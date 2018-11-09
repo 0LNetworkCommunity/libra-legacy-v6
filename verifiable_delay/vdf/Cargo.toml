@@ -2,5 +2,12 @@
 name = "vdf"
 version = "0.1.0"
 authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
+readme = "README.md"
+keywords = ["vdf", "crypto", "cryptography"]
+repository = "https://github.com/poanetwork/vdf"
+license = "Apache-2.0"
 
 [dependencies]
+ramp = "^0.5.1"
+rand = "^0.5.5"
+openssl = "^0.10.15"

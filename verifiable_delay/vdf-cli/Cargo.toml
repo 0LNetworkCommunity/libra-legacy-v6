@@ -2,6 +2,10 @@
 name = "vdf-cli"
 version = "0.1.0"
 authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
+readme = "README.md"
+keywords = ["vdf", "crypto", "cryptography"]
+repository = "https://github.com/poanetwork/vdf"
+license = "Apache-2.0"
 
 [dependencies]
 clap = "2"
