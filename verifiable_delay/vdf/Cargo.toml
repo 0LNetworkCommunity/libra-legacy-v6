@@ -1,0 +1,6 @@
+[package]
+name = "vdf"
+version = "0.1.0"
+authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
+
+[dependencies]

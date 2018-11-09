@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "vdf",
+    "vdf-cli"
+]

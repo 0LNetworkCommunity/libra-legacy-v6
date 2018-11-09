@@ -1,0 +1,8 @@
+[package]
+name = "vdf-cli"
+version = "0.1.0"
+authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
+
+[dependencies]
+clap = "2"
+vdf = { path = "../vdf" }
