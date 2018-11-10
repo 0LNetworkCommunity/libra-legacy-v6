@@ -13,6 +13,7 @@
 // and limitations under the License.
 extern crate num_traits;
 extern crate gmp;
+extern crate libc;
 mod compute;
 pub use compute::*;
 pub trait VDF {

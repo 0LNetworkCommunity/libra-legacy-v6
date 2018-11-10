@@ -12,13 +12,29 @@
 // See the License for the specific language governing permissions and
 // and limitations under the License.#![forbid(unsafe_code)]
 #![forbid(warnings)]
+#![forbid(unsafe_code)]
+use std::u64;
+extern crate gmp;
+use gmp::mpz::Mpz;
 extern crate vdf;
 #[macro_use]
 extern crate clap;
+
+fn is_bigint_ok(obj: String) -> Result<(), String> {
+    Mpz::from_str_radix(&obj, 0).map(drop).map_err(|x|format!("{:?}", x))
+}
+fn is_u64_ok(obj: String) -> Result<(), String> {
+    u64::from_str_radix(&obj, 10).map(drop).map_err(|x|format!("{:?}", x))
+}
 fn main() {
-    let _matches = clap_app!(vdf =>
-        (version: "0.1.0")
+    let _matches = clap_app!(myapp =>
+        (version: crate_version!())
         (author: "Block Notary <poa.networks>")
         (about: "CLI to Verifiable Delay Functions")
+        (@arg DISCRIMINANT: +required {is_bigint_ok} "The discriminant" )
+        (@arg NUM_ITERATIONS: +required  {is_u64_ok} "The number of iterations")
     ).get_matches();
+    let iterations = value_t!(_matches, "NUM_ITERATIONS", u64).unwrap();
+    let discriminant = Mpz::from_str_radix(_matches.value_of("DISCRIMINANT").unwrap(), 0).unwrap();
+    println!("{}", vdf::do_compute(&discriminant, iterations))
 }

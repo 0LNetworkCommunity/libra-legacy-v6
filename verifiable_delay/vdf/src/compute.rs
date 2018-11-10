@@ -1,7 +1,7 @@
 use gmp::mpz::{mpz_ptr, mpz_srcptr, Mpz};
 use num_traits::{One, Zero};
 use std::fmt;
-
+use libc;
 // We use the unsafe versions to avoid unecessary allocations.
 #[link(name = "gmp")]
 extern "C" {
@@ -9,6 +9,19 @@ extern "C" {
     fn __gmpz_fdiv_qr(q: mpz_ptr, r: mpz_ptr, b: mpz_srcptr, g: mpz_srcptr);
     fn __gmpz_fdiv_q(q: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
     fn __gmpz_mul(p: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
+    fn __gmpz_mul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: libc::c_ulong);
+}
+
+fn mpz_mul(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
+    unsafe {
+        __gmpz_mul(rop.inner_mut(), op1.inner(), op2.inner())
+    }
+}
+
+fn mpz_mul_ui(rop: &mut Mpz, op1: &Mpz, op2: libc::c_ulong) {
+    unsafe {
+        __gmpz_mul_ui(rop.inner_mut(), op1.inner(), op2)
+    }
 }
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Hash, Debug, Clone)]
@@ -61,13 +74,13 @@ impl Form {
         }
     }
     fn normalize(&mut self, ctx: &mut Ctx) {
+        assert!(!self.a.is_zero());
         ctx.negative_a = -&self.a;
         if self.b > ctx.negative_a && self.b <= self.a {
             return;
         }
-        let two: Mpz = 2.into();
-        ctx.denom = &self.a * two;
-        ctx.r = (&self.a * &self.b).div_floor(&ctx.denom);
+        mpz_mul_ui(&mut ctx.denom, &self.a, 2);
+        ctx.r = (&self.a - &self.b).div_floor(&ctx.denom);
         ctx.old_b = self.b.clone();
         ctx.ra = &ctx.r * &self.a;
         self.b += &ctx.ra;
@@ -78,14 +91,18 @@ impl Form {
     }
     fn reduce(&mut self, ctx: &mut Ctx) {
         self.normalize(ctx);
-        let two: Mpz = 2.into();
-        while self.a > Zero::zero() || (self.a.is_zero() && self.b < Zero::zero()) {
+        while self.a > self.c || (self.a == self.c && self.b < Zero::zero()) {
             ctx.s = &self.c + &self.b;
-            ctx.x = &self.c * &two;
-            ctx.old_a = self.a.clone();
-            ctx.old_b = self.b.clone();
-            self.a = self.c.clone();
-            self.b = &ctx.s * &self.c * &two - &self.b;
+            mpz_mul_ui(&mut ctx.x, &self.c, 2);
+            unsafe {
+                __gmpz_fdiv_q(ctx.s.inner_mut(), ctx.s.inner_mut(), ctx.x.inner())
+            };
+            ctx.old_a.set(&self.a);
+            ctx.old_b.set(&self.b);
+            self.a.set(&self.c);
+            mpz_mul_ui(&mut self.b, &self.c, 2);
+            self.b *= &ctx.s;
+            self.b -= &ctx.old_b;
             self.c *= &ctx.s * &ctx.s;
             self.c -= &ctx.old_b * &ctx.s;
             self.c += &ctx.old_a;
@@ -117,9 +134,7 @@ impl Form {
         if !ctx.r.is_zero() {
             return false;
         }
-        unsafe {
-            __gmpz_mul(ctx.mu.inner_mut(), ctx.q.inner(), ctx.d.inner());
-        }
+        mpz_mul(&mut ctx.mu, &ctx.q, &ctx.d);
         ctx.mu = ctx.mu.modulus(m);
         v.map(|v| unsafe {
             __gmpz_fdiv_q(v.inner_mut(), m.inner(), ctx.g.inner());
