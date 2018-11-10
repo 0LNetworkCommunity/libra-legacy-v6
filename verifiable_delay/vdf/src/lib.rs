@@ -11,10 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // and limitations under the License.
-extern crate ramp;
-extern crate rand;
-extern crate openssl;
-mod discriminant;
+extern crate num_traits;
+extern crate gmp;
+mod compute;
+pub use compute::*;
 pub trait VDF {
     type PublicParameters;
     type SecurityParameter;
