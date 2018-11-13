@@ -11,11 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // and limitations under the License.
-extern crate num_traits;
+#![deny(warnings)]
+#![feature(dbg_macro)]
 extern crate gmp;
 extern crate libc;
-mod compute;
-pub use compute::*;
+extern crate num_traits;
+extern crate sha2;
+mod gmp_classgroup;
+pub use gmp_classgroup::{do_compute, GmpClassGroup};
+pub mod classgroup;
+pub mod proof_of_time;
+mod proof_pietrzak;
+pub use classgroup::ClassGroup;
 pub trait VDF {
     type PublicParameters;
     type SecurityParameter;
@@ -23,10 +30,18 @@ pub trait VDF {
     type Input;
     type Output;
     type Proof;
-    fn generate(security_parameter: Self::SecurityParameter, time_bound: Self::TimeBound) -> Self::PublicParameters;
-    fn solve(parameters: Self::PublicParameters, input: Self::Input) -> (Self::Output, Self::Proof);
-    fn verify(parameters: Self::PublicParameters, input: Self::Input, output: Self::Output, proof: Self::Proof) -> Result<(), ()>;
+    fn generate(
+        security_parameter: Self::SecurityParameter,
+        time_bound: Self::TimeBound,
+    ) -> Self::PublicParameters;
+    fn solve(parameters: Self::PublicParameters, input: Self::Input)
+        -> (Self::Output, Self::Proof);
+    fn verify(
+        parameters: Self::PublicParameters,
+        input: Self::Input,
+        output: Self::Output,
+        proof: Self::Proof,
+    ) -> Result<(), ()>;
 }
 #[cfg(test)]
-mod tests {
-}
+mod tests {}
