@@ -75,20 +75,19 @@ where
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
     U: Iterator<Item = u64>,
 {
-    let powers_calculated = HashMap::new();
+    let mut powers_calculated = HashMap::new();
     let mut powers_to_calculate: Vec<u64> = powers_to_calculate.collect();
     powers_to_calculate.sort_unstable();
     let mut previous_power: u64 = 0;
-    for current_power in &powers_to_calculate {
-        x.repeated_square(*current_power - previous_power);
-        powers_calculated[current_power] = x.clone();
-        previous_power = *current_power
+    for &current_power in &powers_to_calculate {
+        x.repeated_square(current_power - previous_power);
+        powers_calculated.insert(current_power, x.clone());
+        previous_power = current_power
     }
     powers_calculated
 }
 
 pub fn create_proof_of_time_pietrzak<T>(
-    discriminant: T::BigNum,
     x: T,
     iterations: u64,
     int_size_bits: usize,
@@ -100,12 +99,23 @@ where
 {
     let delta = 8;
     let powers_to_calculate = super::proof_pietrzak::cache_indeces_for_count(iterations);
-    let powers = iterate_squarings(x.clone(), powers_to_calculate.iter().map(|x|*x));
-    let y = powers[&iterations];
-    let identity = T::identity_for_discriminant(discriminant);
-    let proof = super::proof_pietrzak::generate_proof(x, iterations, delta, y, &powers, &x.identity(), &generate_r_value, int_size_bits)?;
-    let proof_len_in_bytes = (proof_len + 1) * 2 * (int_size_bits + 16 >> 4);
-    panic!("serialization not yet implemented")
+    let powers = iterate_squarings(x.clone(), powers_to_calculate.iter().cloned());
+    let y = &powers[&iterations];
+    let identity = &x.identity();
+    let proof = super::proof_pietrzak::generate_proof(x, iterations, delta, y.clone(), &powers, identity, &generate_r_value, int_size_bits)?;
+    let proof_len = proof.len();
+    let element_length = 2 * ((int_size_bits + 16) >> 4);
+    let proof_len_in_bytes = (proof_len + 1) * element_length;
+    let mut v = Vec::with_capacity(proof_len_in_bytes);
+    for _ in 0..proof_len_in_bytes {
+        v.push(0)
+    }
+    y.serialize(&mut v[0..element_length])?;
+    for i in 0..proof_len {
+        let offset = (i + 1) * element_length;
+        proof[i].serialize(&mut v[offset..offset+element_length])?
+    }
+    Ok(v)
 }
 
 pub fn check_proof_of_time_pietrzak<T>(
