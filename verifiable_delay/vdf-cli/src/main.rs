@@ -21,14 +21,29 @@ extern crate vdf;
 extern crate clap;
 
 fn is_bigint_ok(obj: String) -> Result<(), String> {
-    Mpz::from_str_radix(&obj, 0)
-        .map(drop)
-        .map_err(|x| format!("{:?}", x))
+    let s = match Mpz::from_str_radix(&obj, 0) {
+        Ok(m) => {
+            if m >= Mpz::zero() {
+                Err("m must be negative".to_owned())
+            } else if cfg!(debug_assertions)
+                && (-m).probab_prime(5) == gmp::mpz::ProbabPrimeResult::NotPrime
+            {
+                Err("m must be prime".to_owned())
+            } else {
+                Ok(())
+            }
+        }
+        Err(e) => Err(format!("{:?}", e)),
+    };
+    drop(obj);
+    s
 }
 fn is_u64_ok(obj: String) -> Result<(), String> {
-    u64::from_str_radix(&obj, 10)
+    let s = u64::from_str_radix(&obj, 10)
         .map(drop)
-        .map_err(|x| format!("{:?}", x))
+        .map_err(|x| format!("{:?}", x));
+    drop(obj);
+    s
 }
 fn main() {
     let _matches = clap_app!(myapp =>
@@ -41,5 +56,5 @@ fn main() {
     .get_matches();
     let iterations = value_t!(_matches, "NUM_ITERATIONS", u64).unwrap();
     let discriminant = Mpz::from_str_radix(_matches.value_of("DISCRIMINANT").unwrap(), 0).unwrap();
-    println!("{}", vdf::do_compute(&discriminant, iterations))
+    println!("{}", vdf::do_compute(discriminant, iterations))
 }

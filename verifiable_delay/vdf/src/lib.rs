@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // and limitations under the License.
 #![deny(warnings)]
-#![feature(dbg_macro)]
 extern crate gmp;
 extern crate libc;
 extern crate num_traits;

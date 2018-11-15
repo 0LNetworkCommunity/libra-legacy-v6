@@ -1,12 +1,25 @@
+// Copyright 2018 Chia Network Inc and Block Notary Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// and limitations under the License.
 #![deny(unsafe_code)]
-use classgroup::ClassGroupPartial;
+use classgroup::ClassGroup;
 use num_traits::{One, Zero};
 use std::cell::RefCell;
 use std::fmt;
 use std::ops::{Mul, MulAssign};
 
 mod congruence;
-mod ffi;
+pub(crate) mod ffi;
 
 pub use self::ffi::{export_obj, import_obj, Mpz};
 
@@ -173,19 +186,6 @@ impl GmpClassGroup {
         CTX.with(|x| opt.replace(cb(&mut x.borrow_mut())));
         opt.unwrap()
     }
-
-    pub fn generate_for_discriminant(discriminant: &Mpz) -> Self {
-        let one: Mpz = One::one();
-        let x: Mpz = one - discriminant;
-        let mut form = Self::new(
-            2.into(),
-            One::one(),
-            x.div_floor(&8.into()),
-            discriminant.clone(),
-        );
-        form.reduce();
-        form
-    }
 }
 
 impl Default for GmpClassGroup {
@@ -312,7 +312,7 @@ impl MulAssign<&Self> for GmpClassGroup {
     }
 }
 
-impl ClassGroupPartial for GmpClassGroup {
+impl ClassGroup for GmpClassGroup {
     type BigNum = Mpz;
 
     /// Normalize `self`.
@@ -326,6 +326,17 @@ impl ClassGroupPartial for GmpClassGroup {
 
     fn inverse(&mut self) {
         self.b = -self.b.clone();
+    }
+
+    fn serialize(&self, buf: &mut [u8]) -> Result<(), ()> {
+        if buf.len() & 1 == 1 {
+            // odd lengths do not make sense
+            Err(())
+        } else {
+            let len = buf.len() >> 1;
+            ffi::export_obj(&self.a, &mut buf[..len])?;
+            ffi::export_obj(&self.b, &mut buf[len..])
+        }
     }
 
     fn from_bytes(bytearray: &[u8], discriminant: Self::BigNum) -> Self {
@@ -348,8 +359,8 @@ impl ClassGroupPartial for GmpClassGroup {
     }
 
     /// Returns the discriminant of `self`.
-    fn discriminant(&self) -> Self::BigNum {
-        self.discriminant.clone()
+    fn discriminant(&self) -> &Self::BigNum {
+        &self.discriminant
     }
 
     /// Reduce `self`.
@@ -381,6 +392,33 @@ impl ClassGroupPartial for GmpClassGroup {
                 self.inner_square(ctx)
             }
         })
+    }
+
+    fn generate_for_discriminant(discriminant: Self::BigNum) -> Self {
+        let one: Mpz = One::one();
+        let x: Mpz = &one - &discriminant;
+        let mut form = Self::new(2.into(), one, x.div_floor(&8.into()), discriminant);
+        form.reduce();
+        form
+    }
+
+    fn pow(&mut self, mut exponent: Mpz) {
+        let zero = Mpz::zero();
+        assert!(exponent >= zero);
+        let mut state = self.identity();
+        loop {
+            let is_odd = exponent.tstbit(0);
+            exponent.clrbit(0);
+            if is_odd {
+                state *= &*self
+            }
+            if exponent.is_zero() {
+                *self = state;
+                break;
+            }
+            self.square();
+            exponent >>= 1
+        }
     }
 }
 
@@ -414,7 +452,9 @@ impl Default for Ctx {
     }
 }
 
-pub fn do_compute(discriminant: &Mpz, iterations: u64) -> GmpClassGroup {
+pub fn do_compute(discriminant: Mpz, iterations: u64) -> GmpClassGroup {
+    debug_assert!(discriminant < Zero::zero());
+    debug_assert!(discriminant.probab_prime(50) != gmp::mpz::ProbabPrimeResult::NotPrime);
     let mut f = GmpClassGroup::generate_for_discriminant(discriminant);
     f.repeated_square(iterations);
     f

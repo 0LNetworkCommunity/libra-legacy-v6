@@ -1,14 +1,27 @@
-#![allow(dead_code)]
-use gmp::mpz::Mpz;
+// Copyright 2018 Chia Network Inc and Block Notary Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// and limitations under the License.
+use super::classgroup::ClassGroup;
+use num_traits::One;
 use std::ops::Index;
 
-fn approximate_i(t: usize) -> usize {
+fn approximate_i(t: u64) -> u64 {
     let x: f64 = (t as f64) / 16.;
     let w = x.log2() - x.log2().log2() + 0.25;
     (w / 2.).round() as _
 }
 
-fn sum_combinations<'a, T: IntoIterator<Item = &'a usize>>(numbers: T) -> Vec<usize> {
+fn sum_combinations<'a, T: IntoIterator<Item = &'a u64>>(numbers: T) -> Vec<u64> {
     let mut combinations = vec![0];
     for i in numbers {
         let mut new_combinations = combinations.clone();
@@ -21,8 +34,8 @@ fn sum_combinations<'a, T: IntoIterator<Item = &'a usize>>(numbers: T) -> Vec<us
     combinations
 }
 
-pub fn cache_indeces_for_count(t: usize) -> Vec<usize> {
-    let i: usize = approximate_i(t);
+pub fn cache_indeces_for_count(t: u64) -> Vec<u64> {
+    let i: u64 = approximate_i(t);
     let mut curr_t = t;
     let mut intermediate_ts = vec![];
     for _ in 0..i {
@@ -38,7 +51,7 @@ pub fn cache_indeces_for_count(t: usize) -> Vec<usize> {
     cache_indeces
 }
 
-fn calculate_final_t(t: usize, delta: usize) -> usize {
+fn calculate_final_t(t: u64, delta: usize) -> u64 {
     let mut curr_t = t;
     let mut ts = vec![];
     while curr_t != 2 {
@@ -54,36 +67,39 @@ fn calculate_final_t(t: usize, delta: usize) -> usize {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn generate_proof<T, U>(
-    x: &Mpz,
-    t: usize,
+pub fn generate_proof<T, U, V>(
+    x: V,
+    t: u64,
     delta: usize,
-    y: &Mpz,
+    y: V,
     powers: &T,
-    identity: &Mpz,
+    identity: &V,
     generate_r_value: &U,
     int_size_bits: usize,
-) -> Result<Vec<Mpz>, ()>
+) -> Result<Vec<V>, ()>
 where
-    T: Index<usize, Output = Mpz>,
-    U: Fn(&Mpz, &Mpz, &Mpz, usize) -> Result<Mpz, ()>,
+    T: for <'a> Index<&'a u64, Output = V>,
+    U: Fn(&V, &V, &V, usize) -> Result<V::BigNum, ()>,
+    V: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
+    for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
 {
     if t & 1 == 1 {
         panic!("T must be even")
     }
     let i = approximate_i(t);
     let mut mus = vec![];
-    let mut rs = vec![];
-    let mut x_p = vec![x.clone()];
-    let mut y_p = vec![y.clone()];
+    let mut rs: Vec<V::BigNum> = vec![];
+    let mut x_p = vec![x];
+    let mut y_p = vec![y];
 
     let mut curr_t = t;
     let mut ts = vec![];
 
-    let final_t = calculate_final_t(t, delta);
+    let final_t = calculate_final_t(t as _, delta);
 
     let mut round_index = 0;
-    while curr_t != final_t {
+    while curr_t as u64 != final_t {
         assert_eq!(curr_t & 1, 0);
         let half_t = curr_t >> 1;
         ts.push(half_t);
@@ -93,7 +109,7 @@ where
             let mut mu = identity.clone();
             for numerator in (1..denominator).step_by(2) {
                 let num_bits = 62 - denominator.leading_zeros() as usize;
-                let mut r_prod: Mpz = 1.into();
+                let mut r_prod: V::BigNum = One::one();
                 for b in (0..num_bits).rev() {
                     if 0 == numerator & 1 << (b + 1) {
                         r_prod *= &rs[num_bits - b - 1]
@@ -105,42 +121,90 @@ where
                         t_sum += ts[num_bits - b - 1]
                     }
                 }
-                mu *= &powers[t_sum] * &r_prod
+                let mut s = powers[&t_sum].clone();
+                s.pow(r_prod);
+                mu *= &s
             }
             mu
         } else {
             let mut mu = x_p.last().unwrap().clone();
             for _ in 0..half_t {
-                mu = &mu * &mu
+                mu *= &mu.clone()
             }
             mu
         });
-        let mu = mus.last().unwrap();
-        rs.push(generate_r_value(&x, &y, mu, int_size_bits)?);
-        let mut last_r = rs.last().unwrap().clone();
-        last_r *= mu;
+        let mut mu: V = mus.last().unwrap().clone();
+        rs.push(generate_r_value(&x_p[0], &y_p[0], &mu, int_size_bits)?);
+        let last_r: V::BigNum = rs.last().unwrap().clone();
         {
-            let a = x_p.last().unwrap() * &last_r;
+            let mut a: V = x_p.last().unwrap().clone();
+            a.pow(last_r.clone());
+            a *= &mu;
             x_p.push(a)
         }
-        y_p.push(last_r);
+        mu.pow(last_r);
+        mu *= y_p.last().unwrap();
+        y_p.push(mu);
         curr_t >>= 1;
         if curr_t & 1 != 0 {
             curr_t += 1;
-            let q = {
+            let q: V = {
                 let s = y_p.last_mut().unwrap();
-
-                let s_nonmut: &_ = &*s;
-                s_nonmut * s_nonmut
+                let mut t = s.clone();
+                t.square();
+                t
             };
             *(y_p.last_mut().unwrap()) = q
         }
         round_index += 1
     }
-    let one: Mpz = 1u64.into();
-    assert_eq!(
-        y_p.last().unwrap().clone(),
-        x_p.last().unwrap() * (&one << final_t)
-    );
     Ok(mus)
+}
+
+pub fn verify_proof<T, U, V>(
+    x_initial: &V,
+    y_initial: &V,
+    proof: T,
+    t: u64,
+    delta: usize,
+    generate_r_value: &U,
+    int_size_bits: usize,
+) -> Result<(), ()>
+where
+    T: IntoIterator<Item = V>,
+    U: Fn(&V, &V, &V, usize) -> Result<V::BigNum, ()>,
+    V: ClassGroup,
+    for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
+    for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
+{
+    let mut one: V::BigNum = One::one();
+    if t & 1 != 0 {
+        return Err(());
+    }
+    let (mut x, mut y): (V, V) = (x_initial.clone(), y_initial.clone());
+    let final_t = calculate_final_t(t, delta);
+    let mut curr_t = t;
+    for mut mu in proof {
+        if curr_t & 1 != 0 {
+            return Err(());
+        }
+        let r = generate_r_value(x_initial, y_initial, &mu, int_size_bits)?;
+        x.pow(r.clone());
+        x *= &mu;
+        mu.pow(r);
+        y *= &mu;
+
+        curr_t >>= 1;
+        if curr_t & 1 == 1 {
+            curr_t += 1;
+            y.square();
+        }
+    }
+    one <<= final_t as _;
+    x.pow(one);
+    if x == y {
+        Ok(())
+    } else {
+        Err(())
+    }
 }

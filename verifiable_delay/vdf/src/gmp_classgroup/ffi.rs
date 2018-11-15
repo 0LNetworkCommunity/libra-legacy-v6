@@ -1,9 +1,23 @@
+// Copyright 2018 Chia Network Inc and Block Notary Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// and limitations under the License.
 #![allow(unsafe_code)]
+#![forbid(warnings)]
 pub use gmp::mpz::Mpz;
 use gmp::mpz::{mpz_ptr, mpz_srcptr};
 use libc;
 pub use libc::c_ulong;
-use std::{isize, mem, usize};
+use std::{mem, usize};
 // We use the unsafe versions to avoid unecessary allocations.
 #[link(name = "gmp")]
 extern "C" {
@@ -37,6 +51,21 @@ extern "C" {
         nails: libc::size_t,
         op: mpz_srcptr,
     ) -> *mut libc::c_void;
+}
+
+// MEGA HACK: rust-gmp doesn’t expose this struct, so we must define
+// it ourselves and cast.
+//
+// Should be stable though, as changing it would break ABI compat.
+#[repr(C)]
+struct MpzStruct {
+    mp_alloc: libc::c_int,
+    mp_size: libc::c_int,
+    mp_d: *mut libc::c_void,
+}
+
+pub fn mpz_is_negative(z: &Mpz) -> bool {
+    unsafe { (*(z.inner() as *const MpzStruct)).mp_size < 0 }
 }
 
 pub fn mpz_gcdext(g: &mut Mpz, s: &mut Mpz, t: &mut Mpz, a: &Mpz, b: &Mpz) {
@@ -124,22 +153,30 @@ pub fn mpz_sub(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
     unsafe { __gmpz_sub(rop.inner_mut(), op1.inner(), op2.inner()) }
 }
 
-pub fn export_obj(obj: &Mpz, int_size_bits: usize, v: &mut Vec<u8>) -> Result<(), ()> {
-    unsafe {
-        let size = size_in_bits(obj);
-        assert!(size <= usize::MAX - 7);
-        if size > int_size_bits {
-            Err(())
-        } else {
-            let l = v.len();
-            debug_assert!(l <= isize::MAX as usize);
-            v.reserve((size + 7) >> 3);
-            let mut s: usize = mem::uninitialized();
-            let vec_ptr = v.as_mut_ptr().add(l) as *mut _;
-            let ptr = __gmpz_export(vec_ptr, &mut s, 1, 1, 1, 0, obj.inner());
-            assert_eq!(ptr, vec_ptr);
-            v.set_len(s + l);
-            Ok(())
-        }
+pub fn export_obj(obj: &Mpz, v: &mut [u8]) -> Result<(), ()> {
+    let size = size_in_bits(obj);
+    if size > usize::MAX - 8 || v.len() > usize::MAX >> 3 {
+        return Err(());
     }
+    assert!(!mpz_is_negative(obj));
+    let is_negative: u8 = mpz_is_negative(obj).into();
+    let byte_len = (size + 8 - is_negative as usize) >> 3;
+    if v.len() < byte_len {
+        return Err(());
+    }
+    let s = unsafe {
+        let mut s: usize = mem::uninitialized(); // SAFE as __gmpz_export will *always* initialize this.
+        let ptr = v.as_mut_ptr() as *mut _;
+        let ptr2 = __gmpz_export(ptr, &mut s, 1, 1, 1, 0, obj.inner());
+        assert_eq!(ptr, ptr2);
+        s
+    };
+    let i = v.len();
+    assert!(s <= i);
+    for i in &mut v[s..i] {
+        *i = !is_negative
+    }
+
+    v[s - 1] |= !is_negative & 0xFFu8 << (s & 7);
+    Ok(())
 }
