@@ -17,7 +17,7 @@ extern crate libc;
 extern crate num_traits;
 extern crate sha2;
 mod gmp_classgroup;
-pub use gmp_classgroup::{do_compute, GmpClassGroup};
+pub use gmp_classgroup::{do_compute, export_obj, GmpClassGroup};
 pub mod classgroup;
 pub mod proof_of_time;
 mod proof_pietrzak;

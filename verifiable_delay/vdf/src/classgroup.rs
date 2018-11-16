@@ -56,7 +56,7 @@ where
     /// is not enough space in the buffer.
     ///
     /// The data must be serialized in twos-complement, big-endian format.
-    fn serialize(&self, buf: &mut [u8]) -> std::result::Result<(), ()>;
+    fn serialize(&self, buf: &mut [u8]) -> std::result::Result<(), usize>;
 
     /// Reduce `self` in-place.
     fn reduce(&mut self);

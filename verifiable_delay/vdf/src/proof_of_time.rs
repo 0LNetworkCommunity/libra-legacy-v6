@@ -30,7 +30,7 @@ where
     }
     let mut hasher = Sha256::new();
     for i in &[&x, &y, &sqrt_mu] {
-        i.serialize(&mut v)?;
+        i.serialize(&mut v).map_err(drop)?;
         hasher.input(&v);
     }
     let res = hasher.fixed_result();
@@ -102,7 +102,16 @@ where
     let powers = iterate_squarings(x.clone(), powers_to_calculate.iter().cloned());
     let y = &powers[&iterations];
     let identity = &x.identity();
-    let proof = super::proof_pietrzak::generate_proof(x, iterations, delta, y.clone(), &powers, identity, &generate_r_value, int_size_bits)?;
+    let proof = super::proof_pietrzak::generate_proof(
+        x,
+        iterations,
+        delta,
+        y.clone(),
+        &powers,
+        identity,
+        &generate_r_value,
+        int_size_bits,
+    )?;
     let proof_len = proof.len();
     let element_length = 2 * ((int_size_bits + 16) >> 4);
     let proof_len_in_bytes = (proof_len + 1) * element_length;
@@ -110,10 +119,12 @@ where
     for _ in 0..proof_len_in_bytes {
         v.push(0)
     }
-    y.serialize(&mut v[0..element_length])?;
+    y.serialize(&mut v[0..element_length]).map_err(drop)?;
     for i in 0..proof_len {
         let offset = (i + 1) * element_length;
-        proof[i].serialize(&mut v[offset..offset+element_length])?
+        proof[i]
+            .serialize(&mut v[offset..offset + element_length])
+            .map_err(drop)?
     }
     Ok(v)
 }

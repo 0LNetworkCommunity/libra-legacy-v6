@@ -66,7 +66,7 @@ fn calculate_final_t(t: u64, delta: usize) -> u64 {
     ts[ts.len() - delta]
 }
 
-#[allow(clippy::too_many_arguments)]
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
 pub fn generate_proof<T, U, V>(
     x: V,
     t: u64,
@@ -78,7 +78,7 @@ pub fn generate_proof<T, U, V>(
     int_size_bits: usize,
 ) -> Result<Vec<V>, ()>
 where
-    T: for <'a> Index<&'a u64, Output = V>,
+    T: for<'a> Index<&'a u64, Output = V>,
     U: Fn(&V, &V, &V, usize) -> Result<V::BigNum, ()>,
     V: ClassGroup<BigNum = gmp::mpz::Mpz>,
     for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,

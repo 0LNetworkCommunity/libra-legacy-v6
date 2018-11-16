@@ -109,6 +109,7 @@ impl GmpClassGroup {
         self.inner_normalize(ctx);
 
         while self.a > self.c || (self.a == self.c && self.b < Zero::zero()) {
+            assert!(!self.c.is_zero());
             ffi::mpz_add(&mut ctx.s, &self.c, &self.b);
             ffi::mpz_mul_ui(&mut ctx.x, &self.c, 2);
             ffi::mpz_fdiv_q_self(&mut ctx.s, &ctx.x);
@@ -183,7 +184,7 @@ impl GmpClassGroup {
         T: FnOnce(&mut Ctx) -> U,
     {
         let mut opt = None;
-        CTX.with(|x| opt.replace(cb(&mut x.borrow_mut())));
+        CTX.with(|x| opt = Some(cb(&mut x.borrow_mut())));
         opt.unwrap()
     }
 }
@@ -223,7 +224,7 @@ impl<'a> Mul<GmpClassGroup> for &'a GmpClassGroup {
     }
 }
 
-impl Mul<&Self> for GmpClassGroup {
+impl<'a> Mul<&'a Self> for GmpClassGroup {
     type Output = Self;
     fn mul(mut self, rhs: &Self) -> Self {
         self *= rhs;
@@ -239,7 +240,7 @@ impl Mul<Self> for GmpClassGroup {
     }
 }
 
-impl MulAssign<&Self> for GmpClassGroup {
+impl<'a> MulAssign<&'a Self> for GmpClassGroup {
     fn mul_assign(&mut self, rhs: &Self) {
         assert!(self.discriminant == rhs.discriminant);
         GmpClassGroup::with_context(|ctx| {
@@ -328,10 +329,10 @@ impl ClassGroup for GmpClassGroup {
         self.b = -self.b.clone();
     }
 
-    fn serialize(&self, buf: &mut [u8]) -> Result<(), ()> {
+    fn serialize(&self, buf: &mut [u8]) -> Result<(), usize> {
         if buf.len() & 1 == 1 {
             // odd lengths do not make sense
-            Err(())
+            Err(0)
         } else {
             let len = buf.len() >> 1;
             ffi::export_obj(&self.a, &mut buf[..len])?;
