@@ -19,7 +19,7 @@ use std::usize;
 
 fn generate_r_value<T>(x: &T, y: &T, sqrt_mu: &T, int_size_bits: usize) -> Result<T::BigNum, ()>
 where
-    T: ClassGroup<BigNum = super::gmp_classgroup::Mpz>,
+    T: ClassGroup<BigNum = super::gmp_classgroup::ffi::Mpz>,
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {

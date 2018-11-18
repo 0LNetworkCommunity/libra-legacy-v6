@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // and limitations under the License.
 #![allow(unsafe_code)]
-#![forbid(warnings)]
 pub use gmp::mpz::Mpz;
 use gmp::mpz::{mpz_ptr, mpz_srcptr};
 use libc;
@@ -42,7 +41,10 @@ extern "C" {
     fn __gmpz_add(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
     fn __gmpz_add_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: libc::c_ulong);
     fn __gmpz_set_ui(rop: mpz_ptr, op: libc::c_ulong);
+    fn __gmpz_set_si(rop: mpz_ptr, op: libc::c_long);
+    fn __gmpz_com(rop: mpz_ptr, op: mpz_srcptr);
     fn __gmpz_neg(rop: mpz_ptr, op: mpz_srcptr);
+    fn __gmpz_cdiv_ui(n: mpz_srcptr, d: libc::c_ulong) -> libc::c_ulong;
     fn __gmpz_export(
         rop: *mut libc::c_void,
         countp: *mut libc::size_t,
@@ -62,8 +64,20 @@ extern "C" {
 struct MpzStruct {
     mp_alloc: libc::c_int,
     mp_size: libc::c_int,
-    mp_d: *mut libc::c_void,
+    mp_d: *mut gmp::mpz::mp_limb_t,
 }
+
+macro_rules! impl_fdiv_ui {
+    ($t: ty, $i: ident) => {
+        pub fn $i(n: &Mpz, d: $t) -> $t {
+            unsafe { __gmpz_cdiv_ui(n.inner(), libc::c_ulong::from(d)) as $t }
+        }
+    };
+}
+
+// impl_fdiv_ui!(u8, mpz_rem_u8);
+impl_fdiv_ui!(u16, mpz_rem_u16);
+// impl_fdiv_ui!(u32, mpz_rem_u32);
 
 pub fn mpz_is_negative(z: &Mpz) -> bool {
     unsafe { (*(z.inner() as *const MpzStruct)).mp_size < 0 }
@@ -95,6 +109,11 @@ pub fn mpz_set_ui(rop: &mut Mpz, op: c_ulong) {
     unsafe { __gmpz_set_ui(rop.inner_mut(), op) }
 }
 
+#[cfg(none)]
+pub fn mpz_set_si(rop: &mut Mpz, op: libc::c_long) {
+    unsafe { __gmpz_set_si(rop.inner_mut(), op) }
+}
+
 pub fn mpz_fdiv_qr(q: &mut Mpz, r: &mut Mpz, b: &Mpz, g: &Mpz) {
     unsafe { __gmpz_fdiv_qr(q.inner_mut(), r.inner_mut(), b.inner(), g.inner()) }
 }
@@ -104,19 +123,41 @@ pub fn mpz_fdiv_q_ui_self(rop: &mut Mpz, op: c_ulong) -> c_ulong {
 }
 
 pub fn import_obj(buf: &[u8]) -> Mpz {
-    let mut obj = Mpz::new();
-    unsafe {
-        __gmpz_import(
-            obj.inner_mut(),
-            buf.len(),
-            1,
-            1,
-            1,
-            0,
-            buf.as_ptr() as *const _,
-        )
+    fn raw_import(buf: &[u8]) -> Mpz {
+        let mut obj = Mpz::new();
+
+        unsafe {
+            __gmpz_import(
+                obj.inner_mut(),
+                buf.len(),
+                1,
+                1,
+                1,
+                0,
+                buf.as_ptr() as *const _,
+            )
+        }
+        obj
     }
-    obj
+    let is_negative = buf.first().expect("Cannot deserialize an empty buffer") >> 7;
+    if 0u8 == is_negative {
+        raw_import(buf)
+    } else {
+        let mut new_buf: Vec<_> = buf.iter().cloned().skip_while(|&x| x == 0xFF).collect();
+        if new_buf.is_empty() {
+            (-1).into()
+        } else {
+            for i in &mut new_buf {
+                *i ^= 0xFF
+            }
+            let mut obj = raw_import(&new_buf);
+            unsafe {
+                __gmpz_com(obj.inner_mut(), obj.inner());
+            }
+
+            obj
+        }
+    }
 }
 
 pub fn three_gcd(rop: &mut Mpz, a: &Mpz, b: &Mpz, c: &Mpz) {
@@ -148,6 +189,10 @@ pub fn mpz_fdiv_q(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
 
 pub fn mpz_fdiv_q_self(rop: &mut Mpz, op: &Mpz) {
     unsafe { __gmpz_fdiv_q(rop.inner_mut(), rop.inner(), op.inner()) }
+}
+
+pub fn mpz_add_ui_self(rop: &mut Mpz, op: u32) {
+    unsafe { __gmpz_add_ui(rop.inner_mut(), rop.inner(), libc::c_ulong::from(op)) }
 }
 
 pub fn mpz_sub(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
@@ -253,5 +298,10 @@ mod test {
         let mut buf = [0, 0, 0];
         export_obj(&s, &mut buf).expect("buffer should be large enough");
         assert_eq!(buf, [0xFF, 0xFE, 0xFF]);
+    }
+
+    #[test]
+    fn check_rem() {
+        assert_eq!(mpz_rem_u16(&(100i64).into(), 3), 2);
     }
 }

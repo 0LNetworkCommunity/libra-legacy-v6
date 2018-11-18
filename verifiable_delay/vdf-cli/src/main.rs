@@ -38,7 +38,8 @@ fn is_bigint_ok(obj: String) -> Result<(), String> {
             {
                 Err("m must be prime".to_owned())
             } else {
-                Ok(DISCRIMINANT.with(|x| assert!(x.replace(Some(m)).is_none())))
+                DISCRIMINANT.with(|x| assert!(x.replace(Some(m)).is_none()));
+                Ok(())
             }
         }
         Err(e) => Err(format!("{}: {:?}", e, obj)),
@@ -47,12 +48,28 @@ fn is_bigint_ok(obj: String) -> Result<(), String> {
     s
 }
 
-fn is_u64_ok(obj: String) -> Result<(), String> {
-    let s = u64::from_str_radix(&obj, 10)
-        .map(|q| NUM_ITERATIONS.with(|x| assert!(x.replace(Some(q)).is_none())))
-        .map_err(|x| format!("{}: {:?}", x, obj));
+fn is_value_ok(obj: String) -> Result<(), String> {
+    let s = Mpz::from_str_radix(&obj, 0)
+        .map(drop)
+        .map_err(|e| format!("{}: {:?}", e, obj));
     drop(obj);
     s
+}
+
+fn is_u64_ok(obj: String) -> Result<(), String> {
+    match u64::from_str_radix(&obj, 10) {
+        Ok(n) if n < 66 => Err(format!(
+            "Number of iterations must be at least 66, not {}",
+            n
+        )),
+        Ok(n) if n & 1 == 0 => {
+            NUM_ITERATIONS.with(|x| assert!(x.replace(Some(n)).is_none()));
+            drop(obj);
+            Ok(())
+        }
+        Ok(n) => Err(format!("Number of iterations must be even, not {}", n)),
+        Err(s) => Err(format!("{}: {:?}", s, obj)),
+    }
 }
 
 fn parse_already_checked_args() -> (Mpz, u64) {
@@ -62,7 +79,27 @@ fn parse_already_checked_args() -> (Mpz, u64) {
     )
 }
 
-fn main() {
+fn is_hex_ok(obj: String) -> Result<(), String> {
+    if obj.len() & 1 != 0 {
+        return Err(format!("{}", hex::FromHexError::OddLength));
+    }
+    for i in obj.chars() {
+        match i {
+            '0'...'9' | 'a'...'f' | 'A'...'F' => (),
+            _ => drop(hex::decode(&obj).map_err(|x| format!("{}", x))),
+        }
+    }
+    drop(obj);
+    Ok(())
+}
+
+fn is_u16_ok(obj: String) -> Result<(), String> {
+    u16::from_str_radix(&obj, 10)
+        .map(drop)
+        .map_err(|x| format!("{}", x))
+}
+
+fn main() -> Result<(), std::io::Error> {
     let matches = clap_app!(myapp =>
         (version: crate_version!())
         (author: "Block Notary <poa.networks>")
@@ -72,33 +109,77 @@ fn main() {
             (@arg NUM_ITERATIONS: +required  {is_u64_ok} "The number of iterations")
         )
         (@subcommand prove =>
-            (@arg DISCRIMINANT: +required {is_bigint_ok} "The discriminant" )
+            (@arg DISCRIMINANT_CHALLENGE: +required {is_hex_ok} "Hex-encoded challenge to derive the discriminant from" )
             (@arg NUM_ITERATIONS: +required  {is_u64_ok} "The number of iterations")
+            (@arg LENGTH: {is_u16_ok} "Length in bits of the discriminant (default: 2048)")
         )
         (@subcommand verify =>
-            (@arg DISCRIMINANT: +required {is_bigint_ok} "The discriminant" )
+            (@arg DISCRIMINANT_CHALLENGE: +required {is_hex_ok} "Hex-encoded challenge to derive the discriminant from" )
             (@arg NUM_ITERATIONS: +required  {is_u64_ok} "The number of iterations")
-            (@arg PROOF: +required "The proof")
+            (@arg PROOF: +required {is_hex_ok} "The proof")
+            (@arg LENGTH: {is_u16_ok} "Length in bits of the discriminant (default: 2048)")
         )
         (@subcommand dump =>
-        (@arg NUM: +required "The bignum to dump")
+        (@arg NUM: +required {is_value_ok} "The bignum to dump")
         )
     )
     .get_matches();
     if let Some(_matches) = matches.subcommand_matches("compute") {
         let (discriminant, iterations) = parse_already_checked_args();
         println!("{}", vdf::do_compute(discriminant, iterations));
+        Ok(())
     } else if let Some(matches) = matches.subcommand_matches("dump") {
         let mut v_input = matches.value_of("NUM").unwrap();
         let v = Mpz::from_str_radix(v_input, 0).unwrap();
         let mut buf = v_input.to_owned().into_bytes();
         vdf::export_obj(&v, &mut buf).unwrap();
+        assert_eq!(&vdf::import_obj(&buf), &v);
         println!("Dumped output: {:x?}", buf);
+        Ok(())
+    } else if let Some(matches) = matches.subcommand_matches("verify") {
+        let iterations = value_t!(matches, "NUM_ITERATIONS", u64).unwrap();
+        let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
+        let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
+        let length = u16::from_str_radix(length, 10).unwrap();
+        let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
+        let proof = hex::decode(matches.value_of("PROOF").unwrap()).unwrap();
+        let x: vdf::GmpClassGroup =
+            vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
+        match vdf::check_proof_of_time_pietrzak(
+            discriminant,
+            &x,
+            &proof,
+            iterations,
+            usize::from(length),
+        ) {
+            Ok(()) => {
+                println!("Proof is valid");
+                Ok(())
+            }
+            Err(()) => {
+                println!("Bad proof!");
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Bad proof!",
+                ))
+            }
+        }
+    } else if let Some(matches) = matches.subcommand_matches("prove") {
+        let iterations = value_t!(matches, "NUM_ITERATIONS", u64).unwrap();
+        let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
+        let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
+        let length = u16::from_str_radix(length, 10).unwrap();
+        let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
+        let x: vdf::GmpClassGroup =
+            vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant);
+        println!(
+            "{}",
+            hex::encode(
+                &vdf::create_proof_of_time_pietrzak(x, iterations, usize::from(length)).unwrap()
+            )
+        );
+        Ok(())
     } else {
-        unimplemented!();
-        /*
-        if  let Some(matches) = matches.subcommand_matches("verify") {
-        let (discriminant, iterations) = parse_already_checked_args();
-        let v = matches.value_of("PROOF").unwrap(); */
+        unimplemented!()
     }
 }

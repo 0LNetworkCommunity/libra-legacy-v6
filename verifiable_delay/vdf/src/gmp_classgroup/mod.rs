@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // and limitations under the License.
 #![deny(unsafe_code)]
+#![forbid(warnings)]
 use classgroup::ClassGroup;
+use gmp::mpz::Mpz;
 use num_traits::{One, Zero};
 use std::cell::RefCell;
 use std::fmt;
 use std::ops::{Mul, MulAssign};
-
 mod congruence;
-pub(crate) mod ffi;
-
-pub use self::ffi::{export_obj, import_obj, Mpz};
+pub(super) mod ffi;
 
 #[derive(PartialEq, PartialOrd, Eq, Ord, Hash, Debug, Clone)]
 pub struct GmpClassGroup {
@@ -308,7 +307,7 @@ impl<'a> MulAssign<&'a Self> for GmpClassGroup {
             ffi::mpz_mul(&mut ctx.a, &ctx.j, &ctx.m);
             self.c -= &ctx.a;
 
-            self.reduce();
+            self.inner_reduce(ctx);
         })
     }
 }
@@ -371,6 +370,18 @@ impl ClassGroup for GmpClassGroup {
     /// Panics if called within a call to `Self::with_context`.
     fn reduce(&mut self) {
         Self::with_context(|x| self.inner_reduce(x))
+    }
+
+    fn deserialize(buf: &[u8], discriminant: Self::BigNum) -> Self {
+        let len = buf.len();
+        assert!(len != 0, "Cannot deserialize an empty buffer!");
+        assert!(len & 1 == 0, "Buffer must be of even length");
+        let half_len = len >> 1;
+        Self::from_ab_discriminant(
+            ffi::import_obj(&buf[..half_len]),
+            ffi::import_obj(&buf[half_len..]),
+            discriminant,
+        )
     }
 
     /// Square `self`.ClassGroupPartial

@@ -52,7 +52,7 @@ where
         Self::from_ab_discriminant(Self::BigNum::one(), Self::BigNum::one(), discriminant)
     }
 
-    /// Serializes `self` to a byte array.  Returns `Err(())` if there
+    /// Serializes `self` to a byte array.  Returns `Err(s)` if there
     /// is not enough space in the buffer.
     ///
     /// The data must be serialized in twos-complement, big-endian format.
@@ -110,4 +110,7 @@ where
 
     /// Exponentiation
     fn pow(&mut self, exponent: Self::BigNum);
+
+    /// Deserialization
+    fn deserialize(buf: &[u8], discriminant: Self::BigNum) -> Self;
 }

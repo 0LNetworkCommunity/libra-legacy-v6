@@ -11,15 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // and limitations under the License.
-#![deny(warnings)]
+#![forbid(warnings)]
 extern crate gmp;
 extern crate libc;
 extern crate num_traits;
 extern crate sha2;
+mod constants;
+mod create_discriminant;
 mod gmp_classgroup;
-pub use gmp_classgroup::{do_compute, export_obj, GmpClassGroup};
+pub use gmp_classgroup::{
+    do_compute,
+    ffi::{export_obj, import_obj},
+    GmpClassGroup,
+};
 pub mod classgroup;
-pub mod proof_of_time;
+mod proof_of_time;
+pub use create_discriminant::create_discriminant;
+pub use proof_of_time::{check_proof_of_time_pietrzak, create_proof_of_time_pietrzak};
 mod proof_pietrzak;
 pub use classgroup::ClassGroup;
 pub trait VDF {

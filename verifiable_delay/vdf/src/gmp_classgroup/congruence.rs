@@ -35,6 +35,7 @@ impl Default for CongruenceContext {
         }
     }
 }
+
 impl CongruenceContext {
     pub fn solve_linear_congruence(
         &mut self,

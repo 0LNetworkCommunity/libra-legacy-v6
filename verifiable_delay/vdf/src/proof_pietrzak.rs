@@ -63,6 +63,7 @@ fn calculate_final_t(t: u64, delta: usize) -> u64 {
     }
     ts.push(2);
     ts.push(1);
+    assert!(ts.len() >= delta);
     ts[ts.len() - delta]
 }
 
