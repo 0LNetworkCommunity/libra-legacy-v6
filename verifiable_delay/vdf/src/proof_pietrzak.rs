@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // and limitations under the License.
 use super::classgroup::ClassGroup;
-use num_traits::One;
+use num_traits::{One, Zero};
 use std::ops::Index;
 
 fn approximate_i(t: u64) -> u64 {
@@ -135,8 +135,9 @@ where
             mu
         });
         let mut mu: V = mus.last().unwrap().clone();
-        rs.push(generate_r_value(&x_p[0], &y_p[0], &mu, int_size_bits)?);
-        let last_r: V::BigNum = rs.last().unwrap().clone();
+        let last_r: V::BigNum = generate_r_value(&x_p[0], &y_p[0], &mu, int_size_bits)?;
+        assert!(last_r >= Zero::zero());
+        rs.push(last_r.clone());
         {
             let mut a: V = x_p.last().unwrap().clone();
             a.pow(last_r.clone());
@@ -186,10 +187,11 @@ where
     let final_t = calculate_final_t(t, delta);
     let mut curr_t = t;
     for mut mu in proof {
-        if curr_t & 1 != 0 {
-            return Err(());
-        }
-        let r = generate_r_value(x_initial, y_initial, &mu, int_size_bits)?;
+        assert!(
+            curr_t & 1 == 0,
+            "Cannot have an odd number of iterations remaining"
+        );
+        let r = generate_r_value(x_initial, y_initial, &mu, int_size_bits).expect("bug");
         x.pow(r.clone());
         x *= &mu;
         mu.pow(r);

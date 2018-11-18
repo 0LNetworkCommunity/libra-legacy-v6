@@ -41,6 +41,7 @@ pub struct Ctx {
     s: Mpz,
     x: Mpz,
     congruence_context: congruence::CongruenceContext,
+    g: Mpz,
     h: Mpz,
     w: Mpz,
     m: Mpz,
@@ -69,15 +70,27 @@ impl fmt::Display for GmpClassGroup {
 
 impl GmpClassGroup {
     fn new(a: Mpz, b: Mpz, c: Mpz, discriminant: Mpz) -> Self {
-        GmpClassGroup {
+        let s = GmpClassGroup {
             a,
             b,
             c,
             discriminant,
+        };
+        s.assert_valid();
+        s
+    }
+
+    #[cfg_attr(not(debug_assertions), inline(always))]
+    fn assert_valid(&self) {
+        if cfg!(debug_assertions) {
+            let four: Mpz = 4u64.into();
+            let four_ac: Mpz = four * &self.a * &self.c;
+            assert!(&self.discriminant + four_ac == &self.b * &self.b);
         }
     }
 
     fn inner_normalize(&mut self, ctx: &mut Ctx) {
+        self.assert_valid();
         //eprintln!("{:?}", self);
         ctx.negative_a = -&self.a;
         //dbg!(&self);
@@ -102,10 +115,13 @@ impl GmpClassGroup {
         ffi::mpz_mul(&mut ctx.ra, &ctx.r, &ctx.old_b);
         self.c += &ctx.ra;
         //eprintln!("{:?}", self);
+        self.assert_valid();
     }
 
     fn inner_reduce(&mut self, ctx: &mut Ctx) {
+        self.assert_valid();
         self.inner_normalize(ctx);
+        self.assert_valid();
 
         while self.a > self.c || (self.a == self.c && self.b < Zero::zero()) {
             assert!(!self.c.is_zero());
@@ -138,18 +154,21 @@ impl GmpClassGroup {
             // c += a
             self.c += &ctx.old_a;
         }
+        self.assert_valid();
         self.inner_normalize(ctx);
+        self.assert_valid();
         //eprintln!();
     }
 
     fn inner_square(&mut self, ctx: &mut Ctx) {
-        assert!(ctx.congruence_context.solve_linear_congruence(
+        self.assert_valid();
+        ctx.congruence_context.solve_linear_congruence(
             &mut ctx.mu,
             None,
             &self.b,
             &self.c,
             &self.a,
-        ));
+        );
         ffi::mpz_mul(&mut ctx.m, &self.b, &ctx.mu);
         ctx.m -= &self.c;
         ctx.m = ctx.m.div_floor(&self.a);
@@ -167,6 +186,7 @@ impl GmpClassGroup {
         ffi::mpz_mul(&mut self.c, &ctx.mu, &ctx.mu);
         self.c -= &ctx.m;
         self.inner_reduce(ctx);
+        self.assert_valid();
         //assert!(!self.b.is_zero())
     }
 
@@ -201,7 +221,10 @@ impl Default for GmpClassGroup {
 
 impl MulAssign<Self> for GmpClassGroup {
     fn mul_assign(&mut self, rhs: Self) {
-        *self *= &rhs
+        self.assert_valid();
+        rhs.assert_valid();
+        *self *= &rhs;
+        self.assert_valid();
     }
 }
 
@@ -243,62 +266,104 @@ impl<'a> MulAssign<&'a Self> for GmpClassGroup {
     fn mul_assign(&mut self, rhs: &Self) {
         assert!(self.discriminant == rhs.discriminant);
         GmpClassGroup::with_context(|ctx| {
-            ffi::mpz_add(&mut ctx.a, &self.b, &rhs.b);
-            ffi::mpz_fdiv_q_ui_self(&mut ctx.a, 2);
+            self.assert_valid();
+            rhs.assert_valid();
+
+            // g = (b1 + b2) / 2
+            ffi::mpz_add(&mut ctx.g, &self.b, &rhs.b);
+            ffi::mpz_fdiv_q_ui_self(&mut ctx.g, 2);
+
+            // h = (b2 - b1) / 2
             ffi::mpz_sub(&mut ctx.h, &rhs.b, &self.b);
             ffi::mpz_fdiv_q_ui_self(&mut ctx.h, 2);
-            ffi::three_gcd(&mut ctx.w, &self.a, &rhs.a, &ctx.a);
+
+            debug_assert!(&ctx.h + &ctx.g == rhs.b);
+            debug_assert!(&ctx.g - &ctx.h == self.b);
+
+            // w = gcd(a1, a2, g)
+            ffi::three_gcd(&mut ctx.w, &self.a, &rhs.a, &ctx.g);
+
+            // j = w
             ctx.j.set(&ctx.w);
+
+            // r = 0
             ffi::mpz_set_ui(&mut ctx.r, 0);
+
+            // s = a1/w
             ffi::mpz_fdiv_q(&mut ctx.s, &self.a, &ctx.w);
+
+            // t = a2/w
             ffi::mpz_fdiv_q(&mut ctx.t, &rhs.a, &ctx.w);
-            ffi::mpz_fdiv_q(&mut ctx.u, &ctx.a, &ctx.w);
+
+            // u = g/w
+            ffi::mpz_fdiv_q(&mut ctx.u, &ctx.g, &ctx.w);
+
+            // a = t*u
             ffi::mpz_mul(&mut ctx.a, &ctx.t, &ctx.u);
+
+            // b = h*u - s*c1
             ffi::mpz_mul(&mut ctx.b, &ctx.h, &ctx.u);
             ffi::mpz_mul(&mut ctx.m, &ctx.s, &self.c);
             ctx.b += &ctx.m;
+
+            // m = s*t
             ffi::mpz_mul(&mut ctx.m, &ctx.s, &ctx.t);
-            assert!(ctx.congruence_context.solve_linear_congruence(
+            ctx.congruence_context.solve_linear_congruence(
                 &mut ctx.mu,
                 Some(&mut ctx.v),
                 &ctx.a,
                 &ctx.b,
                 &ctx.m,
-            ));
+            );
+
+            // a = t*v
             ffi::mpz_mul(&mut ctx.a, &ctx.t, &ctx.v);
+
+            // b = h - t * mu
             ffi::mpz_mul(&mut ctx.m, &ctx.t, &ctx.mu);
             ffi::mpz_sub(&mut ctx.b, &ctx.h, &ctx.m);
+
+            // m = s
             ctx.m.set(&ctx.s);
-            assert!(ctx.congruence_context.solve_linear_congruence(
+
+            ctx.congruence_context.solve_linear_congruence(
                 &mut ctx.lambda,
                 Some(&mut ctx.sigma),
                 &ctx.a,
                 &ctx.b,
                 &ctx.m,
-            ));
+            );
+
+            // k = mu + v*lambda
             ffi::mpz_mul(&mut ctx.a, &ctx.v, &ctx.lambda);
             ffi::mpz_add(&mut ctx.k, &ctx.mu, &ctx.a);
+
+            // l = (k*t - h)/s
             ffi::mpz_mul(&mut ctx.l, &ctx.k, &ctx.t);
             ctx.l -= &ctx.h;
             ffi::mpz_fdiv_q_self(&mut ctx.l, &ctx.s);
 
+            // m = (t*u*k - h*u - c*s) / s*t
             ffi::mpz_mul(&mut ctx.m, &ctx.t, &ctx.u);
             ctx.m *= &ctx.k;
             ffi::mpz_mul(&mut ctx.a, &ctx.h, &ctx.u);
-            ctx.m *= &ctx.a;
+            ctx.m -= &ctx.a;
             ffi::mpz_mul(&mut ctx.a, &self.c, &ctx.s);
             ctx.m -= &ctx.a;
             ffi::mpz_mul(&mut ctx.a, &ctx.s, &ctx.t);
             ffi::mpz_fdiv_q_self(&mut ctx.m, &ctx.a);
+
+            // A = s*t - r*u
             ffi::mpz_mul(&mut self.a, &ctx.s, &ctx.t);
             ffi::mpz_mul(&mut ctx.a, &ctx.r, &ctx.u);
             self.a -= &ctx.a;
 
             // B = ju + mr - (kt + ls)
-            ffi::mpz_mul(&mut self.b, &ctx.j, &ctx.u);
+            ffi::mpz_mul(&mut ctx.b, &ctx.j, &ctx.u);
             ffi::mpz_mul(&mut ctx.a, &ctx.m, &ctx.r);
+            ffi::mpz_add(&mut self.b, &ctx.b, &ctx.a);
             ffi::mpz_mul(&mut ctx.a, &ctx.k, &ctx.t);
-            self.b += &ctx.a;
+            self.b -= &ctx.a;
             ffi::mpz_mul(&mut ctx.a, &ctx.l, &ctx.s);
             self.b -= &ctx.a;
 
@@ -325,10 +390,12 @@ impl ClassGroup for GmpClassGroup {
     }
 
     fn inverse(&mut self) {
+        self.assert_valid();
         self.b = -self.b.clone();
     }
 
     fn serialize(&self, buf: &mut [u8]) -> Result<(), usize> {
+        self.assert_valid();
         if buf.len() & 1 == 1 {
             // odd lengths do not make sense
             Err(0)
@@ -415,12 +482,13 @@ impl ClassGroup for GmpClassGroup {
     }
 
     fn pow(&mut self, mut exponent: Mpz) {
+        self.assert_valid();
         let zero = Mpz::zero();
         assert!(exponent >= zero);
         let mut state = self.identity();
         loop {
             let is_odd = exponent.tstbit(0);
-            exponent.clrbit(0);
+            exponent >>= 1;
             if is_odd {
                 state *= &*self
             }
@@ -429,7 +497,6 @@ impl ClassGroup for GmpClassGroup {
                 break;
             }
             self.square();
-            exponent >>= 1
         }
     }
 }
@@ -446,6 +513,7 @@ impl Default for Ctx {
             s: Mpz::new(),
             x: Mpz::new(),
             congruence_context: Default::default(),
+            g: Mpz::new(),
             w: Mpz::new(),
             m: Mpz::new(),
             u: Mpz::new(),

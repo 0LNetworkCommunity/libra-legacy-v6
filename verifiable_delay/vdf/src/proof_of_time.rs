@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // and limitations under the License.
 use super::{classgroup::ClassGroup, proof_pietrzak::verify_proof};
-use gmp_classgroup::ffi::import_obj;
 use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::collections::HashMap;
 use std::usize;
@@ -34,7 +33,7 @@ where
         hasher.input(&v);
     }
     let res = hasher.fixed_result();
-    Ok(import_obj(&res[..16]))
+    Ok(T::BigNum::from(&res[..16]))
 }
 
 pub fn deserialize_proof<T>(
@@ -116,9 +115,7 @@ where
     let element_length = 2 * ((int_size_bits + 16) >> 4);
     let proof_len_in_bytes = (proof_len + 1) * element_length;
     let mut v = Vec::with_capacity(proof_len_in_bytes);
-    for _ in 0..proof_len_in_bytes {
-        v.push(0)
-    }
+    v.resize(proof_len_in_bytes, 0);
     y.serialize(&mut v[0..element_length]).map_err(drop)?;
     for i in 0..proof_len {
         let offset = (i + 1) * element_length;

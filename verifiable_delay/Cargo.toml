@@ -16,3 +16,6 @@ members = [
     "vdf",
     "vdf-cli"
 ]
+
+[profile.release]
+debug = true

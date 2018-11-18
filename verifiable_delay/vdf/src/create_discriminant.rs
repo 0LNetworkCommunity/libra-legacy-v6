@@ -47,7 +47,7 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
     let extra: u8 = (length as u8) & 7;
     let entropy_bytes = ((length >> 3) + if extra == 0 { 2 } else { 3 }) as usize;
     let mut entropy = entropy_from_seed(seed, entropy_bytes);
-    assert_eq!(entropy.len(), entropy_bytes.into());
+    assert_eq!(entropy.len(), entropy_bytes);
     let residue = {
         let last_2 = &mut entropy[entropy_bytes - 2..];
         let numerator = (usize::from(last_2[0]) << 8) + usize::from(last_2[1]);
@@ -96,7 +96,10 @@ mod test {
     fn check_discriminant() {
         use std::str::FromStr;
 
-        assert_eq!(create_discriminant(b"\xaa", 40), (-685537176559i64).into());
+        assert_eq!(
+            create_discriminant(b"\xaa", 40),
+            (-685_537_176_559i64).into()
+        );
         assert_eq!(create_discriminant(b"\xaa", 2048), -Mpz::from_str("20149392707186525162590355071292053575364559848351567085354700987844093330948936280039379742871107183330808146182415920691586415080574829617024503722195777232804427670557174581127121229242207584973924825787037130000131358603651587961876409377224876056238680407347843315752681629521613772380379341182886747008940959623895895000737071932595957989286658892888724991242968836440986789551081768017186919005412288127429935094766982059615711599441803409172888758437372755538407566562462485676644100997464269306675140005421720998149066720895066941777378563169387978299301916769407006303085854796535778826115224633447713584423").unwrap());
     }
     #[test]

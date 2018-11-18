@@ -44,7 +44,7 @@ impl CongruenceContext {
         a: &Mpz,
         b: &Mpz,
         m: &Mpz,
-    ) -> bool {
+    ) {
         ffi::mpz_gcdext(&mut self.g, &mut self.d, &mut self.e, &a, &m);
         if cfg!(test) {
             println!(
@@ -53,15 +53,12 @@ impl CongruenceContext {
             );
         }
         ffi::mpz_fdiv_qr(&mut self.q, &mut self.r, &b, &self.g);
-        if !self.r.is_zero() {
-            return false;
-        }
+        assert!(self.r.is_zero());
         ffi::mpz_mul(mu, &self.q, &self.d);
         *mu = mu.modulus(m);
         if let Some(v) = v {
             ffi::mpz_fdiv_q(v, &m, &self.g)
         }
-        true
     }
 }
 
@@ -73,6 +70,6 @@ mod test {
         let (a, b, c) = (11220.into(), (-2519).into(), 83384.into());
         let mut ctx: CongruenceContext = Default::default();
         let mut mu = Mpz::new();
-        assert!(!ctx.solve_linear_congruence(&mut mu, None, &b, &c, &a))
+        ctx.solve_linear_congruence(&mut mu, None, &b, &c, &a)
     }
 }
