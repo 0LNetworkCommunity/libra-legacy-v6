@@ -502,8 +502,7 @@ impl ClassGroup for GmpClassGroup {
 
     fn pow(&mut self, mut exponent: Mpz) {
         self.assert_valid();
-        let zero = Mpz::zero();
-        assert!(exponent >= zero);
+        debug_assert!(exponent >= Mpz::zero());
         let mut state = self.identity();
         loop {
             let is_odd = exponent.tstbit(0);
