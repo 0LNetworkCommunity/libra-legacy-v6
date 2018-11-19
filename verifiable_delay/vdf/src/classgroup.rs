@@ -24,7 +24,8 @@ pub enum InvalidDiscriminant<T> {
 #[allow(type_alias_bounds)] // false positive
 pub type Result<T: ClassGroup> = std::result::Result<T, InvalidDiscriminant<T::BigNum>>;
 
-pub trait ClassGroup: Sized + Clone + for<'a> MulAssign<&'a Self> + PartialEq + std::fmt::Debug
+pub trait ClassGroup:
+    Sized + Clone + for<'a> MulAssign<&'a Self> + PartialEq + std::fmt::Debug
 where
     for<'a, 'b> &'a Self: Mul<&'b Self, Output = Self>,
     for<'a, 'b> &'a Self::BigNum: Mul<&'b Self::BigNum, Output = Self::BigNum>,

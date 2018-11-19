@@ -1,15 +1,14 @@
 use std::env;
-use std::path::PathBuf;
-use std::io::{BufRead, BufReader};
 use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 
-extern crate vdf;
 extern crate gmp;
 extern crate num_traits;
+extern crate vdf;
 use gmp::mpz::Mpz;
-use vdf::ClassGroup;
 use num_traits::Zero;
-
+use vdf::ClassGroup;
 
 fn split_into_three_pieces(line: &str, c: char) -> [&str; 3] {
     let mut iter = line.split(c);
@@ -31,7 +30,7 @@ fn multiplication_is_correct() {
         let bytes_read = f.read_line(&mut buffer).expect("test malfunction");
         assert!(bytes_read == buffer.len());
         if bytes_read == 0 {
-            break
+            break;
         }
         if buffer.ends_with('\n') {
             buffer.pop();
@@ -40,26 +39,29 @@ fn multiplication_is_correct() {
             buffer.pop();
         }
         let mut current_discriminant: Option<Mpz> = None;
-        let q: Vec<_> = split_into_three_pieces(&buffer, '|').iter().map(|i| {
-            let k = split_into_three_pieces(i, ',');
+        let q: Vec<_> = split_into_three_pieces(&buffer, '|')
+            .iter()
+            .map(|i| {
+                let k = split_into_three_pieces(i, ',');
 
-            let a = Mpz::from_str_radix(k[0], 10).expect("bad test file");
-            let b = Mpz::from_str_radix(k[1], 10).expect("bad test file");
-            let c = Mpz::from_str_radix(k[2], 10).expect("bad test file");
-            let mut discriminant: Mpz = &b * &b;
-            let mut minuand: Mpz = (4u64).into();
-            minuand *= &a * &c;
-            discriminant -= &minuand;
-            assert!(discriminant < Mpz::zero());
-            // takes waaaay too long
-            //assert!(discriminant.probab_prime(20) != gmp::mpz::ProbabPrimeResult::NotPrime);
-            if let Some(ref q) = current_discriminant {
-                assert_eq!(q, &discriminant, "mismatching discriminant in test files");
-            } else {
-                current_discriminant = Some(discriminant.clone());
-            }
-            vdf::GmpClassGroup::from_ab_discriminant(a, b, discriminant)
-        }).collect();
+                let a = Mpz::from_str_radix(k[0], 10).expect("bad test file");
+                let b = Mpz::from_str_radix(k[1], 10).expect("bad test file");
+                let c = Mpz::from_str_radix(k[2], 10).expect("bad test file");
+                let mut discriminant: Mpz = &b * &b;
+                let mut minuand: Mpz = (4u64).into();
+                minuand *= &a * &c;
+                discriminant -= &minuand;
+                assert!(discriminant < Mpz::zero());
+                // takes waaaay too long
+                //assert!(discriminant.probab_prime(20) != gmp::mpz::ProbabPrimeResult::NotPrime);
+                if let Some(ref q) = current_discriminant {
+                    assert_eq!(q, &discriminant, "mismatching discriminant in test files");
+                } else {
+                    current_discriminant = Some(discriminant.clone());
+                }
+                vdf::GmpClassGroup::from_ab_discriminant(a, b, discriminant)
+            })
+            .collect();
         assert_eq!(q.len(), 3);
         if &q[0] == &q[1] {
             let mut i = q[0].clone();
