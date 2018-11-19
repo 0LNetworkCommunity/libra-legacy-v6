@@ -14,11 +14,12 @@
 use super::classgroup::ClassGroup;
 use num_traits::{One, Zero};
 use std::ops::Index;
+use std::u64;
 
 fn approximate_i(t: u64) -> u64 {
-    let x: f64 = (t as f64) / 16.;
-    let w = x.log2() - x.log2().log2() + 0.25;
-    (w / 2.).round() as _
+    let x: f64 = ((t as f64) / 16.) * 2.0f64.ln();
+    let w = x.ln() - x.ln().ln() + 0.25;
+    (w / (2. * 2.0f64.ln())).round() as _
 }
 
 fn sum_combinations<'a, T: IntoIterator<Item = &'a u64>>(numbers: T) -> Vec<u64> {
@@ -88,6 +89,7 @@ where
     if t & 1 == 1 {
         panic!("T must be even")
     }
+
     let i = approximate_i(t);
     let mut mus = vec![];
     let mut rs: Vec<V::BigNum> = vec![];
@@ -97,34 +99,36 @@ where
     let mut curr_t = t;
     let mut ts = vec![];
 
-    let final_t = calculate_final_t(t as _, delta);
+    let final_t = calculate_final_t(t, delta);
 
     let mut round_index = 0;
-    while curr_t as u64 != final_t {
+    while curr_t != final_t {
         assert_eq!(curr_t & 1, 0);
         let half_t = curr_t >> 1;
         ts.push(half_t);
         assert!(round_index < 63);
         let denominator: u64 = 1 << (round_index + 1);
+
+        // FIXME the optimization is broken.
         mus.push(if round_index < i {
             let mut mu = identity.clone();
             for numerator in (1..denominator).step_by(2) {
                 let num_bits = 62 - denominator.leading_zeros() as usize;
                 let mut r_prod: V::BigNum = One::one();
                 for b in (0..num_bits).rev() {
-                    if 0 == numerator & 1 << (b + 1) {
+                    if 0 == (numerator & (1 << (b + 1))) {
                         r_prod *= &rs[num_bits - b - 1]
                     }
                 }
                 let mut t_sum = half_t;
                 for b in 0..num_bits {
-                    if 0 == numerator & 1 << (b + 1) {
+                    if 0 != (numerator & (1 << (b + 1))) {
                         t_sum += ts[num_bits - b - 1]
                     }
                 }
                 let mut s = powers[&t_sum].clone();
                 s.pow(r_prod);
-                mu *= &s
+                mu *= &s;
             }
             mu
         } else {
@@ -150,15 +154,17 @@ where
         curr_t >>= 1;
         if curr_t & 1 != 0 {
             curr_t += 1;
-            let q: V = {
-                let s = y_p.last_mut().unwrap();
-                let mut t = s.clone();
-                t.square();
-                t
-            };
-            *(y_p.last_mut().unwrap()) = q
+            y_p.last_mut().unwrap().square();
         }
         round_index += 1
+    }
+    if cfg!(debug_assertions) {
+        let mut last_y = y_p.last().unwrap().clone();
+        let mut last_x = x_p.last().unwrap().clone();
+        let one: V::BigNum = 1u64.into();
+        last_y.pow(one.clone());
+        assert_eq!(last_y, y_p.last().unwrap().clone());
+        last_x.pow(one << final_t as usize);
     }
     Ok(mus)
 }
@@ -209,5 +215,38 @@ where
         Ok(())
     } else {
         Err(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn check_approximate_i() {
+        assert_eq!(approximate_i(534), 2);
+        assert_eq!(approximate_i(134), 1);
+        assert_eq!(approximate_i(1024), 2);
+    }
+    #[test]
+    fn check_cache_indeces() {
+        assert_eq!(cache_indeces_for_count(66)[..], [33, 66]);
+        assert_eq!(cache_indeces_for_count(534)[..], [134, 267, 401, 534]);
+    }
+
+    #[test]
+    fn check_calculate_final_t() {
+        assert_eq!(calculate_final_t(1024, 8), 128);
+        assert_eq!(calculate_final_t(1000, 8), 126);
+        assert_eq!(calculate_final_t(100, 8), 100);
+    }
+    #[test]
+    fn check_assuptions_about_stdlib() {
+        assert_eq!(62 - u64::leading_zeros(1024u64), 9);
+        let mut q: Vec<_> = (1..4).step_by(2).collect();
+        assert_eq!(q[..], [1, 3]);
+        q = (1..3).step_by(2).collect();
+        assert_eq!(q[..], [1]);
+        q = (1..2).step_by(2).collect();
+        assert_eq!(q[..], [1]);
     }
 }
