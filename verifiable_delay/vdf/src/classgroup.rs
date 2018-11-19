@@ -37,7 +37,9 @@ where
         + std::fmt::Debug
         + Rem
         + ShlAssign<usize>
-        + for<'a> MulAssign<&'a Self::BigNum>;
+        + for<'a> MulAssign<&'a Self::BigNum>
+        + std::convert::From<u64>
+        + std::ops::Shl<usize, Output=Self::BigNum>;
 
     /// Produces a `Self` from `a`, `b`, and a discriminant.
     fn from_ab_discriminant(a: Self::BigNum, b: Self::BigNum, discriminant: Self::BigNum) -> Self;
@@ -58,6 +60,10 @@ where
     ///
     /// The data must be serialized in twos-complement, big-endian format.
     fn serialize(&self, buf: &mut [u8]) -> std::result::Result<(), usize>;
+
+    /// Deserializes a bignum from raw, big-endian bytes.  The bytes **must not**
+    /// be interpreted as 2’s complement.
+    fn unsigned_deserialize_bignum(&[u8]) -> Self::BigNum;
 
     /// Reduce `self` in-place.
     fn reduce(&mut self);

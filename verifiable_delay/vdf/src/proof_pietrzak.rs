@@ -82,7 +82,7 @@ pub fn generate_proof<T, U, V>(
 where
     T: for<'a> Index<&'a u64, Output = V>,
     U: Fn(&V, &V, &V, usize) -> Result<V::BigNum, ()>,
-    V: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    V: ClassGroup,
     for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
 {

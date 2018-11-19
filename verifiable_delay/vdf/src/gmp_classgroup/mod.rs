@@ -483,6 +483,10 @@ impl ClassGroup for GmpClassGroup {
         Self::with_context(|ctx| self.inner_square(ctx))
     }
 
+    fn unsigned_deserialize_bignum(buf: &[u8]) -> Self::BigNum {
+        buf.into()
+    }
+
     /// Square `self` `iterations` times.
     ///
     /// # Panics

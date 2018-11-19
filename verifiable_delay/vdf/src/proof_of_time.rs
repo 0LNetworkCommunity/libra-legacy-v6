@@ -18,7 +18,7 @@ use std::usize;
 
 fn generate_r_value<T>(x: &T, y: &T, sqrt_mu: &T, int_size_bits: usize) -> Result<T::BigNum, ()>
 where
-    T: ClassGroup<BigNum = super::gmp_classgroup::ffi::Mpz>,
+    T: ClassGroup,
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
@@ -33,7 +33,7 @@ where
         hasher.input(&v);
     }
     let res = hasher.fixed_result();
-    Ok(T::BigNum::from(&res[..16]))
+    Ok(T::unsigned_deserialize_bignum(&res[..16]))
 }
 
 pub fn deserialize_proof<T>(
@@ -77,7 +77,7 @@ where
 
 fn iterate_squarings<V, U>(mut x: V, powers_to_calculate: U) -> HashMap<u64, V>
 where
-    V: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    V: ClassGroup,
     for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
     U: Iterator<Item = u64>,
@@ -100,7 +100,7 @@ pub fn create_proof_of_time_pietrzak<T>(
     int_size_bits: usize,
 ) -> Result<Vec<u8>, ()>
 where
-    T: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    T: ClassGroup,
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
@@ -142,7 +142,7 @@ pub fn check_proof_of_time_pietrzak<T>(
     length_in_bits: usize,
 ) -> Result<(), ()>
 where
-    T: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    T: ClassGroup,
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
