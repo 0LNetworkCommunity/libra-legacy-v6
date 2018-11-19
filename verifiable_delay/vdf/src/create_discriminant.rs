@@ -20,7 +20,9 @@
 //! `gen_primes.py`.
 
 #![forbid(warnings)]
-use super::constants::{M, RESIDUES, SIEVE_INFO};
+
+include!(concat!(env!("OUT_DIR"), "/constants.rs"));
+
 use super::gmp_classgroup::ffi::{mpz_add_ui_self, mpz_rem_u16};
 use gmp::mpz::Mpz;
 use sha2::{digest::FixedOutput, Digest, Sha256};

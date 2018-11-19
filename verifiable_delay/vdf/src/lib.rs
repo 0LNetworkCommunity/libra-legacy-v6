@@ -16,7 +16,6 @@ extern crate gmp;
 extern crate libc;
 extern crate num_traits;
 extern crate sha2;
-mod constants;
 mod create_discriminant;
 mod gmp_classgroup;
 pub use gmp_classgroup::{
