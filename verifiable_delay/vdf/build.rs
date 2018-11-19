@@ -57,7 +57,7 @@ fn generate(f: &mut dyn Write) {
     let odd_primes_below_65535 = odd_primes_below_n(1 << 16);
     let odd_primes_above_13 = &odd_primes_below_65535[5..];
     assert_eq!(odd_primes_above_13.len(), SIEVE_INFO_LEN);
-    write!(f, "pub const M: u32 = 8 * 3 * 5 * 7 * 11 * 13;\n\n").expect("i/o error");
+    write!(f, "const M: u32 = 8 * 3 * 5 * 7 * 11 * 13;\n\n").expect("i/o error");
     let mut residues = Vec::with_capacity(RESIDUES_LEN);
     'outer: for x in (7..M).step_by(8) {
         for y in &[3, 5, 7, 11, 13] {
@@ -71,7 +71,7 @@ fn generate(f: &mut dyn Write) {
     write!(
         f,
         "#[cfg_attr(feature = \"cargo-clippy\", allow(clippy::unreadable_literals))]\n\
-         pub const RESIDUES: [u32; {}] = {:?};\n\n",
+         const RESIDUES: [u32; {}] = {:?};\n\n",
         RESIDUES_LEN,
         &residues[..]
     )
@@ -84,7 +84,7 @@ fn generate(f: &mut dyn Write) {
     write!(
         f,
         "#[cfg_attr(feature = \"cargo-clippy\", allow(clippy::unreadable_literals))]\n\
-         pub const SIEVE_INFO: [(u16, u16); {}] = {:?};\n\n",
+         const SIEVE_INFO: [(u16, u16); {}] = {:?};\n\n",
         SIEVE_INFO_LEN,
         &sieve_info[..]
     )
