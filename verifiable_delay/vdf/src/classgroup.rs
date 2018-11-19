@@ -74,6 +74,9 @@ where
     /// Normalize `self`.
     fn normalize(&mut self);
 
+    /// The length of `num` in **bits**
+    fn size_in_bits(num: &Self::BigNum) -> usize;
+
     /// Gets the discriminant of `self`.
     fn discriminant(&self) -> &Self::BigNum;
 

@@ -203,7 +203,7 @@ where
         y *= &mu;
 
         curr_t >>= 1;
-        if curr_t & 1 == 1 {
+        if curr_t & 1 != 0 {
             curr_t += 1;
             y.square();
         }

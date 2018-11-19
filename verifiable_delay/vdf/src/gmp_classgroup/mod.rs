@@ -449,6 +449,10 @@ impl ClassGroup for GmpClassGroup {
         &self.discriminant
     }
 
+    fn size_in_bits(num: &Self::BigNum) -> usize {
+        ffi::size_in_bits(num)
+    }
+
     /// Reduce `self`.
     ///
     /// # Panics

@@ -39,14 +39,22 @@ where
 pub fn deserialize_proof<T>(
     proof_blob: &[u8],
     discriminant: &T::BigNum,
-    length: usize,
+    orig_length: usize,
 ) -> Result<Vec<T>, ()>
 where
     T: ClassGroup,
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
-    if length == 0 || length > (usize::MAX / 2) {
+    let length = T::size_in_bits(discriminant);
+    if length > usize::MAX - 16 {
+        return Err(());
+    }
+    let length = (length + 16) >> 4;
+    if length == 0 {
+        return Err(());
+    }
+    if orig_length != length {
         return Err(());
     }
     let length = length * 2;
@@ -149,7 +157,7 @@ where
     }
     let result_bytes = &proof_blob[..length * 2];
     let proof_bytes = &proof_blob[length * 2..];
-    let proof = deserialize_proof(proof_bytes, &discriminant, length * 2)?;
+    let proof = deserialize_proof(proof_bytes, &discriminant, length)?;
     let y = T::from_bytes(result_bytes, discriminant);
     verify_proof(
         x,
