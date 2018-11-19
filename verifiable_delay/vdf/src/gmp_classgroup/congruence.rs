@@ -61,15 +61,3 @@ impl CongruenceContext {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn solve_linear_congruence_test() {
-        let (a, b, c) = (11220.into(), (-2519).into(), 83384.into());
-        let mut ctx: CongruenceContext = Default::default();
-        let mut mu = Mpz::new();
-        ctx.solve_linear_congruence(&mut mu, None, &b, &c, &a)
-    }
-}
