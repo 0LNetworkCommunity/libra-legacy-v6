@@ -109,7 +109,6 @@ where
         assert!(round_index < 63);
         let denominator: u64 = 1 << (round_index + 1);
 
-        // FIXME the optimization is broken.
         mus.push(if round_index < i {
             let mut mu = identity.clone();
             for numerator in (1..denominator).step_by(2) {
