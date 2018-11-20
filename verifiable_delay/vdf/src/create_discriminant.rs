@@ -68,8 +68,7 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
         mpz_add_ui_self(&mut n, residue);
     }
     loop {
-        let mut sieve = Vec::with_capacity(1 << 16);
-        sieve.resize(1 << 16, false);
+        let mut sieve = vec![false; 1 << 16];
         for &(p, q) in SIEVE_INFO.iter() {
             let mut i: usize = (mpz_rem_u16(&n, p) as usize * q as usize) % p as usize;
             while i < sieve.len() {

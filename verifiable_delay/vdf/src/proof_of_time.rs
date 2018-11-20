@@ -122,8 +122,7 @@ where
     let proof_len = proof.len();
     let element_length = 2 * ((int_size_bits + 16) >> 4);
     let proof_len_in_bytes = (proof_len + 1) * element_length;
-    let mut v = Vec::with_capacity(proof_len_in_bytes);
-    v.resize(proof_len_in_bytes, 0);
+    let mut v = vec![0; proof_len_in_bytes];
     y.serialize(&mut v[0..element_length]).map_err(drop)?;
     for i in 0..proof_len {
         let offset = (i + 1) * element_length;
