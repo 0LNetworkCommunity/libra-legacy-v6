@@ -105,7 +105,7 @@ where
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
     let delta = 8;
-    let powers_to_calculate = super::proof_pietrzak::cache_indeces_for_count(iterations);
+    let powers_to_calculate = super::proof_pietrzak::cache_indices_for_count(iterations);
     let powers = iterate_squarings(x.clone(), powers_to_calculate.iter().cloned());
     let y = &powers[&iterations];
     let identity = &x.identity();

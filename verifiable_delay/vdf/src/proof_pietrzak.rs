@@ -35,7 +35,7 @@ fn sum_combinations<'a, T: IntoIterator<Item = &'a u64>>(numbers: T) -> Vec<u64>
     combinations
 }
 
-pub fn cache_indeces_for_count(t: u64) -> Vec<u64> {
+pub fn cache_indices_for_count(t: u64) -> Vec<u64> {
     let i: u64 = approximate_i(t);
     let mut curr_t = t;
     let mut intermediate_ts = vec![];
@@ -46,10 +46,10 @@ pub fn cache_indeces_for_count(t: u64) -> Vec<u64> {
             curr_t += 1
         }
     }
-    let mut cache_indeces = sum_combinations(&intermediate_ts);
-    cache_indeces.sort();
-    cache_indeces.push(t);
-    cache_indeces
+    let mut cache_indices = sum_combinations(&intermediate_ts);
+    cache_indices.sort();
+    cache_indices.push(t);
+    cache_indices
 }
 
 fn calculate_final_t(t: u64, delta: usize) -> u64 {
@@ -227,9 +227,9 @@ mod test {
         assert_eq!(approximate_i(1024), 2);
     }
     #[test]
-    fn check_cache_indeces() {
-        assert_eq!(cache_indeces_for_count(66)[..], [33, 66]);
-        assert_eq!(cache_indeces_for_count(534)[..], [134, 267, 401, 534]);
+    fn check_cache_indices() {
+        assert_eq!(cache_indices_for_count(66)[..], [33, 66]);
+        assert_eq!(cache_indices_for_count(534)[..], [134, 267, 401, 534]);
     }
 
     #[test]
