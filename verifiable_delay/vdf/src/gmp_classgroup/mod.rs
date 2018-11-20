@@ -16,6 +16,7 @@
 use classgroup::ClassGroup;
 use gmp::mpz::Mpz;
 use num_traits::{One, Zero};
+use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::fmt;
 use std::ops::{Mul, MulAssign};
@@ -335,62 +336,35 @@ impl Default for GmpClassGroup {
     }
 }
 
-impl MulAssign<Self> for GmpClassGroup {
+impl<B: Borrow<GmpClassGroup>> MulAssign<B> for GmpClassGroup {
     #[cfg_attr(not(debug_assertions), inline(always))]
-    fn mul_assign(&mut self, rhs: Self) {
+    fn mul_assign(&mut self, rhs: B) {
+        let rhs = rhs.borrow();
         self.assert_valid();
-        rhs.assert_valid();
-        *self *= &rhs;
+        self.assert_valid();
+        debug_assert!(self.discriminant == rhs.discriminant);
+        GmpClassGroup::with_context(|ctx| self.inner_multiply(rhs, ctx));
         self.assert_valid();
     }
 }
 
-impl<'a, 'b> Mul<&'b GmpClassGroup> for &'a GmpClassGroup {
+impl<B: Borrow<Self>> Mul<B> for GmpClassGroup {
+    type Output = Self;
+    #[inline]
+    fn mul(mut self, rhs: B) -> Self {
+        self *= rhs.borrow();
+        self
+    }
+}
+
+impl<'a, B: Borrow<GmpClassGroup>> Mul<B> for &'a GmpClassGroup {
     type Output = GmpClassGroup;
 
     #[inline(always)]
-    fn mul(self, rhs: &'b Self::Output) -> Self::Output {
-        let mut s = self.clone();
+    fn mul(self, rhs: B) -> Self::Output {
+        let mut s = Clone::clone(self.borrow());
         s *= rhs;
         s
-    }
-}
-
-impl<'a> Mul<GmpClassGroup> for &'a GmpClassGroup {
-    type Output = GmpClassGroup;
-
-    #[inline(always)]
-    fn mul(self, rhs: Self::Output) -> Self::Output {
-        let mut s = self.clone();
-        s *= &rhs;
-        s
-    }
-}
-
-impl<'a> Mul<&'a Self> for GmpClassGroup {
-    type Output = Self;
-
-    #[inline(always)]
-    fn mul(mut self, rhs: &Self) -> Self {
-        self *= rhs;
-        self
-    }
-}
-
-impl Mul<Self> for GmpClassGroup {
-    type Output = Self;
-
-    #[inline(always)]
-    fn mul(mut self, rhs: Self) -> Self {
-        self *= rhs;
-        self
-    }
-}
-
-impl<'a> MulAssign<&'a Self> for GmpClassGroup {
-    fn mul_assign(&mut self, rhs: &Self) {
-        assert!(self.discriminant == rhs.discriminant);
-        GmpClassGroup::with_context(|ctx| self.inner_multiply(rhs, ctx));
     }
 }
 
