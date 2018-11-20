@@ -1,4 +1,4 @@
-// Copyright 2018 Chia Network Inc and Block Notary Inc
+// Copyright 2018 POA Networks, Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // and limitations under the License.
+
+//! FFI bindings to GMP.  This module exists because the `rust-gmp` crate
+//! is too high-level.  High-performance bignum computation requires that
+//! bignums be modified in-place, so that their storage can be reused.
+//! Furthermore, the `rust-gmp` crate doesn’t support many operations that
+//! this library requires.
 #![allow(unsafe_code)]
 pub use gmp::mpz::Mpz;
 use gmp::mpz::{mpz_ptr, mpz_srcptr};
@@ -79,10 +85,14 @@ macro_rules! impl_fdiv_ui {
 impl_fdiv_ui!(u16, mpz_rem_u16);
 // impl_fdiv_ui!(u32, mpz_rem_u32);
 
+
+/// Returns `true` if `z` is negative and not zero.  Otherwise,
+/// returns `false`.
 pub fn mpz_is_negative(z: &Mpz) -> bool {
     unsafe { (*(z.inner() as *const MpzStruct)).mp_size < 0 }
 }
 
+/// Sets `g` to the GCD of `a` and `b`.
 pub fn mpz_gcdext(g: &mut Mpz, s: &mut Mpz, t: &mut Mpz, a: &Mpz, b: &Mpz) {
     unsafe {
         __gmpz_gcdext(
@@ -95,16 +105,19 @@ pub fn mpz_gcdext(g: &mut Mpz, s: &mut Mpz, t: &mut Mpz, a: &Mpz, b: &Mpz) {
     }
 }
 
+/// Sets `rop` to `(-1) * op`
 pub fn mpz_neg(rop: &mut Mpz, op: &Mpz) {
     unsafe {
         __gmpz_neg(rop.inner_mut(), op.inner());
     }
 }
 
+/// Doubles `rop` in-place
 pub fn mpz_double(rop: &mut Mpz) {
     unsafe { __gmpz_mul_ui(rop.inner_mut(), rop.inner(), 2) }
 }
 
+/// Sets `rop` to the given `libc::c_ulong`.
 pub fn mpz_set_ui(rop: &mut Mpz, op: c_ulong) {
     unsafe { __gmpz_set_ui(rop.inner_mut(), op) }
 }
