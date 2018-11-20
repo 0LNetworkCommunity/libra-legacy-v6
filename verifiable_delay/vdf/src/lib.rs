@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // and limitations under the License.
-#![forbid(warnings)]
+#![deny(warnings)]
 extern crate gmp;
 extern crate libc;
 extern crate num_traits;
