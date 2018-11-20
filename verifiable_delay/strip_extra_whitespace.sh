@@ -18,21 +18,19 @@
 
 set -euo pipefail
 git ls-files -z | xargs -0 sed -i -- '
-# Fix old copyright notices ― no longer used.
-# s/Block Notary Inc/POA Networks, Ltd./g
-# s/Poa Networks, Inc\./POA Networks, Ltd./g
-
-# Strip trailing whitespace
-s/\s\+$//
-:a
+# Strip leading blank lines
 /[^\s]/,$!d
+:loop
 /^\s*$/ {
+   # Strip trailing blank lines
    $d
    # Delete non-newline whitespace
    s/[^\n]//g
    # Add the next line
    N
+   b loop
 }
-/\n\s*$/ba
+# Strip trailing whitespace
+s/\s\+$//
 '
-exec cargo fmt
+rm -f rls*.log
