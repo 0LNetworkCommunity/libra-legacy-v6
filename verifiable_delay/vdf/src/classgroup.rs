@@ -21,14 +21,10 @@ pub enum InvalidDiscriminant<T> {
     NotPrime(T),
 }
 
-#[allow(type_alias_bounds)] // false positive
-pub type Result<T: ClassGroup> = std::result::Result<T, InvalidDiscriminant<T::BigNum>>;
+pub type Result<T> = std::result::Result<T, InvalidDiscriminant<<T as ClassGroup>::BigNum>>;
 
 pub trait ClassGroup:
-    Sized + Clone + for<'a> MulAssign<&'a Self> + PartialEq + std::fmt::Debug
-where
-    for<'a, 'b> &'a Self: Mul<&'b Self, Output = Self>,
-    for<'a, 'b> &'a Self::BigNum: Mul<&'b Self::BigNum, Output = Self::BigNum>,
+    Sized + Clone + for<'a> MulAssign<&'a Self> + for<'a> Mul<&'a Self> + PartialEq + std::fmt::Debug
 {
     type BigNum: Zero
         + One
@@ -61,8 +57,8 @@ where
     /// The data must be serialized in twos-complement, big-endian format.
     fn serialize(&self, buf: &mut [u8]) -> std::result::Result<(), usize>;
 
-    /// Deserializes a bignum from raw, big-endian bytes.  The bytes **must not**
-    /// be interpreted as 2’s complement.
+    /// Deserializes a bignum from raw bytes.  The bytes **must** be interpreted
+    /// as a big-endian unsigned integer.
     fn unsigned_deserialize_bignum(&[u8]) -> Self::BigNum;
 
     /// Reduce `self` in-place.
