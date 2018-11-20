@@ -85,7 +85,6 @@ macro_rules! impl_fdiv_ui {
 impl_fdiv_ui!(u16, mpz_rem_u16);
 // impl_fdiv_ui!(u32, mpz_rem_u32);
 
-
 /// Returns `true` if `z` is negative and not zero.  Otherwise,
 /// returns `false`.
 pub fn mpz_is_negative(z: &Mpz) -> bool {

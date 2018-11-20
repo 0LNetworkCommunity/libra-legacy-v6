@@ -39,7 +39,7 @@ where
         + ShlAssign<usize>
         + for<'a> MulAssign<&'a Self::BigNum>
         + std::convert::From<u64>
-        + std::ops::Shl<usize, Output=Self::BigNum>;
+        + std::ops::Shl<usize, Output = Self::BigNum>;
 
     /// Produces a `Self` from `a`, `b`, and a discriminant.
     fn from_ab_discriminant(a: Self::BigNum, b: Self::BigNum, discriminant: Self::BigNum) -> Self;
