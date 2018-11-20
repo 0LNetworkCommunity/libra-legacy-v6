@@ -24,10 +24,12 @@ fn multiplication_is_correct() {
     let manifest_path = std::env::var("CARGO_MANIFEST_DIR").expect("cargo should have set this");
     let mut path = PathBuf::from(&manifest_path);
     path.push("tests/multiply.txt");
-    let mut f = BufReader::new(File::open(path).expect("test malfunction"));
+    let mut f = BufReader::new(File::open(path).expect("test file missing or unreadable"));
     let mut buffer = String::new();
     loop {
-        let bytes_read = f.read_line(&mut buffer).expect("test malfunction");
+        let bytes_read = f
+            .read_line(&mut buffer)
+            .expect("could not read from test file");
         assert!(bytes_read == buffer.len());
         if bytes_read == 0 {
             break;
