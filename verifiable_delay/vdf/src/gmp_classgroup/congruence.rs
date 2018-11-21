@@ -28,7 +28,6 @@ use super::ffi;
 pub struct CongruenceContext {
     pub g: Mpz,
     pub d: Mpz,
-    pub e: Mpz,
     pub q: Mpz,
     pub r: Mpz,
 }
@@ -38,7 +37,6 @@ impl Default for CongruenceContext {
         Self {
             g: Mpz::new(),
             d: Mpz::new(),
-            e: Mpz::new(),
             q: Mpz::new(),
             r: Mpz::new(),
         }
@@ -61,11 +59,11 @@ impl CongruenceContext {
         b: &Mpz,
         m: &Mpz,
     ) {
-        ffi::mpz_gcdext(&mut self.g, &mut self.d, &mut self.e, &a, &m);
+        ffi::mpz_gcdext(&mut self.g, &mut self.d, mu, &a, &m);
         if cfg!(test) {
             println!(
                 "g = {}, d = {}, e = {}, a = {}, m = {}",
-                self.g, self.d, self.e, a, m
+                self.g, self.d, mu, a, m
             );
         }
         ffi::mpz_fdiv_qr(&mut self.q, &mut self.r, &b, &self.g);
