@@ -18,17 +18,17 @@ extern crate num_traits;
 extern crate sha2;
 mod create_discriminant;
 mod gmp_classgroup;
-pub use gmp_classgroup::{
+pub use crate::gmp_classgroup::{
     do_compute,
     ffi::{export_obj, import_obj},
     GmpClassGroup,
 };
 pub mod classgroup;
 mod proof_of_time;
-pub use create_discriminant::create_discriminant;
-pub use proof_of_time::{check_proof_of_time_pietrzak, create_proof_of_time_pietrzak};
+pub use crate::create_discriminant::create_discriminant;
+pub use crate::proof_of_time::{check_proof_of_time_pietrzak, create_proof_of_time_pietrzak};
 mod proof_pietrzak;
-pub use classgroup::ClassGroup;
+pub use crate::classgroup::ClassGroup;
 pub trait VDF {
     type PublicParameters;
     type SecurityParameter;

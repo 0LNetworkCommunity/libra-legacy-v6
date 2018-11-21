@@ -59,7 +59,7 @@ pub trait ClassGroup:
 
     /// Deserializes a bignum from raw bytes.  The bytes **must** be interpreted
     /// as a big-endian unsigned integer.
-    fn unsigned_deserialize_bignum(&[u8]) -> Self::BigNum;
+    fn unsigned_deserialize_bignum(_: &[u8]) -> Self::BigNum;
 
     /// Reduce `self` in-place.
     fn reduce(&mut self);

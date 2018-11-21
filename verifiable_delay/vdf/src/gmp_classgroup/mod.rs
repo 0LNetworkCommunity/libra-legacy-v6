@@ -13,7 +13,7 @@
 // and limitations under the License.
 #![deny(unsafe_code)]
 #![forbid(warnings)]
-use classgroup::ClassGroup;
+use crate::classgroup::ClassGroup;
 use gmp::mpz::Mpz;
 use num_traits::{One, Zero};
 use std::borrow::Borrow;
