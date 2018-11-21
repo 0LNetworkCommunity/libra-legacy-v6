@@ -15,13 +15,22 @@
 use self::ffi::Mpz;
 use super::ffi;
 
+/// Stores temporary values for congruence computations, to avoid
+/// repeated allocations.
+///
+/// It is allowed (but inefficient) to generate a fresh `CongruenceContest`
+/// for each call to `solve_linear_congruence`.
+///
+/// `self.solve_linear_congruence` can be called no matter what values
+/// this struct’s public members hold, so long as they are valid `Mpz` values.
+/// However, the values of these members after such a call must not be relied on.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct CongruenceContext {
-    g: Mpz,
-    d: Mpz,
-    e: Mpz,
-    q: Mpz,
-    r: Mpz,
+    pub g: Mpz,
+    pub d: Mpz,
+    pub e: Mpz,
+    pub q: Mpz,
+    pub r: Mpz,
 }
 
 impl Default for CongruenceContext {
@@ -36,6 +45,13 @@ impl Default for CongruenceContext {
     }
 }
 
+/// Solves `a*x = b (mod m)`, storing `x` in `mu`
+///
+/// This function may clobber any or all of `self`’s member variables.
+///
+/// # Panics
+///
+/// Panics if the congruence could not be solved.
 impl CongruenceContext {
     pub fn solve_linear_congruence(
         &mut self,
