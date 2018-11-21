@@ -30,12 +30,13 @@ const RESIDUES_LEN: usize = 5760;
 /// The number of odd prime numbers between 13 and 65536 exclusive.
 const SIEVE_INFO_LEN: usize = PRIMES_LEN - 5;
 
-fn odd_primes_below_n(n: usize) -> Vec<usize> {
-    let mut sieve = vec![true; n >> 1];
-    let mut q = (n as f64).powf(0.5) as usize;
-    assert!(q * q <= n);
+fn odd_primes_below_65536() -> Vec<usize> {
+    const N: usize = 1 << 16;
+    let mut sieve = vec![true; N >> 1];
+    let mut q = (N as f64).powf(0.5) as usize;
+    assert!(q * q <= N);
     q += 1;
-    assert!(q * q > n);
+    assert!(q * q > N);
     for i in (3..q).step_by(2) {
         if sieve[i >> 1] {
             for i in ((i * i >> 1)..sieve.len()).step_by(i) {
@@ -45,7 +46,7 @@ fn odd_primes_below_n(n: usize) -> Vec<usize> {
     }
     // mega cheat ― we know the exact size of this vector
     let mut res = Vec::with_capacity(PRIMES_LEN);
-    for i in 1..n / 2 {
+    for i in 1..N / 2 {
         if sieve[i] {
             res.push(2 * i + 1);
         }
@@ -87,8 +88,8 @@ fn emit<T: std::fmt::Debug>(f: &mut dyn Write, name: &str, t: &str, obj: &[T]) {
 
 /// Write the generated code to `f`.
 fn generate(f: &mut dyn Write) {
-    let odd_primes_below_65535 = odd_primes_below_n(1 << 16);
-    let odd_primes_above_13 = &odd_primes_below_65535[5..];
+    let odd_primes_below_65536 = odd_primes_below_65536();
+    let odd_primes_above_13 = &odd_primes_below_65536[5..];
     assert_eq!(odd_primes_above_13.len(), SIEVE_INFO_LEN);
     write!(f, "const M: u32 = 8 * 3 * 5 * 7 * 11 * 13;\n\n").expect("i/o error");
     let mut residues = Vec::with_capacity(RESIDUES_LEN);
