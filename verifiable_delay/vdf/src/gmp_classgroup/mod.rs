@@ -224,9 +224,7 @@ impl GmpClassGroup {
     }
 
     fn inner_reduce(&mut self, ctx: &mut Ctx) {
-        self.assert_valid();
         self.inner_normalize(ctx);
-        self.assert_valid();
 
         while self.a > self.c || (self.a == self.c && self.b < Zero::zero()) {
             assert!(!self.c.is_zero());
@@ -259,10 +257,7 @@ impl GmpClassGroup {
             // c += a
             self.c += &ctx.old_a;
         }
-        self.assert_valid();
         self.inner_normalize(ctx);
-        self.assert_valid();
-        //eprintln!();
     }
 
     fn inner_square_impl(&mut self, ctx: &mut Ctx) {
@@ -291,8 +286,6 @@ impl GmpClassGroup {
         ffi::mpz_mul(&mut self.c, &ctx.mu, &ctx.mu);
         self.c -= &ctx.m;
         self.inner_reduce(ctx);
-        self.assert_valid();
-        //assert!(!self.b.is_zero())
     }
 
     #[cfg_attr(not(debug_assertions), inline(always))]
@@ -340,11 +333,8 @@ impl<B: Borrow<GmpClassGroup>> MulAssign<B> for GmpClassGroup {
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn mul_assign(&mut self, rhs: B) {
         let rhs = rhs.borrow();
-        self.assert_valid();
-        self.assert_valid();
         debug_assert!(self.discriminant == rhs.discriminant);
         GmpClassGroup::with_context(|ctx| self.inner_multiply(rhs, ctx));
-        self.assert_valid();
     }
 }
 
