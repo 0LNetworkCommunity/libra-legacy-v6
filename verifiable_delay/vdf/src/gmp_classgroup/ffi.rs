@@ -73,7 +73,7 @@ struct MpzStruct {
     mp_d: *mut gmp::mpz::mp_limb_t,
 }
 
-macro_rules! impl_fdiv_ui {
+macro_rules! impl_cdiv_ui {
     ($t: ty, $i: ident) => {
         pub fn $i(n: &Mpz, d: $t) -> $t {
             unsafe { __gmpz_cdiv_ui(n.inner(), libc::c_ulong::from(d)) as $t }
@@ -81,9 +81,9 @@ macro_rules! impl_fdiv_ui {
     };
 }
 
-// impl_fdiv_ui!(u8, mpz_rem_u8);
-impl_fdiv_ui!(u16, mpz_rem_u16);
-// impl_fdiv_ui!(u32, mpz_rem_u32);
+// impl_cdiv_ui!(u8, mpz_rem_u8);
+impl_cdiv_ui!(u16, mpz_rem_u16);
+impl_cdiv_ui!(u32, mpz_rem_u32);
 
 /// Returns `true` if `z` is negative and not zero.  Otherwise,
 /// returns `false`.
@@ -202,7 +202,7 @@ pub fn mpz_fdiv_q(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
 pub fn mpz_fdiv_q_self(rop: &mut Mpz, op: &Mpz) {
     unsafe { __gmpz_fdiv_q(rop.inner_mut(), rop.inner(), op.inner()) }
 }
-
+#[cfg(none)]
 pub fn mpz_add_ui_self(rop: &mut Mpz, op: u32) {
     unsafe { __gmpz_add_ui(rop.inner_mut(), rop.inner(), libc::c_ulong::from(op)) }
 }
