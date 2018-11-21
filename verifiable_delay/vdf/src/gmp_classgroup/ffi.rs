@@ -116,16 +116,6 @@ pub fn mpz_double(rop: &mut Mpz) {
     unsafe { __gmpz_mul_ui(rop.inner_mut(), rop.inner(), 2) }
 }
 
-/// Sets `rop` to the given `libc::c_ulong`.
-pub fn mpz_set_ui(rop: &mut Mpz, op: c_ulong) {
-    unsafe { __gmpz_set_ui(rop.inner_mut(), op) }
-}
-
-#[cfg(none)]
-pub fn mpz_set_si(rop: &mut Mpz, op: libc::c_long) {
-    unsafe { __gmpz_set_si(rop.inner_mut(), op) }
-}
-
 pub fn mpz_fdiv_qr(q: &mut Mpz, r: &mut Mpz, b: &Mpz, g: &Mpz) {
     unsafe { __gmpz_fdiv_qr(q.inner_mut(), r.inner_mut(), b.inner(), g.inner()) }
 }

@@ -42,7 +42,6 @@ pub struct Ctx {
     s: Mpz,
     x: Mpz,
     congruence_context: congruence::CongruenceContext,
-    g: Mpz,
     h: Mpz,
     w: Mpz,
     m: Mpz,
@@ -75,24 +74,21 @@ impl GmpClassGroup {
         rhs.assert_valid();
 
         // g = (b1 + b2) / 2
-        ffi::mpz_add(&mut ctx.g, &self.b, &rhs.b);
-        ffi::mpz_fdiv_q_ui_self(&mut ctx.g, 2);
+        ffi::mpz_add(&mut ctx.congruence_context.g, &self.b, &rhs.b);
+        ffi::mpz_fdiv_q_ui_self(&mut ctx.congruence_context.g, 2);
 
         // h = (b2 - b1) / 2
         ffi::mpz_sub(&mut ctx.h, &rhs.b, &self.b);
         ffi::mpz_fdiv_q_ui_self(&mut ctx.h, 2);
 
-        debug_assert!(&ctx.h + &ctx.g == rhs.b);
-        debug_assert!(&ctx.g - &ctx.h == self.b);
+        debug_assert!(&ctx.h + &ctx.congruence_context.g == rhs.b);
+        debug_assert!(&ctx.congruence_context.g - &ctx.h == self.b);
 
         // w = gcd(a1, a2, g)
-        ffi::three_gcd(&mut ctx.w, &self.a, &rhs.a, &ctx.g);
+        ffi::three_gcd(&mut ctx.w, &self.a, &rhs.a, &ctx.congruence_context.g);
 
         // j = w
         ctx.j.set(&ctx.w);
-
-        // r = 0
-        ffi::mpz_set_ui(&mut ctx.r, 0);
 
         // s = a1/w
         ffi::mpz_fdiv_q(&mut ctx.s, &self.a, &ctx.w);
@@ -101,7 +97,7 @@ impl GmpClassGroup {
         ffi::mpz_fdiv_q(&mut ctx.t, &rhs.a, &ctx.w);
 
         // u = g/w
-        ffi::mpz_fdiv_q(&mut ctx.u, &ctx.g, &ctx.w);
+        ffi::mpz_fdiv_q(&mut ctx.u, &ctx.congruence_context.g, &ctx.w);
 
         // a = t*u
         ffi::mpz_mul(&mut ctx.a, &ctx.t, &ctx.u);
@@ -160,13 +156,9 @@ impl GmpClassGroup {
 
         // A = s*t - r*u
         ffi::mpz_mul(&mut self.a, &ctx.s, &ctx.t);
-        ffi::mpz_mul(&mut ctx.a, &ctx.r, &ctx.u);
-        self.a -= &ctx.a;
 
         // B = ju + mr - (kt + ls)
-        ffi::mpz_mul(&mut ctx.b, &ctx.j, &ctx.u);
-        ffi::mpz_mul(&mut ctx.a, &ctx.m, &ctx.r);
-        ffi::mpz_add(&mut self.b, &ctx.b, &ctx.a);
+        ffi::mpz_mul(&mut self.b, &ctx.j, &ctx.u);
         ffi::mpz_mul(&mut ctx.a, &ctx.k, &ctx.t);
         self.b -= &ctx.a;
         ffi::mpz_mul(&mut ctx.a, &ctx.l, &ctx.s);
@@ -503,7 +495,6 @@ impl Default for Ctx {
             s: Mpz::new(),
             x: Mpz::new(),
             congruence_context: Default::default(),
-            g: Mpz::new(),
             w: Mpz::new(),
             m: Mpz::new(),
             u: Mpz::new(),
