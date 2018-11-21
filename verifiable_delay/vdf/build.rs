@@ -45,12 +45,10 @@ fn odd_primes_below_65536() -> Vec<usize> {
         }
     }
     // mega cheat ― we know the exact size of this vector
-    let mut res = Vec::with_capacity(PRIMES_LEN);
-    for i in 1..N / 2 {
-        if sieve[i] {
-            res.push(2 * i + 1);
-        }
-    }
+    let res: Vec<_> = (1..N / 2)
+        .filter(|&i| sieve[i])
+        .map(|i| 2 * i + 1)
+        .collect();
     assert_eq!(res.len(), PRIMES_LEN);
     res
 }
@@ -88,25 +86,18 @@ fn emit<T: std::fmt::Debug>(f: &mut dyn Write, name: &str, t: &str, obj: &[T]) {
 
 /// Write the generated code to `f`.
 fn generate(f: &mut dyn Write) {
-    let odd_primes_below_65536 = odd_primes_below_65536();
-    let odd_primes_above_13 = &odd_primes_below_65536[5..];
-    assert_eq!(odd_primes_above_13.len(), SIEVE_INFO_LEN);
     write!(f, "const M: u32 = 8 * 3 * 5 * 7 * 11 * 13;\n\n").expect("i/o error");
-    let mut residues = Vec::with_capacity(RESIDUES_LEN);
-    'outer: for x in (7..M).step_by(8) {
-        for y in &[3, 5, 7, 11, 13] {
-            if x % y == 0 {
-                continue 'outer;
-            }
-        }
-        residues.push(x);
-    }
+    let residues: Vec<usize> = {
+        let primes = [3, 5, 7, 11, 13];
+        let not_divisible = |&x: &usize| primes.iter().all(|p| x % p != 0);
+        (7..M).step_by(8).filter(not_divisible).collect()
+    };
     assert_eq!(residues.len(), RESIDUES_LEN);
     emit(f, "RESIDUES", "u32", &residues[..]);
-    let mut sieve_info = Vec::with_capacity(SIEVE_INFO_LEN);
-    for &i in odd_primes_above_13 {
-        sieve_info.push((i, mod_exponentiation(M % i, i - 2, i)));
-    }
+    let sieve_info: Vec<(usize, usize)> = odd_primes_below_65536()[5..]
+        .iter()
+        .map(|&i| (i, mod_exponentiation(M % i, i - 2, i)))
+        .collect();
     assert_eq!(sieve_info.len(), SIEVE_INFO_LEN);
     emit(f, "SIEVE_INFO", "(u16, u16)", &sieve_info[..]);
 }
