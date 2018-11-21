@@ -44,7 +44,7 @@ fn random_bytes_from_seed(seed: &[u8], byte_count: usize) -> Vec<u8> {
 /// Create a discriminant from a seed (a byte string) and a bit length (a
 /// `u16`).  The discriminant is guaranteed to be a negative prime number that
 /// fits in `length` bits, except with negligible probability (less than
-/// 2^(-100)).
+/// 2^(-100)).  It is also guaranteed to equal 7 modulo 8.
 ///
 /// This function uses sha256 to expand the seed.  Therefore, different seeds
 /// will result in completely different discriminants with overwhelming
@@ -81,7 +81,11 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
     } else {
         n -= u64::from(rem - residue);
     }
+
+    // This generates the smallest prime ≥ n that is of the form n + m*x.
     loop {
+        // Speed up prime-finding by quickly ruling out numbers
+        // that are known to be composite.
         let mut sieve = vec![false; 1 << 16];
         for &(p, q) in SIEVE_INFO.iter() {
             let mut i: usize = (mpz_rem_u16(&n, p) as usize * q as usize) % p as usize;
@@ -101,6 +105,8 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
                 }
             }
         }
+        // M is set to a number with many prime factors so the results are
+        // more uniform https://eprint.iacr.org/2011/401.pdf
         n += (u64::from(M) * (1 << 16)) as u64
     }
 }
