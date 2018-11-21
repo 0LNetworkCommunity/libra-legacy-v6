@@ -76,12 +76,13 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
                 i += p as usize;
             }
         }
+
         for (i, &x) in sieve.iter().enumerate() {
             let i = i as u32;
             if !x {
                 let mut res: Mpz = (u64::from(M) * u64::from(i)).into();
                 res += &n;
-                if res.probab_prime(50) != gmp::mpz::ProbabPrimeResult::NotPrime {
+                if res.probab_prime(25) != gmp::mpz::ProbabPrimeResult::NotPrime {
                     return -res;
                 }
             }
@@ -93,18 +94,37 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::str::FromStr;
+
     #[test]
     fn check_discriminant() {
-        use std::str::FromStr;
-
         assert_eq!(
             create_discriminant(b"\xaa", 40),
             (-685_537_176_559i64).into()
         );
-        assert_eq!(create_discriminant(b"\xaa", 2048), -Mpz::from_str("20149392707186525162590355071292053575364559848351567085354700987844093330948936280039379742871107183330808146182415920691586415080574829617024503722195777232804427670557174581127121229242207584973924825787037130000131358603651587961876409377224876056238680407347843315752681629521613772380379341182886747008940959623895895000737071932595957989286658892888724991242968836440986789551081768017186919005412288127429935094766982059615711599441803409172888758437372755538407566562462485676644100997464269306675140005421720998149066720895066941777378563169387978299301916769407006303085854796535778826115224633447713584423").unwrap());
+    }
+
+    #[test]
+    fn check_discriminant_2() {
+        assert_eq!(
+            create_discriminant(b"\xaa", 2048),
+            -Mpz::from_str(
+                "201493927071865251625903550712920535753645598483515670853547009\
+                 878440933309489362800393797428711071833308081461824159206915864\
+                 150805748296170245037221957772328044276705571745811271212292422\
+                 075849739248257870371300001313586036515879618764093772248760562\
+                 386804073478433157526816295216137723803793411828867470089409596\
+                 238958950007370719325959579892866588928887249912429688364409867\
+                 895510817680171869190054122881274299350947669820596157115994418\
+                 034091728887584373727555384075665624624856766441009974642693066\
+                 751400054217209981490667208950669417773785631693879782993019167\
+                 69407006303085854796535778826115224633447713584423"
+            )
+            .unwrap()
+        );
     }
     #[test]
-    fn check_entropy() {
+    fn check_random_bytes() {
         assert_eq!(&entropy_from_seed(b"\xaa", 7), b"\x9f\x9d*\xe5\xe7<\xcb");
         assert_eq!(&entropy_from_seed(b"\xaa", 258)[..], &b"\x9f\x9d*\xe5\xe7<\xcbq\xa4q\x8e\xbc\xf0\xe3:\xa2\x98\xf8\xbd\xdc\xaa\xcbi\xcb\x10\xff\x0e\xafv\xdb\xec!\xc4K\xc6Jf\xf3\xa5\xda.7\xb7\xef\x87I\x85\xb8YX\xfc\xf2\x03\xa1\x8f4\xaf`\xab\xae]n\xcc,g1\x12EI\xc7\xd5\xe2\xfc\x8b\x9a\xde\xd5\xf3\x8f'\xcd\x08\x0fU\xc7\xee\xa85[>\x87]\x07\x82\x00\x13\xce\xf7\xc3/@\xef\x08v\x8f\x85\x87dm(1\x8b\xd9w\xffA]xzY\xa0,\xebz\xff\x03$`\x91\xb66\x88-_\xa9\xf1\xc5\x8e,\x15\xae\x8f\x04\rvhnU3f\x84[{$\xa6l\x95w\xa9\x1f\xba\xa8)\x05\xe6\x8f\x167o\x11/X\x9cl\xab\x9c\xcb}\xec\x88\xf8\xa5\xabXpY\xb0\x88\xed@r\x05\xba\\\x03\xf6\x91\xf8\x03\xca\x18\x1c\xcdH\x1c\x91\xe1V\xed;\x94oJ\xa8 \xa4\x97\xb7K\xce\xc4e\xea\xa2\xbf\x8b\x1f\x90\x87\xc8\x15\xee\x0e\x0fPC:\xb5\xe1g\x97\xea/_\x86c\xaf\x12Wp\xfd\x11\xdb\x17\xe6\x9f\xa5\x8a"[..]);
     }
