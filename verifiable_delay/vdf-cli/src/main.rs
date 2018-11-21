@@ -80,17 +80,7 @@ fn parse_already_checked_args() -> (Mpz, u64) {
 }
 
 fn is_hex_ok(obj: String) -> Result<(), String> {
-    if obj.len() & 1 != 0 {
-        return Err(format!("{}", hex::FromHexError::OddLength));
-    }
-    for i in obj.chars() {
-        match i {
-            '0'...'9' | 'a'...'f' | 'A'...'F' => (),
-            _ => drop(hex::decode(&obj).map_err(|x| format!("{}", x))),
-        }
-    }
-    drop(obj);
-    Ok(())
+    hex::decode(&obj).map_err(|x| format!("{}", x)).map(drop)
 }
 
 fn is_u16_ok(obj: String) -> Result<(), String> {
