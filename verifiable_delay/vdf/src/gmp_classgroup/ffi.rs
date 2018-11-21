@@ -48,7 +48,6 @@ extern "C" {
     fn __gmpz_add_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: libc::c_ulong);
     fn __gmpz_set_ui(rop: mpz_ptr, op: libc::c_ulong);
     fn __gmpz_set_si(rop: mpz_ptr, op: libc::c_long);
-    fn __gmpz_com(rop: mpz_ptr, op: mpz_srcptr);
     fn __gmpz_neg(rop: mpz_ptr, op: mpz_srcptr);
     fn __gmpz_cdiv_ui(n: mpz_srcptr, d: libc::c_ulong) -> libc::c_ulong;
     fn __gmpz_export(
@@ -124,6 +123,12 @@ pub fn mpz_fdiv_q_ui_self(rop: &mut Mpz, op: c_ulong) -> c_ulong {
     unsafe { __gmpz_fdiv_q_ui(rop.inner_mut(), rop.inner(), op) }
 }
 
+/// Unmarshals a buffer to an `Mpz`.  `buf` is interpreted as a
+/// 2’s complement, big-endian integer.
+///
+/// # Panics
+///
+/// Panics if the buffer is empty.
 pub fn import_obj(buf: &[u8]) -> Mpz {
     fn raw_import(buf: &[u8]) -> Mpz {
         let mut obj = Mpz::new();
@@ -141,8 +146,8 @@ pub fn import_obj(buf: &[u8]) -> Mpz {
         }
         obj
     }
-    let is_negative = buf.first().expect("Cannot deserialize an empty buffer") >> 7;
-    if 0u8 == is_negative {
+    let is_negative = buf.first().expect("Cannot deserialize an empty buffer") & 0x80 != 0;
+    if !is_negative {
         raw_import(buf)
     } else {
         let mut new_buf: Vec<_> = buf.iter().cloned().skip_while(|&x| x == 0xFF).collect();
@@ -152,12 +157,7 @@ pub fn import_obj(buf: &[u8]) -> Mpz {
             for i in &mut new_buf {
                 *i ^= 0xFF
             }
-            let mut obj = raw_import(&new_buf);
-            unsafe {
-                __gmpz_com(obj.inner_mut(), obj.inner());
-            }
-
-            obj
+            !raw_import(&new_buf)
         }
     }
 }
@@ -197,12 +197,15 @@ pub fn mpz_sub(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
     unsafe { __gmpz_sub(rop.inner_mut(), op1.inner(), op2.inner()) }
 }
 
+/// Exports `obj` to `v` as an array of 2’s complement, big-endian
+/// bytes.  If `v` is too small to hold the result, returns `Err(s)`,
+/// where `s` is the size needed to hold the exported version of `obj`.
 pub fn export_obj(obj: &Mpz, v: &mut [u8]) -> Result<(), usize> {
     // Requires: offset < v.len() and v[offset..] be able to hold all of `obj`
     unsafe fn raw_export(v: &mut [u8], offset: usize, obj: &Mpz) -> usize {
         // SAFE as `offset` will always be in-bounds, since byte_len always <= byte_len_needed
         // and we check that v.len() >= byte_len_needed.
-        let ptr = (v.as_mut_ptr() as *mut u8).add(offset) as *mut libc::c_void;
+        let ptr = v.as_mut_ptr().add(offset) as *mut libc::c_void;
 
         // Necessary ― this byte may not be fully overwritten
         *(ptr as *mut u8) = 0;
@@ -236,7 +239,7 @@ pub fn export_obj(obj: &Mpz, v: &mut [u8]) -> Result<(), usize> {
     if is_negative {
         // MEGA HACK: GMP does not have a function to perform 2's complement
         let obj = !obj;
-        assert!(
+        debug_assert!(
             !mpz_is_negative(&obj),
             "bitwise negation of a negative number produced a negative number"
         );
