@@ -1,4 +1,3 @@
-use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -7,7 +6,6 @@ extern crate gmp;
 extern crate num_traits;
 extern crate vdf;
 use gmp::mpz::Mpz;
-use num_traits::Zero;
 use vdf::ClassGroup;
 
 fn split_into_three_pieces(line: &str, c: char) -> [&str; 3] {
