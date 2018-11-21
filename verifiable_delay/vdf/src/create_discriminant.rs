@@ -26,37 +26,49 @@ include!(concat!(env!("OUT_DIR"), "/constants.rs"));
 use super::gmp_classgroup::ffi::{mpz_add_ui_self, mpz_rem_u16};
 use gmp::mpz::Mpz;
 use sha2::{digest::FixedOutput, Digest, Sha256};
-use std::mem;
 use std::u16;
 
-fn entropy_from_seed(seed: &[u8], byte_count: usize) -> Vec<u8> {
+fn random_bytes_from_seed(seed: &[u8], byte_count: usize) -> Vec<u8> {
+    assert!(byte_count <= 32 * ((1 << 16) - 1));
     let mut blob = Vec::with_capacity(byte_count);
     let mut extra: u16 = 0;
     while blob.len() < byte_count {
         let mut hasher = Sha256::new();
         hasher.input(seed);
-        let extra_bits: [u8; 2] = unsafe { mem::transmute(extra.to_be()) };
+        let extra_bits: [u8; 2] = [((extra & 0xFF00) >> 8) as _, (extra & 0xFF) as _];
         hasher.input(&extra_bits);
         blob.extend_from_slice(&hasher.fixed_result()[..]);
-        assert!(byte_count >= blob.len() || extra < u16::MAX);
         extra += 1;
     }
     blob.resize(byte_count, 0);
     blob
 }
 
+/// Create a discriminant from a seed (a byte string) and a bit length (a
+/// `u16`).  The discriminant is guaranteed to be a negative prime number that
+/// fits in `length` bits, except with negligible probability (less than
+/// 2^(-100)).
+///
+/// This function uses sha256 to expand the seed.  Therefore, different seeds
+/// will result in completely different discriminants with overwhelming
+/// probability, unless `length` is very small.  However, this function is
+/// deterministic: if it is called twice with identical seeds and lengths, it
+/// will always return the same discriminant.
+///
+/// This function is guaranteed not to panic for any inputs whatsoever, unless
+/// memory allocation fails and the allocator in use panics in that case.
 pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
     let extra: u8 = (length as u8) & 7;
-    let entropy_bytes = ((length >> 3) + if extra == 0 { 2 } else { 3 }) as usize;
-    let mut entropy = entropy_from_seed(seed, entropy_bytes);
-    assert_eq!(entropy.len(), entropy_bytes);
+    let random_bytes_length = ((length >> 3) + if extra == 0 { 2 } else { 3 }) as usize;
+    let mut random_bytes = random_bytes_from_seed(seed, random_bytes_length);
+    assert_eq!(random_bytes.len(), random_bytes_length);
     let residue = {
-        let last_2 = &mut entropy[entropy_bytes - 2..];
+        let last_2 = &mut random_bytes[random_bytes_length - 2..];
         let numerator = (usize::from(last_2[0]) << 8) + usize::from(last_2[1]);
         RESIDUES[numerator % RESIDUES.len()]
     };
-    let orig_n = Mpz::from(&entropy[..entropy_bytes as usize - 2usize]);
-    drop(entropy);
+    let orig_n = Mpz::from(&random_bytes[..random_bytes_length as usize - 2usize]);
+    drop(random_bytes);
     let mut n: Mpz = &orig_n >> ((8 - extra) & 7).into();
     n.setbit((length - 1) as _);
     {
@@ -125,7 +137,10 @@ mod test {
     }
     #[test]
     fn check_random_bytes() {
-        assert_eq!(&entropy_from_seed(b"\xaa", 7), b"\x9f\x9d*\xe5\xe7<\xcb");
-        assert_eq!(&entropy_from_seed(b"\xaa", 258)[..], &b"\x9f\x9d*\xe5\xe7<\xcbq\xa4q\x8e\xbc\xf0\xe3:\xa2\x98\xf8\xbd\xdc\xaa\xcbi\xcb\x10\xff\x0e\xafv\xdb\xec!\xc4K\xc6Jf\xf3\xa5\xda.7\xb7\xef\x87I\x85\xb8YX\xfc\xf2\x03\xa1\x8f4\xaf`\xab\xae]n\xcc,g1\x12EI\xc7\xd5\xe2\xfc\x8b\x9a\xde\xd5\xf3\x8f'\xcd\x08\x0fU\xc7\xee\xa85[>\x87]\x07\x82\x00\x13\xce\xf7\xc3/@\xef\x08v\x8f\x85\x87dm(1\x8b\xd9w\xffA]xzY\xa0,\xebz\xff\x03$`\x91\xb66\x88-_\xa9\xf1\xc5\x8e,\x15\xae\x8f\x04\rvhnU3f\x84[{$\xa6l\x95w\xa9\x1f\xba\xa8)\x05\xe6\x8f\x167o\x11/X\x9cl\xab\x9c\xcb}\xec\x88\xf8\xa5\xabXpY\xb0\x88\xed@r\x05\xba\\\x03\xf6\x91\xf8\x03\xca\x18\x1c\xcdH\x1c\x91\xe1V\xed;\x94oJ\xa8 \xa4\x97\xb7K\xce\xc4e\xea\xa2\xbf\x8b\x1f\x90\x87\xc8\x15\xee\x0e\x0fPC:\xb5\xe1g\x97\xea/_\x86c\xaf\x12Wp\xfd\x11\xdb\x17\xe6\x9f\xa5\x8a"[..]);
+        assert_eq!(
+            &random_bytes_from_seed(b"\xaa", 7),
+            b"\x9f\x9d*\xe5\xe7<\xcb"
+        );
+        assert_eq!(&random_bytes_from_seed(b"\xaa", 258)[..], &b"\x9f\x9d*\xe5\xe7<\xcbq\xa4q\x8e\xbc\xf0\xe3:\xa2\x98\xf8\xbd\xdc\xaa\xcbi\xcb\x10\xff\x0e\xafv\xdb\xec!\xc4K\xc6Jf\xf3\xa5\xda.7\xb7\xef\x87I\x85\xb8YX\xfc\xf2\x03\xa1\x8f4\xaf`\xab\xae]n\xcc,g1\x12EI\xc7\xd5\xe2\xfc\x8b\x9a\xde\xd5\xf3\x8f'\xcd\x08\x0fU\xc7\xee\xa85[>\x87]\x07\x82\x00\x13\xce\xf7\xc3/@\xef\x08v\x8f\x85\x87dm(1\x8b\xd9w\xffA]xzY\xa0,\xebz\xff\x03$`\x91\xb66\x88-_\xa9\xf1\xc5\x8e,\x15\xae\x8f\x04\rvhnU3f\x84[{$\xa6l\x95w\xa9\x1f\xba\xa8)\x05\xe6\x8f\x167o\x11/X\x9cl\xab\x9c\xcb}\xec\x88\xf8\xa5\xabXpY\xb0\x88\xed@r\x05\xba\\\x03\xf6\x91\xf8\x03\xca\x18\x1c\xcdH\x1c\x91\xe1V\xed;\x94oJ\xa8 \xa4\x97\xb7K\xce\xc4e\xea\xa2\xbf\x8b\x1f\x90\x87\xc8\x15\xee\x0e\x0fPC:\xb5\xe1g\x97\xea/_\x86c\xaf\x12Wp\xfd\x11\xdb\x17\xe6\x9f\xa5\x8a"[..]);
     }
 }
