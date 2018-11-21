@@ -192,10 +192,6 @@ pub fn mpz_fdiv_q(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
 pub fn mpz_fdiv_q_self(rop: &mut Mpz, op: &Mpz) {
     unsafe { __gmpz_fdiv_q(rop.inner_mut(), rop.inner(), op.inner()) }
 }
-#[cfg(none)]
-pub fn mpz_add_ui_self(rop: &mut Mpz, op: u32) {
-    unsafe { __gmpz_add_ui(rop.inner_mut(), rop.inner(), libc::c_ulong::from(op)) }
-}
 
 pub fn mpz_sub(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
     unsafe { __gmpz_sub(rop.inner_mut(), op1.inner(), op2.inner()) }
