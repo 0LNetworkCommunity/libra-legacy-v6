@@ -75,8 +75,7 @@ fn mod_exponentiation(base: usize, exponent: usize, modulus: usize) -> usize {
 
 macro_rules! const_fmt {
     () => {
-        "#[allow(clippy::unreadable_literals)]\n\
-         const {}: [{}; {}] = {:?};\n\n";
+        "#[allow(clippy::unreadable_literals)]\nconst {}: [{}; {}] = {:?};\n\n";
     };
 }
 const M: usize = 8 * 3 * 5 * 7 * 11 * 13;

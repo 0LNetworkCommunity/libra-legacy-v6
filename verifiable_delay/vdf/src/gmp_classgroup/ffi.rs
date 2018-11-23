@@ -75,7 +75,7 @@ struct MpzStruct {
 }
 
 macro_rules! impl_div_ui {
-    ($t: ident, $i: ident, $f: expr) => {
+    ($t:ident, $i:ident, $f:expr) => {
         pub fn $i(n: &Mpz, d: $t) -> $t {
             use std::$t;
             let res = unsafe { $f(n.inner(), libc::c_ulong::from(d)) };
