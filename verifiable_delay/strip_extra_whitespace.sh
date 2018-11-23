@@ -13,24 +13,24 @@
 # See the License for the specific language governing permissions and
 # and limitations under the License.
 
-# Delete trailing whitespace.  Also delete any leading or trailing lines that are
-# only whitespace.  Operates on all files in the git repo.
+# Delete trailing whitespace.  Also delete any leading or trailing lines that
+# are only whitespace.  Operates on all files in the git repo EXCEPT .rs files,
+# since those are handled by `cargo fmt`.  Finally, delete RLS log files.
 
 set -euo pipefail
-git ls-files -z | xargs -0 sed -i -- '
-# Strip leading blank lines
-/[^\s]/,$!d
+cargo fmt
+git ls-files -z | grep -vEz '\.rs$' | xargs -0 sed -ni -- '
+s/\s\s*$//
+/./,$!d
+/^$/! b done
+h
 :loop
-/^\s*$/ {
-   # Strip trailing blank lines
-   $d
-   # Delete non-newline whitespace
-   s/[^\n]//g
-   # Add the next line
-   N
-   b loop
-}
-# Strip trailing whitespace
-s/\s\+$//
+n
+s/\s\s*$//
+H
+/^$/bloop
+g
+:done
+p
 '
 rm -f rls*.log

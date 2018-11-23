@@ -66,7 +66,7 @@ fn multiplication_is_correct() {
                 discriminant -= &minuand;
                 assert!(discriminant < Mpz::zero());
                 // takes waaaay too long
-                //assert!(discriminant.probab_prime(20) !=
+                // assert!(discriminant.probab_prime(20) !=
                 // gmp::mpz::ProbabPrimeResult::NotPrime);
                 if let Some(ref q) = current_discriminant {
                     assert_eq!(q, &discriminant, "mismatching discriminant in test files");

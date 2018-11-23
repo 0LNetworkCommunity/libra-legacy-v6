@@ -25,3 +25,12 @@ Cargo.lock
 
 # RLS log files
 rls*.log
+
+# Emacs backup files
+.#*
+\#*#
+*~
+
+# Vim swap files
+.*.swp
+.*.swo
