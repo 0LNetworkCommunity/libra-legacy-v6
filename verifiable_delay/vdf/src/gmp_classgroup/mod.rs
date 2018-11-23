@@ -10,7 +10,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// and limitations under the License.
+// limitations under the License.
 #![deny(unsafe_code)]
 #![forbid(warnings)]
 use crate::classgroup::ClassGroup;
@@ -294,12 +294,14 @@ impl GmpClassGroup {
 
     /// Call `cb` with a mutable reference to the context of type `Ctx`.
     ///
-    /// The reference cannot escape the closure and cannot be sent across threads.
+    /// The reference cannot escape the closure and cannot be sent across
+    /// threads.
     ///
     /// # Panics
     ///
-    /// Panics if called recursively.  This library guarantees that it will never
-    /// call this function from any function that takes a parameter of type `&mut Ctx`.
+    /// Panics if called recursively.  This library guarantees that it will
+    /// never call this function from any function that takes a parameter of
+    /// type `&mut Ctx`.
     pub fn with_context<T, U>(cb: T) -> U
     where
         T: FnOnce(&mut Ctx) -> U,

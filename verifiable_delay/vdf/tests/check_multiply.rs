@@ -1,3 +1,16 @@
+// Copyright 2018 POA Networks, Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -53,7 +66,8 @@ fn multiplication_is_correct() {
                 discriminant -= &minuand;
                 assert!(discriminant < Mpz::zero());
                 // takes waaaay too long
-                //assert!(discriminant.probab_prime(20) != gmp::mpz::ProbabPrimeResult::NotPrime);
+                //assert!(discriminant.probab_prime(20) !=
+                // gmp::mpz::ProbabPrimeResult::NotPrime);
                 if let Some(ref q) = current_discriminant {
                     assert_eq!(q, &discriminant, "mismatching discriminant in test files");
                 } else {

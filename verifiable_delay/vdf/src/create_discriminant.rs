@@ -10,7 +10,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// and limitations under the License.
+// limitations under the License.
 
 //! Creation of discriminants.
 //!
@@ -59,8 +59,8 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
         // The number of “extra” bits (that don’t evenly fit in a byte)
         let extra: u8 = (length as u8) & 7;
 
-        // The number of random bytes needed (the number of bytes that hold `length` bits,
-        // plus 2).
+        // The number of random bytes needed (the number of bytes that hold `length`
+        // bits, plus 2).
         let random_bytes_len = ((usize::from(length) + 7) >> 3) + 2;
         let random_bytes = random_bytes_from_seed(seed, random_bytes_len);
         let (n, last_2) = random_bytes.split_at(random_bytes_len - 2);
@@ -89,9 +89,10 @@ pub fn create_discriminant(seed: &[u8], length: u16) -> Mpz {
         // that are known to be composite.
         let mut sieve = vec![false; 1 << 16];
         for &(p, q) in SIEVE_INFO.iter() {
-            // The reference implementation changes the sign of `n` before taking its remainder.
-            // Instead, we leave `n` as positive, but use ceiling division instead of floor
-            // division.  This is mathematically equivalent and potentially faster.
+            // The reference implementation changes the sign of `n` before taking its
+            // remainder. Instead, we leave `n` as positive, but use ceiling
+            // division instead of floor division.  This is mathematically
+            // equivalent and potentially faster.
             let mut i: usize = (ffi::mpz_crem_u16(&n, p) as usize * q as usize) % p as usize;
             while i < sieve.len() {
                 sieve[i] = true;

@@ -10,7 +10,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// and limitations under the License.
+// limitations under the License.
 #![forbid(unsafe_code)]
 use num_traits::{One, Zero};
 use std::ops::{Mul, MulAssign, Rem, ShlAssign};
@@ -66,8 +66,8 @@ pub trait ClassGroup:
 
     /// Squares `self`, modifying it in-place.
     ///
-    /// A default implementation is provided, but implementations are suggested to override
-    /// it for performance reasons.
+    /// A default implementation is provided, but implementations are suggested
+    /// to override it for performance reasons.
     fn square(&mut self) {
         let s = self.clone();
         self.mul_assign(&s)
@@ -93,10 +93,10 @@ pub trait ClassGroup:
     ///
     /// # Panics
     ///
-    /// This may panic (but is not required to) if the discriminant is not valid.
-    /// If this function does not panic, the results of future operations are unspecified:
-    /// they will not invoke undefined behavior, but may panic, loop forever, or just
-    /// compute garbage.
+    /// This may panic (but is not required to) if the discriminant is not
+    /// valid. If this function does not panic, the results of future
+    /// operations are unspecified: they will not invoke undefined behavior,
+    /// but may panic, loop forever, or just compute garbage.
     ///
     /// In debug builds, this will always panic if the discriminant is invalid.
     fn generate_for_discriminant(discriminant: Self::BigNum) -> Self;

@@ -10,7 +10,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// and limitations under the License.
+// limitations under the License.
 
 //! FFI bindings to GMP.  This module exists because the `rust-gmp` crate
 //! is too high-level.  High-performance bignum computation requires that
@@ -207,8 +207,8 @@ pub fn mpz_sub(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
 pub fn export_obj(obj: &Mpz, v: &mut [u8]) -> Result<(), usize> {
     // Requires: offset < v.len() and v[offset..] be able to hold all of `obj`
     unsafe fn raw_export(v: &mut [u8], offset: usize, obj: &Mpz) -> usize {
-        // SAFE as `offset` will always be in-bounds, since byte_len always <= byte_len_needed
-        // and we check that v.len() >= byte_len_needed.
+        // SAFE as `offset` will always be in-bounds, since byte_len always <=
+        // byte_len_needed and we check that v.len() >= byte_len_needed.
         let ptr = v.as_mut_ptr().add(offset) as *mut libc::c_void;
 
         // Necessary ― this byte may not be fully overwritten
