@@ -17,7 +17,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::u16;
 
-/// The number of odd prime less than 65536.
+/// The number of odd primes less than 65536.
 const PRIMES_LEN: usize = 6541;
 
 /// The number of integers that are:

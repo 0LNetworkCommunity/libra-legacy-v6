@@ -44,14 +44,14 @@ impl Default for CongruenceContext {
     }
 }
 
-/// Solves `a*x = b (mod m)`, storing `x` in `mu`
-///
-/// This function may clobber any or all of `self`’s member variables.
-///
-/// # Panics
-///
-/// Panics if the congruence could not be solved.
 impl CongruenceContext {
+    /// Solves `a*x = b (mod m)`, storing `x` in `mu`
+    ///
+    /// This function may clobber any or all of `self`’s member variables.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the congruence could not be solved.
     pub fn solve_linear_congruence(
         &mut self,
         mu: &mut Mpz,
