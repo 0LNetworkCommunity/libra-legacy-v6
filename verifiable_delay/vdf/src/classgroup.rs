@@ -47,6 +47,17 @@ pub trait ClassGroup:
     fn from_bytes(bytearray: &[u8], discriminant: Self::BigNum) -> Self;
 
     /// Computes the identity element of `Self` for a given discriminant.
+    ///
+    /// If the discriminant is not valid, the result is unspecified.
+    ///
+    /// # Panics
+    ///
+    /// This may panic (but is not required to) if the discriminant is not
+    /// valid. If this function does not panic, the results of future
+    /// operations are unspecified: they will not invoke undefined behavior,
+    /// but may panic, loop forever, or just compute garbage.
+    ///
+    /// In debug builds, this will always panic if the discriminant is invalid.
     fn identity_for_discriminant(discriminant: Self::BigNum) -> Self {
         Self::from_ab_discriminant(Self::BigNum::one(), Self::BigNum::one(), discriminant)
     }
@@ -87,9 +98,18 @@ pub trait ClassGroup:
         Self::identity_for_discriminant(self.discriminant().clone())
     }
 
-    /// Generates a `Self` given a discriminant.
+    /// Generates a *generator* for the class group of `Self`, given a
+    /// discriminant.
     ///
     /// If the discriminant is not valid, the result is unspecified.
+    ///
+    /// # Relation to `Self::identity_for_discriminant`
+    ///
+    /// This is *not* the same as `Self::identity_for_discriminant`: the
+    /// identity element is *never* a generator for *any* group.  This follows
+    /// from their definitions: the identity element, when multiplied by another
+    /// element, always gives that other element, whereas *every* element in the
+    /// group is some power of a generator.
     ///
     /// # Panics
     ///
@@ -98,8 +118,14 @@ pub trait ClassGroup:
     /// operations are unspecified: they will not invoke undefined behavior,
     /// but may panic, loop forever, or just compute garbage.
     ///
+    /// If the global allocator panics on running out of memory, then this
+    /// function may panic in the same situation, but it may also just abort the
+    /// program instead.
+    ///
     /// In debug builds, this will always panic if the discriminant is invalid.
-    fn generate_for_discriminant(discriminant: Self::BigNum) -> Self;
+    fn generator_for_discriminant(discriminant: Self::BigNum) -> Self {
+        Self::from_ab_discriminant(2.into(), One::one(), discriminant)
+    }
 
     /// Replaces `*self` with its inverse.
     fn inverse(&mut self);

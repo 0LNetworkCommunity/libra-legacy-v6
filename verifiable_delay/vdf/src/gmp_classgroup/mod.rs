@@ -458,7 +458,7 @@ impl ClassGroup for GmpClassGroup {
         })
     }
 
-    fn generate_for_discriminant(discriminant: Self::BigNum) -> Self {
+    fn generator_for_discriminant(discriminant: Self::BigNum) -> Self {
         let one: Mpz = One::one();
         let x: Mpz = &one - &discriminant;
         let mut form = Self::new(2.into(), one, x.div_floor(&8.into()), discriminant);
@@ -518,7 +518,7 @@ impl Default for Ctx {
 pub fn do_compute(discriminant: Mpz, iterations: u64) -> GmpClassGroup {
     debug_assert!(discriminant < Zero::zero());
     debug_assert!(discriminant.probab_prime(50) != gmp::mpz::ProbabPrimeResult::NotPrime);
-    let mut f = GmpClassGroup::generate_for_discriminant(discriminant);
+    let mut f = GmpClassGroup::generator_for_discriminant(discriminant);
     f.repeated_square(iterations);
     f
 }
