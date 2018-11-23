@@ -13,11 +13,91 @@
 // limitations under the License.
 use super::classgroup::ClassGroup;
 use num_traits::{One, Zero};
+use std::fmt;
+use std::num::ParseIntError;
 use std::ops::Index;
+use std::str::FromStr;
 use std::u64;
 
-fn approximate_i(t: u64) -> u64 {
-    let x: f64 = ((t as f64) / 16.) * 2.0f64.ln();
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Clone, Debug)]
+pub struct Iterations(u64);
+
+#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Copy, Clone, Debug)]
+pub enum InvalidIterations {
+    OddNumber(u64),
+    LessThan66(u64),
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct ParseIterationsError {
+    kind: Result<InvalidIterations, ParseIntError>,
+}
+
+impl From<InvalidIterations> for ParseIterationsError {
+    fn from(t: InvalidIterations) -> Self {
+        Self { kind: Ok(t) }
+    }
+}
+
+impl From<ParseIntError> for ParseIterationsError {
+    fn from(t: ParseIntError) -> Self {
+        Self { kind: Err(t) }
+    }
+}
+
+impl fmt::Display for InvalidIterations {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            InvalidIterations::OddNumber(s) => {
+                write!(f, "Pietrzak iterations must be an even number, not {}", s)
+            }
+            InvalidIterations::LessThan66(s) => write!(
+                f,
+                "Pietrzak proof-of-time must run for at least 66 iterations, not {}",
+                s
+            ),
+        }
+    }
+}
+
+impl From<Iterations> for u64 {
+    fn from(t: Iterations) -> u64 {
+        t.0
+    }
+}
+
+impl fmt::Display for ParseIterationsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.kind {
+            Ok(ref q) => <InvalidIterations as fmt::Display>::fmt(q, f),
+            Err(ref q) => <ParseIntError as fmt::Display>::fmt(q, f),
+        }
+    }
+}
+
+impl FromStr for Iterations {
+    type Err = ParseIterationsError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::new(s.parse::<u64>().map_err(ParseIterationsError::from)?)
+            .map_err(ParseIterationsError::from)
+    }
+}
+
+impl Iterations {
+    pub fn new<T: Into<u64>>(iterations: T) -> Result<Iterations, InvalidIterations> {
+        let iterations = iterations.into();
+        if iterations & 1 != 0 {
+            Err(InvalidIterations::OddNumber(iterations))
+        } else if iterations < 66 {
+            Err(InvalidIterations::LessThan66(iterations))
+        } else {
+            Ok(Iterations(iterations))
+        }
+    }
+}
+
+fn approximate_i(t: Iterations) -> u64 {
+    let x: f64 = (((t.0 >> 1) as f64) / 8.) * 2.0f64.ln();
     let w = x.ln() - x.ln().ln() + 0.25;
     (w / (2. * 2.0f64.ln())).round() as _
 }
@@ -35,9 +115,9 @@ fn sum_combinations<'a, T: IntoIterator<Item = &'a u64>>(numbers: T) -> Vec<u64>
     combinations
 }
 
-pub fn cache_indices_for_count(t: u64) -> Vec<u64> {
+pub fn cache_indices_for_count(t: Iterations) -> Vec<u64> {
     let i: u64 = approximate_i(t);
-    let mut curr_t = t;
+    let mut curr_t = t.0;
     let mut intermediate_ts = vec![];
     for _ in 0..i {
         curr_t >>= 1;
@@ -48,12 +128,12 @@ pub fn cache_indices_for_count(t: u64) -> Vec<u64> {
     }
     let mut cache_indices = sum_combinations(&intermediate_ts);
     cache_indices.sort();
-    cache_indices.push(t);
+    cache_indices.push(t.0);
     cache_indices
 }
 
-fn calculate_final_t(t: u64, delta: usize) -> u64 {
-    let mut curr_t = t;
+fn calculate_final_t(t: Iterations, delta: usize) -> u64 {
+    let mut curr_t = t.0;
     let mut ts = vec![];
     while curr_t != 2 {
         ts.push(curr_t);
@@ -71,7 +151,7 @@ fn calculate_final_t(t: u64, delta: usize) -> u64 {
 #[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
 pub fn generate_proof<T, U, V>(
     x: V,
-    t: u64,
+    t: Iterations,
     delta: usize,
     y: V,
     powers: &T,
@@ -86,17 +166,13 @@ where
     for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
 {
-    if t & 1 == 1 {
-        panic!("T must be even")
-    }
-
     let i = approximate_i(t);
     let mut mus = vec![];
     let mut rs: Vec<V::BigNum> = vec![];
     let mut x_p = vec![x];
     let mut y_p = vec![y];
 
-    let mut curr_t = t;
+    let mut curr_t = t.0;
     let mut ts = vec![];
 
     let final_t = calculate_final_t(t, delta);
@@ -172,7 +248,7 @@ pub fn verify_proof<T, U, V>(
     x_initial: &V,
     y_initial: &V,
     proof: T,
-    t: u64,
+    t: Iterations,
     delta: usize,
     generate_r_value: &U,
     int_size_bits: usize,
@@ -185,12 +261,9 @@ where
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
 {
     let mut one: V::BigNum = One::one();
-    if t & 1 != 0 {
-        return Err(());
-    }
     let (mut x, mut y): (V, V) = (x_initial.clone(), y_initial.clone());
     let final_t = calculate_final_t(t, delta);
-    let mut curr_t = t;
+    let mut curr_t = t.0;
     for mut mu in proof {
         assert!(
             curr_t & 1 == 0,
@@ -222,21 +295,24 @@ mod test {
     use super::*;
     #[test]
     fn check_approximate_i() {
-        assert_eq!(approximate_i(534), 2);
-        assert_eq!(approximate_i(134), 1);
-        assert_eq!(approximate_i(1024), 2);
+        assert_eq!(approximate_i(Iterations(534)), 2);
+        assert_eq!(approximate_i(Iterations(134)), 1);
+        assert_eq!(approximate_i(Iterations(1024)), 2);
     }
     #[test]
     fn check_cache_indices() {
-        assert_eq!(cache_indices_for_count(66)[..], [33, 66]);
-        assert_eq!(cache_indices_for_count(534)[..], [134, 267, 401, 534]);
+        assert_eq!(cache_indices_for_count(Iterations(66))[..], [33, 66]);
+        assert_eq!(
+            cache_indices_for_count(Iterations(534))[..],
+            [134, 267, 401, 534]
+        );
     }
 
     #[test]
     fn check_calculate_final_t() {
-        assert_eq!(calculate_final_t(1024, 8), 128);
-        assert_eq!(calculate_final_t(1000, 8), 126);
-        assert_eq!(calculate_final_t(100, 8), 100);
+        assert_eq!(calculate_final_t(Iterations(1024), 8), 128);
+        assert_eq!(calculate_final_t(Iterations(1000), 8), 126);
+        assert_eq!(calculate_final_t(Iterations(100), 8), 100);
     }
     #[test]
     fn check_assuptions_about_stdlib() {

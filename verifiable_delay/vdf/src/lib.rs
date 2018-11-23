@@ -29,6 +29,7 @@ pub use crate::create_discriminant::create_discriminant;
 pub use crate::proof_of_time::{check_proof_of_time_pietrzak, create_proof_of_time_pietrzak};
 mod proof_pietrzak;
 pub use crate::classgroup::ClassGroup;
+pub use proof_pietrzak::{InvalidIterations, Iterations, ParseIterationsError};
 pub trait VDF {
     type PublicParameters;
     type SecurityParameter;

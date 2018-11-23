@@ -25,7 +25,6 @@ extern crate clap;
 
 thread_local! {
     static DISCRIMINANT: RefCell<Option<Mpz>> = RefCell::new(None);
-    static NUM_ITERATIONS: RefCell<Option<u64>> = RefCell::new(None);
 }
 
 fn is_bigint_ok(obj: String) -> Result<(), String> {
@@ -48,46 +47,26 @@ fn is_bigint_ok(obj: String) -> Result<(), String> {
     s
 }
 
-fn is_value_ok(obj: String) -> Result<(), String> {
-    let s = Mpz::from_str_radix(&obj, 0)
-        .map(drop)
-        .map_err(|e| format!("{}: {:?}", e, obj));
-    drop(obj);
-    s
+fn parse_already_checked_args() -> (Mpz,) {
+    (DISCRIMINANT.with(|x| x.borrow_mut().take().unwrap()),)
 }
 
-fn is_u64_ok(obj: String) -> Result<(), String> {
-    match u64::from_str_radix(&obj, 10) {
-        Ok(n) if n < 66 => Err(format!(
-            "Number of iterations must be at least 66, not {}",
-            n
-        )),
-        Ok(n) if n & 1 == 0 => {
-            NUM_ITERATIONS.with(|x| assert!(x.replace(Some(n)).is_none()));
-            drop(obj);
-            Ok(())
+macro_rules! gen_validator {
+    ($name:ident : $type:ty) => {
+        gen_validator!($name, str::parse::<$type>);
+    };
+    ($name:ident, $expr:expr) => {
+        fn $name(obj: String) -> Result<(), String> {
+            $expr(&obj).map(drop).map_err(|x| format!("{}", x))
         }
-        Ok(n) => Err(format!("Number of iterations must be even, not {}", n)),
-        Err(s) => Err(format!("{}: {:?}", s, obj)),
-    }
+    };
 }
 
-fn parse_already_checked_args() -> (Mpz, u64) {
-    (
-        DISCRIMINANT.with(|x| x.borrow_mut().take().unwrap()),
-        NUM_ITERATIONS.with(|x| x.borrow_mut().take().unwrap()),
-    )
-}
-
-fn is_hex_ok(obj: String) -> Result<(), String> {
-    hex::decode(&obj).map_err(|x| format!("{}", x)).map(drop)
-}
-
-fn is_u16_ok(obj: String) -> Result<(), String> {
-    u16::from_str_radix(&obj, 10)
-        .map(drop)
-        .map_err(|x| format!("{}", x))
-}
+gen_validator!(is_u16_ok: u16);
+gen_validator!(is_u64_ok: u64);
+gen_validator!(is_iterations_ok: vdf::Iterations);
+gen_validator!(is_hex_ok, hex::decode);
+gen_validator!(is_bignum_ok, |x| Mpz::from_str_radix(x, 0));
 
 fn main() -> Result<(), std::io::Error> {
     let matches = clap_app!(myapp =>
@@ -96,43 +75,43 @@ fn main() -> Result<(), std::io::Error> {
         (about: "CLI to Verifiable Delay Functions")
         (@subcommand compute =>
             (@arg DISCRIMINANT: +required {is_bigint_ok} "The discriminant" )
-            (@arg NUM_ITERATIONS: +required  {is_u64_ok} "The number of iterations")
+            (@arg NUM_ITERATIONS: +required {is_u64_ok} "The number of iterations")
         )
         (@subcommand prove =>
             (@arg DISCRIMINANT_CHALLENGE: +required {is_hex_ok} "Hex-encoded challenge to derive the discriminant from" )
-            (@arg NUM_ITERATIONS: +required  {is_u64_ok} "The number of iterations")
+            (@arg NUM_ITERATIONS: +required {is_iterations_ok} "The number of iterations")
             (@arg LENGTH: {is_u16_ok} "Length in bits of the discriminant (default: 2048)")
         )
         (@subcommand verify =>
             (@arg DISCRIMINANT_CHALLENGE: +required {is_hex_ok} "Hex-encoded challenge to derive the discriminant from" )
-            (@arg NUM_ITERATIONS: +required  {is_u64_ok} "The number of iterations")
+            (@arg NUM_ITERATIONS: +required {is_iterations_ok} "The number of iterations")
             (@arg PROOF: +required {is_hex_ok} "The proof")
             (@arg LENGTH: {is_u16_ok} "Length in bits of the discriminant (default: 2048)")
         )
         (@subcommand dump =>
-        (@arg NUM: +required {is_value_ok} "The bignum to dump")
+        (@arg NUM: +required {is_bignum_ok} "The bignum to dump")
         )
     )
     .get_matches();
     if let Some(_matches) = matches.subcommand_matches("compute") {
-        let (discriminant, iterations) = parse_already_checked_args();
+        let (discriminant,) = parse_already_checked_args();
+        let iterations = value_t_or_exit!(_matches, "NUM_ITERATIONS", u64);
         println!("{}", vdf::do_compute(discriminant, iterations));
         Ok(())
     } else if let Some(matches) = matches.subcommand_matches("dump") {
-        let mut v_input = matches.value_of("NUM").unwrap();
-        let v = Mpz::from_str_radix(v_input, 0).unwrap();
-        let mut buf = v_input.to_owned().into_bytes();
+        let mut v = Mpz::from_str_radix(matches.value_of("NUM").unwrap(), 0).unwrap();
+        let mut buf = vec![0u8; vdf::export_obj(&v, &mut []).unwrap_err()];
         vdf::export_obj(&v, &mut buf).unwrap();
         assert_eq!(&vdf::import_obj(&buf), &v);
         println!("Dumped output: {:x?}", buf);
         Ok(())
-    } else if let Some(matches) = matches.subcommand_matches("verify") {
-        let iterations = value_t!(matches, "NUM_ITERATIONS", u64).unwrap();
-        let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
-        let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
+    } else if let Some(m) = matches.subcommand_matches("verify") {
+        let iterations = value_t_or_exit!(m, "NUM_ITERATIONS", vdf::Iterations).into();
+        let challenge = m.value_of("DISCRIMINANT_CHALLENGE").unwrap();
+        let length = m.value_of("LENGTH").or(Some("2048")).unwrap();
         let length = u16::from_str_radix(length, 10).unwrap();
         let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
-        let proof = hex::decode(matches.value_of("PROOF").unwrap()).unwrap();
+        let proof = hex::decode(m.value_of("PROOF").unwrap()).unwrap();
         let x: vdf::GmpClassGroup =
             vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
         match vdf::check_proof_of_time_pietrzak(
@@ -147,15 +126,12 @@ fn main() -> Result<(), std::io::Error> {
                 Ok(())
             }
             Err(()) => {
-                println!("Bad proof!");
-                Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "Bad proof!",
-                ))
+                println!("Invalid proof");
+                std::process::exit(1);
             }
         }
     } else if let Some(matches) = matches.subcommand_matches("prove") {
-        let iterations = value_t!(matches, "NUM_ITERATIONS", u64).unwrap();
+        let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", vdf::Iterations);
         let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
         let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
         let length = u16::from_str_radix(length, 10).unwrap();

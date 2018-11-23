@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+use super::proof_pietrzak;
 use super::{classgroup::ClassGroup, proof_pietrzak::verify_proof};
 use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::collections::HashMap;
@@ -96,7 +97,7 @@ where
 
 pub fn create_proof_of_time_pietrzak<T>(
     x: T,
-    iterations: u64,
+    iterations: proof_pietrzak::Iterations,
     int_size_bits: usize,
 ) -> Result<Vec<u8>, ()>
 where
@@ -105,9 +106,9 @@ where
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
     let delta = 8;
-    let powers_to_calculate = super::proof_pietrzak::cache_indices_for_count(iterations);
+    let powers_to_calculate = super::proof_pietrzak::cache_indices_for_count(iterations.into());
     let powers = iterate_squarings(x.clone(), powers_to_calculate.iter().cloned());
-    let y = &powers[&iterations];
+    let y = &powers[&iterations.into()];
     let identity = &x.identity();
     let proof = super::proof_pietrzak::generate_proof(
         x,
@@ -145,6 +146,7 @@ where
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
+    let iterations = proof_pietrzak::Iterations::new(iterations).map_err(drop)?;
     if usize::MAX - 16 < length_in_bits {
         // Proof way too long.
         return Err(());
