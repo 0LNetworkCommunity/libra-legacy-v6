@@ -50,6 +50,8 @@ extern "C" {
     fn __gmpz_set_si(rop: mpz_ptr, op: libc::c_long);
     fn __gmpz_neg(rop: mpz_ptr, op: mpz_srcptr);
     fn __gmpz_cdiv_ui(n: mpz_srcptr, d: libc::c_ulong) -> libc::c_ulong;
+    fn __gmpz_fdiv_ui(n: mpz_srcptr, d: libc::c_ulong) -> libc::c_ulong;
+    fn __gmpz_tdiv_ui(n: mpz_srcptr, d: libc::c_ulong) -> libc::c_ulong;
     fn __gmpz_export(
         rop: *mut libc::c_void,
         countp: *mut libc::size_t,
@@ -72,17 +74,19 @@ struct MpzStruct {
     mp_d: *mut gmp::mpz::mp_limb_t,
 }
 
-macro_rules! impl_cdiv_ui {
-    ($t: ty, $i: ident) => {
+macro_rules! impl_div_ui {
+    ($t: ident, $i: ident, $f: expr) => {
         pub fn $i(n: &Mpz, d: $t) -> $t {
-            unsafe { __gmpz_cdiv_ui(n.inner(), libc::c_ulong::from(d)) as $t }
+            use std::$t;
+            let res = unsafe { $f(n.inner(), libc::c_ulong::from(d)) };
+            assert!(res <= $t::MAX.into());
+            res as $t
         }
     };
 }
 
-// impl_cdiv_ui!(u8, mpz_rem_u8);
-impl_cdiv_ui!(u16, mpz_rem_u16);
-impl_cdiv_ui!(u32, mpz_rem_u32);
+impl_div_ui!(u16, mpz_crem_u16, __gmpz_cdiv_ui);
+impl_div_ui!(u32, mpz_frem_u32, __gmpz_fdiv_ui);
 
 /// Returns `true` if `z` is negative and not zero.  Otherwise,
 /// returns `false`.
@@ -303,6 +307,7 @@ mod test {
 
     #[test]
     fn check_rem() {
-        assert_eq!(mpz_rem_u16(&(100i64).into(), 3), 2);
+        assert_eq!(mpz_crem_u16(&(-100i64).into(), 3), 1);
+        assert_eq!(mpz_crem_u16(&(100i64).into(), 3), 2);
     }
 }
