@@ -93,59 +93,64 @@ fn main() -> Result<(), std::io::Error> {
         )
     )
     .get_matches();
-    if let Some(_matches) = matches.subcommand_matches("compute") {
-        let (discriminant,) = parse_already_checked_args();
-        let iterations = value_t_or_exit!(_matches, "NUM_ITERATIONS", u64);
-        println!("{}", vdf::do_compute(discriminant, iterations));
-        Ok(())
-    } else if let Some(matches) = matches.subcommand_matches("dump") {
-        let mut v = Mpz::from_str_radix(matches.value_of("NUM").unwrap(), 0).unwrap();
-        let mut buf = vec![0u8; vdf::export_obj(&v, &mut []).unwrap_err()];
-        vdf::export_obj(&v, &mut buf).unwrap();
-        assert_eq!(&vdf::import_obj(&buf), &v);
-        println!("Dumped output: {:x?}", buf);
-        Ok(())
-    } else if let Some(m) = matches.subcommand_matches("verify") {
-        let iterations = value_t_or_exit!(m, "NUM_ITERATIONS", vdf::Iterations).into();
-        let challenge = m.value_of("DISCRIMINANT_CHALLENGE").unwrap();
-        let length = m.value_of("LENGTH").or(Some("2048")).unwrap();
-        let length = u16::from_str_radix(length, 10).unwrap();
-        let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
-        let proof = hex::decode(m.value_of("PROOF").unwrap()).unwrap();
-        let x: vdf::GmpClassGroup =
-            vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
-        match vdf::check_proof_of_time_pietrzak(
-            discriminant,
-            &x,
-            &proof,
-            iterations,
-            usize::from(length),
-        ) {
-            Ok(()) => {
-                println!("Proof is valid");
-                Ok(())
-            }
-            Err(()) => {
-                println!("Invalid proof");
-                std::process::exit(1);
+    match matches.subcommand() {
+        ("compute", Some(matches)) => {
+            let (discriminant,) = parse_already_checked_args();
+            let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", u64);
+            println!("{}", vdf::do_compute(discriminant, iterations));
+            Ok(())
+        }
+        ("verify", Some(matches)) => {
+            let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", vdf::Iterations).into();
+            let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
+            let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
+            let length = u16::from_str_radix(length, 10).unwrap();
+            let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
+            let proof = hex::decode(matches.value_of("PROOF").unwrap()).unwrap();
+            let x: vdf::GmpClassGroup =
+                vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
+            match vdf::check_proof_of_time_pietrzak(
+                discriminant,
+                &x,
+                &proof,
+                iterations,
+                usize::from(length),
+            ) {
+                Ok(()) => {
+                    println!("Proof is valid");
+                    Ok(())
+                }
+                Err(()) => {
+                    println!("Invalid proof");
+                    std::process::exit(1);
+                }
             }
         }
-    } else if let Some(matches) = matches.subcommand_matches("prove") {
-        let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", vdf::Iterations);
-        let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
-        let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
-        let length = u16::from_str_radix(length, 10).unwrap();
-        let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
-        let x: vdf::GmpClassGroup =
-            vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant);
-        println!(
-            "{}",
-            hex::encode(
-                &vdf::create_proof_of_time_pietrzak(x, iterations, usize::from(length)).unwrap()
-            )
-        );
-        Ok(())
-    } else {
-        unimplemented!()
+        ("prove", Some(matches)) => {
+            let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", vdf::Iterations);
+            let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
+            let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
+            let length = u16::from_str_radix(length, 10).unwrap();
+            let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
+            let x: vdf::GmpClassGroup =
+                vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant);
+            println!(
+                "{}",
+                hex::encode(
+                    &vdf::create_proof_of_time_pietrzak(x, iterations, usize::from(length))
+                        .unwrap()
+                )
+            );
+            Ok(())
+        }
+        ("dump", Some(matches)) => {
+            let mut v = Mpz::from_str_radix(matches.value_of("NUM").unwrap(), 0).unwrap();
+            let mut buf = vec![0u8; vdf::export_obj(&v, &mut []).unwrap_err()];
+            vdf::export_obj(&v, &mut buf).unwrap();
+            assert_eq!(&vdf::import_obj(&buf), &v);
+            println!("Dumped output: {:x?}", buf);
+            Ok(())
+        }
+        _ => unreachable!(),
     }
 }
