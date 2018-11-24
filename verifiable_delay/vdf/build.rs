@@ -78,6 +78,11 @@ macro_rules! const_fmt {
         "#[allow(clippy::unreadable_literals)]\nconst {}: [{}; {}] = {:?};\n\n";
     };
 }
+
+/// A product of many small prime numbers.  We precompute the numbers between
+/// `1` and `M` that are coprime to `M`.  Any number whose residue modulo `M` is
+/// one of these is not divisible by any of the prime factors of `M`.  This
+/// speeds up the generation of random prime numbers.
 const M: usize = 8 * 3 * 5 * 7 * 11 * 13;
 fn emit<T: std::fmt::Debug>(f: &mut dyn Write, name: &str, t: &str, obj: &[T]) {
     write!(f, const_fmt!(), name, t, obj.len(), obj).expect("i/o error in build script");
