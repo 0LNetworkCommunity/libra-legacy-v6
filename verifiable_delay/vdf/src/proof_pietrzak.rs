@@ -96,6 +96,7 @@ impl Iterations {
     }
 }
 
+/// Selects a reasonable choice of cache size.
 fn approximate_i(t: Iterations) -> u64 {
     let x: f64 = (((t.0 >> 1) as f64) / 8.) * 2.0f64.ln();
     let w = x.ln() - x.ln().ln() + 0.25;
