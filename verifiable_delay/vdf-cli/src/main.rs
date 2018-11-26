@@ -1,4 +1,4 @@
-// Copyright 2018 Chia Network Inc and POA Networks, Ltd.
+// Copyright 2018 Chia Network Inc and POA Networks Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ gen_validator!(is_bignum_ok, |x| Mpz::from_str_radix(x, 0));
 fn main() -> Result<(), std::io::Error> {
     let matches = clap_app!(myapp =>
         (version: crate_version!())
-        (author: "POA Networks, Ltd. <poa.networks>")
+        (author: "POA Networks Ltd. <poa.networks>")
         (about: "CLI to Verifiable Delay Functions")
         (@subcommand compute =>
             (@arg DISCRIMINANT: +required {is_bigint_ok} "The discriminant" )

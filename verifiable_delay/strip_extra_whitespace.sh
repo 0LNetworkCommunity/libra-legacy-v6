@@ -1,5 +1,5 @@
 #!/bin/bash --
-# Copyright 2018 POA Networks, Ltd.
+# Copyright 2018 POA Networks Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 
 set -euo pipefail
 cargo fmt
-git ls-files -z | grep -vEz '\.rs$' | xargs -0 sed -ni -- '
+git ls-files -z | { if false; then cat; else grep -vEz '\.rs$'; fi; } | xargs -0 sed -ni -- '
 s/\s\s*$//
 /./,$!d
 /^$/! b done
@@ -31,6 +31,7 @@ H
 /^$/bloop
 g
 :done
+# s/POA Networks, Ltd\./POA Networks Ltd./g
 p
 '
 rm -f rls*.log
