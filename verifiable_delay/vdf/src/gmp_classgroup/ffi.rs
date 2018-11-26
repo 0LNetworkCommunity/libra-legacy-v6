@@ -26,7 +26,7 @@ use std::{mem, usize};
 // We use the unsafe versions to avoid unecessary allocations.
 #[link(name = "gmp")]
 extern "C" {
-    fn __gmpz_gcdext(g: mpz_ptr, s: mpz_ptr, t: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
+    fn __gmpz_gcdext(gcd: mpz_ptr, s: mpz_ptr, t: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
     fn __gmpz_gcd(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
     fn __gmpz_fdiv_qr(q: mpz_ptr, r: mpz_ptr, b: mpz_srcptr, g: mpz_srcptr);
     fn __gmpz_fdiv_q(q: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
@@ -95,10 +95,10 @@ pub fn mpz_is_negative(z: &Mpz) -> bool {
 }
 
 /// Sets `g` to the GCD of `a` and `b`.
-pub fn mpz_gcdext(g: &mut Mpz, s: &mut Mpz, t: &mut Mpz, a: &Mpz, b: &Mpz) {
+pub fn mpz_gcdext(gcd: &mut Mpz, s: &mut Mpz, t: &mut Mpz, a: &Mpz, b: &Mpz) {
     unsafe {
         __gmpz_gcdext(
-            g.inner_mut(),
+            gcd.inner_mut(),
             s.inner_mut(),
             t.inner_mut(),
             a.inner(),

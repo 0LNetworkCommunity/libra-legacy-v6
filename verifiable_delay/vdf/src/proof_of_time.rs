@@ -106,7 +106,7 @@ where
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
     let delta = 8;
-    let powers_to_calculate = super::proof_pietrzak::cache_indices_for_count(iterations.into());
+    let powers_to_calculate = super::proof_pietrzak::cache_indices_for_count(iterations);
     let powers = iterate_squarings(x.clone(), powers_to_calculate.iter().cloned());
     let y = &powers[&iterations.into()];
     let identity = &x.identity();
@@ -125,9 +125,9 @@ where
     let proof_len_in_bytes = (proof_len + 1) * element_length;
     let mut v = vec![0; proof_len_in_bytes];
     y.serialize(&mut v[0..element_length]).map_err(drop)?;
-    for i in 0..proof_len {
-        let offset = (i + 1) * element_length;
-        proof[i]
+    for (index, group) in proof.iter().enumerate() {
+        let offset = (index + 1) * element_length;
+        group
             .serialize(&mut v[offset..offset + element_length])
             .map_err(drop)?
     }

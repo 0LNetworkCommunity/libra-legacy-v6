@@ -77,7 +77,7 @@ fn multiplication_is_correct() {
             })
             .collect();
         assert_eq!(q.len(), 3);
-        if &q[0] == &q[1] {
+        if q[0] == q[1] {
             let mut i = q[0].clone();
             i.square();
             assert_eq!(i, q[2]);

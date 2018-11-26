@@ -201,9 +201,9 @@ where
                         t_sum += ts[num_bits - b - 1]
                     }
                 }
-                let mut s = powers[&t_sum].clone();
-                s.pow(r_prod);
-                mu *= &s;
+                let mut power = powers[&t_sum].clone();
+                power.pow(r_prod);
+                mu *= &power;
             }
             mu
         } else {
@@ -218,10 +218,10 @@ where
         assert!(last_r >= Zero::zero());
         rs.push(last_r.clone());
         {
-            let mut a: V = x_p.last().unwrap().clone();
-            a.pow(last_r.clone());
-            a *= &mu;
-            x_p.push(a)
+            let mut last_x: V = x_p.last().unwrap().clone();
+            last_x.pow(last_r.clone());
+            last_x *= &mu;
+            x_p.push(last_x);
         }
         mu.pow(last_r);
         mu *= y_p.last().unwrap();
