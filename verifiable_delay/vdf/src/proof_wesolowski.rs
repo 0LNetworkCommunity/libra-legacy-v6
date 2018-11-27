@@ -70,7 +70,7 @@ fn hash_prime(seed: &[&[u8]]) -> Mpz {
             hasher.input(i);
         }
         let n = Mpz::from(&hasher.fixed_result()[..16]);
-        if n.probab_prime(2) != gmp::mpz::ProbabPrimeResult::NotPrime {
+        if n.probab_prime(25) != gmp::mpz::ProbabPrimeResult::NotPrime {
             break n;
         }
         j += 1;
