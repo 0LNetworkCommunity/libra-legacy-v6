@@ -13,8 +13,8 @@
 // limitations under the License.
 use super::classgroup::ClassGroup;
 use super::gmp_classgroup::GmpClassGroup;
+use super::proof_of_time::{deserialize_proof, iterate_squarings, serialize};
 use num_traits::{One, Zero};
-use proof_of_time::{deserialize_proof, iterate_squarings, serialize};
 use std::fmt;
 use std::num::ParseIntError;
 use std::ops::Index;

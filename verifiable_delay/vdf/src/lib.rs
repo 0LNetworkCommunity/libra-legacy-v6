@@ -26,8 +26,8 @@ pub use self::gmp_classgroup::{
 };
 use std::fmt::Debug;
 
-pub use proof_pietrzak::{PietrzakVDF, PietrzakVDFParams};
-pub use proof_wesolowski::{WesolowskiVDF, WesolowskiVDFParams};
+pub use self::proof_pietrzak::{PietrzakVDF, PietrzakVDFParams};
+pub use self::proof_wesolowski::{WesolowskiVDF, WesolowskiVDFParams};
 
 const INCORRECT_BUFFER_SIZE: &str =
     "internal error: incorrect buffer size calculation (this is a bug)";
