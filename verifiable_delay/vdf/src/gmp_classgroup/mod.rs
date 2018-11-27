@@ -332,6 +332,29 @@ impl<B: Borrow<GmpClassGroup>> MulAssign<B> for GmpClassGroup {
     }
 }
 
+impl super::classgroup::BigNum for Mpz {
+    fn probab_prime(&self, iterations: u32) -> bool {
+        self.probab_prime(iterations.max(256) as _) != gmp::mpz::ProbabPrimeResult::NotPrime
+    }
+
+    fn setbit(&mut self, bit_index: usize) {
+        self.setbit(bit_index)
+    }
+
+    fn mod_powm(&mut self, base: &Self, exponent: &Self, modulus: &Self) {
+        ffi::mpz_powm(self, base, exponent, modulus)
+    }
+}
+
+impl super::classgroup::BigNumExt for Mpz {
+    fn frem_u32(&self, modulus: u32) -> u32 {
+        ffi::mpz_frem_u32(self, modulus)
+    }
+    fn crem_u16(&mut self, modulus: u16) -> u16 {
+        ffi::mpz_crem_u16(self, modulus)
+    }
+}
+
 impl<B: Borrow<Self>> Mul<B> for GmpClassGroup {
     type Output = Self;
     #[inline]

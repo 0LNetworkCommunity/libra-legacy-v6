@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use super::classgroup::ClassGroup;
+use super::classgroup::{BigNumExt, ClassGroup};
 use super::gmp_classgroup::GmpClassGroup;
 use super::proof_of_time::{deserialize_proof, iterate_squarings, serialize};
 use num_traits::{One, Zero};
@@ -164,7 +164,8 @@ fn create_proof_of_time_pietrzak<T>(
     int_size_bits: u16,
 ) -> Vec<u8>
 where
-    T: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    T: ClassGroup,
+    <T as ClassGroup>::BigNum: BigNumExt,
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
@@ -196,7 +197,8 @@ pub fn check_proof_of_time_pietrzak<T>(
     length_in_bits: u16,
 ) -> Result<(), super::InvalidProof>
 where
-    T: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    T: ClassGroup,
+    T::BigNum: BigNumExt,
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {

@@ -25,19 +25,59 @@ pub enum InvalidDiscriminant<T> {
 #[cfg(none)]
 pub type Result<T> = std::result::Result<T, InvalidDiscriminant<<T as ClassGroup>::BigNum>>;
 
+pub trait BigNum:
+    Zero
+    + One
+    + Clone
+    + PartialOrd
+    + std::fmt::Debug
+    + Rem
+    + ShlAssign<usize>
+    + for<'a> MulAssign<&'a Self>
+    + std::ops::Sub<u64, Output = Self>
+    + std::ops::Add<u64, Output = Self>
+    + std::convert::From<u64>
+    + for<'a> std::convert::From<&'a [u8]>
+    + std::ops::Shl<usize, Output = Self>
+    + std::ops::Shr<usize, Output = Self>
+    + std::ops::Neg<Output = Self>
+    + std::str::FromStr
+    + for<'a> std::ops::Div<&'a Self, Output = Self>
+    + Eq
+    + std::hash::Hash
+{
+    fn probab_prime(&self, iterations: u32) -> bool;
+    fn setbit(&mut self, offset: usize);
+    fn mod_powm(&mut self, base: &Self, exponent: &Self, modulus: &Self);
+}
+
+pub trait BigNumExt: BigNum {
+    fn frem_u32(&self, modulus: u32) -> u32;
+    fn crem_u16(&mut self, modulus: u16) -> u16;
+}
+
+#[cfg(none)]
+impl<T> BigNumExt for T
+where
+    T: BigNum,
+    for<'a> &'a T: std::ops::Rem<u32, Output = u32>,
+{
+    fn frem_u32(&self, modulus: u32) -> u32 {
+        self % modulus
+    }
+
+    fn crem_u16(&mut self, modulus: u16) -> u16 {
+        *self = -*self;
+        let res = &*self % modulus.into();
+        *self = -*self;
+        res as _
+    }
+}
+
 pub trait ClassGroup:
     Sized + Clone + for<'a> MulAssign<&'a Self> + for<'a> Mul<&'a Self> + PartialEq + std::fmt::Debug
 {
-    type BigNum: Zero
-        + One
-        + Clone
-        + PartialOrd
-        + std::fmt::Debug
-        + Rem
-        + ShlAssign<usize>
-        + for<'a> MulAssign<&'a Self::BigNum>
-        + std::convert::From<u64>
-        + std::ops::Shl<usize, Output = Self::BigNum>;
+    type BigNum: BigNum;
 
     /// Produces a `Self` from `a`, `b`, and a discriminant.
     fn from_ab_discriminant(a: Self::BigNum, b: Self::BigNum, discriminant: Self::BigNum) -> Self;

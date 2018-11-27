@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::classgroup::ClassGroup;
-use super::gmp_classgroup::ffi::mpz_powm;
+use super::classgroup::{BigNum, BigNumExt, ClassGroup};
 use super::gmp_classgroup::GmpClassGroup;
 use super::proof_of_time::{iterate_squarings, serialize};
-use gmp::mpz::Mpz;
 use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::{cmp::Eq, collections::HashMap, hash::Hash, mem, u64, usize};
 
@@ -45,10 +43,11 @@ impl super::VDF for WesolowskiVDF {
         if difficulty > usize::MAX as u64 {
             Err(Bad("Cannot have more that usize::MAX iterations".to_owned()))
         } else {
-            Ok(create_proof_of_time_wesolowski::<GmpClassGroup>(
-                challenge,
-                difficulty as usize,
-                self.int_size_bits,
+            Ok(create_proof_of_time_wesolowski::<
+                gmp::mpz::Mpz,
+                GmpClassGroup,
+            >(
+                challenge, difficulty as usize, self.int_size_bits
             ))
         }
     }
@@ -59,7 +58,7 @@ impl super::VDF for WesolowskiVDF {
         difficulty: u64,
         alleged_solution: &[u8],
     ) -> Result<(), super::InvalidProof> {
-        check_proof_of_time_wesolowski::<GmpClassGroup>(
+        check_proof_of_time_wesolowski::<gmp::mpz::Mpz, GmpClassGroup>(
             challenge,
             alleged_solution,
             difficulty,
@@ -111,7 +110,7 @@ fn u64_to_bytes(q: u64) -> [u8; 8] {
 /// Quote:
 ///
 /// > Creates a random prime based on input s.
-fn hash_prime(seed: &[&[u8]]) -> Mpz {
+fn hash_prime<T: BigNum>(seed: &[&[u8]]) -> T {
     let mut j = 0u64;
     loop {
         let mut hasher = Sha256::new();
@@ -120,8 +119,8 @@ fn hash_prime(seed: &[&[u8]]) -> Mpz {
         for i in seed {
             hasher.input(i);
         }
-        let n = Mpz::from(&hasher.fixed_result()[..16]);
-        if n.probab_prime(25) != gmp::mpz::ProbabPrimeResult::NotPrime {
+        let n = T::from(&hasher.fixed_result()[..16]);
+        if n.probab_prime(25) {
             break n;
         }
         j += 1;
@@ -132,21 +131,17 @@ fn hash_prime(seed: &[&[u8]]) -> Mpz {
 ///
 /// > Get“s the ith block of `2^T // B`, such that `sum(get_block(i) * 2^(k*i))
 /// > = t^T // B`
-fn get_block(i: u64, k: u8, t: u64, b: &Mpz) -> Mpz {
-    let mut res = Mpz::new();
-    super::gmp_classgroup::ffi::mpz_powm(
-        &mut res,
-        &Mpz::from(2),
-        &Mpz::from(t - u64::from(k) * (i + 1)),
-        b,
-    );
-    res *= Mpz::one() << k as usize;
+fn get_block<T: BigNumExt>(i: u64, k: u8, t: u64, b: &T) -> T {
+    let mut res = T::from(0);
+    let two = T::from(2);
+    res.mod_powm(&two, &T::from(t - u64::from(k) * (i + 1)), b);
+    res *= &((two >> 1) << (k as usize));
     res / b
 }
 
-fn eval_optimized<T, L: ClassGroup<BigNum = Mpz> + Eq + Hash>(
+fn eval_optimized<T, U: BigNumExt, L: ClassGroup<BigNum = U> + Eq + Hash>(
     h: &L,
-    b: &Mpz,
+    b: &U,
     t: usize,
     k: u8,
     l: usize,
@@ -175,10 +170,10 @@ where
     let k0_exp = 1usize << k0;
     let k1_exp = 1usize << k1;
     for j in (0..l).rev() {
-        x.pow(Mpz::from(k_exp as u64));
-        let mut ys: HashMap<Mpz, L> = HashMap::new();
+        x.pow(U::from(k_exp as u64));
+        let mut ys: HashMap<U, L> = HashMap::new();
         for b in 0..1usize << k {
-            ys.entry(Mpz::from(b as u64))
+            ys.entry(U::from(b as u64))
                 .or_insert_with(|| identity.clone());
         }
         let end_of_loop = ((t as f64) / kl as f64).ceil() as usize;
@@ -194,34 +189,34 @@ where
         for b1 in 0..k1_exp {
             let mut z = identity.clone();
             for b0 in 0..k0_exp {
-                z *= &ys[&Mpz::from((b1 * k0_exp + b0) as u64)]
+                z *= &ys[&U::from((b1 * k0_exp + b0) as u64)]
             }
-            z.pow(Mpz::from((b1 as u64) * (k0_exp as u64)));
+            z.pow(U::from((b1 as u64) * (k0_exp as u64)));
             x *= &z;
         }
 
         for b0 in 0..k0_exp {
             let mut z = identity.clone();
             for b1 in 0..k1_exp {
-                z *= &ys[&Mpz::from((b1 * k0_exp + b0) as u64)];
+                z *= &ys[&U::from((b1 * k0_exp + b0) as u64)];
             }
-            z.pow(Mpz::from(b0 as u64));
+            z.pow(U::from(b0 as u64));
             x *= &z;
         }
     }
     x
 }
 
-pub fn generate_proof<T, V: ClassGroup<BigNum = Mpz> + Eq + Hash>(
+pub fn generate_proof<U, T: BigNumExt, V: ClassGroup<BigNum = T> + Eq + Hash>(
     x: &V,
     iterations: u64,
     k: u8,
     l: usize,
-    powers: &T,
+    powers: &U,
     int_size_bits: usize,
 ) -> V
 where
-    T: for<'a> std::ops::Index<&'a u64, Output = V>,
+    U: for<'a> std::ops::Index<&'a u64, Output = V>,
 {
     let element_len = 2 * ((int_size_bits + 16) >> 4);
     let mut x_buf = vec![0; element_len];
@@ -236,7 +231,7 @@ where
 }
 
 /// Verify a proof, according to the Wesolowski paper.
-pub fn verify_proof<V: ClassGroup<BigNum = Mpz>>(
+pub fn verify_proof<T: BigNum, V: ClassGroup<BigNum = T>>(
     mut x: V,
     y: &V,
     mut proof: V,
@@ -251,8 +246,8 @@ pub fn verify_proof<V: ClassGroup<BigNum = Mpz>>(
     y.serialize(&mut y_buf[..])
         .expect(super::INCORRECT_BUFFER_SIZE);
     let b = hash_prime(&[&x_buf[..], &y_buf[..]]);
-    let mut r = Mpz::new();
-    mpz_powm(&mut r, &Mpz::from(2u64), &Mpz::from(t), &b);
+    let mut r = T::from(0);
+    r.mod_powm(&T::from(2u64), &T::from(t), &b);
     proof.pow(b);
     x.pow(r);
     proof *= &x;
@@ -263,7 +258,7 @@ pub fn verify_proof<V: ClassGroup<BigNum = Mpz>>(
     }
 }
 
-pub fn create_proof_of_time_wesolowski<V: ClassGroup<BigNum = gmp::mpz::Mpz> + Eq + Hash>(
+pub fn create_proof_of_time_wesolowski<T: BigNumExt, V: ClassGroup<BigNum = T> + Eq + Hash>(
     challenge: &[u8],
     iterations: usize,
     int_size_bits: u16,
@@ -288,13 +283,16 @@ where
     serialize(&[proof], &powers[&(iterations as _)], int_size_bits.into())
 }
 
-pub fn check_proof_of_time_wesolowski<V: ClassGroup<BigNum = Mpz>>(
+pub fn check_proof_of_time_wesolowski<T: BigNum, V: ClassGroup<BigNum = T>>(
     challenge: &[u8],
     proof_blob: &[u8],
     iterations: u64,
     int_size_bits: u16,
-) -> Result<(), ()> {
-    let discriminant = super::create_discriminant::create_discriminant(challenge, int_size_bits);
+) -> Result<(), ()>
+where
+    T: BigNumExt,
+{
+    let discriminant: T = super::create_discriminant::create_discriminant(challenge, int_size_bits);
     let x = V::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
     if (usize::MAX - 16) < int_size_bits.into() {
         return Err(());
