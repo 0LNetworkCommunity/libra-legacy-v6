@@ -18,17 +18,25 @@ extern crate num_traits;
 extern crate sha2;
 mod create_discriminant;
 mod gmp_classgroup;
-pub use crate::gmp_classgroup::{
+
+pub use self::gmp_classgroup::{
     do_compute,
     ffi::{export_obj, import_obj},
     GmpClassGroup,
 };
+
+const INCORRECT_BUFFER_SIZE: &str = "incorrect buffer size calculation (this is a bug)";
+
 pub mod classgroup;
 mod proof_of_time;
-pub use crate::create_discriminant::create_discriminant;
-pub use crate::proof_of_time::{check_proof_of_time_pietrzak, create_proof_of_time_pietrzak};
+mod proof_wesolowski;
+pub use self::create_discriminant::create_discriminant;
+pub use self::proof_of_time::{
+    check_proof_of_time_pietrzak, check_proof_of_time_wesolowski, create_proof_of_time_pietrzak,
+    create_proof_of_time_wesolowski,
+};
 mod proof_pietrzak;
-pub use crate::classgroup::ClassGroup;
+pub use self::classgroup::ClassGroup;
 pub use proof_pietrzak::{InvalidIterations, Iterations, ParseIterationsError};
 pub trait VDF {
     type PublicParameters;
@@ -50,5 +58,3 @@ pub trait VDF {
         proof: Self::Proof,
     ) -> Result<(), ()>;
 }
-#[cfg(test)]
-mod tests {}

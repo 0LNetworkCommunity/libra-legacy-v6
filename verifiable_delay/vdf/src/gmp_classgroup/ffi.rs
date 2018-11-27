@@ -61,6 +61,7 @@ extern "C" {
         nails: libc::size_t,
         op: mpz_srcptr,
     ) -> *mut libc::c_void;
+    fn __gmpz_powm(rop: mpz_ptr, base: mpz_srcptr, exp: mpz_srcptr, modulus: mpz_srcptr);
 }
 
 // MEGA HACK: rust-gmp doesn’t expose this struct, so we must define
@@ -92,6 +93,17 @@ impl_div_ui!(u32, mpz_frem_u32, __gmpz_fdiv_ui);
 /// returns `false`.
 pub fn mpz_is_negative(z: &Mpz) -> bool {
     unsafe { (*(z.inner() as *const MpzStruct)).mp_size < 0 }
+}
+
+pub fn mpz_powm(rop: &mut Mpz, base: &Mpz, exponent: &Mpz, modulus: &Mpz) {
+    unsafe {
+        __gmpz_powm(
+            rop.inner_mut(),
+            base.inner(),
+            exponent.inner(),
+            modulus.inner(),
+        )
+    }
 }
 
 /// Sets `g` to the GCD of `a` and `b`.
@@ -236,7 +248,11 @@ pub fn export_obj(obj: &Mpz, v: &mut [u8]) -> Result<(), usize> {
     // One additional bit is needed for the sign bit.
     let byte_len_needed = (size + 8) >> 3;
     if v.len() < byte_len_needed {
-        return Err(byte_len_needed);
+        return if v.is_empty() && obj.is_zero() {
+            Ok(())
+        } else {
+            Err(byte_len_needed)
+        };
     }
     let is_negative = mpz_is_negative(obj);
 
@@ -303,6 +319,7 @@ mod test {
         let mut buf = [0, 0, 0];
         export_obj(&s, &mut buf).expect("buffer should be large enough");
         assert_eq!(buf, [0xFF, 0xFE, 0xFF]);
+        export_obj(&Mpz::zero(), &mut []).unwrap();
     }
 
     #[test]

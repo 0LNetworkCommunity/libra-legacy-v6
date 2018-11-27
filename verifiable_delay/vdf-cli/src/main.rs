@@ -22,7 +22,6 @@ extern crate hex;
 extern crate vdf;
 #[macro_use]
 extern crate clap;
-
 thread_local! {
     static DISCRIMINANT: RefCell<Option<Mpz>> = RefCell::new(None);
 }
@@ -32,7 +31,7 @@ fn is_bigint_ok(obj: String) -> Result<(), String> {
         Ok(m) => {
             if m >= (-6i64).into() {
                 Err("m must be negative and ≤ -7".to_owned())
-            } else if (m).probab_prime(if cfg!(debug_assertions) { 40 } else { 1 })
+            } else if m.probab_prime(if cfg!(debug_assertions) { 40 } else { 1 })
                 == gmp::mpz::ProbabPrimeResult::NotPrime
             {
                 Err("m must be prime".to_owned())
@@ -64,27 +63,48 @@ macro_rules! gen_validator {
 
 gen_validator!(is_u16_ok: u16);
 gen_validator!(is_u64_ok: u64);
-gen_validator!(is_iterations_ok: vdf::Iterations);
 gen_validator!(is_hex_ok, hex::decode);
 gen_validator!(is_bignum_ok, |x| Mpz::from_str_radix(x, 0));
 
+fn check_iterations(is_pietrzak: bool, matches: &clap::ArgMatches) -> u64 {
+    let iterations = value_t!(matches, "NUM_ITERATIONS", u64).unwrap();
+    if is_pietrzak && (iterations & 1 != 0 || iterations < 66) {
+        clap::Error::with_description(
+            "Number of iterations must be even and at least 66",
+            clap::ErrorKind::ValueValidation,
+        )
+        .exit()
+    } else {
+        iterations
+    }
+}
+
 fn main() -> Result<(), std::io::Error> {
+    let validate_proof_type = |x| {
+        if x == "pietrzak" || x == "wesolowski" {
+            Ok(())
+        } else {
+            Err("Invalid proof type".to_owned())
+        }
+    };
+
     let matches = clap_app!(myapp =>
         (version: crate_version!())
         (author: "POA Networks Ltd. <poa.networks>")
         (about: "CLI to Verifiable Delay Functions")
+        (@arg TYPE: -t --type +takes_value {validate_proof_type} "The type of proof to generate")
         (@subcommand compute =>
             (@arg DISCRIMINANT: +required {is_bigint_ok} "The discriminant" )
             (@arg NUM_ITERATIONS: +required {is_u64_ok} "The number of iterations")
         )
         (@subcommand prove =>
             (@arg DISCRIMINANT_CHALLENGE: +required {is_hex_ok} "Hex-encoded challenge to derive the discriminant from" )
-            (@arg NUM_ITERATIONS: +required {is_iterations_ok} "The number of iterations")
+            (@arg NUM_ITERATIONS: +required {is_u64_ok} "The number of iterations")
             (@arg LENGTH: {is_u16_ok} "Length in bits of the discriminant (default: 2048)")
         )
         (@subcommand verify =>
             (@arg DISCRIMINANT_CHALLENGE: +required {is_hex_ok} "Hex-encoded challenge to derive the discriminant from" )
-            (@arg NUM_ITERATIONS: +required {is_iterations_ok} "The number of iterations")
+            (@arg NUM_ITERATIONS: +required {is_u64_ok} "The number of iterations")
             (@arg PROOF: +required {is_hex_ok} "The proof")
             (@arg LENGTH: {is_u16_ok} "Length in bits of the discriminant (default: 2048)")
         )
@@ -93,15 +113,25 @@ fn main() -> Result<(), std::io::Error> {
         )
     )
     .get_matches();
+    let is_pietrzak = matches
+        .value_of("TYPE")
+        .map(|x| x == "pietrzak")
+        .unwrap_or(true);
+
     match matches.subcommand() {
         ("compute", Some(matches)) => {
             let (discriminant,) = parse_already_checked_args();
-            let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", u64);
-            println!("{}", vdf::do_compute(discriminant, iterations));
+            println!(
+                "{}",
+                vdf::do_compute(
+                    discriminant,
+                    matches.value_of("ITERATIONS").unwrap().parse().unwrap()
+                )
+            );
             Ok(())
         }
         ("verify", Some(matches)) => {
-            let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", vdf::Iterations).into();
+            let iterations = check_iterations(is_pietrzak, &matches);
             let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
             let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
             let length = u16::from_str_radix(length, 10).unwrap();
@@ -109,13 +139,24 @@ fn main() -> Result<(), std::io::Error> {
             let proof = hex::decode(matches.value_of("PROOF").unwrap()).unwrap();
             let x: vdf::GmpClassGroup =
                 vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
-            match vdf::check_proof_of_time_pietrzak(
-                discriminant,
-                &x,
-                &proof,
-                iterations,
-                usize::from(length),
-            ) {
+
+            match if is_pietrzak {
+                vdf::check_proof_of_time_pietrzak(
+                    discriminant,
+                    &x,
+                    &proof,
+                    iterations,
+                    usize::from(length),
+                )
+            } else {
+                vdf::check_proof_of_time_wesolowski(
+                    discriminant,
+                    x,
+                    &proof,
+                    iterations,
+                    usize::from(length),
+                )
+            } {
                 Ok(()) => {
                     println!("Proof is valid");
                     Ok(())
@@ -127,20 +168,23 @@ fn main() -> Result<(), std::io::Error> {
             }
         }
         ("prove", Some(matches)) => {
-            let iterations = value_t_or_exit!(matches, "NUM_ITERATIONS", vdf::Iterations);
+            let iterations = check_iterations(is_pietrzak, &matches);
             let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
             let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
             let length = u16::from_str_radix(length, 10).unwrap();
             let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
             let x: vdf::GmpClassGroup =
                 vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant);
-            println!(
-                "{}",
-                hex::encode(
-                    &vdf::create_proof_of_time_pietrzak(x, iterations, usize::from(length))
-                        .unwrap()
+            let proof = if is_pietrzak {
+                vdf::create_proof_of_time_pietrzak(
+                    x,
+                    vdf::Iterations::new(iterations).unwrap(),
+                    length.into(),
                 )
-            );
+            } else {
+                vdf::create_proof_of_time_wesolowski(&x, iterations as _, length.into())
+            };
+            println!("{}", hex::encode(&proof.unwrap()));
             Ok(())
         }
         ("dump", Some(matches)) => {

@@ -149,14 +149,11 @@ fn calculate_final_t(t: Iterations, delta: usize) -> u64 {
     ts[ts.len() - delta]
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(clippy::too_many_arguments))]
 pub fn generate_proof<T, U, V>(
     x: V,
-    t: Iterations,
+    iterations: Iterations,
     delta: usize,
-    y: V,
     powers: &T,
-    identity: &V,
     generate_r_value: &U,
     int_size_bits: usize,
 ) -> Result<Vec<V>, ()>
@@ -167,16 +164,18 @@ where
     for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
 {
-    let i = approximate_i(t);
+    let identity = x.identity();
+    let i = approximate_i(iterations);
     let mut mus = vec![];
     let mut rs: Vec<V::BigNum> = vec![];
     let mut x_p = vec![x];
-    let mut y_p = vec![y];
+    let mut curr_t = iterations.0;
 
-    let mut curr_t = t.0;
+    let mut y_p = vec![powers[&curr_t].clone()];
+
     let mut ts = vec![];
 
-    let final_t = calculate_final_t(t, delta);
+    let final_t = calculate_final_t(iterations, delta);
 
     let mut round_index = 0;
     while curr_t != final_t {

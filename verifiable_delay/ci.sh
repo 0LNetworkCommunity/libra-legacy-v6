@@ -22,21 +22,34 @@ case $0 in
    (*) :;;
 esac
 
-cargo test
-cargo test --release
+cargo test --all
+cargo test --all --release
 IFS=, k=: count=0
 prove () {
-   exec ./target/release/vdf-cli prove -- "$@"
+   fst_arg=$1
+   case a$1 in
+      (a-tpietrzak|a-twesolowski) :;;
+      (*) echo 'internal error' "$1" >&2; exit 1;;
+   esac
+   shift
+   exec ./target/release/vdf-cli "$fst_arg" -- prove -- "$@"
 }
 
 verify() {
-   exec ./target/release/vdf-cli verify -- "$@"
+   fst_arg=$1
+   case a$1 in
+      (a-tpietrzak|a-twesolowski) :;;
+      (*) echo 'internal error' >&2; exit 1;;
+   esac
+   shift
+   exec ./target/release/vdf-cli "$fst_arg" -- verify -- "$@"
 }
 
 test_output () {
-   q=$1
+   local correct_output actual_output
+   correct_output=$1
    shift
-   if correct_output=$("$@") && [[ "$correct_output" = "$q" ]]; then
+   if actual_output=$("$@") && [[ "$correct_output" = "$actual_output" ]]; then
       echo SUCCESS
    else
       echo FAILED
@@ -44,10 +57,12 @@ test_output () {
    fi
 }
 
-while read challenge iterations correct_proof; do
-   printf "Checking proof of input %d... " "$((count += 1))"
-   test_output "$correct_proof" prove "$challenge" "$iterations"
-   printf "Checking verification of input %d... " "$count"
-   test_output 'Proof is valid' verify "$challenge" "$iterations" "$correct_proof"
-done < <(grep -E '^[a-f0-9]{64},[0-9]{2,4},[0-9a-f]+$' test_data.csv)
+for proof_type in wesolowski pietrzak; do
+   while read challenge iterations correct_proof; do
+      printf "Checking proof of type %q on input %d... " "$proof_type" "$((count += 1))"
+      test_output "$correct_proof" ./target/release/vdf-cli "-t$proof_type"  prove -- "$challenge" "$iterations"
+      printf "Checking verification of input %d... " "$count"
+      test_output 'Proof is valid' ./target/release/vdf-cli "-t$proof_type"  verify  -- "$challenge" "$iterations" "$correct_proof"
+   done < <(grep -E '^[a-f0-9]{64},[0-9]{2,4},[0-9a-f]+$' "$proof_type.csv")
+done
 "$k"
