@@ -24,6 +24,7 @@ esac
 
 cargo test --all
 cargo test --all --release
+cargo run --release >/dev/null 2>&1 || :
 IFS=, k=: count=0
 prove () {
    fst_arg=$1

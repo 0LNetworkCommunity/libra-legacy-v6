@@ -20,6 +20,7 @@ use gmp::mpz::Mpz;
 use std::cell::RefCell;
 extern crate hex;
 extern crate vdf;
+use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
 #[macro_use]
 extern crate clap;
 thread_local! {
@@ -132,36 +133,24 @@ fn main() -> Result<(), std::io::Error> {
         }
         ("verify", Some(matches)) => {
             let iterations = check_iterations(is_pietrzak, &matches);
-            let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
+            let challenge =
+                hex::decode(&matches.value_of("DISCRIMINANT_CHALLENGE").unwrap()).unwrap();
             let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
-            let length = u16::from_str_radix(length, 10).unwrap();
-            let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
+            let int_size_bits = u16::from_str_radix(length, 10).unwrap();
             let proof = hex::decode(matches.value_of("PROOF").unwrap()).unwrap();
-            let x: vdf::GmpClassGroup =
-                vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
 
-            match if is_pietrzak {
-                vdf::check_proof_of_time_pietrzak(
-                    discriminant,
-                    &x,
-                    &proof,
-                    iterations,
-                    usize::from(length),
-                )
+            let vdf: Box<VDF> = if is_pietrzak {
+                Box::new(PietrzakVDFParams(int_size_bits).new()) as _
             } else {
-                vdf::check_proof_of_time_wesolowski(
-                    discriminant,
-                    x,
-                    &proof,
-                    iterations,
-                    usize::from(length),
-                )
-            } {
+                Box::new(WesolowskiVDFParams(int_size_bits).new()) as _
+            };
+
+            match vdf.verify(&challenge, iterations, &proof) {
                 Ok(()) => {
                     println!("Proof is valid");
                     Ok(())
                 }
-                Err(()) => {
+                Err(InvalidProof) => {
                     println!("Invalid proof");
                     std::process::exit(1);
                 }
@@ -169,22 +158,19 @@ fn main() -> Result<(), std::io::Error> {
         }
         ("prove", Some(matches)) => {
             let iterations = check_iterations(is_pietrzak, &matches);
-            let challenge = matches.value_of("DISCRIMINANT_CHALLENGE").unwrap();
+            let challenge =
+                hex::decode(&matches.value_of("DISCRIMINANT_CHALLENGE").unwrap()).unwrap();
             let length = matches.value_of("LENGTH").or(Some("2048")).unwrap();
-            let length = u16::from_str_radix(length, 10).unwrap();
-            let discriminant = vdf::create_discriminant(&hex::decode(&challenge).unwrap(), length);
-            let x: vdf::GmpClassGroup =
-                vdf::ClassGroup::from_ab_discriminant(2.into(), 1.into(), discriminant);
-            let proof = if is_pietrzak {
-                vdf::create_proof_of_time_pietrzak(
-                    x,
-                    vdf::Iterations::new(iterations).unwrap(),
-                    length.into(),
-                )
+            let int_size_bits = u16::from_str_radix(length, 10).unwrap();
+
+            let vdf: Box<VDF> = if is_pietrzak {
+                Box::new(PietrzakVDFParams(int_size_bits).new()) as _
             } else {
-                vdf::create_proof_of_time_wesolowski(&x, iterations as _, length.into())
+                Box::new(WesolowskiVDFParams(int_size_bits).new()) as _
             };
-            println!("{}", hex::encode(&proof.unwrap()));
+
+            let proof = vdf.solve(&challenge, iterations).unwrap();
+            println!("{}", hex::encode(&proof));
             Ok(())
         }
         ("dump", Some(matches)) => {

@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use super::classgroup::ClassGroup;
+use super::gmp_classgroup::GmpClassGroup;
 use num_traits::{One, Zero};
+use proof_of_time::{deserialize_proof, iterate_squarings, serialize};
 use std::fmt;
 use std::num::ParseIntError;
 use std::ops::Index;
 use std::str::FromStr;
 use std::u64;
+use std::usize;
 
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Clone, Debug)]
 pub struct Iterations(u64);
@@ -116,7 +119,7 @@ fn sum_combinations<'a, T: IntoIterator<Item = &'a u64>>(numbers: T) -> Vec<u64>
     combinations
 }
 
-pub fn cache_indices_for_count(t: Iterations) -> Vec<u64> {
+fn cache_indices_for_count(t: Iterations) -> Vec<u64> {
     let i: u64 = approximate_i(t);
     let mut curr_t = t.0;
     let mut intermediate_ts = vec![];
@@ -131,6 +134,100 @@ pub fn cache_indices_for_count(t: Iterations) -> Vec<u64> {
     cache_indices.sort();
     cache_indices.push(t.0);
     cache_indices
+}
+
+fn generate_r_value<T>(x: &T, y: &T, sqrt_mu: &T, int_size_bits: usize) -> T::BigNum
+where
+    T: ClassGroup,
+    for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
+    for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
+{
+    use sha2::{digest::FixedOutput, Digest, Sha256};
+
+    let size = (int_size_bits + 16) >> 4;
+    let mut v = Vec::with_capacity(size * 2);
+    for _ in 0..size * 2 {
+        v.push(0)
+    }
+    let mut hasher = Sha256::new();
+    for i in &[&x, &y, &sqrt_mu] {
+        i.serialize(&mut v).expect("bug in proof_pietrzak");
+        hasher.input(&v);
+    }
+    let res = hasher.fixed_result();
+    T::unsigned_deserialize_bignum(&res[..16])
+}
+
+fn create_proof_of_time_pietrzak<T>(
+    challenge: &[u8],
+    iterations: Iterations,
+    int_size_bits: u16,
+) -> Vec<u8>
+where
+    T: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
+    for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
+{
+    let discriminant = super::create_discriminant::create_discriminant(&challenge, int_size_bits);
+    let x = T::from_ab_discriminant(2.into(), 1.into(), discriminant);
+
+    let delta = 8;
+    let powers_to_calculate = cache_indices_for_count(iterations);
+    let powers = iterate_squarings(x.clone(), powers_to_calculate.iter().cloned());
+    let proof: Vec<T> = generate_proof(
+        x,
+        iterations,
+        delta,
+        &powers,
+        &generate_r_value,
+        usize::from(int_size_bits),
+    );
+    serialize(
+        &proof,
+        &powers[&iterations.into()],
+        usize::from(int_size_bits),
+    )
+}
+
+pub fn check_proof_of_time_pietrzak<T>(
+    challenge: &[u8],
+    proof_blob: &[u8],
+    iterations: u64,
+    length_in_bits: u16,
+) -> Result<(), super::InvalidProof>
+where
+    T: ClassGroup<BigNum = gmp::mpz::Mpz>,
+    for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
+    for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
+{
+    let discriminant = super::create_discriminant::create_discriminant(&challenge, length_in_bits);
+    let x = T::from_ab_discriminant(2.into(), 1.into(), discriminant);
+    let iterations = Iterations::new(iterations).map_err(|_| super::InvalidProof)?;
+    if usize::MAX - 16 < length_in_bits.into() {
+        // Proof way too long.
+        return Err(super::InvalidProof);
+    }
+    let length: usize = (usize::from(length_in_bits) + 16usize) >> 4;
+    if proof_blob.len() < 2 * length {
+        // Invalid length of proof
+        return Err(super::InvalidProof);
+    }
+    let result_bytes = &proof_blob[..length * 2];
+    let proof_bytes = &proof_blob[length * 2..];
+    let discriminant = x.discriminant().clone();
+    let proof =
+        deserialize_proof(proof_bytes, &discriminant, length).map_err(|()| super::InvalidProof)?;
+    let y = T::from_bytes(result_bytes, discriminant);
+    verify_proof(
+        &x,
+        &y,
+        proof,
+        iterations,
+        8,
+        &generate_r_value,
+        length_in_bits.into(),
+    )
+    .map_err(|()| super::InvalidProof)
 }
 
 fn calculate_final_t(t: Iterations, delta: usize) -> u64 {
@@ -156,10 +253,10 @@ pub fn generate_proof<T, U, V>(
     powers: &T,
     generate_r_value: &U,
     int_size_bits: usize,
-) -> Result<Vec<V>, ()>
+) -> Vec<V>
 where
     T: for<'a> Index<&'a u64, Output = V>,
-    U: Fn(&V, &V, &V, usize) -> Result<V::BigNum, ()>,
+    U: Fn(&V, &V, &V, usize) -> V::BigNum,
     V: ClassGroup,
     for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
@@ -214,7 +311,7 @@ where
             mu
         });
         let mut mu: V = mus.last().unwrap().clone();
-        let last_r: V::BigNum = generate_r_value(&x_p[0], &y_p[0], &mu, int_size_bits)?;
+        let last_r: V::BigNum = generate_r_value(&x_p[0], &y_p[0], &mu, int_size_bits);
         assert!(last_r >= Zero::zero());
         rs.push(last_r.clone());
         {
@@ -241,7 +338,7 @@ where
         assert_eq!(last_y, y_p.last().unwrap().clone());
         last_x.pow(one << final_t as usize);
     }
-    Ok(mus)
+    mus
 }
 
 pub fn verify_proof<T, U, V>(
@@ -255,7 +352,7 @@ pub fn verify_proof<T, U, V>(
 ) -> Result<(), ()>
 where
     T: IntoIterator<Item = V>,
-    U: Fn(&V, &V, &V, usize) -> Result<V::BigNum, ()>,
+    U: Fn(&V, &V, &V, usize) -> V::BigNum,
     V: ClassGroup,
     for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
     for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
@@ -269,7 +366,7 @@ where
             curr_t & 1 == 0,
             "Cannot have an odd number of iterations remaining"
         );
-        let r = generate_r_value(x_initial, y_initial, &mu, int_size_bits).expect("bug");
+        let r = generate_r_value(x_initial, y_initial, &mu, int_size_bits);
         x.pow(r.clone());
         x *= &mu;
         mu.pow(r);
@@ -287,6 +384,52 @@ where
         Ok(())
     } else {
         Err(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PietrzakVDF {
+    int_size_bits: u16,
+}
+use super::InvalidIterations as Bad;
+
+#[derive(Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash, Debug)]
+pub struct PietrzakVDFParams(pub u16);
+impl super::VDFParams for PietrzakVDFParams {
+    type VDF = PietrzakVDF;
+    fn new(self) -> Self::VDF {
+        PietrzakVDF {
+            int_size_bits: self.0,
+        }
+    }
+}
+
+impl super::VDF for PietrzakVDF {
+    fn check_difficulty(&self, difficulty: u64) -> Result<(), Bad> {
+        Iterations::new(difficulty)
+            .map_err(|x| Bad(format!("{}", x)))
+            .map(drop)
+    }
+    fn solve(&self, challenge: &[u8], difficulty: u64) -> Result<Vec<u8>, Bad> {
+        Ok(create_proof_of_time_pietrzak::<GmpClassGroup>(
+            challenge,
+            Iterations::new(difficulty).map_err(|x| Bad(format!("{}", x)))?,
+            self.int_size_bits,
+        ))
+    }
+
+    fn verify(
+        &self,
+        challenge: &[u8],
+        difficulty: u64,
+        alleged_solution: &[u8],
+    ) -> Result<(), super::InvalidProof> {
+        check_proof_of_time_pietrzak::<GmpClassGroup>(
+            challenge,
+            alleged_solution,
+            difficulty,
+            self.int_size_bits,
+        )
     }
 }
 

@@ -12,12 +12,62 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use super::classgroup::ClassGroup;
 use super::gmp_classgroup::ffi::mpz_powm;
-use super::ClassGroup;
+use super::gmp_classgroup::GmpClassGroup;
+use super::proof_of_time::{iterate_squarings, serialize};
 use gmp::mpz::Mpz;
 use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::{cmp::Eq, collections::HashMap, hash::Hash, mem, u64, usize};
 
+#[derive(Debug, Clone)]
+pub struct WesolowskiVDF {
+    int_size_bits: u16,
+}
+use super::InvalidIterations as Bad;
+
+#[derive(Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash, Debug)]
+pub struct WesolowskiVDFParams(pub u16);
+impl super::VDFParams for WesolowskiVDFParams {
+    type VDF = WesolowskiVDF;
+    fn new(self) -> Self::VDF {
+        WesolowskiVDF {
+            int_size_bits: self.0,
+        }
+    }
+}
+
+impl super::VDF for WesolowskiVDF {
+    fn check_difficulty(&self, _difficulty: u64) -> Result<(), Bad> {
+        Ok(())
+    }
+    fn solve(&self, challenge: &[u8], difficulty: u64) -> Result<Vec<u8>, Bad> {
+        if difficulty > usize::MAX as u64 {
+            Err(Bad("Cannot have more that usize::MAX iterations".to_owned()))
+        } else {
+            Ok(create_proof_of_time_wesolowski::<GmpClassGroup>(
+                challenge,
+                difficulty as usize,
+                self.int_size_bits,
+            ))
+        }
+    }
+
+    fn verify(
+        &self,
+        challenge: &[u8],
+        difficulty: u64,
+        alleged_solution: &[u8],
+    ) -> Result<(), super::InvalidProof> {
+        check_proof_of_time_wesolowski::<GmpClassGroup>(
+            challenge,
+            alleged_solution,
+            difficulty,
+            self.int_size_bits,
+        )
+        .map_err(|()| super::InvalidProof)
+    }
+}
 /// To quote the original Python code:
 ///
 /// > Create `L` and `k` parameters from papers, based on how many iterations
@@ -42,6 +92,7 @@ pub fn approximate_parameters(t: f64) -> (usize, u8, u64) {
 
 fn u64_to_bytes(q: u64) -> [u8; 8] {
     if false {
+        // This use of `std::mem::transumte` is correct, but still not justified.
         unsafe { std::mem::transmute(q.to_be()) }
     } else {
         [
@@ -210,4 +261,51 @@ pub fn verify_proof<V: ClassGroup<BigNum = Mpz>>(
     } else {
         Err(())
     }
+}
+
+pub fn create_proof_of_time_wesolowski<V: ClassGroup<BigNum = gmp::mpz::Mpz> + Eq + Hash>(
+    challenge: &[u8],
+    iterations: usize,
+    int_size_bits: u16,
+) -> Vec<u8>
+where
+    for<'a, 'b> &'a V: std::ops::Mul<&'b V, Output = V>,
+    for<'a, 'b> &'a V::BigNum: std::ops::Mul<&'b V::BigNum, Output = V::BigNum>,
+{
+    let discriminant = super::create_discriminant::create_discriminant(&challenge, int_size_bits);
+    let x = V::from_ab_discriminant(2.into(), 1.into(), discriminant);
+    assert!((iterations as u128) < (1u128 << 53));
+    let (l, k, _) = approximate_parameters(iterations as f64);
+    let q = l.checked_mul(k as _).expect("bug");
+    let powers = iterate_squarings(
+        x.clone(),
+        (0..=iterations / q + 1)
+            .map(|i| i * q)
+            .chain(Some(iterations))
+            .map(|x| x as _),
+    );
+    let proof = generate_proof(&x, iterations as _, k, l, &powers, int_size_bits.into());
+    serialize(&[proof], &powers[&(iterations as _)], int_size_bits.into())
+}
+
+pub fn check_proof_of_time_wesolowski<V: ClassGroup<BigNum = Mpz>>(
+    challenge: &[u8],
+    proof_blob: &[u8],
+    iterations: u64,
+    int_size_bits: u16,
+) -> Result<(), ()> {
+    let discriminant = super::create_discriminant::create_discriminant(challenge, int_size_bits);
+    let x = V::from_ab_discriminant(2.into(), 1.into(), discriminant.clone());
+    if (usize::MAX - 16) < int_size_bits.into() {
+        return Err(());
+    }
+    let int_size = (usize::from(int_size_bits) + 16) >> 4;
+    if int_size * 4 != proof_blob.len() {
+        return Err(());
+    }
+    let (result_bytes, proof_bytes) = proof_blob.split_at(2 * int_size);
+    let proof = ClassGroup::from_bytes(proof_bytes, discriminant.clone());
+    let y = ClassGroup::from_bytes(result_bytes, discriminant);
+
+    verify_proof(x, &y, proof, iterations, int_size_bits.into())
 }
