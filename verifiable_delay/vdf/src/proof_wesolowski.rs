@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::classgroup::{BigNum, BigNumExt, ClassGroup};
-use super::gmp_classgroup::GmpClassGroup;
 use super::proof_of_time::{iterate_squarings, serialize};
+use classgroup::gmp_classgroup::GmpClassGroup;
+use classgroup::{BigNum, BigNumExt, ClassGroup};
 use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::{cmp::Eq, collections::HashMap, hash::Hash, mem, u64, usize};
 
@@ -44,7 +44,7 @@ impl super::VDF for WesolowskiVDF {
             Err(Bad("Cannot have more that usize::MAX iterations".to_owned()))
         } else {
             Ok(create_proof_of_time_wesolowski::<
-                gmp::mpz::Mpz,
+                <GmpClassGroup as ClassGroup>::BigNum,
                 GmpClassGroup,
             >(
                 challenge, difficulty as usize, self.int_size_bits
@@ -58,13 +58,12 @@ impl super::VDF for WesolowskiVDF {
         difficulty: u64,
         alleged_solution: &[u8],
     ) -> Result<(), super::InvalidProof> {
-        check_proof_of_time_wesolowski::<gmp::mpz::Mpz, GmpClassGroup>(
+        check_proof_of_time_wesolowski::<<GmpClassGroup as ClassGroup>::BigNum, GmpClassGroup>(
             challenge,
             alleged_solution,
             difficulty,
             self.int_size_bits,
-        )
-        .map_err(|()| super::InvalidProof)
+        ).map_err(|()| super::InvalidProof)
     }
 }
 /// To quote the original Python code:

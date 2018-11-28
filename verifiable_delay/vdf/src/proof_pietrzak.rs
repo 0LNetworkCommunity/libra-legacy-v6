@@ -11,9 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use super::classgroup::{BigNumExt, ClassGroup};
-use super::gmp_classgroup::GmpClassGroup;
 use super::proof_of_time::{deserialize_proof, iterate_squarings, serialize};
+use classgroup::gmp_classgroup::GmpClassGroup;
+use classgroup::{BigNumExt, ClassGroup};
 use num_traits::{One, Zero};
 use std::fmt;
 use std::num::ParseIntError;
@@ -228,8 +228,7 @@ where
         8,
         &generate_r_value,
         length_in_bits.into(),
-    )
-    .map_err(|()| super::InvalidProof)
+    ).map_err(|()| super::InvalidProof)
 }
 
 fn calculate_final_t(t: Iterations, delta: usize) -> u64 {

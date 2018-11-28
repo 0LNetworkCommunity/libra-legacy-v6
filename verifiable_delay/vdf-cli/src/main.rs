@@ -23,6 +23,7 @@ extern crate vdf;
 use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
 #[macro_use]
 extern crate clap;
+extern crate classgroup;
 thread_local! {
     static DISCRIMINANT: RefCell<Option<Mpz>> = RefCell::new(None);
 }
@@ -73,8 +74,7 @@ fn check_iterations(is_pietrzak: bool, matches: &clap::ArgMatches) -> u64 {
         clap::Error::with_description(
             "Number of iterations must be even and at least 66",
             clap::ErrorKind::ValueValidation,
-        )
-        .exit()
+        ).exit()
     } else {
         iterations
     }
@@ -124,7 +124,7 @@ fn main() -> Result<(), std::io::Error> {
             let (discriminant,) = parse_already_checked_args();
             println!(
                 "{}",
-                vdf::do_compute(
+                classgroup::do_compute(
                     discriminant,
                     matches.value_of("ITERATIONS").unwrap().parse().unwrap()
                 )
@@ -174,10 +174,10 @@ fn main() -> Result<(), std::io::Error> {
             Ok(())
         }
         ("dump", Some(matches)) => {
-            let mut v = Mpz::from_str_radix(matches.value_of("NUM").unwrap(), 0).unwrap();
-            let mut buf = vec![0u8; vdf::export_obj(&v, &mut []).unwrap_err()];
-            vdf::export_obj(&v, &mut buf).unwrap();
-            assert_eq!(&vdf::import_obj(&buf), &v);
+            let v = Mpz::from_str_radix(matches.value_of("NUM").unwrap(), 0).unwrap();
+            let mut buf = vec![0u8; classgroup::export_obj(&v, &mut []).unwrap_err()];
+            classgroup::export_obj(&v, &mut buf).unwrap();
+            assert_eq!(&classgroup::import_obj(&buf), &v);
             println!("Dumped output: {:x?}", buf);
             Ok(())
         }

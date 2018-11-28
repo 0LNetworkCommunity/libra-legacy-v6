@@ -21,7 +21,6 @@ repository = "https://github.com/poanetwork/vdf"
 license = "Apache-2.0"
 
 [dependencies]
+classgroup = { path = "../classgroup" }
 num-traits = "0.2"
-rust-gmp = "0.5"
-libc = "0.2"
 sha2 = "0.8"

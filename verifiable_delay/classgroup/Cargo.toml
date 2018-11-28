@@ -1,4 +1,4 @@
-# Copyright 2018 Chia Network Inc and POA Networks Ltd.
+# Copyright 2018 POA Networks Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # and limitations under the License.
-[workspace]
-members = [
-    "vdf",
-    "vdf-cli",
-    "classgroup",
-]
+[package]
+name = "classgroup"
+version = "0.1.0"
+authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
+keywords = ["class group"]
+repository = "https://github.com/poanetwork/vdf"
+license = "Apache-2.0"
 
-[profile.release]
-debug = true
+[dependencies]
+num-traits = "0.2"
+rust-gmp = "0.5"
+libc = "0.2"

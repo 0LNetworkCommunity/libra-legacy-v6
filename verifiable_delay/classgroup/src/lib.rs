@@ -11,10 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 use num_traits::{One, Zero};
 use std::ops::{Mul, MulAssign, Rem, ShlAssign};
 
+extern crate gmp;
+extern crate libc;
+extern crate num_traits;
+pub mod gmp_classgroup;
+pub use self::gmp_classgroup::{
+    do_compute,
+    ffi::{export_obj, import_obj},
+};
 pub trait BigNum:
     Zero
     + One
@@ -170,7 +178,7 @@ mod test {
 
     extern crate gmp;
     extern crate num_traits;
-    use super::super::gmp_classgroup::GmpClassGroup;
+    use super::gmp_classgroup::GmpClassGroup;
     use super::ClassGroup;
     use gmp::mpz::Mpz;
 
@@ -228,8 +236,7 @@ mod test {
                         current_discriminant = Some(discriminant.clone());
                     }
                     GmpClassGroup::from_ab_discriminant(a, b, discriminant)
-                })
-                .collect();
+                }).collect();
             assert_eq!(q.len(), 3);
             if q[0] == q[1] {
                 let mut i = q[0].clone();

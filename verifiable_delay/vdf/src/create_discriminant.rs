@@ -23,7 +23,7 @@
 //! [`pot`]: <https://github.com/Chia-Network/vdf-competition/blob/003b0d202d3b27058159f7a3f6a838e312e7d79e/inkfish/cmds.py>
 include!(concat!(env!("OUT_DIR"), "/constants.rs"));
 
-use super::classgroup::BigNumExt;
+use classgroup::BigNumExt;
 use num_traits::Zero;
 use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::u16;
@@ -123,7 +123,8 @@ pub fn create_discriminant<T: BigNumExt>(seed: &[u8], length: u16) -> T {
 #[cfg(test)]
 mod test {
     use super::*;
-    use gmp::mpz::Mpz;
+    use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};
+    type Mpz = <GmpClassGroup as ClassGroup>::BigNum;
     use std::str::FromStr;
 
     #[test]
@@ -149,8 +150,7 @@ mod test {
                  034091728887584373727555384075665624624856766441009974642693066\
                  751400054217209981490667208950669417773785631693879782993019167\
                  69407006303085854796535778826115224633447713584423"
-            )
-            .unwrap()
+            ).unwrap()
         );
     }
     #[test]

@@ -12,18 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #![deny(warnings)]
-extern crate gmp;
-extern crate libc;
+extern crate classgroup;
 extern crate num_traits;
 extern crate sha2;
 mod create_discriminant;
-mod gmp_classgroup;
-// HACK: these should be in a separate crate.
-pub use self::gmp_classgroup::{
-    do_compute,
-    ffi::{export_obj, import_obj},
-    GmpClassGroup,
-};
 use std::fmt::Debug;
 
 pub use self::proof_pietrzak::{PietrzakVDF, PietrzakVDFParams};
@@ -34,7 +26,6 @@ pub use self::proof_wesolowski::{WesolowskiVDF, WesolowskiVDFParams};
 const INCORRECT_BUFFER_SIZE: &str =
     "internal error: incorrect buffer size calculation (this is a bug)";
 
-mod classgroup;
 mod proof_of_time;
 mod proof_pietrzak;
 mod proof_wesolowski;

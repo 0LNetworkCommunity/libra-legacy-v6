@@ -13,7 +13,7 @@
 // limitations under the License.
 #![deny(unsafe_code)]
 #![forbid(warnings)]
-use super::classgroup::ClassGroup;
+use super::ClassGroup;
 use gmp::mpz::Mpz;
 use num_traits::{One, Zero};
 use std::borrow::Borrow;
@@ -332,7 +332,7 @@ impl<B: Borrow<GmpClassGroup>> MulAssign<B> for GmpClassGroup {
     }
 }
 
-impl super::classgroup::BigNum for Mpz {
+impl super::BigNum for Mpz {
     fn probab_prime(&self, iterations: u32) -> bool {
         self.probab_prime(iterations.max(256) as _) != gmp::mpz::ProbabPrimeResult::NotPrime
     }
@@ -346,7 +346,7 @@ impl super::classgroup::BigNum for Mpz {
     }
 }
 
-impl super::classgroup::BigNumExt for Mpz {
+impl super::BigNumExt for Mpz {
     fn frem_u32(&self, modulus: u32) -> u32 {
         ffi::mpz_frem_u32(self, modulus)
     }
