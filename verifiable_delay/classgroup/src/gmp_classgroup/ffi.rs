@@ -139,12 +139,8 @@ pub fn mpz_fdiv_q_ui_self(rop: &mut Mpz, op: c_ulong) -> c_ulong {
     unsafe { __gmpz_fdiv_q_ui(rop.inner_mut(), rop.inner(), op) }
 }
 
-/// Unmarshals a buffer to an `Mpz`.  `buf` is interpreted as a
-/// 2’s complement, big-endian integer.
-///
-/// # Panics
-///
-/// Panics if the buffer is empty.
+/// Unmarshals a buffer to an `Mpz`.  `buf` is interpreted as a 2’s complement,
+/// big-endian integer.  If the buffer is empty, zero is returned.
 pub fn import_obj(buf: &[u8]) -> Mpz {
     fn raw_import(buf: &[u8]) -> Mpz {
         let mut obj = Mpz::new();
@@ -162,7 +158,10 @@ pub fn import_obj(buf: &[u8]) -> Mpz {
         }
         obj
     }
-    let is_negative = buf.first().expect("Cannot deserialize an empty buffer") & 0x80 != 0;
+    let is_negative = match buf.first() {
+        None => return Mpz::zero(),
+        Some(x) => x & 0x80 != 0,
+    };
     if !is_negative {
         raw_import(buf)
     } else {
