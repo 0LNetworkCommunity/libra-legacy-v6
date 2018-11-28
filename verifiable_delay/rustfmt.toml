@@ -1,3 +1,4 @@
+## Nightly-only features
 # binop_separator = "Front"
 # blank_lines_lower_bound = 0
 # blank_lines_upper_bound = 1
@@ -49,6 +50,8 @@
 # unstable_features = true
 # where_single_line = false
 # wrap_comments = true
+
+## Stable features
 force_explicit_abi = true
 hard_tabs = false
 max_width = 100
