@@ -20,5 +20,7 @@ case $# in
    (*) echo 'Must have 2 or 3 arguments' >&2; exit 1;;
 esac
 
-cmp <(~/.local/bin/pot -tpietrzak "-l${3-2048}" -- "$1" "$2") \
-    <(./vdf-cli prove -- "$@")
+set -- "-l${3-2048}" -- "$1" "$2"
+
+cmp <(~/.local/bin/pot -tpietrzak "$@") \
+    <(./vdf-cli "$@")

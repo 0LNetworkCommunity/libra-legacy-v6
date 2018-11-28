@@ -119,7 +119,7 @@ fn hash_prime<T: BigNum>(seed: &[&[u8]]) -> T {
             hasher.input(i);
         }
         let n = T::from(&hasher.fixed_result()[..16]);
-        if n.probab_prime(25) {
+        if n.probab_prime(13) {
             break n;
         }
         j += 1;
