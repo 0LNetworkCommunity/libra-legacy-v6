@@ -15,16 +15,6 @@
 use num_traits::{One, Zero};
 use std::ops::{Mul, MulAssign, Rem, ShlAssign};
 
-#[cfg(none)]
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum InvalidDiscriminant<T> {
-    NotNegative(T),
-    NotPrime(T),
-}
-
-#[cfg(none)]
-pub type Result<T> = std::result::Result<T, InvalidDiscriminant<<T as ClassGroup>::BigNum>>;
-
 pub trait BigNum:
     Zero
     + One
@@ -54,24 +44,6 @@ pub trait BigNum:
 pub trait BigNumExt: BigNum {
     fn frem_u32(&self, modulus: u32) -> u32;
     fn crem_u16(&mut self, modulus: u16) -> u16;
-}
-
-#[cfg(none)]
-impl<T> BigNumExt for T
-where
-    T: BigNum,
-    for<'a> &'a T: std::ops::Rem<u32, Output = u32>,
-{
-    fn frem_u32(&self, modulus: u32) -> u32 {
-        self % modulus
-    }
-
-    fn crem_u16(&mut self, modulus: u16) -> u16 {
-        *self = -*self;
-        let res = &*self % modulus.into();
-        *self = -*self;
-        res as _
-    }
 }
 
 pub trait ClassGroup:
