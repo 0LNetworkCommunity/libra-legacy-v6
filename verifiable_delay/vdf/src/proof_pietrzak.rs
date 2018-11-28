@@ -151,7 +151,7 @@ where
     }
     let mut hasher = Sha256::new();
     for i in &[&x, &y, &sqrt_mu] {
-        i.serialize(&mut v).expect("bug in proof_pietrzak");
+        i.serialize(&mut v).expect(super::INCORRECT_BUFFER_SIZE);
         hasher.input(&v);
     }
     let res = hasher.fixed_result();
