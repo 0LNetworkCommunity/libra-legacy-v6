@@ -2,7 +2,7 @@
 
 This repo includes three crates
 
-* `classgroup, which includes a class group implementation, as well as a
+* `classgroup`, which includes a class group implementation, as well as a
   trait for class groups.
 * `vdf`, which includes a Verifyable Delay Function (VDF) trait, as well as
   an implementation of that trait.
