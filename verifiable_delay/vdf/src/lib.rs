@@ -16,7 +16,7 @@
 //!
 //! This repo includes three crates
 //!
-//! * `classgroup, which includes a class group implementation, as well as a
+//! * `classgroup`, which includes a class group implementation, as well as a
 //!   trait for class groups.
 //! * `vdf`, which includes a Verifyable Delay Function (VDF) trait, as well as
 //!   an implementation of that trait.
@@ -40,12 +40,12 @@
 //! $ vdf-cli aa 100 005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3b3f97937b7aa824801138d1771dea8dae2f6397e76a80613afda30f2c30a34b040baaafe76d5707d68689193e5d211833b372a6a4591abb88e2e7f2f5a5ec818b5707b86b8b2c495ca1581c179168509e3593f9a16879620a4dc4e907df452e8dd0ffc4f199825f54ec70472cc061f22eb54c48d6aa5af3ea375a392ac77294e2d955dde1d102ae2ace494293492d31cff21944a8bcb4608993065c9a00292e8d3f4604e7465b4eeefb494f5bea102db343bb61c5a15c7bdf288206885c130fa1f2d86bf5e4634fdc4216bc16ef7dac970b0ee46d69416f9a9acee651d158ac64915b
 //! Proof is valid
 //! ```
+//!
 //! ### To use the VDF library
 //!
 //! ```rust
-//! # extern crate vdf;
-//! # use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
-//! # fn main() {
+//! extern crate vdf;
+//! use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
 //! const CORRECT_SOLUTION: &[u8] =
 //!     b"\x00\x52\x71\xe8\xf9\xab\x2e\xb8\xa2\x90\x6e\x85\x1d\xfc\xb5\x54\x2e\x41\x73\xf0\x16\
 //!     \xb8\x5e\x29\xd4\x81\xa1\x08\xdc\x82\xed\x3b\x3f\x97\x93\x7b\x7a\xa8\x24\x80\x11\x38\
@@ -60,14 +60,21 @@
 //!     \x61\xc5\xa1\x5c\x7b\xdf\x28\x82\x06\x88\x5c\x13\x0f\xa1\xf2\xd8\x6b\xf5\xe4\x63\x4f\
 //!     \xdc\x42\x16\xbc\x16\xef\x7d\xac\x97\x0b\x0e\xe4\x6d\x69\x41\x6f\x9a\x9a\xce\xe6\x51\
 //!     \xd1\x58\xac\x64\x91\x5b";
-//! let pietrzak_vdf = PietrzakVDFParams(2048).new();
-//! assert_eq!(
-//!     &pietrzak_vdf.solve(b"\xaa", 100).unwrap()[..],
-//!     CORRECT_SOLUTION
-//! );
-//! assert!(pietrzak_vdf.verify(b"\xaa", 100, CORRECT_SOLUTION).is_ok());
-//! # }
+//!
+//! fn main() {
+//!     let pietrzak_vdf = PietrzakVDFParams(2048).new();
+//!     assert_eq!(
+//!         &pietrzak_vdf.solve(b"\xaa", 100).unwrap()[..],
+//!         CORRECT_SOLUTION
+//!     );
+//!     assert!(pietrzak_vdf.verify(b"\xaa", 100, CORRECT_SOLUTION).is_ok());
+//! }
 //! ```
+//!
+//! ### To run the benchmarks
+//!
+//! Benchmarks are provided for the classgroup operations.  Run `cargo bench`
+//! to run them.  Additional benchmarks are under development.
 extern crate classgroup;
 extern crate num_traits;
 extern crate sha2;
