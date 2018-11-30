@@ -16,10 +16,12 @@
 use super::ClassGroup;
 use gmp::mpz::Mpz;
 use num_traits::{One, Zero};
-use std::borrow::Borrow;
-use std::cell::RefCell;
-use std::fmt;
-use std::ops::{Mul, MulAssign};
+use std::{
+    borrow::Borrow,
+    cell::RefCell,
+    fmt,
+    ops::{Mul, MulAssign},
+};
 mod congruence;
 pub(super) mod ffi;
 

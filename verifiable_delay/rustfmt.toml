@@ -31,7 +31,7 @@
 # make_backup = false
 # match_arm_blocks = true
 # match_block_trailing_comma = false
-# merge_imports = false
+# merge_imports = true
 # normalize_comments = true
 # normalize_doc_attributes = true
 # reorder_impl_items = false
@@ -61,6 +61,6 @@ remove_nested_parens = true
 reorder_imports = true
 reorder_modules = true
 tab_spaces = 4
-use_field_init_shorthand = false
+use_field_init_shorthand = true
 use_small_heuristics = "Default"
-use_try_shorthand = false
+use_try_shorthand = true

@@ -13,8 +13,7 @@
 // limitations under the License.
 
 use super::proof_of_time::{iterate_squarings, serialize};
-use classgroup::gmp_classgroup::GmpClassGroup;
-use classgroup::{BigNum, BigNumExt, ClassGroup};
+use classgroup::{gmp_classgroup::GmpClassGroup, BigNum, BigNumExt, ClassGroup};
 use sha2::{digest::FixedOutput, Digest, Sha256};
 use std::{cmp::Eq, collections::HashMap, hash::Hash, mem, u64, usize};
 
@@ -119,7 +118,7 @@ fn hash_prime<T: BigNum>(seed: &[&[u8]]) -> T {
             hasher.input(i);
         }
         let n = T::from(&hasher.fixed_result()[..16]);
-        if n.probab_prime(13) {
+        if n.probab_prime(2) {
             break n;
         }
         j += 1;

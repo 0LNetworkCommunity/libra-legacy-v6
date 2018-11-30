@@ -108,7 +108,7 @@ pub fn create_discriminant<T: BigNumExt>(seed: &[u8], length: u16) -> T {
             if !x {
                 let q = u64::from(M) * u64::from(i);
                 n = n + q;
-                if n.probab_prime(13) {
+                if n.probab_prime(2) {
                     return -n;
                 }
                 n = n - q;
@@ -133,6 +133,21 @@ mod test {
             create_discriminant::<Mpz>(b"\xaa", 40),
             (-685_537_176_559i64).into()
         );
+    }
+
+    #[test]
+    fn check_discriminant_3() {
+        assert_eq!(
+            create_discriminant::<Mpz>(b"\xaa", 1024),
+            Mpz::from_str(
+                "-112084717443890964296630631725167420667316836131914185144761\
+                 7438378168250988242739496385274308134767869324152361453294226\
+                 8295868231081182819214054220080323345750407342623884342617809\
+                 8794592117225058677336074005099949757067786815439982423354682\
+                 0386024058617141397148586038290164093146862666602485017735298\
+                 03183"
+            ).unwrap()
+        )
     }
 
     #[test]

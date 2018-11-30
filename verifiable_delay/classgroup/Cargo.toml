@@ -23,3 +23,11 @@ license = "Apache-2.0"
 num-traits = "0.2"
 rust-gmp = "0.5"
 libc = "0.2"
+
+[dev-dependencies]
+criterion = ">=0.2"
+
+[[bench]]
+name = "classgroup-bench"
+harness = false
+path = "bench/bench.rs"

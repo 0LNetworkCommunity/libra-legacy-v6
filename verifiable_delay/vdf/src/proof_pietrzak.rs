@@ -12,15 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use super::proof_of_time::{deserialize_proof, iterate_squarings, serialize};
-use classgroup::gmp_classgroup::GmpClassGroup;
-use classgroup::{BigNumExt, ClassGroup};
+use classgroup::{gmp_classgroup::GmpClassGroup, BigNumExt, ClassGroup};
 use num_traits::{One, Zero};
-use std::fmt;
-use std::num::ParseIntError;
-use std::ops::Index;
-use std::str::FromStr;
-use std::u64;
-use std::usize;
+use std::{fmt, num::ParseIntError, ops::Index, str::FromStr, u64, usize};
 
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Clone, Debug)]
 pub struct Iterations(u64);

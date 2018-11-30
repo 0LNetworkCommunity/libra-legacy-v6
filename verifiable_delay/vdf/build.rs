@@ -11,11 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-use std::env;
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
-use std::u16;
+use std::{env, fs::File, io::Write, path::PathBuf, u16};
 
 /// The number of odd primes less than 65536.
 const PRIMES_LEN: usize = 6541;

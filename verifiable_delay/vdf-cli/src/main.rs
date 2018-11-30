@@ -20,11 +20,7 @@ extern crate vdf;
 extern crate clap;
 extern crate classgroup;
 
-use std::cell::RefCell;
-use std::fs::File;
-use std::io::Read;
-use std::rc::Rc;
-use std::u64;
+use std::{cell::RefCell, fs::File, io::Read, rc::Rc, u64};
 use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
 
 macro_rules! gen_validator {

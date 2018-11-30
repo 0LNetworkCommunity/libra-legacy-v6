@@ -172,14 +172,15 @@ pub trait ClassGroup:
 #[cfg(test)]
 mod test {
 
-    use std::fs::File;
-    use std::io::{BufRead, BufReader};
-    use std::path::PathBuf;
+    use std::{
+        fs::File,
+        io::{BufRead, BufReader},
+        path::PathBuf,
+    };
 
     extern crate gmp;
     extern crate num_traits;
-    use super::gmp_classgroup::GmpClassGroup;
-    use super::ClassGroup;
+    use super::{gmp_classgroup::GmpClassGroup, ClassGroup};
     use gmp::mpz::Mpz;
 
     fn split_into_three_pieces(line: &str, c: char) -> [&str; 3] {
