@@ -1,0 +1,15 @@
+[package]
+name = "vdf-competition"
+version = "0.1.0"
+authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
+# edition = "2018"
+readme = "README.md"
+keywords = ["vdf", "crypto", "cryptography"]
+repository = "https://github.com/poanetwork/vdf"
+license = "Apache-2.0"
+rpath = true
+
+[dependencies]
+rust-gmp = "^0.5.0"
+classgroup = { path = "../classgroup" }
+libc = "0.2"

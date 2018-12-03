@@ -16,7 +16,11 @@ members = [
     "vdf",
     "vdf-cli",
     "classgroup",
+    "vdf-competition",
 ]
 
 [profile.release]
-debug = true
+rpath = true
+# lto   = true
+debug = false
+# panic = 'abort'

@@ -82,6 +82,7 @@ mod create_discriminant;
 use std::fmt::Debug;
 
 pub use self::{
+    create_discriminant::create_discriminant,
     proof_pietrzak::{PietrzakVDF, PietrzakVDFParams},
     proof_wesolowski::{WesolowskiVDF, WesolowskiVDFParams},
 };
