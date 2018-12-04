@@ -34,3 +34,6 @@ rls*.log
 # Vim swap files
 .*.swp
 .*.swo
+
+# Rust output files
+target/
