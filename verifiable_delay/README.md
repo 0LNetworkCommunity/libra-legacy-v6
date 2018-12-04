@@ -1,41 +1,56 @@
 # Verifiable Delay Function (VDF) Implementation in Rust
+
 ## What is a VDF?
-A Verifiable Delay Function (VDF) is a function that requires substantial time to evaluate (even with a polynomial number of parallel processors) but can be very quickly verified as correct. VDFs can be used to construct randomness beacons with multiple applications in a distributed network environment. By introducing a time delay during evaluation, VDFs prevent malicious actors from influencing output. Output cannot be differentiated from a random number until the final result is computed. 
-See https://eprint.iacr.org/2018/712.pdf for more details.
+
+A Verifiable Delay Function (VDF) is a function that requires substantial time to evaluate (even with a polynomial number of parallel processors) but can be very quickly verified as correct. VDFs can be used to construct randomness beacons with multiple applications in a distributed network environment. By introducing a time delay during evaluation, VDFs prevent malicious actors from influencing output. The output cannot be differentiated from a random number until the final result is computed.
+See <https://eprint.iacr.org/2018/712.pdf> for more details.
+
 ## Description
+
 This VDF implementation is written in Rust. We use class groups to implement 2 approaches.
+
 1. [Simple Verifiable Delay Functions](https://eprint.iacr.org/2018/627.pdf). Pietrzak, 2018
 2. [Efficient Verifiable Delay Functions](https://eprint.iacr.org/2018/623.pdf). Wesolowski, 2018
+
 This repo includes three crates:
+
 * `classgroup`: a class group implementation, as well as a trait for class groups.
 * `vdf`: a Verifyable Delay Function (VDF) trait, as well as an implementation of that trait.
 * `vdf-cli`: a command-line interface to the vdf crate. It also includes additional commands, which are deprecated and will be replaced by a CLI to the classgroup crate.
+
 ## Usage
+
 - Install [Rust](https://doc.rust-lang.org/cargo/getting-started/installation.html).  We (POA Networks) have tested the code with the latest stable, beta, and nightly versions of Rust.  It may work with older versions, but this is not guaranteed.
 - Install the [GNU Multiple Precision Library](https://gmplib.org/)
-  * On Debian and derivatives (including Ubuntu):
-    ```sh
-    $ sudo apt-get install -y libgmp-dev
-    ```
-  * On Red Hat and derivatives (Fedora, CentOS)
-    ```sh
-    $ sudo dnf -y install gmp-devel
-    ```
+    * On Debian and derivatives (including Ubuntu):
+        ```sh
+        $ sudo apt-get install -y libgmp-dev
+        ```
+    * On Red Hat and derivatives (Fedora, CentOS)
+        ```sh
+        $ sudo dnf -y install gmp-devel
+        ```
 - Download and prepare the repository
-  ```sh
-  $ git clone https://github.com/poanetwork/vdf.git
-  $ cd vdf
-  $ cargo install
-  ```
+
+    ```sh
+    $ git clone https://github.com/poanetwork/vdf.git
+    $ cd vdf-cli
+    $ cargo install
+    ```
+
 ### Command Line Interface
+
 To initiate, use the `vdf-cli` command followed by 2 arguments:
+
 - _challenge_: byte string of arbitrary length
 - _difficulty_: number of iterations, each iteration requires more time to evaluate
-<!---
--Is this the wesolowski proof of time, are there ways to run the other proofs?
---->
-Once complete you will see the output,returned as a `Vec<u8>`.
+
+This generates the Weslowski proof of time.  To generate the Pietrzak proof of time, pass `-tpietrzak`.  For detailed usage information, run `vdf-cli --help`.
+
+Once complete you will see the output,returned as a `Vec<u8>`.  The CLI tool hex-encodes its output.
+
 **Example**
+
 ```sh
 $ vdf-cli aa 100
 005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3b3f97937b7aa824801138d1771dea8dae2f6397e76a80613afda30f2c30a34b040baaafe76d5707d68689193e5d211833b372a6a4591abb88e2e7f2f5a5ec818b5707b86b8b2c495ca1581c179168509e3593f9a16879620a4dc4e907df452e8dd0ffc4f199825f54ec70472cc061f22eb54c48d6aa5af3ea375a392ac77294e2d955dde1d102ae2ace494293492d31cff21944a8bcb4608993065c9a00292e8d3f4604e7465b4eeefb494f5bea102db343bb61c5a15c7bdf288206885c130fa1f2d86bf5e4634fdc4216bc16ef7dac970b0ee46d69416f9a9acee651d158ac64915b
@@ -47,12 +62,16 @@ $ vdf-cli aa 100 005271e8f9ab2eb8a2906e851dfcb5542e4173f016b85e29d481a108dc82ed3
 Proof is valid
 ```
 ### VDF Library
-<!---
+
+<!--
 Keep as is, and possibly include argument explanations as well (for byte_length for example). May not be needed though is CLI is main user interaction tool.
---->
+-->
+
 ```rust
 extern crate vdf;
 use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
+
+/// The correct solution.
 const CORRECT_SOLUTION: &[u8] =
   b"\x00\x52\x71\xe8\xf9\xab\x2e\xb8\xa2\x90\x6e\x85\x1d\xfc\xb5\x54\x2e\x41\x73\xf0\x16\
   \xb8\x5e\x29\xd4\x81\xa1\x08\xdc\x82\xed\x3b\x3f\x97\x93\x7b\x7a\xa8\x24\x80\x11\x38\
@@ -68,7 +87,8 @@ const CORRECT_SOLUTION: &[u8] =
   \xdc\x42\x16\xbc\x16\xef\x7d\xac\x97\x0b\x0e\xe4\x6d\x69\x41\x6f\x9a\x9a\xce\xe6\x51\
   \xd1\x58\xac\x64\x91\x5b";
 fn main() {
-  let pietrzak_vdf = PietrzakVDFParams(2048).new();
+  let num_bits: u16 = 2048; // The length of the prime numbers generated, in bits.
+  let pietrzak_vdf = PietrzakVDFParams(num_bits).new();
   assert_eq!(
     &pietrzak_vdf.solve(b"\xaa", 100).unwrap()[..],
     CORRECT_SOLUTION
@@ -76,16 +96,76 @@ fn main() {
   assert!(pietrzak_vdf.verify(b"\xaa", 100, CORRECT_SOLUTION).is_ok());
 }
 ```
+
 ## Benchmarks
+
 Benchmarks are provided for the classgroup operations. To run benchmarks:
+
 ```sh
-$ cd vdf/classgroup
-$ cargo bench
+$ ./bench.sh <your challenge here>
 ```
+
 Additional benchmarks are under development.
+
 ### Current Benchmarks
-<!---
-Include table, similar to https://github.com/Chia-Network/vdf-competition#benchmarks
---->
+
+These were generated by `./bench.sh aadf`.
+
+```text
+Benchmarking square with seed aadf: 512
+Benchmarking square with seed aadf: 512: Warming up for 3.0000 s
+Benchmarking square with seed aadf: 512: Collecting 100 samples in estimated 5.0303 s (283k iterations)
+Benchmarking square with seed aadf: 512: Analyzing
+square with seed aadf: 512
+                        time:   [17.148 us 17.236 us 17.344 us]
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking multiply with seed aadf: 512
+Benchmarking multiply with seed aadf: 512: Warming up for 3.0000 s
+Benchmarking multiply with seed aadf: 512: Collecting 100 samples in estimated 5.0953 s (222k iterations)
+Benchmarking multiply with seed aadf: 512: Analyzing
+multiply with seed aadf: 512
+                        time:   [22.268 us 22.462 us 22.670 us]
+
+Benchmarking square with seed aadf: 1024
+Benchmarking square with seed aadf: 1024: Warming up for 3.0000 s
+Benchmarking square with seed aadf: 1024: Collecting 100 samples in estimated 5.1076 s (131k iterations)
+Benchmarking square with seed aadf: 1024: Analyzing
+square with seed aadf: 1024
+                        time:   [41.191 us 41.498 us 41.798 us]
+
+Benchmarking multiply with seed aadf: 1024
+Benchmarking multiply with seed aadf: 1024: Warming up for 3.0000 s
+Benchmarking multiply with seed aadf: 1024: Collecting 100 samples in estimated 5.1781 s (111k iterations)
+Benchmarking multiply with seed aadf: 1024: Analyzing
+multiply with seed aadf: 1024
+                        time:   [46.759 us 46.994 us 47.261 us]
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking square with seed aadf: 2048
+Benchmarking square with seed aadf: 2048: Warming up for 3.0000 s
+Benchmarking square with seed aadf: 2048: Collecting 100 samples in estimated 5.3307 s (56k iterations)
+Benchmarking square with seed aadf: 2048: Analyzing
+square with seed aadf: 2048
+                        time:   [96.041 us 96.339 us 96.647 us]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+Benchmarking multiply with seed aadf: 2048
+Benchmarking multiply with seed aadf: 2048: Warming up for 3.0000 s
+Benchmarking multiply with seed aadf: 2048: Collecting 100 samples in estimated 5.5191 s (45k iterations)
+Benchmarking multiply with seed aadf: 2048: Analyzing
+multiply with seed aadf: 2048
+                        time:   [119.99 us 120.47 us 121.01 us]
+Found 2 outliers among 100 measurements (2.00%)
+  2 (2.00%) high mild
+```
+
 ## License
+
 Apache License, Version 2.0, (LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0) or MIT License (LICENSE-MIT) at your discretion.

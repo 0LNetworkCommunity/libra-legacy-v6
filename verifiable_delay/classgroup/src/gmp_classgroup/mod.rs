@@ -221,7 +221,7 @@ impl GmpClassGroup {
         self.inner_normalize(ctx);
 
         while self.a > self.c || (self.a == self.c && self.b < Zero::zero()) {
-            assert!(!self.c.is_zero());
+            debug_assert!(!self.c.is_zero());
             ffi::mpz_add(&mut ctx.s, &self.c, &self.b);
             ffi::mpz_mul_ui(&mut ctx.x, &self.c, 2);
             ffi::mpz_fdiv_q_self(&mut ctx.s, &ctx.x);
@@ -447,8 +447,8 @@ impl ClassGroup for GmpClassGroup {
 
     fn deserialize(buf: &[u8], discriminant: Self::BigNum) -> Self {
         let len = buf.len();
-        assert!(len != 0, "Cannot deserialize an empty buffer!");
-        assert!(len & 1 == 0, "Buffer must be of even length");
+        debug_assert!(len != 0, "Cannot deserialize an empty buffer!");
+        debug_assert!(len & 1 == 0, "Buffer must be of even length");
         let half_len = len >> 1;
         Self::from_ab_discriminant(
             ffi::import_obj(&buf[..half_len]),

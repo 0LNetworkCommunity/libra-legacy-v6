@@ -7,7 +7,6 @@ readme = "README.md"
 keywords = ["vdf", "crypto", "cryptography"]
 repository = "https://github.com/poanetwork/vdf"
 license = "Apache-2.0"
-rpath = true
 
 [dependencies]
 rust-gmp = "^0.5.0"

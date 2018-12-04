@@ -33,6 +33,9 @@ pub struct CongruenceContext {
     pub r: Mpz,
 }
 
+// #[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+// struct NoCongruence;
+
 impl Default for CongruenceContext {
     fn default() -> Self {
         Self {
@@ -68,7 +71,7 @@ impl CongruenceContext {
             );
         }
         ffi::mpz_fdiv_qr(&mut self.q, &mut self.r, &b, &self.g);
-        assert!(self.r.is_zero());
+        debug_assert!(self.r.is_zero(), "Could not solve the congruence ― did you pass a non-prime or a positive number to the command line tool?!");
         ffi::mpz_mul(mu, &self.q, &self.d);
         *mu = mu.modulus(m);
         if let Some(v) = v {

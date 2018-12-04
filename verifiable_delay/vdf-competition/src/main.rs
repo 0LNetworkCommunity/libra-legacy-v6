@@ -16,13 +16,14 @@ extern crate classgroup;
 extern crate gmp;
 use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};
 use gmp::mpz::{mpz_ptr, Mpz};
-use std::env;
-#[cfg(unix)]
-#[cfg(not(unix))]
-use std::{process, str::FromStr};
+use std::{env, process};
 
 #[cfg(unix)]
 fn main() {
+    let fail = |q| {
+        eprintln!("{}", q);
+        process::exit(1)
+    };
     use std::{ffi::CString, mem, os::unix::ffi::OsStringExt};
     extern crate libc;
 
@@ -36,24 +37,33 @@ fn main() {
     }
 
     let mut args = env::args_os();
+
+    if args.len() != 3 {
+        fail("Must have exactly two arguments");
+    }
+
     args.next();
     let discriminant = unsafe {
-        let mut q: Mpz = mem::uninitialized();
-        assert!(
-            0 == __gmpz_init_set_str(
-                q.inner_mut(),
-                CString::from_vec_unchecked(args.next().unwrap().into_vec()).as_ptr(),
-                0
-            )
-        );
-        q
+        let cstr = CString::from_vec_unchecked(args.next().unwrap().into_vec());
+        let mut q: Mpz = mem::zeroed();
+        if 0 == __gmpz_init_set_str(q.inner_mut(), cstr.as_ptr(), 0) {
+            q
+        } else {
+            fail("Invalid discriminant")
+        }
     };
-    let mut generator = GmpClassGroup::generator_for_discriminant(discriminant);
-    generator.repeated_square(args.next().unwrap().to_str().unwrap().parse().unwrap());
-    println!("{}", generator);
+
+    if let Some(iterations) = args.next().unwrap().to_str().and_then(|x| x.parse().ok()) {
+        let mut generator = GmpClassGroup::generator_for_discriminant(discriminant);
+        generator.repeated_square(iterations);
+        println!("{}", generator);
+    } else {
+        fail("Invalid number of iterations");
+    }
 }
 #[cfg(not(unix))]
 fn main() {
+    use std::str::FromStr;
     let fail = |q| {
         eprintln!("{}", q);
         process::exit(1)
