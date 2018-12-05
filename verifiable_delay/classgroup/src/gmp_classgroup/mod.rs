@@ -220,33 +220,36 @@ impl GmpClassGroup {
     fn inner_reduce(&mut self, ctx: &mut Ctx) {
         self.inner_normalize(ctx);
 
-        while self.a > self.c || (self.a == self.c && self.b < Zero::zero()) {
+        while if ffi::mpz_is_negative(&self.b) {
+            self.a >= self.c
+        } else {
+            self.a > self.c
+        } {
             debug_assert!(!self.c.is_zero());
             ffi::mpz_add(&mut ctx.s, &self.c, &self.b);
-            ffi::mpz_mul_ui(&mut ctx.x, &self.c, 2);
+            ffi::mpz_add(&mut ctx.x, &self.c, &self.c);
             ffi::mpz_fdiv_q_self(&mut ctx.s, &ctx.x);
             ctx.old_a.set(&self.a);
             ctx.old_b.set(&self.b);
 
             self.a.set(&self.c);
-            ffi::mpz_neg(&mut self.b, &ctx.old_b);
 
             // x = 2sc
             ffi::mpz_mul(&mut ctx.x, &ctx.s, &self.c);
             ffi::mpz_double(&mut ctx.x);
 
-            // b += x
-            self.b += &ctx.x;
+            // b = x - old_b
+            ffi::mpz_sub(&mut self.b, &ctx.x, &ctx.old_b);
 
-            // c = cs^2
-            self.c *= &ctx.s;
-            self.c *= &ctx.s;
-
-            // x = bs
+            // x = b*s
             ffi::mpz_mul(&mut ctx.x, &ctx.old_b, &ctx.s);
 
-            // c -= x
-            self.c -= &ctx.x;
+            // s = c*s^2
+            ffi::mpz_mul(&mut ctx.old_b, &ctx.s, &ctx.s);
+            ffi::mpz_mul(&mut ctx.s, &self.c, &ctx.old_b);
+
+            // c = s - x
+            ffi::mpz_sub(&mut self.c, &ctx.s, &ctx.x);
 
             // c += a
             self.c += &ctx.old_a;

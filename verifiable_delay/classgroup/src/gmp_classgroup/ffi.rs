@@ -30,6 +30,7 @@ extern "C" {
     fn __gmpz_gcd(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
     fn __gmpz_fdiv_qr(q: mpz_ptr, r: mpz_ptr, b: mpz_srcptr, g: mpz_srcptr);
     fn __gmpz_fdiv_q(q: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
+    fn __gmpz_tdiv_q(q: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
     fn __gmpz_mul(p: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
     fn __gmpz_mul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: libc::c_ulong);
     fn __gmpz_sub(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
@@ -64,10 +65,10 @@ extern "C" {
     fn __gmpz_powm(rop: mpz_ptr, base: mpz_srcptr, exp: mpz_srcptr, modulus: mpz_srcptr);
 }
 
-// MEGA HACK: rust-gmp doesn’t expose this struct, so we must define
+// MEGA HACK: rust-gmp doesn’t expose the fields of this struct, so we must define
 // it ourselves and cast.
 //
-// Should be stable though, as changing it would break ABI compat.
+// Should be stable though, as only GMP can change it, and doing would break binary compatibility.
 #[repr(C)]
 struct MpzStruct {
     mp_alloc: libc::c_int,
@@ -91,10 +92,12 @@ impl_div_ui!(u32, mpz_frem_u32, __gmpz_fdiv_ui);
 
 /// Returns `true` if `z` is negative and not zero.  Otherwise,
 /// returns `false`.
+// #[inline]
 pub fn mpz_is_negative(z: &Mpz) -> bool {
     unsafe { (*(z.inner() as *const MpzStruct)).mp_size < 0 }
 }
 
+// #[inline]
 pub fn mpz_powm(rop: &mut Mpz, base: &Mpz, exponent: &Mpz, modulus: &Mpz) {
     unsafe {
         __gmpz_powm(
@@ -107,6 +110,7 @@ pub fn mpz_powm(rop: &mut Mpz, base: &Mpz, exponent: &Mpz, modulus: &Mpz) {
 }
 
 /// Sets `g` to the GCD of `a` and `b`.
+// #[inline]
 pub fn mpz_gcdext(gcd: &mut Mpz, s: &mut Mpz, t: &mut Mpz, a: &Mpz, b: &Mpz) {
     unsafe {
         __gmpz_gcdext(
@@ -120,21 +124,24 @@ pub fn mpz_gcdext(gcd: &mut Mpz, s: &mut Mpz, t: &mut Mpz, a: &Mpz, b: &Mpz) {
 }
 
 /// Sets `rop` to `(-1) * op`
+// #[inline]
+#[cfg(none)]
 pub fn mpz_neg(rop: &mut Mpz, op: &Mpz) {
-    unsafe {
-        __gmpz_neg(rop.inner_mut(), op.inner());
-    }
+    unsafe { __gmpz_neg(rop.inner_mut(), op.inner()) }
 }
 
 /// Doubles `rop` in-place
+// #[inline]
 pub fn mpz_double(rop: &mut Mpz) {
-    unsafe { __gmpz_mul_ui(rop.inner_mut(), rop.inner(), 2) }
+    unsafe { __gmpz_add(rop.inner_mut(), rop.inner(), rop.inner()) }
 }
 
+// #[inline]
 pub fn mpz_fdiv_qr(q: &mut Mpz, r: &mut Mpz, b: &Mpz, g: &Mpz) {
     unsafe { __gmpz_fdiv_qr(q.inner_mut(), r.inner_mut(), b.inner(), g.inner()) }
 }
 
+// #[inline]
 pub fn mpz_fdiv_q_ui_self(rop: &mut Mpz, op: c_ulong) -> c_ulong {
     unsafe { __gmpz_fdiv_q_ui(rop.inner_mut(), rop.inner(), op) }
 }
@@ -184,30 +191,44 @@ pub fn three_gcd(rop: &mut Mpz, a: &Mpz, b: &Mpz, c: &Mpz) {
     }
 }
 
+// #[inline]
 pub fn size_in_bits(obj: &Mpz) -> usize {
     unsafe { __gmpz_sizeinbase(obj.inner(), 2) }
 }
 
+// #[inline]
 pub fn mpz_add(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
     unsafe { __gmpz_add(rop.inner_mut(), op1.inner(), op2.inner()) }
 }
 
+// #[inline]
 pub fn mpz_mul(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
     unsafe { __gmpz_mul(rop.inner_mut(), op1.inner(), op2.inner()) }
 }
 
+// #[inline]
 pub fn mpz_mul_ui(rop: &mut Mpz, op1: &Mpz, op2: libc::c_ulong) {
     unsafe { __gmpz_mul_ui(rop.inner_mut(), op1.inner(), op2) }
 }
 
-pub fn mpz_fdiv_q(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
-    unsafe { __gmpz_fdiv_q(rop.inner_mut(), op1.inner(), op2.inner()) }
+/// Divide `n` by `d`.  Round towards -∞ and place the result in `q`.
+pub fn mpz_fdiv_q(q: &mut Mpz, n: &Mpz, d: &Mpz) {
+    if mpz_is_negative(n) == mpz_is_negative(n) {
+        unsafe { __gmpz_tdiv_q(q.inner_mut(), n.inner(), d.inner()) }
+    } else {
+        unsafe { __gmpz_fdiv_q(q.inner_mut(), n.inner(), d.inner()) }
+    }
 }
 
 pub fn mpz_fdiv_q_self(rop: &mut Mpz, op: &Mpz) {
-    unsafe { __gmpz_fdiv_q(rop.inner_mut(), rop.inner(), op.inner()) }
+    if mpz_is_negative(op) == mpz_is_negative(rop) {
+        unsafe { __gmpz_tdiv_q(rop.inner_mut(), rop.inner(), op.inner()) }
+    } else {
+        unsafe { __gmpz_fdiv_q(rop.inner_mut(), rop.inner(), op.inner()) }
+    }
 }
 
+// #[inline]
 pub fn mpz_sub(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
     unsafe { __gmpz_sub(rop.inner_mut(), op1.inner(), op2.inner()) }
 }
