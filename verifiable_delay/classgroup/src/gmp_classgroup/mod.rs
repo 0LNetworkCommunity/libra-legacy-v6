@@ -20,6 +20,7 @@ use std::{
     borrow::Borrow,
     cell::RefCell,
     fmt,
+    mem::swap,
     ops::{Mul, MulAssign},
 };
 mod congruence;
@@ -205,16 +206,17 @@ impl GmpClassGroup {
         ffi::mpz_sub(&mut ctx.r, &self.a, &self.b);
         ffi::mpz_mul_ui(&mut ctx.denom, &self.a, 2);
         ffi::mpz_fdiv_q_self(&mut ctx.r, &ctx.denom);
-        ctx.old_b.set(&self.b);
+        swap(&mut ctx.old_b, &mut self.b);
         ffi::mpz_mul(&mut ctx.ra, &ctx.r, &self.a);
-        self.b += &ctx.ra;
-        self.b += &ctx.ra;
+        ffi::mpz_mul_2exp(&mut ctx.negative_a, &ctx.ra, 1);
+        ffi::mpz_add(&mut self.b, &ctx.old_b, &ctx.negative_a);
 
         ctx.ra *= &ctx.r;
-        self.c += &ctx.ra;
+        ffi::mpz_add(&mut ctx.old_a, &self.c, &ctx.ra);
 
         ffi::mpz_mul(&mut ctx.ra, &ctx.r, &ctx.old_b);
-        self.c += &ctx.ra;
+        ffi::mpz_add(&mut self.c, &ctx.old_a, &ctx.ra);
+
         self.assert_valid();
     }
 
@@ -230,13 +232,13 @@ impl GmpClassGroup {
             ffi::mpz_add(&mut ctx.s, &self.c, &self.b);
             ffi::mpz_add(&mut ctx.x, &self.c, &self.c);
             ffi::mpz_fdiv_q_self(&mut ctx.s, &ctx.x);
-            ctx.old_b.set(&self.b);
+            swap(&mut self.b, &mut ctx.old_b);
 
-            ::std::mem::swap(&mut self.a, &mut self.c);
+            swap(&mut self.a, &mut self.c);
 
             // x = 2sc
-            ffi::mpz_mul(&mut ctx.x, &ctx.s, &self.a);
-            ffi::mpz_double(&mut ctx.x);
+            ffi::mpz_mul(&mut self.b, &ctx.s, &self.a);
+            ffi::mpz_mul_2exp(&mut ctx.x, &self.b, 1);
 
             // b = x - old_b
             ffi::mpz_sub(&mut self.b, &ctx.x, &ctx.old_b);
