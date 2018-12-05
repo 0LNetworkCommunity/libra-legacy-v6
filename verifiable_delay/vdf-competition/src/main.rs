@@ -18,7 +18,7 @@ extern crate libc;
 use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};
 use gmp::mpz::{mpz_ptr, Mpz};
 use std::os::raw::c_void;
-use std::{env, mem::transmute, process};
+use std::{env, process};
 
 #[link = "gmp"]
 extern "C" {
@@ -110,11 +110,7 @@ fn main() {
 #[cfg(not(unix))]
 fn main() {
     unsafe {
-        __gmp_set_memory_functions(
-            &do_malloc as *const _,
-            &do_realloc as *const _,
-            &do_free as *const _,
-        );
+        __gmp_set_memory_functions(Some(do_malloc), Some(do_realloc), Some(do_free));
     }
     use std::str::FromStr;
     let fail = |q| {
