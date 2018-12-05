@@ -14,12 +14,58 @@
 
 extern crate classgroup;
 extern crate gmp;
+extern crate libc;
 use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};
 use gmp::mpz::{mpz_ptr, Mpz};
-use std::{env, process};
+use std::os::raw::c_void;
+use std::{env, mem::transmute, process};
+
+#[link = "gmp"]
+extern "C" {
+    fn __gmp_set_memory_functions(
+        arg1: Option<unsafe extern "C" fn(arg1: usize) -> *mut c_void>,
+        arg2: Option<
+            unsafe extern "C" fn(arg1: *mut c_void, arg2: usize, arg3: usize) -> *mut c_void,
+        >,
+        arg3: Option<unsafe extern "C" fn(arg1: *mut c_void, arg2: usize)>,
+    );
+}
+
+unsafe extern "C" fn do_realloc(
+    old_ptr: *mut libc::c_void,
+    old_len: libc::size_t,
+    new_len: libc::size_t,
+) -> *mut libc::c_void {
+    if old_len.max(2048) >= new_len {
+        old_ptr
+    } else {
+        let q = libc::realloc(old_ptr, new_len);
+        if q.is_null() {
+            libc::abort()
+        }
+        q
+    }
+}
+
+unsafe extern "C" fn do_malloc(len: libc::size_t) -> *mut libc::c_void {
+    let q = libc::malloc(len.max(2048));
+    if q.is_null() {
+        libc::abort()
+    }
+    q
+}
+
+unsafe extern "C" fn do_free(ptr: *mut libc::c_void, _len: libc::size_t) {
+    if true {
+        libc::free(ptr)
+    }
+}
 
 #[cfg(unix)]
 fn main() {
+    unsafe {
+        __gmp_set_memory_functions(Some(do_malloc), Some(do_realloc), Some(do_free));
+    }
     let fail = |q| {
         eprintln!("{}", q);
         process::exit(1)
@@ -63,6 +109,13 @@ fn main() {
 }
 #[cfg(not(unix))]
 fn main() {
+    unsafe {
+        __gmp_set_memory_functions(
+            &do_malloc as *const _,
+            &do_realloc as *const _,
+            &do_free as *const _,
+        );
+    }
     use std::str::FromStr;
     let fail = |q| {
         eprintln!("{}", q);

@@ -19,7 +19,7 @@
 //! this library requires.
 #![allow(unsafe_code)]
 pub use gmp::mpz::Mpz;
-use gmp::mpz::{mpz_ptr, mpz_srcptr};
+use gmp::mpz::{mp_bitcnt_t, mpz_ptr, mpz_srcptr};
 use libc;
 pub use libc::c_ulong;
 use std::{mem, usize};
@@ -33,6 +33,7 @@ extern "C" {
     fn __gmpz_tdiv_q(q: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
     fn __gmpz_mul(p: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
     fn __gmpz_mul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: libc::c_ulong);
+    fn __gmpz_mul_2exp(rop: mpz_ptr, op1: mpz_srcptr, op2: mp_bitcnt_t);
     fn __gmpz_sub(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
     fn __gmpz_import(
         rop: mpz_ptr,
@@ -43,6 +44,7 @@ extern "C" {
         nails: libc::size_t,
         op: *const libc::c_void,
     );
+    fn __gmpz_divexact(q: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
     fn __gmpz_sizeinbase(op: mpz_srcptr, base: libc::c_int) -> libc::size_t;
     fn __gmpz_fdiv_q_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: libc::c_ulong) -> libc::c_ulong;
     fn __gmpz_add(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
@@ -133,7 +135,12 @@ pub fn mpz_neg(rop: &mut Mpz, op: &Mpz) {
 /// Doubles `rop` in-place
 // #[inline]
 pub fn mpz_double(rop: &mut Mpz) {
-    unsafe { __gmpz_add(rop.inner_mut(), rop.inner(), rop.inner()) }
+    if true {
+        // slightly faster
+        unsafe { __gmpz_mul_2exp(rop.inner_mut(), rop.inner(), 1) }
+    } else {
+        unsafe { __gmpz_add(rop.inner_mut(), rop.inner(), rop.inner()) }
+    }
 }
 
 // #[inline]
@@ -206,9 +213,19 @@ pub fn mpz_mul(rop: &mut Mpz, op1: &Mpz, op2: &Mpz) {
     unsafe { __gmpz_mul(rop.inner_mut(), op1.inner(), op2.inner()) }
 }
 
+pub fn mpz_divexact(q: &mut Mpz, n: &Mpz, d: &Mpz) {
+    unsafe { __gmpz_divexact(q.inner_mut(), n.inner(), d.inner()) }
+}
+
 // #[inline]
+#[allow(dead_code)]
 pub fn mpz_mul_ui(rop: &mut Mpz, op1: &Mpz, op2: libc::c_ulong) {
     unsafe { __gmpz_mul_ui(rop.inner_mut(), op1.inner(), op2) }
+}
+
+#[allow(dead_code)]
+pub fn mpz_mul_2exp(rop: &mut Mpz, op1: &Mpz, op2: mp_bitcnt_t) {
+    unsafe { __gmpz_mul_2exp(rop.inner_mut(), op1.inner(), op2) }
 }
 
 /// Divide `n` by `d`.  Round towards -∞ and place the result in `q`.
@@ -217,6 +234,17 @@ pub fn mpz_fdiv_q(q: &mut Mpz, n: &Mpz, d: &Mpz) {
         unsafe { __gmpz_tdiv_q(q.inner_mut(), n.inner(), d.inner()) }
     } else {
         unsafe { __gmpz_fdiv_q(q.inner_mut(), n.inner(), d.inner()) }
+    }
+}
+
+#[inline]
+#[allow(dead_code)]
+pub fn mpz_neg(rop: &mut Mpz) {
+    assert!(mem::size_of::<Mpz>() == mem::size_of::<MpzStruct>());
+    unsafe {
+        let ptr = rop as *mut _ as *mut MpzStruct;
+        let v = (*ptr).mp_size;
+        (*ptr).mp_size = -v;
     }
 }
 

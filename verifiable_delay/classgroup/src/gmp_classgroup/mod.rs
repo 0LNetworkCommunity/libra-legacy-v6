@@ -143,8 +143,8 @@ impl GmpClassGroup {
 
         // l = (k*t - h)/s
         ffi::mpz_mul(&mut ctx.l, &ctx.k, &ctx.t);
-        ctx.l -= &ctx.h;
-        ffi::mpz_fdiv_q_self(&mut ctx.l, &ctx.s);
+        ffi::mpz_sub(&mut ctx.v, &ctx.l, &ctx.h);
+        ffi::mpz_fdiv_q(&mut ctx.l, &ctx.v, &ctx.s);
 
         // m = (t*u*k - h*u - c*s) / s*t
         ffi::mpz_mul(&mut ctx.m, &ctx.t, &ctx.u);
@@ -154,7 +154,7 @@ impl GmpClassGroup {
         ffi::mpz_mul(&mut ctx.a, &self.c, &ctx.s);
         ctx.m -= &ctx.a;
         ffi::mpz_mul(&mut ctx.a, &ctx.s, &ctx.t);
-        ffi::mpz_fdiv_q_self(&mut ctx.m, &ctx.a);
+        ffi::mpz_fdiv_q(&mut ctx.lambda, &ctx.m, &ctx.a);
 
         // A = s*t - r*u
         ffi::mpz_mul(&mut self.a, &ctx.s, &ctx.t);
@@ -168,7 +168,7 @@ impl GmpClassGroup {
 
         // C = kl - jm
         ffi::mpz_mul(&mut self.c, &ctx.k, &ctx.l);
-        ffi::mpz_mul(&mut ctx.a, &ctx.j, &ctx.m);
+        ffi::mpz_mul(&mut ctx.a, &ctx.j, &ctx.lambda);
         self.c -= &ctx.a;
 
         self.inner_reduce(ctx);
@@ -195,6 +195,7 @@ impl GmpClassGroup {
         }
     }
 
+    #[inline(never)]
     fn inner_normalize(&mut self, ctx: &mut Ctx) {
         self.assert_valid();
         ctx.negative_a = -&self.a;

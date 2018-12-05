@@ -70,12 +70,21 @@ impl CongruenceContext {
                 self.g, self.d, mu, a, m
             );
         }
-        ffi::mpz_fdiv_qr(&mut self.q, &mut self.r, &b, &self.g);
-        debug_assert!(self.r.is_zero(), "Could not solve the congruence ― did you pass a non-prime or a positive number to the command line tool?!");
+        if cfg!(debug_assertions) {
+            ffi::mpz_fdiv_qr(&mut self.q, &mut self.r, &b, &self.g);
+            debug_assert!(self.r.is_zero(), "Could not solve the congruence ― did you pass a non-prime or a positive number to the command line tool?!");
+        } else {
+            ffi::mpz_divexact(&mut self.q, &b, &self.g)
+        }
         ffi::mpz_mul(mu, &self.q, &self.d);
         *mu = mu.modulus(m);
         if let Some(v) = v {
-            ffi::mpz_fdiv_q(v, &m, &self.g)
+            if cfg!(debug_assertions) {
+                ffi::mpz_fdiv_qr(v, &mut self.r, &m, &self.g);
+                debug_assert!(self.r.is_zero(), "Could not solve the congruence ― did you pass a non-prime or a positive number to the command line tool?!");
+            } else {
+                ffi::mpz_divexact(v, &m, &self.g)
+            }
         }
     }
 }
