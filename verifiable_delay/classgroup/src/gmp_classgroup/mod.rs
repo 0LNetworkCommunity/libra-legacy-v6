@@ -230,13 +230,12 @@ impl GmpClassGroup {
             ffi::mpz_add(&mut ctx.s, &self.c, &self.b);
             ffi::mpz_add(&mut ctx.x, &self.c, &self.c);
             ffi::mpz_fdiv_q_self(&mut ctx.s, &ctx.x);
-            ctx.old_a.set(&self.a);
             ctx.old_b.set(&self.b);
 
-            self.a.set(&self.c);
+            ::std::mem::swap(&mut self.a, &mut self.c);
 
             // x = 2sc
-            ffi::mpz_mul(&mut ctx.x, &ctx.s, &self.c);
+            ffi::mpz_mul(&mut ctx.x, &ctx.s, &self.a);
             ffi::mpz_double(&mut ctx.x);
 
             // b = x - old_b
@@ -247,10 +246,10 @@ impl GmpClassGroup {
 
             // s = c*s^2
             ffi::mpz_mul(&mut ctx.old_b, &ctx.s, &ctx.s);
-            ffi::mpz_mul(&mut ctx.s, &self.c, &ctx.old_b);
+            ffi::mpz_mul(&mut ctx.s, &self.a, &ctx.old_b);
 
             // c = s - x
-            ffi::mpz_sub(&mut self.c, &ctx.s, &ctx.x);
+            ffi::mpz_sub(&mut ctx.old_a, &ctx.s, &ctx.x);
 
             // c += a
             self.c += &ctx.old_a;
