@@ -44,7 +44,8 @@ fn check_iterations(is_pietrzak: bool, matches: &clap::ArgMatches) -> u64 {
         clap::Error::with_description(
             "Number of iterations must be even and at least 66",
             clap::ErrorKind::ValueValidation,
-        ).exit()
+        )
+        .exit()
     } else {
         iterations
     }

@@ -222,7 +222,8 @@ where
         8,
         &generate_r_value,
         length_in_bits.into(),
-    ).map_err(|()| super::InvalidProof)
+    )
+    .map_err(|()| super::InvalidProof)
 }
 
 fn calculate_final_t(t: Iterations, delta: usize) -> u64 {

@@ -62,7 +62,8 @@ impl super::VDF for WesolowskiVDF {
             alleged_solution,
             difficulty,
             self.int_size_bits,
-        ).map_err(|()| super::InvalidProof)
+        )
+        .map_err(|()| super::InvalidProof)
     }
 }
 /// To quote the original Python code:
