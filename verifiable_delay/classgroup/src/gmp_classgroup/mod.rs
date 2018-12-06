@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #![deny(unsafe_code)]
-#![forbid(warnings)]
+#![cfg_attr(not(test), forbid(warnings))]
+#![cfg_attr(test, deny(warnings))]
 use super::ClassGroup;
 use gmp::mpz::Mpz;
 use num_traits::{One, Zero};
@@ -196,7 +197,6 @@ impl GmpClassGroup {
         }
     }
 
-    #[inline(never)]
     fn inner_normalize(&mut self, ctx: &mut Ctx) {
         self.assert_valid();
         ctx.negative_a = -&self.a;
@@ -204,15 +204,16 @@ impl GmpClassGroup {
             return;
         }
         ffi::mpz_sub(&mut ctx.r, &self.a, &self.b);
-        ffi::mpz_mul_ui(&mut ctx.denom, &self.a, 2);
-        ffi::mpz_fdiv_q_self(&mut ctx.r, &ctx.denom);
+        ffi::mpz_mul_2exp(&mut ctx.denom, &self.a, 1);
+        ffi::mpz_fdiv_q(&mut ctx.negative_a, &ctx.r, &ctx.denom);
+        swap(&mut ctx.negative_a, &mut ctx.r);
         swap(&mut ctx.old_b, &mut self.b);
         ffi::mpz_mul(&mut ctx.ra, &ctx.r, &self.a);
         ffi::mpz_mul_2exp(&mut ctx.negative_a, &ctx.ra, 1);
         ffi::mpz_add(&mut self.b, &ctx.old_b, &ctx.negative_a);
 
-        ctx.ra *= &ctx.r;
-        ffi::mpz_add(&mut ctx.old_a, &self.c, &ctx.ra);
+        ffi::mpz_mul(&mut ctx.negative_a, &ctx.ra, &ctx.r);
+        ffi::mpz_add(&mut ctx.old_a, &self.c, &ctx.negative_a);
 
         ffi::mpz_mul(&mut ctx.ra, &ctx.r, &ctx.old_b);
         ffi::mpz_add(&mut self.c, &ctx.old_a, &ctx.ra);
@@ -231,9 +232,9 @@ impl GmpClassGroup {
             debug_assert!(!self.c.is_zero());
             ffi::mpz_add(&mut ctx.s, &self.c, &self.b);
             ffi::mpz_add(&mut ctx.x, &self.c, &self.c);
-            ffi::mpz_fdiv_q_self(&mut ctx.s, &ctx.x);
             swap(&mut self.b, &mut ctx.old_b);
-
+            ffi::mpz_fdiv_q(&mut self.b, &ctx.s, &ctx.x);
+            swap(&mut self.b, &mut ctx.s);
             swap(&mut self.a, &mut self.c);
 
             // x = 2sc

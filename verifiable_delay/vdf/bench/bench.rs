@@ -15,7 +15,6 @@
 #[macro_use]
 extern crate criterion;
 extern crate classgroup;
-extern crate gmp;
 extern crate hex;
 extern crate vdf;
 use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};

@@ -21,7 +21,7 @@ license = "Apache-2.0"
 
 [dependencies]
 num-traits = "0.2"
-rust-gmp = "0.5"
+rust-gmp = { git = "git+ssh://github.com/poanetwork/rust-gmp" }
 libc = "0.2"
 
 [dev-dependencies]

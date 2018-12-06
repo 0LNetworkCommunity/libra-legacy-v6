@@ -13,10 +13,12 @@
 // limitations under the License.
 
 extern crate classgroup;
-extern crate gmp;
 extern crate libc;
-use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};
-use gmp::mpz::{mpz_ptr, Mpz};
+use classgroup::{
+    gmp::mpz::{mpz_ptr, Mpz},
+    gmp_classgroup::GmpClassGroup,
+    ClassGroup,
+};
 use std::os::raw::c_void;
 use std::{env, process};
 

@@ -15,7 +15,7 @@
 use num_traits::{One, Zero};
 use std::ops::{Mul, MulAssign, Rem, ShlAssign};
 
-extern crate gmp;
+pub extern crate gmp;
 extern crate libc;
 extern crate num_traits;
 pub mod gmp_classgroup;
@@ -237,7 +237,8 @@ mod test {
                         current_discriminant = Some(discriminant.clone());
                     }
                     GmpClassGroup::from_ab_discriminant(a, b, discriminant)
-                }).collect();
+                })
+                .collect();
             assert_eq!(q.len(), 3);
             if q[0] == q[1] {
                 let mut i = q[0].clone();
