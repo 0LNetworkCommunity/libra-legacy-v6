@@ -19,6 +19,7 @@ readme = "README.md"
 keywords = ["vdf", "crypto", "cryptography"]
 repository = "https://github.com/poanetwork/vdf"
 license = "Apache-2.0"
+edition = "2018"
 
 [dependencies]
 clap = "^2.32.0"

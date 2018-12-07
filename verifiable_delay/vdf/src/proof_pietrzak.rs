@@ -43,7 +43,7 @@ impl From<ParseIntError> for ParseIterationsError {
 }
 
 impl fmt::Display for InvalidIterations {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             InvalidIterations::OddNumber(s) => {
                 write!(f, "Pietrzak iterations must be an even number, not {}", s)
@@ -64,7 +64,7 @@ impl From<Iterations> for u64 {
 }
 
 impl fmt::Display for ParseIterationsError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
             Ok(ref q) => <InvalidIterations as fmt::Display>::fmt(q, f),
             Err(ref q) => <ParseIntError as fmt::Display>::fmt(q, f),

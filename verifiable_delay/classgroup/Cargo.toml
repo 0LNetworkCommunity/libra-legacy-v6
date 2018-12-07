@@ -18,6 +18,7 @@ authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
 keywords = ["class group"]
 repository = "https://github.com/poanetwork/vdf"
 license = "Apache-2.0"
+edition = "2018"
 
 [dependencies]
 num-traits = "0.2"

@@ -14,8 +14,7 @@
 
 #[macro_use]
 extern crate criterion;
-extern crate classgroup;
-extern crate gmp;
+
 use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};
 use criterion::Criterion;
 use gmp::mpz::Mpz;

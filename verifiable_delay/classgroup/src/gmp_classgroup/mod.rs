@@ -67,7 +67,7 @@ thread_local! {
 }
 
 impl fmt::Display for GmpClassGroup {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}\n{:?}", self.a, self.b)
     }
 }

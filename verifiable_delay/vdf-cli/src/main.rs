@@ -13,12 +13,10 @@
 // limitations under the License.
 #![forbid(warnings)]
 #![forbid(unsafe_code)]
-extern crate hex;
+use hex;
 
-extern crate vdf;
 #[macro_use]
 extern crate clap;
-extern crate classgroup;
 
 use std::{cell::RefCell, fs::File, io::Read, rc::Rc, u64};
 use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
@@ -38,7 +36,7 @@ gen_validator!(is_u16_ok: u16);
 gen_validator!(is_u64_ok: u64);
 gen_validator!(is_hex_ok, hex::decode);
 
-fn check_iterations(is_pietrzak: bool, matches: &clap::ArgMatches) -> u64 {
+fn check_iterations(is_pietrzak: bool, matches: &clap::ArgMatches<'_>) -> u64 {
     let iterations = value_t!(matches, "NUM_ITERATIONS", u64).unwrap();
     if is_pietrzak && (iterations & 1 != 0 || iterations < 66) {
         clap::Error::with_description(
@@ -104,7 +102,7 @@ fn main() {
     let iterations = check_iterations(is_pietrzak, &matches);
     let challenge = hex::decode(&matches.value_of("DISCRIMINANT_CHALLENGE").unwrap()).unwrap();
 
-    let vdf: Box<VDF> = if is_pietrzak {
+    let vdf: Box<dyn VDF> = if is_pietrzak {
         Box::new(PietrzakVDFParams(int_size_bits).new()) as _
     } else {
         Box::new(WesolowskiVDFParams(int_size_bits).new()) as _

@@ -75,9 +75,8 @@
 //!
 //! Benchmarks are provided for the classgroup operations.  Run `cargo bench`
 //! to run them.  Additional benchmarks are under development.
-extern crate classgroup;
-extern crate num_traits;
-extern crate sha2;
+use classgroup;
+
 mod create_discriminant;
 use std::fmt::Debug;
 

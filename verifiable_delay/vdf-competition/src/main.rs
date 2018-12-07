@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate classgroup;
-extern crate libc;
 use classgroup::{
     gmp::mpz::{mpz_ptr, Mpz},
     gmp_classgroup::GmpClassGroup,
     ClassGroup,
 };
+use libc;
 use std::os::raw::c_void;
 use std::{env, process};
 
@@ -72,8 +71,8 @@ fn main() {
         eprintln!("{}", q);
         process::exit(1)
     };
+    use libc;
     use std::{ffi::CString, mem, os::unix::ffi::OsStringExt};
-    extern crate libc;
 
     #[link = "gmp"]
     extern "C" {

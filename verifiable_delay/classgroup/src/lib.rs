@@ -15,9 +15,8 @@
 use num_traits::{One, Zero};
 use std::ops::{Mul, MulAssign, Rem, ShlAssign};
 
-pub extern crate gmp;
-extern crate libc;
-extern crate num_traits;
+pub use gmp;
+
 pub mod gmp_classgroup;
 pub use self::gmp_classgroup::{
     do_compute,
@@ -178,8 +177,8 @@ mod test {
         path::PathBuf,
     };
 
-    extern crate gmp;
-    extern crate num_traits;
+    use gmp;
+
     use super::{gmp_classgroup::GmpClassGroup, ClassGroup};
     use gmp::mpz::Mpz;
 

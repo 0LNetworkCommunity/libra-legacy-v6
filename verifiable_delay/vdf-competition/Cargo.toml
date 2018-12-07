@@ -2,7 +2,7 @@
 name = "vdf-competition"
 version = "0.1.0"
 authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
-# edition = "2018"
+edition = "2018"
 readme = "README.md"
 keywords = ["vdf", "crypto", "cryptography"]
 repository = "https://github.com/poanetwork/vdf"
