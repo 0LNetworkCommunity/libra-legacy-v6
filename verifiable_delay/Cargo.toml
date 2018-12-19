@@ -21,6 +21,6 @@ members = [
 
 [profile.release]
 rpath = true
-# lto   = true
+lto   = true
 debug = false
 # panic = 'abort'

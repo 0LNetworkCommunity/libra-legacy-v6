@@ -22,7 +22,7 @@ edition = "2018"
 
 [dependencies]
 num-traits = "0.2"
-rust-gmp = { git = "git+ssh://github.com/poanetwork/rust-gmp" }
+rust-gmp = { git = "https://github.com/poanetwork/rust-gmp" }
 libc = "0.2"
 
 [dev-dependencies]

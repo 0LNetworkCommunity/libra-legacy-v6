@@ -19,7 +19,9 @@ case $0 in
    (/*)  cd "${0%/*}/";;
    (*/*) cd "./${0%/*}";;
 esac
-unset RUST_BACKTRACE
+PATH=~/.cargo/bin:/usr/bin
+unset RUST_BACKTRACE CARGO_INCREMENTAL
+export RUSTFLAGS=-Clto
 # cargo build --release -pvdf-competition
 # LD_LIBRARY_PATH=~/.rustup/toolchains/beta-x86_64-unknown-linux-gnu/lib \
 cargo install --path=vdf-competition --force
