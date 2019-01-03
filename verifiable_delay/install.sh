@@ -7,3 +7,4 @@ export PATH="$HOME/.cargo/bin:$PATH"
 rustup install nightly
 rustup default nightly
 cargo install --force --path=vdf-competition
+exit 0
