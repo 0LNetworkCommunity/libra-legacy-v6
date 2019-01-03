@@ -1,7 +1,8 @@
 #!/bin/sh --
 export RUSTFLAGS='-Clto -Cpanic=abort'
-sudo apt-get -y update && sudo apt-get -y dist-upgrade
-sudo apt-get install git build-essential libgmp3-dev -y
+export DEBIAN_FRONTEND=noninteractive
+sudo apt-get -y -q update
+sudo apt-get install git build-essential libgmp3-dev -y -q
 curl https://sh.rustup.rs -sSf | sh -s  -- -y
 export PATH="$HOME/.cargo/bin:$PATH"
 rustup install nightly
