@@ -11,14 +11,16 @@ unset dir CARGO_INCREMENTAL LD_LIBRARY_PATH LD_RUN_PATH RUST_BACKTRACE
 export RUSTFLAGS='-Clto -Cpanic=abort'
 
 which apt-get >/dev/null 2>&1 &&
-   sudo apt-get -y install build-essential m4 curl gnupg2 xz cargo gnupg gpg gpgv2
+   sudo apt-get -y install build-essential m4 curl gnupg2 xz cargo gnupg gpg gpgv2 gnupg2 gpgv
 which dnf > /dev/null 2>&1 && sudo dnf -y install gcc gpg xz cargo
 tmpdir=$(mktemp -d /var/tmp/vdf.XXXXXX)
 trap 'rm -rf -- "$tmpdir"' EXIT
 recv_gpg_keys () {
-   gpg2 --keyserver=keys.gnupg.net \
-        --homedir=. \
-        --recv-keys 343c2ff0fbee5ec2edbef399f3599ff828c67298
+   for i in gpg2 gpg; do
+      "$i" --keyserver=keys.gnupg.net \
+           --homedir=. \
+           --recv-keys 343c2ff0fbee5ec2edbef399f3599ff828c67298 && break
+   done
 }
 
 until recv_gpg_keys; do :; done
