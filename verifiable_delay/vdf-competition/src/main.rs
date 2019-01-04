@@ -13,60 +13,14 @@
 // limitations under the License.
 
 use classgroup::{
-    gmp::mpz::{mpz_ptr, Mpz},
+    gmp::mpz::{mpz_ptr, Mpz, mpz_srcptr},
     gmp_classgroup::GmpClassGroup,
     ClassGroup,
 };
 use libc;
-use std::os::raw::c_void;
 use std::{env, process};
 
-#[link = "gmp"]
-extern "C" {
-    fn __gmp_set_memory_functions(
-        arg1: Option<unsafe extern "C" fn(arg1: usize) -> *mut c_void>,
-        arg2: Option<
-            unsafe extern "C" fn(arg1: *mut c_void, arg2: usize, arg3: usize) -> *mut c_void,
-        >,
-        arg3: Option<unsafe extern "C" fn(arg1: *mut c_void, arg2: usize)>,
-    );
-}
-
-unsafe extern "C" fn do_realloc(
-    old_ptr: *mut libc::c_void,
-    old_len: libc::size_t,
-    new_len: libc::size_t,
-) -> *mut libc::c_void {
-    if old_len.max(2048) >= new_len {
-        old_ptr
-    } else {
-        let q = libc::realloc(old_ptr, new_len);
-        if q.is_null() {
-            libc::abort()
-        }
-        q
-    }
-}
-
-unsafe extern "C" fn do_malloc(len: libc::size_t) -> *mut libc::c_void {
-    let q = libc::malloc(len.max(2048));
-    if q.is_null() {
-        libc::abort()
-    }
-    q
-}
-
-unsafe extern "C" fn do_free(ptr: *mut libc::c_void, _len: libc::size_t) {
-    if true {
-        libc::free(ptr)
-    }
-}
-
-#[cfg(unix)]
 fn main() {
-    unsafe {
-        __gmp_set_memory_functions(Some(do_malloc), Some(do_realloc), Some(do_free));
-    }
     let fail = |q| {
         eprintln!("{}", q);
         process::exit(1)
@@ -81,6 +35,7 @@ fn main() {
             ptr: *const libc::c_char,
             base: libc::c_int,
         ) -> libc::c_int;
+        fn __gmpz_out_str(stream: *mut libc::FILE, base: libc::c_int, op: mpz_srcptr) -> libc::size_t;
     }
 
     let mut args = env::args_os();
@@ -103,41 +58,13 @@ fn main() {
     if let Some(iterations) = args.next().unwrap().to_str().and_then(|x| x.parse().ok()) {
         let mut generator = GmpClassGroup::generator_for_discriminant(discriminant);
         generator.repeated_square(iterations);
-        println!("{}", generator);
+        let (a, b) = generator.into_raw();
+        unsafe {
+            __gmpz_out_str(std::ptr::null_mut(), 10, a.inner());
+            libc::putchar(b'\n'.into());
+            __gmpz_out_str(std::ptr::null_mut(), 10, b.inner());
+        }
     } else {
         fail("Invalid number of iterations");
     }
-}
-#[cfg(not(unix))]
-fn main() {
-    unsafe {
-        __gmp_set_memory_functions(Some(do_malloc), Some(do_realloc), Some(do_free));
-    }
-    use std::str::FromStr;
-    let fail = |q| {
-        eprintln!("{}", q);
-        process::exit(1)
-    };
-    let check_arg = |q: &mut env::ArgsOs| {
-        if let Some(q) = q.next().and_then(|x| x.to_str().map(|x| x.to_owned())) {
-            q
-        } else {
-            fail("Arguments must be valid UTF-8!".to_owned())
-        }
-    };
-    let mut args = env::args_os();
-    if args.len() != 3 {
-        fail("Must have exactly two arguments".to_owned());
-    }
-    drop(args.next());
-    let discriminant = Mpz::from_str_radix(&check_arg(&mut args), 0)
-        .map_err(|x| fail(format!("{}", x)))
-        .unwrap();
-    let iterations: u64 = check_arg(&mut args)
-        .parse()
-        .map_err(|x| fail(format!("{}", x)))
-        .unwrap();
-    let mut generator = GmpClassGroup::generator_for_discriminant(discriminant);
-    generator.repeated_square(iterations);
-    println!("{}", generator);
 }

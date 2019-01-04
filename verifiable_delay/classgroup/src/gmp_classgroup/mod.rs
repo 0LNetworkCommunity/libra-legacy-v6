@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #![deny(unsafe_code)]
-#![cfg_attr(not(test), forbid(warnings))]
-#![cfg_attr(test, deny(warnings))]
 use super::ClassGroup;
 use gmp::mpz::Mpz;
 use num_traits::{One, Zero};
 use std::{
     borrow::Borrow,
     cell::RefCell,
-    fmt,
     mem::swap,
     ops::{Mul, MulAssign},
 };
@@ -66,13 +63,11 @@ thread_local! {
     static CTX: RefCell<Ctx> = Default::default();
 }
 
-impl fmt::Display for GmpClassGroup {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}\n{:?}", self.a, self.b)
-    }
-}
-
 impl GmpClassGroup {
+    pub fn into_raw(self) -> (Mpz, Mpz) {
+        (self.a, self.b)
+    }
+
     fn inner_multiply(&mut self, rhs: &Self, ctx: &mut Ctx) {
         self.assert_valid();
         rhs.assert_valid();
