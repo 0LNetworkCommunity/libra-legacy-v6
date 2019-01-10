@@ -8,3 +8,6 @@ following NOTICE file:
 
     This product includes software developed at
     Chia Network Inc (https://www.chia.net/).
+
+This project contains code from rust-gmp, located at
+https://github.com/fizyk20/rust-gmp and licensed under the MIT license.

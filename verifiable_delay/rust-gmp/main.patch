@@ -1,0 +1,253 @@
+diff --git a/src/mpz.rs b/src/mpz.rs
+index 6226744..87f9895 100644
+--- a/src/mpz.rs
++++ b/src/mpz.rs
+@@ -1,4 +1,4 @@
+-use libc::{c_char, c_int, c_long, c_ulong, c_void, c_double, size_t};
++use libc::{c_char, c_int, c_long, c_ulong, c_void, c_double, size_t, strnlen};
+ use super::rand::gmp_randstate_t;
+ use super::sign::Sign;
+ use std::convert::From;
+@@ -9,7 +9,7 @@ use std::str::FromStr;
+ use std::error::Error;
+ use std::ops::{Div, DivAssign, Mul, MulAssign, Add, AddAssign, Sub, SubAssign, Neg, Not, Shl, ShlAssign, Shr, ShrAssign, BitXor, BitXorAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, Rem, RemAssign};
+ use std::ffi::CString;
+-use std::{u32, i32};
++use std::{u32, i32, usize};
+ use num_traits::{Zero, One};
+ 
+ use ffi::*;
+@@ -97,6 +97,7 @@ extern "C" {
+     fn __gmpz_urandomm(rop: mpz_ptr, state: gmp_randstate_t, n: mpz_srcptr);
+ }
+ 
++#[repr(transparent)]
+ pub struct Mpz {
+     mpz: mpz_struct,
+ }
+@@ -117,14 +118,17 @@ pub enum ProbabPrimeResult {
+ }
+ 
+ impl Mpz {
++    #[inline]
+     pub unsafe fn inner(&self) -> mpz_srcptr {
+         &self.mpz
+     }
+ 
++    #[inline]
+     pub unsafe fn inner_mut(&mut self) -> mpz_ptr {
+         &mut self.mpz
+     }
+ 
++    #[inline]
+     pub fn new() -> Mpz {
+         unsafe {
+             let mut mpz = uninitialized();
+@@ -133,6 +137,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn new_reserve(n: usize) -> Mpz {
+         unsafe {
+             let mut mpz = uninitialized();
+@@ -141,12 +146,14 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn reserve(&mut self, n: usize) {
+         if self.bit_length() < n {
+             unsafe { __gmpz_realloc2(&mut self.mpz, n as c_ulong) }
+         }
+     }
+ 
++    #[inline]
+     pub fn size_in_base(&self, base: u8) -> usize {
+         unsafe {
+             __gmpz_sizeinbase(&self.mpz, base as c_int) as usize
+@@ -158,31 +165,22 @@ impl Mpz {
+     //        machinery for a custom type.
+     pub fn to_str_radix(&self, base: u8) -> String {
+         unsafe {
++            assert!(base >= 2 && base <= 36, "invalid base");
+             // Extra two bytes are for possible minus sign and null terminator
+-            let len = __gmpz_sizeinbase(&self.mpz, base as c_int) as usize + 2;
++            let len = {
++                let len = __gmpz_sizeinbase(&self.mpz, base as c_int) as usize;
++                assert!(usize::MAX - len >= 2, "capacity overflow");
++                len + 2
++            };
+ 
+             // Allocate and write into a raw *c_char of the correct length
+             let mut vector: Vec<u8> = Vec::with_capacity(len);
+-            vector.set_len(len);
+-
+             __gmpz_get_str(vector.as_mut_ptr() as *mut _, base as c_int, &self.mpz);
+-
+-            let mut first_nul = None;
+-            let mut index : usize = 0;
+-            for elem in &vector {
+-                if *elem == 0 {
+-                    first_nul = Some(index);
+-                    break;
+-                }
+-                index += 1;
+-            }
+-            let first_nul = first_nul.unwrap_or(len);
+-
+-            vector.truncate(first_nul);
+-            match String::from_utf8(vector) {
+-                Ok(s)  => s,
+-                Err(_) => panic!("GMP returned invalid UTF-8!")
+-            }
++            let string_len = strnlen(vector.as_ptr() as *const _, len);
++            assert!(string_len < len);
++            vector.set_len(string_len);
++            // FIXME is this actually a problem?
++            String::from_utf8(vector).expect("GMP returned invalid UTF-8!")
+         }
+     }
+ 
+@@ -201,6 +199,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn set(&mut self, other: &Mpz) {
+         unsafe { __gmpz_set(&mut self.mpz, &other.mpz) }
+     }
+@@ -212,10 +211,12 @@ impl Mpz {
+         unsafe { __gmpz_set_str(&mut self.mpz, s.as_ptr(), base as c_int) == 0 }
+     }
+ 
++    #[inline]
+     pub fn bit_length(&self) -> usize {
+         unsafe { __gmpz_sizeinbase(&self.mpz, 2) as usize }
+     }
+ 
++    #[inline]
+     pub fn compl(&self) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -224,6 +225,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn abs(&self) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -232,6 +234,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn div_floor(&self, other: &Mpz) -> Mpz {
+         unsafe {
+             if other.is_zero() {
+@@ -244,6 +247,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn mod_floor(&self, other: &Mpz) -> Mpz {
+         unsafe {
+             if other.is_zero() {
+@@ -270,6 +274,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn nextprime(&self) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -278,6 +283,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn gcd(&self, other: &Mpz) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -298,6 +304,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn lcm(&self, other: &Mpz) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -306,6 +313,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn is_multiple_of(&self, other: &Mpz) -> bool {
+         unsafe {
+             __gmpz_divisible_p(&self.mpz, &other.mpz) != 0
+@@ -341,10 +349,12 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn popcount(&self) -> usize {
+         unsafe { __gmpz_popcount(&self.mpz) as usize }
+     }
+ 
++    #[inline]
+     pub fn pow(&self, exp: u32) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -353,6 +363,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn powm(&self, exp: &Mpz, modulus: &Mpz) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -361,6 +372,7 @@ impl Mpz {
+         }
+     }
+ 
++    #[inline]
+     pub fn powm_sec(&self, exp: &Mpz, modulus: &Mpz) -> Mpz {
+         unsafe {
+             let mut res = Mpz::new();
+@@ -369,6 +381,7 @@ impl Mpz {
+         }
+     }
+     
++    #[inline]
+     pub fn ui_pow_ui(x: u32, y: u32) -> Mpz {
+     	unsafe {
+     		let mut res = Mpz::new();
+@@ -377,22 +390,27 @@ impl Mpz {
+     	}
+     }
+ 
++    #[inline]
+     pub fn hamdist(&self, other: &Mpz) -> usize {
+         unsafe { __gmpz_hamdist(&self.mpz, &other.mpz) as usize }
+     }
+ 
++    #[inline]
+     pub fn setbit(&mut self, bit_index: usize) {
+         unsafe { __gmpz_setbit(&mut self.mpz, bit_index as c_ulong) }
+     }
+ 
++    #[inline]
+     pub fn clrbit(&mut self, bit_index: usize) {
+         unsafe { __gmpz_clrbit(&mut self.mpz, bit_index as c_ulong) }
+     }
+ 
++    #[inline]
+     pub fn combit(&mut self, bit_index: usize) {
+         unsafe { __gmpz_combit(&mut self.mpz, bit_index as c_ulong) }
+     }
+ 
++    #[inline]
+     pub fn tstbit(&self, bit_index: usize) -> bool {
+         unsafe { __gmpz_tstbit(&self.mpz, bit_index as c_ulong) == 1 }
+     }
