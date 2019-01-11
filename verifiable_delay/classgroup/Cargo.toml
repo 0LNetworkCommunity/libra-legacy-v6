@@ -22,7 +22,6 @@ edition = "2018"
 
 [dependencies]
 num-traits = "0.2"
-rust-gmp = { path = "../rust-gmp", version = "0.5.1" }
 libc = "0.2"
 
 [dev-dependencies]

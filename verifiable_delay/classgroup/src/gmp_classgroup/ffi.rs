@@ -18,8 +18,8 @@
 //! Furthermore, the `rust-gmp` crate doesn’t support many operations that
 //! this library requires.
 #![allow(unsafe_code)]
-pub use gmp::mpz::Mpz;
-use gmp::mpz::{mp_bitcnt_t, mp_limb_t};
+pub use super::super::gmp::mpz::Mpz;
+use super::super::gmp::mpz::{mp_bitcnt_t, mp_limb_t};
 use libc::{c_int, c_long, c_ulong, c_void, size_t};
 // pub use c_ulong;
 use std::{mem, usize};

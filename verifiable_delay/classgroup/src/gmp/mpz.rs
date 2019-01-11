@@ -1,5 +1,5 @@
+#![allow(unsafe_code)]
 use libc::{c_char, c_int, c_long, c_ulong, c_void, c_double, size_t, strnlen};
-use super::rand::gmp_randstate_t;
 use super::sign::Sign;
 use std::convert::From;
 use std::mem::{uninitialized,size_of};
@@ -12,7 +12,7 @@ use std::ffi::CString;
 use std::{u32, i32, usize};
 use num_traits::{Zero, One};
 
-use ffi::*;
+use super::ffi::*;
 
 #[repr(C)]
 pub struct mpz_struct {
@@ -93,8 +93,6 @@ extern "C" {
     fn __gmpz_root(rop: mpz_ptr, op: mpz_srcptr, n: c_ulong) -> c_int;
     fn __gmpz_sqrt(rop: mpz_ptr, op: mpz_srcptr);
     fn __gmpz_millerrabin(n: mpz_srcptr, reps: c_int) -> c_int;
-    fn __gmpz_urandomb(rop: mpz_ptr, state: gmp_randstate_t, n: mp_bitcnt_t);
-    fn __gmpz_urandomm(rop: mpz_ptr, state: gmp_randstate_t, n: mpz_srcptr);
 }
 
 #[repr(transparent)]

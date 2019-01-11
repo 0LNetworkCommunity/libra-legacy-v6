@@ -15,7 +15,7 @@
 use num_traits::{One, Zero};
 use std::ops::{Mul, MulAssign, Rem, ShlAssign};
 
-pub use gmp;
+pub mod gmp;
 
 pub mod gmp_classgroup;
 pub use self::gmp_classgroup::{
@@ -177,10 +177,8 @@ mod test {
         path::PathBuf,
     };
 
-    use gmp;
-
     use super::{gmp_classgroup::GmpClassGroup, ClassGroup};
-    use gmp::mpz::Mpz;
+    use super::gmp::mpz::Mpz;
 
     fn split_into_three_pieces(line: &str, c: char) -> [&str; 3] {
         let mut iter = line.split(c);

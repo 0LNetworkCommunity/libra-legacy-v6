@@ -8,6 +8,7 @@ extern "C" {
 }
 
 #[test]
+#[allow(unsafe_code)]
 fn test_limb_size() {
     // We are assuming that the limb size is the same as the pointer size.
     assert_eq!(std::mem::size_of::<mp_limb_t>() * 8,
@@ -98,7 +99,7 @@ mod mpz {
     fn test_div_zero() {
         let x: Mpz = From::<i64>::from(1);
         let y = Mpz::new();
-        x / y;
+        drop(x / y)
     }
 
     #[test]
@@ -106,7 +107,7 @@ mod mpz {
     fn test_rem_zero() {
         let x: Mpz = From::<i64>::from(1);
         let y = Mpz::new();
-        x % y;
+        drop(x % y)
     }
 
     #[test]
@@ -313,7 +314,7 @@ mod mpz {
 
     #[test]
     fn test_popcount() {
-        Mpz::from_str_radix("1010010011", 2).unwrap().popcount() == 5;
+        assert_eq!(Mpz::from_str_radix("1010010011", 2).unwrap().popcount(), 5);
     }
 
     #[test]
@@ -577,148 +578,5 @@ mod mpz {
         assert_eq!(format!("{}", zero), "0");
         let zero = Mpz::from(-51213);
         assert_eq!(format!("{}", zero), "-51213");
-    }
-}
-
-mod rand {
-    use std::convert::From;
-    use super::super::mpz::Mpz;
-    use super::super::rand::RandState;
-
-    #[test]
-    fn test_randstate() {
-        let mut state = RandState::new();
-        state.seed_ui(42);
-        for _ in 1u32..1000 {
-            for x in 1i64..10 {
-                let upper: Mpz = From::<i64>::from(x);
-                assert!(state.urandom(&upper) < upper);
-            }
-        }
-    }
-}
-
-mod mpq {
-    use std::convert::From;
-    use std::u64;
-    use super::super::mpq::Mpq;
-    use super::super::mpz::Mpz;
-    use super::super::sign::Sign;
-
-    #[test]
-    fn test_one() {
-        let onea: Mpq = From::<i64>::from(1);
-        let oneb: Mpq = From::<i64>::from(1);
-        assert!(onea == oneb);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_div_zero() {
-        let x: Mpq = From::<i64>::from(1);
-        let y = Mpq::new();
-        x / y;
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_invert_zero() {
-        Mpq::new().invert();
-    }
-
-    #[test]
-    fn test_fmt() {
-        let fourty: Mpq = From::<i64>::from(40);
-        let six: Mpq = From::<i64>::from(6);
-        let fourty_sixths = &fourty / &six;
-
-        assert_eq!(format!("{:?}", fourty), "40");
-        assert_eq!(format!("{:?}", -&fourty), "-40");
-        assert_eq!(format!("{:?}", fourty_sixths), "20/3");
-        assert_eq!(format!("{:?}", -&fourty_sixths), "-20/3");
-    }
-
-    #[test]
-    fn test_floor() {
-        let half = Mpq::ratio(&Mpz::from(1), &Mpz::from(2));
-        assert_eq!(half.floor(), Mpz::from(0));
-
-        let big = Mpz::from(u64::MAX) * Mpz::from(u64::MAX);
-        let slightly_more_than_one = Mpq::ratio(&(&big + Mpz::from(1)), &big);
-        assert_eq!(slightly_more_than_one.floor(), Mpz::from(1));
-
-        let minus_half = -half;
-        assert_eq!(minus_half.floor(), Mpz::from(-1));
-    }
-
-    #[test]
-    fn test_ceil() {
-        let half = Mpq::ratio(&Mpz::from(1), &Mpz::from(2));
-        assert_eq!(half.ceil(), Mpz::from(1));
-
-        let minus_half = -half;
-        assert_eq!(minus_half.ceil(), Mpz::from(0));
-    }
-
-    #[test]
-    fn test_sign() {
-        let zero: Mpq = From::<i64>::from(0);
-        let five: Mpq = From::<i64>::from(5);
-        let minus_five: Mpq = From::<i64>::from(-5);
-
-        assert_eq!(zero.sign(), Sign::Zero);
-        assert_eq!(five.sign(), Sign::Positive);
-        assert_eq!(minus_five.sign(), Sign::Negative);
-    }
-
-    #[test]
-    fn test_ratio() {
-        let zero: Mpz = From::<i64>::from(0);
-        let one: Mpz = From::<i64>::from(1);
-        let minus_one = -&one;
-        let two = &one + &one;
-        let four = &two + &two;
-
-        assert_eq!(Mpq::ratio(&one, &minus_one), Mpq::ratio(&minus_one, &one));
-        assert_eq!(Mpq::ratio(&zero, &one), Mpq::ratio(&zero, &minus_one));
-        assert_eq!(Mpq::ratio(&zero, &one), Mpq::ratio(&zero, &two));
-        assert_eq!(Mpq::ratio(&two, &four), Mpq::ratio(&one, &two));
-    }
-
-    #[test]
-    fn test_from_str_radix() {
-        let zero: Mpz = From::<i64>::from(0);
-        let one: Mpz = From::<i64>::from(1);
-        let minus_one = -&one;
-        let two = &one + &one;
-
-        assert_eq!(Mpq::from_str_radix("1/-1", 10).unwrap(), Mpq::ratio(&minus_one, &one));
-        assert_eq!(Mpq::from_str_radix("0/2", 10).unwrap(), Mpq::ratio(&zero, &one));
-        assert_eq!(Mpq::from_str_radix("2/4", 10).unwrap(), Mpq::ratio(&one, &two));
-    }
-}
-
-mod mpf {
-    use super::super::mpf::Mpf;
-    use super::super::sign::Sign;
-
-    #[test]
-    #[should_panic]
-    fn test_div_zero() {
-        let x = Mpf::new(0);
-        &x / &x;
-    }
-
-    #[test]
-    fn test_sign() {
-        let zero = Mpf::zero();
-        let mut five = Mpf::zero();
-        Mpf::set_from_si(&mut five, 5);
-        let mut minus_five = Mpf::zero();
-        Mpf::set_from_si(&mut minus_five, -5);
-
-        assert_eq!(zero.sign(), Sign::Zero);
-        assert_eq!(five.sign(), Sign::Positive);
-        assert_eq!(minus_five.sign(), Sign::Negative);
     }
 }

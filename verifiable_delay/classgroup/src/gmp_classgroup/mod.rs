@@ -13,7 +13,8 @@
 // limitations under the License.
 #![deny(unsafe_code)]
 use super::ClassGroup;
-use gmp::mpz::Mpz;
+use super::gmp::mpz::Mpz;
+use super::gmp::mpz::ProbabPrimeResult::NotPrime;
 use num_traits::{One, Zero};
 use std::{
     borrow::Borrow,
@@ -337,7 +338,7 @@ impl<B: Borrow<GmpClassGroup>> MulAssign<B> for GmpClassGroup {
 
 impl super::BigNum for Mpz {
     fn probab_prime(&self, iterations: u32) -> bool {
-        self.probab_prime(iterations.max(256) as _) != gmp::mpz::ProbabPrimeResult::NotPrime
+        self.probab_prime(iterations.max(256) as _) != NotPrime
     }
 
     fn setbit(&mut self, bit_index: usize) {
@@ -543,7 +544,7 @@ impl Default for Ctx {
 
 pub fn do_compute(discriminant: Mpz, iterations: u64) -> GmpClassGroup {
     debug_assert!(discriminant < Zero::zero());
-    debug_assert!(discriminant.probab_prime(50) != gmp::mpz::ProbabPrimeResult::NotPrime);
+    debug_assert!(discriminant.probab_prime(50) != NotPrime);
     let mut f = GmpClassGroup::generator_for_discriminant(discriminant);
     f.repeated_square(iterations);
     f

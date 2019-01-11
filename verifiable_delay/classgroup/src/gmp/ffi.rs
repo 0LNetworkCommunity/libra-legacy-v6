@@ -1,4 +1,4 @@
-use mpz::*;
+use super::mpz::*;
 
 #[link(name = "gmp")]
 extern "C" {
