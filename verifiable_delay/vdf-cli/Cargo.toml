@@ -16,10 +16,11 @@ name = "vdf-cli"
 version = "0.1.0"
 authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
 readme = "README.md"
-keywords = ["vdf", "crypto", "cryptography"]
+keywords = ["vdf", "crypto", "cryptography", "classgroup"]
 repository = "https://github.com/poanetwork/vdf"
 license = "Apache-2.0"
 edition = "2018"
+description = "A command-line interface to the Verifiable Delay Function (VDF) crate"
 
 [dependencies]
 clap = "^2.32.0"

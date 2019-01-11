@@ -16,10 +16,11 @@ name = "vdf"
 version = "0.1.0"
 authors = ["Demi M. Obenour <demiobenour@gmail.com>"]
 readme = "README.md"
-keywords = ["vdf", "crypto", "cryptography"]
+keywords = ["vdf", "classgroup", "crypto", "cryptography"]
 repository = "https://github.com/poanetwork/vdf"
 license = "Apache-2.0"
 edition = "2018"
+description = "An implementation of Verifiable Delay Functions (VDFs) in Rust"
 
 [dependencies]
 classgroup = { path = "../classgroup" }
