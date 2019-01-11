@@ -24,6 +24,6 @@ description = "A command-line interface to the Verifiable Delay Function (VDF) c
 
 [dependencies]
 clap = "^2.32.0"
-classgroup = { path = "../classgroup" }
-vdf = { path = "../vdf" }
+classgroup = { path = "../classgroup", version = "^0.1.0" }
+vdf = { path = "../vdf", version = "^0.1.0" }
 hex = "0.3"

@@ -23,7 +23,7 @@ edition = "2018"
 description = "An implementation of Verifiable Delay Functions (VDFs) in Rust"
 
 [dependencies]
-classgroup = { path = "../classgroup" }
+classgroup = { path = "../classgroup", version = "^0.1.0" }
 num-traits = "0.2"
 sha2 = "0.8"
 
