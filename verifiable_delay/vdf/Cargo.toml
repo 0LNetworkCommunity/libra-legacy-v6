@@ -26,6 +26,7 @@ description = "An implementation of Verifiable Delay Functions (VDFs) in Rust"
 classgroup = { path = "../classgroup", version = "^0.1.0" }
 num-traits = "0.2"
 sha2 = "0.8"
+bit-vec = "0.5"
 
 [dev-dependencies]
 criterion = ">=0.2"
