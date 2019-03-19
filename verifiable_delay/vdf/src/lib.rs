@@ -43,7 +43,7 @@
 //!
 //! ### To use the VDF library
 //!
-//! ```rust
+//! ```rust,no_run
 //! extern crate vdf;
 //! use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
 //! const CORRECT_SOLUTION: &[u8] =
