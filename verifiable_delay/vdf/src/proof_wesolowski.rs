@@ -99,16 +99,13 @@ fn hash_prime<T: BigNum>(seed: &[&[u8]]) -> T {
         h.input(i);
     }
     let mut h = h.xof_result();
-    let mut o = [0u8; 16];
     loop {
         let mut b = [0u8; 16];  // Ideally 17
         h.read(&mut b);
-		assert_ne!(o, b);
         let n = T::from(&b[..]);
         if n.probab_prime(2) {
             break n;
         }
-		o = b;
     }
 }
 
