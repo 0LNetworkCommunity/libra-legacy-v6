@@ -136,7 +136,7 @@ where
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
-	use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
+    use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
 
     let size = (int_size_bits + 16) >> 4;
     let mut v = vec![0; size * 2];
@@ -145,7 +145,7 @@ where
         i.serialize(&mut v).expect(super::INCORRECT_BUFFER_SIZE);
         h.input(&v);
     }
-	let mut res = [0u8; 16];
+    let mut res = [0u8; 16];
     h.xof_result().read(&mut res);
     T::unsigned_deserialize_bignum(&res[..])
 }
