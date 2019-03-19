@@ -139,10 +139,7 @@ where
 	use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
 
     let size = (int_size_bits + 16) >> 4;
-    let mut v = Vec::with_capacity(size * 2);
-    for _ in 0..size * 2 {
-        v.push(0)
-    }
+    let mut v = vec![0; size * 2];
     let mut h = Shake128::default();
     for i in &[&x, &y, &sqrt_mu] {
         i.serialize(&mut v).expect(super::INCORRECT_BUFFER_SIZE);
