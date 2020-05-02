@@ -23,6 +23,7 @@ lcs = { path = "../../../common/lcs", version = "0.1.0", package = "libra-canoni
 libra-crypto = { path = "../../../crypto/crypto", version = "0.1.0"}
 move-core-types = { path = "../../move-core/types", version = "0.1.0" }
 libra-logger = { path = "../../../common/logger", version = "0.1.0" }
+vdf = { git="https://github.com/poanetwork/vdf.git", branch="master" }
 
 [dev-dependencies]
 proptest = "0.9.6"

@@ -4,7 +4,7 @@
 use super::{lcs, signature};
 use crate::{
     loaded_data::runtime_types::Type,
-    native_functions::{account, context::NativeContext, event, hash},
+    native_functions::{account, context::NativeContext, event, hash, vdf},
     values::{debug, vector, Value},
 };
 use libra_types::{
@@ -88,6 +88,7 @@ pub enum NativeFunction {
     AccountSaveAccount,
     DebugPrint,
     DebugPrintStackTrace,
+    VdfVerify,
 }
 
 /// Function.
@@ -156,6 +157,7 @@ impl FunctionResolver {
             (&CORE_CODE_ADDRESS, "LibraAccount", "save_account") => AccountSaveAccount,
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VdfVerify,
             _ => return None,
         })
     }
@@ -189,6 +191,7 @@ impl Function for NativeFunction {
             Self::LCSToBytes => lcs::native_to_bytes(ctx, t, v),
             Self::DebugPrint => debug::native_print(ctx, t, v),
             Self::DebugPrintStackTrace => debug::native_print_stack_trace(ctx, t, v),
+            Self::VdfVerify => vdf::verify(ctx, t, v),
         }
     }
 
@@ -213,6 +216,7 @@ impl Function for NativeFunction {
             Self::AccountSaveAccount => 5,
             Self::DebugPrint => 1,
             Self::DebugPrintStackTrace => 0,
+            Self::VdfVerify => 3,
         }
     }
 
@@ -411,6 +415,10 @@ impl NativeFunction {
                 vec![]
             ),
             Self::DebugPrintStackTrace => simple!(vec![], vec![], vec![]),
+            Self::VdfVerify => simple!(
+                vec![Vector(Box::new(U8)), U64, Vector(Box::new(U8))],
+                vec![Bool]
+            ),
         })
     }
 }
