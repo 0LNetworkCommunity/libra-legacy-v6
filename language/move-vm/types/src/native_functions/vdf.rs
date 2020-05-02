@@ -7,15 +7,15 @@ use crate::{
         context::NativeContext,
         dispatch::{native_gas, NativeResult},
     },
-    values::{values_impl::Reference, Value},
+    values::{Value},
 };
-use libra_types::vm_error::{sub_status::NFE_LCS_SERIALIZATION_FAILURE, StatusCode, VMStatus};
+use libra_types::vm_error::{StatusCode, VMStatus};
 use move_core_types::gas_schedule::NativeCostIndex;
 use std::collections::VecDeque;
 use vm::errors::VMResult;
 use vdf::{VDFParams, VDF};
 
-/// Rust implementation of Move's `native public fun to_bytes<T>(&T): vector<u8>`
+/// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
     context: &impl NativeContext,
     _ty_args: Vec<Type>,
@@ -23,7 +23,7 @@ pub fn verify(
 ) -> VMResult<NativeResult> {
     if arguments.len() != 3 {
         let msg = format!(
-            "wrong number of arguments for sha3_256 expected 1 found {}",
+            "wrong number of arguments for sha3_256 expected 3 found {}",
             arguments.len()
         );
         return Err(VMStatus::new(StatusCode::UNREACHABLE).with_message(msg));
