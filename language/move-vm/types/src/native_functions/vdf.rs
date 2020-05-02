@@ -40,7 +40,7 @@ pub fn verify(
     );
     // let hash_vec = HashValue::from_sha3_256(hash_arg.as_slice()).to_vec();
     // let return_values = vec![Value::vector_u8(hash_vec)];
-    let p = vdf::WesolowskiVDFParams(3);
+    let p = vdf::WesolowskiVDFParams(2048);
     let v = p.new();
     match v.verify(&challenge, difficulty, &alleged_solution) {
         Ok(_) => {
