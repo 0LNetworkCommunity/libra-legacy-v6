@@ -53,7 +53,7 @@ impl Compiler for IRCompiler {
     }
 
     fn use_staged_genesis(&self) -> bool {
-        true
+        false
     }
 }
 
