@@ -1,0 +1,14 @@
+//! new-transaction
+import 0x0.VDF;
+main() {
+  let challenge: vector<u8>;
+  let difficult: u64;
+  let solution: vector<u8>;
+
+  difficult = 10000;
+  challenge = h"aa";
+  solution = h"aa";
+
+  assert(VDF.verify(move(challenge), move(difficult), move(solution))==false, 7);
+
+}
