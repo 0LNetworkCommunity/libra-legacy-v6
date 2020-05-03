@@ -29,27 +29,20 @@ pub fn verify(
         return Err(VMStatus::new(StatusCode::UNREACHABLE).with_message(msg));
     }
 
-    let challenge = pop_arg!(arguments, Vec<u8>);
-    let difficulty = pop_arg!(arguments, u64);
     let alleged_solution = pop_arg!(arguments, Vec<u8>);
+    let difficulty = pop_arg!(arguments, u64);
+    let challenge = pop_arg!(arguments, Vec<u8>);
 
     let cost = native_gas(
         context.cost_table(),
         NativeCostIndex::SHA3_256,
         challenge.len(),
     );
-    // let hash_vec = HashValue::from_sha3_256(hash_arg.as_slice()).to_vec();
-    // let return_values = vec![Value::vector_u8(hash_vec)];
-    let p = vdf::WesolowskiVDFParams(2048);
-    let v = p.new();
-    match v.verify(&challenge, difficulty, &alleged_solution) {
-        Ok(_) => {
-            let return_values = vec![Value::bool(true)];
-            Ok(NativeResult::ok(cost, return_values))
-        }
-        Err(_) => {
-            let return_values = vec![Value::bool(false)];
-            Ok(NativeResult::ok(cost, return_values))
-        }
-    }
+
+    let v = vdf::WesolowskiVDFParams(2048).new();
+
+    let ret_value = v.verify(&challenge, difficulty, &alleged_solution ).is_ok();
+
+    let return_values = vec![Value::bool(ret_value )];
+    Ok(NativeResult::ok(cost, return_values))
 }
