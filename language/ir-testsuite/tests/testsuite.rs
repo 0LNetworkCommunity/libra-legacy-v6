@@ -40,6 +40,7 @@ impl Compiler for IRCompiler {
             ast::ScriptOrModule::Script(parsed_script) => {
                 log(format!("{}", &parsed_script));
                 ScriptOrModule::Script(compile_script(address, parsed_script, &self.deps)?.0)
+
             }
             ast::ScriptOrModule::Module(parsed_module) => {
                 log(format!("{}", &parsed_module));
