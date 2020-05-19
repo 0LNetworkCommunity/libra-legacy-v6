@@ -39,12 +39,7 @@ impl Compiler for IRCompiler {
         Ok(match parse_script_or_module("unused_file_name", input)? {
             ast::ScriptOrModule::Script(parsed_script) => {
                 log(format!("{}", &parsed_script));
-<<<<<<< HEAD
-                ScriptOrModule::Script(compile_script(address, parsed_script, &self.deps)?.0)
-
-=======
                 ScriptOrModule::Script(compile_script(Some(address), parsed_script, &self.deps)?.0)
->>>>>>> a8cd371857f70541f2fd49239c0b02059c54d726
             }
             ast::ScriptOrModule::Module(parsed_module) => {
                 log(format!("{}", &parsed_module));
