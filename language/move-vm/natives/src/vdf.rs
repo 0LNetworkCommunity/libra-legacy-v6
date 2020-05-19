@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    loaded_data::runtime_types::Type,
+    move_vm_types::loaded_data::runtime_types::Type,
     native_functions::{
         context::NativeContext,
         dispatch::{native_gas, NativeResult},
     },
-    values::{Value},
+    move_vm_types::values::{Value},
+
 };
 use libra_types::vm_error::{StatusCode, VMStatus};
 use move_core_types::gas_schedule::NativeCostIndex;
