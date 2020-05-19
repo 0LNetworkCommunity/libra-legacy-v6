@@ -16,8 +16,7 @@ use std::iter::DoubleEndedIterator;
 use crate::{access::ModuleAccess, file_format::*, SignatureTokenKind};
 use std::collections::BTreeSet;
 
-use libra_types::language_storage::ModuleId;
-use move_core_types::identifier::IdentStr;
+use move_core_types::{identifier::IdentStr, language_storage::ModuleId};
 use std::collections::BTreeMap;
 
 /// Represents a lazily evaluated abstraction over a module.
@@ -248,6 +247,15 @@ pub struct FunctionHandleView<'a, T> {
     function_handle: &'a FunctionHandle,
 }
 
+impl<'a, T> Clone for FunctionHandleView<'a, T> {
+    fn clone(&self) -> Self {
+        Self {
+            module: self.module,
+            function_handle: self.function_handle,
+        }
+    }
+}
+
 impl<'a, T: ModuleAccess> FunctionHandleView<'a, T> {
     pub fn new(module: &'a T, function_handle: &'a FunctionHandle) -> Self {
         Self {
@@ -394,10 +402,63 @@ impl<'a, T: ModuleAccess> FieldDefinitionView<'a, T> {
     }
 }
 
+pub struct LocalsSignatureView<'a, T> {
+    function_def_view: FunctionDefinitionView<'a, T>,
+}
+
+impl<'a, T: ModuleAccess> LocalsSignatureView<'a, T> {
+    fn new(function_def_view: FunctionDefinitionView<'a, T>) -> Self {
+        Self { function_def_view }
+    }
+
+    fn parameters(&self) -> &'a [SignatureToken] {
+        &self.function_def_view.parameters().0
+    }
+
+    fn additional_locals(&self) -> &'a [SignatureToken] {
+        &self
+            .function_def_view
+            .module
+            .signature_at(self.function_def_view.code().unwrap().locals)
+            .0
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn len(&self) -> usize {
+        self.parameters().len() + self.additional_locals().len()
+    }
+
+    pub fn token_at(&self, index: LocalIndex) -> SignatureTokenView<'a, T> {
+        let index = index as usize;
+        let parameters = self.parameters();
+        SignatureTokenView::new(
+            self.function_def_view.module,
+            if (index as usize) < parameters.len() {
+                &parameters[index]
+            } else {
+                &self.additional_locals()[index - parameters.len()]
+            },
+        )
+    }
+}
+
 pub struct FunctionDefinitionView<'a, T> {
     module: &'a T,
     function_def: &'a FunctionDefinition,
     function_handle_view: FunctionHandleView<'a, T>,
+}
+
+impl<'a, T> Clone for FunctionDefinitionView<'a, T> {
+    fn clone(&self) -> Self {
+        Self {
+            module: self.module,
+            function_def: self.function_def,
+            function_handle_view: self.function_handle_view.clone(),
+        }
+    }
 }
 
 impl<'a, T: ModuleAccess> FunctionDefinitionView<'a, T> {
@@ -419,9 +480,8 @@ impl<'a, T: ModuleAccess> FunctionDefinitionView<'a, T> {
         self.function_def.is_native()
     }
 
-    pub fn locals_signature(&self) -> SignatureView<'a, T> {
-        let locals_signature = self.module.signature_at(self.function_def.code.locals);
-        SignatureView::new(self.module, locals_signature)
+    pub fn locals_signature(&self) -> Option<LocalsSignatureView<'a, T>> {
+        self.code().map(|_| LocalsSignatureView::new(self.clone()))
     }
 
     pub fn name(&self) -> &'a IdentStr {
@@ -456,8 +516,8 @@ impl<'a, T: ModuleAccess> FunctionDefinitionView<'a, T> {
         self.function_handle_view.arg_count()
     }
 
-    pub fn code(&self) -> &'a CodeUnit {
-        &self.function_def.code
+    pub fn code(&self) -> Option<&'a CodeUnit> {
+        self.function_def.code.as_ref()
     }
 }
 

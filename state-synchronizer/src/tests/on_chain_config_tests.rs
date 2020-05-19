@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::executor_proxy::{ExecutorProxy, ExecutorProxyTrait};
-use executor::{db_bootstrapper::bootstrap_db_if_empty, BlockExecutor, Executor};
+use executor::{db_bootstrapper::bootstrap_db_if_empty, Executor};
+use executor_types::BlockExecutor;
 use executor_utils::test_helpers::{
     gen_block_id, gen_block_metadata, gen_ledger_info_with_sigs, get_test_signed_transaction,
 };
@@ -19,10 +20,12 @@ use libra_types::{
     transaction::authenticator::AuthenticationKey,
 };
 use libra_vm::LibraVM;
+use libradb::LibraDB;
 use std::sync::Arc;
 use stdlib::transaction_scripts::StdlibScript;
 use storage_client::SyncStorageClient;
-use storage_service::{init_libra_db, start_storage_service_with_db};
+use storage_interface::DbReaderWriter;
+use storage_service::start_storage_service_with_db;
 use subscription_service::ReconfigSubscription;
 use transaction_builder::{
     encode_block_prologue_script, encode_publishing_option_script,
@@ -38,7 +41,7 @@ fn test_on_chain_config_pub_sub() {
     let (subscription, mut reconfig_receiver) = ReconfigSubscription::subscribe(subscribed_configs);
 
     let (mut config, genesis_key) = config_builder::test_config();
-    let (db, db_rw) = init_libra_db(&config);
+    let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&config.storage.dir()));
     let _storage = start_storage_service_with_db(&config, Arc::clone(&db));
     bootstrap_db_if_empty::<LibraVM>(&db_rw, get_genesis_txn(&config).unwrap()).unwrap();
 
@@ -84,7 +87,7 @@ fn test_on_chain_config_pub_sub() {
         .test
         .as_mut()
         .unwrap()
-        .account_keypair
+        .operator_keypair
         .as_mut()
         .unwrap();
 
@@ -160,6 +163,7 @@ fn test_on_chain_config_pub_sub() {
             &validator_account,
             validator_auth_key_prefix,
             1_000_000,
+            vec![],
             vec![],
         )),
     );

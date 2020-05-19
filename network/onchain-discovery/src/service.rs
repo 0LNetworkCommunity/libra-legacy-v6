@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    storage_query_discovery_set,
-    types::{OnchainDiscoveryMsg, QueryDiscoverySetRequest, QueryDiscoverySetResponse},
+    storage_query_discovery_set_async,
+    types::{OnchainDiscoveryMsg, QueryDiscoverySetRequest},
 };
 use anyhow::{bail, ensure, format_err, Context as _};
 use bounded_executor::BoundedExecutor;
@@ -18,7 +18,7 @@ use libra_logger::prelude::*;
 use libra_types::PeerId;
 use network::{peer_manager::PeerManagerNotification, protocols::rpc::error::RpcError, ProtocolId};
 use std::{sync::Arc, task::Context};
-use storage_client::StorageRead;
+use storage_interface::DbReader;
 use tokio::runtime::Handle;
 
 /// A LibraNet service for handling [`QueryDiscoverySetRequest`] rpc's.
@@ -32,22 +32,21 @@ pub struct OnchainDiscoveryService {
     // TODO(philiphayes): refactor LibraNet interface to better support this kind
     // of use case.
     peer_mgr_notifs_rx: libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
-    /// internal gRPC client to send read requests to Libra Storage.
-    // TODO(philiphayes): use the new storage DbReader interface.
-    storage_read_client: Arc<dyn StorageRead>,
+    /// handle to LibraDB storage
+    libra_db: Arc<dyn DbReader>,
 }
 
 impl OnchainDiscoveryService {
     pub fn new(
         executor: Handle,
         peer_mgr_notifs_rx: libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
-        storage_read_client: Arc<dyn StorageRead>,
+        libra_db: Arc<dyn DbReader>,
         max_concurrent_inbound_queries: usize,
     ) -> Self {
         Self {
             inbound_rpc_executor: BoundedExecutor::new(max_concurrent_inbound_queries, executor),
             peer_mgr_notifs_rx,
-            storage_read_client,
+            libra_db,
         }
     }
 
@@ -105,16 +104,14 @@ impl OnchainDiscoveryService {
         };
 
         debug!(
-            "recevied query discovery set request: peer: {}, \
-             version: {}, seq_num: {}",
+            "recevied query discovery set request: peer: {}, version: {}",
             peer_id.short_str(),
-            req_msg.client_known_version,
-            req_msg.client_known_seq_num,
+            req_msg.known_version,
         );
 
         self.inbound_rpc_executor
             .try_spawn(handle_query_discovery_set_request(
-                Arc::clone(&self.storage_read_client),
+                Arc::clone(&self.libra_db),
                 peer_id,
                 req_msg,
                 res_tx,
@@ -127,18 +124,17 @@ impl OnchainDiscoveryService {
 }
 
 async fn handle_query_discovery_set_request(
-    storage_read_client: Arc<dyn StorageRead>,
+    libra_db: Arc<dyn DbReader>,
     peer_id: PeerId,
     req_msg: QueryDiscoverySetRequest,
     mut res_tx: oneshot::Sender<Result<Bytes, RpcError>>,
 ) {
+    let mut f_query_storage = storage_query_discovery_set_async(libra_db, req_msg).fuse();
     let mut f_rpc_cancel = future::poll_fn(|cx: &mut Context<'_>| res_tx.poll_canceled(cx)).fuse();
     let peer_id_short = peer_id.short_str();
 
-    // cancel the internal storage rpc request early if the external rpc request
-    // is cancelled.
     futures::select! {
-        res = storage_query_discovery_set(storage_read_client, req_msg).fuse() => {
+        res = f_query_storage => {
             let (_req_msg, res_msg) = match res {
                 Ok(res) => res,
                 Err(err) => {
@@ -147,7 +143,6 @@ async fn handle_query_discovery_set_request(
                 },
             };
 
-            let res_msg = QueryDiscoverySetResponse::from(res_msg);
             let res_msg = OnchainDiscoveryMsg::QueryDiscoverySetResponse(res_msg);
             let res_bytes = match lcs::to_bytes(&res_msg) {
                 Ok(res_bytes) => res_bytes,

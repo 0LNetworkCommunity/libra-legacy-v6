@@ -38,4 +38,4 @@ libra-proptest-helpers = { path = "../../../common/proptest-helpers", version = 
 
 [features]
 default = []
-fuzzing = ["libra-types/fuzzing"]
+fuzzing = ["libra-types/fuzzing", "move-vm-types/fuzzing"]

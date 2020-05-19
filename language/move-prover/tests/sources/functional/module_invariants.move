@@ -1,5 +1,10 @@
-address 0x1:
+address 0x1 {
 module TestModuleInvariants {
+
+    spec module {
+        pragma verify = true;
+    }
+
 
     // Some structure.
     struct S {}
@@ -75,4 +80,5 @@ module TestModuleInvariantsExternal {
         let x = TestModuleInvariants::new_S();
         TestModuleInvariants::delete_S(x);
     }
+}
 }

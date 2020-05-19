@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    access_path::{AccessPath, Accesses},
+    access_path::AccessPath,
     account_config::constants::{
         association_address, type_tag_for_currency_code, CORE_CODE_ADDRESS,
     },
     event::EventHandle,
+};
+use anyhow::Result;
+use move_core_types::{
+    identifier::{IdentStr, Identifier},
     language_storage::{ResourceKey, StructTag},
     move_resource::MoveResource,
 };
-use anyhow::Result;
-use move_core_types::identifier::{IdentStr, Identifier};
 use serde::{Deserialize, Serialize};
 
 /// Struct that represents a CurrencyInfo resource
@@ -69,14 +71,11 @@ impl CurrencyInfoResource {
             association_address(),
             CurrencyInfoResource::struct_tag_for(currency_code),
         );
-        AccessPath::resource_access_path(&resource_key, &Accesses::empty())
+        AccessPath::resource_access_path(&resource_key)
     }
 
     pub fn access_path_for(currency_code: Identifier) -> Vec<u8> {
-        AccessPath::resource_access_vec(
-            &CurrencyInfoResource::struct_tag_for(currency_code),
-            &Accesses::empty(),
-        )
+        AccessPath::resource_access_vec(&CurrencyInfoResource::struct_tag_for(currency_code))
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {

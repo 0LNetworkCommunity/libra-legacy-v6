@@ -4,17 +4,21 @@
 use crate::{interpreter::Interpreter, loader::Loader};
 use bytecode_verifier::VerifiedModule;
 use libra_logger::prelude::*;
-use libra_types::{
+use libra_types::vm_error::{StatusCode, VMStatus};
+use move_core_types::{
+    gas_schedule::CostTable,
+    identifier::IdentStr,
     language_storage::{ModuleId, TypeTag},
-    vm_error::{StatusCode, VMStatus},
 };
-use move_core_types::{gas_schedule::CostTable, identifier::IdentStr};
-use move_vm_types::{interpreter_context::InterpreterContext, values::Value};
+use move_vm_types::{
+    interpreter_context::InterpreterContext, transaction_metadata::TransactionMetadata,
+    values::Value,
+};
+
 use vm::{
     access::ModuleAccess,
     errors::{verification_error, vm_error, Location, VMResult},
     file_format::Signature,
-    transaction_metadata::TransactionMetadata,
     CompiledModule, IndexKind,
 };
 
@@ -65,7 +69,8 @@ impl VMRuntime {
             ));
         };
 
-        VerifiedModule::new(compiled_module).map_err(|(_, e)| e)?;
+        let verified_module = VerifiedModule::new(compiled_module).map_err(|(_, e)| e)?;
+        Loader::check_natives(&verified_module)?;
         context.publish_module(module_id, module)
     }
 

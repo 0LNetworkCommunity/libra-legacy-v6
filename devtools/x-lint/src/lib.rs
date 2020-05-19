@@ -16,6 +16,7 @@ mod runner;
 pub use errors::*;
 pub use runner::*;
 
+use guppy::PackageId;
 use std::{borrow::Cow, fmt, path::Path};
 
 /// Represents a linter.
@@ -88,6 +89,10 @@ pub enum SkipReason<'l> {
     NonUtf8,
     /// This extension was unsupported.
     UnsupportedExtension(Option<&'l str>),
+    /// The given file was unsupported by this linter.
+    UnsupportedFile(&'l Path),
+    /// The given package was unsupported by this linter.
+    UnsupportedPackage(&'l PackageId),
     // TODO: Add more reasons.
 }
 

@@ -7,7 +7,8 @@ use debug_interface::{
     node_debug_service::NodeDebugService,
     proto::node_debug_interface_server::NodeDebugInterfaceServer,
 };
-use executor::{db_bootstrapper::bootstrap_db_if_empty, BlockExecutor, ChunkExecutor, Executor};
+use executor::{db_bootstrapper::bootstrap_db_if_empty, Executor};
+use executor_types::ChunkExecutor;
 use futures::{channel::mpsc::channel, executor::block_on, stream::StreamExt};
 use libra_config::{
     config::{DiscoveryMethod, NetworkConfig, NodeConfig, RoleType},
@@ -19,9 +20,9 @@ use libra_mempool::MEMPOOL_SUBSCRIBED_CONFIGS;
 use libra_metrics::metric_server;
 use libra_types::{on_chain_config::ON_CHAIN_CONFIG_REGISTRY, waypoint::Waypoint, PeerId};
 use libra_vm::LibraVM;
+use libradb::LibraDB;
 use network::validator_network::network_builder::{NetworkBuilder, TransportType};
-use onchain_discovery::{service::OnchainDiscoveryService, OnchainDiscovery};
-use simple_storage_client::SimpleStorageClient;
+use onchain_discovery::{client::OnchainDiscovery, service::OnchainDiscoveryService};
 use state_synchronizer::StateSynchronizer;
 use std::{
     boxed::Box,
@@ -31,11 +32,8 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-use storage_client::StorageReadServiceClient;
 use storage_interface::{DbReader, DbReaderWriter};
-use storage_service::{
-    init_libra_db, start_simple_storage_service_with_db, start_storage_service_with_db,
-};
+use storage_service::{start_simple_storage_service_with_db, start_storage_service_with_db};
 use subscription_service::ReconfigSubscription;
 use tokio::{
     runtime::{Builder, Handle, Runtime},
@@ -60,12 +58,6 @@ fn setup_chunk_executor(db: DbReaderWriter) -> Box<dyn ChunkExecutor> {
     Box::new(Executor::<LibraVM>::new(db))
 }
 
-fn setup_block_executor(config: &NodeConfig) -> Box<dyn BlockExecutor> {
-    Box::new(Executor::<LibraVM>::new(
-        SimpleStorageClient::new(&config.storage.simple_address).into(),
-    ))
-}
-
 fn setup_debug_interface(config: &NodeConfig) -> Runtime {
     let rt = tokio::runtime::Runtime::new().unwrap();
     let addr = format!(
@@ -88,7 +80,7 @@ pub fn setup_onchain_discovery(
     network: &mut NetworkBuilder,
     peer_id: PeerId,
     role: RoleType,
-    storage_read_client: Arc<StorageReadServiceClient>,
+    libra_db: Arc<dyn DbReader>,
     waypoint: Waypoint,
     executor: &Handle,
 ) {
@@ -100,7 +92,7 @@ pub fn setup_onchain_discovery(
     let onchain_discovery_service = OnchainDiscoveryService::new(
         executor.clone(),
         peer_mgr_notifs_rx,
-        storage_read_client.clone(),
+        Arc::clone(&libra_db),
         max_concurrent_inbound_queries,
     );
     executor.spawn(onchain_discovery_service.start());
@@ -115,7 +107,7 @@ pub fn setup_onchain_discovery(
             waypoint,
             network_tx,
             conn_notifs_rx,
-            storage_read_client,
+            libra_db,
             peer_query_ticker,
             storage_query_ticker,
             outbound_rpc_timeout,
@@ -128,7 +120,7 @@ pub fn setup_onchain_discovery(
 pub fn setup_network(
     config: &mut NetworkConfig,
     role: RoleType,
-    storage_read: Arc<StorageReadServiceClient>,
+    libra_db: Arc<dyn DbReader>,
     waypoint: Waypoint,
 ) -> (Runtime, NetworkBuilder) {
     let runtime = Builder::new()
@@ -209,7 +201,7 @@ pub fn setup_network(
                 &mut network_builder,
                 config.peer_id,
                 role,
-                storage_read,
+                libra_db,
                 waypoint,
                 runtime.handle(),
             );
@@ -231,7 +223,14 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
         .expect("Building rayon global thread pool should work.");
 
     let mut instant = Instant::now();
-    let (libra_db, db_rw) = init_libra_db(&node_config);
+    let (libra_db, db_rw) = DbReaderWriter::wrap(
+        LibraDB::open(
+            &node_config.storage.dir(),
+            false, /* readonly */
+            node_config.storage.prune_window,
+        )
+        .expect("DB should open."),
+    );
     let _simple_storage_service =
         start_simple_storage_service_with_db(&node_config, Arc::clone(&libra_db));
 
@@ -246,7 +245,7 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
     );
 
     instant = Instant::now();
-    let chunk_executor = setup_chunk_executor(db_rw);
+    let chunk_executor = setup_chunk_executor(db_rw.clone());
     debug!(
         "ChunkExecutor setup in {} ms",
         instant.elapsed().as_millis()
@@ -265,13 +264,11 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
         ReconfigSubscription::subscribe(ON_CHAIN_CONFIG_REGISTRY);
     reconfig_subscriptions.push(consensus_reconfig_subscription);
 
-    let storage_read = Arc::new(StorageReadServiceClient::new(&node_config.storage.address));
-
     if let Some(network) = node_config.validator_network.as_mut() {
         let (runtime, mut network_builder) = setup_network(
             network,
             RoleType::Validator,
-            Arc::clone(&storage_read),
+            Arc::clone(&db_rw.reader),
             node_config.base.waypoint.expect("No waypoint in config"),
         );
 
@@ -279,8 +276,10 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
             state_synchronizer::network::add_to_network(&mut network_builder);
         state_sync_network_handles.push((network.peer_id, state_sync_sender, state_sync_events));
 
-        let (mempool_sender, mempool_events) =
-            libra_mempool::network::add_to_network(&mut network_builder);
+        let (mempool_sender, mempool_events) = libra_mempool::network::add_to_network(
+            &mut network_builder,
+            node_config.mempool.max_broadcasts_per_peer,
+        );
         mempool_network_handles.push((network.peer_id, mempool_sender, mempool_events));
         validator_network_provider = Some((network.peer_id, runtime, network_builder));
     }
@@ -289,7 +288,7 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
         let (runtime, mut network_builder) = setup_network(
             &mut full_node_network,
             RoleType::FullNode,
-            Arc::clone(&storage_read),
+            Arc::clone(&db_rw.reader),
             node_config.base.waypoint.expect("No waypoint in config"),
         );
 
@@ -301,8 +300,10 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
             state_sync_sender,
             state_sync_events,
         ));
-        let (mempool_sender, mempool_events) =
-            libra_mempool::network::add_to_network(&mut network_builder);
+        let (mempool_sender, mempool_events) = libra_mempool::network::add_to_network(
+            &mut network_builder,
+            node_config.mempool.max_broadcasts_per_peer,
+        );
         mempool_network_handles.push((full_node_network.peer_id, mempool_sender, mempool_events));
 
         // Start the network provider.
@@ -319,7 +320,7 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
     let state_synchronizer = StateSynchronizer::bootstrap(
         state_sync_network_handles,
         state_sync_to_mempool_sender,
-        Arc::clone(&libra_db) as Arc<dyn DbReader>,
+        Arc::clone(&db_rw.reader),
         chunk_executor,
         &node_config,
         reconfig_subscriptions,
@@ -328,7 +329,7 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
 
     let admission_control_runtime = AdmissionControlService::bootstrap(
         &node_config,
-        Arc::clone(&libra_db) as Arc<dyn DbReader>,
+        Arc::clone(&db_rw.reader),
         mp_client_sender.clone(),
     );
     let rpc_runtime = bootstrap_rpc(&node_config, libra_db.clone(), mp_client_sender);
@@ -339,7 +340,7 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
     instant = Instant::now();
     let mempool = libra_mempool::bootstrap(
         node_config,
-        Arc::clone(&libra_db) as Arc<dyn DbReader>,
+        Arc::clone(&db_rw.reader),
         mempool_network_handles,
         mp_client_events,
         consensus_requests,
@@ -373,20 +374,12 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
             .expect("State synchronizer initialization failure");
         debug!("State synchronizer initialization complete.");
 
-        instant = Instant::now();
-        let block_executor = setup_block_executor(&node_config);
-        debug!(
-            "BlockExecutor setup in {} ms",
-            instant.elapsed().as_millis()
-        );
-
         // Initialize and start consensus.
         instant = Instant::now();
         consensus_runtime = Some(start_consensus(
             node_config,
             consensus_network_sender,
             consensus_network_events,
-            block_executor,
             state_synchronizer.create_client(),
             consensus_to_mempool_sender,
             libra_db,

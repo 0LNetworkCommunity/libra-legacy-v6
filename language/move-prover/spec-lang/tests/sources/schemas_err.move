@@ -61,12 +61,12 @@ module M {
         include Invariant;
     }
 
-    struct wrong_condition_in_struct { x: u64 }
+    struct Wrong_condition_in_struct { x: u64 }
     spec schema Condition {
         x: num;
         requires x > 0;
     }
-    spec struct wrong_condition_in_struct {
+    spec struct Wrong_condition_in_struct {
         include Condition;
     }
 
@@ -78,5 +78,11 @@ module M {
     }
     spec schema Cycle3 {
         include Cycle1;
+    }
+
+    spec schema SchemaExp {
+        include 22 ==> Condition;
+        include true ==> 23;
+        include Condition || Condition;
     }
 }

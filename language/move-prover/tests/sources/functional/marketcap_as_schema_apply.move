@@ -1,7 +1,12 @@
 // A minimized version of the MarketCap verification problem.
-address 0x0:
+address 0x0 {
 
 module TestMarketCapWithSchemas {
+
+    spec module {
+        pragma verify = true;
+    }
+
 
     spec module {
         global sum_of_coins<X>: num;
@@ -96,4 +101,6 @@ module TestMarketCapWithSchemas {
     spec fun deposit_different_type_params {
         include DepositIncorrect<Token>;
     }
+}
+
 }

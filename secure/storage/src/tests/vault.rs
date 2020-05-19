@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    tests::suite, vault::VaultStorage, Capability, CryptoStorage, Error, Identity, KVStorage,
-    Permission, Policy, Value,
+    tests::suite,
+    vault::{VaultEngine, VaultStorage},
+    Capability, CryptoStorage, Error, Identity, KVStorage, Permission, Policy, Value,
 };
 use libra_crypto::{HashValue, Signature};
 
@@ -14,12 +15,6 @@ const VAULT_NAMESPACE_1: &str = "namespace_1";
 const VAULT_NAMESPACE_2: &str = "namespace_2";
 const VAULT_NAMESPACE_3: &str = "namespace_3";
 
-/// Storage data constants for testing purposes.
-const U64_KEY_1: &str = "U64 Key 1";
-const U64_KEY_2: &str = "U64 Key 2";
-const U64_VALUE_1: u64 = 10;
-const U64_VALUE_2: u64 = 304;
-
 /// This holds the canonical list of vault storage tests. This is required because vault tests
 /// cannot currently be run in parallel, as each test uses the same vault instance and
 /// storage resets can interfere between tests. To avoid this, we run each test sequentially, and
@@ -28,8 +23,6 @@ const VAULT_TESTS: &[fn()] = &[
     test_vault_crypto_policies,
     test_vault_key_value_policies,
     test_suite_multiple_namespaces,
-    test_vault_namespace_reset,
-    test_vault_no_namespace_reset,
     test_suite_no_namespaces,
 ];
 
@@ -50,51 +43,6 @@ fn execute_storage_tests_vault() {
             .reset_and_clear()
             .expect("Failed to reset storage engine between tests!");
     }
-}
-
-/// Verifies that when calling reset on a VaultStorage instance, if the instance was created with
-/// a namespace, only the secrets within the namespace are removed. This helps to ensure operations
-/// across namespaces do not interfere.
-fn test_vault_namespace_reset() {
-    let mut storage_1 = create_vault_with_namespace(Some(VAULT_NAMESPACE_1.into()));
-    let mut storage_2 = create_vault_with_namespace(Some(VAULT_NAMESPACE_2.into()));
-    storage_1
-        .create(U64_KEY_1, Value::U64(U64_VALUE_1), &Policy::public())
-        .unwrap();
-    storage_2
-        .create(U64_KEY_1, Value::U64(U64_VALUE_1), &Policy::public())
-        .unwrap();
-
-    // Verify resets do not occur across namespaces
-    storage_1
-        .reset_and_clear()
-        .expect("Failed to reset VaultStorage with namespace!");
-    assert!(storage_1.get(U64_KEY_1).is_err());
-    assert_eq!(
-        storage_2.get(U64_KEY_1).unwrap().value.u64().unwrap(),
-        U64_VALUE_1
-    );
-}
-
-/// Verifies that when calling reset on a VaultStorage instance, if the instance was created without
-/// a namespace, all data in the storage engine will be cleared
-fn test_vault_no_namespace_reset() {
-    let mut storage_1 = create_vault_with_namespace(Some(VAULT_NAMESPACE_1.into()));
-    let mut storage_2 = create_vault_with_namespace(Some(VAULT_NAMESPACE_2.into()));
-    storage_1
-        .create(U64_KEY_1, Value::U64(U64_VALUE_1), &Policy::public())
-        .unwrap();
-    storage_2
-        .create(U64_KEY_2, Value::U64(U64_VALUE_2), &Policy::public())
-        .unwrap();
-
-    // Create a VaultStorage without a namespace, reset the instance, and ensure all data is cleared
-    // regardless of namespaces.
-    create_vault_with_namespace(None)
-        .reset_and_clear()
-        .expect("Failed to reset VaultStorage without namespace!");
-    assert!(storage_1.get(U64_KEY_1).is_err());
-    assert!(storage_2.get(U64_KEY_2).is_err());
 }
 
 /// Runs the test suite on a VaultStorage instance that does not use distinct namespaces
@@ -153,10 +101,25 @@ fn test_vault_key_value_policies() {
 
     // Initialize data and policies
 
-    storage.create("anyone", Value::U64(1), &anyone).unwrap();
-    storage.create("root", Value::U64(2), &root).unwrap();
-    storage.create("partial", Value::U64(3), &partial).unwrap();
-    storage.create("full", Value::U64(4), &full).unwrap();
+    storage.set("anyone", Value::U64(1)).unwrap();
+    storage
+        .set_policies("anyone", &VaultEngine::KVSecrets, &anyone)
+        .unwrap();
+
+    storage.set("root", Value::U64(2)).unwrap();
+    storage
+        .set_policies("root", &VaultEngine::KVSecrets, &root)
+        .unwrap();
+
+    storage.set("partial", Value::U64(3)).unwrap();
+    storage
+        .set_policies("partial", &VaultEngine::KVSecrets, &partial)
+        .unwrap();
+
+    storage.set("full", Value::U64(4)).unwrap();
+    storage
+        .set_policies("full", &VaultEngine::KVSecrets, &full)
+        .unwrap();
 
     // Verify initial reading works correctly
 

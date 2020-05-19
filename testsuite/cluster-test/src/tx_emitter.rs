@@ -5,7 +5,7 @@
 
 use crate::{cluster::Cluster, instance::Instance};
 use std::{
-    slice,
+    fmt, slice,
     sync::Arc,
     thread,
     time::{Duration, Instant},
@@ -40,6 +40,7 @@ use libra_types::transaction::SignedTransaction;
 use reqwest::{Client, Url};
 use std::{
     cmp::{max, min},
+    ops::Sub,
     str::FromStr,
     sync::atomic::{AtomicBool, AtomicU64, Ordering},
 };
@@ -57,14 +58,28 @@ pub struct TxEmitter {
 pub struct EmitJob {
     workers: Vec<Worker>,
     stop: Arc<AtomicBool>,
-    stats: Arc<TxStats>,
+    stats: Arc<StatsAccumulator>,
 }
 
 #[derive(Default)]
+struct StatsAccumulator {
+    submitted: AtomicU64,
+    committed: AtomicU64,
+    expired: AtomicU64,
+}
+
+#[derive(Debug, Default)]
 pub struct TxStats {
-    pub submitted: AtomicU64,
-    pub committed: AtomicU64,
-    pub expired: AtomicU64,
+    pub submitted: u64,
+    pub committed: u64,
+    pub expired: u64,
+}
+
+#[derive(Debug, Default)]
+pub struct TxStatsRate {
+    pub submitted: u64,
+    pub committed: u64,
+    pub expired: u64,
 }
 
 #[derive(Clone)]
@@ -176,7 +191,7 @@ impl TxEmitter {
         let all_addresses = Arc::new(all_addresses);
         let mut all_accounts = all_accounts.into_iter();
         let stop = Arc::new(AtomicBool::new(false));
-        let stats = Arc::new(TxStats::default());
+        let stats = Arc::new(StatsAccumulator::default());
         let tokio_handle = Handle::current();
         for instance in &req.instances {
             for _ in 0..workers_per_ac {
@@ -245,7 +260,7 @@ impl TxEmitter {
         let libra_per_seed =
             (LIBRA_PER_NEW_ACCOUNT * num_accounts as u64) / req.instances.len() as u64;
         // Create seed accounts with which we can create actual accounts concurrently
-        let seed_accounts = create_new_accounts(
+        let seed_accounts = mint_to_new_accounts(
             &mut faucet_account,
             req.instances.len(),
             libra_per_seed,
@@ -291,6 +306,10 @@ impl TxEmitter {
         Ok(())
     }
 
+    pub fn peek_job_stats(&self, job: &EmitJob) -> TxStats {
+        job.stats.accumulate()
+    }
+
     pub fn stop_job(&mut self, job: EmitJob) -> TxStats {
         job.stop.store(true, Ordering::Relaxed);
         for worker in job.workers {
@@ -298,11 +317,7 @@ impl TxEmitter {
                 block_on(worker.join_handle).expect("TxEmitter worker thread failed");
             self.accounts.append(&mut accounts);
         }
-        #[allow(clippy::match_wild_err_arm)]
-        match Arc::try_unwrap(job.stats) {
-            Ok(stats) => stats,
-            Err(_) => panic!("Failed to unwrap job.stats - worker thread did not exit?"),
-        }
+        job.stats.accumulate()
     }
 
     fn make_client(&self, instance: &Instance) -> JsonRpcAsyncClient {
@@ -351,7 +366,7 @@ struct SubmissionWorker {
     all_addresses: Arc<Vec<AccountAddress>>,
     stop: Arc<AtomicBool>,
     params: EmitThreadParams,
-    stats: Arc<TxStats>,
+    stats: Arc<StatsAccumulator>,
 }
 
 impl SubmissionWorker {
@@ -532,6 +547,24 @@ fn gen_transfer_txn_request(
             receiver_auth_key_prefix,
             num_coins,
             vec![],
+            vec![],
+        ),
+        sender,
+    )
+}
+
+fn gen_mint_txn_request(
+    sender: &mut AccountData,
+    receiver: &AccountAddress,
+    receiver_auth_key_prefix: Vec<u8>,
+    num_coins: u64,
+) -> SignedTransaction {
+    gen_submit_transaction_request(
+        transaction_builder::encode_mint_script(
+            lbr_type_tag(),
+            receiver,
+            receiver_auth_key_prefix,
+            num_coins,
         ),
         sender,
     )
@@ -540,7 +573,7 @@ fn gen_transfer_txn_request(
 fn gen_random_account(rng: &mut StdRng) -> AccountData {
     let key_pair = KeyPair::generate(rng);
     AccountData {
-        address: AccountAddress::from_public_key(&key_pair.public_key),
+        address: libra_types::account_address::from_public_key(&key_pair.public_key),
         key_pair,
         sequence_number: 0,
     }
@@ -564,6 +597,24 @@ fn gen_transfer_txn_requests(
         .map(|account| {
             gen_transfer_txn_request(
                 source_account,
+                &account.address,
+                account.auth_key_prefix(),
+                amount,
+            )
+        })
+        .collect()
+}
+
+fn gen_mint_txn_requests(
+    sending_account: &mut AccountData,
+    accounts: &[AccountData],
+    amount: u64,
+) -> Vec<SignedTransaction> {
+    accounts
+        .iter()
+        .map(|account| {
+            gen_mint_txn_request(
+                sending_account,
                 &account.address,
                 account.auth_key_prefix(),
                 amount,
@@ -634,6 +685,29 @@ async fn create_new_accounts(
     Ok(accounts)
 }
 
+/// Create `num_new_accounts` by minting libra. Return Vec of created accounts
+async fn mint_to_new_accounts(
+    source_account: &mut AccountData,
+    num_new_accounts: usize,
+    libra_per_new_account: u64,
+    max_num_accounts_per_batch: u64,
+    mut client: JsonRpcAsyncClient,
+) -> Result<Vec<AccountData>> {
+    let mut i = 0;
+    let mut accounts = vec![];
+    while i < num_new_accounts {
+        let mut batch = gen_random_accounts(min(
+            max_num_accounts_per_batch as usize,
+            min(MAX_TXN_BATCH_SIZE, num_new_accounts - i),
+        ));
+        let requests = gen_mint_txn_requests(source_account, &batch, libra_per_new_account);
+        execute_and_wait_transactions(&mut client, source_account, requests).await?;
+        i += batch.len();
+        accounts.append(&mut batch);
+    }
+    Ok(accounts)
+}
+
 #[derive(Clone)]
 pub struct AccountData {
     pub address: AccountAddress,
@@ -646,5 +720,57 @@ impl AccountData {
         AuthenticationKey::ed25519(&self.key_pair.public_key)
             .prefix()
             .to_vec()
+    }
+}
+
+impl StatsAccumulator {
+    pub fn accumulate(&self) -> TxStats {
+        TxStats {
+            submitted: self.submitted.load(Ordering::Relaxed),
+            committed: self.committed.load(Ordering::Relaxed),
+            expired: self.expired.load(Ordering::Relaxed),
+        }
+    }
+}
+
+impl TxStats {
+    pub fn rate(&self, window: Duration) -> TxStatsRate {
+        TxStatsRate {
+            submitted: self.submitted / window.as_secs(),
+            committed: self.committed / window.as_secs(),
+            expired: self.expired / window.as_secs(),
+        }
+    }
+}
+
+impl Sub for &TxStats {
+    type Output = TxStats;
+
+    fn sub(self, other: &TxStats) -> TxStats {
+        TxStats {
+            submitted: self.submitted - other.submitted,
+            committed: self.committed - other.committed,
+            expired: self.expired - other.expired,
+        }
+    }
+}
+
+impl fmt::Display for TxStats {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "submitted: {}, committed: {}, expired: {}",
+            self.submitted, self.committed, self.expired
+        )
+    }
+}
+
+impl fmt::Display for TxStatsRate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "submitted: {} txn/s, committed: {} txn/s, expired: {} txn/s",
+            self.submitted, self.committed, self.expired
+        )
     }
 }

@@ -3,8 +3,9 @@
 
 #![forbid(unsafe_code)]
 
-use crate::{BlockExecutor, Executor};
+use crate::Executor;
 use anyhow::{ensure, format_err, Result};
+use executor_types::BlockExecutor;
 use libra_crypto::{hash::PRE_GENESIS_BLOCK_ID, HashValue};
 use libra_logger::prelude::*;
 use libra_state_view::StateView;
@@ -14,12 +15,12 @@ use libra_types::{
     block_info::{BlockInfo, GENESIS_EPOCH, GENESIS_ROUND, GENESIS_TIMESTAMP_USECS},
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     libra_timestamp::LibraTimestampResource,
-    move_resource::MoveResource,
-    on_chain_config::ConfigurationResource,
+    on_chain_config::{config_address, ConfigurationResource},
     transaction::Transaction,
     waypoint::Waypoint,
 };
 use libra_vm::VMExecutor;
+use move_core_types::move_resource::MoveResource;
 use std::collections::btree_map::BTreeMap;
 use storage_interface::{state_view::VerifiedStateView, DbReaderWriter, TreeState};
 
@@ -156,7 +157,7 @@ fn get_state_timestamp(state_view: &VerifiedStateView) -> Result<u64> {
 fn get_state_epoch(state_view: &VerifiedStateView) -> Result<u64> {
     let rsrc_bytes = &state_view
         .get(&AccessPath::new(
-            association_address(),
+            config_address(),
             ConfigurationResource::resource_path(),
         ))?
         .ok_or_else(|| format_err!("ConfigurationResource missing."))?;

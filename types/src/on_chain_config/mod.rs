@@ -2,14 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    access_path::{AccessPath, Accesses},
+    access_path::AccessPath,
     account_address::AccountAddress,
-    account_config::{association_address, CORE_CODE_ADDRESS},
+    account_config::CORE_CODE_ADDRESS,
     event::{EventHandle, EventKey},
-    language_storage::{StructTag, TypeTag},
 };
 use anyhow::{format_err, Result};
-use move_core_types::identifier::Identifier;
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::{StructTag, TypeTag},
+    move_resource::MoveResource,
+};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 
@@ -24,7 +27,6 @@ pub use self::{
     validator_set::ValidatorSet,
     vm_config::{VMConfig, VMPublishingOption},
 };
-use crate::move_resource::MoveResource;
 
 /// To register an on-chain config in Rust:
 /// 1. Implement the `OnChainConfig` trait for the Rust representation of the config
@@ -32,6 +34,10 @@ use crate::move_resource::MoveResource;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ConfigID(&'static str, &'static str);
+
+pub fn config_address() -> AccountAddress {
+    AccountAddress::from_hex_literal("0xF1A95").expect("failed to get address")
+}
 
 impl ConfigID {
     pub fn access_path(self) -> AccessPath {
@@ -87,7 +93,7 @@ pub trait ConfigStorage {
 /// that is stored in storage as a serialized byte array
 pub trait OnChainConfig: Send + Sync + DeserializeOwned {
     // association_address
-    const ADDRESS: &'static str = "0xA550C18";
+    const ADDRESS: &'static str = "0xF1A95";
     const IDENTIFIER: &'static str;
     const CONFIG_ID: ConfigID = ConfigID(Self::ADDRESS, Self::IDENTIFIER);
 
@@ -122,26 +128,23 @@ pub trait OnChainConfig: Send + Sync + DeserializeOwned {
 }
 
 pub fn new_epoch_event_key() -> EventKey {
-    EventKey::new_from_address(&association_address(), 16)
+    EventKey::new_from_address(&config_address(), 0)
 }
 
 pub fn access_path_for_config(address: AccountAddress, config_name: Identifier) -> AccessPath {
     AccessPath::new(
         address,
-        AccessPath::resource_access_vec(
-            &StructTag {
+        AccessPath::resource_access_vec(&StructTag {
+            address: CORE_CODE_ADDRESS,
+            module: Identifier::new("LibraConfig").unwrap(),
+            name: Identifier::new("T").unwrap(),
+            type_params: vec![TypeTag::Struct(StructTag {
                 address: CORE_CODE_ADDRESS,
-                module: Identifier::new("LibraConfig").unwrap(),
+                module: config_name,
                 name: Identifier::new("T").unwrap(),
-                type_params: vec![TypeTag::Struct(StructTag {
-                    address: CORE_CODE_ADDRESS,
-                    module: config_name,
-                    name: Identifier::new("T").unwrap(),
-                    type_params: vec![],
-                })],
-            },
-            &Accesses::empty(),
-        ),
+                type_params: vec![],
+            })],
+        }),
     )
 }
 
@@ -186,7 +189,10 @@ impl Default for ConfigurationResource {
         Self {
             epoch: 0,
             last_reconfiguration_time: 0,
-            events: EventHandle::new_from_address(&association_address(), 16),
+            events: EventHandle::new_from_address(
+                &crate::account_config::association_address(),
+                16,
+            ),
         }
     }
 }

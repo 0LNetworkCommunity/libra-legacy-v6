@@ -1,4 +1,4 @@
-address 0x0:
+address 0x0 {
 
 // A variable-sized container that can hold both unrestricted types and resources.
 module Vector {
@@ -102,5 +102,38 @@ module Vector {
         swap(v, i, last_idx);
         pop_back(v)
     }
+
+    // ------------------------------------------------------------------------
+    // Specification
+    // ------------------------------------------------------------------------
+
+    spec fun reverse {
+        pragma intrinsic = true;
+    }
+
+    spec fun append {
+        pragma intrinsic = true;
+    }
+
+    spec fun is_empty {
+        pragma intrinsic = true;
+    }
+
+    spec fun contains {
+        pragma intrinsic = true;
+    }
+
+    spec fun index_of {
+        pragma intrinsic = true;
+    }
+
+    spec fun remove {
+        pragma intrinsic = true;
+    }
+
+    spec fun swap_remove {
+        pragma intrinsic = true;
+    }
+}
 
 }

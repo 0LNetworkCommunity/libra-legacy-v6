@@ -24,7 +24,7 @@ use std::{
 use vm::{
     access::ModuleAccess,
     file_format::{
-        self, Bytecode, CodeOffset, CodeUnit, CompiledModule, CompiledModuleMut, CompiledScript,
+        Bytecode, CodeOffset, CodeUnit, CompiledModule, CompiledModuleMut, CompiledScript,
         CompiledScriptMut, Constant, FieldDefinition, FunctionDefinition, FunctionSignature, Kind,
         Signature, SignatureToken, StructDefinition, StructDefinitionIndex, StructFieldInformation,
         StructHandleIndex, TableIndex, TypeParameterIndex, TypeSignature,
@@ -37,6 +37,12 @@ macro_rules! record_src_loc {
         $context
             .source_map
             .add_local_mapping($context.current_function_definition_index(), source_name)?;
+    }};
+    (parameter: $context:expr, $var:expr) => {{
+        let source_name = ($var.value.clone().into_inner(), $var.loc);
+        $context
+            .source_map
+            .add_parameter_mapping($context.current_function_definition_index(), source_name)?;
     }};
     (field: $context:expr, $idx: expr, $field:expr) => {{
         $context
@@ -393,15 +399,11 @@ impl FunctionFrame {
 
 /// Compile a transaction script.
 pub fn compile_script<'a, T: 'a + ModuleAccess>(
-    address: AccountAddress,
+    address: Option<AccountAddress>,
     script: Script,
     dependencies: impl IntoIterator<Item = &'a T>,
 ) -> Result<(CompiledScript, SourceMap<Loc>)> {
-    let current_module = QualifiedModuleIdent {
-        address,
-        name: ModuleName::new(file_format::self_module_name().to_string()),
-    };
-    let mut context = Context::new(dependencies, current_module)?;
+    let mut context = Context::new(dependencies, None)?;
 
     compile_imports(&mut context, address, script.imports)?;
     compile_explicit_dependency_declarations(
@@ -414,7 +416,7 @@ pub fn compile_script<'a, T: 'a + ModuleAccess>(
     let parameters_sig_idx = context.signature_index(Signature(sig.parameters))?;
 
     record_src_loc!(function_decl: context, function.loc, 0);
-    let code = compile_function_body_impl(&mut context, function.value)?;
+    let code = compile_function_body_impl(&mut context, function.value)?.unwrap();
 
     let (
         MaterializedPools {
@@ -460,10 +462,10 @@ pub fn compile_module<'a, T: 'a + ModuleAccess>(
         address,
         name: module.name,
     };
-    let mut context = Context::new(dependencies, current_module)?;
+    let mut context = Context::new(dependencies, Some(current_module))?;
     let self_name = ModuleName::new(ModuleName::self_name().into());
     // Explicitly declare all imports as they will be included even if not used
-    compile_imports(&mut context, address, module.imports)?;
+    compile_imports(&mut context, Some(address), module.imports)?;
 
     // Explicitly declare all structs as they will be included even if not used
     for s in &module.structs {
@@ -560,13 +562,19 @@ fn compile_explicit_dependency_declarations(
 
 fn compile_imports(
     context: &mut Context,
-    address: AccountAddress,
+    address_opt: Option<AccountAddress>,
     imports: Vec<ImportDefinition>,
 ) -> Result<()> {
     for import in imports {
-        let ident = match import.ident {
-            ModuleIdent::Transaction(name) => QualifiedModuleIdent { address, name },
-            ModuleIdent::Qualified(id) => id,
+        let ident = match (address_opt, import.ident) {
+            (Some(address), ModuleIdent::Transaction(name)) => {
+                QualifiedModuleIdent { address, name }
+            }
+            (None, ModuleIdent::Transaction(name)) => bail!(
+                "Invalid import '{}'. No address specified for script so cannot resolve import",
+                name
+            ),
+            (_, ModuleIdent::Qualified(id)) => id,
         };
         context.declare_import(ident, import.alias)?;
     }
@@ -752,28 +760,37 @@ fn compile_functions(
         .collect()
 }
 
-fn compile_function_body_impl(context: &mut Context, ast_function: Function_) -> Result<CodeUnit> {
+fn compile_function_body_impl(
+    context: &mut Context,
+    ast_function: Function_,
+) -> Result<Option<CodeUnit>> {
     Ok(match ast_function.body {
         FunctionBody::Move { locals, code } => {
             let m = type_parameter_indexes(&ast_function.signature.type_formals)?;
-            compile_function_body(context, m, ast_function.signature.formals, locals, code)?
-        }
-        FunctionBody::Bytecode { locals, code } => {
-            let m = type_parameter_indexes(&ast_function.signature.type_formals)?;
-            compile_function_body_bytecode(
+            Some(compile_function_body(
                 context,
                 m,
                 ast_function.signature.formals,
                 locals,
                 code,
-            )?
+            )?)
+        }
+        FunctionBody::Bytecode { locals, code } => {
+            let m = type_parameter_indexes(&ast_function.signature.type_formals)?;
+            Some(compile_function_body_bytecode(
+                context,
+                m,
+                ast_function.signature.formals,
+                locals,
+                code,
+            )?)
         }
 
         FunctionBody::Native => {
             for (var, _) in ast_function.signature.formals.into_iter() {
-                record_src_loc!(local: context, var)
+                record_src_loc!(parameter: context, var)
             }
-            CodeUnit::default()
+            None
         }
     })
 }
@@ -794,13 +811,9 @@ fn compile_function(
 
     let ast_function = ast_function.value;
 
-    let flags = match ast_function.visibility {
-        FunctionVisibility::Internal => 0,
-        FunctionVisibility::Public => CodeUnit::PUBLIC,
-    } | match &ast_function.body {
-        FunctionBody::Move { .. } => 0,
-        FunctionBody::Bytecode { .. } => 0,
-        FunctionBody::Native => CodeUnit::NATIVE,
+    let is_public = match ast_function.visibility {
+        FunctionVisibility::Internal => false,
+        FunctionVisibility::Public => true,
     };
     let acquires_global_resources = ast_function
         .acquires
@@ -812,7 +825,7 @@ fn compile_function(
 
     Ok(FunctionDefinition {
         function: fh_idx,
-        flags,
+        is_public,
         acquires_global_resources,
         code,
     })
@@ -830,9 +843,9 @@ fn compile_function_body(
     for (var, t) in formals {
         let sig = compile_type(context, function_frame.type_parameters(), &t)?;
         function_frame.define_local(&var.value, sig.clone())?;
-        locals_signature.0.push(sig);
-        record_src_loc!(local: context, var);
+        record_src_loc!(parameter: context, var);
     }
+
     for (var_, t) in locals {
         let sig = compile_type(context, function_frame.type_parameters(), &t)?;
         function_frame.define_local(&var_.value, sig.clone())?;
@@ -1624,8 +1637,7 @@ fn compile_function_body_bytecode(
     for (var, t) in formals {
         let sig = compile_type(context, function_frame.type_parameters(), &t)?;
         function_frame.define_local(&var.value, sig.clone())?;
-        locals_signature.0.push(sig);
-        record_src_loc!(local: context, var);
+        record_src_loc!(parameter: context, var);
     }
     for (var_, t) in locals {
         let sig = compile_type(context, function_frame.type_parameters(), &t)?;

@@ -8,11 +8,11 @@ use libra_types::account_config;
 use libra_types::{
     account_address::AccountAddress,
     block_metadata::BlockMetadata,
-    language_storage::TypeTag,
     on_chain_config::{LibraVersion, VMPublishingOption},
     transaction::{authenticator::AuthenticationKey, Script, Transaction, TransactionArgument},
 };
 use mirai_annotations::*;
+use move_core_types::language_storage::TypeTag;
 use std::convert::TryFrom;
 use stdlib::transaction_scripts::StdlibScript;
 #[cfg(any(test, feature = "fuzzing"))]
@@ -102,7 +102,7 @@ encode_txn_script! {
     args: [new_validator: Address],
     script: AddValidator,
     doc: "Encode a program adding `new_validator` to the pending validator set. Fails if the\
-          `new_validator` address is already in the validator set, already in the pending valdiator set,\
+          `new_validator` address is already in the validator set, already in the pending validator set,\
           or does not have a `ValidatorConfig` resource stored at the address"
 }
 
@@ -136,15 +136,19 @@ encode_txn_script! {
           `preburn_address`.  Fails if the sender does not have a published `MintCapability`."
 }
 
-/// Encode a program transferring `amount` coins from `sender` to `recipient` with associated
-/// metadata `metadata`. Fails if there is no account at the recipient address or if the sender's
-/// balance is lower than `amount`.
+/// Encode a program transferring `amount` coins from `sender` to `recipient` with (optional)
+/// associated metadata `metadata` and (optional) `signature` on the metadata.
+/// The `metadata` and `signature` parameters are only required if `amount` >= 1000 LBR and the
+/// sender and recipient of the funds are two distinct VASPs.
+/// Fails if there is no account at the recipient address or if the sender's balance is lower than
+/// `amount`.
 pub fn encode_transfer_with_metadata_script(
     type_: TypeTag,
     recipient: &AccountAddress,
     auth_key_prefix: Vec<u8>,
     amount: u64,
     metadata: Vec<u8>,
+    signature: Vec<u8>,
 ) -> Script {
     validate_auth_key_prefix(&auth_key_prefix);
     Script::new(
@@ -157,6 +161,7 @@ pub fn encode_transfer_with_metadata_script(
             TransactionArgument::U8Vector(auth_key_prefix),
             TransactionArgument::U64(amount),
             TransactionArgument::U8Vector(metadata),
+            TransactionArgument::U8Vector(signature),
         ],
     )
 }
@@ -225,12 +230,50 @@ pub fn encode_create_account_script(
     )
 }
 
+/// Encode a program creating a fresh empty account at `account_address`. No (non-zero) balance can
+/// be held by this account. Fails if there is already an account at `account_address`.
+pub fn encode_create_empty_account_script(
+    token: TypeTag,
+    account_address: &AccountAddress,
+    auth_key_prefix: Vec<u8>,
+) -> Script {
+    validate_auth_key_prefix(&auth_key_prefix);
+    Script::new(
+        StdlibScript::CreateEmptyAccount.compiled_bytes().into_vec(),
+        vec![token],
+        vec![
+            TransactionArgument::Address(*account_address),
+            TransactionArgument::U8Vector(auth_key_prefix),
+        ],
+    )
+}
+
+encode_txn_script! {
+    name: encode_publish_shared_ed25519_public_key_script,
+    args: [public_key: Bytes],
+    script: PublishSharedEd2551PublicKey,
+    doc: "(1) Rotate the authentication key of the sender to `public_key`\
+          (2) Publish a resource containing a 32-byte ed25519 public key and the rotation capability\
+          of the sender under the sender's address.\
+          Aborts if the sender already has a `SharedEd25519PublicKey` resource.\
+          Aborts if the length of `new_public_key` is not 32."
+}
+
 encode_txn_script! {
     name: encode_register_approved_payment_script,
     args: [public_key: Bytes],
     script: RegisterApprovedPayment,
     doc: "Publish a newly created `ApprovedPayment` resource under the sender's account with approval key\
          `public_key`. Aborts if the sender already has a published `ApprovedPayment` resource."
+}
+
+encode_txn_script! {
+    name: encode_add_currency_to_account_script,
+    type_arg: currency,
+    args: [],
+    script: AddCurrencyToAccount,
+    doc: "Add the currency identified by the type `currency` to the sending accounts.\
+          Aborts if the account already holds a balance fo `currency` type."
 }
 
 encode_txn_script! {
@@ -280,6 +323,18 @@ encode_txn_script! {
     script: RotateAuthenticationKey,
     doc: "Encode a program that rotates the sender's authentication key to `new_key`. `new_key`\
           should be a 256 bit sha3 hash of an ed25519 public key."
+}
+
+encode_txn_script! {
+    name: encode_rotate_shared_ed25519_public_key_script,
+    args: [new_public_key: Bytes],
+    script: RotateSharedEd2551PublicKey,
+    doc: "(1) rotate the public key stored in the sender's `SharedEd25519PublicKey` resource to\
+          `new_public_key`\
+          (2) rotate the authentication key using the capability stored in the sender's\
+          `SharedEd25519PublicKey` to a new value derived from `new_public_key`\
+          Aborts if the sender does not have a `SharedEd25519PublicKey` resource.\
+          Aborts if the length of `new_public_key` is not 32."
 }
 
 // TODO: this should go away once we are no longer using it in tests

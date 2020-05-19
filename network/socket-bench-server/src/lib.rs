@@ -10,6 +10,7 @@ use futures::{
     stream::{Stream, StreamExt},
 };
 use libra_crypto::test_utils::TEST_SEED;
+use libra_logger::prelude::*;
 use libra_network_address::NetworkAddress;
 use memsocket::MemorySocket;
 use netcore::{
@@ -96,22 +97,37 @@ pub fn build_tcp_noise_transport() -> impl Transport<Output = NoiseSocket<TcpSoc
 
 /// Server side handler for send throughput benchmark when the messages are sent
 /// over a simple stream (tcp or in-memory).
-pub async fn server_stream_handler<L, I, S, E>(mut server_listener: L)
+pub async fn server_stream_handler<L, I, S, E>(server_listener: L)
 where
     L: Stream<Item = Result<(I, NetworkAddress), E>> + Unpin,
-    I: Future<Output = Result<S, E>>,
-    S: AsyncRead + AsyncWrite + Unpin,
-    E: ::std::error::Error,
+    I: Future<Output = Result<S, E>> + Send + 'static,
+    S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    E: ::std::error::Error + Send,
 {
-    // Wait for next inbound connection
-    while let Some(Ok((f_stream, _client_addr))) = server_listener.next().await {
-        let stream = f_stream.await.unwrap();
-        let mut stream = Framed::new(IoCompat::new(stream), LengthDelimitedCodec::new());
+    // Wait for next inbound connection, this simulated the TransportHandler
+    // which is single-threaded asynchronous accepting new connections.
+    server_listener
+        .for_each_concurrent(None, |result| async {
+            match result {
+                Ok((f_stream, _)) => {
+                    match f_stream.await {
+                        Ok(stream) => {
+                            let mut stream =
+                                Framed::new(IoCompat::new(stream), LengthDelimitedCodec::new());
 
-        // Drain all messages from the client.
-        while let Some(_) = stream.next().await {}
-        stream.close().await.unwrap();
-    }
+                            tokio::task::spawn(async move {
+                                // Drain all messages from the client.
+                                while let Some(_) = stream.next().await {}
+                                stream.close().await.unwrap();
+                            });
+                        }
+                        Err(e) => error!("Connection upgrade failed {:?}", e),
+                    };
+                }
+                Err(e) => error!("Stream failed {:?}", e),
+            }
+        })
+        .await
 }
 
 pub fn start_stream_server<T, L, I, S, E>(

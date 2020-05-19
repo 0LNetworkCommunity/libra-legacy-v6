@@ -6,7 +6,7 @@
 // 1002 -> NOT_AN_ASSOCIATION_ACCOUNT
 // 1003 -> ACCOUNT_DOES_NOT_HAVE_PRIVILEGE
 // 1004 -> ACCOUNT_DOES_NOT_HAVE_PRIVILEGE_RESOURCE
-address 0x0:
+address 0x0 {
 
 module Association {
     use 0x0::Transaction;
@@ -38,6 +38,7 @@ module Association {
 
     // Publish a specific privilege under the sending account.
     public fun apply_for_privilege<Privilege>() {
+        if (::exists<PrivilegedCapability<Privilege>>(Transaction::sender())) return;
         move_to_sender(PrivilegedCapability<Privilege>{ is_certified: false });
     }
 
@@ -108,4 +109,6 @@ module Association {
     acquires PrivilegedCapability {
         Transaction::assert(addr_is_association(addr), 1002);
     }
+}
+
 }

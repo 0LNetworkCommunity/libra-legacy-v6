@@ -24,6 +24,7 @@ const STAGED_TXN_SCRIPTS_DIR: Dir = include_dir!("staged/transaction_scripts");
 pub enum StdlibScript {
     AddValidator,
     AddCurrency,
+    AddCurrencyToAccount,
     AllowChildAccounts,
     ApplyForAssociationAddress,
     ApplyForAssociationPrivilege,
@@ -34,6 +35,7 @@ pub enum StdlibScript {
     Burn,
     CancelBurn,
     CreateAccount,
+    CreateEmptyAccount,
     EmptyScript,
     GrantAssociationAddress,
     GrantAssociationPrivilege,
@@ -46,6 +48,7 @@ pub enum StdlibScript {
     PeerToPeer,
     PeerToPeerWithMetadata,
     Preburn,
+    PublishSharedEd2551PublicKey,
     RecertifyChildAccount,
     RegisterApprovedPayment,
     RegisterPreburner,
@@ -57,6 +60,7 @@ pub enum StdlibScript {
     RemoveValidator,
     RotateAuthenticationKey,
     RotateConsensusPubkey,
+    RotateSharedEd2551PublicKey,
     UnmintLbr,
     UpdateLibraVersion,
     UpdateExchangeRate,
@@ -72,6 +76,7 @@ impl StdlibScript {
         vec![
             AddValidator,
             AddCurrency,
+            AddCurrencyToAccount,
             AllowChildAccounts,
             ApplyForAssociationAddress,
             ApplyForAssociationPrivilege,
@@ -82,6 +87,7 @@ impl StdlibScript {
             Burn,
             CancelBurn,
             CreateAccount,
+            CreateEmptyAccount,
             EmptyScript,
             GrantAssociationAddress,
             GrantAssociationPrivilege,
@@ -94,6 +100,7 @@ impl StdlibScript {
             PeerToPeer,
             PeerToPeerWithMetadata,
             Preburn,
+            PublishSharedEd2551PublicKey,
             RecertifyChildAccount,
             RegisterApprovedPayment,
             RegisterPreburner,
@@ -105,6 +112,7 @@ impl StdlibScript {
             RemoveValidator,
             RotateAuthenticationKey,
             RotateConsensusPubkey,
+            RotateSharedEd2551PublicKey,
             UnmintLbr,
             UpdateLibraVersion,
             UpdateExchangeRate,
@@ -198,6 +206,7 @@ impl fmt::Display for StdlibScript {
             match self {
                 AddValidator => "add_validator",
                 AddCurrency => "add_currency",
+                AddCurrencyToAccount => "add_currency_to_account",
                 AllowChildAccounts => "allow_child_accounts",
                 ApplyForAssociationAddress => "apply_for_association_address",
                 ApplyForAssociationPrivilege => "apply_for_association_privilege",
@@ -208,6 +217,7 @@ impl fmt::Display for StdlibScript {
                 Burn => "burn",
                 CancelBurn => "cancel_burn",
                 CreateAccount => "create_account",
+                CreateEmptyAccount => "create_empty_account",
                 EmptyScript => "empty_script",
                 GrantAssociationAddress => "grant_association_address",
                 GrantAssociationPrivilege => "grant_association_privilege",
@@ -220,6 +230,7 @@ impl fmt::Display for StdlibScript {
                 PeerToPeer => "peer_to_peer",
                 PeerToPeerWithMetadata => "peer_to_peer_with_metadata",
                 Preburn => "preburn",
+                PublishSharedEd2551PublicKey => "publish_shared_ed25519_public_key",
                 RecertifyChildAccount => "recertify_child_account",
                 RegisterApprovedPayment => "register_approved_payment",
                 RegisterPreburner => "register_preburner",
@@ -231,6 +242,7 @@ impl fmt::Display for StdlibScript {
                 RemoveValidator => "remove_validator",
                 RotateAuthenticationKey => "rotate_authentication_key",
                 RotateConsensusPubkey => "rotate_consensus_pubkey",
+                RotateSharedEd2551PublicKey => "rotate_shared_ed25519_public_key",
                 UnmintLbr => "unmint_lbr",
                 UpdateLibraVersion => "update_libra_version",
                 UpdateExchangeRate => "update_exchange_rate",
@@ -250,6 +262,13 @@ mod test {
         // StdlibScript::all() (and vice versa)
         let files = STAGED_TXN_SCRIPTS_DIR.files();
         let scripts = StdlibScript::all();
+        for file in files {
+            assert!(
+                StdlibScript::is(file.contents()),
+                "File {} missing from StdlibScript enum",
+                file.path().display()
+            )
+        }
         assert_eq!(
             files.len(),
             scripts.len(),
@@ -260,12 +279,5 @@ mod test {
                 "Did you forget to rebuild the standard library?"
             }
         );
-        for file in files {
-            assert!(
-                StdlibScript::is(file.contents()),
-                "File {} missing from StdlibScript enum",
-                file.path().display()
-            )
-        }
     }
 }

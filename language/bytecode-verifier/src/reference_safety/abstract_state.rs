@@ -57,6 +57,17 @@ pub enum Label {
     Field(FieldHandleIndex),
 }
 
+// Needed for debugging with the borrow graph
+impl std::fmt::Display for Label {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Label::Local(i) => write!(f, "local#{}", i),
+            Label::Global(i) => write!(f, "resource@{}", i),
+            Label::Field(i) => write!(f, "field#{}", i),
+        }
+    }
+}
+
 /// AbstractState is the analysis state over which abstract interpretation is performed.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AbstractState {
@@ -69,7 +80,20 @@ pub struct AbstractState {
 impl AbstractState {
     /// create a new abstract state
     pub fn new(module: &CompiledModule, function_definition: &FunctionDefinition) -> Self {
-        let num_locals = module.signature_at(function_definition.code.locals).len();
+        let func_handle = module.function_handle_at(function_definition.function);
+        let parameter_types = &module.signature_at(func_handle.parameters).0;
+        let additional_local_types = &module
+            .signature_at(
+                function_definition
+                    .code
+                    .as_ref()
+                    .expect("Abstract interpreter should only run on non-native functions")
+                    .locals,
+            )
+            .0;
+
+        let num_locals = parameter_types.len() + additional_local_types.len();
+
         // ids in [0, num_locals) are reserved for constructing canonical state
         // id at num_locals is reserved for the frame root
         let next_id = num_locals + 1;
@@ -80,16 +104,14 @@ impl AbstractState {
             next_id,
         };
 
-        let func_handle = module.function_handle_at(function_definition.function);
-        let arguments = module.signature_at(func_handle.parameters);
-        for (arg_idx, argument) in arguments.0.iter().enumerate() {
-            let value = if argument.is_reference() {
-                let id = state.new_ref(argument.is_mutable_reference());
+        for (param_idx, param_ty) in parameter_types.iter().enumerate() {
+            let value = if param_ty.is_reference() {
+                let id = state.new_ref(param_ty.is_mutable_reference());
                 AbstractValue::Reference(id)
             } else {
                 AbstractValue::NonReference
             };
-            state.locals.insert(arg_idx as LocalIndex, value);
+            state.locals.insert(param_idx as LocalIndex, value);
         }
         state.borrow_graph.new_ref(state.frame_root(), true);
         state
@@ -500,7 +522,6 @@ impl AbstractState {
         for id in all_references_to_borrow_from {
             self.release(id)
         }
-
         Ok(return_values)
     }
 
@@ -517,7 +538,7 @@ impl AbstractState {
         // Check that no local or global is borrowed
         if !self.is_frame_safe_to_destroy() {
             return Err(err_at_offset(
-                StatusCode::RET_UNSAFE_TO_DESTROY_ERROR,
+                StatusCode::UNSAFE_RET_LOCAL_OR_RESOURCE_STILL_BORROWED,
                 offset,
             ));
         }

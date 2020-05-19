@@ -8,15 +8,13 @@ use crate::{
         ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH,
     },
     block_metadata::{LibraBlockResource, NEW_BLOCK_EVENT_PATH},
-    discovery_set::{DiscoverySetResource, DISCOVERY_SET_CHANGE_EVENT_PATH},
     event::EventHandle,
     libra_timestamp::LibraTimestampResource,
-    move_resource::MoveResource,
     on_chain_config::{ConfigurationResource, OnChainConfig, ValidatorSet},
     validator_config::ValidatorConfigResource,
 };
 use anyhow::{bail, Error, Result};
-use move_core_types::identifier::Identifier;
+use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use serde::{de::DeserializeOwned, export::Formatter, Deserialize, Serialize};
 use std::{collections::btree_map::BTreeMap, convert::TryFrom, fmt};
 
@@ -34,24 +32,24 @@ impl AccountState {
         self.get_resource(&AccountResource::resource_path())
     }
 
-    pub fn get_balance_resource(&self) -> Result<Option<BalanceResource>> {
-        if let Some(account_resource) = self.get_account_resource()? {
-            let balance_currency_code = account_resource.balance_currency_code();
-            let currency_type_tag = type_tag_for_currency_code(balance_currency_code.to_owned());
-            // TODO: update this to use BalanceResource::resource_path once that takes type
-            // parameters
-            self.get_resource(&BalanceResource::access_path_for(currency_type_tag))
-        } else {
-            Ok(None)
-        }
+    pub fn get_balance_resources(
+        &self,
+        currency_codes: &[Identifier],
+    ) -> Result<Vec<BalanceResource>> {
+        currency_codes
+            .iter()
+            .filter_map(|currency_code| {
+                let currency_type_tag = type_tag_for_currency_code(currency_code.to_owned());
+                // TODO: update this to use BalanceResource::resource_path once that takes type
+                // parameters
+                self.get_resource(&BalanceResource::access_path_for(currency_type_tag))
+                    .transpose()
+            })
+            .collect()
     }
 
     pub fn get_configuration_resource(&self) -> Result<Option<ConfigurationResource>> {
         self.get_resource(&ConfigurationResource::resource_path())
-    }
-
-    pub fn get_discovery_set_resource(&self) -> Result<Option<DiscoverySetResource>> {
-        self.get_resource(&DiscoverySetResource::resource_path())
     }
 
     pub fn get_libra_timestamp_resource(&self) -> Result<Option<LibraTimestampResource>> {
@@ -86,9 +84,6 @@ impl AccountState {
         } else if *ACCOUNT_SENT_EVENT_PATH == query_path {
             self.get_account_resource()?
                 .map(|account_resource| account_resource.sent_events().clone())
-        } else if *DISCOVERY_SET_CHANGE_EVENT_PATH == query_path {
-            self.get_discovery_set_resource()?
-                .map(|discovery_set_resource| discovery_set_resource.change_events().clone())
         } else if *NEW_BLOCK_EVENT_PATH == query_path {
             self.get_libra_block_resource()?
                 .map(|libra_block_resource| libra_block_resource.new_block_events().clone())
@@ -122,6 +117,10 @@ impl AccountState {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    pub fn iter(&self) -> impl std::iter::Iterator<Item = (&Vec<u8>, &Vec<u8>)> {
+        self.0.iter()
+    }
 }
 
 impl fmt::Debug for AccountState {
@@ -130,11 +129,6 @@ impl fmt::Debug for AccountState {
         let account_resource_str = self
             .get_account_resource()
             .map(|account_resource_opt| format!("{:#?}", account_resource_opt))
-            .unwrap_or_else(|e| format!("parse error: {:#?}", e));
-
-        let discovery_set_str = self
-            .get_discovery_set_resource()
-            .map(|discovery_set_opt| format!("{:#?}", discovery_set_opt))
             .unwrap_or_else(|e| format!("parse error: {:#?}", e));
 
         let libra_timestamp_str = self
@@ -156,16 +150,11 @@ impl fmt::Debug for AccountState {
             f,
             "{{ \n \
              AccountResource {{ {} }} \n \
-             DiscoverySet {{ {} }} \n \
              LibraTimestamp {{ {} }} \n \
              ValidatorConfig {{ {} }} \n \
              ValidatorSet {{ {} }} \n \
              }}",
-            account_resource_str,
-            discovery_set_str,
-            libra_timestamp_str,
-            validator_config_str,
-            validator_set_str,
+            account_resource_str, libra_timestamp_str, validator_config_str, validator_set_str,
         )
     }
 }

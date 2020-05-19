@@ -3,16 +3,14 @@
 
 use crate::SynchronizerState;
 use anyhow::{ensure, format_err, Result};
-use executor::ChunkExecutor;
-use executor_types::ExecutedTrees;
+use executor_types::{ChunkExecutor, ExecutedTrees};
 use itertools::Itertools;
 use libra_types::{
-    account_config::association_address,
     account_state::AccountState,
     contract_event::ContractEvent,
     ledger_info::LedgerInfoWithSignatures,
     move_resource::MoveStorage,
-    on_chain_config::{OnChainConfigPayload, ON_CHAIN_CONFIG_REGISTRY},
+    on_chain_config::{config_address, OnChainConfigPayload, ON_CHAIN_CONFIG_REGISTRY},
     transaction::TransactionListWithProof,
 };
 use std::{collections::HashSet, convert::TryFrom, sync::Arc};
@@ -95,7 +93,7 @@ impl ExecutorProxy {
             .collect();
         let configs = storage.batch_fetch_resources(access_paths)?;
         let epoch = storage
-            .get_latest_account_state(association_address())?
+            .get_latest_account_state(config_address())?
             .map(|blob| {
                 AccountState::try_from(&blob).and_then(|state| {
                     Ok(state

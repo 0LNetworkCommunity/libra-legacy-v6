@@ -32,11 +32,13 @@ use crate::{
 };
 use libra_types::{
     account_address::AccountAddress,
-    language_storage::ModuleId,
     vm_error::{StatusCode, VMStatus},
 };
 use mirai_annotations::*;
-use move_core_types::identifier::{IdentStr, Identifier};
+use move_core_types::{
+    identifier::{IdentStr, Identifier},
+    language_storage::ModuleId,
+};
 use num_variants::NumVariants;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest::{collection::vec, prelude::*, strategy::BoxedStrategy};
@@ -373,14 +375,15 @@ pub struct FieldDefinition {
 
 /// A `FunctionDefinition` is the implementation of a function. It defines
 /// the *prototype* of the function and the function body.
+
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 #[cfg_attr(any(test, feature = "fuzzing"), proptest(params = "usize"))]
 pub struct FunctionDefinition {
     /// The prototype of the function (module, name, signature).
     pub function: FunctionHandleIndex,
-    /// Flags for this function (private, public, native, etc.)
-    pub flags: u8,
+    /// Flag to indicate if this function is public.
+    pub is_public: bool,
     /// List of nominal resources (declared in this module) that the procedure might access
     /// Either through: BorrowGlobal, MoveFrom, or transitively through another procedure
     /// This list of acquires grants the borrow checker the ability to statically verify the safety
@@ -394,20 +397,25 @@ pub struct FunctionDefinition {
     /// Code for this function.
     #[cfg_attr(
         any(test, feature = "fuzzing"),
-        proptest(strategy = "any_with::<CodeUnit>(params)")
+        proptest(strategy = "any_with::<CodeUnit>(params).prop_map(Some)")
     )]
-    pub code: CodeUnit,
+    pub code: Option<CodeUnit>,
 }
 
 impl FunctionDefinition {
     /// Returns whether the FunctionDefinition is public.
     pub fn is_public(&self) -> bool {
-        self.flags & CodeUnit::PUBLIC != 0
+        self.is_public
     }
     /// Returns whether the FunctionDefinition is native.
     pub fn is_native(&self) -> bool {
-        self.flags & CodeUnit::NATIVE != 0
+        self.code.is_none()
     }
+
+    /// Function can be invoked outside of its declaring module.
+    pub const PUBLIC: u8 = 0x1;
+    /// A native function implemented in Rust.
+    pub const NATIVE: u8 = 0x2;
 }
 
 // Signature
@@ -749,14 +757,6 @@ pub struct CodeUnit {
         proptest(strategy = "vec(any::<Bytecode>(), 0..=params)")
     )]
     pub code: Vec<Bytecode>,
-}
-
-/// Flags for `FunctionDeclaration`.
-impl CodeUnit {
-    /// Function can be invoked outside of its declaring module.
-    pub const PUBLIC: u8 = 0x1;
-    /// A native function implemented in Rust.
-    pub const NATIVE: u8 = 0x2;
 }
 
 /// `Bytecode` is a VM instruction of variable size. The type of the bytecode (opcode) defines
@@ -1127,25 +1127,6 @@ pub enum Bytecode {
     ///
     /// ```..., errorcode -> ...```
     Abort,
-    /// Get gas unit price from the transaction and pushes it on the stack.
-    ///
-    /// Stack transition:
-    ///
-    /// ```... -> ..., u64_value```
-    GetTxnGasUnitPrice,
-    /// Get max gas units set in the transaction and pushes it on the stack.
-    ///
-    /// Stack transition:
-    ///
-    /// ```... -> ..., u64_value```
-    GetTxnMaxGasUnits,
-    /// Get remaining gas for the given transaction at the point of execution of this bytecode.
-    /// The result is pushed on the stack.
-    ///
-    /// Stack transition:
-    ///
-    /// ```... -> ..., u64_value```
-    GetGasRemaining,
     /// Get the sender address from the transaction and pushes it on the stack.
     ///
     /// Stack transition:
@@ -1176,18 +1157,6 @@ pub enum Bytecode {
     /// ```..., value -> ...```
     MoveToSender(StructDefinitionIndex),
     MoveToSenderGeneric(StructDefInstantiationIndex),
-    /// Get the sequence number submitted with the transaction and pushes it on the stack.
-    ///
-    /// Stack transition:
-    ///
-    /// ```... -> ..., u64_value```
-    GetTxnSequenceNumber,
-    /// Get the public key of the sender from the transaction and pushes it on the stack.
-    ///
-    /// Stack transition:
-    ///
-    /// ```..., -> ..., bytearray_value```
-    GetTxnPublicKey,
     /// Shift the (second top value) left (top value) bits and pushes the result on the stack.
     ///
     /// Stack transition:
@@ -1222,7 +1191,7 @@ impl ::std::fmt::Debug for Bytecode {
             Bytecode::CastU8 => write!(f, "CastU8"),
             Bytecode::CastU64 => write!(f, "CastU64"),
             Bytecode::CastU128 => write!(f, "CastU128"),
-            Bytecode::LdConst(a) => write!(f, "LdAddr({})", a),
+            Bytecode::LdConst(a) => write!(f, "LdConst({})", a),
             Bytecode::LdTrue => write!(f, "LdTrue"),
             Bytecode::LdFalse => write!(f, "LdFalse"),
             Bytecode::CopyLoc(a) => write!(f, "CopyLoc({})", a),
@@ -1267,9 +1236,6 @@ impl ::std::fmt::Debug for Bytecode {
             Bytecode::Le => write!(f, "Le"),
             Bytecode::Ge => write!(f, "Ge"),
             Bytecode::Abort => write!(f, "Abort"),
-            Bytecode::GetTxnGasUnitPrice => write!(f, "GetTxnGasUnitPrice"),
-            Bytecode::GetTxnMaxGasUnits => write!(f, "GetTxnMaxGasUnits"),
-            Bytecode::GetGasRemaining => write!(f, "GetGasRemaining"),
             Bytecode::GetTxnSenderAddress => write!(f, "GetTxnSenderAddress"),
             Bytecode::Exists(a) => write!(f, "Exists({:?})", a),
             Bytecode::ExistsGeneric(a) => write!(f, "ExistsGeneric({:?})", a),
@@ -1277,8 +1243,6 @@ impl ::std::fmt::Debug for Bytecode {
             Bytecode::MoveFromGeneric(a) => write!(f, "MoveFromGeneric({:?})", a),
             Bytecode::MoveToSender(a) => write!(f, "MoveToSender({:?})", a),
             Bytecode::MoveToSenderGeneric(a) => write!(f, "MoveToSenderGeneric({:?})", a),
-            Bytecode::GetTxnSequenceNumber => write!(f, "GetTxnSequenceNumber"),
-            Bytecode::GetTxnPublicKey => write!(f, "GetTxnPublicKey"),
             Bytecode::Nop => write!(f, "Nop"),
         }
     }
@@ -1517,9 +1481,9 @@ impl CompiledScriptMut {
         // Create a function definition for the main function.
         let main_def = FunctionDefinition {
             function: main_handle_idx,
-            flags: CodeUnit::PUBLIC,
+            is_public: true,
             acquires_global_resources: vec![],
-            code: self.code,
+            code: Some(self.code),
         };
 
         let info = ScriptConversionInfo {
@@ -1819,7 +1783,7 @@ impl CompiledModule {
 
             type_parameters: main_handle.type_parameters,
             parameters: main_handle.parameters,
-            code: main.code,
+            code: main.code.unwrap(),
         })
     }
 }
@@ -1868,12 +1832,12 @@ pub fn basic_test_module() -> CompiledModuleMut {
 
     m.function_defs.push(FunctionDefinition {
         function: FunctionHandleIndex(0),
-        flags: 0,
+        is_public: false,
         acquires_global_resources: vec![],
-        code: CodeUnit {
+        code: Some(CodeUnit {
             locals: SignatureIndex(0),
             code: vec![],
-        },
+        }),
     });
 
     m.struct_handles.push(StructHandle {
@@ -1904,7 +1868,7 @@ pub fn dummy_procedure_module(code: Vec<Bytecode>) -> CompiledModule {
     let mut code_unit = CodeUnit::default();
     code_unit.code = code;
     let mut fun_def = FunctionDefinition::default();
-    fun_def.code = code_unit;
+    fun_def.code = Some(code_unit);
 
     let fun_handle = FunctionHandle {
         module: ModuleHandleIndex(0),

@@ -43,7 +43,7 @@ module M {
 
     spec schema InvariantIsEqual<T> {
         x: T;
-        invariant update x == old(x);
+        // invariant update x == old(x);
     }
     struct S<X> { x: X }
     spec struct S {
@@ -62,6 +62,14 @@ module M {
     spec fun multiple {
         include MultipleTypeParams<num, num>;
         requires _x > _y;
+    }
+
+    spec schema SchemaExp<T> {
+        x: bool;
+        include x ==> InvariantIsEqual<bool>;
+        include !x ==> InvariantIsEqual<bool>;
+        include InvariantIsEqual<bool> && InvariantIsEqual<bool>;
+        include if (x) InvariantIsEqual<bool> else InvariantIsEqual<bool>;
     }
 
 }

@@ -4,8 +4,11 @@
 //! Defines accessors for compiled modules.
 
 use crate::{file_format::*, internals::ModuleIndex};
-use libra_types::{account_address::AccountAddress, language_storage::ModuleId};
-use move_core_types::identifier::{IdentStr, Identifier};
+use libra_types::account_address::AccountAddress;
+use move_core_types::{
+    identifier::{IdentStr, Identifier},
+    language_storage::ModuleId,
+};
 
 /// Represents accessors for a compiled module.
 ///
@@ -111,7 +114,10 @@ pub trait ModuleAccess: Sync {
     fn function_def_at(&self, idx: FunctionDefinitionIndex) -> &FunctionDefinition {
         let result = &self.as_module().as_inner().function_defs[idx.into_index()];
         assumed_postcondition!(result.function.into_index() < self.function_handles().len()); // invariant
-        assumed_postcondition!(result.code.locals.into_index() < self.signatures().len()); // invariant
+        assumed_postcondition!(match &result.code {
+            Some(code) => code.locals.into_index() < self.signatures().len(),
+            None => true,
+        }); // invariant
         result
     }
 

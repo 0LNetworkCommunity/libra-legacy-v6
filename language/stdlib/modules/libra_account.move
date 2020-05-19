@@ -1,19 +1,21 @@
-address 0x0:
+address 0x0 {
 
 // The module for the account resource that governs every Libra account
 module LibraAccount {
+    use 0x0::AccountTrack;
+    use 0x0::AccountType;
+    use 0x0::Association;
+    use 0x0::Empty;
     use 0x0::Event;
     use 0x0::Hash;
     use 0x0::LCS;
     use 0x0::Libra;
     use 0x0::LibraTransactionTimeout;
+    use 0x0::Signature;
+    use 0x0::Testnet;
     use 0x0::Transaction;
+    use 0x0::VASP;
     use 0x0::Vector;
-    use 0x0::AccountType;
-    use 0x0::Unhosted;
-    use 0x0::Empty;
-    use 0x0::AccountTrack;
-    use 0x0::Association;
 
     // Every Libra account has a LibraAccount::T resource
     resource struct T {
@@ -100,7 +102,7 @@ module LibraAccount {
     acquires T, Balance, AccountOperationsCapability {
         // Since we don't have vector<u8> literals in the source language at
         // the moment.
-        deposit_with_metadata(payee, to_deposit, x"")
+        deposit_with_metadata(payee, to_deposit, x"", x"")
     }
 
     // Deposits the `to_deposit` coin into the sender's account balance
@@ -113,13 +115,15 @@ module LibraAccount {
     public fun deposit_with_metadata<Token>(
         payee: address,
         to_deposit: Libra::T<Token>,
-        metadata: vector<u8>
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>
     ) acquires T, Balance, AccountOperationsCapability {
         deposit_with_sender_and_metadata(
             payee,
             Transaction::sender(),
             to_deposit,
-            metadata
+            metadata,
+            metadata_signature
         );
     }
 
@@ -129,11 +133,41 @@ module LibraAccount {
         payee: address,
         sender: address,
         to_deposit: Libra::T<Token>,
-        metadata: vector<u8>
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>
     ) acquires T, Balance, AccountOperationsCapability {
         // Check that the `to_deposit` coin is non-zero
         let deposit_value = Libra::value(&to_deposit);
         Transaction::assert(deposit_value > 0, 7);
+
+        // TODO: on-chain config for travel rule limit instead of hardcoded value
+        let travel_rule_limit = 1000;
+        // travel rule only applies for payments over a threshold
+        let above_threshold =
+            Libra::approx_lbr_for_value<Token>(deposit_value) >= travel_rule_limit;
+        // travel rule only applies if the sender and recipient are both VASPs
+        let both_vasps = VASP::is_vasp(sender) && VASP::is_vasp(payee);
+        // Don't check the travel rule if we're on testnet and sender
+        // doesn't specify a metadata signature
+        let is_testnet_transfer = Testnet::is_testnet() && Vector::is_empty(&metadata_signature);
+        if (!is_testnet_transfer &&
+            above_threshold &&
+            both_vasps &&
+            // travel rule does not apply for intra-VASP transactions
+            VASP::root_vasp_address(sender) != VASP::root_vasp_address(payee)
+        ) {
+            // sanity check of signature validity
+            Transaction::assert(Vector::length(&metadata_signature) == 64, 9001);
+            // cryptographic check of signature validity
+            Transaction::assert(
+                Signature::ed25519_verify(
+                    metadata_signature,
+                    VASP::travel_rule_public_key(payee),
+                    copy metadata
+                ),
+                9002, // TODO: proper error code
+            );
+        };
 
         // Ensure that this deposit is compliant with the account limits on
         // this account.
@@ -264,13 +298,15 @@ module LibraAccount {
         payee: address,
         cap: &WithdrawalCapability,
         amount: u64,
-        metadata: vector<u8>
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>
     ) acquires T, Balance, AccountOperationsCapability {
         deposit_with_sender_and_metadata<Token>(
             payee,
             *&cap.account_address,
             withdraw_with_capability(cap, amount),
             metadata,
+            metadata_signature
         );
     }
 
@@ -280,12 +316,14 @@ module LibraAccount {
     public fun pay_from_sender_with_metadata<Token>(
         payee: address,
         amount: u64,
-        metadata: vector<u8>
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>
     ) acquires T, Balance, AccountOperationsCapability {
         deposit_with_metadata<Token>(
             payee,
             withdraw_from_sender(amount),
-            metadata
+            metadata,
+            metadata_signature
         );
     }
 
@@ -296,7 +334,7 @@ module LibraAccount {
         payee: address,
         amount: u64
     ) acquires T, Balance, AccountOperationsCapability {
-        pay_from_sender_with_metadata<Token>(payee, amount, x"");
+        pay_from_sender_with_metadata<Token>(payee, amount, x"", x"");
     }
 
     fun rotate_authentication_key_for_account(account: &mut T, new_authentication_key: vector<u8>) {
@@ -350,15 +388,29 @@ module LibraAccount {
         account.delegated_key_rotation_capability = false;
     }
 
-    // Creates a new account at `fresh_address` with an initial balance of zero and authentication
-    // key `auth_key_prefix` | `fresh_address`
-    // Creating an account at address 0x0 will cause runtime failure as it is a
+    // Creates a new testnet account at `fresh_address` with a balance of
+    // zero `Token` type coins, and authentication key `auth_key_prefix` | `fresh_address`.
+    // Trying to create an account at address 0x0 will cause runtime failure as it is a
     // reserved address for the MoveVM.
-    public fun create_unhosted_account<Token>(fresh_address: address, auth_key_prefix: vector<u8>)
+    public fun create_testnet_account<Token>(fresh_address: address, auth_key_prefix: vector<u8>)
     acquires AccountOperationsCapability {
-        make_account<Token, Unhosted::T>(fresh_address, auth_key_prefix, Unhosted::create())
+        Transaction::assert(Testnet::is_testnet(), 10042);
+         let vasp_credential = VASP::create_root_vasp_credential(
+              // "testnet"
+              x"746573746E6574",
+              // "https://libra.org"
+              x"68747470733A2F2F6C696272612E6F72672F",
+              x"",
+              // An empty travel-rule key
+              x"00000000000000000000000000000000",
+         );
+         make_account<Token, VASP::RootVASP>(fresh_address, auth_key_prefix, vasp_credential);
     }
 
+    // Creates a new `Empty` account at `fresh_address` with a balance of zero and authentication
+    // key `auth_key_prefix` | `fresh_address`.
+    // Creating an account at address 0x0 will cause runtime failure as it is a
+    // reserved address for the MoveVM.
     public fun create_account<Token>(fresh_address: address, auth_key_prefix: vector<u8>)
     acquires AccountOperationsCapability {
         make_account<Token, Empty::T>(fresh_address, auth_key_prefix, Empty::create())
@@ -579,4 +631,6 @@ module LibraAccount {
             );
         }
     }
+}
+
 }

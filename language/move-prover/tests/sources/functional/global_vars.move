@@ -1,4 +1,7 @@
 module TestGlobalVars {
+    spec module {
+        pragma verify = true;
+    }
 
     spec module {
         global sum_of_T: u64;
@@ -10,7 +13,6 @@ module TestGlobalVars {
     spec struct T {
       invariant pack sum_of_T = sum_of_T + i;
       invariant unpack sum_of_T = sum_of_T - i;
-      invariant update sum_of_T = sum_of_T - old(i) + i;
     }
 
 

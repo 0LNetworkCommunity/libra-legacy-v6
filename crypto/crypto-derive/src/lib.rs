@@ -153,8 +153,8 @@ pub fn deserialize_key(source: TokenStream) -> TokenStream {
                 D: ::serde::Deserializer<'de>,
             {
                 if deserializer.is_human_readable() {
-                    let encoded_key = <&str>::deserialize(deserializer)?;
-                    ValidCryptoMaterialStringExt::from_encoded_string(encoded_key)
+                    let encoded_key = <String>::deserialize(deserializer)?;
+                    ValidCryptoMaterialStringExt::from_encoded_string(encoded_key.as_str())
                         .map_err(<D::Error as ::serde::de::Error>::custom)
                 } else {
                     // In order to preserve the Serde data model and help analysis tools,
@@ -318,6 +318,9 @@ pub fn derive_enum_signature(input: TokenStream) -> TokenStream {
     }
 }
 
+// There is a unit test for this logic in the crypto crate, at
+// libra_crypto::unit_tests::cryptohasher — you may have to modify it if you
+// edit the below.
 #[proc_macro_derive(CryptoHasher, attributes(CryptoHasherSalt))]
 pub fn hasher_dispatch(input: TokenStream) -> TokenStream {
     let item = parse_macro_input!(input as DeriveInput);
@@ -343,7 +346,7 @@ pub fn hasher_dispatch(input: TokenStream) -> TokenStream {
                 let f_name = #fn_name;
 
                 #hasher_name(
-                    libra_crypto::hash::DefaultHasher::new_with_salt(&format!("{}::{}", f_name, mp).as_bytes()))
+                    libra_crypto::hash::DefaultHasher::new_with_salt(&format!("{}::{}", mp, f_name).as_bytes()))
             }
         }
 

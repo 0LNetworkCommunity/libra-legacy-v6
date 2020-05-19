@@ -1,8 +1,13 @@
 // A module providing functionality to the script*.move tests
-address 0x0:
+address 0x0 {
 
 module ScriptProvider {
     use 0x0::Transaction;
+
+    spec module {
+        pragma verify = true;
+    }
+
 
     resource struct Info<T> {}
 
@@ -18,4 +23,6 @@ module ScriptProvider {
     spec fun register {
         include RegisterConditions<T>;
     }
+}
+
 }

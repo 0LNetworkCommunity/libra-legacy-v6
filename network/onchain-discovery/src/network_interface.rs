@@ -2,23 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Protobuf based interface between OnchainDiscovery and Network layers.
-use crate::types::{
-    OnchainDiscoveryMsg, QueryDiscoverySetRequest, QueryDiscoverySetResponseWithEvent,
-};
+use crate::types::{OnchainDiscoveryMsg, QueryDiscoverySetRequest, QueryDiscoverySetResponse};
 use channel::{libra_channel, message_queues::QueueStyle};
 use futures::{channel::mpsc, sink::SinkExt};
 use libra_types::PeerId;
 use network::{
     connectivity_manager::ConnectivityRequest,
     peer_manager::{
-        conn_status_channel, ConnectionRequestSender, PeerManagerNotification,
+        conn_notifs_channel, ConnectionRequestSender, PeerManagerNotification,
         PeerManagerRequestSender,
     },
     protocols::{network::NetworkSender, rpc::error::RpcError},
-    validator_network::network_builder::NetworkBuilder,
+    validator_network::network_builder::{NetworkBuilder, NETWORK_CHANNEL_SIZE},
     ProtocolId,
 };
-use std::{convert::TryFrom, time::Duration};
+use std::time::Duration;
 
 /// The interface from OnchainDiscovery to Networking layer.
 #[derive(Clone)]
@@ -44,7 +42,7 @@ impl OnchainDiscoveryNetworkSender {
         recipient: PeerId,
         req_msg: QueryDiscoverySetRequest,
         timeout: Duration,
-    ) -> Result<QueryDiscoverySetResponseWithEvent, RpcError> {
+    ) -> Result<Box<QueryDiscoverySetResponse>, RpcError> {
         let protocol = ProtocolId::OnchainDiscoveryRpc;
         let req_msg_enum = OnchainDiscoveryMsg::QueryDiscoverySetRequest(req_msg);
 
@@ -59,8 +57,6 @@ impl OnchainDiscoveryNetworkSender {
                 return Err(RpcError::InvalidRpcResponse);
             }
         };
-        let res_msg = QueryDiscoverySetResponseWithEvent::try_from(res_msg)
-            .map_err(RpcError::ApplicationError)?;
         Ok(res_msg)
     }
 
@@ -79,13 +75,14 @@ pub fn add_to_network(
 ) -> (
     OnchainDiscoveryNetworkSender,
     libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
-    conn_status_channel::Receiver,
+    conn_notifs_channel::Receiver,
 ) {
     let (network_sender, network_receiver, conn_reqs_tx, conn_notifs_rx) = network
         .add_protocol_handler(
             vec![ProtocolId::OnchainDiscoveryRpc],
             vec![],
             QueueStyle::LIFO,
+            NETWORK_CHANNEL_SIZE,
             // Some(&counters::PENDING_CONSENSUS_NETWORK_EVENTS),
             // TODO(philiphayes): add a counter for onchain discovery
             None,

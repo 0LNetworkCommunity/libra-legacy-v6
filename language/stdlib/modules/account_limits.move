@@ -3,7 +3,7 @@
 // 1 -> INVALID_LIMITS_DEFINITION_NOT_CERTIFIED
 // 2 -> INVALID_ACCOUNT_MUTATION_CAPABILITY_SENDER
 // 3 -> WITHDREW_INVALID_CURRENCY
-address 0x0:
+address 0x0 {
 
 module AccountLimits {
     use 0x0::Transaction;
@@ -67,6 +67,7 @@ module AccountLimits {
         receiving_window_info: &mut Window,
         _cap: &UpdateCapability
     ): bool acquires LimitsDefinition {
+        Transaction::assert(0x0::Testnet::is_testnet(), 10047);
         can_receive<CoinType>(
             amount,
             receiving_window_info,
@@ -84,6 +85,7 @@ module AccountLimits {
         account_window_info: &mut Window,
         _cap: &UpdateCapability
     ): bool acquires LimitsDefinition {
+        Transaction::assert(0x0::Testnet::is_testnet(), 10048);
         can_withdraw<CoinType>(
             amount,
             account_window_info,
@@ -238,4 +240,6 @@ module AccountLimits {
     fun current_time(): u64 {
         if (LibraTimestamp::is_genesis()) 0 else LibraTimestamp::now_microseconds()
     }
+}
+
 }

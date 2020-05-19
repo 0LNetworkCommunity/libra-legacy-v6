@@ -17,11 +17,11 @@ const NODE_CONFIG: &str = "node.config.toml";
 enum Args {
     #[structopt(about = "Generate a Libra faucet key")]
     Faucet(FaucetArgs),
-    #[structopt(about = "Create or extend a FullNode network")]
+    #[structopt(about = "Create a new FullNode config XOR extend a Validator config")]
     FullNode(FullNodeCommand),
     #[structopt(about = "Create a new SafetyRules config")]
     SafetyRules(SafetyRulesArgs),
-    #[structopt(about = "Create a new validator config")]
+    #[structopt(about = "Create a new Validator config")]
     Validator(ValidatorArgs),
 }
 
@@ -31,18 +31,18 @@ struct FaucetArgs {
     /// The output directory
     output_dir: PathBuf,
     #[structopt(short = "s", long)]
-    /// Use the provided seed for generating keys for each of the validators
+    /// Use the provided seed for generating keys for each of the validators.
     seed: Option<String>,
     #[structopt(short = "n", long)]
-    /// Specify the number of nodes coded in genesis blob to produce waypoint.
-    nodes_in_genesis: usize,
+    /// Specify the number of validators coded in genesis blob to produce waypoint.
+    validators_in_genesis: usize,
 }
 
 #[derive(Debug, StructOpt)]
 enum FullNodeCommand {
-    #[structopt(about = "Create a new config")]
+    #[structopt(about = "Create a new FullNode config")]
     Create(FullNodeArgs),
-    #[structopt(about = "Create a new config")]
+    #[structopt(about = "Extend a Validator config with a FullNode network")]
     Extend(FullNodeArgs),
 }
 
@@ -50,43 +50,43 @@ enum FullNodeCommand {
 struct FullNodeArgs {
     // Describe the validator networrk
     #[structopt(short = "n", long, default_value = "1")]
-    /// Specify the number of nodes to configure
-    nodes: usize,
+    /// Specify the number of Validators to configure in the genesis blob.
+    validators: usize,
     #[structopt(short = "s", long)]
-    /// Use the provided seed for generating keys for each of the validators
+    /// Use the provided seed for generating keys for each of the validators.
     seed: Option<String>,
 
     // Parameters for this full node config
     #[structopt(short = "a", long, parse(from_str = parse_addr))]
-    /// Advertised address for this node, if this is null, listen is reused
+    /// Advertised address for this node, if this is null, listen is reused.
     advertised: NetworkAddress,
     #[structopt(short = "b", long, parse(from_str = parse_addr))]
-    /// Advertised address for the first node in this test net
+    /// Advertised address for the first node in this FullNode network.
     bootstrap: NetworkAddress,
     #[structopt(short = "d", long, parse(from_os_str))]
-    /// The data directory for the configs (e.g. /opt/libra/data)
+    /// The data directory for the configs (e.g. /opt/libra/data).
     data_dir: PathBuf,
     #[structopt(short = "c", long)]
-    /// Use the provided seed for generating keys for each of the FullNodes
+    /// Use the provided seed for generating keys for each of the FullNodes.
     full_node_seed: Option<String>,
     #[structopt(short = "f", long, default_value = "1")]
-    /// Total number of full nodes
+    /// Total number of FullNodes.
     full_nodes: usize,
     #[structopt(short = "i", long, default_value = "0")]
-    /// Specify the index into the number of nodes to write to output dir
-    index: usize,
+    /// Specify the index of the FullNode being configured.  Must be in the range 0..f-1.
+    full_node_index: usize,
     #[structopt(short = "l", long, parse(from_str = parse_addr))]
-    /// Listening address for this node
+    /// Listening address for this node.
     listen: NetworkAddress,
     #[structopt(short = "o", long, parse(from_os_str))]
-    /// The output directory, note if a config exists already here, it will be updated to include
-    /// this full node network
+    /// The output directory. Note if a NodeConfig exists already here, 'create' will fail while
+    /// 'extend' will update the NodeConfig to include a new FullNode network configuration.
     output_dir: PathBuf,
     #[structopt(short = "p", long)]
     /// Public network, doesn't use any authentication or encryption
     public: bool,
     #[structopt(short = "t", long, parse(from_os_str))]
-    /// Path to a template NodeConfig
+    /// Path to a template NodeConfig.
     template: Option<PathBuf>,
 }
 
@@ -99,13 +99,13 @@ struct SafetyRulesArgs {
 #[derive(Debug, StructOpt)]
 struct ValidatorArgs {
     #[structopt(short = "a", long, parse(from_str = parse_addr))]
-    /// Advertised address for this node, if this is null, listen is reused
+    /// Advertised address for this Validator, if this is null, listen is reused.
     advertised: NetworkAddress,
     #[structopt(short = "b", long, parse(from_str = parse_addr))]
-    /// Advertised address for the first node in this test net
+    /// Advertised address for the first Validator in this test net.
     bootstrap: NetworkAddress,
     #[structopt(short = "l", long, parse(from_str = parse_addr))]
-    /// Listening address for this node
+    /// Listening address for this Validator.
     listen: NetworkAddress,
     #[structopt(flatten)]
     validator_common: ValidatorCommonArgs,
@@ -114,25 +114,26 @@ struct ValidatorArgs {
 #[derive(Debug, StructOpt)]
 struct ValidatorCommonArgs {
     #[structopt(short = "d", long, parse(from_os_str))]
-    /// The data directory for the configs (e.g. /opt/libra/etc)
+    /// The data directory for the configs (e.g. /opt/libra/etc).
     data_dir: PathBuf,
     #[structopt(short = "i", long, default_value = "0")]
-    /// Specify the index into the number of nodes to write to output dir
-    index: usize,
+    /// Specify the index of the Validator being configured.  Must be in the range 0..n-1.
+    validator_index: usize,
     #[structopt(short = "o", long, parse(from_os_str))]
-    /// The output directory
+    /// The output directory.
     output_dir: PathBuf,
     #[structopt(short = "n", long, default_value = "1")]
-    /// Specify the number of nodes to configure
-    nodes: usize,
+    /// Specify the potential number of Validators to configure in the genesis blob.
+    validators: usize,
     #[structopt(short = "g", long)]
-    /// Specify the number of nodes coded in genesis blob, will use all nodes if unspecified
-    nodes_in_genesis: Option<usize>,
+    /// Specify the number of Validators coded in genesis blob, will use all validators if
+    /// unspecified.  Must be in the range 0..n-1.
+    validators_in_genesis: Option<usize>,
     #[structopt(long, parse(from_str = parse_socket_addr))]
     /// Specify the IP:Port for Safety rules. If this is not defined, SafetyRules will run in its
     /// default configuration.
     safety_rules_addr: Option<SocketAddr>,
-    /// Specifies the type of backend to use for safety rules: in-memory, on-disk, or vault
+    /// Specifies the type of backend to use for safety rules: in-memory, on-disk, or vault.
     #[structopt(long)]
     safety_rules_backend: Option<String>,
     /// Specifies the host URL for secure storages hosted on remote URLs
@@ -173,7 +174,7 @@ fn main() {
 
 fn build_faucet(args: FaucetArgs) {
     let mut config_builder = ValidatorConfig::new();
-    config_builder.nodes(args.nodes_in_genesis);
+    config_builder.validators(args.validators_in_genesis);
 
     if let Some(seed) = args.seed.as_ref() {
         let seed = hex::decode(seed).expect("Invalid hex in seed.");
@@ -238,10 +239,10 @@ fn build_full_node_config_builder(args: &FullNodeArgs) -> FullNodeConfig {
     config_builder
         .advertised(args.advertised.clone())
         .bootstrap(args.bootstrap.clone())
-        .full_node_index(args.index)
+        .full_node_index(args.full_node_index)
         .full_nodes(args.full_nodes)
         .listen(args.listen.clone())
-        .nodes(args.nodes)
+        .validators(args.validators)
         .template(load_template(args.template.as_ref()));
 
     if let Some(fn_seed) = args.full_node_seed.as_ref() {
@@ -281,10 +282,10 @@ fn build_validator(args: ValidatorArgs) {
     config_builder
         .advertised(args.advertised)
         .bootstrap(args.bootstrap)
-        .index(args.validator_common.index)
+        .validator_index(args.validator_common.validator_index)
         .listen(args.listen)
-        .nodes(args.validator_common.nodes)
-        .nodes_in_genesis(args.validator_common.nodes_in_genesis);
+        .validators(args.validator_common.validators)
+        .validators_in_genesis(args.validator_common.validators_in_genesis);
 
     if let Some(seed) = args.validator_common.seed.as_ref() {
         config_builder.seed(parse_seed(seed));
@@ -292,6 +293,8 @@ fn build_validator(args: ValidatorArgs) {
 
     let mut node_config = config_builder.build().expect("ConfigBuilder failed");
     node_config.set_data_dir(args.validator_common.data_dir);
+    // Aggressive setting for testnet (1~2 hours worth of history).
+    node_config.storage.prune_window = Some(500_000);
     save_config(node_config, &args.validator_common.output_dir);
 }
 
@@ -299,8 +302,8 @@ fn safety_rules_common(args: &ValidatorCommonArgs) -> ValidatorConfig {
     let mut config_builder = ValidatorConfig::new();
 
     config_builder
-        .index(args.index)
-        .nodes(args.nodes)
+        .validator_index(args.validator_index)
+        .validators(args.validators)
         .safety_rules_addr(args.safety_rules_addr.clone())
         .safety_rules_backend(args.safety_rules_backend.clone())
         .safety_rules_host(args.safety_rules_host.clone())

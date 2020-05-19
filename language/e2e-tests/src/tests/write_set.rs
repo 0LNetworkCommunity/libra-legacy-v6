@@ -6,16 +6,18 @@ use crate::{
     executor::FakeExecutor,
 };
 use libra_types::{
-    access_path::{AccessPath, Accesses},
+    access_path::AccessPath,
     account_config::{lbr_type_tag, CORE_CODE_ADDRESS},
     contract_event::ContractEvent,
-    language_storage::{ResourceKey, StructTag},
     on_chain_config::new_epoch_event_key,
     transaction::{ChangeSet, TransactionPayload, TransactionStatus},
     vm_error::{StatusCode, VMStatus},
     write_set::{WriteOp, WriteSetMut},
 };
-use move_core_types::identifier::Identifier;
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::{ResourceKey, StructTag},
+};
 
 #[test]
 fn verify_and_execute_writeset() {
@@ -137,7 +139,7 @@ fn bad_writesets() {
             type_params: vec![],
         },
     );
-    let path = AccessPath::resource_access_path(&key, &Accesses::empty());
+    let path = AccessPath::resource_access_path(&key);
 
     let write_set = WriteSetMut::new(vec![(path, WriteOp::Value(vec![]))])
         .freeze()

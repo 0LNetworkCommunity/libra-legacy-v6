@@ -11,14 +11,14 @@ use libra_types::{
     account_state_blob::AccountStateWithProof,
     contract_event::ContractEvent,
     epoch_change::EpochChangeProof,
-    language_storage::TypeTag,
     ledger_info::LedgerInfoWithSignatures,
-    move_resource::MoveResource,
     proof::{AccountStateProof, AccumulatorConsistencyProof},
     transaction::{Transaction, TransactionArgument, TransactionPayload},
     vm_error::StatusCode,
 };
-use move_core_types::identifier::IdentStr;
+use move_core_types::{
+    identifier::IdentStr, language_storage::TypeTag, move_resource::MoveResource,
+};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use transaction_builder::get_transaction_name;
@@ -40,7 +40,7 @@ impl AmountView {
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AccountView {
-    pub balance: AmountView,
+    pub balances: Vec<AmountView>,
     pub sequence_number: u64,
     pub authentication_key: BytesView,
     pub sent_events_key: BytesView,
@@ -50,9 +50,12 @@ pub struct AccountView {
 }
 
 impl AccountView {
-    pub fn new(account: &AccountResource, balance: &BalanceResource) -> Self {
+    pub fn new(account: &AccountResource, balances: &[BalanceResource]) -> Self {
         Self {
-            balance: AmountView::new(balance.coin(), account.balance_currency_code()),
+            balances: balances
+                .iter()
+                .map(|balance| AmountView::new(balance.coin(), account.balance_currency_code()))
+                .collect(),
             sequence_number: account.sequence_number(),
             authentication_key: BytesView::from(account.authentication_key()),
             sent_events_key: BytesView::from(account.sent_events().key().as_bytes()),
@@ -274,6 +277,7 @@ pub enum ScriptView {
         auth_key_prefix: BytesView,
         amount: u64,
         metadata: BytesView,
+        metadata_signature: BytesView,
     },
     #[serde(rename = "mint_transaction")]
     Mint {
@@ -346,7 +350,7 @@ impl From<TransactionPayload> for ScriptView {
 
         let res = match code.as_str() {
             "peer_to_peer_with_metadata_transaction" => {
-                if let [TransactionArgument::Address(receiver), TransactionArgument::U8Vector(auth_key_prefix), TransactionArgument::U64(amount), TransactionArgument::U8Vector(metadata)] =
+                if let [TransactionArgument::Address(receiver), TransactionArgument::U8Vector(auth_key_prefix), TransactionArgument::U64(amount), TransactionArgument::U8Vector(metadata), TransactionArgument::U8Vector(metadata_signature)] =
                     &args[..]
                 {
                     Ok(ScriptView::PeerToPeer {
@@ -354,6 +358,7 @@ impl From<TransactionPayload> for ScriptView {
                         auth_key_prefix: BytesView::from(auth_key_prefix),
                         amount: *amount,
                         metadata: BytesView::from(metadata),
+                        metadata_signature: BytesView::from(metadata_signature),
                     })
                 } else {
                     Err(format_err!("Unable to parse PeerToPeer arguments"))

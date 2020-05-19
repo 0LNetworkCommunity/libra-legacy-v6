@@ -9,7 +9,7 @@ use crate::{
     network::{MempoolNetworkEvents, MempoolSyncMsg},
     shared_mempool::{
         tasks,
-        types::{notify_subscribers, IntervalStream, SharedMempool, SharedMempoolNotification},
+        types::{notify_subscribers, SharedMempool, SharedMempoolNotification},
     },
     CommitNotification, ConsensusRequest, SubmissionStatus,
 };
@@ -20,13 +20,13 @@ use channel::libra_channel;
 use debug_interface::prelude::*;
 use futures::{
     channel::{mpsc, oneshot},
-    stream::select_all,
+    stream::{select_all, FuturesUnordered},
     StreamExt,
 };
-use libra_config::config::NodeConfig;
+use libra_config::config::{NetworkId, NodeConfig, PeerNetworkId};
 use libra_logger::prelude::*;
 use libra_security_logger::{security_log, SecurityEvent};
-use libra_types::{on_chain_config::OnChainConfigPayload, transaction::SignedTransaction, PeerId};
+use libra_types::{on_chain_config::OnChainConfigPayload, transaction::SignedTransaction};
 use std::{
     ops::Deref,
     sync::{Arc, Mutex},
@@ -35,38 +35,11 @@ use std::{
 use tokio::{runtime::Handle, time::interval};
 use vm_validator::vm_validator::TransactionValidation;
 
-/// Coordinator that handles [`SyncEvent`], which is periodically emitted for us to
-/// broadcast ready to go transactions to peers.
-pub(crate) async fn broadcast_coordinator<V>(smp: SharedMempool<V>, mut interval: IntervalStream)
-where
-    V: TransactionValidation,
-{
-    let peer_manager = smp.peer_manager;
-    let mempool = smp.mempool;
-    let network_senders = smp.network_senders;
-    let batch_size = smp.config.shared_mempool_batch_size;
-    let subscribers = smp.subscribers;
-
-    while let Some(sync_event) = interval.next().await {
-        trace!("SyncEvent: {:?}", sync_event);
-        tasks::sync_with_peers(
-            peer_manager.clone(),
-            &mempool,
-            network_senders.clone(),
-            batch_size,
-        )
-        .await;
-        notify_subscribers(SharedMempoolNotification::Sync, &subscribers);
-    }
-
-    crit!("SharedMempool outbound_sync_task terminated");
-}
-
-/// Coordinator that handles inbound network events.
-pub(crate) async fn request_coordinator<V>(
-    smp: SharedMempool<V>,
+/// Coordinator that handles inbound network events and outbound txn broadcasts.
+pub(crate) async fn coordinator<V>(
+    mut smp: SharedMempool<V>,
     executor: Handle,
-    network_events: Vec<(PeerId, MempoolNetworkEvents)>,
+    network_events: Vec<(NetworkId, MempoolNetworkEvents)>,
     mut client_events: mpsc::Receiver<(
         SignedTransaction,
         oneshot::Sender<Result<SubmissionStatus>>,
@@ -78,19 +51,21 @@ pub(crate) async fn request_coordinator<V>(
 ) where
     V: TransactionValidation,
 {
-    let peer_manager = smp.peer_manager.clone();
-    let subscribers = smp.subscribers.clone();
     let smp_events: Vec<_> = network_events
         .into_iter()
         .map(|(network_id, events)| events.map(move |e| (network_id, e)))
         .collect();
     let mut events = select_all(smp_events).fuse();
     let is_validator = node_config.base.role.is_validator();
+    let mempool = smp.mempool.clone();
+    let peer_manager = smp.peer_manager.clone();
+    let subscribers = &mut smp.subscribers.clone();
+    let mut scheduled_broadcasts = FuturesUnordered::new();
 
     // Use a BoundedExecutor to restrict only `workers_available` concurrent
     // worker tasks that can process incoming transactions.
     let workers_available = smp.config.shared_mempool_max_concurrent_inbound_syncs;
-    let bounded_executor = BoundedExecutor::new(workers_available, executor);
+    let bounded_executor = BoundedExecutor::new(workers_available, executor.clone());
 
     loop {
         ::futures::select! {
@@ -105,15 +80,18 @@ pub(crate) async fn request_coordinator<V>(
                 .await;
             },
             msg = consensus_requests.select_next_some() => {
-                tasks::process_consensus_request(smp.clone(), msg).await;
+                tasks::process_consensus_request(&mempool, msg).await;
             }
             msg = state_sync_requests.select_next_some() => {
-                tokio::spawn(tasks::process_state_sync_request(smp.clone(), msg));
+                tokio::spawn(tasks::process_state_sync_request(mempool.clone(), msg));
             }
             config_update = mempool_reconfig_events.select_next_some() => {
                 bounded_executor
                 .spawn(tasks::process_config_update(config_update, smp.validator.clone()))
                 .await;
+            },
+            peer = scheduled_broadcasts.select_next_some() => {
+                tasks::execute_broadcast(peer, &mut smp, &mut scheduled_broadcasts, executor.clone());
             },
             (network_id, event) = events.select_next_some() => {
                 match event {
@@ -123,14 +101,18 @@ pub(crate) async fn request_coordinator<V>(
                                 counters::SHARED_MEMPOOL_EVENTS
                                     .with_label_values(&["new_peer".to_string().deref()])
                                     .inc();
-                                peer_manager.add_peer(network_id, peer_id);
+                                let peer = PeerNetworkId(network_id, peer_id);
+                                let is_new_peer = peer_manager.add_peer(peer);
                                 notify_subscribers(SharedMempoolNotification::PeerStateChange, &subscribers);
+                                if is_new_peer && peer_manager.is_upstream_peer(peer) {
+                                    tasks::execute_broadcast(peer, &mut smp, &mut scheduled_broadcasts, executor.clone());
+                                }
                             }
                             Event::LostPeer(peer_id) => {
                                 counters::SHARED_MEMPOOL_EVENTS
                                     .with_label_values(&["lost_peer".to_string().deref()])
                                     .inc();
-                                peer_manager.disable_peer(peer_id);
+                                peer_manager.disable_peer(PeerNetworkId(network_id, peer_id));
                                 notify_subscribers(SharedMempoolNotification::PeerStateChange, &subscribers);
                             }
                             Event::Message((peer_id, msg)) => {
@@ -143,7 +125,10 @@ pub(crate) async fn request_coordinator<V>(
                                             .with_label_values(&["received".to_string().deref(), peer_id.to_string().deref()])
                                             .inc_by(transactions.len() as i64);
                                         let smp_clone = smp.clone();
-                                        let timeline_state = match peer_manager.is_upstream_peer(network_id, peer_id) {
+                                        let peer = PeerNetworkId(network_id, peer_id);
+                                        let timeline_state = match peer_manager
+                                            .is_upstream_peer(peer)
+                                        {
                                             true => TimelineState::NonQualified,
                                             false => TimelineState::NotReady,
                                         };
@@ -153,13 +138,12 @@ pub(crate) async fn request_coordinator<V>(
                                                 transactions,
                                                 request_id,
                                                 timeline_state,
-                                                peer_id,
-                                                network_id,
+                                                peer
                                             ))
                                             .await;
                                     }
                                     MempoolSyncMsg::BroadcastTransactionsResponse{request_id} => {
-                                        tasks::process_broadcast_ack(smp.clone(), request_id, is_validator);
+                                        tasks::process_broadcast_ack(&mempool, request_id, is_validator);
                                         notify_subscribers(SharedMempoolNotification::ACK, &smp.subscribers);
                                     }
                                 };

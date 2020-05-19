@@ -151,15 +151,14 @@ impl<'a> ApplyCodeUnitBoundsContext<'a> {
 
     fn apply_one(&mut self, idx: usize, mutations: Vec<CodeUnitBoundsMutation>) -> Vec<VMStatus> {
         // For this function def, find all the places where a bounds mutation can be applied.
-        let (code_len, locals_len) = {
-            let code = &mut self.module.function_defs[idx].code;
-            (
-                code.code.len(),
-                self.module.signatures[code.locals.into_index()].len(),
-            )
-        };
+        let func_def = &mut self.module.function_defs[idx];
+        let func_handle = &self.module.function_handles[func_def.function.into_index()];
+        let code = func_def.code.as_mut().unwrap();
+        let locals_len = self.module.signatures[func_handle.parameters.into_index()].len()
+            + self.module.signatures[code.locals.into_index()].len();
+        let code = &mut code.code;
+        let code_len = code.len();
 
-        let code = &mut self.module.function_defs[idx].code.code;
         let interesting_offsets: Vec<usize> = (0..code.len())
             .filter(|bytecode_idx| is_interesting(&code[*bytecode_idx]))
             .collect();
@@ -348,9 +347,7 @@ impl<'a> ApplyCodeUnitBoundsContext<'a> {
                     FreezeRef | Pop | Ret | LdU8(_) | LdU64(_) | LdU128(_) | CastU8 | CastU64
                     | CastU128 | LdTrue | LdFalse | ReadRef | WriteRef | Add | Sub | Mul | Mod
                     | Div | BitOr | BitAnd | Xor | Shl | Shr | Or | And | Not | Eq | Neq | Lt
-                    | Gt | Le | Ge | Abort | GetTxnGasUnitPrice | GetTxnMaxGasUnits
-                    | GetGasRemaining | GetTxnSenderAddress | GetTxnSequenceNumber
-                    | GetTxnPublicKey | Nop => {
+                    | Gt | Le | Ge | Abort | GetTxnSenderAddress | Nop => {
                         panic!("Bytecode has no internal index: {:?}", code[bytecode_idx])
                     }
                 };
@@ -402,7 +399,6 @@ fn is_interesting(bytecode: &Bytecode) -> bool {
         FreezeRef | Pop | Ret | LdU8(_) | LdU64(_) | LdU128(_) | CastU8 | CastU64 | CastU128
         | LdTrue | LdFalse | ReadRef | WriteRef | Add | Sub | Mul | Mod | Div | BitOr | BitAnd
         | Xor | Shl | Shr | Or | And | Not | Eq | Neq | Lt | Gt | Le | Ge | Abort
-        | GetTxnGasUnitPrice | GetTxnMaxGasUnits | GetGasRemaining | GetTxnSenderAddress
-        | GetTxnSequenceNumber | GetTxnPublicKey | Nop => false,
+        | GetTxnSenderAddress | Nop => false,
     }
 }

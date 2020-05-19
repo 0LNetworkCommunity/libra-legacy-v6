@@ -18,7 +18,7 @@ use itertools::Itertools;
 use num::{BigUint, Num};
 
 use bytecode_source_map::source_map::SourceMap;
-use libra_types::{account_address::AccountAddress, language_storage};
+use move_core_types::{account_address::AccountAddress, language_storage};
 use move_vm_types::values::Value as VMValue;
 use vm::{
     access::ModuleAccess,
@@ -34,12 +34,12 @@ use vm::{
 };
 
 use crate::{
-    ast::{ModuleName, PropertyBag, Spec, SpecFunDecl, SpecVarDecl},
+    ast::{ModuleName, PropertyBag, Spec, SpecFunDecl, SpecVarDecl, Value},
     symbol::{Symbol, SymbolPool},
     ty::{PrimitiveType, Type},
 };
 use std::collections::{BTreeMap, BTreeSet};
-use vm::{file_format::Bytecode, views::SignatureView, CompiledModule};
+use vm::{file_format::Bytecode, CompiledModule};
 
 // =================================================================================================
 /// # Constants
@@ -1128,6 +1128,11 @@ impl<'env> StructEnv<'env> {
             })
     }
 
+    /// Return the number of fields in the struct.
+    pub fn get_field_count(&self) -> usize {
+        self.data.field_data.len()
+    }
+
     /// Gets a field by its id.
     pub fn get_field(&'env self, id: FieldId) -> FieldEnv<'env> {
         let data = self.data.field_data.get(&id).expect("FieldId undefined");
@@ -1341,13 +1346,31 @@ impl<'env> FunctionEnv<'env> {
             .function_def_at(self.get_def_idx());
         let function_definition_view =
             FunctionDefinitionView::new(&self.module_env.data.module, function_definition);
-        &function_definition_view.code().code
+        match function_definition_view.code() {
+            Some(code) => &code.code,
+            None => &[],
+        }
     }
 
-    /// Returns true if this function is native.
+    /// Returns the value of a boolean pragma for this function. This first looks up a
+    /// pragma in this function, then the enclosing module, and finally uses the provided default.
+    /// value
+    pub fn is_pragma_true(&self, name: &str, default: impl FnOnce() -> bool) -> bool {
+        let name = &self.symbol_pool().make(name);
+        if let Some(Value::Bool(b)) = self.get_spec().properties.get(name) {
+            return *b;
+        }
+        if let Some(Value::Bool(b)) = self.module_env.get_spec().properties.get(name) {
+            return *b;
+        }
+        default()
+    }
+
+    /// Returns true if this function is native. The function is also marked as native
+    /// if it has the pragma intrinsic set to true.
     pub fn is_native(&self) -> bool {
         let view = self.definition_view();
-        view.is_native()
+        view.is_native() || self.is_pragma_true("intrinsic", || false)
     }
 
     /// Returns true if this function is public.
@@ -1428,7 +1451,7 @@ impl<'env> FunctionEnv<'env> {
             .source_map
             .get_function_source_map(self.data.def_idx)
         {
-            if let Some((ident, _)) = fmap.get_local_name(idx as u64) {
+            if let Some((ident, _)) = fmap.get_parameter_or_local_name(idx as u64) {
                 // The move compiler produces temporay names of the form `<foo>%#<num>`.
                 // Ignore those names and use the idx-based repr instead.
                 if !ident.contains("%#") {
@@ -1444,30 +1467,48 @@ impl<'env> FunctionEnv<'env> {
     /// Note we may have more anonymous locals generated e.g by the 'stackless' transformation.
     pub fn get_local_count(&self) -> usize {
         let view = self.definition_view();
-        let signature = if view.is_native() {
-            SignatureView::new(&self.module_env.data.module, view.parameters())
-        } else {
-            view.locals_signature()
-        };
-        signature.len()
+        match view.locals_signature() {
+            Some(locals_view) => locals_view.len(),
+            None => view.parameters().len(),
+        }
     }
 
     /// Gets the type of the local at index. This must use an index in the range as determined by
     /// `get_local_count`.
     pub fn get_local_type(&self, idx: usize) -> Type {
         let view = self.definition_view();
-        let signature = if view.is_native() {
-            SignatureView::new(&self.module_env.data.module, view.parameters())
+
+        let parameters = view.parameters();
+
+        if idx < parameters.len() {
+            self.module_env.globalize_signature(&parameters.0[idx])
         } else {
-            view.locals_signature()
-        };
-        self.module_env
-            .globalize_signature(signature.token_at(idx as u8).signature_token())
+            self.module_env.globalize_signature(
+                view.locals_signature()
+                    .unwrap()
+                    .token_at(idx as u8)
+                    .signature_token(),
+            )
+        }
     }
 
     /// Returns associated specification.
     pub fn get_spec(&'env self) -> &'env Spec {
         &self.data.spec
+    }
+
+    /// Returns the acquired global resource types.
+    pub fn get_acquires_global_resources(&'env self) -> Vec<StructId> {
+        let function_definition = self
+            .module_env
+            .data
+            .module
+            .function_def_at(self.get_def_idx());
+        function_definition
+            .acquires_global_resources
+            .iter()
+            .map(|x| self.module_env.get_struct_id(*x))
+            .collect()
     }
 
     fn definition_view(&'env self) -> FunctionDefinitionView<'env, CompiledModule> {

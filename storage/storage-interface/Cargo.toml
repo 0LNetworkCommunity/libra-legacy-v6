@@ -12,7 +12,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 itertools = "0.9.0"
-serde = { version = "1.0.106", default-features = false }
+serde = { version = "1.0.110", default-features = false }
 thiserror = "1.0"
 
 lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
@@ -22,6 +22,7 @@ libra-state-view = { path = "../../storage/state-view", version = "0.1.0" }
 libra-types = { path = "../../types", version = "0.1.0" }
 libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
 scratchpad = { path = "../scratchpad", version = "0.1.0" }
+move-core-types = { path = "../../language/move-core/types", version = "0.1.0" }
 
 [features]
 default = []

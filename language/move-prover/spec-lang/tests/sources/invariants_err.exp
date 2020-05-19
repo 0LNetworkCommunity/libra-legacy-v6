@@ -1,4 +1,4 @@
-error: expected `bool` but found `num`
+error: expected `bool` but found `num` in expression
 
    ┌── tests/sources/invariants_err.move:9:15 ───
    │
@@ -12,14 +12,6 @@ error: `old(..)` expression not allowed in this context
     │
  11 │     invariant old(x) > 0;
     │               ^^^^^^
-    │
-
-error: `old(..old(..)..)` not allowed
-
-    ┌── tests/sources/invariants_err.move:13:26 ───
-    │
- 13 │     invariant update old(old(x)) > 0;
-    │                          ^^^^^^
     │
 
 error: data invariants cannot depend on global state (directly or indirectly uses a global spec var or resource storage).

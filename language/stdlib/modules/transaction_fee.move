@@ -1,4 +1,4 @@
-address 0x0:
+address 0x0 {
 
 module TransactionFee {
     use 0x0::LibraAccount;
@@ -81,6 +81,7 @@ module TransactionFee {
                 &distribution_resource.fee_withdrawal_capability,
                 amount_to_distribute_per_validator,
                 x"",
+                x""
             );
            }
     }
@@ -96,4 +97,5 @@ module TransactionFee {
         Transaction::assert(validator_payout * num_validators <= amount_collected, 1);
         validator_payout
     }
+}
 }

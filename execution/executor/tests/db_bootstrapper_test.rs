@@ -7,8 +7,9 @@ use anyhow::Result;
 use config_builder::test_config;
 use executor::{
     db_bootstrapper::{bootstrap_db_if_empty, calculate_genesis},
-    BlockExecutor, Executor,
+    Executor,
 };
+use executor_types::BlockExecutor;
 use executor_utils::test_helpers::{
     extract_signer, gen_ledger_info_with_sigs, get_test_signed_transaction,
 };
@@ -20,13 +21,14 @@ use libra_temppath::TempPath;
 use libra_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
-    account_config::{association_address, lbr_type_tag, BalanceResource},
+    account_config::{
+        association_address, from_currency_code_string, lbr_type_tag, BalanceResource, LBR_NAME,
+    },
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
     contract_event::ContractEvent,
-    move_resource::MoveResource,
     on_chain_config,
-    on_chain_config::{ConfigurationResource, OnChainConfig, ValidatorSet},
+    on_chain_config::{config_address, ConfigurationResource, OnChainConfig, ValidatorSet},
     proof::SparseMerkleRangeProof,
     transaction::{
         authenticator::AuthenticationKey, ChangeSet, Transaction, Version, PRE_GENESIS_VERSION,
@@ -38,16 +40,17 @@ use libra_types::{
 };
 use libra_vm::LibraVM;
 use libradb::LibraDB;
+use move_core_types::move_resource::MoveResource;
 use rand::SeedableRng;
 use std::convert::TryFrom;
 use storage_interface::{DbReader, DbReaderWriter};
-use transaction_builder::{encode_create_account_script, encode_transfer_with_metadata_script};
+use transaction_builder::{encode_mint_script, encode_transfer_with_metadata_script};
 
 #[test]
 fn test_empty_db() {
     let (config, _) = test_config();
     let tmp_dir = TempPath::new();
-    let db_rw = DbReaderWriter::new(LibraDB::new(&tmp_dir));
+    let db_rw = DbReaderWriter::new(LibraDB::new_for_test(&tmp_dir));
 
     // Executor won't be able to boot on empty db due to lack of StartupInfo.
     assert!(db_rw.reader.get_startup_info().unwrap().is_none());
@@ -134,7 +137,7 @@ fn get_mint_transaction(
         /* sequence_number = */ association_seq_num,
         association_key.clone(),
         association_key.public_key(),
-        Some(encode_create_account_script(
+        Some(encode_mint_script(
             lbr_type_tag(),
             &account,
             account_auth_key.prefix().to_vec(),
@@ -163,6 +166,7 @@ fn get_transfer_transaction(
             recipient_auth_key.prefix().to_vec(),
             amount,
             vec![],
+            vec![],
         )),
     )
 }
@@ -175,23 +179,21 @@ fn get_balance(account: &AccountAddress, db: &DbReaderWriter) -> u64 {
         .unwrap();
     let account_state = AccountState::try_from(&account_state_blob).unwrap();
     account_state
-        .get_balance_resource()
+        .get_balance_resources(&[from_currency_code_string(LBR_NAME).unwrap()])
         .unwrap()
+        .last()
         .unwrap()
         .coin()
 }
 
 fn get_configuration(db: &DbReaderWriter) -> ConfigurationResource {
-    let association_blob = db
+    let config_blob = db
         .reader
-        .get_latest_account_state(association_address())
+        .get_latest_account_state(config_address())
         .unwrap()
         .unwrap();
-    let association_state = AccountState::try_from(&association_blob).unwrap();
-    association_state
-        .get_configuration_resource()
-        .unwrap()
-        .unwrap()
+    let config_state = AccountState::try_from(&config_blob).unwrap();
+    config_state.get_configuration_resource().unwrap().unwrap()
 }
 
 fn get_state_backup(
@@ -232,7 +234,7 @@ fn test_pre_genesis() {
 
     // Create bootstrapped DB.
     let tmp_dir = TempPath::new();
-    let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new(&tmp_dir));
+    let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&tmp_dir));
     let signer = extract_signer(&mut config);
     let genesis_txn = get_genesis_txn(&config).unwrap().clone();
     bootstrap_db_if_empty::<LibraVM>(&db_rw, &genesis_txn).unwrap();
@@ -249,7 +251,7 @@ fn test_pre_genesis() {
     let (accounts_backup, proof, root_hash) = get_state_backup(&db);
     // Restore into PRE-GENESIS state of a new empty DB.
     let tmp_dir = TempPath::new();
-    let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new(&tmp_dir));
+    let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&tmp_dir));
     restore_state_to_db(&db, accounts_backup, proof, root_hash, PRE_GENESIS_VERSION);
 
     // DB is not empty, `bootstrap_db_if_empty()` won't apply default genesis txn.
@@ -303,7 +305,7 @@ fn test_new_genesis() {
     let (mut config, genesis_key) = config_builder::test_config();
     // Create bootstrapped DB.
     let tmp_dir = TempPath::new();
-    let db = DbReaderWriter::new(LibraDB::new(&tmp_dir));
+    let db = DbReaderWriter::new(LibraDB::new_for_test(&tmp_dir));
     let waypoint = {
         let genesis_txn = get_genesis_txn(&config).unwrap();
         bootstrap_db_if_empty::<LibraVM>(&db, genesis_txn)
@@ -334,10 +336,7 @@ fn test_new_genesis() {
                 WriteOp::Value(lcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
             ),
             (
-                AccessPath::new(
-                    association_address(),
-                    ConfigurationResource::resource_path(),
-                ),
+                AccessPath::new(config_address(), ConfigurationResource::resource_path()),
                 WriteOp::Value(lcs::to_bytes(&configuration.bump_epoch_for_test()).unwrap()),
             ),
             (

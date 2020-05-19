@@ -10,18 +10,15 @@
 mod abstract_state;
 
 use crate::{
-    absint::{
-        AbstractInterpreter, BlockInvariant, BlockPostcondition, BlockPrecondition,
-        TransferFunctions,
-    },
+    absint::{AbstractInterpreter, BlockInvariant, BlockPostcondition, TransferFunctions},
     control_flow_graph::VMControlFlowGraph,
 };
 use abstract_state::{AbstractState, AbstractValue};
-use libra_types::vm_error::{StatusCode, VMStatus};
+use libra_types::vm_error::VMStatus;
 use mirai_annotations::*;
 use vm::{
     access::ModuleAccess,
-    errors::{err_at_offset, VMResult},
+    errors::VMResult,
     file_format::{
         Bytecode, CompiledModule, FunctionDefinition, FunctionHandle, SignatureToken,
         StructDefinition, StructFieldInformation,
@@ -62,22 +59,11 @@ pub fn verify(
     let function_definition_view = FunctionDefinitionView::new(module, function_definition);
     let inv_map = verifier.analyze_function(initial_state, &function_definition_view, cfg);
     // Report all the join failures
-    for (block_id, BlockInvariant { pre, post }) in inv_map {
-        match pre {
-            BlockPrecondition::JoinFailure => {
-                return Err(err_at_offset(StatusCode::JOIN_FAILURE, block_id as usize))
-            }
-            BlockPrecondition::State(_) => (),
-        }
+    for (_block_id, BlockInvariant { post, .. }) in inv_map {
         match post {
             BlockPostcondition::Error(err) => return Err(err),
-            BlockPostcondition::Unprocessed => {
-                return Err(err_at_offset(
-                    StatusCode::VERIFIER_INVARIANT_VIOLATION,
-                    block_id as usize,
-                ))
-            }
-            BlockPostcondition::Success => (),
+            // Block might be unprocessed if all predecessors had an error
+            BlockPostcondition::Unprocessed | BlockPostcondition::Success => (),
         }
     }
     Ok(())
@@ -204,28 +190,34 @@ fn execute_inner(
         }
 
         Bytecode::MutBorrowGlobal(idx) => {
+            checked_verify!(verifier.stack.pop().unwrap().is_value());
             let value = state.borrow_global(offset, true, *idx)?;
             verifier.stack.push(value)
         }
         Bytecode::MutBorrowGlobalGeneric(idx) => {
+            checked_verify!(verifier.stack.pop().unwrap().is_value());
             let struct_inst = verifier.module().struct_instantiation_at(*idx);
             let value = state.borrow_global(offset, true, struct_inst.def)?;
             verifier.stack.push(value)
         }
         Bytecode::ImmBorrowGlobal(idx) => {
+            checked_verify!(verifier.stack.pop().unwrap().is_value());
             let value = state.borrow_global(offset, false, *idx)?;
             verifier.stack.push(value)
         }
         Bytecode::ImmBorrowGlobalGeneric(idx) => {
+            checked_verify!(verifier.stack.pop().unwrap().is_value());
             let struct_inst = verifier.module().struct_instantiation_at(*idx);
             let value = state.borrow_global(offset, false, struct_inst.def)?;
             verifier.stack.push(value)
         }
         Bytecode::MoveFrom(idx) => {
+            checked_verify!(verifier.stack.pop().unwrap().is_value());
             let value = state.move_from(offset, *idx)?;
             verifier.stack.push(value)
         }
         Bytecode::MoveFromGeneric(idx) => {
+            checked_verify!(verifier.stack.pop().unwrap().is_value());
             let struct_inst = verifier.module().struct_instantiation_at(*idx);
             let value = state.move_from(offset, struct_inst.def)?;
             verifier.stack.push(value)
@@ -256,17 +248,19 @@ fn execute_inner(
         | Bytecode::CastU8
         | Bytecode::CastU64
         | Bytecode::CastU128
-        | Bytecode::Not => (),
+        | Bytecode::Not
+        | Bytecode::Exists(_)
+        | Bytecode::ExistsGeneric(_) => (),
 
         Bytecode::BrTrue(_)
         | Bytecode::BrFalse(_)
         | Bytecode::Abort
         | Bytecode::MoveToSender(_)
         | Bytecode::MoveToSenderGeneric(_) => {
-            verifier.stack.pop().unwrap();
+            checked_verify!(verifier.stack.pop().unwrap().is_value());
         }
 
-        Bytecode::LdTrue | Bytecode::LdFalse | Bytecode::Exists(_) | Bytecode::ExistsGeneric(_) => {
+        Bytecode::LdTrue | Bytecode::LdFalse => {
             verifier.stack.push(state.value_for(&SignatureToken::Bool))
         }
         Bytecode::LdU8(_) => verifier.stack.push(state.value_for(&SignatureToken::U8)),
@@ -320,19 +314,6 @@ fn execute_inner(
             let struct_def = verifier.module().struct_def_at(struct_inst.def);
             unpack(verifier, struct_def)
         }
-
-        Bytecode::GetTxnGasUnitPrice
-        | Bytecode::GetTxnMaxGasUnits
-        | Bytecode::GetGasRemaining
-        | Bytecode::GetTxnSequenceNumber
-        | Bytecode::GetTxnPublicKey => {
-            return Err(
-                VMStatus::new(StatusCode::UNKNOWN_VERIFICATION_ERROR).with_message(format!(
-                    "Bytecode {:?} is deprecated and will be removed soon",
-                    bytecode
-                )),
-            );
-        }
     };
     Ok(())
 }
@@ -350,6 +331,7 @@ impl<'a> TransferFunctions for ReferenceSafetyAnalysis<'a> {
     ) -> Result<(), Self::AnalysisError> {
         execute_inner(self, state, bytecode, index)?;
         if index == last_index {
+            checked_verify!(self.stack.is_empty());
             *state = state.construct_canonical_state()
         }
         Ok(())

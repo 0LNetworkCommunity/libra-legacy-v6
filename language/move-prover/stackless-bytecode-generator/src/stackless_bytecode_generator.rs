@@ -62,14 +62,21 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             | MoveBytecode::BrFalse(code_offset)
             | MoveBytecode::Branch(code_offset) = bytecode
             {
-                let label = Label::new(label_map.len());
-                label_map.insert(*code_offset as CodeOffset, label);
+                let offs = *code_offset as CodeOffset;
+                if label_map.get(&offs).is_none() {
+                    let label = Label::new(label_map.len());
+                    label_map.insert(offs, label);
+                }
             }
             if let MoveBytecode::BrTrue(_) | MoveBytecode::BrFalse(_) = bytecode {
-                let fall_through_label = Label::new(label_map.len());
-                label_map.insert((pos + 1) as CodeOffset, fall_through_label);
+                let next_offs = (pos + 1) as CodeOffset;
+                if label_map.get(&next_offs).is_none() {
+                    let fall_through_label = Label::new(label_map.len());
+                    label_map.insert(next_offs, fall_through_label);
+                }
             };
         }
+
         // Generate bytecode.
         let mut given_spec_blocks = BTreeMap::new();
         for (code_offset, bytecode) in original_code.iter().enumerate() {
@@ -81,10 +88,22 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             );
         }
 
+        // Eliminate fall-through for non-branching instructions
+        let code = std::mem::take(&mut self.code);
+        for bytecode in code.into_iter() {
+            if let Bytecode::Label(attr_id, label) = bytecode {
+                if !self.code.is_empty() && !self.code[self.code.len() - 1].is_branch() {
+                    self.code.push(Bytecode::Jump(attr_id, label));
+                }
+            }
+            self.code.push(bytecode);
+        }
+
         FunctionTargetData {
             code: self.code,
             local_types: self.local_types,
             return_types: self.func_env.get_return_types(),
+            acquires_global_resources: self.func_env.get_acquires_global_resources(),
             locations: self.location_table,
             annotations: Annotations::default(),
             given_spec_blocks,
@@ -456,7 +475,6 @@ impl<'a> StacklessBytecodeGenerator<'a> {
                     self.temp_count += 1;
                 }
                 arg_temp_indices.reverse();
-                return_temp_indices.reverse();
                 let callee_env = self.func_env.module_env.get_called_function(*idx);
                 self.code.push(mk_call(
                     Operation::Function(
@@ -1029,14 +1047,6 @@ impl<'a> StacklessBytecodeGenerator<'a> {
                 self.temp_count += 1;
             }
 
-            MoveBytecode::GetTxnGasUnitPrice
-            | MoveBytecode::GetTxnMaxGasUnits
-            | MoveBytecode::GetGasRemaining
-            | MoveBytecode::GetTxnSequenceNumber
-            | MoveBytecode::GetTxnPublicKey => panic!(
-                "MoveBytecode {:?} is deprecated and will be removed soon",
-                bytecode
-            ),
             MoveBytecode::Nop => self.code.push(Bytecode::Nop(attr_id)),
         }
     }

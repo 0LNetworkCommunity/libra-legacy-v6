@@ -6,7 +6,7 @@
 // Note: approved payments are an accounting convenience/a courtesy mechansim for the payee, *not*
 // a hurdle that must be cleared for all payments to the payee. In addition, approved payments do
 // not have replay protection.
-address 0x0:
+address 0x0 {
 module ApprovedPayment {
     use 0x0::Libra;
     use 0x0::LibraAccount;
@@ -43,7 +43,7 @@ module ApprovedPayment {
             ),
             9002, // TODO: proper error code
         );
-        LibraAccount::deposit_with_metadata<Token>(payee, coin, metadata)
+        LibraAccount::deposit_with_metadata<Token>(payee, coin, metadata, x"")
     }
 
     // Wrapper of `deposit` that withdraw's from the sender's balance and uses the top-level
@@ -66,6 +66,13 @@ module ApprovedPayment {
     // Rotate the key used to sign approved payments. This will invalidate any approved payments
     // that are currently in flight
     public fun rotate_key(approved_payment: &mut T, new_public_key: vector<u8>) {
+        // Cryptographic check of public key validity
+        Transaction::assert(
+            Signature::ed25519_validate_pubkey(
+                copy new_public_key
+            ),
+            9003, // TODO: proper error code
+        );
         approved_payment.public_key = new_public_key
     }
 
@@ -80,7 +87,12 @@ module ApprovedPayment {
     // `public_key`
     public fun publish(public_key: vector<u8>) {
         // Sanity check for key validity
-        Transaction::assert(Vector::length(&public_key) == 32, 9003); // TODO: proper error code
+        Transaction::assert(
+            Signature::ed25519_validate_pubkey(
+                copy public_key
+            ),
+            9003, // TODO: proper error code
+        );
         move_to_sender(T { public_key })
     }
 
@@ -93,5 +105,7 @@ module ApprovedPayment {
     public fun exists(addr: address): bool {
         ::exists<T>(addr)
     }
+
+}
 
 }

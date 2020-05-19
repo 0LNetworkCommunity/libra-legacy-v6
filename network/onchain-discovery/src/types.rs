@@ -1,19 +1,21 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::{bail, ensure, Error, Result};
+use anyhow::{ensure, format_err, Context as _, Result};
 use libra_config::config::RoleType;
 use libra_crypto::x25519;
 use libra_logger::prelude::*;
 use libra_network_address::NetworkAddress;
 use libra_types::{
-    discovery_info::DiscoveryInfo,
-    discovery_set::{
-        DiscoverySet, DiscoverySetChangeEvent, GLOBAL_DISCOVERY_SET_CHANGE_EVENT_PATH,
-    },
-    get_with_proof::{
-        RequestItem, ResponseItem, UpdateToLatestLedgerRequest, UpdateToLatestLedgerResponse,
-    },
+    account_config,
+    account_state::AccountState,
+    account_state_blob::AccountStateWithProof,
+    epoch_change::EpochChangeProof,
+    ledger_info::LedgerInfoWithSignatures,
+    on_chain_config::ValidatorSet,
+    proof::AccumulatorConsistencyProof,
+    trusted_state::{TrustedState, TrustedStateChange},
+    validator_info::ValidatorInfo,
     PeerId,
 };
 use serde::{Deserialize, Serialize};
@@ -23,106 +25,105 @@ use std::{collections::HashMap, convert::TryFrom};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum OnchainDiscoveryMsg {
     QueryDiscoverySetRequest(QueryDiscoverySetRequest),
-    QueryDiscoverySetResponse(QueryDiscoverySetResponse),
+    QueryDiscoverySetResponse(Box<QueryDiscoverySetResponse>),
 }
 
-/// A request for another peer's latest discovery set and (if needed) a validator
-/// change proof.
+/// A request for another peer's latest validator set and a validator change proof
+/// to get the client up-to-date if they're behind.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryDiscoverySetRequest {
-    pub client_known_version: u64,
-    // TODO(philiphayes): actually use this sequence number.
-    pub client_known_seq_num: u64,
+    pub known_version: u64,
+    // TODO(philiphayes): split sets into separate V and VFN sets. add enum to
+    // select by discovery set type.
 }
 
-impl Into<UpdateToLatestLedgerRequest> for QueryDiscoverySetRequest {
-    fn into(self) -> UpdateToLatestLedgerRequest {
-        let req_items = vec![RequestItem::GetEventsByEventAccessPath {
-            access_path: GLOBAL_DISCOVERY_SET_CHANGE_EVENT_PATH.clone(),
-            // u64::MAX means query the latest event
-            start_event_seq_num: ::std::u64::MAX,
-            // to query latest, ascending needs to be false
-            ascending: false,
-            // just query the last event
-            limit: 1,
-        }];
-
-        UpdateToLatestLedgerRequest::new(self.client_known_version, req_items)
-    }
-}
-
-/// A response to a QueryDiscoverySetRequest with the latest discovery set change
-/// event and (if needed) a epoch change proof.
+/// A response to a [`QueryDiscoverySetRequest`]. The server will include an
+/// epoch change proof if the client is behind.
+///
+/// The validator set only changes when there is a new epoch. To minimize
+/// wire overhead, the server will include the validator set account's
+/// [`AccountStateWithProof`] _if and only if_ the server also presents a
+/// non-empty epoch change proof.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct QueryDiscoverySetResponse {
-    pub update_to_latest_ledger_response: Box<UpdateToLatestLedgerResponse>,
+    pub latest_li: LedgerInfoWithSignatures,
+    pub epoch_change_proof: EpochChangeProof,
+    pub accumulator_proof: AccumulatorConsistencyProof,
+    pub account_state: Option<AccountStateWithProof>,
 }
 
-impl From<UpdateToLatestLedgerResponse> for QueryDiscoverySetResponse {
-    fn from(res: UpdateToLatestLedgerResponse) -> Self {
-        Self {
-            update_to_latest_ledger_response: Box::new(res),
-        }
-    }
-}
+impl QueryDiscoverySetResponse {
+    /// Verify and ratchet the given trusted state, returning the verified trusted
+    /// state change and latest validator set (if present).
+    ///
+    /// 1. Verify and ratchet trusted state using epoch changes and latest ledger info
+    /// 2. (If present) Verify validator set account state proof
+    /// 3. (If present) Deserialize `ValidatorSet` from validator set resource in account blob
+    pub fn verify_and_ratchet<'a>(
+        &'a self,
+        req_msg: &QueryDiscoverySetRequest,
+        trusted_state: &'a TrustedState,
+    ) -> Result<(TrustedStateChange<'a>, Option<ValidatorSet>)> {
+        // TODO(philiphayes): how to deal with partial epoch change proofs?
+        // should probably not return discovery set until at head?
 
-impl From<QueryDiscoverySetResponseWithEvent> for QueryDiscoverySetResponse {
-    fn from(res: QueryDiscoverySetResponseWithEvent) -> Self {
-        Self {
-            update_to_latest_ledger_response: res.query_res.update_to_latest_ledger_response,
-        }
-    }
-}
+        let has_epoch_change = !self.epoch_change_proof.ledger_info_with_sigs.is_empty();
+        let has_validator_set = self.account_state.is_some();
 
-/// A QueryDiscoverySetResponse with the event validated, deserialized, and pulled
-/// out to reduce unnecessary double validation.
-#[derive(Clone, Debug)]
-pub struct QueryDiscoverySetResponseWithEvent {
-    pub query_res: QueryDiscoverySetResponse,
-    pub event: Option<DiscoverySetChangeEvent>,
-}
-
-impl TryFrom<QueryDiscoverySetResponse> for QueryDiscoverySetResponseWithEvent {
-    type Error = Error;
-
-    fn try_from(query_res: QueryDiscoverySetResponse) -> Result<Self> {
-        // TODO(philiphayes): validate event access path etc
-
-        let res = &query_res.update_to_latest_ledger_response;
-        let res_len = res.response_items.len();
+        // enforce property: epoch change <==> some validator set in response
         ensure!(
-            res_len <= 1,
-            "Should only contain at most one response item. response_items.len(): {}",
-            res_len
+            has_epoch_change == has_validator_set,
+            "mismatch between epoch change and validator set. \
+             has_epoch_change iff has_validator_set: \
+             has_epoch_change: {}, has_validator_set: {}",
+            has_epoch_change,
+            has_validator_set,
         );
 
-        let maybe_event = res.response_items.get(0)
-            .map(|res_item| {
-                match res_item {
-                    ResponseItem::GetEventsByEventAccessPath {
-                        events_with_proof,
-                        ..
-                    } => {
-                        let events_len = events_with_proof.len();
-                        ensure!(
-                            events_len <= 1,
-                            "Should only contain at most one event response. events_with_proof.len(): {}",
-                            events_len
-                        );
+        // check response is not stale
+        let ledger_version = self.latest_li.ledger_info().version();
+        ensure!(
+            ledger_version >= req_msg.known_version,
+            "received stale ledger_info: ledger_version: {}, request known_version: {}",
+            ledger_version,
+            req_msg.known_version,
+        );
 
-                        Ok(events_with_proof.get(0).map(|event_with_proof| &event_with_proof.event))
-                    },
-                    res_item => bail!("Unexpected response item type: res_item: {:?}, expected GetEventsByEventAccessPath", res_item),
-                }
+        // try to ratchet trusted state
+        let trusted_state_change = trusted_state
+            .verify_and_ratchet(&self.latest_li, &self.epoch_change_proof)
+            .context("failed to ratchet trusted_state")?;
+
+        // if the response contains the validator set account, then verify
+        // account_state_proof and pull out the validator set
+        let opt_validator_set = self
+            .account_state
+            .as_ref()
+            .map(|account_state| -> Result<ValidatorSet> {
+                account_state
+                    .verify(
+                        self.latest_li.ledger_info(),
+                        ledger_version,
+                        account_config::validator_set_address(),
+                    )
+                    .context("failed to verify account state proof for validator set resource")?;
+
+                let blob = account_state
+                    .blob
+                    .as_ref()
+                    .ok_or_else(|| format_err!("validator set account blob cannot be missing"))?;
+
+                let validator_set = AccountState::try_from(blob)?
+                    .get_validator_set()?
+                    .ok_or_else(|| format_err!("validator set resource cannot be missing"))?;
+                Ok(validator_set)
             })
-            .transpose()?
-            .flatten();
-
-        let event = maybe_event
-            .map(DiscoverySetChangeEvent::try_from)
             .transpose()?;
 
-        Ok(Self { query_res, event })
+        // TODO(philiphayes): do something with accumulator_proof?
+        // self.query_res.accumulator_proof.
+
+        Ok((trusted_state_change, opt_validator_set))
     }
 }
 
@@ -131,14 +132,14 @@ impl TryFrom<QueryDiscoverySetResponse> for QueryDiscoverySetResponseWithEvent {
 pub struct DiscoverySetInternal(pub HashMap<PeerId, DiscoveryInfoInternal>);
 
 impl DiscoverySetInternal {
-    pub fn from_discovery_set(role_filter: RoleType, discovery_set: DiscoverySet) -> Self {
+    pub fn from_validator_set(role_filter: RoleType, validator_set: ValidatorSet) -> Self {
         Self(
-            discovery_set
+            validator_set
                 .into_iter()
-                .filter_map(|discovery_info| {
-                    let peer_id = discovery_info.account_address;
+                .filter_map(|validator_info| {
+                    let peer_id = *validator_info.account_address();
                     let res_info =
-                        DiscoveryInfoInternal::try_from_discovery_info(role_filter, discovery_info);
+                        DiscoveryInfoInternal::try_from_validator_info(role_filter, validator_info);
 
                     // ignore network addresses that fail to deserialize
                     res_info
@@ -173,21 +174,25 @@ impl DiscoverySetInternal {
 pub struct DiscoveryInfoInternal(pub x25519::PublicKey, pub Vec<NetworkAddress>);
 
 impl DiscoveryInfoInternal {
-    pub fn try_from_discovery_info(
+    pub fn try_from_validator_info(
         role_filter: RoleType,
-        discovery_info: DiscoveryInfo,
+        validator_info: ValidatorInfo,
     ) -> Result<Self> {
         let info = match role_filter {
             RoleType::Validator => Self(
-                discovery_info.validator_network_identity_pubkey,
+                validator_info
+                    .config()
+                    .validator_network_identity_public_key,
                 vec![NetworkAddress::try_from(
-                    &discovery_info.validator_network_address,
+                    &validator_info.config().validator_network_address,
                 )?],
             ),
             RoleType::FullNode => Self(
-                discovery_info.fullnodes_network_identity_pubkey,
+                validator_info
+                    .config()
+                    .full_node_network_identity_public_key,
                 vec![NetworkAddress::try_from(
-                    &discovery_info.fullnodes_network_address,
+                    &validator_info.config().full_node_network_address,
                 )?],
             ),
         };

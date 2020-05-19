@@ -7,11 +7,10 @@ use libra_crypto::HashValue;
 use libra_logger::prelude::*;
 use libra_state_view::StateView;
 use libra_types::{
+    access_path::AccessPath,
     account_address::AccountAddress,
     account_config,
     block_metadata::BlockMetadata,
-    language_storage::TypeTag,
-    move_resource::MoveResource,
     on_chain_config::{LibraVersion, OnChainConfig, VMConfig},
     transaction::{
         ChangeSet, Module, Script, SignatureCheckedTransaction, SignedTransaction, Transaction,
@@ -24,20 +23,23 @@ use libra_types::{
 use move_core_types::{
     gas_schedule::{AbstractMemorySize, CostTable, GasAlgebra, GasCarrier, GasUnits},
     identifier::{IdentStr, Identifier},
+    language_storage::{ResourceKey, StructTag, TypeTag},
+    move_resource::MoveResource,
 };
 use move_vm_runtime::MoveVM;
 use move_vm_state::{
     data_cache::{BlockDataCache, RemoteCache, RemoteStorage},
     execution_context::{ExecutionContext, SystemExecutionContext, TransactionExecutionContext},
 };
-use move_vm_types::{chain_state::ChainState, identifier::create_access_path, values::Value};
-use rayon::prelude::*;
-use std::{collections::HashSet, convert::TryFrom, sync::Arc};
-use vm::{
-    errors::{convert_prologue_runtime_error, VMResult},
+use move_vm_types::{
+    chain_state::ChainState,
     gas_schedule::{calculate_intrinsic_gas, zero_cost_schedule},
     transaction_metadata::TransactionMetadata,
+    values::Value,
 };
+use rayon::prelude::*;
+use std::{collections::HashSet, convert::TryFrom, sync::Arc};
+use vm::errors::{convert_prologue_runtime_error, VMResult};
 
 #[derive(Clone)]
 /// A wrapper to make VMRuntime standalone and thread safe.
@@ -1045,6 +1047,12 @@ fn convert_txn_args(args: &[TransactionArgument]) -> Vec<Value> {
             TransactionArgument::U8Vector(v) => Value::vector_u8(v.clone()),
         })
         .collect()
+}
+
+/// Get the AccessPath to a resource stored under `address` with type name `tag`
+fn create_access_path(address: AccountAddress, tag: StructTag) -> AccessPath {
+    let resource_tag = ResourceKey::new(address, tag);
+    AccessPath::resource_access_path(&resource_tag)
 }
 
 fn get_transaction_output(

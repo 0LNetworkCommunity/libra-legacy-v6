@@ -128,14 +128,15 @@ pub struct LibraDB {
     state_store: Arc<StateStore>,
     event_store: EventStore,
     system_store: SystemStore,
-    pruner: Pruner,
+    pruner: Option<Pruner>,
 }
 
 impl LibraDB {
-    /// Config parameter for the pruner.
-    const NUM_HISTORICAL_VERSIONS_TO_KEEP: u64 = 1_000_000;
-
-    pub fn open<P: AsRef<Path> + Clone>(db_root_path: P, readonly: bool) -> Result<Self> {
+    pub fn open<P: AsRef<Path> + Clone>(
+        db_root_path: P,
+        readonly: bool,
+        prune_window: Option<u64>,
+    ) -> Result<Self> {
         let column_families = vec![
             /* LedgerInfo CF = */ DEFAULT_CF_NAME,
             EPOCH_BY_VERSION_CF_NAME,
@@ -155,9 +156,9 @@ impl LibraDB {
         let instant = Instant::now();
 
         let db = Arc::new(if readonly {
-            DB::open_readonly(path.clone(), column_families)?
+            DB::open_readonly(path.clone(), "libradb_ro", column_families)?
         } else {
-            DB::open(path.clone(), column_families)?
+            DB::open(path.clone(), "libradb", column_families)?
         });
 
         info!(
@@ -173,13 +174,19 @@ impl LibraDB {
             state_store: Arc::new(StateStore::new(Arc::clone(&db))),
             transaction_store: Arc::new(TransactionStore::new(Arc::clone(&db))),
             system_store: SystemStore::new(Arc::clone(&db)),
-            pruner: Pruner::new(Arc::clone(&db), Self::NUM_HISTORICAL_VERSIONS_TO_KEEP),
+            pruner: prune_window.map(|n| Pruner::new(Arc::clone(&db), n)),
         })
     }
 
-    /// This creates an empty LibraDB instance on disk or opens one if it already exists.
-    pub fn new<P: AsRef<Path> + Clone>(db_root_path: P) -> Self {
-        Self::open(db_root_path, false).expect("Unable to open LibraDB")
+    /// This opens db in non-readonly mode, without the pruner.
+    #[cfg(any(test, feature = "fuzzing"))]
+    pub fn new_for_test<P: AsRef<Path> + Clone>(db_root_path: P) -> Self {
+        Self::open(
+            db_root_path,
+            false, /* readonly */
+            None,  /* pruner */
+        )
+        .expect("Unable to open LibraDB")
     }
 
     // ================================== Public API ==================================
@@ -606,6 +613,12 @@ impl LibraDB {
 
         Ok(())
     }
+
+    fn wake_pruner(&self, latest_version: Version) {
+        if let Some(pruner) = self.pruner.as_ref() {
+            pruner.wake(latest_version)
+        }
+    }
 }
 
 impl DbReader for LibraDB {
@@ -921,7 +934,7 @@ impl DbWriter for LibraDB {
                 .expect("Counters should be bumped with transactions being saved.")
                 .bump_op_counters();
 
-            self.pruner.wake(last_version);
+            self.wake_pruner(last_version);
         }
 
         Ok(())

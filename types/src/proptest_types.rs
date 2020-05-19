@@ -3,7 +3,7 @@
 
 use crate::{
     access_path::AccessPath,
-    account_address::AccountAddress,
+    account_address::{self, AccountAddress},
     account_config::{AccountResource, BalanceResource, LBR_NAME},
     account_state_blob::AccountStateBlob,
     block_info::{BlockInfo, Round},
@@ -13,7 +13,6 @@ use crate::{
     epoch_info::EpochInfo,
     event::{EventHandle, EventKey},
     get_with_proof::{ResponseItem, UpdateToLatestLedgerResponse},
-    language_storage::{StructTag, TypeTag},
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     on_chain_config::ValidatorSet,
     proof::{AccumulatorConsistencyProof, TransactionListProof},
@@ -33,7 +32,7 @@ use libra_crypto::{
     HashValue,
 };
 use libra_proptest_helpers::Index;
-use move_core_types::identifier::Identifier;
+use move_core_types::{identifier::Identifier, language_storage::TypeTag};
 use proptest::{
     collection::{vec, SizeRange},
     option,
@@ -114,7 +113,7 @@ struct AccountInfo {
 
 impl AccountInfo {
     pub fn new(private_key: Ed25519PrivateKey, public_key: Ed25519PublicKey) -> Self {
-        let address = AccountAddress::from_public_key(&public_key);
+        let address = account_address::from_public_key(&public_key);
         Self {
             address,
             private_key,
@@ -357,7 +356,7 @@ impl SignatureCheckedTransaction {
     ) -> impl Strategy<Value = Self> {
         (keypair_strategy, payload_strategy)
             .prop_flat_map(|(keypair, payload)| {
-                let address = AccountAddress::from_public_key(&keypair.public_key);
+                let address = account_address::from_public_key(&keypair.public_key);
                 (
                     Just(keypair),
                     RawTransaction::strategy_impl(Just(address), Just(payload)),
@@ -552,7 +551,7 @@ prop_compose! {
         keypair in ed25519::keypair_strategy(),
     ) -> (AccountAddress, Ed25519Signature) {
         let signature = keypair.private_key.sign_message(&hash);
-        (AccountAddress::from_public_key(&keypair.public_key), signature)
+        (account_address::from_public_key(&keypair.public_key), signature)
     }
 }
 
@@ -705,45 +704,6 @@ impl Arbitrary for EventHandle {
 
     fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
         EventHandle::strategy_impl(any::<EventKey>()).boxed()
-    }
-}
-
-impl Arbitrary for TypeTag {
-    type Parameters = ();
-    type Strategy = BoxedStrategy<Self>;
-
-    fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-        use TypeTag::*;
-        let leaf = prop_oneof![
-            Just(Bool),
-            Just(U8),
-            Just(U64),
-            Just(U128),
-            Just(Address),
-            Just(Vector(Box::new(Bool))),
-        ];
-        leaf.prop_recursive(
-            8,  // levels deep
-            16, // max size
-            4,  // max number of items per collection
-            |inner| {
-                (
-                    any::<AccountAddress>(),
-                    any::<Identifier>(),
-                    any::<Identifier>(),
-                    vec(inner, 0..4),
-                )
-                    .prop_map(|(address, module, name, type_params)| {
-                        Struct(StructTag {
-                            address,
-                            module,
-                            name,
-                            type_params,
-                        })
-                    })
-            },
-        )
-        .boxed()
     }
 }
 

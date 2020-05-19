@@ -4,7 +4,8 @@
 use crate::{
     gas,
     loader::{Function, Loader, Resolver},
-    native_context::FunctionContext,
+    native_functions::FunctionContext,
+    trace,
 };
 use libra_logger::prelude::*;
 use libra_types::{
@@ -15,9 +16,10 @@ use libra_types::{
 };
 use move_core_types::gas_schedule::{AbstractMemorySize, CostTable, GasAlgebra, GasCarrier};
 use move_vm_types::{
+    gas_schedule::calculate_intrinsic_gas,
     interpreter_context::InterpreterContext,
     loaded_data::{runtime_types::Type, types::FatStructType},
-    native_functions::dispatch::{Function as NativeFunction, FunctionResolver},
+    transaction_metadata::TransactionMetadata,
     values::{self, IntegerValue, Locals, Reference, Struct, StructRef, VMValueCast, Value},
 };
 use std::{cmp::min, collections::VecDeque, fmt::Write, sync::Arc};
@@ -27,8 +29,7 @@ use vm::{
         Bytecode, FunctionHandleIndex, FunctionInstantiationIndex, StructDefInstantiationIndex,
         StructDefinitionIndex,
     },
-    gas_schedule::{calculate_intrinsic_gas, Opcodes},
-    transaction_metadata::TransactionMetadata,
+    file_format_common::Opcodes,
 };
 
 macro_rules! debug_write {
@@ -235,22 +236,13 @@ impl<'txn> Interpreter<'txn> {
         function: Arc<Function>,
         ty_args: Vec<Type>,
     ) -> VMResult<()> {
-        let module_id = function
-            .module_id()
-            .expect("Module must exist on native function");
-        let function_name = function.name();
-        let native_function =
-            FunctionResolver::resolve(module_id, function_name).ok_or_else(|| {
-                VMStatus::new(StatusCode::LINKER_ERROR)
-                    .with_message(format!("Cannot find native function {}", function_name))
-            })?;
-
         let mut arguments = VecDeque::new();
-        let expected_args = native_function.num_args();
+        let expected_args = function.arg_count();
         for _ in 0..expected_args {
             arguments.push_front(self.operand_stack.pop()?);
         }
         let mut native_context = FunctionContext::new(self, context, resolver);
+        let native_function = function.get_native()?;
         let result = native_function.dispatch(&mut native_context, ty_args, arguments)?;
         gas!(consume: context, result.cost)?;
         result.result.and_then(|values| {
@@ -688,6 +680,7 @@ impl Frame {
         let code = self.function.code();
         loop {
             for instruction in &code[self.pc as usize..] {
+                trace!(self.function.pretty_string(), self.pc, instruction);
                 self.pc += 1;
 
                 match instruction {
@@ -764,6 +757,7 @@ impl Frame {
                     Bytecode::MoveLoc(idx) => {
                         let local = self.locals.move_loc(*idx as usize)?;
                         gas!(instr: context, interpreter, Opcodes::MOVE_LOC, local.size())?;
+
                         interpreter.operand_stack.push(local)?;
                     }
                     Bytecode::StLoc(idx) => {
@@ -1154,16 +1148,6 @@ impl Frame {
                         gas!(const_instr: context, interpreter, Opcodes::NOT)?;
                         let value = !interpreter.operand_stack.pop_as::<bool>()?;
                         interpreter.operand_stack.push(Value::bool(value))?;
-                    }
-                    Bytecode::GetGasRemaining
-                    | Bytecode::GetTxnPublicKey
-                    | Bytecode::GetTxnSequenceNumber
-                    | Bytecode::GetTxnMaxGasUnits
-                    | Bytecode::GetTxnGasUnitPrice => {
-                        return Err(VMStatus::new(StatusCode::VERIFIER_INVARIANT_VIOLATION)
-                            .with_message(
-                                "This opcode is deprecated and will be removed soon".to_string(),
-                            ));
                     }
                     Bytecode::Nop => {
                         gas!(const_instr: context, interpreter, Opcodes::NOP)?;

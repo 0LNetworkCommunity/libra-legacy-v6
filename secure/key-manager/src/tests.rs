@@ -3,12 +3,13 @@
 
 use crate::{libra_interface::JsonRpcLibraInterface, Action, Error, KeyManager, LibraInterface};
 use anyhow::Result;
-use executor::{db_bootstrapper, BlockExecutor, Executor};
+use executor::{db_bootstrapper, Executor};
+use executor_types::BlockExecutor;
 use futures::{channel::mpsc::channel, StreamExt};
 use libra_config::{config::NodeConfig, utils, utils::get_genesis_txn};
 use libra_crypto::{ed25519::Ed25519PrivateKey, HashValue, PrivateKey, Uniform};
-use libra_secure_json_rpc::JsonRpcClient;
-use libra_secure_storage::{InMemoryStorageInternal, KVStorage, Policy, Value};
+use libra_global_constants::OPERATOR_KEY;
+use libra_secure_storage::{InMemoryStorageInternal, KVStorage, Value};
 use libra_secure_time::{MockTimeService, TimeService};
 use libra_types::{
     account_address::AccountAddress,
@@ -16,7 +17,6 @@ use libra_types::{
     account_state::AccountState,
     block_info::BlockInfo,
     block_metadata::{BlockMetadata, LibraBlockResource},
-    discovery_set::DiscoverySet,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     mempool_status::{MempoolStatus, MempoolStatusCode},
     on_chain_config::{ConfigurationResource, ValidatorSet},
@@ -126,15 +126,13 @@ impl<T: LibraInterface> LibraInterfaceTestHarness<T> {
         }
     }
 
-    /// Returns the discover set associated with the discovery set address.
-    fn retrieve_discovery_set(&self) -> Result<DiscoverySet, Error> {
-        let account = account_config::discovery_set_address();
+    /// Returns the validator set associated with the validator set address.
+    fn retrieve_validator_set(&self) -> Result<ValidatorSet, Error> {
+        let account = account_config::validator_set_address();
         let account_state = self.libra.retrieve_account_state(account)?;
         Ok(account_state
-            .get_discovery_set_resource()?
-            .ok_or_else(|| Error::DataDoesNotExist("DiscoverySetResource".into()))?
-            .discovery_set()
-            .clone())
+            .get_validator_set()?
+            .ok_or_else(|| Error::DataDoesNotExist("ValidatorSetResource".into()))?)
     }
 
     /// Returns the libra block resource associated with the association address.
@@ -203,7 +201,7 @@ impl MockLibraInterface {
     }
 
     pub fn retrieve_configuration_resource(&self) -> Result<ConfigurationResource, Error> {
-        let account = account_config::association_address();
+        let account = libra_types::on_chain_config::config_address();
         let account_state = self.retrieve_account_state(account)?;
         account_state
             .get_configuration_resource()?
@@ -284,8 +282,7 @@ impl LibraInterface for MockLibraInterface {
 // This setup is useful for testing nodes as they operate in a production environment.
 fn setup_node_using_json_rpc(config: &NodeConfig) -> (Node<JsonRpcLibraInterface>, Runtime) {
     let (_storage, db_rw) = setup_libra_db(config);
-    let (client, server) = setup_json_client_and_server(db_rw.clone());
-    let libra = JsonRpcLibraInterface::new(client);
+    let (libra, server) = setup_libra_interface_and_json_server(db_rw.clone());
     let executor = Executor::new(db_rw);
 
     (setup_node(config, executor, libra), server)
@@ -303,7 +300,7 @@ fn setup_node_using_test_mocks(config: &NodeConfig) -> Node<MockLibraInterface> 
 
 // Creates and returns a libra database and database reader/writer pair bootstrapped with genesis.
 fn setup_libra_db(config: &NodeConfig) -> (Arc<LibraDB>, DbReaderWriter) {
-    let (storage, db_rw) = DbReaderWriter::wrap(LibraDB::new(&config.storage.dir()));
+    let (storage, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&config.storage.dir()));
     db_bootstrapper::bootstrap_db_if_empty::<LibraVM>(&db_rw, get_genesis_txn(config).unwrap())
         .expect("Failed to execute genesis");
 
@@ -320,11 +317,16 @@ fn setup_node<T: LibraInterface + Clone>(
     let account = config.validator_network.as_ref().unwrap().peer_id;
     let time = MockTimeService::new();
     let libra_test_harness = LibraInterfaceTestHarness::new(libra);
+    let key_manager_config = &config.secure.key_manager;
+
     let key_manager = KeyManager::new(
         account,
         libra_test_harness.clone(),
         setup_secure_storage(&config, time.clone()),
         time.clone(),
+        key_manager_config.rotation_period_secs,
+        key_manager_config.sleep_period_secs,
+        key_manager_config.txn_expiration_secs,
     );
 
     Node::new(account, executor, libra_test_harness, key_manager, time)
@@ -339,37 +341,31 @@ fn setup_secure_storage(
     let mut sec_storage = InMemoryStorageInternal::new_with_time_service(time);
     let test_config = config.clone().test.unwrap();
 
-    let mut a_keypair = test_config.account_keypair.unwrap();
+    let mut a_keypair = test_config.operator_keypair.unwrap();
     let a_prikey = Value::Ed25519PrivateKey(a_keypair.take_private().unwrap());
 
-    sec_storage
-        .create(crate::VALIDATOR_KEY, a_prikey, &Policy::public())
-        .unwrap();
+    sec_storage.set(OPERATOR_KEY, a_prikey).unwrap();
 
     let mut c_keypair = test_config.consensus_keypair.unwrap();
     let c_prikey = c_keypair.take_private().unwrap();
     let c_prikey0 = Value::Ed25519PrivateKey(c_prikey.clone());
     let c_prikey1 = Value::Ed25519PrivateKey(c_prikey);
 
-    sec_storage
-        .create(crate::CONSENSUS_KEY, c_prikey0, &Policy::public())
-        .unwrap();
+    sec_storage.set(crate::CONSENSUS_KEY, c_prikey0).unwrap();
     // Ugly hack but we need this until we support retrieving a policy from within storage and that
     // currently is not easy, since we would need to convert from Vault -> Libra policy.
-    sec_storage
-        .create(
-            &format!("{}_previous", crate::CONSENSUS_KEY),
-            c_prikey1,
-            &Policy::public(),
-        )
-        .unwrap();
+    let previous = format!("{}_previous", crate::CONSENSUS_KEY);
+    sec_storage.set(&previous, c_prikey1).unwrap();
     sec_storage
 }
 
-// Generates and returns a (client, server) pair, where the client is a lightweight JSON client
-// and the server is a JSON server that serves the JSON RPC requests. The server communicates
-// with the given database reader/writer to handle each JSON RPC request.
-fn setup_json_client_and_server(db_rw: DbReaderWriter) -> (JsonRpcClient, Runtime) {
+// Generates and returns a (libra interface, server) pair, where the libra interface is a JSON RPC
+// based interface using the lightweight JSON client internally, and the server is a JSON server
+// that serves the JSON RPC requests. The server communicates with the given database reader/writer
+// to handle each JSON RPC request.
+fn setup_libra_interface_and_json_server(
+    db_rw: DbReaderWriter,
+) -> (JsonRpcLibraInterface, Runtime) {
     let address = "0.0.0.0";
     let port = utils::get_available_port();
     let host = format!("{}:{}", address, port);
@@ -390,10 +386,10 @@ fn setup_json_client_and_server(db_rw: DbReaderWriter) -> (JsonRpcClient, Runtim
         }
     });
 
-    let url = format!("http://{}", host);
-    let client = JsonRpcClient::new(url);
+    let json_rpc_endpoint = format!("http://{}", host);
+    let libra = JsonRpcLibraInterface::new(json_rpc_endpoint);
 
-    (client, server)
+    (libra, server)
 }
 
 #[test]
@@ -412,9 +408,9 @@ fn test_ability_to_read_move_data() {
 
 fn verify_ability_to_read_move_data<T: LibraInterface>(node: Node<T>) {
     assert!(node.libra.last_reconfiguration().is_ok());
-    assert!(node.libra.retrieve_discovery_set().is_ok());
+    assert!(node.libra.retrieve_validator_set().is_ok());
     assert!(node.libra.retrieve_validator_config(node.account).is_ok());
-    assert!(node.libra.retrieve_discovery_set().is_ok());
+    assert!(node.libra.retrieve_validator_set().is_ok());
     assert!(node.libra.retrieve_validator_info(node.account).is_ok());
     assert!(node.libra.retrieve_libra_block_resource().is_ok());
 }
@@ -437,7 +433,11 @@ fn test_manual_rotation_on_chain() {
 
 fn verify_manual_rotation_on_chain<T: LibraInterface>(config: NodeConfig, mut node: Node<T>) {
     let test_config = config.test.unwrap();
-    let account_prikey = test_config.account_keypair.unwrap().take_private().unwrap();
+    let account_prikey = test_config
+        .operator_keypair
+        .unwrap()
+        .take_private()
+        .unwrap();
     let genesis_pubkey = test_config
         .consensus_keypair
         .unwrap()
@@ -449,7 +449,7 @@ fn verify_manual_rotation_on_chain<T: LibraInterface>(config: NodeConfig, mut no
     let genesis_info = node.libra.retrieve_validator_info(node.account).unwrap();
 
     // Check on-chain consensus state matches the genesis state
-    assert_eq!(genesis_pubkey, genesis_config.consensus_pubkey);
+    assert_eq!(genesis_pubkey, genesis_config.consensus_public_key);
     assert_eq!(&genesis_pubkey, genesis_info.consensus_public_key());
     assert_eq!(&node.account, genesis_info.account_address());
 
@@ -471,7 +471,7 @@ fn verify_manual_rotation_on_chain<T: LibraInterface>(config: NodeConfig, mut no
 
     // Check on-chain consensus state has been rotated
     assert_ne!(new_pubkey, genesis_pubkey);
-    assert_eq!(new_pubkey, new_config.consensus_pubkey);
+    assert_eq!(new_pubkey, new_config.consensus_public_key);
     assert_eq!(&new_pubkey, new_info.consensus_public_key());
 }
 
@@ -540,21 +540,22 @@ fn test_execute() {
     // Test the mock libra interface implementation
     let (config, _genesis_key) = config_builder::test_config();
     let node = setup_node_using_test_mocks(&config);
-    verify_execute(node);
+    verify_execute(&config, node);
 
     // Test the json libra interface implementation
     let (config, _genesis_key) = config_builder::test_config();
     let (node, _runtime) = setup_node_using_json_rpc(&config);
-    verify_execute(node);
+    verify_execute(&config, node);
 }
 
-fn verify_execute<T: LibraInterface>(mut node: Node<T>) {
+fn verify_execute<T: LibraInterface>(config: &NodeConfig, mut node: Node<T>) {
     // Verify correct initial state (i.e., nothing to be done by key manager)
     assert_eq!(0, node.time.now());
     assert_eq!(0, node.libra.last_reconfiguration().unwrap());
 
     // Verify rotation required after enough time
-    node.time.increment_by(crate::ROTATION_PERIOD_SECS);
+    node.time
+        .increment_by(config.secure.key_manager.rotation_period_secs);
     node.update_libra_timestamp();
     assert_eq!(
         Action::FullKeyRotation,
@@ -573,7 +574,8 @@ fn verify_execute<T: LibraInterface>(mut node: Node<T>) {
     );
 
     // Verify rotation transaction not executed, now expired
-    node.time.increment_by(crate::TXN_RETRY_SECS);
+    node.time
+        .increment_by(config.secure.key_manager.txn_expiration_secs);
     node.update_libra_timestamp();
     assert_eq!(
         Action::SubmitKeyRotationTransaction,

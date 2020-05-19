@@ -1,6 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::native_functions::NativeFunction;
 use bytecode_verifier::{
     verifier::{verify_dependencies, verify_script_dependency_map},
     VerifiedModule, VerifiedScript,
@@ -8,11 +9,13 @@ use bytecode_verifier::{
 use libra_crypto::HashValue;
 use libra_logger::prelude::*;
 use libra_types::{
-    access_path::{AccessPath, Accesses},
-    language_storage::{ModuleId, StructTag, TypeTag},
+    access_path::AccessPath,
     vm_error::{StatusCode, VMStatus},
 };
-use move_core_types::identifier::{IdentStr, Identifier};
+use move_core_types::{
+    identifier::{IdentStr, Identifier},
+    language_storage::{ModuleId, StructTag, TypeTag},
+};
 use move_vm_types::{
     interpreter_context::InterpreterContext,
     loaded_data::{
@@ -28,14 +31,14 @@ use std::{
 };
 use vm::{
     access::{ModuleAccess, ScriptAccess},
-    errors::{vm_error, Location, VMResult},
+    errors::{verification_error, vm_error, Location, VMResult},
     file_format::{
         Bytecode, CompiledScript, Constant, ConstantPoolIndex, FieldHandleIndex,
         FieldInstantiationIndex, FunctionDefinition, FunctionHandleIndex,
         FunctionInstantiationIndex, Kind, Signature, SignatureToken, StructDefInstantiationIndex,
         StructDefinition, StructDefinitionIndex, StructFieldInformation,
     },
-    CompiledModule,
+    CompiledModule, IndexKind,
 };
 
 // A simple cache that offers both a HashMap and a Vector lookup.
@@ -389,12 +392,26 @@ impl Loader {
         context: &mut dyn InterpreterContext,
     ) -> VMResult<()> {
         self.check_dependencies(&module, context)?;
+        Self::check_natives(&module)?;
         let module_id = module.self_id();
         self.module_cache
             .lock()
             .unwrap()
             .insert(module_id, module)
             .and_then(|_| Ok(()))
+    }
+
+    fn load_module(
+        &self,
+        id: &ModuleId,
+        context: &dyn InterpreterContext,
+    ) -> VMResult<Arc<Module>> {
+        if let Some(module) = self.module_cache.lock().unwrap().get(id) {
+            return Ok(module);
+        }
+        let module = self.deserialize_and_verify_module(id, context)?;
+        Self::check_natives(&module)?;
+        self.module_cache.lock().unwrap().insert(id.clone(), module)
     }
 
     pub(crate) fn verify_ty_args(&self, constraints: &[Kind], ty_args: &[Type]) -> VMResult<()> {
@@ -414,16 +431,40 @@ impl Loader {
         Ok(())
     }
 
-    fn load_module(
-        &self,
-        id: &ModuleId,
-        context: &dyn InterpreterContext,
-    ) -> VMResult<Arc<Module>> {
-        if let Some(module) = self.module_cache.lock().unwrap().get(id) {
-            return Ok(module);
+    pub(crate) fn check_natives(module: &VerifiedModule) -> VMResult<()> {
+        for (idx, native_function) in module
+            .function_defs()
+            .iter()
+            .filter(|fdv| fdv.is_native())
+            .enumerate()
+        {
+            let fh = module.function_handle_at(native_function.function);
+            let mh = module.module_handle_at(fh.module);
+            NativeFunction::resolve(
+                module.address_identifier_at(mh.address),
+                module.identifier_at(mh.name).as_str(),
+                module.identifier_at(fh.name).as_str(),
+            )
+            .ok_or_else(|| {
+                verification_error(
+                    IndexKind::FunctionHandle,
+                    idx,
+                    StatusCode::MISSING_DEPENDENCY,
+                )
+            })?;
         }
-        let module = self.deserialize_and_verify_module(id, context)?;
-        self.module_cache.lock().unwrap().insert(id.clone(), module)
+        // TODO: fix check and error code if we leave something around for native structs.
+        // For now this generates the only error test cases care about...
+        for (idx, struct_def) in module.struct_defs().iter().enumerate() {
+            if struct_def.field_information == StructFieldInformation::Native {
+                return Err(verification_error(
+                    IndexKind::FunctionHandle,
+                    idx,
+                    StatusCode::MISSING_DEPENDENCY,
+                ));
+            }
+        }
+        Ok(())
     }
 
     fn get_module(&self, idx: &ModuleId) -> Arc<Module> {
@@ -938,18 +979,25 @@ impl Script {
         let code: Vec<Bytecode> = compiled_script.code.code.clone();
         let parameters = script.signature_at(compiled_script.parameters).clone();
         let return_ = Signature(vec![]);
-        let locals = script.signature_at(compiled_script.code.locals).clone();
+        let locals = Signature(
+            parameters
+                .0
+                .iter()
+                .chain(script.signature_at(compiled_script.code.locals).0.iter())
+                .cloned()
+                .collect(),
+        );
         let type_parameters = compiled_script.type_parameters.clone();
         // TODO: main does not have a name. Revisit.
         let name = Identifier::new("main").unwrap();
-        let is_native = false;
+        let native = None; // Script entries cannot be native
         let main: Arc<Function> = Arc::new(Function {
             code,
             parameters,
             return_,
             locals,
             type_parameters,
-            is_native,
+            native,
             scope,
             name,
         });
@@ -991,7 +1039,7 @@ pub struct Function {
     return_: Signature,
     locals: Signature,
     type_parameters: Vec<Kind>,
-    is_native: bool,
+    native: Option<NativeFunction>,
     scope: Scope,
     name: Identifier,
 }
@@ -1000,20 +1048,42 @@ impl Function {
     fn new(def: &FunctionDefinition, module: &VerifiedModule) -> Self {
         let handle = module.function_handle_at(def.function);
         let name = module.identifier_at(handle.name).to_owned();
-        let scope = Scope::Module(module.self_id());
-        let code = def.code.code.clone();
+        let module_id = module.self_id();
+        let native = if def.is_native() {
+            NativeFunction::resolve(
+                module_id.address(),
+                module_id.name().as_str(),
+                name.as_str(),
+            )
+        } else {
+            None
+        };
+        let scope = Scope::Module(module_id);
         let parameters = module.signature_at(handle.parameters).clone();
+        // Native functions do not have a code unit
+        let (code, locals) = match &def.code {
+            Some(code) => (
+                code.code.clone(),
+                Signature(
+                    parameters
+                        .0
+                        .iter()
+                        .chain(module.signature_at(code.locals).0.iter())
+                        .cloned()
+                        .collect(),
+                ),
+            ),
+            None => (vec![], Signature(vec![])),
+        };
         let return_ = module.signature_at(handle.return_).clone();
-        let locals = module.signature_at(def.code.locals).clone();
         let type_parameters = handle.type_parameters.clone();
-        let is_native = def.is_native();
         Self {
             code,
             parameters,
             return_,
             locals,
             type_parameters,
-            is_native,
+            native,
             scope,
             name,
         }
@@ -1080,7 +1150,14 @@ impl Function {
     }
 
     pub(crate) fn is_native(&self) -> bool {
-        self.is_native
+        self.native.is_some()
+    }
+
+    pub(crate) fn get_native(&self) -> VMResult<NativeFunction> {
+        self.native.ok_or_else(|| {
+            VMStatus::new(StatusCode::UNREACHABLE)
+                .with_message("Missing Native Function".to_string())
+        })
     }
 }
 
@@ -1217,7 +1294,7 @@ impl LibraType {
             name: fat_type.name.clone(),
             type_params,
         };
-        let resource_key = AccessPath::resource_access_vec(&tag, &Accesses::empty());
+        let resource_key = AccessPath::resource_access_vec(&tag);
         Ok(Self {
             fat_type,
             resource_key,

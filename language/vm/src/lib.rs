@@ -15,12 +15,10 @@ pub mod errors;
 pub mod deserializer;
 pub mod file_format;
 pub mod file_format_common;
-pub mod gas_schedule;
 pub mod internals;
 #[cfg(any(test, feature = "fuzzing"))]
 pub mod proptest_types;
 pub mod serializer;
-pub mod transaction_metadata;
 pub mod views;
 
 #[cfg(test)]

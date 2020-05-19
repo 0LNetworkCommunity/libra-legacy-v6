@@ -6,7 +6,7 @@
 // Note: approved payments are an accounting convenience/a courtesy mechansim for the payee, *not*
 // a hurdle that must be cleared for all payments to the payee. In addition, approved payments do
 // not have replay protection.
-address 0x0:
+address 0x0 {
 module ApprovedPayment {
     use 0x0::Libra;
     use 0x0::LibraAccount;
@@ -70,6 +70,13 @@ module ApprovedPayment {
     // Rotate the key used to sign approved payments. This will invalidate any approved payments
     // that are currently in flight
     public fun rotate_key(approved_payment: &mut T, new_public_key: vector<u8>) {
+        // Cryptographic check of public key validity
+        Transaction::assert(
+            Signature::ed25519_validate_pubkey(
+                copy new_public_key
+            ),
+            9003, // TODO: proper error code
+        );
         approved_payment.public_key = new_public_key
     }
 
@@ -98,4 +105,5 @@ module ApprovedPayment {
         ::exists<T>(addr)
     }
 
+}
 }

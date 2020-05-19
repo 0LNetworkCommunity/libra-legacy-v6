@@ -50,7 +50,8 @@ pub fn add_to_network(
         .add_protocol_handler(
             vec![],
             vec![ProtocolId::StateSynchronizerDirectSend],
-            QueueStyle::FIFO,
+            QueueStyle::LIFO,
+            1,
             Some(&counters::PENDING_STATE_SYNCHRONIZER_NETWORK_EVENTS),
         );
     (

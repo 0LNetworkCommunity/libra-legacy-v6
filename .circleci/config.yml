@@ -4,6 +4,10 @@ executors:
   build-executor:
     docker:
       - image: circleci/rust:buster
+    resource_class: 2xlarge
+  unittest-executor:
+    docker:
+      - image: circleci/rust:buster
     resource_class: 2xlarge+
   test-executor:
     docker:
@@ -12,7 +16,7 @@ executors:
   audit-executor:
     docker:
       - image: circleci/rust:buster
-    resource_class: xlarge
+    resource_class: medium
   terraform-executor:
     docker:
       - image: hashicorp/terraform
@@ -50,7 +54,7 @@ commands:
           name: Install Dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y cmake curl clang llvm
+            sudo apt-get install -y cmake curl clang llvm gcc-powerpc-linux-gnu
             rustup component add clippy rustfmt
   install_code_coverage_deps:
     steps:
@@ -65,9 +69,9 @@ commands:
       - run:
           name: install dockerfile linter (hadolint)
           command: |
-             export HADOLINT=${HOME}/hadolint
-             export HADOLINT_VER=v1.17.4
-             curl -sL -o ${HADOLINT} "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VER}/hadolint-$(uname -s)-$(uname -m)" && chmod 700 ${HADOLINT}
+            export HADOLINT=${HOME}/hadolint
+            export HADOLINT_VER=v1.17.4
+            curl -sL -o ${HADOLINT} "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VER}/hadolint-$(uname -s)-$(uname -m)" && chmod 700 ${HADOLINT}
   install_rust_nightly_toolchain:
     steps:
       - run:
@@ -104,7 +108,7 @@ commands:
             ls -all /usr/local/cargo
             du -ssh /usr/local/cargo
   send_message:
-    description: Send message to the specified webhook.
+    description: Send message to the specified webhook, if no webhook is set simply return.
     parameters:
       payload_file:
         description: File containing the message payload
@@ -122,7 +126,6 @@ commands:
       - run:
           name: Send job status
           command: |
-            set -x
             if [ -e <<parameters.payload_file>> ]; then
               jq -n \
                 --arg msg "$(cat <<parameters.payload_file>>)" \
@@ -142,8 +145,15 @@ commands:
                   ]
                 }' > /tmp/payload
               cat /tmp/payload
-              curl -X POST -H 'Content-type: application/json' -d @/tmp/payload \
+              if [ <<parameters.webhook>> ]; then
+                curl -X POST -H 'Content-type: application/json' -d @/tmp/payload \
                 <<parameters.webhook>>
+              else
+                echo "Not sending messages as no webhook url is set."
+                echo "Chances are you are not building on master, or circle is misconfigured."
+                echo "webhook is empty"
+                exit 0
+              fi
             fi
           when: always
   build_setup:
@@ -161,7 +171,7 @@ commands:
 
 jobs:
   prefetch-crates:
-    executor: test-executor
+    executor: audit-executor
     description: Prefetch cargo crates for subsequent jobs.
     steps:
       - build_setup
@@ -191,14 +201,6 @@ jobs:
       - run:
           name: cargo fmt
           command: cargo xfmt --check
-      - run:
-          name: cargo guppy
-          command: |
-            cargo install cargo-guppy \
-              --git http://github.com/calibra/cargo-guppy \
-              --rev 8b2bc45c0cd6323a7a2b8170ddad6d2a5b79047b
-            [[ -z $(cargo guppy dups --target x86_64-unknown-linux-gnu \
-              --kind directthirdparty) ]]
   build-dev:
     executor: build-executor
     description: Development Build
@@ -217,19 +219,23 @@ jobs:
           command: RUST_BACKTRACE=1 cargo build -j 16 -p language-benchmarks
       - run:
           command: RUST_BACKTRACE=1 cargo build -j 16 -p test-generation
+      - run:
+          command: |
+            rustup target add powerpc-unknown-linux-gnu
+            RUST_BACKTRACE=1 cargo build -j 16 -p transaction-builder --target powerpc-unknown-linux-gnu
       - build_teardown
   build-release:
-    executor: build-executor
+    executor: test-executor
     description: Release Build
     steps:
       - build_setup
       - restore_cargo_package_cache
       - run:
           name: Build release
-          command: RUST_BACKTRACE=1 cargo build -j 16 --release
+          command: RUST_BACKTRACE=1 cargo build -j 8 --release
       - build_teardown
   build-e2e-test:
-    executor: build-executor
+    executor: test-executor
     description: Generate a list of E2E test targets to be distributed.
     steps:
       - build_setup
@@ -248,8 +254,8 @@ jobs:
             - e2e_tests
             - target/debug/deps/libratest*
   run-e2e-test:
-    executor: build-executor
-    parallelism: 8
+    executor: test-executor
+    parallelism: 4
     description: Run E2E tests in parallel. Each container runs a subset of
       test targets.
     environment:
@@ -284,7 +290,7 @@ jobs:
               status=1
               failed_tests=
               while [[ $status != 0 && $retry < ${E2E_RETRIES} ]]; do
-                RUST_BACKTRACE=1 timeout --kill-after=370 --preserve-status 360 \
+                RUST_BACKTRACE=full timeout --kill-after=370 --preserve-status 360 \
                   $libratest $target --test-threads 1 --exact --nocapture
                 status=$?
                 retry=$((retry + 1))
@@ -311,7 +317,7 @@ jobs:
           build_url: "${CIRCLE_BUILD_URL}#tests/containers/${CIRCLE_NODE_INDEX}"
           webhook: "${WEBHOOK_FLAKY_TESTS}"
   run-unit-test:
-    executor: build-executor
+    executor: unittest-executor
     description: Run all unit tests, excluding E2E and flaky tests that are
       explicitly ignored.
     steps:
@@ -322,7 +328,7 @@ jobs:
           command: |
             RUST_BACKTRACE=1 $CI_TIMEOUT cargo x test --unit
   run-crypto-unit-test:
-    executor: test-executor
+    executor: audit-executor
     description: Run crypto unit tests without formally verified crypto, to insulate against a curve25519 "default" backend regression
     steps:
       - build_setup
@@ -332,7 +338,7 @@ jobs:
           command: |
             cd crypto/crypto && \
             RUST_BACKTRACE=1 cargo test \
-              --features='std u64_backend batch fuzzing' \
+              --features='std u64_backend batch' \
               --no-default-features
   run-flaky-unit-test:
     executor: test-executor
@@ -347,7 +353,7 @@ jobs:
             ./scripts/run_quarantined.sh -c <your package here> -r 3 -f
   validate-cluster-test-dockerfile:
     description: Validate that committed docker files for cluster test are up to date
-    executor: build-executor
+    executor: audit-executor
     steps:
       - build_setup
       - run:
@@ -359,6 +365,7 @@ jobs:
     executor: audit-executor
     steps:
       - build_setup
+      - restore_cargo_package_cache
       - run:
           name: Install Cargo Audit
           command: |
@@ -375,7 +382,9 @@ jobs:
       - build_teardown
   code-coverage:
     description: Run code coverage
-    executor: build-executor
+    executor: test-executor
+    environment:
+      MESSAGE_PAYLOAD_FILE: "/tmp/message_payload"
     steps:
       - build_setup
       - install_code_coverage_deps
@@ -385,10 +394,15 @@ jobs:
           command: echo "export CODECOV_OUTPUT=codecov" >> $BASH_ENV
       - run:
           name: Run code coverage
-          command: ./scripts/coverage_report.sh . $CODECOV_OUTPUT --batch
+          command: |
+            ./scripts/coverage_report.sh . $CODECOV_OUTPUT --batch --failed_crate_file ${MESSAGE_PAYLOAD_FILE}
       - run:
           name: Upload result to codecov.io
           command: bash <(curl -s https://codecov.io/bash) -f $CODECOV_OUTPUT/lcov.info;
+      - send_message:
+          payload_file: "${MESSAGE_PAYLOAD_FILE}"
+          build_url: "${CIRCLE_BUILD_URL}#tests/containers/${CIRCLE_NODE_INDEX}"
+          webhook: "${WEBHOOK_FLAKY_TESTS}"
   terraform:
     executor: terraform-executor
     steps:
@@ -435,13 +449,65 @@ jobs:
               fi
             done
 
+  # build-docs and deploy-docs are adapted from
+  # https://circleci.com/blog/deploying-documentation-to-github-pages-with-continuous-integration/.
+  build-docs:
+    executor: build-executor
+    description: Documentation Build
+    steps:
+      - build_setup
+      - run:
+          name: Generate documentation
+          command: |
+            # Use `RUSTC_BOOTSTRAP` in order to use the `--enable-index-page` flag of rustdoc
+            # This is needed in order to generate a landing page `index.html` for workspaces
+            RUSTC_BOOTSTRAP=1 RUSTDOCFLAGS="-Z unstable-options --enable-index-page" cargo doc --no-deps --workspace --lib
+      - persist_to_workspace:
+          root: target
+          paths: doc
+  deploy-docs:
+    docker:
+      - image: node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: target
+      - run:
+          name: Disable jekyll builds
+          command: touch target/doc/.nojekyll
+      - run:
+          name: Install and configure gh-pages
+          command: |
+            npm install -g --silent gh-pages@2.0.1
+            git config user.email "libra-doc-bot@users.noreply.github.com"
+            git config user.name "libra-doc-bot"
+      - add_ssh_keys:
+          fingerprints:
+            - "b4:01:8d:ee:cb:ee:84:c6:e3:25:a4:1e:af:cf:7b:f2"
+      - run:
+          name: Deploy to gh-pages branch
+          command: |
+            gh-pages --dotfiles --message "[skip ci] documentation update" --dist target/doc
+
 workflows:
   commit-workflow:
     jobs:
-      - build-docker
-      - validate-cluster-test-dockerfile
-      - terraform
-      - prefetch-crates
+      - build-docker:
+        filters:
+          branches:
+            ignore: gh-pages
+      - validate-cluster-test-dockerfile:
+        filters:
+          branches:
+            ignore: gh-pages
+      - terraform:
+        filters:
+          branches:
+            ignore: gh-pages
+      - prefetch-crates:
+        filters:
+          branches:
+            ignore: gh-pages
       - lint:
           requires:
             - prefetch-crates
@@ -463,9 +529,15 @@ workflows:
       - run-crypto-unit-test:
           requires:
             - prefetch-crates
-      #- run-flaky-unit-test:
-      #    requires:
-      #      - prefetch-crates
+      - build-docs:
+          requires:
+            - lint
+      - deploy-docs:
+          requires:
+            - build-docs
+          filters:
+            branches:
+              only: master
 
   scheduled-workflow:
     triggers:

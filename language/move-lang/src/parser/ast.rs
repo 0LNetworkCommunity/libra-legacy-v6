@@ -50,25 +50,21 @@ macro_rules! new_name {
 
 #[derive(Debug)]
 pub struct Program {
-    pub source_definitions: Vec<FileDefinition>,
-    pub lib_definitions: Vec<FileDefinition>,
+    pub source_definitions: Vec<Definition>,
+    pub lib_definitions: Vec<Definition>,
 }
 
 #[derive(Debug)]
 #[allow(clippy::large_enum_variant)]
-pub enum FileDefinition {
-    Modules(Vec<ModuleOrAddress>),
-    Main(Main),
-}
-
-#[derive(Debug)]
-pub enum ModuleOrAddress {
+pub enum Definition {
     Module(ModuleDefinition),
-    Address(Loc, Address),
+    Address(Loc, Address, Vec<ModuleDefinition>),
+    Script(Script),
 }
 
 #[derive(Debug)]
-pub struct Main {
+pub struct Script {
+    pub loc: Loc,
     pub uses: Vec<(ModuleIdent, Option<ModuleName>)>,
     pub function: Function,
     pub specs: Vec<SpecBlock>,
@@ -232,15 +228,11 @@ pub enum SpecBlockMember_ {
         type_: Type,
     },
     Include {
-        name: ModuleAccess,
-        type_arguments: Option<Vec<Type>>,
-        arguments: Vec<(Name, Exp)>,
+        exp: Exp,
     },
     Apply {
-        name: ModuleAccess,
-        type_arguments: Option<Vec<Type>>,
+        exp: Exp,
         patterns: Vec<SpecApplyPattern>,
-        arguments: Vec<(Name, Exp)>,
         exclusion_patterns: Vec<SpecApplyPattern>,
     },
     Pragma {
@@ -553,10 +545,6 @@ impl ModuleName {
     pub const SELF_NAME: &'static str = "Self";
 }
 
-impl FunctionName {
-    pub const MAIN_NAME: &'static str = "main";
-}
-
 impl Var {
     pub fn starts_with_underscore(&self) -> bool {
         self.0.value.starts_with('_')
@@ -713,24 +701,26 @@ impl AstDebug for Program {
     }
 }
 
-impl AstDebug for FileDefinition {
+impl AstDebug for Definition {
     fn ast_debug(&self, w: &mut AstWriter) {
         match self {
-            FileDefinition::Main(m) => m.ast_debug(w),
-            FileDefinition::Modules(moras) => {
-                for mora in moras {
-                    mora.ast_debug(w);
-                    w.new_line();
-                    w.new_line();
+            Definition::Address(_, addr, modules) => {
+                w.writeln(&format!("address {} {{", addr));
+                for m in modules {
+                    m.ast_debug(w)
                 }
+                w.writeln("}");
             }
+            Definition::Module(m) => m.ast_debug(w),
+            Definition::Script(m) => m.ast_debug(w),
         }
     }
 }
 
-impl AstDebug for Main {
+impl AstDebug for Script {
     fn ast_debug(&self, w: &mut AstWriter) {
-        let Main {
+        let Script {
+            loc: _loc,
             uses,
             function,
             specs,
@@ -740,17 +730,6 @@ impl AstDebug for Main {
         for spec in specs {
             spec.ast_debug(w);
             w.new_line();
-        }
-    }
-}
-
-impl AstDebug for ModuleOrAddress {
-    fn ast_debug(&self, w: &mut AstWriter) {
-        match self {
-            ModuleOrAddress::Address(_, addr) => {
-                w.writeln(&format!("address {}:", addr));
-            }
-            ModuleOrAddress::Module(m) => m.ast_debug(w),
         }
     }
 }
@@ -921,53 +900,17 @@ impl AstDebug for SpecBlockMember_ {
                 w.write(": ");
                 type_.ast_debug(w);
             }
-            SpecBlockMember_::Include {
-                name,
-                type_arguments,
-                arguments,
-            } => {
+            SpecBlockMember_::Include { exp } => {
                 w.write("include ");
-                name.ast_debug(w);
-                if let Some(ty_args) = type_arguments {
-                    w.write("<");
-                    ty_args.ast_debug(w);
-                    w.write(">");
-                }
-                if !arguments.is_empty() {
-                    w.write("{");
-                    w.list(arguments, ", ", |w, (l, r)| {
-                        w.write(&l.value);
-                        w.write(" : ");
-                        r.ast_debug(w);
-                        true
-                    });
-                    w.write("}");
-                }
+                exp.ast_debug(w);
             }
             SpecBlockMember_::Apply {
-                name,
-                type_arguments,
-                arguments,
+                exp,
                 patterns,
                 exclusion_patterns,
             } => {
                 w.write("apply ");
-                name.ast_debug(w);
-                if let Some(ty_args) = type_arguments {
-                    w.write("<");
-                    ty_args.ast_debug(w);
-                    w.write(">");
-                }
-                if !arguments.is_empty() {
-                    w.write("{");
-                    w.list(arguments, ", ", |w, (l, r)| {
-                        w.write(&l.value);
-                        w.write(" : ");
-                        r.ast_debug(w);
-                        true
-                    });
-                    w.write("}");
-                }
+                exp.ast_debug(w);
                 w.write(" to ");
                 w.list(patterns, ", ", |w, p| {
                     p.ast_debug(w);

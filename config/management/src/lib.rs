@@ -4,37 +4,26 @@
 #![forbid(unsafe_code)]
 
 mod error;
+mod genesis;
+mod layout;
 mod secure_backend;
+mod validator_config;
 
-use crate::{error::Error, secure_backend::SecureBackend};
-use libra_crypto::{ed25519::Ed25519PublicKey, hash::CryptoHash, x25519, ValidCryptoMaterial};
-use libra_network_address::{NetworkAddress, RawNetworkAddress};
+use crate::{error::Error, layout::SetLayout, secure_backend::SecureBackend};
+use libra_crypto::ed25519::Ed25519PublicKey;
+use libra_global_constants::{
+    ASSOCIATION_KEY, CONSENSUS_KEY, EPOCH, FULLNODE_NETWORK_KEY, LAST_VOTED_ROUND, OPERATOR_KEY,
+    OWNER_KEY, PREFERRED_ROUND, VALIDATOR_NETWORK_KEY, WAYPOINT,
+};
 use libra_secure_storage::{Storage, Value};
-use libra_secure_time::{RealTimeService, TimeService};
-use libra_types::{
-    account_address::AccountAddress,
-    transaction::{RawTransaction, SignedTransaction, Transaction},
-    waypoint::Waypoint,
-};
-use std::{
-    convert::{TryFrom, TryInto},
-    fmt::Write,
-    str::FromStr,
-    time::Duration,
-};
+use libra_types::{transaction::Transaction, waypoint::Waypoint};
+use std::{convert::TryInto, fmt::Write, str::FromStr};
 use structopt::StructOpt;
 
-pub mod constants {
-    pub const ASSOCIATION_KEY: &str = "association";
-    pub const CONSENSUS_KEY: &str = "consensus";
-    pub const EPOCH: &str = "epoch";
-    pub const FULLNODE_NETWORK_KEY: &str = "fullnode_network";
-    pub const LAST_VOTED_ROUND: &str = "last_voted_round";
-    pub const OWNER_KEY: &str = "owner";
-    pub const OPERATOR_KEY: &str = "operator";
-    pub const PREFERRED_ROUND: &str = "preferred_round";
-    pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
-    pub const WAYPOINT: &str = "waypoint";
+pub mod management_constants {
+    pub const COMMON_NS: &str = "common";
+    pub const LAYOUT: &str = "layout";
+    pub const VALIDATOR_CONFIG: &str = "validator_config";
 
     pub const GAS_UNIT_PRICE: u64 = 0;
     pub const MAX_GAS_AMOUNT: u64 = 1_000_000;
@@ -44,19 +33,29 @@ pub mod constants {
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Tool used to manage Libra Validators")]
 pub enum Command {
+    #[structopt(about = "Submits an Ed25519PublicKey for the association")]
+    AssociationKey(SecureBackends),
+    #[structopt(about = "Retrieves data from a store to produce genesis")]
+    Genesis(crate::genesis::Genesis),
     #[structopt(about = "Submits an Ed25519PublicKey for the operator")]
     OperatorKey(SecureBackends),
     #[structopt(about = "Submits an Ed25519PublicKey for the owner")]
     OwnerKey(SecureBackends),
+    #[structopt(about = "Submits a Layout doc to a shared storage")]
+    SetLayout(SetLayout),
     #[structopt(about = "Constructs and signs a ValidatorConfig")]
-    ValidatorConfig(ValidatorConfig),
+    ValidatorConfig(crate::validator_config::ValidatorConfig),
     #[structopt(about = "Verifies and prints the current configuration state")]
     Verify(SingleBackend),
 }
 
+#[derive(Debug, PartialEq)]
 pub enum CommandName {
+    AssociationKey,
+    Genesis,
     OperatorKey,
     OwnerKey,
+    SetLayout,
     ValidatorConfig,
     Verify,
 }
@@ -64,8 +63,11 @@ pub enum CommandName {
 impl From<&Command> for CommandName {
     fn from(command: &Command) -> Self {
         match command {
+            Command::AssociationKey(_) => CommandName::AssociationKey,
+            Command::Genesis(_) => CommandName::Genesis,
             Command::OperatorKey(_) => CommandName::OperatorKey,
             Command::OwnerKey(_) => CommandName::OwnerKey,
+            Command::SetLayout(_) => CommandName::SetLayout,
             Command::ValidatorConfig(_) => CommandName::ValidatorConfig,
             Command::Verify(_) => CommandName::Verify,
         }
@@ -75,8 +77,11 @@ impl From<&Command> for CommandName {
 impl std::fmt::Display for CommandName {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let name = match self {
+            CommandName::AssociationKey => "association-key",
+            CommandName::Genesis => "genesis",
             CommandName::OperatorKey => "operator-key",
             CommandName::OwnerKey => "owner-key",
+            CommandName::SetLayout => "set-layout",
             CommandName::ValidatorConfig => "validator-config",
             CommandName::Verify => "verify",
         };
@@ -87,108 +92,79 @@ impl std::fmt::Display for CommandName {
 impl Command {
     pub fn execute(self) -> String {
         match &self {
+            Command::AssociationKey(_) => self.association_key().unwrap().to_string(),
+            Command::Genesis(_) => format!("{:?}", self.genesis().unwrap()),
             Command::OperatorKey(_) => self.operator_key().unwrap().to_string(),
             Command::OwnerKey(_) => self.owner_key().unwrap().to_string(),
+            Command::SetLayout(_) => self.set_layout().unwrap().to_string(),
             Command::ValidatorConfig(_) => format!("{:?}", self.validator_config().unwrap()),
             Command::Verify(_) => self.verify().unwrap(),
         }
     }
 
+    pub fn association_key(self) -> Result<Ed25519PublicKey, Error> {
+        if let Command::AssociationKey(secure_backends) = self {
+            Self::submit_key(ASSOCIATION_KEY, secure_backends)
+        } else {
+            Err(Error::UnexpectedCommand(
+                CommandName::AssociationKey,
+                CommandName::from(&self),
+            ))
+        }
+    }
+
+    pub fn genesis(self) -> Result<Transaction, Error> {
+        if let Command::Genesis(genesis) = self {
+            genesis.execute()
+        } else {
+            Err(Error::UnexpectedCommand(
+                CommandName::Genesis,
+                CommandName::from(&self),
+            ))
+        }
+    }
+
     pub fn operator_key(self) -> Result<Ed25519PublicKey, Error> {
         if let Command::OperatorKey(secure_backends) = self {
-            Self::submit_key(constants::OPERATOR_KEY, secure_backends)
+            Self::submit_key(OPERATOR_KEY, secure_backends)
         } else {
-            let expected = CommandName::OperatorKey.to_string();
-            let actual = CommandName::from(&self).to_string();
-            Err(Error::UnexpectedCommand(expected, actual))
+            Err(Error::UnexpectedCommand(
+                CommandName::OperatorKey,
+                CommandName::from(&self),
+            ))
         }
     }
 
     pub fn owner_key(self) -> Result<Ed25519PublicKey, Error> {
         if let Command::OwnerKey(secure_backends) = self {
-            Self::submit_key(constants::OWNER_KEY, secure_backends)
+            Self::submit_key(OWNER_KEY, secure_backends)
         } else {
-            let expected = CommandName::OwnerKey.to_string();
-            let actual = CommandName::from(&self).to_string();
-            Err(Error::UnexpectedCommand(expected, actual))
+            Err(Error::UnexpectedCommand(
+                CommandName::OwnerKey,
+                CommandName::from(&self),
+            ))
+        }
+    }
+
+    pub fn set_layout(self) -> Result<crate::layout::Layout, Error> {
+        if let Command::SetLayout(set_layout) = self {
+            set_layout.execute()
+        } else {
+            Err(Error::UnexpectedCommand(
+                CommandName::SetLayout,
+                CommandName::from(&self),
+            ))
         }
     }
 
     pub fn validator_config(self) -> Result<Transaction, Error> {
         if let Command::ValidatorConfig(config) = self {
-            let mut storage: Box<dyn Storage> = config.backend.backend.try_into()?;
-            if !storage.available() {
-                return Err(Error::LocalStorageUnavailable);
-            }
-
-            let consensus_key = storage
-                .get_public_key(constants::CONSENSUS_KEY)
-                .map_err(|e| Error::LocalStorageReadError(e.to_string()))?
-                .public_key;
-            let fullnode_network_key = storage
-                .get_public_key(constants::FULLNODE_NETWORK_KEY)
-                .map_err(|e| Error::LocalStorageReadError(e.to_string()))?
-                .public_key;
-            let validator_network_key = storage
-                .get_public_key(constants::VALIDATOR_NETWORK_KEY)
-                .map_err(|e| Error::LocalStorageReadError(e.to_string()))?
-                .public_key;
-
-            let fullnode_address = RawNetworkAddress::try_from(&config.fullnode_address)
-                .expect("Unable to serialize fullnode network address from config");
-            let validator_address = RawNetworkAddress::try_from(&config.validator_address)
-                .expect("Unable to serialize validator network address from config");
-
-            let fullnode_network_key = fullnode_network_key.to_bytes();
-            let fullnode_network_key: x25519::PublicKey = fullnode_network_key
-                .as_ref()
-                .try_into()
-                .expect("Unable to decode x25519 from fullnode_network_key");
-
-            let validator_network_key = validator_network_key.to_bytes();
-            let validator_network_key: x25519::PublicKey = validator_network_key
-                .as_ref()
-                .try_into()
-                .expect("Unable to decode x25519 from validator_network_key");
-
-            let owner_key = storage
-                .get_public_key(constants::OWNER_KEY)
-                .map_err(|e| Error::LocalStorageReadError(e.to_string()))?
-                .public_key;
-
-            // TODO(davidiw): The signing key, parameter 2, will be deleted soon, so this is a
-            // temporary hack to reduce over-engineering.
-            let script = transaction_builder::encode_register_validator_script(
-                consensus_key.to_bytes().to_vec(),
-                owner_key.to_bytes().to_vec(),
-                validator_network_key.to_bytes(),
-                validator_address.into(),
-                fullnode_network_key.to_bytes(),
-                fullnode_address.into(),
-            );
-
-            let sender = config.owner_address;
-            // TODO(davidiw): In genesis this is irrelevant -- afterward we need to obtain the
-            // current sequence number by querying the blockchain.
-            let sequence_number = 0;
-            let expiration_time = RealTimeService::new().now() + constants::TXN_EXPIRATION_SECS;
-            let raw_transaction = RawTransaction::new_script(
-                sender,
-                sequence_number,
-                script,
-                constants::MAX_GAS_AMOUNT,
-                constants::GAS_UNIT_PRICE,
-                Duration::from_secs(expiration_time),
-            );
-            let signature = storage
-                .sign_message(constants::OWNER_KEY, &raw_transaction.hash())
-                .map_err(|e| Error::LocalStorageSigningError(e.to_string()))?;
-            let signed_txn = SignedTransaction::new(raw_transaction, owner_key, signature);
-            Ok(Transaction::UserTransaction(signed_txn))
+            config.execute()
         } else {
-            let expected = CommandName::ValidatorConfig.to_string();
-            let actual = CommandName::from(&self).to_string();
-            Err(Error::UnexpectedCommand(expected, actual))
+            Err(Error::UnexpectedCommand(
+                CommandName::ValidatorConfig,
+                CommandName::from(&self),
+            ))
         }
     }
 
@@ -206,28 +182,20 @@ impl Command {
             writeln!(buffer, "Keys").unwrap();
             writeln!(buffer, "=================================================").unwrap();
 
-            Self::write_key(storage.as_ref(), &mut buffer, constants::CONSENSUS_KEY);
-            Self::write_key(
-                storage.as_ref(),
-                &mut buffer,
-                constants::FULLNODE_NETWORK_KEY,
-            );
-            Self::write_key(storage.as_ref(), &mut buffer, constants::OWNER_KEY);
-            Self::write_key(storage.as_ref(), &mut buffer, constants::OPERATOR_KEY);
-            Self::write_key(
-                storage.as_ref(),
-                &mut buffer,
-                constants::VALIDATOR_NETWORK_KEY,
-            );
+            Self::write_key(storage.as_ref(), &mut buffer, CONSENSUS_KEY);
+            Self::write_key(storage.as_ref(), &mut buffer, FULLNODE_NETWORK_KEY);
+            Self::write_key(storage.as_ref(), &mut buffer, OWNER_KEY);
+            Self::write_key(storage.as_ref(), &mut buffer, OPERATOR_KEY);
+            Self::write_key(storage.as_ref(), &mut buffer, VALIDATOR_NETWORK_KEY);
 
             writeln!(buffer, "=================================================").unwrap();
             writeln!(buffer, "Data").unwrap();
             writeln!(buffer, "=================================================").unwrap();
 
-            Self::write_u64(storage.as_ref(), &mut buffer, constants::EPOCH);
-            Self::write_u64(storage.as_ref(), &mut buffer, constants::LAST_VOTED_ROUND);
-            Self::write_u64(storage.as_ref(), &mut buffer, constants::PREFERRED_ROUND);
-            Self::write_waypoint(storage.as_ref(), &mut buffer, constants::WAYPOINT);
+            Self::write_u64(storage.as_ref(), &mut buffer, EPOCH);
+            Self::write_u64(storage.as_ref(), &mut buffer, LAST_VOTED_ROUND);
+            Self::write_u64(storage.as_ref(), &mut buffer, PREFERRED_ROUND);
+            Self::write_waypoint(storage.as_ref(), &mut buffer, WAYPOINT);
 
             writeln!(buffer, "=================================================").unwrap();
 
@@ -294,8 +262,8 @@ impl Command {
             }
 
             remote
-                .create_with_default_policy(key_name, key)
-                .map_err(|e| Error::LocalStorageReadError(e.to_string()))?;
+                .set(key_name, key)
+                .map_err(|e| Error::RemoteStorageWriteError(e.to_string()))?;
         }
 
         Ok(key)
@@ -304,16 +272,17 @@ impl Command {
 
 #[derive(Debug, StructOpt)]
 pub struct SecureBackends {
-    /// The local secure backend. Secure backends are represented as a
-    /// semi-colon deliminted key value pair: "k0=v0;k1=v1;...".
-    /// The current supported formats are:
+    /// The local secure backend, this is the source of data. Secure
+    /// backends are represented as a semi-colon deliminted key value
+    /// pair: "k0=v0;k1=v1;...".  The current supported formats are:
     ///     Vault: "backend=vault;server=URL;token=TOKEN"
     ///         vault has an optional namespace: "namespace=NAMESPACE"
     ///     InMemory: "backend=memory"
     ///     OnDisk: "backend=disk;path=LOCAL_PATH"
     #[structopt(long, verbatim_doc_comment)]
     local: SecureBackend,
-    /// The remote secure backend. See the comments for the local backend.
+    /// The remote secure backend, this is where data is stored. See
+    /// the comments for the local backend for usage.
     #[structopt(long)]
     remote: Option<SecureBackend>,
 }
@@ -331,19 +300,6 @@ pub struct SingleBackend {
     backend: SecureBackend,
 }
 
-// TODO(davidiw) add operator_address, since that will eventually be the identity producing this.
-#[derive(Debug, StructOpt)]
-pub struct ValidatorConfig {
-    #[structopt(long)]
-    owner_address: AccountAddress,
-    #[structopt(long)]
-    validator_address: NetworkAddress,
-    #[structopt(long)]
-    fullnode_address: NetworkAddress,
-    #[structopt(flatten)]
-    backend: SingleBackend,
-}
-
 /// These tests depends on running Vault, which can be done by using the provided docker run script
 /// in `docker/vault/run.sh`.
 /// Note: Some of these tests may fail if you run them too quickly one after another due to data
@@ -352,8 +308,11 @@ pub struct ValidatorConfig {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+    use crate::management_constants::{COMMON_NS, LAYOUT, VALIDATOR_CONFIG};
+    use libra_network_address::NetworkAddress;
     use libra_secure_storage::{Policy, Value, VaultStorage};
-    use libra_types::transaction::TransactionPayload;
+    use libra_types::account_address::AccountAddress;
+    use std::{fs::File, io::Write};
 
     const VAULT_HOST: &str = "http://localhost:8200";
     const VAULT_ROOT_TOKEN: &str = "root_token";
@@ -361,55 +320,125 @@ pub mod tests {
     #[test]
     #[ignore]
     fn test_end_to_end() {
-        let namespace = "end_to_end";
+        // Each identity works in their own namespace
+        // Alice, Bob, and Carol are operators, implicitly mapped 1:1 with owners.
+        // Dave is the association.
+        // Each user will upload their contents to *_ns + "shared"
+        // Common is used by the technical staff for coordination.
+        let alice_ns = "alice";
+        let bob_ns = "bob";
+        let carol_ns = "carol";
+        let dave_ns = "dave";
+        let shared = "_shared";
+
+        // Step 1) Define and upload the layout specifying which identities have which roles. This
+        // is uplaoded to the common namespace.
+
+        let mut common = default_storage(COMMON_NS.into());
+        common.reset_and_clear().unwrap();
+
+        // Note: owners are irrelevant currently
+        let layout_text = "\
+            operators = [\"alice_shared\", \"bob_shared\", \"carol_shared\"]\n\
+            owners = []\n\
+            association = [\"dave_shared\"]\n\
+        ";
+
+        let temppath = libra_temppath::TempPath::new();
+        temppath.create_as_file().unwrap();
+        let mut file = File::create(temppath.path()).unwrap();
+        file.write_all(&layout_text.to_string().into_bytes())
+            .unwrap();
+        file.sync_all().unwrap();
+
+        set_layout(temppath.path().to_str().unwrap(), COMMON_NS).unwrap();
+
+        // Step 2) Upload the association key:
+
+        let mut association = default_storage(dave_ns.into());
+        initialize_storage(association.as_mut());
+
+        let mut association_shared = default_storage(dave_ns.to_string() + shared);
+        association_shared.reset_and_clear().unwrap();
+
+        association_key(dave_ns, &(dave_ns.to_string() + shared)).unwrap();
+
+        // Step 3) Upload each operators key and then a signed transaction:
+
+        for ns in [alice_ns, bob_ns, carol_ns].iter() {
+            let mut local = default_storage((*ns).to_string());
+            initialize_storage(local.as_mut());
+
+            let mut remote = default_storage((*ns).to_string() + shared);
+            remote.reset_and_clear().unwrap();
+
+            operator_key(ns, &((*ns).to_string() + shared)).unwrap();
+
+            validator_config(
+                AccountAddress::random(),
+                "/ip4/0.0.0.0/tcp/6180".parse().unwrap(),
+                "/ip4/0.0.0.0/tcp/6180".parse().unwrap(),
+                ns,
+                &((*ns).to_string() + shared),
+            )
+            .unwrap();
+        }
+
+        // Step 4) Produce genesis
+
+        genesis().unwrap();
+    }
+
+    #[test]
+    #[ignore]
+    fn test_set_layout() {
+        let namespace = "set_layout";
+
         let mut storage = default_storage(namespace.into());
-        initialize_storage(storage.as_mut());
-        let association_key = storage
-            .get_public_key(constants::ASSOCIATION_KEY)
-            .unwrap()
-            .public_key;
+        storage.reset_and_clear().unwrap();
 
-        let validator_key = storage
-            .get_public_key(constants::OWNER_KEY)
-            .unwrap()
-            .public_key;
+        let temppath = libra_temppath::TempPath::new();
+        set_layout(temppath.path().to_str().unwrap(), namespace).unwrap_err();
 
-        let validator_txn = validator_config(
-            AccountAddress::random(),
-            "/ip4/0.0.0.0/tcp/6180".parse().unwrap(),
-            "/ip4/0.0.0.0/tcp/6180".parse().unwrap(),
-            namespace,
-        );
-
-        let validator_txn = validator_txn.unwrap();
-        let validator_txn = validator_txn.as_signed_user_txn().unwrap().payload();
-        let validator_txn = if let TransactionPayload::Script(script) = validator_txn {
-            script.clone()
-        } else {
-            panic!("Expected TransactionPayload::Script(_)");
-        };
-
-        vm_genesis::encode_genesis_transaction_with_validator(
-            association_key,
-            &[(validator_key, validator_txn)],
-            None,
-        );
+        temppath.create_as_file().unwrap();
+        let mut file = File::create(temppath.path()).unwrap();
+        let layout_text = "\
+            operators = [\"alice\", \"bob\"]\n\
+            owners = [\"carol\"]\n\
+            association = [\"dave\"]\n\
+        ";
+        file.write_all(&layout_text.to_string().into_bytes())
+            .unwrap();
+        file.sync_all().unwrap();
+        set_layout(temppath.path().to_str().unwrap(), namespace).unwrap();
+        let stored_layout = storage.get(LAYOUT).unwrap().value.string().unwrap();
+        assert_eq!(layout_text, stored_layout);
     }
 
     #[test]
     #[ignore]
     fn test_validator_config() {
-        let namespace = "validator_config";
-        let mut storage = default_storage(namespace.into());
-        initialize_storage(storage.as_mut());
+        let local_ns = "local_validator_config";
+        let remote_ns = "remote_validator_config";
+        let mut local = default_storage(local_ns.into());
+        initialize_storage(local.as_mut());
 
-        validator_config(
+        let mut remote = default_storage(remote_ns.into());
+        remote.reset_and_clear().unwrap();
+
+        let local_txn = validator_config(
             AccountAddress::random(),
             "/ip4/0.0.0.0/tcp/6180".parse().unwrap(),
             "/ip4/0.0.0.0/tcp/6180".parse().unwrap(),
-            namespace,
+            local_ns,
+            remote_ns,
         )
         .unwrap();
+
+        let remote_txn = remote.get(VALIDATOR_CONFIG).unwrap().value;
+        let remote_txn = remote_txn.transaction().unwrap();
+
+        assert_eq!(local_txn, remote_txn);
     }
 
     #[test]
@@ -432,13 +461,13 @@ pub mod tests {
     #[test]
     #[ignore]
     fn test_owner_key() {
-        test_key(constants::OWNER_KEY, owner_key);
+        test_key(OWNER_KEY, owner_key);
     }
 
     #[test]
     #[ignore]
     fn test_operator_key() {
-        test_key(constants::OPERATOR_KEY, operator_key);
+        test_key(OPERATOR_KEY, operator_key);
     }
 
     fn test_key(key_name: &str, op: fn(&str, &str) -> Result<Ed25519PublicKey, Error>) {
@@ -479,35 +508,60 @@ pub mod tests {
         let policy = Policy::public();
         storage.reset_and_clear().unwrap();
 
-        storage
-            .create_key(constants::ASSOCIATION_KEY, &policy)
-            .unwrap();
-        storage
-            .create_key(constants::CONSENSUS_KEY, &policy)
-            .unwrap();
-        storage
-            .create_key(constants::FULLNODE_NETWORK_KEY, &policy)
-            .unwrap();
-        storage.create_key(constants::OWNER_KEY, &policy).unwrap();
-        storage
-            .create_key(constants::OPERATOR_KEY, &policy)
-            .unwrap();
-        storage
-            .create_key(constants::VALIDATOR_NETWORK_KEY, &policy)
-            .unwrap();
+        storage.create_key(ASSOCIATION_KEY, &policy).unwrap();
+        storage.create_key(CONSENSUS_KEY, &policy).unwrap();
+        storage.create_key(FULLNODE_NETWORK_KEY, &policy).unwrap();
+        storage.create_key(OWNER_KEY, &policy).unwrap();
+        storage.create_key(OPERATOR_KEY, &policy).unwrap();
+        storage.create_key(VALIDATOR_NETWORK_KEY, &policy).unwrap();
 
-        storage
-            .create(constants::EPOCH, Value::U64(0), &policy)
-            .unwrap();
-        storage
-            .create(constants::LAST_VOTED_ROUND, Value::U64(0), &policy)
-            .unwrap();
-        storage
-            .create(constants::PREFERRED_ROUND, Value::U64(0), &policy)
-            .unwrap();
-        storage
-            .create(constants::WAYPOINT, Value::String("".into()), &policy)
-            .unwrap();
+        storage.set(EPOCH, Value::U64(0)).unwrap();
+        storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
+        storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
+        storage.set(WAYPOINT, Value::String("".into())).unwrap();
+    }
+
+    fn association_key(local_ns: &str, remote_ns: &str) -> Result<Ed25519PublicKey, Error> {
+        let args = format!(
+            "
+                management
+                association-key
+                --local backend={backend};\
+                    server={server};\
+                    token={token};\
+                    namespace={local_ns}
+                --remote backend={backend};\
+                    server={server};\
+                    token={token};\
+                    namespace={remote_ns}\
+            ",
+            backend = crate::secure_backend::VAULT,
+            server = VAULT_HOST,
+            token = VAULT_ROOT_TOKEN,
+            local_ns = local_ns,
+            remote_ns = remote_ns,
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.association_key()
+    }
+
+    fn genesis() -> Result<Transaction, Error> {
+        let args = format!(
+            "
+                management
+                genesis
+                --backend backend={backend};\
+                    server={server};\
+                    token={token}
+            ",
+            backend = crate::secure_backend::VAULT,
+            server = VAULT_HOST,
+            token = VAULT_ROOT_TOKEN,
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.genesis()
     }
 
     fn operator_key(local_ns: &str, remote_ns: &str) -> Result<Ed25519PublicKey, Error> {
@@ -560,11 +614,34 @@ pub mod tests {
         command.owner_key()
     }
 
+    fn set_layout(path: &str, namespace: &str) -> Result<crate::layout::Layout, Error> {
+        let args = format!(
+            "
+                validator_config
+                set-layout
+                --path {path}
+                --backend backend={backend};\
+                    server={server};\
+                    token={token};\
+                    namespace={ns}
+            ",
+            path = path,
+            backend = crate::secure_backend::VAULT,
+            server = VAULT_HOST,
+            token = VAULT_ROOT_TOKEN,
+            ns = namespace,
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.set_layout()
+    }
+
     fn validator_config(
         owner_address: AccountAddress,
         validator_address: NetworkAddress,
         fullnode_address: NetworkAddress,
-        namespace: &str,
+        local_ns: &str,
+        remote_ns: &str,
     ) -> Result<Transaction, Error> {
         let args = format!(
             "
@@ -573,10 +650,14 @@ pub mod tests {
                 --owner-address {owner_address}
                 --validator-address {validator_address}
                 --fullnode-address {fullnode_address}
-                --backend backend={backend};\
+                --local backend={backend};\
                     server={server};\
                     token={token};\
-                    namespace={ns}
+                    namespace={local_ns}
+                --remote backend={backend};\
+                    server={server};\
+                    token={token};\
+                    namespace={remote_ns}\
             ",
             owner_address = owner_address,
             validator_address = validator_address,
@@ -584,7 +665,8 @@ pub mod tests {
             backend = crate::secure_backend::VAULT,
             server = VAULT_HOST,
             token = VAULT_ROOT_TOKEN,
-            ns = namespace,
+            local_ns = local_ns,
+            remote_ns = remote_ns,
         );
 
         let command = Command::from_iter(args.split_whitespace());

@@ -404,9 +404,24 @@ fn serialize_function_definition(
     function_definition: &FunctionDefinition,
 ) -> Result<()> {
     write_u16_as_uleb128(binary, function_definition.function.0)?;
-    binary.push(function_definition.flags)?;
+
+    let is_public = if function_definition.is_public() {
+        FunctionDefinition::PUBLIC
+    } else {
+        0
+    };
+    let is_native = if function_definition.is_native() {
+        FunctionDefinition::NATIVE
+    } else {
+        0
+    };
+    binary.push(is_public | is_native)?;
+
     serialize_acquires(binary, &function_definition.acquires_global_resources)?;
-    serialize_code_unit(binary, &function_definition.code)
+    if let Some(code) = &function_definition.code {
+        serialize_code_unit(binary, code)?;
+    }
+    Ok(())
 }
 
 fn serialize_field_handle(binary: &mut BinaryData, field_handle: &FieldHandle) -> Result<()> {
@@ -675,9 +690,6 @@ fn serialize_instruction_inner(binary: &mut BinaryData, opcode: &Bytecode) -> Re
         Bytecode::Le => binary.push(Opcodes::LE as u8),
         Bytecode::Ge => binary.push(Opcodes::GE as u8),
         Bytecode::Abort => binary.push(Opcodes::ABORT as u8),
-        Bytecode::GetTxnGasUnitPrice => binary.push(Opcodes::GET_TXN_GAS_UNIT_PRICE as u8),
-        Bytecode::GetTxnMaxGasUnits => binary.push(Opcodes::GET_TXN_MAX_GAS_UNITS as u8),
-        Bytecode::GetGasRemaining => binary.push(Opcodes::GET_GAS_REMAINING as u8),
         Bytecode::GetTxnSenderAddress => binary.push(Opcodes::GET_TXN_SENDER as u8),
         Bytecode::Exists(class_idx) => {
             binary.push(Opcodes::EXISTS as u8)?;
@@ -719,8 +731,6 @@ fn serialize_instruction_inner(binary: &mut BinaryData, opcode: &Bytecode) -> Re
             binary.push(Opcodes::MOVE_TO_GENERIC as u8)?;
             write_u16_as_uleb128(binary, class_idx.0)
         }
-        Bytecode::GetTxnSequenceNumber => binary.push(Opcodes::GET_TXN_SEQUENCE_NUMBER as u8),
-        Bytecode::GetTxnPublicKey => binary.push(Opcodes::GET_TXN_PUBLIC_KEY as u8),
         Bytecode::Nop => binary.push(Opcodes::NOP as u8),
     };
     res?;

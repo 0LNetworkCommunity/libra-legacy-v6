@@ -4,7 +4,8 @@
 use anyhow::Result;
 use consensus_types::common::Round;
 use libra_crypto::ed25519::Ed25519PrivateKey;
-use libra_secure_storage::{InMemoryStorage, Policy, Storage, Value};
+use libra_global_constants::{CONSENSUS_KEY, EPOCH, LAST_VOTED_ROUND, PREFERRED_ROUND, WAYPOINT};
+use libra_secure_storage::{InMemoryStorage, Storage, Value};
 use libra_types::waypoint::Waypoint;
 use std::str::FromStr;
 
@@ -16,12 +17,6 @@ use std::str::FromStr;
 pub struct PersistentSafetyStorage {
     internal_store: Box<dyn Storage>,
 }
-
-const CONSENSUS_KEY: &str = "consensus_key";
-const EPOCH: &str = "epoch";
-const LAST_VOTED_ROUND: &str = "last_voted_round";
-const PREFERRED_ROUND: &str = "preferred_round";
-const WAYPOINT: &str = "waypoint";
 
 impl PersistentSafetyStorage {
     pub fn in_memory(private_key: Ed25519PrivateKey) -> Self {
@@ -46,20 +41,11 @@ impl PersistentSafetyStorage {
         private_key: Ed25519PrivateKey,
         waypoint: Waypoint,
     ) -> Result<()> {
-        let perms = Policy::public();
-        internal_store.create_if_not_exists(
-            CONSENSUS_KEY,
-            Value::Ed25519PrivateKey(private_key),
-            &perms,
-        )?;
-        internal_store.create_if_not_exists(EPOCH, Value::U64(1), &perms)?;
-        internal_store.create_if_not_exists(LAST_VOTED_ROUND, Value::U64(0), &perms)?;
-        internal_store.create_if_not_exists(PREFERRED_ROUND, Value::U64(0), &perms)?;
-        internal_store.create_if_not_exists(
-            WAYPOINT,
-            Value::String(waypoint.to_string()),
-            &perms,
-        )?;
+        internal_store.set(CONSENSUS_KEY, Value::Ed25519PrivateKey(private_key))?;
+        internal_store.set(EPOCH, Value::U64(1))?;
+        internal_store.set(LAST_VOTED_ROUND, Value::U64(0))?;
+        internal_store.set(PREFERRED_ROUND, Value::U64(0))?;
+        internal_store.set(WAYPOINT, Value::String(waypoint.to_string()))?;
         Ok(())
     }
 

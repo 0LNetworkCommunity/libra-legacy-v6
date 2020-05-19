@@ -1,8 +1,9 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use executor::{BlockExecutor, Executor};
-use executor_utils::create_storage_service_and_executor;
+use executor::{db_bootstrapper::bootstrap_db_if_empty, Executor};
+use executor_types::BlockExecutor;
+use libra_config::{config::NodeConfig, utils::get_genesis_txn};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     hash::{CryptoHash, HashValue},
@@ -19,10 +20,18 @@ use libra_types::{
     },
 };
 use libra_vm::LibraVM;
+use libradb::LibraDB;
 use rand::{rngs::StdRng, SeedableRng};
-use std::{collections::BTreeMap, convert::TryFrom, path::PathBuf, sync::mpsc};
-use storage_interface::DbReader;
-use transaction_builder::{encode_create_account_script, encode_transfer_with_metadata_script};
+use simple_storage_client::SimpleStorageClient;
+use std::{
+    collections::BTreeMap,
+    convert::TryFrom,
+    path::PathBuf,
+    sync::{mpsc, Arc},
+};
+use storage_interface::{DbReader, DbReaderWriter};
+use storage_service::start_simple_storage_service_with_db;
+use transaction_builder::{encode_mint_script, encode_transfer_with_metadata_script};
 
 struct AccountData {
     private_key: Ed25519PrivateKey,
@@ -68,7 +77,7 @@ impl TransactionGenerator {
         for _i in 0..num_accounts {
             let private_key = Ed25519PrivateKey::generate(&mut rng);
             let public_key = private_key.public_key();
-            let address = AccountAddress::from_public_key(&public_key);
+            let address = libra_types::account_address::from_public_key(&public_key);
             let account = AccountData {
                 private_key,
                 public_key,
@@ -103,7 +112,7 @@ impl TransactionGenerator {
                     (i * block_size + j + 1) as u64,
                     &self.genesis_key,
                     self.genesis_key.public_key(),
-                    encode_create_account_script(
+                    encode_mint_script(
                         lbr_type_tag(),
                         &account.address,
                         account.auth_key_prefix(),
@@ -142,6 +151,7 @@ impl TransactionGenerator {
                         &receiver.address,
                         receiver.auth_key_prefix(),
                         1, /* amount */
+                        vec![],
                         vec![],
                     ),
                 );
@@ -250,6 +260,25 @@ impl TransactionExecutor {
     }
 }
 
+fn create_storage_service_and_executor(
+    config: &NodeConfig,
+) -> (Arc<dyn DbReader>, Executor<LibraVM>) {
+    let (db, db_rw) = DbReaderWriter::wrap(
+        LibraDB::open(
+            &config.storage.dir(),
+            false, /* readonly */
+            None,  /* pruner */
+        )
+        .expect("DB should open."),
+    );
+    bootstrap_db_if_empty::<LibraVM>(&db_rw, get_genesis_txn(config).unwrap()).unwrap();
+
+    let _handle = start_simple_storage_service_with_db(config, db.clone());
+    let executor = Executor::new(SimpleStorageClient::new(&config.storage.simple_address).into());
+
+    (db, executor)
+}
+
 /// Runs the benchmark with given parameters.
 pub fn run_benchmark(
     num_accounts: usize,
@@ -313,7 +342,7 @@ fn create_transaction(
         sequence_number,
         program,
         1_000_000, /* max_gas_amount */
-        1,         /* gas_unit_price */
+        0,         /* gas_unit_price */
         expiration_time,
     );
 

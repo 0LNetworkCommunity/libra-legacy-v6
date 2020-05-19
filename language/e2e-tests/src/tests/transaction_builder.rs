@@ -10,6 +10,7 @@
 
 use crate::{
     account::{Account, AccountData},
+    common_transactions::mint_txn,
     executor::FakeExecutor,
     keygen::KeyGen,
 };
@@ -26,10 +27,15 @@ fn register_preburn_burn() {
 
     // account to initiate preburning
     let preburner = {
-        let data = AccountData::new(1_000_000, 0);
+        let data = AccountData::new(0, 0);
         executor.add_account_data(&data);
         data.into_account()
     };
+
+    // We need to mint in order to bump the market cap
+    let txn = mint_txn(&association, &preburner, 1, 1_000_000);
+    let output = executor.execute_transaction(txn);
+    executor.apply_write_set(output.write_set());
 
     // Register preburner
     executor.execute_and_apply(preburner.signed_script_txn(
@@ -50,12 +56,12 @@ fn register_preburn_burn() {
     // Complete the first request by burning
     executor.execute_and_apply(association.signed_script_txn(
         encode_burn_script(account_config::lbr_type_tag(), *preburner.address()),
-        1,
+        2,
     ));
     // Complete the second request by cancelling
     executor.execute_and_apply(association.signed_script_txn(
         encode_cancel_burn_script(account_config::lbr_type_tag(), *preburner.address()),
-        2,
+        3,
     ));
 }
 
@@ -97,5 +103,39 @@ fn approved_payment() {
             signature.to_bytes().to_vec(),
         ),
         0,
+    ));
+}
+
+#[test]
+fn publish_rotate_shared_ed25519_public_key() {
+    let mut executor = FakeExecutor::from_genesis_file();
+    let mut publisher = {
+        let data = AccountData::new(1_000_000, 0);
+        executor.add_account_data(&data);
+        data.into_account()
+    };
+    // generate the key to initialize the SharedEd25519PublicKey resource
+    let mut keygen = KeyGen::from_seed([9u8; 32]);
+    let (private_key1, public_key1) = keygen.generate_keypair();
+    executor.execute_and_apply(publisher.signed_script_txn(
+        encode_publish_shared_ed25519_public_key_script(public_key1.to_bytes().to_vec()),
+        0,
+    ));
+    // must rotate the key locally or sending subsequent txes will fail
+    publisher.rotate_key(private_key1, public_key1);
+
+    // send another transaction rotating to a new key
+    let (private_key2, public_key2) = keygen.generate_keypair();
+    executor.execute_and_apply(publisher.signed_script_txn(
+        encode_rotate_shared_ed25519_public_key_script(public_key2.to_bytes().to_vec()),
+        1,
+    ));
+    // must rotate the key in account data or sending subsequent txes will fail
+    publisher.rotate_key(private_key2, public_key2.clone());
+
+    // test that sending still works
+    executor.execute_and_apply(publisher.signed_script_txn(
+        encode_rotate_shared_ed25519_public_key_script(public_key2.to_bytes().to_vec()),
+        2,
     ));
 }

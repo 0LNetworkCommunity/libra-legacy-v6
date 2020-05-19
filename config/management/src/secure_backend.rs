@@ -21,10 +21,10 @@ pub const VAULT: &str = "vault";
 /// config::SecureBackend type to parse.
 ///
 /// Example: backend=vault;server=http://127.0.0.1:8080;token=123456
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct SecureBackend {
-    backend: String,
-    parameters: HashMap<String, String>,
+    pub backend: String,
+    pub parameters: HashMap<String, String>,
 }
 
 impl SecureBackend {
@@ -88,7 +88,6 @@ impl TryInto<config::SecureBackend> for SecureBackend {
                     .remove("token")
                     .ok_or_else(|| Error::BackendParsingError("missing token".into()))?;
                 config::SecureBackend::Vault(VaultConfig {
-                    default: false,
                     namespace: self.parameters.remove("namespace"),
                     server,
                     // TODO(davidiw) Make this a path to a file

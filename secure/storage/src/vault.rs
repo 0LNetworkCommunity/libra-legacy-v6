@@ -38,24 +38,7 @@ impl VaultStorage {
         self.namespace.clone()
     }
 
-    /// Erase all secrets and keys from the vault storage. If a namespace was specified on vault
-    /// storage creation, only the secrets associated with that namespace are removed. Use with
-    /// caution.
-    pub fn reset(&self) -> Result<(), Error> {
-        if let Some(namespace) = &self.namespace {
-            let key_path = format!("{}/", namespace);
-            let crypto_path = format!("{}__", namespace);
-            self.reset_kv(&key_path)?;
-            self.reset_crypto(&crypto_path)?;
-            self.reset_policies(&key_path)?;
-            self.reset_policies(&crypto_path)
-        } else {
-            self.reset_kv("")?;
-            self.reset_crypto("")?;
-            self.reset_policies("")
-        }
-    }
-
+    #[cfg(any(test, feature = "testing"))]
     fn reset_kv(&self, path: &str) -> Result<(), Error> {
         let secrets = self.client.list_secrets(path)?;
         for secret in secrets {
@@ -68,7 +51,8 @@ impl VaultStorage {
         Ok(())
     }
 
-    fn reset_crypto(&self, prefix: &str) -> Result<(), Error> {
+    #[cfg(any(test, feature = "testing"))]
+    fn reset_crypto(&self) -> Result<(), Error> {
         let keys = match self.client.list_keys() {
             Ok(keys) => keys,
             // No keys were found, so there's no need to reset.
@@ -76,14 +60,13 @@ impl VaultStorage {
             Err(e) => return Err(e.into()),
         };
         for key in keys {
-            if (!key.contains("__") && prefix.is_empty()) || key.starts_with(prefix) {
-                self.client.delete_key(&key)?;
-            }
+            self.client.delete_key(&key)?;
         }
         Ok(())
     }
 
-    fn reset_policies(&self, prefix: &str) -> Result<(), Error> {
+    #[cfg(any(test, feature = "testing"))]
+    fn reset_policies(&self) -> Result<(), Error> {
         let policies = match self.client.list_policies() {
             Ok(policies) => policies,
             Err(libra_vault_client::Error::NotFound(_, _)) => return Ok(()),
@@ -96,10 +79,7 @@ impl VaultStorage {
                 continue;
             }
 
-            let ns_policy = policy.contains("__") || policy.contains('/');
-            if (!ns_policy && prefix.is_empty()) || policy.starts_with(prefix) {
-                self.client.delete_policy(&policy)?;
-            }
+            self.client.delete_policy(&policy)?;
         }
         Ok(())
     }
@@ -138,7 +118,7 @@ impl VaultStorage {
     /// Create a new policy in Vault, see the explanation for Policy for how the data is
     /// structured. Vault does not distingush a create and update. An update must first read the
     /// existing policy, amend the contents,  and then be applied via this API.
-    fn set_policy(
+    pub fn set_policy(
         &self,
         policy_name: &str,
         engine: &VaultEngine,
@@ -190,7 +170,12 @@ impl VaultStorage {
             .version)
     }
 
-    fn set_policies(&self, name: &str, engine: &VaultEngine, policy: &Policy) -> Result<(), Error> {
+    pub fn set_policies(
+        &self,
+        name: &str,
+        engine: &VaultEngine,
+        policy: &Policy,
+    ) -> Result<(), Error> {
         for perm in &policy.permissions {
             match &perm.id {
                 Identity::User(id) => self.set_policy(id, engine, name, &perm.capabilities)?,
@@ -225,36 +210,20 @@ impl KVStorage for VaultStorage {
         self.client.unsealed().unwrap_or(false) && self.client.transit_enabled().unwrap_or(false)
     }
 
-    fn create(&mut self, key: &str, value: Value, policy: &Policy) -> Result<(), Error> {
-        // Vault internally does not distinguish creation versus update except by permissions. So we
-        // simulate that by first getting the key. If it doesn't exist, we're okay.
-        match self.get_secret(&key) {
-            Ok(_) => return Err(Error::KeyAlreadyExists(key.to_string())),
-            Err(Error::KeyNotSet(_)) => (/* Expected this for new keys! */),
-            Err(e) => return Err(e),
-        }
-
-        self.set_secret(&key, value)?;
-        if !policy.is_default() {
-            self.set_policies(key, &VaultEngine::KVSecrets, policy)?;
-        }
-        Ok(())
-    }
-
     fn get(&self, key: &str) -> Result<GetResponse, Error> {
         self.get_secret(&key)
     }
 
     fn set(&mut self, key: &str, value: Value) -> Result<(), Error> {
-        // Vault internally does not distinguish create versus udpate except by permissions. So we
-        // simulate that by first getting the key. If it exists, we can update it.
-        self.get_secret(&key)?;
         self.set_secret(&key, value)?;
         Ok(())
     }
 
+    #[cfg(any(test, feature = "testing"))]
     fn reset_and_clear(&mut self) -> Result<(), Error> {
-        self.reset()
+        self.reset_kv("")?;
+        self.reset_crypto()?;
+        self.reset_policies()
     }
 }
 
@@ -332,7 +301,7 @@ impl CryptoStorage for VaultStorage {
     }
 }
 
-enum VaultEngine {
+pub enum VaultEngine {
     KVSecrets,
     Transit,
 }

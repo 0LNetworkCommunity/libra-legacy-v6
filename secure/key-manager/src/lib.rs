@@ -19,11 +19,12 @@
 //! KeyManager talks to its own storage through the `LibraSecureStorage::Storage trait.
 #![forbid(unsafe_code)]
 
-use crate::libra_interface::LibraInterface;
+use crate::{counters::COUNTERS, libra_interface::LibraInterface};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey,
 };
+use libra_global_constants::{CONSENSUS_KEY, OPERATOR_KEY};
 use libra_logger::info;
 use libra_secure_storage::Storage;
 use libra_secure_time::TimeService;
@@ -34,19 +35,14 @@ use libra_types::{
 use std::time::Duration;
 use thiserror::Error;
 
+pub mod counters;
 pub mod libra_interface;
 
 #[cfg(test)]
 mod tests;
 
-pub const VALIDATOR_KEY: &str = "validator";
-pub const CONSENSUS_KEY: &str = "consensus";
 const GAS_UNIT_PRICE: u64 = 0;
 const MAX_GAS_AMOUNT: u64 = 400_000;
-const ROTATION_PERIOD_SECS: u64 = 604_800; // 1 week
-const SLEEP_PERIOD_SECS: u64 = 600; // 10 minutes, after which the key manager will awaken again
-const TXN_EXPIRATION_SECS: u64 = 3600; // 1 hour, we'll try again after that
-const TXN_RETRY_SECS: u64 = 3600; // 1 hour retry period
 
 /// Defines actions that KeyManager should perform after a check of all associated state.
 #[derive(Debug, PartialEq)]
@@ -62,8 +58,6 @@ pub enum Action {
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
-    #[error("Unknown error: {0}")]
-    UnknownError(String),
     #[error("Key mismatch, config: {0}, info: {0}")]
     ConfigInfoKeyMismatch(Ed25519PublicKey, Ed25519PublicKey),
     #[error("Key mismatch, config: {0}, storage: {0}")]
@@ -78,6 +72,8 @@ pub enum Error {
     SecureStorageError(#[from] libra_secure_storage::Error),
     #[error("ValidatorInfo not found in ValidatorConfig: {0}")]
     ValidatorInfoNotFound(AccountAddress),
+    #[error("Unknown error: {0}")]
+    UnknownError(String),
 }
 
 #[cfg(test)]
@@ -93,6 +89,9 @@ pub struct KeyManager<LI, S, T> {
     storage: S,
     time_service: T,
     last_checked_libra_timestamp: u64,
+    rotation_period_secs: u64, // The frequency by which to rotate all keys
+    sleep_period_secs: u64,    // The amount of time to sleep between key management checks
+    txn_expiration_secs: u64,  // The time after which a rotation transaction expires
 }
 
 impl<LI, S, T> KeyManager<LI, S, T>
@@ -101,13 +100,24 @@ where
     S: Storage,
     T: TimeService,
 {
-    pub fn new(account: AccountAddress, libra: LI, storage: S, time_service: T) -> Self {
+    pub fn new(
+        account: AccountAddress,
+        libra: LI,
+        storage: S,
+        time_service: T,
+        rotation_period_secs: u64,
+        sleep_period_secs: u64,
+        txn_expiration_secs: u64,
+    ) -> Self {
         Self {
             account,
             libra,
             storage,
             time_service,
             last_checked_libra_timestamp: 0,
+            rotation_period_secs,
+            sleep_period_secs,
+            txn_expiration_secs,
         }
     }
 
@@ -121,28 +131,23 @@ where
             info!("Checking the status of the keys.");
             self.execute_once()?;
 
-            info!("Going to sleep for {} seconds.", SLEEP_PERIOD_SECS);
-            self.time_service.sleep(SLEEP_PERIOD_SECS);
+            info!("Going to sleep for {} seconds.", self.sleep_period_secs);
+            COUNTERS.sleeps.inc();
+            self.time_service.sleep(self.sleep_period_secs);
         }
     }
 
     /// Checks the current state of the validator keys and performs any actions that might be
     /// required (e.g., performing a key rotation).
     pub fn execute_once(&mut self) -> Result<(), Error> {
-        let status = self.evaluate_status()?;
-        if status != Action::NoAction {
-            info!("The following actions need to be performed: {:?}.", status);
-            self.perform_action(status)?;
-        } else {
-            info!("No actions need to be performed.");
-        }
-        Ok(())
+        let action = self.evaluate_status()?;
+        self.perform_action(action)
     }
 
     pub fn compare_storage_to_config(&self) -> Result<(), Error> {
         let storage_key = self.storage.get_public_key(CONSENSUS_KEY)?.public_key;
         let validator_config = self.libra.retrieve_validator_config(self.account)?;
-        let config_key = validator_config.consensus_pubkey;
+        let config_key = validator_config.consensus_public_key;
 
         if storage_key == config_key {
             return Ok(());
@@ -154,7 +159,7 @@ where
         let validator_info = self.libra.retrieve_validator_info(self.account)?;
         let info_key = validator_info.consensus_public_key();
         let validator_config = self.libra.retrieve_validator_config(self.account)?;
-        let config_key = validator_config.consensus_pubkey;
+        let config_key = validator_config.consensus_public_key;
 
         if &config_key == info_key {
             return Ok(());
@@ -178,6 +183,7 @@ where
 
     pub fn resubmit_consensus_key_transaction(&self) -> Result<(), Error> {
         let storage_key = self.storage.get_public_key(CONSENSUS_KEY)?.public_key;
+        COUNTERS.consensus_rotation_tx_resubmissions.inc();
         self.submit_key_rotation_transaction(storage_key)
             .map(|_| ())
     }
@@ -185,6 +191,7 @@ where
     pub fn rotate_consensus_key(&mut self) -> Result<Ed25519PublicKey, Error> {
         let new_key = self.storage.rotate_key(CONSENSUS_KEY)?;
         info!("Successfully rotated the consensus key in secure storage.");
+        COUNTERS.completed_consensus_key_rotations.inc();
         self.submit_key_rotation_transaction(new_key)
     }
 
@@ -192,9 +199,9 @@ where
         &self,
         new_key: Ed25519PublicKey,
     ) -> Result<Ed25519PublicKey, Error> {
-        let account_prikey = self.storage.export_private_key(VALIDATOR_KEY)?;
+        let account_prikey = self.storage.export_private_key(OPERATOR_KEY)?;
         let seq_id = self.libra.retrieve_sequence_number(self.account)?;
-        let expiration = Duration::from_secs(self.time_service.now() + TXN_EXPIRATION_SECS);
+        let expiration = Duration::from_secs(self.time_service.now() + self.txn_expiration_secs);
         let txn =
             build_rotation_transaction(self.account, seq_id, &account_prikey, &new_key, expiration);
         self.libra.submit_transaction(txn)?;
@@ -230,6 +237,7 @@ where
 
         // If this is inconsistent, then we are waiting on a reconfiguration...
         if let Err(Error::ConfigInfoKeyMismatch(..)) = self.compare_info_to_config() {
+            COUNTERS.waiting_on_consensus_reconfiguration.inc();
             return Ok(Action::NoAction);
         }
 
@@ -237,14 +245,14 @@ where
 
         // If this is inconsistent, then the transaction either failed or was never submitted.
         if let Err(Error::ConfigStorageKeyMismatch(..)) = self.compare_storage_to_config() {
-            return if last_rotation + TXN_RETRY_SECS <= self.time_service.now() {
+            return if last_rotation + self.txn_expiration_secs <= self.time_service.now() {
                 Ok(Action::SubmitKeyRotationTransaction)
             } else {
                 Ok(Action::NoAction)
             };
         }
 
-        if last_rotation + ROTATION_PERIOD_SECS <= self.time_service.now() {
+        if last_rotation + self.rotation_period_secs <= self.time_service.now() {
             Ok(Action::FullKeyRotation)
         } else {
             Ok(Action::NoAction)
@@ -253,9 +261,19 @@ where
 
     pub fn perform_action(&mut self, action: Action) -> Result<(), Error> {
         match action {
-            Action::FullKeyRotation => self.rotate_consensus_key().map(|_| ()),
-            Action::SubmitKeyRotationTransaction => self.resubmit_consensus_key_transaction(),
-            Action::NoAction => Ok(()),
+            Action::FullKeyRotation => {
+                info!("A full consensus key rotation needs to be performed.");
+                self.rotate_consensus_key().map(|_| ())
+            }
+            Action::SubmitKeyRotationTransaction => {
+                info!("The consensus key rotation transaction needs to be resubmitted");
+                self.resubmit_consensus_key_transaction()
+            }
+            Action::NoAction => {
+                info!("No actions need to be performed.");
+                COUNTERS.no_actions_required.inc();
+                Ok(())
+            }
         }
     }
 }

@@ -1,5 +1,10 @@
-address 0x1:
+address 0x1 {
 module TestMutRefs {
+
+    spec module {
+        pragma verify = true;
+    }
+
 
     struct T { value: u64 }
 
@@ -130,4 +135,5 @@ module TestMutRefsUser {
         TestMutRefs::increment(&mut x);
         TestMutRefs::delete(x);
     }
+}
 }

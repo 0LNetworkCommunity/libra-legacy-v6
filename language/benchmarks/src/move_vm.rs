@@ -5,18 +5,17 @@ use anyhow::Result;
 use bytecode_verifier::VerifiedModule;
 use criterion::Criterion;
 use libra_state_view::StateView;
-use libra_types::{
-    access_path::AccessPath, account_address::AccountAddress, language_storage::ModuleId,
-};
+use libra_types::{access_path::AccessPath, account_address::AccountAddress};
 use move_core_types::{
     gas_schedule::{GasAlgebra, GasUnits},
     identifier::{IdentStr, Identifier},
+    language_storage::ModuleId,
 };
 use move_lang::{compiled_unit::CompiledUnit, shared::Address};
 use move_vm_runtime::MoveVM;
 use move_vm_state::{data_cache::BlockDataCache, execution_context::TransactionExecutionContext};
+use move_vm_types::{gas_schedule::zero_cost_schedule, transaction_metadata::TransactionMetadata};
 use std::path::PathBuf;
-use vm::{gas_schedule::zero_cost_schedule, transaction_metadata::TransactionMetadata};
 
 /// Entry point for the bench, provide a function name to invoke in Module Bench in bench.move.
 pub fn bench(c: &mut Criterion, fun: &str) {

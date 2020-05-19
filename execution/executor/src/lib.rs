@@ -14,7 +14,8 @@ pub mod db_bootstrapper;
 use anyhow::{bail, ensure, format_err, Result};
 use debug_interface::prelude::*;
 use executor_types::{
-    ExecutedTrees, ProcessedVMOutput, ProofReader, StateComputeResult, TransactionData,
+    BlockExecutor, ChunkExecutor, Error, ExecutedTrees, ProcessedVMOutput, ProofReader,
+    StateComputeResult, TransactionData,
 };
 use libra_crypto::{
     hash::{CryptoHash, EventAccumulatorHasher, TransactionAccumulatorHasher},
@@ -23,7 +24,6 @@ use libra_crypto::{
 use libra_logger::prelude::*;
 use libra_types::{
     account_address::AccountAddress,
-    account_config,
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
     contract_event::ContractEvent,
@@ -51,52 +51,6 @@ use storage_interface::{state_view::VerifiedStateView, DbReaderWriter, TreeState
 
 static OP_COUNTERS: Lazy<libra_metrics::OpMetrics> =
     Lazy::new(|| libra_metrics::OpMetrics::new_and_registered("executor"));
-
-pub trait ChunkExecutor: Send {
-    /// Verifies the transactions based on the provided proofs and ledger info. If the transactions
-    /// are valid, executes them and commits immediately if execution results match the proofs.
-    /// Returns a vector of reconfiguration events in the chunk
-    fn execute_and_commit_chunk(
-        &mut self,
-        txn_list_with_proof: TransactionListWithProof,
-        // Target LI that has been verified independently: the proofs are relative to this version.
-        verified_target_li: LedgerInfoWithSignatures,
-        // An optional end of epoch LedgerInfo. We do not allow chunks that end epoch without
-        // carrying any epoch change LI.
-        epoch_change_li: Option<LedgerInfoWithSignatures>,
-    ) -> Result<Vec<ContractEvent>>;
-}
-
-pub trait BlockExecutor: Send {
-    /// Reset the internal state including cache with newly fetched latest committed block from storage.
-    fn reset(&mut self) -> Result<()>;
-
-    /// Executes a block.
-    fn execute_block(
-        &mut self,
-        block: (HashValue, Vec<Transaction>),
-        parent_block_id: HashValue,
-    ) -> Result<StateComputeResult>;
-
-    /// Saves eligible blocks to persistent storage.
-    /// If we have multiple blocks and not all of them have signatures, we may send them to storage
-    /// in a few batches. For example, if we have
-    /// ```text
-    /// A <- B <- C <- D <- E
-    /// ```
-    /// and only `C` and `E` have signatures, we will send `A`, `B` and `C` in the first batch,
-    /// then `D` and `E` later in the another batch.
-    /// Commits a block and all its ancestors in a batch manner.
-    ///
-    /// Returns `Ok(Result<Vec<Transaction>, Vec<ContractEvents>)` if successful,
-    /// where Vec<Transaction> is a vector of transactions that were kept from the submitted blocks, and
-    /// Vec<ContractEvents> is a vector of reconfiguration events in the submitted blocks
-    fn commit_blocks(
-        &mut self,
-        block_ids: Vec<HashValue>,
-        ledger_info_with_sigs: LedgerInfoWithSignatures,
-    ) -> Result<(Vec<Transaction>, Vec<ContractEvent>)>;
-}
 
 /// `Executor` implements all functionalities the execution module needs to provide.
 pub struct Executor<V> {
@@ -128,7 +82,7 @@ where
         }
     }
 
-    fn reset_cache(&mut self) -> Result<()> {
+    fn reset_cache(&mut self) -> Result<(), Error> {
         let startup_info = self
             .db
             .reader
@@ -327,7 +281,7 @@ where
                 .any(|event| *event.key() == new_epoch_event_key)
             {
                 let validator_set = account_to_state
-                    .get(&account_config::validator_set_address())
+                    .get(&on_chain_config::config_address())
                     .map(|state| {
                         state
                             .get_validator_set()?
@@ -335,7 +289,7 @@ where
                     })
                     .ok_or_else(|| format_err!("ValidatorSet account does not exist"))??;
                 let configuration = account_to_state
-                    .get(&account_config::association_address())
+                    .get(&on_chain_config::config_address())
                     .map(|state| {
                         state
                             .get_configuration_resource()?
@@ -449,7 +403,7 @@ where
             .collect()
     }
 
-    fn get_executed_trees(&self, block_id: HashValue) -> Result<ExecutedTrees> {
+    fn get_executed_trees(&self, block_id: HashValue) -> Result<ExecutedTrees, Error> {
         let executed_trees = if block_id == self.cache.committed_block_id() {
             self.cache.committed_trees().clone()
         } else {
@@ -646,17 +600,19 @@ impl<V: VMExecutor> ChunkExecutor for Executor<V> {
 }
 
 impl<V: VMExecutor> BlockExecutor for Executor<V> {
-    // Reset executor state.
-    fn reset(&mut self) -> Result<()> {
+    fn committed_block_id(&mut self) -> Result<HashValue, Error> {
+        Ok(Self::committed_block_id(self))
+    }
+
+    fn reset(&mut self) -> Result<(), Error> {
         self.reset_cache()
     }
 
-    /// Executes a block.
     fn execute_block(
         &mut self,
         block: (HashValue, Vec<Transaction>),
         parent_block_id: HashValue,
-    ) -> Result<StateComputeResult> {
+    ) -> Result<StateComputeResult, Error> {
         let (block_id, transactions) = block;
         let _timer = OP_COUNTERS.timer("block_execute_time_s");
         let parent_block_executed_trees = self.get_executed_trees(parent_block_id)?;
@@ -665,7 +621,7 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
         let vm_outputs = {
             trace_code_block!("executor::execute_block", {"block", block_id});
             let _timer = OP_COUNTERS.timer("vm_execute_block_time_s");
-            V::execute_block(transactions.clone(), &state_view)?
+            V::execute_block(transactions.clone(), &state_view).map_err(anyhow::Error::from)?
         };
 
         trace_code_block!("executor::process_vm_outputs", {"block", block_id});
@@ -701,7 +657,7 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
         &mut self,
         block_ids: Vec<HashValue>,
         ledger_info_with_sigs: LedgerInfoWithSignatures,
-    ) -> Result<(Vec<Transaction>, Vec<ContractEvent>)> {
+    ) -> Result<(Vec<Transaction>, Vec<ContractEvent>), Error> {
         let block_id_to_commit = ledger_info_with_sigs.ledger_info().consensus_block_id();
         debug!("Received request to commit block {:x}.", block_id_to_commit);
 
@@ -714,7 +670,7 @@ impl<V: VMExecutor> BlockExecutor for Executor<V> {
         let arc_blocks = block_ids
             .iter()
             .map(|id| self.cache.get_block(id))
-            .collect::<Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>, Error>>()?;
         let blocks = arc_blocks
             .iter()
             .map(|b| b.lock().unwrap())

@@ -45,6 +45,9 @@ pub struct FunctionSourceMap<Location: Clone + Eq> {
     /// Note that type parameters need to be added in the order of their declaration
     pub type_parameters: Vec<SourceName<Location>>,
 
+    pub parameters: Vec<SourceName<Location>>,
+
+    // pub parameters: Vec<SourceName<Location>>,
     /// The index into the vector is the locals index. The corresponding `(Identifier, Location)` tuple
     /// is the name and location of the local.
     pub locals: Vec<SourceName<Location>>,
@@ -59,8 +62,9 @@ pub struct FunctionSourceMap<Location: Clone + Eq> {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SourceMap<Location: Clone + Eq> {
-    /// The name <address.module_name> for module/script that this source map is for
-    pub module_name: (AccountAddress, Identifier),
+    /// The name <address.module_name> for module that this source map is for
+    /// None if it is a script
+    pub module_name_opt: Option<(AccountAddress, Identifier)>,
 
     // A mapping of StructDefinitionIndex to source map for each struct/resource
     struct_map: BTreeMap<TableIndex, StructSourceMap<Location>>,
@@ -160,6 +164,7 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
         Self {
             decl_location,
             type_parameters: Vec::new(),
+            parameters: Vec::new(),
             locals: Vec::new(),
             code_map: BTreeMap::new(),
             nops: BTreeMap::new(),
@@ -204,6 +209,10 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
         self.locals.push(name);
     }
 
+    pub fn add_parameter_mapping(&mut self, name: SourceName<Location>) {
+        self.parameters.push(name)
+    }
+
     /// Recall that we are using a segment tree. We therefore lookup the location for the code
     /// offset by performing a range query for the largest number less than or equal to the code
     /// offset passed in.
@@ -214,13 +223,19 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
             .map(|(_, vl)| vl.clone())
     }
 
-    pub fn get_local_name(&self, local_index: u64) -> Option<SourceName<Location>> {
-        self.locals.get(local_index as usize).cloned()
+    pub fn get_parameter_or_local_name(&self, idx: u64) -> Option<SourceName<Location>> {
+        let idx = idx as usize;
+        if idx < self.parameters.len() {
+            self.parameters.get(idx).cloned()
+        } else {
+            self.locals.get(idx - self.parameters.len()).cloned()
+        }
     }
 
     pub fn make_local_name_to_index_map(&self) -> BTreeMap<&String, LocalIndex> {
         self.locals
             .iter()
+            .chain(self.parameters.iter())
             .enumerate()
             .map(|(i, (n, _))| (n, i as LocalIndex))
             .collect()
@@ -233,7 +248,6 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
         default_loc: Location,
     ) -> Result<()> {
         let function_handle = module.function_handle_at(function_def.function);
-        let function_code = &function_def.code;
 
         // Generate names for each type parameter
         for i in 0..function_handle.type_parameters.len() {
@@ -241,8 +255,8 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
             self.add_type_parameter((name, default_loc.clone()))
         }
 
-        if !function_def.is_native() {
-            let locals = module.signature_at(function_code.locals);
+        if let Some(code) = &function_def.code {
+            let locals = module.signature_at(code.locals);
             for i in 0..locals.0.len() {
                 let name = format!("loc{}", i);
                 self.add_local_mapping((name, default_loc.clone()))
@@ -263,12 +277,17 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
         let FunctionSourceMap {
             decl_location,
             type_parameters,
+            parameters,
             locals,
             code_map,
             nops,
         } = self;
         let decl_location = f(decl_location);
         let type_parameters = type_parameters
+            .into_iter()
+            .map(|n| remap_locations_source_name(n, f))
+            .collect();
+        let parameters = parameters
             .into_iter()
             .map(|n| remap_locations_source_name(n, f))
             .collect();
@@ -280,6 +299,7 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
         FunctionSourceMap {
             decl_location,
             type_parameters,
+            parameters,
             locals,
             code_map,
             nops,
@@ -288,10 +308,13 @@ impl<Location: Clone + Eq> FunctionSourceMap<Location> {
 }
 
 impl<Location: Clone + Eq> SourceMap<Location> {
-    pub fn new(module_name: QualifiedModuleIdent) -> Self {
-        let ident = Identifier::new(module_name.name.into_inner()).unwrap();
+    pub fn new(module_name_opt: Option<QualifiedModuleIdent>) -> Self {
+        let module_name_opt = module_name_opt.map(|module_name| {
+            let ident = Identifier::new(module_name.name.into_inner()).unwrap();
+            (module_name.address, ident)
+        });
         Self {
-            module_name: (module_name.address, ident),
+            module_name_opt,
             struct_map: BTreeMap::new(),
             function_map: BTreeMap::new(),
         }
@@ -386,14 +409,26 @@ impl<Location: Clone + Eq> SourceMap<Location> {
         Ok(())
     }
 
-    pub fn get_local_name(
+    pub fn add_parameter_mapping(
+        &mut self,
+        fdef_idx: FunctionDefinitionIndex,
+        name: SourceName<Location>,
+    ) -> Result<()> {
+        let func_entry = self.function_map.get_mut(&fdef_idx.0).ok_or_else(|| {
+            format_err!("Tried to add parameter mapping to undefined function index")
+        })?;
+        func_entry.add_parameter_mapping(name);
+        Ok(())
+    }
+
+    pub fn get_parameter_or_local_name(
         &self,
         fdef_idx: FunctionDefinitionIndex,
         index: u64,
     ) -> Result<SourceName<Location>> {
         self.function_map
             .get(&fdef_idx.0)
-            .and_then(|function_source_map| function_source_map.get_local_name(index))
+            .and_then(|function_source_map| function_source_map.get_parameter_or_local_name(index))
             .ok_or_else(|| format_err!("Tried to get local name at undefined function index"))
     }
 
@@ -481,7 +516,7 @@ impl<Location: Clone + Eq> SourceMap<Location> {
         let address = *module.address_identifier_at(module_handle.address);
         let module_ident = QualifiedModuleIdent::new(module_name, address);
 
-        let mut empty_source_map = Self::new(module_ident);
+        let mut empty_source_map = Self::new(Some(module_ident));
 
         for (function_idx, function_def) in module.function_defs().iter().enumerate() {
             empty_source_map.add_top_level_function_mapping(
@@ -519,7 +554,7 @@ impl<Location: Clone + Eq> SourceMap<Location> {
         f: &mut impl FnMut(Location) -> Other,
     ) -> SourceMap<Other> {
         let SourceMap {
-            module_name,
+            module_name_opt,
             struct_map,
             function_map,
         } = self;
@@ -532,7 +567,7 @@ impl<Location: Clone + Eq> SourceMap<Location> {
             .map(|(n, m)| (n, m.remap_locations(f)))
             .collect();
         SourceMap {
-            module_name,
+            module_name_opt,
             struct_map,
             function_map,
         }

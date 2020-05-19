@@ -1,78 +1,56 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_types::{contract_event, transaction};
-use proptest::{
-    prelude::*,
-    test_runner::{Config, FileFailurePersistence, TestRunner},
+use libra_crypto::{
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
+    hash::{CryptoHasher, TestOnlyHasher},
+    multi_ed25519::{MultiEd25519PublicKey, MultiEd25519Signature},
+    traits::{SigningKey, Uniform},
 };
-use serde_reflection::{Registry, Samples, Tracer, TracerConfig};
-use std::sync::{Arc, Mutex};
+use libra_types::{contract_event, event, transaction, write_set};
+use move_core_types::language_storage;
+use rand::{rngs::StdRng, SeedableRng};
+use serde_reflection::{Registry, Result, Samples, Tracer, TracerConfig};
 
 /// Default output file.
 pub fn output_file() -> Option<&'static str> {
     Some("tests/staged/libra.yaml")
 }
 
-pub fn get_registry(_name: String, skip_deserialize: bool) -> Registry {
-    let (mut tracer, samples) = proptest_serialization_tracing();
-    if !skip_deserialize {
-        deserialization_tracing(&mut tracer, &samples);
-    }
-    tracer.registry().unwrap()
+/// Record sample values for crypto types used by transactions.
+fn trace_crypto_values(tracer: &mut Tracer, samples: &mut Samples) -> Result<()> {
+    let mut hasher = TestOnlyHasher::default();
+    hasher.write(b"Test message");
+    let hashed_message = hasher.finish();
+
+    let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+    let private_key = Ed25519PrivateKey::generate(&mut rng);
+    let public_key: Ed25519PublicKey = (&private_key).into();
+    let signature = private_key.sign_message(&hashed_message);
+
+    tracer.trace_value(samples, &hashed_message)?;
+    tracer.trace_value(samples, &public_key)?;
+    tracer.trace_value::<MultiEd25519PublicKey>(samples, &public_key.into())?;
+    tracer.trace_value(samples, &signature)?;
+    tracer.trace_value::<MultiEd25519Signature>(samples, &signature.into())?;
+    Ok(())
 }
 
-/// Which Libra values to record with the serialization tracing API.
-///
-/// This step is useful to inject well-formed values that must pass
-/// custom-validation checks (e.g. keys).
-fn proptest_serialization_tracing() -> (Tracer, Samples) {
-    let mut runner = TestRunner::new(Config {
-        failure_persistence: Some(Box::new(FileFailurePersistence::Off)),
-        ..Config::default()
-    });
+pub fn get_registry() -> Result<Registry> {
+    let mut tracer =
+        Tracer::new(TracerConfig::default().is_human_readable(lcs::is_human_readable()));
+    let mut samples = Samples::new();
+    // 1. Record samples for types with custom deserializers.
+    trace_crypto_values(&mut tracer, &mut samples)?;
+    tracer.trace_value(&mut samples, &event::EventKey::random())?;
 
-    let tracer = Arc::new(Mutex::new(Tracer::new(
-        TracerConfig::default().is_human_readable(lcs::is_human_readable()),
-    )));
-    let samples = Arc::new(Mutex::new(Samples::new()));
-
-    runner
-        .run(&any::<transaction::Transaction>(), |v| {
-            tracer
-                .lock()
-                .unwrap()
-                .trace_value(&mut samples.lock().unwrap(), &v)?;
-            Ok(())
-        })
-        .unwrap();
-
-    runner
-        .run(&any::<contract_event::ContractEvent>(), |v| {
-            tracer
-                .lock()
-                .unwrap()
-                .trace_value(&mut samples.lock().unwrap(), &v)?;
-            Ok(())
-        })
-        .unwrap();
-
-    // Recover the Arc-mutex-ed tracer.
-    (
-        Arc::try_unwrap(tracer).unwrap().into_inner().unwrap(),
-        Arc::try_unwrap(samples).unwrap().into_inner().unwrap(),
-    )
-}
-
-/// Which Libra types to record with the deserialization tracing API.
-///
-/// This step is useful to guarantee coverage of the analysis but it may
-/// fail if the previous step missed some custom types.
-fn deserialization_tracing(tracer: &mut Tracer, samples: &Samples) {
-    tracer
-        .trace_type::<transaction::Transaction>(&samples)
-        .unwrap();
-    tracer
-        .trace_type::<contract_event::ContractEvent>(&samples)
-        .unwrap();
+    // 2. Trace the main entry point(s) + every enum separately.
+    tracer.trace_type::<contract_event::ContractEvent>(&samples)?;
+    tracer.trace_type::<language_storage::TypeTag>(&samples)?;
+    tracer.trace_type::<transaction::Transaction>(&samples)?;
+    tracer.trace_type::<transaction::TransactionArgument>(&samples)?;
+    tracer.trace_type::<transaction::TransactionPayload>(&samples)?;
+    tracer.trace_type::<transaction::authenticator::TransactionAuthenticator>(&samples)?;
+    tracer.trace_type::<write_set::WriteOp>(&samples)?;
+    tracer.registry()
 }

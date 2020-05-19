@@ -44,7 +44,12 @@ impl<'a> StackUsageVerifier<'a> {
     }
 
     fn verify_block(&self, block_id: BlockId, cfg: &dyn ControlFlowGraph) -> VMResult<()> {
-        let code = &self.function_definition.code.code;
+        let code = &self
+            .function_definition
+            .code
+            .as_ref()
+            .expect("Abstract interpreter should only run on non-native functions")
+            .code;
         let mut stack_size_increment = 0;
         let block_start = cfg.block_start(block_id);
         for i in block_start..=cfg.block_end(block_id) {
@@ -96,11 +101,6 @@ impl<'a> StackUsageVerifier<'a> {
             | Bytecode::MoveLoc(_)
             | Bytecode::MutBorrowLoc(_)
             | Bytecode::ImmBorrowLoc(_)
-            | Bytecode::GetTxnGasUnitPrice
-            | Bytecode::GetTxnMaxGasUnits
-            | Bytecode::GetGasRemaining
-            | Bytecode::GetTxnPublicKey
-            | Bytecode::GetTxnSequenceNumber
             | Bytecode::GetTxnSenderAddress => (0, 1),
 
             // Instructions that pop and push once

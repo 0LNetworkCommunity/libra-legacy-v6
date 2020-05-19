@@ -1,7 +1,12 @@
 // A minimized version of the MarketCap verification problem.
-address 0x0:
+address 0x0 {
 
 module TestMarketCap {
+
+    spec module {
+        pragma verify = true;
+    }
+
 
     spec module {
         // SPEC: sum of values of all coins.
@@ -20,7 +25,6 @@ module TestMarketCap {
         // maintain true sum_of_coins
         invariant pack sum_of_coins = sum_of_coins + value;
         invariant unpack sum_of_coins = sum_of_coins - value;
-        invariant update sum_of_coins = sum_of_coins - old(value) + value;
     }
 
     resource struct MarketCap {
@@ -49,4 +53,6 @@ module TestMarketCap {
          aborts_if coin_ref.value + check.value / 2 > max_u64();
          ensures coin_ref.value == old(coin_ref.value) + check.value / 2;
      }
+}
+
 }

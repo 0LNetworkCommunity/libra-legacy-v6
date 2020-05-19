@@ -10,7 +10,7 @@ publish = false
 edition = "2018"
 
 [dependencies]
-futures = "0.3.0"
+futures = "0.3.5"
 jemallocator = { version = "0.3.2", features = ["profiling", "unprefixed_malloc_on_supported_platforms"] }
 rayon = "1.2.0"
 structopt = "0.3.14"
@@ -20,10 +20,12 @@ tonic = "0.2"
 admission-control-proto = { path = "../admission-control/admission-control-proto", version = "0.1.0" }
 admission-control-service = { path = "../admission-control/admission-control-service", version = "0.1.0" }
 libra-config = { path = "../config", version = "0.1.0" }
+libradb = { path = "../storage/libradb", version = "0.1.0" }
 consensus = { path = "../consensus", version = "0.1.0" }
 crash-handler = { path = "../common/crash-handler", version = "0.1.0" }
 debug-interface = { path = "../common/debug-interface", version = "0.1.0" }
 executor = { path = "../execution/executor", version = "0.1.0" }
+executor-types = { path = "../execution/executor-types", version = "0.1.0" }
 libra-logger = { path = "../common/logger", version = "0.1.0" }
 libra-mempool = { path = "../mempool", version = "0.1.0" }
 libra-metrics = { path = "../common/metrics", version = "0.1.0" }
@@ -33,7 +35,6 @@ onchain-discovery = { path = "../network/onchain-discovery", version = "0.1.0" }
 libra-json-rpc = { path = "../json-rpc", version = "0.1.0" }
 simple-storage-client = { path = "../storage/simple-storage-client", version = "0.1.0" }
 state-synchronizer = { path = "../state-synchronizer", version = "0.1.0" }
-storage-client = { path = "../storage/storage-client", version = "0.1.0" }
 storage-interface= { path = "../storage/storage-interface", version = "0.1.0" }
 storage-service = { path = "../storage/storage-service", version = "0.1.0" }
 subscription-service = { path = "../common/subscription-service", version = "0.1.0" }

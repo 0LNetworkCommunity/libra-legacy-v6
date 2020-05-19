@@ -3,9 +3,13 @@
 
 //! Project and package linters that run queries on guppy.
 
-use crate::config::EnforcedAttributesConfig;
-use guppy::graph::BuildTargetId;
-use std::{collections::HashMap, ffi::OsStr};
+use crate::config::{EnforcedAttributesConfig, OverlayConfig};
+use guppy::{graph::feature::FeatureFilterFn, Version};
+use std::{
+    collections::{BTreeMap, HashMap},
+    ffi::OsStr,
+    iter,
+};
 use x_lint::prelude::*;
 
 /// Ban certain crates from being used as direct dependencies.
@@ -43,14 +47,12 @@ impl<'cfg> ProjectLinter for BannedDirectDeps<'cfg> {
 
         for (package, message) in banned_packages {
             // Look at the reverse direct dependencies of this package.
-            let dep_links = package_graph
-                .reverse_dep_links(package.id())
-                .expect("valid package ID");
-            for link in dep_links {
-                if let Some(workspace_path) = link.from.workspace_path() {
+            for link in package.reverse_direct_links() {
+                let from = link.from();
+                if let Some(workspace_path) = from.workspace_path() {
                     out.write_kind(
                         LintKind::Package {
-                            name: link.from.name(),
+                            name: from.name(),
                             workspace_path,
                         },
                         LintLevel::Error,
@@ -183,11 +185,8 @@ impl PackageLinter for WorkspaceHack {
         ctx: &PackageContext<'l>,
         out: &mut LintFormatter<'l, '_>,
     ) -> Result<RunStatus<'l>> {
-        let package_id = ctx.metadata().id();
-        let pkg_graph = ctx
-            .project_ctx()
-            .package_graph()
-            .expect("can't find package graph");
+        let package = ctx.metadata();
+        let pkg_graph = ctx.package_graph();
         let workspace_hack_id = pkg_graph
             .workspace()
             .member_by_name("libra-workspace-hack")
@@ -195,17 +194,13 @@ impl PackageLinter for WorkspaceHack {
             .id();
 
         // libra-workspace-hack does not need to depend on itself
-        if package_id == workspace_hack_id {
+        if package.id() == workspace_hack_id {
             return Ok(RunStatus::Executed);
         }
 
-        let has_links = pkg_graph
-            .dep_links(package_id)
-            .expect("valid package ID")
-            .next()
-            .is_some();
+        let has_links = package.direct_links().next().is_some();
         let has_hack_dep = pkg_graph
-            .directly_depends_on(package_id, workspace_hack_id)
+            .directly_depends_on(package.id(), workspace_hack_id)
             .expect("valid package ID");
         if has_links && !has_hack_dep {
             out.write(LintLevel::Error, "missing libra-workspace-hack dependency");
@@ -233,21 +228,167 @@ impl PackageLinter for IrrelevantBuildDeps {
     ) -> Result<RunStatus<'l>> {
         let metadata = ctx.metadata();
 
-        // TODO: clean up with guppy 0.4.
-        let has_build_script = metadata.build_target(&BuildTargetId::BuildScript).is_some();
+        let has_build_dep = metadata
+            .direct_links()
+            .any(|link| link.build().is_present());
 
-        let has_build_dep = ctx
-            .project_ctx()
-            .package_graph()
-            .unwrap()
-            .dep_links(metadata.id())
-            .unwrap()
-            .any(|link| link.edge.build().is_some());
-
-        if !has_build_script && has_build_dep {
+        if !metadata.has_build_script() && has_build_dep {
             out.write(LintLevel::Error, "build dependencies but no build script");
         }
 
         Ok(RunStatus::Executed)
+    }
+}
+
+/// Ensure that packages within the workspace only depend on one version of a third-party crate.
+#[derive(Debug)]
+pub struct DirectDepDups;
+
+impl Linter for DirectDepDups {
+    fn name(&self) -> &'static str {
+        "direct-dep-dups"
+    }
+}
+
+impl ProjectLinter for DirectDepDups {
+    fn run<'l>(
+        &self,
+        ctx: &ProjectContext<'l>,
+        out: &mut LintFormatter<'l, '_>,
+    ) -> Result<RunStatus<'l>> {
+        let package_graph = ctx.package_graph()?;
+
+        // This is a map of direct deps by name -> version -> packages that depend on it.
+        let mut direct_deps: BTreeMap<&str, BTreeMap<&Version, Vec<&str>>> = BTreeMap::new();
+        package_graph.query_workspace().resolve_with_fn(|_, link| {
+            // Collect direct dependencies of workspace packages.
+            let (from, to) = link.endpoints();
+            if from.in_workspace() && !to.in_workspace() {
+                direct_deps
+                    .entry(to.name())
+                    .or_default()
+                    .entry(to.version())
+                    .or_default()
+                    .push(from.name());
+            }
+            // query_workspace + preventing further traversals will mean that only direct
+            // dependencies are considered.
+            false
+        });
+        for (direct_dep, versions) in direct_deps {
+            if versions.len() > 1 {
+                let mut msg = format!("duplicate direct dependency '{}':\n", direct_dep);
+                for (version, packages) in versions {
+                    msg.push_str(&format!("  * {} (", version));
+                    msg.push_str(&packages.join(", "));
+                    msg.push_str(")\n");
+                }
+                out.write(LintLevel::Error, msg);
+            }
+        }
+
+        Ok(RunStatus::Executed)
+    }
+}
+
+/// Assertions for "overlay" features.
+///
+/// An "overlay" feature is a feature name used throughout the codebase, whose purpose it is to
+/// augment each package with extra code (e.g. proptest generators). Overlay features shouldn't be
+/// enabled by anything except overlay features on workspace members, but may be enabled by default
+/// by test-only or other non-default workspace members.
+#[derive(Debug)]
+pub struct OverlayFeatures<'cfg> {
+    config: &'cfg OverlayConfig,
+}
+
+impl<'cfg> OverlayFeatures<'cfg> {
+    pub fn new(config: &'cfg OverlayConfig) -> Self {
+        Self { config }
+    }
+
+    fn is_overlay(&self, feature: Option<&str>) -> bool {
+        match feature {
+            Some(feature) => self.config.features.iter().any(|f| *f == feature),
+            // The base feature isn't banned.
+            None => false,
+        }
+    }
+}
+
+impl<'cfg> Linter for OverlayFeatures<'cfg> {
+    fn name(&self) -> &'static str {
+        "overlay-features"
+    }
+}
+
+impl<'cfg> PackageLinter for OverlayFeatures<'cfg> {
+    fn run<'l>(
+        &self,
+        ctx: &PackageContext<'l>,
+        out: &mut LintFormatter<'l, '_>,
+    ) -> Result<RunStatus<'l>> {
+        let package = ctx.metadata();
+        if !ctx.is_default_member() {
+            return Ok(RunStatus::Skipped(SkipReason::UnsupportedPackage(
+                package.id(),
+            )));
+        }
+
+        let filter = FeatureFilterFn::new(|_, feature_id| {
+            // Accept all features except for overlay ones.
+            !self.is_overlay(feature_id.feature())
+        });
+
+        let package_graph = ctx.package_graph();
+
+        let package_query = package_graph
+            .query_forward(iter::once(package.id()))
+            .expect("valid package ID");
+        let feature_query = package_graph
+            .feature_graph()
+            .query_packages(&package_query, filter);
+
+        let mut overlays: Vec<(Option<&str>, &str, Option<&str>)> = vec![];
+
+        feature_query.resolve_with_fn(|_, link| {
+            // Consider the dependency even if it's dev-only since the v1 resolver unifies these.
+            // TODO: might be able to relax this for the v2 resolver.
+            let (from, to) = link.endpoints();
+            let to_package = to.package();
+            if to_package.in_workspace() && self.is_overlay(to.feature_id().feature()) {
+                overlays.push((
+                    from.feature_id().feature(),
+                    to_package.name(),
+                    to.feature_id().feature(),
+                ));
+            }
+
+            // Don't need to traverse past direct dependencies.
+            false
+        });
+
+        if !overlays.is_empty() {
+            let mut msg = "overlay features enabled by default:\n".to_string();
+            for (from_feature, to_package, to_feature) in overlays {
+                msg.push_str(&format!(
+                    "  * {} -> {}/{}\n",
+                    feature_str(from_feature),
+                    to_package,
+                    feature_str(to_feature)
+                ));
+            }
+            msg.push_str("Use a line in the [features] section instead.\n");
+            out.write(LintLevel::Error, msg);
+        }
+
+        Ok(RunStatus::Executed)
+    }
+}
+
+fn feature_str(feature: Option<&str>) -> &str {
+    match feature {
+        Some(feature) => feature,
+        None => "[base]",
     }
 }

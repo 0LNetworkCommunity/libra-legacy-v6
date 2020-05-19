@@ -1,7 +1,8 @@
-address 0x0:
+address 0x0 {
 
 module Unhosted {
     use 0x0::AccountLimits;
+    use 0x0::Testnet;
     use 0x0::Transaction;
 
     // An unhosted account is subject to account holding/velocity limits.
@@ -21,6 +22,7 @@ module Unhosted {
     }
 
     public fun create(): T {
+        Transaction::assert(Testnet::is_testnet(), 10041);
         T { limit_tracker: AccountLimits::create() }
     }
 
@@ -38,4 +40,5 @@ module Unhosted {
     public fun limits_addr(): address {
         0xA550C18
     }
+}
 }

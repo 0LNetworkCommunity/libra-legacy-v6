@@ -20,15 +20,15 @@ use libra_network_address::RawNetworkAddress;
 use libra_types::{
     account_config,
     contract_event::ContractEvent,
-    language_storage::{StructTag, TypeTag},
-    on_chain_config::{new_epoch_event_key, VMPublishingOption},
+    on_chain_config::{config_address, new_epoch_event_key, VMPublishingOption},
     transaction::{authenticator::AuthenticationKey, ChangeSet, Script, Transaction},
 };
-use move_vm_state::{data_cache::BlockDataCache, execution_context::ExecutionContext};
-use move_vm_types::{chain_state::ChainState, values::Value};
+use move_core_types::language_storage::{StructTag, TypeTag};
+use move_vm_state::data_cache::BlockDataCache;
+use move_vm_types::{chain_state::ChainState, loaded_data::types::FatStructType, values::Value};
 use once_cell::sync::Lazy;
 use rand::prelude::*;
-use std::convert::TryFrom;
+use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
 
@@ -36,9 +36,6 @@ use vm::access::ModuleAccess;
 const GENESIS_SEED: [u8; 32] = [42; 32];
 
 const GENESIS_MODULE_NAME: &str = "Genesis";
-
-/// The initial balance of the association account.
-pub const ASSOCIATION_INIT_BALANCE: u64 = 1_000_000_000_000_000;
 
 pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::new(|| {
     let mut rng = StdRng::from_seed(GENESIS_SEED);
@@ -68,7 +65,7 @@ pub fn encode_genesis_change_set(
     validators: &[ValidatorRegistration],
     stdlib_modules: &[VerifiedModule],
     vm_publishing_option: VMPublishingOption,
-) -> ChangeSet {
+) -> (ChangeSet, BTreeMap<Vec<u8>, FatStructType>) {
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
     for module in stdlib_modules {
@@ -88,7 +85,8 @@ pub fn encode_genesis_change_set(
 
     // generate the genesis WriteSet
     create_and_initialize_main_accounts(&mut genesis_context, &public_key, &lbr_ty);
-    create_and_initialize_validator_and_discovery_set(&mut genesis_context, &validators, &lbr_ty);
+    create_and_initialize_validator_set(&mut genesis_context, &lbr_ty);
+    initialize_validators(&mut genesis_context, &validators, &lbr_ty);
     setup_libra_version(&mut genesis_context);
     setup_vm_config(&mut genesis_context, vm_publishing_option);
     reconfigure(&mut genesis_context);
@@ -97,11 +95,14 @@ pub fn encode_genesis_change_set(
     publish_stdlib(&mut interpreter_context, stdlib_modules);
 
     verify_genesis_write_set(interpreter_context.events());
-    ChangeSet::new(
-        interpreter_context
-            .make_write_set()
-            .expect("Genesis WriteSet failure"),
-        interpreter_context.events().to_vec(),
+    (
+        ChangeSet::new(
+            interpreter_context
+                .make_write_set()
+                .expect("Genesis WriteSet failure"),
+            interpreter_context.events().to_vec(),
+        ),
+        interpreter_context.get_type_map(),
     )
 }
 
@@ -111,12 +112,15 @@ pub fn encode_genesis_transaction(
     stdlib_modules: &[VerifiedModule],
     vm_publishing_option: VMPublishingOption,
 ) -> Transaction {
-    Transaction::WaypointWriteSet(encode_genesis_change_set(
-        &public_key,
-        validators,
-        stdlib_modules,
-        vm_publishing_option,
-    ))
+    Transaction::WaypointWriteSet(
+        encode_genesis_change_set(
+            &public_key,
+            validators,
+            stdlib_modules,
+            vm_publishing_option,
+        )
+        .0,
+    )
 }
 
 /// Create an initialize Association, Transaction Fee and Core Code accounts.
@@ -135,12 +139,32 @@ fn create_and_initialize_main_accounts(
 
     context.exec(
         GENESIS_MODULE_NAME,
+        "initialize_association",
+        vec![],
+        vec![Value::address(root_association_address)],
+    );
+
+    context.set_sender(config_address());
+    context.exec(GENESIS_MODULE_NAME, "initialize_config", vec![], vec![]);
+
+    context.set_sender(root_association_address);
+    context.exec(
+        "LibraConfig",
+        "grant_creator_privilege",
+        vec![],
+        vec![Value::address(config_address())],
+    );
+    context.set_sender(config_address());
+    context.exec("Libra", "initialize", vec![], vec![]);
+
+    context.set_sender(root_association_address);
+    context.exec(
+        GENESIS_MODULE_NAME,
         "initialize_accounts",
         vec![],
         vec![
             Value::address(root_association_address),
             Value::address(burn_account_address),
-            Value::u64(ASSOCIATION_INIT_BALANCE),
             Value::vector_u8(genesis_auth_key.clone()),
         ],
     );
@@ -174,6 +198,14 @@ fn create_and_initialize_main_accounts(
         GENESIS_MODULE_NAME,
         "initialize_txn_fee_account",
         vec![],
+        vec![Value::vector_u8(genesis_auth_key.clone())],
+    );
+
+    context.set_sender(config_address());
+    context.exec(
+        "LibraAccount",
+        "rotate_authentication_key",
+        vec![],
         vec![Value::vector_u8(genesis_auth_key)],
     );
 
@@ -195,51 +227,10 @@ fn create_and_initialize_main_accounts(
     );
 }
 
-/// Create and initialize validator and discovery set.
-fn create_and_initialize_validator_and_discovery_set(
-    genesis_context: &mut GenesisContext,
-    validators: &[ValidatorRegistration],
-    lbr_ty: &TypeTag,
-) {
-    create_and_initialize_validator_set(genesis_context, lbr_ty);
-    create_and_initialize_discovery_set(genesis_context, lbr_ty);
-    initialize_validators(genesis_context, &validators, lbr_ty);
-}
-
 /// Create and initialize the validator set.
-fn create_and_initialize_validator_set(context: &mut GenesisContext, lbr_ty: &TypeTag) {
-    let validator_set_address = account_config::validator_set_address();
-    context.set_sender(validator_set_address);
-
-    context.exec(
-        "LibraAccount",
-        "create_unhosted_account",
-        vec![lbr_ty.clone()],
-        vec![
-            Value::address(validator_set_address),
-            Value::vector_u8(validator_set_address.to_vec()),
-        ],
-    );
-
+fn create_and_initialize_validator_set(context: &mut GenesisContext, _lbr_ty: &TypeTag) {
+    context.set_sender(config_address());
     context.exec("LibraSystem", "initialize_validator_set", vec![], vec![]);
-}
-
-/// Create and initialize the discovery set.
-fn create_and_initialize_discovery_set(context: &mut GenesisContext, lbr_ty: &TypeTag) {
-    let discovery_set_address = account_config::discovery_set_address();
-    context.set_sender(discovery_set_address);
-
-    context.exec(
-        "LibraAccount",
-        "create_unhosted_account",
-        vec![lbr_ty.clone()],
-        vec![
-            Value::address(discovery_set_address),
-            Value::vector_u8(discovery_set_address.to_vec()),
-        ],
-    );
-
-    context.exec("LibraSystem", "initialize_discovery_set", vec![], vec![]);
 }
 
 /// Initialize each validator.
@@ -257,7 +248,7 @@ fn initialize_validators(
 
         context.exec(
             "LibraAccount",
-            "create_unhosted_account",
+            "create_testnet_account",
             vec![lbr_ty.clone()],
             vec![
                 Value::address(account),
@@ -272,7 +263,7 @@ fn initialize_validators(
         // Finally, add the account to the validator set
         context.exec(
             "LibraSystem",
-            "add_validator_no_discovery_event",
+            "add_validator",
             vec![],
             vec![Value::address(account)],
         );
@@ -280,7 +271,7 @@ fn initialize_validators(
 }
 
 fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishingOption) {
-    context.set_sender(account_config::association_address());
+    context.set_sender(config_address());
 
     let option_bytes =
         lcs::to_bytes(&publishing_option).expect("Cannot serialize publishing option");
@@ -297,7 +288,7 @@ fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishing
 }
 
 fn setup_libra_version(context: &mut GenesisContext) {
-    context.set_sender(account_config::association_address());
+    context.set_sender(config_address());
     context.exec("LibraVersion", "initialize", vec![], vec![]);
 }
 
@@ -324,25 +315,22 @@ fn reconfigure(context: &mut GenesisContext) {
     context.set_sender(account_config::association_address());
     context.exec("LibraTimestamp", "initialize", vec![], vec![]);
     context.exec("LibraConfig", "emit_reconfiguration_event", vec![], vec![]);
-    context.exec("LibraSystem", "emit_discovery_set_change", vec![], vec![]);
 }
 
 /// Verify the consistency of the genesis `WriteSet`
 fn verify_genesis_write_set(events: &[ContractEvent]) {
     // Sanity checks on emitted events:
-    // (1) The genesis tx should emit 4 events: a pair of payment sent/received events for
-    // minting to the genesis address, a ValidatorSetChangeEvent, and a
-    // DiscoverySetChangeEvent.
+    // (1) The genesis tx should emit 1 event: a NewEpochEvent.
     assert_eq!(
         events.len(),
-        4,
-        "Genesis transaction should emit four events, but found {} events: {:?}",
+        1,
+        "Genesis transaction should emit one event, but found {} events: {:?}",
         events.len(),
         events,
     );
 
-    // (2) The third event should be the new epoch event
-    let new_epoch_event = &events[2];
+    // (2) The first event should be the new epoch event
+    let new_epoch_event = &events[0];
     assert_eq!(
         *new_epoch_event.key(),
         new_epoch_event_key(),
@@ -370,6 +358,21 @@ pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) ->
         stdlib_modules,
         VMPublishingOption::Open,
     )
+    .0
+}
+
+/// Generate an artificial genesis `ChangeSet` for testing
+pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, FatStructType> {
+    let stdlib_modules = stdlib_modules(StdLibOptions::Staged);
+    let swarm = libra_config::generator::validator_swarm_for_testing(10);
+
+    encode_genesis_change_set(
+        &GENESIS_KEYPAIR.1,
+        &validator_registrations(&swarm.nodes),
+        stdlib_modules,
+        VMPublishingOption::Open,
+    )
+    .1
 }
 
 pub fn validator_registrations(node_configs: &[NodeConfig]) -> Vec<ValidatorRegistration> {
@@ -377,7 +380,7 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> Vec<ValidatorRegi
         .iter()
         .map(|n| {
             let test = n.test.as_ref().unwrap();
-            let account_key = test.account_keypair.as_ref().unwrap().public_key();
+            let account_key = test.operator_keypair.as_ref().unwrap().public_key();
             let consensus_key = test.consensus_keypair.as_ref().unwrap().public_key();
             let network = n.validator_network.as_ref().unwrap();
             let network_keypairs = network.network_keypairs.as_ref().unwrap();

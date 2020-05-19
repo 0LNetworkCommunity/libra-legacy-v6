@@ -7,8 +7,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use itertools::Itertools;
 #[allow(unused_imports)]
-use log::{debug, info};
-use num::Zero;
+use log::{debug, info, log, warn, Level};
 
 use spec_lang::{
     env::{GlobalEnv, Loc, ModuleEnv, StructEnv, TypeParameter},
@@ -36,7 +35,6 @@ use crate::{
     code_writer::CodeWriter,
     spec_translator::SpecTranslator,
 };
-use spec_lang::ast::Value;
 
 pub struct BoogieTranslator<'env> {
     env: &'env GlobalEnv,
@@ -123,17 +121,14 @@ impl<'env> ModuleTranslator<'env> {
         }
     }
 
-    /// Returns true if for the module no code should be produced because its already defined
-    /// in the prelude.
-    pub fn is_module_provided_by_prelude(&self) -> bool {
-        let name = self.module_env.get_name();
-        self.module_env.symbol_pool().string(name.name()).as_str() == "Vector"
-            && name.addr().is_zero()
-    }
-
     /// Translates this module.
     fn translate(&mut self) {
-        info!(
+        log!(
+            if self.module_env.is_in_dependency() {
+                Level::Debug
+            } else {
+                Level::Info
+            },
             "translating module {}",
             self.module_env
                 .get_name()
@@ -144,9 +139,6 @@ impl<'env> ModuleTranslator<'env> {
         let spec_translator = SpecTranslator::new(self.writer, &self.module_env, false);
         spec_translator.translate_spec_vars();
         spec_translator.translate_spec_funs();
-        if self.is_module_provided_by_prelude() {
-            return;
-        }
         self.translate_structs();
         self.translate_functions();
     }
@@ -197,21 +189,30 @@ impl<'env> ModuleTranslator<'env> {
             .enumerate()
             .map(|(i, _)| format!("$tv{}: TypeValue", i))
             .join(", ");
-        let mut type_args_for_ctor = String::from("EmptyTypeValueArray");
-        for i in 0..struct_env.get_type_parameters().len() {
-            type_args_for_ctor = format!("ExtendTypeValueArray({}, $tv{})", type_args_for_ctor, i);
+
+        let mut param_types = String::from("MapConstTypeValue(DefaultTypeValue)");
+        let type_param_count = struct_env.get_type_parameters().len();
+        for i in 0..type_param_count {
+            param_types = format!("{}[{} := $tv{}]", param_types, i, i);
         }
-        let mut field_types = String::from("EmptyTypeValueArray");
+        let type_param_array = format!("TypeValueArray({}, {})", param_types, type_param_count);
+        let mut field_types = String::from("MapConstTypeValue(DefaultTypeValue)");
         for field_env in struct_env.get_fields() {
             field_types = format!(
-                "ExtendTypeValueArray({}, {})",
+                "{}[{} := {}]",
                 field_types,
+                field_env.get_offset(),
                 boogie_type_value(self.module_env.env, &field_env.get_type())
             );
         }
+        let field_array = format!(
+            "TypeValueArray({}, {})",
+            field_types,
+            struct_env.get_field_count()
+        );
         let type_value = format!(
             "StructType({}, {}, {})",
-            struct_name, type_args_for_ctor, field_types
+            struct_name, type_param_array, field_array
         );
         if struct_name == "$LibraAccount_T" {
             // Special treatment of well-known resource LibraAccount_T. The type_value
@@ -272,22 +273,30 @@ impl<'env> ModuleTranslator<'env> {
             separate(vec![type_args_str.clone(), args_str.clone()], ", ")
         );
         self.writer.indent();
-        let mut fields_str = String::from("EmptyValueArray");
+        let mut ctor_expr = "MapConstValue(DefaultValue)".to_owned();
         for field_env in struct_env.get_fields() {
+            let field_param =
+                &format!("{}", field_env.get_name().display(struct_env.symbol_pool()));
             let type_check = boogie_well_formed_check(
                 self.module_env.env,
-                &format!("{}", field_env.get_name().display(struct_env.symbol_pool())),
+                field_param,
                 &field_env.get_type(),
                 WellFormedMode::Default,
             );
             emit!(self.writer, &type_check);
-            fields_str = format!(
-                "ExtendValueArray({}, {})",
-                fields_str,
-                field_env.get_name().display(struct_env.symbol_pool())
+            ctor_expr = format!(
+                "{}[{} := {}]",
+                ctor_expr,
+                field_env.get_offset(),
+                field_param
             );
         }
-        emitln!(self.writer, "$struct := Vector({});", fields_str);
+        emitln!(
+            self.writer,
+            "$struct := Vector(ValueArray({}, {}));",
+            ctor_expr,
+            struct_env.get_field_count()
+        );
 
         // Generate $DebugTrackLocal so we can see the constructed value before invariant
         // evaluation may abort.
@@ -358,14 +367,15 @@ impl<'env> ModuleTranslator<'env> {
             self.writer.set_location(&func_env.get_loc());
             self.translate_function(&self.targets.get_target(&func_env));
         }
-        if num_fun > 0 {
-            info!(
-                "{} out of {} functions are specified in module {}",
+        if num_fun > 0 && !self.module_env.is_in_dependency() {
+            debug!(
+                "{} out of {} functions have (directly or indirectly) \
+                 specifications in module `{}`",
                 num_fun_specified,
                 num_fun,
                 self.module_env
                     .get_name()
-                    .display(self.module_env.symbol_pool())
+                    .display_full(self.module_env.symbol_pool())
             );
         }
     }
@@ -410,24 +420,12 @@ impl<'env> ModuleTranslator<'env> {
         }
         // We look up the `verify` pragma property first in this function, then in
         // the module, and finally fall back to the value of option `--verify`.
-        let prop_name = &func_target.symbol_pool().make("verify");
-        if let Some(Value::Bool(b)) = func_target.func_env.get_spec().properties.get(prop_name) {
-            return *b;
-        }
-        if let Some(Value::Bool(b)) = func_target
-            .func_env
-            .module_env
-            .get_spec()
-            .properties
-            .get(prop_name)
-        {
-            return *b;
-        }
-        match self.options.verify_scope {
+        let default = || match self.options.verify_scope {
             VerificationScope::Public => func_target.func_env.is_public(),
             VerificationScope::All => true,
             VerificationScope::None => false,
-        }
+        };
+        func_target.is_pragma_true("verify", default)
     }
 
     /// Return a string for a boogie procedure header.
@@ -864,6 +862,7 @@ impl<'env> ModuleTranslator<'env> {
 
         // Translate the bytecode instruction.
         match bytecode {
+            WriteBack(..) | UnpackRef(..) | PackRef(..) | Splice(..) => unimplemented!(),
             SpecBlock(_, block_id) => {
                 self.generate_function_spec_inside_impl(func_target, *block_id);
             }
@@ -907,6 +906,15 @@ impl<'env> ModuleTranslator<'env> {
                         self.writer,
                         "call $tmp := $CopyOrMoveValue($GetLocal($m, $frame + {}));",
                         src
+                    );
+                    emit!(
+                        self.writer,
+                        &boogie_well_formed_check(
+                            self.module_env.env,
+                            "$tmp",
+                            &func_target.get_local_type(*dest),
+                            WellFormedMode::Default
+                        )
                     );
                     emitln!(self.writer, &update_and_track_local(*dest, "$tmp"));
                 }
@@ -1008,7 +1016,6 @@ impl<'env> ModuleTranslator<'env> {
                         // code outside of the module is executed.
                         if callee_env.module_env.get_id()
                             != func_target.func_env.module_env.get_id()
-                            && callee_env.module_env.get_spec().has_conditions()
                         {
                             let spec_translator =
                                 SpecTranslator::new(self.writer, &callee_env.module_env, false)
