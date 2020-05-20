@@ -2,8 +2,9 @@
 import 0x0.VDF;
 import 0x0.Debug;
 main() {
-  // Test for the script handling an invalid proof.
+  // Test for the script handling an invalid "solution".
   // This tests that the verifier catches a wrong proof and gives feedback.
+
   let challenge: vector<u8>;
   let difficulty: u64;
   let solution: vector<u8>;

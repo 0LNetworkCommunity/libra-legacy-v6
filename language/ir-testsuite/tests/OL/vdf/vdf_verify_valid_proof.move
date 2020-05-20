@@ -2,6 +2,9 @@
 import 0x0.VDF;
 import 0x0.Debug;
 main() {
+
+  // this tests the happy case, that a proof is submitted with all three correct parameters.
+
   let challenge: vector<u8>;
   let difficulty: u64;
   let solution: vector<u8>;

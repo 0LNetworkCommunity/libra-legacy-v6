@@ -2,6 +2,9 @@
 import 0x0.VDF;
 import 0x0.Debug;
 main() {
+
+  // This checks that the VDF verifier catches an invalide "challenge" parameter, and fails gracefully with error.
+
   let challenge: vector<u8>;
   let difficulty: u64;
   let solution: vector<u8>;
