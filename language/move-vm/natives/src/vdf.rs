@@ -1,20 +1,20 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    move_vm_types::loaded_data::runtime_types::Type,
-    native_functions::{
-        context::NativeContext,
-        dispatch::{native_gas, NativeResult},
-    },
-    move_vm_types::values::{Value},
 
+use vdf::{VDFParams, VDF};
+
+use move_vm_types::{
+    gas_schedule::NativeCostIndex,
+    loaded_data::runtime_types::Type,
+    natives::function::{native_gas, NativeContext, NativeResult},
+    values::Value,
 };
+
 use libra_types::vm_error::{StatusCode, VMStatus};
-use move_core_types::gas_schedule::NativeCostIndex;
 use std::collections::VecDeque;
 use vm::errors::VMResult;
-use vdf::{VDFParams, VDF};
+
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
