@@ -12,7 +12,7 @@ use move_vm_types::{
 };
 
 use libra_types::vm_error::{StatusCode, VMStatus};
-use std::collections::VecDeque;
+use std::{collections::VecDeque, panic};
 use vm::errors::VMResult;
 
 
@@ -34,6 +34,7 @@ pub fn verify(
     let difficulty = pop_arg!(arguments, u64);
     let challenge = pop_arg!(arguments, Vec<u8>);
 
+    // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(
         context.cost_table(),
         NativeCostIndex::SHA3_256,
@@ -42,8 +43,11 @@ pub fn verify(
 
     let v = vdf::WesolowskiVDFParams(2048).new();
 
-    let ret_value = v.verify(&challenge, difficulty, &alleged_solution ).is_ok();
+    // catch panicked and return `false` value
+    let result = panic::catch_unwind(|| {
+        let _ = v.verify(&challenge, difficulty, &alleged_solution );
+    });
 
-    let return_values = vec![Value::bool(ret_value )];
+    let return_values = vec![Value::bool(result.is_ok() )];
     Ok(NativeResult::ok(cost, return_values))
 }
