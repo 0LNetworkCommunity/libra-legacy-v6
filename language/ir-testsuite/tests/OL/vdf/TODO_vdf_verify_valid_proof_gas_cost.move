@@ -3,7 +3,8 @@ import 0x0.VDF;
 import 0x0.Debug;
 main() {
 
-  // this test confirms that the native function VDF is being metered by the GAS calcs.
+  // TODO: this test confirms that the native function VDF is being metered by the GAS calcs.
+  // Should test that GAS price is returned in the result.
 
   let challenge: vector<u8>;
   let difficulty: u64;
@@ -16,6 +17,8 @@ main() {
 
   re = VDF.verify(move(challenge), move(difficulty), move(solution));
   Debug.print<bool>(&re);
-  assert(move(re)==true, 7);
+
+  // false, just to say this test is not implemented
+  assert(move(re)==false, 7);
   return;
 }
