@@ -58,17 +58,17 @@ module Genesis {
         AccountTrack::initialize();
         LibraAccount::initialize();
         Unhosted::publish_global_limits_definition();
-        LibraAccount::create_account<LBR::T>(
+        LibraAccount::create_account<GAS::T>(
             association_root_addr,
             copy dummy_auth_key,
         );
 
         // Create the burn account
-        LibraAccount::create_account<LBR::T>(burn_addr, copy dummy_auth_key);
+        LibraAccount::create_account<GAS::T>(burn_addr, copy dummy_auth_key);
 
         // Register transaction fee accounts
         // TODO: Need to convert this to a different account type than unhosted.
-        LibraAccount::create_testnet_account<LBR::T>(0xFEE, copy dummy_auth_key);
+        LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key);
 
         // Create the config account
         LibraAccount::create_account<LBR::T>(LibraConfig::default_config_address(), dummy_auth_key);
