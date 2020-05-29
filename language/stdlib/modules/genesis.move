@@ -12,6 +12,7 @@ module Genesis {
     use 0x0::Empty;
     use 0x0::Event;
     use 0x0::LBR;
+    use 0x0::GAS;
     use 0x0::Libra;
     use 0x0::LibraAccount;
     use 0x0::LibraBlock;
@@ -45,6 +46,7 @@ module Genesis {
         Coin1::initialize();
         Coin2::initialize();
         LBR::initialize();
+        GAS::initialize();
         LibraConfig::apply_for_creator_privilege();
         LibraConfig::grant_creator_privilege(0xA550C18);
 
