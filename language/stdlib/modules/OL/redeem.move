@@ -33,7 +33,7 @@ address 0x0 {
 
       // Permissions: anyone can call this contract.
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
-      let redeems = borrow_global_mut<T>(default_redeem_address());
+      let redeems = borrow_global_mut<T>(Transaction::sender());
       let redeemed = redeems.history.contains(vdf_proof_blob.solution);
       Transaction::assert(redeemed == true, 10000);
 
@@ -44,7 +44,7 @@ address 0x0 {
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemtion in process"
       // [Storage]
       Vector::push_back(&mut redeems.history, vdf_proof_blob.solution);
-      let in_process = borrow_global_mut<InProcess>(default_redeem_address());
+      let in_process = borrow_global_mut<InProcess>(Transaction::sender());
       Vector::push_back(&mut in_process.proofs, user_proof);
 
     }
