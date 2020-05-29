@@ -90,6 +90,7 @@ impl<'a> GenesisContext<'a> {
         type_params: Vec<TypeTag>,
         args: Vec<Value>,
     ) {
+        println!("{}, {}", module_name, function_name);
         self.vm
             .execute_function(
                 &Self::module(module_name),
