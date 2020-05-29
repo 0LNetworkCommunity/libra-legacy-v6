@@ -52,7 +52,7 @@ address 0x0 {
     pub fun end_redeem(pubkey: vector<u8>, vdf_proof_blob: VdfProofBlob) {
       // Permissions: Only the 0x0 address can call this, when an epoch ends.
       let sender = Transaction::sender();
-      Transaction::assert(sender == default_redeem_address(), 1);
+      Transaction::assert(sender != default_redeem_address(), 10003);
 
       let in_process = borrow_global_mut<InProcess>(default_redeem_address());
 
