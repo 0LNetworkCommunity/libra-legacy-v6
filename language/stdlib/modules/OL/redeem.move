@@ -25,32 +25,40 @@ address 0x0 {
     }
 
     pub fun begin_redeem(pubkey: vector<u8>, vdf_proof_blob: VdfProofBlob) {
+      // Permissions: anyone can call this contract.
+      // There is an edge-case which may not be clear. For example: Ping wants to join the network, he did a VDF.
+      // He has no gas to submit, he asks to Lucas to submit the VDF (which Ping ran on his computer).
 
       let user_proof = UserProof{
           pubkey: pubkey,
           proof: vdf_proof_blob,
       };
 
-      // Permissions: anyone can call this contract.
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
-      let redeems = borrow_global_mut<T>(Transaction::sender());
-      let redeemed = redeems.history.contains(vdf_proof_blob.solution);
-      Transaction::assert(redeemed == true, 10000);
+
+      // TODO: This should not be the sender of the transaction.
+      // In the example above. Lucas sent a valid proof for Ping.
+      // Looks like the implementation below would allow Ping to ask Keerthi to send the transaction again, and he gets two coins.
+
+      let user_redemption_state = borrow_global_mut<T>(Transaction::sender());
+      let blob_redeemed = user_redemption_state.history.contains(vdf_proof_blob.solution);
+      Transaction::assert(blob_redeemed == true, 10000);
 
       // Checks that the user did run the delay (VDF). Calling Verify() to check the validity of Blob
       let valid = VDF::verify(vdf_proof_blob.challenge, vdf_proof_blob.difficulty, vdf_proof_blob.solution);
       Transaction::assert(valid == false, 10001);
+      // QUESTION: Should we save a UserProof that is false so that we know it's been attempted multiple times?
 
-      // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemtion in process"
+      // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
       // [Storage]
-      Vector::push_back(&mut redeems.history, vdf_proof_blob.solution);
+      Vector::push_back(&mut user_redemption_state.history, vdf_proof_blob.solution);
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());
       Vector::push_back(&mut in_process.proofs, user_proof);
 
     }
 
     pub fun end_redeem(pubkey: vector<u8>, vdf_proof_blob: VdfProofBlob) {
-      // Permissions: Only the 0x0 address can call this, when an epoch ends.
+      // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
       Transaction::assert(sender != default_redeem_address(), 10003);
 
