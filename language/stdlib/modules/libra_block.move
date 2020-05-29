@@ -1,7 +1,7 @@
 address 0x0 {
 
 module LibraBlock {
-    use 0x0::LBR;
+    use 0x0::GAS;
     use 0x0::Event;
     use 0x0::LibraSystem;
     use 0x0::LibraTimestamp;
@@ -57,7 +57,7 @@ module LibraBlock {
         // TODO: Once we have a better on-chain representation of epochs we will make this per-epoch.
         // TODO: Need to update this to allow per-currency transaction fee
         // distribution
-        TransactionFee::distribute_transaction_fees<LBR::T>();
+        TransactionFee::distribute_transaction_fees<GAS::T>();
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
     }
