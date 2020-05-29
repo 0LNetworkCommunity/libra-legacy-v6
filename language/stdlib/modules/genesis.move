@@ -71,7 +71,7 @@ module Genesis {
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key);
 
         // Create the config account
-        LibraAccount::create_account<LBR::T>(LibraConfig::default_config_address(), dummy_auth_key);
+        LibraAccount::create_account<GAS::T>(LibraConfig::default_config_address(), dummy_auth_key);
 
         LibraTransactionTimeout::initialize();
         LibraBlock::initialize_block_metadata();
