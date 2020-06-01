@@ -1,0 +1,16 @@
+//!account: alice, 1000
+
+import 0x0.LibraAccount;
+import 0x0.LBR;
+import 0x0.LCS;
+import 0x0.Libra;
+import 0x0.NodeWeight;
+
+main() {
+    let alice_balance: u64;
+
+    alice_balance = LibraAccount.balance<LBR.T>({{alice}});
+    assert(move(alice_balance) == 1000, 84);
+
+    return;
+}
