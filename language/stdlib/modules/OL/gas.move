@@ -25,7 +25,7 @@ module GAS {
         // Register the GAS currency.
         Libra::register_currency<T>(
             FixedPoint32::create_from_rational(1, 1), // exchange rate to LBR
-            true,    // is_synthetic
+            false,    // is_synthetic
             1000000, // scaling_factor = 10^6
             1000,    // fractional_part = 10^3
             x"474153" // UTF8-encoded "LBR" as a hex string
