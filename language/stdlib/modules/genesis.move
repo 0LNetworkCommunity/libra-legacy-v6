@@ -91,6 +91,7 @@ module Genesis {
         Libra::grant_burn_capability_for_sender<Coin1::T>();
         Libra::grant_burn_capability_for_sender<Coin2::T>();
         Libra::grant_burn_capability_for_sender<LBR::T>();
+        Libra::grant_burn_capability_for_sender<GAS::T>();
         LibraAccount::rotate_authentication_key(auth_key);
     }
 
