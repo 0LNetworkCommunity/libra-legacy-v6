@@ -28,8 +28,8 @@ fun main() {
     // mint 100 coins and check that the market cap increases appropriately
     let old_market_cap = Libra::market_cap<GAS::T>();
     let coin = Libra::mint<GAS::T>(100);
-    Transaction::assert(Libra::value<GAS::T>(&coin) == 100, 8000);
-    Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap + 100, 8001);
+    Transaction::assert(Libra::value<GAS::T>(&coin) == 100, 4);
+    Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap + 100, 5);
 
     // get rid of the coin
     LibraAccount::deposit({{alice}}, coin);
@@ -47,7 +47,7 @@ use 0x0::Libra;
 use 0x0::LibraAccount;
 fun main() {
     let coin = Libra::mint<GAS::T>(100);
-    LibraAccount::deposit_to_sender<GAS::T>(coin)
+    LibraAccount::deposit_to_sender<GAS::T>(coin);
 }
 }
 
@@ -65,9 +65,11 @@ script {
 use 0x0::GAS;
 use 0x0::Libra;
 use 0x0::LibraAccount;
+use 0x0::Transaction;
 fun main() {
     let coin = Libra::mint<GAS::T>(100);
     LibraAccount::deposit({{preburner}}, coin);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{preburner}}) == 100, 6);
 }
 }
 
