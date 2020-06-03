@@ -5,6 +5,7 @@ address 0x0 {
     use 0x0::VDF;
     use 0x0::Vector;
     use 0x0::Transaction;
+    use 0x0::Debug;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -26,6 +27,12 @@ address 0x0 {
       // He has no gas to submit, he asks to Lucas to submit the VDF (which Ping ran on his computer).
 
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
+      if (!has(default_redeem_address())) {
+          initialize();
+      };
+      if (!has_in_process(addr)) {
+           init_in_process();
+      };
 
       // TODO: This should not be the sender of the transaction.
       // In the example above. Lucas sent a valid proof for Ping.
@@ -48,30 +55,54 @@ address 0x0 {
 
     }
 
-    public fun end_redeem(addr: address, vdf_proof_blob: VdfProofBlob) acquires InProcess {
+    public fun end_redeem(addr: address, vdf_proof_blob: VdfProofBlob)  {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
       Transaction::assert(sender != default_redeem_address(), 10003);
 
-      let in_process = borrow_global_mut<InProcess>(addr);
-      let (has,idx) = Vector::index_of(&mut in_process.proofs, &vdf_proof_blob);
-      Transaction::assert(has == false, 10001);
+      Debug::print(&addr);
+      Debug::print(&vdf_proof_blob);
+
+      // Account do not have proof to verify.
+      Transaction::assert( !has_in_process(addr), 10001);
+      // let in_process = remove_in_process(addr); //TODO don't know how to destroy resource.
 
       // Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
 
       // Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
       // TBD
+      //let counts = Vector::length(&in_process.proofs);
+      //Debug::print(&counts);
 
       // If those checks are successful Redeem calls Subsidy module (which subsequently calls the  Gas_Coin.Mint function).
       // Subsidy(pubkey, quantity)
 
-      // clean in process
-      Vector::remove(&mut in_process.proofs, idx);
+
     }
 
     fun default_redeem_address(): address {
         0x0
+    }
+
+    fun has_in_process(addr: address): bool {
+       ::exists<InProcess>(addr)
+    }
+
+    fun remove_in_process(addr: address): InProcess acquires InProcess {
+        move_from<InProcess>(addr)
+    }
+
+    fun initialize(){
+        move_to_sender<T>( T{ history: Vector::empty()})
+    }
+
+    fun init_in_process(){
+        move_to_sender<InProcess>( InProcess{ proofs: Vector::empty()})
+    }
+
+    fun has(addr: address): bool {
+       ::exists<T>(addr)
     }
   }
 }
