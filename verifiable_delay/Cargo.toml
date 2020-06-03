@@ -16,7 +16,7 @@ members = [
     "vdf",
     "vdf-cli",
     "classgroup",
-    "vdf-competition",
+    "ol-miner"
 ]
 
 [profile.release]
