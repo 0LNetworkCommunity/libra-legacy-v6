@@ -11,7 +11,7 @@ use glob::glob;
 use serde::Serialize;
 use std::{fs, io::Write, path::Path};
 use vdf::{VDFParams, WesolowskiVDFParams, VDF};
-
+use libra_crypto::hash::HashValue;
 /// `start` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
@@ -32,7 +32,7 @@ impl Runnable for StartCmd {
         let config = app_config();
         let blocks_dir = Path::new(&config.chain_info.block_dir);
 
-        let (current_block_number, current_block_path) = {
+        let (mut current_block_number, mut current_block_path) = {
             //Check for existing blocks
 
             if !blocks_dir.exists() {
@@ -62,24 +62,47 @@ impl Runnable for StartCmd {
             }
         };
 
+        let mut preimage ={
+            if let Some(max_block_path) = current_block_path{
+                let block_file =fs::read_to_string(max_block_path)
+                .expect("Could not read latest blockd");
+
+                let latest_block:Block = serde_json::from_str(&block_file).expect("could not deserialize latest block");
+
+                HashValue::sha3_256_of(&latest_block.data).to_vec()
+
+            }else{
+                HashValue::sha3_256_of(&config.gen_preimage()).to_vec()
+            }
+
+        };
+
+        loop{
+
+        status_ok!("Generating Proof for block {}",current_block_number.to_string());
         let vdf: Box<dyn VDF> = Box::new(WesolowskiVDFParams(SECURITY_PARAM).new());
 
         let proof = vdf
-            .solve(&config.gen_preimage(), config.chain_info.block_size)
+            .solve(&preimage, config.chain_info.block_size)
             .expect("iterations should have been valiated earlier");
 
+        current_block_number +=1;
+
+        preimage = HashValue::sha3_256_of(&proof).to_vec();
+
         let block = Block {
-            height: current_block_number + 1,
+            height: current_block_number,
             data: proof,
         };
 
         let mut latest_block_path = blocks_dir.to_path_buf();
-        latest_block_path.push(format!("block_{}.json", current_block_number + 1));
+        latest_block_path.push(format!("block_{}.json", current_block_number));
         let mut file = fs::File::create(&latest_block_path).unwrap();
 
         file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
-            .unwrap();
+            .expect("Could not write block");
 
+    }
     }
 }
 

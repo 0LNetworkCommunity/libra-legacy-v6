@@ -11,10 +11,10 @@ thiserror = "1"
 classgroup = { path = "../classgroup", version = "^0.1.0" }
 vdf = { path = "../vdf", version = "^0.1.0" }
 hex = "0.4"
-byteorder = "1.3.4"
-glob = "0.3.0"
-serde_json = "1.0.53"
-
+byteorder = "1"
+glob = "0.3"
+serde_json = "1"
+libra-crypto ={git="https://github.com/libra/libra", branch="master"}
 
 [dependencies.abscissa_core]
 version = "0.5.2"
