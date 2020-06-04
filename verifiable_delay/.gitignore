@@ -37,3 +37,9 @@ rls*.log
 
 # Rust output files
 target/
+
+#miner output
+blocks/
+
+#Mac files
+.DS_Store
