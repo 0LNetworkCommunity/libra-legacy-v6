@@ -1,7 +1,7 @@
 //! Proof block datastructure
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json;
+// use serde_json;
 
 ///Proof Block Datastructure
 #[derive(Serialize, Deserialize)]
