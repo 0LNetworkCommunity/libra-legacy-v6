@@ -60,10 +60,7 @@ impl Configurable<OlMinerConfig> for OlMinerCmd {
     ///
     /// This can be safely deleted if you don't want to override config
     /// settings from command-line options.
-    fn process_config(
-        &self,
-        config: OlMinerConfig,
-    ) -> Result<OlMinerConfig, FrameworkError> {
+    fn process_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
         match self {
             OlMinerCmd::Start(cmd) => cmd.override_config(config),
             _ => Ok(config),

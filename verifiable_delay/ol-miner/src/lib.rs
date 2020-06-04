@@ -16,6 +16,7 @@
 )]
 
 pub mod application;
+pub mod block;
 pub mod commands;
 pub mod config;
 pub mod error;

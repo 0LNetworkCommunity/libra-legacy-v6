@@ -6,6 +6,8 @@ use abscissa_core::{
     config, trace, Application, EntryPoint, FrameworkError, StandardPaths,
 };
 
+pub(crate) const SECURITY_PARAM: u16 = 2048;
+
 /// Application state
 pub static APPLICATION: AppCell<OlMinerApp> = AppCell::new();
 
