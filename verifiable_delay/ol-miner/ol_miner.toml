@@ -1,0 +1,8 @@
+[profile]
+public_key = "f32b280a4ebf1ef004ae6880431e872af32b280a4ebf1ef004ae6880431e872af32b280a4ebf1ef004ae6880431e872af32b280a4ebf1ef004ae6880431e872a"
+statement = "test"
+
+[chain_info]
+chain_id = "whatever"
+block_size = 60
+block_dir= "."

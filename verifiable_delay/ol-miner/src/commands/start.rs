@@ -1,5 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
+
 use crate::application::SECURITY_PARAM;
 use crate::block::Block;
 use crate::config::OlMinerConfig;
@@ -25,6 +26,7 @@ pub struct StartCmd {
     #[options(free)]
     recipient: Vec<String>,
 }
+
 
 impl Runnable for StartCmd {
     /// Start the application.

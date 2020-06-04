@@ -14,6 +14,7 @@
     unused_lifetimes,
     unused_qualifications
 )]
+#![feature(str_strip)]
 
 pub mod application;
 pub mod block;
@@ -21,3 +22,4 @@ pub mod commands;
 pub mod config;
 pub mod error;
 pub mod prelude;
+pub mod delay;
