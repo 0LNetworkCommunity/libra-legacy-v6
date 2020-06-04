@@ -79,6 +79,7 @@ impl Runnable for StartCmd {
 
         file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
             .unwrap();
+
     }
 }
 
