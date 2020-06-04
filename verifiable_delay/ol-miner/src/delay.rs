@@ -1,24 +1,10 @@
 //! OlMiner delay module
+#![forbid(unsafe_code)]
 
-
-
-// #[derive(Command, Debug, Options)]
-// pub struct StartCmd {
-//     /// To whom are we saying hello?
-//     #[options(free)]
-//     recipient: Vec<String>,
-// }
-
-// use vdf::{InvalidProof, PietrzakVDFParams, VDFParams, WesolowskiVDFParams, VDF};
-
-
-pub mod delay {
-    //use crate::prelude::*;
-    // use crate::config::OlMinerConfig;
-    use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
+pub mod Delay {
     use vdf::{VDFParams, WesolowskiVDFParams, PietrzakVDFParams, VDF};
 
-    pub fn do_delay() -> Vec<u8>{
+    pub fn do_delay(preimage: &[u8], delay_length: u64) -> Vec<u8>{
 
         println!("Running the delay");
 
@@ -26,13 +12,11 @@ pub mod delay {
         let vdf = vdf::WesolowskiVDFParams(int_size_bits).new();
         let vdf:Box<dyn vdf::VDF> = Box::new(vdf::WesolowskiVDFParams(int_size_bits).new());
 
-        let proof = vdf
-        .solve(b"\xaa", 1000)
-        .expect("iterations should have been validated earlier");
-
-        println!("weso proof:\n{}", hex::encode(&proof));
-
-        return proof
+        // previously was:
+        //  let config = app_config();
+        //  vdf.solve(&config.gen_preimage(), config.chain_info.block_size)
+        vdf.solve(preimage, delay_length)
+        .expect("iterations should have been valiated earlier")
     }
 
 }

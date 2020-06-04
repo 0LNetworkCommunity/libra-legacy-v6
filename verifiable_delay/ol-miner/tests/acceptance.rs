@@ -22,6 +22,7 @@ use abscissa_core::testing::prelude::*;
 use ol_miner::config::OlMinerConfig;
 use once_cell::sync::Lazy;
 
+
 /// Executes your application binary via `cargo run`.
 ///
 /// Storing this value as a [`Lazy`] static ensures that all instances of
@@ -35,6 +36,6 @@ pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 fn start_no_args() {
     let mut runner = RUNNER.clone();
     let mut cmd = runner.arg("start").capture_stdout().run();
-    cmd.stdout().expect_line("Mining...");
+    cmd.stdout().expect_line("Running the delay");
     cmd.wait().unwrap().expect_success();
 }

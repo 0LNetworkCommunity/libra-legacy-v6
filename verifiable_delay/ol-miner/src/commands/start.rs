@@ -4,6 +4,8 @@
 use crate::application::SECURITY_PARAM;
 use crate::block::Block;
 use crate::config::OlMinerConfig;
+use crate::delay::Delay;
+
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use crate::prelude::*;
@@ -64,15 +66,10 @@ impl Runnable for StartCmd {
             }
         };
 
-        let vdf: Box<dyn VDF> = Box::new(WesolowskiVDFParams(SECURITY_PARAM).new());
-
-        let proof = vdf
-            .solve(&config.gen_preimage(), config.chain_info.block_size)
-            .expect("iterations should have been valiated earlier");
-
         let block = Block {
             height: current_block_number + 1,
-            data: proof,
+            // note: do_delay() sigature is (challenge, delay difficulty)
+            data: Delay::do_delay(&config.gen_preimage(), config.chain_info.block_size),
         };
 
         let mut latest_block_path = blocks_dir.to_path_buf();
