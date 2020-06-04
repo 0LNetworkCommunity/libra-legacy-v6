@@ -40,11 +40,11 @@ address 0x0 {
       let blob_redeemed = Vector::contains(&user_redemption_state.history, &vdf_proof_blob.solution);
       Transaction::assert(blob_redeemed == true, 10000);
 
-      // Checks that the user did run the delay (VDF). Calling Verify() to check the validity of Blob
-      let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-
       // QUESTION: Should we save a UserProof that is false so that we know it's been attempted multiple times?
       Vector::push_back(&mut user_redemption_state.history, *&vdf_proof_blob.solution);
+
+      // Checks that the user did run the delay (VDF). Calling Verify() to check the validity of Blob
+      let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid == false, 10001);
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
