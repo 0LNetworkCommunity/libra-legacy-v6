@@ -41,7 +41,7 @@ impl FromStr for Balance {
 
     fn from_str(s: &str) -> Result<Self> {
         // TODO: Try to get this from the on-chain config?
-        let coin_types = vec!["GAS", "Coin1", "Coin2"];
+        let coin_types = vec!["GAS", "Coin1", "Coin2", "LBR"];
         let mut coin_type: Vec<&str> = coin_types.into_iter().filter(|x| s.ends_with(x)).collect();
         let currency_code = coin_type.pop().unwrap_or("GAS");
         if !coin_type.is_empty() {
