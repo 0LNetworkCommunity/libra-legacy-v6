@@ -39,7 +39,7 @@ pub mod build_block {
 
 
     // writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn write_block(proof_data: Vec<u8>) {
+    pub fn write_block() {
 
         // parse the existing blocks in the app directory. It's a config in ol_miner.toml
         fn parse_block_height (blocks_dir: &Path) -> (u64, Option<PathBuf>) {
