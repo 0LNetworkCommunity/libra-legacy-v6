@@ -19,7 +19,7 @@ pub struct OlMinerConfig {
 }
 
 impl OlMinerConfig {
-    ///Format the config file data into a fixed byte structure for easy parsing in Move/other languages
+    /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
     pub fn gen_preimage(&self) -> Vec<u8> {
         let mut preimage: Vec<u8> = vec![];
 
@@ -84,11 +84,10 @@ impl OlMinerConfig {
         assert!(
             preimage.len()
                 == (
-                    32 //OL Key
-        +64 //chain_id
-        +8 // iterations
-        +1024
-                    //statement
+                    32 // OL Key
+                    +64 // chain_id
+                    +8 // iterations/difficulty
+                    +1024// statement
                 ),
             "preimage is the incorrect size"
         );

@@ -39,20 +39,22 @@ pub mod build_block {
     use libra_crypto::hash::HashValue;
     use crate::delay::*;
 
-    // writes a JSON file with the vdf proof, ordered by a blockheight
+    /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn write_block() {
-        //! Writes the OL proof chain to local files.
+
 
         // get the location of this miner's blocks
         let config = app_config();
         let blocks_dir = Path::new(&config.chain_info.block_dir);
         let (mut current_block_number, current_block_path) = parse_block_height(blocks_dir);
 
-        // create the preimage (or 'challenge') for the VDF proof.
+        // create the initial preimage (or 'challenge') of this sequence for the OL proof.
+        // the preimage is a hash of the previous block's proof.
+        // in the case of the first block, use the config.gen_preimage()
         let mut preimage ={
             // In this case the app is picking up where it previously left off.
-            // If there is a previous block (max block), use the data (proof) as the preimage.
-            if let Some(max_block_path) = current_block_path{
+            // If there is a previous block (max_block_path), use the proof (.data) as the preimage for next block.
+            if let Some(max_block_path) = current_block_path{ // current_block_path is Option type, check if destructures to Some.
                 let block_file =fs::read_to_string(max_block_path)
                 .expect("Could not read latest block");
 

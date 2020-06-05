@@ -4,13 +4,12 @@
 // use crate::block::Block;
 use crate::config::OlMinerConfig;
 use crate::block::*;
+use crate::prelude::*;
 
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-//use std::{fs, io::Write, path::Path};
-//use libra_crypto::hash::HashValue;
 
 /// `start` subcommand
 ///
@@ -30,9 +29,8 @@ pub struct StartCmd {
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
-        println!("Mining...");
+        status_ok!("Start mining...", "ok"); //TODO: Print something more interesting here.
         build_block::write_block();
-
     }
 }
 
