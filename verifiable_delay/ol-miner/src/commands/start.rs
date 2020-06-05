@@ -30,7 +30,7 @@ pub struct StartCmd {
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
-
+        println!("Mining...");
         build_block::write_block();
 
     }

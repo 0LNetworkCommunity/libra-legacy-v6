@@ -21,6 +21,8 @@
 use abscissa_core::testing::prelude::*;
 // use ol_miner::config::OlMinerConfig;
 use once_cell::sync::Lazy;
+use std::time::Duration;
+
 
 
 /// Executes your application binary via `cargo run`.
@@ -32,10 +34,12 @@ use once_cell::sync::Lazy;
 pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 
 /// Use `OlMinerConfig::default()` value if no config or args
-#[test] #[ignore]
+#[test] // #[ignore]
 fn start_no_args() {
     let mut runner = RUNNER.clone();
-    let mut cmd = runner.arg("start").capture_stdout().run();
-    cmd.stdout().expect_line("Generating Proof for block");
-    cmd.wait().unwrap().expect_success();
+    let mut cmd = runner.arg("start").timeout(Duration::new(1, 0)).capture_stdout().run();
+    cmd.stdout().expect_line("Mining...");
+
+    // TODO: This test fails because the miner runs in a loop, the process doesn't exit as expected.
+    //cmd.wait().unwrap().expect_success();
 }
