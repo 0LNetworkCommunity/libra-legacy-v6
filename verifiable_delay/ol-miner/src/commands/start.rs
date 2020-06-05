@@ -3,17 +3,14 @@
 
 // use crate::block::Block;
 use crate::config::OlMinerConfig;
-use crate::delay::delay;
 use crate::block::*;
 
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
-use crate::prelude::*;
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use glob::glob;
-use std::{fs, io::Write, path::Path};
-use libra_crypto::hash::HashValue;
+//use std::{fs, io::Write, path::Path};
+//use libra_crypto::hash::HashValue;
 
 /// `start` subcommand
 ///
@@ -43,7 +40,7 @@ impl config::Override<OlMinerConfig> for StartCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.
-    fn override_config(&self, mut config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
+    fn override_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
         Ok(config)
     }
 }
