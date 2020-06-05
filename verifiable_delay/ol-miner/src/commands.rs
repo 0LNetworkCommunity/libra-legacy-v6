@@ -12,8 +12,9 @@
 
 mod start;
 mod version;
+mod keygen;
 
-use self::{start::StartCmd, version::VersionCmd};
+use self::{start::StartCmd, version::VersionCmd, keygen::KeyGenCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -31,12 +32,16 @@ pub enum OlMinerCmd {
     Help(Help<Self>),
 
     /// The `start` subcommand
-    #[options(help = "start the application")]
+    #[options(help = "start mining blocks")]
     Start(StartCmd),
 
     /// The `version` subcommand
     #[options(help = "display version information")]
     Version(VersionCmd),
+
+    /// The `keygen` subcommand
+    #[options(help = "generate a keypair ")]
+    KeyGen(KeyGenCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

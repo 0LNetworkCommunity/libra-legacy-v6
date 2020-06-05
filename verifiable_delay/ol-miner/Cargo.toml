@@ -15,6 +15,7 @@ byteorder = "1"
 glob = "0.3"
 serde_json = "1"
 libra-crypto ={git="https://github.com/libra/libra", branch="master"}
+libra-wallet ={git="https://github.com/libra/libra", branch="master"}
 
 [dependencies.abscissa_core]
 version = "0.5.2"
