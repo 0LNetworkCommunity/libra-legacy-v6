@@ -1,17 +1,18 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::application::SECURITY_PARAM;
+
 use crate::block::Block;
 use crate::config::OlMinerConfig;
+use crate::delay::delay;
+
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use crate::prelude::*;
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use glob::glob;
-use serde::Serialize;
 use std::{fs, io::Write, path::Path};
-use vdf::{VDFParams, WesolowskiVDFParams, VDF};
 use libra_crypto::hash::HashValue;
+
 /// `start` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
@@ -26,13 +27,15 @@ pub struct StartCmd {
     recipient: Vec<String>,
 }
 
+
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
         let config = app_config();
         let blocks_dir = Path::new(&config.chain_info.block_dir);
 
-        let (mut current_block_number, mut current_block_path) = {
+        //TODO: current_block_path is unused
+        let (mut current_block_number, current_block_path) = {
             //Check for existing blocks
 
             if !blocks_dir.exists() {
@@ -80,20 +83,16 @@ impl Runnable for StartCmd {
         loop{
 
         status_ok!("Generating Proof for block {}",current_block_number.to_string());
-        let vdf: Box<dyn VDF> = Box::new(WesolowskiVDFParams(SECURITY_PARAM).new());
-
-        let proof = vdf
-            .solve(&preimage, config.chain_info.block_size)
-            .expect("iterations should have been valiated earlier");
-
-        current_block_number +=1;
-
-        preimage = HashValue::sha3_256_of(&proof).to_vec();
 
         let block = Block {
-            height: current_block_number,
-            data: proof,
+            height: current_block_number + 1,
+            // note: do_delay() sigature is (challenge, delay difficulty)
+            data: delay::do_delay(&config.gen_preimage(),config.chain_info.block_size)
         };
+        current_block_number +=1;
+
+        preimage = HashValue::sha3_256_of(&block.data).to_vec();
+
 
         let mut latest_block_path = blocks_dir.to_path_buf();
         latest_block_path.push(format!("block_{}.json", current_block_number));
