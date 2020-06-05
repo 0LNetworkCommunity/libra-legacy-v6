@@ -34,7 +34,7 @@ use std::time::Duration;
 pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 
 /// Use `OlMinerConfig::default()` value if no config or args
-#[test] // #[ignore]
+#[test] #[ignore]
 fn start_no_args() {
     let mut runner = RUNNER.clone();
     let mut cmd = runner.arg("start").timeout(Duration::new(1, 0)).capture_stdout().run();
