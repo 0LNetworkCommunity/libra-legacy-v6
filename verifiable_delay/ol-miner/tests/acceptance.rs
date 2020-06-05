@@ -19,7 +19,7 @@
 )]
 
 use abscissa_core::testing::prelude::*;
-use ol_miner::config::OlMinerConfig;
+// use ol_miner::config::OlMinerConfig;
 use once_cell::sync::Lazy;
 
 
