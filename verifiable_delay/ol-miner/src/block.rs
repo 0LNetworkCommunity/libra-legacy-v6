@@ -69,14 +69,14 @@ pub mod build_block {
         // generate new blocks continuosly using the previous block's proof as the input to the next.
         loop{
             status_ok!("Generating Proof for block:",current_block_number.to_string());
-
+            current_block_number +=1;
+            
             let block = Block {
-                height: current_block_number + 1,
+                height: current_block_number,
                 // note: do_delay() sigature is (challenge, delay difficulty).
                 // note: trait serializes data field.
                 data: delay::do_delay(&preimage,config.chain_info.block_size)
             };
-            current_block_number +=1;
 
             // set the preimage for the next loop.
             preimage = HashValue::sha3_256_of(&block.data).to_vec();
