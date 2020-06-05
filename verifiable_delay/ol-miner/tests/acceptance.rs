@@ -32,7 +32,7 @@ use once_cell::sync::Lazy;
 pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 
 /// Use `OlMinerConfig::default()` value if no config or args
-#[test]
+#[test] #[ignore]
 fn start_no_args() {
     let mut runner = RUNNER.clone();
     let mut cmd = runner.arg("start").capture_stdout().run();
