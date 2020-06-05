@@ -1,22 +1,28 @@
-// This module is to rank nodes based on node weight (i.e., stake they own)
+// This module is used to select the validators who would participate in LibraBFT protocol. Due to the restrictions on throughput with increasing validators above a threshold, 
+// we rank nodes based on node weight (i.e., stake they own, previous participation trends) to select the validators for an epoch. 
 address 0x0 {
   module NodeWeight {
 
-        fun hi(): bool {
-              return true
-        }
+    use 0x0::Vector;
 
-        // This function returns balance given an account number
-        fun get_balance(): u64 {
-            return 100
-        }
+    // Input: a vector of account addresses
+    //Output: Top n according to weight (Just account balance for now) 
+    public fun top_n_accounts(accounts: vector<address>, n: u64): vector<address> {
+      
+      let length = Vector::length<address>(&accounts);
+      
+      //BASE CASE
+      // If n is greater than or equal to accounts vector length - return the vector.
+       if(length<=n)
+        return accounts
+      
+      // Now we rank to find out top n accounts based on weights.
 
-        //This function takes the list of verified nodes (validator candidates) and rank them based on node weights.
-        fun rank_nodes(): u64 {
-            // Sort the list based on account balances.
+      //Weight - currently function of account balance. 
 
-            //return the list of top 100 nodes 
-            return 100
-        }
+      
+      else
+        return Vector::empty()
+    } 
   }
 }
