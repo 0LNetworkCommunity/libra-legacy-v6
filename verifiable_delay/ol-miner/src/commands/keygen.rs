@@ -2,7 +2,6 @@
 
 #![allow(clippy::never_loop)]
 
-use super::OlMinerCmd;
 use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::WalletLibrary;
 use libra_crypto::traits::ValidCryptoMaterial;

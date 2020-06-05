@@ -2,11 +2,11 @@
 
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 
+/// Data structure and serialization of OL delay proof.
 #[derive(Serialize, Deserialize)]
 pub struct Block {
-    ///Block Height
+    /// Block Height
     pub height: u64,
     /// VDF Output
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
@@ -29,55 +29,32 @@ where
     decode(s).map_err(D::Error::custom)
 }
 
+
 pub mod build_block {
-    use glob::glob;
+    //! Functions for generating the OL delay proof and writing data to file system.
     use std::{fs, io::Write, path::Path, path::PathBuf};
+    use glob::glob;
     use super::Block;
     use crate::prelude::*;
     use libra_crypto::hash::HashValue;
     use crate::delay::*;
 
+    /// writes a JSON file with the vdf proof, ordered by a blockheight
+    pub fn write_block() {
 
-    // writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn write_block(proof_data: Vec<u8>) {
 
-        // parse the existing blocks in the app directory. It's a config in ol_miner.toml
-        fn parse_block_height (blocks_dir: &Path) -> (u64, Option<PathBuf>) {
-            if !blocks_dir.exists() {
-                fs::create_dir(blocks_dir).unwrap();
-                (0u64, None)
-            } else {
-                let mut max_block = 0u64;
-                let mut max_block_path = None;
-                for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
-                    .expect("Failed to read glob pattern")
-                {
-                    if let Ok(entry) = entry {
-                        if let Some(stem) = entry.file_stem() {
-                            if let Some(stem_string) = stem.to_str() {
-                                if let Some(blocknumber) = stem_string.strip_prefix("block_") {
-                                    let blocknumber = blocknumber.parse::<u64>().unwrap();
-                                    if blocknumber > max_block {
-                                        max_block = blocknumber;
-                                        max_block_path = Some(entry);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                return (max_block, max_block_path)
-            }
-        };
-
+        // get the location of this miner's blocks
         let config = app_config();
         let blocks_dir = Path::new(&config.chain_info.block_dir);
         let (mut current_block_number, current_block_path) = parse_block_height(blocks_dir);
 
+        // create the initial preimage (or 'challenge') of this sequence for the OL proof.
+        // the preimage is a hash of the previous block's proof.
+        // in the case of the first block, use the config.gen_preimage()
         let mut preimage ={
-            // If there is a previous block, use the last block as the preimage.
-            // This is the case where the app is picking up where it previously left off.
-            if let Some(max_block_path) = current_block_path{
+            // In this case the app is picking up where it previously left off.
+            // If there is a previous block (max_block_path), use the proof (.data) as the preimage for next block.
+            if let Some(max_block_path) = current_block_path{ // current_block_path is Option type, check if destructures to Some.
                 let block_file =fs::read_to_string(max_block_path)
                 .expect("Could not read latest block");
 
@@ -91,30 +68,98 @@ pub mod build_block {
             }
         };
 
+        // generate new blocks continuosly using the previous block's proof as the input to the next.
         loop{
-            status_ok!("Generating Proof for block {}",current_block_number.to_string());
-
-            let block = Block {
-                height: current_block_number + 1,
-                // note: do_delay() sigature is (challenge, delay difficulty)
-                data: delay::do_delay(&config.gen_preimage(),config.chain_info.block_size)
-            };
+            status_ok!("Generating Proof for block:",current_block_number.to_string());
             current_block_number +=1;
+            
+            let block = Block {
+                height: current_block_number,
+                // note: do_delay() sigature is (challenge, delay difficulty).
+                // note: trait serializes data field.
+                data: delay::do_delay(&preimage,config.chain_info.block_size)
+            };
 
             // set the preimage for the next loop.
             preimage = HashValue::sha3_256_of(&block.data).to_vec();
 
             // Write the file.
-            // serialize the data
             let mut latest_block_path = blocks_dir.to_path_buf();
             latest_block_path.push(format!("block_{}.json", current_block_number));
             let mut file = fs::File::create(&latest_block_path).unwrap();
-
             file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
                 .expect("Could not write block");
-
-            let config = app_config();
-            let blocks_dir = Path::new(&config.chain_info.block_dir);
         }
+    }
+
+    // parse the existing blocks in the miner's path. This function receives any path.
+    // Note: the path is configured in ol_miner.toml which abscissa Configurable parses, see commands.rs.
+    fn parse_block_height (blocks_dir: &Path) -> (u64, Option<PathBuf>) {
+        let mut max_block = 0u64;
+        let mut max_block_path = None;
+
+        if !blocks_dir.exists() {
+            // first run, create the directory if there is none, or if the user changed the configs.
+            // note: user may have blocks but they are in a different directory than what ol_miner.toml says.
+            fs::create_dir(blocks_dir).unwrap();
+        } else {
+            // iterate through all json files in the directory.
+            for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
+                .expect("Failed to read glob pattern")
+            {
+                if let Ok(entry) = entry {
+                    if let Some(stem) = entry.file_stem() {
+                        if let Some(stem_string) = stem.to_str() {
+                            if let Some(blocknumber) = stem_string.strip_prefix("block_") {
+                                let blocknumber = blocknumber.parse::<u64>().unwrap();
+                                if blocknumber > max_block {
+                                    max_block = blocknumber;
+                                    max_block_path = Some(entry);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        (max_block, max_block_path)
+    }
+
+    /* ////////////// */
+    /* / Unit tests / */
+    /* ////////////// */
+
+    #[test]
+    fn test_parse_no_files() {
+        // if no file is found, the block height is 0
+        let blocks_dir = Path::new(".");
+        assert_eq!(parse_block_height(blocks_dir).0, 0);
+    }
+
+    #[test]
+    fn test_parse_one_file() {
+        // create a mock file temporarily in ./test_blocks with height 33
+        let current_block_number = 33;
+        let block = Block {
+            height: current_block_number,
+            // note: do_delay() sigature is (challenge, delay difficulty).
+            // note: trait serializes data field.
+            data: Vec::new()
+        };
+
+        // write the mock data temporarilty
+        let blocks_dir = Path::new("./test_blocks");
+        fs::create_dir(blocks_dir).unwrap();
+        let mut latest_block_path = blocks_dir.to_path_buf();
+        latest_block_path.push(format!("block_{}.json", current_block_number));
+        let mut file = fs::File::create(&latest_block_path).unwrap();
+        file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
+            .expect("Could not write block");
+
+        // block heigh
+        assert_eq!(parse_block_height(blocks_dir).0, 33);
+        // delete the temporary test file and directory.
+        // remove_dir_all is scary: be careful with this.
+        fs::remove_dir_all(blocks_dir).unwrap();
     }
 }
