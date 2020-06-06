@@ -8,11 +8,11 @@ use crate::{
 use anyhow::{bail, Result};
 use executor_types::ExecutedTrees;
 use futures::executor::block_on;
-use libra_config::config::{PeerNetworkId, RoleType};
-use libra_crypto::{
-    ed25519::Ed25519PrivateKey, hash::ACCUMULATOR_PLACEHOLDER_HASH, test_utils::TEST_SEED, x25519,
-    PrivateKey, Uniform,
+use libra_config::{
+    config::{PeerNetworkId, RoleType},
+    network_id::NetworkId,
 };
+use libra_crypto::{hash::ACCUMULATOR_PLACEHOLDER_HASH, test_utils::TEST_SEED, x25519, Uniform};
 use libra_mempool::mocks::MockSharedMempool;
 use libra_network_address::{NetworkAddress, RawNetworkAddress};
 use libra_types::{
@@ -23,7 +23,7 @@ use libra_types::{
     validator_verifier::random_validator_verifier, waypoint::Waypoint,
 };
 use network::{
-    validator_network::network_builder::{NetworkBuilder, TransportType},
+    validator_network::network_builder::{AuthenticationMode, NetworkBuilder},
     NetworkPublicKeys,
 };
 use rand::{rngs::StdRng, SeedableRng};
@@ -116,8 +116,9 @@ struct SynchronizerEnv {
     clients: Vec<Arc<StateSyncClient>>,
     storage_proxies: Vec<Arc<RwLock<MockStorage>>>, // to directly modify peers storage
     signers: Vec<ValidatorSigner>,
-    network_signers: Vec<Ed25519PrivateKey>,
+    network_keys: Vec<x25519::PrivateKey>,
     public_keys: Vec<ValidatorInfo>,
+    network_id: NetworkId,
     peer_ids: Vec<PeerId>,
     peer_addresses: Vec<NetworkAddress>,
     mempools: Vec<MockSharedMempool>,
@@ -129,18 +130,14 @@ impl SynchronizerEnv {
         count: usize,
     ) -> (
         Vec<ValidatorSigner>,
-        Vec<Ed25519PrivateKey>,
         Vec<ValidatorInfo>,
+        Vec<x25519::PrivateKey>,
     ) {
         let (signers, _verifier) = random_validator_verifier(count, None, true);
 
-        // Setup signing public keys.
-        let mut rng = StdRng::from_seed(TEST_SEED);
-        let signing_private_keys: Vec<_> = (0..count)
-            .map(|_| Ed25519PrivateKey::generate(&mut rng))
-            .collect();
         // Setup identity public keys.
-        let identity_private_keys: Vec<_> = (0..count)
+        let mut rng = StdRng::from_seed(TEST_SEED);
+        let network_keys: Vec<_> = (0..count)
             .map(|_| x25519::PrivateKey::generate(&mut rng))
             .collect();
 
@@ -151,10 +148,9 @@ impl SynchronizerEnv {
             let addr: NetworkAddress = "/memory/0".parse().unwrap();
             let validator_config = ValidatorConfig::new(
                 signer.public_key(),
-                signing_private_keys[idx].public_key(),
-                identity_private_keys[idx].public_key(),
+                network_keys[idx].public_key(),
                 RawNetworkAddress::try_from(&addr).unwrap(),
-                identity_private_keys[idx].public_key(),
+                network_keys[idx].public_key(),
                 RawNetworkAddress::try_from(&addr).unwrap(),
                 // Vec::<AccountAddress>::new(),
             );
@@ -162,7 +158,7 @@ impl SynchronizerEnv {
                 ValidatorInfo::new(signer.author(), voting_power, validator_config);
             validators_keys.push(validator_info);
         }
-        (signers, signing_private_keys, validators_keys)
+        (signers, validators_keys, network_keys)
     }
 
     // Moves peer 0 to the next epoch. Note that other peers are not going to be able to discover
@@ -200,7 +196,7 @@ impl SynchronizerEnv {
     fn new(num_peers: usize) -> Self {
         ::libra_logger::Logger::new().environment_only(true).init();
         let runtime = Runtime::new().unwrap();
-        let (signers, network_signers, public_keys) = Self::initial_setup(num_peers);
+        let (signers, public_keys, network_keys) = Self::initial_setup(num_peers);
         let peer_ids = signers.iter().map(|s| s.author()).collect::<Vec<PeerId>>();
 
         Self {
@@ -209,7 +205,8 @@ impl SynchronizerEnv {
             clients: vec![],
             storage_proxies: vec![],
             signers,
-            network_signers,
+            network_id: NetworkId::Validator,
+            network_keys,
             public_keys,
             peer_ids,
             peer_addresses: vec![],
@@ -223,6 +220,16 @@ impl SynchronizerEnv {
         role: RoleType,
         waypoint: Option<Waypoint>,
     ) {
+        self.setup_next_synchronizer(handler, role, waypoint, 60_000);
+    }
+
+    fn setup_next_synchronizer(
+        &mut self,
+        handler: MockRpcHandler,
+        role: RoleType,
+        waypoint: Option<Waypoint>,
+        timeout_ms: u64,
+    ) {
         let new_peer_idx = self.synchronizers.len();
         let trusted_peers: HashMap<_, _> = self
             .public_keys
@@ -231,7 +238,6 @@ impl SynchronizerEnv {
                 (
                     *public_keys.account_address(),
                     NetworkPublicKeys {
-                        signing_public_key: public_keys.network_signing_public_key().clone(),
                         identity_public_key: public_keys.network_identity_public_key(),
                     },
                 )
@@ -249,20 +255,17 @@ impl SynchronizerEnv {
         }
         let mut network_builder = NetworkBuilder::new(
             self.runtime.handle().clone(),
+            self.network_id.clone(),
             self.peer_ids[new_peer_idx],
-            addr,
             RoleType::Validator,
+            addr,
         );
         network_builder
-            .signing_keypair((
-                self.network_signers[new_peer_idx].clone(),
-                self.public_keys[new_peer_idx]
-                    .network_signing_public_key()
-                    .clone(),
+            .authentication_mode(AuthenticationMode::Mutual(
+                self.network_keys[new_peer_idx].clone(),
             ))
             .trusted_peers(trusted_peers)
             .seed_peers(seed_peers)
-            .transport(TransportType::Memory)
             .add_connectivity_manager()
             .add_gossip_discovery();
 
@@ -270,15 +273,14 @@ impl SynchronizerEnv {
         let peer_addr = network_builder.build();
 
         let mut config = config_builder::test_config().0;
-        let mut network = config.validator_network.unwrap();
-        let mut network_id = network.peer_id;
+        let network = config.validator_network.unwrap();
+        let network_id = network.peer_id();
         if !role.is_validator() {
-            network.peer_id = PeerId::default();
-            network_id = network.peer_id;
             config.full_node_networks = vec![network];
             config.validator_network = None;
         }
         config.base.role = role;
+        config.state_sync.sync_request_timeout_ms = timeout_ms;
         if new_peer_idx > 0 {
             // set the upstream peer in the config
             let upstream_peer = PeerNetworkId(network_id, self.peer_ids[new_peer_idx - 1]);
@@ -427,6 +429,23 @@ fn test_flaky_peer_sync() {
     env.commit(0, 20);
     env.sync_to(1, env.latest_li(0));
     assert_eq!(env.latest_li(1).ledger_info().version(), 20);
+}
+
+#[test]
+#[should_panic]
+fn test_request_timeout() {
+    let handler =
+        Box::new(move |_| -> Result<TransactionListWithProof> { bail!("chunk fetch failed") });
+    let mut env = SynchronizerEnv::new(2);
+    env.start_next_synchronizer(handler, RoleType::Validator, None);
+    env.setup_next_synchronizer(
+        SynchronizerEnv::default_handler(),
+        RoleType::Validator,
+        None,
+        100,
+    );
+    env.commit(0, 1);
+    env.sync_to(1, env.latest_li(0));
 }
 
 #[test]

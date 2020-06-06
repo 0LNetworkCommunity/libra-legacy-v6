@@ -4,23 +4,21 @@
 use crate::{
     account_address::AccountAddress,
     block_info::{BlockInfo, Round},
-    epoch_info::EpochInfo,
+    epoch_state::EpochState,
     on_chain_config::ValidatorSet,
     transaction::Version,
     validator_verifier::{ValidatorVerifier, VerifyError},
 };
-use anyhow::{Error, Result};
 use libra_crypto::{
     ed25519::Ed25519Signature,
-    hash::{CryptoHash, CryptoHasher, HashValue},
+    hash::{CryptoHash, HashValue},
 };
-use libra_crypto_derive::CryptoHasher;
+use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
-    convert::TryFrom,
     fmt::{Display, Formatter},
     ops::{Deref, DerefMut},
 };
@@ -42,7 +40,7 @@ use std::{
 /// LedgerInfo with the `version` being the latest version that will be committed if B gets 2f+1
 /// votes. It sets `consensus_data_hash` to represent B so that if those 2f+1 votes are gathered a
 /// QC is formed on B.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, CryptoHasher)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct LedgerInfo {
     commit_info: BlockInfo,
@@ -116,8 +114,8 @@ impl LedgerInfo {
         self.commit_info.timestamp_usecs()
     }
 
-    pub fn next_epoch_info(&self) -> Option<&EpochInfo> {
-        self.commit_info.next_epoch_info()
+    pub fn next_epoch_state(&self) -> Option<&EpochState> {
+        self.commit_info.next_epoch_state()
     }
 
     /// Returns hash of consensus voting data in this `LedgerInfo`.
@@ -127,61 +125,6 @@ impl LedgerInfo {
 
     pub fn set_consensus_data_hash(&mut self, consensus_data_hash: HashValue) {
         self.consensus_data_hash = consensus_data_hash;
-    }
-}
-
-impl TryFrom<crate::proto::types::LedgerInfo> for LedgerInfo {
-    type Error = Error;
-
-    fn try_from(proto: crate::proto::types::LedgerInfo) -> Result<Self> {
-        let version = proto.version;
-        let transaction_accumulator_hash =
-            HashValue::from_slice(&proto.transaction_accumulator_hash)?;
-        let consensus_data_hash = HashValue::from_slice(&proto.consensus_data_hash)?;
-        let consensus_block_id = HashValue::from_slice(&proto.consensus_block_id)?;
-        let epoch = proto.epoch;
-        let round = proto.round;
-        let timestamp_usecs = proto.timestamp_usecs;
-
-        let next_epoch_info = lcs::from_bytes(&proto.next_epoch_info)?;
-        Ok(LedgerInfo::new(
-            BlockInfo::new(
-                epoch,
-                round,
-                consensus_block_id,
-                transaction_accumulator_hash,
-                version,
-                timestamp_usecs,
-                next_epoch_info,
-            ),
-            consensus_data_hash,
-        ))
-    }
-}
-
-impl From<LedgerInfo> for crate::proto::types::LedgerInfo {
-    fn from(ledger_info: LedgerInfo) -> Self {
-        Self {
-            version: ledger_info.version(),
-            transaction_accumulator_hash: ledger_info.transaction_accumulator_hash().to_vec(),
-            consensus_data_hash: ledger_info.consensus_data_hash().to_vec(),
-            consensus_block_id: ledger_info.consensus_block_id().to_vec(),
-            epoch: ledger_info.epoch(),
-            round: ledger_info.round(),
-            timestamp_usecs: ledger_info.timestamp_usecs(),
-            next_epoch_info: lcs::to_bytes(&ledger_info.next_epoch_info())
-                .expect("failed to serialize EpochInfo"),
-        }
-    }
-}
-
-impl CryptoHash for LedgerInfo {
-    type Hasher = LedgerInfoHasher;
-
-    fn hash(&self) -> HashValue {
-        let mut state = Self::Hasher::default();
-        state.write(&lcs::to_bytes(self).expect("Serialization should work."));
-        state.finish()
     }
 }
 
@@ -302,22 +245,6 @@ impl LedgerInfoWithV0 {
     ) -> ::std::result::Result<(), VerifyError> {
         let ledger_hash = self.ledger_info().hash();
         validator.batch_verify_aggregated_signature(ledger_hash, self.signatures())
-    }
-}
-
-impl TryFrom<crate::proto::types::LedgerInfoWithSignatures> for LedgerInfoWithSignatures {
-    type Error = Error;
-
-    fn try_from(proto: crate::proto::types::LedgerInfoWithSignatures) -> Result<Self> {
-        Ok(lcs::from_bytes(&proto.bytes)?)
-    }
-}
-
-impl From<LedgerInfoWithSignatures> for crate::proto::types::LedgerInfoWithSignatures {
-    fn from(ledger_info_with_sigs: LedgerInfoWithSignatures) -> Self {
-        Self {
-            bytes: lcs::to_bytes(&ledger_info_with_sigs).expect("failed to serialize ledger info"),
-        }
     }
 }
 

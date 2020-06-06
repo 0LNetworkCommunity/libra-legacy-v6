@@ -307,6 +307,7 @@ impl CompiledModuleStrategyGen {
                     // Build a compiled module
                     CompiledModuleMut {
                         module_handles,
+                        self_module_handle_idx: ModuleHandleIndex(0),
                         struct_handles,
                         function_handles,
                         field_handles,
@@ -363,6 +364,7 @@ impl StDefnMaterializeState {
         use SignatureToken::*;
 
         match signature {
+            Signer => true,
             Struct(struct_handle_index) => {
                 self.struct_handles[struct_handle_index.0 as usize].is_nominal_resource
             }

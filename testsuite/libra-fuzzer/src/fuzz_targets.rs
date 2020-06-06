@@ -36,7 +36,7 @@ macro_rules! proto_fuzz_target {
                 _idx: usize,
                 gen: &mut ::libra_proptest_helpers::ValueGenerator,
             ) -> Option<Vec<u8>> {
-                use libra_prost_ext::MessageExt;
+                use libra_prost_test_helpers::MessageExt;
 
                 let value: $prototy = gen.generate(::proptest::arbitrary::any::<$ty>()).into();
 
@@ -65,21 +65,25 @@ mod network_noise_initiator;
 mod network_noise_responder;
 mod signed_transaction;
 mod sparse_merkle_proof;
+//mod storage_save_blocks;
+mod storage_schema_decode;
 mod vm_value;
 
 static ALL_TARGETS: Lazy<BTreeMap<&'static str, Box<dyn FuzzTargetImpl>>> = Lazy::new(|| {
     let targets: Vec<Box<dyn FuzzTargetImpl>> = vec![
         // List fuzz targets here in this format.
         Box::new(compiled_module::CompiledModuleTarget::default()),
-        Box::new(signed_transaction::SignedTransactionTarget::default()),
-        Box::new(inner_signed_transaction::SignedTransactionTarget::default()),
-        Box::new(sparse_merkle_proof::SparseMerkleProofTarget::default()),
-        Box::new(vm_value::ValueTarget::default()),
         Box::new(consensus_proposal::ConsensusProposal::default()),
-        Box::new(json_rpc_service::JsonRpcSubmitTransactionRequest::default()),
         Box::new(inbound_rpc_protocol::RpcInboundRequest::default()),
+        Box::new(inner_signed_transaction::SignedTransactionTarget::default()),
+        Box::new(json_rpc_service::JsonRpcSubmitTransactionRequest::default()),
         Box::new(network_noise_initiator::NetworkNoiseInitiator::default()),
         Box::new(network_noise_responder::NetworkNoiseResponder::default()),
+        Box::new(signed_transaction::SignedTransactionTarget::default()),
+        Box::new(sparse_merkle_proof::SparseMerkleProofTarget::default()),
+        //        Box::new(storage_save_blocks::StorageSaveBlocks::default()),
+        Box::new(storage_schema_decode::StorageSchemaDecode::default()),
+        Box::new(vm_value::ValueTarget::default()),
     ];
     targets
         .into_iter()

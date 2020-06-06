@@ -12,7 +12,7 @@ use libra_crypto::{
 use libra_logger::prelude::*;
 use libra_types::{
     account_address::AccountAddress,
-    account_config::{association_address, lbr_type_tag, AccountResource},
+    account_config::{association_address, lbr_type_tag, AccountResource, LBR_NAME},
     block_info::BlockInfo,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     transaction::{
@@ -22,16 +22,18 @@ use libra_types::{
 use libra_vm::LibraVM;
 use libradb::LibraDB;
 use rand::{rngs::StdRng, SeedableRng};
-use simple_storage_client::SimpleStorageClient;
 use std::{
     collections::BTreeMap,
     convert::TryFrom,
     path::PathBuf,
     sync::{mpsc, Arc},
 };
+use storage_client::StorageClient;
 use storage_interface::{DbReader, DbReaderWriter};
-use storage_service::start_simple_storage_service_with_db;
-use transaction_builder::{encode_mint_script, encode_transfer_with_metadata_script};
+use storage_service::start_storage_service_with_db;
+use transaction_builder::{
+    encode_mint_lbr_to_address_script, encode_transfer_with_metadata_script,
+};
 
 struct AccountData {
     private_key: Ed25519PrivateKey,
@@ -112,8 +114,7 @@ impl TransactionGenerator {
                     (i * block_size + j + 1) as u64,
                     &self.genesis_key,
                     self.genesis_key.public_key(),
-                    encode_mint_script(
-                        lbr_type_tag(),
+                    encode_mint_lbr_to_address_script(
                         &account.address,
                         account.auth_key_prefix(),
                         init_account_balance,
@@ -148,8 +149,7 @@ impl TransactionGenerator {
                     sender.public_key.clone(),
                     encode_transfer_with_metadata_script(
                         lbr_type_tag(),
-                        &receiver.address,
-                        receiver.auth_key_prefix(),
+                        receiver.address,
                         1, /* amount */
                         vec![],
                         vec![],
@@ -231,7 +231,7 @@ impl TransactionExecutor {
                 output.root_hash(),
                 version,
                 0,    /* timestamp_usecs, doesn't matter */
-                None, /* next_epoch_info */
+                None, /* next_epoch_state */
             );
             let ledger_info = LedgerInfo::new(
                 block_info,
@@ -273,8 +273,8 @@ fn create_storage_service_and_executor(
     );
     bootstrap_db_if_empty::<LibraVM>(&db_rw, get_genesis_txn(config).unwrap()).unwrap();
 
-    let _handle = start_simple_storage_service_with_db(config, db.clone());
-    let executor = Executor::new(SimpleStorageClient::new(&config.storage.simple_address).into());
+    let _handle = start_storage_service_with_db(config, db.clone());
+    let executor = Executor::new(StorageClient::new(&config.storage.address).into());
 
     (db, executor)
 }
@@ -341,8 +341,9 @@ fn create_transaction(
         sender,
         sequence_number,
         program,
-        1_000_000, /* max_gas_amount */
-        0,         /* gas_unit_price */
+        1_000_000,           /* max_gas_amount */
+        0,                   /* gas_unit_price */
+        LBR_NAME.to_owned(), /* gas_currency_code */
         expiration_time,
     );
 

@@ -47,8 +47,12 @@ impl JsonRpcBatch {
         );
     }
 
-    pub fn add_get_metadata_request(&mut self) {
-        self.add_request("get_metadata".to_string(), vec![]);
+    pub fn add_get_metadata_request(&mut self, version: Option<u64>) {
+        self.add_request("get_metadata".to_string(), vec![json!(version)]);
+    }
+
+    pub fn add_get_currencies_info(&mut self) {
+        self.add_request("get_currencies".to_string(), vec![]);
     }
 
     pub fn add_get_transactions_request(
@@ -104,6 +108,10 @@ impl JsonRpcBatch {
                 json!(ledger_version),
             ],
         );
+    }
+
+    pub fn add_get_network_status_request(&mut self) {
+        self.add_request("get_network_status".to_string(), vec![]);
     }
 }
 

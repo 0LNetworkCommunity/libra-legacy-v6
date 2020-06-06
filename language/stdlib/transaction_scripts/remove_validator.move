@@ -1,9 +1,8 @@
 script {
-use 0x0::LibraSystem;
-// Script for adding a new validator
-// Will only succeed when run by the Association address
+    use 0x0::LibraSystem;
 
-fun main(new_validator: address) {
-  LibraSystem::remove_validator(new_validator)
-}
+    // Callable by Validator's operator
+    fun main(account: &signer, validator_address: address) {
+        LibraSystem::remove_validator(account, validator_address);
+    }
 }

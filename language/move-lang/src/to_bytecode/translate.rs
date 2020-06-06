@@ -6,7 +6,7 @@ use crate::{
     cfgir::ast as G,
     compiled_unit::*,
     errors::*,
-    expansion::ast::SpecId,
+    expansion::ast::{SpecId, Value_},
     hlir::{
         ast::{self as H},
         translate::{display_var, DisplayVar},
@@ -14,7 +14,7 @@ use crate::{
     naming::ast::{BuiltinTypeName_, TParam},
     parser::ast::{
         BinOp, BinOp_, Field, FunctionName, FunctionVisibility, Kind, Kind_, ModuleIdent,
-        StructName, UnaryOp, UnaryOp_, Value_, Var,
+        StructName, UnaryOp, UnaryOp_, Var,
     },
     shared::{unique_map::UniqueMap, *},
 };
@@ -373,7 +373,7 @@ fn function(
     let signature = function_signature(context, signature);
     let acquires = acquires
         .into_iter()
-        .map(|s| context.struct_definition_name(m.unwrap(), s))
+        .map(|(s, _)| context.struct_definition_name(m.unwrap(), s))
         .collect();
     let body = match body.value {
         G::FunctionBody_::Native => IR::FunctionBody::Native,
@@ -589,6 +589,7 @@ fn base_type(context: &mut Context, sp!(_, bt_): H::BaseType) -> IR::Type {
             panic!("ICE should not have reached compilation if there are errors")
         }
         B::Apply(_, sp!(_, TN::Builtin(sp!(_, BT::Address))), _) => IRT::Address,
+        B::Apply(_, sp!(_, TN::Builtin(sp!(_, BT::Signer))), _) => IRT::Signer,
         B::Apply(_, sp!(_, TN::Builtin(sp!(_, BT::U8))), _) => IRT::U8,
         B::Apply(_, sp!(_, TN::Builtin(sp!(_, BT::U64))), _) => IRT::U64,
         B::Apply(_, sp!(_, TN::Builtin(sp!(_, BT::U128))), _) => IRT::U128,
@@ -736,7 +737,7 @@ fn exp_(context: &mut Context, code: &mut IR::BytecodeBlock, e: H::Exp) {
     match e_ {
         E::Unreachable => panic!("ICE should not compile dead code"),
         E::UnresolvedError => panic!("ICE should not have reached compilation if there are errors"),
-        E::Unit => (),
+        E::Unit { .. } => (),
         // remember to switch to orig_name
         E::Spec(id, used_locals) => code.push(sp(loc, B::Nop(Some(context.spec(id, used_locals))))),
         E::Value(v) => {
@@ -903,6 +904,10 @@ fn builtin(context: &mut Context, code: &mut IR::BytecodeBlock, sp!(loc, b_): H:
             HB::MoveToSender(bt) => {
                 let (n, tys) = struct_definition_name_base(context, bt);
                 B::MoveToSender(n, tys)
+            }
+            HB::MoveTo(bt) => {
+                let (n, tys) = struct_definition_name_base(context, bt);
+                B::MoveTo(n, tys)
             }
             HB::MoveFrom(bt) => {
                 let (n, tys) = struct_definition_name_base(context, bt);

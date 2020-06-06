@@ -3,7 +3,7 @@
 
 #![allow(clippy::unit_arg)]
 
-use anyhow::{Error, Result};
+use anyhow::Result;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest::prelude::*;
 #[cfg(any(test, feature = "fuzzing"))]
@@ -198,55 +198,6 @@ impl VMStatus {
     }
 }
 
-//***********************************
-// Decoding/Encoding to Protobuffers
-//***********************************
-impl TryFrom<crate::proto::types::VmStatus> for VMStatus {
-    type Error = Error;
-
-    fn try_from(proto: crate::proto::types::VmStatus) -> Result<Self> {
-        let mut status = VMStatus::new(
-            StatusCode::try_from(proto.major_status).unwrap_or(StatusCode::UNKNOWN_STATUS),
-        );
-
-        if proto.has_sub_status {
-            status.set_sub_status(proto.sub_status);
-        }
-
-        if proto.has_message {
-            status.set_message(proto.message);
-        }
-
-        Ok(status)
-    }
-}
-
-impl From<VMStatus> for crate::proto::types::VmStatus {
-    fn from(status: VMStatus) -> Self {
-        let mut proto_status = Self::default();
-
-        proto_status.has_sub_status = false;
-        proto_status.has_message = false;
-
-        // Set major status
-        proto_status.major_status = status.major_status.into();
-
-        // Set minor status if there is one
-        if let Some(sub_status) = status.sub_status {
-            proto_status.has_sub_status = true;
-            proto_status.sub_status = sub_status;
-        }
-
-        // Set info string
-        if let Some(string) = status.message {
-            proto_status.has_message = true;
-            proto_status.message = string;
-        }
-
-        proto_status
-    }
-}
-
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 #[repr(u64)]
@@ -402,6 +353,9 @@ pub enum StatusCode {
     INVALID_LOOP_CONTINUE = 1087,
     UNSAFE_RET_UNUSED_RESOURCES = 1088,
     TOO_MANY_LOCALS = 1089,
+    MOVETO_TYPE_MISMATCH_ERROR = 1090,
+    MOVETO_NO_RESOURCE_ERROR = 1091,
+    GENERIC_MEMBER_OPCODE_MISMATCH = 1092,
 
     // These are errors that the VM might raise if a violation of internal
     // invariants takes place.
@@ -479,7 +433,6 @@ pub enum StatusCode {
     CALL_STACK_OVERFLOW = 4021,
     NATIVE_FUNCTION_ERROR = 4022,
     GAS_SCHEDULE_ERROR = 4023,
-    CREATE_NULL_ACCOUNT = 4024,
 
     // A reserved status to represent an unknown vm status.
     UNKNOWN_STATUS = std::u64::MAX,
@@ -674,7 +627,6 @@ impl TryFrom<u64> for StatusCode {
             4021 => Ok(StatusCode::CALL_STACK_OVERFLOW),
             4022 => Ok(StatusCode::NATIVE_FUNCTION_ERROR),
             4023 => Ok(StatusCode::GAS_SCHEDULE_ERROR),
-            4024 => Ok(StatusCode::CREATE_NULL_ACCOUNT),
             std::u64::MAX => Ok(StatusCode::UNKNOWN_STATUS),
             _ => Err("invalid StatusCode"),
         }

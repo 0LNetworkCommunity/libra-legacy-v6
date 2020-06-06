@@ -124,7 +124,7 @@ impl ExecutorProxyTrait for ExecutorProxy {
             .get_startup_info()?
             .ok_or_else(|| format_err!("[state sync] Failed to access storage info"))?;
 
-        let current_epoch_info = storage_info.get_epoch_info().clone();
+        let current_epoch_state = storage_info.get_epoch_state().clone();
 
         let synced_trees = if let Some(synced_tree_state) = storage_info.synced_tree_state {
             ExecutedTrees::from(synced_tree_state)
@@ -135,7 +135,7 @@ impl ExecutorProxyTrait for ExecutorProxy {
         Ok(SynchronizerState::new(
             storage_info.latest_ledger_info,
             synced_trees,
-            current_epoch_info,
+            current_epoch_state,
         ))
     }
 
@@ -194,6 +194,10 @@ impl ExecutorProxyTrait for ExecutorProxy {
         if events.is_empty() {
             return Ok(());
         }
+        let event_keys = events
+            .into_iter()
+            .map(|event| *event.key())
+            .collect::<HashSet<_>>();
 
         // calculate deltas
         let new_configs = Self::fetch_all_configs(&*self.storage)?;
@@ -214,7 +218,11 @@ impl ExecutorProxyTrait for ExecutorProxy {
         // notify subscribers
         for subscription in self.reconfig_subscriptions.iter_mut() {
             // publish updates if *any* of the subscribed configs changed
-            if !changed_configs.is_disjoint(&subscription.subscribed_configs()) {
+            // or any of the subscribed events were emitted
+            let subscribed_items = subscription.subscribed_items();
+            if !changed_configs.is_disjoint(&subscribed_items.configs)
+                || !event_keys.is_disjoint(&subscribed_items.events)
+            {
                 subscription.publish(new_configs.clone())?;
             }
         }

@@ -3,10 +3,10 @@
 
 use crate::executor_proxy::{ExecutorProxy, ExecutorProxyTrait};
 use executor::{db_bootstrapper::bootstrap_db_if_empty, Executor};
-use executor_types::BlockExecutor;
-use executor_utils::test_helpers::{
+use executor_test_helpers::{
     gen_block_id, gen_block_metadata, gen_ledger_info_with_sigs, get_test_signed_transaction,
 };
+use executor_types::BlockExecutor;
 use futures::{future::FutureExt, stream::StreamExt};
 use libra_config::utils::get_genesis_txn;
 use libra_crypto::{
@@ -17,15 +17,11 @@ use libra_crypto::{
 use libra_types::{
     account_config::{association_address, lbr_type_tag},
     on_chain_config::{OnChainConfig, VMConfig, VMPublishingOption},
-    transaction::authenticator::AuthenticationKey,
 };
 use libra_vm::LibraVM;
 use libradb::LibraDB;
-use std::sync::Arc;
 use stdlib::transaction_scripts::StdlibScript;
-use storage_client::SyncStorageClient;
 use storage_interface::DbReaderWriter;
-use storage_service::start_storage_service_with_db;
 use subscription_service::ReconfigSubscription;
 use transaction_builder::{
     encode_block_prologue_script, encode_publishing_option_script,
@@ -37,17 +33,14 @@ use transaction_builder::{
 fn test_on_chain_config_pub_sub() {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     // set up reconfig subscription
-    let subscribed_configs = &[VMConfig::CONFIG_ID];
-    let (subscription, mut reconfig_receiver) = ReconfigSubscription::subscribe(subscribed_configs);
+    let (subscription, mut reconfig_receiver) =
+        ReconfigSubscription::subscribe_all(vec![VMConfig::CONFIG_ID], vec![]);
 
     let (mut config, genesis_key) = config_builder::test_config();
     let (db, db_rw) = DbReaderWriter::wrap(LibraDB::new_for_test(&config.storage.dir()));
-    let _storage = start_storage_service_with_db(&config, Arc::clone(&db));
     bootstrap_db_if_empty::<LibraVM>(&db_rw, get_genesis_txn(&config).unwrap()).unwrap();
 
-    let mut block_executor = Box::new(Executor::<LibraVM>::new(
-        SyncStorageClient::new(&config.storage.address).into(),
-    ));
+    let mut block_executor = Box::new(Executor::<LibraVM>::new(db_rw.clone()));
     let chunk_executor = Box::new(Executor::<LibraVM>::new(db_rw));
     let mut executor_proxy = ExecutorProxy::new(db, chunk_executor, vec![subscription]);
 
@@ -82,7 +75,7 @@ fn test_on_chain_config_pub_sub() {
     //////////////////////////////////////////////////
     let genesis_account = association_address();
     let network_config = config.validator_network.as_ref().unwrap();
-    let validator_account = network_config.peer_id;
+    let validator_account = network_config.peer_id();
     let keys = config
         .test
         .as_mut()
@@ -93,8 +86,6 @@ fn test_on_chain_config_pub_sub() {
 
     let validator_privkey = keys.take_private().unwrap();
     let validator_pubkey = keys.public_key();
-    let auth_key = AuthenticationKey::ed25519(&validator_pubkey);
-    let validator_auth_key_prefix = auth_key.prefix().to_vec();
 
     // Create a dummy block prologue transaction that will bump the timer.
     let txn1 = encode_block_prologue_script(gen_block_metadata(1, validator_account));
@@ -102,7 +93,7 @@ fn test_on_chain_config_pub_sub() {
     // Add a script to whitelist.
     let new_whitelist = {
         let mut existing_list = StdlibScript::whitelist();
-        existing_list.push(*HashValue::from_sha3_256(&[]).as_ref());
+        existing_list.push(*HashValue::sha3_256_of(&[]).as_ref());
         existing_list
     };
     let vm_publishing_option = VMPublishingOption::Locked(new_whitelist);
@@ -160,8 +151,7 @@ fn test_on_chain_config_pub_sub() {
         genesis_key.public_key(),
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &validator_account,
-            validator_auth_key_prefix,
+            validator_account,
             1_000_000,
             vec![],
             vec![],

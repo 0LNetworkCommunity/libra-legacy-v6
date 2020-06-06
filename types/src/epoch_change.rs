@@ -4,14 +4,11 @@
 #![forbid(unsafe_code)]
 
 use crate::ledger_info::{LedgerInfo, LedgerInfoWithSignatures};
-use anyhow::{ensure, format_err, Error, Result};
+use anyhow::{ensure, format_err, Result};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest::{collection::vec, prelude::*};
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::{TryFrom, TryInto},
-    fmt::Debug,
-};
+use std::fmt::Debug;
 
 /// The verification of the epoch change proof starts with verifier that is trusted by the
 /// client: could be either a waypoint (upon startup) or a known epoch info.
@@ -113,42 +110,11 @@ impl EpochChangeProof {
             // trusted) validator sets.
             verifier_ref = ledger_info_with_sigs
                 .ledger_info()
-                .next_epoch_info()
+                .next_epoch_state()
                 .ok_or_else(|| format_err!("LedgerInfo doesn't carry a ValidatorSet"))?;
         }
 
         Ok(self.ledger_info_with_sigs.last().unwrap())
-    }
-}
-
-impl TryFrom<crate::proto::types::EpochChangeProof> for EpochChangeProof {
-    type Error = Error;
-
-    fn try_from(proto: crate::proto::types::EpochChangeProof) -> Result<Self> {
-        let ledger_info_with_sigs = proto
-            .ledger_info_with_sigs
-            .into_iter()
-            .map(TryInto::try_into)
-            .collect::<Result<Vec<_>>>()?;
-        let more = proto.more;
-
-        Ok(EpochChangeProof {
-            ledger_info_with_sigs,
-            more,
-        })
-    }
-}
-
-impl From<EpochChangeProof> for crate::proto::types::EpochChangeProof {
-    fn from(change: EpochChangeProof) -> Self {
-        Self {
-            ledger_info_with_sigs: change
-                .ledger_info_with_sigs
-                .into_iter()
-                .map(Into::into)
-                .collect(),
-            more: change.more,
-        }
     }
 }
 
@@ -167,7 +133,7 @@ impl Arbitrary for EpochChangeProof {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{block_info::BlockInfo, epoch_info::EpochInfo, waypoint::Waypoint};
+    use crate::{block_info::BlockInfo, epoch_state::EpochState, waypoint::Waypoint};
 
     #[test]
     fn verify_epoch_change_proof() {
@@ -187,7 +153,7 @@ mod tests {
             validator_verifier.push(current_verifier.clone());
             let (next_signers, next_verifier) =
                 random_validator_verifier((*epoch + 1) as usize, None, true);
-            let epoch_info = EpochInfo {
+            let epoch_state = EpochState {
                 epoch: *epoch + 1,
                 verifier: next_verifier.clone(),
             };
@@ -199,7 +165,7 @@ mod tests {
                     HashValue::zero(),
                     current_version,
                     0,
-                    Some(epoch_info),
+                    Some(epoch_state),
                 ),
                 HashValue::zero(),
             );
@@ -216,7 +182,7 @@ mod tests {
         // Test well-formed proof will succeed
         let proof_1 = EpochChangeProof::new(valid_ledger_info.clone(), /* more = */ false);
         assert!(proof_1
-            .verify(&EpochInfo {
+            .verify(&EpochState {
                 epoch: all_epoch[0],
                 verifier: validator_verifier[0].clone(),
             })
@@ -225,7 +191,7 @@ mod tests {
         let proof_2 =
             EpochChangeProof::new(valid_ledger_info[2..5].to_vec(), /* more = */ false);
         assert!(proof_2
-            .verify(&EpochInfo {
+            .verify(&EpochState {
                 epoch: all_epoch[2],
                 verifier: validator_verifier[2].clone()
             })
@@ -233,7 +199,7 @@ mod tests {
 
         // Test proof with stale prefix will verify
         assert!(proof_1
-            .verify(&EpochInfo {
+            .verify(&EpochState {
                 epoch: all_epoch[4],
                 verifier: validator_verifier[4].clone()
             })
@@ -242,7 +208,7 @@ mod tests {
         // Test empty proof will fail verification
         let proof_3 = EpochChangeProof::new(vec![], /* more = */ false);
         assert!(proof_3
-            .verify(&EpochInfo {
+            .verify(&EpochState {
                 epoch: all_epoch[0],
                 verifier: validator_verifier[0].clone()
             })
@@ -253,7 +219,7 @@ mod tests {
         list.extend_from_slice(&valid_ledger_info[8..9]);
         let proof_4 = EpochChangeProof::new(list, /* more = */ false);
         assert!(proof_4
-            .verify(&EpochInfo {
+            .verify(&EpochState {
                 epoch: all_epoch[3],
                 verifier: validator_verifier[3].clone()
             })
@@ -264,7 +230,7 @@ mod tests {
         list.reverse();
         let proof_5 = EpochChangeProof::new(list, /* more = */ false);
         assert!(proof_5
-            .verify(&EpochInfo {
+            .verify(&EpochState {
                 epoch: all_epoch[9],
                 verifier: validator_verifier[9].clone()
             })
@@ -279,7 +245,7 @@ mod tests {
             /* more = */ false,
         );
         assert!(proof_6
-            .verify(&EpochInfo {
+            .verify(&EpochState {
                 epoch: all_epoch[0],
                 verifier: validator_verifier[0].clone()
             })

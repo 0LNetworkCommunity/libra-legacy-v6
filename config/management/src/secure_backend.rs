@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::Error;
-use libra_config::config::{self, OnDiskStorageConfig, VaultConfig};
+use libra_config::config::{self, GitHubConfig, OnDiskStorageConfig, Token, VaultConfig};
 use libra_secure_storage::Storage;
 use std::{
     collections::HashMap,
@@ -12,6 +12,7 @@ use std::{
 };
 
 pub const DISK: &str = "disk";
+pub const GITHUB: &str = "github";
 pub const MEMORY: &str = "memory";
 pub const VAULT: &str = "vault";
 
@@ -20,7 +21,7 @@ pub const VAULT: &str = "vault";
 /// Some backends require parameters others do not, so that requires a conversion into the
 /// config::SecureBackend type to parse.
 ///
-/// Example: backend=vault;server=http://127.0.0.1:8080;token=123456
+/// Example: backend=vault;server=http://127.0.0.1:8080;token=/path/to/token
 #[derive(Clone, Debug)]
 pub struct SecureBackend {
     pub backend: String,
@@ -75,10 +76,32 @@ impl TryInto<config::SecureBackend> for SecureBackend {
                     .remove("path")
                     .ok_or_else(|| Error::BackendParsingError("missing path".into()))?;
                 config.path = PathBuf::from(path);
+                config.namespace = self.parameters.remove("namespace");
                 config::SecureBackend::OnDiskStorage(config)
+            }
+            GITHUB => {
+                let owner = self
+                    .parameters
+                    .remove("owner")
+                    .ok_or_else(|| Error::BackendParsingError("missing owner".into()))?;
+                let repository = self
+                    .parameters
+                    .remove("repository")
+                    .ok_or_else(|| Error::BackendParsingError("missing repository".into()))?;
+                let token = self
+                    .parameters
+                    .remove("token")
+                    .ok_or_else(|| Error::BackendParsingError("missing token".into()))?;
+                config::SecureBackend::GitHub(GitHubConfig {
+                    namespace: self.parameters.remove("namespace"),
+                    owner,
+                    repository,
+                    token: Token::new_disk(PathBuf::from(token)),
+                })
             }
             MEMORY => config::SecureBackend::InMemoryStorage,
             VAULT => {
+                let certificate = self.parameters.remove("ca_certificate").map(PathBuf::from);
                 let server = self
                     .parameters
                     .remove("server")
@@ -90,8 +113,8 @@ impl TryInto<config::SecureBackend> for SecureBackend {
                 config::SecureBackend::Vault(VaultConfig {
                     namespace: self.parameters.remove("namespace"),
                     server,
-                    // TODO(davidiw) Make this a path to a file
-                    token,
+                    ca_certificate: certificate,
+                    token: Token::new_disk(PathBuf::from(token)),
                 })
             }
             _ => panic!("Invalid backend: {}", self.backend),
@@ -119,6 +142,7 @@ impl TryInto<Box<dyn Storage>> for SecureBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{fs::File, io::Write};
 
     #[test]
     fn test_memory() {
@@ -131,20 +155,58 @@ mod tests {
 
     #[test]
     fn test_disk() {
-        let disk = "backend=disk;path=some_path";
-        storage(disk).unwrap();
+        let path = libra_temppath::TempPath::new();
+        path.create_as_file().unwrap();
+        let disk = format!("backend=disk;path={}", path.path().to_str().unwrap());
+        storage(&disk).unwrap();
 
         let disk = "backend=disk";
         assert!(storage(disk).is_err());
     }
 
     #[test]
-    fn test_vault() {
-        let vault = "backend=vault;server=http://127.0.0.1:8080;token=123456";
-        storage(vault).unwrap();
+    fn test_github() {
+        let path = libra_temppath::TempPath::new();
+        path.create_as_file().unwrap();
+        let mut file = File::create(path.path()).unwrap();
+        file.write_all(b"disk_token").unwrap();
+        let path_str = path.path().to_str().unwrap();
 
-        let vault = "backend=vault;server=http://127.0.0.1:8080;token=123456;namespace=test";
-        storage(vault).unwrap();
+        let github = format!(
+            "backend=github;owner=libra;repository=libra;token={}",
+            path_str
+        );
+        storage(&github).unwrap();
+
+        let github = format!(
+            "backend=github;owner=libra;repository=libra;token={};namespace=test",
+            path_str
+        );
+        storage(&github).unwrap();
+
+        let github = "backend=github";
+        assert!(storage(github).is_err());
+    }
+
+    #[test]
+    fn test_vault() {
+        let path = libra_temppath::TempPath::new();
+        path.create_as_file().unwrap();
+        let mut file = File::create(path.path()).unwrap();
+        file.write_all(b"disk_token").unwrap();
+        let path_str = path.path().to_str().unwrap();
+
+        let vault = format!(
+            "backend=vault;server=http://127.0.0.1:8080;token={}",
+            path_str
+        );
+        storage(&vault).unwrap();
+
+        let vault = format!(
+            "backend=vault;server=http://127.0.0.1:8080;token={};namespace=test",
+            path_str
+        );
+        storage(&vault).unwrap();
 
         let vault = "backend=vault";
         assert!(storage(vault).is_err());

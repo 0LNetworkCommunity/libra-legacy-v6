@@ -3,7 +3,7 @@
 
 use crate::{
     Capability, CryptoStorage, Error, GetResponse, Identity, KVStorage, Policy, PublicKeyResponse,
-    Storage, Value,
+    Value,
 };
 use chrono::DateTime;
 use libra_crypto::{
@@ -22,20 +22,21 @@ const LIBRA_DEFAULT: &str = "libra_default";
 /// calls pointers to data keys, Vault has actually a secret that contains multiple key value
 /// pairs.
 pub struct VaultStorage {
-    client: Client,
+    pub client: Client,
     namespace: Option<String>,
 }
 
 impl VaultStorage {
-    pub fn new(host: String, token: String, namespace: Option<String>) -> Self {
+    pub fn new(
+        host: String,
+        token: String,
+        namespace: Option<String>,
+        certificate: Option<String>,
+    ) -> Self {
         Self {
-            client: Client::new(host, token),
+            client: Client::new(host, token, certificate),
             namespace,
         }
-    }
-
-    pub fn namespace(&self) -> Option<String> {
-        self.namespace.clone()
     }
 
     #[cfg(any(test, feature = "testing"))]
@@ -97,24 +98,6 @@ impl VaultStorage {
         Ok(result)
     }
 
-    /// Retrieves a key from a given secret. Libra Secure Storage inserts each key into its own
-    /// distinct secret store and thus the secret and key have the same identifier.
-    fn get_secret(&self, key: &str) -> Result<GetResponse, Error> {
-        let secret = self.secret_name(key);
-        let resp = self.client.read_secret(&secret, key)?;
-        let last_update = DateTime::parse_from_rfc3339(&resp.creation_time)?.timestamp() as u64;
-        let value: Value = serde_json::from_str(&resp.value)?;
-        Ok(GetResponse { last_update, value })
-    }
-
-    /// Inserts a key, value pair into a secret that shares the name of the key.
-    fn set_secret(&self, key: &str, value: Value) -> Result<(), Error> {
-        let secret = self.secret_name(key);
-        self.client
-            .write_secret(&secret, key, &serde_json::to_string(&value)?)?;
-        Ok(())
-    }
-
     /// Create a new policy in Vault, see the explanation for Policy for how the data is
     /// structured. Vault does not distingush a create and update. An update must first read the
     /// existing policy, amend the contents,  and then be applied via this API.
@@ -155,11 +138,6 @@ impl VaultStorage {
         vault_policy.add_policy(&path, core_capabilities);
         self.client.set_policy(&policy_name, &vault_policy)?;
         Ok(())
-    }
-
-    /// Public convenience function to return a new Vault based Storage.
-    pub fn new_storage(host: String, token: String, namespace: Option<String>) -> Box<dyn Storage> {
-        Box::new(VaultStorage::new(host, token, namespace))
     }
 
     fn key_version(&self, name: &str, version: &Ed25519PublicKey) -> Result<u32, Error> {
@@ -206,16 +184,26 @@ impl VaultStorage {
 }
 
 impl KVStorage for VaultStorage {
-    fn available(&self) -> bool {
-        self.client.unsealed().unwrap_or(false) && self.client.transit_enabled().unwrap_or(false)
+    fn available(&self) -> Result<(), Error> {
+        if !self.client.unsealed()? {
+            Err(Error::InternalError("Vault is not unsealed".into()))
+        } else {
+            Ok(())
+        }
     }
 
     fn get(&self, key: &str) -> Result<GetResponse, Error> {
-        self.get_secret(&key)
+        let secret = self.secret_name(key);
+        let resp = self.client.read_secret(&secret, key)?;
+        let last_update = DateTime::parse_from_rfc3339(&resp.creation_time)?.timestamp() as u64;
+        let value: Value = serde_json::from_str(&resp.value)?;
+        Ok(GetResponse { last_update, value })
     }
 
     fn set(&mut self, key: &str, value: Value) -> Result<(), Error> {
-        self.set_secret(&key, value)?;
+        let secret = self.secret_name(key);
+        self.client
+            .write_secret(&secret, key, &serde_json::to_string(&value)?)?;
         Ok(())
     }
 
@@ -228,7 +216,7 @@ impl KVStorage for VaultStorage {
 }
 
 impl CryptoStorage for VaultStorage {
-    fn create_key(&mut self, name: &str, policy: &Policy) -> Result<Ed25519PublicKey, Error> {
+    fn create_key(&mut self, name: &str) -> Result<Ed25519PublicKey, Error> {
         let ns_name = self.crypto_name(name);
         match self.get_public_key(name) {
             Ok(_) => return Err(Error::KeyAlreadyExists(ns_name)),
@@ -237,9 +225,6 @@ impl CryptoStorage for VaultStorage {
         }
 
         self.client.create_ed25519_key(&ns_name, true)?;
-        if !policy.is_default() {
-            self.set_policies(&ns_name, &VaultEngine::Transit, policy)?;
-        }
         self.get_public_key(name).map(|v| v.public_key)
     }
 
@@ -256,6 +241,19 @@ impl CryptoStorage for VaultStorage {
         let name = self.crypto_name(name);
         let vers = self.key_version(&name, &version)?;
         Ok(self.client.export_ed25519_key(&name, Some(vers))?)
+    }
+
+    fn import_private_key(&mut self, name: &str, key: Ed25519PrivateKey) -> Result<(), Error> {
+        let ns_name = self.crypto_name(name);
+        match self.get_public_key(name) {
+            Ok(_) => return Err(Error::KeyAlreadyExists(ns_name)),
+            Err(Error::KeyNotSet(_)) => (/* Expected this for new keys! */),
+            Err(e) => return Err(e),
+        }
+
+        self.client
+            .import_ed25519_key(&ns_name, &key)
+            .map_err(|e| e.into())
     }
 
     fn get_public_key(&self, name: &str) -> Result<PublicKeyResponse, Error> {

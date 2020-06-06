@@ -9,13 +9,13 @@ license = "Apache-2.0"
 edition = "2018"
 
 [lib]
-proc_macro = true
+proc-macro = true
 
 [dependencies]
 libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
-syn = { version = "1.0.21", features = ["derive"] }
-quote = "1.0.5"
-proc-macro2 = "1.0.12"
+syn = { version = "1.0.30", features = ["derive"] }
+quote = "1.0.6"
+proc-macro2 = "1.0.18"
 
 [dev-dependencies]
-anyhow = "1.0"
+anyhow = "1.0.31"

@@ -157,10 +157,10 @@ impl SpeculationCache {
         committed_trees: ExecutedTrees,
         committed_ledger_info: &LedgerInfo,
     ) {
-        let new_root_block_id = if committed_ledger_info.next_epoch_info().is_some() {
+        let new_root_block_id = if committed_ledger_info.next_epoch_state().is_some() {
             // Update the root block id with reconfig virtual block id, to be consistent
             // with the logic of Consensus.
-            let id = Block::<()>::make_genesis_block_from_ledger_info(committed_ledger_info).id();
+            let id = Block::make_genesis_block_from_ledger_info(committed_ledger_info).id();
             debug!(
                 "Updated with a new root block {} as a virtual block of reconfiguration block {}",
                 id,

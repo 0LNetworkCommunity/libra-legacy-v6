@@ -98,7 +98,7 @@ impl TransactionStore {
             ));
         }
 
-        if self.check_if_full() {
+        if self.check_if_full(&txn, current_sequence_number) {
             return MempoolStatus::new(MempoolStatusCode::MempoolIsFull).with_message(format!(
                 "mempool size: {}, capacity: {}",
                 self.system_ttl_index.size(),
@@ -145,8 +145,11 @@ impl TransactionStore {
 
     /// checks if Mempool is full
     /// If it's full, tries to free some space by evicting transactions from ParkingLot
-    fn check_if_full(&mut self) -> bool {
-        if self.system_ttl_index.size() >= self.capacity {
+    /// We only evict on attempt to insert a transaction that would be ready for broadcast upon insertion
+    fn check_if_full(&mut self, txn: &MempoolTransaction, curr_sequence_number: u64) -> bool {
+        if self.system_ttl_index.size() >= self.capacity
+            && self.check_txn_ready(txn, curr_sequence_number)
+        {
             // try to free some space in Mempool from ParkingLot
             if let Some((address, sequence_number)) = self.parking_lot_index.pop() {
                 if let Some(txn) = self
@@ -159,6 +162,32 @@ impl TransactionStore {
             }
         }
         self.system_ttl_index.size() >= self.capacity
+    }
+
+    /// check if a transaction would be ready for broadcast in mempool upon insertion (without inserting it)
+    /// Two ways this can happen:
+    /// 1. txn sequence number == curr_sequence_number
+    /// (this handles both cases where (1) txn is first possible txn for an account
+    /// and (2) previous txn is committed)
+    /// 2. the txn before this is ready for broadcast but not yet committed
+    fn check_txn_ready(&mut self, txn: &MempoolTransaction, curr_sequence_number: u64) -> bool {
+        let tx_sequence_number = txn.get_sequence_number();
+        if tx_sequence_number == curr_sequence_number {
+            return true;
+        } else if tx_sequence_number == 0 {
+            // shouldn't really get here because filtering out old txn sequence numbers happens earlier in workflow
+            unreachable!("[mempool] already committed txn detected, cannot be checked for readiness upon insertion");
+        }
+
+        // check previous txn in sequence is ready
+        if let Some(account_txns) = self.transactions.get(&txn.get_sender()) {
+            if let Some(prev_txn) = account_txns.get(&(tx_sequence_number - 1)) {
+                if let TimelineState::Ready(_) = prev_txn.timeline_state {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     /// check if transaction is already present in Mempool
@@ -275,16 +304,18 @@ impl TransactionStore {
         &mut self,
         timeline_id: u64,
         count: usize,
-    ) -> (Vec<SignedTransaction>, u64) {
+    ) -> (Vec<(u64, SignedTransaction)>, u64) {
         let mut batch = vec![];
         let mut last_timeline_id = timeline_id;
-        for (address, sequence_number) in self.timeline_index.read_timeline(timeline_id, count) {
+        for (id, (address, sequence_number)) in
+            self.timeline_index.read_timeline(timeline_id, count)
+        {
             if let Some(txn) = self
                 .transactions
                 .get_mut(&address)
                 .and_then(|txns| txns.get(&sequence_number))
             {
-                batch.push(txn.txn.clone());
+                batch.push((id, txn.txn.clone()));
                 if let TimelineState::Ready(timeline_id) = txn.timeline_state {
                     last_timeline_id = timeline_id;
                 }
@@ -293,26 +324,29 @@ impl TransactionStore {
         (batch, last_timeline_id)
     }
 
-    /// Returns block of transactions with timeline id in the range `start_timeline_id` exclusive to `end_timeline_id` inclusive
-    pub(crate) fn timeline_range(
+    /// Returns transactions with timeline ID in `timeline_ids`
+    /// as list of (timeline_id, transaction)
+    pub(crate) fn filter_read_timeline(
         &mut self,
-        start_timeline_id: u64,
-        end_timeline_id: u64,
-    ) -> Vec<SignedTransaction> {
-        let mut batch = vec![];
-        for (address, sequence_number) in self
-            .timeline_index
-            .range(start_timeline_id, end_timeline_id)
-        {
-            if let Some(txn) = self
-                .transactions
-                .get_mut(&address)
-                .and_then(|txns| txns.get(&sequence_number))
-            {
-                batch.push(txn.txn.clone());
-            }
-        }
-        batch
+        timeline_ids: Vec<u64>,
+    ) -> Vec<(u64, SignedTransaction)> {
+        timeline_ids
+            .into_iter()
+            .filter_map(|timeline_id| {
+                if let Some((address, sequence_number)) =
+                    self.timeline_index.get_timeline_entry(timeline_id)
+                {
+                    if let Some(txn) = self
+                        .transactions
+                        .get_mut(&address)
+                        .and_then(|txns| txns.get(&sequence_number))
+                    {
+                        return Some((timeline_id, txn.txn.clone()));
+                    }
+                }
+                None
+            })
+            .collect()
     }
 
     /// GC old transactions

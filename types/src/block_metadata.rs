@@ -66,14 +66,10 @@ impl BlockMetadata {
     pub fn proposer(&self) -> AccountAddress {
         self.proposer
     }
-
-    pub fn voters(&self) -> Vec<AccountAddress> {
-        self.previous_block_votes.clone()
-    }
 }
 
 pub fn new_block_event_key() -> EventKey {
-    EventKey::new_from_address(&association_address(), 14)
+    EventKey::new_from_address(&association_address(), 16)
 }
 
 /// The path to the new block event handle under a LibraBlock::BlockMetadata resource.

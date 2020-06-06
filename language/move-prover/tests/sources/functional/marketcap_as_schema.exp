@@ -12,5 +12,5 @@ error:  A postcondition might not hold on this return path.
     =         check = <redacted>,
     =         value = <redacted>
     =     at tests/sources/functional/marketcap_as_schema.move:60:27: deposit_invalid
-    =         coin_ref = <redacted>
     =     at tests/sources/functional/marketcap_as_schema.move:58:6: deposit_invalid (exit)
+    =         result = <redacted>

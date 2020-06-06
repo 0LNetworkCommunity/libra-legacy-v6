@@ -21,12 +21,10 @@ macro_rules! debug_writeln {
     };
 }
 
-pub mod chain_state;
+pub mod data_store;
 pub mod gas_schedule;
-pub mod interpreter_context;
 pub mod loaded_data;
 pub mod natives;
-pub mod transaction_metadata;
 pub mod values;
 
 #[cfg(test)]

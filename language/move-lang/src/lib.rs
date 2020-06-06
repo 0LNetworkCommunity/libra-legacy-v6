@@ -20,6 +20,7 @@ pub mod test_utils;
 mod to_bytecode;
 pub mod typing;
 
+use anyhow::anyhow;
 use codespan::{ByteIndex, Span};
 use compiled_unit::CompiledUnit;
 use errors::*;
@@ -29,7 +30,7 @@ use shared::Address;
 use std::{
     collections::{BTreeMap, HashMap},
     fs::File,
-    io::{self, ErrorKind, Read, Write},
+    io::{Read, Write},
     iter::Peekable,
     path::{Path, PathBuf},
     str::Chars,
@@ -52,7 +53,7 @@ pub fn move_check(
     targets: &[String],
     deps: &[String],
     sender_opt: Option<Address>,
-) -> io::Result<()> {
+) -> anyhow::Result<()> {
     let (files, errors) = move_check_no_report(targets, deps, sender_opt)?;
     if !errors.is_empty() {
         errors::report_errors(files, errors)
@@ -65,7 +66,7 @@ pub fn move_check_no_report(
     targets: &[String],
     deps: &[String],
     sender_opt: Option<Address>,
-) -> io::Result<(FilesSourceText, Errors)> {
+) -> anyhow::Result<(FilesSourceText, Errors)> {
     let (files, pprog_and_comments_res) = parse_program(targets, deps)?;
     let pprog_res = pprog_and_comments_res.map(|(pprog, _)| pprog);
     match check_program(pprog_res, sender_opt) {
@@ -83,7 +84,7 @@ pub fn move_compile(
     targets: &[String],
     deps: &[String],
     sender_opt: Option<Address>,
-) -> io::Result<(FilesSourceText, Vec<CompiledUnit>)> {
+) -> anyhow::Result<(FilesSourceText, Vec<CompiledUnit>)> {
     let (files, pprog_and_comments_res) = parse_program(targets, deps)?;
     let pprog_res = pprog_and_comments_res.map(|(pprog, _)| pprog);
     match compile_program(pprog_res, sender_opt) {
@@ -97,7 +98,7 @@ pub fn move_compile_no_report(
     targets: &[String],
     deps: &[String],
     sender_opt: Option<Address>,
-) -> io::Result<(FilesSourceText, Result<Vec<CompiledUnit>, Errors>)> {
+) -> anyhow::Result<(FilesSourceText, Result<Vec<CompiledUnit>, Errors>)> {
     let (files, pprog_and_comments_res) = parse_program(targets, deps)?;
     let pprog_res = pprog_and_comments_res.map(|(pprog, _)| pprog);
     Ok(match compile_program(pprog_res, sender_opt) {
@@ -113,7 +114,7 @@ pub fn move_compile_to_expansion_no_report(
     targets: &[String],
     deps: &[String],
     sender_opt: Option<Address>,
-) -> io::Result<(
+) -> anyhow::Result<(
     FilesSourceText,
     Result<(expansion::ast::Program, CommentMap), Errors>,
 )> {
@@ -145,7 +146,7 @@ pub fn output_compiled_units(
     files: FilesSourceText,
     compiled_units: Vec<CompiledUnit>,
     out_dir: &str,
-) -> io::Result<()> {
+) -> anyhow::Result<()> {
     const SCRIPT_SUB_DIR: &str = "scripts";
     const MODULE_SUB_DIR: &str = "modules";
 
@@ -189,25 +190,7 @@ pub fn output_compiled_units(
         let mut path = PathBuf::from(format!("{}/{}/{}", out_dir, SCRIPT_SUB_DIR, unit.name()));
         emit_unit!(path, unit);
     }
-    // let script_map = {
-    //     let mut m: BTreeMap<String, Vec<CompiledUnit>> = BTreeMap::new();
-    //     for u in scripts {
-    //         m.entry(u.name()).or_insert_with(Vec::new).push(u)
-    //     }
-    //     m
-    // };
-    // for (n, units) in script_map {
-    //     let num_units = units.len();
-    //     for (idx, unit) in units.into_iter().enumerate() {
-    //         let file_name = if num_units == 1 {
-    //             format!("{}", n)
-    //         } else {
-    //             format!("{}_{}", n, idx)
-    //         };
-    //         let mut path = PathBuf::from(format!("{}/{}/{}", out_dir, SCRIPT_SUB_DIR, file_name));
-    //         emit_unit!(path, unit);
-    //     }
-    // }
+
     if !ice_errors.is_empty() {
         errors::report_errors(files, ice_errors)
     }
@@ -247,12 +230,18 @@ fn compile_program(
 fn parse_program(
     targets: &[String],
     deps: &[String],
-) -> io::Result<(
+) -> anyhow::Result<(
     FilesSourceText,
     Result<(parser::ast::Program, CommentMap), Errors>,
 )> {
-    let targets = find_and_intern_move_filenames(targets)?;
-    let deps = find_and_intern_move_filenames(deps)?;
+    let targets = find_move_filenames(targets)?
+        .iter()
+        .map(|s| leak_str(s))
+        .collect::<Vec<&'static str>>();
+    let deps = find_move_filenames(deps)?
+        .iter()
+        .map(|s| leak_str(s))
+        .collect::<Vec<&'static str>>();
     let mut files: FilesSourceText = HashMap::new();
     let mut source_definitions = Vec::new();
     let mut source_comments = CommentMap::new();
@@ -286,20 +275,21 @@ fn parse_program(
     Ok((files, res))
 }
 
-fn find_and_intern_move_filenames(files: &[String]) -> io::Result<Vec<&'static str>> {
+pub fn find_move_filenames(files: &[String]) -> anyhow::Result<Vec<String>> {
     let mut result = vec![];
+    let has_move_extension = |path: &Path| match path.extension().and_then(|s| s.to_str()) {
+        Some(extension) => extension == MOVE_EXTENSION,
+        None => false,
+    };
     for file in files {
         let path = Path::new(file);
         if !path.exists() {
-            return Err(std::io::Error::new(
-                ErrorKind::NotFound,
-                format!("No such file or directory '{}'", file),
-            ));
+            return Err(anyhow!(format!("No such file or directory '{}'", file)));
         }
         if !path.is_dir() {
             // If the filename is specified directly, add it to the list, regardless
             // of whether it has a ".move" extension.
-            result.push(leak_str(file));
+            result.push(file.clone());
             continue;
         }
         for entry in walkdir::WalkDir::new(path)
@@ -311,24 +301,14 @@ fn find_and_intern_move_filenames(files: &[String]) -> io::Result<Vec<&'static s
                 continue;
             }
             match entry_path.to_str() {
-                Some(p) => result.push(leak_str(p)),
+                Some(p) => result.push(p.to_string()),
                 None => {
-                    return Err(std::io::Error::new(
-                        ErrorKind::Other,
-                        "non-Unicode file name",
-                    ))
+                    return Err(anyhow!("non-Unicode file name"));
                 }
             }
         }
     }
     Ok(result)
-}
-
-fn has_move_extension(path: &Path) -> bool {
-    match path.extension().and_then(|s| s.to_str()) {
-        Some(extension) => extension == MOVE_EXTENSION,
-        None => false,
-    }
 }
 
 // TODO replace with some sort of intern table
@@ -339,7 +319,7 @@ fn leak_str(s: &str) -> &'static str {
 fn parse_file(
     files: &mut FilesSourceText,
     fname: &'static str,
-) -> io::Result<(Vec<parser::ast::Definition>, MatchedFileCommentMap, Errors)> {
+) -> anyhow::Result<(Vec<parser::ast::Definition>, MatchedFileCommentMap, Errors)> {
     let mut errors: Errors = Vec::new();
     let mut f = File::open(fname)
         .map_err(|err| std::io::Error::new(err.kind(), format!("{}: {}", err, fname)))?;
@@ -407,9 +387,8 @@ fn verify_string(fname: &'static str, string: &str) -> Result<(), Errors> {
             let span = Span::new(ByteIndex(idx as u32), ByteIndex(idx as u32));
             let loc = Loc::new(fname, span);
             let msg = format!(
-                "Invalid character '{}' found when reading file. \
-                 Only ASCII printable characters, tabs (\\t), and line endings (\\n) \
-                 are permitted.",
+                "Invalid character '{}' found when reading file. Only ASCII printable characters, \
+                 tabs (\\t), and line endings (\\n) are permitted.",
                 chr
             );
             Err(vec![vec![(loc, msg)]])
@@ -436,9 +415,12 @@ fn strip_comments(fname: &'static str, input: &str) -> Result<(String, FileComme
     const SLASH: char = '/';
     const SPACE: char = ' ';
     const STAR: char = '*';
+    const QUOTE: char = '"';
+    const BACKSLASH: char = '\\';
 
     enum State {
         Source,
+        String,
         LineComment,
         BlockComment,
     }
@@ -466,6 +448,25 @@ fn strip_comments(fname: &'static str, input: &str) -> Result<(String, FileComme
     let mut char_iter = input.chars().peekable();
     while let Some(chr) = char_iter.next() {
         match state {
+            // Strings
+            State::Source if chr == QUOTE => {
+                source.push(chr);
+                pos += 1;
+                state = State::String;
+            }
+            State::String => {
+                source.push(chr);
+                pos += 1;
+                if chr == BACKSLASH {
+                    // Skip over the escaped character (e.g., a quote or another backslash)
+                    if let Some(next) = char_iter.next() {
+                        source.push(next);
+                        pos += 1;
+                    }
+                } else if chr == QUOTE {
+                    state = State::Source;
+                }
+            }
             // Line comments
             State::Source if chr == SLASH && next_is(&mut char_iter, SLASH) => {
                 // Starting line comment. We do not capture the `//` in the comment.
@@ -564,7 +565,7 @@ fn strip_comments(fname: &'static str, input: &str) -> Result<(String, FileComme
                 ),
             ]]);
         }
-        State::Source => {}
+        State::Source | State::String => {}
     }
 
     Ok((source, comment_map))

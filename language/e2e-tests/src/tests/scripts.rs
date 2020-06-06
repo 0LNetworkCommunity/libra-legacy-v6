@@ -1,9 +1,9 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{account::AccountData, executor::FakeExecutor, gas_costs};
+use crate::{account, account::AccountData, executor::FakeExecutor, gas_costs};
 use libra_types::{
-    account_address::AccountAddress, on_chain_config::VMPublishingOption,
+    account_address::AccountAddress, account_config::LBR_NAME, on_chain_config::VMPublishingOption,
     transaction::TransactionStatus, vm_error::StatusCode,
 };
 use move_core_types::identifier::Identifier;
@@ -31,6 +31,7 @@ fn script_code_unverifiable() {
         10,
         gas_costs::TXN_RESERVED,
         1,
+        LBR_NAME.to_owned(),
     );
 
     // execute transaction
@@ -49,9 +50,12 @@ fn script_code_unverifiable() {
     // Check that numbers in store are correct.
     let gas = output.gas_used();
     let balance = 1_000_000 - gas;
-    let (updated_sender, updated_sender_balance) = executor
-        .read_account_info(sender.account())
+    let updated_sender = executor
+        .read_account_resource(sender.account())
         .expect("sender must exist");
+    let updated_sender_balance = executor
+        .read_balance_resource(sender.account(), account::lbr_currency_code())
+        .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
 }
@@ -65,18 +69,6 @@ fn script_none_existing_module_dep() {
 
     // create a bogus script
     let mut script = empty_script();
-
-    // the dummy self module handle
-    // TODO: remove this once we get rid of the script/module conversion.
-    script
-        .address_identifiers
-        .push(AccountAddress::new([1u8; AccountAddress::LENGTH]));
-    script.identifiers.push(Identifier::new("<SELF>").unwrap());
-    let module_handle = ModuleHandle {
-        address: AddressIdentifierIndex((script.address_identifiers.len() - 1) as u16),
-        name: IdentifierIndex((script.identifiers.len() - 1) as u16),
-    };
-    script.module_handles.push(module_handle);
 
     // make a non existent external module
     script
@@ -114,6 +106,7 @@ fn script_none_existing_module_dep() {
         10,
         gas_costs::TXN_RESERVED,
         1,
+        LBR_NAME.to_owned(),
     );
 
     // execute transaction
@@ -129,9 +122,12 @@ fn script_none_existing_module_dep() {
     // Check that numbers in store are correct.
     let gas = output.gas_used();
     let balance = 1_000_000 - gas;
-    let (updated_sender, updated_sender_balance) = executor
-        .read_account_info(sender.account())
+    let updated_sender = executor
+        .read_account_resource(sender.account())
         .expect("sender must exist");
+    let updated_sender_balance = executor
+        .read_balance_resource(sender.account(), account::lbr_currency_code())
+        .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
 }
@@ -145,18 +141,6 @@ fn script_non_existing_function_dep() {
 
     // create a bogus script
     let mut script = empty_script();
-
-    // create the dummy self module handle
-    // TODO: remove this once we get rid of the script/module conversion.
-    script
-        .address_identifiers
-        .push(AccountAddress::new([1u8; AccountAddress::LENGTH]));
-    script.identifiers.push(Identifier::new("<SELF>").unwrap());
-    let module_handle = ModuleHandle {
-        address: AddressIdentifierIndex((script.address_identifiers.len() - 1) as u16),
-        name: IdentifierIndex((script.identifiers.len() - 1) as u16),
-    };
-    script.module_handles.push(module_handle);
 
     // LCS module
     script
@@ -194,6 +178,7 @@ fn script_non_existing_function_dep() {
         10,
         gas_costs::TXN_RESERVED,
         1,
+        LBR_NAME.to_owned(),
     );
 
     // execute transaction
@@ -209,9 +194,12 @@ fn script_non_existing_function_dep() {
     // Check that numbers in store are correct.
     let gas = output.gas_used();
     let balance = 1_000_000 - gas;
-    let (updated_sender, updated_sender_balance) = executor
-        .read_account_info(sender.account())
+    let updated_sender = executor
+        .read_account_resource(sender.account())
         .expect("sender must exist");
+    let updated_sender_balance = executor
+        .read_balance_resource(sender.account(), account::lbr_currency_code())
+        .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
 }
@@ -225,18 +213,6 @@ fn script_bad_sig_function_dep() {
 
     // create a bogus script
     let mut script = empty_script();
-
-    // create the dummy self module handle
-    // TODO: remove this once we get rid of the script/module conversion.
-    script
-        .address_identifiers
-        .push(AccountAddress::new([1u8; AccountAddress::LENGTH]));
-    script.identifiers.push(Identifier::new("<SELF>").unwrap());
-    let module_handle = ModuleHandle {
-        address: AddressIdentifierIndex((script.address_identifiers.len() - 1) as u16),
-        name: IdentifierIndex((script.identifiers.len() - 1) as u16),
-    };
-    script.module_handles.push(module_handle);
 
     // LCS module
     script
@@ -276,6 +252,7 @@ fn script_bad_sig_function_dep() {
         10,
         gas_costs::TXN_RESERVED,
         1,
+        LBR_NAME.to_owned(),
     );
 
     // execute transaction
@@ -291,9 +268,12 @@ fn script_bad_sig_function_dep() {
     // Check that numbers in store are correct.
     let gas = output.gas_used();
     let balance = 1_000_000 - gas;
-    let (updated_sender, updated_sender_balance) = executor
-        .read_account_info(sender.account())
+    let updated_sender = executor
+        .read_account_resource(sender.account())
         .expect("sender must exist");
+    let updated_sender_balance = executor
+        .read_balance_resource(sender.account(), account::lbr_currency_code())
+        .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
 }

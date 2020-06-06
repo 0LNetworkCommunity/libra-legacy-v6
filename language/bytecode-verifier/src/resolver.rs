@@ -30,7 +30,7 @@ impl Resolver {
     pub fn new(module: &impl ModuleAccess) -> Self {
         let mut address_map = BTreeMap::new();
         for (idx, address) in module.address_identifiers().iter().enumerate() {
-            address_map.insert(address.clone(), AddressIdentifierIndex(idx as u16));
+            address_map.insert(*address, AddressIdentifierIndex(idx as u16));
         }
         let mut identifier_map = BTreeMap::new();
         for (idx, name) in module.identifiers().iter().enumerate() {
@@ -65,6 +65,7 @@ impl Resolver {
             | SignatureToken::U64
             | SignatureToken::U128
             | SignatureToken::Address
+            | SignatureToken::Signer
             | SignatureToken::TypeParameter(_) => Ok(sig_token.clone()),
             SignatureToken::Vector(ty) => Ok(SignatureToken::Vector(Box::new(
                 self.import_signature_token(dependency, ty)?,

@@ -261,20 +261,24 @@ fn test_timeline() {
             .collect()
     };
     let (timeline, _) = pool.read_timeline(0, 10);
+    let timeline = timeline.into_iter().map(|(_id, txn)| txn).collect();
     assert_eq!(view(timeline), vec![0, 1]);
 
     // add txn 2 to unblock txn3
     add_txns_to_mempool(&mut pool, vec![TestTransaction::new(1, 2, 1)]);
     let (timeline, _) = pool.read_timeline(0, 10);
+    let timeline = timeline.into_iter().map(|(_id, txn)| txn).collect();
     assert_eq!(view(timeline), vec![0, 1, 2, 3]);
 
     // try different start read position
     let (timeline, _) = pool.read_timeline(2, 10);
+    let timeline = timeline.into_iter().map(|(_id, txn)| txn).collect();
     assert_eq!(view(timeline), vec![2, 3]);
 
     // simulate callback from consensus to unblock txn 5
     pool.remove_transaction(&TestTransaction::get_address(1), 4, false);
     let (timeline, _) = pool.read_timeline(0, 10);
+    let timeline = timeline.into_iter().map(|(_id, txn)| txn).collect();
     assert_eq!(view(timeline), vec![5]);
 }
 
@@ -326,6 +330,38 @@ fn test_parking_lot_eviction() {
 }
 
 #[test]
+fn test_parking_lot_evict_only_for_ready_txn_insertion() {
+    let mut config = NodeConfig::random();
+    config.mempool.capacity = 6;
+    let mut pool = CoreMempool::new(&config);
+    // add transactions with following sequence numbers to Mempool
+    for seq in &[0, 1, 2, 9, 10, 11] {
+        add_txn(&mut pool, TestTransaction::new(1, *seq, 1)).unwrap();
+    }
+
+    // try inserting for ready txs
+    let ready_seq_nums = vec![3, 4];
+    for seq in ready_seq_nums {
+        add_txn(&mut pool, TestTransaction::new(1, seq, 1)).unwrap();
+    }
+
+    // Make sure that we have correct txns in Mempool
+    let mut txns: Vec<_> = pool
+        .get_block(5, HashSet::new())
+        .iter()
+        .map(SignedTransaction::sequence_number)
+        .collect();
+    txns.sort();
+    assert_eq!(txns, vec![0, 1, 2, 3, 4]);
+
+    // trying to insert a tx that would not be ready after inserting should fail
+    let not_ready_seq_nums = vec![6, 8, 12, 14];
+    for seq in not_ready_seq_nums {
+        assert!(add_txn(&mut pool, TestTransaction::new(1, seq, 1)).is_err());
+    }
+}
+
+#[test]
 fn test_gc_ready_transaction() {
     let mut pool = setup_mempool().0;
     add_txn(&mut pool, TestTransaction::new(1, 0, 1)).unwrap();
@@ -353,6 +389,10 @@ fn test_gc_ready_transaction() {
     assert_eq!(block[0].sequence_number(), 0);
 
     let (timeline, _) = pool.read_timeline(0, 10);
+    let timeline = timeline
+        .into_iter()
+        .map(|(_id, txn)| txn)
+        .collect::<Vec<_>>();
     assert_eq!(timeline.len(), 1);
     assert_eq!(timeline[0].sequence_number(), 0);
 }

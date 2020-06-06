@@ -37,21 +37,14 @@
 
 use crate::{
     account_address::AccountAddress,
-    account_config::{AccountResource, ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH},
+    account_config::{ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH},
 };
-use anyhow::{Error, Result};
 use libra_crypto::hash::HashValue;
-use move_core_types::{
-    language_storage::{ModuleId, ResourceKey, StructTag, CODE_TAG, RESOURCE_TAG},
-    move_resource::MoveResource,
-};
+use move_core_types::language_storage::{ModuleId, ResourceKey, StructTag, CODE_TAG, RESOURCE_TAG};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::{TryFrom, TryInto},
-    fmt,
-};
+use std::fmt;
 
 #[derive(Clone, Eq, PartialEq, Default, Hash, Serialize, Deserialize, Ord, PartialOrd)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
@@ -66,11 +59,6 @@ impl AccessPath {
 
     pub fn new(address: AccountAddress, path: Vec<u8>) -> Self {
         AccessPath { address, path }
-    }
-
-    /// Given an address, returns the corresponding access path that stores the Account resource.
-    pub fn new_for_account(address: AccountAddress) -> Self {
-        Self::new(address, AccountResource::resource_path())
     }
 
     /// Create an AccessPath to the event for the sender account in a deposit operation.
@@ -151,23 +139,6 @@ impl fmt::Display for AccessPath {
                 "suffix: {:?} }} ",
                 String::from_utf8_lossy(&self.path[1 + HashValue::LENGTH..])
             )
-        }
-    }
-}
-
-impl TryFrom<crate::proto::types::AccessPath> for AccessPath {
-    type Error = Error;
-
-    fn try_from(proto: crate::proto::types::AccessPath) -> Result<Self> {
-        Ok(AccessPath::new(proto.address.try_into()?, proto.path))
-    }
-}
-
-impl From<AccessPath> for crate::proto::types::AccessPath {
-    fn from(path: AccessPath) -> Self {
-        Self {
-            address: path.address.to_vec(),
-            path: path.path,
         }
     }
 }
