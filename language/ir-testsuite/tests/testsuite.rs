@@ -64,4 +64,4 @@ fn run_test(path: &Path) -> datatest_stable::Result<()> {
     )
 }
 
-datatest_stable::harness!(run_test, "tests", r".mvir|.move");
+datatest_stable::harness!(run_test, "tests/OL", r".mvir|.move");

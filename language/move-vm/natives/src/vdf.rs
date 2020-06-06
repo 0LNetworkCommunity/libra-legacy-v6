@@ -1,20 +1,17 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-
-
 use vdf::{VDFParams, VDF};
 
 use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
     natives::function::{native_gas, NativeContext, NativeResult},
-    values::Value,
+    values::{Value, Reference},
 };
 
 use libra_types::vm_error::{StatusCode, VMStatus};
 use std::{collections::VecDeque, panic};
 use vm::errors::VMResult;
-
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
@@ -30,15 +27,15 @@ pub fn verify(
         return Err(VMStatus::new(StatusCode::UNREACHABLE).with_message(msg));
     }
 
-    let alleged_solution = pop_arg!(arguments, Vec<u8>);
-    let difficulty = pop_arg!(arguments, u64);
-    let challenge = pop_arg!(arguments, Vec<u8>);
+    let alleged_solution = pop_arg!(arguments, Reference).read_ref()?.value_as::<Vec<u8>>()?;
+    let difficulty = pop_arg!(arguments, Reference).read_ref()?.value_as::<u64>()?;
+    let challenge = pop_arg!(arguments, Reference).read_ref()?.value_as::<Vec<u8>>()?;
 
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(
         context.cost_table(),
         NativeCostIndex::SHA3_256,
-        challenge.len(),
+        1,
     );
 
     let v = vdf::WesolowskiVDFParams(2048).new();

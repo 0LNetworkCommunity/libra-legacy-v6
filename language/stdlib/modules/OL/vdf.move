@@ -5,6 +5,6 @@
 
 address 0x0 {
   module VDF {
-      native public fun verify(challenge: &vector<u8>, difficulty: u64, alleged_solution: &vector<u8>): bool;
+      native public fun verify(challenge: &vector<u8>, difficulty: &u64, alleged_solution: &vector<u8>): bool;
   }
 }
