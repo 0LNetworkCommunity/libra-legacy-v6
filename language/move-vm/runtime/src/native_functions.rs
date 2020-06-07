@@ -1,18 +1,19 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{interpreter::Interpreter, loader::Resolver};
+use crate::{data_operations::move_resource_to, interpreter::Interpreter, loader::Resolver};
 use libra_types::{
     access_path::AccessPath, account_address::AccountAddress, account_config::CORE_CODE_ADDRESS,
     contract_event::ContractEvent,
 };
 use move_core_types::{gas_schedule::CostTable, identifier::IdentStr, language_storage::ModuleId};
-use move_vm_natives::{account, event, hash, lcs, signature, vdf};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector, vdf};
 use move_vm_types::{
-    interpreter_context::InterpreterContext,
+    data_store::DataStore,
+    gas_schedule::CostStrategy,
     loaded_data::{runtime_types::Type, types::FatType},
     natives::function::{NativeContext, NativeResult},
-    values::{debug, vector, Struct, Value},
+    values::{Struct, Value},
 };
 use std::{collections::VecDeque, fmt::Write};
 use vm::errors::VMResult;
@@ -40,10 +41,12 @@ pub(crate) enum NativeFunction {
     VectorDestroyEmpty,
     VectorSwap,
     AccountWriteEvent,
-    AccountSaveAccount,
     DebugPrint,
     DebugPrintStackTrace,
-    VdfVerify,
+    SignerBorrowAddress,
+    CreateSigner,
+    DestroySigner,
+    VDFVerify,
 }
 
 impl NativeFunction {
@@ -56,6 +59,7 @@ impl NativeFunction {
 
         let case = (module_address, module_name, function_name);
         Some(match case {
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify,
             (&CORE_CODE_ADDRESS, "Hash", "sha2_256") => HashSha2_256,
             (&CORE_CODE_ADDRESS, "Hash", "sha3_256") => HashSha3_256,
             (&CORE_CODE_ADDRESS, "LCS", "to_bytes") => LCSToBytes,
@@ -73,10 +77,11 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Vector", "destroy_empty") => VectorDestroyEmpty,
             (&CORE_CODE_ADDRESS, "Vector", "swap") => VectorSwap,
             (&CORE_CODE_ADDRESS, "Event", "write_to_event_store") => AccountWriteEvent,
-            (&CORE_CODE_ADDRESS, "LibraAccount", "save_account") => AccountSaveAccount,
+            (&CORE_CODE_ADDRESS, "LibraAccount", "create_signer") => CreateSigner,
+            (&CORE_CODE_ADDRESS, "LibraAccount", "destroy_signer") => DestroySigner,
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
-            (&CORE_CODE_ADDRESS, "VDF", "verify") => VdfVerify,
+            (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
             _ => return None,
         })
     }
@@ -106,44 +111,48 @@ impl NativeFunction {
             Self::VectorSwap => vector::native_swap(ctx, t, v),
             // natives that need the full API of `NativeContext`
             Self::AccountWriteEvent => event::native_emit_event(ctx, t, v),
-            Self::AccountSaveAccount => account::native_save_account(ctx, t, v),
             Self::LCSToBytes => lcs::native_to_bytes(ctx, t, v),
             Self::DebugPrint => debug::native_print(ctx, t, v),
             Self::DebugPrintStackTrace => debug::native_print_stack_trace(ctx, t, v),
-            Self::VdfVerify => vdf::verify(ctx, t, v),
-
+            Self::SignerBorrowAddress => signer::native_borrow_address(ctx, t, v),
+            Self::CreateSigner => account::native_create_signer(ctx, t, v),
+            Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
+            Self::VDFVerify => vdf::verify(ctx, t, v),
         }
     }
 }
 
-pub(crate) struct FunctionContext<'a, 'txn> {
-    interpreter: &'a mut Interpreter<'txn>,
-    interpreter_context: &'a mut dyn InterpreterContext,
+pub(crate) struct FunctionContext<'a> {
+    interpreter: &'a mut Interpreter,
+    data_store: &'a mut dyn DataStore,
+    cost_strategy: &'a CostStrategy<'a>,
     resolver: &'a Resolver<'a>,
 }
 
-impl<'a, 'txn> FunctionContext<'a, 'txn> {
+impl<'a> FunctionContext<'a> {
     pub(crate) fn new(
-        interpreter: &'a mut Interpreter<'txn>,
-        context: &'a mut dyn InterpreterContext,
+        interpreter: &'a mut Interpreter,
+        data_store: &'a mut dyn DataStore,
+        cost_strategy: &'a mut CostStrategy,
         resolver: &'a Resolver<'a>,
-    ) -> FunctionContext<'a, 'txn> {
+    ) -> FunctionContext<'a> {
         FunctionContext {
             interpreter,
-            interpreter_context: context,
+            data_store,
+            cost_strategy,
             resolver,
         }
     }
 }
 
-impl<'a, 'txn> NativeContext for FunctionContext<'a, 'txn> {
+impl<'a> NativeContext for FunctionContext<'a> {
     fn print_stack_trace<B: Write>(&self, buf: &mut B) -> VMResult<()> {
         self.interpreter
             .debug_print_stack_trace(buf, &self.resolver)
     }
 
     fn cost_table(&self) -> &CostTable {
-        self.interpreter.gas_schedule()
+        self.cost_strategy.cost_table()
     }
 
     fn save_under_address(
@@ -154,19 +163,20 @@ impl<'a, 'txn> NativeContext for FunctionContext<'a, 'txn> {
         resource_to_save: Struct,
         account_address: AccountAddress,
     ) -> VMResult<()> {
-        let libra_type = self.resolver.get_libra_type_info(
-            module_id,
-            struct_name,
-            ty_args,
-            self.interpreter_context,
-        )?;
+        let libra_type =
+            self.resolver
+                .get_libra_type_info(module_id, struct_name, ty_args, self.data_store)?;
         let ap = AccessPath::new(account_address, libra_type.resource_key().to_vec());
-        self.interpreter_context
-            .move_resource_to(&ap, libra_type.fat_type(), resource_to_save)
+        move_resource_to(
+            self.data_store,
+            &ap,
+            libra_type.fat_type(),
+            resource_to_save,
+        )
     }
 
     fn save_event(&mut self, event: ContractEvent) -> VMResult<()> {
-        Ok(self.interpreter_context.push_event(event))
+        Ok(self.data_store.emit_event(event))
     }
 
     fn convert_to_fat_types(&self, types: Vec<Type>) -> VMResult<Vec<FatType>> {
@@ -174,5 +184,9 @@ impl<'a, 'txn> NativeContext for FunctionContext<'a, 'txn> {
             .iter()
             .map(|ty| self.resolver.type_to_fat_type(ty))
             .collect()
+    }
+
+    fn is_resource(&self, ty: &Type) -> VMResult<bool> {
+        self.resolver.is_resource(ty)
     }
 }

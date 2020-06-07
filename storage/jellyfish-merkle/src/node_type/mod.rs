@@ -13,14 +13,13 @@
 #[cfg(test)]
 mod node_type_test;
 
-use crate::nibble_path::NibblePath;
+use crate::{nibble_path::NibblePath, ROOT_NIBBLE_HEIGHT};
 use anyhow::{ensure, Context, Result};
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use libra_crypto::{
     hash::{CryptoHash, SPARSE_MERKLE_PLACEHOLDER_HASH},
     HashValue,
 };
-use libra_crypto_derive::CryptoHasher;
 use libra_nibble::Nibble;
 use libra_types::{
     account_state_blob::AccountStateBlob,
@@ -111,6 +110,11 @@ impl NodeKey {
         let mut reader = Cursor::new(val);
         let version = reader.read_u64::<BigEndian>()?;
         let num_nibbles = reader.read_u8()? as usize;
+        ensure!(
+            num_nibbles <= ROOT_NIBBLE_HEIGHT,
+            "Invalid number of nibbles: {}",
+            num_nibbles,
+        );
         let mut nibble_bytes = Vec::with_capacity((num_nibbles + 1) / 2);
         reader.read_to_end(&mut nibble_bytes)?;
         ensure!(
@@ -122,6 +126,12 @@ impl NodeKey {
         let nibble_path = if num_nibbles % 2 == 0 {
             NibblePath::new(nibble_bytes)
         } else {
+            let padding = nibble_bytes.last().unwrap() & 0x0f;
+            ensure!(
+                padding == 0,
+                "Padding nibble expected to be 0, got: {}",
+                padding,
+            );
             NibblePath::new_odd(nibble_bytes)
         };
         Ok(NodeKey::new(version, nibble_path))
@@ -161,7 +171,7 @@ pub(crate) type Children = HashMap<Nibble, Child>;
 /// Though we choose the same internal node structure as that of Patricia Merkle tree, the root hash
 /// computation logic is similar to a 4-level sparse Merkle tree except for some customizations. See
 /// the `CryptoHash` trait implementation below for details.
-#[derive(Clone, Debug, Eq, PartialEq, CryptoHasher)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InternalNode {
     // Up to 16 children.
     children: Children,
@@ -213,18 +223,6 @@ pub struct InternalNode {
 /// height
 /// Note: @ denotes placeholder hash.
 /// ```
-impl CryptoHash for InternalNode {
-    type Hasher = InternalNodeHasher;
-
-    fn hash(&self) -> HashValue {
-        self.merkle_hash(
-            0,  /* start index */
-            16, /* the number of leaves in the subtree of which we want the hash of root */
-            self.generate_bitmaps(),
-        )
-    }
-}
-
 #[cfg(any(test, feature = "fuzzing"))]
 impl Arbitrary for InternalNode {
     type Parameters = ();
@@ -259,6 +257,14 @@ impl InternalNode {
             )
         }
         Self { children }
+    }
+
+    pub fn hash(&self) -> HashValue {
+        self.merkle_hash(
+            0,  /* start index */
+            16, /* the number of leaves in the subtree of which we want the hash of root */
+            self.generate_bitmaps(),
+        )
     }
 
     pub fn serialize(&self, binary: &mut Vec<u8>) -> Result<()> {
@@ -326,11 +332,6 @@ impl InternalNode {
     /// Gets the `n`-th child.
     pub fn child(&self, n: Nibble) -> Option<&Child> {
         self.children.get(&n)
-    }
-
-    /// Return the total number of existing children.
-    pub fn num_children(&self) -> usize {
-        self.children.len()
     }
 
     /// Generates `existence_bitmap` and `leaf_bitmap` as a pair of `u16`s: child at index `i`
@@ -494,7 +495,7 @@ pub(crate) fn get_child_and_sibling_half_start(n: Nibble, height: u8) -> (u8, u8
 }
 
 /// Represents an account.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, CryptoHasher)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct LeafNode {
     // The hashed account address associated with this leaf node.
     account_key: HashValue,
@@ -520,23 +521,12 @@ impl LeafNode {
         self.account_key
     }
 
-    /// Gets the hash of associated blob.
-    pub fn blob_hash(&self) -> HashValue {
-        self.blob_hash
-    }
-
     /// Gets the associated blob itself.
     pub fn blob(&self) -> &AccountStateBlob {
         &self.blob
     }
-}
 
-/// Computes the hash of a [`LeafNode`].
-impl CryptoHash for LeafNode {
-    // Unused hasher.
-    type Hasher = LeafNodeHasher;
-
-    fn hash(&self) -> HashValue {
+    pub fn hash(&self) -> HashValue {
         SparseMerkleLeafNode::new(self.account_key, self.blob_hash).hash()
     }
 }

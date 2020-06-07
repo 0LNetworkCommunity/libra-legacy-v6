@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{on_chain_config::OnChainConfig, validator_info::ValidatorInfo};
-use anyhow::{Error, Result};
+
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom, fmt, iter::IntoIterator, vec};
+use std::{fmt, iter::IntoIterator, vec};
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
@@ -41,36 +41,12 @@ impl ValidatorSet {
         }
     }
 
-    pub fn scheme(&self) -> ConsensusScheme {
-        self.scheme
-    }
-
     pub fn payload(&self) -> &[ValidatorInfo] {
         &self.payload
     }
 
     pub fn empty() -> Self {
         ValidatorSet::new(Vec::new())
-    }
-
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
-    }
-}
-
-impl TryFrom<crate::proto::types::ValidatorSet> for ValidatorSet {
-    type Error = Error;
-
-    fn try_from(proto: crate::proto::types::ValidatorSet) -> Result<Self> {
-        Ok(lcs::from_bytes(&proto.bytes)?)
-    }
-}
-
-impl From<ValidatorSet> for crate::proto::types::ValidatorSet {
-    fn from(set: ValidatorSet) -> Self {
-        Self {
-            bytes: lcs::to_bytes(&set).expect("failed to serialize validator set"),
-        }
     }
 }
 

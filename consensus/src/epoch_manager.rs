@@ -4,34 +4,34 @@
 use crate::{
     block_storage::BlockStore,
     counters,
-    event_processor::{EventProcessor, SyncProcessor, UnverifiedEvent, VerifiedEvent},
     liveness::{
         leader_reputation::{ActiveInactiveHeuristic, LeaderReputation, LibraDBBackend},
-        multi_proposer_election::MultiProposer,
-        pacemaker::{ExponentialTimeInterval, Pacemaker},
         proposal_generator::ProposalGenerator,
         proposer_election::ProposerElection,
         rotating_proposer_election::{choose_leader, RotatingProposer},
+        round_state::{ExponentialTimeInterval, RoundState},
     },
     network::{IncomingBlockRetrievalRequest, NetworkReceivers, NetworkSender},
     network_interface::{ConsensusMsg, ConsensusNetworkSender},
     persistent_liveness_storage::{LedgerRecoveryData, PersistentLivenessStorage, RecoveryData},
+    round_manager::{RecoveryManager, RoundManager, UnverifiedEvent, VerifiedEvent},
     state_replication::{StateComputer, TxnManager},
-    util::time_service::{ClockTimeService, TimeService},
+    util::time_service::TimeService,
 };
-use anyhow::anyhow;
+use anyhow::{anyhow, bail, ensure, Context};
 use channel::libra_channel;
 use consensus_types::{
-    common::{Author, Payload, Round},
+    common::{Author, Round},
     epoch_retrieval::EpochRetrievalRequest,
 };
 use futures::{select, StreamExt};
 use libra_config::config::{ConsensusConfig, ConsensusProposerType, NodeConfig};
 use libra_logger::prelude::*;
+use libra_secure_storage::config;
 use libra_types::{
     account_address::AccountAddress,
     epoch_change::EpochChangeProof,
-    epoch_info::EpochInfo,
+    epoch_state::EpochState,
     on_chain_config::{OnChainConfigPayload, ValidatorSet},
 };
 use network::protocols::network::Event;
@@ -42,24 +42,23 @@ use std::{
     time::{Duration, Instant},
 };
 
-/// The enum contains two processor
-/// SyncProcessor is used to process events in order to sync up with peer if we can't recover from local consensusdb
-/// EventProcessor is used for normal event handling.
-/// We suppress clippy warning here because we expect most of the time we will have EventProcessor
+/// RecoveryManager is used to process events in order to sync up with peer if we can't recover from local consensusdb
+/// RoundManager is used for normal event handling.
+/// We suppress clippy warning here because we expect most of the time we will have RoundManager
 #[allow(clippy::large_enum_variant)]
-pub enum Processor<T> {
-    SyncProcessor(SyncProcessor<T>),
-    EventProcessor(EventProcessor<T>),
+pub enum RoundProcessor {
+    Recovery(RecoveryManager),
+    Normal(RoundManager),
 }
 
 #[allow(clippy::large_enum_variant)]
-pub enum LivenessStorageData<T> {
-    RecoveryData(RecoveryData<T>),
+pub enum LivenessStorageData {
+    RecoveryData(RecoveryData),
     LedgerRecoveryData(LedgerRecoveryData),
 }
 
-impl<T: Payload> LivenessStorageData<T> {
-    pub fn expect_recovery_data(self, msg: &str) -> RecoveryData<T> {
+impl LivenessStorageData {
+    pub fn expect_recovery_data(self, msg: &str) -> RecoveryData {
         match self {
             LivenessStorageData::RecoveryData(data) => data,
             LivenessStorageData::LedgerRecoveryData(_) => panic!("{}", msg),
@@ -67,34 +66,34 @@ impl<T: Payload> LivenessStorageData<T> {
     }
 }
 
-// Manager the components that shared across epoch and spawn per-epoch EventProcessor with
+// Manager the components that shared across epoch and spawn per-epoch RoundManager with
 // epoch-specific input.
-pub struct EpochManager<T> {
+pub struct EpochManager {
     author: Author,
     config: ConsensusConfig,
-    time_service: Arc<ClockTimeService>,
-    self_sender: channel::Sender<anyhow::Result<Event<ConsensusMsg<T>>>>,
-    network_sender: ConsensusNetworkSender<T>,
+    time_service: Arc<dyn TimeService>,
+    self_sender: channel::Sender<anyhow::Result<Event<ConsensusMsg>>>,
+    network_sender: ConsensusNetworkSender,
     timeout_sender: channel::Sender<Round>,
-    txn_manager: Box<dyn TxnManager<Payload = T>>,
-    state_computer: Arc<dyn StateComputer<Payload = T>>,
-    storage: Arc<dyn PersistentLivenessStorage<T>>,
-    safety_rules_manager: SafetyRulesManager<T>,
-    processor: Option<Processor<T>>,
+    txn_manager: Box<dyn TxnManager>,
+    state_computer: Arc<dyn StateComputer>,
+    storage: Arc<dyn PersistentLivenessStorage>,
+    safety_rules_manager: SafetyRulesManager,
+    processor: Option<RoundProcessor>,
 }
 
-impl<T: Payload> EpochManager<T> {
+impl EpochManager {
     pub fn new(
         node_config: &mut NodeConfig,
-        time_service: Arc<ClockTimeService>,
-        self_sender: channel::Sender<anyhow::Result<Event<ConsensusMsg<T>>>>,
-        network_sender: ConsensusNetworkSender<T>,
+        time_service: Arc<dyn TimeService>,
+        self_sender: channel::Sender<anyhow::Result<Event<ConsensusMsg>>>,
+        network_sender: ConsensusNetworkSender,
         timeout_sender: channel::Sender<Round>,
-        txn_manager: Box<dyn TxnManager<Payload = T>>,
-        state_computer: Arc<dyn StateComputer<Payload = T>>,
-        storage: Arc<dyn PersistentLivenessStorage<T>>,
+        txn_manager: Box<dyn TxnManager>,
+        state_computer: Arc<dyn StateComputer>,
+        storage: Arc<dyn PersistentLivenessStorage>,
     ) -> Self {
-        let author = node_config.validator_network.as_ref().unwrap().peer_id;
+        let author = config::peer_id(node_config.validator_network.as_ref().unwrap());
         let config = node_config.consensus.clone();
         let safety_rules_manager = SafetyRulesManager::new(node_config);
         Self {
@@ -112,49 +111,46 @@ impl<T: Payload> EpochManager<T> {
         }
     }
 
-    fn epoch_info(&self) -> &EpochInfo {
+    fn epoch_state(&self) -> &EpochState {
         match self
             .processor
             .as_ref()
             .expect("EpochManager not started yet")
         {
-            Processor::EventProcessor(p) => p.epoch_info(),
-            Processor::SyncProcessor(p) => p.epoch_info(),
+            RoundProcessor::Normal(p) => p.epoch_state(),
+            RoundProcessor::Recovery(p) => p.epoch_state(),
         }
     }
 
     fn epoch(&self) -> u64 {
-        self.epoch_info().epoch
+        self.epoch_state().epoch
     }
 
-    fn create_pacemaker(
+    fn create_round_state(
         &self,
         time_service: Arc<dyn TimeService>,
         timeout_sender: channel::Sender<Round>,
-    ) -> Pacemaker {
+    ) -> RoundState {
         // 1.5^6 ~= 11
         // Timeout goes from initial_timeout to initial_timeout*11 in 6 steps
         let time_interval = Box::new(ExponentialTimeInterval::new(
-            Duration::from_millis(self.config.pacemaker_initial_timeout_ms),
+            Duration::from_millis(self.config.round_initial_timeout_ms),
             1.5,
             6,
         ));
-        Pacemaker::new(time_interval, time_service, timeout_sender)
+        RoundState::new(time_interval, time_service, timeout_sender)
     }
 
     /// Create a proposer election handler based on proposers
     fn create_proposer_election(
         &self,
-        epoch_info: &EpochInfo,
-    ) -> Box<dyn ProposerElection<T> + Send + Sync> {
-        let proposers = epoch_info
+        epoch_state: &EpochState,
+    ) -> Box<dyn ProposerElection + Send + Sync> {
+        let proposers = epoch_state
             .verifier
             .get_ordered_account_addresses_iter()
             .collect::<Vec<_>>();
         match self.config.proposer_type {
-            ConsensusProposerType::MultipleOrderedProposers => {
-                Box::new(MultiProposer::new(epoch_info.epoch, proposers, 2))
-            }
             ConsensusProposerType::RotatingProposer => Box::new(RotatingProposer::new(
                 proposers,
                 self.config.contiguous_rounds,
@@ -185,28 +181,24 @@ impl<T: Payload> EpochManager<T> {
         &mut self,
         request: EpochRetrievalRequest,
         peer_id: AccountAddress,
-    ) {
-        let proof = match self
+    ) -> anyhow::Result<()> {
+        let proof = self
             .storage
             .libra_db()
             .get_epoch_change_ledger_infos(request.start_epoch, request.end_epoch)
-        {
-            Ok(proof) => proof,
-            Err(e) => {
-                warn!("Failed to get epoch proof from storage: {:?}", e);
-                return;
-            }
-        };
-        let msg = ConsensusMsg::EpochChangeProof::<T>(Box::new(proof));
-        if let Err(e) = self.network_sender.send_to(peer_id, msg) {
-            warn!(
-                "Failed to send a epoch retrieval to peer {}: {:?}",
-                peer_id, e
-            );
-        };
+            .context("[EpochManager] Failed to get epoch proof")?;
+        let msg = ConsensusMsg::EpochChangeProof(Box::new(proof));
+        self.network_sender.send_to(peer_id, msg).context(format!(
+            "[EpochManager] Failed to send epoch proof to {}",
+            peer_id
+        ))
     }
 
-    async fn process_different_epoch(&mut self, different_epoch: u64, peer_id: AccountAddress) {
+    async fn process_different_epoch(
+        &mut self,
+        different_epoch: u64,
+        peer_id: AccountAddress,
+    ) -> anyhow::Result<()> {
         match different_epoch.cmp(&self.epoch()) {
             // We try to help nodes that have lower epoch than us
             Ordering::Less => {
@@ -225,53 +217,47 @@ impl<T: Payload> EpochManager<T> {
                     start_epoch: self.epoch(),
                     end_epoch: different_epoch,
                 };
-                let msg = ConsensusMsg::EpochRetrievalRequest::<T>(Box::new(request));
-                if let Err(e) = self.network_sender.send_to(peer_id, msg) {
-                    warn!(
-                        "Failed to send a epoch retrieval to peer {}: {:?}",
-                        peer_id, e
-                    );
-                }
+                let msg = ConsensusMsg::EpochRetrievalRequest(Box::new(request));
+                self.network_sender.send_to(peer_id, msg).context(format!(
+                    "[EpochManager] Failed to send epoch retrieval to {}",
+                    peer_id
+                ))
             }
             Ordering::Equal => {
-                warn!("Same epoch should not come to process_different_epoch");
+                bail!("[EpochManager] Same epoch should not come to process_different_epoch");
             }
         }
     }
 
-    async fn start_new_epoch(&mut self, proof: EpochChangeProof) {
-        let ledger_info = match proof.verify(self.epoch_info()) {
-            Ok(ledger_info) => ledger_info,
-            Err(e) => {
-                error!("Invalid EpochChangeProof: {:?}", e);
-                return;
-            }
-        };
+    async fn start_new_epoch(&mut self, proof: EpochChangeProof) -> anyhow::Result<()> {
+        let ledger_info = proof
+            .verify(self.epoch_state())
+            .context("[EpochManager] Invalid EpochChangeProof")?;
         debug!(
             "Received epoch change to {}",
             ledger_info.ledger_info().epoch() + 1
         );
 
         // make sure storage is on this ledger_info too, it should be no-op if it's already committed
-        if let Err(e) = self.state_computer.sync_to(ledger_info.clone()).await {
-            error!("State sync to new epoch {} failed with {:?}, we'll try to start from current libradb", ledger_info, e);
-        }
+        self.state_computer
+            .sync_to(ledger_info.clone())
+            .await
+            .context(format!(
+                "[EpochManager] State sync to new epoch {}",
+                ledger_info
+            ))
         // state_computer notifies reconfiguration in another channel
     }
 
-    async fn start_event_processor(
-        &mut self,
-        recovery_data: RecoveryData<T>,
-        epoch_info: EpochInfo,
-    ) {
-        // Release the previous EventProcessor, especially the SafetyRule client
+    async fn start_round_manager(&mut self, recovery_data: RecoveryData, epoch_state: EpochState) {
+        // Release the previous RoundManager, especially the SafetyRule client
         self.processor = None;
-        counters::EPOCH.set(epoch_info.epoch as i64);
-        counters::CURRENT_EPOCH_VALIDATORS.set(epoch_info.verifier.len() as i64);
-        counters::CURRENT_EPOCH_QUORUM_SIZE.set(epoch_info.verifier.quorum_voting_power() as i64);
+        counters::EPOCH.set(epoch_state.epoch as i64);
+        counters::CURRENT_EPOCH_VALIDATORS.set(epoch_state.verifier.len() as i64);
+        counters::CURRENT_EPOCH_QUORUM_SIZE.set(epoch_state.verifier.quorum_voting_power() as i64);
         info!(
             "Starting {} with genesis {}",
-            epoch_info,
+            epoch_state,
             recovery_data.root_block(),
         );
         let last_vote = recovery_data.last_vote();
@@ -311,24 +297,23 @@ impl<T: Payload> EpochManager<T> {
             self.config.max_block_size,
         );
 
-        info!("Create Pacemaker");
-        let pacemaker =
-            self.create_pacemaker(self.time_service.clone(), self.timeout_sender.clone());
+        info!("Create RoundState");
+        let round_state =
+            self.create_round_state(self.time_service.clone(), self.timeout_sender.clone());
 
         info!("Create ProposerElection");
-        let proposer_election = self.create_proposer_election(&epoch_info);
+        let proposer_election = self.create_proposer_election(&epoch_state);
         let network_sender = NetworkSender::new(
             self.author,
             self.network_sender.clone(),
             self.self_sender.clone(),
-            epoch_info.verifier.clone(),
+            epoch_state.verifier.clone(),
         );
 
-        let mut processor = EventProcessor::new(
-            epoch_info,
+        let mut processor = RoundManager::new(
+            epoch_state,
             block_store,
-            last_vote,
-            pacemaker,
+            round_state,
             proposer_election,
             proposal_generator,
             safety_rules,
@@ -337,32 +322,32 @@ impl<T: Payload> EpochManager<T> {
             self.storage.clone(),
             self.time_service.clone(),
         );
-        processor.start().await;
-        self.processor = Some(Processor::EventProcessor(processor));
-        info!("EventProcessor started");
+        processor.start(last_vote).await;
+        self.processor = Some(RoundProcessor::Normal(processor));
+        info!("RoundManager started");
     }
 
     // Depending on what data we can extract from consensusdb, we may or may not have an
     // event processor at startup. If we need to sync up with peers for blocks to construct
     // a valid block store, which is required to construct an event processor, we will take
     // care of the sync up here.
-    async fn start_sync_processor(
+    async fn start_recovery_manager(
         &mut self,
         ledger_recovery_data: LedgerRecoveryData,
-        epoch_info: EpochInfo,
+        epoch_state: EpochState,
     ) {
         let network_sender = NetworkSender::new(
             self.author,
             self.network_sender.clone(),
             self.self_sender.clone(),
-            epoch_info.verifier.clone(),
+            epoch_state.verifier.clone(),
         );
-        self.processor = Some(Processor::SyncProcessor(SyncProcessor::new(
-            epoch_info,
+        self.processor = Some(RoundProcessor::Recovery(RecoveryManager::new(
+            epoch_state,
             network_sender,
             self.storage.clone(),
             self.state_computer.clone(),
-            ledger_recovery_data,
+            ledger_recovery_data.commit_round(),
         )));
         info!("SyncProcessor started");
     }
@@ -371,23 +356,17 @@ impl<T: Payload> EpochManager<T> {
         let validator_set: ValidatorSet = payload
             .get()
             .expect("failed to get ValidatorSet from payload");
-        let epoch_info = EpochInfo {
+        let epoch_state = EpochState {
             epoch: payload.epoch(),
             verifier: (&validator_set).into(),
         };
-        let validator_keys = validator_set.payload().to_vec();
-        info!("Update Network about new validators");
-        self.network_sender
-            .update_eligible_nodes(validator_keys)
-            .await
-            .expect("Unable to update network's eligible peers");
 
         match self.storage.start() {
             LivenessStorageData::RecoveryData(initial_data) => {
-                self.start_event_processor(initial_data, epoch_info).await
+                self.start_round_manager(initial_data, epoch_state).await
             }
             LivenessStorageData::LedgerRecoveryData(ledger_recovery_data) => {
-                self.start_sync_processor(ledger_recovery_data, epoch_info)
+                self.start_recovery_manager(ledger_recovery_data, epoch_state)
                     .await
             }
         }
@@ -396,70 +375,71 @@ impl<T: Payload> EpochManager<T> {
     pub async fn process_message(
         &mut self,
         peer_id: AccountAddress,
-        consensus_msg: ConsensusMsg<T>,
-    ) {
-        if let Some(event) = self.process_epoch(peer_id, consensus_msg).await {
-            match event.verify(&self.epoch_info().verifier) {
-                Ok(event) => self.process_event(peer_id, event).await,
-                Err(err) => warn!("Message failed verification: {:?}", err),
-            }
+        consensus_msg: ConsensusMsg,
+    ) -> anyhow::Result<()> {
+        if let Some(event) = self.process_epoch(peer_id, consensus_msg).await? {
+            let verified_event = event
+                .verify(&self.epoch_state().verifier)
+                .context("[EpochManager] Verify event")?;
+            self.process_event(peer_id, verified_event).await?;
         }
+        Ok(())
     }
 
     async fn process_epoch(
         &mut self,
         peer_id: AccountAddress,
-        msg: ConsensusMsg<T>,
-    ) -> Option<UnverifiedEvent<T>> {
+        msg: ConsensusMsg,
+    ) -> anyhow::Result<Option<UnverifiedEvent>> {
         match msg {
             ConsensusMsg::ProposalMsg(_) | ConsensusMsg::SyncInfo(_) | ConsensusMsg::VoteMsg(_) => {
-                let event: UnverifiedEvent<T> = msg.into();
+                let event: UnverifiedEvent = msg.into();
                 if event.epoch() == self.epoch() {
-                    return Some(event);
+                    return Ok(Some(event));
                 } else {
-                    self.process_different_epoch(event.epoch(), peer_id).await;
+                    self.process_different_epoch(event.epoch(), peer_id).await?;
                 }
             }
             ConsensusMsg::EpochChangeProof(proof) => {
-                let msg_epoch = proof.epoch().map_err(|e| warn!("{:?}", e)).ok()?;
+                let msg_epoch = proof.epoch()?;
                 if msg_epoch == self.epoch() {
-                    self.start_new_epoch(*proof).await
+                    self.start_new_epoch(*proof).await?;
                 } else {
-                    self.process_different_epoch(msg_epoch, peer_id).await
+                    self.process_different_epoch(msg_epoch, peer_id).await?;
                 }
             }
             ConsensusMsg::EpochRetrievalRequest(request) => {
-                if request.end_epoch <= self.epoch() {
-                    self.process_epoch_retrieval(*request, peer_id).await
-                } else {
-                    warn!("Received EpochRetrievalRequest beyond what we have locally");
-                }
+                ensure!(
+                    request.end_epoch <= self.epoch(),
+                    "[EpochManager] Received EpochRetrievalRequest beyond what we have locally"
+                );
+                self.process_epoch_retrieval(*request, peer_id).await?;
             }
             _ => {
-                warn!("Unexpected messages: {:?}", msg);
+                bail!("[EpochManager] Unexpected messages: {:?}", msg);
             }
         }
-        None
+        Ok(None)
     }
 
-    async fn process_event(&mut self, peer_id: AccountAddress, event: VerifiedEvent<T>) {
+    async fn process_event(
+        &mut self,
+        peer_id: AccountAddress,
+        event: VerifiedEvent,
+    ) -> anyhow::Result<()> {
         match self.processor_mut() {
-            Processor::SyncProcessor(p) => {
-                let result = match event {
+            RoundProcessor::Recovery(p) => {
+                let recovery_data = match event {
                     VerifiedEvent::ProposalMsg(proposal) => p.process_proposal_msg(*proposal).await,
                     VerifiedEvent::VoteMsg(vote) => p.process_vote(*vote).await,
                     _ => Err(anyhow!("Unexpected VerifiedEvent during startup")),
-                };
-                let epoch_info = p.epoch_info().clone();
-                match result {
-                    Ok(data) => {
-                        info!("Recovered from SyncProcessor");
-                        self.start_event_processor(data, epoch_info).await
-                    }
-                    Err(e) => error!("{:?}", e),
-                }
+                }?;
+                let epoch_state = p.epoch_state().clone();
+                info!("Recovered from SyncProcessor");
+                self.start_round_manager(recovery_data, epoch_state).await;
+                Ok(())
             }
-            Processor::EventProcessor(p) => match event {
+            RoundProcessor::Normal(p) => match event {
                 VerifiedEvent::ProposalMsg(proposal) => p.process_proposal_msg(*proposal).await,
                 VerifiedEvent::VoteMsg(vote) => p.process_vote(*vote).await,
                 VerifiedEvent::SyncInfo(sync_info) => {
@@ -469,30 +449,33 @@ impl<T: Payload> EpochManager<T> {
         }
     }
 
-    fn processor_mut(&mut self) -> &mut Processor<T> {
+    fn processor_mut(&mut self) -> &mut RoundProcessor {
         self.processor
             .as_mut()
-            .expect("EpochManager not started yet")
+            .expect("[EpochManager] not started yet")
     }
 
-    pub async fn process_block_retrieval(&mut self, request: IncomingBlockRetrievalRequest) {
+    pub async fn process_block_retrieval(
+        &mut self,
+        request: IncomingBlockRetrievalRequest,
+    ) -> anyhow::Result<()> {
         match self.processor_mut() {
-            Processor::EventProcessor(p) => p.process_block_retrieval(request).await,
-            _ => warn!("EventProcessor not started yet"),
+            RoundProcessor::Normal(p) => p.process_block_retrieval(request).await,
+            _ => bail!("[EpochManager] RoundManager not started yet"),
         }
     }
 
-    pub async fn process_local_timeout(&mut self, round: u64) {
+    pub async fn process_local_timeout(&mut self, round: u64) -> anyhow::Result<()> {
         match self.processor_mut() {
-            Processor::EventProcessor(p) => p.process_local_timeout(round).await,
-            _ => unreachable!("EventProcessor not started yet"),
+            RoundProcessor::Normal(p) => p.process_local_timeout(round).await,
+            _ => unreachable!("RoundManager not started yet"),
         }
     }
 
     pub async fn start(
         mut self,
-        mut pacemaker_timeout_sender_rx: channel::Receiver<Round>,
-        mut network_receivers: NetworkReceivers<T>,
+        mut round_timeout_sender_rx: channel::Receiver<Round>,
+        mut network_receivers: NetworkReceivers,
         mut reconfig_events: libra_channel::Receiver<(), OnChainConfigPayload>,
     ) {
         // initial start of the processor
@@ -502,10 +485,11 @@ impl<T: Payload> EpochManager<T> {
         loop {
             let pre_select_instant = Instant::now();
             let idle_duration;
-            select! {
+            let result = select! {
                 payload = reconfig_events.select_next_some() => {
                     idle_duration = pre_select_instant.elapsed();
-                    self.start_processor(payload).await
+                    self.start_processor(payload).await;
+                    Ok(())
                 }
                 msg = network_receivers.consensus_messages.select_next_some() => {
                     idle_duration = pre_select_instant.elapsed();
@@ -515,10 +499,16 @@ impl<T: Payload> EpochManager<T> {
                     idle_duration = pre_select_instant.elapsed();
                     self.process_block_retrieval(block_retrieval).await
                 }
-                round = pacemaker_timeout_sender_rx.select_next_some() => {
+                round = round_timeout_sender_rx.select_next_some() => {
                     idle_duration = pre_select_instant.elapsed();
                     self.process_local_timeout(round).await
                 }
+            };
+            if let Err(e) = result {
+                error!("{:?}", e);
+            }
+            if let RoundProcessor::Normal(p) = self.processor_mut() {
+                debug!("{}", p.round_state());
             }
             counters::EVENT_PROCESSING_LOOP_BUSY_DURATION_S
                 .observe_duration(pre_select_instant.elapsed() - idle_duration);

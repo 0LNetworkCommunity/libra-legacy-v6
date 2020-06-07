@@ -1,17 +1,12 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    error::Error,
-    layout::Layout,
-    management_constants::{COMMON_NS, LAYOUT, VALIDATOR_CONFIG},
-    SingleBackend,
-};
+use crate::{constants, error::Error, layout::Layout, SingleBackend};
 use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_global_constants::{ASSOCIATION_KEY, OPERATOR_KEY};
 use libra_secure_storage::Storage;
 use libra_types::transaction::{Transaction, TransactionPayload};
-use std::{convert::TryInto, path::PathBuf};
+use std::{convert::TryInto, fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::ValidatorRegistration;
 
@@ -21,9 +16,9 @@ use vm_genesis::ValidatorRegistration;
 #[derive(Debug, StructOpt)]
 pub struct Genesis {
     #[structopt(flatten)]
-    backend: SingleBackend,
+    pub backend: SingleBackend,
     #[structopt(long)]
-    path: Option<PathBuf>,
+    pub path: Option<PathBuf>,
 }
 
 impl Genesis {
@@ -32,11 +27,25 @@ impl Genesis {
         let association_key = self.association(&layout)?;
         let validators = self.validators(&layout)?;
 
-        Ok(vm_genesis::encode_genesis_transaction_with_validator(
+        let genesis = vm_genesis::encode_genesis_transaction_with_validator(
             association_key,
             &validators,
             None,
-        ))
+        );
+
+        if let Some(path) = self.path {
+            let mut file = File::create(path).map_err(|e| {
+                Error::UnexpectedError(format!("Unable to create genesis file: {}", e.to_string()))
+            })?;
+            let bytes = lcs::to_bytes(&genesis).map_err(|e| {
+                Error::UnexpectedError(format!("Unable to serialize genesis: {}", e.to_string()))
+            })?;
+            file.write_all(&bytes).map_err(|e| {
+                Error::UnexpectedError(format!("Unable to write genesis file: {}", e.to_string()))
+            })?;
+        }
+
+        Ok(genesis)
     }
 
     /// Retrieves association key from the remote storage. Note, at this point in time, genesis
@@ -50,11 +59,11 @@ impl Genesis {
 
         let association_key = association
             .get(ASSOCIATION_KEY)
-            .map_err(|e| Error::RemoteStorageReadError(e.to_string()))?;
+            .map_err(|e| Error::RemoteStorageReadError(ASSOCIATION_KEY, e.to_string()))?;
         association_key
             .value
             .ed25519_public_key()
-            .map_err(|e| Error::RemoteStorageReadError(e.to_string()))
+            .map_err(|e| Error::RemoteStorageReadError(ASSOCIATION_KEY, e.to_string()))
     }
 
     /// Retrieves a layout from the remote storage.
@@ -62,16 +71,15 @@ impl Genesis {
         let mut common_config = self.backend.backend.clone();
         common_config
             .parameters
-            .insert("namespace".into(), COMMON_NS.into());
+            .insert("namespace".into(), constants::COMMON_NS.into());
         let common: Box<dyn Storage> = common_config.try_into()?;
 
         let layout = common
-            .get(LAYOUT)
-            .map_err(|e| Error::RemoteStorageReadError(e.to_string()))?
-            .value
-            .string()
-            .map_err(|e| Error::RemoteStorageReadError(e.to_string()))?;
-        Layout::parse(&layout).map_err(|e| Error::RemoteStorageReadError(e.to_string()))
+            .get(constants::LAYOUT)
+            .and_then(|v| v.value.string())
+            .map_err(|e| Error::RemoteStorageReadError(constants::LAYOUT, e.to_string()))?;
+        Layout::parse(&layout)
+            .map_err(|e| Error::RemoteStorageReadError(constants::LAYOUT, e.to_string()))
     }
 
     /// Produces a set of ValidatorRegistration from the remote storage.
@@ -86,14 +94,16 @@ impl Genesis {
 
             let key = validator
                 .get(OPERATOR_KEY)
-                .map_err(|e| Error::RemoteStorageReadError(e.to_string()))?
+                .map_err(|e| Error::RemoteStorageReadError(OPERATOR_KEY, e.to_string()))?
                 .value
                 .ed25519_public_key()
-                .map_err(|e| Error::RemoteStorageReadError(e.to_string()))?;
+                .map_err(|e| Error::RemoteStorageReadError(OPERATOR_KEY, e.to_string()))?;
 
             let txn = validator
-                .get(VALIDATOR_CONFIG)
-                .map_err(|e| Error::RemoteStorageReadError(e.to_string()))?
+                .get(constants::VALIDATOR_CONFIG)
+                .map_err(|e| {
+                    Error::RemoteStorageReadError(constants::VALIDATOR_CONFIG, e.to_string())
+                })?
                 .value;
             let txn = txn.transaction().unwrap();
             let txn = txn.as_signed_user_txn().unwrap().payload();

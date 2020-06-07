@@ -4,12 +4,43 @@
 //! Support for encoding transactions for common situations.
 
 use crate::{account::Account, gas_costs};
+use compiler::Compiler;
 use libra_types::{
     account_address::AccountAddress,
-    account_config::lbr_type_tag,
+    account_config,
+    account_config::{lbr_type_tag, LBR_NAME},
     transaction::{RawTransaction, SignedTransaction, TransactionArgument},
 };
+use once_cell::sync::Lazy;
 use stdlib::transaction_scripts::StdlibScript;
+
+pub static CREATE_ACCOUNT_SCRIPT: Lazy<Vec<u8>> = Lazy::new(|| {
+    let code = "
+    import 0x0.Libra;
+    import 0x0.LibraAccount;
+
+    main<Token>(account: &signer, fresh_address: address, auth_key_prefix: vector<u8>, initial_amount: u64) {
+      LibraAccount.create_testnet_account<Token>(copy(fresh_address), move(auth_key_prefix));
+      if (copy(initial_amount) > 0) {
+         LibraAccount.deposit<Token>(
+           copy(account),
+           move(fresh_address),
+           LibraAccount.withdraw_from<Token>(copy(account), move(initial_amount))
+         );
+      }
+      return;
+    }
+";
+
+    let compiler = Compiler {
+        address: account_config::CORE_CODE_ADDRESS,
+        extra_deps: vec![],
+        ..Compiler::default()
+    };
+    compiler
+        .into_script_blob("file_name", code)
+        .expect("Failed to compile")
+});
 
 /// Returns a transaction to add a new validator
 pub fn add_validator_txn(
@@ -27,6 +58,7 @@ pub fn add_validator_txn(
         seq_num,
         gas_costs::TXN_RESERVED * 2,
         0,
+        LBR_NAME.to_owned(),
     )
 }
 
@@ -43,12 +75,36 @@ pub fn create_account_txn(
     args.push(TransactionArgument::U64(initial_amount));
 
     sender.create_signed_txn_with_args(
-        StdlibScript::CreateAccount.compiled_bytes().into_vec(),
+        CREATE_ACCOUNT_SCRIPT.to_vec(),
         vec![lbr_type_tag()],
         args,
         seq_num,
         gas_costs::TXN_RESERVED,
-        1,
+        0,
+        LBR_NAME.to_owned(),
+    )
+}
+
+/// Returns a transaction to create a validator account with the given arguments.
+pub fn create_validator_account_txn(
+    sender: &Account,
+    new_account: &Account,
+    seq_num: u64,
+) -> SignedTransaction {
+    let mut args: Vec<TransactionArgument> = Vec::new();
+    args.push(TransactionArgument::Address(*new_account.address()));
+    args.push(TransactionArgument::U8Vector(new_account.auth_key_prefix()));
+
+    sender.create_signed_txn_with_args(
+        StdlibScript::CreateValidatorAccount
+            .compiled_bytes()
+            .into_vec(),
+        vec![lbr_type_tag()],
+        args,
+        seq_num,
+        gas_costs::TXN_RESERVED * 3,
+        0,
+        LBR_NAME.to_owned(),
     )
 }
 
@@ -62,17 +118,21 @@ pub fn peer_to_peer_txn(
 ) -> SignedTransaction {
     let mut args: Vec<TransactionArgument> = Vec::new();
     args.push(TransactionArgument::Address(*receiver.address()));
-    args.push(TransactionArgument::U8Vector(receiver.auth_key_prefix()));
     args.push(TransactionArgument::U64(transfer_amount));
+    args.push(TransactionArgument::U8Vector(vec![]));
+    args.push(TransactionArgument::U8Vector(vec![]));
 
     // get a SignedTransaction
     sender.create_signed_txn_with_args(
-        StdlibScript::PeerToPeer.compiled_bytes().into_vec(),
+        StdlibScript::PeerToPeerWithMetadata
+            .compiled_bytes()
+            .into_vec(),
         vec![lbr_type_tag()],
         args,
         seq_num,
         gas_costs::TXN_RESERVED, // this is a default for gas
-        1,                       // this is a default for gas
+        0,                       // this is a default for gas
+        LBR_NAME.to_owned(),
     )
 }
 
@@ -80,7 +140,6 @@ pub fn peer_to_peer_txn(
 pub fn register_validator_txn(
     sender: &Account,
     consensus_pubkey: Vec<u8>,
-    validator_network_signing_pubkey: Vec<u8>,
     validator_network_identity_pubkey: Vec<u8>,
     validator_network_address: Vec<u8>,
     fullnodes_network_identity_pubkey: Vec<u8>,
@@ -89,7 +148,6 @@ pub fn register_validator_txn(
 ) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(consensus_pubkey),
-        TransactionArgument::U8Vector(validator_network_signing_pubkey),
         TransactionArgument::U8Vector(validator_network_identity_pubkey),
         TransactionArgument::U8Vector(validator_network_address),
         TransactionArgument::U8Vector(fullnodes_network_identity_pubkey),
@@ -100,8 +158,9 @@ pub fn register_validator_txn(
         vec![],
         args,
         seq_num,
-        gas_costs::TXN_RESERVED,
+        gas_costs::TXN_RESERVED * 3,
         0,
+        LBR_NAME.to_owned(),
     )
 }
 
@@ -116,7 +175,8 @@ pub fn rotate_key_txn(sender: &Account, new_key_hash: Vec<u8>, seq_num: u64) -> 
         args,
         seq_num,
         gas_costs::TXN_RESERVED,
-        1,
+        0,
+        LBR_NAME.to_owned(),
     )
 }
 
@@ -136,7 +196,8 @@ pub fn raw_rotate_key_txn(
         args,
         seq_num,
         gas_costs::TXN_RESERVED,
-        1,
+        0,
+        LBR_NAME.to_owned(),
     )
 }
 
@@ -154,30 +215,8 @@ pub fn rotate_consensus_pubkey_txn(
         vec![],
         args,
         seq_num,
-        gas_costs::TXN_RESERVED * 3,
-        1,
-    )
-}
-
-/// Returns a transaction to mint new funds with the given arguments.
-pub fn mint_txn(
-    sender: &Account,
-    receiver: &Account,
-    seq_num: u64,
-    transfer_amount: u64,
-) -> SignedTransaction {
-    let mut args: Vec<TransactionArgument> = Vec::new();
-    args.push(TransactionArgument::Address(*receiver.address()));
-    args.push(TransactionArgument::U8Vector(receiver.auth_key_prefix()));
-    args.push(TransactionArgument::U64(transfer_amount));
-
-    // get a SignedTransaction
-    sender.create_signed_txn_with_args(
-        StdlibScript::Mint.compiled_bytes().into_vec(),
-        vec![lbr_type_tag()],
-        args,
-        seq_num,
-        gas_costs::TXN_RESERVED, // this is a default for gas
-        0,                       // this is a default for gas
+        gas_costs::TXN_RESERVED * 4,
+        0,
+        LBR_NAME.to_owned(),
     )
 }

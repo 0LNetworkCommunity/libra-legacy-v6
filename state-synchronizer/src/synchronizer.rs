@@ -19,7 +19,12 @@ use libra_types::{
     contract_event::ContractEvent, ledger_info::LedgerInfoWithSignatures, transaction::Transaction,
     waypoint::Waypoint, PeerId,
 };
-use std::{boxed::Box, collections::HashMap, sync::Arc, time::Duration};
+use std::{
+    boxed::Box,
+    collections::HashMap,
+    sync::Arc,
+    time::{Duration, SystemTime},
+};
 use storage_interface::DbReader;
 use subscription_service::ReconfigSubscription;
 use tokio::{
@@ -40,6 +45,7 @@ impl StateSynchronizer {
         storage: Arc<dyn DbReader>,
         executor: Box<dyn ChunkExecutor>,
         config: &NodeConfig,
+        waypoint: Waypoint,
         reconfig_event_subscriptions: Vec<ReconfigSubscription>,
     ) -> Self {
         let runtime = Builder::new()
@@ -55,7 +61,7 @@ impl StateSynchronizer {
             network,
             state_sync_to_mempool_sender,
             config.base.role,
-            config.base.waypoint,
+            Some(waypoint),
             &config.state_sync,
             config.upstream.clone(),
             executor_proxy,
@@ -134,9 +140,15 @@ impl StateSyncClient {
     pub fn sync_to(&self, target: LedgerInfoWithSignatures) -> impl Future<Output = Result<()>> {
         let mut sender = self.coordinator_sender.clone();
         let (callback, cb_receiver) = oneshot::channel();
-        let request = SyncRequest { callback, target };
+        let request = SyncRequest {
+            callback,
+            target,
+            last_progress_tst: SystemTime::now(),
+        };
         async move {
-            sender.send(CoordinatorMessage::Request(request)).await?;
+            sender
+                .send(CoordinatorMessage::Request(Box::new(request)))
+                .await?;
             cb_receiver.await?
         }
     }
@@ -159,7 +171,7 @@ impl StateSyncClient {
                 ))
                 .await?;
 
-            match timeout(Duration::from_secs(1), callback_rcv).await {
+            match timeout(Duration::from_secs(5), callback_rcv).await {
                 Err(_) => {
                     Err(format_err!("[state sync client] failed to receive commit ACK from state synchronizer on time"))
                 }

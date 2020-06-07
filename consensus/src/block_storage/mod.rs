@@ -13,6 +13,7 @@ mod block_tree;
 mod pending_votes;
 
 pub use block_store::{sync_manager::BlockRetriever, BlockStore};
+use consensus_types::sync_info::SyncInfo;
 pub use pending_votes::PendingVotes;
 
 /// Result of the vote processing. The failure case (Verification error) is returned
@@ -32,19 +33,19 @@ pub enum VoteReceptionResult {
     NewTimeoutCertificate(Arc<TimeoutCertificate>),
     /// There might be some issues adding a vote
     ErrorAddingVote(VerifyError),
+    /// The vote is not for the current round.
+    UnexpectedRound(u64, u64),
 }
 
 pub trait BlockReader: Send + Sync {
-    type Payload;
-
     /// Check if a block with the block_id exist in the BlockTree.
     fn block_exists(&self, block_id: HashValue) -> bool;
 
     /// Try to get a block with the block_id, return an Arc of it if found.
-    fn get_block(&self, block_id: HashValue) -> Option<Arc<ExecutedBlock<Self::Payload>>>;
+    fn get_block(&self, block_id: HashValue) -> Option<Arc<ExecutedBlock>>;
 
     /// Get the current root block of the BlockTree.
-    fn root(&self) -> Arc<ExecutedBlock<Self::Payload>>;
+    fn root(&self) -> Arc<ExecutedBlock>;
 
     fn get_quorum_cert_for_block(&self, block_id: HashValue) -> Option<Arc<QuorumCert>>;
 
@@ -55,11 +56,10 @@ pub trait BlockReader: Send + Sync {
     /// path_from_root(b2) -> Some([b2, b1])
     /// path_from_root(b0) -> Some([])
     /// path_from_root(a) -> None
-    fn path_from_root(&self, block_id: HashValue)
-        -> Option<Vec<Arc<ExecutedBlock<Self::Payload>>>>;
+    fn path_from_root(&self, block_id: HashValue) -> Option<Vec<Arc<ExecutedBlock>>>;
 
     /// Return the certified block with the highest round.
-    fn highest_certified_block(&self) -> Arc<ExecutedBlock<Self::Payload>>;
+    fn highest_certified_block(&self) -> Arc<ExecutedBlock>;
 
     /// Return the quorum certificate with the highest round
     fn highest_quorum_cert(&self) -> Arc<QuorumCert>;
@@ -69,4 +69,7 @@ pub trait BlockReader: Send + Sync {
 
     /// Return the highest timeout certificate if available.
     fn highest_timeout_cert(&self) -> Option<Arc<TimeoutCertificate>>;
+
+    /// Return the combination of highest quorum cert, timeout cert and commit cert.
+    fn sync_info(&self) -> SyncInfo;
 }

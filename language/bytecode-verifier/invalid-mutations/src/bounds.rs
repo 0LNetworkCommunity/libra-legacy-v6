@@ -191,7 +191,7 @@ impl ApplyOutOfBoundsContext {
         {
             mutation_map
                 .entry((mutation.src_kind, mutation.dst_kind))
-                .or_insert_with(|| vec![])
+                .or_insert_with(Vec::new)
                 .push(mutation);
         }
 
@@ -353,6 +353,6 @@ fn struct_handle(token: &SignatureToken) -> Option<StructHandleIndex> {
         Struct(sh_idx) => Some(*sh_idx),
         StructInstantiation(sh_idx, _) => Some(*sh_idx),
         Reference(token) | MutableReference(token) => struct_handle(token),
-        Bool | U8 | U64 | U128 | Address | Vector(_) | TypeParameter(_) => None,
+        Bool | U8 | U64 | U128 | Address | Signer | Vector(_) | TypeParameter(_) => None,
     }
 }

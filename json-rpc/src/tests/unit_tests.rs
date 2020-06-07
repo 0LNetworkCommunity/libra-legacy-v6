@@ -3,12 +3,11 @@
 
 use crate::{
     errors::{JsonRpcError, ServerCode},
-    runtime::bootstrap,
-    tests::mock_db::MockLibraDB,
+    tests::utils::{test_bootstrap, MockLibraDB},
 };
 use futures::{channel::mpsc::channel, StreamExt};
 use libra_config::utils;
-use libra_crypto::{ed25519::Ed25519PrivateKey, HashValue, PrivateKey, Uniform};
+use libra_crypto::{ed25519::Ed25519PrivateKey, hash::CryptoHash, HashValue, PrivateKey, Uniform};
 use libra_json_rpc_client::{
     views::{
         AccountStateWithProofView, BlockMetadata, BytesView, EventView, StateProofView,
@@ -25,7 +24,7 @@ use libra_types::{
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
     mempool_status::{MempoolStatus, MempoolStatusCode},
-    proof::{SparseMerkleProof, TransactionAccumulatorProof},
+    proof::{SparseMerkleProof, TransactionAccumulatorProof, TransactionInfoWithProof},
     test_helpers::transaction_test_helpers::get_test_signed_txn,
     transaction::{Transaction, TransactionInfo, TransactionPayload},
     vm_error::{StatusCode, VMStatus},
@@ -45,6 +44,7 @@ use tokio::runtime::Runtime;
 use vm_validator::{
     mocks::mock_vm_validator::MockVMValidator, vm_validator::TransactionValidation,
 };
+
 type JsonMap = HashMap<String, serde_json::Value>;
 
 // returns MockLibraDB for unit-testing
@@ -84,7 +84,7 @@ fn mock_db() -> MockLibraDB {
 
         // Record all account states.
         for (address, blob) in account_states.into_iter() {
-            all_accounts.insert(address.clone(), blob.clone());
+            all_accounts.insert(address, blob.clone());
         }
 
         // Record all transactions.
@@ -128,7 +128,7 @@ fn test_json_rpc_protocol() {
     let address = format!("0.0.0.0:{}", utils::get_available_port());
     let mock_db = mock_db();
     let mp_sender = channel(1024).0;
-    let _runtime = bootstrap(address.parse().unwrap(), Arc::new(mock_db), mp_sender);
+    let _runtime = test_bootstrap(address.parse().unwrap(), Arc::new(mock_db), mp_sender);
     let client = reqwest::blocking::Client::new();
 
     // check that only root path is accessible
@@ -181,7 +181,7 @@ fn test_transaction_submission() {
     let mock_db = mock_db();
     let port = utils::get_available_port();
     let address = format!("0.0.0.0:{}", port);
-    let mut runtime = bootstrap(address.parse().unwrap(), Arc::new(mock_db), mp_sender);
+    let mut runtime = test_bootstrap(address.parse().unwrap(), Arc::new(mock_db), mp_sender);
     let client = JsonRpcAsyncClient::new(
         reqwest::Url::from_str(format!("http://{}:{}", "127.0.0.1", port).as_str())
             .expect("invalid url"),
@@ -311,7 +311,7 @@ fn test_get_metadata() {
 
     let (actual_version, actual_timestamp) = mock_db.get_latest_commit_metadata().unwrap();
     let mut batch = JsonRpcBatch::default();
-    batch.add_get_metadata_request();
+    batch.add_get_metadata_request(None);
 
     let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
 
@@ -372,6 +372,7 @@ fn test_get_transactions() {
             let version = base_version + i as u64;
             assert_eq!(view.version, version);
             let (tx, status) = &mock_db.all_txns[version as usize];
+            assert_eq!(view.hash, tx.hash().to_string());
 
             // Check we returned correct events
             let expected_events = mock_db
@@ -415,7 +416,7 @@ fn test_get_transactions() {
                         assert_eq!(&t.sender().to_string(), sender);
                         // TODO: verify every field
                         if let TransactionPayload::Script(s) = t.payload() {
-                            assert_eq!(script_hash, &HashValue::from_sha3_256(s.code()).to_hex());
+                            assert_eq!(script_hash, &HashValue::sha3_256_of(s.code()).to_hex());
                         }
                     }
                     _ => panic!("Returned value doesn't match!"),
@@ -433,7 +434,7 @@ fn test_get_account_transaction() {
         let ar = AccountResource::try_from(blob).unwrap();
         for seq in 1..ar.sequence_number() {
             let mut batch = JsonRpcBatch::default();
-            batch.add_get_account_transaction_request(acc.clone(), seq, true);
+            batch.add_get_account_transaction_request(*acc, seq, true);
 
             let result = execute_batch_and_get_first_response(&client, &mut runtime, batch);
             let tx_view = TransactionView::optional_from_response(result)
@@ -446,6 +447,7 @@ fn test_get_account_transaction() {
                 .find_map(|(t, status)| {
                     if let Ok(x) = t.as_signed_user_txn() {
                         if x.sender() == *acc && x.sequence_number() == seq {
+                            assert_eq!(tx_view.hash, t.hash().to_string());
                             return Some((x, status));
                         }
                     }
@@ -491,7 +493,7 @@ fn test_get_account_transaction() {
                     assert_eq!(seq, sequence_number);
 
                     if let TransactionPayload::Script(s) = expected_tx.payload() {
-                        assert_eq!(script_hash, HashValue::from_sha3_256(s.code()).to_hex());
+                        assert_eq!(script_hash, HashValue::sha3_256_of(s.code()).to_hex());
                     }
                 }
                 _ => panic!("wrong type"),
@@ -533,8 +535,7 @@ fn test_get_account_state_with_proof() {
     let expected_proof = get_first_state_proof_from_mock_db(&mock_db);
     let expected_blob = expected_proof.blob.as_ref().unwrap();
     let expected_sm_proof = expected_proof.proof.transaction_info_to_account_proof();
-    let expected_txn_info = expected_proof.proof.transaction_info();
-    let expected_li_proof = expected_proof.proof.ledger_info_to_transaction_info_proof();
+    let expected_txn_info_with_proof = expected_proof.proof.transaction_info_with_proof();
 
     //version
     assert_eq!(received_proof.version, expected_proof.version);
@@ -556,7 +557,6 @@ fn test_get_account_state_with_proof() {
     assert_eq!(sm_proof, *expected_sm_proof);
     let txn_info: TransactionInfo =
         lcs::from_bytes(&received_proof.proof.transaction_info.into_bytes().unwrap()).unwrap();
-    assert_eq!(txn_info, *expected_txn_info);
     let li_proof: TransactionAccumulatorProof = lcs::from_bytes(
         &received_proof
             .proof
@@ -565,7 +565,8 @@ fn test_get_account_state_with_proof() {
             .unwrap(),
     )
     .unwrap();
-    assert_eq!(li_proof, *expected_li_proof);
+    let txn_info_with_proof = TransactionInfoWithProof::new(li_proof, txn_info);
+    assert_eq!(txn_info_with_proof, *expected_txn_info_with_proof);
 }
 
 #[test]
@@ -582,6 +583,23 @@ fn test_get_state_proof() {
     assert_eq!(li.ledger_info().version(), version);
 }
 
+#[test]
+fn test_get_network_status() {
+    let (_mock_db, client, mut runtime) = create_database_client_and_runtime(1);
+
+    let mut batch = JsonRpcBatch::default();
+    batch.add_get_network_status_request();
+
+    if let JsonRpcResponse::NetworkStatusResponse(connected_peers) =
+        execute_batch_and_get_first_response(&client, &mut runtime, batch)
+    {
+        // expect no connected peers when no network is running
+        assert_eq!(connected_peers.as_u64().unwrap(), 0);
+    } else {
+        panic!("did not receive expected json rpc response");
+    }
+}
+
 /// Creates and returns a MockLibraDB, JsonRpcAsyncClient and corresponding server Runtime tuple for
 /// testing. The given channel_buffer specifies the buffer size of the mempool client sender channel.
 fn create_database_client_and_runtime(
@@ -594,7 +612,7 @@ fn create_database_client_and_runtime(
     let address = format!("{}:{}", host, port);
     let mp_sender = channel(channel_buffer).0;
 
-    let runtime = bootstrap(
+    let runtime = test_bootstrap(
         address.parse().unwrap(),
         Arc::new(mock_db.clone()),
         mp_sender,

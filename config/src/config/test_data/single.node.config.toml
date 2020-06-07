@@ -26,31 +26,37 @@ public_metrics_server_port = 9102
 address = "0.0.0.0"
 
 [storage]
-address = "127.0.0.1:6184"
+address = "127.0.0.1:6666"
 dir = "libradb/db"
 grpc_max_receive_len = 100000000
 
 [test]
 auth_key = "8e0d19280063fa870fe4dbb85cc724091a398451c5c11e1e76e64cdc7b588510"
 operator_private_key = "76b8e0ada0f13d90405d6ae55386bd28bdd219b8a08ded1aa836efcc8b770dc7"
-consensus_private_key = "29b721769ce64e43d57133b074d839d531ed1f28510afb45ace10a1f4b794d6f"
+consensus_private_key = "9f07e7be5551387a98ba977c732d080dcb0f29a048e3656912c6533e32ee7aed"
 initialize_storage = true
 
 [validator_network]
-peer_id = "1a398451c5c11e1e76e64cdc7b588510"
 listen_address = "/ip4/0.0.0.0/tcp/65206"
 advertised_address = "/ip4/0.0.0.0/tcp/65206"
 discovery_interval_ms = 1000
 connectivity_check_interval_ms = 5000
-enable_noise = true
 enable_remote_authentication = true
 network_peers_file = ""
 seed_peers_file = ""
 
+[validator_network.identity]
+type = "from_config"
+key = "60dd107034b4582a2ef42c5e1ea475f2fea477a10a9f1d75b3635243b2506b72"
+peer_id = "31893204fa402143c11b26ce8a89ea1d"
+
+[validator_network.network_id]
+type = "Validator"
+
 [consensus]
 max_block_size = 1000
 max_pruned_blocks_in_mem = 10000
-pacemaker_initial_timeout_ms = 1000
+round_initial_timeout_ms = 1000
 contiguous_rounds = 2
 
 [consensus.proposer_type]

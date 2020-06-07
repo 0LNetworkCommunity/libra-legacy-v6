@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use admission_control_service::admission_control_service::AdmissionControlService;
-use consensus::consensus_provider::start_consensus;
-use debug_interface::{
-    node_debug_service::NodeDebugService,
-    proto::node_debug_interface_server::NodeDebugInterfaceServer,
-};
+use backup_service::start_backup_service;
+use consensus::{consensus_provider::start_consensus, gen_consensus_reconfig_subscription};
+use debug_interface::node_debug_service::NodeDebugService;
 use executor::{db_bootstrapper::bootstrap_db_if_empty, Executor};
 use executor_types::ChunkExecutor;
 use futures::{channel::mpsc::channel, executor::block_on, stream::StreamExt};
@@ -16,12 +14,16 @@ use libra_config::{
 };
 use libra_json_rpc::bootstrap_from_config as bootstrap_rpc;
 use libra_logger::prelude::*;
-use libra_mempool::MEMPOOL_SUBSCRIBED_CONFIGS;
+use libra_mempool::gen_mempool_reconfig_subscription;
 use libra_metrics::metric_server;
-use libra_types::{on_chain_config::ON_CHAIN_CONFIG_REGISTRY, waypoint::Waypoint, PeerId};
+use libra_secure_storage::config;
+use libra_types::{waypoint::Waypoint, PeerId};
 use libra_vm::LibraVM;
 use libradb::LibraDB;
-use network::validator_network::network_builder::{NetworkBuilder, TransportType};
+use network::validator_network::network_builder::{AuthenticationMode, NetworkBuilder};
+use network_simple_onchain_discovery::{
+    gen_simple_discovery_reconfig_subscription, ConfigurationChangeListener,
+};
 use onchain_discovery::{client::OnchainDiscovery, service::OnchainDiscoveryService};
 use state_synchronizer::StateSynchronizer;
 use std::{
@@ -33,8 +35,7 @@ use std::{
     time::{Duration, Instant},
 };
 use storage_interface::{DbReader, DbReaderWriter};
-use storage_service::{start_simple_storage_service_with_db, start_storage_service_with_db};
-use subscription_service::ReconfigSubscription;
+use storage_service::start_storage_service_with_db;
 use tokio::{
     runtime::{Builder, Handle, Runtime},
     time::interval,
@@ -50,16 +51,15 @@ pub struct LibraHandle {
     _state_synchronizer: StateSynchronizer,
     _network_runtimes: Vec<Runtime>,
     _consensus_runtime: Option<Runtime>,
-    _storage: Runtime,
-    _debug: Runtime,
+    _debug: NodeDebugService,
+    _backup: Runtime,
 }
 
 fn setup_chunk_executor(db: DbReaderWriter) -> Box<dyn ChunkExecutor> {
     Box::new(Executor::<LibraVM>::new(db))
 }
 
-fn setup_debug_interface(config: &NodeConfig) -> Runtime {
-    let rt = tokio::runtime::Runtime::new().unwrap();
+fn setup_debug_interface(config: &NodeConfig) -> NodeDebugService {
     let addr = format!(
         "{}:{}",
         config.debug_interface.address, config.debug_interface.admission_control_node_debug_port,
@@ -68,12 +68,8 @@ fn setup_debug_interface(config: &NodeConfig) -> Runtime {
     .unwrap()
     .next()
     .unwrap();
-    rt.spawn(
-        tonic::transport::Server::builder()
-            .add_service(NodeDebugInterfaceServer::new(NodeDebugService::new()))
-            .serve(addr),
-    );
-    rt
+
+    NodeDebugService::new(addr)
 }
 
 pub fn setup_onchain_discovery(
@@ -129,77 +125,68 @@ pub fn setup_network(
         .enable_all()
         .build()
         .expect("Failed to start runtime. Won't be able to start networking.");
+
+    let identity_key = config::identity_key(config);
+    let peer_id = config::peer_id(config);
+
     let mut network_builder = NetworkBuilder::new(
         runtime.handle().clone(),
-        config.peer_id,
-        config.listen_address.clone(),
+        config.network_id.clone(),
+        peer_id,
         role,
+        config.listen_address.clone(),
     );
-    network_builder
-        .enable_remote_authentication(config.enable_remote_authentication)
-        .advertised_address(config.advertised_address.clone())
-        .add_connection_monitoring();
-    if config.enable_remote_authentication {
-        // If the node wants to run in permissioned mode, it should also have authentication and
-        // encryption.
-        assert!(
-            config.enable_noise,
-            "Permissioned network end-points should use authentication"
-        );
-        let seed_peers = config.seed_peers.seed_peers.clone();
-        let network_keypairs = config
-            .network_keypairs
-            .as_mut()
-            .expect("Network keypairs are not defined");
-        let signing_keypair = &mut network_keypairs.signing_keypair;
-        let signing_private = signing_keypair
-            .take_private()
-            .expect("Failed to take Network signing private key, key absent or already read");
-        let signing_public = signing_keypair.public_key();
+    network_builder.add_connection_monitoring();
 
-        let identity_key = network_keypairs
-            .identity_keypair
-            .take_private()
-            .expect("identity key should be present");
+    if config.enable_remote_authentication {
+        // Sanity check seed peer addresses.
+        config
+            .seed_peers
+            .verify_libranet_addrs()
+            .expect("Seed peer addresses must be well-formed");
+
+        let network_peers = config.network_peers.peers.clone();
+        let seed_peers = config.seed_peers.seed_peers.clone();
 
         let trusted_peers = if role == RoleType::Validator {
             // for validators, trusted_peers is empty will be populated from consensus
             HashMap::new()
         } else {
-            config.network_peers.peers.clone()
+            network_peers
         };
+
+        info!(
+            "network setup: role: {}, seed_peers: {:?}, trusted_peers: {:?}",
+            role, seed_peers, trusted_peers,
+        );
+
         network_builder
-            .transport(TransportType::TcpNoise(Some(identity_key)))
-            .connectivity_check_interval_ms(config.connectivity_check_interval_ms)
-            .seed_peers(seed_peers)
+            .advertised_address(config.advertised_address.clone())
+            .authentication_mode(AuthenticationMode::Mutual(identity_key))
             .trusted_peers(trusted_peers)
-            .signing_keypair((signing_private, signing_public))
-            .discovery_interval_ms(config.discovery_interval_ms)
+            .seed_peers(seed_peers)
+            .connectivity_check_interval_ms(config.connectivity_check_interval_ms)
+            // TODO:  Why is the connectivity manager related to remote_authentication?
             .add_connectivity_manager();
-    } else if config.enable_noise {
-        let identity_key = config
-            .network_keypairs
-            .as_mut()
-            .expect("Network keypairs are not defined")
-            .identity_keypair
-            .take_private()
-            .expect("identity key should be present");
+    } else {
         // Even if a network end-point operates without remote authentication, it might want to prove
         // its identity to another peer it connects to. For this, we use TCP + Noise but without
         // enforcing a trusted peers set.
-        network_builder.transport(TransportType::TcpNoise(Some(identity_key)));
-    } else {
-        network_builder.transport(TransportType::Tcp);
+        network_builder
+            .authentication_mode(AuthenticationMode::ServerOnly(identity_key))
+            .advertised_address(config.advertised_address.clone());
     }
 
     match config.discovery_method {
         DiscoveryMethod::Gossip => {
-            network_builder.add_gossip_discovery();
+            network_builder
+                .discovery_interval_ms(config.discovery_interval_ms)
+                .add_gossip_discovery();
         }
         DiscoveryMethod::Onchain => {
             setup_onchain_discovery(
                 &mut network_builder,
-                config.peer_id,
+                peer_id,
                 role,
                 libra_db,
                 waypoint,
@@ -232,10 +219,12 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
         .expect("DB should open."),
     );
     let _simple_storage_service =
-        start_simple_storage_service_with_db(&node_config, Arc::clone(&libra_db));
+        start_storage_service_with_db(&node_config, Arc::clone(&libra_db));
+    let backup_service = start_backup_service(
+        node_config.storage.backup_service_port,
+        Arc::clone(&libra_db),
+    );
 
-    // Will be deprecated. Do not reference it anymore.
-    let storage = start_storage_service_with_db(&node_config, Arc::clone(&libra_db));
     bootstrap_db_if_empty::<LibraVM>(&db_rw, get_genesis_txn(&node_config).unwrap())
         .expect("Db-bootstrapper should not fail.");
 
@@ -257,31 +246,46 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
     let mut reconfig_subscriptions = vec![];
 
     let (mempool_reconfig_subscription, mempool_reconfig_events) =
-        ReconfigSubscription::subscribe(MEMPOOL_SUBSCRIBED_CONFIGS);
+        gen_mempool_reconfig_subscription();
     reconfig_subscriptions.push(mempool_reconfig_subscription);
     // consensus has to subscribe to ALL on-chain configs
     let (consensus_reconfig_subscription, consensus_reconfig_events) =
-        ReconfigSubscription::subscribe(ON_CHAIN_CONFIG_REGISTRY);
+        gen_consensus_reconfig_subscription();
     reconfig_subscriptions.push(consensus_reconfig_subscription);
+
+    let waypoint = config::waypoint(&node_config.base.waypoint);
 
     if let Some(network) = node_config.validator_network.as_mut() {
         let (runtime, mut network_builder) = setup_network(
             network,
             RoleType::Validator,
             Arc::clone(&db_rw.reader),
-            node_config.base.waypoint.expect("No waypoint in config"),
+            waypoint,
         );
+        let peer_id = network_builder.peer_id();
+
+        // Set up to listen for network configuration changes from StateSync.
+        if let Some(conn_mgr_reqs_tx) = network_builder.conn_mgr_reqs_tx() {
+            let (simple_discovery_reconfig_subscription, simple_discovery_reconfig_rx) =
+                gen_simple_discovery_reconfig_subscription();
+            reconfig_subscriptions.push(simple_discovery_reconfig_subscription);
+            let network_config_listener =
+                ConfigurationChangeListener::new(conn_mgr_reqs_tx, RoleType::Validator);
+            runtime
+                .handle()
+                .spawn(network_config_listener.start(simple_discovery_reconfig_rx));
+        };
 
         let (state_sync_sender, state_sync_events) =
             state_synchronizer::network::add_to_network(&mut network_builder);
-        state_sync_network_handles.push((network.peer_id, state_sync_sender, state_sync_events));
+        state_sync_network_handles.push((peer_id, state_sync_sender, state_sync_events));
 
         let (mempool_sender, mempool_events) = libra_mempool::network::add_to_network(
             &mut network_builder,
             node_config.mempool.max_broadcasts_per_peer,
         );
-        mempool_network_handles.push((network.peer_id, mempool_sender, mempool_events));
-        validator_network_provider = Some((network.peer_id, runtime, network_builder));
+        mempool_network_handles.push((peer_id, mempool_sender, mempool_events));
+        validator_network_provider = Some((peer_id, runtime, network_builder));
     }
 
     for mut full_node_network in node_config.full_node_networks.iter_mut() {
@@ -289,26 +293,23 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
             &mut full_node_network,
             RoleType::FullNode,
             Arc::clone(&db_rw.reader),
-            node_config.base.waypoint.expect("No waypoint in config"),
+            waypoint,
         );
+        let peer_id = network_builder.peer_id();
 
         network_runtimes.push(runtime);
         let (state_sync_sender, state_sync_events) =
             state_synchronizer::network::add_to_network(&mut network_builder);
-        state_sync_network_handles.push((
-            full_node_network.peer_id,
-            state_sync_sender,
-            state_sync_events,
-        ));
+        state_sync_network_handles.push((peer_id, state_sync_sender, state_sync_events));
         let (mempool_sender, mempool_events) = libra_mempool::network::add_to_network(
             &mut network_builder,
             node_config.mempool.max_broadcasts_per_peer,
         );
-        mempool_network_handles.push((full_node_network.peer_id, mempool_sender, mempool_events));
+        mempool_network_handles.push((peer_id, mempool_sender, mempool_events));
 
         // Start the network provider.
         let _listen_addr = network_builder.build();
-        debug!("Network started for peer_id: {}", full_node_network.peer_id);
+        debug!("Network started for peer_id: {}", peer_id);
     }
 
     // TODO set up on-chain discovery network based on UpstreamConfig.fallback_network
@@ -323,6 +324,7 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
         Arc::clone(&db_rw.reader),
         chunk_executor,
         &node_config,
+        waypoint,
         reconfig_subscriptions,
     );
     let (mp_client_sender, mp_client_events) = channel(AC_SMP_CHANNEL_BUFFER_SIZE);
@@ -406,7 +408,7 @@ pub fn setup_environment(node_config: &mut NodeConfig) -> LibraHandle {
         _mempool: mempool,
         _state_synchronizer: state_synchronizer,
         _consensus_runtime: consensus_runtime,
-        _storage: storage,
         _debug: debug_if,
+        _backup: backup_service,
     }
 }

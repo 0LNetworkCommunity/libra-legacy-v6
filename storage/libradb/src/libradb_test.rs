@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
+#[allow(unused_imports)]
 use crate::{
     schema::jellyfish_merkle_node::JellyfishMerkleNodeSchema,
     test_helper::{arb_blocks_to_commit, arb_mock_genesis},
 };
+#[allow(unused_imports)]
 use jellyfish_merkle::node_type::{Node, NodeKey};
 use libra_crypto::hash::CryptoHash;
 use libra_temppath::TempPath;
+#[allow(unused_imports)]
 use libra_types::{
     account_config::AccountResource, contract_event::ContractEvent, ledger_info::LedgerInfo,
     proof::SparseMerkleLeafNode, vm_error::StatusCode,
@@ -20,7 +23,7 @@ fn verify_epochs(db: &LibraDB, ledger_infos_with_sigs: &[LedgerInfoWithSignature
     let (_, _, actual_epoch_change_lis, _) = db.update_to_latest_ledger(0, Vec::new()).unwrap();
     let expected_epoch_change_lis: Vec<_> = ledger_infos_with_sigs
         .iter()
-        .filter(|info| info.ledger_info().next_epoch_info().is_some())
+        .filter(|info| info.ledger_info().next_epoch_state().is_some())
         .cloned()
         .collect();
     assert_eq!(
@@ -29,7 +32,7 @@ fn verify_epochs(db: &LibraDB, ledger_infos_with_sigs: &[LedgerInfoWithSignature
     );
 }
 
-fn test_save_blocks_impl(input: Vec<(Vec<TransactionToCommit>, LedgerInfoWithSignatures)>) {
+pub fn test_save_blocks_impl(input: Vec<(Vec<TransactionToCommit>, LedgerInfoWithSignatures)>) {
     let tmp_dir = TempPath::new();
     let db = LibraDB::new_for_test(&tmp_dir);
 
@@ -270,11 +273,11 @@ fn group_events_by_query_path(
         for (address, account_blob) in txn.account_states().iter() {
             let account = AccountResource::try_from(account_blob).unwrap();
             event_key_to_query_path.insert(
-                account.sent_events().key().clone(),
+                *account.sent_events().key(),
                 AccessPath::new_for_sent_event(*address),
             );
             event_key_to_query_path.insert(
-                account.received_events().key().clone(),
+                *account.received_events().key(),
                 AccessPath::new_for_received_event(*address),
             );
         }

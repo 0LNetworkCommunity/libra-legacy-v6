@@ -3,30 +3,26 @@
 
 use crate::{
     account_config::{
-        BurnEvent, CancelBurnEvent, MintEvent, PreburnEvent, ReceivedPaymentEvent, SentPaymentEvent,
+        BurnEvent, CancelBurnEvent, MintEvent, NewBlockEvent, NewEpochEvent, PreburnEvent,
+        ReceivedPaymentEvent, SentPaymentEvent, UpgradeEvent,
     },
     event::EventKey,
     ledger_info::LedgerInfo,
     proof::EventProof,
     transaction::Version,
 };
-use anyhow::{ensure, format_err, Error, Result};
-use libra_crypto::{
-    hash::{CryptoHash, CryptoHasher},
-    HashValue,
-};
-use libra_crypto_derive::CryptoHasher;
+use anyhow::{ensure, Error, Result};
+use libra_crypto::hash::CryptoHash;
+use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
 use move_core_types::{language_storage::TypeTag, move_resource::MoveResource};
+
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::{TryFrom, TryInto},
-    ops::Deref,
-};
+use std::{convert::TryFrom, ops::Deref};
 
 /// Support versioning of the data structure.
-#[derive(Hash, Clone, Eq, PartialEq, Serialize, Deserialize, CryptoHasher)]
+#[derive(Hash, Clone, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
 pub enum ContractEvent {
     V0(ContractEventV0),
 }
@@ -170,6 +166,39 @@ impl TryFrom<&ContractEvent> for CancelBurnEvent {
     }
 }
 
+impl TryFrom<&ContractEvent> for UpgradeEvent {
+    type Error = Error;
+
+    fn try_from(event: &ContractEvent) -> Result<Self> {
+        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+            anyhow::bail!("Expected UpgradeEvent")
+        }
+        Self::try_from_bytes(&event.event_data)
+    }
+}
+
+impl TryFrom<&ContractEvent> for NewBlockEvent {
+    type Error = Error;
+
+    fn try_from(event: &ContractEvent) -> Result<Self> {
+        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+            anyhow::bail!("Expected NewBlockEvent")
+        }
+        Self::try_from_bytes(&event.event_data)
+    }
+}
+
+impl TryFrom<&ContractEvent> for NewEpochEvent {
+    type Error = Error;
+
+    fn try_from(event: &ContractEvent) -> Result<Self> {
+        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+            anyhow::bail!("Expected NewEpochEvent")
+        }
+        Self::try_from_bytes(&event.event_data)
+    }
+}
+
 impl std::fmt::Debug for ContractEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -199,39 +228,6 @@ impl std::fmt::Display for ContractEvent {
             )
         } else {
             write!(f, "{:?}", self)
-        }
-    }
-}
-
-impl CryptoHash for ContractEvent {
-    type Hasher = ContractEventHasher;
-
-    fn hash(&self) -> HashValue {
-        let mut state = Self::Hasher::default();
-        state.write(&lcs::to_bytes(self).expect("Failed to serialize."));
-        state.finish()
-    }
-}
-
-impl TryFrom<crate::proto::types::Event> for ContractEvent {
-    type Error = Error;
-
-    fn try_from(event: crate::proto::types::Event) -> Result<Self> {
-        let key = EventKey::try_from(event.key.as_ref())?;
-        let sequence_number = event.sequence_number;
-        let type_tag = lcs::from_bytes(&event.type_tag)?;
-        let event_data = event.event_data;
-        Ok(Self::new(key, sequence_number, type_tag, event_data))
-    }
-}
-
-impl From<ContractEvent> for crate::proto::types::Event {
-    fn from(event: ContractEvent) -> Self {
-        Self {
-            key: event.key.to_vec(),
-            sequence_number: event.sequence_number,
-            type_tag: lcs::to_bytes(&event.type_tag).expect("Failed to serialize."),
-            event_data: event.event_data.clone(),
         }
     }
 }
@@ -322,35 +318,5 @@ impl EventWithProof {
         )?;
 
         Ok(())
-    }
-}
-
-impl TryFrom<crate::proto::types::EventWithProof> for EventWithProof {
-    type Error = Error;
-
-    fn try_from(event: crate::proto::types::EventWithProof) -> Result<Self> {
-        Ok(Self::new(
-            event.transaction_version,
-            event.event_index,
-            event
-                .event
-                .ok_or_else(|| format_err!("Missing event"))?
-                .try_into()?,
-            event
-                .proof
-                .ok_or_else(|| format_err!("Missing proof"))?
-                .try_into()?,
-        ))
-    }
-}
-
-impl From<EventWithProof> for crate::proto::types::EventWithProof {
-    fn from(event: EventWithProof) -> Self {
-        Self {
-            transaction_version: event.transaction_version,
-            event_index: event.event_index,
-            event: Some(event.event.into()),
-            proof: Some(event.proof.into()),
-        }
     }
 }

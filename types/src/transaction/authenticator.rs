@@ -160,7 +160,7 @@ impl AuthenticationKey {
 
     /// Create an authentication key from a preimage by taking its sha3 hash
     pub fn from_preimage(preimage: &AuthenticationKeyPreimage) -> AuthenticationKey {
-        AuthenticationKey::new(*HashValue::from_sha3_256(&preimage.0).as_ref())
+        AuthenticationKey::new(*HashValue::sha3_256_of(&preimage.0).as_ref())
     }
 
     /// Create an authentication key from an Ed25519 public key
@@ -187,11 +187,6 @@ impl AuthenticationKey {
         let mut array = [0u8; AccountAddress::LENGTH];
         array.copy_from_slice(&self.0[..AccountAddress::LENGTH]);
         array
-    }
-
-    /// Return an abbreviated representation of this authentication key
-    pub fn short_str(&self) -> String {
-        hex::encode(&self.0[..4])
     }
 
     /// Construct a vector from this authentication key
@@ -231,11 +226,6 @@ impl AuthenticationKeyPreimage {
     /// Construct a preimage from a MultiEd25519 public key
     pub fn multi_ed25519(public_key: &MultiEd25519PublicKey) -> AuthenticationKeyPreimage {
         Self::new(public_key.to_bytes(), Scheme::MultiEd25519)
-    }
-
-    /// Construct a slice from this authentication key
-    pub fn to_bytes(&self) -> &[u8] {
-        &self.0
     }
 
     /// Construct a vector from this authentication key
