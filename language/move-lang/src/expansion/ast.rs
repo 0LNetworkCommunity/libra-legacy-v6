@@ -3,9 +3,8 @@
 
 use crate::{
     parser::ast::{
-        BinOp, Field, FunctionName, FunctionVisibility, Kind, ModuleIdent, ModuleName,
-        PragmaProperty, ResourceLoc, SpecApplyPattern, SpecBlockTarget, SpecConditionKind,
-        StructName, UnaryOp, Value, Var,
+        BinOp, Field, FunctionName, FunctionVisibility, Kind, ModuleIdent, ResourceLoc,
+        SpecApplyPattern, SpecBlockTarget, SpecConditionKind, StructName, UnaryOp, Var,
     },
     shared::{ast_debug::*, unique_map::UniqueMap, *},
 };
@@ -32,8 +31,6 @@ pub struct Program {
 #[derive(Debug)]
 pub struct Script {
     pub loc: Loc,
-    pub uses: BTreeMap<ModuleIdent, Loc>,
-    pub unused_aliases: Vec<ModuleIdent>,
     pub function_name: FunctionName,
     pub function: Function,
     pub specs: Vec<SpecBlock>,
@@ -46,8 +43,6 @@ pub struct Script {
 #[derive(Debug)]
 pub struct ModuleDefinition {
     pub loc: Loc,
-    pub uses: BTreeMap<ModuleIdent, Loc>,
-    pub unused_aliases: Vec<ModuleIdent>,
     pub is_source_module: bool,
     pub structs: UniqueMap<StructName, StructDefinition>,
     pub functions: UniqueMap<FunctionName, Function>,
@@ -113,10 +108,8 @@ pub struct Function {
 #[derive(Debug, PartialEq)]
 pub struct SpecBlock_ {
     pub target: SpecBlockTarget,
-    pub uses: Vec<(ModuleIdent, Option<ModuleName>)>,
     pub members: Vec<SpecBlockMember>,
 }
-
 pub type SpecBlock = Spanned<SpecBlock_>;
 
 #[derive(Debug, PartialEq)]
@@ -149,8 +142,14 @@ pub enum SpecBlockMember_ {
         properties: Vec<PragmaProperty>,
     },
 }
-
 pub type SpecBlockMember = Spanned<SpecBlockMember_>;
+
+#[derive(Debug, PartialEq)]
+pub struct PragmaProperty_ {
+    pub name: Name,
+    pub value: Option<Value>,
+}
+pub type PragmaProperty = Spanned<PragmaProperty_>;
 
 //**************************************************************************************************
 // Types
@@ -197,6 +196,23 @@ pub enum ExpDotted_ {
 pub type ExpDotted = Spanned<ExpDotted_>;
 
 #[derive(Debug, PartialEq)]
+pub enum Value_ {
+    // 0x<hex representation up to 64 digits with padding 0s>
+    Address(Address),
+    // <num>u8
+    U8(u8),
+    // <num>u64
+    U64(u64),
+    // <num>u128
+    U128(u128),
+    // true
+    // false
+    Bool(bool),
+    Bytearray(Vec<u8>),
+}
+pub type Value = Spanned<Value_>;
+
+#[derive(Debug, PartialEq)]
 #[allow(clippy::large_enum_variant)]
 pub enum Exp_ {
     Value(Value),
@@ -229,7 +245,7 @@ pub enum Exp_ {
     BinopExp(Box<Exp>, BinOp, Box<Exp>),
 
     ExpList(Vec<Exp>),
-    Unit,
+    Unit { trailing: bool },
 
     Borrow(bool, Box<Exp>),
     ExpDotted(Box<ExpDotted>),
@@ -338,30 +354,10 @@ impl AstDebug for Script {
     fn ast_debug(&self, w: &mut AstWriter) {
         let Script {
             loc: _loc,
-            uses,
-            unused_aliases,
             function_name,
             function,
             specs,
         } = self;
-        if !uses.is_empty() {
-            w.writeln("uses: ");
-            w.indent(2, |w| {
-                w.list(uses, ",", |w, (m, _)| {
-                    w.write(&format!("{}", m));
-                    true
-                })
-            });
-        }
-        if !unused_aliases.is_empty() {
-            w.writeln("unused_aliases: ");
-            w.indent(2, |w| {
-                w.list(unused_aliases, ",", |w, m| {
-                    w.write(&format!("{}", m));
-                    true
-                })
-            });
-        }
         (function_name.clone(), function).ast_debug(w);
         for spec in specs {
             spec.ast_debug(w);
@@ -374,8 +370,6 @@ impl AstDebug for ModuleDefinition {
     fn ast_debug(&self, w: &mut AstWriter) {
         let ModuleDefinition {
             loc: _loc,
-            uses,
-            unused_aliases,
             is_source_module,
             structs,
             functions,
@@ -386,24 +380,6 @@ impl AstDebug for ModuleDefinition {
         } else {
             "library module"
         });
-        if !uses.is_empty() {
-            w.writeln("uses: ");
-            w.indent(2, |w| {
-                w.list(uses, ",", |w, (m, _)| {
-                    w.write(&format!("{}", m));
-                    true
-                })
-            });
-        }
-        if !unused_aliases.is_empty() {
-            w.writeln("unused_aliases: ");
-            w.indent(2, |w| {
-                w.list(unused_aliases, ",", |w, m| {
-                    w.write(&format!("{}", m));
-                    true
-                })
-            });
-        }
         for sdef in structs {
             sdef.ast_debug(w);
             w.new_line();
@@ -535,6 +511,16 @@ impl AstDebug for SpecBlockMember_ {
     }
 }
 
+impl AstDebug for PragmaProperty_ {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        w.write(&self.name.value);
+        if let Some(value) = &self.value {
+            w.write(" = ");
+            value.ast_debug(w);
+        }
+    }
+}
+
 impl AstDebug for (FunctionName, &Function) {
     fn ast_debug(&self, w: &mut AstWriter) {
         let (
@@ -662,11 +648,28 @@ impl AstDebug for SequenceItem_ {
     }
 }
 
+impl AstDebug for Value_ {
+    fn ast_debug(&self, w: &mut AstWriter) {
+        use Value_ as V;
+        w.write(&match self {
+            V::Address(addr) => format!("{}", addr),
+            V::U8(u) => format!("{}u8", u),
+            V::U64(u) => format!("{}u64", u),
+            V::U128(u) => format!("{}u128", u),
+            V::Bool(b) => format!("{}", b),
+            V::Bytearray(v) => format!("{:?}", v),
+        })
+    }
+}
+
 impl AstDebug for Exp_ {
     fn ast_debug(&self, w: &mut AstWriter) {
         use Exp_ as E;
         match self {
-            E::Unit => w.write("()"),
+            E::Unit { trailing } if !trailing => w.write("()"),
+            E::Unit {
+                trailing: _trailing,
+            } => w.write("/*()*/"),
             E::InferredNum(u) => w.write(&format!("{}", u)),
             E::Value(v) => v.ast_debug(w),
             E::Move(v) => w.write(&format!("move {}", v)),

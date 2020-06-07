@@ -296,7 +296,7 @@ impl<'a> BoundsChecker<'a> {
                     }
                 }
                 Pack(idx) | Unpack(idx) | Exists(idx) | ImmBorrowGlobal(idx)
-                | MutBorrowGlobal(idx) | MoveFrom(idx) | MoveToSender(idx) => {
+                | MutBorrowGlobal(idx) | MoveFrom(idx) | MoveToSender(idx) | MoveTo(idx) => {
                     check_code_unit_bounds_impl(&self.module.struct_defs, bytecode_offset, *idx)?
                 }
                 PackGeneric(idx)
@@ -305,6 +305,7 @@ impl<'a> BoundsChecker<'a> {
                 | ImmBorrowGlobalGeneric(idx)
                 | MutBorrowGlobalGeneric(idx)
                 | MoveFromGeneric(idx)
+                | MoveToGeneric(idx)
                 | MoveToSenderGeneric(idx) => {
                     check_code_unit_bounds_impl(
                         &self.module.struct_def_instantiations,
@@ -370,7 +371,7 @@ impl<'a> BoundsChecker<'a> {
 
         for ty in ty.preorder_traversal() {
             match ty {
-                Bool | U8 | U64 | U128 | Address | TypeParameter(_) | Reference(_)
+                Bool | U8 | U64 | U128 | Address | Signer | TypeParameter(_) | Reference(_)
                 | MutableReference(_) | Vector(_) => (),
                 Struct(idx) => {
                     check_bounds_impl(&self.module.struct_handles, *idx)?;
@@ -427,6 +428,7 @@ impl<'a> BoundsChecker<'a> {
                 | U64
                 | U128
                 | Address
+                | Signer
                 | Struct(_)
                 | Reference(_)
                 | MutableReference(_)

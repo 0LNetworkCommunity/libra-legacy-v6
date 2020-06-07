@@ -26,8 +26,12 @@ mod state_store;
 mod system_store;
 mod transaction_store;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "fuzzing"))]
+#[allow(dead_code)]
 mod libradb_test;
+
+#[cfg(feature = "fuzzing")]
+pub use libradb_test::test_save_blocks_impl;
 
 use crate::{
     backup::BackupHandler,
@@ -44,7 +48,7 @@ use crate::{
 };
 use anyhow::{ensure, format_err, Result};
 use itertools::{izip, zip_eq};
-use jellyfish_merkle::restore::JellyfishMerkleRestore;
+use jellyfish_merkle::{restore::JellyfishMerkleRestore, TreeReader, TreeWriter};
 use libra_crypto::hash::{CryptoHash, HashValue, SPARSE_MERKLE_PLACEHOLDER_HASH};
 use libra_logger::prelude::*;
 use libra_metrics::{
@@ -62,7 +66,7 @@ use libra_types::{
     ledger_info::LedgerInfoWithSignatures,
     proof::{
         AccountStateProof, AccumulatorConsistencyProof, EventProof, SparseMerkleProof,
-        SparseMerkleRangeProof, TransactionListProof, TransactionProof,
+        SparseMerkleRangeProof, TransactionListProof,
     },
     transaction::{
         TransactionInfo, TransactionListWithProof, TransactionToCommit, TransactionWithProof,
@@ -213,12 +217,9 @@ impl LibraDB {
         ledger_version: Version,
         fetch_events: bool,
     ) -> Result<TransactionWithProof> {
-        let proof = {
-            let (txn_info, txn_info_accumulator_proof) = self
-                .ledger_store
-                .get_transaction_info_with_proof(version, ledger_version)?;
-            TransactionProof::new(txn_info_accumulator_proof, txn_info)
-        };
+        let proof = self
+            .ledger_store
+            .get_transaction_info_with_proof(version, ledger_version)?;
         let transaction = self.transaction_store.get_transaction(version)?;
 
         // If events were requested, also fetch those.
@@ -400,6 +401,14 @@ impl LibraDB {
         Ok(())
     }
 
+    pub fn get_state_restore_receiver(
+        &self,
+        version: Version,
+        expected_root_hash: HashValue,
+    ) -> Result<JellyfishMerkleRestore<impl TreeReader + TreeWriter>> {
+        JellyfishMerkleRestore::new(&*self.state_store, version, expected_root_hash)
+    }
+
     // ================================== Private APIs ==================================
     /// Returns events specified by `query_path` with sequence number in range designated by
     /// `start_seq_num`, `ascending` and `limit`. If ascending is true this query will return up to
@@ -497,10 +506,10 @@ impl LibraDB {
                     seq,
                     event.sequence_number()
                 );
-                let (txn_info, txn_info_proof) = self
+                let txn_info_with_proof = self
                     .ledger_store
                     .get_transaction_info_with_proof(ver, ledger_version)?;
-                let proof = EventProof::new(txn_info_proof, txn_info, event_proof);
+                let proof = EventProof::new(txn_info_with_proof, event_proof);
                 Ok(EventWithProof::new(ver, idx, event, proof))
             })
             .collect::<Result<Vec<_>>>()?;
@@ -818,7 +827,7 @@ impl DbReader for LibraDB {
             latest_version
         );
 
-        let (txn_info, txn_info_accumulator_proof) = self
+        let txn_info_with_proof = self
             .ledger_store
             .get_transaction_info_with_proof(version, ledger_version)?;
         let (account_state_blob, sparse_merkle_proof) = self
@@ -827,7 +836,7 @@ impl DbReader for LibraDB {
         Ok(AccountStateWithProof::new(
             version,
             account_state_blob,
-            AccountStateProof::new(txn_info_accumulator_proof, txn_info, sparse_merkle_proof),
+            AccountStateProof::new(txn_info_with_proof, sparse_merkle_proof),
         ))
     }
 

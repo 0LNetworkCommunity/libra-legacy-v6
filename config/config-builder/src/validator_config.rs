@@ -6,10 +6,11 @@ use anyhow::{ensure, format_err, Result};
 use executor::db_bootstrapper;
 use libra_config::{
     config::{
-        ConsensusType, NodeConfig, RemoteService, SafetyRulesService, SecureBackend,
-        SeedPeersConfig, VaultConfig,
+        NodeConfig, OnDiskStorageConfig, RemoteService, SafetyRulesService, SecureBackend, Token,
+        VaultConfig, WaypointConfig,
     },
     generator,
+    network_id::NetworkId,
 };
 use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use libra_network_address::NetworkAddress;
@@ -18,40 +19,40 @@ use libra_types::waypoint::Waypoint;
 use libra_vm::LibraVM;
 use libradb::LibraDB;
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::{collections::HashMap, net::SocketAddr, str::FromStr};
+use std::{net::SocketAddr, str::FromStr};
 use storage_interface::DbReaderWriter;
 
 const DEFAULT_SEED: [u8; 32] = [13u8; 32];
-const DEFAULT_ADVERTISED: &str = "/ip4/127.0.0.1/tcp/6180";
-const DEFAULT_LISTEN: &str = "/ip4/0.0.0.0/tcp/6180";
+const DEFAULT_ADVERTISED_ADDRESS: &str = "/ip4/127.0.0.1/tcp/6180";
+const DEFAULT_LISTEN_ADDRESS: &str = "/ip4/0.0.0.0/tcp/6180";
 
 pub struct ValidatorConfig {
-    advertised: NetworkAddress,
-    build_waypoint: bool,
-    bootstrap: NetworkAddress,
-    index: usize,
-    listen: NetworkAddress,
-    nodes: usize,
-    nodes_in_genesis: Option<usize>,
-    safety_rules_addr: Option<SocketAddr>,
-    safety_rules_backend: Option<String>,
-    safety_rules_host: Option<String>,
-    safety_rules_namespace: Option<String>,
-    safety_rules_token: Option<String>,
-    seed: [u8; 32],
-    template: NodeConfig,
+    pub advertised_address: NetworkAddress,
+    pub build_waypoint: bool,
+    pub bootstrap: NetworkAddress,
+    pub node_index: usize,
+    pub listen_address: NetworkAddress,
+    pub num_nodes: usize,
+    pub num_nodes_in_genesis: Option<usize>,
+    pub safety_rules_addr: Option<SocketAddr>,
+    pub safety_rules_backend: Option<String>,
+    pub safety_rules_host: Option<String>,
+    pub safety_rules_namespace: Option<String>,
+    pub safety_rules_token: Option<String>,
+    pub seed: [u8; 32],
+    pub template: NodeConfig,
 }
 
 impl Default for ValidatorConfig {
     fn default() -> Self {
         Self {
-            advertised: NetworkAddress::from_str(DEFAULT_ADVERTISED).unwrap(),
-            bootstrap: NetworkAddress::from_str(DEFAULT_ADVERTISED).unwrap(),
+            advertised_address: NetworkAddress::from_str(DEFAULT_ADVERTISED_ADDRESS).unwrap(),
+            bootstrap: NetworkAddress::from_str(DEFAULT_ADVERTISED_ADDRESS).unwrap(),
             build_waypoint: true,
-            index: 0,
-            listen: NetworkAddress::from_str(DEFAULT_LISTEN).unwrap(),
-            nodes: 1,
-            nodes_in_genesis: None,
+            node_index: 0,
+            listen_address: NetworkAddress::from_str(DEFAULT_LISTEN_ADDRESS).unwrap(),
+            num_nodes: 1,
+            num_nodes_in_genesis: None,
             safety_rules_addr: None,
             safety_rules_backend: None,
             safety_rules_host: None,
@@ -68,96 +69,28 @@ impl ValidatorConfig {
         Self::default()
     }
 
-    pub fn advertised(&mut self, advertised: NetworkAddress) -> &mut Self {
-        self.advertised = advertised;
-        self
-    }
-
-    pub fn bootstrap(&mut self, bootstrap: NetworkAddress) -> &mut Self {
-        self.bootstrap = bootstrap;
-        self
-    }
-
-    pub fn build_waypoint(&mut self, enabled: bool) -> &mut Self {
-        self.build_waypoint = enabled;
-        self
-    }
-
-    pub fn validator_index(&mut self, index: usize) -> &mut Self {
-        self.index = index;
-        self
-    }
-
-    pub fn listen(&mut self, listen: NetworkAddress) -> &mut Self {
-        self.listen = listen;
-        self
-    }
-
-    pub fn validators(&mut self, nodes: usize) -> &mut Self {
-        self.nodes = nodes;
-        self
-    }
-
-    pub fn validators_in_genesis(&mut self, nodes_in_genesis: Option<usize>) -> &mut Self {
-        self.nodes_in_genesis = nodes_in_genesis;
-        self
-    }
-
-    pub fn safety_rules_addr(&mut self, safety_rules_addr: Option<SocketAddr>) -> &mut Self {
-        self.safety_rules_addr = safety_rules_addr;
-        self
-    }
-
-    pub fn safety_rules_backend(&mut self, safety_rules_backend: Option<String>) -> &mut Self {
-        self.safety_rules_backend = safety_rules_backend;
-        self
-    }
-
-    pub fn safety_rules_host(&mut self, safety_rules_host: Option<String>) -> &mut Self {
-        self.safety_rules_host = safety_rules_host;
-        self
-    }
-
-    pub fn safety_rules_namespace(&mut self, safety_rules_namespace: Option<String>) -> &mut Self {
-        self.safety_rules_namespace = safety_rules_namespace;
-        self
-    }
-
-    pub fn safety_rules_token(&mut self, safety_rules_token: Option<String>) -> &mut Self {
-        self.safety_rules_token = safety_rules_token;
-        self
-    }
-
-    pub fn seed(&mut self, seed: [u8; 32]) -> &mut Self {
-        self.seed = seed;
-        self
-    }
-
-    pub fn template(&mut self, template: NodeConfig) -> &mut Self {
-        self.template = template;
-        self
-    }
-
     pub fn build(&self) -> Result<NodeConfig> {
         let mut configs = self.build_set()?;
-        let first_peer_id = configs[0]
+
+        // Extract and format first node's advertised address to use as the seed
+        // peer for bootstrapping other validator nodes.
+        let seed_config = &configs[0]
             .validator_network
             .as_ref()
-            .ok_or(Error::MissingValidatorNetwork)?
-            .peer_id;
-        let mut config = configs.swap_remove(self.index);
+            .ok_or(Error::MissingValidatorNetwork)?;
+        let seed_peers = generator::build_seed_peers(&seed_config, self.bootstrap.clone());
+
+        // Pull out this specific node from the generated validator configs.
+        let mut config = configs.swap_remove(self.node_index);
 
         let validator_network = config
             .validator_network
             .as_mut()
             .ok_or(Error::MissingValidatorNetwork)?;
-        validator_network.listen_address = self.listen.clone();
-        validator_network.advertised_address = self.advertised.clone();
-
-        let mut seed_peers = HashMap::new();
-        seed_peers.insert(first_peer_id, vec![self.bootstrap.clone()]);
-        let seed_peers_config = SeedPeersConfig { seed_peers };
-        validator_network.seed_peers = seed_peers_config;
+        validator_network.network_id = NetworkId::Validator;
+        validator_network.listen_address = self.listen_address.clone();
+        validator_network.advertised_address = self.advertised_address.clone();
+        validator_network.seed_peers = seed_peers;
 
         self.build_safety_rules(&mut config)?;
 
@@ -165,52 +98,51 @@ impl ValidatorConfig {
     }
 
     pub fn build_set(&self) -> Result<Vec<NodeConfig>> {
-        let (configs, _) = self.build_common(false, false)?;
+        let (configs, _) = self.build_common(false)?;
         Ok(configs)
     }
 
     pub fn build_faucet_client(&self) -> Result<(Ed25519PrivateKey, Waypoint)> {
-        let (configs, faucet_key) = self.build_common(false, false)?;
+        let (configs, faucet_key) = self.build_common(false)?;
         Ok((
             faucet_key,
             configs[0]
                 .base
                 .waypoint
+                .waypoint_from_config()
                 .ok_or_else(|| format_err!("Waypoint not generated"))?,
         ))
     }
 
     pub fn build_common(
         &self,
-        randomize_service_ports: bool,
-        randomize_libranet_ports: bool,
+        randomize_ports: bool,
     ) -> Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
-        ensure!(self.nodes > 0, Error::NonZeroNetwork);
+        ensure!(self.num_nodes > 0, Error::NonZeroNetwork);
         ensure!(
-            self.index < self.nodes,
+            self.node_index < self.num_nodes,
             Error::IndexError {
-                index: self.index,
-                nodes: self.nodes
+                index: self.node_index,
+                nodes: self.num_nodes
             }
         );
 
         let (faucet_key, config_seed) = self.build_faucet_key();
         let generator::ValidatorSwarm { mut nodes, .. } = generator::validator_swarm(
             &self.template,
-            self.nodes,
+            self.num_nodes,
             config_seed,
-            randomize_service_ports,
-            randomize_libranet_ports,
+            randomize_ports,
         );
 
         ensure!(
-            nodes.len() == self.nodes,
+            nodes.len() == self.num_nodes,
             Error::MissingConfigs { found: nodes.len() }
         );
 
         // Optionally choose a limited subset of generated validators to be
         // present at genesis time.
-        let nodes_in_genesis = self.nodes_in_genesis.unwrap_or(self.nodes);
+        let nodes_in_genesis = self.num_nodes_in_genesis.unwrap_or(self.num_nodes);
 
         let validators = vm_genesis::validator_registrations(&nodes[..nodes_in_genesis]);
 
@@ -229,18 +161,17 @@ impl ValidatorConfig {
                 &path, false, /* readonly */
                 None,  /* pruner */
             )?);
-            Some(
-                db_bootstrapper::bootstrap_db_if_empty::<LibraVM>(&db_rw, &genesis)?
-                    .ok_or_else(|| format_err!("Failed to bootstrap empty DB."))?,
-            )
+            let waypoint = db_bootstrapper::bootstrap_db_if_empty::<LibraVM>(&db_rw, &genesis)?
+                .ok_or_else(|| format_err!("Failed to bootstrap empty DB."))?;
+            WaypointConfig::FromConfig { waypoint }
         } else {
-            None
+            WaypointConfig::None
         };
 
         let genesis = Some(genesis);
 
         for node in &mut nodes {
-            node.base.waypoint = waypoint;
+            node.base.waypoint = waypoint.clone();
             node.execution.genesis = genesis.clone();
         }
 
@@ -257,16 +188,14 @@ impl ValidatorConfig {
     fn build_safety_rules(&self, config: &mut NodeConfig) -> Result<()> {
         let safety_rules_config = &mut config.consensus.safety_rules;
         if let Some(server_address) = self.safety_rules_addr {
-            safety_rules_config.service = SafetyRulesService::Process(RemoteService {
-                server_address,
-                consensus_type: ConsensusType::SignedTransactions,
-            })
+            safety_rules_config.service =
+                SafetyRulesService::Process(RemoteService { server_address })
         }
 
         if let Some(backend) = &self.safety_rules_backend {
             safety_rules_config.backend = match backend.as_str() {
                 "in-memory" => SecureBackend::InMemoryStorage,
-                "on-disk" => safety_rules_config.backend.clone(),
+                "on-disk" => SecureBackend::OnDiskStorage(OnDiskStorageConfig::default()),
                 "vault" => SecureBackend::Vault(VaultConfig {
                     namespace: self.safety_rules_namespace.clone(),
                     server: self
@@ -274,11 +203,13 @@ impl ValidatorConfig {
                         .as_ref()
                         .ok_or_else(|| Error::MissingSafetyRulesHost)?
                         .clone(),
-                    token: self
-                        .safety_rules_token
-                        .as_ref()
-                        .ok_or_else(|| Error::MissingSafetyRulesToken)?
-                        .clone(),
+                    ca_certificate: None,
+                    token: Token::new_config(
+                        self.safety_rules_token
+                            .as_ref()
+                            .ok_or_else(|| Error::MissingSafetyRulesToken)?
+                            .clone(),
+                    ),
                 }),
                 _ => return Err(Error::InvalidSafetyRulesBackend(backend.to_string()).into()),
             };
@@ -290,7 +221,7 @@ impl ValidatorConfig {
 
 impl BuildSwarm for ValidatorConfig {
     fn build_swarm(&self) -> Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
-        self.build_common(true, true)
+        self.build_common(true)
     }
 }
 
@@ -307,40 +238,42 @@ mod test {
     #[test]
     fn verify_correctness() {
         let mut validator_config = ValidatorConfig::new();
-        let config = validator_config
-            .validators(2)
-            .validator_index(1)
-            .build()
-            .unwrap();
+        validator_config.num_nodes = 2;
+        validator_config.node_index = 1;
+
+        let config = validator_config.build().unwrap();
         let network = config.validator_network.as_ref().unwrap();
-        let (seed_peer_id, seed_peer_ips) = network.seed_peers.seed_peers.iter().next().unwrap();
-        assert!(&network.peer_id != seed_peer_id);
-        // These equal cause we didn't set
-        assert_eq!(network.advertised_address, seed_peer_ips[0]);
+
+        network.seed_peers.verify_libranet_addrs().unwrap();
+        let (seed_peer_id, seed_addrs) = network.seed_peers.seed_peers.iter().next().unwrap();
+        assert_eq!(seed_addrs.len(), 1);
+        assert_ne!(&network.peer_id(), seed_peer_id);
+        assert_ne!(&network.advertised_address, &seed_addrs[0]);
+
         assert_eq!(
             network.advertised_address,
-            NetworkAddress::from_str(DEFAULT_ADVERTISED).unwrap()
+            NetworkAddress::from_str(DEFAULT_ADVERTISED_ADDRESS).unwrap()
         );
         assert_eq!(
             network.listen_address,
-            NetworkAddress::from_str(DEFAULT_LISTEN).unwrap()
+            NetworkAddress::from_str(DEFAULT_LISTEN_ADDRESS).unwrap()
         );
+
         assert!(config.execution.genesis.is_some());
     }
 
     #[test]
     fn verify_same_genesis() {
-        let config1 = ValidatorConfig::new()
-            .validators(10)
-            .validator_index(1)
-            .build()
-            .unwrap();
-        let config2 = ValidatorConfig::new()
-            .validators(13)
-            .validator_index(12)
-            .validators_in_genesis(Some(10))
-            .build()
-            .unwrap();
+        let mut config1 = ValidatorConfig::new();
+        config1.num_nodes = 10;
+        config1.node_index = 1;
+        let config1 = config1.build().unwrap();
+
+        let mut config2 = ValidatorConfig::new();
+        config2.num_nodes = 13;
+        config2.node_index = 12;
+        config2.num_nodes_in_genesis = Some(10);
+        let config2 = config2.build().unwrap();
 
         assert_eq!(config1.execution.genesis, config2.execution.genesis);
     }

@@ -7,6 +7,7 @@ use libra_nibble::Nibble;
 use proptest::{collection::vec, prelude::*};
 use rand::{rngs::StdRng, SeedableRng};
 use serde::Serialize;
+use std::str::FromStr;
 
 #[derive(Serialize)]
 struct Foo(u32);
@@ -32,17 +33,17 @@ fn test_primitive_type() {
     let x = 0xf312_u16;
     let mut wtr: Vec<u8> = vec![];
     wtr.extend_from_slice(&x.to_le_bytes());
-    assert_eq!(x.test_only_hash(), HashValue::from_sha3_256(&wtr[..]));
+    assert_eq!(x.test_only_hash(), HashValue::sha3_256_of(&wtr[..]));
 
     let x = 0x_ff001234_u32;
     let mut wtr: Vec<u8> = vec![];
     wtr.extend_from_slice(&x.to_le_bytes());
-    assert_eq!(x.test_only_hash(), HashValue::from_sha3_256(&wtr[..]));
+    assert_eq!(x.test_only_hash(), HashValue::sha3_256_of(&wtr[..]));
 
     let x = 0x_89abcdef_01234567_u64;
     let mut wtr: Vec<u8> = vec![];
     wtr.extend_from_slice(&x.to_le_bytes());
-    assert_eq!(x.test_only_hash(), HashValue::from_sha3_256(&wtr[..]));
+    assert_eq!(x.test_only_hash(), HashValue::sha3_256_of(&wtr[..]));
 }
 
 #[test]
@@ -251,6 +252,12 @@ proptest! {
         let mut bytes: Vec<u8> = bitvec.into();
         bytes.reverse();
         let hash2 = HashValue::from_slice(&bytes).unwrap();
+        prop_assert_eq!(hash, hash2);
+    }
+
+    #[test]
+    fn test_hashvalue_to_str_roundtrip(hash in any::<HashValue>()) {
+        let hash2 = HashValue::from_str(&hash.to_hex()).unwrap();
         prop_assert_eq!(hash, hash2);
     }
 

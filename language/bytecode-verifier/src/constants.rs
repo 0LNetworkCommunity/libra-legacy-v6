@@ -5,7 +5,6 @@
 //! - a constant's type only refers to primitive types
 //! - a constant's data serializes correctly for that type
 use libra_types::vm_error::StatusCode;
-use move_vm_types::values::Value;
 use vm::{
     access::ModuleAccess,
     errors::{verification_error, VMResult},
@@ -39,7 +38,8 @@ impl<'a> ConstantsChecker<'a> {
         match type_ {
             S::Bool | S::U8 | S::U64 | S::U128 | S::Address => Ok(()),
             S::Vector(inner) => self.verify_constant_type(idx, inner),
-            S::Struct(_)
+            S::Signer
+            | S::Struct(_)
             | S::StructInstantiation(_, _)
             | S::Reference(_)
             | S::MutableReference(_)
@@ -52,7 +52,7 @@ impl<'a> ConstantsChecker<'a> {
     }
 
     pub fn verify_constant_data(&self, idx: usize, constant: &Constant) -> VMResult<()> {
-        match Value::deserialize_constant(constant) {
+        match constant.deserialize_constant() {
             Some(_) => Ok(()),
             None => Err(verification_error(
                 IndexKind::ConstantPool,

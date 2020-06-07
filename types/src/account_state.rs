@@ -4,7 +4,8 @@
 use crate::{
     account_address::AccountAddress,
     account_config::{
-        type_tag_for_currency_code, AccountResource, BalanceResource, CurrencyInfoResource,
+        type_tag_for_currency_code, AccountResource, AccountRole, BalanceResource, ChildVASP,
+        ChildVASPRole, EmptyRole, ParentVASP, ParentVASPRole, UnhostedRole,
         ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH,
     },
     block_metadata::{LibraBlockResource, NEW_BLOCK_EVENT_PATH},
@@ -35,7 +36,7 @@ impl AccountState {
     pub fn get_balance_resources(
         &self,
         currency_codes: &[Identifier],
-    ) -> Result<Vec<BalanceResource>> {
+    ) -> Result<BTreeMap<Identifier, BalanceResource>> {
         currency_codes
             .iter()
             .filter_map(|currency_code| {
@@ -44,6 +45,7 @@ impl AccountState {
                 // parameters
                 self.get_resource(&BalanceResource::access_path_for(currency_type_tag))
                     .transpose()
+                    .map(|balance| balance.map(|b| (currency_code.to_owned(), b)))
             })
             .collect()
     }
@@ -60,13 +62,34 @@ impl AccountState {
         self.get_resource(&ValidatorConfigResource::resource_path())
     }
 
-    pub fn get_currency_info_resource(
-        &self,
-        currency_code: Identifier,
-    ) -> Result<Option<BalanceResource>> {
-        // TODO: update this to use BalanceResource::resource_path once that takes type
-        // parameters
-        self.get_resource(&CurrencyInfoResource::access_path_for(currency_code))
+    pub fn get_account_role(&self) -> Result<Option<AccountRole>> {
+        if self
+            .0
+            .contains_key(&AccountRole::access_path_for::<ParentVASP>())
+        {
+            self.get_resource(&AccountRole::access_path_for::<ParentVASP>())
+                .map(|role| role.map(|role: ParentVASPRole| AccountRole::ParentVASP(role.role)))
+        } else if self
+            .0
+            .contains_key(&AccountRole::access_path_for::<ChildVASP>())
+        {
+            self.get_resource(&AccountRole::access_path_for::<ChildVASP>())
+                .map(|x| x.map(|role: ChildVASPRole| AccountRole::ChildVASP(role.role)))
+        } else if self
+            .0
+            .contains_key(&AccountRole::access_path_for::<UnhostedRole>())
+        {
+            self.get_resource(&AccountRole::access_path_for::<UnhostedRole>())
+                .map(|x| x.map(|_: UnhostedRole| AccountRole::Unhosted))
+        } else if self
+            .0
+            .contains_key(&AccountRole::access_path_for::<EmptyRole>())
+        {
+            self.get_resource(&AccountRole::access_path_for::<EmptyRole>())
+                .map(|x| x.map(|_: EmptyRole| AccountRole::Empty))
+        } else {
+            Ok(Some(AccountRole::Unknown))
+        }
     }
 
     pub fn get_validator_set(&self) -> Result<Option<ValidatorSet>> {
@@ -112,10 +135,6 @@ impl AccountState {
 
     pub fn remove(&mut self, key: &[u8]) -> Option<Vec<u8>> {
         self.0.remove(key)
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
     }
 
     pub fn iter(&self) -> impl std::iter::Iterator<Item = (&Vec<u8>, &Vec<u8>)> {

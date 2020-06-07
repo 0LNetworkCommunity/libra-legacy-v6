@@ -92,23 +92,27 @@ pub fn boogie_spec_fun_name(env: &ModuleEnv<'_>, id: SpecFunId) -> String {
 pub fn boogie_type_value(env: &GlobalEnv, ty: &Type) -> String {
     match ty {
         Type::Primitive(p) => match p {
-            PrimitiveType::Bool => "BooleanType()".to_string(),
+            PrimitiveType::Bool => "$BooleanType()".to_string(),
             PrimitiveType::U8 | PrimitiveType::U64 | PrimitiveType::U128 | PrimitiveType::Num => {
-                "IntegerType()".to_string()
+                "$IntegerType()".to_string()
             }
-            PrimitiveType::Address => "AddressType()".to_string(),
-            PrimitiveType::Range => "RangeType()".to_string(),
+            PrimitiveType::Address => "$AddressType()".to_string(),
+            // TODO fix this for a real boogie type
+            PrimitiveType::Signer => "$AddressType()".to_string(),
+            PrimitiveType::Range => "$RangeType()".to_string(),
+            PrimitiveType::TypeValue => "$TypeType()".to_string(),
         },
         Type::Vector(t) => format!("$Vector_type_value({})", boogie_type_value(env, t)),
         Type::Reference(_, t) => format!("ReferenceType({})", boogie_type_value(env, t)),
         Type::TypeParameter(index) => format!("$tv{}", index),
+        Type::TypeLocal(s) => format!("t#$Type({})", s.display(env.symbol_pool())),
         Type::Struct(module_id, struct_id, args) => {
             boogie_struct_type_value(env, *module_id, *struct_id, args)
         }
         // TODO: function and tuple types?
         Type::Tuple(_args) => "Tuple_type_value()".to_string(),
         Type::Fun(_args, _result) => "Function_type_value()".to_string(),
-        _ => panic!("unexpected transient type"),
+        Type::Error | Type::Var(..) | Type::TypeDomain(..) => panic!("unexpected transient type"),
     }
 }
 
@@ -137,9 +141,9 @@ pub fn boogie_type_values(env: &GlobalEnv, args: &[Type]) -> String {
 /// Return boogie type for a local with given signature token.
 pub fn boogie_local_type(ty: &Type) -> String {
     if ty.is_reference() {
-        "Reference".to_string()
+        "$Reference".to_string()
     } else {
-        "Value".to_string()
+        "$Value".to_string()
     }
 }
 
@@ -179,9 +183,12 @@ fn boogie_well_formed_expr_impl(
             PrimitiveType::U64 => conds.push(format!("$IsValidU64({})", name)),
             PrimitiveType::U128 => conds.push(format!("$IsValidU128({})", name)),
             PrimitiveType::Num => conds.push(format!("$IsValidNum({})", name)),
-            PrimitiveType::Bool => conds.push(format!("is#Boolean({})", name)),
-            PrimitiveType::Address => conds.push(format!("is#Address({})", name)),
+            PrimitiveType::Bool => conds.push(format!("is#$Boolean({})", name)),
+            PrimitiveType::Address => conds.push(format!("is#$Address({})", name)),
+            // TODO fix this for a real boogie check
+            PrimitiveType::Signer => conds.push(format!("is#$Address({})", name)),
             PrimitiveType::Range => conds.push(format!("$IsValidRange({})", name)),
+            PrimitiveType::TypeValue => conds.push(format!("is#$Type({})", name)),
         },
         Type::Vector(elem_ty) => {
             conds.push(format!("$Vector_is_well_formed({})", name));
@@ -220,7 +227,7 @@ fn boogie_well_formed_expr_impl(
             };
             conds.push(boogie_well_formed_expr_impl(
                 env,
-                &format!("$Dereference($m, {})", name),
+                &format!("$Dereference({})", name),
                 rtype,
                 mode,
                 nest + 1,
@@ -229,9 +236,9 @@ fn boogie_well_formed_expr_impl(
         // TODO: tuple and functions?
         Type::Fun(_args, _result) => {}
         Type::Tuple(_elems) => {}
-        // A type parameter is opaque, so no type check here.
-        Type::TypeParameter(_) => {}
-        _ => panic!("unexpected transient type"),
+        // A type parameter or type value is opaque, so no type check here.
+        Type::TypeParameter(..) | Type::TypeLocal(..) => {}
+        Type::Error | Type::Var(..) | Type::TypeDomain(..) => panic!("unexpected transient type"),
     }
     conds.iter().filter(|s| !s.is_empty()).join(" && ")
 }
@@ -252,6 +259,23 @@ pub fn boogie_well_formed_check(
     }
 }
 
+/// Create boogie well-formed preconditions. The result will be either an empty
+/// string or a newline-terminated requires statement.
+pub fn boogie_requires_well_formed(
+    env: &GlobalEnv,
+    name: &str,
+    ty: &Type,
+    mode: WellFormedMode,
+    type_requires_str: &str,
+) -> String {
+    let expr = boogie_well_formed_expr(env, name, ty, mode);
+    if !expr.is_empty() {
+        format!("{} {};\n", type_requires_str, expr)
+    } else {
+        "".to_string()
+    }
+}
+
 /// Create boogie global variable with type constraint. No references allowed.
 pub fn boogie_declare_global(env: &GlobalEnv, name: &str, param_count: usize, ty: &Type) -> String {
     let declarator = boogie_global_declarator(env, name, param_count, ty);
@@ -267,7 +291,7 @@ pub fn boogie_declare_global(env: &GlobalEnv, name: &str, param_count: usize, ty
             "var {} where (forall {} :: {});",
             declarator,
             (0..param_count)
-                .map(|i| format!("$tv{}: TypeValue", i))
+                .map(|i| format!("$tv{}: $TypeValue", i))
                 .join(", "),
             type_check
         )
@@ -289,23 +313,19 @@ pub fn boogie_global_declarator(
     assert!(!ty.is_reference());
     if param_count > 0 {
         format!(
-            "{} : [{}]Value",
+            "{} : [{}]$Value",
             name,
-            (0..param_count).map(|_| "TypeValue").join(", ")
+            (0..param_count).map(|_| "$TypeValue").join(", ")
         )
     } else {
-        format!("{} : Value", name)
+        format!("{} : $Value", name)
     }
-}
-
-pub fn boogie_var_before_borrow(idx: usize) -> String {
-    format!("$before_borrow_{}", idx)
 }
 
 pub fn boogie_byte_blob(val: &[u8]) -> String {
     let mut res = "$mk_vector()".to_string();
     for b in val {
-        res = format!("$push_back_vector({}, Integer({}))", res, b);
+        res = format!("$push_back_vector({}, $Integer({}))", res, b);
     }
     res
 }

@@ -6,14 +6,8 @@ use crate::{
     persistent_safety_storage::PersistentSafetyStorage, t_safety_rules::TSafetyRules, COUNTERS,
 };
 use consensus_types::{
-    block::Block,
-    block_data::BlockData,
-    common::{Author, Payload},
-    quorum_cert::QuorumCert,
-    timeout::Timeout,
-    vote::Vote,
-    vote_data::VoteData,
-    vote_proposal::VoteProposal,
+    block::Block, block_data::BlockData, common::Author, quorum_cert::QuorumCert, timeout::Timeout,
+    vote::Vote, vote_data::VoteData, vote_proposal::VoteProposal,
 };
 use libra_crypto::{ed25519::Ed25519Signature, hash::HashValue};
 use libra_logger::debug;
@@ -21,7 +15,6 @@ use libra_types::{
     block_info::BlockInfo, epoch_change::EpochChangeProof, ledger_info::LedgerInfo,
     validator_signer::ValidatorSigner, validator_verifier::ValidatorVerifier, waypoint::Waypoint,
 };
-use std::marker::PhantomData;
 
 /// SafetyRules is responsible for the safety of the consensus:
 /// 1) voting rules
@@ -32,14 +25,13 @@ use std::marker::PhantomData;
 /// @TODO bootstrap with a hash of a ledger info (waypoint) that includes a validator set
 /// @TODO update storage with hash of ledger info (waypoint) during epoch changes (includes a new validator
 /// set)
-pub struct SafetyRules<T> {
+pub struct SafetyRules {
     persistent_storage: PersistentSafetyStorage,
     validator_signer: ValidatorSigner,
     validator_verifier: Option<ValidatorVerifier>,
-    marker: PhantomData<T>,
 }
 
-impl<T: Payload> SafetyRules<T> {
+impl SafetyRules {
     /// Constructs a new instance of SafetyRules with the given persistent storage and the
     /// consensus private keys
     /// @TODO replace this with an API that takes in a SafetyRulesConfig
@@ -52,7 +44,6 @@ impl<T: Payload> SafetyRules<T> {
             persistent_storage,
             validator_signer,
             validator_verifier: None,
-            marker: PhantomData,
         }
     }
 
@@ -62,7 +53,7 @@ impl<T: Payload> SafetyRules<T> {
     /// 1) B0 <- B1 <- B2 <--
     /// 2) round(B0) + 1 = round(B1), and
     /// 3) round(B1) + 1 = round(B2).
-    pub fn construct_ledger_info(&self, proposed_block: &Block<T>) -> LedgerInfo {
+    pub fn construct_ledger_info(&self, proposed_block: &Block) -> LedgerInfo {
         let block2 = proposed_block.round();
         let block1 = proposed_block.quorum_cert().certified_block().round();
         let block0 = proposed_block.quorum_cert().parent_block().round();
@@ -104,13 +95,14 @@ impl<T: Payload> SafetyRules<T> {
     /// @TODO if public key does not match private key in validator set, access persistent storage
     /// to identify new key
     fn start_new_epoch(&mut self, ledger_info: &LedgerInfo) -> Result<(), Error> {
-        let epoch_info = ledger_info.next_epoch_info().cloned();
-        self.validator_verifier = Some(epoch_info.ok_or(Error::InvalidLedgerInfo)?.verifier);
-
+        let epoch_state = ledger_info
+            .next_epoch_state()
+            .cloned()
+            .ok_or(Error::InvalidLedgerInfo)?;
+        self.validator_verifier = Some(epoch_state.verifier);
         let current_epoch = self.persistent_storage.epoch()?;
-        let next_epoch = ledger_info.epoch() + 1;
 
-        if current_epoch < next_epoch {
+        if current_epoch < epoch_state.epoch {
             // This is ordered specifically to avoid configuration issues:
             // * First set the waypoint to lock in the minimum restarting point,
             // * set the round information,
@@ -120,14 +112,37 @@ impl<T: Payload> SafetyRules<T> {
                 .set_waypoint(&Waypoint::new_epoch_boundary(ledger_info)?)?;
             self.persistent_storage.set_last_voted_round(0)?;
             self.persistent_storage.set_preferred_round(0)?;
-            self.persistent_storage.set_epoch(ledger_info.epoch() + 1)?;
+            self.persistent_storage.set_epoch(epoch_state.epoch)?;
         }
 
         Ok(())
     }
+
+    /// This checks the epoch given against storage for consistent verification
+    fn verify_epoch(&self, epoch: u64) -> Result<(), Error> {
+        let expected_epoch = self.persistent_storage.epoch()?;
+        if epoch != expected_epoch {
+            Err(Error::IncorrectEpoch(epoch, expected_epoch))
+        } else {
+            Ok(())
+        }
+    }
+
+    /// This checkes whether the author of one proposal is the validator signer
+    fn verify_author(&self, author: Option<Author>) -> Result<(), Error> {
+        let validator_signer_author = &self.validator_signer.author();
+        let author = author
+            .ok_or_else(|| Error::InvalidProposal("No author found in the proposal".into()))?;
+        if validator_signer_author != &author {
+            return Err(Error::InvalidProposal(
+                "Proposal author is not validator signer!".into(),
+            ));
+        }
+        Ok(())
+    }
 }
 
-impl<T: Payload> TSafetyRules<T> for SafetyRules<T> {
+impl TSafetyRules for SafetyRules {
     fn consensus_state(&mut self) -> Result<ConsensusState, Error> {
         Ok(ConsensusState::new(
             self.persistent_storage.epoch()?,
@@ -160,10 +175,11 @@ impl<T: Payload> TSafetyRules<T> for SafetyRules<T> {
 
     /// @TODO verify signature on vote proposal
     /// @TODO verify QC correctness
-    /// @TODO verify epoch on vote proposal
-    fn construct_and_sign_vote(&mut self, vote_proposal: &VoteProposal<T>) -> Result<Vote, Error> {
+    fn construct_and_sign_vote(&mut self, vote_proposal: &VoteProposal) -> Result<Vote, Error> {
         debug!("Incoming vote proposal to sign.");
         let proposed_block = vote_proposal.block();
+
+        self.verify_epoch(proposed_block.epoch())?;
 
         let last_voted_round = self.persistent_storage.last_voted_round()?;
         if proposed_block.round() <= last_voted_round {
@@ -208,7 +224,7 @@ impl<T: Payload> TSafetyRules<T> for SafetyRules<T> {
                 proposed_block.gen_block_info(
                     new_tree.root_hash(),
                     new_tree.version(),
-                    vote_proposal.next_epoch_info().cloned(),
+                    vote_proposal.next_epoch_state().cloned(),
                 ),
                 proposed_block.quorum_cert().certified_block().clone(),
             ),
@@ -218,11 +234,37 @@ impl<T: Payload> TSafetyRules<T> for SafetyRules<T> {
         ))
     }
 
-    /// @TODO only sign blocks that are later than last_voted_round and match the current epoch
-    /// @TODO verify QC correctness
-    /// @TODO verify QC matches preferred round
-    fn sign_proposal(&mut self, block_data: BlockData<T>) -> Result<Block<T>, Error> {
+    fn sign_proposal(&mut self, block_data: BlockData) -> Result<Block, Error> {
         debug!("Incoming proposal to sign.");
+        self.verify_author(block_data.author())?;
+        self.verify_epoch(block_data.epoch())?;
+        let last_voted_round = self.persistent_storage.last_voted_round()?;
+        if block_data.round() <= last_voted_round {
+            debug!(
+                "Block round is older than last_voted_round ({} <= {})",
+                block_data.round(),
+                last_voted_round
+            );
+            return Err(Error::OldProposal {
+                proposal_round: block_data.round(),
+                last_voted_round,
+            });
+        }
+
+        let qc = block_data.quorum_cert();
+        self.verify_qc(qc)?;
+        let preferred_round = self.persistent_storage.preferred_round()?;
+        if qc.certified_block().round() < preferred_round {
+            debug!(
+                "QC round does not match preferred round {} < {}",
+                qc.certified_block().round(),
+                preferred_round
+            );
+            return Err(Error::InvalidQuorumCertificate(
+                "QC's certified round is older than the preferred round".into(),
+            ));
+        }
+
         COUNTERS.sign_proposal.inc();
         Ok(Block::new_proposal_from_block_data(
             block_data,
@@ -239,10 +281,7 @@ impl<T: Payload> TSafetyRules<T> for SafetyRules<T> {
         debug!("Incoming timeout message for round {}", timeout.round());
         COUNTERS.requested_sign_timeout.inc();
 
-        let expected_epoch = self.persistent_storage.epoch()?;
-        if timeout.epoch() != expected_epoch {
-            return Err(Error::IncorrectEpoch(timeout.epoch(), expected_epoch));
-        }
+        self.verify_epoch(timeout.epoch())?;
 
         let preferred_round = self.persistent_storage.preferred_round()?;
         if timeout.round() <= preferred_round {

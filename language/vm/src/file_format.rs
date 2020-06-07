@@ -546,6 +546,8 @@ pub enum SignatureToken {
     U128,
     /// Address, a 16 bytes immutable type.
     Address,
+    /// Signer, a 16 bytes immutable type representing the capability to publish at an address
+    Signer,
     /// Vector
     Vector(Box<SignatureToken>),
     /// MOVE user type, resource or copyable
@@ -584,7 +586,7 @@ impl<'a> Iterator for SignatureTokenPreorderTraversalIter<'a> {
                         self.stack.extend(inner_toks.iter().rev())
                     }
 
-                    Bool | Address | U8 | U64 | U128 | Struct(_) | TypeParameter(_) => (),
+                    Signer | Bool | Address | U8 | U64 | U128 | Struct(_) | TypeParameter(_) => (),
                 }
                 Some(tok)
             }
@@ -635,6 +637,7 @@ impl std::fmt::Debug for SignatureToken {
             SignatureToken::U64 => write!(f, "U64"),
             SignatureToken::U128 => write!(f, "U128"),
             SignatureToken::Address => write!(f, "Address"),
+            SignatureToken::Signer => write!(f, "Signer"),
             SignatureToken::Vector(boxed) => write!(f, "Vector({:?})", boxed),
             SignatureToken::Struct(idx) => write!(f, "Struct({:?})", idx),
             SignatureToken::StructInstantiation(idx, types) => {
@@ -663,26 +666,13 @@ impl SignatureToken {
             | U64
             | U128
             | Address
+            | Signer
             | Struct(_)
             | StructInstantiation(_, _)
             | Vector(_) => SignatureTokenKind::Value,
             // TODO: This is a temporary hack to please the verifier. SignatureTokenKind will soon
             // be completely removed. `SignatureTokenView::kind()` should be used instead.
             TypeParameter(_) => SignatureTokenKind::Value,
-        }
-    }
-
-    /// Returns `true` if the `SignatureToken` is a primitive type.
-    pub fn is_primitive(&self) -> bool {
-        use SignatureToken::*;
-        match self {
-            Bool | U8 | U64 | U128 | Address => true,
-            Struct(_)
-            | StructInstantiation(_, _)
-            | Reference(_)
-            | Vector(_)
-            | MutableReference(_)
-            | TypeParameter(_) => false,
         }
     }
 
@@ -693,6 +683,7 @@ impl SignatureToken {
             U8 | U64 | U128 => true,
             Bool
             | Address
+            | Signer
             | Vector(_)
             | Struct(_)
             | StructInstantiation(_, _)
@@ -1157,6 +1148,15 @@ pub enum Bytecode {
     /// ```..., value -> ...```
     MoveToSender(StructDefinitionIndex),
     MoveToSenderGeneric(StructDefInstantiationIndex),
+    /// Move the instance at the top of the stack to the address of the `Signer` on the stack below
+    /// it
+    /// Abort execution if an object of type StructDefinitionIndex already exists in address.
+    ///
+    /// Stack transition:
+    ///
+    /// ```..., signer_value, value -> ...```
+    MoveTo(StructDefinitionIndex),
+    MoveToGeneric(StructDefInstantiationIndex),
     /// Shift the (second top value) left (top value) bits and pushes the result on the stack.
     ///
     /// Stack transition:
@@ -1243,6 +1243,8 @@ impl ::std::fmt::Debug for Bytecode {
             Bytecode::MoveFromGeneric(a) => write!(f, "MoveFromGeneric({:?})", a),
             Bytecode::MoveToSender(a) => write!(f, "MoveToSender({:?})", a),
             Bytecode::MoveToSenderGeneric(a) => write!(f, "MoveToSenderGeneric({:?})", a),
+            Bytecode::MoveTo(a) => write!(f, "MoveTo({:?})", a),
+            Bytecode::MoveToGeneric(a) => write!(f, "MoveToGeneric({:?})", a),
             Bytecode::Nop => write!(f, "Nop"),
         }
     }
@@ -1384,7 +1386,7 @@ pub struct ScriptConversionInfo {
     added_dummy_sig: bool,
     // If the <SELF> identifier was added.
     added_self_ident: bool,
-    // If a dummy self module handle was added.
+    // If a self module handle was added.
     added_self_module_handle: bool,
 }
 
@@ -1426,34 +1428,35 @@ impl CompiledScriptMut {
             }
         };
 
-        // Use the first module handle as the self module handle. Create one if none exists.
-        //
-        // Note: this correctly handles scripts with either a proper self module handle or no module
-        // handles at all. For scripts whose first module handle is used to refer to external modules,
-        // the verifier may complain about not being able to find implementations for functioins.
-        //
-        // This is because the verifier always considers the first handle self, and it would be very
-        // tricky for us to fix this during conversion. (We don't want to shift the indices.)
-        //
-        // This will no longer be an issue once we remove script/module conversion so this won't be fixed.
-        let (added_self_module_handle, added_dummy_addr, self_module_handle_idx) =
-            if self.module_handles.is_empty() {
-                // Grab an arbitratry address. Create one if none exists.
-                let added_dummy_addr = self.address_identifiers.is_empty();
-                if added_dummy_addr {
-                    self.address_identifiers
-                        .push(AccountAddress::new([0xff; AccountAddress::LENGTH]));
+        // Add a dummy adress if none exists.
+        let dummy_addr = AccountAddress::new([0xff; AccountAddress::LENGTH]);
+        let (added_dummy_addr, dummy_addr_idx) = match self
+            .address_identifiers
+            .iter()
+            .position(|addr| addr == &dummy_addr)
+        {
+            Some(idx) => (false, AddressIdentifierIndex::new(idx as u16)),
+            None => {
+                let idx = AddressIdentifierIndex::new(self.address_identifiers.len() as u16);
+                self.address_identifiers.push(dummy_addr);
+                (true, idx)
+            }
+        };
+
+        // Add a self module handle.
+        let (added_self_module_handle, self_module_handle_idx) =
+            match self.module_handles.iter().position(|handle| {
+                handle.address == dummy_addr_idx && handle.name == self_ident_idx
+            }) {
+                Some(idx) => (false, ModuleHandleIndex::new(idx as u16)),
+                None => {
+                    let idx = ModuleHandleIndex::new(self.module_handles.len() as u16);
+                    self.module_handles.push(ModuleHandle {
+                        address: dummy_addr_idx,
+                        name: self_ident_idx,
+                    });
+                    (true, idx)
                 }
-                let addr_idx = AddressIdentifierIndex::new(0);
-                let self_module_handle_idx =
-                    ModuleHandleIndex::new(self.module_handles.len() as u16);
-                self.module_handles.push(ModuleHandle {
-                    address: addr_idx,
-                    name: self_ident_idx,
-                });
-                (true, added_dummy_addr, self_module_handle_idx)
-            } else {
-                (false, false, ModuleHandleIndex::new(0 as u16))
             };
 
         // Find the index to the empty signature [].
@@ -1495,6 +1498,7 @@ impl CompiledScriptMut {
 
         let m = CompiledModuleMut {
             module_handles: self.module_handles,
+            self_module_handle_idx,
             struct_handles: self.struct_handles,
             function_handles: self.function_handles,
             field_handles: vec![],
@@ -1530,8 +1534,10 @@ pub struct CompiledModule(CompiledModuleMut);
 /// the bounds checker.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct CompiledModuleMut {
-    /// Handles to external modules and self at position 0.
+    /// Handles to external modules and self.
     pub module_handles: Vec<ModuleHandle>,
+    /// Handle to self.
+    pub self_module_handle_idx: ModuleHandleIndex,
     /// Handles to external and internal types.
     pub struct_handles: Vec<StructHandle>,
     /// Handles to external and internal functions.
@@ -1629,6 +1635,7 @@ impl Arbitrary for CompiledModuleMut {
                 vec(any::<StructHandle>(), 0..=size),
                 vec(any::<FunctionHandle>(), 0..=size),
             ),
+            any::<ModuleHandleIndex>(),
             vec(any_with::<Signature>(size), 0..=size),
             (
                 vec(any::<Identifier>(), 0..=size),
@@ -1642,6 +1649,7 @@ impl Arbitrary for CompiledModuleMut {
             .prop_map(
                 |(
                     (module_handles, struct_handles, function_handles),
+                    self_module_handle_idx,
                     signatures,
                     (identifiers, address_identifiers),
                     (struct_defs, function_defs),
@@ -1651,6 +1659,7 @@ impl Arbitrary for CompiledModuleMut {
                         module_handles,
                         struct_handles,
                         function_handles,
+                        self_module_handle_idx,
                         field_handles: vec![],
                         struct_def_instantiations: vec![],
                         function_instantiations: vec![],
@@ -1703,9 +1712,6 @@ impl CompiledModuleMut {
 }
 
 impl CompiledModule {
-    /// By convention, the index of the module being implemented is 0.
-    pub const IMPLEMENTED_MODULE_INDEX: u16 = 0;
-
     /// Returns a reference to the inner `CompiledModuleMut`.
     pub fn as_inner(&self) -> &CompiledModuleMut {
         &self.0
@@ -1795,6 +1801,7 @@ pub fn empty_module() -> CompiledModuleMut {
             address: AddressIdentifierIndex(0),
             name: IdentifierIndex(0),
         }],
+        self_module_handle_idx: ModuleHandleIndex(0),
         identifiers: vec![self_module_name().to_owned()],
         address_identifiers: vec![AccountAddress::default()],
         constant_pool: vec![],

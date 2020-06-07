@@ -23,7 +23,7 @@ use futures::{
     stream::{select_all, FuturesUnordered},
     StreamExt,
 };
-use libra_config::config::{NetworkId, NodeConfig, PeerNetworkId};
+use libra_config::config::{NodeConfig, PeerNetworkId, UpstreamNetworkId};
 use libra_logger::prelude::*;
 use libra_security_logger::{security_log, SecurityEvent};
 use libra_types::{on_chain_config::OnChainConfigPayload, transaction::SignedTransaction};
@@ -39,7 +39,7 @@ use vm_validator::vm_validator::TransactionValidation;
 pub(crate) async fn coordinator<V>(
     mut smp: SharedMempool<V>,
     executor: Handle,
-    network_events: Vec<(NetworkId, MempoolNetworkEvents)>,
+    network_events: Vec<(UpstreamNetworkId, MempoolNetworkEvents)>,
     mut client_events: mpsc::Receiver<(
         SignedTransaction,
         oneshot::Sender<Result<SubmissionStatus>>,
@@ -142,8 +142,9 @@ pub(crate) async fn coordinator<V>(
                                             ))
                                             .await;
                                     }
-                                    MempoolSyncMsg::BroadcastTransactionsResponse{request_id} => {
-                                        tasks::process_broadcast_ack(&mempool, request_id, is_validator);
+                                    MempoolSyncMsg::BroadcastTransactionsResponse{request_id, retry_txns} => {
+                                        let peer = PeerNetworkId(network_id, peer_id);
+                                        tasks::process_broadcast_ack(&mempool, peer, request_id, retry_txns, is_validator, peer_manager.clone());
                                         notify_subscribers(SharedMempoolNotification::ACK, &smp.subscribers);
                                     }
                                 };

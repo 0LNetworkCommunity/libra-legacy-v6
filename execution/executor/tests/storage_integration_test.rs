@@ -3,11 +3,11 @@
 
 use anyhow::{ensure, format_err, Result};
 use executor::{db_bootstrapper::bootstrap_db_if_empty, Executor};
-use executor_types::BlockExecutor;
-use executor_utils::test_helpers::{
+use executor_test_helpers::{
     extract_signer, gen_block_id, gen_block_metadata, gen_ledger_info_with_sigs,
     get_test_signed_transaction,
 };
+use executor_types::BlockExecutor;
 use libra_config::{config::NodeConfig, utils::get_genesis_txn};
 use libra_crypto::{ed25519::*, test_utils::TEST_SEED, HashValue, PrivateKey, Uniform};
 use libra_types::{
@@ -29,8 +29,9 @@ use std::convert::TryFrom;
 use stdlib::transaction_scripts::StdlibScript;
 use storage_interface::DbReaderWriter;
 use transaction_builder::{
-    encode_block_prologue_script, encode_mint_script, encode_publishing_option_script,
-    encode_rotate_consensus_pubkey_script, encode_transfer_with_metadata_script,
+    encode_block_prologue_script, encode_mint_lbr_to_address_script,
+    encode_publishing_option_script, encode_rotate_consensus_pubkey_script,
+    encode_transfer_with_metadata_script,
 };
 
 fn create_db_and_executor(config: &NodeConfig) -> (DbReaderWriter, Executor<LibraVM>) {
@@ -49,7 +50,7 @@ fn test_genesis() {
     let (li, epoch_change_proof, _accumulator_consistency_proof) =
         db.reader.get_state_proof(0).unwrap();
 
-    let trusted_state = TrustedState::from(config.base.waypoint.unwrap());
+    let trusted_state = TrustedState::from(config.base.waypoint.waypoint_from_config().unwrap());
     trusted_state
         .verify_and_ratchet(&li, &epoch_change_proof)
         .unwrap();
@@ -80,7 +81,7 @@ fn test_reconfiguration() {
 
     let genesis_account = association_address();
     let network_config = config.validator_network.as_ref().unwrap();
-    let validator_account = network_config.peer_id;
+    let validator_account = network_config.peer_id();
     let keys = config
         .test
         .as_mut()
@@ -91,7 +92,6 @@ fn test_reconfiguration() {
     let validator_privkey = keys.take_private().unwrap();
     let validator_pubkey = keys.public_key();
     let auth_key = AuthenticationKey::ed25519(&validator_pubkey);
-    let validator_auth_key_prefix = auth_key.prefix().to_vec();
     assert!(
         auth_key.derived_address() == validator_account,
         "Address derived from validator auth key does not match validator account address"
@@ -105,8 +105,7 @@ fn test_reconfiguration() {
         genesis_key.public_key(),
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &validator_account,
-            validator_auth_key_prefix,
+            validator_account,
             1_000_000,
             vec![],
             vec![],
@@ -173,7 +172,7 @@ fn test_change_publishing_option_to_custom() {
 
     let genesis_account = association_address();
     let network_config = config.validator_network.as_ref().unwrap();
-    let validator_account = network_config.peer_id;
+    let validator_account = network_config.peer_id();
     let keys = config
         .test
         .as_mut()
@@ -186,14 +185,6 @@ fn test_change_publishing_option_to_custom() {
 
     let signer = extract_signer(&mut config);
 
-    let auth_key = AuthenticationKey::ed25519(&validator_pubkey);
-    let validator_auth_key_prefix = auth_key.prefix().to_vec();
-    assert_eq!(
-        auth_key.derived_address(),
-        validator_account,
-        "Address derived from validator auth key does not match validator account address"
-    );
-
     // give the validator some money so they can send a tx
     let txn1 = get_test_signed_transaction(
         genesis_account,
@@ -202,8 +193,7 @@ fn test_change_publishing_option_to_custom() {
         genesis_key.public_key(),
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &validator_account,
-            validator_auth_key_prefix,
+            validator_account,
             1_000_000,
             vec![],
             vec![],
@@ -266,7 +256,8 @@ fn test_change_publishing_option_to_custom() {
 
     let (li, epoch_change_proof, _accumulator_consistency_proof) =
         db.reader.get_state_proof(0).unwrap();
-    let mut trusted_state = TrustedState::from(config.base.waypoint.unwrap());
+    let mut trusted_state =
+        TrustedState::from(config.base.waypoint.waypoint_from_config().unwrap());
     match trusted_state.verify_and_ratchet(&li, &epoch_change_proof) {
         Ok(TrustedStateChange::Epoch { new_state, .. }) => trusted_state = new_state,
         _ => panic!("unexpected state change"),
@@ -349,7 +340,7 @@ fn test_extend_whitelist() {
 
     let genesis_account = association_address();
     let network_config = config.validator_network.as_ref().unwrap();
-    let validator_account = network_config.peer_id;
+    let validator_account = network_config.peer_id();
     let keys = config
         .test
         .as_mut()
@@ -361,7 +352,6 @@ fn test_extend_whitelist() {
     let validator_pubkey = keys.public_key();
     let signer = extract_signer(&mut config);
     let auth_key = AuthenticationKey::ed25519(&validator_pubkey);
-    let validator_auth_key_prefix = auth_key.prefix().to_vec();
     assert!(
         auth_key.derived_address() == validator_account,
         "Address derived from validator auth key does not match validator account address"
@@ -375,8 +365,7 @@ fn test_extend_whitelist() {
         genesis_key.public_key(),
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &validator_account,
-            validator_auth_key_prefix,
+            validator_account,
             1_000_000,
             vec![],
             vec![],
@@ -410,7 +399,7 @@ fn test_extend_whitelist() {
     // Add script1 to whitelist.
     let new_whitelist = {
         let mut existing_list = StdlibScript::whitelist();
-        existing_list.push(*HashValue::from_sha3_256(&[]).as_ref());
+        existing_list.push(*HashValue::sha3_256_of(&[]).as_ref());
         existing_list
     };
 
@@ -446,7 +435,8 @@ fn test_extend_whitelist() {
 
     let (li, epoch_change_proof, _accumulator_consistency_proof) =
         db.reader.get_state_proof(0).unwrap();
-    let mut trusted_state = TrustedState::from(config.base.waypoint.unwrap());
+    let mut trusted_state =
+        TrustedState::from(config.base.waypoint.waypoint_from_config().unwrap());
     match trusted_state.verify_and_ratchet(&li, &epoch_change_proof) {
         Ok(TrustedStateChange::Epoch { new_state, .. }) => trusted_state = new_state,
         _ => panic!("unexpected state change"),
@@ -562,8 +552,7 @@ fn test_execution_with_storage() {
         /* sequence_number = */ 1,
         genesis_key.clone(),
         genesis_key.public_key(),
-        Some(encode_mint_script(
-            lbr_type_tag(),
+        Some(encode_mint_lbr_to_address_script(
             &account1,
             account1_auth_key.prefix().to_vec(),
             2_000_000,
@@ -576,8 +565,7 @@ fn test_execution_with_storage() {
         /* sequence_number = */ 2,
         genesis_key.clone(),
         genesis_key.public_key(),
-        Some(encode_mint_script(
-            lbr_type_tag(),
+        Some(encode_mint_lbr_to_address_script(
             &account2,
             account2_auth_key.prefix().to_vec(),
             1_200_000,
@@ -590,8 +578,7 @@ fn test_execution_with_storage() {
         /* sequence_number = */ 3,
         genesis_key.clone(),
         genesis_key.public_key(),
-        Some(encode_mint_script(
-            lbr_type_tag(),
+        Some(encode_mint_lbr_to_address_script(
             &account3,
             account3_auth_key.prefix().to_vec(),
             1_000_000,
@@ -607,8 +594,7 @@ fn test_execution_with_storage() {
         pubkey1.clone(),
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &account2,
-            account2_auth_key.prefix().to_vec(),
+            account2,
             20_000,
             vec![],
             vec![],
@@ -624,8 +610,7 @@ fn test_execution_with_storage() {
         pubkey2,
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &account3,
-            account3_auth_key.prefix().to_vec(),
+            account3,
             10_000,
             vec![],
             vec![],
@@ -641,8 +626,7 @@ fn test_execution_with_storage() {
         pubkey1.clone(),
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &account3,
-            account3_auth_key.prefix().to_vec(),
+            account3,
             70_000,
             vec![],
             vec![],
@@ -664,8 +648,7 @@ fn test_execution_with_storage() {
             pubkey1.clone(),
             Some(encode_transfer_with_metadata_script(
                 lbr_type_tag(),
-                &account3,
-                account3_auth_key.prefix().to_vec(),
+                account3,
                 10_000,
                 vec![],
                 vec![],
@@ -687,7 +670,8 @@ fn test_execution_with_storage() {
 
     let (li, epoch_change_proof, _accumulator_consistency_proof) =
         db.reader.get_state_proof(0).unwrap();
-    let mut trusted_state = TrustedState::from(config.base.waypoint.unwrap());
+    let mut trusted_state =
+        TrustedState::from(config.base.waypoint.waypoint_from_config().unwrap());
     match trusted_state.verify_and_ratchet(&li, &epoch_change_proof) {
         Ok(TrustedStateChange::Epoch { new_state, .. }) => trusted_state = new_state,
         _ => panic!("unexpected state change"),
@@ -905,7 +889,7 @@ where
     let balance = if let Some(blob) = &account_state_with_proof.blob {
         AccountState::try_from(blob)?
             .get_balance_resources(&[from_currency_code_string(LBR_NAME).unwrap()])?
-            .last()
+            .get(&from_currency_code_string(LBR_NAME).unwrap())
             .map(|b| b.coin())
             .unwrap_or(0)
     } else {

@@ -7,8 +7,8 @@ use libra_json_rpc_client::{
     errors::JsonRpcError,
     get_response_from_batch,
     views::{
-        AccountStateWithProofView, AccountView, BlockMetadata, BytesView, EventView,
-        StateProofView, TransactionView,
+        AccountStateWithProofView, AccountView, BlockMetadata, BytesView, CurrencyInfoView,
+        EventView, StateProofView, TransactionView,
     },
     JsonRpcBatch, JsonRpcClient, JsonRpcResponse, ResponseAsView,
 };
@@ -185,12 +185,23 @@ impl LibraClient {
     /// Gets the block metadata
     pub fn get_metadata(&mut self) -> Result<BlockMetadata> {
         let mut batch = JsonRpcBatch::new();
-        batch.add_get_metadata_request();
+        batch.add_get_metadata_request(None);
         let responses = self.client.execute(batch)?;
 
         match get_response_from_batch(0, &responses)? {
             Ok(resp) => Ok(BlockMetadata::from_response(resp.clone())?),
             Err(e) => bail!("Failed to get block metadata with error: {:?}", e),
+        }
+    }
+
+    /// Gets the currency info stored on-chain
+    pub fn get_currency_info(&mut self) -> Result<Vec<CurrencyInfoView>> {
+        let mut batch = JsonRpcBatch::new();
+        batch.add_get_currencies_info();
+        let responses = self.client.execute(batch)?;
+        match get_response_from_batch(0, &responses)? {
+            Ok(resp) => Ok(CurrencyInfoView::vec_from_response(resp.clone())?),
+            Err(e) => bail!("Failed to get currencies info with error: {:?}", e),
         }
     }
 
@@ -245,7 +256,7 @@ impl LibraClient {
                     "Verified epoch changed to {}",
                     latest_epoch_change_li
                         .ledger_info()
-                        .next_epoch_info()
+                        .next_epoch_state()
                         .expect("no validator set in epoch change ledger info"),
                 );
                 // Update client state

@@ -22,11 +22,11 @@ use libra_crypto::{
     HashValue,
 };
 use libra_types::{
-    epoch_info::EpochInfo,
+    epoch_state::EpochState,
     ledger_info::LedgerInfoWithSignatures,
     proof::{
         definition::LeafCount, position::Position, AccumulatorConsistencyProof,
-        TransactionAccumulatorProof, TransactionAccumulatorRangeProof,
+        TransactionAccumulatorProof, TransactionAccumulatorRangeProof, TransactionInfoWithProof,
     },
     transaction::{TransactionInfo, Version},
 };
@@ -122,7 +122,7 @@ impl LedgerStore {
             ensure!(
                 ledger_info_with_sigs
                     .ledger_info()
-                    .next_epoch_info()
+                    .next_epoch_state()
                     .is_some(),
                 "DB corruption: the last ledger info of epoch {} is missing next epoch info",
                 epoch,
@@ -149,8 +149,14 @@ impl LedgerStore {
             .store(Arc::new(Some(ledger_info_with_sigs)));
     }
 
-    fn get_epoch_info(&self, epoch: u64) -> Result<EpochInfo> {
-        ensure!(epoch > 0, "EpochInfo only queryable for epoch >= 1.",);
+    pub fn get_latest_ledger_info_in_epoch(&self, epoch: u64) -> Result<LedgerInfoWithSignatures> {
+        self.db.get::<LedgerInfoSchema>(&epoch)?.ok_or_else(|| {
+            LibraDbError::NotFound(format!("Last LedgerInfo of epoch {}", epoch)).into()
+        })
+    }
+
+    fn get_epoch_state(&self, epoch: u64) -> Result<EpochState> {
+        ensure!(epoch > 0, "EpochState only queryable for epoch >= 1.",);
 
         let ledger_info_with_sigs =
             self.db
@@ -158,12 +164,12 @@ impl LedgerStore {
                 .ok_or_else(|| {
                     LibraDbError::NotFound(format!("Last LedgerInfo of epoch {}", epoch - 1))
                 })?;
-        let latest_epoch_info = ledger_info_with_sigs
+        let latest_epoch_state = ledger_info_with_sigs
             .ledger_info()
-            .next_epoch_info()
-            .ok_or_else(|| format_err!("Last LedgerInfo in epoch must carry next_epoch_info."))?;
+            .next_epoch_state()
+            .ok_or_else(|| format_err!("Last LedgerInfo in epoch must carry next_epoch_state."))?;
 
-        Ok(latest_epoch_info.clone())
+        Ok(latest_epoch_state.clone())
     }
 
     pub fn get_tree_state(
@@ -184,12 +190,12 @@ impl LedgerStore {
             Some(x) => x,
             None => return Ok(None),
         };
-        let latest_epoch_info_if_not_in_li =
-            match latest_ledger_info.ledger_info().next_epoch_info() {
+        let latest_epoch_state_if_not_in_li =
+            match latest_ledger_info.ledger_info().next_epoch_state() {
                 Some(_) => None,
                 // If the latest LedgerInfo doesn't carry a validator set, we look for the previous
                 // LedgerInfo which should always carry a validator set.
-                None => Some(self.get_epoch_info(latest_ledger_info.ledger_info().epoch())?),
+                None => Some(self.get_epoch_state(latest_ledger_info.ledger_info().epoch())?),
             };
 
         let li_version = latest_ledger_info.ledger_info().version();
@@ -210,7 +216,7 @@ impl LedgerStore {
 
         Ok(Some(StartupInfo::new(
             latest_ledger_info,
-            latest_epoch_info_if_not_in_li,
+            latest_epoch_state_if_not_in_li,
             commited_tree_state,
             synced_tree_state,
         )))
@@ -263,10 +269,10 @@ impl LedgerStore {
         &self,
         version: Version,
         ledger_version: Version,
-    ) -> Result<(TransactionInfo, TransactionAccumulatorProof)> {
-        Ok((
-            self.get_transaction_info(version)?,
+    ) -> Result<TransactionInfoWithProof> {
+        Ok(TransactionInfoWithProof::new(
             self.get_transaction_proof(version, ledger_version)?,
+            self.get_transaction_info(version)?,
         ))
     }
 
@@ -341,7 +347,7 @@ impl LedgerStore {
     ) -> Result<()> {
         let ledger_info = ledger_info_with_sigs.ledger_info();
 
-        if ledger_info.next_epoch_info().is_some() {
+        if ledger_info.next_epoch_state().is_some() {
             // This is the last version of the current epoch, update the epoch by version index.
             cs.batch
                 .put::<EpochByVersionSchema>(&ledger_info.version(), &ledger_info.epoch())?;

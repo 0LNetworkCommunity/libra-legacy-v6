@@ -15,7 +15,7 @@ use crate::{
 };
 use move_ir_types::location::*;
 use state::*;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 //**************************************************************************************************
 // Entry and trait bindings
@@ -97,7 +97,7 @@ impl<'a> AbstractInterpreter for LocalsSafety<'a> {}
 pub fn verify(
     errors: &mut Errors,
     signature: &FunctionSignature,
-    _acquires: &BTreeSet<StructName>,
+    _acquires: &BTreeMap<StructName, Loc>,
     locals: &UniqueMap<Var, SingleType>,
     cfg: &super::cfg::BlockCFG,
 ) -> BTreeMap<Label, LocalStates> {
@@ -151,7 +151,8 @@ fn command(context: &mut Context, sp!(loc, cmd_): &Command) {
                                         format!("The parameter '{}' {} a resource value", l, verb)
                                     } else {
                                         format!(
-                                            "The local '{}' {} a resource value due to this assignment",
+                                            "The local '{}' {} a resource value due to this \
+                                             assignment",
                                             l, verb
                                         )
                                     }
@@ -201,8 +202,8 @@ fn lvalue(context: &mut Context, sp!(loc, l_): &LValue) {
                             DisplayVar::Orig(s) => s,
                         };
                         let msg = format!(
-                            "The local {} a resource value due to this assignment. The \
-                             resource must be used before you assign to this local again",
+                            "The local {} a resource value due to this assignment. The resource \
+                             must be used before you assign to this local again",
                             verb
                         );
                         context.error(vec![
@@ -222,7 +223,7 @@ fn exp(context: &mut Context, parent_e: &Exp) {
     use UnannotatedExp_ as E;
     let eloc = &parent_e.exp.loc;
     match &parent_e.exp.value {
-        E::Unit | E::Value(_) | E::Spec(_, _) | E::UnresolvedError => (),
+        E::Unit { .. } | E::Value(_) | E::Spec(_, _) | E::UnresolvedError => (),
 
         E::BorrowLocal(_, var) | E::Copy { var, .. } => use_local(context, eloc, var),
 
@@ -275,8 +276,8 @@ fn use_local(context: &mut Context, loc: &Loc, local: &Var) {
                 DisplayVar::Orig(s) => s,
             };
             let msg = format!(
-                "The local {} not have a value due to this position. The local must be assigned \
-                 a value before being used",
+                "The local {} not have a value due to this position. The local must be assigned a \
+                 value before being used",
                 verb
             );
             context.error(vec![

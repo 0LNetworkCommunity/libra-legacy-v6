@@ -7,7 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use libra_logger::info;
+use libra_logger::{info, warn};
 use reqwest::Url;
 use structopt::{clap::ArgGroup, StructOpt};
 use termion::{color, style};
@@ -20,13 +20,12 @@ use cluster_test::{
     experiments::{get_experiment, Context, Experiment},
     github::GitHub,
     health::{DebugPortLogThread, HealthCheckRunner, LogTail, PrintFailures, TraceTail},
+    instance::Instance,
     prometheus::Prometheus,
     report::SuiteReport,
     slack::SlackClient,
-    stats,
     suite::ExperimentSuite,
     tx_emitter::{AccountData, EmitJobRequest, EmitThreadParams, TxEmitter, TxStats},
-    util::unix_timestamp_now,
 };
 use futures::{
     future::{join_all, FutureExt},
@@ -130,7 +129,8 @@ pub fn main() {
         let duration = Duration::from_secs(args.duration);
         if args.swarm {
             let util = BasicSwarmUtil::setup(&args);
-            rt.block_on(util.emit_tx(
+            rt.block_on(emit_tx(
+                &util.cluster,
                 args.accounts_per_client,
                 args.workers_per_ac,
                 thread_params,
@@ -139,7 +139,8 @@ pub fn main() {
             return;
         } else {
             let util = ClusterUtil::setup(&args);
-            rt.block_on(util.emit_tx(
+            rt.block_on(emit_tx(
+                &util.cluster,
                 args.accounts_per_client,
                 args.workers_per_ac,
                 thread_params,
@@ -154,7 +155,8 @@ pub fn main() {
     let mut perf_msg = None;
 
     if args.health_check {
-        runner.run_health_check();
+        let duration = Duration::from_secs(args.duration);
+        exit_on_error(runner.run_health_check(duration));
     } else if args.perf_run {
         perf_msg = Some(runner.perf_run());
     } else if args.cleanup {
@@ -258,6 +260,38 @@ fn parse_host_port(s: &str) -> Result<(String, u32)> {
     Ok((host, port))
 }
 
+pub async fn emit_tx(
+    cluster: &Cluster,
+    accounts_per_client: usize,
+    workers_per_ac: Option<usize>,
+    thread_params: EmitThreadParams,
+    duration: Duration,
+) {
+    let mut emitter = TxEmitter::new(cluster);
+    let job = emitter
+        .start_job(EmitJobRequest {
+            instances: cluster.validator_instances().to_vec(),
+            accounts_per_client,
+            workers_per_ac,
+            thread_params,
+        })
+        .await
+        .expect("Failed to start emit job");
+    let deadline = Instant::now() + duration;
+    let mut prev_stats: Option<TxStats> = None;
+    while Instant::now() < deadline {
+        let window = Duration::from_secs(10);
+        tokio::time::delay_for(window).await;
+        let stats = emitter.peek_job_stats(&job);
+        let delta = &stats - &prev_stats.unwrap_or_default();
+        prev_stats = Some(stats);
+        println!("{}", delta.rate(window));
+    }
+    let stats = emitter.stop_job(job).await;
+    println!("Total stats: {}", stats);
+    println!("Average rate: {}", stats.rate(duration));
+}
+
 impl BasicSwarmUtil {
     pub fn setup(args: &Args) -> Self {
         if args.peers.is_empty() {
@@ -347,38 +381,6 @@ impl BasicSwarmUtil {
         println!("Looks like all full nodes are healthy!");
         Ok(())
     }
-
-    pub async fn emit_tx(
-        self,
-        accounts_per_client: usize,
-        workers_per_ac: Option<usize>,
-        thread_params: EmitThreadParams,
-        duration: Duration,
-    ) {
-        let mut emitter = TxEmitter::new(&self.cluster);
-        let job = emitter
-            .start_job(EmitJobRequest {
-                instances: self.cluster.validator_instances().to_vec(),
-                accounts_per_client,
-                workers_per_ac,
-                thread_params,
-            })
-            .await
-            .expect("Failed to start emit job");
-        let deadline = Instant::now() + duration;
-        let mut prev_stats: Option<TxStats> = None;
-        while Instant::now() < deadline {
-            let window = Duration::from_secs(10);
-            tokio::time::delay_for(window).await;
-            let stats = emitter.peek_job_stats(&job);
-            let delta = &stats - &prev_stats.unwrap_or_default();
-            prev_stats = Some(stats);
-            println!("{}", delta.rate(window));
-        }
-        let stats = emitter.stop_job(job);
-        println!("Total stats: {}", stats);
-        println!("Average rate: {}", stats.rate(duration));
-    }
 }
 
 impl ClusterUtil {
@@ -448,45 +450,6 @@ impl ClusterUtil {
                 cluster_swarm,
             }
         })
-    }
-
-    pub async fn emit_tx(
-        self,
-        accounts_per_client: usize,
-        workers_per_ac: Option<usize>,
-        thread_params: EmitThreadParams,
-        duration: Duration,
-    ) {
-        let mut emitter = TxEmitter::new(&self.cluster);
-        emitter
-            .start_job(EmitJobRequest {
-                instances: self.cluster.validator_instances().to_vec(),
-                accounts_per_client,
-                workers_per_ac,
-                thread_params,
-            })
-            .await
-            .expect("Failed to start emit job");
-        self.run_stat_loop(duration);
-    }
-
-    fn run_stat_loop(&self, duration: Duration) {
-        let deadline = Instant::now() + duration;
-        let window = Duration::from_secs(30);
-        thread::sleep(Duration::from_secs(30)); // warm up
-        loop {
-            if Instant::now() > deadline {
-                return;
-            }
-            thread::sleep(Duration::from_secs(10));
-            let now = unix_timestamp_now();
-            match stats::txn_stats(&self.prometheus, now - window, now) {
-                Ok((avg_tps, avg_latency)) => {
-                    info!("Tps: {:.0}, latency: {:.0} ms", avg_tps, avg_latency)
-                }
-                Err(err) => info!("Stat error: {:?}", err),
-            }
-        }
     }
 }
 
@@ -776,16 +739,21 @@ impl ClusterTestRunner {
         Ok(())
     }
 
-    fn run_health_check(&mut self) {
+    fn run_health_check(&mut self, duration: Duration) -> Result<()> {
+        let health_check_deadline = Instant::now() + duration;
         loop {
             let deadline = Instant::now() + Duration::from_secs(1);
             // Receive all events that arrived to aws log tail within next 1 second
             // This assumes so far that event propagation time is << 1s, this need to be refined
             // in future to account for actual event propagation delay
             let events = self.logs.recv_all_until_deadline(deadline);
-            let _ignore =
-                self.health_check_runner
-                    .run(&events, &HashSet::new(), PrintFailures::All);
+            let result = self
+                .health_check_runner
+                .run(&events, &HashSet::new(), PrintFailures::All);
+            let now = Instant::now();
+            if now > health_check_deadline {
+                return result.map(|_| ());
+            }
         }
     }
 
@@ -811,7 +779,24 @@ impl ClusterTestRunner {
                 }
             }
         }
-        info!("All validators are now healthy");
+        info!("All validators are now healthy. Checking json rpc endpoints of validators and full nodes");
+        loop {
+            let results = self.runtime.block_on(join_all(
+                self.cluster.all_instances().map(Instance::try_json_rpc),
+            ));
+            if results.iter().all(Result::is_ok) {
+                break;
+            }
+            if Instant::now() > wait_deadline {
+                for (instance, result) in zip(self.cluster.all_instances(), results) {
+                    if let Err(err) = result {
+                        warn!("Instance {} still unhealthy: {}", instance, err);
+                    }
+                }
+                bail!("Some json rpc endpoints did not become healthy after deployment");
+            }
+        }
+        info!("All json rpc endpoints are healthy");
         Ok(())
     }
 

@@ -16,7 +16,9 @@ use futures::{
     stream::select_all,
     StreamExt,
 };
-use libra_config::config::{NetworkId, PeerNetworkId, RoleType, StateSyncConfig, UpstreamConfig};
+use libra_config::config::{
+    PeerNetworkId, RoleType, StateSyncConfig, UpstreamConfig, UpstreamNetworkId,
+};
 use libra_logger::prelude::*;
 use libra_mempool::{CommitNotification, CommitResponse, CommittedTransaction};
 use libra_types::{
@@ -38,12 +40,13 @@ pub(crate) struct SyncRequest {
     // reach the target (the LI in the storage remains unchanged as if nothing happened).
     pub callback: oneshot::Sender<Result<()>>,
     pub target: LedgerInfoWithSignatures,
+    pub last_progress_tst: SystemTime,
 }
 
 /// message used by StateSyncClient for communication with Coordinator
 pub(crate) enum CoordinatorMessage {
     // used to initiate new sync
-    Request(SyncRequest),
+    Request(Box<SyncRequest>),
     // used to notify about new txn commit
     Commit(
         // committed transactions
@@ -93,7 +96,7 @@ pub(crate) struct SyncCoordinator<T> {
     // waypoint a node is not going to be abl
     waypoint: Option<Waypoint>,
     // network senders - (k, v) = (network ID, network sender)
-    network_senders: HashMap<NetworkId, StateSynchronizerSender>,
+    network_senders: HashMap<UpstreamNetworkId, StateSynchronizerSender>,
     // peers used for synchronization
     peer_manager: PeerManager,
     // Optional sync request to be called when the target sync is reached
@@ -111,7 +114,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
     pub fn new(
         client_events: mpsc::UnboundedReceiver<CoordinatorMessage>,
         state_sync_to_mempool_sender: mpsc::Sender<CommitNotification>,
-        network_senders: HashMap<NetworkId, StateSynchronizerSender>,
+        network_senders: HashMap<UpstreamNetworkId, StateSynchronizerSender>,
         role: RoleType,
         waypoint: Option<Waypoint>,
         config: StateSyncConfig,
@@ -159,7 +162,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
                 msg = self.client_events.select_next_some() => {
                     match msg {
                         CoordinatorMessage::Request(request) => {
-                            if let Err(e) = self.request_sync(request) {
+                            if let Err(e) = self.request_sync(*request) {
                                 error!("[state sync] request sync fail: {}", e);
                             }
                         }
@@ -359,7 +362,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
             );
             msg = "state sync failed to send commit notif to shared mempool";
         }
-        if let Err(e) = timeout(Duration::from_secs(1), callback_rcv).await {
+        if let Err(e) = timeout(Duration::from_secs(5), callback_rcv).await {
             error!(
                 "[state sync] did not receive ACK for commit notification sent to mempool: {:?}",
                 e
@@ -382,6 +385,9 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         self.check_subscriptions();
         self.peer_manager.remove_requests(local_version);
 
+        if let Some(mut req) = self.sync_request.as_mut() {
+            req.last_progress_tst = SystemTime::now();
+        }
         let sync_request_complete = self.sync_request.as_ref().map_or(false, |sync_req| {
             // Each `ChunkResponse` is verified to make sure it never goes beyond the requested
             // target version, hence, the local version should never go beyond sync req target.
@@ -708,7 +714,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         let new_version =
             self.local_state.highest_version_in_local_storage() + txn_list_with_proof.len() as u64;
         let new_epoch = if response_li.ledger_info().version() == new_version
-            && response_li.ledger_info().next_epoch_info().is_some()
+            && response_li.ledger_info().next_epoch_state().is_some()
         {
             // This chunk is going to finish the current epoch, optimistically request a chunk
             // from the next epoch.
@@ -798,6 +804,27 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         if self.role == RoleType::Validator && self.sync_request.is_none() && self.is_initialized()
         {
             return;
+        }
+
+        // check that we made progress in fulfilling consensus sync request
+        let sync_request_expired = self.sync_request.as_ref().map_or(false, |req| {
+            let default_timeout = Duration::from_millis(self.config.sync_request_timeout_ms);
+            if let Some(tst) = req.last_progress_tst.checked_add(default_timeout) {
+                return SystemTime::now().duration_since(tst).is_ok();
+            }
+            false
+        });
+        // notify consensus if sync request timed out
+        if sync_request_expired {
+            if let Some(sync_request) = self.sync_request.take() {
+                if sync_request
+                    .callback
+                    .send(Err(format_err!("request timed out")))
+                    .is_err()
+                {
+                    error!("[state sync] Failed to notify consensus");
+                }
+            }
         }
 
         let known_version = self.local_state.highest_version_in_local_storage();
@@ -900,7 +927,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         self.subscriptions.retain(|peer, request_info| {
             // filter out expired peer requests
             if SystemTime::now()
-                .duration_since(request_info.expiration_time.clone())
+                .duration_since(request_info.expiration_time)
                 .is_ok()
             {
                 return false;

@@ -4,7 +4,8 @@
 //! This module contains the public APIs supported by the bytecode verifier.
 use crate::{
     check_duplication::DuplicationChecker, code_unit_verifier::CodeUnitVerifier,
-    constants::ConstantsChecker, instantiation_loops::InstantiationLoopChecker, resolver::Resolver,
+    constants::ConstantsChecker, instantiation_loops::InstantiationLoopChecker,
+    instruction_consistency::InstructionConsistency, resolver::Resolver,
     resources::ResourceTransitiveChecker, signature::SignatureChecker,
     struct_defs::RecursiveStructDefChecker,
 };
@@ -77,6 +78,7 @@ impl VerifiedModule {
 fn verify_module(module: &CompiledModule) -> VMResult<()> {
     DuplicationChecker::new(&module).verify()?;
     SignatureChecker::new(&module).verify()?;
+    InstructionConsistency::new(&module).verify()?;
     ResourceTransitiveChecker::new(&module).verify()?;
     ConstantsChecker::new(&module).verify()?;
     RecursiveStructDefChecker::new(&module).verify()?;
@@ -165,11 +167,40 @@ impl ScriptAccess for VerifiedScript {
 
 /// This function checks the extra requirements on the signature of the main function of a script.
 pub fn verify_main_signature(script: &CompiledScript) -> VMResult<()> {
+    fn is_valid_arg_type(idx: usize, arg_type: &SignatureToken) -> bool {
+        use SignatureToken as S;
+        match arg_type {
+            S::Bool | S::U8 | S::U64 | S::U128 | S::Address => true,
+            S::Vector(inner) => match &**inner {
+                S::U8 => true,
+                S::Bool
+                | S::U64
+                | S::U128
+                | S::Address
+                | S::Signer
+                | S::Struct(_)
+                | S::Vector(_)
+                | S::StructInstantiation(_, _)
+                | S::Reference(_)
+                | S::MutableReference(_)
+                | S::TypeParameter(_) => false,
+            },
+
+            // &signer is a type that can only be populated by the Move VM. And its value is filled
+            // based on the sender of the transaction
+            S::Reference(inner) => idx == 0 && matches!(&**inner, S::Signer),
+
+            S::Signer
+            | S::Struct(_)
+            | S::StructInstantiation(_, _)
+            | S::MutableReference(_)
+            | S::TypeParameter(_) => false,
+        }
+    }
+
     let arguments = script.signature_at(script.as_inner().parameters);
-    for arg_type in &arguments.0 {
-        if !(arg_type.is_primitive()
-            || *arg_type == SignatureToken::Vector(Box::new(SignatureToken::U8)))
-        {
+    for (idx, arg_type) in arguments.0.iter().enumerate() {
+        if !is_valid_arg_type(idx, arg_type) {
             return Err(VMStatus::new(StatusCode::INVALID_MAIN_FUNCTION_SIGNATURE));
         }
     }
@@ -235,7 +266,7 @@ fn verify_all_dependencies_provided(
 ) -> VMResult<()> {
     for (idx, module_handle_view) in module_view.module_handles().enumerate() {
         let module_id = module_handle_view.module_id();
-        if idx != CompiledModule::IMPLEMENTED_MODULE_INDEX as usize
+        if idx != module_view.self_handle_idx().0 as usize
             && !dependency_map.contains_key(&module_id)
         {
             return Err(verification_error(

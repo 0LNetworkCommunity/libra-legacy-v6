@@ -13,6 +13,7 @@ use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
     convert::{Into, TryFrom},
     fmt,
+    iter::IntoIterator,
     net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
     num,
     str::FromStr,
@@ -133,7 +134,7 @@ pub enum Protocol {
     Tcp(u16),
     Memory(u16),
     // human-readable x25519::PublicKey is lower-case hex encoded
-    NoiseIk(x25519::PublicKey),
+    NoiseIK(x25519::PublicKey),
     // TODO(philiphayes): use actual handshake::MessagingProtocolVersion. we
     // probably need to move network wire into its own crate to avoid circular
     // dependency b/w network and types.
@@ -208,10 +209,6 @@ impl RawNetworkAddress {
         Self(bytes)
     }
 
-    pub fn empty() -> Self {
-        Self(Vec::new())
-    }
-
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -263,17 +260,110 @@ impl NetworkAddress {
         Self(protocols)
     }
 
+    // TODO(philiphayes): could return NonZeroUsize?
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     pub fn as_slice(&self) -> &[Protocol] {
         self.0.as_slice()
     }
 
-    pub fn push(&mut self, proto: Protocol) {
-        self.0.push(proto)
+    pub fn push(mut self, proto: Protocol) -> Self {
+        self.0.push(proto);
+        self
+    }
+
+    pub fn extend_from_slice(mut self, protos: &[Protocol]) -> Self {
+        self.0.extend_from_slice(protos);
+        self
+    }
+
+    /// Given a base `NetworkAddress`, append production protocols and
+    /// return the modified `NetworkAddress`.
+    ///
+    /// ### Example
+    ///
+    /// ```rust
+    /// use libra_crypto::{traits::ValidCryptoMaterialStringExt, x25519};
+    /// use libra_network_address::NetworkAddress;
+    /// use std::str::FromStr;
+    ///
+    /// let pubkey_str = "080e287879c918794170e258bfaddd75acac5b3e350419044655e4983a487120";
+    /// let pubkey = x25519::PublicKey::from_encoded_string(pubkey_str).unwrap();
+    /// let addr = NetworkAddress::from_str("/dns/example.com/tcp/6180").unwrap();
+    /// let addr = addr.append_prod_protos(pubkey, 0);
+    /// assert_eq!(
+    ///     addr.to_string(),
+    ///     "/dns/example.com/tcp/6180/ln-noise-ik/080e287879c918794170e258bfaddd75acac5b3e350419044655e4983a487120/ln-handshake/0",
+    /// );
+    /// ```
+    // TODO(philiphayes): use handshake version enum
+    pub fn append_prod_protos(
+        self,
+        network_pubkey: x25519::PublicKey,
+        handshake_version: u8,
+    ) -> Self {
+        self.push(Protocol::NoiseIK(network_pubkey))
+            .push(Protocol::Handshake(handshake_version))
+    }
+
+    /// Check that a `NetworkAddress` looks like a typical LibraNet address with
+    /// associated protocols.
+    ///
+    /// "typical" LibraNet addresses begin with a transport protocol:
+    ///
+    /// `"/ip4/<addr>/tcp/<port>"` or
+    /// `"/ip6/<addr>/tcp/<port>"` or
+    /// `"/dns4/<domain>/tcp/<port>"` or
+    /// `"/dns6/<domain>/tcp/<port>"` or
+    /// `"/dns/<domain>/tcp/<port>"` or
+    /// cfg!(test) `"/memory/<port>"`
+    ///
+    /// followed by transport upgrade handshake protocols:
+    ///
+    /// `"/ln-noise-ik/<pubkey>/ln-handshake/<version>"`
+    ///
+    /// ### Example
+    ///
+    /// ```rust
+    /// use libra_network_address::NetworkAddress;
+    /// use std::str::FromStr;
+    ///
+    /// let addr_str = "/ip4/1.2.3.4/tcp/6180/ln-noise-ik/080e287879c918794170e258bfaddd75acac5b3e350419044655e4983a487120/ln-handshake/0";
+    /// let addr = NetworkAddress::from_str(addr_str).unwrap();
+    /// assert!(addr.is_libranet_addr());
+    /// ```
+    pub fn is_libranet_addr(&self) -> bool {
+        parse_libranet_protos(self.as_slice()).is_some()
+    }
+
+    /// A temporary, hacky function to parse out the first `/ln-noise-ik/<pubkey>` from
+    /// a `NetworkAddress`. We can remove this soon, when we move to the interim
+    /// "monolithic" transport model.
+    pub fn find_noise_proto(&self) -> Option<x25519::PublicKey> {
+        self.0.iter().find_map(|proto| match proto {
+            Protocol::NoiseIK(pubkey) => Some(*pubkey),
+            _ => None,
+        })
     }
 
     #[cfg(any(test, feature = "fuzzing"))]
     pub fn mock() -> Self {
         NetworkAddress::new(vec![Protocol::Memory(1234)])
+    }
+}
+
+impl IntoIterator for NetworkAddress {
+    type Item = Protocol;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }
 
@@ -402,6 +492,32 @@ impl Arbitrary for NetworkAddress {
     }
 }
 
+#[cfg(any(test, feature = "fuzzing"))]
+pub fn arb_libranet_addr() -> impl Strategy<Value = NetworkAddress> {
+    let arb_transport_protos = prop_oneof![
+        any::<u16>().prop_map(|port| vec![Protocol::Memory(port)]),
+        any::<(Ipv4Addr, u16)>()
+            .prop_map(|(addr, port)| vec![Protocol::Ip4(addr), Protocol::Tcp(port)]),
+        any::<(Ipv6Addr, u16)>()
+            .prop_map(|(addr, port)| vec![Protocol::Ip6(addr), Protocol::Tcp(port)]),
+        any::<(DnsName, u16)>()
+            .prop_map(|(name, port)| vec![Protocol::Dns(name), Protocol::Tcp(port)]),
+        any::<(DnsName, u16)>()
+            .prop_map(|(name, port)| vec![Protocol::Dns4(name), Protocol::Tcp(port)]),
+        any::<(DnsName, u16)>()
+            .prop_map(|(name, port)| vec![Protocol::Dns6(name), Protocol::Tcp(port)]),
+    ];
+    let arb_libranet_protos = any::<(x25519::PublicKey, u8)>()
+        .prop_map(|(pubkey, hs)| vec![Protocol::NoiseIK(pubkey), Protocol::Handshake(hs)]);
+
+    (arb_transport_protos, arb_libranet_protos).prop_map(
+        |(mut transport_protos, mut libranet_protos)| {
+            transport_protos.append(&mut libranet_protos);
+            NetworkAddress::new(transport_protos)
+        },
+    )
+}
+
 //////////////
 // Protocol //
 //////////////
@@ -417,7 +533,7 @@ impl fmt::Display for Protocol {
             Dns6(domain) => write!(f, "/dns6/{}", domain),
             Tcp(port) => write!(f, "/tcp/{}", port),
             Memory(port) => write!(f, "/memory/{}", port),
-            NoiseIk(pubkey) => write!(
+            NoiseIK(pubkey) => write!(
                 f,
                 "/ln-noise-ik/{}",
                 pubkey
@@ -451,7 +567,7 @@ impl Protocol {
             "dns6" => Protocol::Dns6(parse_one(args)?),
             "tcp" => Protocol::Tcp(parse_one(args)?),
             "memory" => Protocol::Memory(parse_one(args)?),
-            "ln-noise-ik" => Protocol::NoiseIk(x25519::PublicKey::from_encoded_string(
+            "ln-noise-ik" => Protocol::NoiseIK(x25519::PublicKey::from_encoded_string(
                 args.next().ok_or(ParseError::UnexpectedEnd)?,
             )?),
             "ln-handshake" => Protocol::Handshake(parse_one(args)?),
@@ -561,6 +677,115 @@ impl Arbitrary for DnsName {
     }
 }
 
+/////////////
+// Parsing //
+/////////////
+
+/// parse the `&[Protocol]` into the `"/memory/<port>"` prefix and unparsed
+/// `&[Protocol]` suffix.
+pub fn parse_memory(protos: &[Protocol]) -> Option<(u16, &[Protocol])> {
+    protos
+        .split_first()
+        .and_then(|(first, suffix)| match first {
+            Protocol::Memory(port) => Some((*port, suffix)),
+            _ => None,
+        })
+}
+
+/// parse the `&[Protocol]` into the `"/ip4/<addr>/tcp/<port>"` or
+/// `"/ip6/<addr>/tcp/<port>"` prefix and unparsed `&[Protocol]` suffix.
+pub fn parse_ip_tcp(protos: &[Protocol]) -> Option<((IpAddr, u16), &[Protocol])> {
+    use Protocol::*;
+
+    if protos.len() < 2 {
+        return None;
+    }
+
+    let (prefix, suffix) = protos.split_at(2);
+    match prefix {
+        [Ip4(ip), Tcp(port)] => Some(((IpAddr::V4(*ip), *port), suffix)),
+        [Ip6(ip), Tcp(port)] => Some(((IpAddr::V6(*ip), *port), suffix)),
+        _ => None,
+    }
+}
+
+/// parse the `&[Protocol]` into the `"/dns/<domain>/tcp/<port>"`,
+/// `"/dns4/<domain>/tcp/<port>"`, or `"/dns6/<domain>/tcp/<port>"` prefix and
+/// unparsed `&[Protocol]` suffix.
+pub fn parse_dns_tcp(protos: &[Protocol]) -> Option<((&DnsName, u16), &[Protocol])> {
+    use Protocol::*;
+
+    if protos.len() < 2 {
+        return None;
+    }
+
+    let (prefix, suffix) = protos.split_at(2);
+    match prefix {
+        [Dns(name), Tcp(port)] => Some(((name, *port), suffix)),
+        [Dns4(name), Tcp(port)] => Some(((name, *port), suffix)),
+        [Dns6(name), Tcp(port)] => Some(((name, *port), suffix)),
+        _ => None,
+    }
+}
+
+/// parse the `&[Protocol]` into the `"/ln-noise-ik/<pubkey>"` prefix and
+/// unparsed `&[Protocol]` suffix.
+pub fn parse_noise_ik(protos: &[Protocol]) -> Option<(&x25519::PublicKey, &[Protocol])> {
+    match protos.split_first() {
+        Some((Protocol::NoiseIK(pubkey), suffix)) => Some((pubkey, suffix)),
+        _ => None,
+    }
+}
+
+/// parse the `&[Protocol]` into the `"/ln-handshake/<version>"` prefix and
+/// unparsed `&[Protocol]` suffix.
+pub fn parse_handshake(protos: &[Protocol]) -> Option<(u8, &[Protocol])> {
+    match protos.split_first() {
+        Some((Protocol::Handshake(version), suffix)) => Some((*version, suffix)),
+        _ => None,
+    }
+}
+
+/// parse canonical libranet protocols
+///
+/// See: `NetworkAddress::is_libranet_addr(&self)`
+fn parse_libranet_protos(protos: &[Protocol]) -> Option<&[Protocol]> {
+    // parse base transport layer
+    // ---
+    // parse_ip_tcp
+    // <or> parse_dns_tcp
+    // <or> cfg!(test) parse_memory
+
+    let transport_suffix = None
+        .or_else(|| parse_ip_tcp(protos).map(|x| x.1))
+        .or_else(|| parse_dns_tcp(protos).map(|x| x.1))
+        .or_else(|| {
+            if cfg!(test) {
+                parse_memory(protos).map(|x| x.1)
+            } else {
+                None
+            }
+        })?;
+
+    // parse authentication layer
+    // ---
+    // parse_noise_ik
+
+    let auth_suffix = parse_noise_ik(transport_suffix).map(|x| x.1)?;
+
+    // parse handshake layer
+
+    let handshake_suffix = parse_handshake(auth_suffix).map(|x| x.1)?;
+
+    // ensure no trailing protos after handshake
+
+    if handshake_suffix.is_empty() {
+        Some(protos)
+    } else {
+        None
+    }
+}
+
 ///////////
 // Tests //
 ///////////
@@ -622,7 +847,7 @@ mod test {
                 vec![
                     Dns(DnsName("example.com".to_owned())),
                     Tcp(1234),
-                    NoiseIk(pubkey),
+                    NoiseIK(pubkey),
                     Handshake(5),
                 ],
             ),
@@ -664,6 +889,131 @@ mod test {
         }
     }
 
+    #[test]
+    fn test_parse_memory() {
+        let addr = NetworkAddress::from_str("/memory/123").unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_memory(addr.as_slice()).unwrap(),
+            (123, expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/memory/123/tcp/999").unwrap();
+        let expected_suffix: &[Protocol] = &[Protocol::Tcp(999)];
+        assert_eq!(
+            parse_memory(addr.as_slice()).unwrap(),
+            (123, expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/tcp/999/memory/123").unwrap();
+        assert_eq!(None, parse_memory(addr.as_slice()));
+    }
+
+    #[test]
+    fn test_parse_ip_tcp() {
+        let addr = NetworkAddress::from_str("/ip4/1.2.3.4/tcp/123").unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_ip_tcp(addr.as_slice()).unwrap(),
+            ((IpAddr::from_str("1.2.3.4").unwrap(), 123), expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/ip6/::1/tcp/123").unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_ip_tcp(addr.as_slice()).unwrap(),
+            ((IpAddr::from_str("::1").unwrap(), 123), expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/ip6/::1/tcp/123/memory/999").unwrap();
+        let expected_suffix: &[Protocol] = &[Protocol::Memory(999)];
+        assert_eq!(
+            parse_ip_tcp(addr.as_slice()).unwrap(),
+            ((IpAddr::from_str("::1").unwrap(), 123), expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/tcp/999/memory/123").unwrap();
+        assert_eq!(None, parse_ip_tcp(addr.as_slice()));
+    }
+
+    #[test]
+    fn test_parse_dns_tcp() {
+        let dns_name = DnsName::from_str("example.com").unwrap();
+        let addr = NetworkAddress::from_str("/dns/example.com/tcp/123").unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_dns_tcp(addr.as_slice()).unwrap(),
+            ((&dns_name, 123), expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/dns4/example.com/tcp/123").unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_dns_tcp(addr.as_slice()).unwrap(),
+            ((&dns_name, 123), expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/dns6/example.com/tcp/123").unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_dns_tcp(addr.as_slice()).unwrap(),
+            ((&dns_name, 123), expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/dns/example.com/tcp/123/memory/44").unwrap();
+        let expected_suffix: &[Protocol] = &[Protocol::Memory(44)];
+        assert_eq!(
+            parse_dns_tcp(addr.as_slice()).unwrap(),
+            ((&dns_name, 123), expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/tcp/999/memory/123").unwrap();
+        assert_eq!(None, parse_dns_tcp(addr.as_slice()));
+    }
+
+    #[test]
+    fn test_parse_noise_ik() {
+        let pubkey_str = "080e287879c918794170e258bfaddd75acac5b3e350419044655e4983a487120";
+        let pubkey = x25519::PublicKey::from_encoded_string(pubkey_str).unwrap();
+        let addr = NetworkAddress::from_str(&format!("/ln-noise-ik/{}", pubkey_str)).unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_noise_ik(addr.as_slice()).unwrap(),
+            (&pubkey, expected_suffix)
+        );
+
+        let addr =
+            NetworkAddress::from_str(&format!("/ln-noise-ik/{}/tcp/999", pubkey_str)).unwrap();
+        let expected_suffix: &[Protocol] = &[Protocol::Tcp(999)];
+        assert_eq!(
+            parse_noise_ik(addr.as_slice()).unwrap(),
+            (&pubkey, expected_suffix)
+        );
+
+        let addr = NetworkAddress::from_str("/tcp/999/memory/123").unwrap();
+        assert_eq!(None, parse_noise_ik(addr.as_slice()));
+    }
+
+    #[test]
+    fn test_parse_handshake() {
+        let addr = NetworkAddress::from_str("/ln-handshake/0").unwrap();
+        let expected_suffix: &[Protocol] = &[];
+        assert_eq!(
+            parse_handshake(addr.as_slice()).unwrap(),
+            (0, expected_suffix),
+        );
+
+        let addr = NetworkAddress::from_str("/ln-handshake/0/tcp/999").unwrap();
+        let expected_suffix: &[Protocol] = &[Protocol::Tcp(999)];
+        assert_eq!(
+            parse_handshake(addr.as_slice()).unwrap(),
+            (0, expected_suffix),
+        );
+
+        let addr = NetworkAddress::from_str("/tcp/999/memory/123").unwrap();
+        assert_eq!(None, parse_handshake(addr.as_slice()));
+    }
+
     proptest! {
         #[test]
         fn test_network_address_canonical_serialization(addr in any::<NetworkAddress>()) {
@@ -675,6 +1025,21 @@ mod test {
             let addr_str = addr.to_string();
             let addr_parsed = NetworkAddress::from_str(&addr_str).unwrap();
             assert_eq!(addr, addr_parsed);
+        }
+
+        #[test]
+        fn test_is_libranet_addr(addr in arb_libranet_addr()) {
+            assert!(addr.is_libranet_addr(), "addr.is_libranet_addr() = false; addr: '{}'", addr);
+        }
+
+        #[test]
+        fn test_is_not_libranet_addr_with_trailing(
+            addr in arb_libranet_addr(),
+            addr_suffix in any::<NetworkAddress>(),
+        ) {
+            // A valid LibraNet addr w/ unexpected trailing protocols should not parse.
+            let addr = addr.extend_from_slice(addr_suffix.as_slice());
+            assert!(!addr.is_libranet_addr(), "addr.is_libranet_addr() = true; addr: '{}'", addr);
         }
     }
 }
