@@ -43,10 +43,10 @@ pub(crate) enum NativeFunction {
     AccountWriteEvent,
     DebugPrint,
     DebugPrintStackTrace,
-    VdfVerify,
     SignerBorrowAddress,
     CreateSigner,
     DestroySigner,
+    VDFVerify,
 }
 
 impl NativeFunction {
@@ -59,6 +59,7 @@ impl NativeFunction {
 
         let case = (module_address, module_name, function_name);
         Some(match case {
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify,
             (&CORE_CODE_ADDRESS, "Hash", "sha2_256") => HashSha2_256,
             (&CORE_CODE_ADDRESS, "Hash", "sha3_256") => HashSha3_256,
             (&CORE_CODE_ADDRESS, "LCS", "to_bytes") => LCSToBytes,
@@ -80,7 +81,6 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "LibraAccount", "destroy_signer") => DestroySigner,
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
-            (&CORE_CODE_ADDRESS, "VDF", "verify") => VdfVerify,
             (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
             _ => return None,
         })
@@ -114,10 +114,10 @@ impl NativeFunction {
             Self::LCSToBytes => lcs::native_to_bytes(ctx, t, v),
             Self::DebugPrint => debug::native_print(ctx, t, v),
             Self::DebugPrintStackTrace => debug::native_print_stack_trace(ctx, t, v),
-            Self::VdfVerify => vdf::verify(ctx, t, v),
             Self::SignerBorrowAddress => signer::native_borrow_address(ctx, t, v),
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
+            Self::VDFVerify => vdf::verify(ctx, t, v),
         }
     }
 }
