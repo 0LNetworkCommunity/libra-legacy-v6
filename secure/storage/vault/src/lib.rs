@@ -3,12 +3,16 @@
 
 #![forbid(unsafe_code)]
 
-use libra_crypto::ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
+use libra_crypto::{
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
+    PrivateKey,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{
     collections::BTreeMap,
     convert::{TryFrom, TryInto},
+    sync::Arc,
 };
 use thiserror::Error;
 
@@ -76,18 +80,33 @@ impl From<serde_json::Error> for Error {
 pub struct Client {
     host: String,
     token: String,
+    tls_config: Option<Arc<rustls::ClientConfig>>,
 }
 
 impl Client {
-    pub fn new(host: String, token: String) -> Self {
-        Self { host, token }
+    pub fn new(host: String, token: String, ca_certificate: Option<String>) -> Self {
+        let tls_config = if let Some(certificate) = ca_certificate {
+            let mut tls_config = rustls::ClientConfig::new();
+            // First try the certificate as a DER encoded cert, then as a PEM, and then panic.
+            let cert = rustls::Certificate(certificate.as_bytes().to_vec());
+            if tls_config.root_store.add(&cert).is_err() {
+                let certs = rustls::internal::pemfile::certs(&mut certificate.as_bytes()).unwrap();
+                tls_config.root_store.add(&certs[0]).unwrap();
+            }
+            Some(Arc::new(tls_config))
+        } else {
+            None
+        };
+        Self {
+            host,
+            token,
+            tls_config,
+        }
     }
 
     pub fn delete_policy(&self, policy_name: &str) -> Result<(), Error> {
-        let resp = ureq::delete(&format!("{}/v1/sys/policy/{}", self.host, policy_name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::delete(&format!("{}/v1/sys/policy/{}", self.host, policy_name));
+        let resp = self.upgrade_request(request).call();
         if resp.ok() {
             Ok(())
         } else {
@@ -96,10 +115,8 @@ impl Client {
     }
 
     pub fn list_policies(&self) -> Result<Vec<String>, Error> {
-        let resp = ureq::get(&format!("{}/v1/sys/policy", self.host))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::get(&format!("{}/v1/sys/policy", self.host));
+        let resp = self.upgrade_request(request).call();
         match resp.status() {
             200 => {
                 let policies: ListPoliciesResponse = serde_json::from_str(&resp.into_string()?)?;
@@ -113,10 +130,8 @@ impl Client {
 
     /// Retrieves the policy at the given policy name.
     pub fn read_policy(&self, policy_name: &str) -> Result<Policy, Error> {
-        let resp = ureq::get(&format!("{}/v1/sys/policy/{}", self.host, policy_name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::get(&format!("{}/v1/sys/policy/{}", self.host, policy_name));
+        let resp = self.upgrade_request(request).call();
         match resp.status() {
             200 => Ok(Policy::try_from(resp.into_json()?)?),
             _ => Err(resp.into()),
@@ -127,10 +142,8 @@ impl Client {
     /// structured. Vault does not distingush a create and update. An update must first read the
     /// existing policy, amend the contents,  and then be applied via this API.
     pub fn set_policy(&self, policy_name: &str, policy: &Policy) -> Result<(), Error> {
-        let resp = ureq::post(&format!("{}/v1/sys/policy/{}", self.host, policy_name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .send_json(policy.try_into()?);
+        let request = ureq::post(&format!("{}/v1/sys/policy/{}", self.host, policy_name));
+        let resp = self.upgrade_request(request).send_json(policy.try_into()?);
         if resp.ok() {
             Ok(())
         } else {
@@ -141,9 +154,9 @@ impl Client {
     /// Creates a new token or identity for accessing Vault. The token will have access to anything
     /// under the default policy and any prescribed policies.
     pub fn create_token(&self, policies: Vec<&str>) -> Result<String, Error> {
-        let resp = ureq::post(&format!("{}/v1/auth/token/create", self.host))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
+        let request = ureq::post(&format!("{}/v1/auth/token/create", self.host));
+        let resp = self
+            .upgrade_request(request)
             .send_json(json!({ "policies": policies }));
         if resp.ok() {
             let resp: CreateTokenResponse = serde_json::from_str(&resp.into_string()?)?;
@@ -155,13 +168,11 @@ impl Client {
 
     /// List all stored secrets
     pub fn list_secrets(&self, secret: &str) -> Result<Vec<String>, Error> {
-        let resp = ureq::request(
+        let request = ureq::request(
             "LIST",
             &format!("{}/v1/secret/metadata/{}", self.host, secret),
-        )
-        .set("X-Vault-Token", &self.token)
-        .timeout_connect(TIMEOUT)
-        .call();
+        );
+        let resp = self.upgrade_request(request).call();
         match resp.status() {
             200 => {
                 let resp: ReadSecretListResponse = serde_json::from_str(&resp.into_string()?)?;
@@ -175,10 +186,8 @@ impl Client {
 
     /// Delete a specific secret store
     pub fn delete_secret(&self, secret: &str) -> Result<(), Error> {
-        let resp = ureq::delete(&format!("{}/v1/secret/metadata/{}", self.host, secret))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::delete(&format!("{}/v1/secret/metadata/{}", self.host, secret));
+        let resp = self.upgrade_request(request).call();
         if resp.ok() {
             Ok(())
         } else {
@@ -188,10 +197,8 @@ impl Client {
 
     /// Read a key/value pair from a given secret store.
     pub fn read_secret(&self, secret: &str, key: &str) -> Result<ReadResponse<String>, Error> {
-        let resp = ureq::get(&format!("{}/v1/secret/data/{}", self.host, secret))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::get(&format!("{}/v1/secret/data/{}", self.host, secret));
+        let resp = self.upgrade_request(request).call();
         match resp.status() {
             200 => {
                 let mut resp: ReadSecretResponse = serde_json::from_str(&resp.into_string()?)?;
@@ -210,9 +217,9 @@ impl Client {
     }
 
     pub fn create_ed25519_key(&self, name: &str, exportable: bool) -> Result<(), Error> {
-        let resp = ureq::post(&format!("{}/v1/transit/keys/{}", self.host, name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
+        let request = ureq::post(&format!("{}/v1/transit/keys/{}", self.host, name));
+        let resp = self
+            .upgrade_request(request)
             .send_json(json!({ "type": "ed25519", "exportable": exportable }));
         match resp.status() {
             200 => Ok(()),
@@ -223,19 +230,17 @@ impl Client {
     }
 
     pub fn delete_key(&self, name: &str) -> Result<(), Error> {
-        let resp = ureq::post(&format!("{}/v1/transit/keys/{}/config", self.host, name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
+        let request = ureq::post(&format!("{}/v1/transit/keys/{}/config", self.host, name));
+        let resp = self
+            .upgrade_request(request)
             .send_json(json!({ "deletion_allowed": true }));
 
         if !resp.ok() {
             return Err(resp.into());
         }
 
-        let resp = ureq::delete(&format!("{}/v1/transit/keys/{}", self.host, name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::delete(&format!("{}/v1/transit/keys/{}", self.host, name));
+        let resp = self.upgrade_request(request).call();
         if resp.ok() {
             Ok(())
         } else {
@@ -248,13 +253,11 @@ impl Client {
         name: &str,
         version: Option<u32>,
     ) -> Result<Ed25519PrivateKey, Error> {
-        let resp = ureq::get(&format!(
+        let request = ureq::get(&format!(
             "{}/v1/transit/export/signing-key/{}",
             self.host, name
-        ))
-        .set("X-Vault-Token", &self.token)
-        .timeout_connect(TIMEOUT)
-        .call();
+        ));
+        let resp = self.upgrade_request(request).call();
         if resp.ok() {
             let export_key: ExportKeyResponse = serde_json::from_str(&resp.into_string()?)?;
             if let Some(version) = version {
@@ -273,11 +276,21 @@ impl Client {
         }
     }
 
+    pub fn import_ed25519_key(&self, name: &str, key: &Ed25519PrivateKey) -> Result<(), Error> {
+        let backup = base64::encode(serde_json::to_string(&KeyBackup::new(key))?);
+        let request = ureq::post(&format!("{}/v1/transit/restore/{}", self.host, name));
+        let resp = self
+            .upgrade_request(request)
+            .send_json(json!({ "backup": backup }));
+        match resp.status() {
+            204 => Ok(()),
+            _ => Err(resp.into()),
+        }
+    }
+
     pub fn list_keys(&self) -> Result<Vec<String>, Error> {
-        let resp = ureq::request("LIST", &format!("{}/v1/transit/keys", self.host))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::request("LIST", &format!("{}/v1/transit/keys", self.host));
+        let resp = self.upgrade_request(request).call();
         match resp.status() {
             200 => {
                 let list_keys: ListKeysResponse = serde_json::from_str(&resp.into_string()?)?;
@@ -292,10 +305,8 @@ impl Client {
         &self,
         name: &str,
     ) -> Result<Vec<ReadResponse<Ed25519PublicKey>>, Error> {
-        let resp = ureq::get(&format!("{}/v1/transit/keys/{}", self.host, name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::get(&format!("{}/v1/transit/keys/{}", self.host, name));
+        let resp = self.upgrade_request(request).call();
         match resp.status() {
             200 => {
                 let read_key: ReadKeyResponse = serde_json::from_str(&resp.into_string()?)?;
@@ -315,10 +326,8 @@ impl Client {
     }
 
     pub fn rotate_key(&self, name: &str) -> Result<(), Error> {
-        let resp = ureq::post(&format!("{}/v1/transit/keys/{}/rotate", self.host, name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::post(&format!("{}/v1/transit/keys/{}/rotate", self.host, name));
+        let resp = self.upgrade_request(request).call();
         if resp.ok() {
             Ok(())
         } else {
@@ -338,10 +347,8 @@ impl Client {
             json!({ "input": base64::encode(&data) })
         };
 
-        let resp = ureq::post(&format!("{}/v1/transit/sign/{}", self.host, name))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .send_json(data);
+        let request = ureq::post(&format!("{}/v1/transit/sign/{}", self.host, name));
+        let resp = self.upgrade_request(request).send_json(data);
         if resp.ok() {
             let signature: SignatureResponse = serde_json::from_str(&resp.into_string()?)?;
             let signature = &signature.data.signature;
@@ -359,9 +366,9 @@ impl Client {
 
     /// Create or update a key/value pair in a given secret store.
     pub fn write_secret(&self, secret: &str, key: &str, value: &str) -> Result<(), Error> {
-        let resp = ureq::put(&format!("{}/v1/secret/data/{}", self.host, secret))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
+        let request = ureq::put(&format!("{}/v1/secret/data/{}", self.host, secret));
+        let resp = self
+            .upgrade_request(request)
             .send_json(json!({ "data": { key: value } }));
         match resp.status() {
             200 => Ok(()),
@@ -372,9 +379,9 @@ impl Client {
     /// Returns whether or not the vault is unsealed (can be read from / written to). This can be
     /// queried without authentication.
     pub fn unsealed(&self) -> Result<bool, Error> {
-        let resp = ureq::get(&format!("{}/v1/sys/seal-status", self.host))
-            .timeout_connect(TIMEOUT)
-            .call();
+        let request = ureq::get(&format!("{}/v1/sys/seal-status", self.host));
+        let resp = self.upgrade_request_without_token(request).call();
+        println!("{:?}", resp.synthetic_error());
         match resp.status() {
             200 => {
                 let resp: SealStatusResponse = serde_json::from_str(&resp.into_string()?)?;
@@ -384,20 +391,146 @@ impl Client {
         }
     }
 
-    /// Returns whether or not transit is enabled at the default location "transit/"
-    pub fn transit_enabled(&self) -> Result<bool, Error> {
-        let resp = ureq::get(&format!("{}/v1/sys/mounts", self.host))
-            .set("X-Vault-Token", &self.token)
-            .timeout_connect(TIMEOUT)
-            .call();
-        match resp.status() {
-            200 => {
-                let resp: SysMountsResponse = serde_json::from_str(&resp.into_string()?)?;
-                Ok(resp.transit.is_some())
-            }
-            _ => Err(resp.into()),
-        }
+    fn upgrade_request(&self, request: ureq::Request) -> ureq::Request {
+        let mut request = self.upgrade_request_without_token(request);
+        request.set("X-Vault-Token", &self.token);
+        request
     }
+
+    fn upgrade_request_without_token(&self, mut request: ureq::Request) -> ureq::Request {
+        request.timeout_connect(TIMEOUT);
+        if let Some(tls_config) = self.tls_config.as_ref() {
+            request.set_tls_config(tls_config.clone());
+        }
+        request
+    }
+}
+
+/// Key backup / restore format
+/// Example:
+/// {
+///    "policy":{
+///       "name":"local_owner_key__consensus",
+///       "keys":{
+///          "1":{
+///             "key":"C3R5O8uAfrgv7sJmCMSLEp1R2HmkZtwdfGT/xVvZVvgCGo6TkWga/ojplJFMM+i2805X3CV7IRyNLCSJcr4AqQ==",
+///             "hmac_key":null,
+///             "time":"2020-05-29T06:27:38.1233515Z",
+///             "ec_x":null,
+///             "ec_y":null,
+///             "ec_d":null,
+///             "rsa_key":null,
+///             "public_key":"AhqOk5FoGv6I6ZSRTDPotvNOV9wleyEcjSwkiXK+AKk=",
+///             "convergent_version":0,
+///             "creation_time":1590733658
+///          }
+///       },
+///       "derived":false,
+///       "kdf":0,
+///       "convergent_encryption":false,
+///       "exportable":true,
+///       "min_decryption_version":1,
+///       "min_encryption_version":0,
+///       "latest_version":1,
+///       "archive_version":1,
+///       "archive_min_version":0,
+///       "min_available_version":0,
+///       "deletion_allowed":false,
+///       "convergent_version":0,
+///       "type":2,
+///       "backup_info":{
+///          "time":"2020-05-29T06:28:48.2937047Z",
+///          "version":1
+///       },
+///       "restore_info":null,
+///       "allow_plaintext_backup":true,
+///       "version_template":"",
+///       "storage_prefix":""
+///    }
+/// }
+///
+/// This is intended to be a very simple application of it only for the purpose of introducing a
+/// single key with no versioning history into Vault. This is /only/ for test purposes and not
+/// intended for production use cases.
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+pub struct KeyBackup {
+    policy: KeyBackupPolicy,
+}
+
+impl KeyBackup {
+    pub fn new(key: &Ed25519PrivateKey) -> Self {
+        let mut key_bytes = key.to_bytes().to_vec();
+        let pub_key_bytes = key.public_key().to_bytes();
+        key_bytes.extend(&pub_key_bytes);
+
+        let now = chrono::Utc::now();
+        let time_as_str = now.to_rfc3339();
+
+        let mut info = KeyBackupInfo::default();
+        info.key = Some(base64::encode(key_bytes));
+        info.public_key = Some(base64::encode(pub_key_bytes));
+        info.creation_time = now.timestamp_subsec_millis();
+        info.time = time_as_str.clone();
+
+        let mut key_backup = Self {
+            policy: KeyBackupPolicy::default(),
+        };
+
+        key_backup.policy.exportable = true;
+        key_backup.policy.min_decryption_version = 1;
+        key_backup.policy.latest_version = 1;
+        key_backup.policy.archive_version = 1;
+        key_backup.policy.backup_type = 2;
+        key_backup.policy.keys.insert(1, info);
+        key_backup.policy.backup_info.time = time_as_str;
+        key_backup.policy.backup_info.version = 1;
+        key_backup
+    }
+}
+
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct KeyBackupPolicy {
+    name: String,
+    keys: BTreeMap<u32, KeyBackupInfo>,
+    derived: bool,
+    kdf: u32,
+    convergent_encryption: bool,
+    exportable: bool,
+    min_decryption_version: u32,
+    min_encryption_version: u32,
+    latest_version: u32,
+    archive_version: u32,
+    archive_min_version: u32,
+    min_available_version: u32,
+    deletion_allowed: bool,
+    convergent_version: u32,
+    #[serde(rename = "type")]
+    backup_type: u32,
+    backup_info: BackupInfo,
+    restore_info: Option<()>,
+    allow_plaintext_backup: bool,
+    version_template: String,
+    storage_prefix: String,
+}
+
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct KeyBackupInfo {
+    key: Option<String>,
+    hhmac_key: Option<String>,
+    time: String,
+    ec_x: Option<String>,
+    ec_y: Option<String>,
+    ec_d: Option<String>,
+    rsa_key: Option<String>,
+    public_key: Option<String>,
+    convergent_version: u32,
+    creation_time: u32,
+}
+
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
+pub struct BackupInfo {
+    time: String,
+    version: u32,
 }
 
 /// Provides a simple wrapper for all read APIs.
@@ -713,37 +846,4 @@ struct Signature {
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 struct SealStatusResponse {
     sealed: bool,
-}
-
-/// Below is an example of SysMountsResponse. Only the fields leveraged by this framework are
-/// decoded.
-/// {
-///   "sys/": {
-///     "type": "system",
-///     "description": "system endpoint",
-///     "config": {
-///       "default_lease_ttl": 0,
-///       "max_lease_ttl": 0,
-///       "force_no_cache": false,
-///       "seal_wrap": false,
-///     }
-///   }
-/// }
-/// Note: there are some other fields that are not in the same format, hence the data structure
-/// below.
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-struct SysMountsResponse {
-    #[serde(rename = "data/")]
-    data: Option<SysMountInfo>,
-    #[serde(rename = "sys/")]
-    sys: Option<SysMountInfo>,
-    #[serde(rename = "transit/")]
-    transit: Option<SysMountInfo>,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-struct SysMountInfo {
-    #[serde(rename = "type")]
-    sys_type: String,
-    description: String,
 }

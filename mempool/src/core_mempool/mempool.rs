@@ -65,7 +65,7 @@ impl Mempool {
             sequence_number,
             is_rejected
         );
-        self.log_latency(sender.clone(), sequence_number, "e2e.latency");
+        self.log_latency(*sender, sequence_number, "e2e.latency");
         self.metrics_cache.remove(&(*sender, sequence_number));
         OP_COUNTERS.inc(&format!("remove_transaction.{}", is_rejected));
 
@@ -86,8 +86,7 @@ impl Mempool {
         } else {
             // update current cached sequence number for account
             let new_seq_number = max(current_seq_number, sequence_number + 1);
-            self.sequence_number_cache
-                .insert(sender.clone(), new_seq_number);
+            self.sequence_number_cache.insert(*sender, new_seq_number);
             self.transactions
                 .commit_transaction(&sender, new_seq_number);
         }
@@ -251,18 +250,16 @@ impl Mempool {
         &mut self,
         timeline_id: u64,
         count: usize,
-    ) -> (Vec<SignedTransaction>, u64) {
+    ) -> (Vec<(u64, SignedTransaction)>, u64) {
         self.transactions.read_timeline(timeline_id, count)
     }
 
-    /// Read transactions from timeline whose timeline id is in range
-    /// `start_timeline_id` (exclusive) to `end_timeline_id` (inclusive)
-    pub(crate) fn timeline_range(
+    /// Read transactions as (timeline_id, transaction) with timeline IDs in `timeline_ids`
+    /// Note for some requested timeline IDs, the corresponding transaction may not be in the timeline
+    pub(crate) fn filter_read_timeline(
         &mut self,
-        start_timeline_id: u64,
-        end_timeline_id: u64,
-    ) -> Vec<SignedTransaction> {
-        self.transactions
-            .timeline_range(start_timeline_id, end_timeline_id)
+        timeline_ids: Vec<u64>,
+    ) -> Vec<(u64, SignedTransaction)> {
+        self.transactions.filter_read_timeline(timeline_ids)
     }
 }

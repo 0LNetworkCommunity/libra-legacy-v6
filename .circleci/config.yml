@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@3.3.0
+
 executors:
   build-executor:
     docker:
@@ -10,6 +13,10 @@ executors:
       - image: circleci/rust:buster
     resource_class: 2xlarge+
   test-executor:
+    docker:
+      - image: circleci/rust:buster
+    resource_class: xlarge
+  premainnet-cluster-test-executor:
     docker:
       - image: circleci/rust:buster
     resource_class: xlarge
@@ -91,6 +98,7 @@ commands:
     description: Save cargo package cache for subsequent jobs
     steps:
       - save_cache:
+          name: Save cargo package cache
           key: cargo-package-cache-{{ checksum "Cargo.lock" }}
           # paths are relative to /home/circleci/project/
           paths:
@@ -101,12 +109,29 @@ commands:
     description: Restore Cargo package cache from prev job
     steps:
       - restore_cache:
+          name: Restore cargo package cache
           key: cargo-package-cache-{{ checksum "Cargo.lock" }}
       - run:
           name: Check cargo package cache
           command: |
             ls -all /usr/local/cargo
             du -ssh /usr/local/cargo
+  save_breaking_change_rev:
+    description: Save the breaking change rev since last testnet update.
+    steps:
+      - save_cache:
+          name: Save breaking change rev
+          key: testnet-{{ checksum "testnet_rev" }}
+          # paths are relative to /home/circleci/project/
+          paths:
+            - breaking_change_rev
+          when: on_fail
+  restore_breaking_change_rev:
+    description: Restore the breaking change rev since last testnet update
+    steps:
+      - restore_cache:
+          name: Restore breaking change rev
+          key: testnet-{{ checksum "testnet_rev" }}
   send_message:
     description: Send message to the specified webhook, if no webhook is set simply return.
     parameters:
@@ -222,7 +247,7 @@ jobs:
       - run:
           command: |
             rustup target add powerpc-unknown-linux-gnu
-            RUST_BACKTRACE=1 cargo build -j 16 -p transaction-builder --target powerpc-unknown-linux-gnu
+            RUST_BACKTRACE=1 cargo build -j 16 -p transaction-builder -p move-vm-types --target powerpc-unknown-linux-gnu
       - build_teardown
   build-release:
     executor: test-executor
@@ -234,28 +259,9 @@ jobs:
           name: Build release
           command: RUST_BACKTRACE=1 cargo build -j 8 --release
       - build_teardown
-  build-e2e-test:
-    executor: test-executor
-    description: Generate a list of E2E test targets to be distributed.
-    steps:
-      - build_setup
-      - attach_workspace:
-          at: /home/circleci/project
-      - restore_cargo_package_cache
-      - run:
-          name: Find all e2e tests
-          command: |
-            RUST_BACKTRACE=1 cargo x test --package testsuite -- --list | \
-              grep "::" | sed 's/: .*$//' > e2e_tests
-            cat e2e_tests
-      - persist_to_workspace:
-          root: /home/circleci/project
-          paths:
-            - e2e_tests
-            - target/debug/deps/libratest*
   run-e2e-test:
-    executor: test-executor
-    parallelism: 4
+    executor: build-executor
+    parallelism: 2
     description: Run E2E tests in parallel. Each container runs a subset of
       test targets.
     environment:
@@ -265,15 +271,15 @@ jobs:
     steps:
       - build_setup
       - restore_cargo_package_cache
-      - attach_workspace:
-          at: /home/circleci/project
       - run:
           name: Determine test targets for this container.
           # NOTE Currently the tests are distributed by name order. Once test
           # metadata is enabled, the tests can be distributed by run time to
           # speed up this job.
           command: |
-            ls -all target/debug/*
+            RUST_BACKTRACE=1 cargo x test --package testsuite -- --list | \
+              grep "::" | sed 's/: .*$//' > e2e_tests
+            cat e2e_tests
             echo -e "Found $(wc -l e2e_tests) tests."
             cat e2e_tests | circleci tests split > /tmp/tests_to_run
             echo -e "This runner will run these tests\n$(cat /tmp/tests_to_run)"
@@ -283,7 +289,6 @@ jobs:
           # +e to disable exit immediately when test timeout in the retry loop
           command: |
             set +e
-            libratest=$(find target/debug/deps/ -name "libratest*" -executable)
             num_fails=0
             for target in $(cat /tmp/tests_to_run) ; do
               retry=0
@@ -291,7 +296,7 @@ jobs:
               failed_tests=
               while [[ $status != 0 && $retry < ${E2E_RETRIES} ]]; do
                 RUST_BACKTRACE=full timeout --kill-after=370 --preserve-status 360 \
-                  $libratest $target --test-threads 1 --exact --nocapture
+                  cargo x test --package testsuite -- $target --test-threads 1 --exact --nocapture
                 status=$?
                 retry=$((retry + 1))
                 sleep 10
@@ -382,7 +387,7 @@ jobs:
       - build_teardown
   code-coverage:
     description: Run code coverage
-    executor: test-executor
+    executor: build-executor
     environment:
       MESSAGE_PAYLOAD_FILE: "/tmp/message_payload"
     steps:
@@ -448,7 +453,71 @@ jobs:
                 echo "$docker_file is renamed or removed in pull request."
               fi
             done
-
+  check-breaking-change:
+    executor: audit-executor
+    description: Detect breaking change in CLI
+    environment:
+      # NOTE The  built-in save_cache and restore_cache cmds dont accept cache
+      # path or cache key defined via env var on the fly. As a result, if you
+      # change BREAKING_CHANGE_REV_FILE or TESTNET_REV_FILE, make sure to change
+      # save_breaking_change_rev and restore_breaking_change_rev accordingly.
+      BREAKING_CHANGE_REV_FILE: "breaking_change_rev"
+      TESTNET_REV_FILE: "testnet_rev"
+    steps:
+      - build_setup
+      - run:
+          name: Prepare cache key for breaking change rev lookup
+          # NOTE save_cache and restore_cache dont take cache key defined via
+          # env var on the fly. So we are going to store the testnet rev in a
+          # file and use its checksum as cache key.
+          command: |
+            echo 'export GIT_REV=$(git rev-parse HEAD)' >> $BASH_ENV
+            git rev-parse origin/testnet > ${TESTNET_REV_FILE}
+      - restore_breaking_change_rev
+      - run:
+          name: Check exiting breaking change rev
+          command: |
+            pwd
+            if [ -f "${BREAKING_CHANGE_REV_FILE}" ]; then
+              echo "master already has breaking change $(cat ${BREAKING_CHANGE_REV_FILE})"
+              echo "Nothing to do. Halting CI..."
+              circleci step halt
+            else
+              echo "No existing breacking change rev. Will continue CI."
+            fi
+      - restore_cargo_package_cache
+      - run:
+          name: Construct CLI cmds
+          command: |
+            echo "
+              a c
+              a m 0 10 LBR false
+              q b 0
+              a c
+              a m 1 11 LBR false
+              q b 1
+              t 0 1 1 LBR
+              q b 0
+              q b 1
+              quit
+            " > /tmp/cli
+      - run:
+          name: Connect to testnet
+          # NOTE +e to disable exit immediately on failure
+          command: |
+            set +e
+            ./scripts/cli/start_cli_testnet.sh < /tmp/cli
+            status=$?
+            if [[ $status != 0 ]] ; then
+              git rev-parse HEAD > ${BREAKING_CHANGE_REV_FILE}
+              echo "Will save breaking change rev $(cat ${BREAKING_CHANGE_REV_FILE})"
+            fi
+            exit $status
+      - save_breaking_change_rev
+      - slack/status:
+          fail_only: true
+          webhook: "${WEBHOOK_BREAKING_CHANGE}"
+          failure_message: ":red_circle: <@channel> breaking change in *${GIT_REV}*"
   # build-docs and deploy-docs are adapted from
   # https://circleci.com/blog/deploying-documentation-to-github-pages-with-continuous-integration/.
   build-docs:
@@ -488,26 +557,66 @@ jobs:
           name: Deploy to gh-pages branch
           command: |
             gh-pages --dotfiles --message "[skip ci] documentation update" --dist target/doc
-
+  premainnet-cluster-test:
+    executor: premainnet-cluster-test-executor
+    description: Run cluster test against Premainnet
+    steps:
+      - run:
+          name: Set Premainnet Clustetest Environment
+          command: |
+            # Please see the runbook to determine when to update these values: https://fb.quip.com/FnSVAppvJaT9
+            echo Premainnet git revision $PREMAINNET_GIT_REVISION
+            echo 'export NODES=a11d2e31854e811eaa1f702474484dd1-21dcb00bef9f6cc0.elb.us-west-2.amazonaws.com:80,\
+            a1981c0ab68b011eab1bb02f729e0dd7-3c9f20567ceb2efd.elb.us-west-2.amazonaws.com:80,\
+            a569b48655cbc40d092379f55e630966-e1f284c7eb8add73.elb.eu-west-1.amazonaws.com:80,\
+            aa4d66f81665240019022d50326c1654-cf61b8e99df12293.elb.eu-west-1.amazonaws.com:80,\
+            a5b46d6b8b23e42538ec0de5f0680350-46d80c995764cdd9.elb.us-west-2.amazonaws.com:80,\
+            a88662827a2d341bbb7beb883d6e32b9-2e166f46672c7f2b.elb.us-east-1.amazonaws.com:80,\
+            libra-fullnode-pre-mainnet.shopifyapps.com:80,\
+            20.50.43.42:80,\
+            34.68.134.0:80,\
+            35.193.177.28:80,\
+            3.230.173.177:32251' >> $BASH_ENV
+            echo 'export CARGO_INCREMENTAL=0' >> $BASH_ENV
+            echo 'export CI_TIMEOUT="timeout 40m"' >> $BASH_ENV
+      - checkout
+      - run:
+          name: Get premain git revision
+          command: git checkout $PREMAINNET_GIT_REVISION
+      - rust_setup
+      - print_versions
+      - env_setup
+      - install_deps
+      - run:
+          name: Build config-builder
+          command: |
+            cargo build -p config-builder
+      - run:
+          name: Build cluster-test
+          command: |
+            cargo build -p cluster-test
+      - run:
+          name: Generate premaintnet config key
+          command: |
+            cargo run -p config-builder -- faucet \
+            --output-dir "/tmp/config" \
+            --validators-in-genesis $PREMAINNET_NUM_VAL \
+            --seed $PREMAINNET_CONFIG_SEED
+      - run:
+          name: Premainnet cluster test
+          command: |
+            cargo run -p cluster-test -- --swarm --emit-tx --mint-file /tmp/config/mint.key --peers $NODES
+      - slack/status:
+          fail_only: true
+          webhook: "${WEBHOOK_PREMAINNET}"
+          failure_message: "<@channel> Cluster test failed on premainnet :ferris-detective:"
 workflows:
   commit-workflow:
     jobs:
-      - build-docker:
-        filters:
-          branches:
-            ignore: gh-pages
-      - validate-cluster-test-dockerfile:
-        filters:
-          branches:
-            ignore: gh-pages
-      - terraform:
-        filters:
-          branches:
-            ignore: gh-pages
-      - prefetch-crates:
-        filters:
-          branches:
-            ignore: gh-pages
+      - build-docker
+      - validate-cluster-test-dockerfile
+      - terraform
+      - prefetch-crates
       - lint:
           requires:
             - prefetch-crates
@@ -517,12 +626,9 @@ workflows:
       - build-release:
           requires:
             - prefetch-crates
-      - build-e2e-test:
-          requires:
-            - prefetch-crates
       - run-e2e-test:
           requires:
-            - build-e2e-test
+            - prefetch-crates
       - run-unit-test:
           requires:
             - prefetch-crates
@@ -538,6 +644,12 @@ workflows:
           filters:
             branches:
               only: master
+      - check-breaking-change:
+          requires:
+            - prefetch-crates
+          filters:
+           branches:
+             only: master
 
   scheduled-workflow:
     triggers:
@@ -549,3 +661,13 @@ workflows:
     jobs:
       - audit
       - code-coverage
+
+  premainnet-clustertest:
+    triggers:
+      - schedule:
+          cron: "0 * * * *"
+          filters:
+            branches:
+              only: master
+    jobs:
+      - premainnet-cluster-test

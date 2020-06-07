@@ -4,6 +4,7 @@
 use crate::{prelude::*, LintContext};
 use guppy::graph::{PackageGraph, PackageMetadata};
 use std::path::Path;
+use x_core::WorkspaceStatus;
 
 /// Represents a linter that runs once per package.
 pub trait PackageLinter: Linter {
@@ -33,13 +34,13 @@ impl<'l> PackageContext<'l> {
         workspace_path: &'l Path,
         metadata: PackageMetadata<'l>,
     ) -> Result<Self> {
-        let default_members = project_ctx.default_workspace_members()?;
+        let default_members = project_ctx.default_members()?;
         Ok(Self {
             project_ctx,
             package_graph,
             workspace_path,
             metadata,
-            is_default_member: default_members.contains(metadata.id()),
+            is_default_member: default_members.status_of(metadata.id()) != WorkspaceStatus::Absent,
         })
     }
 

@@ -171,6 +171,8 @@ pub enum Kind {
 pub enum Type {
     /// `address`
     Address,
+    /// `signer`
+    Signer,
     /// `u8`
     U8,
     /// `u64`
@@ -356,6 +358,8 @@ pub enum Builtin {
     MoveFrom(StructName, Vec<Type>),
     /// Publish an instantiated struct object into sender's account.
     MoveToSender(StructName, Vec<Type>),
+    /// Publish an instantiated struct object into signer's (signer is the first arg) account.
+    MoveTo(StructName, Vec<Type>),
 
     /// Convert a mutable reference into an immutable one
     Freeze,
@@ -660,6 +664,7 @@ pub enum Bytecode_ {
     Exists(StructName, Vec<Type>),
     MoveFrom(StructName, Vec<Type>),
     MoveToSender(StructName, Vec<Type>),
+    MoveTo(StructName, Vec<Type>),
     Shl,
     Shr,
 }
@@ -1486,6 +1491,7 @@ impl fmt::Display for Type {
             Type::U128 => write!(f, "u128"),
             Type::Bool => write!(f, "bool"),
             Type::Address => write!(f, "address"),
+            Type::Signer => write!(f, "signer"),
             Type::Vector(ty) => write!(f, "vector<{}>", ty),
             Type::Struct(ident, tys) => write!(f, "{}{}", ident, format_type_actuals(tys)),
             Type::Reference(is_mutable, t) => {
@@ -1521,6 +1527,7 @@ impl fmt::Display for Builtin {
             Builtin::MoveToSender(t, tys) => {
                 write!(f, "move_to_sender<{}{}>", t, format_type_actuals(tys))
             }
+            Builtin::MoveTo(t, tys) => write!(f, "move_to<{}{}>", t, format_type_actuals(tys)),
             Builtin::Freeze => write!(f, "freeze"),
             Builtin::ToU8 => write!(f, "to_u8"),
             Builtin::ToU64 => write!(f, "to_u64"),
@@ -1827,6 +1834,7 @@ impl fmt::Display for Bytecode_ {
             Bytecode_::MoveToSender(n, tys) => {
                 write!(f, "MoveToSender {}{}", n, format_type_actuals(tys))
             }
+            Bytecode_::MoveTo(n, tys) => write!(f, "MoveTo {}{}", n, format_type_actuals(tys)),
             Bytecode_::Shl => write!(f, "Shl"),
             Bytecode_::Shr => write!(f, "Shr"),
         }

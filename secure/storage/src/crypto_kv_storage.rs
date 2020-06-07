@@ -1,7 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{CryptoStorage, Error, KVStorage, Policy, PublicKeyResponse, Value};
+use crate::{CryptoStorage, Error, KVStorage, PublicKeyResponse, Value};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     HashValue, PrivateKey, SigningKey, Uniform,
@@ -14,17 +14,10 @@ use rand::{rngs::OsRng, Rng, SeedableRng};
 pub trait CryptoKVStorage: KVStorage {}
 
 impl<T: CryptoKVStorage> CryptoStorage for T {
-    fn create_key(&mut self, name: &str, _policy: &Policy) -> Result<Ed25519PublicKey, Error> {
+    fn create_key(&mut self, name: &str) -> Result<Ed25519PublicKey, Error> {
         // Generate and store the new named key pair
         let (private_key, public_key) = new_ed25519_key_pair()?;
-        self.set(name, Value::Ed25519PrivateKey(private_key))?;
-
-        // Set the previous key pair version to be the newly generated key pair.
-        self.set(
-            &get_previous_version_name(name),
-            Value::Ed25519PrivateKey(self.export_private_key(name)?),
-        )?;
-
+        self.import_private_key(name, private_key)?;
         Ok(public_key)
     }
 
@@ -51,6 +44,16 @@ impl<T: CryptoKVStorage> CryptoStorage for T {
         }
 
         Err(Error::KeyVersionNotFound(version.to_string()))
+    }
+
+    fn import_private_key(&mut self, name: &str, key: Ed25519PrivateKey) -> Result<(), Error> {
+        self.set(name, Value::Ed25519PrivateKey(key))?;
+
+        // Set the previous key pair version to be the newly generated key pair.
+        self.set(
+            &get_previous_version_name(name),
+            Value::Ed25519PrivateKey(self.export_private_key(name)?),
+        )
     }
 
     fn get_public_key(&self, name: &str) -> Result<PublicKeyResponse, Error> {

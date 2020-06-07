@@ -6,7 +6,7 @@
 //! For examples on how to use these traits, see the implementations of the [`ed25519`] or
 //! [`bls12381`] modules.
 
-use crate::HashValue;
+use crate::{hash::CryptoHash, HashValue};
 use anyhow::Result;
 use core::convert::{From, TryFrom};
 use rand::{rngs::StdRng, CryptoRng, RngCore, SeedableRng};
@@ -24,6 +24,8 @@ use thiserror::Error;
 #[derive(Clone, Debug, PartialEq, Eq, Error)]
 #[error("{:?}", self)]
 pub enum CryptoMaterialError {
+    /// Struct to be signed does not serialize correctly.
+    SerializationError,
     /// Key or signature material does not deserialize correctly.
     DeserializationError,
     /// Key or signature material deserializes, but is otherwise not valid.
@@ -119,8 +121,24 @@ pub trait SigningKey:
     /// The associated signature type for this signing key.
     type SignatureMaterial: Signature<SigningKeyMaterial = Self>;
 
-    /// Signs an input message.
+    /// Signs an input message, represented by its `HashValue`
     fn sign_message(&self, message: &HashValue) -> Self::SignatureMaterial;
+
+    /// Signs an object that has an distinct domain-separation hasher and
+    /// that we know how to serialize. There is no pre-hashing into a
+    /// `HashValue` to be done by the caller.
+    ///
+    /// For the moment, this signature is incompatible with the conversion into
+    /// a `HashValue` above. We intend to deprecate `sign message` in favor of
+    /// the present function soon.
+    fn sign<T: CryptoHash + Serialize>(
+        &self,
+        message: &T,
+    ) -> Result<Self::SignatureMaterial, CryptoMaterialError>;
+
+    /// Signs a non-hash input message. For testing only.
+    #[cfg(any(test, feature = "fuzzing"))]
+    fn sign_arbitrary_message(&self, message: &[u8]) -> Self::SignatureMaterial;
 
     /// Returns the associated verifying key
     fn verifying_key(&self) -> Self::VerifyingKeyMaterial {
@@ -176,6 +194,15 @@ pub trait VerifyingKey:
         signature.verify(message, self)
     }
 
+    /// We provide the striaghtfoward implementation which dispatches to the signature.
+    fn verify_struct_signature<T: CryptoHash + Serialize>(
+        &self,
+        message: &T,
+        signature: &Self::SignatureMaterial,
+    ) -> Result<()> {
+        signature.verify_struct_msg(message, self)
+    }
+
     /// We provide the implementation which dispatches to the signature.
     fn batch_verify_signatures(
         message: &HashValue,
@@ -216,6 +243,14 @@ pub trait Signature:
 
     /// The verification function.
     fn verify(&self, message: &HashValue, public_key: &Self::VerifyingKeyMaterial) -> Result<()>;
+
+    /// Verification for a struct we unabmiguously know how to serialize and
+    /// that we have a domain separation prefix for..
+    fn verify_struct_msg<T: CryptoHash + Serialize>(
+        &self,
+        message: &T,
+        public_key: &Self::VerifyingKeyMaterial,
+    ) -> Result<()>;
 
     /// Native verification function.
     fn verify_arbitrary_msg(

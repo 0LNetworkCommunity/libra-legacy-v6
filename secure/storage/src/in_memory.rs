@@ -1,7 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{CryptoKVStorage, Error, GetResponse, KVStorage, Storage, Value};
+use crate::{CryptoKVStorage, Error, GetResponse, KVStorage, Value};
 use libra_secure_time::{RealTimeService, TimeService};
 use std::collections::HashMap;
 
@@ -23,11 +23,6 @@ impl InMemoryStorageInternal<RealTimeService> {
     pub fn new() -> Self {
         Self::new_with_time_service(RealTimeService::new())
     }
-
-    /// Public convenience function to return a new InMemoryStorage based Storage.
-    pub fn new_storage() -> Box<dyn Storage> {
-        Box::new(Self::new())
-    }
 }
 
 impl<T: TimeService> InMemoryStorageInternal<T> {
@@ -40,8 +35,8 @@ impl<T: TimeService> InMemoryStorageInternal<T> {
 }
 
 impl<T: Send + Sync + TimeService> KVStorage for InMemoryStorageInternal<T> {
-    fn available(&self) -> bool {
-        true
+    fn available(&self) -> Result<(), Error> {
+        Ok(())
     }
 
     fn get(&self, key: &str) -> Result<GetResponse, Error> {

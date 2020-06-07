@@ -3,7 +3,7 @@
 
 use crate::transport::Transport;
 use futures::{future, stream::Stream};
-use libra_network_address::{NetworkAddress, Protocol};
+use libra_network_address::{parse_memory, NetworkAddress, Protocol};
 use memsocket::{MemoryListener, MemorySocket};
 use std::{
     io,
@@ -12,7 +12,7 @@ use std::{
 };
 
 /// Transport to build in-memory connections
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct MemoryTransport;
 
 impl Transport for MemoryTransport {
@@ -26,47 +26,54 @@ impl Transport for MemoryTransport {
         &self,
         addr: NetworkAddress,
     ) -> Result<(Self::Listener, NetworkAddress), Self::Error> {
-        let port = parse_addr(&addr)?;
+        let port = match addr.as_slice() {
+            [Protocol::Memory(port)] => *port,
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!(
+                        "Unexpected listening network address: '{}', \
+                         expected format: '/memory/<port>'",
+                        addr
+                    ),
+                ))
+            }
+        };
+
         let listener = MemoryListener::bind(port)?;
         let actual_port = listener.local_addr();
-        let actual_addr = NetworkAddress::from(Protocol::Memory(actual_port));
+        let listen_addr = NetworkAddress::from(Protocol::Memory(actual_port));
 
-        Ok((Listener { inner: listener }, actual_addr))
+        Ok((Listener::new(listener), listen_addr))
     }
 
     fn dial(&self, addr: NetworkAddress) -> Result<Self::Outbound, Self::Error> {
-        let port = parse_addr(&addr)?;
+        let (port, _addr_suffix) = parse_memory(addr.as_slice()).ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!(
+                    "Unexpected dialing network address: '{}', \
+                     expected format: '/memory/<port>/..'",
+                    addr
+                ),
+            )
+        })?;
+        // TODO(philiphayes): base memory transport should not allow trailing protocols
         let socket = MemorySocket::connect(port)?;
         Ok(future::ready(Ok(socket)))
     }
-}
-
-fn parse_addr(addr: &NetworkAddress) -> io::Result<u16> {
-    let mut iter = addr.as_slice().iter();
-
-    let port = if let Some(Protocol::Memory(port)) = iter.next() {
-        *port
-    } else {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("Invalid NetworkAddress '{:?}'", addr),
-        ));
-    };
-
-    if iter.next().is_some() {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("Invalid NetworkAddress '{:?}'", addr),
-        ));
-    }
-
-    Ok(port)
 }
 
 #[must_use = "streams do nothing unless polled"]
 #[derive(Debug)]
 pub struct Listener {
     inner: MemoryListener,
+}
+
+impl Listener {
+    pub fn new(inner: MemoryListener) -> Self {
+        Listener { inner }
+    }
 }
 
 impl Stream for Listener {

@@ -70,6 +70,7 @@ RawTransaction:
         TYPENAME: TransactionPayload
     - max_gas_amount: U64
     - gas_unit_price: U64
+    - gas_currency_code: STR
     - expiration_time: U64
 Script:
   STRUCT:
@@ -115,17 +116,23 @@ Transaction:
 TransactionArgument:
   ENUM:
     0:
+      U8:
+        NEWTYPE: U8
+    1:
       U64:
         NEWTYPE: U64
-    1:
+    2:
+      U128:
+        NEWTYPE: U128
+    3:
       Address:
         NEWTYPE:
           TYPENAME: AccountAddress
-    2:
+    4:
       U8Vector:
         NEWTYPE:
           SEQ: U8
-    3:
+    5:
       Bool:
         NEWTYPE: BOOL
 TransactionAuthenticator:
@@ -173,10 +180,12 @@ TypeTag:
     4:
       Address: UNIT
     5:
+      Signer: UNIT
+    6:
       Vector:
         NEWTYPE:
           TYPENAME: TypeTag
-    6:
+    7:
       Struct:
         NEWTYPE:
           TYPENAME: StructTag

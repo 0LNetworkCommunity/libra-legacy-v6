@@ -6,7 +6,7 @@
 use crate::{
     ast::QualifiedSymbol,
     env::{GlobalEnv, ModuleId, StructEnv, StructId},
-    symbol::SymbolPool,
+    symbol::{Symbol, SymbolPool},
 };
 use std::{collections::BTreeMap, fmt, fmt::Formatter};
 
@@ -24,6 +24,8 @@ pub enum Type {
 
     // Types only appearing in specifications
     Fun(Vec<Type>, Box<Type>),
+    TypeDomain(Box<Type>),
+    TypeLocal(Symbol),
 
     // Temporary types used during type checking
     Error,
@@ -41,10 +43,11 @@ pub enum PrimitiveType {
     U64,
     U128,
     Address,
-
+    Signer,
     // Types only appearing in specifications
     Num,
     Range,
+    TypeValue,
 }
 
 /// A type substitution.
@@ -172,6 +175,7 @@ impl Type {
             }
             Type::Tuple(args) => Type::Tuple(replace_vec(args)),
             Type::Vector(et) => Type::Vector(Box::new(et.replace(params, subs))),
+            Type::TypeDomain(et) => Type::TypeDomain(Box::new(et.replace(params, subs))),
             _ => self.clone(),
         }
     }
@@ -322,6 +326,14 @@ impl Substitution {
             (Type::Vector(e1), Type::Vector(e2)) => {
                 return self.unify(display_context, &*e1, &*e2);
             }
+            (Type::TypeDomain(e1), Type::TypeDomain(e2)) => {
+                return self.unify(display_context, &*e1, &*e2);
+            }
+            (Type::TypeLocal(s1), Type::TypeLocal(s2)) => {
+                if s1 == s2 {
+                    return Ok(t1.clone());
+                }
+            }
             _ => {}
         }
 
@@ -416,7 +428,17 @@ pub enum TypeDisplayContext<'a> {
     },
     WithEnv {
         env: &'a GlobalEnv,
+        type_param_names: Option<Vec<Symbol>>,
     },
+}
+
+impl<'a> TypeDisplayContext<'a> {
+    pub fn symbol_pool(&self) -> &SymbolPool {
+        match self {
+            TypeDisplayContext::WithEnv { env, .. } => env.symbol_pool(),
+            TypeDisplayContext::WithoutEnv { symbol_pool, .. } => symbol_pool,
+        }
+    }
 }
 
 /// Helper for type displays.
@@ -437,7 +459,7 @@ impl Type {
 impl<'a> fmt::Display for TypeDisplay<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         use Type::*;
-        let comma_list = |f: &mut Formatter<'_>, ts: &[Type]| {
+        let comma_list = |f: &mut Formatter<'_>, ts: &[Type]| -> fmt::Result {
             let mut first = true;
             for t in ts {
                 if first {
@@ -457,6 +479,8 @@ impl<'a> fmt::Display for TypeDisplay<'a> {
                 f.write_str(")")
             }
             Vector(t) => write!(f, "vector<{}>", t.display(self.context)),
+            TypeDomain(t) => write!(f, "domain<{}>", t.display(self.context)),
+            TypeLocal(s) => write!(f, "{}", s.display(self.context.symbol_pool())),
             Fun(ts, t) => {
                 f.write_str("|")?;
                 comma_list(f, ts)?;
@@ -475,7 +499,7 @@ impl<'a> fmt::Display for TypeDisplay<'a> {
                             f.write_str("??unknown??")?;
                         }
                     }
-                    TypeDisplayContext::WithEnv { env } => {
+                    TypeDisplayContext::WithEnv { env, .. } => {
                         let func_env = env.get_module(*mid).into_struct(*sid);
                         write!(
                             f,
@@ -499,9 +523,24 @@ impl<'a> fmt::Display for TypeDisplay<'a> {
                 }
                 write!(f, "{}", t.display(self.context))
             }
-            TypeParameter(idx) => write!(f, "#{}", idx),
+            TypeParameter(idx) => {
+                if let TypeDisplayContext::WithEnv {
+                    env,
+                    type_param_names: Some(names),
+                } = self.context
+                {
+                    let idx = *idx as usize;
+                    if idx < names.len() {
+                        write!(f, "{}", names[idx].display(env.symbol_pool()))
+                    } else {
+                        write!(f, "#{}", idx)
+                    }
+                } else {
+                    write!(f, "#{}", idx)
+                }
+            }
             Var(idx) => write!(f, "?{}", idx),
-            Error => f.write_str("?error"),
+            Error => f.write_str("*error*"),
         }
     }
 }
@@ -515,8 +554,10 @@ impl fmt::Display for PrimitiveType {
             U64 => f.write_str("u64"),
             U128 => f.write_str("u128"),
             Address => f.write_str("address"),
+            Signer => f.write_str("signer"),
             Range => f.write_str("range"),
             Num => f.write_str("num"),
+            TypeValue => f.write_str("type"),
         }
     }
 }

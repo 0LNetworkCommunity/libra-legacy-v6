@@ -11,6 +11,7 @@
 
 mod account_universe;
 mod create_account;
+mod data_store;
 mod failed_transaction_tests;
 mod genesis;
 mod mint;
@@ -20,6 +21,7 @@ mod peer_to_peer;
 mod rotate_key;
 mod scripts;
 mod transaction_builder;
+mod transaction_fees;
 mod validator_set_management;
 mod verify_txn;
 mod write_set;

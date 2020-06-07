@@ -9,7 +9,7 @@ use bytecode_verifier::VerifiedModule;
 use compiler::Compiler;
 use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use libra_types::{
-    account_config::{lbr_type_tag, CORE_CODE_ADDRESS},
+    account_config::{lbr_type_tag, CORE_CODE_ADDRESS, LBR_NAME},
     on_chain_config::VMPublishingOption,
     test_helpers::transaction_test_helpers,
     transaction::{
@@ -31,8 +31,7 @@ fn verify_signature() {
     let private_key = Ed25519PrivateKey::generate_for_testing();
     let program = encode_transfer_with_metadata_script(
         lbr_type_tag(),
-        sender.address(),
-        vec![],
+        *sender.address(),
         100,
         vec![],
         vec![],
@@ -61,8 +60,7 @@ fn verify_reserved_sender() {
     let private_key = Ed25519PrivateKey::generate_for_testing();
     let program = encode_transfer_with_metadata_script(
         lbr_type_tag(),
-        sender.address(),
-        vec![],
+        *sender.address(),
         100,
         vec![],
         vec![],
@@ -97,8 +95,12 @@ fn verify_simple_payment() {
     let mut args: Vec<TransactionArgument> = Vec::new();
     args.push(TransactionArgument::Address(*receiver.address()));
     args.push(TransactionArgument::U64(transfer_amount));
+    args.push(TransactionArgument::U8Vector(vec![]));
+    args.push(TransactionArgument::U8Vector(vec![]));
 
-    let p2p_script = StdlibScript::PeerToPeer.compiled_bytes().into_vec();
+    let p2p_script = StdlibScript::PeerToPeerWithMetadata
+        .compiled_bytes()
+        .into_vec();
 
     // Create a new transaction that has the exact right sequence number.
     let txn = sender.account().create_signed_txn_with_args(
@@ -108,6 +110,7 @@ fn verify_simple_payment() {
         10, // this should be programmable but for now is 1 more than the setup
         100_000,
         1,
+        LBR_NAME.to_owned(),
     );
     assert_eq!(executor.verify_transaction(txn).status(), None);
 
@@ -120,6 +123,7 @@ fn verify_simple_payment() {
         10, // this should be programmable but for now is 1 more than the setup
         100_000,
         1,
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -135,6 +139,7 @@ fn verify_simple_payment() {
         1,
         100_000,
         1,
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -150,6 +155,7 @@ fn verify_simple_payment() {
         11,
         100_000,
         1,
+        LBR_NAME.to_owned(),
     );
     assert_prologue_disparity!(
         executor.verify_transaction(txn.clone()).status() => None,
@@ -167,6 +173,7 @@ fn verify_simple_payment() {
         10,
         1_000_000,
         1,
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -188,6 +195,7 @@ fn verify_simple_payment() {
         10,
         10_000,
         1,
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -211,6 +219,7 @@ fn verify_simple_payment() {
         10,
         1_000_000,
         GasConstants::default().max_price_per_gas_unit.get() + 1,
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -241,6 +250,7 @@ fn verify_simple_payment() {
         10,
         1,
         GasConstants::default().max_price_per_gas_unit.get(),
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -255,6 +265,7 @@ fn verify_simple_payment() {
         10,
         GasConstants::default().min_transaction_gas_units.get() - 1,
         GasConstants::default().max_price_per_gas_unit.get(),
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -269,6 +280,7 @@ fn verify_simple_payment() {
         10,
         GasConstants::default().maximum_number_of_gas_units.get() + 1,
         GasConstants::default().max_price_per_gas_unit.get(),
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -283,6 +295,7 @@ fn verify_simple_payment() {
         10,
         GasConstants::default().maximum_number_of_gas_units.get() + 1,
         GasConstants::default().max_price_per_gas_unit.get(),
+        LBR_NAME.to_owned(),
     );
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -302,12 +315,13 @@ fn verify_simple_payment() {
         10,
         100_000,
         1,
+        LBR_NAME.to_owned(),
     );
     assert_eq!(
         executor.execute_transaction(txn).status(),
         &TransactionStatus::Keep(
             VMStatus::new(StatusCode::TYPE_MISMATCH)
-                .with_message("argument length mismatch: expected 3 got 2".to_string())
+                .with_message("argument length mismatch: expected 5 got 3".to_string())
         )
     );
 
@@ -319,13 +333,14 @@ fn verify_simple_payment() {
         10,
         100_000,
         1,
+        LBR_NAME.to_owned(),
     );
 
     assert_eq!(
         executor.execute_transaction(txn).status(),
         &TransactionStatus::Keep(
             VMStatus::new(StatusCode::TYPE_MISMATCH)
-                .with_message("argument length mismatch: expected 3 got 0".to_string())
+                .with_message("argument length mismatch: expected 5 got 1".to_string())
         )
     );
 }
@@ -340,10 +355,15 @@ pub fn test_whitelist() {
 
     // When CustomScripts is off, a garbage script should be rejected with Keep(UnknownScript)
     let random_script = vec![];
-    let txn =
-        sender
-            .account()
-            .create_signed_txn_with_args(random_script, vec![], vec![], 10, 100_000, 1);
+    let txn = sender.account().create_signed_txn_with_args(
+        random_script,
+        vec![],
+        vec![],
+        10,
+        100_000,
+        1,
+        LBR_NAME.to_owned(),
+    );
 
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
@@ -364,10 +384,15 @@ pub fn test_arbitrary_script_execution() {
     // If CustomScripts is on, result should be Keep(DeserializationError). If it's off, the
     // result should be Keep(UnknownScript)
     let random_script = vec![];
-    let txn =
-        sender
-            .account()
-            .create_signed_txn_with_args(random_script, vec![], vec![], 10, 100_000, 1);
+    let txn = sender.account().create_signed_txn_with_args(
+        random_script,
+        vec![],
+        vec![],
+        10,
+        100_000,
+        1,
+        LBR_NAME.to_owned(),
+    );
 
     assert_eq!(executor.verify_transaction(txn.clone()).status(), None);
     let status = executor.execute_transaction(txn).status().clone();
@@ -411,7 +436,7 @@ pub fn test_no_publishing() {
     let random_module = compile_module_with_address(sender.address(), "file_name", &module);
     let txn = sender
         .account()
-        .create_user_txn(random_module, 10, 100_000, 1);
+        .create_user_txn(random_module, 10, 100_000, 1, LBR_NAME.to_owned());
     assert_prologue_parity!(
         executor.verify_transaction(txn.clone()).status(),
         executor.execute_transaction(txn).status(),
@@ -454,7 +479,7 @@ pub fn test_open_publishing_invalid_address() {
     let random_module = compile_module_with_address(receiver.address(), "file_name", &module);
     let txn = sender
         .account()
-        .create_user_txn(random_module, 10, 100_000, 1);
+        .create_user_txn(random_module, 10, 100_000, 1, LBR_NAME.to_owned());
 
     // TODO: This is not verified for now.
     // verify and fail because the addresses don't match
@@ -505,7 +530,7 @@ pub fn test_open_publishing() {
     let random_module = compile_module_with_address(sender.address(), "file_name", &program);
     let txn = sender
         .account()
-        .create_user_txn(random_module, 10, 100_000, 1);
+        .create_user_txn(random_module, 10, 100_000, 1, LBR_NAME.to_owned());
     assert_eq!(executor.verify_transaction(txn.clone()).status(), None);
     assert_eq!(
         executor.execute_transaction(txn).status(),
@@ -570,6 +595,7 @@ fn test_dependency_fails_verification() {
         10,
         100_000,
         1,
+        LBR_NAME.to_owned(),
     );
     // As of now, we don't verify dependencies in verify_transaction.
     assert_eq!(executor.verify_transaction(txn.clone()).status(), None);

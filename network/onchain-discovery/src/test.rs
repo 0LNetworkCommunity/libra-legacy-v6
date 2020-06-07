@@ -26,7 +26,7 @@ use libra_types::{
 use libra_vm::LibraVM;
 use libradb::LibraDB;
 use network::{
-    connectivity_manager::ConnectivityRequest,
+    connectivity_manager::{ConnectivityRequest, DiscoverySource},
     peer_manager::{
         ConnectionNotification, ConnectionRequestSender, PeerManagerNotification,
         PeerManagerRequest, PeerManagerRequestSender,
@@ -163,11 +163,9 @@ fn read_validator_set(libra_db: &Arc<dyn DbReader>) -> ValidatorSet {
 }
 
 fn gen_configs(count: usize) -> Vec<NodeConfig> {
-    config_builder::ValidatorConfig::new()
-        .validators(count)
-        .build_common(true, false)
-        .unwrap()
-        .0
+    let mut node_config = config_builder::ValidatorConfig::new();
+    node_config.num_nodes = count;
+    node_config.build_common(false).unwrap().0
 }
 
 fn setup_storage_service_and_executor(
@@ -258,7 +256,7 @@ fn service_handles_remote_query() {
     ::libra_logger::Logger::new().environment_only(true).init();
     let mut rt = Runtime::new().unwrap();
     let config = gen_configs(1).swap_remove(0);
-    let self_peer_id = config.validator_network.as_ref().unwrap().peer_id;
+    let self_peer_id = config.validator_network.as_ref().unwrap().peer_id();
     let role = config.base.role;
 
     let (libra_db, _executor, waypoint) = setup_storage_service_and_executor(&config);
@@ -285,7 +283,7 @@ fn service_handles_remote_query() {
     let query_res =
         rt.block_on(mock_network_tx.query_discovery_set(other_peer_id, query_req.clone()));
 
-    // verify response and ratchet epoch_info
+    // verify response and ratchet epoch_state
     let (trusted_state_change, opt_validator_set) = query_res
         .verify_and_ratchet(&query_req, &trusted_state)
         .unwrap();
@@ -315,7 +313,7 @@ fn queries_storage_on_tick() {
     ::libra_logger::Logger::new().environment_only(true).init();
     let mut rt = Runtime::new().unwrap();
     let config = gen_configs(1).swap_remove(0);
-    let self_peer_id = config.validator_network.as_ref().unwrap().peer_id;
+    let self_peer_id = config.validator_network.as_ref().unwrap().peer_id();
     let role = config.base.role;
 
     let (libra_db, _executor, waypoint) = setup_storage_service_and_executor(&config);
@@ -340,29 +338,26 @@ fn queries_storage_on_tick() {
     drop(peer_query_ticker_tx);
     drop(storage_query_ticker_tx);
 
-    // expect updates for all other nodes except ourselves
+    // expect updates for all nodes
     let validator_set = DiscoverySetInternal::from_validator_set(role, validator_set);
     let expected_update_reqs = validator_set
         .0
         .into_iter()
-        .filter(|(peer_id, _validator_info)| &self_peer_id != peer_id)
         .map(|(peer_id, DiscoveryInfoInternal(_id_pubkey, addrs))| (peer_id, addrs))
         .collect::<HashMap<_, _>>();
 
     // onchain discovery should notify connectivity manager about new peer infos
     let update_reqs = rt.block_on(conn_mgr_reqs_rx.collect::<Vec<_>>());
-    let update_reqs = update_reqs
-        .into_iter()
-        .map(|req| match req {
-            ConnectivityRequest::UpdateAddresses(_src, peer_id, addrs) => (peer_id, addrs),
-            _ => panic!(
-                "Unexpected ConnectivityRequest, expected UpdateAddresses: {:?}",
-                req
-            ),
-        })
-        .collect::<HashMap<_, _>>();
-
-    assert_eq!(expected_update_reqs, update_reqs);
+    assert_eq!(1, update_reqs.len());
+    match update_reqs.first() {
+        Some(ConnectivityRequest::UpdateAddresses(DiscoverySource::OnChain, update_map)) => {
+            assert_eq!(expected_update_reqs, *update_map)
+        }
+        x => panic!(
+            "Unexpected ConnectivityRequest, expected UpdateAddresses: {:?}",
+            x
+        ),
+    }
 
     // onchain discovery actor should terminate
     rt.block_on(f_onchain_discovery).unwrap();
@@ -378,7 +373,7 @@ fn queries_peers_on_tick() {
     // server setup
 
     let server_config = configs.swap_remove(0);
-    let server_peer_id = server_config.validator_network.as_ref().unwrap().peer_id;
+    let server_peer_id = server_config.validator_network.as_ref().unwrap().peer_id();
     let server_role = server_config.base.role;
 
     let (server_libra_db, _server_executor, waypoint) =
@@ -403,7 +398,7 @@ fn queries_peers_on_tick() {
     // client setup
 
     let client_config = configs.swap_remove(0);
-    let client_peer_id = client_config.validator_network.as_ref().unwrap().peer_id;
+    let client_peer_id = client_config.validator_network.as_ref().unwrap().peer_id();
     let client_role = client_config.base.role;
 
     let (libra_db, _executor, waypoint) = setup_storage_service_and_executor(&client_config);
@@ -448,24 +443,21 @@ fn queries_peers_on_tick() {
     let expected_update_reqs = validator_set
         .0
         .into_iter()
-        .filter(|(peer_id, _discovery_info)| &client_peer_id != peer_id)
         .map(|(peer_id, DiscoveryInfoInternal(_id_pubkey, addrs))| (peer_id, addrs))
         .collect::<HashMap<_, _>>();
 
     // client should notify its connectivity manager about new peer infos
     let update_reqs = rt.block_on(client_conn_mgr_reqs_rx.collect::<Vec<_>>());
-    let update_reqs = update_reqs
-        .into_iter()
-        .map(|req| match req {
-            ConnectivityRequest::UpdateAddresses(_src, peer_id, addrs) => (peer_id, addrs),
-            _ => panic!(
-                "Unexpected ConnectivityRequest, expected UpdateAddresses: {:?}",
-                req
-            ),
-        })
-        .collect::<HashMap<_, _>>();
-
-    assert_eq!(expected_update_reqs, update_reqs);
+    assert_eq!(1, update_reqs.len());
+    match update_reqs.first() {
+        Some(ConnectivityRequest::UpdateAddresses(DiscoverySource::OnChain, update_map)) => {
+            assert_eq!(expected_update_reqs, *update_map)
+        }
+        x => panic!(
+            "Unexpected ConnectivityRequest, expected UpdateAddresses: {:?}",
+            x
+        ),
+    }
 
     // client should shutdown completely
     rt.block_on(f_client_onchain_discovery).unwrap();

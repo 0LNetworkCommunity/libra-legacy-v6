@@ -305,18 +305,17 @@ fn find_token(file: &'static str, text: &str, start_offset: usize) -> Result<(To
             }
         }
         'A'..='Z' | 'a'..='z' | '_' => {
-            if text.starts_with("x\"") {
-                // Search the current source line for a closing quote.
-                let line = text.lines().next().unwrap();
-                let len = line[2..].find('"').unwrap_or_else(|| line.len() - 2);
-                if line.len() == 2 || !&text[(2 + len)..].starts_with('"') {
-                    let loc = make_loc(file, start_offset, start_offset + 2 + len);
-                    return Err(vec![(
-                        loc,
-                        "Missing closing quote (\") after byte string".to_string(),
-                    )]);
+            if text.starts_with("x\"") || text.starts_with("b\"") {
+                let line = &text.lines().next().unwrap()[2..];
+                match get_string_len(line) {
+                    Some(last_quote) => (Tok::ByteStringValue, 2 + last_quote + 1),
+                    None => {
+                        return Err(vec![(
+                            make_loc(file, start_offset, start_offset + line.len() + 2),
+                            "Missing closing quote (\") after byte string".to_string(),
+                        )])
+                    }
                 }
-                (Tok::ByteStringValue, 2 + len + 1)
             } else {
                 let len = get_name_len(&text);
                 (get_name_token(&text[..len]), len)
@@ -449,6 +448,24 @@ fn get_hex_digits_len(text: &str) -> usize {
         _ => true,
     })
     .unwrap_or_else(|| text.len())
+}
+
+// Return the length of the quoted string, or None if there is no closing quote.
+fn get_string_len(text: &str) -> Option<usize> {
+    let mut pos = 0;
+    let mut iter = text.chars();
+    while let Some(chr) = iter.next() {
+        if chr == '\\' {
+            // Skip over the escaped character (e.g., a quote or another backslash)
+            if iter.next().is_some() {
+                pos += 1;
+            }
+        } else if chr == '"' {
+            return Some(pos);
+        }
+        pos += 1;
+    }
+    None
 }
 
 fn get_name_token(name: &str) -> Tok {

@@ -9,7 +9,7 @@ use crate::{
 };
 use move_ir_types::location::*;
 use petgraph::{algo::toposort as petgraph_toposort, graphmap::DiGraphMap};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 //**************************************************************************************************
 // Entry
@@ -121,9 +121,6 @@ fn module_defs(context: &mut Context, modules: &UniqueMap<ModuleIdent, N::Module
 
 fn module(context: &mut Context, mident: ModuleIdent, mdef: &N::ModuleDefinition) {
     context.current_module = Some(mident);
-    mdef.uses
-        .iter()
-        .for_each(|(mident, loc)| context.add_usage(mident, *loc));
     mdef.structs
         .iter()
         .for_each(|(_, sdef)| struct_def(context, sdef));
@@ -151,7 +148,7 @@ fn function_signature(context: &mut Context, sig: &N::FunctionSignature) {
     type_(context, &sig.return_type)
 }
 
-fn function_acquires(_context: &mut Context, _acqs: &BTreeSet<StructName>) {}
+fn function_acquires(_context: &mut Context, _acqs: &BTreeMap<StructName, Loc>) {}
 
 //**************************************************************************************************
 // Types
@@ -225,7 +222,7 @@ fn lvalue(context: &mut Context, sp!(loc, a_): &N::LValue) {
 fn exp(context: &mut Context, sp!(loc, e_): &N::Exp) {
     use N::Exp_ as E;
     match e_ {
-        E::Unit
+        E::Unit { .. }
         | E::UnresolvedError
         | E::Break
         | E::Continue
@@ -300,6 +297,7 @@ fn builtin_function(context: &mut Context, sp!(_, bf_): &N::BuiltinFunction) {
     use N::BuiltinFunction_ as B;
     match bf_ {
         B::MoveToSender(bt_opt)
+        | B::MoveTo(bt_opt)
         | B::MoveFrom(bt_opt)
         | B::BorrowGlobal(_, bt_opt)
         | B::Exists(bt_opt)

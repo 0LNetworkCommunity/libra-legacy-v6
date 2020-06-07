@@ -10,8 +10,11 @@ use crate::{
 use anyhow::{format_err, Result};
 use channel::{self, libra_channel, message_queues::QueueStyle};
 use futures::channel::{mpsc, oneshot};
-use libra_config::config::{NetworkConfig, NodeConfig};
-use libra_types::{mempool_status::MempoolStatusCode, transaction::SignedTransaction, PeerId};
+use libra_config::{
+    config::{NetworkConfig, NodeConfig},
+    network_id::NetworkId,
+};
+use libra_types::{mempool_status::MempoolStatusCode, transaction::SignedTransaction};
 use network::peer_manager::{
     conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender,
 };
@@ -48,11 +51,9 @@ impl MockSharedMempool {
             .build()
             .expect("[mock shared mempool] failed to create runtime");
 
-        let peer_id = PeerId::random();
-        let mut validator_network_config = NetworkConfig::default();
-        validator_network_config.peer_id = peer_id;
         let mut config = NodeConfig::random();
-        config.validator_network = Some(validator_network_config);
+        config.validator_network = Some(NetworkConfig::network_with_id(NetworkId::Validator));
+        let peer_id = config.validator_network.as_ref().unwrap().peer_id();
 
         let mempool = Arc::new(Mutex::new(CoreMempool::new(&config)));
         let (network_reqs_tx, _network_reqs_rx) =
@@ -136,6 +137,10 @@ impl MockSharedMempool {
             .mempool
             .lock()
             .expect("[mock shared mempool] failed to acquire mempool lock");
-        pool.read_timeline(timeline_id, count).0
+        pool.read_timeline(timeline_id, count)
+            .0
+            .into_iter()
+            .map(|(_, txn)| txn)
+            .collect()
     }
 }

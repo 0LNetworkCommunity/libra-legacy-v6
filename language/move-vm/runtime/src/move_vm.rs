@@ -4,13 +4,11 @@
 use crate::runtime::VMRuntime;
 use bytecode_verifier::VerifiedModule;
 use move_core_types::{
-    gas_schedule::CostTable,
+    account_address::AccountAddress,
     identifier::IdentStr,
     language_storage::{ModuleId, TypeTag},
 };
-use move_vm_types::{
-    chain_state::ChainState, transaction_metadata::TransactionMetadata, values::Value,
-};
+use move_vm_types::{data_store::DataStore, gas_schedule::CostStrategy, values::Value};
 use vm::errors::VMResult;
 
 pub struct MoveVM {
@@ -24,55 +22,55 @@ impl MoveVM {
         }
     }
 
-    pub fn execute_function<S: ChainState>(
+    pub fn execute_function(
         &self,
         module: &ModuleId,
         function_name: &IdentStr,
-        gas_schedule: &CostTable,
-        chain_state: &mut S,
-        txn_data: &TransactionMetadata,
         ty_args: Vec<TypeTag>,
         args: Vec<Value>,
+        sender: AccountAddress,
+        data_store: &mut dyn DataStore,
+        cost_strategy: &mut CostStrategy,
     ) -> VMResult<()> {
         self.runtime.execute_function(
-            chain_state,
-            txn_data,
-            gas_schedule,
             module,
             function_name,
             ty_args,
             args,
+            sender,
+            data_store,
+            cost_strategy,
         )
     }
 
-    pub fn execute_script<S: ChainState>(
+    pub fn execute_script(
         &self,
         script: Vec<u8>,
-        gas_schedule: &CostTable,
-        chain_state: &mut S,
-        txn_data: &TransactionMetadata,
         ty_args: Vec<TypeTag>,
         args: Vec<Value>,
+        sender: AccountAddress,
+        data_store: &mut dyn DataStore,
+        cost_strategy: &mut CostStrategy,
     ) -> VMResult<()> {
         self.runtime
-            .execute_script(chain_state, txn_data, gas_schedule, script, ty_args, args)
+            .execute_script(script, ty_args, args, sender, data_store, cost_strategy)
     }
 
-    pub fn publish_module<S: ChainState>(
+    pub fn publish_module(
         &self,
         module: Vec<u8>,
-        chain_state: &mut S,
-        txn_data: &TransactionMetadata,
+        sender: AccountAddress,
+        data_store: &mut dyn DataStore,
     ) -> VMResult<()> {
-        self.runtime.publish_module(module, chain_state, txn_data)
+        self.runtime.publish_module(module, &sender, data_store)
     }
 
-    pub fn cache_module<S: ChainState>(
+    pub fn cache_module(
         &self,
         module: VerifiedModule,
-        chain_state: &mut S,
+        data_store: &mut dyn DataStore,
     ) -> VMResult<()> {
-        self.runtime.cache_module(module, chain_state)
+        self.runtime.cache_module(module, data_store)
     }
 }
 

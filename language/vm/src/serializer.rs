@@ -93,6 +93,7 @@ struct ModuleSerializer {
     function_defs: (u32, u32),
     field_handles: (u32, u32),
     field_instantiations: (u32, u32),
+    misc: (u32, u32),
 }
 
 /// Holds data to compute the header of a transaction script binary.
@@ -492,6 +493,7 @@ fn serialize_signature_token(binary: &mut BinaryData, token: &SignatureToken) ->
             SignatureToken::U64 => binary.push(SerializedType::U64 as u8)?,
             SignatureToken::U128 => binary.push(SerializedType::U128 as u8)?,
             SignatureToken::Address => binary.push(SerializedType::ADDRESS as u8)?,
+            SignatureToken::Signer => binary.push(SerializedType::SIGNER as u8)?,
             SignatureToken::Vector(_) => {
                 binary.push(SerializedType::VECTOR as u8)?;
             }
@@ -708,6 +710,10 @@ fn serialize_instruction_inner(binary: &mut BinaryData, opcode: &Bytecode) -> Re
             write_u16_as_uleb128(binary, class_idx.0)
         }
         Bytecode::MoveToSender(class_idx) => {
+            binary.push(Opcodes::MOVE_TO_SENDER as u8)?;
+            write_u16_as_uleb128(binary, class_idx.0)
+        }
+        Bytecode::MoveTo(class_idx) => {
             binary.push(Opcodes::MOVE_TO as u8)?;
             write_u16_as_uleb128(binary, class_idx.0)
         }
@@ -728,6 +734,10 @@ fn serialize_instruction_inner(binary: &mut BinaryData, opcode: &Bytecode) -> Re
             write_u16_as_uleb128(binary, class_idx.0)
         }
         Bytecode::MoveToSenderGeneric(class_idx) => {
+            binary.push(Opcodes::MOVE_TO_SENDER_GENERIC as u8)?;
+            write_u16_as_uleb128(binary, class_idx.0)
+        }
+        Bytecode::MoveToGeneric(class_idx) => {
             binary.push(Opcodes::MOVE_TO_GENERIC as u8)?;
             write_u16_as_uleb128(binary, class_idx.0)
         }
@@ -1036,11 +1046,13 @@ impl ModuleSerializer {
             function_defs: (0, 0),
             field_handles: (0, 0),
             field_instantiations: (0, 0),
+            misc: (0, 0),
         }
     }
 
     fn serialize(&mut self, binary: &mut BinaryData, module: &CompiledModuleMut) -> Result<()> {
         self.common.serialize_common(binary, module)?;
+        self.serialize_miscellaneous_items(binary, module)?;
         self.serialize_struct_definitions(binary, &module.struct_defs)?;
         self.serialize_struct_def_instantiations(binary, &module.struct_def_instantiations)?;
         self.serialize_function_definitions(binary, &module.function_defs)?;
@@ -1050,6 +1062,13 @@ impl ModuleSerializer {
 
     fn serialize_header(&mut self, binary: &mut BinaryData) -> Result<()> {
         let start_offset = self.common.serialize_header(binary)?;
+        checked_serialize_table(
+            binary,
+            TableType::MISC,
+            self.misc.0,
+            start_offset,
+            self.misc.1,
+        )?;
         checked_serialize_table(
             binary,
             TableType::STRUCT_DEFS,
@@ -1085,6 +1104,19 @@ impl ModuleSerializer {
             start_offset,
             self.field_instantiations.1,
         )?;
+        Ok(())
+    }
+
+    fn serialize_miscellaneous_items(
+        &mut self,
+        binary: &mut BinaryData,
+        module: &CompiledModuleMut,
+    ) -> Result<()> {
+        self.common.table_count = self.common.table_count.wrapping_add(1); // the count will bound to a small number
+        self.misc.0 = check_index_in_binary(binary.len())?;
+        // self module handle index
+        write_u16_as_uleb128(binary, module.self_module_handle_idx.0)?;
+        self.misc.1 = checked_calculate_table_size(binary, self.misc.0)?;
         Ok(())
     }
 

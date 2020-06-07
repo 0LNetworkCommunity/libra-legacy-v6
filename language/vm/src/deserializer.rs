@@ -327,7 +327,8 @@ fn build_common_tables(
             | TableType::STRUCT_DEF_INST
             | TableType::FIELD_HANDLE
             | TableType::FIELD_INST
-            | TableType::MAIN => continue,
+            | TableType::MAIN
+            | TableType::MISC => continue,
         }
     }
     Ok(())
@@ -355,6 +356,9 @@ fn build_module_tables(
             }
             TableType::FIELD_INST => {
                 load_field_instantiations(binary, table, &mut module.field_instantiations)?;
+            }
+            TableType::MISC => {
+                load_miscellaneous_items(binary, table, module)?;
             }
             TableType::MODULE_HANDLES
             | TableType::STRUCT_HANDLES
@@ -407,7 +411,8 @@ fn build_script_tables(
             | TableType::STRUCT_DEF_INST
             | TableType::FUNCTION_DEFS
             | TableType::FIELD_INST
-            | TableType::FIELD_HANDLE => {
+            | TableType::FIELD_HANDLE
+            | TableType::MISC => {
                 return Err(VMStatus::new(StatusCode::MALFORMED)
                     .with_message("Bad table in Script".to_string()));
             }
@@ -463,6 +468,18 @@ fn load_struct_handles(
             type_parameters,
         });
     }
+    Ok(())
+}
+
+fn load_miscellaneous_items(
+    binary: &[u8],
+    table: &Table,
+    module: &mut CompiledModuleMut,
+) -> BinaryLoaderResult<()> {
+    let start = table.offset as usize;
+    let end = start + table.count as usize;
+    let mut cursor = Cursor::new(&binary[start..end]);
+    module.self_module_handle_idx = ModuleHandleIndex::new(read_uleb_u16_internal(&mut cursor)?);
     Ok(())
 }
 
@@ -748,6 +765,7 @@ fn load_signature_token(cursor: &mut Cursor<&[u8]>) -> BinaryLoaderResult<Signat
                 S::U64 => T::Saturated(SignatureToken::U64),
                 S::U128 => T::Saturated(SignatureToken::U128),
                 S::ADDRESS => T::Saturated(SignatureToken::Address),
+                S::SIGNER => T::Saturated(SignatureToken::Signer),
                 S::VECTOR => T::Vector,
                 S::REFERENCE => T::Reference,
                 S::MUTABLE_REFERENCE => T::MutableReference,
@@ -1157,13 +1175,21 @@ fn load_code(cursor: &mut Cursor<&[u8]>, code: &mut Vec<Bytecode>) -> BinaryLoad
                 let idx = read_uleb_u16_internal(cursor)?;
                 Bytecode::MoveFromGeneric(StructDefInstantiationIndex(idx))
             }
-            Opcodes::MOVE_TO => {
+            Opcodes::MOVE_TO_SENDER => {
                 let idx = read_uleb_u16_internal(cursor)?;
                 Bytecode::MoveToSender(StructDefinitionIndex(idx))
             }
-            Opcodes::MOVE_TO_GENERIC => {
+            Opcodes::MOVE_TO_SENDER_GENERIC => {
                 let idx = read_uleb_u16_internal(cursor)?;
                 Bytecode::MoveToSenderGeneric(StructDefInstantiationIndex(idx))
+            }
+            Opcodes::MOVE_TO => {
+                let idx = read_uleb_u16_internal(cursor)?;
+                Bytecode::MoveTo(StructDefinitionIndex(idx))
+            }
+            Opcodes::MOVE_TO_GENERIC => {
+                let idx = read_uleb_u16_internal(cursor)?;
+                Bytecode::MoveToGeneric(StructDefInstantiationIndex(idx))
             }
             Opcodes::FREEZE_REF => Bytecode::FreezeRef,
             Opcodes::NOP => Bytecode::Nop,
@@ -1226,6 +1252,7 @@ impl TableType {
             0xC => Ok(TableType::FUNCTION_DEFS),
             0xD => Ok(TableType::FIELD_HANDLE),
             0xE => Ok(TableType::FIELD_INST),
+            0xF => Ok(TableType::MISC),
             _ => Err(VMStatus::new(StatusCode::UNKNOWN_TABLE_TYPE)),
         }
     }
@@ -1245,6 +1272,7 @@ impl SerializedType {
             0x9 => Ok(SerializedType::TYPE_PARAMETER),
             0xA => Ok(SerializedType::VECTOR),
             0xB => Ok(SerializedType::STRUCT_INST),
+            0xC => Ok(SerializedType::SIGNER),
             _ => Err(VMStatus::new(StatusCode::UNKNOWN_SERIALIZED_TYPE)),
         }
     }
@@ -1328,7 +1356,7 @@ impl Opcodes {
             0x2A => Ok(Opcodes::MUT_BORROW_GLOBAL),
             0x2B => Ok(Opcodes::IMM_BORROW_GLOBAL),
             0x2C => Ok(Opcodes::MOVE_FROM),
-            0x2D => Ok(Opcodes::MOVE_TO),
+            0x2D => Ok(Opcodes::MOVE_TO_SENDER),
             0x2E => Ok(Opcodes::FREEZE_REF),
             0x2F => Ok(Opcodes::SHL),
             0x30 => Ok(Opcodes::SHR),
@@ -1346,8 +1374,10 @@ impl Opcodes {
             0x3C => Ok(Opcodes::MUT_BORROW_GLOBAL_GENERIC),
             0x3D => Ok(Opcodes::IMM_BORROW_GLOBAL_GENERIC),
             0x3E => Ok(Opcodes::MOVE_FROM_GENERIC),
-            0x3F => Ok(Opcodes::MOVE_TO_GENERIC),
+            0x3F => Ok(Opcodes::MOVE_TO_SENDER_GENERIC),
             0x40 => Ok(Opcodes::NOP),
+            0x41 => Ok(Opcodes::MOVE_TO),
+            0x42 => Ok(Opcodes::MOVE_TO_GENERIC),
             _ => Err(VMStatus::new(StatusCode::UNKNOWN_OPCODE)),
         }
     }
