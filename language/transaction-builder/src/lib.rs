@@ -3,20 +3,21 @@
 
 #![forbid(unsafe_code)]
 
-#[cfg(any(test, feature = "fuzzing"))]
-use libra_types::account_config;
 use libra_types::{
+    access_path::AccessPath,
     account_address::AccountAddress,
     block_metadata::BlockMetadata,
     on_chain_config::{LibraVersion, VMPublishingOption},
-    transaction::{authenticator::AuthenticationKey, Script, Transaction, TransactionArgument},
+    transaction::{
+        authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
+    },
+    write_set::{WriteOp, WriteSetMut},
 };
 use mirai_annotations::*;
 use move_core_types::language_storage::TypeTag;
 use std::convert::TryFrom;
-use stdlib::transaction_scripts::StdlibScript;
-#[cfg(any(test, feature = "fuzzing"))]
-use vm::file_format::{Bytecode, CompiledScript};
+use stdlib::{transaction_scripts::StdlibScript, StdLibOptions};
+use vm::access::ModuleAccess;
 
 fn validate_auth_key_prefix(auth_key_prefix: &[u8]) {
     let auth_key_prefix_length = auth_key_prefix.len();
@@ -107,24 +108,22 @@ encode_txn_script! {
 }
 
 encode_txn_script! {
-    name: encode_approved_payment_script,
-    type_arg: type_,
-    args: [payee: Address, amount: U64, metadata: Bytes, signature: Bytes],
-    script: ApprovedPayment,
-    doc: "Encode a program that deposits `amount` LBR in `payee`'s account if the `signature` on the\
-          payment metadata matches the public key stored in the `payee`'s ApprovedPayment` resource.\
-          Aborts if the signature does not match, `payee` does not have an `ApprovedPayment` resource, or\
-          the sender's balance is less than `amount`."
-}
-
-encode_txn_script! {
     name: encode_burn_script,
     type_arg: type_,
-    args: [preburn_address: Address],
+    args: [nonce: U64, preburn_address: Address],
     script: Burn,
     doc: "Permanently destroy the coins stored in the oldest burn request under the `Preburn`\
           resource stored at `preburn_address`. This will only succeed if the sender has a\
           `MintCapability` stored under their account and `preburn_address` has a pending burn request"
+}
+
+encode_txn_script! {
+    name: encode_burn_txn_fees_script,
+    type_arg: currency,
+    args: [],
+    script: BurnTxnFees,
+    doc: "Burn transaction fees that have been collected in the given `currency`,\
+          and relinquish to the association. The currency must be non-synthetic."
 }
 
 encode_txn_script! {
@@ -136,68 +135,17 @@ encode_txn_script! {
           `preburn_address`.  Fails if the sender does not have a published `MintCapability`."
 }
 
-/// Encode a program transferring `amount` coins from `sender` to `recipient` with (optional)
-/// associated metadata `metadata` and (optional) `signature` on the metadata.
-/// The `metadata` and `signature` parameters are only required if `amount` >= 1000 LBR and the
-/// sender and recipient of the funds are two distinct VASPs.
-/// Fails if there is no account at the recipient address or if the sender's balance is lower than
-/// `amount`.
-pub fn encode_transfer_with_metadata_script(
-    type_: TypeTag,
-    recipient: &AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    amount: u64,
-    metadata: Vec<u8>,
-    signature: Vec<u8>,
-) -> Script {
-    validate_auth_key_prefix(&auth_key_prefix);
-    Script::new(
-        StdlibScript::PeerToPeerWithMetadata
-            .compiled_bytes()
-            .into_vec(),
-        vec![type_],
-        vec![
-            TransactionArgument::Address(*recipient),
-            TransactionArgument::U8Vector(auth_key_prefix),
-            TransactionArgument::U64(amount),
-            TransactionArgument::U8Vector(metadata),
-            TransactionArgument::U8Vector(signature),
-        ],
-    )
-}
-
-/// Encode a program transferring `amount` coins from `sender` to `recipient` but pad the output
-/// bytecode with unreachable instructions.
-#[cfg(any(test, feature = "fuzzing"))]
-pub fn encode_transfer_script_with_padding(
-    recipient: &AccountAddress,
-    amount: u64,
-    padding_size: u64,
-) -> Script {
-    let mut script_mut =
-        CompiledScript::deserialize(&StdlibScript::PeerToPeer.compiled_bytes().into_vec())
-            .unwrap()
-            .into_inner();
-    script_mut
-        .code
-        .code
-        .extend(std::iter::repeat(Bytecode::Ret).take(padding_size as usize));
-    let mut script_bytes = vec![];
-    script_mut
-        .freeze()
-        .unwrap()
-        .serialize(&mut script_bytes)
-        .unwrap();
-
-    Script::new(
-        script_bytes,
-        vec![account_config::lbr_type_tag()],
-        vec![
-            TransactionArgument::Address(*recipient),
-            TransactionArgument::U8Vector(vec![]), // use empty auth key prefix
-            TransactionArgument::U64(amount),
-        ],
-    )
+encode_txn_script! {
+    name: encode_transfer_with_metadata_script,
+    type_arg: coin_type,
+    args: [recipient_address: Address, amount: U64, metadata: Bytes, metadata_signature: Bytes],
+    script: PeerToPeerWithMetadata,
+    doc: "Encode a program transferring `amount` coins to `recipient_address` with (optional)\
+          associated metadata `metadata` and (optional) `signature` on the metadata, amount, and\
+          sender address. The `metadata` and `signature` parameters are only required if\
+          `amount` >= 1000 LBR and the sender and recipient of the funds are two distinct VASPs.\
+          Fails if there is no account at the recipient address or if the sender's balance is lower\
+          than `amount`"
 }
 
 encode_txn_script! {
@@ -209,45 +157,6 @@ encode_txn_script! {
           already has a published `Preburn` resource."
 }
 
-/// Encode a program creating a fresh account at `account_address` with `initial_balance` coins
-/// transferred from the sender's account balance. Fails if there is already an account at
-/// `account_address` or if the sender's balance is lower than `initial_balance`.
-pub fn encode_create_account_script(
-    token: TypeTag,
-    account_address: &AccountAddress,
-    auth_key_prefix: Vec<u8>,
-    initial_balance: u64,
-) -> Script {
-    validate_auth_key_prefix(&auth_key_prefix);
-    Script::new(
-        StdlibScript::CreateAccount.compiled_bytes().into_vec(),
-        vec![token],
-        vec![
-            TransactionArgument::Address(*account_address),
-            TransactionArgument::U8Vector(auth_key_prefix),
-            TransactionArgument::U64(initial_balance),
-        ],
-    )
-}
-
-/// Encode a program creating a fresh empty account at `account_address`. No (non-zero) balance can
-/// be held by this account. Fails if there is already an account at `account_address`.
-pub fn encode_create_empty_account_script(
-    token: TypeTag,
-    account_address: &AccountAddress,
-    auth_key_prefix: Vec<u8>,
-) -> Script {
-    validate_auth_key_prefix(&auth_key_prefix);
-    Script::new(
-        StdlibScript::CreateEmptyAccount.compiled_bytes().into_vec(),
-        vec![token],
-        vec![
-            TransactionArgument::Address(*account_address),
-            TransactionArgument::U8Vector(auth_key_prefix),
-        ],
-    )
-}
-
 encode_txn_script! {
     name: encode_publish_shared_ed25519_public_key_script,
     args: [public_key: Bytes],
@@ -257,14 +166,6 @@ encode_txn_script! {
           of the sender under the sender's address.\
           Aborts if the sender already has a `SharedEd25519PublicKey` resource.\
           Aborts if the length of `new_public_key` is not 32."
-}
-
-encode_txn_script! {
-    name: encode_register_approved_payment_script,
-    args: [public_key: Bytes],
-    script: RegisterApprovedPayment,
-    doc: "Publish a newly created `ApprovedPayment` resource under the sender's account with approval key\
-         `public_key`. Aborts if the sender already has a published `ApprovedPayment` resource."
 }
 
 encode_txn_script! {
@@ -289,7 +190,6 @@ encode_txn_script! {
     name: encode_register_validator_script,
     args: [
         consensus_pubkey: Bytes,
-        validator_network_signing_pubkey: Bytes,
         validator_network_identity_pubkey: Bytes,
         validator_network_address: Bytes,
         fullnodes_network_identity_pubkey: Bytes,
@@ -297,7 +197,6 @@ encode_txn_script! {
     ],
     script: RegisterValidator,
     doc: "Encode a program registering the sender as a candidate validator with the given key information.\
-         `network_signing_pubkey` should be a Ed25519 public key\
          `network_identity_pubkey` should be a X25519 public key\
          `consensus_pubkey` should be a Ed25519 public c=key."
 }
@@ -308,6 +207,20 @@ encode_txn_script! {
     script: RemoveValidator,
     doc: "Encode a program adding `to_remove` to the set of pending validator removals. Fails if\
           the `to_remove` address is already in the validator set or already in the pending removals."
+}
+
+encode_txn_script! {
+    name: encode_rotate_compliance_public_key_script,
+    args: [new_key: Bytes],
+    script: RotateCompliancePublicKey,
+    doc: "Encode a program that rotates `vasp_root_addr`'s compliance public key to `new_key`."
+}
+
+encode_txn_script! {
+    name: encode_rotate_base_url_script,
+    args: [new_url: Bytes],
+    script: RotateBaseUrl,
+    doc: "Encode a program that rotates `vasp_root_addr`'s base URL to `new_url`."
 }
 
 encode_txn_script! {
@@ -351,6 +264,24 @@ pub fn encode_mint_script(
         vec![token],
         vec![
             TransactionArgument::Address(*sender),
+            TransactionArgument::U8Vector(auth_key_prefix),
+            TransactionArgument::U64(amount),
+        ],
+    )
+}
+
+/// Encode a program creating `amount` LBR for `address`
+pub fn encode_mint_lbr_to_address_script(
+    address: &AccountAddress,
+    auth_key_prefix: Vec<u8>,
+    amount: u64,
+) -> Script {
+    validate_auth_key_prefix(&auth_key_prefix);
+    Script::new(
+        StdlibScript::MintLbrToAddress.compiled_bytes().into_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(*address),
             TransactionArgument::U8Vector(auth_key_prefix),
             TransactionArgument::U64(amount),
         ],
@@ -415,70 +346,6 @@ encode_txn_script! {
 //...........................................................................
 
 encode_txn_script! {
-    name: encode_add_currency,
-    type_arg: type_,
-    args: [
-        exchange_rate_denom: U64,
-        exchange_rate_num: U64,
-        is_synthetic: Bool,
-        scaling_factor: U64,
-        fractional_part: U64,
-        currency_code: Bytes
-    ],
-    script: AddCurrency,
-    doc: "Add a new currency of type `type_` to the system with exchange rate given by\
-        `exchange_rate_denom/exchange_rate_num and with the specified scaling_factor, and\
-        fractional_part"
-}
-
-encode_txn_script! {
-    name: encode_apply_for_association_address,
-    args: [],
-    script: ApplyForAssociationAddress,
-    doc: "Applies for the sending account to be added to the set of association addresses encoded on-chain"
-}
-
-encode_txn_script! {
-    name: encode_apply_for_association_privilege,
-    type_arg: privilege,
-    args: [],
-    script: ApplyForAssociationPrivilege,
-    doc: "Applies for the sending account to have the association privilege given by `privilege` to the sending account"
-}
-
-encode_txn_script! {
-    name: encode_grant_association_address,
-    args: [addr: Address],
-    script: GrantAssociationAddress,
-    doc: "Grants the address at `addr` association privileges. `addr` must have previously applied\
-          for association privileges."
-}
-
-encode_txn_script! {
-    name: encode_remove_association_address,
-    args: [addr: Address],
-    script: RemoveAssociationAddress,
-    doc: "Removes the address at `addr` from the set of association addresses encoded on-chain."
-}
-
-encode_txn_script! {
-    name: encode_grant_association_privilege,
-    type_arg: privilege,
-    args: [addr: Address],
-    script: GrantAssociationPrivilege,
-    doc: "Grants the address at `addr` the specific privilege given by `privilege`. `addr` must\
-          have previously applied for the `privilege` privilege."
-}
-
-encode_txn_script! {
-    name: encode_remove_association_privilege,
-    type_arg: privilege,
-    args: [addr: Address],
-    script: RemoveAssociationPrivilege,
-    doc: "Removes the association privilege given by `privilege` from the account at `addr`."
-}
-
-encode_txn_script! {
     name: encode_update_exchange_rate,
     type_arg: currency,
     args: [new_exchange_rate_denominator: U64, new_exchange_rate_numerator: U64],
@@ -500,76 +367,91 @@ encode_txn_script! {
 //...........................................................................
 
 encode_txn_script! {
-    name: encode_apply_for_child_vasp_credential,
-    args: [root_vasp_address: Address],
-    script: ApplyForChildVaspCredential,
-    doc: "Applies for the sending account to be added as a child account for VAPS with root account\
-          at `root_vasp_address`."
+    name: encode_create_parent_vasp_account,
+    type_arg: currency,
+    args: [address: Address, auth_key_prefix: Bytes, human_name: Bytes, base_url: Bytes, compliance_public_key: Bytes, add_all_currencies: Bool],
+    script: CreateParentVaspAccount,
+    doc: "Create an account with the ParentVASP role at `address` with authentication key\
+          `auth_key_prefix` | `new_account_address` and a 0 balance of type `currency`. If\
+          `add_all_currencies` is true, 0 balances for all available currencies in the system will\
+          also be added. This can only be invoked by an Association account."
 }
 
 encode_txn_script! {
-    name: encode_apply_for_parent_capability,
-    args: [],
-    script: ApplyForParentCapability,
-    doc: "Applies for the sending account to be added as a parent account for a VASP. The sender\
-          must already be VASP account."
+    name: encode_create_child_vasp_account,
+    type_arg: currency,
+    args: [address: Address, auth_key_prefix: Bytes, add_all_currencies: Bool, initial_balance: U64],
+    script: CreateChildVaspAccount,
+    doc: "Create an account with the ChildVASP role at `address` with authentication key\
+          `auth_key_prefix` | `new_account_address` and `initial_balance` of type `currency`\
+          transferred from the sender. If `add_all_currencies` is true, 0 balances for all\
+          available currencies in the system will also be added to the account. This account will\
+          be a child of the transaction sender, which must be a ParentVASP."
+}
+
+//...........................................................................
+// Treasury Compliance Scripts
+//...........................................................................
+
+encode_txn_script! {
+    name: encode_tiered_mint,
+    type_arg: coin_type,
+    args: [nonce: U64, designated_dealer_address: Address, mint_amount: U64, tier_index: U64],
+    script: TieredMint,
+    doc: "Mints 'mint_amount' to 'designated_dealer_address' for 'tier_index' tier.\
+          Max valid tier index is 3 since there are max 4 tiers per DD.
+          Sender should be treasury compliance account and receiver authorized DD"
 }
 
 encode_txn_script! {
-    name: encode_apply_for_root_vasp,
-    args: [human_name: Bytes, base_url: Bytes, ca_cert: Bytes],
-    script: ApplyForRootVasp,
-    doc: "Applies for the sending account to be added as a root VASP account."
+    name: encode_create_designated_dealer,
+    type_arg: coin_type,
+    args: [nonce: U64, new_account_address: Address, auth_key_prefix: Bytes],
+    script: CreateDesignatedDealer,
+    doc: "Creates designated dealer at 'new_account_address"
 }
 
 encode_txn_script! {
-    name: encode_allow_child_accounts,
-    args: [],
-    script: AllowChildAccounts,
-    doc: "Allows child accounts to be created for the calling account if it is a root VASP account."
+    name: encode_freeze_account,
+    args: [nonce: U64, addr: Address],
+    script: FreezeAccount,
+    doc: "Freezes account with address addr."
 }
 
 encode_txn_script! {
-    name: encode_grant_child_account,
-    args: [child_address: Address],
-    script: GrantChildAccount,
-    doc: "Grants the account at `child_address` application to be a child account for the VASP that\
-          the sending account belongs to."
+    name: encode_unfreeze_account,
+    args: [nonce: U64, addr: Address],
+    script: UnfreezeAccount,
+    doc: "Unfreezes account with address addr."
 }
 
 encode_txn_script! {
-    name: encode_recertify_child_account,
-    args: [child_address: Address],
-    script: RecertifyChildAccount,
-    doc: "Recertifies the child account at `child_address` if it has been previously decertified/removed"
-}
+    name: encode_rotate_authentication_key_script_with_nonce,
+    args: [nonce: U64, new_hashed_key: Bytes],
+    script: RotateAuthenticationKeyWithNonce,
+    doc: "Encode a program that rotates the sender's authentication key to `new_key`. `new_key`\
+          should be a 256 bit sha3 hash of an ed25519 public key. This script also takes nonce"
 
-encode_txn_script! {
-    name: encode_remove_child_account,
-    args: [child_address: Address],
-    script: RemoveChildAccount,
-    doc: "Removes the child account at `child_address`. It can be recertified in the future however."
 }
+//...........................................................................
+// WriteSets
+//...........................................................................
 
-encode_txn_script! {
-    name: encode_grant_parent_account,
-    args: [parent_address: Address],
-    script: GrantParentAccount,
-    doc: "Grants the account at `parent_address` application to be a parent account w.r.t. the root\
-          VASP at the sending account."
-}
-
-encode_txn_script! {
-    name: encode_grant_vasp_account,
-    args: [root_address: Address],
-    script: GrantVaspAccount,
-    doc: "Grants the account's application at `root_address` to be a root VASP account. The sending\
-          account must have the association privilege: VASP::CreationPrivilege."
-}
-
-encode_txn_script! {
-    name: encode_remove_parent_account,
-    args: [parent_address: Address],
-    script: RemoveParentAccount,
-    doc: "Removes the parent account at `parent_address`. It can be recertified in the future however."
+pub fn encode_stdlib_upgrade_transaction(option: StdLibOptions) -> ChangeSet {
+    let mut write_set = WriteSetMut::new(vec![]);
+    let stdlib = stdlib::stdlib_modules(option);
+    for module in stdlib {
+        let mut bytes = vec![];
+        module
+            .serialize(&mut bytes)
+            .expect("Failed to serialize module");
+        write_set.push((
+            AccessPath::code_access_path(&module.self_id()),
+            WriteOp::Value(bytes),
+        ));
+    }
+    ChangeSet::new(
+        write_set.freeze().expect("Failed to create writeset"),
+        vec![],
+    )
 }

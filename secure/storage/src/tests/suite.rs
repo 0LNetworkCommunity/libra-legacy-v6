@@ -1,7 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{Error, Policy, Storage, Value};
+use crate::{Error, Storage, Value};
 use libra_crypto::{ed25519::Ed25519PrivateKey, HashValue, PrivateKey, Signature, Uniform};
 
 /// This suite contains tests for secure storage backends. We test the correct functionality
@@ -24,6 +24,7 @@ const STORAGE_TESTS: &[fn(&mut dyn Storage)] = &[
     test_get_uncreated_key_pair,
     test_hash_value,
     test_incremental_timestamp,
+    test_import_key,
     test_verify_incorrect_value_types,
 ];
 
@@ -36,9 +37,7 @@ const CRYPTO_NAME: &str = "Test_Key_Name";
 pub fn execute_all_storage_tests(storage: &mut dyn Storage) {
     for test in STORAGE_TESTS.iter() {
         test(storage);
-        storage
-            .reset_and_clear()
-            .expect("Failed to reset storage engine between tests!");
+        storage.reset_and_clear().unwrap();
     }
 }
 
@@ -102,6 +101,58 @@ fn test_get_set(storage: &mut dyn Storage) {
     );
 }
 
+/// This test ensures that a key can reasonably be imported.
+fn test_import_key(storage: &mut dyn Storage) {
+    let key_name = "key";
+    let imported_key_name = "imported_key";
+
+    // Prepare key
+
+    storage.create_key(key_name).unwrap();
+    let key = storage.export_private_key(key_name).unwrap();
+    let public_key = storage.get_public_key(key_name).unwrap().public_key;
+
+    // Restore and verify key
+
+    storage
+        .import_private_key(imported_key_name, key.clone())
+        .unwrap();
+    let imported_key = storage.export_private_key(imported_key_name).unwrap();
+    let imported_public_key = storage
+        .get_public_key(imported_key_name)
+        .unwrap()
+        .public_key;
+
+    assert_eq!(key, imported_key);
+    assert_eq!(public_key, imported_public_key);
+
+    // Verify valid keys
+
+    let message = HashValue::new([1; HashValue::LENGTH]);
+    let message_signature = storage.sign_message(imported_key_name, &message).unwrap();
+    message_signature
+        .verify(&message, &imported_public_key)
+        .unwrap();
+
+    // Ensure rotation still works
+
+    storage.rotate_key(imported_key_name).unwrap();
+    let rotated_imported_key = storage.export_private_key(imported_key_name).unwrap();
+    let rotated_imported_public_key = storage
+        .get_public_key(imported_key_name)
+        .unwrap()
+        .public_key;
+
+    let rotated_message_signature = storage.sign_message(imported_key_name, &message).unwrap();
+    rotated_message_signature
+        .verify(&message, &rotated_imported_public_key)
+        .unwrap();
+
+    assert_ne!(imported_key, rotated_imported_key);
+    assert_ne!(imported_public_key, rotated_imported_public_key);
+    assert_ne!(message_signature, rotated_message_signature);
+}
+
 /// This test stores different types of values into storage, retrieves them, and asserts
 /// that the value unwrap functions return an unexpected type error on an incorrect unwrap.
 fn test_verify_incorrect_value_types(storage: &mut dyn Storage) {
@@ -130,7 +181,7 @@ fn test_verify_incorrect_value_types(storage: &mut dyn Storage) {
 /// the created key pair; (iii) compares the public keys returned by the create call and the
 /// retrieval call.
 fn test_create_get_key_pair(storage: &mut dyn Storage) {
-    let public_key = storage.create_key(CRYPTO_NAME, &Policy::public()).unwrap();
+    let public_key = storage.create_key(CRYPTO_NAME).unwrap();
     let retrieved_public_key_response = storage.get_public_key(CRYPTO_NAME).unwrap();
     assert_eq!(public_key, retrieved_public_key_response.public_key);
 }
@@ -164,17 +215,14 @@ fn test_hash_value(storage: &mut dyn Storage) {
 
 /// This test verifies the storage engine is up and running.
 fn test_ensure_storage_is_available(storage: &mut dyn Storage) {
-    assert!(
-        storage.available(),
-        eprintln!("Backend storage is not available")
-    );
+    storage.available().unwrap();
 }
 
 /// This test creates a new named key pair and attempts to get a non-existent version of the public
 /// and private keys. As such, these calls should fail.
 fn test_create_and_get_non_existent_version(storage: &mut dyn Storage) {
     // Create new named key pair
-    let _ = storage.create_key(CRYPTO_NAME, &Policy::public()).unwrap();
+    let _ = storage.create_key(CRYPTO_NAME).unwrap();
 
     // Get a non-existent version of the new key pair and verify failure
     let non_existent_public_key = Ed25519PrivateKey::generate_for_testing().public_key();
@@ -189,28 +237,17 @@ fn test_create_and_get_non_existent_version(storage: &mut dyn Storage) {
 fn test_create_key_pair_and_perform_rotations(storage: &mut dyn Storage) {
     let num_rotations = 10;
 
-    let mut public_key = storage
-        .create_key(CRYPTO_NAME, &Policy::public())
-        .expect("Failed to create a test Ed25519 key pair!");
-    let mut private_key = storage
-        .export_private_key(CRYPTO_NAME)
-        .expect("Failed to get the private key for a key pair that should exist!");
+    let mut public_key = storage.create_key(CRYPTO_NAME).unwrap();
+    let mut private_key = storage.export_private_key(CRYPTO_NAME).unwrap();
 
     for _ in 0..num_rotations {
-        let new_public_key = storage
-            .rotate_key(CRYPTO_NAME)
-            .expect("Failed to rotate a valid key pair!");
-        let new_private_key = storage
-            .export_private_key(CRYPTO_NAME)
-            .expect("Failed to get the private key for the rotated key pair!");
+        let new_public_key = storage.rotate_key(CRYPTO_NAME).unwrap();
+        let new_private_key = storage.export_private_key(CRYPTO_NAME).unwrap();
 
-        assert_eq!(
-            storage
-                .export_private_key_for_version(CRYPTO_NAME, public_key)
-                .expect("Failed to get the previous private key!"),
-            private_key
-        );
-
+        let exported_key = storage
+            .export_private_key_for_version(CRYPTO_NAME, public_key)
+            .unwrap();
+        assert_eq!(exported_key, private_key);
         assert_eq!(new_public_key, new_private_key.public_key());
 
         public_key = new_public_key;
@@ -223,9 +260,7 @@ fn test_create_key_pair_and_perform_rotations(storage: &mut dyn Storage) {
 /// produced.
 fn test_create_sign_rotate_sign(storage: &mut dyn Storage) {
     // Generate new key pair
-    let public_key = storage
-        .create_key(CRYPTO_NAME, &Policy::public())
-        .expect("Failed to create a test Ed25519 key pair!");
+    let public_key = storage.create_key(CRYPTO_NAME).unwrap();
 
     // Create then sign message and verify correct signature
     let message = HashValue::new([1; HashValue::LENGTH]);

@@ -59,10 +59,6 @@ impl ValidatorConsensusInfo {
         }
     }
 
-    pub fn public_key(&self) -> &Ed25519PublicKey {
-        &self.public_key
-    }
-
     pub fn voting_power(&self) -> u64 {
         self.voting_power
     }
@@ -288,7 +284,7 @@ impl From<&ValidatorSet> for ValidatorVerifier {
             BTreeMap::new(),
             |mut map, validator| {
                 map.insert(
-                    validator.account_address().clone(),
+                    *validator.account_address(),
                     ValidatorConsensusInfo::new(
                         validator.consensus_public_key().clone(),
                         validator.consensus_voting_power(),

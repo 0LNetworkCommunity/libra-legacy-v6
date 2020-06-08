@@ -66,14 +66,6 @@ pub static GAS_SCHEDULE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
         Identifier::new("GasSchedule").unwrap(),
     )
 });
-/// The ModuleId for the transaction fee module
-pub static TRANSACTION_FEE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
-    ModuleId::new(
-        account_config::CORE_CODE_ADDRESS,
-        Identifier::new("TransactionFee").unwrap(),
-    )
-});
-
 pub static ASSOCIATION_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     ModuleId::new(
         account_config::CORE_CODE_ADDRESS,
@@ -86,8 +78,12 @@ pub static CREATE_ACCOUNT_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("create_unhosted_account").unwrap());
 pub static PROLOGUE_NAME: Lazy<Identifier> = Lazy::new(|| Identifier::new("prologue").unwrap());
 pub static EPILOGUE_NAME: Lazy<Identifier> = Lazy::new(|| Identifier::new("epilogue").unwrap());
+pub static BUMP_SEQUENCE_NUMBER_NAME: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("bump_sequence_number").unwrap());
 pub static BLOCK_PROLOGUE: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("block_prologue").unwrap());
+pub static DISTRIBUTE_TXN_FEES: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("distribute_transaction_fees").unwrap());
 
 static ASSOCIATION_MODULE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("Association").unwrap());

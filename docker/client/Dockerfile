@@ -16,17 +16,18 @@ FROM toolchain AS builder
 
 COPY . /libra
 
+ENV RUSTFLAGS "-Ctarget-cpu=skylake -Ctarget-feature=+aes,+sse2,+sse4.1,+ssse3"
 RUN cargo build --release -p libra-node -p cli -p config-builder -p safety-rules && cd target/release && rm -r build deps incremental
 RUN strip target/release/cli
 
 ### Production Image ###
-FROM debian:buster AS prod
+FROM debian:buster-slim AS prod
 
 RUN mkdir -p /opt/libra/bin /opt/libra/etc
 COPY --from=builder /libra/target/release/cli /opt/libra/bin/libra_client
 
 ENTRYPOINT ["/opt/libra/bin/libra_client"]
-CMD ["--url", "http://client.testnet.libra.org"]
+CMD ["--url", "https://client.testnet.libra.org", "--waypoint_url",  "https://developers.libra.org/testnet_waypoint.txt"]
 
 ARG BUILD_DATE
 ARG GIT_REV

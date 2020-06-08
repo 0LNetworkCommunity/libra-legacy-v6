@@ -1,19 +1,16 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{block::Block, common::Round};
-use libra_crypto::{
-    ed25519::Ed25519Signature,
-    hash::{CryptoHash, CryptoHasher, HashValue},
-};
-use libra_crypto_derive::CryptoHasher;
+use crate::common::Round;
+use libra_crypto::{ed25519::Ed25519Signature, hash::CryptoHash};
+use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
 use libra_types::validator_signer::ValidatorSigner;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 /// This structure contains all the information necessary to construct a signature
 /// on the equivalent of a timeout message
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, CryptoHasher)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, CryptoHasher, LCSCryptoHash)]
 pub struct Timeout {
     /// Epoch number corresponds to the set of validators that are active for this round.
     epoch: u64,
@@ -26,13 +23,6 @@ impl Timeout {
         Self { epoch, round }
     }
 
-    pub fn from_block<T>(block: &Block<T>) -> Self {
-        Self {
-            epoch: block.epoch(),
-            round: block.round(),
-        }
-    }
-
     pub fn epoch(&self) -> u64 {
         self.epoch
     }
@@ -43,17 +33,6 @@ impl Timeout {
 
     pub fn sign(&self, signer: &ValidatorSigner) -> Ed25519Signature {
         signer.sign_message(self.hash())
-    }
-}
-
-impl CryptoHash for Timeout {
-    type Hasher = TimeoutHasher;
-
-    fn hash(&self) -> HashValue {
-        let bytes = lcs::to_bytes(self).expect("Timeout serialization failed");
-        let mut state = Self::Hasher::default();
-        state.write(bytes.as_ref());
-        state.finish()
     }
 }
 

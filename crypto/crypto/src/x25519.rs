@@ -10,12 +10,11 @@
 //! # Examples
 //!
 //! ```
-//! use libra_crypto::{x25519, Uniform};
+//! use libra_crypto::{x25519, Uniform, test_utils::TEST_SEED};
 //! use rand::{rngs::StdRng, SeedableRng};
 //!
 //! // Derive an X25519 private key for testing.
-//! let seed = [1u8; 32];
-//! let mut rng: StdRng = SeedableRng::from_seed(seed);
+//! let mut rng: StdRng = SeedableRng::from_seed(TEST_SEED);
 //! let private_key = x25519::PrivateKey::generate(&mut rng);
 //! let public_key = private_key.public_key();
 //!
@@ -31,7 +30,10 @@
 //! ```
 //!
 
-use crate::traits::{self, ValidCryptoMaterial, ValidCryptoMaterialStringExt};
+use crate::{
+    traits::{self, CryptoMaterialError, ValidCryptoMaterial, ValidCryptoMaterialStringExt},
+    x25519,
+};
 use libra_crypto_derive::{DeserializeKey, SerializeKey, SilentDebug, SilentDisplay};
 use rand::{CryptoRng, RngCore};
 use std::convert::{TryFrom, TryInto};
@@ -70,7 +72,7 @@ pub struct PrivateKey(x25519_dalek::StaticSecret);
 
 /// This type should be used to deserialize a received public key
 #[derive(
-    Default, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, SerializeKey, DeserializeKey,
+    Default, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, SerializeKey, DeserializeKey,
 )]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct PublicKey([u8; PUBLIC_KEY_SIZE]);
@@ -93,12 +95,56 @@ impl PrivateKey {
         let shared_secret = self.0.diffie_hellman(&remote_public_key);
         shared_secret.as_bytes().to_owned()
     }
+
+    /// Deserialize an X25119 PrivateKey given the sha512 pre-image of a hash
+    /// whose least significant half is a canonical X25519 scalar, following
+    /// the XEdDSA approach.
+    ///
+    /// This will FAIL if the passed-in byte representation converts to a
+    /// non-canonical scalar in the X25519 sense (and thus cannot correspond to
+    /// a X25519 valid key without bit-mangling).
+    ///
+    /// This is meant to compensate for the poor key storage capabilities of some
+    /// key management solutions, and NOT to promote double usage of keys under
+    /// several schemes, which would lead to BAD vulnerabilities.
+    pub fn from_ed25519_private_bytes(private_slice: &[u8]) -> Result<Self, CryptoMaterialError> {
+        let ed25519_secretkey = ed25519_dalek::SecretKey::from_bytes(private_slice)
+            .map_err(|_| CryptoMaterialError::DeserializationError)?;
+        let expanded_key = ed25519_dalek::ExpandedSecretKey::from(&ed25519_secretkey);
+
+        let mut expanded_keypart = [0u8; 32];
+        expanded_keypart.copy_from_slice(&expanded_key.to_bytes()[..32]);
+        let potential_x25519 = x25519::PrivateKey::from(expanded_keypart);
+
+        // This checks for x25519 clamping & reduction, which is an RFC requirement
+        if potential_x25519.to_bytes()[..] != expanded_key.to_bytes()[..32] {
+            Err(CryptoMaterialError::DeserializationError)
+        } else {
+            Ok(potential_x25519)
+        }
+    }
 }
 
 impl PublicKey {
     /// Obtain a slice reference to the underlying bytearray
     pub fn as_slice(&self) -> &[u8] {
         &self.0
+    }
+
+    /// Deserialize an X25119 PublicKey from its representation as an
+    /// Ed25519PublicKey, following the XEdDSA approach. This is meant to
+    /// compensate for the poor key storage capabilities of key management
+    /// solutions, and NOT to promote double usage of keys under several
+    /// schemes, which would lead to BAD vulnerabilities.
+    pub fn from_ed25519_public_bytes(ed25519_bytes: &[u8]) -> Result<Self, CryptoMaterialError> {
+        if ed25519_bytes.len() != 32 {
+            return Err(CryptoMaterialError::DeserializationError);
+        }
+        let ed_point = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(ed25519_bytes)
+            .decompress()
+            .ok_or(CryptoMaterialError::DeserializationError)?;
+
+        Ok(x25519::PublicKey::from(ed_point.to_montgomery().to_bytes()))
     }
 }
 
@@ -205,4 +251,21 @@ impl std::fmt::Display for PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "[X25519 public key: {}]", hex::encode(self.0))
     }
+}
+
+impl std::fmt::Debug for PublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[X25519 public key: {}]", hex::encode(self.0))
+    }
+}
+
+#[cfg(any(test, feature = "fuzzing"))]
+use crate::test_utils::{self, KeyPair};
+#[cfg(any(test, feature = "fuzzing"))]
+use proptest::prelude::*;
+
+/// Produces a uniformly random ed25519 keypair from a seed
+#[cfg(any(test, feature = "fuzzing"))]
+pub fn keypair_strategy() -> impl Strategy<Value = KeyPair<PrivateKey, PublicKey>> {
+    test_utils::uniform_keypair_strategy::<PrivateKey, PublicKey>()
 }

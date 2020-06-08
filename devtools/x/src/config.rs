@@ -4,7 +4,7 @@
 use crate::{utils::project_root, Result};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -40,10 +40,12 @@ fn default_as_true() -> bool {
 pub struct WorkspaceConfig {
     /// Attributes to enforce on workspace crates
     pub enforced_attributes: EnforcedAttributesConfig,
-    /// Banned direct dependencies
-    pub banned_direct_deps: HashMap<String, String>,
+    /// Banned dependencies
+    pub banned_deps: BannedDepsConfig,
     /// Overlay config in this workspace
     pub overlay: OverlayConfig,
+    /// Test-only config in this workspace
+    pub test_only: TestOnlyConfig,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -57,9 +59,25 @@ pub struct EnforcedAttributesConfig {
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
+pub struct BannedDepsConfig {
+    /// Banned direct dependencies
+    pub direct: HashMap<String, String>,
+    /// Banned dependencies in the default build set
+    pub default_build: HashMap<String, String>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
 pub struct OverlayConfig {
     /// A list of overlay feature names
     pub features: Vec<String>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub struct TestOnlyConfig {
+    /// A list of test-only members
+    pub members: HashSet<PathBuf>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]

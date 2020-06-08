@@ -57,11 +57,11 @@ pub static PREFERRED_BLOCK_ROUND: Lazy<IntGauge> = Lazy::new(|| {
     .unwrap()
 });
 
-/// This counter is set to the last round reported by the local pacemaker.
+/// This counter is set to the last round reported by the local round_state.
 pub static CURRENT_ROUND: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!(
         "libra_consensus_current_round",
-        "This counter is set to the last round reported by the local pacemaker."
+        "This counter is set to the last round reported by the local round_state."
     )
     .unwrap()
 });
@@ -137,12 +137,6 @@ pub static PROPOSALS_COUNT: Lazy<IntCounter> = Lazy::new(|| {
     register_int_counter!("libra_consensus_proposals_count", "Count of the block proposals sent by this validator since last restart (both primary and secondary)").unwrap()
 });
 
-/// Count the number of times a validator voted for secondary proposals (upon timeout) since
-/// last restart.
-pub static VOTE_SECONDARY_PROPOSAL_COUNT: Lazy<IntCounter> = Lazy::new(|| {
-    register_int_counter!("libra_consensus_vote_secondary_proposal_count", "Count the number of times a validator voted for secondary proposals (upon timeout) since last restart.").unwrap()
-});
-
 /// Count the number of times a validator voted for a nil block since last restart.
 pub static VOTE_NIL_COUNT: Lazy<IntCounter> = Lazy::new(|| {
     register_int_counter!(
@@ -153,7 +147,7 @@ pub static VOTE_NIL_COUNT: Lazy<IntCounter> = Lazy::new(|| {
 });
 
 //////////////////////
-// PACEMAKER COUNTERS
+// RoundState COUNTERS
 //////////////////////
 /// Count of the rounds that gathered QC since last restart.
 pub static QC_ROUNDS_COUNT: Lazy<IntCounter> = Lazy::new(|| {
@@ -418,11 +412,11 @@ pub static PENDING_SELF_MESSAGES: Lazy<IntGauge> = Lazy::new(|| {
     .unwrap()
 });
 
-/// Count of the pending outbound pacemaker timeouts
-pub static PENDING_PACEMAKER_TIMEOUTS: Lazy<IntGauge> = Lazy::new(|| {
+/// Count of the pending outbound round timeouts
+pub static PENDING_ROUND_TIMEOUTS: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!(
-        "libra_consensus_pending_pacemaker_timeouts",
-        "Count of the pending outbound pacemaker timeouts"
+        "libra_consensus_pending_round_timeouts",
+        "Count of the pending outbound round timeouts"
     )
     .unwrap()
 });

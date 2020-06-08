@@ -10,27 +10,27 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0"
-flate2 = { version = "1.0", features = ["rust_backend"], default-features = false }
+anyhow = "1.0.31"
+flate2 = { version = "1.0.14", features = ["rust_backend"], default-features = false }
 hex = "0.4.2"
 itertools = "0.9.0"
-once_cell = "1.3.1"
+once_cell = "1.4.0"
 rand = "0.7.3"
-regex = { version = "1.3.7", default-features = false, features = ["std", "perf"] }
-reqwest = { version="0.10.4", features=["blocking", "json", "rustls-tls"], default_features = false }
-serde_json = "1.0"
+regex = { version = "1.3.9", default-features = false, features = ["std", "perf"] }
+reqwest = { version = "0.10.6", features = ["blocking", "json", "rustls-tls"], default_features = false }
+serde_json = "1.0.53"
 serde_yaml = "0.8.12"
-termion = "1.5.3"
-serde = { version = "1.0.110", features = ["derive"] }
+termion = "1.5.5"
+serde = { version = "1.0.111", features = ["derive"] }
 structopt = "0.3.14"
-rusoto_core = "0.43.0"
-rusoto_autoscaling = "0.43.0"
-rusoto_sts =  "0.43.0"
+rusoto_core = {version = "0.44.0", default-features = false, features = ["rustls"] }
+rusoto_autoscaling = {version = "0.44.0", default-features = false, features = ["rustls"] }
+rusoto_sts = {version = "0.44.0", default-features = false, features = ["rustls"] }
 
 debug-interface = { path = "../../common/debug-interface", version = "0.1.0"}
 libra-json-rpc-client = { path = "../../client/json-rpc", version = "0.1.0"}
 admission-control-proto = { path = "../../admission-control/admission-control-proto", version = "0.1.0" }
-util = { path = "../../common/util", version = "0.1.0", package = "libra-util" }
+libra-retrier = { path = "../../common/retrier", version = "0.1.0" }
 num_cpus = "1.13.0"
 
 config-builder = { path = "../../config/config-builder", version = "0.1.0" }
@@ -43,8 +43,9 @@ libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0"
 transaction-builder = { path = "../../language/transaction-builder", version = "0.1.0" }
 
 futures = "0.3.5"
-tokio = { version = "0.2.13", features = ["full"] }
-async-trait = "0.1.31"
+tokio = { version = "0.2.21", features = ["full"] }
+async-trait = "0.1.33"
 
-kube = "0.32.0"
-k8s-openapi = { version = "0.7.1", default-features = false, features = ["v1_15"] }
+kube = { version = "0.34.0", default-features = false, features = ["rustls-tls"] }
+
+k8s-openapi = { version = "0.8.0", default-features = false, features = ["v1_15"] }

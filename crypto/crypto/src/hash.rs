@@ -7,14 +7,13 @@
 //!
 //! It is designed to help authors protect against two types of real world attacks:
 //!
-//! 1. **Domain Ambiguity**: imagine that Alice has a private key and is using
+//! 1. **Semantic Ambiguity**: imagine that Alice has a private key and is using
 //!    two different applications, X and Y. X asks Alice to sign a message saying
-//!    "I am Alice". naturally, Alice is willing to sign this message, since she
-//!    is in fact Alice. However, unbeknownst to Alice, in application Y,
-//!    messages beginning with the letter "I" represent transfers. " am "
-//!    represents a transfer of 500 coins and "Alice" can be interpreted as a
-//!    destination address. When Alice signed the message she needed to be
-//!    aware of how other applications might interpret that message.
+//!    "I am Alice". Alice accepts to sign this message in the context of X. However,
+//!    unbeknownst to Alice, in application Y, messages beginning with the letter "I"
+//!    represent transfers. " am " represents a transfer of 500 coins and "Alice"
+//!    can be interpreted as a destination address. When Alice signed the message she
+//!    needed to be aware of how other applications might interpret that message.
 //!
 //! 2. **Format Ambiguity**: imagine a program that hashes a pair of strings.
 //!    To hash the strings `a` and `b` it hashes `a + "||" + b`. The pair of
@@ -22,85 +21,100 @@
 //!    same input to the hash function and therefore the same hash. This
 //!    creates a collision.
 //!
-//! # Examples
+//! Regarding (1), this library makes it easy for Libra developers to create as
+//! many new "hashable" Rust types as needed so that each Rust type hashed and signed
+//! in Libra has a unique meaning, that is, unambiguously captures the intent of a signer.
+//!
+//! Regarding (2), this library provides the `CryptoHasher` abstraction to easily manage
+//! cryptographic seeds for hashing. Hashing seeds aim to ensure that
+//! the hashes of values of a given type `MyNewStruct` never collide with hashes of values
+//! from another type.
+//!
+//! Finally, to prevent format ambiguity within a same type `MyNewStruct` and facilitate protocol
+//! specifications, we use [Libra Canonical Serialization (LCS)](../../libra_canonical_serialization/index.html)
+//! as the recommended solution to write Rust values into a hasher.
+//!
+//! # Quick Start
+//!
+//! To obtain a `hash()` method for any new type `MyNewStruct`, it is (strongly) recommended to
+//! use the derive macros of `serde` and `libra_crypto_derive` as follows:
+//! ```
+//! use libra_crypto::hash::CryptoHash;
+//! use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+//! use serde::{Deserialize, Serialize};
+//! #[derive(Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+//! struct MyNewStruct { /*...*/ }
+//!
+//! let value = MyNewStruct { /*...*/ };
+//! value.hash();
+//! ```
+//!
+//! Under the hood, this will generate a new implementation `MyNewStructHasher` for the trait
+//! `CryptoHasher` and implement the trait `CryptoHash` for `MyNewStruct` using LCS.
+//!
+//! # Implementing New Hashers
+//!
+//! The trait `CryptoHasher` captures the notion of a pre-seeded hash function, aka a "hasher".
+//! New implementations can be defined in two ways.
+//!
+//! ## Derive macro (recommended)
+//!
+//! For any new structure `MyNewStruct` that needs to be hashed, it is recommended to simply
+//! use the derive macro [`CryptoHasher`](https://doc.rust-lang.org/reference/procedural-macros.html).
+//!
+//! ```
+//! use libra_crypto_derive::CryptoHasher;
+//! use serde::Deserialize;
+//! #[derive(Deserialize, CryptoHasher)]
+//! #[serde(rename = "OptionalCustomSerdeName")]
+//! struct MyNewStruct { /*...*/ }
+//! ```
+//!
+//! The macro `CryptoHasher` will define a hasher automatically called `MyNewStructHasher`, and derive a salt
+//! using the name of the type as seen by the Serde library. In the example above, this name
+//! was changed using the Serde parameter `rename`: the salt will be based on the value `OptionalCustomSerdeName`
+//! instead of the default name `MyNewStruct`.
+//!
+//! ## Customized hashers
+//!
+//! **IMPORTANT:** Do NOT use this for new code unless you know what you are doing.
+//!
+//! This library also provides a few customized hashers defined in the code as follows:
+//!
+//! ```
+//! # // To get around that there's no way to doc-test a non-exported macro:
+//! # macro_rules! define_hasher { ($e:expr) => () }
+//! define_hasher! { (MyNewDataHasher, MY_NEW_DATA_HASHER, MY_NEW_DATA_SEED, b"MyUniqueSaltString") }
+//! ```
+//!
+//! # Using a hasher directly
+//!
+//! **IMPORTANT:** Do NOT use this for new code unless you know what you are doing.
 //!
 //! ```
 //! use libra_crypto::hash::{CryptoHasher, TestOnlyHasher};
 //!
 //! let mut hasher = TestOnlyHasher::default();
-//! hasher.write("Test message".as_bytes());
+//! hasher.update("Test message".as_bytes());
 //! let hash_value = hasher.finish();
 //! ```
-//! The output is of type [`HashValue`], which can be used as an input for signing.
-//!
-//! # Implementing new hashers
-//!
-//! ## The automatic way
-//!
-//! For any new structure `MyNewStruct` that needs to be hashed, the developer
-//! should use the [`CryptoHasher` derive macro](https://doc.rust-lang.org/reference/procedural-macros.html).
-//!
-//! ```ignore
-//! #[derive(CryptoHasher)]
-//! struct MyNewStruct {
-//!   ...
-//! }
-//! ```
-//!
-//! The macro will define a hasher automatically called `MyNewStructHasher`, and pick a salt
-//! equal to the full module path + "::"  + structure name, i.e. if
-//! `MyNewStruct` is defined in `bar::baz::quux`, the salt will be `b"bar::baz::quux::MyNewStruct"`.
-//! You can then use it in your implementation of `CryptoHash` (see below).
-//!
-//! ## The semi-automatic way
-//!
-//! For any new structure `MyNewStruct` that needs to be hashed, the developer should define a
-//! new hasher with:
-//!
-//! ```
-//! # // To get around that there's no way to doc-test a non-exported macro:
-//! # macro_rules! define_hasher { ($e:expr) => () }
-//! define_hasher! { (MyNewStructHasher, MY_NEW_STRUCT_HASHER, b"MyNewStruct") }
-//! ```
-//!
-//! **Note**: The last argument for the `define_hasher` macro must be a unique string.
-//!
-//! ## The `CryptoHash` implementation (for both automatic and semi-automatic way)
-//! Then, the `CryptoHash` trait should be implemented:
-//! ```
-//! # use libra_crypto::hash::*;
-//! # #[derive(Default)]
-//! # struct MyNewStructHasher;
-//! # impl CryptoHasher for MyNewStructHasher {
-//! #   fn finish(self) -> HashValue { unimplemented!() }
-//! #   fn write(&mut self, bytes: &[u8]) -> &mut Self { unimplemented!() }
-//! # }
-//! struct MyNewStruct;
-//!
-//! impl CryptoHash for MyNewStruct {
-//!     type Hasher = MyNewStructHasher; // use the above defined hasher here
-//!
-//!     fn hash(&self) -> HashValue {
-//!         let mut state = Self::Hasher::default();
-//!         state.write(b"Struct serialized into bytes here");
-//!         state.finish()
-//!     }
-//! }
-//! ```
 
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Error, Result};
 use bytes::Bytes;
 use libra_nibble::Nibble;
 use mirai_annotations::*;
-use once_cell::sync::Lazy;
+use once_cell::sync::{Lazy, OnceCell};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use rand::{rngs::OsRng, Rng};
 use serde::{de, ser};
-use std::{self, convert::AsRef, fmt};
+use std::{self, convert::AsRef, fmt, str::FromStr};
 use tiny_keccak::{Hasher, Sha3};
 
-const LIBRA_HASH_SUFFIX: &[u8] = b"@@$$LIBRA$$@@";
+/// A prefix used to begin the salt of every libra hashable structure. The salt
+/// consists in this global prefix, concatenated with the specified
+/// serialization name of the struct.
+pub(crate) const LIBRA_HASH_PREFIX: &[u8] = b"LIBRA::";
 const SHORT_STRING_LENGTH: usize = 4;
 
 /// Output value of our hash function. Intentionally opaque for safety and modularity.
@@ -143,15 +157,10 @@ impl HashValue {
     }
 
     /// Creates a zero-initialized instance.
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         HashValue {
             hash: [0; HashValue::LENGTH],
         }
-    }
-
-    /// Check if the hash value is zero.
-    pub fn is_zero(&self) -> bool {
-        *self == HashValue::zero()
     }
 
     /// Create a cryptographically random instance.
@@ -167,9 +176,13 @@ impl HashValue {
         HashValue { hash }
     }
 
-    /// Convenience function to compute a sha3-256 HashValue of the buffer. It will handle hasher
-    /// creation, data feeding and finalization.
-    pub fn from_sha3_256(buffer: &[u8]) -> Self {
+    /// Convenience function that computes a `HashValue` internally equal to
+    /// the sha3_256 of a byte buffer. It will handle hasher creation, data
+    /// feeding and finalization.
+    ///
+    /// Note this will not result in the `<T as CryptoHash>::hash()` for any
+    /// reasonable struct T, as this computes a sha3 without any ornaments.
+    pub fn sha3_256_of(buffer: &[u8]) -> Self {
         let mut sha3 = Sha3::v256();
         sha3.update(buffer);
         HashValue::from_keccak(sha3)
@@ -360,6 +373,14 @@ impl From<HashValue> for Bytes {
     }
 }
 
+impl FromStr for HashValue {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        HashValue::from_hex(s)
+    }
+}
+
 /// An iterator over `HashValue` that generates one bit for each iteration.
 pub struct HashValueBitIterator<'a> {
     /// The reference to the bytes that represent the `HashValue`.
@@ -409,8 +430,10 @@ impl<'a> std::iter::DoubleEndedIterator for HashValueBitIterator<'a> {
 
 impl<'a> std::iter::ExactSizeIterator for HashValueBitIterator<'a> {}
 
-/// A type that implements `CryptoHash` can be hashed by a cryptographic hash function and produce
-/// a `HashValue`. Each type needs to have its own `Hasher` type.
+/// A type that can be cryptographically hashed to produce a `HashValue`.
+///
+/// In most cases, this trait should not be implemented manually but rather derived using
+/// the macros `serde::Serialize`, `CryptoHasher`, and `LCSCryptoHash`.
 pub trait CryptoHash {
     /// The associated `Hasher` type which comes with a unique salt for this type.
     type Hasher: CryptoHasher;
@@ -419,74 +442,65 @@ pub trait CryptoHash {
     fn hash(&self) -> HashValue;
 }
 
-/// A trait for generating hash from arbitrary stream of bytes.
-///
-/// Instances of `CryptoHasher` usually represent state that is changed while hashing data.
-/// Similar to `std::hash::Hasher` but not same. CryptoHasher cannot be reused after finish() has
-/// been called.
-pub trait CryptoHasher: Default {
+/// A trait for representing the state of a cryptographic hasher.
+pub trait CryptoHasher: Default + std::io::Write {
+    /// the seed used to initialize hashing `Self` before the serialization bytes of the actual value
+    fn seed() -> &'static [u8; 32];
+
+    /// Write bytes into the hasher.
+    fn update(&mut self, bytes: &[u8]);
+
     /// Finish constructing the [`HashValue`].
     fn finish(self) -> HashValue;
-    /// Write bytes into the hasher.
-    fn write(&mut self, bytes: &[u8]) -> &mut Self;
-    /// Write a single byte into the hasher.
-    fn write_u8(&mut self, byte: u8) {
-        self.write(&[byte]);
-    }
 }
 
-/// Our preferred hashing schema, outputting [`HashValue`]s.
-/// * Hashing is parameterized by a `domain` to prevent domain
-/// ambiguity attacks.
-/// * The existence of serialization/deserialization function rules
-/// out any formatting ambiguity.
-/// * Assuming that the `domain` seed is used only once per Rust type,
-/// or that the serialization carries enough type information to avoid
-/// ambiguities within a same domain.
-/// * Only used internally within this crate
+/// The default hasher underlying generated implementations of `CryptoHasher`.
+#[doc(hidden)]
 #[derive(Clone)]
 pub struct DefaultHasher {
     state: Sha3,
 }
 
-impl CryptoHasher for DefaultHasher {
-    fn finish(self) -> HashValue {
+impl DefaultHasher {
+    #[doc(hidden)]
+    /// This function does not return a HashValue in the sense of our usual
+    /// hashes, but a construction of initial bytes that are fed into any hash
+    /// provided we're passed  a (lcs) serialization name as argument.
+    pub fn prefixed_hash(buffer: &[u8]) -> [u8; HashValue::LENGTH] {
+        // The salt is initial material we prefix to actual value bytes for
+        // domain separation. Its length is variable.
+        let salt: Vec<u8> = [LIBRA_HASH_PREFIX, buffer].concat();
+        // The seed is a fixed-length hash of the salt, thereby preventing
+        // suffix attacks on the domain separation bytes.
+        HashValue::sha3_256_of(&salt[..]).hash
+    }
+
+    #[doc(hidden)]
+    pub fn new(typename: &[u8]) -> Self {
+        let mut state = Sha3::v256();
+        if !typename.is_empty() {
+            state.update(&Self::prefixed_hash(typename));
+        }
+        DefaultHasher { state }
+    }
+
+    #[doc(hidden)]
+    pub fn update(&mut self, bytes: &[u8]) {
+        self.state.update(bytes);
+    }
+
+    #[doc(hidden)]
+    pub fn finish(self) -> HashValue {
         let mut hasher = HashValue::default();
         self.state.finalize(hasher.as_ref_mut());
         hasher
-    }
-
-    fn write(&mut self, bytes: &[u8]) -> &mut Self {
-        self.state.update(bytes);
-        self
-    }
-}
-
-impl Default for DefaultHasher {
-    fn default() -> Self {
-        DefaultHasher {
-            state: Sha3::v256(),
-        }
-    }
-}
-
-impl DefaultHasher {
-    /// initialize a new hasher with a specific salt
-    pub fn new_with_salt(typename: &[u8]) -> Self {
-        let mut state = Sha3::v256();
-        if !typename.is_empty() {
-            let mut salt = typename.to_vec();
-            salt.extend_from_slice(LIBRA_HASH_SUFFIX);
-            state.update(HashValue::from_sha3_256(&salt[..]).as_ref());
-        }
-        DefaultHasher { state }
     }
 }
 
 macro_rules! define_hasher {
     (
         $(#[$attr:meta])*
-        ($hasher_type: ident, $hasher_name: ident, $salt: expr)
+        ($hasher_type: ident, $hasher_name: ident, $seed_name: ident, $salt: expr)
     ) => {
 
         #[derive(Clone)]
@@ -495,9 +509,12 @@ macro_rules! define_hasher {
 
         impl $hasher_type {
             fn new() -> Self {
-                $hasher_type(DefaultHasher::new_with_salt($salt))
+                $hasher_type(DefaultHasher::new($salt))
             }
         }
+
+        static $hasher_name: Lazy<$hasher_type> = Lazy::new(|| { $hasher_type::new() });
+        static $seed_name: OnceCell<[u8; 32]> = OnceCell::new();
 
         impl Default for $hasher_type {
             fn default() -> Self {
@@ -506,17 +523,30 @@ macro_rules! define_hasher {
         }
 
         impl CryptoHasher for $hasher_type {
+            fn seed() -> &'static [u8;32] {
+                $seed_name.get_or_init(|| {
+                    DefaultHasher::prefixed_hash($salt)
+                })
+            }
+
+            fn update(&mut self, bytes: &[u8]) {
+                self.0.update(bytes);
+            }
+
             fn finish(self) -> HashValue {
                 self.0.finish()
             }
-
-            fn write(&mut self, bytes: &[u8]) -> &mut Self {
-                self.0.write(bytes);
-                self
-            }
         }
 
-        static $hasher_name: Lazy<$hasher_type> = Lazy::new(|| { $hasher_type::new() });
+        impl std::io::Write for $hasher_type {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                self.0.update(bytes);
+                Ok(bytes.len())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
     };
 }
 
@@ -525,6 +555,7 @@ define_hasher! {
     (
         TransactionAccumulatorHasher,
         TRANSACTION_ACCUMULATOR_HASHER,
+        TRANSACTION_ACCUMULATOR_SEED,
         b"TransactionAccumulator"
     )
 }
@@ -534,6 +565,7 @@ define_hasher! {
     (
         EventAccumulatorHasher,
         EVENT_ACCUMULATOR_HASHER,
+        EVENT_ACCUMULATOR_SEED,
         b"EventAccumulator"
     )
 }
@@ -543,18 +575,14 @@ define_hasher! {
     (
         SparseMerkleInternalHasher,
         SPARSE_MERKLE_INTERNAL_HASHER,
+        SPARSE_MERKLE_INTERNAL_SEED,
         b"SparseMerkleInternal"
     )
 }
 
 define_hasher! {
     /// The hasher used only for testing. It doesn't have a salt.
-    (TestOnlyHasher, TEST_ONLY_HASHER, b"")
-}
-
-define_hasher! {
-    /// The hasher used to compute the hash of a DiscoveryMsg object.
-    (DiscoveryMsgHasher, DISCOVERY_MSG_HASHER, b"DiscoveryMsg")
+    (TestOnlyHasher, TEST_ONLY_HASHER, TEST_ONLY_SEED, b"")
 }
 
 fn create_literal_hash(word: &str) -> HashValue {
@@ -605,7 +633,7 @@ impl<T: ser::Serialize + ?Sized> TestOnlyHash for T {
     fn test_only_hash(&self) -> HashValue {
         let bytes = lcs::to_bytes(self).expect("serialize failed during hash.");
         let mut hasher = TestOnlyHasher::default();
-        hasher.write(&bytes);
+        hasher.update(&bytes);
         hasher.finish()
     }
 }

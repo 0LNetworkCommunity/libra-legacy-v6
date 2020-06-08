@@ -17,7 +17,7 @@
 //! use rand::{rngs::StdRng, SeedableRng};
 //!
 //! let mut hasher = TestOnlyHasher::default();
-//! hasher.write("Test message".as_bytes());
+//! hasher.update("Test message".as_bytes());
 //! let hashed_message = hasher.finish();
 //!
 //! let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
@@ -28,11 +28,15 @@
 //! ```
 //! **Note**: The above example generates a private key using a private function intended only for
 //! testing purposes. Production code should find an alternate means for secure key generation.
-
-use crate::{traits::*, HashValue};
+use crate::{
+    hash::{CryptoHash, CryptoHasher},
+    traits::*,
+    HashValue,
+};
 use anyhow::{anyhow, Result};
 use core::convert::TryFrom;
 use libra_crypto_derive::{DeserializeKey, SerializeKey, SilentDebug, SilentDisplay};
+use serde::Serialize;
 use std::{cmp::Ordering, fmt};
 
 /// The length of the Ed25519PrivateKey
@@ -89,6 +93,17 @@ impl Ed25519PrivateKey {
             Err(_) => Err(CryptoMaterialError::DeserializationError),
         }
     }
+
+    /// Private function aimed at minimizing code duplication between sign
+    /// methods of the SigningKey implementation. This should remain private.
+    fn sign_arbitrary_message(&self, message: &[u8]) -> Ed25519Signature {
+        let secret_key: &ed25519_dalek::SecretKey = &self.0;
+        let public_key: Ed25519PublicKey = self.into();
+        let expanded_secret_key: ed25519_dalek::ExpandedSecretKey =
+            ed25519_dalek::ExpandedSecretKey::from(secret_key);
+        let sig = expanded_secret_key.sign(message.as_ref(), &public_key.0);
+        Ed25519Signature(sig)
+    }
 }
 
 impl Ed25519PublicKey {
@@ -105,6 +120,41 @@ impl Ed25519PublicKey {
             Ok(dalek_public_key) => Ok(Ed25519PublicKey(dalek_public_key)),
             Err(_) => Err(CryptoMaterialError::DeserializationError),
         }
+    }
+
+    /// Deserialize an Ed25519PublicKey from its representation as an x25519
+    /// public key, along with an indication of sign. This is meant to
+    /// compensate for the poor key storage capabilities of key management
+    /// solutions, and NOT to promote double usage of keys under several
+    /// schemes, which would lead to BAD vulnerabilities.
+    ///
+    /// Arguments:
+    /// - `x25519_bytes`: bit representation of a public key in clamped
+    ///            Montgomery form, a.k.a. the x25519 public key format.
+    /// - `negative`: whether to interpret the given point as a negative point,
+    ///               as the Montgomery form erases the sign byte. By XEdDSA
+    ///               convention, if you expect to ever convert this back to an
+    ///               x25519 public key, you should pass `false` for this
+    ///               argument.
+    #[cfg(test)]
+    pub(crate) fn from_x25519_public_bytes(
+        x25519_bytes: &[u8],
+        negative: bool,
+    ) -> Result<Self, CryptoMaterialError> {
+        if x25519_bytes.len() != 32 {
+            return Err(CryptoMaterialError::DeserializationError);
+        }
+        let key_bits = {
+            let mut bits = [0u8; 32];
+            bits.copy_from_slice(x25519_bytes);
+            bits
+        };
+        let mtg_point = curve25519_dalek::montgomery::MontgomeryPoint(key_bits);
+        let sign = if negative { 1u8 } else { 0u8 };
+        let ed_point = mtg_point
+            .to_edwards(sign)
+            .ok_or(CryptoMaterialError::DeserializationError)?;
+        Ed25519PublicKey::try_from(&ed_point.compress().as_bytes()[..])
     }
 }
 
@@ -168,13 +218,26 @@ impl SigningKey for Ed25519PrivateKey {
     type VerifyingKeyMaterial = Ed25519PublicKey;
     type SignatureMaterial = Ed25519Signature;
 
+    fn sign<T: CryptoHash + Serialize>(
+        &self,
+        message: &T,
+    ) -> Result<Ed25519Signature, CryptoMaterialError> {
+        let mut bytes = <T::Hasher as CryptoHasher>::seed().to_vec();
+        lcs::serialize_into(&mut bytes, &message)
+            .map_err(|_| CryptoMaterialError::SerializationError)?;
+        Ok(Ed25519PrivateKey::sign_arbitrary_message(
+            &self,
+            bytes.as_ref(),
+        ))
+    }
+
     fn sign_message(&self, message: &HashValue) -> Ed25519Signature {
-        let secret_key: &ed25519_dalek::SecretKey = &self.0;
-        let public_key: Ed25519PublicKey = self.into();
-        let expanded_secret_key: ed25519_dalek::ExpandedSecretKey =
-            ed25519_dalek::ExpandedSecretKey::from(secret_key);
-        let sig = expanded_secret_key.sign(message.as_ref(), &public_key.0);
-        Ed25519Signature(sig)
+        Ed25519PrivateKey::sign_arbitrary_message(&self, message.as_ref())
+    }
+
+    #[cfg(any(test, feature = "fuzzing"))]
+    fn sign_arbitrary_message(&self, message: &[u8]) -> Ed25519Signature {
+        Ed25519PrivateKey::sign_arbitrary_message(self, message)
     }
 }
 
@@ -342,6 +405,17 @@ impl Signature for Ed25519Signature {
         self.verify_arbitrary_msg(message.as_ref(), public_key)
     }
 
+    fn verify_struct_msg<T: CryptoHash + Serialize>(
+        &self,
+        message: &T,
+        public_key: &Ed25519PublicKey,
+    ) -> Result<()> {
+        let mut bytes = <T::Hasher as CryptoHasher>::seed().to_vec();
+        lcs::serialize_into(&mut bytes, &message)
+            .map_err(|_| CryptoMaterialError::SerializationError)?;
+        Self::verify_arbitrary_msg(self, &bytes, public_key)
+    }
+
     /// Checks that `self` is valid for an arbitrary &[u8] `message` using `public_key`.
     /// Outside of this crate, this particular function should only be used for native signature
     /// verification in move
@@ -416,7 +490,7 @@ impl TryFrom<&[u8]> for Ed25519Signature {
 // Those are required by the implementation of hash above
 impl PartialEq for Ed25519Signature {
     fn eq(&self, other: &Ed25519Signature) -> bool {
-        self.to_bytes().as_ref() == other.to_bytes().as_ref()
+        self.to_bytes()[..] == other.to_bytes()[..]
     }
 }
 

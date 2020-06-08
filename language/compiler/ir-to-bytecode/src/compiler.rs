@@ -8,12 +8,12 @@ use crate::{
 use anyhow::{bail, format_err, Result};
 use bytecode_source_map::source_map::SourceMap;
 use libra_types::account_address::AccountAddress;
+use move_core_types::value::{MoveTypeLayout, MoveValue};
 use move_ir_types::{
     ast::{self, Bytecode as IRBytecode, Bytecode_ as IRBytecode_, *},
     location::*,
     sp,
 };
-use move_vm_types::values::Value as MoveVMValue;
 use std::{
     clone::Clone,
     collections::{
@@ -161,6 +161,7 @@ enum InferredType {
     U64,
     U128,
     Address,
+    Signer,
     Vector(Box<InferredType>),
     Struct(StructHandleIndex, Vec<InferredType>),
     Reference(Box<InferredType>),
@@ -181,6 +182,7 @@ impl InferredType {
             S::U64 => I::U64,
             S::U128 => I::U128,
             S::Address => I::Address,
+            S::Signer => I::Signer,
             S::Vector(s_inner) => I::Vector(Box::new(Self::from_signature_token_with_subst(
                 subst, s_inner,
             ))),
@@ -233,6 +235,7 @@ impl InferredType {
             InferredType::U64 => bail!("no struct type for U64"),
             InferredType::U128 => bail!("no struct type for U128"),
             InferredType::Address => bail!("no struct type for Address"),
+            InferredType::Signer => bail!("no struct type for Signer"),
             InferredType::Vector(_) => bail!("no struct type for vector"),
             InferredType::Reference(inner) | InferredType::MutableReference(inner) => {
                 inner.get_struct_handle()
@@ -251,6 +254,7 @@ impl InferredType {
             I::U64 => S::U64,
             I::U128 => S::U128,
             I::Address => S::Address,
+            I::Signer => S::Signer,
             I::Vector(inner) => S::Vector(Box::new(Self::to_signature_token(inner)?)),
             I::Struct(si, tys) if tys.is_empty() => S::Struct(*si),
             I::Struct(si, tys) => S::StructInstantiation(*si, Self::build_signature_tokens(tys)?),
@@ -462,8 +466,9 @@ pub fn compile_module<'a, T: 'a + ModuleAccess>(
         address,
         name: module.name,
     };
-    let mut context = Context::new(dependencies, Some(current_module))?;
+    let mut context = Context::new(dependencies, Some(current_module.clone()))?;
     let self_name = ModuleName::new(ModuleName::self_name().into());
+    let self_module_handle_idx = context.declare_import(current_module, self_name.clone())?;
     // Explicitly declare all imports as they will be included even if not used
     compile_imports(&mut context, Some(address), module.imports)?;
 
@@ -512,6 +517,7 @@ pub fn compile_module<'a, T: 'a + ModuleAccess>(
     ) = context.materialize_pools();
     let compiled_module = CompiledModuleMut {
         module_handles,
+        self_module_handle_idx,
         struct_handles,
         function_handles,
         field_handles,
@@ -639,6 +645,7 @@ fn compile_type(
 ) -> Result<SignatureToken> {
     Ok(match ty {
         Type::Address => SignatureToken::Address,
+        Type::Signer => SignatureToken::Signer,
         Type::U8 => SignatureToken::U8,
         Type::U64 => SignatureToken::U64,
         Type::U128 => SignatureToken::U128,
@@ -1182,8 +1189,8 @@ fn compile_expression(
         }
         Exp_::Value(cv) => match cv.value {
             CopyableVal_::Address(address) => {
-                let address_value = MoveVMValue::address(address);
-                let constant = compile_constant(context, SignatureToken::Address, address_value)?;
+                let address_value = MoveValue::Address(address);
+                let constant = compile_constant(context, MoveTypeLayout::Address, address_value)?;
                 let idx = context.constant_index(constant)?;
                 push_instr!(exp.loc, Bytecode::LdConst(idx));
                 function_frame.push()?;
@@ -1205,8 +1212,8 @@ fn compile_expression(
                 vec_deque![InferredType::U128]
             }
             CopyableVal_::ByteArray(buf) => {
-                let vec_value = MoveVMValue::vector_u8(buf);
-                let type_ = SignatureToken::Vector(Box::new(SignatureToken::U8));
+                let vec_value = MoveValue::vector_u8(buf);
+                let type_ = MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U8));
                 let constant = compile_constant(context, type_, vec_value)?;
                 let idx = context.constant_index(constant)?;
                 push_instr!(exp.loc, Bytecode::LdConst(idx));
@@ -1543,6 +1550,24 @@ fn compile_call(
                     function_frame.push()?;
                     vec_deque![]
                 }
+                Builtin::MoveTo(name, tys) => {
+                    let tokens = Signature(compile_types(
+                        context,
+                        function_frame.type_parameters(),
+                        &tys,
+                    )?);
+                    let type_actuals_id = context.signature_index(tokens)?;
+                    let def_idx = context.struct_definition_index(&name)?;
+                    if tys.is_empty() {
+                        push_instr!(call.loc, Bytecode::MoveTo(def_idx));
+                    } else {
+                        let si_idx =
+                            context.struct_instantiation_index(def_idx, type_actuals_id)?;
+                        push_instr!(call.loc, Bytecode::MoveToGeneric(si_idx));
+                    }
+                    function_frame.push()?;
+                    vec_deque![]
+                }
                 Builtin::Freeze => {
                     push_instr!(call.loc, Bytecode::FreezeRef);
                     function_frame.pop()?; // pop mut ref
@@ -1614,10 +1639,10 @@ fn compile_call(
 
 fn compile_constant(
     _context: &mut Context,
-    type_: SignatureToken,
-    value: MoveVMValue,
+    type_: MoveTypeLayout,
+    value: MoveValue,
 ) -> Result<Constant> {
-    MoveVMValue::serialize_constant(type_, value)
+    Constant::serialize_constant(&type_, &value)
         .ok_or_else(|| format_err!("Could not serialize constant"))
 }
 
@@ -1700,14 +1725,14 @@ fn compile_bytecode(
         IRBytecode_::CastU64 => Bytecode::CastU64,
         IRBytecode_::CastU128 => Bytecode::CastU128,
         IRBytecode_::LdByteArray(b) => {
-            let vec_value = MoveVMValue::vector_u8(b);
-            let type_ = SignatureToken::Vector(Box::new(SignatureToken::U8));
+            let vec_value = MoveValue::vector_u8(b);
+            let type_ = MoveTypeLayout::Vector(Box::new(MoveTypeLayout::U8));
             let constant = compile_constant(context, type_, vec_value)?;
             Bytecode::LdConst(context.constant_index(constant)?)
         }
         IRBytecode_::LdAddr(a) => {
-            let address_value = MoveVMValue::address(a);
-            let constant = compile_constant(context, SignatureToken::Address, address_value)?;
+            let address_value = MoveValue::Address(a);
+            let constant = compile_constant(context, MoveTypeLayout::Address, address_value)?;
             Bytecode::LdConst(context.constant_index(constant)?)
         }
         IRBytecode_::LdTrue => Bytecode::LdTrue,
@@ -1905,6 +1930,21 @@ fn compile_bytecode(
             } else {
                 let si_idx = context.struct_instantiation_index(def_idx, type_actuals_id)?;
                 Bytecode::MoveToSenderGeneric(si_idx)
+            }
+        }
+        IRBytecode_::MoveTo(n, tys) => {
+            let tokens = Signature(compile_types(
+                context,
+                function_frame.type_parameters(),
+                &tys,
+            )?);
+            let type_actuals_id = context.signature_index(tokens)?;
+            let def_idx = context.struct_definition_index(&n)?;
+            if tys.is_empty() {
+                Bytecode::MoveTo(def_idx)
+            } else {
+                let si_idx = context.struct_instantiation_index(def_idx, type_actuals_id)?;
+                Bytecode::MoveToGeneric(si_idx)
             }
         }
         IRBytecode_::Shl => Bytecode::Shl,

@@ -1,17 +1,17 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use executor_types::BlockExecutor;
-use executor_utils::test_helpers::{
+use executor_test_helpers::{
     extract_signer, gen_block_id, gen_ledger_info_with_sigs, get_test_signed_transaction,
 };
+use executor_types::BlockExecutor;
 use libra_crypto::{ed25519::*, test_utils::TEST_SEED, PrivateKey, Uniform};
 use libra_types::{
     account_config::{association_address, lbr_type_tag},
     transaction::authenticator::AuthenticationKey,
 };
 use rand::SeedableRng;
-use transaction_builder::encode_create_account_script;
+use transaction_builder::encode_mint_script;
 
 pub fn run_test_suite(func: fn() -> Box<dyn BlockExecutor>) {
     let (mut config, genesis_key) = config_builder::test_config();
@@ -39,7 +39,7 @@ pub fn run_test_suite(func: fn() -> Box<dyn BlockExecutor>) {
         /* sequence_number = */ 1,
         genesis_key.clone(),
         genesis_key.public_key(),
-        Some(encode_create_account_script(
+        Some(encode_mint_script(
             lbr_type_tag(),
             &account1,
             account1_auth_key.prefix().to_vec(),

@@ -3,7 +3,6 @@
 
 use crate::persistent_safety_storage::PersistentSafetyStorage;
 use consensus_types::{
-    accumulator_extension_proof::AccumulatorExtensionProof,
     block::Block,
     common::{Payload, Round},
     quorum_cert::QuorumCert,
@@ -18,6 +17,7 @@ use libra_types::{
     block_info::BlockInfo,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     on_chain_config::ValidatorSet,
+    proof::AccumulatorExtensionProof,
     validator_info::ValidatorInfo,
     validator_signer::ValidatorSigner,
     waypoint::Waypoint,
@@ -33,16 +33,16 @@ pub fn empty_proof() -> Proof {
     Proof::new(vec![], 0, vec![])
 }
 
-pub fn make_proposal_with_qc_and_proof<P: Payload>(
-    payload: P,
+pub fn make_proposal_with_qc_and_proof(
+    payload: Payload,
     round: Round,
     proof: Proof,
     qc: QuorumCert,
     validator_signer: &ValidatorSigner,
-) -> VoteProposal<P> {
-    VoteProposal::<P>::new(
+) -> VoteProposal {
+    VoteProposal::new(
         proof,
-        Block::<P>::new_proposal(
+        Block::new_proposal(
             payload,
             round,
             SystemTime::now()
@@ -56,21 +56,27 @@ pub fn make_proposal_with_qc_and_proof<P: Payload>(
     )
 }
 
-pub fn make_proposal_with_qc<P: Payload>(
+pub fn make_proposal_with_qc(
     round: Round,
     qc: QuorumCert,
     validator_signer: &ValidatorSigner,
-) -> VoteProposal<P> {
-    make_proposal_with_qc_and_proof(P::default(), round, empty_proof(), qc, validator_signer)
+) -> VoteProposal {
+    make_proposal_with_qc_and_proof(vec![], round, empty_proof(), qc, validator_signer)
 }
 
-pub fn make_proposal_with_parent<P: Payload>(
-    payload: P,
+pub fn make_proposal_with_parent_and_overrides(
+    payload: Payload,
     round: Round,
-    parent: &VoteProposal<P>,
-    committed: Option<&VoteProposal<P>>,
+    parent: &VoteProposal,
+    committed: Option<&VoteProposal>,
     validator_signer: &ValidatorSigner,
-) -> VoteProposal<P> {
+    epoch: Option<u64>,
+) -> VoteProposal {
+    let block_epoch = match epoch {
+        Some(e) => e,
+        _ => parent.block().epoch(),
+    };
+
     let parent_output = parent
         .accumulator_extension_proof()
         .verify(
@@ -88,10 +94,18 @@ pub fn make_proposal_with_parent<P: Payload>(
         vec![Timeout::new(0, round).hash()],
     );
 
+    let proposed_block = BlockInfo::new(
+        block_epoch,
+        parent.block().round(),
+        parent.block().id(),
+        parent_output.root_hash(),
+        parent_output.version(),
+        parent.block().timestamp_usecs(),
+        None,
+    );
+
     let vote_data = VoteData::new(
-        parent
-            .block()
-            .gen_block_info(parent_output.root_hash(), parent_output.version(), None),
+        proposed_block,
         parent.block().quorum_cert().certified_block().clone(),
     );
 
@@ -138,6 +152,23 @@ pub fn make_proposal_with_parent<P: Payload>(
     make_proposal_with_qc_and_proof(payload, round, proof, qc, validator_signer)
 }
 
+pub fn make_proposal_with_parent(
+    payload: Payload,
+    round: Round,
+    parent: &VoteProposal,
+    committed: Option<&VoteProposal>,
+    validator_signer: &ValidatorSigner,
+) -> VoteProposal {
+    make_proposal_with_parent_and_overrides(
+        payload,
+        round,
+        parent,
+        committed,
+        validator_signer,
+        None,
+    )
+}
+
 pub fn validator_signers_to_ledger_info(signers: &[&ValidatorSigner]) -> LedgerInfo {
     let infos = signers
         .iter()
@@ -153,6 +184,6 @@ pub fn validator_signers_to_waypoints(signers: &[&ValidatorSigner]) -> Waypoint 
 
 pub fn test_storage(signer: &ValidatorSigner) -> PersistentSafetyStorage {
     let waypoint = validator_signers_to_waypoints(&[signer]);
-    let storage = InMemoryStorage::new_storage();
+    let storage = Box::new(InMemoryStorage::new());
     PersistentSafetyStorage::initialize(storage, signer.private_key().clone(), waypoint)
 }

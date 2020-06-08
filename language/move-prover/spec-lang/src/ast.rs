@@ -17,6 +17,7 @@ use std::{
 };
 use vm::file_format::CodeOffset;
 
+use crate::env::{FunId, SchemaId, TypeParameter};
 use std::collections::BTreeSet;
 
 // =================================================================================================
@@ -76,7 +77,7 @@ impl ConditionKind {
     /// Returns true of this condition allows the `old(..)` expression.
     pub fn allows_old(&self) -> bool {
         use ConditionKind::*;
-        matches!(self, Ensures | AbortsIf | InvariantUpdate | VarUpdate(..))
+        matches!(self, Ensures | InvariantUpdate | VarUpdate(..))
     }
 
     /// Returns true if this condition is allowed on a public function declaration.
@@ -88,7 +89,7 @@ impl ConditionKind {
     /// Returns true if this condition is allowed on a private function declaration.
     pub fn allowed_on_private_fun_decl(&self) -> bool {
         use ConditionKind::*;
-        matches!(self, Requires | AbortsIf | Ensures)
+        matches!(self, Requires | RequiresModule | AbortsIf | Ensures)
     }
 
     /// Returns true if this condition is allowed in a function body.
@@ -181,6 +182,30 @@ impl Spec {
     pub fn any_kind(&self, kind: ConditionKind) -> bool {
         self.any(move |c| c.kind == kind)
     }
+}
+
+/// Information about a specification block in the source. This is used for documentation
+/// generation. In the object model, the original locations and documentation of spec blocks
+/// is reduced to conditions on a `Spec`, with expansion of schemas. This data structure
+/// allows us to disover the original spec blocks and their content.
+#[derive(Debug, Clone)]
+pub struct SpecBlockInfo {
+    /// The location of the entire spec block.
+    pub loc: Loc,
+    /// The target of the spec block.
+    pub target: SpecBlockTarget,
+    /// The locations of all members of the spec block.
+    pub member_locs: Vec<Loc>,
+}
+
+/// Describes the target of a spec block.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum SpecBlockTarget {
+    Module,
+    Struct(ModuleId, StructId),
+    Function(ModuleId, FunId),
+    FunctionCode(ModuleId, FunId, usize),
+    Schema(ModuleId, SchemaId, Vec<TypeParameter>),
 }
 
 // =================================================================================================
@@ -286,9 +311,12 @@ pub enum Operation {
     Len,
     All,
     Any,
+    TypeValue,
+    TypeDomain,
     Global,
     Exists,
     Old,
+    Trace,
     Update,
     Sender,
     MaxU8,
