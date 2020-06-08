@@ -6,6 +6,7 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Transaction;
     use 0x0::Debug;
+    use 0x0::LibraConfig;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -25,7 +26,7 @@ address 0x0 {
        VdfProofBlob {challenge,  difficulty, solution }
     }
 
-    public fun begin_redeem(config_addr: address, vdf_proof_blob: VdfProofBlob) acquires T, InProcess{
+    public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess{
       // Permissions: anyone can call this contract.
       // There is an edge-case which may not be clear. For example: Ping wants to join the network, he did a VDF.
       // He has no gas to submit, he asks to Lucas to submit the VDF (which Ping ran on his computer).
@@ -40,7 +41,7 @@ address 0x0 {
       // Looks like the implementation below would allow Ping to ask Keerthi to send the transaction again, and he gets two coins.
       // it's not possible, the only way to implement is that Ping submit his proof by himself. because Move only has move_to_sender().
 
-      let user_redemption_state = borrow_global_mut<T>(config_addr);
+      let user_redemption_state = borrow_global_mut<T>(default_redeem_address());
       let blob_redeemed = Vector::contains(&user_redemption_state.history, &vdf_proof_blob.solution);
       Transaction::assert(blob_redeemed == false, 10000);
 
@@ -57,10 +58,10 @@ address 0x0 {
 
     }
 
-    public fun end_redeem(config_addr: address, redeemed_addr: address, vdf_proof_blob: VdfProofBlob) acquires InProcess {
+    public fun end_redeem(redeemed_addr: address, vdf_proof_blob: VdfProofBlob) acquires InProcess {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
-      Transaction::assert(sender == config_addr, 10003);
+      Transaction::assert(sender == default_redeem_address(), 10003);
 
       Debug::print(&redeemed_addr);
       Debug::print(&vdf_proof_blob);
@@ -87,13 +88,13 @@ address 0x0 {
     // This can only be invoked by the default redeem address to instantiate
     // the resource under that address.
     // It can only be called a single time. it should be invoked in the genesis transaction.
-    public fun initialize() {
-        //Transaction::assert( Transaction::sender() != config_addr, 10003);
-        move_to_sender<T>( T{ history: Vector::empty()});
+    public fun initialize(config_account: &signer) {
+        Transaction::assert( Transaction::sender() == default_redeem_address(), 10003);
+        move_to<T>( config_account ,T{ history: Vector::empty()});
     }
 
     fun default_redeem_address(): address {
-        0x50882a77197b897e4409ab0c9db6a069
+        LibraConfig::default_config_address()
     }
 
     fun has_in_process(): bool {
