@@ -14,7 +14,7 @@
 
 use super::proof_of_time::{iterate_squarings, serialize};
 use classgroup::{gmp_classgroup::GmpClassGroup, BigNum, BigNumExt, ClassGroup};
-use sha2::{digest::FixedOutput, Digest, Sha256};
+use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
 use std::{cmp::Eq, collections::HashMap, hash::Hash, mem, u64, usize};
 
 #[derive(Debug, Clone)]
@@ -66,6 +66,7 @@ impl super::VDF for WesolowskiVDF {
         .map_err(|()| super::InvalidProof)
     }
 }
+
 /// To quote the original Python code:
 ///
 /// > Create `L` and `k` parameters from papers, based on how many iterations
@@ -88,41 +89,41 @@ pub fn approximate_parameters(t: f64) -> (usize, u8, u64) {
     (l as _, k as _, w as _)
 }
 
-fn u64_to_bytes(q: u64) -> [u8; 8] {
-    if false {
-        // This use of `std::mem::transumte` is correct, but still not justified.
-        unsafe { std::mem::transmute(q.to_be()) }
-    } else {
-        [
-            (q >> 56) as u8,
-            (q >> 48) as u8,
-            (q >> 40) as u8,
-            (q >> 32) as u8,
-            (q >> 24) as u8,
-            (q >> 16) as u8,
-            (q >> 8) as u8,
-            q as u8,
-        ]
-    }
-}
 
+/// As on page 10 of Wesolowski's paper, we uniformly sample a prime
+/// from amongst the first 2^129 primes.  According to the prime number
+/// theorem, the prime counting function `π(x)` can be approximated
+/// by `x / log x` asymptotically, so like `2^128` when `x = 2^134` or
+/// `2^122` when `x = 2^128`, which still leaves some margine.
+///
+/// Assuming the Riemann hypothesis, there is stronger approximation
+/// `Li(x) - π(x) = O(\sqrt(x) \log x)` where `Li(x)` is the
+/// [offset logarithmic integral](https://en.wikipedia.org/wiki/Logarithmic_integral_function),
+/// so `Li(2^y) - Li(2) = \int_2^{2^y} dt/ln t = 2^y / y` and
+/// `y = 134` gives at least 128 bits of security.
+///
+/// We may however have use for extra security margin against
+/// an adversary with some influence over the random oracle.
+///
+///
 /// Quote:
 ///
 /// > Creates a random prime based on input s.
 fn hash_prime<T: BigNum>(seed: &[&[u8]]) -> T {
-    let mut j = 0u64;
+    let mut h = Shake128::default();
+    h.input(b"prime");
+    for i in seed {
+        h.input(i);
+    }
+    let mut h = h.xof_result();
     loop {
-        let mut hasher = Sha256::new();
-        hasher.input(b"prime");
-        hasher.input(u64_to_bytes(j));
-        for i in seed {
-            hasher.input(i);
-        }
-        let n = T::from(&hasher.fixed_result()[..16]);
+        // Ideally we should use 17 bytes here for 134 bits
+        let mut b = [0u8; 16];
+        h.read(&mut b);
+        let n = T::from(&b[..]);
         if n.probab_prime(2) {
             break n;
         }
-        j += 1;
     }
 }
 

@@ -136,20 +136,18 @@ where
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
-    use sha2::{digest::FixedOutput, Digest, Sha256};
+    use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
 
     let size = (int_size_bits + 16) >> 4;
-    let mut v = Vec::with_capacity(size * 2);
-    for _ in 0..size * 2 {
-        v.push(0)
-    }
-    let mut hasher = Sha256::new();
+    let mut v = vec![0; size * 2];
+    let mut h = Shake128::default();
     for i in &[&x, &y, &sqrt_mu] {
         i.serialize(&mut v).expect(super::INCORRECT_BUFFER_SIZE);
-        hasher.input(&v);
+        h.input(&v);
     }
-    let res = hasher.fixed_result();
-    T::unsigned_deserialize_bignum(&res[..16])
+    let mut res = [0u8; 16];
+    h.xof_result().read(&mut res);
+    T::unsigned_deserialize_bignum(&res[..])
 }
 
 fn create_proof_of_time_pietrzak<T>(
