@@ -7,7 +7,7 @@ use libra_config::{config::NodeConfig, utils::get_genesis_txn};
 use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use libra_types::{
     account_address, account_config,
-    account_config::lbr_type_tag,
+    account_config::{lbr_type_tag, LBR_NAME},
     test_helpers::transaction_test_helpers,
     transaction::{Module, Script, TransactionArgument, MAX_TRANSACTION_SIZE_IN_BYTES},
     vm_error::StatusCode,
@@ -67,7 +67,7 @@ fn test_validate_transaction() {
 
     let address = account_config::association_address();
     let program =
-        encode_transfer_with_metadata_script(lbr_type_tag(), &address, vec![], 100, vec![], vec![]);
+        encode_transfer_with_metadata_script(lbr_type_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
         address,
         1,
@@ -90,7 +90,7 @@ fn test_validate_invalid_signature() {
 
     let address = account_config::association_address();
     let program =
-        encode_transfer_with_metadata_script(lbr_type_tag(), &address, vec![], 100, vec![], vec![]);
+        encode_transfer_with_metadata_script(lbr_type_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_unchecked_txn(
         address,
         1,
@@ -125,7 +125,8 @@ fn test_validate_known_script_too_large_args() {
              * longer than the
              * max size */
         0,
-        0, /* max gas price */
+        0,                   /* max gas price */
+        LBR_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -148,8 +149,9 @@ fn test_validate_max_gas_units_above_max() {
         key.public_key(),
         None,
         0,
-        0,              /* max gas price */
-        Some(u64::MAX), // Max gas units
+        0,                   /* max gas price */
+        LBR_NAME.to_owned(), /* gas currency code */
+        Some(u64::MAX),      // Max gas units
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
     assert_eq!(
@@ -171,8 +173,9 @@ fn test_validate_max_gas_units_below_min() {
         key.public_key(),
         None,
         0,
-        0,       /* max gas price */
-        Some(1), // Max gas units
+        0,                   /* max gas price */
+        LBR_NAME.to_owned(), /* gas currency code */
+        Some(1),             // Max gas units
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
     assert_eq!(
@@ -194,7 +197,8 @@ fn test_validate_max_gas_price_above_bounds() {
         key.public_key(),
         None,
         0,
-        u64::MAX, /* max gas price */
+        u64::MAX,            /* max gas price */
+        LBR_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -214,7 +218,7 @@ fn test_validate_max_gas_price_below_bounds() {
 
     let address = account_config::association_address();
     let program =
-        encode_transfer_with_metadata_script(lbr_type_tag(), &address, vec![], 100, vec![], vec![]);
+        encode_transfer_with_metadata_script(lbr_type_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_transaction(
         address,
         1,
@@ -223,7 +227,8 @@ fn test_validate_max_gas_price_below_bounds() {
         Some(program),
         // Initial Time was set to 0 with a TTL 86400 secs.
         40000,
-        0, /* max gas price */
+        0,                   /* max gas price */
+        LBR_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -289,7 +294,7 @@ fn test_validate_invalid_auth_key() {
 
     let address = account_config::association_address();
     let program =
-        encode_transfer_with_metadata_script(lbr_type_tag(), &address, vec![], 100, vec![], vec![]);
+        encode_transfer_with_metadata_script(lbr_type_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
         address,
         1,
@@ -312,7 +317,7 @@ fn test_validate_account_doesnt_exist() {
     let address = account_config::association_address();
     let random_account_addr = account_address::AccountAddress::random();
     let program =
-        encode_transfer_with_metadata_script(lbr_type_tag(), &address, vec![], 100, vec![], vec![]);
+        encode_transfer_with_metadata_script(lbr_type_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_transaction(
         random_account_addr,
         1,
@@ -320,7 +325,8 @@ fn test_validate_account_doesnt_exist() {
         key.public_key(),
         Some(program),
         0,
-        1, /* max gas price */
+        1,                   /* max gas price */
+        LBR_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -337,7 +343,7 @@ fn test_validate_sequence_number_too_new() {
 
     let address = account_config::association_address();
     let program =
-        encode_transfer_with_metadata_script(lbr_type_tag(), &address, vec![], 100, vec![], vec![]);
+        encode_transfer_with_metadata_script(lbr_type_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
         address,
         1,
@@ -356,7 +362,7 @@ fn test_validate_invalid_arguments() {
 
     let address = account_config::association_address();
     let (program_script, _) =
-        encode_transfer_with_metadata_script(lbr_type_tag(), &address, vec![], 100, vec![], vec![])
+        encode_transfer_with_metadata_script(lbr_type_tag(), address, 100, vec![], vec![])
             .into_inner();
     let program = Script::new(program_script, vec![], vec![TransactionArgument::U64(42)]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
@@ -378,7 +384,7 @@ fn test_validate_non_genesis_write_set() {
 
     let address = account_config::association_address();
     let transaction =
-        transaction_test_helpers::get_write_set_txn(address, 1, &key, key.public_key(), None)
+        transaction_test_helpers::get_write_set_txn(address, 2, &key, key.public_key(), None)
             .into_inner();
     let ret = vm_validator.validate_transaction(transaction).unwrap();
     assert_eq!(ret.status().unwrap().major_status, StatusCode::ABORTED);

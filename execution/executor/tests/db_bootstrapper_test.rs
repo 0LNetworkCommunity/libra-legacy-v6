@@ -9,10 +9,10 @@ use executor::{
     db_bootstrapper::{bootstrap_db_if_empty, calculate_genesis},
     Executor,
 };
-use executor_types::BlockExecutor;
-use executor_utils::test_helpers::{
+use executor_test_helpers::{
     extract_signer, gen_ledger_info_with_sigs, get_test_signed_transaction,
 };
+use executor_types::BlockExecutor;
 use libra_config::utils::get_genesis_txn;
 use libra_crypto::{
     ed25519::Ed25519PrivateKey, test_utils::TEST_SEED, HashValue, PrivateKey, Uniform,
@@ -44,7 +44,9 @@ use move_core_types::move_resource::MoveResource;
 use rand::SeedableRng;
 use std::convert::TryFrom;
 use storage_interface::{DbReader, DbReaderWriter};
-use transaction_builder::{encode_mint_script, encode_transfer_with_metadata_script};
+use transaction_builder::{
+    encode_mint_lbr_to_address_script, encode_transfer_with_metadata_script,
+};
 
 #[test]
 fn test_empty_db() {
@@ -137,8 +139,7 @@ fn get_mint_transaction(
         /* sequence_number = */ association_seq_num,
         association_key.clone(),
         association_key.public_key(),
-        Some(encode_mint_script(
-            lbr_type_tag(),
+        Some(encode_mint_lbr_to_address_script(
             &account,
             account_auth_key.prefix().to_vec(),
             amount,
@@ -151,10 +152,8 @@ fn get_transfer_transaction(
     sender_seq_number: u64,
     sender_key: &Ed25519PrivateKey,
     recipient: AccountAddress,
-    recipient_key: &Ed25519PrivateKey,
     amount: u64,
 ) -> Transaction {
-    let recipient_auth_key = AuthenticationKey::ed25519(&recipient_key.public_key());
     get_test_signed_transaction(
         sender,
         sender_seq_number,
@@ -162,8 +161,7 @@ fn get_transfer_transaction(
         sender_key.public_key(),
         Some(encode_transfer_with_metadata_script(
             lbr_type_tag(),
-            &recipient,
-            recipient_auth_key.prefix().to_vec(),
+            recipient,
             amount,
             vec![],
             vec![],
@@ -174,14 +172,14 @@ fn get_transfer_transaction(
 fn get_balance(account: &AccountAddress, db: &DbReaderWriter) -> u64 {
     let account_state_blob = db
         .reader
-        .get_latest_account_state(account.clone())
+        .get_latest_account_state(*account)
         .unwrap()
         .unwrap();
     let account_state = AccountState::try_from(&account_state_blob).unwrap();
     account_state
         .get_balance_resources(&[from_currency_code_string(LBR_NAME).unwrap()])
         .unwrap()
-        .last()
+        .get(&from_currency_code_string(LBR_NAME).unwrap())
         .unwrap()
         .coin()
 }
@@ -379,8 +377,7 @@ fn test_new_genesis() {
     assert_eq!(get_balance(&account2, &db), 2_000_000);
 
     // Transfer some money.
-    let txn =
-        get_transfer_transaction(account1, 0, &account1_key, account2, &account2_key, 500_000);
+    let txn = get_transfer_transaction(account1, 0, &account1_key, account2, 500_000);
     execute_and_commit(vec![txn], &db, &signer);
 
     // And verify.

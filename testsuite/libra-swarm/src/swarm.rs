@@ -6,6 +6,7 @@ use config_builder::{FullNodeConfig, SwarmConfig, ValidatorConfig};
 use debug_interface::NodeDebugClient;
 use libra_config::config::{NodeConfig, RoleType};
 use libra_logger::prelude::*;
+use libra_secure_storage::config;
 use libra_temppath::TempPath;
 use libra_types::account_address::AccountAddress;
 use std::{
@@ -50,6 +51,15 @@ impl Drop for LibraNode {
 }
 
 impl LibraNode {
+    /// Prior to using LibraSwarm this should be run. LibraSwarm will acquire ephemeral networking
+    /// ports that are only reserved in a safe state for a brief period of time.
+    /// workspace_builder::get_bin actually compiles all of the Libra code base which can take
+    /// substantially longer time than the networking ports are reserved. Calling prior to
+    /// reserving those ports will reduce the liklihood of issues.
+    pub fn prepare() {
+        Command::new(workspace_builder::get_bin(LIBRA_NODE_BIN));
+    }
+
     pub fn launch(
         node_id: String,
         role: RoleType,
@@ -62,7 +72,9 @@ impl LibraNode {
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
         let log_file = File::create(&log_path)?;
         let validator_peer_id = match role {
-            RoleType::Validator => Some(config.validator_network.unwrap().peer_id),
+            RoleType::Validator => {
+                Some(config::peer_id(config.validator_network.as_ref().unwrap()))
+            }
             RoleType::FullNode => None,
         };
         let mut node_command = Command::new(workspace_builder::get_bin(LIBRA_NODE_BIN));
@@ -244,26 +256,17 @@ impl LibraSwarm {
         for i in 0..num_launch_attempts {
             info!("Launch swarm attempt: {} of {}", i, num_launch_attempts);
 
-            let node_config = if let Some(template) = template.clone() {
-                template
-            } else {
-                NodeConfig::default()
-            };
-
             if let Ok(mut swarm) = Self::configure_swarm(
                 num_nodes,
                 role,
                 config_dir.clone(),
-                Some(node_config),
+                Some(template.as_ref().cloned().unwrap_or_default()),
                 upstream_config_dir.clone(),
             ) {
-                match swarm.launch_attempt(role, disable_logging) {
-                    Ok(_) => {
-                        return swarm;
-                    }
-                    Err(e) => {
-                        error!("Error launching swarm: {}", e);
-                    }
+                if let Err(e) = swarm.launch_attempt(role, disable_logging) {
+                    error!("Error launching swarm: {}", e);
+                } else {
+                    return swarm;
                 }
             }
         }
@@ -275,22 +278,19 @@ impl LibraSwarm {
     /// assumably due to previous launch failure, it will be removed.
     /// The directory for the last failed attempt won't be removed.
     fn setup_config_dir(config_dir: &Option<String>) -> LibraSwarmDir {
-        match config_dir {
-            Some(dir_str) => {
-                let path_buf = PathBuf::from_str(&dir_str).expect("unable to create config dir");
-                if path_buf.exists() {
-                    std::fs::remove_dir_all(dir_str).expect("unable to delete previous config dir");
-                }
-                std::fs::create_dir_all(dir_str).expect("unable to create config dir");
-                LibraSwarmDir::Persistent(path_buf)
+        if let Some(dir_str) = config_dir {
+            let path_buf = PathBuf::from_str(&dir_str).expect("unable to create config dir");
+            if path_buf.exists() {
+                std::fs::remove_dir_all(dir_str).expect("unable to delete previous config dir");
             }
-            None => {
-                let temp_dir = TempPath::new();
-                temp_dir
-                    .create_as_dir()
-                    .expect("unable to create temporary config dir");
-                LibraSwarmDir::Temporary(temp_dir)
-            }
+            std::fs::create_dir_all(dir_str).expect("unable to create config dir");
+            LibraSwarmDir::Persistent(path_buf)
+        } else {
+            let temp_dir = TempPath::new();
+            temp_dir
+                .create_as_dir()
+                .expect("unable to create temporary config dir");
+            LibraSwarmDir::Temporary(temp_dir)
         }
     }
 
@@ -301,6 +301,8 @@ impl LibraSwarm {
         template: Option<NodeConfig>,
         upstream_config_dir: Option<String>,
     ) -> Result<LibraSwarm> {
+        LibraNode::prepare();
+
         let swarm_config_dir = Self::setup_config_dir(&config_dir);
         info!("logs at {:?}", swarm_config_dir);
 
@@ -314,9 +316,8 @@ impl LibraSwarm {
         let config_path = &swarm_config_dir.as_ref().to_path_buf();
         let config = if role.is_validator() {
             let mut validator_builder = ValidatorConfig::new();
-            validator_builder
-                .template(node_config)
-                .validators(num_nodes);
+            validator_builder.template = node_config;
+            validator_builder.num_nodes = num_nodes;
             SwarmConfig::build(&validator_builder, config_path)?
         } else {
             let upstream_config_dir = upstream_config_dir.expect("No upstream node for full nodes");
@@ -324,17 +325,15 @@ impl LibraSwarm {
             let mut validator_config = NodeConfig::load(&upstream_config_file)?;
             let genesis = validator_config.execution.genesis.as_ref();
             let mut full_node_builder = FullNodeConfig::new();
-            full_node_builder
-                .full_nodes(num_nodes)
-                .genesis(genesis.expect("Missing genesis from validator").clone())
-                .template(node_config);
+            full_node_builder.num_full_nodes = num_nodes;
+            full_node_builder.genesis =
+                Some(genesis.expect("Missing genesis from validator").clone());
+            full_node_builder.template(node_config);
             full_node_builder.extend_validator(&mut validator_config)?;
             validator_config.save(&upstream_config_file)?;
-            full_node_builder.bootstrap(
-                validator_config.full_node_networks[0]
-                    .advertised_address
-                    .clone(),
-            );
+            full_node_builder.bootstrap = validator_config.full_node_networks[0]
+                .advertised_address
+                .clone();
             SwarmConfig::build(&full_node_builder, config_path)?
         };
 
@@ -470,32 +469,30 @@ impl LibraSwarm {
                 i + 1,
                 num_attempts
             );
+
             for (node, done) in self.nodes.values_mut().zip(done.iter_mut()) {
                 if *done {
                     continue;
                 }
 
-                match node.get_metric(last_committed_round_str) {
-                    Some(val) => {
-                        if val >= last_committed_round {
-                            println!(
-                                "\tNode {} is caught up with last committed round {}",
-                                node.node_id, val
-                            );
-                            *done = true;
-                        } else {
-                            println!(
-                                "\tNode {} is not caught up yet with last committed round {}",
-                                node.node_id, val
-                            );
-                        }
-                    }
-                    None => {
+                if let Some(val) = node.get_metric(last_committed_round_str) {
+                    if val >= last_committed_round {
                         println!(
-                            "\tNode {} last committed round unknown, assuming 0.",
-                            node.node_id
+                            "\tNode {} is caught up with last committed round {}",
+                            node.node_id, val
+                        );
+                        *done = true;
+                    } else {
+                        println!(
+                            "\tNode {} is not caught up yet with last committed round {}",
+                            node.node_id, val
                         );
                     }
+                } else {
+                    println!(
+                        "\tNode {} last committed round unknown, assuming 0.",
+                        node.node_id
+                    );
                 }
             }
 

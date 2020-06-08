@@ -3,13 +3,13 @@
 
 use crate::{
     epoch_change::Verifier,
-    epoch_info::EpochInfo,
+    epoch_state::EpochState,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     transaction::Version,
 };
 use anyhow::{ensure, format_err, Error, Result};
-use libra_crypto::hash::{CryptoHash, CryptoHasher, HashValue};
-use libra_crypto_derive::CryptoHasher;
+use libra_crypto::hash::{CryptoHash, HashValue};
+use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{Display, Formatter},
@@ -43,7 +43,7 @@ impl Waypoint {
 
     /// Generates a new waypoint given the epoch change LedgerInfo.
     pub fn new_epoch_boundary(ledger_info: &LedgerInfo) -> Result<Self> {
-        ensure!(ledger_info.next_epoch_info().is_some(), "No validator set");
+        ensure!(ledger_info.next_epoch_state().is_some(), "No validator set");
         Ok(Self::new_any(ledger_info))
     }
 
@@ -123,13 +123,13 @@ impl FromStr for Waypoint {
 /// Keeps the fields of LedgerInfo that are hashed for generating a waypoint.
 /// Note that not all the fields of LedgerInfo are included: some consensus-related fields
 /// might not be the same for all the participants.
-#[derive(Deserialize, Serialize, CryptoHasher)]
+#[derive(Deserialize, Serialize, CryptoHasher, LCSCryptoHash)]
 struct Ledger2WaypointConverter {
     epoch: u64,
     root_hash: HashValue,
     version: Version,
     timestamp_usecs: u64,
-    next_epoch_info: Option<EpochInfo>,
+    next_epoch_state: Option<EpochState>,
 }
 
 impl Ledger2WaypointConverter {
@@ -139,19 +139,8 @@ impl Ledger2WaypointConverter {
             root_hash: ledger_info.transaction_accumulator_hash(),
             version: ledger_info.version(),
             timestamp_usecs: ledger_info.timestamp_usecs(),
-            next_epoch_info: ledger_info.next_epoch_info().cloned(),
+            next_epoch_state: ledger_info.next_epoch_state().cloned(),
         }
-    }
-}
-
-impl CryptoHash for Ledger2WaypointConverter {
-    type Hasher = Ledger2WaypointConverterHasher;
-
-    fn hash(&self) -> HashValue {
-        let bytes = lcs::to_bytes(self).expect("Ledger2WaypointConverter serialization failed");
-        let mut state = Self::Hasher::default();
-        state.write(bytes.as_ref());
-        state.finish()
     }
 }
 
@@ -184,7 +173,7 @@ mod test {
                 HashValue::random(),
                 123,
                 1000,
-                Some(EpochInfo::empty()),
+                Some(EpochState::empty()),
             ),
             HashValue::zero(),
         );

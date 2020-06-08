@@ -13,7 +13,6 @@ use crate::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use debug_interface::node_debug_service::parse_event;
 use futures::{future::try_join_all, join};
 use libra_logger::info;
 use serde_json::Value;
@@ -134,8 +133,7 @@ impl Experiment for PerformanceBenchmark {
         if let Some(trace) = trace {
             info!("Traced {} events", trace.len());
             let mut events = vec![];
-            for (node, event) in trace {
-                let mut event = parse_event(event);
+            for (node, mut event) in trace {
                 // This could be done more elegantly, but for now this will do
                 event
                     .json
@@ -153,11 +151,17 @@ impl Experiment for PerformanceBenchmark {
         }
         let end = unix_timestamp_now() - buffer;
         let start = end - window + 2 * buffer;
-        let (avg_tps, avg_latency) = stats::txn_stats(&context.prometheus, start, end)?;
         let avg_txns_per_block = stats::avg_txns_per_block(&context.prometheus, start, end)?;
+        let avg_latency_client = stats.latency / stats.committed;
+        let p99_latency = stats.latency_buckets.percentile(99, 100);
+        let avg_tps = stats.committed / window.as_secs();
         info!(
             "Link to dashboard : {}",
             context.prometheus.link_to_dashboard(start, end)
+        );
+        info!(
+            "Tx status from client side: txn {}, avg latency {}",
+            stats.committed as u64, avg_latency_client
         );
         let instance_configs = instance::instance_configs(&self.down_validators)?;
         let futures: Vec<_> = instance_configs
@@ -176,10 +180,15 @@ impl Experiment for PerformanceBenchmark {
         context
             .report
             .report_metric(&self, "avg_txns_per_block", avg_txns_per_block as f64);
-        context.report.report_metric(&self, "avg_tps", avg_tps);
         context
             .report
-            .report_metric(&self, "avg_latency", avg_latency);
+            .report_metric(&self, "avg_tps", avg_tps as f64);
+        context
+            .report
+            .report_metric(&self, "avg_latency", avg_latency_client as f64);
+        context
+            .report
+            .report_metric(&self, "p99_latency", p99_latency as f64);
         info!("avg_txns_per_block: {}", avg_txns_per_block);
         let expired_text = if expired_txn == 0 {
             "no expired txns".to_string()
@@ -187,8 +196,8 @@ impl Experiment for PerformanceBenchmark {
             format!("(!) expired {} out of {} txns", expired_txn, submitted_txn)
         };
         context.report.report_text(format!(
-            "{} : {:.0} TPS, {:.1} ms latency, {}",
-            self, avg_tps, avg_latency, expired_text
+            "{} : {:.0} TPS, {:.1} ms latency, {:.1} ms p99 latency, {}",
+            self, avg_tps, avg_latency_client, p99_latency, expired_text
         ));
         Ok(())
     }

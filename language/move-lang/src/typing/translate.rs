@@ -8,13 +8,13 @@ use super::{
 use crate::{
     errors::Errors,
     expansion::ast::Fields,
-    naming::ast::{self as N, BuiltinTypeName_, Type, TypeName_, Type_},
+    naming::ast::{self as N, Type, TypeName_, Type_},
     parser::ast::{BinOp_, Field, FunctionName, ModuleIdent, StructName, UnaryOp_, Var},
     shared::{unique_map::UniqueMap, *},
     typing::ast as T,
 };
 use move_ir_types::location::*;
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, VecDeque};
 
 //**************************************************************************************************
 // Entry
@@ -90,32 +90,51 @@ fn script(context: &mut Context, nscript: N::Script) -> T::Script {
     }
 }
 
-fn check_primitive_script_arg(context: &mut Context, mloc: Loc, ty: &Type) {
-    use BuiltinTypeName_ as BT;
+fn check_primitive_script_arg(context: &mut Context, mloc: Loc, idx: usize, ty: &Type) {
+    let loc = ty.loc;
 
-    let sp!(loc, ty_) = ty;
-    if let Some(bt) = ty_.builtin_name() {
-        match bt.value {
-            BT::U8 | BT::U64 | BT::U128 | BT::Bool | BT::Address => return,
-            BT::Vector => {
-                let vector_u8_ty = Type_::vector(*loc, Type_::u8(*loc));
-                if subtype_no_report(context, ty.clone(), vector_u8_ty).is_ok() {
-                    return;
-                }
-            }
-        }
+    let signer_ref = sp(loc, Type_::Ref(false, Box::new(Type_::signer(loc))));
+    let acceptable_types = vec![
+        Type_::u8(loc),
+        Type_::u64(loc),
+        Type_::u128(loc),
+        Type_::bool(loc),
+        Type_::address(loc),
+        Type_::vector(loc, Type_::u8(loc)),
+        signer_ref.clone(),
+    ];
+    let ty_is_an_acceptable_type = acceptable_types.iter().all(|acceptable_type| {
+        subtype_no_report(context, ty.clone(), acceptable_type.clone()).is_err()
+    });
+    if ty_is_an_acceptable_type {
+        let mmsg = format!(
+            "Invalid parameter for script function '{}'",
+            context.current_function.as_ref().unwrap()
+        );
+        let tys = acceptable_types
+            .iter()
+            .map(|t| core::error_format(t, &Subst::empty()));
+        let tmsg = format!(
+            "Found: {}. But expected: {}",
+            core::error_format(ty, &Subst::empty()),
+            format_comma(tys),
+        );
+        context.error(vec![(mloc, mmsg), (loc, tmsg)]);
+        return;
     }
 
-    let mmsg = format!(
-        "Invalid parameter for script function '{}'",
-        context.current_function.as_ref().unwrap()
-    );
-    let tmsg = format!(
-        "Found: {}. But expected: {}",
-        core::error_format(ty, &Subst::empty()),
-        format_comma(&["u8", "u64", "u128", "bool", "address", "vector<u8>"]),
-    );
-    context.error(vec![(mloc, mmsg), (*loc, tmsg)])
+    if idx != 0 && subtype_no_report(context, ty.clone(), signer_ref.clone()).is_ok() {
+        let mmsg = format!(
+            "Invalid parameter for script function '{}'",
+            context.current_function.as_ref().unwrap()
+        );
+        let tmsg = format!(
+            "{} must be the first argument to a script",
+            core::error_format(&signer_ref, &Subst::empty()),
+        );
+        context.error(vec![(mloc, mmsg), (loc, tmsg)]);
+        return;
+    }
 }
 
 //**************************************************************************************************
@@ -141,8 +160,8 @@ fn function(
 
     function_signature(context, &signature);
     if is_script {
-        for (_, param_ty) in &signature.parameters {
-            check_primitive_script_arg(context, loc, param_ty);
+        for (idx, (_, param_ty)) in signature.parameters.iter().enumerate() {
+            check_primitive_script_arg(context, loc, idx, param_ty);
         }
         subtype(
             context,
@@ -192,7 +211,7 @@ fn function_signature(context: &mut Context, sig: &N::FunctionSignature) {
 
 fn function_body(
     context: &mut Context,
-    acquires: &BTreeSet<StructName>,
+    acquires: &BTreeMap<StructName, Loc>,
     sp!(loc, nb_): N::FunctionBody,
 ) -> T::FunctionBody {
     assert!(context.constraints.is_empty());
@@ -490,7 +509,7 @@ fn exp_(context: &mut Context, sp!(eloc, ne_): N::Exp) -> T::Exp {
     use N::Exp_ as NE;
     use T::UnannotatedExp_ as TE;
     let (ty, e_) = match ne_ {
-        NE::Unit => (sp(eloc, Type_::Unit), TE::Unit),
+        NE::Unit { trailing } => (sp(eloc, Type_::Unit), TE::Unit { trailing }),
         NE::Value(sp!(vloc, v)) => (v.type_(vloc), TE::Value(sp(vloc, v))),
         NE::InferredNum(v) => (core::make_num_tvar(context, eloc), TE::InferredNum(v)),
 
@@ -705,8 +724,8 @@ fn exp_(context: &mut Context, sp!(eloc, ne_): N::Exp) -> T::Exp {
                     let msg = format!("Invalid arguments to '{}'", &bop);
                     context.add_single_type_constraint(eloc, msg, ty.clone());
                     let msg = format!(
-                        "Cannot use '{}' on resource values. This would destroy the resource. \
-                         Try borrowing the values with '&' first.'",
+                        "Cannot use '{}' on resource values. This would destroy the resource. Try \
+                         borrowing the values with '&' first.'",
                         &bop
                     );
                     context.add_copyable_constraint(eloc, msg, ty.clone());
@@ -767,8 +786,8 @@ fn exp_(context: &mut Context, sp!(eloc, ne_): N::Exp) -> T::Exp {
             });
             if !context.is_current_module(&m) {
                 let msg = format!(
-                    "Invalid instantiation of '{}::{}'.\n\
-                     All structs can only be constructed in the module in which they are declared",
+                    "Invalid instantiation of '{}::{}'.\nAll structs can only be constructed in \
+                     the module in which they are declared",
                     &m, &n,
                 );
                 context.error(vec![(eloc, msg)])
@@ -1082,8 +1101,8 @@ fn lvalue(
             });
             if !context.is_current_module(&m) {
                 let msg = format!(
-                    "Invalid deconstruction {} of '{}::{}'.\n All \
-                     structs can only be deconstructed in the module in which they are declared",
+                    "Invalid deconstruction {} of '{}::{}'.\n All structs can only be \
+                     deconstructed in the module in which they are declared",
                     verb, &m, &n,
                 );
                 context.error(vec![(loc, msg)])
@@ -1142,8 +1161,8 @@ fn resolve_field(context: &mut Context, loc: Loc, ty: Type, field: &Field) -> Ty
         sp!(_, Apply(_, sp!(_, ModuleType(m, n)), targs)) => {
             if !context.is_current_module(&m) {
                 let msg = format!(
-                    "Invalid access of field '{}' on '{}::{}'. \
-                     Fields can only be accessed inside the struct's module",
+                    "Invalid access of field '{}' on '{}::{}'. Fields can only be accessed inside \
+                     the struct's module",
                     field, &m, &n
                 );
                 context.error(vec![(loc, msg)])
@@ -1180,8 +1199,8 @@ fn add_field_types<T>(
         N::StructFields::Defined(m) => m,
         N::StructFields::Native(nloc) => {
             let msg = format!(
-                "Invalid {} usage for native struct '{}::{}'. Native structs cannot \
-                 be directly constructed/deconstructd, and their fields cannot be dirctly accessed",
+                "Invalid {} usage for native struct '{}::{}'. Native structs cannot be directly \
+                 constructed/deconstructd, and their fields cannot be dirctly accessed",
                 verb, m, n
             );
             context.error(vec![(loc, msg), (nloc, "Declared 'native' here".into())]);
@@ -1418,6 +1437,13 @@ fn builtin_call(
             params_ty = vec![ty_arg];
             ret_ty = sp(loc, Type_::Unit);
         }
+        NB::MoveTo(ty_arg_opt) => {
+            let ty_arg = mk_ty_arg(ty_arg_opt);
+            b_ = TB::MoveTo(ty_arg.clone());
+            let signer_ = Box::new(Type_::signer(bloc));
+            params_ty = vec![sp(bloc, Type_::Ref(false, signer_)), ty_arg];
+            ret_ty = sp(loc, Type_::Unit);
+        }
         NB::MoveFrom(ty_arg_opt) => {
             let ty_arg = mk_ty_arg(ty_arg_opt);
             b_ = TB::MoveFrom(ty_arg.clone());
@@ -1477,7 +1503,10 @@ fn call_args<S: std::fmt::Display, F: Fn() -> S>(
     let tys = args.iter().map(|e| e.ty.clone()).collect();
     let tys = make_arg_types(context, loc, msg, arity, argloc, tys);
     let arg = match args.len() {
-        0 => T::exp(sp(argloc, Type_::Unit), sp(argloc, TE::Unit)),
+        0 => T::exp(
+            sp(argloc, Type_::Unit),
+            sp(argloc, TE::Unit { trailing: false }),
+        ),
         1 => args.pop().unwrap(),
         _ => {
             let ty = Type_::multiple(argloc, tys.clone());

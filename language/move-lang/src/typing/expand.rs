@@ -3,8 +3,9 @@
 
 use super::core::{self, Context};
 use crate::{
+    expansion::ast::Value_,
     naming::ast::{BuiltinTypeName_, FunctionSignature, TParam, Type, Type_},
-    parser::ast::{Kind, Kind_, Value_},
+    parser::ast::{Kind, Kind_},
     typing::ast as T,
 };
 use move_ir_types::location::*;
@@ -209,7 +210,7 @@ fn exp(context: &mut Context, e: &mut T::Exp) {
 
         E::Spec(_, used_locals) => used_locals.values_mut().for_each(|ty| type_(context, ty)),
 
-        E::Unit
+        E::Unit { .. }
         | E::Value(_)
         | E::Move { .. }
         | E::Copy { .. }
@@ -305,6 +306,7 @@ fn builtin_function(context: &mut Context, b: &mut T::BuiltinFunction) {
     use T::BuiltinFunction_ as B;
     match &mut b.value {
         B::MoveToSender(bt)
+        | B::MoveTo(bt)
         | B::MoveFrom(bt)
         | B::BorrowGlobal(_, bt)
         | B::Exists(bt)

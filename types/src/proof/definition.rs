@@ -4,73 +4,28 @@
 //! This module has definition of various proofs.
 
 use super::{
-    position::Position, verify_transaction_info, MerkleTreeInternalNode, SparseMerkleInternalNode,
-    SparseMerkleLeafNode,
+    accumulator::InMemoryAccumulator, position::Position, verify_transaction_info,
+    MerkleTreeInternalNode, SparseMerkleInternalNode, SparseMerkleLeafNode,
 };
 use crate::{
     account_state_blob::AccountStateBlob,
     ledger_info::LedgerInfo,
     transaction::{TransactionInfo, Version},
 };
-use anyhow::{bail, ensure, format_err, Error, Result};
+use anyhow::{bail, ensure, format_err, Result};
 #[cfg(any(test, feature = "fuzzing"))]
 use libra_crypto::hash::TestOnlyHasher;
 use libra_crypto::{
     hash::{
         CryptoHash, CryptoHasher, EventAccumulatorHasher, TransactionAccumulatorHasher,
-        ACCUMULATOR_PLACEHOLDER_HASH, SPARSE_MERKLE_PLACEHOLDER_HASH,
+        SPARSE_MERKLE_PLACEHOLDER_HASH,
     },
     HashValue,
 };
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::{TryFrom, TryInto},
-    marker::PhantomData,
-};
-
-/// Converts sibling nodes from Protobuf format to Rust format, using the fact that empty byte
-/// arrays represent placeholder hashes.
-fn from_proto_siblings(siblings: Vec<Vec<u8>>, placeholder: HashValue) -> Result<Vec<HashValue>> {
-    debug_assert!(
-        placeholder == *ACCUMULATOR_PLACEHOLDER_HASH
-            || placeholder == *SPARSE_MERKLE_PLACEHOLDER_HASH,
-        "Placeholder can only be ACCUMULATOR_PLACEHOLDER_HASH or SPARSE_MERKLE_PLACEHOLDER_HASH.",
-    );
-
-    siblings
-        .into_iter()
-        .map(|hash_bytes| {
-            if hash_bytes.is_empty() {
-                Ok(placeholder)
-            } else {
-                HashValue::from_slice(&hash_bytes)
-            }
-        })
-        .collect()
-}
-
-/// Converts sibling nodes from Rust format to Protobuf format. The placeholder hashes are
-/// converted to empty byte arrays.
-fn into_proto_siblings(siblings: Vec<HashValue>, placeholder: HashValue) -> Vec<Vec<u8>> {
-    debug_assert!(
-        placeholder == *ACCUMULATOR_PLACEHOLDER_HASH
-            || placeholder == *SPARSE_MERKLE_PLACEHOLDER_HASH,
-        "Placeholder can only be ACCUMULATOR_PLACEHOLDER_HASH or SPARSE_MERKLE_PLACEHOLDER_HASH.",
-    );
-
-    siblings
-        .into_iter()
-        .map(|sibling| {
-            if sibling != placeholder {
-                sibling.to_vec()
-            } else {
-                vec![]
-            }
-        })
-        .collect()
-}
+use std::marker::PhantomData;
 
 /// A proof that can be used authenticate an element in an accumulator given trusted root hash. For
 /// example, both `LedgerInfoToTransactionInfoProof` and `TransactionInfoToEventProof` can be
@@ -168,26 +123,6 @@ impl<H> PartialEq for AccumulatorProof<H> {
 }
 
 impl<H> Eq for AccumulatorProof<H> {}
-
-impl<H> TryFrom<crate::proto::types::AccumulatorProof> for AccumulatorProof<H>
-where
-    H: CryptoHasher,
-{
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::AccumulatorProof) -> Result<Self> {
-        let siblings = from_proto_siblings(proto_proof.siblings, *ACCUMULATOR_PLACEHOLDER_HASH)?;
-        Ok(AccumulatorProof::new(siblings))
-    }
-}
-
-impl<H> From<AccumulatorProof<H>> for crate::proto::types::AccumulatorProof {
-    fn from(proof: AccumulatorProof<H>) -> Self {
-        let mut proto_proof = Self::default();
-        proto_proof.siblings = into_proto_siblings(proof.siblings, *ACCUMULATOR_PLACEHOLDER_HASH);
-        proto_proof
-    }
-}
 
 pub type TransactionAccumulatorProof = AccumulatorProof<TransactionAccumulatorHasher>;
 pub type EventAccumulatorProof = AccumulatorProof<EventAccumulatorHasher>;
@@ -321,45 +256,6 @@ impl SparseMerkleProof {
     }
 }
 
-impl TryFrom<crate::proto::types::SparseMerkleProof> for SparseMerkleProof {
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::SparseMerkleProof) -> Result<Self> {
-        let proto_leaf = proto_proof.leaf;
-        let leaf = if proto_leaf.is_empty() {
-            None
-        } else if proto_leaf.len() == HashValue::LENGTH * 2 {
-            let key = HashValue::from_slice(&proto_leaf[0..HashValue::LENGTH])?;
-            let value_hash = HashValue::from_slice(&proto_leaf[HashValue::LENGTH..])?;
-            Some(SparseMerkleLeafNode::new(key, value_hash))
-        } else {
-            bail!(
-                "Mailformed proof. Leaf has {} bytes. Expect 0 or {} bytes.",
-                proto_leaf.len(),
-                HashValue::LENGTH * 2
-            );
-        };
-
-        let siblings = from_proto_siblings(proto_proof.siblings, *SPARSE_MERKLE_PLACEHOLDER_HASH)?;
-
-        Ok(SparseMerkleProof::new(leaf, siblings))
-    }
-}
-
-impl From<SparseMerkleProof> for crate::proto::types::SparseMerkleProof {
-    fn from(proof: SparseMerkleProof) -> Self {
-        let mut proto_proof = Self::default();
-        // If a leaf is present, we write the key and value hash as a single byte array of 64
-        // bytes. Otherwise we write an empty byte array.
-        if let Some(leaf) = proof.leaf {
-            proto_proof.leaf.extend_from_slice(leaf.key.as_ref());
-            proto_proof.leaf.extend_from_slice(leaf.value_hash.as_ref());
-        }
-        proto_proof.siblings = into_proto_siblings(proof.siblings, *SPARSE_MERKLE_PLACEHOLDER_HASH);
-        proto_proof
-    }
-}
-
 /// A proof that can be used to show that two Merkle accumulators are consistent -- the big one can
 /// be obtained by appending certain leaves to the small one. For example, at some point in time a
 /// client knows that the root hash of the ledger at version 10 is `old_root` (it could be a
@@ -384,28 +280,6 @@ impl AccumulatorConsistencyProof {
     /// Returns the subtrees.
     pub fn subtrees(&self) -> &[HashValue] {
         &self.subtrees
-    }
-}
-
-impl TryFrom<crate::proto::types::AccumulatorConsistencyProof> for AccumulatorConsistencyProof {
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::AccumulatorConsistencyProof) -> Result<Self> {
-        let subtrees = proto_proof
-            .subtrees
-            .into_iter()
-            .map(|hash_bytes| HashValue::from_slice(&hash_bytes))
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(Self::new(subtrees))
-    }
-}
-
-impl From<AccumulatorConsistencyProof> for crate::proto::types::AccumulatorConsistencyProof {
-    fn from(proof: AccumulatorConsistencyProof) -> Self {
-        Self {
-            subtrees: proof.subtrees.iter().map(HashValue::to_vec).collect(),
-        }
     }
 }
 
@@ -461,6 +335,11 @@ where
     /// Get all the left siblngs.
     pub fn left_siblings(&self) -> &Vec<HashValue> {
         &self.left_siblings
+    }
+
+    /// Get all the right siblngs.
+    pub fn right_siblings(&self) -> &Vec<HashValue> {
+        &self.right_siblings
     }
 
     /// Verifies the proof is correct. The verifier needs to have `expected_root_hash`, the index
@@ -581,33 +460,6 @@ impl<H> PartialEq for AccumulatorRangeProof<H> {
 
 impl<H> Eq for AccumulatorRangeProof<H> {}
 
-impl<H> TryFrom<crate::proto::types::AccumulatorRangeProof> for AccumulatorRangeProof<H>
-where
-    H: CryptoHasher,
-{
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::AccumulatorRangeProof) -> Result<Self> {
-        let left_siblings =
-            from_proto_siblings(proto_proof.left_siblings, *ACCUMULATOR_PLACEHOLDER_HASH)?;
-        let right_siblings =
-            from_proto_siblings(proto_proof.right_siblings, *ACCUMULATOR_PLACEHOLDER_HASH)?;
-
-        Ok(Self::new(left_siblings, right_siblings))
-    }
-}
-
-impl<H> From<AccumulatorRangeProof<H>> for crate::proto::types::AccumulatorRangeProof {
-    fn from(proof: AccumulatorRangeProof<H>) -> Self {
-        let mut proto_proof = Self::default();
-        proto_proof.left_siblings =
-            into_proto_siblings(proof.left_siblings, *ACCUMULATOR_PLACEHOLDER_HASH);
-        proto_proof.right_siblings =
-            into_proto_siblings(proof.right_siblings, *ACCUMULATOR_PLACEHOLDER_HASH);
-        proto_proof
-    }
-}
-
 pub type TransactionAccumulatorRangeProof = AccumulatorRangeProof<TransactionAccumulatorHasher>;
 #[cfg(any(test, feature = "fuzzing"))]
 pub type TestAccumulatorRangeProof = AccumulatorRangeProof<TestOnlyHasher>;
@@ -650,31 +502,10 @@ impl SparseMerkleRangeProof {
     }
 }
 
-impl TryFrom<crate::proto::types::SparseMerkleRangeProof> for SparseMerkleRangeProof {
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::SparseMerkleRangeProof) -> Result<Self> {
-        let right_siblings =
-            from_proto_siblings(proto_proof.right_siblings, *SPARSE_MERKLE_PLACEHOLDER_HASH)?;
-        Ok(Self::new(right_siblings))
-    }
-}
-
-impl From<SparseMerkleRangeProof> for crate::proto::types::SparseMerkleRangeProof {
-    fn from(proof: SparseMerkleRangeProof) -> Self {
-        let right_siblings =
-            into_proto_siblings(proof.right_siblings, *SPARSE_MERKLE_PLACEHOLDER_HASH);
-        Self { right_siblings }
-    }
-}
-
-/// The complete proof used to authenticate a `Transaction` object.  This structure consists of an
-/// `AccumulatorProof` from `LedgerInfo` to `TransactionInfo` the verifier needs to verify the
-/// correctness of the `TransactionInfo` object, and the `TransactionInfo` object that is supposed
-/// to match the `Transaction`.
+/// `TransactionInfo` and a `TransactionAccumulatorProof` connecting it to the ledger root.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-pub struct TransactionProof {
+pub struct TransactionInfoWithProof {
     /// The accumulator proof from ledger info root to leaf that authenticates the hash of the
     /// `TransactionInfo` object.
     ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
@@ -683,8 +514,8 @@ pub struct TransactionProof {
     transaction_info: TransactionInfo,
 }
 
-impl TransactionProof {
-    /// Constructs a new `TransactionProof` object using given
+impl TransactionInfoWithProof {
+    /// Constructs a new `TransactionWithProof` object using given
     /// `ledger_info_to_transaction_info_proof`.
     pub fn new(
         ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
@@ -706,33 +537,9 @@ impl TransactionProof {
         &self.transaction_info
     }
 
-    /// Verifies that a `Transaction` with hash value of `transaction_hash` is the version
-    /// `transaction_version` transaction in the ledger using the provided proof.  If
-    /// `event_root_hash` is provided, it's also verified against the proof.
-    pub fn verify(
-        &self,
-        ledger_info: &LedgerInfo,
-        transaction_hash: HashValue,
-        event_root_hash: Option<HashValue>,
-        transaction_version: Version,
-    ) -> Result<()> {
-        ensure!(
-            transaction_hash == self.transaction_info.transaction_hash(),
-            "The hash of transaction does not match the transaction info in proof. \
-             Transaction hash: {:x}. Transaction hash provided by proof: {:x}.",
-            transaction_hash,
-            self.transaction_info.transaction_hash()
-        );
-
-        if let Some(event_root_hash) = event_root_hash {
-            ensure!(
-                event_root_hash == self.transaction_info.event_root_hash(),
-                "Event root hash ({}) doesn't match that in the transaction info ({}).",
-                event_root_hash,
-                self.transaction_info.event_root_hash(),
-            );
-        }
-
+    /// Verifies that the `TransactionInfo` exists in the ledger represented by the `LedgerInfo`
+    /// at specified version.
+    pub fn verify(&self, ledger_info: &LedgerInfo, transaction_version: Version) -> Result<()> {
         verify_transaction_info(
             ledger_info,
             transaction_version,
@@ -743,49 +550,13 @@ impl TransactionProof {
     }
 }
 
-impl TryFrom<crate::proto::types::TransactionProof> for TransactionProof {
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::TransactionProof) -> Result<Self> {
-        let ledger_info_to_transaction_info_proof = proto_proof
-            .ledger_info_to_transaction_info_proof
-            .ok_or_else(|| format_err!("Missing ledger_info_to_transaction_info_proof"))?
-            .try_into()?;
-        let transaction_info = proto_proof
-            .transaction_info
-            .ok_or_else(|| format_err!("Missing transaction_info"))?
-            .try_into()?;
-
-        Ok(TransactionProof::new(
-            ledger_info_to_transaction_info_proof,
-            transaction_info,
-        ))
-    }
-}
-
-impl From<TransactionProof> for crate::proto::types::TransactionProof {
-    fn from(proof: TransactionProof) -> Self {
-        Self {
-            ledger_info_to_transaction_info_proof: Some(
-                proof.ledger_info_to_transaction_info_proof.into(),
-            ),
-            transaction_info: Some(proof.transaction_info.into()),
-        }
-    }
-}
-
 /// The complete proof used to authenticate the state of an account. This structure consists of the
 /// `AccumulatorProof` from `LedgerInfo` to `TransactionInfo`, the `TransactionInfo` object and the
 /// `SparseMerkleProof` from state root to the account.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct AccountStateProof {
-    /// The accumulator proof from ledger info root to leaf that authenticates the hash of the
-    /// `TransactionInfo` object.
-    ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
-
-    /// The `TransactionInfo` object at the leaf of the accumulator.
-    transaction_info: TransactionInfo,
+    transaction_info_with_proof: TransactionInfoWithProof,
 
     /// The sparse merkle proof from state root to the account state.
     transaction_info_to_account_proof: SparseMerkleProof,
@@ -795,25 +566,18 @@ impl AccountStateProof {
     /// Constructs a new `AccountStateProof` using given `ledger_info_to_transaction_info_proof`,
     /// `transaction_info` and `transaction_info_to_account_proof`.
     pub fn new(
-        ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
-        transaction_info: TransactionInfo,
+        transaction_info_with_proof: TransactionInfoWithProof,
         transaction_info_to_account_proof: SparseMerkleProof,
     ) -> Self {
         AccountStateProof {
-            ledger_info_to_transaction_info_proof,
-            transaction_info,
+            transaction_info_with_proof,
             transaction_info_to_account_proof,
         }
     }
 
-    /// Returns the `ledger_info_to_transaction_info_proof` object in this proof.
-    pub fn ledger_info_to_transaction_info_proof(&self) -> &TransactionAccumulatorProof {
-        &self.ledger_info_to_transaction_info_proof
-    }
-
-    /// Returns the `transaction_info` object in this proof.
-    pub fn transaction_info(&self) -> &TransactionInfo {
-        &self.transaction_info
+    /// Returns the `transaction_info_with_proof` object in this proof.
+    pub fn transaction_info_with_proof(&self) -> &TransactionInfoWithProof {
+        &self.transaction_info_with_proof
     }
 
     /// Returns the `transaction_info_to_account_proof` object in this proof.
@@ -832,55 +596,17 @@ impl AccountStateProof {
         account_state_blob: Option<&AccountStateBlob>,
     ) -> Result<()> {
         self.transaction_info_to_account_proof.verify(
-            self.transaction_info.state_root_hash(),
+            self.transaction_info_with_proof
+                .transaction_info
+                .state_root_hash(),
             account_address_hash,
             account_state_blob,
         )?;
 
-        verify_transaction_info(
-            ledger_info,
-            state_version,
-            &self.transaction_info,
-            &self.ledger_info_to_transaction_info_proof,
-        )?;
+        self.transaction_info_with_proof
+            .verify(ledger_info, state_version)?;
+
         Ok(())
-    }
-}
-
-impl TryFrom<crate::proto::types::AccountStateProof> for AccountStateProof {
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::AccountStateProof) -> Result<Self> {
-        let ledger_info_to_transaction_info_proof = proto_proof
-            .ledger_info_to_transaction_info_proof
-            .ok_or_else(|| format_err!("Missing ledger_info_to_transaction_info_proof"))?
-            .try_into()?;
-        let transaction_info = proto_proof
-            .transaction_info
-            .ok_or_else(|| format_err!("Missing transaction_info"))?
-            .try_into()?;
-        let transaction_info_to_account_proof = proto_proof
-            .transaction_info_to_account_proof
-            .ok_or_else(|| format_err!("Missing transaction_info_to_account_proof"))?
-            .try_into()?;
-
-        Ok(AccountStateProof::new(
-            ledger_info_to_transaction_info_proof,
-            transaction_info,
-            transaction_info_to_account_proof,
-        ))
-    }
-}
-
-impl From<AccountStateProof> for crate::proto::types::AccountStateProof {
-    fn from(proof: AccountStateProof) -> Self {
-        Self {
-            ledger_info_to_transaction_info_proof: Some(
-                proof.ledger_info_to_transaction_info_proof.into(),
-            ),
-            transaction_info: Some(proof.transaction_info.into()),
-            transaction_info_to_account_proof: Some(proof.transaction_info_to_account_proof.into()),
-        }
     }
 }
 
@@ -890,12 +616,7 @@ impl From<AccountStateProof> for crate::proto::types::AccountStateProof {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct EventProof {
-    /// The accumulator proof from ledger info root to leaf that authenticates the hash of the
-    /// `TransactionInfo` object.
-    ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
-
-    /// The `TransactionInfo` object at the leaf of the accumulator.
-    transaction_info: TransactionInfo,
+    transaction_info_with_proof: TransactionInfoWithProof,
 
     /// The accumulator proof from event root to the actual event.
     transaction_info_to_event_proof: EventAccumulatorProof,
@@ -905,25 +626,18 @@ impl EventProof {
     /// Constructs a new `EventProof` using given `ledger_info_to_transaction_info_proof`,
     /// `transaction_info` and `transaction_info_to_event_proof`.
     pub fn new(
-        ledger_info_to_transaction_info_proof: TransactionAccumulatorProof,
-        transaction_info: TransactionInfo,
+        transaction_info_with_proof: TransactionInfoWithProof,
         transaction_info_to_event_proof: EventAccumulatorProof,
     ) -> Self {
         EventProof {
-            ledger_info_to_transaction_info_proof,
-            transaction_info,
+            transaction_info_with_proof,
             transaction_info_to_event_proof,
         }
     }
 
-    /// Returns the `ledger_info_to_transaction_info_proof` object in this proof.
-    pub fn ledger_info_to_transaction_info_proof(&self) -> &TransactionAccumulatorProof {
-        &self.ledger_info_to_transaction_info_proof
-    }
-
-    /// Returns the `transaction_info` object in this proof.
-    pub fn transaction_info(&self) -> &TransactionInfo {
-        &self.transaction_info
+    /// Returns the `transaction_info_with_proof` object in this proof.
+    pub fn transaction_info_with_proof(&self) -> &TransactionInfoWithProof {
+        &self.transaction_info_with_proof
     }
 
     /// Returns the `transaction_info_to_event_proof` object in this proof.
@@ -940,56 +654,17 @@ impl EventProof {
         event_version_within_transaction: Version,
     ) -> Result<()> {
         self.transaction_info_to_event_proof.verify(
-            self.transaction_info.event_root_hash(),
+            self.transaction_info_with_proof
+                .transaction_info()
+                .event_root_hash(),
             event_hash,
             event_version_within_transaction,
         )?;
 
-        verify_transaction_info(
-            ledger_info,
-            transaction_version,
-            &self.transaction_info,
-            &self.ledger_info_to_transaction_info_proof,
-        )?;
+        self.transaction_info_with_proof
+            .verify(ledger_info, transaction_version)?;
 
         Ok(())
-    }
-}
-
-impl TryFrom<crate::proto::types::EventProof> for EventProof {
-    type Error = Error;
-
-    fn try_from(proto_proof: crate::proto::types::EventProof) -> Result<Self> {
-        let ledger_info_to_transaction_info_proof = proto_proof
-            .ledger_info_to_transaction_info_proof
-            .ok_or_else(|| format_err!("Missing ledger_info_to_transaction_info_proof"))?
-            .try_into()?;
-        let transaction_info = proto_proof
-            .transaction_info
-            .ok_or_else(|| format_err!("Missing transaction_info"))?
-            .try_into()?;
-        let transaction_info_to_event_proof = proto_proof
-            .transaction_info_to_event_proof
-            .ok_or_else(|| format_err!("Missing transaction_info_to_account_proof"))?
-            .try_into()?;
-
-        Ok(EventProof::new(
-            ledger_info_to_transaction_info_proof,
-            transaction_info,
-            transaction_info_to_event_proof,
-        ))
-    }
-}
-
-impl From<EventProof> for crate::proto::types::EventProof {
-    fn from(proof: EventProof) -> Self {
-        Self {
-            ledger_info_to_transaction_info_proof: Some(
-                proof.ledger_info_to_transaction_info_proof.into(),
-            ),
-            transaction_info: Some(proof.transaction_info.into()),
-            transaction_info_to_event_proof: Some(proof.transaction_info_to_event_proof.into()),
-        }
     }
 }
 
@@ -1026,6 +701,11 @@ impl TransactionListProof {
     /// Returns the list of `TransactionInfo` objects.
     pub fn transaction_infos(&self) -> &[TransactionInfo] {
         &self.transaction_infos
+    }
+
+    /// Retursn the accumulator proof
+    pub fn ledger_info_to_transaction_infos_proof(&self) -> &TransactionAccumulatorRangeProof {
+        &self.ledger_info_to_transaction_infos_proof
     }
 
     pub fn left_siblings(&self) -> &Vec<HashValue> {
@@ -1075,38 +755,45 @@ impl TransactionListProof {
     }
 }
 
-impl TryFrom<crate::proto::types::TransactionListProof> for TransactionListProof {
-    type Error = Error;
+/// A proof that first verifies that establishes correct computation of the root and then
+/// returns the new tree to acquire a new root and version. Note: this is used internally by
+/// VoteProposal hence why it exists within consensus-types andd not libra-types.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AccumulatorExtensionProof<H> {
+    /// Represents the roots of all the full subtrees from left to right in the original accumulator.
+    frozen_subtree_roots: Vec<HashValue>,
+    /// The total number of leaves in original accumulator.
+    num_leaves: LeafCount,
+    /// The values representing the newly appended leaves.
+    leaves: Vec<HashValue>,
 
-    fn try_from(proto_proof: crate::proto::types::TransactionListProof) -> Result<Self> {
-        let ledger_info_to_transaction_infos_proof = proto_proof
-            .ledger_info_to_transaction_infos_proof
-            .ok_or_else(|| format_err!("Missing ledger_info_to_transaction_infos_proof"))?
-            .try_into()?;
-        let transaction_infos = proto_proof
-            .transaction_infos
-            .into_iter()
-            .map(TryInto::try_into)
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(TransactionListProof::new(
-            ledger_info_to_transaction_infos_proof,
-            transaction_infos,
-        ))
-    }
+    hasher: PhantomData<H>,
 }
 
-impl From<TransactionListProof> for crate::proto::types::TransactionListProof {
-    fn from(proof: TransactionListProof) -> Self {
+impl<H: CryptoHasher> AccumulatorExtensionProof<H> {
+    pub fn new(
+        frozen_subtree_roots: Vec<HashValue>,
+        num_leaves: LeafCount,
+        leaves: Vec<HashValue>,
+    ) -> Self {
         Self {
-            ledger_info_to_transaction_infos_proof: Some(
-                proof.ledger_info_to_transaction_infos_proof.into(),
-            ),
-            transaction_infos: proof
-                .transaction_infos
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+            frozen_subtree_roots,
+            num_leaves,
+            leaves,
+            hasher: PhantomData,
         }
+    }
+
+    pub fn verify(&self, original_root: HashValue) -> anyhow::Result<InMemoryAccumulator<H>> {
+        let original_tree =
+            InMemoryAccumulator::<H>::new(self.frozen_subtree_roots.clone(), self.num_leaves)?;
+        ensure!(
+            original_tree.root_hash() == original_root,
+            "Root hashes do not match. Actual root hash: {:x}. Expected root hash: {:x}.",
+            original_tree.root_hash(),
+            original_root
+        );
+
+        Ok(original_tree.append(self.leaves.as_slice()))
     }
 }

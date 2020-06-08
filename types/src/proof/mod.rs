@@ -29,10 +29,10 @@ use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 pub use self::definition::{
-    AccountStateProof, AccumulatorConsistencyProof, AccumulatorProof, AccumulatorRangeProof,
-    EventAccumulatorProof, EventProof, SparseMerkleProof, SparseMerkleRangeProof,
-    TransactionAccumulatorProof, TransactionAccumulatorRangeProof, TransactionListProof,
-    TransactionProof,
+    AccountStateProof, AccumulatorConsistencyProof, AccumulatorExtensionProof, AccumulatorProof,
+    AccumulatorRangeProof, EventAccumulatorProof, EventProof, SparseMerkleProof,
+    SparseMerkleRangeProof, TransactionAccumulatorProof, TransactionAccumulatorRangeProof,
+    TransactionInfoWithProof, TransactionListProof,
 };
 
 #[cfg(any(test, feature = "fuzzing"))]
@@ -83,8 +83,8 @@ impl<H: CryptoHasher> CryptoHash for MerkleTreeInternalNode<H> {
 
     fn hash(&self) -> HashValue {
         let mut state = Self::Hasher::default();
-        state.write(self.left_child.as_ref());
-        state.write(self.right_child.as_ref());
+        state.update(self.left_child.as_ref());
+        state.update(self.right_child.as_ref());
         state.finish()
     }
 }
@@ -120,8 +120,8 @@ impl CryptoHash for SparseMerkleLeafNode {
 
     fn hash(&self) -> HashValue {
         let mut state = Self::Hasher::default();
-        state.write(self.key.as_ref());
-        state.write(self.value_hash.as_ref());
+        state.update(self.key.as_ref());
+        state.update(self.value_hash.as_ref());
         state.finish()
     }
 }

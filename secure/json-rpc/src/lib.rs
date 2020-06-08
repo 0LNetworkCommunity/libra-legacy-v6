@@ -272,10 +272,10 @@ mod test {
     use futures::{channel::mpsc::channel, StreamExt};
     use libra_config::utils;
     use libra_crypto::{ed25519::Ed25519PrivateKey, HashValue, PrivateKey, Uniform};
-    use libra_json_rpc::bootstrap;
+    use libra_json_rpc::test_bootstrap;
     use libra_types::{
         account_address::AccountAddress,
-        account_config::{from_currency_code_string, AccountResource, BalanceResource, LBR_NAME},
+        account_config::{AccountResource, BalanceResource},
         account_state::AccountState,
         account_state_blob::{AccountStateBlob, AccountStateWithProof},
         block_info::BlockInfo,
@@ -286,6 +286,7 @@ mod test {
         mempool_status::{MempoolStatus, MempoolStatusCode},
         proof::{
             AccountStateProof, AccumulatorConsistencyProof, AccumulatorProof, SparseMerkleProof,
+            TransactionInfoWithProof,
         },
         test_helpers::transaction_test_helpers::get_test_signed_txn,
         transaction::{
@@ -412,7 +413,7 @@ mod test {
         let port = utils::get_available_port();
         let host = format!("{}:{}", address, port);
         let (mp_sender, mut mp_events) = channel(1024);
-        let server = bootstrap(host.parse().unwrap(), Arc::new(db), mp_sender);
+        let server = test_bootstrap(host.parse().unwrap(), Arc::new(db), mp_sender);
 
         let url = format!("http://{}", host);
         let client = JsonRpcClient::new(url);
@@ -446,8 +447,7 @@ mod test {
         );
 
         AccountStateProof::new(
-            AccumulatorProof::new(vec![]),
-            transaction_info,
+            TransactionInfoWithProof::new(AccumulatorProof::new(vec![]), transaction_info),
             SparseMerkleProof::new(None, vec![]),
         )
     }
@@ -482,7 +482,6 @@ mod test {
             EventHandle::random_handle(100),
             EventHandle::random_handle(100),
             false,
-            from_currency_code_string(LBR_NAME).unwrap(),
         )
     }
 

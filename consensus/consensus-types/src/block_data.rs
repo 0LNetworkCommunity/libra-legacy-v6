@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    common::{Author, Round},
+    common::{Author, Payload, Round},
     quorum_cert::QuorumCert,
     vote_data::VoteData,
 };
-use libra_crypto::hash::{CryptoHash, CryptoHasher, HashValue};
-use libra_crypto_derive::CryptoHasher;
+use libra_crypto::hash::HashValue;
+use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
 use libra_types::{
     block_info::BlockInfo,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
@@ -17,10 +17,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq)]
-pub enum BlockType<T> {
+pub enum BlockType {
     Proposal {
         /// T of the block (e.g. one or more transaction(s)
-        payload: T,
+        payload: Payload,
         /// Author of the block that can be validated by the author's public key and the signature
         author: Author,
     },
@@ -34,10 +34,10 @@ pub enum BlockType<T> {
     Genesis,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, CryptoHasher)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Eq, CryptoHasher, LCSCryptoHash)]
 /// Block has the core data of a consensus block that should be persistent when necessary.
 /// Each block must know the id of its parent and keep the QuorurmCertificate to that parent.
-pub struct BlockData<T> {
+pub struct BlockData {
     /// Epoch number corresponds to the set of validators that are active for this block.
     epoch: u64,
     /// The round of a block is an internal monotonically increasing counter used by Consensus
@@ -65,10 +65,10 @@ pub struct BlockData<T> {
     /// voted on successfully
     quorum_cert: QuorumCert,
     /// If a block is a real proposal, contains its author and signature.
-    block_type: BlockType<T>,
+    block_type: BlockType,
 }
 
-impl<T> BlockData<T> {
+impl BlockData {
     pub fn author(&self) -> Option<Author> {
         if let BlockType::Proposal { author, .. } = self.block_type {
             Some(author)
@@ -77,7 +77,7 @@ impl<T> BlockData<T> {
         }
     }
 
-    pub fn block_type(&self) -> &BlockType<T> {
+    pub fn block_type(&self) -> &BlockType {
         &self.block_type
     }
 
@@ -89,7 +89,7 @@ impl<T> BlockData<T> {
         self.quorum_cert.certified_block().id()
     }
 
-    pub fn payload(&self) -> Option<&T> {
+    pub fn payload(&self) -> Option<&Payload> {
         if let BlockType::Proposal { payload, .. } = &self.block_type {
             Some(payload)
         } else {
@@ -113,9 +113,7 @@ impl<T> BlockData<T> {
     pub fn quorum_cert(&self) -> &QuorumCert {
         &self.quorum_cert
     }
-}
 
-impl<T> BlockData<T> {
     pub fn is_genesis_block(&self) -> bool {
         matches!(self.block_type, BlockType::Genesis)
     }
@@ -123,14 +121,9 @@ impl<T> BlockData<T> {
     pub fn is_nil_block(&self) -> bool {
         matches!(self.block_type, BlockType::NilBlock)
     }
-}
 
-impl<T> BlockData<T>
-where
-    T: Default + Serialize,
-{
     pub fn new_genesis_from_ledger_info(ledger_info: &LedgerInfo) -> Self {
-        assert!(ledger_info.next_epoch_info().is_some());
+        assert!(ledger_info.next_epoch_state().is_some());
         let ancestor = BlockInfo::new(
             ledger_info.epoch(),
             0,                 /* round */
@@ -181,7 +174,7 @@ where
     }
 
     pub fn new_proposal(
-        payload: T,
+        payload: Payload,
         author: Author,
         round: Round,
         timestamp_usecs: u64,
@@ -194,19 +187,5 @@ where
             quorum_cert,
             block_type: BlockType::Proposal { payload, author },
         }
-    }
-}
-
-impl<T> CryptoHash for BlockData<T>
-where
-    T: Serialize,
-{
-    type Hasher = BlockDataHasher;
-
-    fn hash(&self) -> HashValue {
-        let bytes = lcs::to_bytes(self).expect("BlockData serialization failed");
-        let mut state = Self::Hasher::default();
-        state.write(bytes.as_ref());
-        state.finish()
     }
 }

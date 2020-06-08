@@ -1,6 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use crate as libra_crypto;
 use crate::{
     ed25519::{
         Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature, ED25519_PRIVATE_KEY_LENGTH,
@@ -8,6 +9,7 @@ use crate::{
     },
     test_utils::uniform_keypair_strategy,
     traits::*,
+    x25519,
 };
 
 use core::{
@@ -16,14 +18,71 @@ use core::{
 };
 
 use crate::hash::HashValue;
-use proptest::prelude::*;
+use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use proptest::{collection::vec, prelude::*};
+use serde::{Deserialize, Serialize};
+
+#[derive(CryptoHasher, LCSCryptoHash, Serialize, Deserialize)]
+struct CryptoHashable(pub usize);
 
 proptest! {
+
+    #[test]
+    fn convert_from_ed25519_publickey(keypair in uniform_keypair_strategy::<Ed25519PrivateKey, Ed25519PublicKey>()) {
+        let x25519_public_key = x25519::PublicKey::from_ed25519_public_bytes(&keypair.public_key.to_bytes()[..]).unwrap();
+
+        // Let's construct an x25519 private key from the ed25519 private key.
+        let x25519_privatekey = x25519::PrivateKey::from_ed25519_private_bytes(&keypair.private_key.to_bytes()[..]);
+
+        // This is the important part! We abandon the entire test if an x25519 private
+        // key can't be built from this ed25519 private key, thus "grinding"
+        // the RNG.
+        if x25519_privatekey.is_ok() {
+            // Now derive the public key from x25519_privatekey and see if it matches the public key that
+            // was created from the Ed25519PublicKey.
+            let x25519_publickey_2 = x25519_privatekey.unwrap().public_key();
+            assert_eq!(x25519_public_key, x25519_publickey_2);
+        }
+    }
+
+    #[test]
+    fn ed25519_and_x25519_privkeys(keypair in uniform_keypair_strategy::<x25519::PrivateKey, x25519::PublicKey>()){
+        let x25519_public_bytes = keypair.public_key.to_bytes();
+        let x25519_private_bytes = keypair.private_key.to_bytes();
+        //sanity-check
+        prop_assert_eq!(x25519_public_bytes.clone(), x25519::PublicKey::from(&keypair.private_key).to_bytes());
+
+        // always pass false if you hope to ever get back to the original public key
+        let ed25519_public = Ed25519PublicKey::from_x25519_public_bytes(&x25519_public_bytes, false).unwrap();
+        let x25519_backconverted_public = x25519::PublicKey::from_ed25519_public_bytes(&ed25519_public.to_bytes()[..]).unwrap();
+
+        let ed25519_private = Ed25519PrivateKey::try_from(&x25519_private_bytes[..]).unwrap();
+        let x25519_backconverted_private = x25519::PrivateKey::try_from(&ed25519_private.to_bytes()[..]).unwrap();
+
+        // Test that you can always retrieve a valid x25519 keypair after
+        // "serialization" as an ed25519 keypair
+        prop_assert_eq!(keypair.public_key, x25519_backconverted_public);
+        prop_assert_eq!(keypair.private_key, x25519_backconverted_private.clone());
+        prop_assert_eq!(x25519_backconverted_public, x25519::PublicKey::from(&x25519_backconverted_private));
+        // Note that the reverse is not true: converting to an x25519 private
+        // key mangles the ed25519 private key bits irreversibly !
+    }
+
+    #[test]
+    fn ed25519_to_x25519_roundtrip(keypair in uniform_keypair_strategy::<Ed25519PrivateKey, Ed25519PublicKey>()){
+        let ed25519_bytes = keypair.public_key.to_bytes();
+        let x25519 = x25519::PublicKey::from_ed25519_public_bytes(&ed25519_bytes).unwrap();
+        let x25519_bytes = x25519.as_slice();
+        let backconverted_ed_positive = Ed25519PublicKey::from_x25519_public_bytes(x25519_bytes, false).unwrap();
+        let backconverted_ed_negative = Ed25519PublicKey::from_x25519_public_bytes(x25519_bytes, true).unwrap();
+        prop_assert!(keypair.public_key == backconverted_ed_negative || keypair.public_key == backconverted_ed_positive);
+    }
+
     #[test]
     fn test_keys_encode(keypair in uniform_keypair_strategy::<Ed25519PrivateKey, Ed25519PublicKey>()) {
         {
             let encoded = keypair.private_key.to_encoded_string().unwrap();
-             // Hex encoding of a 32-bytes key is 64 (2 x 32) characters.
+            // Hex encoding of a 32-bytes key is 64 (2 x 32) characters.
             prop_assert_eq!(2 * ED25519_PRIVATE_KEY_LENGTH, encoded.len());
             let decoded = Ed25519PrivateKey::from_encoded_string(&encoded);
             prop_assert_eq!(Some(keypair.private_key), decoded.ok());
@@ -81,6 +140,32 @@ proptest! {
         prop_assert_eq!(ED25519_SIGNATURE_LENGTH, serialized.len());
         let deserialized = Ed25519Signature::try_from(serialized).unwrap();
         prop_assert!(keypair.public_key.verify_signature(&hash, &deserialized).is_ok());
+    }
+
+    #[test]
+    fn test_signature_verification_from_arbitrary(
+        // this should be > 64 bits to go over the length of a default hash
+        msg in vec(proptest::num::u8::ANY, 1..128),
+        keypair in uniform_keypair_strategy::<Ed25519PrivateKey, Ed25519PublicKey>()
+    ) {
+        let signature = keypair.private_key.sign_arbitrary_message(&msg);
+        let serialized: &[u8] = &(signature.to_bytes());
+        prop_assert_eq!(ED25519_SIGNATURE_LENGTH, serialized.len());
+        let deserialized = Ed25519Signature::try_from(serialized).unwrap();
+        prop_assert!(deserialized.verify_arbitrary_msg(&msg, &keypair.public_key).is_ok());
+    }
+
+    #[test]
+    fn test_signature_verification_from_struct(
+        x in any::<usize>(),
+        keypair in uniform_keypair_strategy::<Ed25519PrivateKey, Ed25519PublicKey>()
+    ) {
+        let hashable = CryptoHashable(x);
+        let signature = keypair.private_key.sign(&hashable).expect("all `RawTransaction` objects should LCS-serialize correctly");
+        let serialized: &[u8] = &(signature.to_bytes());
+        prop_assert_eq!(ED25519_SIGNATURE_LENGTH, serialized.len());
+        let deserialized = Ed25519Signature::try_from(serialized).unwrap();
+        prop_assert!(deserialized.verify_struct_msg(&hashable, &keypair.public_key).is_ok());
     }
 
     // Check for canonical S.

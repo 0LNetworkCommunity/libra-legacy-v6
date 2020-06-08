@@ -22,22 +22,21 @@ use crate::{
         health_checker::{self, HealthChecker},
         wire::handshake::v1::SupportedProtocols,
     },
-    transport,
-    transport::*,
+    transport::{self, Connection, LibraNetTransport, LIBRA_TCP_TRANSPORT},
     ProtocolId,
 };
 use channel::{self, libra_channel, message_queues::QueueStyle};
 use futures::stream::StreamExt;
-use libra_config::config::RoleType;
-use libra_crypto::{
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
-    x25519,
+use libra_config::{
+    config::{RoleType, HANDSHAKE_VERSION},
+    network_id::NetworkId,
 };
+use libra_crypto::x25519;
 use libra_logger::prelude::*;
 use libra_metrics::IntCounterVec;
 use libra_network_address::NetworkAddress;
 use libra_types::PeerId;
-use netcore::transport::Transport;
+use netcore::transport::{memory, Transport};
 use std::{
     clone::Clone,
     collections::HashMap,
@@ -66,15 +65,31 @@ pub const MAX_CONCURRENT_NETWORK_REQS: usize = 100;
 pub const MAX_CONCURRENT_NETWORK_NOTIFS: usize = 100;
 pub const MAX_CONNECTION_DELAY_MS: u64 = 10 * 60 * 1000 /* 10 minutes */;
 
-/// The type of the transport layer, i.e., running on memory or TCP stream,
-/// with or without Noise encryption
-pub enum TransportType {
-    Memory,
-    MemoryNoise(Option<x25519::PrivateKey>),
-    PermissionlessMemoryNoise(Option<x25519::PrivateKey>),
-    Tcp,
-    TcpNoise(Option<x25519::PrivateKey>),
-    PermissionlessTcpNoise(Option<x25519::PrivateKey>),
+#[derive(Debug)]
+pub enum AuthenticationMode {
+    /// Inbound and outbound connections are secured with NoiseIK; however, only
+    /// clients/dialers will authenticate the servers/listeners. More specifically,
+    /// dialers will pin the connection to a specific, expected pubkey while
+    /// listeners will accept any inbound dialer's pubkey.
+    ServerOnly(x25519::PrivateKey),
+    /// Inbound and outbound connections are secured with NoiseIK. Both dialer and
+    /// listener will only accept connections that successfully authenticate to a
+    /// pubkey in their "trusted peers" set.
+    Mutual(x25519::PrivateKey),
+}
+
+impl AuthenticationMode {
+    /// Convenience method to retrieve the public key for the auth mode's inner
+    /// network identity key.
+    ///
+    /// Note: this only works because all auth modes are Noise-based.
+    pub fn public_key(&self) -> x25519::PublicKey {
+        match self {
+            AuthenticationMode::ServerOnly(key) | AuthenticationMode::Mutual(key) => {
+                key.public_key()
+            }
+        }
+    }
 }
 
 /// Build Network module with custom configuration values.
@@ -82,15 +97,19 @@ pub enum TransportType {
 /// MempoolNetworkHandler and ConsensusNetworkHandler are constructed by calling
 /// [`NetworkBuilder::build`].  New instances of `NetworkBuilder` are obtained
 /// via [`NetworkBuilder::new`].
+// TODO(philiphayes): refactor NetworkBuilder and libra-node; current config is
+// pretty tangled.
 pub struct NetworkBuilder {
     executor: Handle,
+    network_id: NetworkId,
     peer_id: PeerId,
-    addr: NetworkAddress,
     role: RoleType,
+    // TODO(philiphayes): better support multiple listening addrs
+    listen_address: NetworkAddress,
     advertised_address: Option<NetworkAddress>,
     seed_peers: HashMap<PeerId, Vec<NetworkAddress>>,
     trusted_peers: Arc<RwLock<HashMap<PeerId, NetworkPublicKeys>>>,
-    transport: TransportType,
+    authentication_mode: Option<AuthenticationMode>,
     channel_size: usize,
     direct_send_protocols: Vec<ProtocolId>,
     rpc_protocols: Vec<ProtocolId>,
@@ -107,23 +126,19 @@ pub struct NetworkBuilder {
     connection_reqs_rx: libra_channel::Receiver<PeerId, ConnectionRequest>,
     conn_mgr_reqs_tx: Option<channel::Sender<ConnectivityRequest>>,
     connectivity_check_interval_ms: u64,
-    inbound_rpc_timeout_ms: u64,
-    max_concurrent_outbound_rpcs: u32,
-    max_concurrent_inbound_rpcs: u32,
     max_concurrent_network_reqs: usize,
     max_concurrent_network_notifs: usize,
     max_connection_delay_ms: u64,
-    signing_keypair: Option<(Ed25519PrivateKey, Ed25519PublicKey)>,
-    enable_remote_authentication: bool,
 }
 
 impl NetworkBuilder {
     /// Return a new NetworkBuilder initialized with default configuration values.
     pub fn new(
         executor: Handle,
+        network_id: NetworkId,
         peer_id: PeerId,
-        addr: NetworkAddress,
         role: RoleType,
+        listen_address: NetworkAddress,
     ) -> NetworkBuilder {
         // Setup channel to send requests to peer manager.
         let (pm_reqs_tx, pm_reqs_rx) = libra_channel::new(
@@ -139,12 +154,14 @@ impl NetworkBuilder {
         );
         NetworkBuilder {
             executor,
+            network_id,
             peer_id,
-            addr,
             role,
+            listen_address,
             advertised_address: None,
             seed_peers: HashMap::new(),
             trusted_peers: Arc::new(RwLock::new(HashMap::new())),
+            authentication_mode: None,
             channel_size: NETWORK_CHANNEL_SIZE,
             direct_send_protocols: vec![],
             rpc_protocols: vec![],
@@ -155,30 +172,28 @@ impl NetworkBuilder {
             connection_reqs_tx,
             connection_reqs_rx,
             conn_mgr_reqs_tx: None,
-            transport: TransportType::Memory,
             discovery_interval_ms: DISCOVERY_INTERVAL_MS,
             ping_interval_ms: PING_INTERVAL_MS,
             ping_timeout_ms: PING_TIMEOUT_MS,
             ping_failures_tolerated: PING_FAILURES_TOLERATED,
             connectivity_check_interval_ms: CONNECTIVITY_CHECK_INTERNAL_MS,
-            inbound_rpc_timeout_ms: INBOUND_RPC_TIMEOUT_MS,
-            max_concurrent_outbound_rpcs: MAX_CONCURRENT_OUTBOUND_RPCS,
-            max_concurrent_inbound_rpcs: MAX_CONCURRENT_INBOUND_RPCS,
             max_concurrent_network_reqs: MAX_CONCURRENT_NETWORK_REQS,
             max_concurrent_network_notifs: MAX_CONCURRENT_NETWORK_NOTIFS,
             max_connection_delay_ms: MAX_CONNECTION_DELAY_MS,
-            signing_keypair: None,
-            enable_remote_authentication: true,
         }
     }
 
-    /// Set transport type, i.e., Memory or Tcp transports.
-    pub fn transport(&mut self, transport: TransportType) -> &mut Self {
-        self.transport = transport;
+    pub fn peer_id(&self) -> PeerId {
+        self.peer_id
+    }
+
+    /// Set network authentication mode.
+    pub fn authentication_mode(&mut self, authentication_mode: AuthenticationMode) -> &mut Self {
+        self.authentication_mode = Some(authentication_mode);
         self
     }
 
-    /// Set and address to advertise, if different from the listen address
+    /// Set an address to advertise, if different from the listen address
     pub fn advertised_address(&mut self, advertised_address: NetworkAddress) -> &mut Self {
         self.advertised_address = Some(advertised_address);
         self
@@ -190,12 +205,6 @@ impl NetworkBuilder {
         trusted_peers: HashMap<PeerId, NetworkPublicKeys>,
     ) -> &mut Self {
         *self.trusted_peers.write().unwrap() = trusted_peers;
-        self
-    }
-
-    /// Set signing keys of local node.
-    pub fn signing_keypair(&mut self, keypair: (Ed25519PrivateKey, Ed25519PublicKey)) -> &mut Self {
-        self.signing_keypair = Some(keypair);
         self
     }
 
@@ -211,86 +220,12 @@ impl NetworkBuilder {
         self
     }
 
-    /// Set ping interval.
-    pub fn ping_interval_ms(&mut self, ping_interval_ms: u64) -> &mut Self {
-        self.ping_interval_ms = ping_interval_ms;
-        self
-    }
-
-    /// Set number of ping failures tolerated.
-    pub fn ping_failures_tolerated(&mut self, ping_failures_tolerated: u64) -> &mut Self {
-        self.ping_failures_tolerated = ping_failures_tolerated;
-        self
-    }
-
-    /// Set ping timeout.
-    pub fn ping_timeout_ms(&mut self, ping_timeout_ms: u64) -> &mut Self {
-        self.ping_timeout_ms = ping_timeout_ms;
-        self
-    }
-
     /// Set connectivity check ticker interval
     pub fn connectivity_check_interval_ms(
         &mut self,
         connectivity_check_interval_ms: u64,
     ) -> &mut Self {
         self.connectivity_check_interval_ms = connectivity_check_interval_ms;
-        self
-    }
-
-    /// Set inbound rpc timeout.
-    pub fn inbound_rpc_timeout_ms(&mut self, inbound_rpc_timeout_ms: u64) -> &mut Self {
-        self.inbound_rpc_timeout_ms = inbound_rpc_timeout_ms;
-        self
-    }
-
-    /// The maximum number of concurrent outbound rpc requests we will service.
-    pub fn max_concurrent_outbound_rpcs(&mut self, max_concurrent_outbound_rpcs: u32) -> &mut Self {
-        self.max_concurrent_outbound_rpcs = max_concurrent_outbound_rpcs;
-        self
-    }
-
-    /// The maximum number of concurrent inbound rpc requests we will service.
-    pub fn max_concurrent_inbound_rpcs(&mut self, max_concurrent_inbound_rpcs: u32) -> &mut Self {
-        self.max_concurrent_inbound_rpcs = max_concurrent_inbound_rpcs;
-        self
-    }
-
-    /// The maximum number of concurrent NetworkRequests we will service in NetworkProvider.
-    pub fn max_concurrent_network_reqs(&mut self, max_concurrent_network_reqs: usize) -> &mut Self {
-        self.max_concurrent_network_reqs = max_concurrent_network_reqs;
-        self
-    }
-
-    /// The maximum number of concurrent Notifications from each actor we will service in
-    /// NetworkProvider.
-    pub fn max_concurrent_network_notifs(
-        &mut self,
-        max_concurrent_network_notifs: usize,
-    ) -> &mut Self {
-        self.max_concurrent_network_notifs = max_concurrent_network_notifs;
-        self
-    }
-
-    /// The maximum duration (in milliseconds) we should wait before dialing a peer we should
-    /// connect to.
-    pub fn max_connection_delay_ms(&mut self, max_connection_delay_ms: u64) -> &mut Self {
-        self.max_connection_delay_ms = max_connection_delay_ms;
-        self
-    }
-
-    /// Set the size of the channels between different network actors.
-    pub fn channel_size(&mut self, channel_size: usize) -> &mut Self {
-        self.channel_size = channel_size;
-        self
-    }
-
-    /// Set the enable_remote_authentication flag to make the network operate with remote authentication.
-    pub fn enable_remote_authentication(
-        &mut self,
-        enable_remote_authentication: bool,
-    ) -> &mut Self {
-        self.enable_remote_authentication = enable_remote_authentication;
         self
     }
 
@@ -395,23 +330,39 @@ impl NetworkBuilder {
     /// (gossip) [`Discovery`] discovers other eligible peers' network addresses
     /// by exchanging the full set of known peer network addresses with connected
     /// peers as a network protocol.
+    ///
+    /// This is for testing purposes only and should not be used in production networks.
     pub fn add_gossip_discovery(&mut self) -> &mut Self {
-        // Note: We use the `enable_remote_authentication` flag as a proxy for
-        // whether we need to run the discovery module or not. We should make this
-        // more explicit eventually.
         let peer_id = self.peer_id;
         let conn_mgr_reqs_tx = self
             .conn_mgr_reqs_tx()
             .expect("ConnectivityManager not enabled");
-        let (signing_private_key, _signing_public_key) =
-            self.signing_keypair.take().expect("Signing keys not set");
         // Get handles for network events and sender.
         let (discovery_network_tx, discovery_network_rx) = discovery::add_to_network(self);
-        let addrs = vec![self
+
+        // TODO(philiphayes): the current setup for gossip discovery doesn't work
+        // when we don't have an `advertised_address` set, since it uses the
+        // `listen_address`, which might not be bound to a port yet. For example,
+        // if our `listen_address` is "/ip6/::1/tcp/0" and `advertised_address` is
+        // `None`, then this will set our `advertised_address` to something like
+        // "/ip6/::1/tcp/0/ln-noise-ik/<pubkey>/ln-handshake/0", which is wrong
+        // since the actual bound port will be something > 0.
+
+        // TODO(philiphayes): in network_builder setup, only bind the channels.
+        // wait until PeerManager is running to actual setup gossip discovery.
+
+        let advertised_address = self
             .advertised_address
             .clone()
-            .unwrap_or_else(|| self.addr.clone())];
-        let trusted_peers = self.trusted_peers.clone();
+            .unwrap_or_else(|| self.listen_address.clone());
+        let authentication_mode = self
+            .authentication_mode
+            .as_ref()
+            .expect("Authentication Mode not set");
+        let pubkey = authentication_mode.public_key();
+        let advertised_address = advertised_address.append_prod_protos(pubkey, HANDSHAKE_VERSION);
+
+        let addrs = vec![advertised_address];
         let role = self.role;
         let discovery_interval_ms = self.discovery_interval_ms;
         let discovery = self.executor.enter(|| {
@@ -419,8 +370,6 @@ impl NetworkBuilder {
                 peer_id,
                 role,
                 addrs,
-                signing_private_key,
-                trusted_peers,
                 interval(Duration::from_millis(discovery_interval_ms)).fuse(),
                 discovery_network_tx,
                 discovery_network_rx,
@@ -455,47 +404,45 @@ impl NetworkBuilder {
     /// Create the configured transport and start PeerManager.
     /// Return the actual NetworkAddress over which this peer is listening.
     pub fn build(mut self) -> NetworkAddress {
-        let peer_id = self.peer_id;
-        let supported_protocols = self.supported_protocols();
-        // Build network based on the transport type
-        let trusted_peers = self.trusted_peers.clone();
-        match self.transport {
-            TransportType::Memory => {
-                self.build_with_transport(build_memory_transport(peer_id, supported_protocols))
-            }
-            TransportType::MemoryNoise(ref mut keys) => {
-                let keys = keys.take().expect("Identity keys not set");
-                self.build_with_transport(build_memory_noise_transport(
-                    keys,
-                    trusted_peers,
-                    supported_protocols,
+        use libra_network_address::Protocol::*;
+
+        let network_id = self.network_id.clone();
+        let protos = self.supported_protocols();
+
+        let authentication_mode = self
+            .authentication_mode
+            .take()
+            .expect("Authentication Mode not set");
+
+        let (key, maybe_trusted_peers) = match authentication_mode {
+            AuthenticationMode::ServerOnly(key) => (key, None),
+            AuthenticationMode::Mutual(key) => (key, Some(self.trusted_peers.clone())),
+        };
+
+        match self.listen_address.as_slice() {
+            [Ip4(_), Tcp(_)] | [Ip6(_), Tcp(_)] => {
+                self.build_with_transport(LibraNetTransport::new(
+                    LIBRA_TCP_TRANSPORT.clone(),
+                    key,
+                    maybe_trusted_peers,
+                    HANDSHAKE_VERSION,
+                    network_id,
+                    protos,
                 ))
             }
-            TransportType::PermissionlessMemoryNoise(ref mut keys) => {
-                let keys = keys.take().expect("Identity keys not set");
-                self.build_with_transport(build_unauthenticated_memory_noise_transport(
-                    keys,
-                    supported_protocols,
-                ))
-            }
-            TransportType::Tcp => {
-                self.build_with_transport(build_tcp_transport(peer_id, supported_protocols))
-            }
-            TransportType::TcpNoise(ref mut keys) => {
-                let keys = keys.take().expect("Identity keys not set");
-                self.build_with_transport(build_tcp_noise_transport(
-                    keys,
-                    trusted_peers,
-                    supported_protocols,
-                ))
-            }
-            TransportType::PermissionlessTcpNoise(ref mut keys) => {
-                let keys = keys.take().expect("Identity keys not set");
-                self.build_with_transport(build_unauthenticated_tcp_noise_transport(
-                    keys,
-                    supported_protocols,
-                ))
-            }
+            [Memory(_)] => self.build_with_transport(LibraNetTransport::new(
+                memory::MemoryTransport,
+                key,
+                maybe_trusted_peers,
+                HANDSHAKE_VERSION,
+                network_id,
+                protos,
+            )),
+            _ => panic!(
+                "Unsupported listen_address: '{}', expected '/memory/<port>', \
+                 '/ip4/<addr>/tcp/<port>', or '/ip6/<addr>/tcp/<port>'.",
+                self.listen_address
+            ),
         }
     }
 
@@ -511,7 +458,9 @@ impl NetworkBuilder {
             transport,
             self.peer_id,
             self.role,
-            self.addr,
+            // TODO(philiphayes): peer manager should take `Vec<NetworkAddress>`
+            // (which could be empty, like in client use case)
+            self.listen_address,
             self.pm_reqs_rx,
             self.connection_reqs_rx,
             self.upstream_handlers,
@@ -521,8 +470,10 @@ impl NetworkBuilder {
             self.channel_size,
         );
         let listen_addr = peer_mgr.listen_addr().clone();
+
         self.executor.spawn(peer_mgr.start());
         debug!("Started peer manager");
+
         listen_addr
     }
 }

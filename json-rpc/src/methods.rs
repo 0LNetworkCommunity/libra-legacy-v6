@@ -13,6 +13,8 @@ use anyhow::{ensure, format_err, Error, Result};
 use core::future::Future;
 use debug_interface::prelude::*;
 use futures::{channel::oneshot, SinkExt};
+use libra_config::config::RoleType;
+use libra_crypto::hash::CryptoHash;
 use libra_mempool::MempoolClientSender;
 use libra_types::{
     account_address::AccountAddress,
@@ -25,6 +27,7 @@ use libra_types::{
     on_chain_config::{OnChainConfig, RegisteredCurrencies},
     transaction::SignedTransaction,
 };
+use network::counters;
 use serde_json::Value;
 use std::{collections::HashMap, convert::TryFrom, ops::Deref, pin::Pin, str::FromStr, sync::Arc};
 use storage_interface::DbReader;
@@ -33,11 +36,16 @@ use storage_interface::DbReader;
 pub(crate) struct JsonRpcService {
     db: Arc<dyn DbReader>,
     mempool_sender: MempoolClientSender,
+    role: RoleType,
 }
 
 impl JsonRpcService {
-    pub fn new(db: Arc<dyn DbReader>, mempool_sender: MempoolClientSender) -> Self {
-        Self { db, mempool_sender }
+    pub fn new(db: Arc<dyn DbReader>, mempool_sender: MempoolClientSender, role: RoleType) -> Self {
+        Self {
+            db,
+            mempool_sender,
+            role,
+        }
     }
 
     pub fn get_latest_ledger_info(&self) -> Result<LedgerInfoWithSignatures> {
@@ -103,25 +111,36 @@ async fn get_account_state(
     let currency_info = currencies_info(service, request).await?;
     let currencies: Vec<_> = currency_info
         .into_iter()
-        .map(|info| from_currency_code_string(&info.code).unwrap())
-        .collect();
+        .map(|info| from_currency_code_string(&info.code))
+        .collect::<Result<_, _>>()?;
     if let Some(blob) = response {
         let account_state = AccountState::try_from(&blob)?;
         if let Some(account) = account_state.get_account_resource()? {
-            let balance = account_state.get_balance_resources(&currencies)?;
-            return Ok(Some(AccountView::new(&account, &balance)));
+            let balances = account_state.get_balance_resources(&currencies)?;
+            if let Some(account_role) = account_state.get_account_role()? {
+                return Ok(Some(AccountView::new(&account, balances, account_role)));
+            }
         }
     }
     Ok(None)
 }
 
-/// Returns the current blockchain metadata
+/// Returns the blockchain metadata for a specified version. If no version is specified, default to
+/// returning the current blockchain metadata
 /// Can be used to verify that target Full Node is up-to-date
-async fn get_metadata(_service: JsonRpcService, request: JsonRpcRequest) -> Result<BlockMetadata> {
-    Ok(BlockMetadata {
-        version: request.version(),
-        timestamp: request.ledger_info.ledger_info().timestamp_usecs(),
-    })
+async fn get_metadata(service: JsonRpcService, request: JsonRpcRequest) -> Result<BlockMetadata> {
+    let (version, timestamp) = match serde_json::from_value::<u64>(request.get_param(0)) {
+        Ok(version) => {
+            let li = service.db.get_ledger_info(version)?;
+            (version, li.ledger_info().timestamp_usecs())
+        }
+        _ => (
+            request.version(),
+            request.ledger_info.ledger_info().timestamp_usecs(),
+        ),
+    };
+
+    Ok(BlockMetadata { version, timestamp })
 }
 
 /// Returns transactions by range
@@ -172,6 +191,7 @@ async fn get_transactions(
 
         result.push(TransactionView {
             version: start_version + v as u64,
+            hash: tx.hash().to_string(),
             transaction: tx.into(),
             events,
             vm_status: info.major_status(),
@@ -214,6 +234,7 @@ async fn get_account_transaction(
 
         Ok(Some(TransactionView {
             version: tx_version,
+            hash: tx.transaction.hash().to_string(),
             transaction: tx.transaction.into(),
             events,
             vm_status: tx.proof.transaction_info().major_status(),
@@ -308,21 +329,39 @@ async fn get_account_state_with_proof(
     )?)
 }
 
+/// Returns the number of peers this node is connected to
+async fn get_network_status(service: JsonRpcService, _request: JsonRpcRequest) -> Result<u64> {
+    let blah = counters::LIBRA_NETWORK_PEERS
+        .get_metric_with_label_values(&[service.role.as_str(), "connected"])?;
+    Ok(blah.get() as u64)
+}
+
 /// Builds registry of all available RPC methods
 /// To register new RPC method, add it via `register_rpc_method!` macros call
 /// Note that RPC method name will equal to name of function
 pub(crate) fn build_registry() -> RpcRegistry {
     let mut registry = RpcRegistry::new();
-    register_rpc_method!(registry, submit, 1);
-    register_rpc_method!(registry, get_metadata, 0);
-    register_rpc_method!(registry, get_account_state, 1);
-    register_rpc_method!(registry, get_transactions, 3);
-    register_rpc_method!(registry, get_account_transaction, 3);
-    register_rpc_method!(registry, get_events, 3);
-    register_rpc_method!(registry, currencies_info, 0);
+    register_rpc_method!(registry, "submit", submit, 1);
+    register_rpc_method!(registry, "get_metadata", get_metadata, 1);
+    register_rpc_method!(registry, "get_account_state", get_account_state, 1);
+    register_rpc_method!(registry, "get_transactions", get_transactions, 3);
+    register_rpc_method!(
+        registry,
+        "get_account_transaction",
+        get_account_transaction,
+        3
+    );
+    register_rpc_method!(registry, "get_events", get_events, 3);
+    register_rpc_method!(registry, "get_currencies", currencies_info, 0);
 
-    register_rpc_method!(registry, get_state_proof, 1);
-    register_rpc_method!(registry, get_account_state_with_proof, 3);
+    register_rpc_method!(registry, "get_state_proof", get_state_proof, 1);
+    register_rpc_method!(
+        registry,
+        "get_account_state_with_proof",
+        get_account_state_with_proof,
+        3
+    );
+    register_rpc_method!(registry, "get_network_status", get_network_status, 0);
 
     registry
 }

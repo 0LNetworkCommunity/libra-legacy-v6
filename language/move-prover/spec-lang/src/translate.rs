@@ -32,17 +32,18 @@ use vm::{
 use crate::{
     ast::{
         Condition, ConditionKind, Exp, LocalVarDecl, ModuleName, Operation, QualifiedSymbol, Spec,
-        SpecFunDecl, SpecVarDecl, Value,
+        SpecBlockInfo, SpecBlockTarget, SpecFunDecl, SpecVarDecl, Value,
     },
     env::{
-        FieldId, FunId, FunctionData, GlobalEnv, Loc, ModuleId, MoveIrLoc, NodeId, SpecFunId,
-        SpecVarId, StructData, StructId, SCRIPT_AST_FUN_NAME, SCRIPT_BYTECODE_FUN_NAME,
+        FieldId, FunId, FunctionData, GlobalEnv, Loc, ModuleId, MoveIrLoc, NodeId, SchemaId,
+        SpecFunId, SpecVarId, StructData, StructId, TypeConstraint, TypeParameter,
+        SCRIPT_AST_FUN_NAME, SCRIPT_BYTECODE_FUN_NAME,
     },
     project_1st, project_2nd,
     symbol::{Symbol, SymbolPool},
     ty::{PrimitiveType, Substitution, Type, TypeDisplayContext, BOOL_TYPE},
 };
-use move_ir_types::location::Spanned;
+use move_ir_types::location::{sp, Spanned};
 use move_lang::parser::ast::BinOp_;
 use regex::Regex;
 use std::{fmt, fmt::Formatter};
@@ -65,6 +66,9 @@ pub struct Translator<'env> {
     spec_var_table: BTreeMap<QualifiedSymbol, SpecVarEntry>,
     /// A symbol table for specification schemas.
     spec_schema_table: BTreeMap<QualifiedSymbol, SpecSchemaEntry>,
+    /// A symbol table storing unused schemas, used later to generate warnings. All schemas
+    /// are initially in the table and are removed when they are used in expressions.
+    unused_schema_set: BTreeSet<QualifiedSymbol>,
     // A symbol table for structs.
     struct_table: BTreeMap<QualifiedSymbol, StructEntry>,
     /// A reverse mapping from ModuleId/StructId pairs to QualifiedSymbol. This
@@ -144,6 +148,7 @@ impl<'env> Translator<'env> {
             spec_fun_table: BTreeMap::new(),
             spec_var_table: BTreeMap::new(),
             spec_schema_table: BTreeMap::new(),
+            unused_schema_set: BTreeSet::new(),
             struct_table: BTreeMap::new(),
             reverse_struct_table: BTreeMap::new(),
             fun_table: BTreeMap::new(),
@@ -183,7 +188,7 @@ impl<'env> Translator<'env> {
         // TODO: check whether overloads are distinguishable
         self.spec_fun_table
             .entry(name)
-            .or_insert_with(|| vec![])
+            .or_insert_with(Vec::new)
             .push(entry);
     }
 
@@ -241,6 +246,7 @@ impl<'env> Translator<'env> {
                 &format!("previous declaration of `{}`", schema_display),
             );
         }
+        self.unused_schema_set.insert(name);
     }
 
     /// Defines a struct type.
@@ -321,12 +327,13 @@ impl<'env> Translator<'env> {
         let num_t = &Type::new_prim(PrimitiveType::Num);
         let range_t = &Type::new_prim(PrimitiveType::Range);
         let address_t = &Type::new_prim(PrimitiveType::Address);
+
         let param_t = &Type::TypeParameter(0);
         let add_builtin = |trans: &mut Translator, name: QualifiedSymbol, entry: SpecFunEntry| {
             trans
                 .spec_fun_table
                 .entry(name)
-                .or_insert_with(|| vec![])
+                .or_insert_with(Vec::new)
                 .push(entry);
         };
 
@@ -412,6 +419,8 @@ impl<'env> Translator<'env> {
         {
             // Builtin functions.
             let vector_t = &Type::Vector(Box::new(param_t.clone()));
+            let type_t = &Type::Primitive(PrimitiveType::TypeValue);
+            let domain_t = &Type::TypeDomain(Box::new(param_t.clone()));
             let pred_t = &Type::Fun(vec![param_t.clone()], Box::new(bool_t.clone()));
             let pred_num_t = &Type::Fun(vec![num_t.clone()], Box::new(bool_t.clone()));
 
@@ -559,13 +568,72 @@ impl<'env> Translator<'env> {
                 },
             );
 
+            // Type values, domains and quantifiers
+            add_builtin(
+                self,
+                self.builtin_fun_symbol("type"),
+                SpecFunEntry {
+                    loc: loc.clone(),
+                    oper: Operation::TypeValue,
+                    type_params: vec![param_t.clone()],
+                    arg_types: vec![],
+                    result_type: type_t.clone(),
+                },
+            );
+            add_builtin(
+                self,
+                self.builtin_fun_symbol("domain"),
+                SpecFunEntry {
+                    loc: loc.clone(),
+                    oper: Operation::TypeDomain,
+                    type_params: vec![param_t.clone()],
+                    arg_types: vec![],
+                    result_type: domain_t.clone(),
+                },
+            );
+            add_builtin(
+                self,
+                self.builtin_fun_symbol("all"),
+                SpecFunEntry {
+                    loc: loc.clone(),
+                    oper: Operation::All,
+                    type_params: vec![param_t.clone()],
+                    arg_types: vec![domain_t.clone(), pred_t.clone()],
+                    result_type: bool_t.clone(),
+                },
+            );
+            add_builtin(
+                self,
+                self.builtin_fun_symbol("any"),
+                SpecFunEntry {
+                    loc: loc.clone(),
+                    oper: Operation::Any,
+                    type_params: vec![param_t.clone()],
+                    arg_types: vec![domain_t.clone(), pred_t.clone()],
+                    result_type: bool_t.clone(),
+                },
+            );
+
             // Old
             add_builtin(
                 self,
                 self.builtin_fun_symbol("old"),
                 SpecFunEntry {
-                    loc,
+                    loc: loc.clone(),
                     oper: Operation::Old,
+                    type_params: vec![param_t.clone()],
+                    arg_types: vec![param_t.clone()],
+                    result_type: param_t.clone(),
+                },
+            );
+
+            // Tracing
+            add_builtin(
+                self,
+                self.builtin_fun_symbol("TRACE"),
+                SpecFunEntry {
+                    loc,
+                    oper: Operation::Trace,
                     type_params: vec![param_t.clone()],
                     arg_types: vec![param_t.clone()],
                     result_type: param_t.clone(),
@@ -641,6 +709,8 @@ pub struct ModuleTranslator<'env, 'translator> {
     struct_specs: BTreeMap<Symbol, Spec>,
     /// Translated module spec
     module_spec: Spec,
+    /// Spec block infos.
+    spec_block_infos: Vec<SpecBlockInfo>,
 }
 
 /// # Entry Points
@@ -665,6 +735,7 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
             fun_specs: BTreeMap::new(),
             struct_specs: BTreeMap::new(),
             module_spec: Spec::default(),
+            spec_block_infos: Default::default(),
         }
     }
 
@@ -695,6 +766,7 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
     ) {
         self.decl_ana(&module_def);
         self.def_ana(&module_def, function_infos);
+        self.collect_spec_block_infos(&module_def);
         self.populate_env_from_result(loc, compiled_module, source_map);
     }
 }
@@ -1193,7 +1265,7 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
         &mut self,
         _loc: &Loc,
         context: &SpecBlockContext,
-        properties: &[PA::PragmaProperty],
+        properties: &[EA::PragmaProperty],
     ) {
         // For now we pass properties just on. We may want to check against a set of known
         // property names and types.
@@ -1609,7 +1681,7 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
                 let tys = tys_opt
                     .as_ref()
                     .map(|tys| et.translate_types(tys))
-                    .unwrap_or_else(|| vec![]);
+                    .unwrap_or_else(Vec::new);
                 if let Some(spec_var) = et.parent.parent.spec_var_table.get(&var_name) {
                     Some((spec_var.module_id, spec_var.var_id, tys, rhs.as_ref()))
                 } else {
@@ -1969,6 +2041,9 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
         args_opt: Option<&EA::Fields<EA::Exp>>,
     ) {
         let schema_name = self.module_access_to_qualified(maccess);
+
+        // Remove schema from unused table since it is used in an expression
+        self.parent.unused_schema_set.remove(&schema_name);
 
         // We need to temporarily detach the schema entry from the parent table because of
         // borrowing problems, as we need to traverse it while at the same time mutate self.
@@ -2453,6 +2528,63 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
     }
 }
 
+/// # Spec Block Infos
+
+impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
+    /// Collect location and target information for all spec blocks. This is used for documentation
+    /// generation.
+    fn collect_spec_block_infos(&mut self, module_def: &EA::ModuleDefinition) {
+        for block in &module_def.specs {
+            let block_loc = self.parent.to_loc(&block.loc);
+            let member_locs = block
+                .value
+                .members
+                .iter()
+                .map(|m| self.parent.to_loc(&m.loc))
+                .collect_vec();
+            let target = match self.get_spec_block_context(&block.value.target) {
+                Some(SpecBlockContext::Module) => SpecBlockTarget::Module,
+                Some(SpecBlockContext::Function(qsym)) => {
+                    SpecBlockTarget::Function(self.module_id, FunId::new(qsym.symbol))
+                }
+                Some(SpecBlockContext::FunctionCode(qsym, info)) => SpecBlockTarget::FunctionCode(
+                    self.module_id,
+                    FunId::new(qsym.symbol),
+                    info.offset as usize,
+                ),
+                Some(SpecBlockContext::Struct(qsym)) => {
+                    SpecBlockTarget::Struct(self.module_id, StructId::new(qsym.symbol))
+                }
+                Some(SpecBlockContext::Schema(qsym)) => {
+                    let entry = self
+                        .parent
+                        .spec_schema_table
+                        .get(&qsym)
+                        .expect("schema defined");
+                    SpecBlockTarget::Schema(
+                        self.module_id,
+                        SchemaId::new(qsym.symbol),
+                        entry
+                            .type_params
+                            .iter()
+                            .map(|(name, _)| TypeParameter(*name, TypeConstraint::None))
+                            .collect_vec(),
+                    )
+                }
+                None => {
+                    // This has been reported as an error. Choose a dummy target.
+                    SpecBlockTarget::Module
+                }
+            };
+            self.spec_block_infos.push(SpecBlockInfo {
+                loc: block_loc,
+                member_locs,
+                target,
+            })
+        }
+    }
+}
+
 /// # Environment Population
 
 impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
@@ -2478,7 +2610,6 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
                         .struct_specs
                         .remove(&name)
                         .unwrap_or_else(Spec::default);
-                    // Ensure that all invariant kinds
                     Some((
                         StructId::new(name),
                         self.parent.env.create_struct_data(
@@ -2545,7 +2676,26 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
             std::mem::take(&mut self.loc_map),
             std::mem::take(&mut self.type_map),
             std::mem::take(&mut self.instantiation_map),
+            std::mem::take(&mut self.spec_block_infos),
         );
+        // Warn about unused schemas.
+        for name in &self.parent.unused_schema_set {
+            let entry = self
+                .parent
+                .spec_schema_table
+                .get(&name)
+                .expect("schema defined");
+            let schema_name = name.display_simple(self.symbol_pool()).to_string();
+            let module_env = self.parent.env.get_module(entry.module_id);
+            // Warn about unused schema only if the module is a target and schema name
+            // does not start with 'UNUSED'
+            if !module_env.is_dependency() && !schema_name.starts_with("UNUSED") {
+                self.parent.env.warn(
+                    &entry.loc,
+                    &format!("unused schema {}", name.display(self.symbol_pool())),
+                );
+            }
+        }
     }
 }
 
@@ -2679,14 +2829,14 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
             let node_id = NodeId::new(i);
             if let Some(ty) = self.parent.type_map.get(&node_id) {
                 let ty = self.finalize_type(node_id, ty);
-                self.parent.type_map.insert(node_id.clone(), ty);
+                self.parent.type_map.insert(node_id, ty);
             }
             if let Some(inst) = self.parent.instantiation_map.get(&node_id) {
                 let inst = inst
                     .iter()
                     .map(|ty| self.finalize_type(node_id, ty))
                     .collect_vec();
-                self.parent.instantiation_map.insert(node_id.clone(), inst);
+                self.parent.instantiation_map.insert(node_id, inst);
             }
         }
     }
@@ -2888,6 +3038,8 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
                 match &type_name.value {
                     Builtin(builtin_type_name) => match &builtin_type_name.value {
                         Address => Type::new_prim(PrimitiveType::Address),
+                        // TODO fix this for a real signer type
+                        Signer => Type::new_prim(PrimitiveType::Address),
                         U8 => Type::new_prim(PrimitiveType::U8),
                         U64 => Type::new_prim(PrimitiveType::U64),
                         U128 => Type::new_prim(PrimitiveType::U128),
@@ -2939,15 +3091,37 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
         match &ty.value {
             Apply(access, args) => {
                 if let EA::ModuleAccess_::Name(n) = &access.value {
-                    // Attempt to resolve as primitive type.
+                    let check_zero_args = |et: &mut Self, ty: Type| {
+                        if args.is_empty() {
+                            ty
+                        } else {
+                            et.error(&et.to_loc(&n.loc), "expected no type arguments");
+                            Type::Error
+                        }
+                    };
+                    // Attempt to resolve as builtin type.
                     match n.value.as_str() {
-                        "bool" => return Type::new_prim(PrimitiveType::Bool),
-                        "u8" => return Type::new_prim(PrimitiveType::U8),
-                        "u64" => return Type::new_prim(PrimitiveType::U64),
-                        "u128" => return Type::new_prim(PrimitiveType::U128),
-                        "num" => return Type::new_prim(PrimitiveType::Num),
-                        "range" => return Type::new_prim(PrimitiveType::Range),
-                        "address" => return Type::new_prim(PrimitiveType::Address),
+                        "bool" => {
+                            return check_zero_args(self, Type::new_prim(PrimitiveType::Bool))
+                        }
+                        "u8" => return check_zero_args(self, Type::new_prim(PrimitiveType::U8)),
+                        "u64" => return check_zero_args(self, Type::new_prim(PrimitiveType::U64)),
+                        "u128" => {
+                            return check_zero_args(self, Type::new_prim(PrimitiveType::U128))
+                        }
+                        "num" => return check_zero_args(self, Type::new_prim(PrimitiveType::Num)),
+                        "range" => {
+                            return check_zero_args(self, Type::new_prim(PrimitiveType::Range))
+                        }
+                        "address" => {
+                            return check_zero_args(self, Type::new_prim(PrimitiveType::Address))
+                        }
+                        "signer" => {
+                            return check_zero_args(self, Type::new_prim(PrimitiveType::Signer))
+                        }
+                        "type" => {
+                            return check_zero_args(self, Type::new_prim(PrimitiveType::TypeValue))
+                        }
                         "vector" => {
                             if args.len() != 1 {
                                 self.error(
@@ -2963,8 +3137,19 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
                     }
                     // Attempt to resolve as a type parameter.
                     let sym = self.symbol_pool().make(n.value.as_str());
-                    if let Some(ty) = self.type_params_table.get(&sym) {
-                        return ty.clone();
+                    if let Some(ty) = self.type_params_table.get(&sym).cloned() {
+                        return check_zero_args(self, ty);
+                    }
+                    // Attempt to resolve as a type value.
+                    if let Some(entry) = self.lookup_local(sym) {
+                        let ty = entry.type_.clone();
+                        self.check_type(
+                            &self.to_loc(&n.loc),
+                            &ty,
+                            &Type::new_prim(PrimitiveType::TypeValue),
+                            "in type",
+                        );
+                        return check_zero_args(self, Type::TypeLocal(sym));
                     }
                 }
                 let loc = self.to_loc(&access.loc);
@@ -3008,7 +3193,7 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
         tys_opt
             .as_deref()
             .map(|tys| self.translate_types(tys))
-            .unwrap_or_else(|| vec![])
+            .unwrap_or_else(Vec::new)
     }
 }
 
@@ -3041,6 +3226,19 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
             }
             EA::Exp_::Name(maccess, type_params) => {
                 self.translate_name(&loc, maccess, type_params.as_deref(), expected_type)
+            }
+            EA::Exp_::GlobalCall(n, type_params, args) => {
+                let maccess_ = EA::ModuleAccess_::Name(n.clone());
+                let maccess = sp(n.loc, maccess_);
+                // Need to make a &[&Exp] out of args.
+                let args = args.value.iter().map(|e| e).collect_vec();
+                self.translate_fun_call(
+                    expected_type,
+                    &loc,
+                    &maccess,
+                    type_params.as_deref(),
+                    &args,
+                )
             }
             EA::Exp_::Call(maccess, type_params, args) => {
                 // Need to make a &[&Exp] out of args.
@@ -3106,7 +3304,7 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
                 let id = self.new_node_id_with_type_loc(&ty, &loc);
                 Exp::Call(id, Operation::Tuple, exps)
             }
-            EA::Exp_::Unit => {
+            EA::Exp_::Unit { .. } => {
                 let ty = self.check_type(
                     &loc,
                     &Type::Tuple(vec![]),
@@ -3127,10 +3325,10 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
         }
     }
 
-    fn translate_value(&mut self, v: &PA::Value) -> Option<(Value, Type)> {
+    fn translate_value(&mut self, v: &EA::Value) -> Option<(Value, Type)> {
         let loc = self.to_loc(&v.loc);
         match &v.value {
-            PA::Value_::Address(addr) => {
+            EA::Value_::Address(addr) => {
                 let addr_str = &format!("{}", addr);
                 if &addr_str[..2] == "0x" {
                     let digits_only = &addr_str[2..];
@@ -3145,20 +3343,20 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
                     None
                 }
             }
-            PA::Value_::U8(x) => Some((
+            EA::Value_::U8(x) => Some((
                 Value::Number(BigUint::from_u8(*x).unwrap()),
                 Type::new_prim(PrimitiveType::U8),
             )),
-            PA::Value_::U64(x) => Some((
+            EA::Value_::U64(x) => Some((
                 Value::Number(BigUint::from_u64(*x).unwrap()),
                 Type::new_prim(PrimitiveType::U64),
             )),
-            PA::Value_::U128(x) => Some((
+            EA::Value_::U128(x) => Some((
                 Value::Number(BigUint::from_u128(*x).unwrap()),
                 Type::new_prim(PrimitiveType::U128),
             )),
-            PA::Value_::Bool(x) => Some((Value::Bool(*x), Type::new_prim(PrimitiveType::Bool))),
-            PA::Value_::Bytearray(x) => {
+            EA::Value_::Bool(x) => Some((Value::Bool(*x), Type::new_prim(PrimitiveType::Bool))),
+            EA::Value_::Bytearray(x) => {
                 let ty = Type::Vector(Box::new(Type::new_prim(PrimitiveType::U8)));
                 Some((Value::ByteArray(x.clone()), ty))
             }

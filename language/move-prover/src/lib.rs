@@ -7,20 +7,26 @@ use crate::{
     boogie_wrapper::BoogieWrapper,
     bytecode_translator::BoogieTranslator,
     cli::{Options, INLINE_PRELUDE},
-    code_writer::CodeWriter,
     prelude_template_helpers::StratificationHelper,
 };
 use anyhow::anyhow;
-use codespan_reporting::term::termcolor::WriteColor;
+use codespan_reporting::term::termcolor::{ColorChoice, StandardStream, WriteColor};
+use docgen::docgen::Docgen;
 use handlebars::Handlebars;
 #[allow(unused_imports)]
 use log::{debug, info, warn};
+use move_lang::find_move_filenames;
+use once_cell::sync::Lazy;
 use regex::Regex;
-use spec_lang::{env::GlobalEnv, run_spec_lang_compiler};
+use spec_lang::{code_writer::CodeWriter, emit, emitln, env::GlobalEnv, run_spec_lang_compiler};
 use stackless_bytecode_generator::{
+    borrow_analysis::BorrowAnalysisProcessor,
     eliminate_imm_refs::EliminateImmRefsProcessor,
+    eliminate_mut_refs::EliminateMutRefsProcessor,
     function_target_pipeline::{FunctionTargetPipeline, FunctionTargetsHolder},
-    lifetime_analysis::LifetimeAnalysisProcessor,
+    livevar_analysis::LiveVarAnalysisProcessor,
+    packref_analysis::PackrefAnalysisProcessor,
+    writeback_analysis::WritebackAnalysisProcessor,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -30,9 +36,6 @@ use std::{
     path::{Path, PathBuf},
     time::Instant,
 };
-
-#[macro_use]
-mod code_writer;
 
 mod boogie_helpers;
 mod boogie_wrapper;
@@ -52,17 +55,22 @@ pub fn run_move_prover<W: WriteColor>(
     options: Options,
 ) -> anyhow::Result<()> {
     let now = Instant::now();
-    let sources = options.move_sources.clone();
-    let mut deps = options.move_deps.clone();
-    if !options.search_path.is_empty() {
-        calculate_deps(&sources, &options.search_path, &mut deps)?;
-    }
+    let sources = find_move_filenames(&options.move_sources)?;
+    let deps = calculate_deps(&sources, &find_move_filenames(&options.move_deps)?)?;
     let address = Some(options.account_address.as_ref());
     debug!("parsing and checking sources");
     let mut env: GlobalEnv = run_spec_lang_compiler(sources, deps, address)?;
     if env.has_errors() {
         env.report_errors(error_writer);
         return Err(anyhow!("exiting with checking errors"));
+    }
+    if env.has_warnings() {
+        env.report_warnings(error_writer);
+    }
+
+    // Until this point, prover and docgen have same code. Here we part ways.
+    if options.run_docgen {
+        return run_docgen(&env, &options, now);
     }
     let targets = create_and_process_bytecode(&options, &env);
     if env.has_errors() {
@@ -77,10 +85,10 @@ pub fn run_move_prover<W: WriteColor>(
         env.report_errors(error_writer);
         return Err(anyhow!("exiting with boogie generation errors"));
     }
-    debug!("writing boogie to {}", &options.output_path);
+    debug!("writing boogie to `{}`", &options.output_path);
     writer.process_result(|result| fs::write(&options.output_path, result))?;
     let translator_elapsed = now.elapsed();
-    if !options.generate_only {
+    if !options.prover.generate_only {
         let boogie_file_id =
             writer.process_result(|result| env.add_source(&options.output_path, result, false));
         let boogie = BoogieWrapper {
@@ -90,9 +98,9 @@ pub fn run_move_prover<W: WriteColor>(
             options: &options,
             boogie_file_id,
         };
-        boogie.call_boogie_and_verify_output(options.bench_repeat, &options.output_path)?;
+        boogie.call_boogie_and_verify_output(options.backend.bench_repeat, &options.output_path)?;
         let boogie_elapsed = now.elapsed();
-        if options.bench_repeat <= 1 {
+        if options.backend.bench_repeat <= 1 {
             info!(
                 "{:.3}s translator, {:.3}s solver",
                 translator_elapsed.as_secs_f64(),
@@ -102,8 +110,9 @@ pub fn run_move_prover<W: WriteColor>(
             info!(
                 "{:.3}s translator, {:.3}s solver (average over {} solver runs)",
                 translator_elapsed.as_secs_f64(),
-                (boogie_elapsed - translator_elapsed).as_secs_f64() / (options.bench_repeat as f64),
-                options.bench_repeat
+                (boogie_elapsed - translator_elapsed).as_secs_f64()
+                    / (options.backend.bench_repeat as f64),
+                options.backend.bench_repeat
             );
         }
 
@@ -112,6 +121,30 @@ pub fn run_move_prover<W: WriteColor>(
             return Err(anyhow!("exiting with boogie verification errors"));
         }
     }
+    Ok(())
+}
+
+pub fn run_move_prover_errors_to_stderr(options: Options) -> anyhow::Result<()> {
+    let mut error_writer = StandardStream::stderr(ColorChoice::Auto);
+    run_move_prover(&mut error_writer, options)
+}
+
+fn run_docgen(env: &GlobalEnv, options: &Options, now: Instant) -> anyhow::Result<()> {
+    let mut generator = Docgen::new(env, &options.docgen);
+    let checking_elapsed = now.elapsed();
+    info!("generating documentation");
+    generator.gen();
+    for (file, content) in generator.into_result() {
+        let path = PathBuf::from(&file);
+        fs::create_dir_all(path.parent().unwrap())?;
+        fs::write(path.as_path(), content)?;
+    }
+    let generating_elapsed = now.elapsed();
+    info!(
+        "{:.3}s checking, {:.3}s generating",
+        checking_elapsed.as_secs_f64(),
+        (generating_elapsed - checking_elapsed).as_secs_f64()
+    );
     Ok(())
 }
 
@@ -129,10 +162,10 @@ fn add_prelude(options: &Options, writer: &CodeWriter) -> anyhow::Result<()> {
     handlebars.register_helper(
         "stratified",
         Box::new(StratificationHelper::new(
-            options.template_context.stratification_depth,
+            options.backend.stratification_depth,
         )),
     );
-    let expanded_content = handlebars.render_template(&content, &options.template_context)?;
+    let expanded_content = handlebars.render_template(&content, &options)?;
     emitln!(writer, &expanded_content);
     Ok(())
 }
@@ -161,27 +194,24 @@ fn create_bytecode_processing_pipeline(_options: &Options) -> FunctionTargetPipe
 
     // Add processors in order they are executed.
     res.add_processor(EliminateImmRefsProcessor::new());
-
-    // Must happen last as it is currently computing information based on raw code offsets.
-    res.add_processor(LifetimeAnalysisProcessor::new());
+    res.add_processor(LiveVarAnalysisProcessor::new());
+    res.add_processor(BorrowAnalysisProcessor::new());
+    res.add_processor(WritebackAnalysisProcessor::new());
+    res.add_processor(PackrefAnalysisProcessor::new());
+    res.add_processor(EliminateMutRefsProcessor::new());
 
     res
 }
 
 /// Calculates transitive dependencies of the given move sources.
-fn calculate_deps(
-    sources: &[String],
-    search_path: &[String],
-    deps: &mut Vec<String>,
-) -> anyhow::Result<()> {
-    let file_map = calculate_file_map(search_path)?;
+fn calculate_deps(sources: &[String], input_deps: &[String]) -> anyhow::Result<Vec<String>> {
+    let file_map = calculate_file_map(input_deps)?;
+    let mut deps = vec![];
     let mut visited = BTreeSet::new();
-    // Iterate both over sources and what is initial in deps, as provided via the --dep flag.
-    for src in sources.iter().chain(deps.clone().iter()) {
-        let path = Path::new(src);
-        calculate_deps_recursively(path, &file_map, &mut visited, deps)?;
+    for src in sources.iter() {
+        calculate_deps_recursively(Path::new(src), &file_map, &mut visited, &mut deps)?;
     }
-    Ok(())
+    Ok(deps)
 }
 
 /// Recursively calculate dependencies.
@@ -191,10 +221,12 @@ fn calculate_deps_recursively(
     visited: &mut BTreeSet<String>,
     deps: &mut Vec<String>,
 ) -> anyhow::Result<()> {
+    static REX: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"(?m)0x[0-9abcdefABCDEF]+::\s*(\w+)").unwrap());
     if !visited.insert(path.to_string_lossy().to_string()) {
         return Ok(());
     }
-    for dep in extract_matches(path, r"0x[0-9,a,b,c,d,e,f,A,B,C,D,E,F]+::\s*(\w+)")? {
+    for dep in extract_matches(path, &*REX)? {
         if let Some(dep_path) = file_map.get(&dep) {
             let dep_str = dep_path.to_string_lossy().to_string();
             if !deps.contains(&dep_str) {
@@ -207,28 +239,21 @@ fn calculate_deps_recursively(
 }
 
 /// Calculate a map of module names to files which define those modules.
-fn calculate_file_map(search_path: &[String]) -> anyhow::Result<BTreeMap<String, PathBuf>> {
+fn calculate_file_map(deps: &[String]) -> anyhow::Result<BTreeMap<String, PathBuf>> {
+    static REX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)module\s+(\w+)\s*\{").unwrap());
     let mut module_to_file = BTreeMap::new();
-    for dir_str in search_path {
-        let dir = Path::new(dir_str);
-        for entry in dir.read_dir()? {
-            let cand = entry?.path();
-            if !cand.to_string_lossy().ends_with(".move") {
-                continue;
-            }
-            for module in extract_matches(cand.as_path(), r"module\s+(\w+)\s*\{")? {
-                module_to_file.insert(module, cand.clone());
-            }
+    for dep in deps {
+        let dep_path = PathBuf::from(dep);
+        for module in extract_matches(dep_path.as_path(), &*REX)? {
+            module_to_file.insert(module, dep_path.clone());
         }
     }
     Ok(module_to_file)
 }
 
-/// Extracts matches out of some text file. `pat` must be a regular expression with one anonymous
-/// group. The list of the content of this group is returned. Use as in in
-/// `extract_matches(file, "use 0x0::([a-zA-Z_]+)")`
-pub fn extract_matches(path: &Path, pat: &str) -> anyhow::Result<Vec<String>> {
-    let rex = Regex::new(&format!("(?m){}", pat))?;
+/// Extracts matches out of some text file. `rex` must be a regular expression with one anonymous
+/// group.
+fn extract_matches(path: &Path, rex: &Regex) -> anyhow::Result<Vec<String>> {
     let mut content = String::new();
     let mut file = File::open(path)?;
     file.read_to_string(&mut content)?;

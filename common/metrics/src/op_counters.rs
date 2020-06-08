@@ -7,8 +7,8 @@
 use prometheus::{
     core::{Collector, Desc},
     proto::MetricFamily,
-    Histogram, HistogramOpts, HistogramTimer, HistogramVec, IntCounter, IntCounterVec, IntGauge,
-    IntGaugeVec, Opts,
+    Histogram, HistogramOpts, HistogramTimer, HistogramVec, IntCounterVec, IntGauge, IntGaugeVec,
+    Opts,
 };
 
 use std::time::Duration;
@@ -54,7 +54,7 @@ impl OpMetrics {
             .unwrap(),
             gauges: IntGaugeVec::new(
                 Opts::new(
-                    format!("{}_gauge", name_str.clone()),
+                    format!("{}_gauge", name_str),
                     format!("Gauges for {}", name_str),
                 ),
                 &["op"],
@@ -62,7 +62,7 @@ impl OpMetrics {
             .unwrap(),
             peer_gauges: IntGaugeVec::new(
                 Opts::new(
-                    format!("{}_peer_gauge", name_str.clone()),
+                    format!("{}_peer_gauge", name_str),
                     format!("Gauges of each remote peer for {}", name_str),
                 ),
                 &["op", "remote_peer_id"],
@@ -70,7 +70,7 @@ impl OpMetrics {
             .unwrap(),
             duration_histograms: HistogramVec::new(
                 HistogramOpts::new(
-                    format!("{}_duration", name_str.clone()),
+                    format!("{}_duration", name_str),
                     format!("Histogram values for {}", name_str),
                 ),
                 &["op"],
@@ -97,20 +97,6 @@ impl OpMetrics {
     }
 
     #[inline]
-    pub fn counter(&self, name: &str) -> IntCounter {
-        self.counters.with_label_values(&[name])
-    }
-
-    #[inline]
-    pub fn histogram(&self, name: &str) -> Histogram {
-        self.duration_histograms.with_label_values(&[name])
-    }
-
-    pub fn duration_histogram(&self, name: &str) -> DurationHistogram {
-        DurationHistogram::new(self.duration_histograms.with_label_values(&[name]))
-    }
-
-    #[inline]
     pub fn inc(&self, op: &str) {
         self.counters.with_label_values(&[op]).inc();
     }
@@ -120,16 +106,6 @@ impl OpMetrics {
         // The underlying method is expecting i64, but most of the types
         // we're going to log are `u64` or `usize`.
         self.counters.with_label_values(&[op]).inc_by(v as i64);
-    }
-
-    #[inline]
-    pub fn add(&self, op: &str) {
-        self.gauges.with_label_values(&[op]).inc();
-    }
-
-    #[inline]
-    pub fn sub(&self, op: &str) {
-        self.gauges.with_label_values(&[op]).dec();
     }
 
     #[inline]

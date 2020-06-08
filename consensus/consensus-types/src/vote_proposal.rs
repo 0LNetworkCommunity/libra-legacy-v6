@@ -1,36 +1,36 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{accumulator_extension_proof::AccumulatorExtensionProof, block::Block};
+use crate::block::Block;
 use libra_crypto::hash::TransactionAccumulatorHasher;
-use libra_types::epoch_info::EpochInfo;
+use libra_types::{epoch_state::EpochState, proof::AccumulatorExtensionProof};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 /// This structure contains all the information needed by safety rules to
 /// evaluate a proposal / block for correctness / safety and to produce a Vote.
 #[derive(Clone, Deserialize, Serialize)]
-pub struct VoteProposal<T> {
+pub struct VoteProposal {
     /// Contains the data necessary to construct the parent's execution output state
     /// and the childs in a verifiable way
     accumulator_extension_proof: AccumulatorExtensionProof<TransactionAccumulatorHasher>,
     /// The block / proposal to evaluate
-    #[serde(bound(deserialize = "Block<T>: Deserialize<'de>"))]
-    block: Block<T>,
+    #[serde(bound(deserialize = "Block: Deserialize<'de>"))]
+    block: Block,
     /// An optional field containing the next epoch info.
-    next_epoch_info: Option<EpochInfo>,
+    next_epoch_state: Option<EpochState>,
 }
 
-impl<T> VoteProposal<T> {
+impl VoteProposal {
     pub fn new(
         accumulator_extension_proof: AccumulatorExtensionProof<TransactionAccumulatorHasher>,
-        block: Block<T>,
-        next_epoch_info: Option<EpochInfo>,
+        block: Block,
+        next_epoch_state: Option<EpochState>,
     ) -> Self {
         Self {
             accumulator_extension_proof,
             block,
-            next_epoch_info,
+            next_epoch_state,
         }
     }
 
@@ -40,16 +40,16 @@ impl<T> VoteProposal<T> {
         &self.accumulator_extension_proof
     }
 
-    pub fn block(&self) -> &Block<T> {
+    pub fn block(&self) -> &Block {
         &self.block
     }
 
-    pub fn next_epoch_info(&self) -> Option<&EpochInfo> {
-        self.next_epoch_info.as_ref()
+    pub fn next_epoch_state(&self) -> Option<&EpochState> {
+        self.next_epoch_state.as_ref()
     }
 }
 
-impl<T: PartialEq> Display for VoteProposal<T> {
+impl Display for VoteProposal {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "VoteProposal[block: {}]", self.block,)
     }

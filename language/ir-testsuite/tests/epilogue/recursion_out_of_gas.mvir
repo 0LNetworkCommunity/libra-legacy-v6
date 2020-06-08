@@ -1,4 +1,4 @@
-//! account: default, 50000
+//! account: default, 0LBR
 
 module M {
     public rec(x: u64) {
@@ -7,10 +7,22 @@ module M {
     }
 }
 
+// check: EXECUTED
 
 //! new-transaction
-//! gas-price: 1
+//! sender: association
+import 0x0.LBR;
+import 0x0.LibraAccount;
+import 0x0.Libra;
+main(blessed: &signer) {
+    LibraAccount.deposit_to<LBR.T>(copy(blessed), LBR.mint(copy(blessed), 50000));
+    return;
+}
+
+//! new-transaction
+//! gas-price: 0
 //! max-gas: 5000
+//! sender: default
 import {{default}}.M;
 
 main() {
@@ -21,15 +33,3 @@ main() {
 // check: gas_used
 // check: 5000
 // check: OUT_OF_GAS
-
-
-//! new-transaction
-import 0x0.LibraAccount;
-import 0x0.LBR;
-
-main() {
-    assert(LibraAccount.balance<LBR.T>(get_txn_sender()) == 45000, 42);
-    return;
-}
-
-// check: EXECUTED

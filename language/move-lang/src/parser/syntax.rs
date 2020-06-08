@@ -212,7 +212,7 @@ where
 
 // Parse an identifier:
 //      Identifier = <IdentifierValue>
-fn parse_identifier<'input>(tokens: &mut Lexer<'input>) -> Result<Spanned<String>, Error> {
+fn parse_identifier<'input>(tokens: &mut Lexer<'input>) -> Result<Name, Error> {
     if tokens.peek() != Tok::IdentifierValue {
         return Err(unexpected_token_error(tokens, "an identifier"));
     }
@@ -426,30 +426,20 @@ fn parse_lambda_bind_list<'input>(tokens: &mut Lexer<'input>) -> Result<BindList
 
 // Parse a byte string:
 //      ByteString = <ByteStringValue>
-fn parse_byte_string<'input>(tokens: &mut Lexer<'input>) -> Result<Vec<u8>, Error> {
+fn parse_byte_string<'input>(tokens: &mut Lexer<'input>) -> Result<Value_, Error> {
     if tokens.peek() != Tok::ByteStringValue {
         return Err(unexpected_token_error(tokens, "a byte string value"));
     }
-    let start_loc = tokens.start_loc();
     let s = tokens.content();
-    assert!(s.starts_with("x\""));
-    let mut hex_string = String::from(&s[2..s.len() - 1]);
-    if hex_string.len() % 2 != 0 {
-        hex_string.insert(0, '0');
-    }
+    let text = s[2..s.len() - 1].to_owned();
+    let value_ = if s.starts_with("x\"") {
+        Value_::HexString(text)
+    } else {
+        assert!(s.starts_with("b\""));
+        Value_::ByteString(text)
+    };
     tokens.advance()?;
-    match hex::decode(hex_string.as_str()) {
-        Ok(vec) => Ok(vec),
-        Err(hex::FromHexError::InvalidHexCharacter { c, index }) => {
-            let offset = start_loc + 1 + index;
-            let loc = make_loc(tokens.file_name(), offset, offset);
-            Err(vec![(
-                loc,
-                format!("Invalid hexadecimal character: '{}'", c),
-            )])
-        }
-        Err(_) => unreachable!("unexpected error parsing hex byte string value"),
-    }
+    Ok(value_)
 }
 
 // Parse a value:
@@ -503,10 +493,7 @@ fn parse_value<'input>(tokens: &mut Lexer<'input>) -> Result<Value, Error> {
             tokens.advance()?;
             Value_::U128(i)
         }
-        Tok::ByteStringValue => {
-            let byte_string = parse_byte_string(tokens)?;
-            Value_::Bytearray(byte_string)
-        }
+        Tok::ByteStringValue => parse_byte_string(tokens)?,
         _ => unreachable!("parse_value called with invalid token"),
     };
     let end_loc = tokens.previous_end_loc();
@@ -524,7 +511,7 @@ fn parse_num(tokens: &mut Lexer) -> Result<u128, Error> {
             let end_loc = start_loc + tokens.content().len();
             let loc = make_loc(tokens.file_name(), start_loc, end_loc);
             let msg = "Invalid number literal. The given literal is too large to fit into the \
-                         largest number type 'u128'";
+                       largest number type 'u128'";
             Err(vec![(loc, msg.to_owned())])
         }
     };
@@ -1415,22 +1402,55 @@ fn parse_address_block<'input>(
 //**************************************************************************************************
 
 // Parse a use declaration:
-//      UseDecl = "use" <ModuleIdent> ("as" <ModuleName>)? ";"
-fn parse_use_decl<'input>(
-    tokens: &mut Lexer<'input>,
-) -> Result<(ModuleIdent, Option<ModuleName>), Error> {
+//      UseDecl =
+//          "use" <ModuleIdent> <UseAlias> ";" |
+//          "use" <ModuleIdent> :: <UseMember> ";" |
+//          "use" <ModuleIdent> :: "{" Comma<UseMember> "}" ";"
+fn parse_use_decl<'input>(tokens: &mut Lexer<'input>) -> Result<Use, Error> {
     consume_token(tokens, Tok::Use)?;
     let ident = parse_module_ident(tokens)?;
-    let alias = if tokens.peek() == Tok::As {
-        tokens.advance()?;
-        Some(parse_module_name(tokens)?)
-    } else {
-        None
+    let alias_opt = parse_use_alias(tokens)?;
+    let use_ = match (&alias_opt, tokens.peek()) {
+        (None, Tok::ColonColon) => {
+            consume_token(tokens, Tok::ColonColon)?;
+            let sub_uses = match tokens.peek() {
+                Tok::LBrace => parse_comma_list(
+                    tokens,
+                    Tok::LBrace,
+                    Tok::RBrace,
+                    parse_use_member,
+                    "a module member alias",
+                )?,
+                _ => vec![parse_use_member(tokens)?],
+            };
+            Use::Members(ident, sub_uses)
+        }
+        _ => Use::Module(ident, alias_opt.map(ModuleName)),
     };
     consume_token(tokens, Tok::Semicolon)?;
-    Ok((ident, alias))
+    Ok(use_)
 }
 
+// Parse an alias for a module member:
+//      UseMember = <Identifier> <UseAlias>
+fn parse_use_member<'input>(tokens: &mut Lexer<'input>) -> Result<(Name, Option<Name>), Error> {
+    let member = parse_identifier(tokens)?;
+    let alias_opt = parse_use_alias(tokens)?;
+    Ok((member, alias_opt))
+}
+
+// Parse an 'as' use alias:
+//      UseAlias = ("as" <Identifier>)?
+fn parse_use_alias<'input>(tokens: &mut Lexer<'input>) -> Result<Option<Name>, Error> {
+    Ok(if tokens.peek() == Tok::As {
+        tokens.advance()?;
+        Some(parse_identifier(tokens)?)
+    } else {
+        None
+    })
+}
+
+// TODO rework parsing modifiers
 fn is_struct_definition<'input>(tokens: &mut Lexer<'input>) -> Result<bool, Error> {
     let mut t = tokens.peek();
     if t == Tok::Native {
@@ -1453,34 +1473,22 @@ fn parse_module<'input>(tokens: &mut Lexer<'input>) -> Result<ModuleDefinition, 
     let name = parse_module_name(tokens)?;
     consume_token(tokens, Tok::LBrace)?;
 
-    let mut uses = vec![];
-    while tokens.peek() == Tok::Use {
-        uses.push(parse_use_decl(tokens)?);
-    }
-
-    let mut structs = vec![];
-    let mut functions = vec![];
-    let mut specs = vec![];
+    let mut members = vec![];
     while tokens.peek() != Tok::RBrace {
-        if tokens.peek() == Tok::Spec {
-            specs.push(parse_spec_block(tokens)?);
-        } else if is_struct_definition(tokens)? {
-            structs.push(parse_struct_definition(tokens)?);
-        } else {
-            functions.push(parse_function_decl(tokens, /* allow_native */ true)?);
-        }
+        members.push(match tokens.peek() {
+            Tok::Spec => ModuleMember::Spec(parse_spec_block(tokens)?),
+            Tok::Use => ModuleMember::Use(parse_use_decl(tokens)?),
+            // TODO rework parsing modifiers
+            _ if is_struct_definition(tokens)? => {
+                ModuleMember::Struct(parse_struct_definition(tokens)?)
+            }
+            _ => ModuleMember::Function(parse_function_decl(tokens, /* allow_native */ true)?),
+        })
     }
-    tokens.advance()?; // consume the RBrace
+    consume_token(tokens, Tok::RBrace)?;
 
     let loc = make_loc(tokens.file_name(), start_loc, tokens.previous_end_loc());
-    Ok(ModuleDefinition {
-        loc,
-        uses,
-        name,
-        structs,
-        functions,
-        specs,
-    })
+    Ok(ModuleDefinition { loc, name, members })
 }
 
 //**************************************************************************************************
@@ -1569,7 +1577,7 @@ fn parse_spec_block<'input>(tokens: &mut Lexer<'input>) -> Result<SpecBlock, Err
             return Err(unexpected_token_error(
                 tokens,
                 "one of `module`, `struct`, `fun`, `schema`, or `{`",
-            ))
+            ));
         }
     };
     let target = spanned(
@@ -1628,14 +1636,15 @@ fn parse_spec_block_member<'input>(tokens: &mut Lexer<'input>) -> Result<SpecBlo
         },
         _ => Err(unexpected_token_error(
             tokens,
-            "one of `assert`, `assume`, `decreases`, `aborts_if`, `ensures`,\
-                 `requires`, `include`, `apply`, `pragma`, `global`, or a name",
+            "one of `assert`, `assume`, `decreases`, `aborts_if`, `ensures`, `requires`, \
+             `include`, `apply`, `pragma`, `global`, or a name",
         )),
     }
 }
 
 // Parse a specification condition:
-//    SpecCondition = ("assert" | "assume" | "decreases" | "aborts_if" | "ensures" | "requires" ) <Exp> ";"
+//    SpecCondition =
+//        ("assert" | "assume" | "decreases" | "aborts_if" | "ensures" | "requires" ) <Exp> ";"
 fn parse_condition<'input>(tokens: &mut Lexer<'input>) -> Result<SpecBlockMember, Error> {
     let start_loc = tokens.start_loc();
     let kind = match tokens.content() {
@@ -1711,7 +1720,8 @@ fn parse_invariant<'input>(tokens: &mut Lexer<'input>) -> Result<SpecBlockMember
 // Parse a specification function.
 //     SpecFunction = "define" <SpecFunctionSignature> "{" <Sequence> "}"
 //                  | "native" "define" <SpecFunctionSignature> ";"
-//     SpecFunctionSignature = <Identifier> <OptionalTypeParameters> "(" Comma<Parameter> ")" ":" <Type>
+//     SpecFunctionSignature =
+//         <Identifier> <OptionalTypeParameters> "(" Comma<Parameter> ")" ":" <Type>
 fn parse_spec_function<'input>(tokens: &mut Lexer<'input>) -> Result<SpecBlockMember, Error> {
     let start_loc = tokens.start_loc();
     let native_opt = consume_optional_token_with_loc(tokens, Tok::Native)?;

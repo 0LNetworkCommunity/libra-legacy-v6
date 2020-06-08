@@ -20,10 +20,13 @@ pub enum Error {
     #[error("Internal error: {:?}", error)]
     InternalError { error: String },
 
+    #[error("Invalid proposal: {}", {0})]
+    InvalidProposal(String),
+
     #[error("Unable to verify that the new tree extneds the parent: {:?}", error)]
     InvalidAccumulatorExtension { error: String },
 
-    #[error("No next_epoch_info specified in the provided Ledger Info")]
+    #[error("No next_epoch_state specified in the provided Ledger Info")]
     InvalidLedgerInfo,
 
     #[error("Invalid QC: {}", {0})]

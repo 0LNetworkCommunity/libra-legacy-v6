@@ -13,7 +13,7 @@ pub struct NamespacedStorage<T> {
 }
 
 impl<T: KVStorage> KVStorage for NamespacedStorage<T> {
-    fn available(&self) -> bool {
+    fn available(&self) -> Result<(), Error> {
         self.inner.available()
     }
 
@@ -42,10 +42,6 @@ impl<T> NamespacedStorage<T> {
 
     fn ns_name(&self, key: &str) -> String {
         format!("{}/{}", self.namespace, key)
-    }
-
-    pub fn namespace(&self) -> &str {
-        &self.namespace
     }
 }
 

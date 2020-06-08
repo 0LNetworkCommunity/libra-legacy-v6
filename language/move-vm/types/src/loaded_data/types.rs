@@ -9,8 +9,9 @@ use libra_types::{
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
+    value::{MoveStructLayout, MoveTypeLayout},
 };
-use std::fmt::Write;
+use std::{convert::TryInto, fmt::Write};
 use vm::errors::VMResult;
 
 use libra_types::access_path::AccessPath;
@@ -43,6 +44,7 @@ pub enum FatType {
     U64,
     U128,
     Address,
+    Signer,
     Vector(Box<FatType>),
     Struct(Box<FatStructType>),
     Reference(Box<FatType>),
@@ -126,6 +128,7 @@ impl FatType {
             U64 => U64,
             U128 => U128,
             Address => Address,
+            Signer => Signer,
             Vector(ty) => Vector(Box::new(ty.subst(ty_args)?)),
             Reference(ty) => Reference(Box::new(ty.subst(ty_args)?)),
             MutableReference(ty) => MutableReference(Box::new(ty.subst(ty_args)?)),
@@ -145,6 +148,7 @@ impl FatType {
             U64 => TypeTag::U64,
             U128 => TypeTag::U128,
             Address => TypeTag::Address,
+            Signer => TypeTag::Signer,
             Vector(ty) => TypeTag::Vector(Box::new(ty.type_tag()?)),
             Struct(struct_ty) => TypeTag::Struct(struct_ty.struct_tag()?),
 
@@ -162,6 +166,7 @@ impl FatType {
 
         match self {
             Bool | U8 | U64 | U128 | Address | Reference(_) | MutableReference(_) => Ok(false),
+            Signer => Ok(true),
             Vector(ty) => ty.is_resource(),
             Struct(struct_ty) => Ok(struct_ty.is_resource),
             // In the VM, concrete type arguments are required for type resolution and the only place
@@ -183,6 +188,7 @@ impl FatType {
             U64 => debug_write!(buf, "u64"),
             U128 => debug_write!(buf, "u128"),
             Address => debug_write!(buf, "address"),
+            Signer => debug_write!(buf, "signer"),
             Vector(elem_ty) => {
                 debug_write!(buf, "vector<")?;
                 elem_ty.debug_print(buf)?;
@@ -213,7 +219,14 @@ pub mod prop {
         pub fn single_value_strategy() -> impl Strategy<Value = Self> {
             use FatType::*;
 
-            prop_oneof![Just(Bool), Just(U8), Just(U64), Just(U128), Just(Address),]
+            prop_oneof![
+                Just(Bool),
+                Just(U8),
+                Just(U64),
+                Just(U128),
+                Just(Address),
+                Just(Signer)
+            ]
         }
 
         /// Generate a primitive Value, a Struct or a Vector.
@@ -262,5 +275,42 @@ pub mod prop {
         }
 
         type Strategy = BoxedStrategy<Self>;
+    }
+}
+
+impl TryInto<MoveStructLayout> for &FatStructType {
+    type Error = VMStatus;
+
+    fn try_into(self) -> Result<MoveStructLayout, Self::Error> {
+        Ok(MoveStructLayout::new(
+            self.layout
+                .iter()
+                .map(|ty| ty.try_into())
+                .collect::<VMResult<Vec<_>>>()?,
+        ))
+    }
+}
+
+impl TryInto<MoveTypeLayout> for &FatType {
+    type Error = VMStatus;
+
+    fn try_into(self) -> Result<MoveTypeLayout, Self::Error> {
+        Ok(match self {
+            FatType::Address => MoveTypeLayout::Address,
+            FatType::U8 => MoveTypeLayout::U8,
+            FatType::U64 => MoveTypeLayout::U64,
+            FatType::U128 => MoveTypeLayout::U128,
+            FatType::Bool => MoveTypeLayout::Bool,
+            FatType::Vector(v) => MoveTypeLayout::Vector(Box::new(v.as_ref().try_into()?)),
+            FatType::Struct(s) => MoveTypeLayout::Struct(MoveStructLayout::new(
+                s.layout
+                    .iter()
+                    .map(|ty| ty.try_into())
+                    .collect::<VMResult<Vec<_>>>()?,
+            )),
+            FatType::Signer => MoveTypeLayout::Signer,
+
+            _ => return Err(VMStatus::new(StatusCode::ABORT_TYPE_MISMATCH_ERROR)),
+        })
     }
 }

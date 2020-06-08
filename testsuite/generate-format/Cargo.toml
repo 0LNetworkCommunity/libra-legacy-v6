@@ -10,16 +10,17 @@ publish = false
 edition = "2018"
 
 [dependencies]
-proptest = "0.9.6"
+proptest = "0.10.0"
 rand = "0.7.3"
-serde = { version = "1.0.110", features = ["derive"] }
-serde-reflection = "0.2.0"
-serde_yaml = "0.8"
+serde = { version = "1.0.111", features = ["derive"] }
+serde-reflection = "0.3.0"
+serde_yaml = "0.8.12"
 structopt = "0.3.14"
 
 consensus = { path = "../../consensus", version = "0.1.0", features=["fuzzing"] }
 consensus-types = { path = "../../consensus/consensus-types", version = "0.1.0", features=["fuzzing"] }
 lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
+libra-config = { path = "../../config", version = "0.1.0" }
 libra-crypto = { path = "../../crypto/crypto", version = "0.1.0", features=["fuzzing"] }
 libra-types = { path = "../../types", version = "0.1.0", features=["fuzzing"] }
 libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }

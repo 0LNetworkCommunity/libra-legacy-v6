@@ -11,9 +11,9 @@ edition = "2018"
 
 [dependencies]
 libra-workspace-hack = { path = "../workspace-hack", version = "0.1.0" }
-serde = { version = "1.0.110", features = ["derive"] }
+serde = { version = "1.0.111", features = ["derive"] }
 
 [dev-dependencies]
 lcs = { path = "../lcs", version = "0.1.0", package = "libra-canonical-serialization" }
 libra-proptest-helpers = { path = "../proptest-helpers", version = "0.1.0"}
-proptest = { version = "0.9.6", default-features = true}
+proptest = { version = "0.10.0", default-features = true }
