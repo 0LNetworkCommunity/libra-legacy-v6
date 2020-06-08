@@ -58,13 +58,10 @@ address 0x0 {
 
     }
 
-    public fun end_redeem(redeemed_addr: address, vdf_proof_blob: VdfProofBlob) acquires InProcess {
+    public fun end_redeem(redeemed_addr: address, _vdf_proof_blob: VdfProofBlob) acquires InProcess {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
       Transaction::assert(sender == default_redeem_address(), 10003);
-
-      Debug::print(&redeemed_addr);
-      Debug::print(&vdf_proof_blob);
 
       // Account do not have proof to verify.
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
