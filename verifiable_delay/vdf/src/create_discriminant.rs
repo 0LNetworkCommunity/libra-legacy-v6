@@ -30,24 +30,8 @@ include!(concat!(env!("OUT_DIR"), "/constants.rs"));
 
 use classgroup::BigNumExt;
 use num_traits::Zero;
-use sha2::{digest::FixedOutput, Digest, Sha256};
+use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
 use std::u16;
-
-fn random_bytes_from_seed(seed: &[u8], byte_count: usize) -> Vec<u8> {
-    assert!(byte_count <= 32 * ((1 << 16) - 1));
-    let mut blob = Vec::with_capacity(byte_count);
-    let mut extra: u16 = 0;
-    while blob.len() < byte_count {
-        let mut hasher = Sha256::new();
-        hasher.input(seed);
-        let extra_bits: [u8; 2] = [((extra & 0xFF00) >> 8) as _, (extra & 0xFF) as _];
-        hasher.input(&extra_bits);
-        blob.extend_from_slice(&hasher.fixed_result()[..]);
-        extra += 1;
-    }
-    blob.resize(byte_count, 0);
-    blob
-}
 
 /// Create a discriminant from a seed (a byte string) and a bit length (a
 /// `u16`).  The discriminant is guaranteed to be a negative prime number that
@@ -62,26 +46,30 @@ fn random_bytes_from_seed(seed: &[u8], byte_count: usize) -> Vec<u8> {
 ///
 /// This function is guaranteed not to panic for any inputs whatsoever, unless
 /// memory allocation fails and the allocator in use panics in that case.
-pub fn create_discriminant<T: BigNumExt>(seed: &[u8], length: u16) -> T {
-    let (mut n, residue) = {
-        // The number of “extra” bits (that don’t evenly fit in a byte)
-        let extra: u8 = (length as u8) & 7;
+pub fn create_discriminant<T: BigNumExt>(seed: &[u8], bit_length: u16) -> T {
+    let mut h = Shake128::default().chain(seed).xof_result();
 
-        // The number of random bytes needed (the number of bytes that hold `length`
-        // bits, plus 2).
-        let random_bytes_len = ((usize::from(length) + 7) >> 3) + 2;
-        let random_bytes = random_bytes_from_seed(seed, random_bytes_len);
-        let (n, last_2) = random_bytes.split_at(random_bytes_len - 2);
-        let numerator = (usize::from(last_2[0]) << 8) + usize::from(last_2[1]);
+    let mut n = {
+        // The number of extra bits that do not evenly fit in a byte)
+        let extra: u8 = (bit_length as u8) & 7;
+
+        let byte_length = (usize::from(bit_length) + 7) >> 3;
+        let mut n = vec![0u8; byte_length];
+        h.read(&mut n);
 
         // If there are any extra bits, right shift `n` so that it fits
         // in `length` bits, discarding the least significant bits.
-        let n = T::from(n) >> usize::from((8 - extra) & 7);
-        (n, RESIDUES[numerator % RESIDUES.len()])
+        T::from(&n[..]) >> usize::from((8 - extra) & 7)
     };
-    n.setbit(usize::from(length - 1));
+    n.setbit(usize::from(bit_length - 1));
     debug_assert!(n >= Zero::zero());
     let rem = n.frem_u32(M);
+
+    let residue = {
+        let mut numerator = [0u8; 2];
+        h.read(&mut numerator);
+        RESIDUES[u16::from_le_bytes(numerator) as usize % RESIDUES.len()]
+    };
 
     // HACK HACK `rust-gmp` doesn’t expose += and -= with i32 or i64
     if residue > rem {
@@ -125,11 +113,19 @@ pub fn create_discriminant<T: BigNumExt>(seed: &[u8], length: u16) -> T {
     }
 }
 
+
 #[cfg(test)]
 mod test {
     use super::*;
     use classgroup::{gmp_classgroup::GmpClassGroup, ClassGroup};
     type Mpz = <GmpClassGroup as ClassGroup>::BigNum;
+
+    #[test]
+    fn check_discriminant_size() {
+        assert_eq!( GmpClassGroup::size_in_bits(& create_discriminant::<Mpz>(b"\xaa", 997)), 997);
+    }
+
+    /*
     use std::str::FromStr;
 
     #[test]
@@ -196,4 +192,5 @@ mod test {
                    \xa5\x8a"[..]
         );
     }
+    */
 }
