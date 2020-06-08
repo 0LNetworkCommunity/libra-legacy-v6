@@ -4,108 +4,99 @@
 // genesis (for now).
 address 0x0 {
 module Genesis {
-    use 0x0::AccountTrack;
-    use 0x0::AccountType;
     use 0x0::Association;
     use 0x0::Coin1;
     use 0x0::Coin2;
-    use 0x0::Empty;
     use 0x0::Event;
     use 0x0::LBR;
-    use 0x0::GAS;
     use 0x0::Libra;
     use 0x0::LibraAccount;
     use 0x0::LibraBlock;
     use 0x0::LibraConfig;
+    use 0x0::LibraSystem;
+    use 0x0::LibraTimestamp;
     use 0x0::LibraTransactionTimeout;
+    use 0x0::LibraVersion;
     use 0x0::LibraWriteSetManager;
+    use 0x0::Signer;
+    use 0x0::Testnet;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
-    use 0x0::VASP;
-    use 0x0::Testnet;
 
-    fun initialize_association(association_root_addr: address) {
-        // Association/cap setup
-        Association::initialize();
-        Association::apply_for_privilege<Libra::AddCurrency>();
-        Association::grant_privilege<Libra::AddCurrency>(association_root_addr);
-    }
-
-    fun initialize_accounts(
-        association_root_addr: address,
-        burn_addr: address,
+    fun initialize(
+        association: &signer,
+        config_account: &signer,
+        fee_account: &signer,
+        tc_account: &signer,
+        tc_addr: address,
         genesis_auth_key: vector<u8>,
     ) {
-        let dummy_auth_key = x"00000000000000000000000000000000";
+        let dummy_auth_key_prefix = x"00000000000000000000000000000000";
+
+        // Association root setup
+        Association::initialize(association);
+        Association::grant_privilege<Libra::AddCurrency>(association, association);
+
+        // On-chain config setup
+        Event::publish_generator(config_account);
+        LibraConfig::initialize(config_account, association);
+
+        // Currency setup
+        Libra::initialize(config_account);
 
         // Set that this is testnet
-        Testnet::initialize();
+        Testnet::initialize(association);
 
         // Event and currency setup
-        Event::grant_event_generator();
-        Coin1::initialize();
-        Coin2::initialize();
-        LBR::initialize();
-        GAS::initialize();
-        LibraConfig::apply_for_creator_privilege();
-        LibraConfig::grant_creator_privilege(0xA550C18);
+        Event::publish_generator(association);
+        let (coin1_mint_cap, coin1_burn_cap) = Coin1::initialize(association);
+        let (coin2_mint_cap, coin2_burn_cap) = Coin2::initialize(association);
+        LBR::initialize(association);
 
-        //// Account type setup
-        AccountType::register<Unhosted::T>();
-        AccountType::register<Empty::T>();
-        VASP::initialize();
-
-        AccountTrack::initialize();
-        LibraAccount::initialize();
-        Unhosted::publish_global_limits_definition();
-        LibraAccount::create_account<GAS::T>(
-            association_root_addr,
-            copy dummy_auth_key,
+        LibraAccount::initialize(association);
+        Unhosted::publish_global_limits_definition(association);
+        LibraAccount::create_genesis_account<LBR::T>(
+            Signer::address_of(association),
+            copy dummy_auth_key_prefix,
         );
-
-        // Create the burn account
-        LibraAccount::create_account<GAS::T>(burn_addr, copy dummy_auth_key);
+        Libra::grant_mint_capability_to_association<Coin1::T>(association);
+        Libra::grant_mint_capability_to_association<Coin2::T>(association);
 
         // Register transaction fee accounts
-        // TODO: Need to convert this to a different account type than unhosted.
-        LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key);
+        LibraAccount::create_testnet_account<LBR::T>(0xFEE, copy dummy_auth_key_prefix);
+        TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
+        TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
+        TransactionFee::initialize(tc_account, fee_account);
+
+        // Create the treasury compliance account
+        LibraAccount::create_treasury_compliance_account<LBR::T>(
+            association,
+            tc_addr,
+            copy dummy_auth_key_prefix,
+            coin1_mint_cap,
+            coin1_burn_cap,
+            coin2_mint_cap,
+            coin2_burn_cap,
+        );
 
         // Create the config account
-        LibraAccount::create_account<GAS::T>(LibraConfig::default_config_address(), dummy_auth_key);
+        LibraAccount::create_genesis_account<LBR::T>(
+            LibraConfig::default_config_address(),
+            dummy_auth_key_prefix
+        );
 
-        LibraTransactionTimeout::initialize();
-        LibraBlock::initialize_block_metadata();
-        LibraWriteSetManager::initialize();
-        LibraAccount::rotate_authentication_key(genesis_auth_key);
+        LibraTransactionTimeout::initialize(association);
+        LibraSystem::initialize_validator_set(config_account);
+        LibraVersion::initialize(config_account);
+
+        LibraBlock::initialize_block_metadata(association);
+        LibraWriteSetManager::initialize(association);
+        LibraTimestamp::initialize(association);
+        LibraAccount::rotate_authentication_key(association, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(tc_account, genesis_auth_key);
     }
 
-    fun initalize_burn_account() {
-        Association::apply_for_association();
-    }
-
-    fun grant_burn_account(burn_addr: address) {
-        Association::grant_association_address(burn_addr)
-    }
-
-    fun grant_burn_capabilities_for_sender(auth_key: vector<u8>) {
-        Libra::grant_burn_capability_for_sender<Coin1::T>();
-        Libra::grant_burn_capability_for_sender<Coin2::T>();
-        Libra::grant_burn_capability_for_sender<LBR::T>();
-        Libra::grant_burn_capability_for_sender<GAS::T>();
-        LibraAccount::rotate_authentication_key(auth_key);
-    }
-
-    fun initialize_txn_fee_account(auth_key: vector<u8>) {
-        LibraAccount::add_currency<Coin1::T>();
-        LibraAccount::add_currency<Coin2::T>();
-        TransactionFee::initialize_transaction_fees();
-        LibraAccount::rotate_authentication_key(auth_key);
-    }
-
-    fun initialize_config() {
-        Event::grant_event_generator();
-        LibraConfig::initialize_configuration();
-        LibraConfig::apply_for_creator_privilege();
-    }
 }
 }
