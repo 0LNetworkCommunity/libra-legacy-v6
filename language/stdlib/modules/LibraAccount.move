@@ -10,6 +10,7 @@ module LibraAccount {
     use 0x0::Event;
     use 0x0::Hash;
     use 0x0::LBR;
+    use 0x0::GAS;
     use 0x0::LCS;
     use 0x0::LibraTimestamp;
     use 0x0::LibraTransactionTimeout;
@@ -602,6 +603,9 @@ module LibraAccount {
             };
             if (!::exists<Balance<LBR::T>>(new_account_addr)) {
                 add_currency<LBR::T>(&new_account);
+            };
+            if (!::exists<Balance<GAS::T>>(new_account_addr)) {
+                add_currency<GAS::T>(&new_account);
             };
         };
         // (4) TODO: publish account limits?

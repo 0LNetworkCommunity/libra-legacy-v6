@@ -1781,6 +1781,9 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
         <b>if</b> (!::<a href="#0x0_LibraAccount_exists">exists</a>&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;<a href="LBR.md#0x0_LBR_T">LBR::T</a>&gt;&gt;(new_account_addr)) {
             <a href="#0x0_LibraAccount_add_currency">add_currency</a>&lt;<a href="LBR.md#0x0_LBR_T">LBR::T</a>&gt;(&new_account);
         };
+        <b>if</b> (!::<a href="#0x0_LibraAccount_exists">exists</a>&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;&gt;(new_account_addr)) {
+            <a href="#0x0_LibraAccount_add_currency">add_currency</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(&new_account);
+        };
     };
     // (4) TODO: publish account limits?
 

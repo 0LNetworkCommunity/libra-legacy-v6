@@ -443,7 +443,6 @@ module Libra {
     // The `check` coin is consumed in the process
     // OL Update: Checking if sender is association
     public fun deposit<CoinType>(coin: &mut T<CoinType>, check: T<CoinType>) {
-        Association::assert_sender_is_association();
         let T { value } = check;
         coin.value = coin.value + value;
     }
