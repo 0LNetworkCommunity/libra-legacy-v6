@@ -217,7 +217,11 @@
   // TBD
   <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&counts);
 
+<<<<<<< HEAD
   // If those checks are successful <a href="#0x0_Redeem">Redeem</a> calls <a href="subsidy.md#0x0_Subsidy">Subsidy</a> <b>module</b> (which subsequently calls the  <a href="gas_coin.md#0x0_Gas_Coin">Gas_Coin</a>.Mint function).
+=======
+  // If those checks are successful <a href="#0x0_Redeem">Redeem</a> calls <a href="subsidy.md#0x0_Subsidy">Subsidy</a> <b>module</b> (which subsequently calls the  Gas_Coin.Mint function).
+>>>>>>> OLv3
   // <a href="subsidy.md#0x0_Subsidy">Subsidy</a>(pubkey, quantity)
 
   // Clean In Process
