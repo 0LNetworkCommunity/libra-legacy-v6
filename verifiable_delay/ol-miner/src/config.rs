@@ -6,7 +6,6 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-use std::assert;
 
 /// OlMiner Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
