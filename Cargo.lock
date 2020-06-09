@@ -3519,6 +3519,7 @@ version = "0.1.0"
 dependencies = [
  "libra-canonical-serialization 0.1.0",
  "libra-crypto 0.1.0",
+ "libra-logger 0.1.0",
  "libra-types 0.1.0",
  "libra-workspace-hack 0.1.0",
  "mirai-annotations 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3527,6 +3528,7 @@ dependencies = [
  "proptest 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vdf 0.1.0 (git+https://github.com/poanetwork/vdf.git)",
  "vm 0.1.0",
 ]
 
