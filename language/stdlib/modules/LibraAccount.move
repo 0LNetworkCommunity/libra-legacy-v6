@@ -377,6 +377,7 @@ module LibraAccount {
         balance: &mut Balance<Token>,
         amount: u64
     ): Libra::T<Token> acquires AccountOperationsCapability {
+        Association::assert_addr_is_association(_addr);
         // Make sure that this withdrawal is compliant with the limits on
         // the account.
         let _  = borrow_global<AccountOperationsCapability>(0xA550C18);
@@ -406,6 +407,7 @@ module LibraAccount {
     public fun withdraw_with_capability<Token>(
         cap: &WithdrawCapability, amount: u64
     ): Libra::T<Token> acquires Balance, AccountOperationsCapability {
+        Association::assert_addr_is_association(cap.account_address);
         let balance = borrow_global_mut<Balance<Token>>(cap.account_address);
         withdraw_from_balance<Token>(cap.account_address, balance , amount)
     }
@@ -477,6 +479,7 @@ module LibraAccount {
     // Creates the `payee` account if it does not exist
     public fun pay_from<Token>(payer: &signer, payee: address, amount: u64)
     acquires T, Balance, AccountOperationsCapability, Role {
+        Association::assert_is_association(payer);
         pay_from_with_metadata<Token>(payer, payee, amount, x"", x"");
     }
 
