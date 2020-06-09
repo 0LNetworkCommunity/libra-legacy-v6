@@ -27,20 +27,12 @@ address 0x0 {
     }
 
     public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess{
-      // Permissions: anyone can call this contract.
-      // There is an edge-case which may not be clear. For example: Ping wants to join the network, he did a VDF.
-      // He has no gas to submit, he asks to Lucas to submit the VDF (which Ping ran on his computer).
+      // Initialize
       if (!has_in_process()) {
            init_in_process();
       };
 
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
-
-      // TODO: This should not be the sender of the transaction.
-      // In the example above. Lucas sent a valid proof for Ping.
-      // Looks like the implementation below would allow Ping to ask Keerthi to send the transaction again, and he gets two coins.
-      // it's not possible, the only way to implement is that Ping submit his proof by himself. because Move only has move_to_sender().
-
       let user_redemption_state = borrow_global_mut<T>(default_redeem_address());
       let blob_redeemed = Vector::contains(&user_redemption_state.history, &vdf_proof_blob.solution);
       Transaction::assert(blob_redeemed == false, 10000);
@@ -66,7 +58,7 @@ address 0x0 {
       // Account do not have proof to verify.
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
       let counts = Vector::length(&in_process_redemption.proofs);
-      Transaction::assert(counts > 0, 10003);
+      Transaction::assert(counts > 0, 10002);
 
       // Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
