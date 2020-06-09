@@ -101,7 +101,7 @@
     <b>let</b> (mint_cap, burn_cap) = <a href="Libra.md#0x0_Libra_register_currency">Libra::register_currency</a>&lt;<a href="#0x0_GAS_T">T</a>&gt;(
         account,
         <a href="FixedPoint32.md#0x0_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 1), // exchange rate <b>to</b> <a href="LBR.md#0x0_LBR">LBR</a>
-        <b>true</b>,    // is_synthetic
+        <b>false</b>,    // is_synthetic
         1000000, // scaling_factor = 10^6
         1000,    // fractional_part = 10^3
         b"<a href="#0x0_GAS">GAS</a>"

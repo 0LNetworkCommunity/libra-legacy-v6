@@ -1281,6 +1281,7 @@
     balance: &<b>mut</b> <a href="#0x0_LibraAccount_Balance">Balance</a>&lt;Token&gt;,
     amount: u64
 ): <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt; <b>acquires</b> <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Association.md#0x0_Association_assert_addr_is_association">Association::assert_addr_is_association</a>(_addr);
     // Make sure that this withdrawal is compliant with the limits on
     // the account.
     <b>let</b> _  = borrow_global&lt;<a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(0xA550C18);
@@ -1348,6 +1349,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_withdraw_with_capability">withdraw_with_capability</a>&lt;Token&gt;(
     cap: &<a href="#0x0_LibraAccount_WithdrawCapability">WithdrawCapability</a>, amount: u64
 ): <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt; <b>acquires</b> <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Association.md#0x0_Association_assert_addr_is_association">Association::assert_addr_is_association</a>(cap.account_address);
     <b>let</b> balance = borrow_global_mut&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(cap.account_address);
     <a href="#0x0_LibraAccount_withdraw_from_balance">withdraw_from_balance</a>&lt;Token&gt;(cap.account_address, balance , amount)
 }
@@ -1517,6 +1519,7 @@ with the attached
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_pay_from">pay_from</a>&lt;Token&gt;(payer: &signer, payee: address, amount: u64)
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="#0x0_LibraAccount_Role">Role</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(payer);
     <a href="#0x0_LibraAccount_pay_from_with_metadata">pay_from_with_metadata</a>&lt;Token&gt;(payer, payee, amount, x"", x"");
 }
 </code></pre>

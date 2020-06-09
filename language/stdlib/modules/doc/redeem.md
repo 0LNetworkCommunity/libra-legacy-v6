@@ -157,20 +157,12 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_Redeem_begin_redeem">begin_redeem</a>(vdf_proof_blob: <a href="#0x0_Redeem_VdfProofBlob">VdfProofBlob</a>) <b>acquires</b> <a href="#0x0_Redeem_T">T</a>, <a href="#0x0_Redeem_InProcess">InProcess</a>{
-  // Permissions: anyone can call this contract.
-  // There is an edge-case which may not be clear. For example: Ping wants <b>to</b> join the network, he did a <a href="vdf.md#0x0_VDF">VDF</a>.
-  // He has no gas <b>to</b> submit, he asks <b>to</b> Lucas <b>to</b> submit the <a href="vdf.md#0x0_VDF">VDF</a> (which Ping ran on his computer).
+  // Initialize
   <b>if</b> (!<a href="#0x0_Redeem_has_in_process">has_in_process</a>()) {
        <a href="#0x0_Redeem_init_in_process">init_in_process</a>();
   };
 
   // Checks that the blob was not previously redeemed, <b>if</b> previously redeemed its a no-op, with error message.
-
-  // TODO: This should not be the sender of the transaction.
-  // In the example above. Lucas sent a valid proof for Ping.
-  // Looks like the implementation below would allow Ping <b>to</b> ask Keerthi <b>to</b> send the transaction again, and he gets two coins.
-  // it's not possible, the only way <b>to</b> implement is that Ping submit his proof by himself. because Move only has move_to_sender().
-
   <b>let</b> user_redemption_state = borrow_global_mut&lt;<a href="#0x0_Redeem_T">T</a>&gt;(<a href="#0x0_Redeem_default_redeem_address">default_redeem_address</a>());
   <b>let</b> blob_redeemed = <a href="Vector.md#0x0_Vector_contains">Vector::contains</a>(&user_redemption_state.history, &vdf_proof_blob.solution);
   Transaction::assert(blob_redeemed == <b>false</b>, 10000);
@@ -199,7 +191,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Redeem_end_redeem">end_redeem</a>(redeemed_addr: address, _vdf_proof_blob: <a href="#0x0_Redeem_VdfProofBlob">Redeem::VdfProofBlob</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Redeem_end_redeem">end_redeem</a>(redeemed_addr: address)
 </code></pre>
 
 
@@ -208,7 +200,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Redeem_end_redeem">end_redeem</a>(redeemed_addr: address, _vdf_proof_blob: <a href="#0x0_Redeem_VdfProofBlob">VdfProofBlob</a>) <b>acquires</b> <a href="#0x0_Redeem_InProcess">InProcess</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Redeem_end_redeem">end_redeem</a>(redeemed_addr: address) <b>acquires</b> <a href="#0x0_Redeem_InProcess">InProcess</a> {
   // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
   <b>let</b> sender = Transaction::sender();
   Transaction::assert(sender == <a href="#0x0_Redeem_default_redeem_address">default_redeem_address</a>(), 10003);
@@ -216,7 +208,7 @@
   // Account do not have proof <b>to</b> verify.
   <b>let</b> in_process_redemption = borrow_global_mut&lt;<a href="#0x0_Redeem_InProcess">InProcess</a>&gt;(redeemed_addr);
   <b>let</b> counts = <a href="Vector.md#0x0_Vector_length">Vector::length</a>(&in_process_redemption.proofs);
-  Transaction::assert(counts &gt; 0, 10003);
+  Transaction::assert(counts &gt; 0, 10002);
 
   // Calls <a href="stats.md#0x0_Stats">Stats</a> <b>module</b> <b>to</b> check that pubkey was engaged in consensus, that the n% liveness above.
   // <a href="stats.md#0x0_Stats">Stats</a>(pubkey, block)
