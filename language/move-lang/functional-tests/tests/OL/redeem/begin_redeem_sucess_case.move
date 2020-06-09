@@ -1,5 +1,5 @@
-//! account: bob, 10000000LBR
-//! account: alice, 10000000LBR
+//! account: bob, 10000000GAS
+//! account: alice, 10000000GAS
 
 // Initialize Redeem Module
 //! new-transaction
