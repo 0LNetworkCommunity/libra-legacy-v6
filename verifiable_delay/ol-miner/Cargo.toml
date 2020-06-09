@@ -19,9 +19,6 @@ libra-wallet ={git="https://github.com/libra/libra", branch="master"}
 
 [dependencies.abscissa_core]
 version = "0.5.2"
-# optional: use `gimli` to capture backtraces
-# see https://github.com/rust-lang/backtrace-rs/issues/189
-# features = ["gimli-backtrace"]
 
 [dev-dependencies]
 abscissa_core = { version = "0.5.2", features = ["testing"] }
