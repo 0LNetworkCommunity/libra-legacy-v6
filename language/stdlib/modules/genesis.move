@@ -63,6 +63,7 @@ module Genesis {
         );
         Libra::grant_mint_capability_to_association<Coin1::T>(association);
         Libra::grant_mint_capability_to_association<Coin2::T>(association);
+        Libra::grant_mint_capability_to_association<GAS::T>(association);
 
         // Register transaction fee accounts
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);

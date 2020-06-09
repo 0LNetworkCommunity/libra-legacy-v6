@@ -26,7 +26,7 @@ module GAS {
         let (mint_cap, burn_cap) = Libra::register_currency<T>(
             account,
             FixedPoint32::create_from_rational(1, 1), // exchange rate to LBR
-            true,    // is_synthetic
+            false,    // is_synthetic
             1000000, // scaling_factor = 10^6
             1000,    // fractional_part = 10^3
             b"GAS"

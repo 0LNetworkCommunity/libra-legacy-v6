@@ -63,6 +63,7 @@
     );
     <a href="Libra.md#0x0_Libra_grant_mint_capability_to_association">Libra::grant_mint_capability_to_association</a>&lt;<a href="Coin1.md#0x0_Coin1_T">Coin1::T</a>&gt;(association);
     <a href="Libra.md#0x0_Libra_grant_mint_capability_to_association">Libra::grant_mint_capability_to_association</a>&lt;<a href="Coin2.md#0x0_Coin2_T">Coin2::T</a>&gt;(association);
+    <a href="Libra.md#0x0_Libra_grant_mint_capability_to_association">Libra::grant_mint_capability_to_association</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(association);
 
     // Register transaction fee accounts
     <a href="LibraAccount.md#0x0_LibraAccount_create_testnet_account">LibraAccount::create_testnet_account</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(0xFEE, <b>copy</b> dummy_auth_key_prefix);

@@ -992,6 +992,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_deposit">deposit</a>&lt;Token&gt;(payer: &signer, payee: address, to_deposit: <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt;)
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="#0x0_LibraAccount_Role">Role</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(payer);
     <a href="#0x0_LibraAccount_deposit_with_metadata">deposit_with_metadata</a>(payer, payee, to_deposit, x"", x"")
 }
 </code></pre>
@@ -1017,6 +1018,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_deposit_to">deposit_to</a>&lt;Token&gt;(account: &signer, to_deposit: <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt;)
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="#0x0_LibraAccount_Role">Role</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(account);
     <a href="#0x0_LibraAccount_deposit">deposit</a>(account, <a href="Signer.md#0x0_Signer_address_of">Signer::address_of</a>(account), to_deposit)
 }
 </code></pre>
@@ -1313,6 +1315,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_withdraw_from">withdraw_from</a>&lt;Token&gt;(account: &signer, amount: u64): <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt;
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(account);
     <b>let</b> sender = <a href="Signer.md#0x0_Signer_address_of">Signer::address_of</a>(account);
     <b>let</b> sender_account = borrow_global_mut&lt;<a href="#0x0_LibraAccount_T">T</a>&gt;(sender);
     <b>let</b> sender_balance = borrow_global_mut&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(sender);

@@ -215,12 +215,14 @@ module LibraAccount {
     // Deposits the `to_deposit` coin into the `payee`'s account balance
     public fun deposit<Token>(payer: &signer, payee: address, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
+        Association::assert_is_association(payer);
         deposit_with_metadata(payer, payee, to_deposit, x"", x"")
     }
 
     // Deposits the `to_deposit` coin into `account`
     public fun deposit_to<Token>(account: &signer, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
+        Association::assert_is_association(account);
         deposit(account, Signer::address_of(account), to_deposit)
     }
 
@@ -390,6 +392,7 @@ module LibraAccount {
     // Withdraw `amount` Libra::T<Token> from the transaction sender's account balance
     public fun withdraw_from<Token>(account: &signer, amount: u64): Libra::T<Token>
     acquires T, Balance, AccountOperationsCapability {
+        Association::assert_is_association(account);
         let sender = Signer::address_of(account);
         let sender_account = borrow_global_mut<T>(sender);
         let sender_balance = borrow_global_mut<Balance<Token>>(sender);
