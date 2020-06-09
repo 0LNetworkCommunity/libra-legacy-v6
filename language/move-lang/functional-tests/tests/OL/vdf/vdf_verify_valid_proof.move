@@ -18,7 +18,7 @@ fun main() {
 
   re = VDF::verify(&challenge, &difficulty, &solution);
   Debug::print<bool>(&re);
-  Transaction::assert(move re == true, 7);
+  Transaction::assert(move re == true, 1);
 }
 }
 
