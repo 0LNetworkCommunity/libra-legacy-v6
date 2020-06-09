@@ -127,7 +127,6 @@ impl<'txn> TransactionDataCache<'txn> {
         ap: &AccessPath,
         ty: &FatStructType,
     ) -> VMResult<&mut Option<(FatStructType, GlobalValue)>> {
-        print!("{}",ty.module.as_str());
         if !self.data_map.contains_key(ap) {
             match self.data_cache.get(ap)? {
                 Some(bytes) => {
