@@ -23,3 +23,8 @@ version = "0.5.2"
 [dev-dependencies]
 abscissa_core = { version = "0.5.2", features = ["testing"] }
 once_cell = "1.2"
+criterion = "0.3"
+
+[[bench]]
+name = "bench"
+harness = false

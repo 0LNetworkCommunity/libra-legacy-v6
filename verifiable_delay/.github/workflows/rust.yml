@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ lg-tests ]
+    branches: [ master, zaki-ol-miner, lg-tests ]
   pull_request:
-    branches: [ lg-tests ]
+    branches: [ master, zaki-ol-miner, lg-tests ]
 
 env:
   CARGO_TERM_COLOR: always
