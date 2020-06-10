@@ -7,25 +7,25 @@ on:
     branches: [ OLv3 ]
 
 jobs:
-    ol-tests:
+  ol-tests:
 
-      runs-on: ubuntu-latest-xl
+    runs-on: ubuntu-latest-xl
 
-      steps:
-      - uses: actions/checkout@v2
-      - name: Version Info
-        run: rustc --version; cargo --version; rustup --version
-      - name: Environment Setup
-        run: |
-          echo '::set-env name=LIBRA_DUMP_LOGS::1'
-          echo '::set-env name=CARGO_INCREMENTAL::0'
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake curl clang llvm gcc-powerpc-linux-gnu
-          rustup component add clippy rustfmt
+    steps:
+    - uses: actions/checkout@v2
+    - name: Version Info
+      run: rustc --version; cargo --version; rustup --version
+    - name: Environment Setup
+      run: |
+        echo '::set-env name=LIBRA_DUMP_LOGS::1'
+        echo '::set-env name=CARGO_INCREMENTAL::0'
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake curl clang llvm gcc-powerpc-linux-gnu
+        rustup component add clippy rustfmt
 
-      - name: Run OL Functional Tests
-        run: |
-        cd language/move-lang/functional-tests
+    - name: Run OL functional tests
+      run: |
+       cd language/move-lang/functional-tests/
         RUST_BACKTRACE=1 cargo test OL
