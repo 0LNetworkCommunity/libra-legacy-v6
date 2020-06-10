@@ -34,19 +34,19 @@ address 0x0{
         }
     
         public fun isEmpty(): bool acquires State {
-          let st = borrow_global_mut<State>(Transaction::sender());
+          let st = borrow_global<State>(Transaction::sender());
           let s = &st.hist;
           Vector::is_empty(s)
         }
     
-        public fun length(): u64 acquires State {
-          let st = borrow_global_mut<State>(Transaction::sender());
+        public fun length(): u64 acquires State{
+          let st = borrow_global<State>(Transaction::sender());
           let s = &st.hist;
           Vector::length(s)
         }
     
         public fun contains(num: u8): bool acquires State {
-          let st = borrow_global_mut<State>(Transaction::sender());
+          let st = borrow_global<State>(Transaction::sender());
           let s = &st.hist;
           Vector::contains(s, &num)
         }
