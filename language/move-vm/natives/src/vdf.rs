@@ -42,7 +42,10 @@ pub fn verify(
 
     // catch panicked and return `false` value
     let result = panic::catch_unwind(|| {
-        let _ = v.verify(&challenge, difficulty, &alleged_solution );
+        let r = v.verify(&challenge, difficulty, &alleged_solution );
+        if r.is_err() {
+            panic!("Invalid Proof");
+        }
     });
 
     let return_values = vec![Value::bool(result.is_ok() )];
