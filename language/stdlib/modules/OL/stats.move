@@ -14,7 +14,6 @@ address 0x0 {
 
     // Each Node represents one validator
     struct Node {
-      valid: bool,
       validator: address,
       chunks: vector<Chunk>
     }
@@ -30,6 +29,53 @@ address 0x0 {
       // This should happen in genesis
       // Transaction::assert(Transaction::sender() == 0xA550C18)
       move_to_sender<History>(History{ val_list: Vector::empty() });
+    }
+
+    public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
+      let history = borrow_global_mut<History>(Transaction::sender());
+      //let node_list = &mut history.val_list;
+
+      // Add the a Node for the validator if one doesn't aleady exist
+      if (!exists(history, node_addr)) {
+        Vector::push_back(&mut history.val_list, Node{ validator: node_addr, chunks: Vector::empty() });
+      };
+
+      let node = get_node_mut(history, node_addr);
+      let i = 0;
+      let len = Vector::length<Chunk>(&node.chunks);
+
+      if (len == 0) {
+        Vector::push_back(&mut node.chunks, Chunk{ start_block: start_block, end_block: end_block });
+        return
+      };
+      
+      // This is a temporary reference to an existing chunk. Assuming there are no
+      // conflicts and it is not adjacent to an existing chunk, it will be discarded.
+      // If it is adjacent, we will assign this reference to the adjacent chunk so
+      // we don't have to search for it again.
+      // This should all be simpler in the final implementation in Rust since we will
+      // be able to use binary trees and the Option<T> type.
+      let adjacent = false;
+      let chunk = Vector::borrow_mut(&mut node.chunks, 0);
+
+      // Check to see if the insert conflicts with what is already stored
+      while (i < len) {
+        chunk = Vector::borrow_mut(&mut node.chunks, i);
+        Transaction::assert(chunk.start_block > end_block, 1);
+        Transaction::assert(chunk.end_block < start_block, 1);
+        // If chunk.end_block == start_block, then we are just adding on to the last block
+        if (chunk.end_block == start_block) {
+          adjacent = true;
+          break
+        };
+      };
+
+      // Add in the new chunk
+      if (adjacent){
+        chunk.end_block = end_block
+      } else {
+        Vector::push_back(&mut node.chunks, Chunk{ start_block: start_block, end_block: end_block });
+      }
     }
 
     // This should actually return a float as a percentage, but move doesn't support floats
@@ -83,6 +129,21 @@ address 0x0 {
 
       while (i < len) {
         node = Vector::borrow<Node>(node_list, i);
+        if (node.validator == add) break;
+      };
+      node
+    }
+
+    // This function goes through the vector in history and gets the desired node.
+    // By the time this runs, we already know that the node exists in the history
+    fun get_node_mut(hist: &mut History, add: address): &mut Node {
+      let i = 0;
+      let node_list = &mut hist.val_list;
+      let len = Vector::length<Node>(node_list);
+      let node = Vector::borrow_mut<Node>(node_list, i);
+
+      while (i < len) {
+        node = Vector::borrow_mut<Node>(node_list, i);
         if (node.validator == add) break;
       };
       node
