@@ -25,15 +25,15 @@ jobs:
           sudo apt-get install -y cmake curl clang llvm gcc-powerpc-linux-gnu
           rustup component add clippy rustfmt
 
-      - name: Run OL Functional Tests
+      - name: Run OL functional tests
         run: |
-        cd language/move-lang/functional-tests
-        RUST_BACKTRACE=1 cargo test OL
-
+         cd language/move-lang/functional-tests/
+          RUST_BACKTRACE=1 cargo test OL
+        
       - name: Check for changed and untracked files
         run: ./scripts/changed-files.sh
 
-  unit-tests:
+unit-tests:
 
     runs-on: ubuntu-latest-xl
 
