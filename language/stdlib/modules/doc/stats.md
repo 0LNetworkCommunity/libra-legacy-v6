@@ -24,7 +24,7 @@
 
 
 
-<pre><code><b>resource</b> <b>struct</b> <a href="#0x0_Stats_Chunk">Chunk</a>
+<pre><code><b>struct</b> <a href="#0x0_Stats_Chunk">Chunk</a>
 </code></pre>
 
 
@@ -59,7 +59,7 @@
 
 
 
-<pre><code><b>resource</b> <b>struct</b> <a href="#0x0_Stats_Node">Node</a>
+<pre><code><b>struct</b> <a href="#0x0_Stats_Node">Node</a>
 </code></pre>
 
 

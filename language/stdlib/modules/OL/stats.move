@@ -7,13 +7,13 @@ address 0x0 {
     use 0x0::Transaction;
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
-    resource struct Chunk {
+    struct Chunk {
       start_block: u64,
       end_block: u64
     }
 
     // Each Node represents one validator
-    resource struct Node {
+    struct Node {
       validator: address,
       chunks: vector<Chunk>
     }
