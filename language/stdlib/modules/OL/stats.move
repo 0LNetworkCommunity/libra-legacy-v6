@@ -27,11 +27,19 @@ address 0x0 {
     public fun initialize() {
       // Eventually want to ensue that only the Association and make a history block.
       // This should happen in genesis
-      // Transaction::assert(Transaction::sender() == 0xA550C18)
       move_to_sender<History>(History{ val_list: Vector::empty() });
     }
 
-    public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
+    public fun newBlock(height: u64, votes: &vector<address>) acquires History {
+      let i = 0;
+      let len = Vector::length<address>(votes);
+
+      while (i < len) {
+        insert(*Vector::borrow(votes, i), height, height);
+      };
+    }
+
+    fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
       let history = borrow_global_mut<History>(Transaction::sender());
       //let node_list = &mut history.val_list;
 
@@ -86,7 +94,7 @@ address 0x0 {
 
       if (start_height > end_height) return 0;
 
-      let history = borrow_global<History>(Transaction::sender());
+      let history = borrow_global<History>(0xA550C18);
 
       // This is the case where the validator has voted on nothing and does not have a Node
       if (!exists(history, node_addr)) return 0;
