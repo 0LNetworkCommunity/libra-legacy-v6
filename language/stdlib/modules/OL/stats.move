@@ -7,13 +7,13 @@ address 0x0 {
     use 0x0::Transaction;
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
-    struct Chunk {
+    resource struct Chunk {
       start_block: u64,
       end_block: u64
     }
 
     // Each Node represents one validator
-    struct Node {
+    resource struct Node {
       validator: address,
       chunks: vector<Chunk>
     }
@@ -39,7 +39,7 @@ address 0x0 {
       };
     }
 
-    fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
+    public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
       let history = borrow_global_mut<History>(Transaction::sender());
       //let node_list = &mut history.val_list;
 
@@ -94,7 +94,7 @@ address 0x0 {
 
       if (start_height > end_height) return 0;
 
-      let history = borrow_global<History>(0xA550C18);
+      let history = borrow_global<History>(Transaction::sender());
 
       // This is the case where the validator has voted on nothing and does not have a Node
       if (!exists(history, node_addr)) return 0;

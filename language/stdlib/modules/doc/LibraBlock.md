@@ -156,6 +156,11 @@
     // Can only be invoked by LibraVM privilege.
     Transaction::assert(<a href="Signer.md#0x0_Signer_address_of">Signer::address_of</a>(vm) == 0x0, 33);
 
+    {
+      <b>let</b> block_metadata_ref = borrow_global&lt;<a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(0xA550C18);
+      <a href="stats.md#0x0_Stats_newBlock">Stats::newBlock</a>(block_metadata_ref.height, &previous_block_votes);
+    };
+
     <a href="#0x0_LibraBlock_process_block_prologue">process_block_prologue</a>(vm,  round, timestamp, previous_block_votes, proposer);
 
     // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
