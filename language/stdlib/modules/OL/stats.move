@@ -30,6 +30,86 @@ address 0x0 {
       move_to_sender<History>(History{ val_list: Vector::empty() });
     }
 
+    // This should actually return a float as a percentage, but move doesn't support floats
+    // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
+    public fun Node_Heuristics(node_addr: address, start_height: u64, 
+      end_height: u64): u64 acquires History {
+      // Returns the percentage of blocks in the given range that the block voted on
+
+      if (start_height > end_height) return 0;
+      let history = borrow_global<History>(Transaction::sender());
+
+      // This is the case where the validator has voted on nothing and does not have a Node
+      if (!exists(history, node_addr)) return 0;
+
+      let node = get_node(history, node_addr);
+      let chunks = &node.chunks;
+      let i = 0;
+      let len = Vector::length<Chunk>(chunks);
+      let num_voted = 0;
+
+      // Go though all the chunks of the validator and accumulate
+      while (i < len) {
+        let chunk = Vector::borrow<Chunk>(chunks, i);
+        // Check if the chunk has segments in desired region
+        if (chunk.end_block > start_height && chunk.start_block < end_height) {
+          // Find the lower and upper blockheights within desired region
+          let lower = chunk.start_block;
+          if (start_height > lower) lower = start_height;
+
+          let upper = chunk.end_block;
+          if (end_height < upper) upper = end_height;
+
+          // +1 because bounds are inclusive.
+          // E.g. a node which participated in only block 30 would have
+          // upper - lower = 0 even though it voted in a block.
+          num_voted = num_voted + (upper - lower + 1);
+        }
+      };
+      num_voted 
+      // This should be added to get a percentage: num_voted / (end_height - start_height + 1)
+    }
+
+    // This should actually return a float as a percentage, but move doesn't support floats
+    // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
+    public fun Network_Heuristics(start_height: u64, end_height: u64): u64 acquires History{
+      if (start_height > end_height) return 0;
+      let history = borrow_global<History>(Transaction::sender());
+      let val_list = &history.val_list;
+
+      // This keeps track of how many voters voted on every single block in the range
+      let num_voters = 0;
+      let num_nodes = Vector::length<Node>(val_list);
+      if (num_nodes == 0) return 0;
+      let i = 0;
+
+      // Go though all the nodes and find the ones which paticipated
+      while (i < num_nodes) {
+        let j = 0;
+        let node = Vector::borrow<Node>(val_list, i);
+        let chunks = &node.chunks;
+        let num_chunks = Vector::length<Chunk>(chunks);
+
+        // If the node has participated in every single block in a range, then that entire
+        // range will be a subset of one of the chunks in the data structure. So, we need
+        // only to find the chunk whose start_block is just below (or equal to) the start_height
+        // This is faster in a BST, but we do a linear search for the POC implementation
+        if (num_chunks == 0) continue;
+        let chunk = Vector::borrow<Chunk>(chunks, 0);
+        while (j < num_chunks) {
+          let cand_chunk = Vector::borrow<Chunk>(chunks, j);
+          if (cand_chunk.start_block <= start_height && cand_chunk.start_block < chunk.start_block) {
+            chunk = cand_chunk;
+          }
+        };
+        // This is the case that this voter has voted for all blocks in the range
+        if (chunk.start_block <= start_height && chunk.end_block >= end_height){
+          num_voters = num_voters + 1;
+        }
+      };
+      return num_voters
+    }
+
     public fun newBlock(height: u64, votes: &vector<address>) acquires History {
       let i = 0;
       let len = Vector::length<address>(votes);
@@ -84,47 +164,6 @@ address 0x0 {
       } else {
         Vector::push_back(&mut node.chunks, Chunk{ start_block: start_block, end_block: end_block });
       }
-    }
-
-    // This should actually return a float as a percentage, but move doesn't support floats
-    // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
-    public fun Node_Heuristics(node_addr: address, start_height: u64, 
-      end_height: u64): u64 acquires History {
-      // Returns the percentage of blocks in the given range that the block voted on
-
-      if (start_height > end_height) return 0;
-
-      let history = borrow_global<History>(Transaction::sender());
-
-      // This is the case where the validator has voted on nothing and does not have a Node
-      if (!exists(history, node_addr)) return 0;
-
-      let node = get_node(history, node_addr);
-      let chunks = &node.chunks;
-      let i = 0;
-      let len = Vector::length<Chunk>(chunks);
-      let num_voted = 0;
-
-      // Go though all the chunks of the validator and accumulate
-      while (i < len) {
-        let chunk = Vector::borrow<Chunk>(chunks, i);
-        // Check if the chunk has segments in desired region
-        if (chunk.end_block > start_height && chunk.start_block < end_height) {
-          // Find the lower and upper blockheights within desired region
-          let lower = chunk.start_block;
-          if (start_height > lower) lower = start_height;
-
-          let upper = chunk.end_block;
-          if (end_height < upper) upper = end_height;
-
-          // +1 because bounds are inclusive.
-          // E.g. a node which participated in only block 30 would have
-          // upper - lower = 0 even though it voted in a block.
-          num_voted = num_voted + (upper - lower + 1);
-        }
-      };
-      num_voted 
-      // This should be added to get a percentage: num_voted / (end_height - start_height + 1)
     }
 
     // This function goes through the vector in history and gets the desired node.
