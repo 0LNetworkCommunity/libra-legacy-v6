@@ -19,7 +19,7 @@ pub struct OlMinerConfig {
 
 impl OlMinerConfig {
     /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
-    pub fn gen_preimage(&self) -> Vec<u8> {
+    pub fn genesis_preimage(&self) -> Vec<u8> {
         let mut preimage: Vec<u8> = vec![];
 
         let mut padded_key_bytes = match hex::decode(self.profile.public_key.clone()) {
@@ -115,11 +115,12 @@ pub struct ChainInfo {
     pub block_dir: String,
 }
 
+// TODO: These defaults serving as test fixtures.
 impl Default for ChainInfo {
     fn default() -> Self {
         Self {
             chain_id: "Ol testnet".to_owned(),
-            block_size: 100,
+            block_size: 100.to_owned(),
             block_dir: "blocks".to_owned(),
         }
     }
@@ -135,7 +136,8 @@ pub struct Profile {
 impl Default for Profile {
     fn default() -> Self {
         Self {
-            public_key: "ed25519_key".to_owned(),
+            // TODO: change this public key.
+            public_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_owned(),
             statement: "protests rage across America".to_owned(),
         }
     }

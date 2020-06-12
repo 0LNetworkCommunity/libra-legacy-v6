@@ -30,7 +30,8 @@ impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
         status_ok!("Start mining...", "ok"); //TODO: Print something more interesting here.
-        build_block::write_block();
+        let miner_configs = app_config();
+        build_block::write_block(&miner_configs);
     }
 }
 

@@ -5,7 +5,7 @@ use ol_miner::delay::delay;
 
 #[test]
 fn test_do_delay() {
-    // use a test pre image and a 100 millisecond difficulty
+    // use a test pre image and a 100 difficulty
     let proof = delay::do_delay(b"test preimage",100);
 
     // print to copy/paste the correct_proof string below.
