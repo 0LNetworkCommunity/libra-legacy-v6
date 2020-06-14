@@ -5,6 +5,8 @@ address 0x0 {
   module Stats {
     use 0x0::Vector;
     use 0x0::Transaction;
+    use 0x0::Signer;
+    use 0x0::Debug;
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
     struct Chunk {
@@ -24,21 +26,21 @@ address 0x0 {
       val_list: vector<Node>,
     }
 
-    public fun initialize() {
+    public fun initialize(association: &signer) {
       // Eventually want to ensue that only the Association and make a history block.
       // This should happen in genesis
+      Transaction::assert(Signer::address_of(association) == 0xA550C18, 1);
       move_to_sender<History>(History{ val_list: Vector::empty() });
     }
 
     // This should actually return a float as a percentage, but move doesn't support floats
     // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
     public fun Node_Heuristics(node_addr: address, start_height: u64, 
-      end_height: u64): u64 acquires History {
+      end_height: u64): u64 acquires History{
       // Returns the percentage of blocks in the given range that the block voted on
 
       if (start_height > end_height) return 0;
-      let history = borrow_global<History>(Transaction::sender());
-
+      let history = borrow_global<History>(0xA550C18);
       // This is the case where the validator has voted on nothing and does not have a Node
       if (!exists(history, node_addr)) return 0;
 
@@ -47,7 +49,7 @@ address 0x0 {
       let i = 0;
       let len = Vector::length<Chunk>(chunks);
       let num_voted = 0;
-
+      if(node_addr == 0xA550C18) return 1; 
       // Go though all the chunks of the validator and accumulate
       while (i < len) {
         let chunk = Vector::borrow<Chunk>(chunks, i);
@@ -74,7 +76,7 @@ address 0x0 {
     // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
     public fun Network_Heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
-      let history = borrow_global<History>(Transaction::sender());
+      let history = borrow_global<History>(0xA550C18);
       let val_list = &history.val_list;
 
       // This keeps track of how many voters voted on every single block in the range
@@ -120,7 +122,7 @@ address 0x0 {
     }
 
     public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
-      let history = borrow_global_mut<History>(Transaction::sender());
+      let history = borrow_global_mut<History>(0xA550C18);
       //let node_list = &mut history.val_list;
 
       // Add the a Node for the validator if one doesn't aleady exist
@@ -145,7 +147,8 @@ address 0x0 {
       // be able to use binary trees and the Option<T> type.
       let adjacent = false;
       let chunk = Vector::borrow_mut(&mut node.chunks, 0);
-
+      
+      let x = 42;
       // Check to see if the insert conflicts with what is already stored
       while (i < len) {
         chunk = Vector::borrow_mut(&mut node.chunks, i);
@@ -156,8 +159,9 @@ address 0x0 {
           adjacent = true;
           break
         };
+        Debug::print(&x);
       };
-
+        
       // Add in the new chunk
       if (adjacent){
         chunk.end_block = end_block

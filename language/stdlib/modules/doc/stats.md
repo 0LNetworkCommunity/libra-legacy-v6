@@ -123,7 +123,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Stats_initialize">initialize</a>()
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Stats_initialize">initialize</a>(association: &signer)
 </code></pre>
 
 
@@ -132,9 +132,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Stats_initialize">initialize</a>() {
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Stats_initialize">initialize</a>(association: &signer) {
   // Eventually want <b>to</b> ensue that only the <a href="Association.md#0x0_Association">Association</a> and make a history block.
   // This should happen in genesis
+  Transaction::assert(<a href="Signer.md#0x0_Signer_address_of">Signer::address_of</a>(association) == 0xA550C18, 1);
   move_to_sender&lt;<a href="#0x0_Stats_History">History</a>&gt;(<a href="#0x0_Stats_History">History</a>{ val_list: <a href="Vector.md#0x0_Vector_empty">Vector::empty</a>() });
 }
 </code></pre>
@@ -163,35 +164,35 @@
   // Returns the percentage of blocks in the given range that the block voted on
 
   <b>if</b> (start_height &gt; end_height) <b>return</b> 0;
-  <b>let</b> history = borrow_global&lt;<a href="#0x0_Stats_History">History</a>&gt;(Transaction::sender());
+  <b>let</b> history = borrow_global&lt;<a href="#0x0_Stats_History">History</a>&gt;(0xA550C18);
 
   // This is the case where the validator has voted on nothing and does not have a <a href="#0x0_Stats_Node">Node</a>
   <b>if</b> (!<a href="#0x0_Stats_exists">exists</a>(history, node_addr)) <b>return</b> 0;
 
-  <b>let</b> node = <a href="#0x0_Stats_get_node">get_node</a>(history, node_addr);
-  <b>let</b> chunks = &node.chunks;
-  <b>let</b> i = 0;
-  <b>let</b> len = <a href="Vector.md#0x0_Vector_length">Vector::length</a>&lt;<a href="#0x0_Stats_Chunk">Chunk</a>&gt;(chunks);
+  //<b>let</b> node = <a href="#0x0_Stats_get_node">get_node</a>(history, node_addr);
+  //<b>let</b> chunks = &node.chunks;
+  //<b>let</b> i = 0;
+  //<b>let</b> len = <a href="Vector.md#0x0_Vector_length">Vector::length</a>&lt;<a href="#0x0_Stats_Chunk">Chunk</a>&gt;(chunks);
   <b>let</b> num_voted = 0;
 
   // Go though all the chunks of the validator and accumulate
-  <b>while</b> (i &lt; len) {
-    <b>let</b> chunk = <a href="Vector.md#0x0_Vector_borrow">Vector::borrow</a>&lt;<a href="#0x0_Stats_Chunk">Chunk</a>&gt;(chunks, i);
-    // Check <b>if</b> the chunk has segments in desired region
-    <b>if</b> (chunk.end_block &gt; start_height && chunk.start_block &lt; end_height) {
-      // Find the lower and upper blockheights within desired region
-      <b>let</b> lower = chunk.start_block;
-      <b>if</b> (start_height &gt; lower) lower = start_height;
+  // <b>while</b> (i &lt; len) {
+  //   <b>let</b> chunk = <a href="Vector.md#0x0_Vector_borrow">Vector::borrow</a>&lt;<a href="#0x0_Stats_Chunk">Chunk</a>&gt;(chunks, i);
+  //   // Check <b>if</b> the chunk has segments in desired region
+  //   <b>if</b> (chunk.end_block &gt; start_height && chunk.start_block &lt; end_height) {
+  //     // Find the lower and upper blockheights within desired region
+  //     <b>let</b> lower = chunk.start_block;
+  //     <b>if</b> (start_height &gt; lower) lower = start_height;
 
-      <b>let</b> upper = chunk.end_block;
-      <b>if</b> (end_height &lt; upper) upper = end_height;
+  //     <b>let</b> upper = chunk.end_block;
+  //     <b>if</b> (end_height &lt; upper) upper = end_height;
 
-      // +1 because bounds are inclusive.
-      // E.g. a node which participated in only block 30 would have
-      // upper - lower = 0 even though it voted in a block.
-      num_voted = num_voted + (upper - lower + 1);
-    }
-  };
+  //     // +1 because bounds are inclusive.
+  //     // E.g. a node which participated in only block 30 would have
+  //     // upper - lower = 0 even though it voted in a block.
+  //     num_voted = num_voted + (upper - lower + 1);
+  //   }
+  // };
   num_voted
   // This should be added <b>to</b> get a percentage: num_voted / (end_height - start_height + 1)
 }
@@ -216,9 +217,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Stats_Network_Heuristics">Network_Heuristics</a>(start_height: u64, end_height: u64): u64 <b>acquires</b> <a href="#0x0_Stats_History">History</a>{
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Stats_Network_Heuristics">Network_Heuristics</a>(start_height: u64, end_height: u64): u64 <b>acquires</b> <a href="#0x0_Stats_History">History</a> {
   <b>if</b> (start_height &gt; end_height) <b>return</b> 0;
-  <b>let</b> history = borrow_global&lt;<a href="#0x0_Stats_History">History</a>&gt;(Transaction::sender());
+  <b>let</b> history = borrow_global&lt;<a href="#0x0_Stats_History">History</a>&gt;(0xA550C18);
   <b>let</b> val_list = &history.val_list;
 
   // This keeps track of how many voters voted on every single block in the range
@@ -304,7 +305,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_Stats_insert">insert</a>(node_addr: address, start_block: u64, end_block: u64) <b>acquires</b> <a href="#0x0_Stats_History">History</a> {
-  <b>let</b> history = borrow_global_mut&lt;<a href="#0x0_Stats_History">History</a>&gt;(Transaction::sender());
+  <b>let</b> history = borrow_global_mut&lt;<a href="#0x0_Stats_History">History</a>&gt;(0xA550C18);
   //<b>let</b> node_list = &<b>mut</b> history.val_list;
 
   // Add the a <a href="#0x0_Stats_Node">Node</a> for the validator <b>if</b> one doesn't aleady exist
@@ -330,6 +331,7 @@
   <b>let</b> adjacent = <b>false</b>;
   <b>let</b> chunk = <a href="Vector.md#0x0_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> node.chunks, 0);
 
+  <b>let</b> x = 42;
   // Check <b>to</b> see <b>if</b> the insert conflicts with what is already stored
   <b>while</b> (i &lt; len) {
     chunk = <a href="Vector.md#0x0_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> node.chunks, i);
@@ -340,6 +342,7 @@
       adjacent = <b>true</b>;
       <b>break</b>
     };
+    <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&x);
   };
 
   // Add in the new chunk

@@ -1,7 +1,7 @@
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
-//! account: charlie
-//! account: storage, 1000000
+//! account: charlie, 1000000
+//! account: storage, 4000000
 
 // The data struct and history are all kept in storage's account.
 // For now, any inserts and/or queries have to be in transactions sent
@@ -13,18 +13,18 @@
 // However, since inserts are currently failing, nothing actually gets changed in the DS.
 
 //! new-transaction
-//! sender: storage
+//! sender: association
 script {
     use 0x0::Stats;
     use 0x0::Debug;
-        fun main() {
-            Stats::initialize();
+        fun main(account: &signer) {
+            Stats::initialize(account);
             let a = 0;
             Debug::print(&a);
         }
     }
 // check: EXECUTED
-    
+
 //! new-transaction
 //! sender: storage
 script {
@@ -97,7 +97,7 @@ script {
 // These are manual inserts I added for debugging.
 //! new-transaction
 //! gas-price: 1
-//! max-gas: 10000000
+//! max-gas: 2000000
 //! sender: storage
 script {
     use 0x0::Stats;
@@ -105,47 +105,6 @@ script {
     fun main(){
         Stats::insert({{bob}}, 2, 2);
         let a = 5;
-        Debug::print(&a);
-    }
-}
-// check: EXECUTED
-
-//! new-transaction
-//! gas-price: 1
-//! max-gas: 10000000
-//! sender: storage
-script {
-    use 0x0::Stats;
-    use 0x0::Debug;
-    fun main(){
-        Stats::insert({{charlie}}, 1, 1);
-        let a = 6;
-        Debug::print(&a);
-    }
-}
-// check: EXECUTED
-
-
-// These (below) currently all print zero. This should not be the case, but it seems
-// every transaction which tries to insert into the data structure becomes
-// discarded or runs out of gas. Possibly too expensive.
-// They print zero because they are querying empty data structures.
-
-//! new-transaction
-//! sender: storage
-script {
-    use 0x0::Debug;
-    use 0x0::Stats;
-    fun main(){
-        let a = Stats::Node_Heuristics({{alice}}, 0, 500);
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{alice}}, 0, 100);
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{bob}}, 0, 500);
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{bob}}, 0, 200);
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{charlie}}, 0, 500);
         Debug::print(&a);
     }
 }
