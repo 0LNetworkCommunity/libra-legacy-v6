@@ -72,7 +72,7 @@ address 0x0 {
 
     // This should actually return a float as a percentage, but move doesn't support floats
     // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
-    public fun Network_Heuristics(start_height: u64, end_height: u64): u64 acquires History{
+    public fun Network_Heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
       let history = borrow_global<History>(Transaction::sender());
       let val_list = &history.val_list;
