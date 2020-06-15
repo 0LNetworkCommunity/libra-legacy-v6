@@ -1,4 +1,3 @@
-
 // This module returns statistics about the network at any given block, or window of blocks. A number of core OL modules depend on Statistics. The relevant statistics in an MVP are "liveness accountability" statistics. From within the VM context the statistics available are those in the BlockMetadata type.
 
 address 0x0 {
@@ -6,7 +5,6 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Transaction;
     use 0x0::Signer;
-    use 0x0::Debug;
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
     struct Chunk {
@@ -20,27 +18,25 @@ address 0x0 {
       chunks: vector<Chunk>
     }
 
-    // This stores the full history. For POC, it is a vector which stores one
-    //  entry for each validator.
+    // This stores the full history. For proof of concept (POC), it is a vector 
+    // which stores one entry for each validator.
     resource struct History {
       val_list: vector<Node>,
     }
 
     public fun initialize(association: &signer) {
-      // Eventually want to ensue that only the Association and make a history block.
-      // This should happen in genesis
+      // This should happen only once in genesis
       Transaction::assert(Signer::address_of(association) == 0xA550C18, 1);
       move_to_sender<History>(History{ val_list: Vector::empty() });
     }
 
-    // This should actually return a float as a percentage, but move doesn't support floats
-    // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
+    // This should actually return a float as a percentage, but this hasn't been implemented yet.
+    // For now, it will be returned as an unsigned int and be a confidence level 
     public fun Node_Heuristics(node_addr: address, start_height: u64, 
       end_height: u64): u64 acquires History{
-      // Returns the percentage of blocks in the given range that the block voted on
-
       if (start_height > end_height) return 0;
       let history = borrow_global<History>(0xA550C18);
+      
       // This is the case where the validator has voted on nothing and does not have a Node
       if (!exists(history, node_addr)) return 0;
 
@@ -50,7 +46,8 @@ address 0x0 {
       let len = Vector::length<Chunk>(chunks);
       let num_voted = 0;
       if(node_addr == 0xA550C18) return 1; 
-      // Go though all the chunks of the validator and accumulate
+      
+      // Go though all the chunks of the validator's node and accumulate
       while (i < len) {
         let chunk = Vector::borrow<Chunk>(chunks, i);
         // Check if the chunk has segments in desired region
@@ -66,14 +63,15 @@ address 0x0 {
           // E.g. a node which participated in only block 30 would have
           // upper - lower = 0 even though it voted in a block.
           num_voted = num_voted + (upper - lower + 1);
-        }
+        };
+        i = i + 1;
       };
       num_voted 
-      // This should be added to get a percentage: num_voted / (end_height - start_height + 1)
+      // This should be added to get a percentage eventually: num_voted / (end_height - start_height + 1)
     }
 
-    // This should actually return a float as a percentage, but move doesn't support floats
-    // as primitive types. For now, it will be returned as an unsigned int and be a confidence level 
+    // This should actually return a float as a percentage, but this hasn't been implemented yet.
+    // For now, it will be returned as an unsigned int and be a confidence level 
     public fun Network_Heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
       let history = borrow_global<History>(0xA550C18);
@@ -96,34 +94,49 @@ address 0x0 {
         // range will be a subset of one of the chunks in the data structure. So, we need
         // only to find the chunk whose start_block is just below (or equal to) the start_height
         // This is faster in a BST, but we do a linear search for the POC implementation
-        if (num_chunks == 0) continue;
+        if (num_chunks == 0) {
+          i = i + 1;
+          continue
+        };
+
+        // Go through all chunks for the node
         let chunk = Vector::borrow<Chunk>(chunks, 0);
         while (j < num_chunks) {
           let cand_chunk = Vector::borrow<Chunk>(chunks, j);
           if (cand_chunk.start_block <= start_height && cand_chunk.start_block < chunk.start_block) {
             chunk = cand_chunk;
-          }
+          };
+          j = j + 1;
         };
+
         // This is the case that this voter has voted for all blocks in the range
         if (chunk.start_block <= start_height && chunk.end_block >= end_height){
           num_voters = num_voters + 1;
-        }
+        };
+        i = i + 1;
       };
-      return num_voters
+      num_voters
     }
 
     public fun newBlock(height: u64, votes: &vector<address>) acquires History {
       let i = 0;
       let len = Vector::length<address>(votes);
 
+      // For some reason, LibraBlock currently passes in an empty vector 
+      // for the previous votes each time, so history is not correctly stored
+      
       while (i < len) {
         insert(*Vector::borrow(votes, i), height, height);
+        i = i + 1;
       };
     }
 
+    // This function should not actually be public, but it is so that inserts can 
+    // be made manually. Currently, LibraBlock only passes in empty BlockMetadata
+    // (which is incorrect). Normally, inserts and updates happen through the
+    // public newBlock function.
     public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
       let history = borrow_global_mut<History>(0xA550C18);
-      //let node_list = &mut history.val_list;
 
       // Add the a Node for the validator if one doesn't aleady exist
       if (!exists(history, node_addr)) {
@@ -148,18 +161,22 @@ address 0x0 {
       let adjacent = false;
       let chunk = Vector::borrow_mut(&mut node.chunks, 0);
       
-      let x = 42;
       // Check to see if the insert conflicts with what is already stored
       while (i < len) {
         chunk = Vector::borrow_mut(&mut node.chunks, i);
-        Transaction::assert(chunk.start_block > end_block, 1);
-        Transaction::assert(chunk.end_block < start_block, 1);
+
+        if ((chunk.start_block > end_block) || (chunk.end_block < start_block)){
+          // This is the case where the new block is not connected to the old
+          // one we are comparing with
+          i = i + 1;
+          continue
+        };
         // If chunk.end_block == start_block, then we are just adding on to the last block
         if (chunk.end_block == start_block) {
           adjacent = true;
           break
         };
-        Debug::print(&x);
+        i = i + 1;
       };
         
       // Add in the new chunk
@@ -170,7 +187,7 @@ address 0x0 {
       }
     }
 
-    // This function goes through the vector in history and gets the desired node.
+    // This function goes through the vector in history and gets the desired node (immutable reference).
     // By the time this runs, we already know that the node exists in the history
     fun get_node(hist: &History, add: address): &Node {
       let i = 0;
@@ -180,12 +197,13 @@ address 0x0 {
 
       while (i < len) {
         node = Vector::borrow<Node>(node_list, i);
+        i = i + 1;
         if (node.validator == add) break;
       };
       node
     }
 
-    // This function goes through the vector in history and gets the desired node.
+    // This function goes through the vector in history and gets the desired node (mutable reference).
     // By the time this runs, we already know that the node exists in the history
     fun get_node_mut(hist: &mut History, add: address): &mut Node {
       let i = 0;
@@ -195,6 +213,7 @@ address 0x0 {
 
       while (i < len) {
         node = Vector::borrow_mut<Node>(node_list, i);
+        i = i + 1;
         if (node.validator == add) break;
       };
       node
@@ -209,12 +228,14 @@ address 0x0 {
 
       while (i < len) {
         if (Vector::borrow<Node>(node_list, i).validator == add) return true;
+        i = i + 1;
       };
       false
     }
 
 
-    // The actual Stats data structures and workings are a work in progress
+    // Below is the original comments which showed the specs of the module.
+    // These are not deleted yet in case we need it again.
 
     // TODO: Check if libra core "leader reputation" can be wrapped or implemented in our own contract: https://github.com/libra/libra/pull/3026/files
     // pub fun Node_Heuristics(node_address: address type, start_blockheight: u32, end_blockheight: u32)  {
