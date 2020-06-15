@@ -165,7 +165,7 @@ pub mod build_block {
                 if let Ok(entry) = entry {
                     if let Some(stem) = entry.file_stem() {
                         if let Some(stem_string) = stem.to_str() {
-                            if let Some(blocknumber) = stem_string.strip_prefix("block_") {
+                            if let Some(blocknumber) = stem_string.replace("block_","") {
                                 // TODO: Alternatively rely on the json data field 'height' insead of file name.
                                 let blocknumber = blocknumber.parse::<u64>().unwrap();
                                 if blocknumber >= max_block {

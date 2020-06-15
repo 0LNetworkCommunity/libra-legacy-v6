@@ -14,7 +14,6 @@
     unused_lifetimes,
     unused_qualifications
 )]
-#![feature(str_strip)]
 
 pub mod application;
 pub mod block;
