@@ -1,0 +1,30 @@
+[package]
+name = "ol_miner"
+authors = []
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+gumdrop = "0.7"
+serde = { version = "1", features = ["serde_derive"] }
+thiserror = "1"
+classgroup = { path = "../classgroup", version = "^0.1.0" }
+vdf = { path = "../vdf", version = "^0.1.0" }
+hex = "0.4"
+byteorder = "1"
+glob = "0.3"
+serde_json = "1"
+libra-crypto ={git="https://github.com/libra/libra", branch="master"}
+libra-wallet ={git="https://github.com/libra/libra", branch="master"}
+
+[dependencies.abscissa_core]
+version = "0.5.2"
+
+[dev-dependencies]
+abscissa_core = { version = "0.5.2", features = ["testing"] }
+once_cell = "1.2"
+criterion = "0.3"
+
+[[bench]]
+name = "bench"
+harness = false
