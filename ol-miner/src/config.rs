@@ -107,12 +107,15 @@ impl Default for OlMinerConfig {
         }
     }
 }
-
+/// Information about the Chain to mined for
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ChainInfo {
+    /// Chain that this work is being committed to
     pub chain_id: String,
+    /// Number of iterations of work
     pub block_size: u64,
+    /// Directory to store blocks in
     pub block_dir: String,
 }
 
@@ -126,11 +129,13 @@ impl Default for ChainInfo {
         }
     }
 }
-
+/// Miner profile to commit this work chain to a particular identity
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
+    ///Miner Public Key for OL Blockchain
     pub public_key: String,
+    ///An opportunites for the Miner to argument for his value to the network
     pub statement: String,
 }
 

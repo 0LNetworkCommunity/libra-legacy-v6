@@ -1,7 +1,6 @@
 //! Proof block datastructure
 
 use hex::{decode, encode};
-use libra_crypto::hash::HashValue;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
 /// Data structure and serialization of OL delay proof.
@@ -33,7 +32,6 @@ where
 pub mod build_block {
     //! Functions for generating the OL delay proof and writing data to file system.
     use super::Block;
-    use crate::application::*;
     use crate::config::*;
     use crate::delay::*;
     use crate::prelude::*;
@@ -56,11 +54,11 @@ pub mod build_block {
 
         write_json(&block, block_dir_buf)
     }
-
+    /// Mine one block
     pub fn mine_once(config: &OlMinerConfig) -> u64 {
         let block_dir = Path::new(&config.chain_info.block_dir);
 
-        let (mut current_block_number, current_block_path) = parse_block_height(block_dir);
+        let (_current_block_number, current_block_path) = parse_block_height(block_dir);
         // If there are files in path, continue mining.
         if let Some(max_block_path) = current_block_path {
             // current_block_path is Option type, check if destructures to Some.
@@ -72,7 +70,7 @@ pub mod build_block {
 
             let preimage = HashValue::sha3_256_of(&latest_block.data).to_vec();
             // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
-            let mut height = latest_block.height + 1;
+            let height = latest_block.height + 1;
             // TODO: cleanup this duplication with mine_genesis_once?
             let block = Block {
                 height,
@@ -89,11 +87,11 @@ pub mod build_block {
             0u64
         }
     }
-
+    /// Write block to file
     pub fn write_block(config: &OlMinerConfig) {
         // get the location of this miner's blocks
         let blocks_dir = Path::new(&config.chain_info.block_dir);
-        let (mut current_block_number, current_block_path) = parse_block_height(blocks_dir);
+        let (current_block_number, _current_block_path) = parse_block_height(blocks_dir);
 
         // If there are files in path, continue mining.
         if current_block_number == 0 {
@@ -160,14 +158,14 @@ pub mod build_block {
             if let Ok(entry) = entry {
                 if let Some(stem) = entry.file_stem() {
                     if let Some(stem_string) = stem.to_str() {
-                        if let blocknumber = stem_string.replace("block_", "") {
+                        let blocknumber = stem_string.replace("block_", ""); 
                             // TODO: Alternatively rely on the json data field 'height' insead of file name.
                             let blocknumber = blocknumber.parse::<u64>().unwrap();
                             if blocknumber >= max_block {
                                 max_block = blocknumber;
                                 max_block_path = Some(entry);
                             }
-                        }
+                        
                     }
                 }
             }
@@ -180,7 +178,7 @@ pub mod build_block {
     /* ////////////// */
 
     // TODO: Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
-
+    #[allow(dead_code)]
     fn test_helper_clear_block_dir(blocks_dir: &Path) {
         // delete the temporary test file and directory.
         // remove_dir_all is scary: be careful with this.
