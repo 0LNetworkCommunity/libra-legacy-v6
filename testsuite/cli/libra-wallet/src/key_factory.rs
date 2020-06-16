@@ -127,9 +127,9 @@ pub struct KeyFactory {
 }
 
 impl KeyFactory {
-    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"LIBRA WALLET: mnemonic salt prefix$";
-    const MASTER_KEY_SALT: &'static [u8] = b"LIBRA WALLET: master key salt$";
-    const INFO_PREFIX: &'static [u8] = b"LIBRA WALLET: derived key$";
+    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"OL WALLET: mnemonic salt prefix$";
+    const MASTER_KEY_SALT: &'static [u8] = b"OL WALLET: master key salt$";
+    const INFO_PREFIX: &'static [u8] = b"OL WALLET: derived key$";
     /// Instantiate a new KeyFactor from a Seed, where the [u8; 64] raw bytes of the Seed are used
     /// to derive both the Master
     pub fn new(seed: &Seed) -> Result<Self> {
@@ -196,11 +196,11 @@ fn test_key_derivation() {
         mnemonic.to_string(),
         Mnemonic::mnemonic(&data).unwrap().to_string()
     );
-    let seed = Seed::new(&mnemonic, "LIBRA");
+    let seed = Seed::new(&mnemonic, "OL");
 
     let key_factory = KeyFactory::new(&seed).unwrap();
     assert_eq!(
-        "16274c9618ed59177ca948529c1884ba65c57984d562ec2b4e5aa1ee3e3903be",
+        "9c674cda0f0f975263e68aca67436cb03ebe827fb2abee92fa15cb1d60de412a",
         hex::encode(&key_factory.master())
     );
 
