@@ -31,43 +31,39 @@ script {
 //! sender: storage
 script {
     use 0x0::Stats;
-    use 0x0::Debug;
+    // use 0x0::Debug;
     fun main(){
-        Stats::insert({{bob}}, 0, 4);
-        Stats::insert({{charlie}}, 4, 7);
-        Stats::insert({{alice}}, 10, 19);
-        Stats::insert({{alice}}, 120, 199);
-        Stats::insert({{bob}}, 80, 149);
-        let a = 1;
-        Debug::print(&a);
+        Stats::insert({{bob}}, 2, 4);
+        // let a = 1;
+        // Debug::print(&a);
     }
 }
 // check: EXECUTED
-
-// Query data struct
-//! new-transaction
-//! sender: storage
-script{
-    use 0x0::Debug;
-    use 0x0::Stats;
-    fun main(){
-        let a = Stats::Node_Heuristics({{alice}}, 0, 500);
-        // Should print 90
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{alice}}, 0, 100);
-        // Should print 10
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{bob}}, 0, 500);
-        // Should print 75
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{bob}}, 0, 100);
-        // Should print 25
-        Debug::print(&a);
-        a = Stats::Node_Heuristics({{charlie}}, 0, 500);
-        // Should print 4
-        Debug::print(&a);
-        a = 3;
-        Debug::print(&a);
-    }
-}
-// check: EXECUTED
+//
+// // Query data struct
+// //! new-transaction
+// //! sender: storage
+// script{
+//     use 0x0::Debug;
+//     use 0x0::Stats;
+//     fun main(){
+//         let a = Stats::Node_Heuristics({{alice}}, 0, 500);
+//         // Should print 90
+//         Debug::print(&a);
+//         // a = Stats::Node_Heuristics({{alice}}, 0, 100);
+//         // // Should print 10
+//         // Debug::print(&a);
+//         // a = Stats::Node_Heuristics({{bob}}, 0, 500);
+//         // // Should print 75
+//         // Debug::print(&a);
+//         // a = Stats::Node_Heuristics({{bob}}, 0, 100);
+//         // // Should print 25
+//         // Debug::print(&a);
+//         // a = Stats::Node_Heuristics({{charlie}}, 0, 500);
+//         // // Should print 4
+//         // Debug::print(&a);
+//         // a = 3;
+//         // Debug::print(&a);
+//     }
+// }
+// // check: EXECUTED

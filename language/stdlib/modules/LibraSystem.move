@@ -265,6 +265,62 @@ module LibraSystem {
     fun is_validator_(addr: address, validators_vec_ref: &vector<ValidatorInfo>): bool {
         Option::is_some(&get_validator_index_(validators_vec_ref, addr))
     }
+   ///////////////////////////////////////////////////////////////////////////
+    // OpenLibra Methods
+    // Utils required for OpenLibra
+    ///////////////////////////////////////////////////////////////////////////
 
+    // This function takes in a set of top n validators and updates the validator set. 
+    // NewEpochEvent event will be fired.
+    // The Association, the VM, the validator operator or the validator from the current validator set
+    // are authorized to update the set of validator infos and add/remove validators
+    // Tests for this method are written in move-lang/functional-tests/OL/reconfiguration/bulk_update.move
+    public fun bulk_update_validators(        
+        account: &signer,
+        new_validators: vector<address>) acquires CapabilityHolder {
+        
+        Transaction::assert(is_authorized_to_reconfigure_(account), 22);
+
+        // Either check for each validator and add/remove them or clear the current list and append the list.
+        // The first way might be computationally expensive, so I choose to go with second approach. 
+
+        // Clear all the current validators  ==> Intialize new validators
+        let next_epoch_validators = Vector::empty();
+
+        let n = Vector::length<address>(&new_validators);
+         
+        // Get the current validator and append it to list 
+        let index = 0;
+        while (index < n) { 
+            let account_address = *(Vector::borrow<address>(&new_validators, index));
+
+            // A prospective validator must have a validator config resource
+            Transaction::assert(is_valid_and_certified(account_address), 33);
+
+            let config = ValidatorConfig::get_config(account_address);
+
+            Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                addr: account_address,
+                config, // copy the config over to ValidatorSet
+                consensus_voting_power: 1,
+            });
+
+            index = index + 1;
+        };
+
+        // We have vector of validators - updated!
+        // Next, let us get the current validator set for the current parameters 
+        let outgoing_validator_set = get_validator_set();
+        
+        // We create a new Validator set using scheme from outgoingValidatorset and update the validator set. 
+        let updated_validator_set = T {
+            scheme: outgoing_validator_set.scheme,
+            validators: next_epoch_validators,
+        };
+       
+        // Updated the configuration using updated validator set. Now, start new epoch
+        set_validator_set(updated_validator_set);
+    }
+ 
 }
 }
