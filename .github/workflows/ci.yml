@@ -27,4 +27,6 @@ jobs:
         with:
           command: check
       - name: Run tests
-        run: cargo test --verbose
+        run: |
+        cd language/move-lang/functional-tests
+        cargo test --verbose
