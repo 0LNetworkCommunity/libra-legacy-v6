@@ -242,11 +242,9 @@ pub fn verify_proof<T: BigNum, V: ClassGroup<BigNum = T>>(
 ) -> Result<(), ()> {
     let element_len = 2 * ((int_size_bits + 16) >> 4);
     let mut x_buf = vec![0; element_len];
-    x.serialize(&mut x_buf[..])
-        .expect(super::INCORRECT_BUFFER_SIZE);
+    x.serialize(&mut x_buf[..]).map_err(|_| ())?;
     let mut y_buf = vec![0; element_len];
-    y.serialize(&mut y_buf[..])
-        .expect(super::INCORRECT_BUFFER_SIZE);
+    y.serialize(&mut y_buf[..]).map_err(|_| ())?;
     let b = hash_prime(&[&x_buf[..], &y_buf[..]]);
     let mut r = T::from(0);
     r.mod_powm(&T::from(2u64), &T::from(t), &b);
