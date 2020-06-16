@@ -19,7 +19,7 @@ serde = { version = "1.0.111", features = ["derive", "rc"] }
 lcs = { path = "../../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
 libra-crypto = { path = "../../../crypto/crypto", version = "0.1.0"}
 libra-logger = { path = "../../../common/logger", version = "0.1.0" }
-vdf = { git="https://github.com/poanetwork/vdf.git", branch="master" }
+vdf = { path="../../../verifiable_delay/vdf",version = "0.1.0"}
 libra-types = { path = "../../../types", version = "0.1.0" }
 libra-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
 move-core-types = { path = "../../move-core/types", version = "0.1.0" }

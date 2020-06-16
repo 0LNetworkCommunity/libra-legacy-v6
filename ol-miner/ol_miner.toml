@@ -1,0 +1,8 @@
+[profile]
+public_key = "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+statement = "test"
+
+[chain_info]
+chain_id = "experimental"
+block_size = 60 # TODO: should this be called "difficulty"
+block_dir= "./blocks/"

@@ -23,7 +23,7 @@ libra-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1
 move-core-types = { path = "../../move-core/types", version = "0.1.0" }
 move-vm-types = { path = "../types", version = "0.1.0" }
 vm = { path = "../../vm", version = "0.1.0" }
-vdf = { git="https://github.com/poanetwork/vdf.git", branch="master" }
+vdf = { path="../../../verifiable_delay/vdf",version = "0.1.0"}
 
 [features]
 default = []

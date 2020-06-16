@@ -6,7 +6,7 @@ use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
     natives::function::{native_gas, NativeContext, NativeResult},
-    values::{Value, Reference},
+    values::{Reference, Value},
 };
 
 use libra_types::vm_error::{StatusCode, VMStatus};
@@ -27,27 +27,29 @@ pub fn verify(
         return Err(VMStatus::new(StatusCode::UNREACHABLE).with_message(msg));
     }
 
-    let alleged_solution = pop_arg!(arguments, Reference).read_ref()?.value_as::<Vec<u8>>()?;
-    let difficulty = pop_arg!(arguments, Reference).read_ref()?.value_as::<u64>()?;
-    let challenge = pop_arg!(arguments, Reference).read_ref()?.value_as::<Vec<u8>>()?;
+    let alleged_solution = pop_arg!(arguments, Reference)
+        .read_ref()?
+        .value_as::<Vec<u8>>()?;
+    let difficulty = pop_arg!(arguments, Reference)
+        .read_ref()?
+        .value_as::<u64>()?;
+    let challenge = pop_arg!(arguments, Reference)
+        .read_ref()?
+        .value_as::<Vec<u8>>()?;
 
     // TODO change the `cost_index` when we have our own cost table.
-    let cost = native_gas(
-        context.cost_table(),
-        NativeCostIndex::SHA3_256,
-        1,
-    );
+    let cost = native_gas(context.cost_table(), NativeCostIndex::SHA3_256, 1);
 
     let v = vdf::WesolowskiVDFParams(2048).new();
 
     // catch panicked and return `false` value
     let result = panic::catch_unwind(|| {
-        let r = v.verify(&challenge, difficulty, &alleged_solution );
+        let r = v.verify(&challenge, difficulty, &alleged_solution);
         if r.is_err() {
             panic!("Invalid Proof");
         }
     });
 
-    let return_values = vec![Value::bool(result.is_ok() )];
+    let return_values = vec![Value::bool(result.is_ok())];
     Ok(NativeResult::ok(cost, return_values))
 }
