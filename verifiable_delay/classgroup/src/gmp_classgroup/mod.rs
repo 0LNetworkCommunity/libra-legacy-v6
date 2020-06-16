@@ -402,9 +402,7 @@ impl ClassGroup for GmpClassGroup {
     }
 
     fn serialize(&self, buf: &mut [u8]) -> Result<(), usize> {
-        self.assert_valid();
-        if buf.len() & 1 == 1 {
-            // odd lengths do not make sense
+        if !self.is_valid() || buf.len() & 1 == 1 {
             Err(0)
         } else {
             let len = buf.len() >> 1;
