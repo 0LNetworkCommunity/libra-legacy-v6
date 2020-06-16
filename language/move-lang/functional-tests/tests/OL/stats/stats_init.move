@@ -13,10 +13,13 @@
 script {
     use 0x0::Stats;
     use 0x0::Debug;
+    use 0x0::Transaction;
+    
         fun main(account: &signer) {
-            Stats::initialize(account);
-            let a = 0;
-            Debug::print(&a);
+            let success = Stats::initialize(account);
+            Transaction::assert(success == 1u64, 1);
+            // let a = 0;
+            Debug::print(&success);
         }
     }
 // check: EXECUTED
@@ -24,21 +27,21 @@ script {
 // These are manual inserts which are added since automatic inserts are
 // not working (See issue #31)
 
-// Insert into data struct
-//! new-transaction
-//! gas-price: 1
-//! max-gas: 2000000
-//! sender: storage
-script {
-    use 0x0::Stats;
-    // use 0x0::Debug;
-    fun main(){
-        Stats::insert({{bob}}, 2, 4);
-        // let a = 1;
-        // Debug::print(&a);
-    }
-}
-// check: EXECUTED
+// // Insert into data struct
+// //! new-transaction
+// //! gas-price: 1
+// //! max-gas: 2000000
+// //! sender: storage
+// script {
+//     use 0x0::Stats;
+//     // use 0x0::Debug;
+//     fun main(){
+//         Stats::insert({{bob}}, 2, 4);
+//         // let a = 1;
+//         // Debug::print(&a);
+//     }
+// }
+// // check: EXECUTED
 //
 // // Query data struct
 // //! new-transaction

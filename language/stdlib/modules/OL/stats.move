@@ -3,8 +3,9 @@
 address 0x0 {
   module Stats {
     use 0x0::Vector;
-    use 0x0::Transaction;
+    //use 0x0::Transaction;
     use 0x0::Signer;
+    // use 0x0::Debug;
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
     struct Chunk {
@@ -18,25 +19,29 @@ address 0x0 {
       chunks: vector<Chunk>
     }
 
-    // This stores the full history. For proof of concept (POC), it is a vector 
+    // This stores the full history. For proof of concept (POC), it is a vector
     // which stores one entry for each validator.
     resource struct History {
       val_list: vector<Node>,
     }
 
-    public fun initialize(association: &signer) {
+    public fun initialize(association: &signer): u64 {
       // This should happen only once in genesis
-      Transaction::assert(Signer::address_of(association) == 0xA550C18, 1);
-      move_to_sender<History>(History{ val_list: Vector::empty() });
+      if (Signer::address_of(association) == 0xA550C18) {
+        move_to_sender<History>(History{ val_list: Vector::empty() });
+        return 1u64
+      } else {
+        return 0u64
+      }
     }
 
     // This should actually return a float as a percentage, but this hasn't been implemented yet.
-    // For now, it will be returned as an unsigned int and be a confidence level 
-    public fun Node_Heuristics(node_addr: address, start_height: u64, 
+    // For now, it will be returned as an unsigned int and be a confidence level
+    public fun Node_Heuristics(node_addr: address, start_height: u64,
       end_height: u64): u64 acquires History{
       if (start_height > end_height) return 0;
       let history = borrow_global<History>(0xA550C18);
-      
+
       // This is the case where the validator has voted on nothing and does not have a Node
       if (!exists(history, node_addr)) return 0;
 
@@ -45,8 +50,8 @@ address 0x0 {
       let i = 0;
       let len = Vector::length<Chunk>(chunks);
       let num_voted = 0;
-      if(node_addr == 0xA550C18) return 1; 
-      
+      if(node_addr == 0xA550C18) return 1;
+
       // Go though all the chunks of the validator's node and accumulate
       while (i < len) {
         let chunk = Vector::borrow<Chunk>(chunks, i);
@@ -66,12 +71,12 @@ address 0x0 {
         };
         i = i + 1;
       };
-      num_voted 
+      num_voted
       // This should be added to get a percentage eventually: num_voted / (end_height - start_height + 1)
     }
 
     // This should actually return a float as a percentage, but this hasn't been implemented yet.
-    // For now, it will be returned as an unsigned int and be a confidence level 
+    // For now, it will be returned as an unsigned int and be a confidence level
     public fun Network_Heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
       let history = borrow_global<History>(0xA550C18);
@@ -122,16 +127,16 @@ address 0x0 {
       let i = 0;
       let len = Vector::length<address>(votes);
 
-      // For some reason, LibraBlock currently passes in an empty vector 
+      // For some reason, LibraBlock currently passes in an empty vector
       // for the previous votes each time, so history is not correctly stored
-      
+
       while (i < len) {
         insert(*Vector::borrow(votes, i), height, height);
         i = i + 1;
       };
     }
 
-    // This function should not actually be public, but it is so that inserts can 
+    // This function should not actually be public, but it is so that inserts can
     // be made manually. Currently, LibraBlock only passes in empty BlockMetadata
     // (which is incorrect). Normally, inserts and updates happen through the
     // public newBlock function.
@@ -151,7 +156,7 @@ address 0x0 {
         Vector::push_back(&mut node.chunks, Chunk{ start_block: start_block, end_block: end_block });
         return
       };
-      
+
       // This is a temporary reference to an existing chunk. Assuming there are no
       // conflicts and it is not adjacent to an existing chunk, it will be discarded.
       // If it is adjacent, we will assign this reference to the adjacent chunk so
@@ -160,7 +165,7 @@ address 0x0 {
       // be able to use binary trees and the Option<T> type.
       let adjacent = false;
       let chunk = Vector::borrow_mut(&mut node.chunks, 0);
-      
+
       // Check to see if the insert conflicts with what is already stored
       while (i < len) {
         chunk = Vector::borrow_mut(&mut node.chunks, i);
@@ -178,7 +183,7 @@ address 0x0 {
         };
         i = i + 1;
       };
-        
+
       // Add in the new chunk
       if (adjacent){
         chunk.end_block = end_block
