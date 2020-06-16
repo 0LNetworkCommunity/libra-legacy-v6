@@ -10,11 +10,11 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
+mod keygen;
 mod start;
 mod version;
-mod keygen;
 
-use self::{start::StartCmd, version::VersionCmd, keygen::KeyGenCmd};
+use self::{keygen::KeyGenCmd, start::StartCmd, version::VersionCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,

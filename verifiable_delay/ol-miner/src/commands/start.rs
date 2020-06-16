@@ -1,11 +1,9 @@
 //! `start` subcommand - example of how to write a subcommand
 
-
 // use crate::block::Block;
-use crate::config::OlMinerConfig;
 use crate::block::*;
+use crate::config::OlMinerConfig;
 use crate::prelude::*;
-
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
@@ -24,7 +22,6 @@ pub struct StartCmd {
     #[options(free)]
     recipient: Vec<String>,
 }
-
 
 impl Runnable for StartCmd {
     /// Start the application.

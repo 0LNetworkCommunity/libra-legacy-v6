@@ -15,7 +15,7 @@
 //! Creation of discriminants.
 //!
 //! The [`pot`] tool does not accept a discriminant as a command-line argument.
-//! Instead, we generate the discriminant from a (much smaller) seed.  
+//! Instead, we generate the discriminant from a (much smaller) seed.
 //!
 //! For performance, we follow the Chia network's [`inkfish`] implementation
 //! of ["Close to Uniform Prime Number Generation With Fewer Random Bits"][1]
@@ -30,7 +30,10 @@ include!(concat!(env!("OUT_DIR"), "/constants.rs"));
 
 use classgroup::BigNumExt;
 use num_traits::Zero;
-use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
+use sha3::{
+    digest::{ExtendableOutput, Input, XofReader},
+    Shake128,
+};
 use std::u16;
 
 /// Create a discriminant from a seed (a byte string) and a bit length (a
@@ -113,7 +116,6 @@ pub fn create_discriminant<T: BigNumExt>(seed: &[u8], bit_length: u16) -> T {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -122,7 +124,10 @@ mod test {
 
     #[test]
     fn check_discriminant_size() {
-        assert_eq!( GmpClassGroup::size_in_bits(& create_discriminant::<Mpz>(b"\xaa", 997)), 997);
+        assert_eq!(
+            GmpClassGroup::size_in_bits(&create_discriminant::<Mpz>(b"\xaa", 997)),
+            997
+        );
     }
 
     /*

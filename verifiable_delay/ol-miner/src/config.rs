@@ -86,7 +86,8 @@ impl OlMinerConfig {
                     32 // OL Key
                     +64 // chain_id
                     +8 // iterations/difficulty
-                    +1024// statement
+                    +1024
+                    // statement
                 ),
             "preimage is the incorrect size"
         );
@@ -137,7 +138,8 @@ impl Default for Profile {
     fn default() -> Self {
         Self {
             // TODO: change this public key.
-            public_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_owned(),
+            public_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+                .to_owned(),
             statement: "protests rage across America".to_owned(),
         }
     }

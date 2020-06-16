@@ -136,7 +136,10 @@ where
     for<'a, 'b> &'a T: std::ops::Mul<&'b T, Output = T>,
     for<'a, 'b> &'a T::BigNum: std::ops::Mul<&'b T::BigNum, Output = T::BigNum>,
 {
-    use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
+    use sha3::{
+        digest::{ExtendableOutput, Input, XofReader},
+        Shake128,
+    };
 
     let size = (int_size_bits + 16) >> 4;
     let mut v = vec![0; size * 2];

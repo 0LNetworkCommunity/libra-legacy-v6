@@ -3,8 +3,8 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use libra_wallet::WalletLibrary;
 use libra_crypto::traits::ValidCryptoMaterial;
+use libra_wallet::WalletLibrary;
 
 /// `keygen` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -19,8 +19,7 @@ impl Runnable for KeyGenCmd {
 
         let hex_key = hex::encode(auth_key.to_bytes());
 
-        println!("OL key:{}",hex_key);
-        println!("OL mnemonic: {}",wallet.mnemonic());
-
+        println!("OL key:{}", hex_key);
+        println!("OL mnemonic: {}", wallet.mnemonic());
     }
 }

@@ -14,7 +14,10 @@
 
 use super::proof_of_time::{iterate_squarings, serialize};
 use classgroup::{gmp_classgroup::GmpClassGroup, BigNum, BigNumExt, ClassGroup};
-use sha3::{digest::{Input, ExtendableOutput, XofReader}, Shake128};
+use sha3::{
+    digest::{ExtendableOutput, Input, XofReader},
+    Shake128,
+};
 use std::{cmp::Eq, collections::HashMap, hash::Hash, mem, u64, usize};
 
 #[derive(Debug, Clone)]
@@ -88,7 +91,6 @@ pub fn approximate_parameters(t: f64) -> (usize, u8, u64) {
     let w = (t / (t / k + l * (2.0f64).powf(k + 1.0)) - 2.0).floor();
     (l as _, k as _, w as _)
 }
-
 
 /// As on page 10 of Wesolowski's paper, we uniformly sample a prime
 /// from amongst the first 2^129 primes.  According to the prime number

@@ -23,8 +23,6 @@ use abscissa_core::testing::prelude::*;
 use once_cell::sync::Lazy;
 use std::time::Duration;
 
-
-
 /// Executes your application binary via `cargo run`.
 ///
 /// Storing this value as a [`Lazy`] static ensures that all instances of
@@ -34,10 +32,15 @@ use std::time::Duration;
 pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 
 /// Use `OlMinerConfig::default()` value if no config or args
-#[test] #[ignore]
+#[test]
+#[ignore]
 fn start_no_args() {
     let mut runner = RUNNER.clone();
-    let mut cmd = runner.arg("start").timeout(Duration::new(1, 0)).capture_stdout().run();
+    let mut cmd = runner
+        .arg("start")
+        .timeout(Duration::new(1, 0))
+        .capture_stdout()
+        .run();
     cmd.stdout().expect_line("Mining...");
 
     // TODO: This test fails because the miner runs in a loop, the process doesn't exit as expected.

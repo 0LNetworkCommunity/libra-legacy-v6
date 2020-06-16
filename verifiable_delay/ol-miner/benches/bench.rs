@@ -12,17 +12,17 @@ use ol_miner::delay::*;
 //     }
 // }
 
-
 fn bench_delay(c: &mut Criterion) {
-
-    c.bench_function("do_delay_100", |b| b.iter(|| delay::do_delay(b"test preimage",100)));
+    c.bench_function("do_delay_100", |b| {
+        b.iter(|| delay::do_delay(b"test preimage", 100))
+    });
 
     // example code
     // c.bench_function("fib", |b| b.iter(|| fibonacci(1)));
 }
 
 // sample size configs not documented. Found here: https://github.com/bheisler/criterion.rs/issues/407
-criterion_group!{
+criterion_group! {
     name = ol_benches;
     config = Criterion::default().sample_size(10);  // sampling size
     targets = bench_delay

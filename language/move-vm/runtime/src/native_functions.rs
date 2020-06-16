@@ -7,7 +7,7 @@ use libra_types::{
     contract_event::ContractEvent,
 };
 use move_core_types::{gas_schedule::CostTable, identifier::IdentStr, language_storage::ModuleId};
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector, vdf};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,

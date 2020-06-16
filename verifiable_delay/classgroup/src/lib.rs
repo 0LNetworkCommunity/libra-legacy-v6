@@ -177,8 +177,8 @@ mod test {
         path::PathBuf,
     };
 
-    use super::{gmp_classgroup::GmpClassGroup, ClassGroup};
     use super::gmp::mpz::Mpz;
+    use super::{gmp_classgroup::GmpClassGroup, ClassGroup};
 
     fn split_into_three_pieces(line: &str, c: char) -> [&str; 3] {
         let mut iter = line.split(c);
@@ -247,5 +247,4 @@ mod test {
             buffer.clear();
         }
     }
-
 }
