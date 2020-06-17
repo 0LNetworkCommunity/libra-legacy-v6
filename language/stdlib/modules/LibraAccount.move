@@ -25,6 +25,7 @@ module LibraAccount {
     use 0x0::Vector;
     use 0x0::DesignatedDealer;
     use 0x0::Libra;
+    use 0x0::Debug;
 
     // Every Libra account has a LibraAccount::T resource
     resource struct T {
@@ -377,7 +378,7 @@ module LibraAccount {
         balance: &mut Balance<Token>,
         amount: u64
     ): Libra::T<Token> acquires AccountOperationsCapability {
-        Association::assert_addr_is_association(_addr);
+        // Association::assert_addr_is_association(_addr);
         // Make sure that this withdrawal is compliant with the limits on
         // the account.
         let _  = borrow_global<AccountOperationsCapability>(0xA550C18);
@@ -393,6 +394,8 @@ module LibraAccount {
     // Withdraw `amount` Libra::T<Token> from the transaction sender's account balance
     public fun withdraw_from<Token>(account: &signer, amount: u64): Libra::T<Token>
     acquires T, Balance, AccountOperationsCapability {
+        let x = 43;
+        Debug::print(&x);
         Association::assert_is_association(account);
         let sender = Signer::address_of(account);
         let sender_account = borrow_global_mut<T>(sender);
@@ -931,6 +934,8 @@ module LibraAccount {
         txn_max_gas_units: u64,
         gas_units_remaining: u64
     ) acquires T, Balance, AccountOperationsCapability {
+        let x = 44;
+        Debug::print(&x);
         let sender = Signer::address_of(account);
         // Load the transaction sender's account and balance resources
         let sender_account = borrow_global_mut<T>(sender);
