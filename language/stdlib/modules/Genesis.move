@@ -30,6 +30,7 @@ module Genesis {
         fee_account: &signer,
         tc_account: &signer,
         tc_addr: address,
+        subsidy_addr: address,
         genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
@@ -80,6 +81,12 @@ module Genesis {
             coin1_burn_cap,
             coin2_mint_cap,
             coin2_burn_cap,
+        );
+
+        LibraAccount::create_subsidy_account<GAS::T>(
+            association,
+            subsidy_addr,
+            copy dummy_auth_key_prefix
         );
 
         // Create the config account

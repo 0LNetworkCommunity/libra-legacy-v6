@@ -9,6 +9,7 @@ module Libra {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Vector;
+    use 0x0::Subsidy;
 
     // The currency has a `CoinType` color that tells us what currency the
     // `value` inside represents.
@@ -138,6 +139,16 @@ module Libra {
     public fun grant_mint_capability_to_association<CoinType>(association: &signer) {
         assert_assoc_and_currency<CoinType>(association);
         move_to(association, MintCapability<CoinType>{})
+    }
+
+    public fun grant_mint_capability_to_subsidy<CoinType>(subsidy: &signer) {
+        assert_subsidy_and_currency<CoinType>(subsidy);
+        move_to(subsidy, MintCapability<CoinType>{})
+    }
+
+    public fun grant_burn_capability_to_subsidy<CoinType>(subsidy: &signer) {
+        assert_subsidy_and_currency<CoinType>(subsidy);
+        move_to(subsidy, BurnCapability<CoinType>{})
     }
 
     // Publish the `MintCapability` `cap` for the `CoinType` currency under `account`. `CoinType`
@@ -594,6 +605,11 @@ module Libra {
     // `CoinType` is a regstered currency type.
     fun assert_assoc_and_currency<CoinType>(account: &signer) {
         Association::assert_is_association(account);
+        assert_is_coin<CoinType>();
+    }
+
+    fun assert_subsidy_and_currency<CoinType>(account: &signer) {
+        Subsidy::assert_is_subsidy(Signer::address_of(account));
         assert_is_coin<CoinType>();
     }
 

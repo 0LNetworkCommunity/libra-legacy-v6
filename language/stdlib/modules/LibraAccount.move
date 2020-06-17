@@ -658,6 +658,24 @@ module LibraAccount {
     }
 
 
+    /// Create a treasury/compliance account at `new_account_address` with authentication key
+    /// `auth_key_prefix` | `new_account_address`
+    public fun create_subsidy_account<Token>(
+        association: &signer,
+        subsidy_account_address: address,
+        auth_key_prefix: vector<u8>
+    ) {
+        Association::assert_is_root(association);
+        let subsidy_account = create_signer(subsidy_account_address);
+        Association::grant_association_address(association, &subsidy_account);
+        Association::grant_privilege<FreezingPrivilege>(association, &subsidy_account);
+        Libra::grant_mint_capability_to_subsidy<GAS::T>(&subsidy_account);
+        Libra::grant_burn_capability_to_subsidy<GAS::T>(&subsidy_account);
+        Event::publish_generator(&subsidy_account);
+        make_account<Token, Empty::T>(subsidy_account, auth_key_prefix, Empty::create(), false)
+    }
+
+
     ///////////////////////////////////////////////////////////////////////////
     // Designated Dealer API
     ///////////////////////////////////////////////////////////////////////////

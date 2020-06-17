@@ -1,5 +1,11 @@
 address 0x0 {
   module Subsidy {
+    use 0x0::Transaction;
+
+    resource struct PrivilegedCapability<Privilege> { }
+
+    struct T { }
+
     // pub fun mint_subsidy() {
       // Permissions: Only the redeem.end_redeem method should be able to call this contract.
 
@@ -34,5 +40,18 @@ address 0x0 {
         // gas_coin.burn(burn)
       //}
     //}
+
+    public fun mint_gas() {
+      
+    }
+
+    public fun assert_is_subsidy(addr: address) {
+      Transaction::assert(addr_is_subsidy(addr), 1001);
+    }
+
+    public fun addr_is_subsidy(addr: address): bool {
+        //TODO:Do we initialize subsidy to a particular address like association
+        exists<PrivilegedCapability<T>>(addr)
+    }
   }
 }

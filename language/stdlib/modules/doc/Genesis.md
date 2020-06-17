@@ -15,7 +15,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="#0x0_Genesis_initialize">initialize</a>(association: &signer, config_account: &signer, fee_account: &signer, tc_account: &signer, tc_addr: address, genesis_auth_key: vector&lt;u8&gt;)
+<pre><code><b>fun</b> <a href="#0x0_Genesis_initialize">initialize</a>(association: &signer, config_account: &signer, fee_account: &signer, tc_account: &signer, tc_addr: address, subsidy_addr: address, genesis_auth_key: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -30,6 +30,7 @@
     fee_account: &signer,
     tc_account: &signer,
     tc_addr: address,
+    subsidy_addr: address,
     genesis_auth_key: vector&lt;u8&gt;,
 ) {
     <b>let</b> dummy_auth_key_prefix = x"00000000000000000000000000000000";
@@ -80,6 +81,12 @@
         coin1_burn_cap,
         coin2_mint_cap,
         coin2_burn_cap,
+    );
+
+    <a href="LibraAccount.md#0x0_LibraAccount_create_subsidy_account">LibraAccount::create_subsidy_account</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(
+        association,
+        subsidy_addr,
+        <b>copy</b> dummy_auth_key_prefix
     );
 
     // Create the config account
