@@ -20,6 +20,7 @@ module Genesis {
     use 0x0::LibraVersion;
     use 0x0::LibraWriteSetManager;
     use 0x0::Signer;
+    use 0x0::Stats;
     use 0x0::Testnet;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
@@ -44,6 +45,9 @@ module Genesis {
 
         // Currency setup
         Libra::initialize(config_account);
+
+        // Stats module setup
+        Stats::initialize(association);
 
         // Set that this is testnet
         Testnet::initialize(association);
