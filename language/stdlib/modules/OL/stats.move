@@ -103,7 +103,7 @@ address 0x0 {
         let chunk = Vector::borrow<Chunk>(chunks, 0);
         while (j < num_chunks) {
           let cand_chunk = Vector::borrow<Chunk>(chunks, j);
-          if (cand_chunk.start_block <= start_height && cand_chunk.start_block < chunk.start_block) {
+          if (cand_chunk.start_block <= start_height && cand_chunk.start_block > chunk.start_block) {
             chunk = cand_chunk;
           };
           j = j + 1;
