@@ -25,7 +25,6 @@ module LibraAccount {
     use 0x0::Vector;
     use 0x0::DesignatedDealer;
     use 0x0::Libra;
-    use 0x0::Debug;
 
     // Every Libra account has a LibraAccount::T resource
     resource struct T {
@@ -932,8 +931,6 @@ module LibraAccount {
         txn_max_gas_units: u64,
         gas_units_remaining: u64
     ) acquires T, Balance, AccountOperationsCapability {
-        let x = 44;
-        Debug::print(&x);
         let sender = Signer::address_of(account);
         // Load the transaction sender's account and balance resources
         let sender_account = borrow_global_mut<T>(sender);
