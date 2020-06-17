@@ -10,7 +10,7 @@ use move_core_types::{
 };
 use once_cell::sync::Lazy;
 
-pub const LBR_NAME: &str = "LBR";
+pub const LBR_NAME: &str = "GAS";
 
 pub static LBR_MODULE: Lazy<ModuleId> =
     Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, Identifier::new(LBR_NAME).unwrap()));

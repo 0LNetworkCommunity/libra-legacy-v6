@@ -6,6 +6,7 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Transaction;
     use 0x0::Debug;
+    use 0x0::LibraConfig;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -21,50 +22,43 @@ address 0x0 {
         proofs: vector<VdfProofBlob>,
     }
 
-    public fun begin_redeem(addr: address, vdf_proof_blob: VdfProofBlob) acquires T, InProcess{
-      // Permissions: anyone can call this contract.
-      // There is an edge-case which may not be clear. For example: Ping wants to join the network, he did a VDF.
-      // He has no gas to submit, he asks to Lucas to submit the VDF (which Ping ran on his computer).
+    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>,) : VdfProofBlob {
+       VdfProofBlob {challenge,  difficulty, solution }
+    }
+
+    public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess{
+      // Initialize
       if (!has_in_process()) {
            init_in_process();
       };
 
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
-
-      // TODO: This should not be the sender of the transaction.
-      // In the example above. Lucas sent a valid proof for Ping.
-      // Looks like the implementation below would allow Ping to ask Keerthi to send the transaction again, and he gets two coins.
-      // it's not possible, the only way to implement is that Ping submit his proof by himself. because Move only has move_to_sender().
-
       let user_redemption_state = borrow_global_mut<T>(default_redeem_address());
       let blob_redeemed = Vector::contains(&user_redemption_state.history, &vdf_proof_blob.solution);
-      Transaction::assert(blob_redeemed == true, 10000);
+      Transaction::assert(blob_redeemed == false, 10000);
 
       // QUESTION: Should we save a UserProof that is false so that we know it's been attempted multiple times?
       Vector::push_back(&mut user_redemption_state.history, *&vdf_proof_blob.solution);
 
       // Checks that the user did run the delay (VDF). Calling Verify() to check the validity of Blob
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-      Transaction::assert(valid == false, 10001);
+      Transaction::assert(valid == true, 10001);
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
-      let in_process = borrow_global_mut<InProcess>(addr);
+      let in_process = borrow_global_mut<InProcess>(Transaction::sender());
       Vector::push_back(&mut in_process.proofs, vdf_proof_blob);
 
     }
 
-    public fun end_redeem(redeemed_addr: address, vdf_proof_blob: VdfProofBlob) acquires InProcess {
+    public fun end_redeem(redeemed_addr: address) acquires InProcess {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
-      Transaction::assert(sender != default_redeem_address(), 10003);
-
-      Debug::print(&redeemed_addr);
-      Debug::print(&vdf_proof_blob);
+      Transaction::assert(sender == default_redeem_address(), 10003);
 
       // Account do not have proof to verify.
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
       let counts = Vector::length(&in_process_redemption.proofs);
-      Transaction::assert(counts<=0, 10003);
+      Transaction::assert(counts > 0, 10002);
 
       // Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
@@ -83,13 +77,13 @@ address 0x0 {
     // This can only be invoked by the default redeem address to instantiate
     // the resource under that address.
     // It can only be called a single time. it should be invoked in the genesis transaction.
-    public fun initialize(){
-        Transaction::assert( Transaction::sender() != default_redeem_address(), 10003);
-        move_to_sender<T>( T{ history: Vector::empty()})
+    public fun initialize(config_account: &signer) {
+        Transaction::assert( Transaction::sender() == default_redeem_address(), 10003);
+        move_to<T>( config_account ,T{ history: Vector::empty()});
     }
 
     fun default_redeem_address(): address {
-        0x0
+        LibraConfig::default_config_address()
     }
 
     fun has_in_process(): bool {
