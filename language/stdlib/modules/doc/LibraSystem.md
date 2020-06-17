@@ -23,6 +23,7 @@
 -  [Function `get_validator_index_`](#0x0_LibraSystem_get_validator_index_)
 -  [Function `update_ith_validator_info_`](#0x0_LibraSystem_update_ith_validator_info_)
 -  [Function `is_validator_`](#0x0_LibraSystem_is_validator_)
+-  [Function `bulk_update_validators`](#0x0_LibraSystem_bulk_update_validators)
 
 
 
@@ -615,6 +616,73 @@
 
 <pre><code><b>fun</b> <a href="#0x0_LibraSystem_is_validator_">is_validator_</a>(addr: address, validators_vec_ref: &vector&lt;<a href="#0x0_LibraSystem_ValidatorInfo">ValidatorInfo</a>&gt;): bool {
     <a href="Option.md#0x0_Option_is_some">Option::is_some</a>(&<a href="#0x0_LibraSystem_get_validator_index_">get_validator_index_</a>(validators_vec_ref, addr))
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x0_LibraSystem_bulk_update_validators"></a>
+
+## Function `bulk_update_validators`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraSystem_bulk_update_validators">bulk_update_validators</a>(account: &signer, new_validators: vector&lt;address&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraSystem_bulk_update_validators">bulk_update_validators</a>(
+    account: &signer,
+    new_validators: vector&lt;address&gt;) <b>acquires</b> <a href="#0x0_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
+
+    Transaction::assert(<a href="#0x0_LibraSystem_is_authorized_to_reconfigure_">is_authorized_to_reconfigure_</a>(account), 22);
+
+    // Either check for each validator and add/remove them or clear the current list and append the list.
+    // The first way might be computationally expensive, so I choose <b>to</b> go with second approach.
+
+    // Clear all the current validators  ==&gt; Intialize new validators
+    <b>let</b> next_epoch_validators = <a href="Vector.md#0x0_Vector_empty">Vector::empty</a>();
+
+    <b>let</b> n = <a href="Vector.md#0x0_Vector_length">Vector::length</a>&lt;address&gt;(&new_validators);
+
+    // Get the current validator and append it <b>to</b> list
+    <b>let</b> index = 0;
+    <b>while</b> (index &lt; n) {
+        <b>let</b> account_address = *(<a href="Vector.md#0x0_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&new_validators, index));
+
+        // A prospective validator must have a validator config <b>resource</b>
+        Transaction::assert(<a href="#0x0_LibraSystem_is_valid_and_certified">is_valid_and_certified</a>(account_address), 33);
+
+        <b>let</b> config = <a href="ValidatorConfig.md#0x0_ValidatorConfig_get_config">ValidatorConfig::get_config</a>(account_address);
+
+        <a href="Vector.md#0x0_Vector_push_back">Vector::push_back</a>(&<b>mut</b> next_epoch_validators, <a href="#0x0_LibraSystem_ValidatorInfo">ValidatorInfo</a> {
+            addr: account_address,
+            config, // <b>copy</b> the config over <b>to</b> ValidatorSet
+            consensus_voting_power: 1,
+        });
+
+        index = index + 1;
+    };
+
+    // We have vector of validators - updated!
+    // Next, <b>let</b> us get the current validator set for the current parameters
+    <b>let</b> outgoing_validator_set = <a href="#0x0_LibraSystem_get_validator_set">get_validator_set</a>();
+
+    // We create a new Validator set using scheme from outgoingValidatorset and <b>update</b> the validator set.
+    <b>let</b> updated_validator_set = <a href="#0x0_LibraSystem_T">T</a> {
+        scheme: outgoing_validator_set.scheme,
+        validators: next_epoch_validators,
+    };
+
+    // Updated the configuration using updated validator set. Now, start new epoch
+    <a href="#0x0_LibraSystem_set_validator_set">set_validator_set</a>(updated_validator_set);
 }
 </code></pre>
 
