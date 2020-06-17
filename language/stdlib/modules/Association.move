@@ -105,7 +105,7 @@ module Association {
     }
 
     /// Assert that `addr` is an association account.
-    fun assert_addr_is_association(addr: address) {
+    public fun assert_addr_is_association(addr: address) {
         Transaction::assert(addr_is_association(addr), 1002);
     }
 

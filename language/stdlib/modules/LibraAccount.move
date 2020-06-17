@@ -10,6 +10,7 @@ module LibraAccount {
     use 0x0::Event;
     use 0x0::Hash;
     use 0x0::LBR;
+    use 0x0::GAS;
     use 0x0::LCS;
     use 0x0::LibraTimestamp;
     use 0x0::LibraTransactionTimeout;
@@ -24,6 +25,7 @@ module LibraAccount {
     use 0x0::Vector;
     use 0x0::DesignatedDealer;
     use 0x0::Libra;
+    use 0x0::Debug;
 
     // Every Libra account has a LibraAccount::T resource
     resource struct T {
@@ -214,12 +216,14 @@ module LibraAccount {
     // Deposits the `to_deposit` coin into the `payee`'s account balance
     public fun deposit<Token>(payer: &signer, payee: address, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
+        Association::assert_is_association(payer);
         deposit_with_metadata(payer, payee, to_deposit, x"", x"")
     }
 
     // Deposits the `to_deposit` coin into `account`
     public fun deposit_to<Token>(account: &signer, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
+        Association::assert_is_association(account);
         deposit(account, Signer::address_of(account), to_deposit)
     }
 
@@ -374,6 +378,7 @@ module LibraAccount {
         balance: &mut Balance<Token>,
         amount: u64
     ): Libra::T<Token> acquires AccountOperationsCapability {
+        // Association::assert_addr_is_association(_addr);
         // Make sure that this withdrawal is compliant with the limits on
         // the account.
         let _  = borrow_global<AccountOperationsCapability>(0xA550C18);
@@ -389,6 +394,9 @@ module LibraAccount {
     // Withdraw `amount` Libra::T<Token> from the transaction sender's account balance
     public fun withdraw_from<Token>(account: &signer, amount: u64): Libra::T<Token>
     acquires T, Balance, AccountOperationsCapability {
+        let x = 43;
+        Debug::print(&x);
+        Association::assert_is_association(account);
         let sender = Signer::address_of(account);
         let sender_account = borrow_global_mut<T>(sender);
         let sender_balance = borrow_global_mut<Balance<Token>>(sender);
@@ -402,6 +410,7 @@ module LibraAccount {
     public fun withdraw_with_capability<Token>(
         cap: &WithdrawCapability, amount: u64
     ): Libra::T<Token> acquires Balance, AccountOperationsCapability {
+        Association::assert_addr_is_association(cap.account_address);
         let balance = borrow_global_mut<Balance<Token>>(cap.account_address);
         withdraw_from_balance<Token>(cap.account_address, balance , amount)
     }
@@ -473,6 +482,7 @@ module LibraAccount {
     // Creates the `payee` account if it does not exist
     public fun pay_from<Token>(payer: &signer, payee: address, amount: u64)
     acquires T, Balance, AccountOperationsCapability, Role {
+        Association::assert_is_association(payer);
         pay_from_with_metadata<Token>(payer, payee, amount, x"", x"");
     }
 
@@ -602,6 +612,9 @@ module LibraAccount {
             };
             if (!::exists<Balance<LBR::T>>(new_account_addr)) {
                 add_currency<LBR::T>(&new_account);
+            };
+            if (!::exists<Balance<GAS::T>>(new_account_addr)) {
+                add_currency<GAS::T>(&new_account);
             };
         };
         // (4) TODO: publish account limits?
@@ -921,6 +934,8 @@ module LibraAccount {
         txn_max_gas_units: u64,
         gas_units_remaining: u64
     ) acquires T, Balance, AccountOperationsCapability {
+        let x = 44;
+        Debug::print(&x);
         let sender = Signer::address_of(account);
         // Load the transaction sender's account and balance resources
         let sender_account = borrow_global_mut<T>(sender);

@@ -1,0 +1,33 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master, zaki-ol-miner, lg-testing ]
+  pull_request:
+    branches: [ master, zaki-ol-miner ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Rust project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            override: true
+            components: rustfmt, clippy
+
+      # `cargo check` command here will use installed `nightly`
+      # as it is set as an "override" for current directory
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+      - name: Run tests
+        run: cargo test -- --test-threads 1

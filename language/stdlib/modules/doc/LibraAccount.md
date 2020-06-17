@@ -992,6 +992,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_deposit">deposit</a>&lt;Token&gt;(payer: &signer, payee: address, to_deposit: <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt;)
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="#0x0_LibraAccount_Role">Role</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(payer);
     <a href="#0x0_LibraAccount_deposit_with_metadata">deposit_with_metadata</a>(payer, payee, to_deposit, x"", x"")
 }
 </code></pre>
@@ -1017,6 +1018,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_deposit_to">deposit_to</a>&lt;Token&gt;(account: &signer, to_deposit: <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt;)
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="#0x0_LibraAccount_Role">Role</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(account);
     <a href="#0x0_LibraAccount_deposit">deposit</a>(account, <a href="Signer.md#0x0_Signer_address_of">Signer::address_of</a>(account), to_deposit)
 }
 </code></pre>
@@ -1279,6 +1281,7 @@
     balance: &<b>mut</b> <a href="#0x0_LibraAccount_Balance">Balance</a>&lt;Token&gt;,
     amount: u64
 ): <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt; <b>acquires</b> <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Association.md#0x0_Association_assert_addr_is_association">Association::assert_addr_is_association</a>(_addr);
     // Make sure that this withdrawal is compliant with the limits on
     // the account.
     <b>let</b> _  = borrow_global&lt;<a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(0xA550C18);
@@ -1313,6 +1316,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_withdraw_from">withdraw_from</a>&lt;Token&gt;(account: &signer, amount: u64): <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt;
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(account);
     <b>let</b> sender = <a href="Signer.md#0x0_Signer_address_of">Signer::address_of</a>(account);
     <b>let</b> sender_account = borrow_global_mut&lt;<a href="#0x0_LibraAccount_T">T</a>&gt;(sender);
     <b>let</b> sender_balance = borrow_global_mut&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(sender);
@@ -1345,6 +1349,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_withdraw_with_capability">withdraw_with_capability</a>&lt;Token&gt;(
     cap: &<a href="#0x0_LibraAccount_WithdrawCapability">WithdrawCapability</a>, amount: u64
 ): <a href="Libra.md#0x0_Libra_T">Libra::T</a>&lt;Token&gt; <b>acquires</b> <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Association.md#0x0_Association_assert_addr_is_association">Association::assert_addr_is_association</a>(cap.account_address);
     <b>let</b> balance = borrow_global_mut&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(cap.account_address);
     <a href="#0x0_LibraAccount_withdraw_from_balance">withdraw_from_balance</a>&lt;Token&gt;(cap.account_address, balance , amount)
 }
@@ -1514,6 +1519,7 @@ with the attached
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_pay_from">pay_from</a>&lt;Token&gt;(payer: &signer, payee: address, amount: u64)
 <b>acquires</b> <a href="#0x0_LibraAccount_T">T</a>, <a href="#0x0_LibraAccount_Balance">Balance</a>, <a href="#0x0_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="#0x0_LibraAccount_Role">Role</a> {
+    <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(payer);
     <a href="#0x0_LibraAccount_pay_from_with_metadata">pay_from_with_metadata</a>&lt;Token&gt;(payer, payee, amount, x"", x"");
 }
 </code></pre>
@@ -1780,6 +1786,9 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
         };
         <b>if</b> (!::<a href="#0x0_LibraAccount_exists">exists</a>&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;<a href="LBR.md#0x0_LBR_T">LBR::T</a>&gt;&gt;(new_account_addr)) {
             <a href="#0x0_LibraAccount_add_currency">add_currency</a>&lt;<a href="LBR.md#0x0_LBR_T">LBR::T</a>&gt;(&new_account);
+        };
+        <b>if</b> (!::<a href="#0x0_LibraAccount_exists">exists</a>&lt;<a href="#0x0_LibraAccount_Balance">Balance</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;&gt;(new_account_addr)) {
+            <a href="#0x0_LibraAccount_add_currency">add_currency</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(&new_account);
         };
     };
     // (4) TODO: publish account limits?
