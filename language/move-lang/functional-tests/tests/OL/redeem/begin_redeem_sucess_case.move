@@ -3,7 +3,7 @@
 
 // Initialize Redeem Module
 //! new-transaction
-//! sender: config
+//! sender: association
 script {
 use 0x0::Redeem;
 fun main(s: &signer) {
@@ -32,7 +32,7 @@ fun main() {
 
 // Bob Submit end_redeem Transaction. Only the one who initialed Redeem module can execute this transaction.
 //! new-transaction
-//! sender: config
+//! sender: association
 script {
 use 0x0::Redeem;
 fun main() {

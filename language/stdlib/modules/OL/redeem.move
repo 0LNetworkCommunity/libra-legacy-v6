@@ -6,7 +6,6 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Transaction;
     use 0x0::Debug;
-    use 0x0::LibraConfig;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -83,7 +82,7 @@ address 0x0 {
     }
 
     fun default_redeem_address(): address {
-        LibraConfig::default_config_address()
+        0xA550C18
     }
 
     fun has_in_process(): bool {
