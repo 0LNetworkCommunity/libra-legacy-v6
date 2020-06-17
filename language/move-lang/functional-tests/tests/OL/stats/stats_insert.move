@@ -9,7 +9,7 @@ script {
     use 0x0::Stats;
     use 0x0::Debug;
     use 0x0::Transaction;
-    
+
         fun main(account: &signer) {
             let success = Stats::initialize(account);
             Transaction::assert(success == 1u64, 1);
