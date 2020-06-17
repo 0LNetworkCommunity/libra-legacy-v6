@@ -69,6 +69,12 @@ impl GmpClassGroup {
         (self.a, self.b)
     }
 
+    pub fn is_valid(&self) -> bool {
+        let four: Mpz = 4u64.into();
+        let four_ac: Mpz = four * &self.a * &self.c;
+        &self.discriminant + four_ac == &self.b * &self.b
+    }
+
     fn inner_multiply(&mut self, rhs: &Self, ctx: &mut Ctx) {
         self.assert_valid();
         rhs.assert_valid();
@@ -187,9 +193,7 @@ impl GmpClassGroup {
     #[cfg_attr(not(debug_assertions), inline(always))]
     fn assert_valid(&self) {
         if cfg!(debug_assertions) {
-            let four: Mpz = 4u64.into();
-            let four_ac: Mpz = four * &self.a * &self.c;
-            assert!(&self.discriminant + four_ac == &self.b * &self.b);
+            assert!(self.is_valid());
         }
     }
 
@@ -398,9 +402,7 @@ impl ClassGroup for GmpClassGroup {
     }
 
     fn serialize(&self, buf: &mut [u8]) -> Result<(), usize> {
-        self.assert_valid();
-        if buf.len() & 1 == 1 {
-            // odd lengths do not make sense
+        if !self.is_valid() || buf.len() & 1 == 1 {
             Err(0)
         } else {
             let len = buf.len() >> 1;
