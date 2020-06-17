@@ -20,6 +20,7 @@ pub mod data_store;
 pub mod executor;
 pub mod gas_costs;
 pub mod keygen;
+pub mod redeem;
 mod proptest_types;
 
 pub fn assert_status_eq(s1: &VMStatus, s2: &VMStatus) -> bool {

@@ -34,3 +34,4 @@ libra-proptest-helpers = { path = "../../common/proptest-helpers", version = "0.
 libra-config =  { path = "../../config", version = "0.1.0" }
 libra-logger = { path = "../../common/logger", version = "0.1.0" }
 stdlib = { path = "../stdlib", version = "0.1.0" }
+ol_miner = { path = "../../ol-miner", version = "0.1.0" }

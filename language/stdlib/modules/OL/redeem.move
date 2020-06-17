@@ -77,12 +77,14 @@ address 0x0 {
     // the resource under that address.
     // It can only be called a single time. it should be invoked in the genesis transaction.
     public fun initialize(config_account: &signer) {
+        Debug::print(&Transaction::sender());
+        Debug::print(&default_redeem_address());
         Transaction::assert( Transaction::sender() == default_redeem_address(), 10003);
         move_to<T>( config_account ,T{ history: Vector::empty()});
     }
 
     fun default_redeem_address(): address {
-        0xA550C18
+        0x0000000000000000000000000a550c18
     }
 
     fun has_in_process(): bool {
