@@ -12,8 +12,10 @@ fn submit_proofs() {
     // mint transaction.
     let mut executor = FakeExecutor::from_genesis_file();
 
+    let acc = Account::new_genesis_account(libra_types::on_chain_config::config_address() );
+
     let sender = AccountData::with_account(
-        Account::new_association(), 1_000_000,
+        acc, 1_000_000,
         lbr_currency_code(),10, AccountTypeSpecifier::Empty);
     executor.add_account_data(&sender);
 

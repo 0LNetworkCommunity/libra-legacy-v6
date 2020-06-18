@@ -3,7 +3,7 @@
 
 // Initialize Redeem Module
 //! new-transaction
-//! sender: association
+//! sender: config
 script {
 use 0x0::Redeem;
 fun main(s: &signer) {
