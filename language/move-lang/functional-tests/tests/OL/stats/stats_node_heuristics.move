@@ -38,25 +38,25 @@ script{
     use 0x0::Stats;
     use 0x0::Transaction;
     fun main(){
-        let a = Stats::Node_Heuristics({{alice}}, 0, 500);
+        let a = Stats::node_heuristics({{alice}}, 0, 500);
         Transaction::assert(a == 41, 1);
-        a = Stats::Node_Heuristics({{alice}}, 0, 100);
+        a = Stats::node_heuristics({{alice}}, 0, 100);
         Transaction::assert(a == 22, 1);
-        a = Stats::Node_Heuristics({{bob}}, 0, 500);
+        a = Stats::node_heuristics({{bob}}, 0, 500);
         Transaction::assert(a == 40, 1);
-        a = Stats::Node_Heuristics({{bob}}, 0, 100);
+        a = Stats::node_heuristics({{bob}}, 0, 100);
         Transaction::assert(a == 26, 1);
-        a = Stats::Node_Heuristics({{charlie}}, 0, 500);
+        a = Stats::node_heuristics({{charlie}}, 0, 500);
         Transaction::assert(a == 4, 1);
 
         // Network Heuristics Tests
-        a = Stats::Network_Heuristics(4, 4);
+        a = Stats::network_heuristics(4, 4);
         Transaction::assert(a == 3, 1);
-        a = Stats::Network_Heuristics(90, 100);
+        a = Stats::network_heuristics(90, 100);
         Transaction::assert(a == 2, 1);
-        a = Stats::Network_Heuristics(0, 5);
+        a = Stats::network_heuristics(0, 5);
         Transaction::assert(a == 0, 1);
-        a = Stats::Network_Heuristics(125, 127);
+        a = Stats::network_heuristics(125, 127);
         Transaction::assert(a == 1, 1);
     }
 }

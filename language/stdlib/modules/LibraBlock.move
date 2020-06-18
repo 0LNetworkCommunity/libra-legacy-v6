@@ -57,7 +57,7 @@ module LibraBlock {
 
         {
           let block_metadata_ref = borrow_global<BlockMetadata>(0xA550C18);
-          Stats::newBlock(block_metadata_ref.height, &previous_block_votes);
+          Stats::new_block(block_metadata_ref.height, &previous_block_votes);
         };
 
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
