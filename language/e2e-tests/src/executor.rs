@@ -183,7 +183,10 @@ impl FakeExecutor {
     /// Executes the transaction as a singleton block and applies the resulting write set to the
     /// data store. Panics if execution fails
     pub fn execute_and_apply(&mut self, transaction: SignedTransaction) -> TransactionOutput {
-        let mut outputs = self.execute_block(vec![transaction]).unwrap();
+
+        let mut tx_vec = vec![transaction];
+
+        let mut outputs = self.execute_block(tx_vec).unwrap();
         assert!(outputs.len() == 1, "transaction outputs size mismatch");
         let output = outputs.pop().unwrap();
         match output.status() {

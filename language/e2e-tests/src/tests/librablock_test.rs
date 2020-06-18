@@ -8,6 +8,21 @@ use crate::{
     librablock_setup::librablock_helper_tx,
 };
 
+
+use libra_crypto::HashValue;
+use libra_state_view::StateView;
+use libra_types::{
+    access_path::AccessPath,
+    account_config::{AccountResource, BalanceResource},
+    block_metadata::{new_block_event_key, BlockMetadata, NewBlockEvent},
+    on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet},
+    transaction::{
+        SignedTransaction, Transaction, TransactionOutput, TransactionStatus, VMValidatorResult,
+    },
+    vm_error::{StatusCode, VMStatus},
+    write_set::WriteSet,
+};
+
 #[test]
 fn librablock () {
     // TODO: This is using the Fake Executor, like all the other e2e tests. Is there a way to use a libra-swarm node?
@@ -20,9 +35,39 @@ fn librablock () {
     // construct a valid and signed tx script.
     let txn = librablock_helper_tx(&genesis_account, &validator_account, 1);
 
-    // force the test runner to create a new block before running the test.
+    // TODO: force the test runner to create a new block before running the test.
+    // THIS DOES NOT WORK. The executor will start fresh on the next instruction.
     // executor.new_block(); // block parameters include the validators which voted on the previous block.
 
     // execute and persist the transaction
-    executor.execute_and_apply(txn);
+    // executor.execute_and_apply(txn);
+    executor.execute_block(vec!(txn));
+}
+
+fn newblock_tx () -> Transaction {
+    // TODO Add the block metadata here.
+    // let validator_set = ValidatorSet::fetch_config(&self.data_store)
+    //     .expect("Unable to retrieve the validator set from storage");
+    // self.block_time += 1;
+    //
+    // // OL: Mocking the validator signatures in previous block.
+    // let mut vec_validator_adresses = vec![];
+    // for i in validator_set.payload().iter() {
+    //     //println!("\nvalidator: \n{:?}",i );
+    //     vec_validator_adresses.push(*i.account_address())
+    // }
+
+    let new_block = BlockMetadata::new(
+        HashValue::zero(),
+        111, // OL: block height/round TODO: This does not appear in tests.
+        20000,
+        vec![], // OL: Mocking the validator signatures in previous block.
+        Account::new().addr,
+    );
+
+    Transaction::BlockMetadata(new_block)
+
+    // let output = self
+    //     .execute_transaction_block(vec![Transaction::BlockMetadata(new_block)])
+    // tx_vec.push(Transaction::BlockMetadata(new_block));
 }

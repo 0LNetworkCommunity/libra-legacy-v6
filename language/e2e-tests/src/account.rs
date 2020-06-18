@@ -53,7 +53,7 @@ pub fn coin2_currency_code() -> Identifier {
 /// encodes the logic to operate on and verify operations on any Libra account.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Account {
-    addr: AccountAddress,
+    pub addr: AccountAddress,
     /// The current private key for this account.
     pub privkey: Ed25519PrivateKey,
     /// The current public key for this account.
