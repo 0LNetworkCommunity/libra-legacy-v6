@@ -6,41 +6,40 @@ use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};
 
 #[test]
-fn submit_proofs() {
-    // create a FakeExecutor with a genesis from file
-    // We can't run mint test on terraform genesis as we don't have the private key to sign the
-    // mint transaction.
+fn submit_proofs_transaction() {
+    // TODO: This is using the Fake Executor, like all the other e2e tests. Is there a way to use a libra-swarm node?
     let mut executor = FakeExecutor::from_genesis_file();
-
-    let acc = Account::new_genesis_account(libra_types::on_chain_config::config_address() );
-
+    let sequence_number = 10u64;
     let sender = AccountData::with_account(
-        acc, 1_000_000,
-        lbr_currency_code(),10, AccountTypeSpecifier::Empty);
+        Account::new_association(), 1_000_000,
+        lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
     executor.add_account_data(&sender);
 
     println!("address:{:?}", sender.address() );
 
-    let oi = executor.execute_and_apply(
+    let initialization_output = executor.execute_and_apply(
+        // TODO: Describe what is happening here. What are we initializing?
         redeem_initialize_txn(&sender.account(), 10)
     );
     assert_eq!(
-        oi.status(),
+        initialization_output.status(),
         &TransactionStatus::Keep(VMStatus::new(StatusCode::EXECUTED))
     );
 
+    // test data for the VDF proof
     let challenge = b"test preimage";
     let difficulty = 100;
     // use a test pre image and a 100 difficulty
     let proof = delay::do_delay(challenge, difficulty);
 
+    //run the transaction script
     let output = executor.execute_and_apply(
-        redeem_txn(&sender.account(), 11, challenge.to_vec(), difficulty, proof)
+        // build the transaction script binary.
+        redeem_txn(&sender.account(), sequence_number+1u64, challenge.to_vec(), difficulty, proof)
     );
 
     assert_eq!(
         output.status(),
         &TransactionStatus::Keep(VMStatus::new(StatusCode::EXECUTED))
     );
-
 }
