@@ -140,7 +140,7 @@ address 0x0 {
     // be made manually. Currently, LibraBlock only passes in empty BlockMetadata
     // (which is incorrect). Normally, inserts and updates happen through the
     // public newBlock function.
-    public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
+    fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
       let history = borrow_global_mut<History>(0xA550C18);
 
       // Add the a Node for the validator if one doesn't aleady exist
