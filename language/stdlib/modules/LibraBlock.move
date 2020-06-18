@@ -96,6 +96,14 @@ module LibraBlock {
     public fun get_current_block_height(): u64 acquires BlockMetadata {
       borrow_global<BlockMetadata>(0xA550C18).height
     }
+
+    // Get the previous block voters
+    public fun get_previous_voters(): u64 acquires BlockMetadata {
+       let what = borrow_global<BlockMetadata>(0xA550C18);
+       Debug::print(&0x7E5700002);
+       Debug::print(what);
+       return 0xB000
+    }
 }
 
 }
