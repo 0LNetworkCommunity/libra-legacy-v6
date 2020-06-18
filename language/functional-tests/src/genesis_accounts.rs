@@ -11,6 +11,7 @@ pub const ASSOCIATION_NAME: &str = "association";
 pub const TXN_FEE_NAME: &str = "fees";
 pub const CONFIG_NAME: &str = "config";
 pub const TREASURY_COMPLIANCE_NAME: &str = "blessed";
+pub const SUBSIDY_NAME: &str = "subsidy";
 
 pub fn make_genesis_accounts() -> BTreeMap<String, Account> {
     let mut m = BTreeMap::new();
@@ -26,6 +27,10 @@ pub fn make_genesis_accounts() -> BTreeMap<String, Account> {
     m.insert(
         TREASURY_COMPLIANCE_NAME.to_string(),
         Account::new_genesis_account(account_config::treasury_compliance_account_address()),
+    );
+    m.insert(
+        SUBSIDY_NAME.to_string(),
+        Account::new_genesis_account(account_config::subsidy_account_address()),
     );
     m
 }

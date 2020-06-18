@@ -29,6 +29,7 @@ module Genesis {
         config_account: &signer,
         fee_account: &signer,
         tc_account: &signer,
+        subsidy_account: &signer,
         tc_addr: address,
         subsidy_addr: address,
         genesis_auth_key: vector<u8>,
@@ -71,7 +72,7 @@ module Genesis {
         TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
         TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
         TransactionFee::initialize(tc_account, fee_account);
-
+        
         // Create the treasury compliance account
         LibraAccount::create_treasury_compliance_account<GAS::T>(
             association,
@@ -105,7 +106,8 @@ module Genesis {
         LibraAccount::rotate_authentication_key(association, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(tc_account, genesis_auth_key);
+        LibraAccount::rotate_authentication_key(tc_account, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(subsidy_account, copy genesis_auth_key);
     }
 
 }

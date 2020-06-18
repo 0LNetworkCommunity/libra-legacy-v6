@@ -87,16 +87,16 @@ fn main() {
     }
 
     // Generate documentation
-    if !no_doc {
-        time_it("Generating stdlib documentation", || {
-            build_stdlib_doc();
-        });
-        time_it("Generating script documentation", || {
-            for txn_file in &transaction_files {
-                build_transaction_script_doc(txn_file.clone());
-            }
-        });
-    }
+    // if !no_doc {
+    //     time_it("Generating stdlib documentation", || {
+    //         build_stdlib_doc();
+    //     });
+    //     time_it("Generating script documentation", || {
+    //         for txn_file in &transaction_files {
+    //             build_transaction_script_doc(txn_file.clone());
+    //         }
+    //     });
+    // }
 
     fn time_it<F>(msg: &str, f: F)
     where

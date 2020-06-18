@@ -146,6 +146,7 @@ fn create_and_initialize_main_accounts(
             Value::transaction_argument_signer_reference(tc_account_address),
             Value::transaction_argument_signer_reference(subsidy_account_address),
             Value::address(tc_account_address),
+            Value::address(subsidy_account_address),
             Value::vector_u8(genesis_auth_key.to_vec()),
         ],
     );

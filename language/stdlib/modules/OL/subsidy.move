@@ -5,7 +5,6 @@ address 0x0 {
     resource struct PrivilegedCapability<Privilege> { }
 
     struct T { }
-
     // pub fun mint_subsidy() {
       // Permissions: Only the redeem.end_redeem method should be able to call this contract.
 
@@ -45,13 +44,13 @@ address 0x0 {
       
     }
 
-    public fun assert_is_subsidy(addr: address) {
-      Transaction::assert(addr_is_subsidy(addr), 1001);
+    /// The address at which the root account will be published.
+    public fun subsidy_root_address(): address {
+        0xDEED
     }
 
-    public fun addr_is_subsidy(addr: address): bool {
-        //TODO:Do we initialize subsidy to a particular address like association
-        exists<PrivilegedCapability<T>>(addr)
+    public fun assert_is_subsidy(addr: address) {
+      Transaction::assert(addr == subsidy_root_address(), 1001);
     }
   }
 }

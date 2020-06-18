@@ -25,6 +25,6 @@ pub fn treasury_compliance_account_address() -> AccountAddress {
 }
 
 pub fn subsidy_account_address() -> AccountAddress {
-    AccountAddress::from_hex_literal("0x5B51DE")
+    AccountAddress::from_hex_literal("0xDEED")
         .expect("Parsing valid hex literal should always succeed")
 }
