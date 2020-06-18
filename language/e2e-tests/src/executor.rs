@@ -238,13 +238,22 @@ impl FakeExecutor {
         let validator_set = ValidatorSet::fetch_config(&self.data_store)
             .expect("Unable to retrieve the validator set from storage");
         self.block_time += 1;
+
+        // OL: Mocking the validator signatures in previous block.
+        let mut vec_validator_adresses = vec![];
+        for i in validator_set.payload().iter() {
+            //println!("\nvalidator: \n{:?}",i );
+            vec_validator_adresses.push(*i.account_address())
+        }
+
         let new_block = BlockMetadata::new(
             HashValue::zero(),
-            0,
+            111, // OL: block height/round TODO: This does not appear in tests.
             self.block_time,
-            vec![],
+            vec_validator_adresses, // OL: Mocking the validator signatures in previous block.
             *validator_set.payload()[0].account_address(),
         );
+
         let output = self
             .execute_transaction_block(vec![Transaction::BlockMetadata(new_block)])
             .expect("Executing block prologue should succeed")

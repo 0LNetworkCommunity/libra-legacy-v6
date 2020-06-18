@@ -6,6 +6,8 @@ module LibraBlock {
     use 0x0::LibraTimestamp;
     use 0x0::Signer;
     use 0x0::Transaction;
+    use 0x0::Debug;
+
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -68,6 +70,10 @@ module LibraBlock {
         proposer: address
     ) acquires BlockMetadata {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0xA550C18);
+        Debug::print(&0x7E5700001);
+        Debug::print(&previous_block_votes);
+
+        // Debug::print(&account_address);
 
         // TODO: Figure out a story for errors in the system transactions.
         if(proposer != 0x0) Transaction::assert(LibraSystem::is_validator(proposer), 5002);

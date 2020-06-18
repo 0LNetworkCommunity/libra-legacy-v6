@@ -11,6 +11,8 @@ module LibraSystem {
     use 0x0::Signer;
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
+    // use 0x0::Debug;
+    // use 0x0::LibraBlock;
 
     struct ValidatorInfo {
         addr: address,
@@ -73,6 +75,10 @@ module LibraSystem {
             Signer::address_of(operator) == ValidatorConfig::get_operator(account_address),
             22
         );
+
+        // Debug::print(&0x017E57);
+        // Debug::print(&account_address);
+
 
         // A prospective validator must have a validator config resource
         Transaction::assert(is_valid_and_certified(account_address), 33);
