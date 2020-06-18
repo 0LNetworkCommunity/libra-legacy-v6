@@ -136,6 +136,9 @@ address 0x0 {
       };
     }
 
+    // TODO: make this function not public. Note: this will break the tests stats_insert.move
+    //  and stats_node_heuristics.move as they were created to verify insert function
+
     // This function should not actually be public, but it is so that inserts can
     // be made manually. Currently, LibraBlock only passes in empty BlockMetadata
     // (which is incorrect). Normally, inserts and updates happen through the
