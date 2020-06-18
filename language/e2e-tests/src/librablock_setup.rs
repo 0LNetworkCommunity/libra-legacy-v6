@@ -12,7 +12,7 @@ use stdlib::transaction_scripts::StdlibScript;
 
 
 
-pub fn librablock_helper_tx(
+pub fn librablock_helper_tx_old(
     sender: &Account,
     receiver: &Account,
     seq_num: u64,
@@ -34,6 +34,28 @@ pub fn librablock_helper_tx(
         seq_num,
         gas_costs::TXN_RESERVED, // this is a default for gas
         0,                       // this is a default for gas
+        LBR_NAME.to_owned(),
+    )
+}
+
+pub fn librablock_helper_tx(
+    sender: &Account,
+    new_account: &Account,
+    seq_num: u64,
+) -> SignedTransaction {
+    let mut args: Vec<TransactionArgument> = Vec::new();
+    //args.push(TransactionArgument::Address(*new_account.address()));
+    // args.push(TransactionArgument::U8Vector(new_account.auth_key_prefix()));
+
+    sender.create_signed_txn_with_args(
+        StdlibScript::LibraBlockTestHelper
+            .compiled_bytes()
+            .into_vec(),
+        vec![lbr_type_tag()],
+        args,
+        seq_num,
+        gas_costs::TXN_RESERVED * 3,
+        0,
         LBR_NAME.to_owned(),
     )
 }
