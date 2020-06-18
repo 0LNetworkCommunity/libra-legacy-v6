@@ -9,9 +9,11 @@ use libra_types::vm_error::{VMStatus, StatusCode};
 fn submit_proofs_transaction() {
     // TODO: This is using the Fake Executor, like all the other e2e tests. Is there a way to use a libra-swarm node?
     let mut executor = FakeExecutor::from_genesis_file();
+
+    let account = Account::new_genesis_account(libra_types::on_chain_config::config_address() );
     let sequence_number = 10u64;
     let sender = AccountData::with_account(
-        Account::new_association(), 1_000_000,
+        account, 1_000_000,
         lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
     executor.add_account_data(&sender);
 
@@ -19,7 +21,7 @@ fn submit_proofs_transaction() {
 
     let initialization_output = executor.execute_and_apply(
         // TODO: Describe what is happening here. What are we initializing?
-        redeem_initialize_txn(&sender.account(), 10)
+        redeem_initialize_txn(&sender.account(), sequence_number)
     );
     assert_eq!(
         initialization_output.status(),
