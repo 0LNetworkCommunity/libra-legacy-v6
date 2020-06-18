@@ -72,6 +72,8 @@ module LibraBlock {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0xA550C18);
         Debug::print(&0x7E5700001);
         Debug::print(&previous_block_votes);
+        Debug::print(&round);
+
 
         // Debug::print(&account_address);
 
