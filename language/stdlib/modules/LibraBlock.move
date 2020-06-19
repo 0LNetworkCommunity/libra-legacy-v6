@@ -38,7 +38,7 @@ module LibraBlock {
           account,
           BlockMetadata {
               height: 0,
-              voters: Vector::singleton(0xA550C18), // OL Change TODO: Remove this. It's a placeholder.
+              voters: Vector::singleton(0xA550C18), // OL Change TODO: OL: (Nelaturuk) Remove this. It's a placeholder.
               new_block_events: Event::new_event_handle<Self::NewBlockEvent>(account),
           }
       );
@@ -61,7 +61,7 @@ module LibraBlock {
 
         {
           let block_metadata_ref = borrow_global<BlockMetadata>(0xA550C18);
-          Stats::new_block(block_metadata_ref.height, &previous_block_votes);
+          Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
         };
 
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);

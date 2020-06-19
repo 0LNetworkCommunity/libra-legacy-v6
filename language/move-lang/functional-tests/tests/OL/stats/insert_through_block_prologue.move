@@ -13,17 +13,17 @@ script {
     fun main(){
         let validators = Vector::empty<address>();
         Vector::push_back<address>(&mut validators, {{alice}});
-        Stats::new_block(1, &validators);
+        Stats::insert_voter_list(1, &validators);
         Vector::push_back<address>(&mut validators, {{bob}});
-        Stats::new_block(2, &validators);
+        Stats::insert_voter_list(2, &validators);
         Vector::push_back<address>(&mut validators, {{charlie}});
-        Stats::new_block(3, &validators);
-        Stats::new_block(4, &validators);
+        Stats::insert_voter_list(3, &validators);
+        Stats::insert_voter_list(4, &validators);
         Vector::pop_back<address>(&mut validators);
-        Stats::new_block(5, &validators);
+        Stats::insert_voter_list(5, &validators);
         Vector::remove(&mut validators, 0);
-        Stats::new_block(6, &validators);
-        Stats::new_block(7, &validators);
+        Stats::insert_voter_list(6, &validators);
+        Stats::insert_voter_list(7, &validators);
     }
 }
 // check: EXECUTED

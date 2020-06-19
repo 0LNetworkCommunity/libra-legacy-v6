@@ -75,7 +75,7 @@ address 0x0 {
       // This should be added to get a percentage eventually: num_voted / (end_height - start_height + 1)
     }
 
-    // This should actually return a float as a percentage, but this hasn't been implemented yet.
+    // TODO: OL: (dranade) This should actually return a fixed decimal as a percentage, but this hasn't been implemented yet.
     // For now, it will be returned as an unsigned int and be a confidence level
     public fun network_heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
@@ -123,27 +123,17 @@ address 0x0 {
       num_voters
     }
 
-    public fun new_block(height: u64, votes: &vector<address>) acquires History {
+    public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
+        // TODO: OL: (Nelaturuk) This needs a capability/permission to prevent the general public from calling this function.
       let i = 0;
       let len = Vector::length<address>(votes);
-
-      // For some reason, LibraBlock currently passes in an empty vector
-      // for the previous votes each time, so history is not correctly stored
-
       while (i < len) {
         insert(*Vector::borrow(votes, i), height, height);
         i = i + 1;
       };
     }
 
-    // TODO: make this function not public. Note: this will break the tests stats_insert.move
-    //  and stats_node_heuristics.move as they were created to verify insert function
-
-    // This function should not actually be public, but it is so that inserts can
-    // be made manually. Currently, LibraBlock only passes in empty BlockMetadata
-    // (which is incorrect). Normally, inserts and updates happen through the
-    // public new_block function.
-    public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
+    fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
       let history = borrow_global_mut<History>(0xA550C18);
 
       // Add the a Node for the validator if one doesn't aleady exist
@@ -240,28 +230,6 @@ address 0x0 {
       };
       false
     }
-
-
-    // Below is the original comments which showed the specs of the module.
-    // These are not deleted yet in case we need it again.
-
-    // TODO: Check if libra core "leader reputation" can be wrapped or implemented in our own contract: https://github.com/libra/libra/pull/3026/files
-    // pub fun node_heuristics(node_address: address type, start_blockheight: u32, end_blockheight: u32)  {
-    // fun liveness(node_address){
-        // Returns the percentage of blocks have been signed by the node within the range of blocks.
-
-        // Accomplished by querying the data structue
-    // }
-
-    // pub fun network_heuristics() {
-    //  fun signer_density_window(start_blockheight, end_blockheight) {
-        // Find the min count of nodes that signed *every* block in the range.
-    //  }
-
-    //  fun signer_density_lookback(number_of_blocks: u32 ) {
-        // Sugar Needed for subsidy contract. Counts back from current block that accepted transaction. E.g. 1,000 blocks.
-    //  }
-    // }
   }
 }
 
