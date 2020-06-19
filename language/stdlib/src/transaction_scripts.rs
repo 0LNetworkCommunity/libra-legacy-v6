@@ -38,6 +38,7 @@ pub enum StdlibScript {
     MintLbrToAddress,
     ModifyPublishingOption,
     PeerToPeerWithMetadata,
+    LibraBlockTestHelper,  // OL Change
     Preburn,
     PublishSharedEd2551PublicKey,
     RegisterPreburner,
@@ -84,6 +85,7 @@ impl StdlibScript {
             MintLbrToAddress,
             ModifyPublishingOption,
             PeerToPeerWithMetadata,
+            LibraBlockTestHelper, // OL Change
             Preburn,
             PublishSharedEd2551PublicKey,
             RegisterPreburner,
@@ -209,6 +211,7 @@ impl fmt::Display for StdlibScript {
                 MintLbrToAddress => "mint_lbr_to_address",
                 ModifyPublishingOption => "modify_publishing_option",
                 PeerToPeerWithMetadata => "peer_to_peer_with_metadata",
+                LibraBlockTestHelper => "libra_block_test_helper", // OL Change
                 Preburn => "preburn",
                 PublishSharedEd2551PublicKey => "publish_shared_ed25519_public_key",
                 RegisterPreburner => "register_preburner",
