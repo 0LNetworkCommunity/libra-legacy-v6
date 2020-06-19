@@ -58,6 +58,8 @@ pub enum StdlibScript {
     UpdateExchangeRate,
     UpdateMintingAbility,
     // ...add new scripts here
+    Redeem,
+    RedeemInitialize,
 }
 
 impl StdlibScript {
@@ -102,6 +104,8 @@ impl StdlibScript {
             UpdateExchangeRate,
             UpdateMintingAbility,
             // ...add new scripts here
+            Redeem,
+            RedeemInitialize,
         ]
     }
 
@@ -130,6 +134,7 @@ impl StdlibScript {
         // read from disk
         let mut path = PathBuf::from(self.name());
         path.set_extension("mv");
+        println!("{:?}", path);
         CompiledBytes(
             STAGED_TXN_SCRIPTS_DIR
                 .get_file(path.clone())
@@ -223,6 +228,8 @@ impl fmt::Display for StdlibScript {
                 UpdateLibraVersion => "update_libra_version",
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
+                Redeem => "redeem",
+                RedeemInitialize => "redeem_init"
             }
         )
     }
