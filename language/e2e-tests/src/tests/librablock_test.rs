@@ -37,21 +37,20 @@ fn librablock () {
 
     // TODO: force the test runner to create a new block before running the test.
     // THIS DOES NOT WORK. The executor will start fresh on the next instruction.
-    // executor.new_block(); // block parameters include the validators which voted on the previous block.
-    executor.new_block();
+    executor.new_block(); // block parameters include the validators which voted on the previous block.
     // execute and persist the transaction
     executor.execute_and_apply(txn);
     // executor.execute_block(vec!(txn));
 }
 
-#[test]
-fn librablock_newblock_tx () {
-    // TODO: test we are getting the voter vector from the BlockMetadata
-    let mut executor = FakeExecutor::from_genesis_file();
-    let result = executor.new_block();
-    println!("executor.new_block(); \n{:?}", result );
-    return result
-}
+// #[test]
+// fn librablock_newblock_tx () {
+//     // TODO: test we are getting the voter vector from the BlockMetadata
+//     let mut executor = FakeExecutor::from_genesis_file();
+//     let result = executor.new_block();
+//     println!("executor.new_block(); \n{:?}", result );
+//     return result
+// }
 
 
 // fn newblock_tx () -> Transaction {
