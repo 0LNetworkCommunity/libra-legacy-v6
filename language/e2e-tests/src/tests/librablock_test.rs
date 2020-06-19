@@ -40,43 +40,4 @@ fn librablock () { // Run with: `cargo xtest -p language-e2e-tests librablock --
     executor.new_block(); // block parameters include the validators which voted on the previous block.
     // execute and persist the transaction
     executor.execute_and_apply(txn);
-    // executor.execute_block(vec!(txn));
 }
-
-// #[test]
-// fn librablock_newblock_tx () {
-//     // TODO: test we are getting the voter vector from the BlockMetadata
-//     let mut executor = FakeExecutor::from_genesis_file();
-//     let result = executor.new_block();
-//     println!("executor.new_block(); \n{:?}", result );
-//     return result
-// }
-
-
-// fn newblock_tx () -> Transaction {
-    // TODO Add the block metadata here.
-    // let validator_set = ValidatorSet::fetch_config(&self.data_store)
-    //     .expect("Unable to retrieve the validator set from storage");
-    // self.block_time += 1;
-    //
-    // // OL: Mocking the validator signatures in previous block.
-    // let mut vec_validator_adresses = vec![];
-    // for i in validator_set.payload().iter() {
-    //     //println!("\nvalidator: \n{:?}",i );
-    //     vec_validator_adresses.push(*i.account_address())
-    // }
-
-    // let new_block = BlockMetadata::new(
-    //     HashValue::zero(),
-    //     111, // OL: block height/round TODO: This does not appear in tests.
-    //     20000,
-    //     vec![], // OL: Mocking the validator signatures in previous block.
-    //     Account::new().addr,
-    // );
-    //
-    // Transaction::BlockMetadata(new_block)
-
-    // let output = self
-    //     .execute_transaction_block(vec![Transaction::BlockMetadata(new_block)])
-    // tx_vec.push(Transaction::BlockMetadata(new_block));
-//}

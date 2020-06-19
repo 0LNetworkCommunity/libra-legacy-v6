@@ -83,6 +83,7 @@ pub static NEW_BLOCK_EVENT_PATH: Lazy<Vec<u8>> = Lazy::new(|| {
 #[derive(Deserialize, Serialize)]
 pub struct LibraBlockResource {
     height: u64,
+    voters: Vec<AccountAddress>,
     new_block_events: EventHandle,
 }
 
