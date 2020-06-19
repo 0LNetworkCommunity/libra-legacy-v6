@@ -3,7 +3,7 @@
 address 0x0 {
   module Stats {
     use 0x0::Vector;
-    //use 0x0::Transaction;
+    // use 0x0::Transaction;
     use 0x0::Signer;
     // use 0x0::Debug;
 
@@ -37,7 +37,7 @@ address 0x0 {
 
     // This should actually return a float as a percentage, but this hasn't been implemented yet.
     // For now, it will be returned as an unsigned int and be a confidence level
-    public fun Node_Heuristics(node_addr: address, start_height: u64,
+    public fun node_heuristics(node_addr: address, start_height: u64,
       end_height: u64): u64 acquires History{
       if (start_height > end_height) return 0;
       let history = borrow_global<History>(0xA550C18);
@@ -56,13 +56,13 @@ address 0x0 {
       while (i < len) {
         let chunk = Vector::borrow<Chunk>(chunks, i);
         // Check if the chunk has segments in desired region
-        if (chunk.end_block > start_height && chunk.start_block < end_height) {
+        if (chunk.end_block >= start_height && chunk.start_block <= end_height) {
           // Find the lower and upper blockheights within desired region
           let lower = chunk.start_block;
-          if (start_height > lower) lower = start_height;
+          if (start_height >= lower) lower = start_height;
 
           let upper = chunk.end_block;
-          if (end_height < upper) upper = end_height;
+          if (end_height <= upper) upper = end_height;
 
           // +1 because bounds are inclusive.
           // E.g. a node which participated in only block 30 would have
@@ -77,7 +77,7 @@ address 0x0 {
 
     // This should actually return a float as a percentage, but this hasn't been implemented yet.
     // For now, it will be returned as an unsigned int and be a confidence level
-    public fun Network_Heuristics(start_height: u64, end_height: u64): u64 acquires History {
+    public fun network_heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
       let history = borrow_global<History>(0xA550C18);
       let val_list = &history.val_list;
@@ -123,7 +123,7 @@ address 0x0 {
       num_voters
     }
 
-    public fun newBlock(height: u64, votes: &vector<address>) acquires History {
+    public fun new_block(height: u64, votes: &vector<address>) acquires History {
       let i = 0;
       let len = Vector::length<address>(votes);
 
@@ -136,10 +136,13 @@ address 0x0 {
       };
     }
 
+    // TODO: make this function not public. Note: this will break the tests stats_insert.move
+    //  and stats_node_heuristics.move as they were created to verify insert function
+
     // This function should not actually be public, but it is so that inserts can
     // be made manually. Currently, LibraBlock only passes in empty BlockMetadata
     // (which is incorrect). Normally, inserts and updates happen through the
-    // public newBlock function.
+    // public new_block function.
     public fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
       let history = borrow_global_mut<History>(0xA550C18);
 
@@ -170,14 +173,14 @@ address 0x0 {
       while (i < len) {
         chunk = Vector::borrow_mut(&mut node.chunks, i);
 
-        if ((chunk.start_block > end_block) || (chunk.end_block < start_block)){
+        if ((chunk.start_block > end_block) || (chunk.end_block < start_block - 1)){
           // This is the case where the new block is not connected to the old
           // one we are comparing with
           i = i + 1;
           continue
         };
         // If chunk.end_block == start_block, then we are just adding on to the last block
-        if (chunk.end_block == start_block) {
+        if (chunk.end_block == start_block - 1) {
           adjacent = true;
           break
         };
@@ -243,14 +246,14 @@ address 0x0 {
     // These are not deleted yet in case we need it again.
 
     // TODO: Check if libra core "leader reputation" can be wrapped or implemented in our own contract: https://github.com/libra/libra/pull/3026/files
-    // pub fun Node_Heuristics(node_address: address type, start_blockheight: u32, end_blockheight: u32)  {
+    // pub fun node_heuristics(node_address: address type, start_blockheight: u32, end_blockheight: u32)  {
     // fun liveness(node_address){
         // Returns the percentage of blocks have been signed by the node within the range of blocks.
 
         // Accomplished by querying the data structue
     // }
 
-    // pub fun Network_Heuristics() {
+    // pub fun network_heuristics() {
     //  fun signer_density_window(start_blockheight, end_blockheight) {
         // Find the min count of nodes that signed *every* block in the range.
     //  }
