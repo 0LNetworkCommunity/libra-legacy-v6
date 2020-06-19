@@ -36,7 +36,7 @@ fn librablock () {
     let txn = librablock_helper_tx(&genesis_account, &validator_account, 1);
 
     // TODO: force the test runner to create a new block before running the test.
-    // THIS DOES NOT WORK. The executor will start fresh on the next instruction.
+    // Unclear how this works. At times it seems the executor will start fresh on the next instruction.
     executor.new_block(); // block parameters include the validators which voted on the previous block.
     // execute and persist the transaction
     executor.execute_and_apply(txn);
