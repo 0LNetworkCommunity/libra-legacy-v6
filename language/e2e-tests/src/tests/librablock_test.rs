@@ -41,10 +41,10 @@ fn librablock () { // Run with: `cargo xtest -p language-e2e-tests librablock --
     // execute and persist the transaction
     executor.execute_and_apply(txn);
 
-    let account_state = executor
-        .read_account_resource(&association_account)
-        .expect("sender must exist");
-    // TODO: get a list of validators here. Test that the stats is inserting the validator votes.
-
-    println!("history_state \n{:?}", &history_state.received_events());
+    // let account_state = executor
+    //     .read_account_resource(&association_account)
+    //     .expect("sender must exist");
+    // // TODO: get a list of validators here. Test that the stats is inserting the validator votes.
+    //
+    // println!("history_state \n{:?}", &account_state.received_events());
 }
