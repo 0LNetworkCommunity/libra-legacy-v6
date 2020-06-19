@@ -24,7 +24,7 @@ use libra_types::{
 };
 
 #[test]
-fn librablock () { // Run with: `cargo xtest -p librablock -- --nocapture`
+fn librablock () { // Run with: `cargo xtest -p language-e2e-tests librablock -- --nocapture`
     // TODO: This is using the Fake Executor, like all the other e2e tests. Is there a way to use a libra-swarm node?
     let mut executor = FakeExecutor::from_genesis_file();
 

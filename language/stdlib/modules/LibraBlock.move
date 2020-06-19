@@ -84,7 +84,6 @@ module LibraBlock {
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
 
         block_metadata_ref.height = block_metadata_ref.height + 1;
-        block_metadata_ref.height_two = block_metadata_ref.height_two + 1;
         block_metadata_ref.voters = *&previous_block_votes;
 
         Event::emit_event<NewBlockEvent>(
