@@ -11,6 +11,7 @@
 -  [Function `block_prologue`](#0x0_LibraBlock_block_prologue)
 -  [Function `process_block_prologue`](#0x0_LibraBlock_process_block_prologue)
 -  [Function `get_current_block_height`](#0x0_LibraBlock_get_current_block_height)
+-  [Function `get_previous_voters`](#0x0_LibraBlock_get_previous_voters)
 
 
 
@@ -33,6 +34,20 @@
 <dt>
 
 <code>height: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+
+<code>height_two: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+
+<code>voters: vector&lt;address&gt;</code>
 </dt>
 <dd>
 
@@ -121,6 +136,8 @@
       account,
       <a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a> {
           height: 0,
+          height_two: 1, // OL Change
+          voters: <a href="Vector.md#0x0_Vector_singleton">Vector::singleton</a>(0xA550C18), // OL Change
           new_block_events: <a href="Event.md#0x0_Event_new_event_handle">Event::new_event_handle</a>&lt;<a href="#0x0_LibraBlock_NewBlockEvent">Self::NewBlockEvent</a>&gt;(account),
       }
   );
@@ -189,11 +206,20 @@
     proposer: address
 ) <b>acquires</b> <a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a> {
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(0xA550C18);
+    // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&0x7E5700001);
+    // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&previous_block_votes);
+    // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&round);
+
+    // TODO OL (Dev): Call the Stats <b>module</b> from here with previous_block_votes.
 
     // TODO: Figure out a story for errors in the system transactions.
     <b>if</b>(proposer != 0x0) Transaction::assert(<a href="LibraSystem.md#0x0_LibraSystem_is_validator">LibraSystem::is_validator</a>(proposer), 5002);
     <a href="LibraTimestamp.md#0x0_LibraTimestamp_update_global_time">LibraTimestamp::update_global_time</a>(vm, proposer, timestamp);
+
     block_metadata_ref.height = block_metadata_ref.height + 1;
+    block_metadata_ref.height_two = block_metadata_ref.height_two + 1;
+    block_metadata_ref.voters = *&previous_block_votes;
+
     <a href="Event.md#0x0_Event_emit_event">Event::emit_event</a>&lt;<a href="#0x0_LibraBlock_NewBlockEvent">NewBlockEvent</a>&gt;(
       &<b>mut</b> block_metadata_ref.new_block_events,
       <a href="#0x0_LibraBlock_NewBlockEvent">NewBlockEvent</a> {
@@ -227,6 +253,34 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraBlock_get_current_block_height">get_current_block_height</a>(): u64 <b>acquires</b> <a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a> {
   borrow_global&lt;<a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(0xA550C18).height
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x0_LibraBlock_get_previous_voters"></a>
+
+## Function `get_previous_voters`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraBlock_get_previous_voters">get_previous_voters</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraBlock_get_previous_voters">get_previous_voters</a>(): u64 <b>acquires</b> <a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a> {
+   <b>let</b> what = borrow_global&lt;<a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a>&gt;(0xA550C18);
+   <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&0x7E5700002);
+   <a href="Debug.md#0x0_Debug_print">Debug::print</a>(what);
+   // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(what.counter);
+   <b>return</b> 0
 }
 </code></pre>
 

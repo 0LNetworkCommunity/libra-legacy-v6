@@ -216,8 +216,8 @@
         22
     );
 
-    <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&b"add validator");
-    <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&account_address);
+    // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&0x017E57);
+    // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&account_address);
 
 
     // A prospective validator must have a validator config <b>resource</b>
