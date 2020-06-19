@@ -7,12 +7,14 @@ module LibraBlock {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Debug;
+    use 0x0::Vector;
 
 
     resource struct BlockMetadata {
       // Height of the current block
       // TODO: should we keep the height?
       height: u64,
+      voters: vector<address>,
       // Handle where events with the time of new blocks are emitted
       new_block_events: Event::EventHandle<Self::NewBlockEvent>,
     }
@@ -36,6 +38,7 @@ module LibraBlock {
           account,
           BlockMetadata {
               height: 0,
+              voters: Vector::singleton(0xA550C18),
               new_block_events: Event::new_event_handle<Self::NewBlockEvent>(account),
           }
       );
@@ -70,9 +73,9 @@ module LibraBlock {
         proposer: address
     ) acquires BlockMetadata {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0xA550C18);
-        Debug::print(&0x7E5700001);
-        Debug::print(&previous_block_votes);
-        Debug::print(&round);
+        // Debug::print(&0x7E5700001);
+        // Debug::print(&previous_block_votes);
+        // Debug::print(&round);
 
 
         // Debug::print(&account_address);
@@ -81,6 +84,9 @@ module LibraBlock {
         if(proposer != 0x0) Transaction::assert(LibraSystem::is_validator(proposer), 5002);
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
         block_metadata_ref.height = block_metadata_ref.height + 1;
+
+        block_metadata_ref.voters = previous_block_votes;
+
         Event::emit_event<NewBlockEvent>(
           &mut block_metadata_ref.new_block_events,
           NewBlockEvent {
@@ -99,7 +105,7 @@ module LibraBlock {
 
     // Get the previous block voters
     public fun get_previous_voters(): u64 acquires BlockMetadata {
-       let what = &borrow_global<BlockMetadata>(0xA550C18).new_block_events;
+       let what = &borrow_global<BlockMetadata>(0xA550C18).voters;
        Debug::print(&0x7E5700002);
        Debug::print(what);
        // Debug::print(what.counter);
