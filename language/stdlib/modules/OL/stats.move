@@ -26,7 +26,7 @@ address 0x0 {
     }
 
     public fun initialize(association: &signer): u64 {
-      // This should happen only once in genesis
+      // TODO: OL: (nelaturuk) This should happen only once in genesis
       if (Signer::address_of(association) == 0xA550C18) {
         move_to_sender<History>(History{ val_list: Vector::empty() });
         return 1u64

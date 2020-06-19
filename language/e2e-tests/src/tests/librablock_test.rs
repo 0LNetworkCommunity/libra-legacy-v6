@@ -29,15 +29,22 @@ fn librablock () { // Run with: `cargo xtest -p language-e2e-tests librablock --
     let mut executor = FakeExecutor::from_genesis_file();
 
     // meed to create some account types to be able to call a tx script.
-    let genesis_account = Account::new_association();
+    let association_account = Account::new_association();
     let validator_account = Account::new();
 
     // construct a valid and signed tx script.
-    let txn = librablock_helper_tx(&genesis_account, &validator_account, 1);
+    let txn = librablock_helper_tx(&association_account, &validator_account, 1);
 
     // TODO: force the test runner to create a new block before running the test.
     // Unclear how this works. At times it seems the executor will start fresh on the next instruction.
     executor.new_block(); // block parameters include the validators which voted on the previous block.
     // execute and persist the transaction
     executor.execute_and_apply(txn);
+
+    let account_state = executor
+        .read_account_resource(&association_account)
+        .expect("sender must exist");
+    // TODO: get a list of validators here. Test that the stats is inserting the validator votes.
+
+    println!("history_state \n{:?}", &history_state.received_events());
 }
