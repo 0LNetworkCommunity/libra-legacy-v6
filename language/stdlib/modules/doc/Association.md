@@ -451,7 +451,7 @@ Assert that
 <code>addr</code> is an association account.
 
 
-<pre><code><b>fun</b> <a href="#0x0_Association_assert_addr_is_association">assert_addr_is_association</a>(addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Association_assert_addr_is_association">assert_addr_is_association</a>(addr: address)
 </code></pre>
 
 
@@ -460,7 +460,7 @@ Assert that
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="#0x0_Association_assert_addr_is_association">assert_addr_is_association</a>(addr: address) {
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Association_assert_addr_is_association">assert_addr_is_association</a>(addr: address) {
     Transaction::assert(<a href="#0x0_Association_addr_is_association">addr_is_association</a>(addr), 1002);
 }
 </code></pre>
@@ -764,7 +764,7 @@ a Root privilege. I guess it's moot so long as
 ### Function `assert_addr_is_association`
 
 
-<pre><code><b>fun</b> <a href="#0x0_Association_assert_addr_is_association">assert_addr_is_association</a>(addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Association_assert_addr_is_association">assert_addr_is_association</a>(addr: address)
 </code></pre>
 
 

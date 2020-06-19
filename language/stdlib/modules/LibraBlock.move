@@ -8,7 +8,7 @@ module LibraBlock {
     use 0x0::Transaction;
     use 0x0::Debug;
     use 0x0::Vector;
-
+    use 0x0::Stats;
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -58,6 +58,11 @@ module LibraBlock {
     ) acquires BlockMetadata {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
+
+        {
+          let block_metadata_ref = borrow_global<BlockMetadata>(0xA550C18);
+          Stats::newBlock(block_metadata_ref.height, &previous_block_votes);
+        };
 
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 

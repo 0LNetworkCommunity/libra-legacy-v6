@@ -7,7 +7,7 @@ use libra_types::{
     contract_event::ContractEvent,
 };
 use move_core_types::{gas_schedule::CostTable, identifier::IdentStr, language_storage::ModuleId};
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,
@@ -46,6 +46,7 @@ pub(crate) enum NativeFunction {
     SignerBorrowAddress,
     CreateSigner,
     DestroySigner,
+    VDFVerify,
 }
 
 impl NativeFunction {
@@ -58,6 +59,7 @@ impl NativeFunction {
 
         let case = (module_address, module_name, function_name);
         Some(match case {
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify,
             (&CORE_CODE_ADDRESS, "Hash", "sha2_256") => HashSha2_256,
             (&CORE_CODE_ADDRESS, "Hash", "sha3_256") => HashSha3_256,
             (&CORE_CODE_ADDRESS, "LCS", "to_bytes") => LCSToBytes,
@@ -115,6 +117,7 @@ impl NativeFunction {
             Self::SignerBorrowAddress => signer::native_borrow_address(ctx, t, v),
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
+            Self::VDFVerify => vdf::verify(ctx, t, v),
         }
     }
 }

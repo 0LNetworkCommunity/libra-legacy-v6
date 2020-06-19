@@ -25,6 +25,7 @@ move-vm-natives = { path = "../natives", version = "0.1.0" }
 move-vm-types = { path = "../types", version = "0.1.0" }
 vm = { path = "../../vm", version = "0.1.0" }
 
+
 [dev-dependencies]
 anyhow = "1.0.31"
 hex = "0.4.2"

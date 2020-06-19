@@ -53,7 +53,7 @@ impl Compiler for IRCompiler {
     }
 
     fn use_staged_genesis(&self) -> bool {
-        true
+        false
     }
 }
 
@@ -64,4 +64,4 @@ fn run_test(path: &Path) -> datatest_stable::Result<()> {
     )
 }
 
-datatest_stable::harness!(run_test, "tests", r".*\.mvir");
+datatest_stable::harness!(run_test, "tests/OL", r".mvir|.move");

@@ -11,4 +11,5 @@ pub mod hash;
 pub mod lcs;
 pub mod signature;
 pub mod signer;
+pub mod vdf;
 pub mod vector;
