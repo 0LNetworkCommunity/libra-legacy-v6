@@ -128,6 +128,10 @@ pub struct KeyFactory {
 
 impl KeyFactory {
     const MNEMONIC_SALT_PREFIX: &'static [u8] = b"0L WALLET: STOCKS ARE CLIMBING AS PROTESTS RAGE ACROSS AMERICA: mnemonic salt prefix$"; // https://markets.businessinsider.com/news/stocks/why-stock-market-rising-amid-nationwide-police-brutality-protests-2020-6-1029273996
+    // Unrest, fires and violence as protests rage across US, https://www.cnn.com/videos/us/2020/05/29/protests-us-george-floyd-lon-orig-tp.cnn
+    // Race protests rage across US https://www.msn.com/en-au/news/australia/race-protests-rage-across-us/vp-BB14QRwE
+    // President threatens to deploy U.S. military to quell riots across the country. The government will also establish a 7 p.m. curfew in Washington https://www.foxbusiness.com/lifestyle/trump-threatens-to-deploy-u-s-military-to-quell-riots-across-the-country
+    // Protests rage across nation https://abcnews.go.com/US/video/protests-rage-nation-reaction-george-floyds-death-part-70977616
     const MASTER_KEY_SALT: &'static [u8] = b"0L WALLET: 30 MILLION AMERICANS HAVE FILED INITIAL UNEMPLOYMENT CLAIMS: master key salt$"; // https://www.cnn.com/2020/04/30/economy/unemployment-benefits-coronavirus/index.html
     const INFO_PREFIX: &'static [u8] = b"0L WALLET: US DEATHS NEAR 100,000, AN INCALCULABLE LOSS: derived key$"; // https://www.nytimes.com/interactive/2020/05/24/us/us-coronavirus-deaths-100000.html
     /// Instantiate a new KeyFactor from a Seed, where the [u8; 64] raw bytes of the Seed are used
