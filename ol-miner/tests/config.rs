@@ -14,7 +14,7 @@ fn test_genesis_preimage() {
         },
         chain_info: ChainInfo {
             chain_id: "Ol testnet".to_owned(),
-            block_size: 100.to_owned(),
+            difficulty: 100.to_owned(),
             block_dir: "blocks".to_owned(),
         },
     };

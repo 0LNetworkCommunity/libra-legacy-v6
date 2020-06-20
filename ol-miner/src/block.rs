@@ -47,7 +47,7 @@ pub mod build_block {
             height: 0u64,
             // note: do_delay() sigature is (challenge, delay difficulty).
             // note: trait serializes data field.
-            data: delay::do_delay(&preimage, config.chain_info.block_size),
+            data: delay::do_delay(&preimage, config.chain_info.difficulty),
         };
         //TODO: check for overwriting file...
         let block_dir_buf = Path::new(&config.chain_info.block_dir).to_path_buf();
@@ -76,7 +76,7 @@ pub mod build_block {
                 height,
                 // note: do_delay() sigature is (challenge, delay difficulty).
                 // note: trait serializes data field.
-                data: delay::do_delay(&preimage, config.chain_info.block_size),
+                data: delay::do_delay(&preimage, config.chain_info.difficulty),
             };
 
             let block_dir_buf = block_dir.to_path_buf();
@@ -197,7 +197,7 @@ pub mod build_block {
             },
             chain_info: ChainInfo {
                 chain_id: "Ol testnet".to_owned(),
-                block_size: 100.to_owned(),
+                difficulty: 100.to_owned(),
                 block_dir: "test_blocks".to_owned(),
             },
         };
@@ -236,7 +236,7 @@ pub mod build_block {
             },
             chain_info: ChainInfo {
                 chain_id: "Ol testnet".to_owned(),
-                block_size: 100.to_owned(),
+                difficulty: 100.to_owned(),
                 block_dir: "test_blocks".to_owned(),
             },
         };
