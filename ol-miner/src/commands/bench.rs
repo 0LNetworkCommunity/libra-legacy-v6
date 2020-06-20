@@ -27,5 +27,4 @@ impl Runnable for BenchCmd {
             println!("Elapsed: {} secs, difficulty per sec {}", elapsed, diff/elapsed);
         }
     }
-    }
 }
