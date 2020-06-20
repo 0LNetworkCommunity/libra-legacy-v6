@@ -217,6 +217,10 @@
         22
     );
 
+    // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&0x017E57);
+    // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&account_address);
+
+
     // A prospective validator must have a validator config <b>resource</b>
     Transaction::assert(<a href="#0x0_LibraSystem_is_valid_and_certified">is_valid_and_certified</a>(account_address), 33);
 

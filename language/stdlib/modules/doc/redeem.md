@@ -245,6 +245,8 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_Redeem_initialize">initialize</a>(config_account: &signer) {
+    <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&Transaction::sender());
+    <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&<a href="#0x0_Redeem_default_redeem_address">default_redeem_address</a>());
     Transaction::assert( Transaction::sender() == <a href="#0x0_Redeem_default_redeem_address">default_redeem_address</a>(), 10003);
     move_to&lt;<a href="#0x0_Redeem_T">T</a>&gt;( config_account ,<a href="#0x0_Redeem_T">T</a>{ history: <a href="Vector.md#0x0_Vector_empty">Vector::empty</a>()});
 }
@@ -270,7 +272,7 @@
 
 
 <pre><code><b>fun</b> <a href="#0x0_Redeem_default_redeem_address">default_redeem_address</a>(): address {
-    <a href="LibraConfig.md#0x0_LibraConfig_default_config_address">LibraConfig::default_config_address</a>()
+    0x0000000000000000000000000a550c18
 }
 </code></pre>
 

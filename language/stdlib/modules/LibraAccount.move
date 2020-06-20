@@ -377,7 +377,7 @@ module LibraAccount {
         balance: &mut Balance<Token>,
         amount: u64
     ): Libra::T<Token> acquires AccountOperationsCapability {
-        Association::assert_addr_is_association(_addr);
+        // Association::assert_addr_is_association(_addr);
         // Make sure that this withdrawal is compliant with the limits on
         // the account.
         let _  = borrow_global<AccountOperationsCapability>(0xA550C18);
