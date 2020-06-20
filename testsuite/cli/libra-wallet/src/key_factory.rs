@@ -127,9 +127,9 @@ pub struct KeyFactory {
 }
 
 impl KeyFactory {
-    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"OL WALLET: PROTESTS RAGE ACROSS AMERICA: mnemonic salt prefix$";
-    const MASTER_KEY_SALT: &'static [u8] = b"OL WALLET: 30 MILLION AMERICANS HAVE FILED INITIAL UNEMPLOYMENT CLAIMS: master key salt$";
-    const INFO_PREFIX: &'static [u8] = b"OL WALLET: US DEATHS NEAR 100,000, AN INCALCULABLE LOSS US: derived key$";
+    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"0L WALLET: PROTESTS RAGE ACROSS AMERICA: mnemonic salt prefix$";
+    const MASTER_KEY_SALT: &'static [u8] = b"0L WALLET: 30 MILLION AMERICANS HAVE FILED INITIAL UNEMPLOYMENT CLAIMS: master key salt$";
+    const INFO_PREFIX: &'static [u8] = b"0L WALLET: US DEATHS NEAR 100,000, AN INCALCULABLE LOSS US: derived key$";
     /// Instantiate a new KeyFactor from a Seed, where the [u8; 64] raw bytes of the Seed are used
     /// to derive both the Master
     pub fn new(seed: &Seed) -> Result<Self> {
