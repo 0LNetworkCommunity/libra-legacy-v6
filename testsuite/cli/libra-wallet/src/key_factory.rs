@@ -200,14 +200,14 @@ fn test_key_derivation() {
 
     let key_factory = KeyFactory::new(&seed).unwrap();
     assert_eq!(
-        "9c674cda0f0f975263e68aca67436cb03ebe827fb2abee92fa15cb1d60de412a",
+        "d5941c4657963515daf43fb733633ace87d877f54bfe5a048fc65ce66f44e2b7",
         hex::encode(&key_factory.master())
     );
 
     // Check child_0 key derivation.
     let child_private_0 = key_factory.private_child(ChildNumber(0)).unwrap();
     assert_eq!(
-        "358a375f36d74c30b7f3299b62d712b307725938f8cc931100fbd10a434fc8b9",
+        "3869be7a0198e7b3e7b82dcdd62e187d36498d84bb6599b9af6f88ade4303470",
         hex::encode(&child_private_0.private_key.to_bytes()[..])
     );
 
@@ -221,7 +221,7 @@ fn test_key_derivation() {
     // Check child_1 key derivation.
     let child_private_1 = key_factory.private_child(ChildNumber(1)).unwrap();
     assert_eq!(
-        "a325fe7d27b1b49f191cc03525951fec41b6ffa2d4b3007bb1d9dd353b7e56a6",
+        "8bcc1eb18980f9e9bfcd0465847e41d59f7b71bcde5b2e06bd88ee76a36a67ec",
         hex::encode(&child_private_1.private_key.to_bytes()[..])
     );
 
@@ -232,7 +232,7 @@ fn test_key_derivation() {
     // Check determinism, regenerate child_1, but by incrementing ChildNumber(0).
     let child_private_1_from_increment = key_factory.private_child(child_1_again).unwrap();
     assert_eq!(
-        "a325fe7d27b1b49f191cc03525951fec41b6ffa2d4b3007bb1d9dd353b7e56a6",
+        "8bcc1eb18980f9e9bfcd0465847e41d59f7b71bcde5b2e06bd88ee76a36a67ec",
         hex::encode(&child_private_1_from_increment.private_key.to_bytes()[..])
     );
 }
