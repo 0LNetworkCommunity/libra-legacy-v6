@@ -198,18 +198,19 @@ pub mod build_block {
             chain_info: ChainInfo {
                 chain_id: "Ol testnet".to_owned(),
                 difficulty: 100.to_owned(),
-                block_dir: "test_blocks".to_owned(),
+                block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
             },
         };
 
-        let blocks_dir = Path::new(&mock_configs.chain_info.block_dir);
-
+        // mine
         mine_genesis(&mock_configs);
 
-        // let latest_block_path = &mock_configs.chain_info.block_dir.to_string().push(format!("block_0.json"));
+        // read file
+        let blocks_dir = Path::new(&mock_configs.chain_info.block_dir);
 
         let block_file =
-            fs::read_to_string("./test_blocks/block_0.json").expect("Could not read latest block");
+            // TODO: make this work: let latest_block_path = &mock_configs.chain_info.block_dir.to_string().push(format!("block_0.json"));
+            fs::read_to_string("./test_blocks_temp_1/block_0.json").expect("Could not read latest block");
 
         let latest_block: Block =
             serde_json::from_str(&block_file).expect("could not deserialize latest block");
@@ -237,7 +238,7 @@ pub mod build_block {
             chain_info: ChainInfo {
                 chain_id: "Ol testnet".to_owned(),
                 difficulty: 100.to_owned(),
-                block_dir: "test_blocks".to_owned(),
+                block_dir: "test_blocks_temp_2".to_owned(),
             },
         };
 
@@ -264,7 +265,7 @@ pub mod build_block {
 
         // confirm this mock was written to systems.
         let block_file =
-            fs::read_to_string("./test_blocks/block_1.json").expect("Could not read latest block");
+            fs::read_to_string("./test_blocks_temp_2/block_1.json").expect("Could not read latest block");
         let latest_block: Block =
             serde_json::from_str(&block_file).expect("could not deserialize latest block");
         // Test the file is read, and blockheight is 0
@@ -300,7 +301,7 @@ pub mod build_block {
         };
 
         // write the mock data temporarilty
-        let blocks_dir = Path::new("./test_blocks");
+        let blocks_dir = Path::new("./test_blocks_temp_3");
         fs::create_dir(blocks_dir).unwrap();
         let mut latest_block_path = blocks_dir.to_path_buf();
         latest_block_path.push(format!("block_{}.json", current_block_number));
