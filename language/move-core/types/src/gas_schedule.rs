@@ -204,7 +204,7 @@ impl Default for GasConstants {
             min_transaction_gas_units: GasUnits(600),
             large_transaction_cutoff: AbstractMemorySize(600),
             instrinsic_gas_per_byte: GasUnits(8),
-            maximum_number_of_gas_units: GasUnits(10_000_000), // TODO: 0L: (LG) This does no match the statment above of 10ms in comments above.
+            maximum_number_of_gas_units: GasUnits(10_000_000), // 0L Change.
             min_price_per_gas_unit: GasPrice(0),
             max_price_per_gas_unit: GasPrice(10_000), // TODO: 0L: (LG) What's the rationale behind this max?
             max_transaction_size_in_bytes: 4096,
