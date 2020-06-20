@@ -1,17 +1,27 @@
 address 0x0 {
   module Subsidy {
     use 0x0::Transaction;
+    use 0x0::GAS;
+    use 0x0::Libra;
 
     resource struct PrivilegedCapability<Privilege> { }
 
-    struct T { }
-    // pub fun mint_subsidy() {
-      // Permissions: Only the redeem.end_redeem method should be able to call this contract.
+    resource struct SubsidyInfo {
+      minted_gas: GAS,
+      max_subsidy: u64
+    }
 
-      // Mint the maximum reward coins that could be used in the epoch.
-      // The coins exist in this contract's address until the end of consensus.
-      // let epoch_subsidy = [minted coins]
-    //}
+    struct T { }
+
+    // Permissions: Only the redeem.end_redeem method should be able to \
+    //call this contract.
+    // Mint the maximum reward coins that could be used in the epoch.
+    // The coins exist in this contract's address until the end of consensus.
+    // let epoch_subsidy = [minted coins]
+    public fun mint_subsidy(account: &signer) {
+      let minted_coin = Libra::mint<GAS::T>(account, max_subsidy);
+      Transaction::assert(Libra::value<GAS::T>(&minted_coin) == max_subsidy, 1002);
+    }
 
     // pub fun calculate_Subsidy(blockheight: u8){
       // Gets the proxy for liveness from Stats
@@ -39,10 +49,6 @@ address 0x0 {
         // gas_coin.burn(burn)
       //}
     //}
-
-    public fun mint_gas() {
-      
-    }
 
     /// The address at which the root account will be published.
     public fun subsidy_root_address(): address {

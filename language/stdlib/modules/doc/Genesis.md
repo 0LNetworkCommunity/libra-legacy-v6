@@ -15,7 +15,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="#0x0_Genesis_initialize">initialize</a>(association: &signer, config_account: &signer, fee_account: &signer, tc_account: &signer, tc_addr: address, subsidy_addr: address, genesis_auth_key: vector&lt;u8&gt;)
+<pre><code><b>fun</b> <a href="#0x0_Genesis_initialize">initialize</a>(association: &signer, config_account: &signer, fee_account: &signer, tc_account: &signer, subsidy_account: &signer, tc_addr: address, subsidy_addr: address, genesis_auth_key: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -29,6 +29,7 @@
     config_account: &signer,
     fee_account: &signer,
     tc_account: &signer,
+    subsidy_account: &signer,
     tc_addr: address,
     subsidy_addr: address,
     genesis_auth_key: vector&lt;u8&gt;,
@@ -105,7 +106,8 @@
     <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(association, <b>copy</b> genesis_auth_key);
     <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(config_account, <b>copy</b> genesis_auth_key);
     <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(fee_account, <b>copy</b> genesis_auth_key);
-    <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(tc_account, genesis_auth_key);
+    <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(tc_account, <b>copy</b> genesis_auth_key);
+    <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(subsidy_account, <b>copy</b> genesis_auth_key);
 }
 </code></pre>
 

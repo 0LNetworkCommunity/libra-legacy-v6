@@ -8,8 +8,8 @@
 -  [Struct `PrivilegedCapability`](#0x0_Subsidy_PrivilegedCapability)
 -  [Struct `T`](#0x0_Subsidy_T)
 -  [Function `mint_gas`](#0x0_Subsidy_mint_gas)
+-  [Function `subsidy_root_address`](#0x0_Subsidy_subsidy_root_address)
 -  [Function `assert_is_subsidy`](#0x0_Subsidy_assert_is_subsidy)
--  [Function `addr_is_subsidy`](#0x0_Subsidy_addr_is_subsidy)
 
 
 
@@ -93,6 +93,31 @@
 
 </details>
 
+<a name="0x0_Subsidy_subsidy_root_address"></a>
+
+## Function `subsidy_root_address`
+
+The address at which the root account will be published.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Subsidy_subsidy_root_address">subsidy_root_address</a>(): address
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Subsidy_subsidy_root_address">subsidy_root_address</a>(): address {
+    0xDEED
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x0_Subsidy_assert_is_subsidy"></a>
 
 ## Function `assert_is_subsidy`
@@ -109,32 +134,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_Subsidy_assert_is_subsidy">assert_is_subsidy</a>(addr: address) {
-  Transaction::assert(<a href="#0x0_Subsidy_addr_is_subsidy">addr_is_subsidy</a>(addr), 1001);
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x0_Subsidy_addr_is_subsidy"></a>
-
-## Function `addr_is_subsidy`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Subsidy_addr_is_subsidy">addr_is_subsidy</a>(addr: address): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Subsidy_addr_is_subsidy">addr_is_subsidy</a>(addr: address): bool {
-    //TODO:Do we initialize subsidy <b>to</b> a particular address like association
-    exists&lt;<a href="#0x0_Subsidy_PrivilegedCapability">PrivilegedCapability</a>&lt;<a href="#0x0_Subsidy_T">T</a>&gt;&gt;(addr)
+  Transaction::assert(addr == <a href="#0x0_Subsidy_subsidy_root_address">subsidy_root_address</a>(), 1001);
 }
 </code></pre>
 
