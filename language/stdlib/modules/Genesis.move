@@ -24,6 +24,7 @@ module Genesis {
     use 0x0::Testnet;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
+    use 0x0::Subsidy;
 
     fun initialize(
         association: &signer,
@@ -48,6 +49,9 @@ module Genesis {
 
         // Stats module setup
         Stats::initialize(association);
+
+        //Subsidy module setup
+        Subsidy::initialize(association);
 
         // Set that this is testnet
         Testnet::initialize(association);

@@ -9,7 +9,6 @@ module Libra {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Vector;
-    use 0x0::Subsidy;
 
     // The currency has a `CoinType` color that tells us what currency the
     // `value` inside represents.
