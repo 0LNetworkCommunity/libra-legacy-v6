@@ -40,20 +40,35 @@ fun main(account: &signer) {
 // check: BurnEvent
 // check: EXECUTED
 
-//! new-transaction
-//  Adding new burn account
-//! sender: association
-script {
-use 0x0::Transaction;
-use 0x0::Subsidy;
-fun main(account: &signer) {
-    Subsidy::add_burn_account(account, 0xDEADDEAD);
-    let size = Subsidy::get_burn_accounts_size(account);
-    Transaction::assert(size == 2, 8004);
-}   
-}
+// Commenting as the function is private
+// //! new-transaction
+// //  Adding new burn account
+// //! sender: association
+// script {
+// use 0x0::Transaction;
+// use 0x0::Subsidy;
+// fun main(account: &signer) {
+//     Subsidy::add_burn_account(account, 0xDEADDEAD);
+//     let size = Subsidy::get_burn_accounts_size(account);
+//     Transaction::assert(size == 2, 8004);
+// }   
+// }
 
 //check: EXECUTED
+
+// Commenting as the function is private
+// //! new-transaction
+// //  Adding new burn account
+// //! sender: association
+// script {
+// use 0x0::Debug;
+// use 0x0::Subsidy;
+// fun main() {
+//     let (subsidy_units, burn_units) = Subsidy::subsidy_curve(296, 4, 300, 150);
+//     Debug::print(&subsidy_units);
+//     Debug::print(&burn_units);
+// }   
+// }
 
 
     

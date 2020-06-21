@@ -6,9 +6,13 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::LibraAccount;
     use 0x0::Vector;
+    use 0x0::FixedPoint32;
+    use 0x0::Stats;
 
     resource struct SubsidyInfo {
       subsidy_ceiling: u64,
+      min_node_density: u64,
+      max_node_density: u64,
       burn_accounts: vector<address>
     }
 
@@ -19,7 +23,9 @@ address 0x0 {
       Transaction::assert(sender == 0xA550C18, 1002);
       move_to_sender<SubsidyInfo>(
         SubsidyInfo { 
-          subsidy_ceiling: 10, 
+          subsidy_ceiling: 296, //TODO:OL:Update this with actually subsidy ceiling 
+          min_node_density: 4,
+          max_node_density: 300,
           burn_accounts: Vector::empty<address>()
         });
 
@@ -46,32 +52,46 @@ address 0x0 {
       Transaction::assert(new_gas_balance == old_gas_balance + subsidy_info.subsidy_ceiling, 1003);
     }
 
-    // pub fun calculate_Subsidy(blockheight: u8){
-    //   // Gets the proxy for liveness from Stats
-    //   Stats.network_heuristics().signer_density_lookback(blockheight)
+    public fun calculate_Subsidy(blockheight: u8){
+      // Gets the proxy for liveness from Stats
+      // Stats.network_heuristics().signer_density_lookback(blockheight)
 
-    //   // Gets the fees paid in the block from Stdlib.BlockMetadata
-    //   // let fees_in_epoch = Stdlib.BlockMetadata.[Get fees paid]
+      // Gets the fees paid in the block from Stdlib.BlockMetadata
+      // let fees_in_epoch = Stdlib.BlockMetadata.[Get fees paid]
 
-    //   // subsidy_Curve(node_density) {
-    //     // Returns the split bestween subsidy_units, burn_units according to curve.
-    //     // return (subsidy_units, burn_units);
-    //   //}
+      // subsidy_Curve(node_density) {
+        // Returns the split bestween subsidy_units, burn_units according to curve.
+        // return (subsidy_units, burn_units);
+      //}
+    }
+
+    // fun process_subsidy(node_address: address, amount: u64) {
+    //   get the split of payments to subsidy and burn
+    //   let split = calculate_Subsidy()
+
+    //   let subsidy_owed = epoch_subsidy * split.subsidy
+    //   Issue: Need to transfer the calculate_subsidy but transfers are not enabled.
+    //   Gas_coin.transfer(consensus_leader, subsidy_owed)
+
+    //   process_burn(coins) {
+    //     let burn = epoch_subsidy * split.burn
+    //     gas_coin.burn(burn)
+    //   }
     // }
 
-    // process_subsidy(node_address, amount) {
-      // get the split of payments to subsidy and burn
-      // let split = calculate_Subsidy()
-
-      // let subsidy_owed = epoch_subsidy * split.subsidy
-      // Issue: Need to transfer the calculate_subsidy but transfers are not enabled.
-      // Gas_coin.transfer(consensus_leader, subsidy_owed)
-
-      // process_burn(coins) {
-        // let burn = epoch_subsidy * split.burn
-        // gas_coin.burn(burn)
-      //}
-    //}
+    fun subsidy_curve(subsidy_ceiling: u64, min_node_density: u64, max_node_density: u64, node_density: u64): (u64, u64) {
+      //Slope calculation assuming (4, subsidy_ceiling) and (300, 0)
+      let slope = FixedPoint32::divide_u64(
+        (subsidy_ceiling), 
+        FixedPoint32::create_from_rational(max_node_density - min_node_density, 1)
+        );
+      //y-intercept
+      let intercept = slope * max_node_density; 
+      //calculating subsidy and burn units
+      let subsidy_units = intercept - slope * node_density;
+      let burn_units = subsidy_ceiling - subsidy_units;
+      (subsidy_units, burn_units)
+    } 
 
     public fun burn_subsidy(account: &signer, amount: u64) acquires SubsidyInfo{
       //Need to check for association or vm account
