@@ -22,6 +22,10 @@ address 0x0 {
         proofs: vector<VdfProofBlob>,
     }
 
+
+    // TODO: (SM86) Add new resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch.
+    // To consider the long term size of the structure. For a POC a vector is acceptable.
+
     public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>,) : VdfProofBlob {
        VdfProofBlob {challenge,  difficulty, solution }
     }
@@ -43,6 +47,9 @@ address 0x0 {
       // Checks that the user did run the delay (VDF). Calling Verify() to check the validity of Blob
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid == true, 10001);
+
+      // TODO: (SM86) Adds the address to the Validator Universe state.
+      // For every  VDF proof that is correct, add the address and the epoch to the struct.
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());
