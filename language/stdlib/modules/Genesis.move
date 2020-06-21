@@ -24,6 +24,7 @@ module Genesis {
     use 0x0::Testnet;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
+    use 0x0::Redeem;
 
     fun initialize(
         association: &signer,
@@ -45,6 +46,7 @@ module Genesis {
 
         // Currency setup
         Libra::initialize(config_account);
+        Redeem::initialize(config_account);
 
         // Stats module setup
         Stats::initialize(association);

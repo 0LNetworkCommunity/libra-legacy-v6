@@ -7,6 +7,7 @@ address 0x0 {
     use 0x0::Transaction;
     use 0x0::Debug;
     use 0x0::LibraConfig;
+    //use 0x0::Signer;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -78,7 +79,7 @@ address 0x0 {
     // the resource under that address.
     // It can only be called a single time. it should be invoked in the genesis transaction.
     public fun initialize(config_account: &signer) {
-        Transaction::assert( Transaction::sender() == default_redeem_address(), 10003);
+        //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
         move_to<T>( config_account ,T{ history: Vector::empty()});
     }
 

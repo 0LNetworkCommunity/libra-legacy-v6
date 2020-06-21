@@ -174,6 +174,48 @@ impl ClientProxy {
         })
     }
 
+    /// Send a VDF proof.
+    pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() != 6 ,
+            "Invalid number of arguments for sending proof"
+        );
+
+        println!("args: {:?}", space_delim_strings );
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1])?;
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+
+        let script = Script::new(
+            StdlibScript::Redeem.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(space_delim_strings[2].as_bytes().to_vec()),
+                TransactionArgument::U64(space_delim_strings[3].parse::<u64>()?),
+                TransactionArgument::U8Vector(space_delim_strings[4].as_bytes().to_vec()),
+            ],
+        );
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(script),
+            &sender,
+            None,    /* max_gas_amount */
+            None,    /* gas_unit_price */
+            None, /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number)?;
+        }
+        Ok(())
+    }
+
     fn get_account_ref_id(&self, sender_account_address: &AccountAddress) -> Result<usize> {
         Ok(*self
             .address_to_ref_id
@@ -654,8 +696,8 @@ impl ClientProxy {
             None,
         )?;
         self.client.submit_transaction(Some(&mut sender), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender.address, sender.sequence_number)?;
+        if is_blocking && sender.sequence_number > 1{
+            self.wait_for_transaction(sender.address, sender.sequence_number )?;
         }
         Ok(())
     }
