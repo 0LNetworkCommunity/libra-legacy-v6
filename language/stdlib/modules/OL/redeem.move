@@ -31,7 +31,7 @@ address 0x0 {
 
     // TODO: (SM86) a simple public function to query the EligibleValidators.
     // public fun query_eligible_validators() : vector<address> {
-    //     //returns a history <T> of EligibleValidators
+    //      return borrow_global_mut<ValidatorUniverse>(0xA550C18)
     // }
 
     public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>,) : VdfProofBlob {
