@@ -140,6 +140,11 @@ module Libra {
         move_to(association, MintCapability<CoinType>{})
     }
 
+    public fun grant_burn_capability_to_association<CoinType>(association: &signer) {
+        assert_assoc_and_currency<CoinType>(association);
+        move_to(association, BurnCapability<CoinType>{})
+    }
+
     // Publish the `MintCapability` `cap` for the `CoinType` currency under `account`. `CoinType`
     // must be a registered currency type.
     public fun publish_mint_capability<CoinType>(account: &signer, cap: MintCapability<CoinType>) {

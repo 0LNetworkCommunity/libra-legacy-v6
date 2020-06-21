@@ -18,6 +18,8 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18, 1002);
       move_to_sender<SubsidyInfo>(SubsidyInfo{ subsidy_ceiling: 10 });
+
+      Libra::publish_preburn(account, Libra::new_preburn<GAS::T>());
     }
 
     public fun mint_subsidy(account: &signer) acquires SubsidyInfo{
@@ -65,31 +67,20 @@ address 0x0 {
       //}
     //}
 
-    public fun burn_subsidy(account: &signer) acquires SubsidyInfo{
+    public fun burn_subsidy(account: &signer, amount: u64) {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
       
-      //Acquire subsidy info
-      let subsidy_info = borrow_global<SubsidyInfo>(sender);
-      let old_gas_balance = LibraAccount::balance<GAS::T>(sender);
+      //Preburning coins to association
+      //TODO:OL:Need to change to list of accounts
+      let to_burn_coins = LibraAccount::withdraw_from<GAS::T>(account, amount);
+      Libra::preburn_with_resource(to_burn_coins, borrow_global_mut<Preburn<GAS::T>>(0xA550C18), 0xA550C18);
 
-      //Mint gas coin not returning the coin
-      let minted_coins = Libra::mint<GAS::T>(account, subsidy_info.subsidy_ceiling);
-      LibraAccount::deposit_to(account, minted_coins);
-
-      //Check if balance is increased
-      let new_gas_balance = LibraAccount::balance<GAS::T>(sender);
-      Transaction::assert(new_gas_balance == old_gas_balance + subsidy_info.subsidy_ceiling, 1003);
-    }
-
-    /// The address at which the root account will be published.
-    public fun subsidy_root_address(): address {
-      0x20D1AC
-    }
-
-    public fun assert_is_subsidy(addr: address) {
-      Transaction::assert(addr == subsidy_root_address(), 1001);
+      //Burn coin and check if market_cap is decreased
+      let old_market_cap = Libra::market_cap<GAS::T>();
+      Libra::burn<GAS::T>(account, sender);
+      Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (amount as u128), 1005);
     }
   }
 }
