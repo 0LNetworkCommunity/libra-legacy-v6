@@ -31,7 +31,9 @@ module Genesis {
         config_account: &signer,
         fee_account: &signer,
         tc_account: &signer,
+        burn_account: &signer,
         tc_addr: address,
+        burn_account_addr: address,
         genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
@@ -52,7 +54,6 @@ module Genesis {
 
         //Subsidy module setup and burn account initialization
         Subsidy::initialize(association);
-        Subsidy::add_burn_account(association, 0xDEADDEAD);
 
         // Set that this is testnet
         Testnet::initialize(association);
@@ -94,6 +95,14 @@ module Genesis {
             coin2_mint_cap,
             coin2_burn_cap,
         );
+        
+        // Create a burn account and publish preburn
+        LibraAccount::create_burn_account<GAS::T>(
+            association,
+            burn_account_addr,
+            copy dummy_auth_key_prefix
+        );
+        Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
 
         // Create the config account
         LibraAccount::create_genesis_account<GAS::T>(
@@ -112,6 +121,7 @@ module Genesis {
         LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(tc_account, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
     }
 
 }

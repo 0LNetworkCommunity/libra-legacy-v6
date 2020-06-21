@@ -132,6 +132,7 @@ fn create_and_initialize_main_accounts(
     let root_association_address = account_config::association_address();
     let tc_account_address = account_config::treasury_compliance_account_address();
     let fee_account_address = account_config::transaction_fee_address();
+    let burn_account_address = account_config::burn_account_address();
 
     context.set_sender(root_association_address);
     context.exec(
@@ -143,7 +144,9 @@ fn create_and_initialize_main_accounts(
             Value::transaction_argument_signer_reference(config_address()),
             Value::transaction_argument_signer_reference(fee_account_address),
             Value::transaction_argument_signer_reference(tc_account_address),
+            Value::transaction_argument_signer_reference(burn_account_address),
             Value::address(tc_account_address),
+            Value::address(burn_account_address),
             Value::vector_u8(genesis_auth_key.to_vec()),
         ],
     );

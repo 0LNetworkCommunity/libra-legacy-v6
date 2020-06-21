@@ -14,7 +14,7 @@ address 0x0 {
 
     struct T { }
     
-    public fun initialize(account: &signer) {
+    public fun initialize(account: &signer) acquires SubsidyInfo{
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18, 1002);
       move_to_sender<SubsidyInfo>(
@@ -22,6 +22,10 @@ address 0x0 {
           subsidy_ceiling: 10, 
           burn_accounts: Vector::empty<address>()
         });
+
+      //Adding burn account
+      //TODO:OL:Add more accounts later
+      add_burn_account(account, 0xDEADDEAD);
     }
 
     public fun mint_subsidy(account: &signer) acquires SubsidyInfo{
@@ -69,23 +73,27 @@ address 0x0 {
       //}
     //}
 
-    public fun burn_subsidy(account: &signer, amount: u64) {
+    public fun burn_subsidy(account: &signer, amount: u64) acquires SubsidyInfo{
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
       
-      //Preburning coins to association
-      //TODO:OL:Need to change to list of accounts
+      let subsidy_info = borrow_global<SubsidyInfo>(sender);
+      Transaction::assert(Vector::length(&subsidy_info.burn_accounts) > 0, 1002);
+      
+      //Preburning coins to burn account
+      let burn_accounts = &subsidy_info.burn_accounts;
       let to_burn_coins = LibraAccount::withdraw_from<GAS::T>(account, amount);
-      Libra::preburn_to<GAS::T>(account, to_burn_coins);
+      let burn_address = Vector::borrow(burn_accounts, 0);
+      Libra::preburn_to_address<GAS::T>({{*burn_address}}, to_burn_coins);
 
-      //Burn coin and check if market_cap is decreased
+      // Burn coin and check if market_cap is decreased
       let old_market_cap = Libra::market_cap<GAS::T>();
-      Libra::burn<GAS::T>(account, sender);
+      Libra::burn<GAS::T>(account, {{*burn_address}});
       Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (amount as u128), 1005);
     }
 
-    public fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {
+    fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
