@@ -4,5 +4,4 @@ statement = "test"
 
 [chain_info]
 chain_id = "experimental"
-difficulty = 60
 block_dir= "./blocks/"

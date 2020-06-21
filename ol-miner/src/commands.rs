@@ -13,10 +13,9 @@
 mod keygen;
 mod start;
 mod version;
-mod bench;
 
 
-use self::{keygen::KeyGenCmd, start::StartCmd, version::VersionCmd, bench::BenchCmd};
+use self::{keygen::KeyGenCmd, start::StartCmd, version::VersionCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -45,9 +44,6 @@ pub enum OlMinerCmd {
     #[options(help = "generate a keypair ")]
     KeyGen(KeyGenCmd),
 
-    /// The `bench` subcommand
-    #[options(help = "benchmark the delay ")]
-    Bench(BenchCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

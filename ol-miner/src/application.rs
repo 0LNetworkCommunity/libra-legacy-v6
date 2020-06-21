@@ -7,6 +7,12 @@ use abscissa_core::{
 };
 
 pub(crate) const SECURITY_PARAM: u16 = 4096;
+#[cfg(not(test))]
+pub(crate) const DELAY_ITERATIONS: u64 = 2400000;
+#[cfg(test)]
+pub(crate) const DELAY_ITERATIONS: u64 = 100;
+
+
 
 /// Application state
 pub static APPLICATION: AppCell<OlMinerApp> = AppCell::new();
