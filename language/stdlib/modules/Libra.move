@@ -289,6 +289,11 @@ module Libra {
         preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(sender), sender);
     }
 
+    //Meth
+    public fun preburn_to_address<Token>(preburn_address: address, coin: T<Token>) acquires CurrencyInfo, Preburn {
+        preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(preburn_address), preburn_address);
+    }
+
     // Permanently remove the coins held in the `Preburn` resource stored at `preburn_address` and
     // update the market cap accordingly. If there are multiple preburn requests in progress, this
     // will remove the oldest one.

@@ -5,11 +5,11 @@ address 0x0 {
     use 0x0::Libra;
     use 0x0::Signer;
     use 0x0::LibraAccount;
-
-    resource struct PrivilegedCapability<Privilege> { }
+    use 0x0::Vector;
 
     resource struct SubsidyInfo {
-      subsidy_ceiling: u64
+      subsidy_ceiling: u64,
+      burn_accounts: vector<address>
     }
 
     struct T { }
@@ -17,7 +17,11 @@ address 0x0 {
     public fun initialize(account: &signer) {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18, 1002);
-      move_to_sender<SubsidyInfo>(SubsidyInfo{ subsidy_ceiling: 10 });
+      move_to_sender<SubsidyInfo>(
+        SubsidyInfo { 
+          subsidy_ceiling: 10, 
+          burn_accounts: Vector::empty<address>()
+        });
 
       Libra::publish_preburn(account, Libra::new_preburn<GAS::T>());
     }
@@ -81,6 +85,13 @@ address 0x0 {
       let old_market_cap = Libra::market_cap<GAS::T>();
       Libra::burn<GAS::T>(account, sender);
       Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (amount as u128), 1005);
+    }
+
+    public fun put<address>(account:&signer, burn_accounts: &mut vector<address>, new_burn_account: address) {
+      //Need to check for association or vm account
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
+      Vector::push_back<address>(burn_accounts, new_burn_account);
     }
   }
 }
