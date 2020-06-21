@@ -75,7 +75,7 @@ address 0x0 {
       //Preburning coins to association
       //TODO:OL:Need to change to list of accounts
       let to_burn_coins = LibraAccount::withdraw_from<GAS::T>(account, amount);
-      Libra::preburn_with_resource(to_burn_coins, borrow_global_mut<Preburn<GAS::T>>(0xA550C18), 0xA550C18);
+      Libra::preburn_to<GAS::T>(account, to_burn_coins);
 
       //Burn coin and check if market_cap is decreased
       let old_market_cap = Libra::market_cap<GAS::T>();
