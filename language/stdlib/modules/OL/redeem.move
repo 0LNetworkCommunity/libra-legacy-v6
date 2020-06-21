@@ -63,8 +63,6 @@ address 0x0 {
       // Vector::push_back(&mut universe.address, default_redeem_address());
       // Vector::push_back(&mut universe.epoch, TODO: Epoch);
 
-        // Vector::push_back(&mut in_process.proofs, vdf_proof_blob);
-
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());
       Vector::push_back(&mut in_process.proofs, vdf_proof_blob);
