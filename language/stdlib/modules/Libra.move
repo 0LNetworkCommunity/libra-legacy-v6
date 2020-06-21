@@ -289,7 +289,7 @@ module Libra {
         preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(sender), sender);
     }
 
-    //Meth
+    //OL:Method to preburn using address instead of account
     public fun preburn_to_address<Token>(preburn_address: address, coin: T<Token>) acquires CurrencyInfo, Preburn {
         preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(preburn_address), preburn_address);
     }

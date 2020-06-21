@@ -50,7 +50,9 @@ module Genesis {
         // Stats module setup
         Stats::initialize(association);
 
-        
+        //Subsidy module setup and burn account initialization
+        Subsidy::initialize(association);
+        Subsidy::add_burn_account(association, 0xDEADDEAD);
 
         // Set that this is testnet
         Testnet::initialize(association);
@@ -74,9 +76,7 @@ module Genesis {
         //Granting minting and burn capability to association
         Libra::grant_mint_capability_to_association<GAS::T>(association);
         Libra::grant_burn_capability_to_association<GAS::T>(association);
-
-        //Subsidy module setup
-        Subsidy::initialize(association);
+        Libra::publish_preburn(association, Libra::new_preburn<GAS::T>());
 
         // Register transaction fee accounts
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);

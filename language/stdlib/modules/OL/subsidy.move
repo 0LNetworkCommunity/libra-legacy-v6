@@ -22,8 +22,6 @@ address 0x0 {
           subsidy_ceiling: 10, 
           burn_accounts: Vector::empty<address>()
         });
-
-      Libra::publish_preburn(account, Libra::new_preburn<GAS::T>());
     }
 
     public fun mint_subsidy(account: &signer) acquires SubsidyInfo{
@@ -87,11 +85,23 @@ address 0x0 {
       Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (amount as u128), 1005);
     }
 
-    public fun put<address>(account:&signer, burn_accounts: &mut vector<address>, new_burn_account: address) {
+    public fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
-      Vector::push_back<address>(burn_accounts, new_burn_account);
+
+      //TODO:OL:Need to check if account exists already
+      //Get mutable burn accounts vector from association
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(sender);
+      Vector::push_back(&mut subsidy_info.burn_accounts, new_burn_account);
+    }
+
+    public fun get_burn_accounts_size(account: &signer): u64 acquires SubsidyInfo {
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002); 
+
+      let subsidy_info = borrow_global<SubsidyInfo>(sender);
+      Vector::length(&subsidy_info.burn_accounts)
     }
   }
 }

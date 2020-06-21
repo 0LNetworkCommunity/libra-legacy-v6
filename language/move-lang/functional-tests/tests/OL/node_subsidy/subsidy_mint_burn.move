@@ -1,11 +1,7 @@
-//! account: alice, 0GAS
-//! account: preburner, 0GAS
-
 //! new-transaction
 // Subsidy minting should work
 //! sender: association
 script {
-//use 0x0::Transaction;
 use 0x0::Subsidy;
 fun main(account: &signer) {
     Subsidy::mint_subsidy(account);
@@ -18,7 +14,6 @@ fun main(account: &signer) {
 //! new-transaction
 // Subsidy minting with unauthorized account should not work
 script {
-//use 0x0::Transaction;
 use 0x0::Subsidy;
 fun main(account: &signer) {
     Subsidy::mint_subsidy(account);
@@ -44,4 +39,21 @@ fun main(account: &signer) {
 // check: PreburnEvent
 // check: BurnEvent
 // check: EXECUTED
+
+//! new-transaction
+//  Adding new burn account
+//! sender: association
+script {
+use 0x0::Transaction;
+use 0x0::Subsidy;
+fun main(account: &signer) {
+    Subsidy::add_burn_account(account, 0xDEADDEAD);
+    let size = Subsidy::get_burn_accounts_size(account);
+    Transaction::assert(size == 2, 8004);
+}   
+}
+
+//check: EXECUTED
+
+
     
