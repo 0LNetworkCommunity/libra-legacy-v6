@@ -24,7 +24,15 @@ address 0x0 {
 
 
     // TODO: (SM86) Add new resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch.
-    // To consider the long term size of the structure. For a POC a vector is acceptable.
+    // resource struct ValidatorUniverse{
+    //     address: vector<address>, //  default_redeem_address()
+    //     epoch: // The epoch that the proof was submitted in, for ease in querying.
+    // }
+
+    // TODO: (SM86) a simple public function to query the EligibleValidators.
+    // public fun query_eligible_validators() : vector<address> {
+    //     //returns a history <T> of EligibleValidators
+    // }
 
     public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>,) : VdfProofBlob {
        VdfProofBlob {challenge,  difficulty, solution }
@@ -49,7 +57,13 @@ address 0x0 {
       Transaction::assert(valid == true, 10001);
 
       // TODO: (SM86) Adds the address to the Validator Universe state.
+      // This shoudl use the association address.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
+      // let universe = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+      // Vector::push_back(&mut universe.address, default_redeem_address());
+      // Vector::push_back(&mut universe.epoch, TODO: Epoch);
+
+        // Vector::push_back(&mut in_process.proofs, vdf_proof_blob);
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());
