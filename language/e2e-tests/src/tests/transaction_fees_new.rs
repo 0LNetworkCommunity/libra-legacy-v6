@@ -5,7 +5,9 @@ use crate::{
     account::{Account, AccountData},
     executor::FakeExecutor,
     gas_costs,
-    librablock_setup::librablock_helper_tx
+    librablock_setup::librablock_helper_tx,
+    txfee_setup::txfee_helper_tx
+
 };
 use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use libra_types::{
@@ -23,18 +25,23 @@ use transaction_builder::{encode_burn_txn_fees_script, encode_mint_lbr_to_addres
 
 
 #[test]
-fn txn_fees_new() {
+fn txn_fees_new_calc_one_tx_fees() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(0, 0);
-    // let association = Account::new_association();
-    executor.add_account_data(&sender);
+    // this creates a new block with validator info.
+    executor.new_block();
 
     let association_account = Account::new_association();
     let validator_account = Account::new();
 
-    // simple no-op operation to create a state transition
+    // Let's do a simple no-op operation to create a state transition
+    // librablock_helper_tx this with print some helpful debugs. Look for places with a 7e57 to lookup your print (hex for "TEST")
     let txn = librablock_helper_tx(&association_account, &validator_account, 1);
     executor.execute_and_apply(txn);
+
+    // measure the gas used.
+    // create a new account.
+    let sender = AccountData::new(0, 0);
+    executor.add_account_data(&sender);
 
 
     let gas_used = {
@@ -61,32 +68,29 @@ fn txn_fees_new() {
         );
         status.gas_used()
     };
-    //
-    // let tc = Account::new_blessed_tc();
-    // let lbr_ty = TypeTag::Struct(StructTag {
-    //     address: account_config::CORE_CODE_ADDRESS,
-    //     module: Identifier::new("LBR").unwrap(),
-    //     name: Identifier::new("T").unwrap(),
-    //     type_params: vec![],
-    // });
-    //
-    // let output =
-    //     executor.execute_and_apply(tc.signed_script_txn(encode_burn_txn_fees_script(lbr_ty), 0));
-    //
-    // let burn_events: Vec<_> = output
-    //     .events()
-    //     .iter()
-    //     .filter_map(|event| BurnEvent::try_from(event).ok())
-    //     .collect();
-    //
-    // assert_eq!(burn_events.len(), 2);
-    // assert!(burn_events
-    //     .iter()
-    //     .any(|event| event.currency_code().as_str() == "Coin1"));
-    // assert!(burn_events
-    //     .iter()
-    //     .any(|event| event.currency_code().as_str() == "Coin2"));
-    // burn_events
-    //     .iter()
-    //     .for_each(|event| assert_eq!(event.amount(), gas_used / 2));
+}
+
+#[test]
+fn txn_fees_new_check_distribute_gas() {
+    let mut executor = FakeExecutor::from_genesis_file();
+    // this creates a new block with validator info.
+    executor.new_block();
+
+    let association_account = Account::new_association();
+    let validator_account = Account::new();
+
+    // Let's do a simple no-op operation to create a state transition
+    // librablock_helper_tx this with print some helpful debugs. Look for places with a 7e57 to lookup your print (hex for "TEST")
+    let txn = librablock_helper_tx(&association_account, &validator_account, 1);
+    executor.execute_and_apply(txn);
+
+    // measure the gas used.
+    // create a new account.
+    let sender = AccountData::new(0, 0);
+    executor.add_account_data(&sender);
+
+    // PERHAPS FIND A WAY TO DEPOSIT FUNDS DIRECTLY INTO 0xFEE
+    let setup_fees_txn = librablock_helper_tx(&association_account, &validator_account, 2); // make sure you have the right "sequence number" in this tx
+    executor.execute_and_apply(setup_fees_txn);
+
 }
