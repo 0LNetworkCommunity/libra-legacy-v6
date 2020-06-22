@@ -23,7 +23,7 @@ address 0x0 {
         proofs: vector<VdfProofBlob>,
     }
 
-    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>,) : VdfProofBlob {
+    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>) : VdfProofBlob {
        VdfProofBlob {challenge,  difficulty, solution }
     }
 
