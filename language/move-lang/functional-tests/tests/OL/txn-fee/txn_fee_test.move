@@ -3,97 +3,32 @@
 // I wanted to see if the GAS balance of a node was changing as they sent transactions
 
 //! account: bob, 0GAS
+//! account: alice, 10GAS
 
 //! new-transaction
+// Minting from a privileged account should work
 //! sender: association
 script {
-    use 0x0::LibraAccount;
-    use 0x0::GAS;
-    fun main(assoc: &signer) {
-        LibraAccount::mint_to_address<GAS::T>(assoc, {{bob}}, 1000);
-    }
-}
+use 0x0::GAS;
+use 0x0::Libra;
+use 0x0::LibraAccount;
+use 0x0::Transaction;
+// use 0x0::TransactionFee;
+use 0x0::Debug;
 
-//! new-transaction
-//! sender: bob
-//! max-gas: 100
-//! gas-price: 1
-//! gas-currency: GAS
-script {
-    use 0x0::Debug;
-    use 0x0::GAS;
-    use 0x0::LibraAccount;
-    fun main() {
-        let a = LibraAccount::balance<GAS::T>({{bob}});
-        Debug::print(&a);
+    fun main(sender: &signer) {
+        // mint a coin the association (tx sender)
+        let coin = Libra::mint<GAS::T>(sender, 1000);
+
+        // send coin to Fee collecting address
+        LibraAccount::deposit(sender, 0xFEE, coin);
+        let amount = LibraAccount::balance<GAS::T>(0xFEE);
+        Debug::print(&0x000000000000007E5700000000000001);
+        Debug::print(&amount);
+        Transaction::assert(Libra::market_cap<GAS::T>() == 1000, 5);
     }
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: bob
-//! max-gas: 100
-//! gas-price: 1
-//! gas-currency: GAS
-script {
-    use 0x0::Debug;
-    use 0x0::GAS;
-    use 0x0::LibraAccount;
-    fun main() {
-        let a = LibraAccount::balance<GAS::T>({{bob}});
-        Debug::print(&a);
-    }
-}
-// check: EXECUTED
-
-//! new-transaction
-//! sender: bob
-//! max-gas: 100
-//! gas-price: 1
-//! gas-currency: GAS
-script {
-    use 0x0::Debug;
-    use 0x0::GAS;
-    use 0x0::LibraAccount;
-    fun main() {
-        let a = LibraAccount::balance<GAS::T>({{bob}});
-        Debug::print(&a);
-    }
-}
-// check: EXECUTED
-
-//! new-transaction
-//! sender: bob
-//! max-gas: 100
-//! gas-price: 1
-//! gas-currency: GAS
-script {
-    use 0x0::Debug;
-    use 0x0::GAS;
-    use 0x0::LibraAccount;
-    fun main() {
-        let a = LibraAccount::balance<GAS::T>({{bob}});
-        Debug::print(&a);
-        a = 0;
-        while (a < 10) {
-            _ = LibraAccount::balance<GAS::T>({{bob}});
-        };
-    }
-}
-// check: EXECUTED
-
-//! new-transaction
-//! sender: bob
-//! max-gas: 100
-//! gas-price: 1
-//! gas-currency: GAS
-script {
-    use 0x0::Debug;
-    use 0x0::GAS;
-    use 0x0::LibraAccount;
-    fun main() {
-        let a = LibraAccount::balance<GAS::T>({{bob}});
-        Debug::print(&a);
-    }
-}
+// check: MintEvent
 // check: EXECUTED
