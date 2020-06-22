@@ -21,7 +21,7 @@ use move_core_types::{
 };
 use std::convert::TryFrom;
 use stdlib::transaction_scripts::StdlibScript;
-use transaction_builder::{encode_burn_txn_fees_script, encode_mint_lbr_to_address_script};
+use transaction_builder::{encode_mint_lbr_to_address_script};
 
 
 #[test]
