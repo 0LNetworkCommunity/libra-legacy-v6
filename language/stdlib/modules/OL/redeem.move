@@ -103,13 +103,9 @@ address 0x0 {
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid == true, 10001);
 
-      // TODO: (SM86) Adds the address to the Validator Universe state.
-      // This shoudl use the association address.
+      // Adds the address to the Validator Universe state.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
       add_validator(Transaction::sender());
-      // let universe = borrow_global_mut<ValidatorUniverse>(0xA550C18);
-      // Vector::push_back(&mut universe.address, default_redeem_address());
-      // Vector::push_back(&mut universe.epoch, TODO: Epoch);
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());

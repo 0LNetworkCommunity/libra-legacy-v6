@@ -70,10 +70,9 @@ module LibraBlock {
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
         
         // OL implementation of reconfiguration.
-
-        // TODO: Uncomment the below to apply it. this is hard-coded, needs to be in genesis file. 
+        // TODO : This should be intialized as Constant
         if ( round == 15 )
-          ReconfigureOL::reconfigure(vm);  // Should pass association signer as parameter.
+          ReconfigureOL::reconfigure(vm);
 
     }
 
