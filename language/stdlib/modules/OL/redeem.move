@@ -62,19 +62,20 @@ address 0x0 {
     // This is triggered in new epoch by Configuration in block prologue
     public fun new_epoch_validator_universe_update(account: &signer) acquires ValidatorUniverse {
 
-        Transaction::assert(Signer::address_of(account) == 0xA550C18, 401);
+        Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
 
-        let collection = borrow_global_mut<ValidatorUniverse>(Signer::address_of(account));
+        let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
         collection.epoch = collection.epoch + 1;
         collection.addresses = Vector::empty();
     }
+    
     // A simple public function to query the EligibleValidators.
     // Only association should be able to access this function
     public fun query_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
         
-        Transaction::assert(Signer::address_of(account) == 0xA550C18, 401);
+        Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
 
-        let collection = borrow_global<ValidatorUniverse>(Signer::address_of(account));
+        let collection = borrow_global<ValidatorUniverse>(0xA550C18);
         
         return *&(collection.addresses)
     }

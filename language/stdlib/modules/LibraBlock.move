@@ -9,7 +9,7 @@ module LibraBlock {
     use 0x0::Debug;
     use 0x0::Vector;
     use 0x0::Stats;
-    // use 0x0::ReconfigureOL;
+    use 0x0::ReconfigureOL;
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -72,8 +72,8 @@ module LibraBlock {
         // OL implementation of reconfiguration.
 
         // TODO: Uncomment the below to apply it. this is hard-coded, needs to be in genesis file. 
-        // if ( round == 5 )
-        //   ReconfigureOL::reconfigure();  // Should pass association signer as parameter.
+        if ( round == 5 )
+          ReconfigureOL::reconfigure(vm);  // Should pass association signer as parameter.
 
     }
 
