@@ -40,7 +40,7 @@ pub fn verify(
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(context.cost_table(), NativeCostIndex::SHA3_256, 1);
 
-    let v = vdf::WesolowskiVDFParams(2048).new();
+    let v = vdf::WesolowskiVDFParams(4096).new();
 
     let result = v.verify(&challenge, difficulty, &alleged_solution);
 
