@@ -8,7 +8,12 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::FixedPoint32;
     use 0x0::Stats;
+    use 0x0::LibraSystem;
+    use 0x0::Option;
 
+    // Subsidy ceiling yet to be updated from gas schedule. 
+    // Subsidy Ceiling = Max Trans Per Block (20) * 
+    // Max gas units per transaction (10_000_000) * blocks epoch (1_000_000)
     resource struct SubsidyInfo {
       subsidy_ceiling: u64,
       min_node_density: u64,
@@ -20,7 +25,7 @@ address 0x0 {
     
     public fun initialize(account: &signer) acquires SubsidyInfo{
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18, 1002);
+      Transaction::assert(sender == 0xA550C18, 8001);
       move_to_sender<SubsidyInfo>(
         SubsidyInfo { 
           subsidy_ceiling: 296, //TODO:OL:Update this with actually subsidy ceiling 
@@ -37,7 +42,7 @@ address 0x0 {
     public fun mint_subsidy(account: &signer) acquires SubsidyInfo{
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
       
       //Acquire subsidy info
       let subsidy_info = borrow_global<SubsidyInfo>(sender);
@@ -49,35 +54,58 @@ address 0x0 {
 
       //Check if balance is increased
       let new_gas_balance = LibraAccount::balance<GAS::T>(sender);
-      Transaction::assert(new_gas_balance == old_gas_balance + subsidy_info.subsidy_ceiling, 1003);
+      Transaction::assert(new_gas_balance == old_gas_balance + subsidy_info.subsidy_ceiling, 8002);
     }
 
-    public fun calculate_Subsidy(blockheight: u8){
+    // Method to calculate subsidy split for an epoch. 
+    // This method should be used to get the units at the beginning of the epoch.
+    public fun calculate_Subsidy(account: &signer, start_height: u64, end_height: u64)
+    :(u64, u64) acquires SubsidyInfo {
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001); 
+
       // Gets the proxy for liveness from Stats
-      // Stats.network_heuristics().signer_density_lookback(blockheight)
+      let node_density = Stats::network_heuristics(start_height, end_height);
 
-      // Gets the fees paid in the block from Stdlib.BlockMetadata
-      // let fees_in_epoch = Stdlib.BlockMetadata.[Get fees paid]
+      // Gets the transaction fees in the epoch
+      let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
 
-      // subsidy_Curve(node_density) {
-        // Returns the split bestween subsidy_units, burn_units according to curve.
-        // return (subsidy_units, burn_units);
-      //}
+      //Calculate the split for subsidy and burn
+      let subsidy_info = borrow_global<SubsidyInfo>(sender);
+
+      let (subsidy_units, burn_units) = subsidy_curve(
+        subsidy_info.subsidy_ceiling, 
+        subsidy_info.min_node_density, 
+        subsidy_info.max_node_density, 
+        node_density
+      );
+      //Deducting the txn fees from subsidy_units to get maximum subsidy for all validators
+      subsidy_units = subsidy_units - txn_fee_amount;
+      burn_units = burn_units + txn_fee_amount; //Adding the fee amount to be burned
+      (subsidy_units, burn_units)
     }
 
-    // fun process_subsidy(node_address: address, amount: u64) {
-    //   get the split of payments to subsidy and burn
-    //   let split = calculate_Subsidy()
+    public fun process_subsidy(account: &signer, node_address: address, 
+                               subsidy_units: u64) {
+      //Need to check for association or vm account
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      
+      //get node voting power
+      let voting_power_vec = LibraSystem::get_validator_voting_power(node_address);
+      Transaction::assert(Option::is_some(&voting_power_vec), 8003);
+      let voting_power = *Option::borrow(&voting_power_vec);
+      let subsidy_owed = subsidy_units * voting_power;
 
-    //   let subsidy_owed = epoch_subsidy * split.subsidy
-    //   Issue: Need to transfer the calculate_subsidy but transfers are not enabled.
-    //   Gas_coin.transfer(consensus_leader, subsidy_owed)
+      //Get balances before transfer from association and node_address
+      let old_association_balance = LibraAccount::balance<GAS::T>(sender);
+      let old_validator_balance = LibraAccount::balance<GAS::T>(node_address);
 
-    //   process_burn(coins) {
-    //     let burn = epoch_subsidy * split.burn
-    //     gas_coin.burn(burn)
-    //   }
-    // }
+      //Transfer gas from association to validator
+      LibraAccount::pay_from<GAS::T>(account, node_address, subsidy_owed);
+      Transaction::assert(LibraAccount::balance<GAS::T>(sender) == old_association_balance - subsidy_owed, 8004);
+      Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_balance + subsidy_owed, 8004);
+    }
 
     fun subsidy_curve(subsidy_ceiling: u64, min_node_density: u64, max_node_density: u64, node_density: u64): (u64, u64) {
       //Slope calculation assuming (4, subsidy_ceiling) and (300, 0)
@@ -96,10 +124,10 @@ address 0x0 {
     public fun burn_subsidy(account: &signer, amount: u64) acquires SubsidyInfo{
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
       
       let subsidy_info = borrow_global<SubsidyInfo>(sender);
-      Transaction::assert(Vector::length(&subsidy_info.burn_accounts) > 0, 1002);
+      Transaction::assert(Vector::length(&subsidy_info.burn_accounts) > 0, 8005);
       
       //Preburning coins to burn account
       let burn_accounts = &subsidy_info.burn_accounts;
@@ -110,13 +138,13 @@ address 0x0 {
       // Burn coin and check if market_cap is decreased
       let old_market_cap = Libra::market_cap<GAS::T>();
       Libra::burn<GAS::T>(account, {{*burn_address}});
-      Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (amount as u128), 1005);
+      Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (amount as u128), 8006);
     }
 
     fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
       //TODO:OL:Need to check if account exists already
       //Get mutable burn accounts vector from association
@@ -126,7 +154,7 @@ address 0x0 {
 
     public fun get_burn_accounts_size(account: &signer): u64 acquires SubsidyInfo {
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 1002); 
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001); 
 
       let subsidy_info = borrow_global<SubsidyInfo>(sender);
       Vector::length(&subsidy_info.burn_accounts)

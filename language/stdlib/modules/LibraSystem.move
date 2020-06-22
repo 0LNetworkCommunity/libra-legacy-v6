@@ -327,6 +327,27 @@ module LibraSystem {
         // Updated the configuration using updated validator set. Now, start new epoch
         set_validator_set(updated_validator_set);
     }
+
+    //TODO:OL:This is untested. Need to figure a way to test this. 
+    //Method to get validator voting power. To be used in node subsidy
+    public fun get_validator_voting_power(validator_address: address): Option::T<u64> {
+        let validator_set = get_validator_set();
+        let size = Vector::length(&validator_set.validators);
+        if (size == 0) {
+            return Option::none()
+        };
+
+        let i = 0;
+        while (i < size) {
+            let validator_info_ref = Vector::borrow<ValidatorInfo>(&validator_set.validators, i);
+            if (validator_info_ref.addr == validator_address) {
+                return Option::some(validator_info_ref.consensus_voting_power)
+            };
+            i = i + 1;
+        };
+
+        return Option::none()
+    }
  
 }
 }

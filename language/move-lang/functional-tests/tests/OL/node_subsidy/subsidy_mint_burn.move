@@ -70,5 +70,18 @@ fun main(account: &signer) {
 // }   
 // }
 
+// //! new-transaction
+// //  Testing calculate subsidy
+// //! sender: association
+// script {
+// use 0x0::Debug;
+// use 0x0::Subsidy;
+// fun main(account: &signer) {
+//     let (subsidy_units, burn_units) = Subsidy::calculate_Subsidy(account, 0, 0);
+//     Debug::print(&subsidy_units);
+//     Debug::print(&burn_units);
+// }   
+// }
+
 
     
