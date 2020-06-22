@@ -47,7 +47,7 @@ pub mod build_block {
             height: 0u64,
             // note: do_delay() sigature is (challenge, delay difficulty).
             // note: trait serializes data field.
-            data: delay::do_delay(&preimage, config.chain_info.difficulty),
+            data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
         };
         //TODO: check for overwriting file...
         let block_dir_buf = Path::new(&config.chain_info.block_dir).to_path_buf();
@@ -76,7 +76,7 @@ pub mod build_block {
                 height,
                 // note: do_delay() sigature is (challenge, delay difficulty).
                 // note: trait serializes data field.
-                data: delay::do_delay(&preimage, config.chain_info.difficulty),
+                data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
             };
 
             let block_dir_buf = block_dir.to_path_buf();
@@ -159,13 +159,12 @@ pub mod build_block {
                 if let Some(stem) = entry.file_stem() {
                     if let Some(stem_string) = stem.to_str() {
                         let blocknumber = stem_string.replace("block_", "");
-                            // TODO: Alternatively rely on the json data field 'height' insead of file name.
-                            let blocknumber = blocknumber.parse::<u64>().unwrap();
-                            if blocknumber >= max_block {
-                                max_block = blocknumber;
-                                max_block_path = Some(entry);
-                            }
-
+                        // TODO: Alternatively rely on the json data field 'height' insead of file name.
+                        let blocknumber = blocknumber.parse::<u64>().unwrap();
+                        if blocknumber >= max_block {
+                            max_block = blocknumber;
+                            max_block_path = Some(entry);
+                        }
                     }
                 }
             }
@@ -197,7 +196,6 @@ pub mod build_block {
             },
             chain_info: ChainInfo {
                 chain_id: "Ol testnet".to_owned(),
-                difficulty: 100.to_owned(),
                 block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
             },
         };
@@ -237,7 +235,6 @@ pub mod build_block {
             },
             chain_info: ChainInfo {
                 chain_id: "Ol testnet".to_owned(),
-                difficulty: 100.to_owned(),
                 block_dir: "test_blocks_temp_2".to_owned(),
             },
         };
@@ -264,8 +261,8 @@ pub mod build_block {
         mine_once(&mock_configs);
 
         // confirm this mock was written to systems.
-        let block_file =
-            fs::read_to_string("./test_blocks_temp_2/block_1.json").expect("Could not read latest block");
+        let block_file = fs::read_to_string("./test_blocks_temp_2/block_1.json")
+            .expect("Could not read latest block");
         let latest_block: Block =
             serde_json::from_str(&block_file).expect("could not deserialize latest block");
         // Test the file is read, and blockheight is 0
