@@ -56,7 +56,7 @@ impl OlMinerConfig {
         preimage.append(&mut padded_chain_id_bytes);
 
         preimage
-            .write_u64::<LittleEndian>(self.chain_info.block_size)
+            .write_u64::<LittleEndian>(crate::application::DELAY_ITERATIONS)
             .unwrap();
 
         let mut padded_statements_bytes = {
@@ -113,8 +113,6 @@ impl Default for OlMinerConfig {
 pub struct ChainInfo {
     /// Chain that this work is being committed to
     pub chain_id: String,
-    /// Number of iterations of work
-    pub block_size: u64,
     /// Directory to store blocks in
     pub block_dir: String,
 }
@@ -124,7 +122,6 @@ impl Default for ChainInfo {
     fn default() -> Self {
         Self {
             chain_id: "Ol testnet".to_owned(),
-            block_size: 100.to_owned(),
             block_dir: "blocks".to_owned(),
         }
     }
