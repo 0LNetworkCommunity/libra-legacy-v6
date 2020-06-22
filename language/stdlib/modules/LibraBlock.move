@@ -72,7 +72,7 @@ module LibraBlock {
         // OL implementation of reconfiguration.
 
         // TODO: Uncomment the below to apply it. this is hard-coded, needs to be in genesis file. 
-        if ( round == 5 )
+        if ( round == 15 )
           ReconfigureOL::reconfigure(vm);  // Should pass association signer as parameter.
 
     }
