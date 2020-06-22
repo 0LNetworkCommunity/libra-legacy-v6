@@ -24,6 +24,7 @@ module Genesis {
     use 0x0::Testnet;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
+    use 0x0::Redeem;
 
     fun initialize(
         association: &signer,
@@ -48,6 +49,9 @@ module Genesis {
 
         // Stats module setup
         Stats::initialize(association);
+
+        // Redeem module Validator Universe setup
+        Redeem::initialize_validator_universe(association);
 
         // Set that this is testnet
         Testnet::initialize(association);

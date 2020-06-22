@@ -12,6 +12,21 @@ fun main(s: &signer) {
 }
 // check: EXECUTED
 
+//  Validator Universe TEST: should be empty
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Redeem;
+    use 0x0::Transaction;
+    use 0x0::Vector;
+
+    fun main(s: &signer) {
+        let validators = Redeem::query_eligible_validators(s);
+        Transaction::assert(Vector::length<address>(&validators) == 0, 1);
+    }
+}
+// check: EXECUTED
+
 // Alice Submit VDF Proof
 //! new-transaction
 //! sender: alice
@@ -30,6 +45,24 @@ fun main() {
 }
 // check: EXECUTED
 
+// Validator Universe TEST 
+// Check if alice is added to Validator Universe
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Redeem;
+    use 0x0::Transaction;
+    use 0x0::Vector;
+
+    fun main(s: &signer) {
+        let validators = Redeem::query_eligible_validators(s);
+        Transaction::assert(Vector::length<address>(&validators) == 1, 1);
+        Transaction::assert(Vector::contains<address>(&validators, &{{alice}}) == true, 1);
+    }
+}
+// check: EXECUTED
+
+
 // Bob Submit end_redeem Transaction. Only the one who initialed Redeem module can execute this transaction.
 //! new-transaction
 //! sender: config
@@ -39,5 +72,22 @@ fun main() {
 
     Redeem::end_redeem({{alice}});
 }
+}
+// check: EXECUTED
+
+// Validator Universe TEST 
+// If new epoch is called, is the vector should be cleared.
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Redeem;
+    use 0x0::Transaction;
+    use 0x0::Vector;
+
+    fun main(s: &signer) {
+        Redeem::new_epoch_validator_universe_update(s);
+        let validators = Redeem::query_eligible_validators(s);
+        Transaction::assert(Vector::length<address>(&validators) == 0, 1);
+    }
 }
 // check: EXECUTED

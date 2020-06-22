@@ -9,6 +9,7 @@ module LibraBlock {
     use 0x0::Debug;
     use 0x0::Vector;
     use 0x0::Stats;
+    use 0x0::ReconfigureOL;
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -67,6 +68,12 @@ module LibraBlock {
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
+        
+        // OL implementation of reconfiguration.
+        // TODO: this is hard-coded, needs to be in genesis file. 
+        if ( round == 5 )
+          ReconfigureOL::reconfigure();
+
     }
 
     // Update the BlockMetadata resource with the new blockmetada coming from the consensus.

@@ -1,3 +1,4 @@
+// 401- Unauthrized access (only association allowed)
 address 0x0 {
 
   // Note: This module needs a key-value store.
@@ -7,6 +8,7 @@ address 0x0 {
     use 0x0::Transaction;
     use 0x0::Debug;
     use 0x0::LibraConfig;
+    use 0x0::Signer;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -22,23 +24,67 @@ address 0x0 {
         proofs: vector<VdfProofBlob>,
     }
 
+     ///////////////////////////////////////////////////////////////////////////
+    // Validator Universe
+    ///////////////////////////////////////////////////////////////////////////
 
-    // TODO: (SM86) Add new resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch.
-    // resource struct ValidatorUniverse{
-    //     address: vector<address>, //  default_redeem_address()
-    //     epoch: // The epoch that the proof was submitted in, for ease in querying.
-    // }
+    // resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch number. 
+    resource struct ValidatorUniverse {
+      addresses: vector<address>, 
+      epoch: u64, // The epoch that the proof was submitted in, for ease in querying.
+    }
 
-    // TODO: (SM86) a simple public function to query the EligibleValidators.
-    // public fun query_eligible_validators() : vector<address> {
-    //      return borrow_global_mut<ValidatorUniverse>(0xA550C18)
-    // }
+    // This function is called to add validator to the validator universe.
+    fun add_validator(addr: address) acquires ValidatorUniverse {
+
+        let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+
+        if(!Vector::contains<address>(&mut collection.addresses, &addr))
+          Vector::push_back<address>(&mut collection.addresses, addr);
+    }
+
+
+     ///////////////////////////////////////////////////////////////////////////
+    // Public functions 
+    ///////////////////////////////////////////////////////////////////////////
+
+    // function to initialize ValidatorUniverse in genesis.
+    // This is triggered in new epoch by Configuration in Genesis.move
+    public fun initialize_validator_universe(account: &signer){
+      move_to<ValidatorUniverse>(account, ValidatorUniverse {
+            addresses: Vector::empty<address>(),
+            epoch: 0,
+        }
+      );
+    }
+    
+    // function to re-initialize ValidatorUniverse in new epoch.
+    // This is triggered in new epoch by Configuration in block prologue
+    public fun new_epoch_validator_universe_update(account: &signer) acquires ValidatorUniverse {
+
+        Transaction::assert(Signer::address_of(account) == 0xA550C18, 401);
+
+        let collection = borrow_global_mut<ValidatorUniverse>(Signer::address_of(account));
+        collection.epoch = collection.epoch + 1;
+        collection.addresses = Vector::empty();
+    }
+    // A simple public function to query the EligibleValidators.
+    // Only association should be able to access this function
+    public fun query_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
+        
+        Transaction::assert(Signer::address_of(account) == 0xA550C18, 401);
+
+        let collection = borrow_global<ValidatorUniverse>(Signer::address_of(account));
+        
+        return *&(collection.addresses)
+    }
+
 
     public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>,) : VdfProofBlob {
        VdfProofBlob {challenge,  difficulty, solution }
     }
 
-    public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess{
+    public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess, ValidatorUniverse{
       // Initialize
       if (!has_in_process()) {
            init_in_process();
@@ -59,6 +105,7 @@ address 0x0 {
       // TODO: (SM86) Adds the address to the Validator Universe state.
       // This shoudl use the association address.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
+      add_validator(Transaction::sender());
       // let universe = borrow_global_mut<ValidatorUniverse>(0xA550C18);
       // Vector::push_back(&mut universe.address, default_redeem_address());
       // Vector::push_back(&mut universe.epoch, TODO: Epoch);
