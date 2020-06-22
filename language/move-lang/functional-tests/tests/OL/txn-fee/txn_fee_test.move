@@ -12,12 +12,12 @@ use 0x0::Transaction;
 // use 0x0::TransactionFee;
 use 0x0::Debug;
 
-fun main(account: &signer) {
-    // mint 100 coins and check that the market cap increases appropriately
-    let coin = Libra::mint<GAS::T>(account, 1000);
+fun main(sender: &signer) {
+    // mint a coin the association (tx sender)
+    let coin = Libra::mint<GAS::T>(sender, 1000);
 
-    // get rid of the coin
-    LibraAccount::deposit(account, 0xFEE, coin);
+    // send coin to Fee collecting address
+    LibraAccount::deposit(sender, 0xFEE, coin);
     let amount = LibraAccount::balance<GAS::T>(0xFEE);
     Debug::print(&0x000000000000007E5700000000000001);
     Debug::print(&amount);
