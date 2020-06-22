@@ -17,7 +17,6 @@ fn test_write_block() {
         },
         chain_info: ChainInfo {
             chain_id: "Ol testnet".to_owned(),
-            block_size: 100.to_owned(),
             block_dir: "test_blocks".to_owned(),
         },
     };
