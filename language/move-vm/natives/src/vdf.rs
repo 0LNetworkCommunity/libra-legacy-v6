@@ -46,7 +46,6 @@ pub fn verify(
     let result = panic::catch_unwind(|| {
         let r = v.verify(&challenge, difficulty, &alleged_solution);
         if r.is_err() {
-            // let return_values = vec![Value::bool(false)];
             return Err(());
         }
         Ok(())
