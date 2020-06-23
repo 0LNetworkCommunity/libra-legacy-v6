@@ -41,8 +41,6 @@ pub mod build_block {
     use std::{fs, io::Write, path::Path, path::PathBuf};
     use std::time::{Duration, Instant};
 
-
-
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
         let preimage = config.genesis_preimage();
