@@ -16,8 +16,10 @@ address 0x0 {
         solution: vector<u8>,
     }
 
-    resource struct T {
+    resource struct T { // rename this to History.
         history: vector<vector<u8>>,
+        // mining_epoch_count: u64 // Make this increment on end_redeem by +1 if there were proofs in that epoch.
+        // end_redeem checks that the user was validating after submitting an initial mining proof.
     }
 
     resource struct InProcess {
@@ -28,10 +30,11 @@ address 0x0 {
     // Validator Universe
     ///////////////////////////////////////////////////////////////////////////
 
-    // resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch number. 
+    // resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch number.
     resource struct ValidatorUniverse {
-      addresses: vector<address>, 
-      epoch: u64, // The epoch that the proof was submitted in, for ease in querying.
+      addresses: vector<address>,
+      epoch: u64, // LG: Deprecated. The epoch that the proof was submitted in, for ease in querying.
+      // mining_epoch_count: u64,  // How many consecutive epochs the validator has done mining.
     }
 
     // This function is called to add validator to the validator universe.
@@ -45,7 +48,7 @@ address 0x0 {
 
 
      ///////////////////////////////////////////////////////////////////////////
-    // Public functions 
+    // Public functions
     ///////////////////////////////////////////////////////////////////////////
 
     // function to initialize ValidatorUniverse in genesis.
@@ -54,10 +57,11 @@ address 0x0 {
       move_to<ValidatorUniverse>(account, ValidatorUniverse {
             addresses: Vector::empty<address>(),
             epoch: 0,
+            //mining_epoch_count: 0,
         }
       );
     }
-    
+
     // function to re-initialize ValidatorUniverse in new epoch.
     // This is triggered in new epoch by Configuration in block prologue
     public fun new_epoch_validator_universe_update(account: &signer) acquires ValidatorUniverse {
@@ -66,17 +70,20 @@ address 0x0 {
 
         let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
         collection.epoch = collection.epoch + 1;
+        //collection.mining_epoch_count = 0 // get the validator proof redemption history.
+        // need to dd to redemption history a field: mining_epoch_count.
+        // borrow_global_mut<T>(default_redeem_address());
         collection.addresses = Vector::empty();
     }
-    
+
     // A simple public function to query the EligibleValidators.
     // Only association should be able to access this function
     public fun query_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
-        
+
         Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
 
         let collection = borrow_global<ValidatorUniverse>(0xA550C18);
-        
+
         return *&(collection.addresses)
     }
 
@@ -123,8 +130,11 @@ address 0x0 {
       let counts = Vector::length(&in_process_redemption.proofs);
       Transaction::assert(counts > 0, 10002);
 
-      // Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
+      // TODO: Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
+
+      // TODO: Update the  ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+      // 
 
       // Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
       // TBD

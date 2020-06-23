@@ -9,6 +9,15 @@ address 0x0 {
 
     // Input: a vector of account addresses
     //Output: Top n according to weight (Just account balance for now)
+    // public fun proof_of_weight(accounts: vector<address>, n: u64): vector<address> {
+    //
+    //     // Call stats and confirm the validators that signed more that 90% of blocks
+    //     for i in accounts {
+    //         let vector_of_validators = Stats::node_heuristic(i, start, end)
+    //     }
+    //
+    //
+    // }
     public fun top_n_accounts(accounts: vector<address>, n: u64): vector<address> {
 
       let length = Vector::length<address>(&accounts);
@@ -28,7 +37,17 @@ address 0x0 {
       while (k < length) {
           let cur_address = Vector::borrow<address>(&accounts, k);
           // Retrieve balance for the current account
+          // TODO: remove balance from algorithm leave as comments.
           let balance = LibraAccount::balance<GAS::T>({{*cur_address}});
+          // Instead of balance. We want miners that have been mining for longest amount of new_epoch_validator_universe_update
+          // Use the VAlidatorUniverse.mining_epoch_count for that user.
+          // How many epochs has the validator submitted VDF proofs for.
+          // let new_balance = borrow_global_mut<ValidatorUniverse>(0xA550C18).mining_epoch_count
+
+          // let active_validator = Stats::node_heuristic({{*cur_address}}, start_epoch_height, end_epoch_height)
+          // if active_validator < threshold_signing {
+          //     return // not included in the next validator set, has weight of 0.
+          // }
           // Weight is just account balance for now.
           Vector::push_back<u64>(&mut weights, balance);
           k = k + 1;

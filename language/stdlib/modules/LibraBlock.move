@@ -68,7 +68,7 @@ module LibraBlock {
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
-        
+
         // OL implementation of reconfiguration.
         // TODO : This should be intialized as Constant
         Debug::print(&round);
