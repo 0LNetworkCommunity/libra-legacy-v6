@@ -9,6 +9,7 @@ module LibraBlock {
     use 0x0::Vector;
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
+    use 0x0::Debug;
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -70,6 +71,7 @@ module LibraBlock {
         
         // OL implementation of reconfiguration.
         // TODO : This should be intialized as Constant
+        Debug::print(&round);
         if ( round == 15 )
           ReconfigureOL::reconfigure(vm);
 
