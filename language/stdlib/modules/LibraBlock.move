@@ -71,10 +71,8 @@ module LibraBlock {
 
         // OL implementation of reconfiguration.
         // TODO : This should be intialized as Constant
-        Debug::print(&round);
-        if ( round == 15 )
-          ReconfigureOL::reconfigure(vm);
-
+        if ( round == 15 ) 
+          process_epoch_prologue(vm)
     }
 
     // Update the BlockMetadata resource with the new blockmetada coming from the consensus.
@@ -104,6 +102,16 @@ module LibraBlock {
             time_microseconds: timestamp,
           }
         );
+    }
+
+    fun process_epoch_prologue(
+      vm: &signer
+    ) {
+      // Step 1: Call end redeem
+      // Step 2: Reconfigure at the end of epoch
+      ReconfigureOL::reconfigure(vm);
+      // Step 3: Process node subsidy
+      // Step 4: Distribute transaction fees
     }
 
     // Get the current block height
