@@ -28,3 +28,4 @@ mod write_set;
 mod redeem;
 mod librablock_test;
 mod transaction_fees_new;
+mod txn_fee_test;

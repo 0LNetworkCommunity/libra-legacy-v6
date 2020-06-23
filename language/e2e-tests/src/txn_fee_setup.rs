@@ -27,7 +27,7 @@ pub fn txn_fee_tx_mint(
         args,
         seq_num,
         gas_costs::TXN_RESERVED * 3,
-        1,
+        0,
         LBR_NAME.to_owned(),
     )
 }
@@ -36,18 +36,18 @@ pub fn txn_fee_tx_move(
     sender: &Account,
     seq_num: u64,
 ) -> SignedTransaction {
-    let mut args: Vec<TransactionArgument> = Vec::new();
+    let args: Vec<TransactionArgument> = Vec::new();
     let type_vec: Vec<TypeTag> = Vec::new();
 
     sender.create_signed_txn_with_args(
-        StdlibScript::LibraBlockTestHelper
+        StdlibScript::TxFeeTestMove
             .compiled_bytes()
             .into_vec(),
         type_vec,
         args,
         seq_num,
-        gas_costs::TXN_RESERVED * 3,
-        1,
+        gas_costs::TXN_RESERVED * 4,
+        0,
         LBR_NAME.to_owned(),
     )
 }

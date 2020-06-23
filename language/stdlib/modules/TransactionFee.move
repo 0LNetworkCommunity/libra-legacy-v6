@@ -47,13 +47,19 @@ module TransactionFee {
       let total_weight = 0;
       let num_validators = LibraSystem::validator_set_size();
 
+      Debug::print(&0x7E57000000007890);
+      Debug::print(&num_validators);
+
       while (i < num_validators) {
         total_weight = total_weight + LibraSystem::get_ith_validator_weight(i);
         i = i + 1;
+        Debug::print(&i);
       };
 
       let amount_collected = LibraAccount::balance<Token>(0xFEE);
 
+      Debug::print(&0xC011EC7ED00000000);
+      Debug::print(&amount_collected);
       // If amount_collected == 0, this will also return early
       if (amount_collected < total_weight) return ();
 
