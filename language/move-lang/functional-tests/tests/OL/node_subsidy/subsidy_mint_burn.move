@@ -54,7 +54,7 @@ fun main(account: &signer) {
 // }   
 // }
 
-//check: EXECUTED
+// //check: EXECUTED
 
 // Commenting as the function is private
 // //! new-transaction
