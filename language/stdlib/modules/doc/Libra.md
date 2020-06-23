@@ -18,6 +18,8 @@
 -  [Struct `AddCurrency`](#0x0_Libra_AddCurrency)
 -  [Function `initialize`](#0x0_Libra_initialize)
 -  [Function `grant_mint_capability_to_association`](#0x0_Libra_grant_mint_capability_to_association)
+-  [Function `grant_mint_capability_to_subsidy`](#0x0_Libra_grant_mint_capability_to_subsidy)
+-  [Function `grant_burn_capability_to_subsidy`](#0x0_Libra_grant_burn_capability_to_subsidy)
 -  [Function `publish_mint_capability`](#0x0_Libra_publish_mint_capability)
 -  [Function `publish_burn_capability`](#0x0_Libra_publish_burn_capability)
 -  [Function `mint`](#0x0_Libra_mint)
@@ -59,6 +61,7 @@
 -  [Function `update_minting_ability`](#0x0_Libra_update_minting_ability)
 -  [Function `currency_addr`](#0x0_Libra_currency_addr)
 -  [Function `assert_assoc_and_currency`](#0x0_Libra_assert_assoc_and_currency)
+-  [Function `assert_subsidy_and_currency`](#0x0_Libra_assert_subsidy_and_currency)
 -  [Function `assert_is_coin`](#0x0_Libra_assert_is_coin)
 -  [Specification](#0x0_Libra_Specification)
     -  [Struct `T`](#0x0_Libra_Specification_T)
@@ -556,6 +559,56 @@
 <pre><code><b>public</b> <b>fun</b> <a href="#0x0_Libra_grant_mint_capability_to_association">grant_mint_capability_to_association</a>&lt;CoinType&gt;(association: &signer) {
     <a href="#0x0_Libra_assert_assoc_and_currency">assert_assoc_and_currency</a>&lt;CoinType&gt;(association);
     move_to(association, <a href="#0x0_Libra_MintCapability">MintCapability</a>&lt;CoinType&gt;{})
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x0_Libra_grant_mint_capability_to_subsidy"></a>
+
+## Function `grant_mint_capability_to_subsidy`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Libra_grant_mint_capability_to_subsidy">grant_mint_capability_to_subsidy</a>&lt;CoinType&gt;(subsidy: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Libra_grant_mint_capability_to_subsidy">grant_mint_capability_to_subsidy</a>&lt;CoinType&gt;(subsidy: &signer) {
+    <a href="#0x0_Libra_assert_subsidy_and_currency">assert_subsidy_and_currency</a>&lt;CoinType&gt;(subsidy);
+    move_to(subsidy, <a href="#0x0_Libra_MintCapability">MintCapability</a>&lt;CoinType&gt;{})
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x0_Libra_grant_burn_capability_to_subsidy"></a>
+
+## Function `grant_burn_capability_to_subsidy`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Libra_grant_burn_capability_to_subsidy">grant_burn_capability_to_subsidy</a>&lt;CoinType&gt;(subsidy: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_Libra_grant_burn_capability_to_subsidy">grant_burn_capability_to_subsidy</a>&lt;CoinType&gt;(subsidy: &signer) {
+    <a href="#0x0_Libra_assert_subsidy_and_currency">assert_subsidy_and_currency</a>&lt;CoinType&gt;(subsidy);
+    move_to(subsidy, <a href="#0x0_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;{})
 }
 </code></pre>
 
@@ -1735,6 +1788,31 @@ Fails if
 
 <pre><code><b>fun</b> <a href="#0x0_Libra_assert_assoc_and_currency">assert_assoc_and_currency</a>&lt;CoinType&gt;(account: &signer) {
     <a href="Association.md#0x0_Association_assert_is_association">Association::assert_is_association</a>(account);
+    <a href="#0x0_Libra_assert_is_coin">assert_is_coin</a>&lt;CoinType&gt;();
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x0_Libra_assert_subsidy_and_currency"></a>
+
+## Function `assert_subsidy_and_currency`
+
+
+
+<pre><code><b>fun</b> <a href="#0x0_Libra_assert_subsidy_and_currency">assert_subsidy_and_currency</a>&lt;CoinType&gt;(account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="#0x0_Libra_assert_subsidy_and_currency">assert_subsidy_and_currency</a>&lt;CoinType&gt;(account: &signer) {
+    <a href="subsidy.md#0x0_Subsidy_assert_is_subsidy">Subsidy::assert_is_subsidy</a>(<a href="Signer.md#0x0_Signer_address_of">Signer::address_of</a>(account));
     <a href="#0x0_Libra_assert_is_coin">assert_is_coin</a>&lt;CoinType&gt;();
 }
 </code></pre>

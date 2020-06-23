@@ -136,7 +136,6 @@ impl StdlibScript {
         // read from disk
         let mut path = PathBuf::from(self.name());
         path.set_extension("mv");
-        println!("{:?}", path);
         CompiledBytes(
             STAGED_TXN_SCRIPTS_DIR
                 .get_file(path.clone())

@@ -25,13 +25,16 @@ module Genesis {
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
     use 0x0::Redeem;
+    use 0x0::Subsidy;
 
     fun initialize(
         association: &signer,
         config_account: &signer,
         fee_account: &signer,
         tc_account: &signer,
+        burn_account: &signer,
         tc_addr: address,
+        burn_account_addr: address,
         genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
@@ -52,6 +55,8 @@ module Genesis {
 
         // Redeem module Validator Universe setup
         Redeem::initialize_validator_universe(association);
+        //Subsidy module setup and burn account initialization
+        Subsidy::initialize(association);
 
         // Set that this is testnet
         Testnet::initialize(association);
@@ -71,14 +76,18 @@ module Genesis {
         );
         Libra::grant_mint_capability_to_association<Coin1::T>(association);
         Libra::grant_mint_capability_to_association<Coin2::T>(association);
+
+        //Granting minting and burn capability to association
         Libra::grant_mint_capability_to_association<GAS::T>(association);
+        Libra::grant_burn_capability_to_association<GAS::T>(association);
+        Libra::publish_preburn(association, Libra::new_preburn<GAS::T>());
 
         // Register transaction fee accounts
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
         TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
         TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
         TransactionFee::initialize(tc_account, fee_account);
-
+        
         // Create the treasury compliance account
         LibraAccount::create_treasury_compliance_account<GAS::T>(
             association,
@@ -89,6 +98,14 @@ module Genesis {
             coin2_mint_cap,
             coin2_burn_cap,
         );
+        
+        // Create a burn account and publish preburn
+        LibraAccount::create_burn_account<GAS::T>(
+            association,
+            burn_account_addr,
+            copy dummy_auth_key_prefix
+        );
+        Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
 
         // Create the config account
         LibraAccount::create_genesis_account<GAS::T>(
@@ -106,7 +123,8 @@ module Genesis {
         LibraAccount::rotate_authentication_key(association, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(tc_account, genesis_auth_key);
+        LibraAccount::rotate_authentication_key(tc_account, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
     }
 
 }
