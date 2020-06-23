@@ -85,10 +85,6 @@ module LibraBlock {
         proposer: address
     ) acquires BlockMetadata {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0xA550C18);
-        // Debug::print(&0x7E5700001);
-        // Debug::print(&previous_block_votes);
-        // Debug::print(&round);
-
         // TODO OL (Dev): Call the Stats module from here with previous_block_votes.
 
         // TODO: Figure out a story for errors in the system transactions.
