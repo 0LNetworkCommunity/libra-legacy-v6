@@ -6,7 +6,6 @@ module LibraBlock {
     use 0x0::LibraTimestamp;
     use 0x0::Signer;
     use 0x0::Transaction;
-    use 0x0::Debug;
     use 0x0::Vector;
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
@@ -113,9 +112,6 @@ module LibraBlock {
     // Get the previous block voters
     public fun get_previous_voters(): vector<address> acquires BlockMetadata {
        let voters = *&borrow_global<BlockMetadata>(0xA550C18).voters;
-       Debug::print(&0x7E5700002);
-       Debug::print(&voters);
-       // Debug::print(what.counter);
        return voters //vector<address>
     }
 }
