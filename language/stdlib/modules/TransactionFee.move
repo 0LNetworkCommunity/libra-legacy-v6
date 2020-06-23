@@ -5,6 +5,7 @@ module TransactionFee {
     use 0x0::LibraSystem;
     use 0x0::Signer;
     use 0x0::Transaction;
+    use 0x0::Debug;
 
     ///////////////////////////////////////////////////////////////////////////
     // Transaction Fee Distribution
@@ -38,7 +39,9 @@ module TransactionFee {
 
     public fun distribute_transaction_fees<Token>() acquires TransactionFees {
       // Can only be invoked by LibraVM privilege.
-      Transaction::assert(Transaction::sender() == 0x0, 33);
+      // Transaction::assert(Transaction::sender() == 0x0, 33);
+
+      Debug::print(&0x7357002222);
 
       let i = 0;
       let total_weight = 0;
@@ -66,6 +69,8 @@ module TransactionFee {
           amount_collected,
           total_weight
       );
+
+        Debug::print(&0x735700000003456);
 
       // Iterate through the validators distributing fees according to weight
       distribute_transaction_fees_internal<Token>(
@@ -99,7 +104,8 @@ module TransactionFee {
                 x"",
                 x"",
             );
-           }
+        };
+        Debug::print(&0x41);
     }
 
     // This calculates the amount to be distributed to each validator equally. We do this by calculating
