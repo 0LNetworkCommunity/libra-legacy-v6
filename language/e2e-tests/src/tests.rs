@@ -25,8 +25,6 @@ mod transaction_builder;
 mod validator_set_management;
 mod verify_txn;
 mod write_set;
-mod redeem;
-mod librablock_test;
 mod transaction_fees_new;
 mod txn_fee_test;
 mod ol_e2e_test_redeem;
