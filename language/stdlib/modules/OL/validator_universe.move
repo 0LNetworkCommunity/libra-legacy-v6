@@ -122,5 +122,16 @@ address 0x0 {
             validatorInfo.weight = weight;
             weight
         }
+
+        public fun get_validator_weight(addr: address, index: u64): u64 acquires ValidatorUniverse{
+            let sender = Transaction::sender();
+            Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
+
+            let collection = borrow_global<ValidatorUniverse>(0xA550C18);
+            let validator_list = &collection.validators;
+            let validatorInfo = Vector::borrow<ValidatorEpochInfo>(validator_list, index);
+            Transaction::assert(validatorInfo.validator_address == addr, 8002);
+            validatorInfo.weight
+        }
     }
 }

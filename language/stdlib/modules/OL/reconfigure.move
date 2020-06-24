@@ -19,10 +19,10 @@ address 0x0 {
             // TODO: 'N' variable is a global constant. To be set in genesis block. 
             
             // Calls NodeWeights on validatorset to select top N accounts.
-            //let selected_validators = NodeWeight::top_n_accounts(eligible_validators, 10);
+            let selected_validators = NodeWeight::top_n_accounts(eligible_validators, 10);
 
             // Call bulkUpdate module
-           //LibraSystem::bulk_update_validators(account, selected_validators); 
+            LibraSystem::bulk_update_validators(account, selected_validators); 
         }
 
   }

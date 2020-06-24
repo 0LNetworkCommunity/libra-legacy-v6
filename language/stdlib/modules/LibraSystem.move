@@ -11,8 +11,7 @@ module LibraSystem {
     use 0x0::Signer;
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
-    // use 0x0::Debug;
-    // use 0x0::LibraBlock;
+    use 0x0::ValidatorUniverse;
 
     struct ValidatorInfo {
         addr: address,
@@ -308,7 +307,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: 1,
+                consensus_voting_power: ValidatorUniverse::get_validator_weight(account_address, index),
             });
 
             index = index + 1;
