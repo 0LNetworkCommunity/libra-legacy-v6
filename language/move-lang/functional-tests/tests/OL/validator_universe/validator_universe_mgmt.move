@@ -37,8 +37,8 @@ use 0x0::ValidatorUniverse;
 fun main() {
     // Borrow validator universe for modification
     ValidatorUniverse::add_validator(0xDEADBEEF);
-    ValidatorUniverse::update_validator(0xDEADBEEF);
-    ValidatorUniverse::update_validator(0xDEADDEAD);
+    ValidatorUniverse::update_validator_epoch_count(0xDEADBEEF);
+    ValidatorUniverse::update_validator_epoch_count(0xDEADDEAD);
 }
 }
 // check: EXECUTED

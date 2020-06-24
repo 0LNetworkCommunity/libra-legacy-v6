@@ -74,7 +74,7 @@ address 0x0 {
       // Stats(pubkey, block)
 
       // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
-      ValidatorUniverse::update_validator(redeemed_addr);
+      ValidatorUniverse::update_validator_epoch_count(redeemed_addr);
 
       // Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
       // TBD

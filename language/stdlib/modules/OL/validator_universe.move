@@ -3,10 +3,14 @@ address 0x0 {
         use 0x0::Vector;
         use 0x0::Transaction;
         use 0x0::Signer;
+        use 0x0::LibraBlock;
+        use 0x0::FixedPoint32;
+        use 0x0::Stats;
 
         struct ValidatorEpochInfo {
             validator_address: address, 
-            mining_epoch_count: u64
+            mining_epoch_count: u64,
+            weight: u64
         }
     
         // resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch number.
@@ -36,7 +40,8 @@ address 0x0 {
             Vector::push_back<ValidatorEpochInfo>(&mut collection.validators,
                 ValidatorEpochInfo{
                 validator_address: addr,
-                mining_epoch_count: 0
+                mining_epoch_count: 0,
+                weight: 0
                 });
         }
     
@@ -71,7 +76,7 @@ address 0x0 {
             false
         }
     
-        public fun update_validator(addr: address) acquires ValidatorUniverse{
+        public fun update_validator_epoch_count(addr: address) acquires ValidatorUniverse{
             let sender = Transaction::sender();
             Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
@@ -87,6 +92,35 @@ address 0x0 {
             };
             i = i + 1;
             };
+        }
+
+        public fun update_validator_weight(addr: address, index: u64): u64 acquires ValidatorUniverse{
+            let sender = Transaction::sender();
+            Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
+
+            let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+            let validator_list = &mut collection.validators;
+            let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
+            Transaction::assert(validatorInfo.validator_address == addr, 8002);
+
+            // We want miners that have been mining for longest amount of new_epoch_validator_universe_update
+            // How many epochs has the validator submitted VDF proofs for.
+            let weight = validatorInfo.mining_epoch_count;
+            
+            // TODO: OL: Confirm the current epoch length assuming it as 15 because of round check
+            // Calculate start and end block height for the current epoch
+            // What about empty blocks that get created after every epoch? 
+            let epoch_length = 15;
+            let end_block_height = LibraBlock::get_current_block_height();
+            let start_block_height = end_block_height - epoch_length;
+            let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_length;
+
+            let active_validator = Stats::node_heuristics({{validatorInfo.validator_address}}, start_block_height, end_block_height);
+            if (active_validator < threshold_signing) {
+                weight = 0;
+            };
+            validatorInfo.weight = weight;
+            weight
         }
     }
 }
