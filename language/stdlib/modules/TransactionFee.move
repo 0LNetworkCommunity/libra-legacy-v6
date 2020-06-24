@@ -5,7 +5,7 @@ address 0x0 {
         use 0x0::LibraSystem;
         use 0x0::Signer;
         use 0x0::Transaction;
-        use 0x0::Debug;
+        // use 0x0::Debug;
         use 0x0::Vector;
     
         ///////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ address 0x0 {
     
           let amount_collected = LibraAccount::balance<Token>(0xFEE);
           // If amount_collected == 0, this will also return early
-          if (amount_collected < total_weight) { return }
+          if (amount_collected < total_weight) { return };
     
           // TODO: Currently, this will give no gas if the sum of validator
           // weights is too high. This may be a problem since we cannot give
