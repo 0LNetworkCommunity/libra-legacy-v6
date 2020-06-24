@@ -40,7 +40,9 @@ address 0x0 {
     
         public fun distribute_transaction_fees<Token>() acquires TransactionFees {
           // Can only be invoked by LibraVM privilege.
-          Transaction::assert(Transaction::sender() == 0x0, 33);
+          // Allowed association to invoke for testing purposes.
+          Transaction::assert(Transaction::sender() == 0x0 
+                || Transaction::sender() == Association::addr_is_association(Transaction::sender()), 33);
     
           let i = 0;
           let total_weight = 0;
