@@ -1,6 +1,7 @@
 address 0x0 {
 
     module TransactionFee {
+        use 0x0::Association;
         use 0x0::LibraAccount;
         use 0x0::LibraSystem;
         use 0x0::Signer;
@@ -42,7 +43,7 @@ address 0x0 {
           // Can only be invoked by LibraVM privilege.
           // Allowed association to invoke for testing purposes.
           Transaction::assert(Transaction::sender() == 0x0 
-                || Transaction::sender() == Association::addr_is_association(Transaction::sender()), 33);
+                || Association::addr_is_association(Transaction::sender()), 33);
     
           let i = 0;
           let total_weight = 0;
