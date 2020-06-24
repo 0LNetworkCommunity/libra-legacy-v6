@@ -14,8 +14,13 @@ fn submit_proofs_transaction() {
     let account = Account::new_genesis_account(libra_types::on_chain_config::config_address() );
     let sequence_number = 10u64;
     let sender = AccountData::with_account(
-        account, 1_000_000,
-        lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
+        account,
+        1_000_000,
+        lbr_currency_code(),
+        sequence_number,
+        AccountTypeSpecifier::Empty
+    );
+
     executor.add_account_data(&sender);
 
     println!("address:{:?}", sender.address() );
