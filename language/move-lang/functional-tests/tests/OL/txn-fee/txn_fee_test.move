@@ -36,20 +36,11 @@ use 0x0::Debug;
 //! sender: alice
 script {
     use 0x0::GAS;
-    // use 0x0::Libra;
-    use 0x0::LibraAccount;
-    // use 0x0::Transaction;
     use 0x0::TransactionFee;
-    use 0x0::Debug;
 
     fun main() {
-        // mint a coin the association (tx sender)
-
+        // Distribute transaction fees.
         TransactionFee::distribute_transaction_fees<GAS::T>();
-        
-        let bal = LibraAccount::balance<GAS::T>(0xFEE);
-        Debug::print(&0xBA1);
-        Debug::print(&bal);
     }
 }
 // check: EXECUTED

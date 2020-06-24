@@ -42,20 +42,17 @@ fn txn_fees_test () { // Run with: `cargo xtest -p language-e2e-tests txn_fee_te
 
     // construct a valid and signed tx script.
     let mint = txn_fee_tx_mint(&assoc_acc_data.account(), &acc_data.account(), 1);
-    let calc = txn_fee_tx_move(&assoc_acc_data.account(), 2);
-    let distr = txn_fee_tx_distr(&assoc_acc_data.account(), 3, 5000);
-
-    println!("running transactions");
+    //let calc = txn_fee_tx_move(&assoc_acc_data.account(), 2);
+    let distr = txn_fee_tx_distr(&assoc_acc_data.account(), 2);
 
     executor.new_block(); 
     let mut tx_out = executor.execute_and_apply(mint);
 
-    println!("gas used: {:?}, running second", tx_out.gas_used());
+    // println!("gas used: {:?}, running second", tx_out.gas_used());
+    // executor.new_block();
+    // tx_out = executor.execute_and_apply(calc);
 
-    executor.new_block();
-    tx_out = executor.execute_and_apply(calc);
-
-    println!("gas used: {:?}, running third", tx_out.gas_used());
+    // println!("gas used: {:?}, running third", tx_out.gas_used());
     executor.new_block();
     tx_out = executor.execute_and_apply(distr);
     println!("gas used: {:?}", tx_out.gas_used());

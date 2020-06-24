@@ -54,12 +54,10 @@ pub fn txn_fee_tx_move(
 
 pub fn txn_fee_tx_distr(
     sender: &Account,
-    seq_num: u64,
-    amt: u64
+    seq_num: u64
 ) -> SignedTransaction {
-    let mut args: Vec<TransactionArgument> = Vec::new();
+    let args: Vec<TransactionArgument> = Vec::new();
     let type_vec: Vec<TypeTag> = Vec::new();
-    args.push(TransactionArgument::U64(amt));
 
     sender.create_signed_txn_with_args(
         StdlibScript::TxFeeTestDistr
