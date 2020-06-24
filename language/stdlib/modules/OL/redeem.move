@@ -8,7 +8,7 @@ address 0x0 {
     use 0x0::Transaction;
     use 0x0::Debug;
     use 0x0::LibraConfig;
-    use 0x0::Signer;
+    use 0x0::ValidatorUniverse;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -25,74 +25,14 @@ address 0x0 {
     }
 
      ///////////////////////////////////////////////////////////////////////////
-    // Validator Universe
-    ///////////////////////////////////////////////////////////////////////////
-    struct ValidatorEpochInfo {
-      validator_address: address, 
-      mining_epoch_count: u64
-    }
-
-    // resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch number.
-    resource struct ValidatorUniverse {
-      validators: vector<ValidatorEpochInfo>
-    }
-
-    // This function is called to add validator to the validator universe.
-    fun add_validator(addr: address) acquires ValidatorUniverse {
-
-      let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
-      if(!validator_exists_in_universe(collection, addr))
-        Vector::push_back<ValidatorEpochInfo>(&mut collection.validators,
-          ValidatorEpochInfo{
-            validator_address: addr,
-            mining_epoch_count: 0
-          });
-    }
-
-
-     ///////////////////////////////////////////////////////////////////////////
     // Public functions
     ///////////////////////////////////////////////////////////////////////////
-
-    // function to initialize ValidatorUniverse in genesis.
-    // This is triggered in new epoch by Configuration in Genesis.move
-    public fun initialize_validator_universe(account: &signer){
-      // Check for transactions sender is association
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18, 8001);
-
-      move_to<ValidatorUniverse>(account, ValidatorUniverse {
-            validators: Vector::empty<ValidatorEpochInfo>()
-        }
-      );
-    }
-
-    // A simple public function to query the EligibleValidators.
-    // Only association should be able to access this function
-    public fun get_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
-        let sender = Signer::address_of(account);
-        Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-        
-        let eligible_validators = Vector::empty<address>();
-        // Create a vector with all eligible validator addresses
-        let collection = borrow_global<ValidatorUniverse>(0xA550C18);
-        let i = 0;
-        let validator_list = &collection.validators;
-        let len = Vector::length<ValidatorEpochInfo>(validator_list);
-        while (i < len) {
-          Vector::push_back(&mut eligible_validators, Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address);
-          i = i + 1;
-        };
-        
-        eligible_validators
-    }
-
 
     public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>,) : VdfProofBlob {
        VdfProofBlob {challenge,  difficulty, solution }
     }
 
-    public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess, ValidatorUniverse{
+    public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess {
       // Initialize
       if (!has_in_process()) {
            init_in_process();
@@ -112,7 +52,7 @@ address 0x0 {
 
       // Adds the address to the Validator Universe state.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
-      add_validator(Transaction::sender());
+      ValidatorUniverse::add_validator(Transaction::sender());
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());
@@ -120,7 +60,7 @@ address 0x0 {
 
     }
 
-    public fun end_redeem(redeemed_addr: address) acquires InProcess, ValidatorUniverse {
+    public fun end_redeem(redeemed_addr: address) acquires InProcess {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
       Transaction::assert(sender == default_redeem_address(), 10003);
@@ -134,8 +74,7 @@ address 0x0 {
       // Stats(pubkey, block)
 
       // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
-      let validatorUniverse = borrow_global_mut<ValidatorUniverse>(0xA550C18);
-      update_validator(validatorUniverse, redeemed_addr);
+      ValidatorUniverse::update_validator(redeemed_addr);
 
       // Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
       // TBD
@@ -170,31 +109,6 @@ address 0x0 {
 
     fun has(addr: address): bool {
        ::exists<T>(addr)
-    }
-
-    fun validator_exists_in_universe(validatorUniverse: &ValidatorUniverse, addr: address): bool {
-      let i = 0;
-      let validator_list = &validatorUniverse.validators;
-      let len = Vector::length<ValidatorEpochInfo>(validator_list);
-      while (i < len) {
-        if (Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address == addr) return true;
-        i = i + 1;
-      };
-      false
-    }
-
-    fun update_validator(validatorUniverse: &mut ValidatorUniverse, addr: address) {
-      let i = 0;
-      let validator_list = &mut validatorUniverse.validators;
-      let len = Vector::length<ValidatorEpochInfo>(validator_list);
-      while (i < len) {
-        let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, i); 
-        if (validatorInfo.validator_address == addr) {
-          validatorInfo.mining_epoch_count = validatorInfo.mining_epoch_count + 1; 
-          break 
-        };
-        i = i + 1;
-      };
     }
   }
 }

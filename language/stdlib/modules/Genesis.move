@@ -24,7 +24,7 @@ module Genesis {
     use 0x0::Testnet;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
-    use 0x0::Redeem;
+    use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
 
     fun initialize(
@@ -50,11 +50,11 @@ module Genesis {
         // Currency setup
         Libra::initialize(config_account);
 
-        // Stats module setup
+        // Stats module 
         Stats::initialize(association);
 
-        // Redeem module Validator Universe setup
-        Redeem::initialize_validator_universe(association);
+        // Validator Universe setup
+        ValidatorUniverse::initialize(association);
         //Subsidy module setup and burn account initialization
         Subsidy::initialize(association);
 

@@ -16,9 +16,6 @@ address 0x0 {
             
             Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
 
-            // Get the eligible validators vector
-            //let eligible_validators = Redeem::query_eligible_validators(account);
-
             // TODO: 'N' variable is a global constant. To be set in genesis block. 
             
             // Calls NodeWeights on validatorset to select top N accounts.
