@@ -27,6 +27,7 @@ mod dev_commands;
 mod libra_client;
 mod query_commands;
 mod transfer_commands;
+mod ol_commands;
 
 /// Struct used to store data for each created account.  We track the sequence number
 /// so we can create new transactions easily

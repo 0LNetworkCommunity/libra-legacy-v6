@@ -35,3 +35,4 @@ libra-config =  { path = "../../config", version = "0.1.0" }
 libra-logger = { path = "../../common/logger", version = "0.1.0" }
 stdlib = { path = "../stdlib", version = "0.1.0" }
 ol_miner = { path = "../../ol-miner", version = "0.1.0" }
+hex ="0.4"

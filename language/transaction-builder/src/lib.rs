@@ -108,6 +108,13 @@ encode_txn_script! {
 }
 
 encode_txn_script! {
+    name: encode_send_proof_script,
+    args: [challenge: Bytes, difficulty: U64, proof: Bytes],
+    script: Redeem,
+    doc: "Redeem Script"
+}
+
+encode_txn_script! {
     name: encode_burn_script,
     type_arg: type_,
     args: [nonce: U64, preburn_address: Address],

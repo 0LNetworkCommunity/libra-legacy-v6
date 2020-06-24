@@ -8,6 +8,7 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 pub struct Block {
     /// Block Height
     pub height: u64,
+    pub elapsed_secs: u64,
     /// VDF Output
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub data: Vec<u8>,
@@ -38,16 +39,22 @@ pub mod build_block {
     use glob::glob;
     use libra_crypto::hash::HashValue;
     use std::{fs, io::Write, path::Path, path::PathBuf};
+    use std::time::{Duration, Instant};
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
-
     pub fn mine_genesis(config: &OlMinerConfig) {
         let preimage = config.genesis_preimage();
+        let mut now = Instant::now();
+        let data = delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS);
+        let elapsed_secs = now.elapsed().as_secs();
+        println!("Delay: {:?}", elapsed_secs);
+
         let block = Block {
             height: 0u64,
+            elapsed_secs,
             // note: do_delay() sigature is (challenge, delay difficulty).
             // note: trait serializes data field.
-            data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
+            data
         };
         //TODO: check for overwriting file...
         let block_dir_buf = Path::new(&config.chain_info.block_dir).to_path_buf();
@@ -72,11 +79,18 @@ pub mod build_block {
             // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
             let height = latest_block.height + 1;
             // TODO: cleanup this duplication with mine_genesis_once?
+
+            let mut now = Instant::now();
+            let data = delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS);
+            let elapsed_secs = now.elapsed().as_secs();
+            println!("Delay: {:?}", elapsed_secs);
+
             let block = Block {
                 height,
+                elapsed_secs,
                 // note: do_delay() sigature is (challenge, delay difficulty).
                 // note: trait serializes data field.
-                data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
+                data //data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
             };
 
             let block_dir_buf = block_dir.to_path_buf();
@@ -243,7 +257,8 @@ pub mod build_block {
 
         let mock_block = Block {
             /// Block Height
-            height: 0,
+            height: 0u64,
+            elapsed_secs: 0u64,
             data: mock_previous_proof,
         };
 
@@ -292,6 +307,7 @@ pub mod build_block {
         let current_block_number = 33;
         let block = Block {
             height: current_block_number,
+            elapsed_secs: 0u64,
             // note: do_delay() sigature is (challenge, delay difficulty).
             // note: trait serializes data field.
             data: Vec::new(),
