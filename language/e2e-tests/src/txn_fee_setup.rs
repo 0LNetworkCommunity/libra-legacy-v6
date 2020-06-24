@@ -51,3 +51,25 @@ pub fn txn_fee_tx_move(
         LBR_NAME.to_owned(),
     )
 }
+
+pub fn txn_fee_tx_distr(
+    sender: &Account,
+    seq_num: u64,
+    amt: u64
+) -> SignedTransaction {
+    let mut args: Vec<TransactionArgument> = Vec::new();
+    let type_vec: Vec<TypeTag> = Vec::new();
+    args.push(TransactionArgument::U64(amt));
+
+    sender.create_signed_txn_with_args(
+        StdlibScript::TxFeeTestDistr
+            .compiled_bytes()
+            .into_vec(),
+        type_vec,
+        args,
+        seq_num,
+        gas_costs::TXN_RESERVED * 4,
+        0,
+        LBR_NAME.to_owned(),
+    )
+}

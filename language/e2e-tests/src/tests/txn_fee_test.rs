@@ -5,8 +5,7 @@ use crate::{
     account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier},
     // common_transactions::peer_to_peer_txn,
     executor::FakeExecutor,
-    txn_fee_setup::txn_fee_tx_mint,
-    txn_fee_setup::txn_fee_tx_move
+    txn_fee_setup::{txn_fee_tx_mint, txn_fee_tx_move, txn_fee_tx_distr}
 };
 
 
@@ -43,14 +42,23 @@ fn txn_fees_test () { // Run with: `cargo xtest -p language-e2e-tests txn_fee_te
 
     // construct a valid and signed tx script.
     let mint = txn_fee_tx_mint(&assoc_acc_data.account(), &acc_data.account(), 1);
-    let distribute = txn_fee_tx_move(&assoc_acc_data.account(), 2);
+    let calc = txn_fee_tx_move(&assoc_acc_data.account(), 2);
+    let distr = txn_fee_tx_distr(&assoc_acc_data.account(), 3, 5000);
 
     println!("running transactions");
 
     executor.new_block(); 
-    executor.execute_and_apply(mint);
-    println!("running second");
-    executor.execute_and_apply(distribute);
+    let mut tx_out = executor.execute_and_apply(mint);
+
+    println!("gas used: {:?}, running second", tx_out.gas_used());
+
+    executor.new_block();
+    tx_out = executor.execute_and_apply(calc);
+
+    println!("gas used: {:?}, running third", tx_out.gas_used());
+    executor.new_block();
+    tx_out = executor.execute_and_apply(distr);
+    println!("gas used: {:?}", tx_out.gas_used());
 
     // let account_state = executor
     //     .read_account_resource(&association_account)

@@ -6,6 +6,7 @@ module TransactionFee {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Debug;
+    use 0x0::Vector;
 
     ///////////////////////////////////////////////////////////////////////////
     // Transaction Fee Distribution
@@ -37,7 +38,7 @@ module TransactionFee {
         });
     }
 
-    public fun distribute_transaction_fees<Token>() acquires TransactionFees {
+    public fun distribute_transaction_fees<Token>(): u64 { //acquires TransactionFees {
       // Can only be invoked by LibraVM privilege.
       // Transaction::assert(Transaction::sender() == 0x0, 33);
 
@@ -53,7 +54,6 @@ module TransactionFee {
       while (i < num_validators) {
         total_weight = total_weight + LibraSystem::get_ith_validator_weight(i);
         i = i + 1;
-        Debug::print(&i);
       };
 
       let amount_collected = LibraAccount::balance<Token>(0xFEE);
@@ -61,7 +61,7 @@ module TransactionFee {
       Debug::print(&0xC011EC7ED00000000);
       Debug::print(&amount_collected);
       // If amount_collected == 0, this will also return early
-      if (amount_collected < total_weight) return ();
+      if (amount_collected < total_weight) return 0;
 
       // TODO: Currently, this will give no gas if the sum of validator
       // weights is too high. This may be a problem since we cannot give
@@ -77,11 +77,14 @@ module TransactionFee {
       );
 
         Debug::print(&0x735700000003456);
+        Debug::print(&amount_to_distribute_per_weight);
 
-      // Iterate through the validators distributing fees according to weight
-      distribute_transaction_fees_internal<Token>(
-          amount_to_distribute_per_weight
-      );
+      amount_to_distribute_per_weight
+
+    //   // Iterate through the validators distributing fees according to weight
+    //   distribute_transaction_fees_internal<Token>(
+    //       amount_to_distribute_per_weight
+    //   );
     }
 
     // After the book keeping has been performed, this then distributes the
@@ -89,12 +92,15 @@ module TransactionFee {
     // any remainder (in the case that the number of validators does not
     // evenly divide the transaction fee pot) is distributed to the first
     // validator.
-    fun distribute_transaction_fees_internal<Token>(
+    public fun distribute_transaction_fees_internal<Token>(
         amount_to_distribute_per_weight: u64
     ) acquires TransactionFees {
         let distribution_resource = borrow_global<TransactionFees>(0xFEE);
         let index = 0;
         let num_validators = LibraSystem::validator_set_size();
+
+        Debug::print(&0x7E570000876500000);
+        Debug::print(&amount_to_distribute_per_weight);
 
         while (index < num_validators) {
 
@@ -103,12 +109,15 @@ module TransactionFee {
             // Increment the index into the validator set.
             index = index + 1;
 
+            Debug::print(&addr);
+            Debug::print(&weight);
+
             LibraAccount::pay_from_capability<Token>(
                 addr,
                 &distribution_resource.fee_withdrawal_capability,
                 amount_to_distribute_per_weight * weight,
-                x"",
-                x"",
+                Vector::empty<u8>(),
+                Vector::empty<u8>(),
             );
         };
         Debug::print(&0x41);

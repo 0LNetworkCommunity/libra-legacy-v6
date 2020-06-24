@@ -61,9 +61,10 @@ pub enum StdlibScript {
     Redeem,
     RedeemInitialize,
     LibraBlockTestHelper, // 0L Change
-    TxFeeTestHelper, // 0L Change
+    TxFeeTestHelper,// 0L Change
     TxFeeTestMint,  // 0L Change
-    TxFeeTestMove   // 0L Change
+    TxFeeTestMove,  // 0L Change
+    TxFeeTestDistr  // 0L Change
 }
 
 impl StdlibScript {
@@ -111,9 +112,10 @@ impl StdlibScript {
             Redeem,
             RedeemInitialize,
             LibraBlockTestHelper, // 0L Change
-            TxFeeTestHelper, // 0L Change
+            TxFeeTestHelper,    // 0L Change
             TxFeeTestMint,      // 0L Change
-            TxFeeTestMove       // 0L Change
+            TxFeeTestMove,      // 0L Change
+            TxFeeTestDistr
         ]
     }
 
@@ -240,9 +242,10 @@ impl fmt::Display for StdlibScript {
                 Redeem => "redeem", // 0L Change
                 RedeemInitialize => "redeem_init", // 0L Change
                 LibraBlockTestHelper => "libra_block_test_helper", // 0L Change
-                TxFeeTestHelper => "tx_fees_e2e_test_helper", // 0L Change
+                TxFeeTestHelper => "tx_fees_e2e_test_helper",// 0L Change
                 TxFeeTestMint => "txn_fee_test_mint",       // 0L Change
-                TxFeeTestMove => "txn_fee_test_move"        // 0L Change
+                TxFeeTestMove => "txn_fee_test_move",       // 0L Change
+                TxFeeTestDistr => "txn_fee_test_distr"
             }
         )
     }
