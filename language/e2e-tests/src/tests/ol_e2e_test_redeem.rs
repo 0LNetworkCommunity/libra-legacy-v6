@@ -37,7 +37,7 @@ fn submit_proofs_transaction() {
     //run the transaction script
     let output = executor.execute_and_apply(
         // build the transaction script binary.
-        redeem_txn(&sender.account(), sequence_number+1u64, challenge.to_vec(), difficulty, proof)
+        redeem_txn(&sender.account(), sequence_number, challenge.to_vec(), difficulty, proof)
     );
 
     assert_eq!(
