@@ -9,8 +9,7 @@ module LibraBlock {
     use 0x0::Vector;
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
-    use 0x0::Debug;
-
+    
     resource struct BlockMetadata {
       // Height of the current block
       height: u64,

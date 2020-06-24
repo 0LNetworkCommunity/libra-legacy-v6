@@ -5,9 +5,9 @@
 address 0x0 {
     module ReconfigureOL {
 
-        use 0x0::Redeem;
-        use 0x0::NodeWeight;
-        use 0x0::LibraSystem;
+        //use 0x0::Redeem;
+        //use 0x0::NodeWeight;
+        //use 0x0::LibraSystem;
         use 0x0::Signer;
         use 0x0::Transaction;
 
@@ -18,18 +18,15 @@ address 0x0 {
             Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
 
             // Get the eligible validators vector
-            let eligible_validators = Redeem::query_eligible_validators(account);
+            //let eligible_validators = Redeem::query_eligible_validators(account);
 
             // TODO: 'N' variable is a global constant. To be set in genesis block. 
             
             // Calls NodeWeights on validatorset to select top N accounts.
-            let selected_validators = NodeWeight::top_n_accounts(eligible_validators, 10);
+            //let selected_validators = NodeWeight::top_n_accounts(eligible_validators, 10);
 
             // Call bulkUpdate module
-            LibraSystem::bulk_update_validators(account, selected_validators); 
-
-            Redeem::new_epoch_validator_universe_update(account);
-
+           //LibraSystem::bulk_update_validators(account, selected_validators); 
         }
 
   }

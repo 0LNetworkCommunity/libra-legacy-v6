@@ -17,9 +17,7 @@ address 0x0 {
     }
 
     resource struct T { // rename this to History.
-        history: vector<vector<u8>>,
-        // mining_epoch_count: u64 // Make this increment on end_redeem by +1 if there were proofs in that epoch.
-        // end_redeem checks that the user was validating after submitting an initial mining proof.
+        history: vector<vector<u8>>
     }
 
     resource struct InProcess {
@@ -29,21 +27,26 @@ address 0x0 {
      ///////////////////////////////////////////////////////////////////////////
     // Validator Universe
     ///////////////////////////////////////////////////////////////////////////
+    struct ValidatorEpochInfo {
+      validator_address: address, 
+      mining_epoch_count: u64
+    }
 
     // resource for tracking the universe of accounts that have submitted a proof correctly, with the epoch number.
     resource struct ValidatorUniverse {
-      addresses: vector<address>,
-      epoch: u64, // LG: Deprecated. The epoch that the proof was submitted in, for ease in querying.
-      // mining_epoch_count: u64,  // How many consecutive epochs the validator has done mining.
+      validators: vector<ValidatorEpochInfo>
     }
 
     // This function is called to add validator to the validator universe.
-    fun add_validator(addr: address) acquires ValidatorUniverse {
+    public fun add_validator(addr: address) acquires ValidatorUniverse {
 
-        let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
-
-        if(!Vector::contains<address>(&mut collection.addresses, &addr))
-          Vector::push_back<address>(&mut collection.addresses, addr);
+      let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+      if(!validator_exists_in_universe(collection, addr))
+        Vector::push_back<ValidatorEpochInfo>(&mut collection.validators,
+          ValidatorEpochInfo{
+            validator_address: addr,
+            mining_epoch_count: 0
+          });
     }
 
 
@@ -54,37 +57,22 @@ address 0x0 {
     // function to initialize ValidatorUniverse in genesis.
     // This is triggered in new epoch by Configuration in Genesis.move
     public fun initialize_validator_universe(account: &signer){
+      // Check for transactions sender is association
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18, 8001);
+
       move_to<ValidatorUniverse>(account, ValidatorUniverse {
-            addresses: Vector::empty<address>(),
-            epoch: 0,
-            //mining_epoch_count: 0,
+            validators: Vector::empty<ValidatorEpochInfo>()
         }
       );
     }
 
-    // function to re-initialize ValidatorUniverse in new epoch.
-    // This is triggered in new epoch by Configuration in block prologue
-    public fun new_epoch_validator_universe_update(account: &signer) acquires ValidatorUniverse {
-
-        Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
-
-        let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
-        collection.epoch = collection.epoch + 1;
-        //collection.mining_epoch_count = 0 // get the validator proof redemption history.
-        // need to dd to redemption history a field: mining_epoch_count.
-        // borrow_global_mut<T>(default_redeem_address());
-        collection.addresses = Vector::empty();
-    }
-
     // A simple public function to query the EligibleValidators.
     // Only association should be able to access this function
-    public fun query_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
-
+    public fun query_eligible_validators(account: &signer) : vector<ValidatorEpochInfo> acquires ValidatorUniverse {
         Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
-
         let collection = borrow_global<ValidatorUniverse>(0xA550C18);
-
-        return *&(collection.addresses)
+        return *&(collection.validators)
     }
 
 
@@ -120,7 +108,7 @@ address 0x0 {
 
     }
 
-    public fun end_redeem(redeemed_addr: address) acquires InProcess {
+    public fun end_redeem(redeemed_addr: address) acquires InProcess, ValidatorUniverse {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
       Transaction::assert(sender == default_redeem_address(), 10003);
@@ -133,8 +121,9 @@ address 0x0 {
       // TODO: Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
 
-      // TODO: Update the  ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
-      // 
+      // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+      let validatorUniverse = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+      update_validator(validatorUniverse, redeemed_addr);
 
       // Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
       // TBD
@@ -169,6 +158,31 @@ address 0x0 {
 
     fun has(addr: address): bool {
        ::exists<T>(addr)
+    }
+
+    fun validator_exists_in_universe(validatorUniverse: &ValidatorUniverse, addr: address): bool {
+      let i = 0;
+      let validator_list = &validatorUniverse.validators;
+      let len = Vector::length<ValidatorEpochInfo>(validator_list);
+      while (i < len) {
+        if (Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address == addr) return true;
+        i = i + 1;
+      };
+      false
+    }
+
+    fun update_validator(validatorUniverse: &mut ValidatorUniverse, addr: address) {
+      let i = 0;
+      let validator_list = &mut validatorUniverse.validators;
+      let len = Vector::length<ValidatorEpochInfo>(validator_list);
+      while (i < len) {
+        let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, i); 
+        if (validatorInfo.validator_address == addr) {
+          validatorInfo.mining_epoch_count = validatorInfo.mining_epoch_count + 1; 
+          break 
+        };
+        i = i + 1;
+      };
     }
   }
 }
