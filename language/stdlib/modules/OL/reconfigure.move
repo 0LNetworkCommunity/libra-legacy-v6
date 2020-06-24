@@ -4,7 +4,6 @@
 
 address 0x0 {
     module ReconfigureOL {
-
         //use 0x0::Redeem;
         //use 0x0::NodeWeight;
         //use 0x0::LibraSystem;

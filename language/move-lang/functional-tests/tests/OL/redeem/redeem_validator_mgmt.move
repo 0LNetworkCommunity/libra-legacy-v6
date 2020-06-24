@@ -38,4 +38,21 @@ fun main(s: &signer) {
 // }
 // }
 // // check: EXECUTED
+
+// // Get eligible validators
+// //! new-transaction
+// //! sender: association
+// script{
+// use 0x0::Redeem;
+// use 0x0::Debug;
+// use 0x0::Vector;
+// fun main(account: &signer) {
+//     // Borrow validator universe for modification
+//     Redeem::add_validator(0xDEADBEEF);
+//     Redeem::add_validator(0xDEADDEAD);
+//     let len = Vector::length<address>(&Redeem::get_eligible_validators(account));
+//     Debug::print(&len);
+// }
+// }
+// // check: EXECUTED
     

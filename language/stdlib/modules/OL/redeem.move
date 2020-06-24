@@ -38,7 +38,7 @@ address 0x0 {
     }
 
     // This function is called to add validator to the validator universe.
-    public fun add_validator(addr: address) acquires ValidatorUniverse {
+    fun add_validator(addr: address) acquires ValidatorUniverse {
 
       let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
       if(!validator_exists_in_universe(collection, addr))
@@ -69,10 +69,22 @@ address 0x0 {
 
     // A simple public function to query the EligibleValidators.
     // Only association should be able to access this function
-    public fun query_eligible_validators(account: &signer) : vector<ValidatorEpochInfo> acquires ValidatorUniverse {
-        Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
+    public fun get_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
+        let sender = Signer::address_of(account);
+        Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
+        
+        let eligible_validators = Vector::empty<address>();
+        // Create a vector with all eligible validator addresses
         let collection = borrow_global<ValidatorUniverse>(0xA550C18);
-        return *&(collection.validators)
+        let i = 0;
+        let validator_list = &collection.validators;
+        let len = Vector::length<ValidatorEpochInfo>(validator_list);
+        while (i < len) {
+          Vector::push_back(&mut eligible_validators, Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address);
+          i = i + 1;
+        };
+        
+        eligible_validators
     }
 
 
