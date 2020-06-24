@@ -16,10 +16,16 @@ address 0x0 {
             
             Transaction::assert(Signer::address_of(account) == 0x0 || Signer::address_of(account) == 0xA550C18, 401);
 
-            // TODO: 'N' variable is a global constant. To be set in genesis block. 
+            // Step 1: Call end redeem
+            // Step 2: Reconfigure at the end of epoch
             
-            // Calls NodeWeights on validatorset to select top N accounts.
+            // Step 3: Process node subsidy
+            // Step 4: Distribute transaction fees
+            // TODO: 'N' variable is a global constant. To be set in genesis block. 
+            //Calls NodeWeights on validatorset to select top N accounts.
             let selected_validators = NodeWeight::top_n_accounts(eligible_validators, 10);
+
+            // Subsidy payments to the validators 
 
             // Call bulkUpdate module
             LibraSystem::bulk_update_validators(account, selected_validators); 

@@ -27,7 +27,7 @@ address 0x0 {
       let k = 0;
       while (k < length) {
           let cur_address = Vector::borrow<address>(&eligible_validators, k);
-          Vector::push_back<u64>(&mut weights, ValidatorUniverse::update_validator_weight({{*cur_address}}, k));
+          Vector::push_back<u64>(&mut weights, ValidatorUniverse::get_validator_weight({{*cur_address}}, k));
           k = k + 1;
       };
 

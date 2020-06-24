@@ -4,7 +4,6 @@ address 0x0 {
   module Stats {
     use 0x0::Vector;
     use 0x0::Signer;
-    use 0x0::FixedPoint32;
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
     struct Chunk {
@@ -70,8 +69,7 @@ address 0x0 {
         };
         i = i + 1;
       };
-      FixedPoint32::divide_u64((num_voted), 
-      FixedPoint32::create_from_rational(end_height - start_height + 1, 1))
+      num_voted
     }
 
     // TODO: OL: (dranade) This should actually return a fixed decimal as a percentage, but this hasn't been implemented yet.

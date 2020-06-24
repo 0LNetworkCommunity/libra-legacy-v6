@@ -113,6 +113,8 @@ address 0x0 {
             let epoch_length = 15;
             let end_block_height = LibraBlock::get_current_block_height();
             let start_block_height = end_block_height - epoch_length;
+            
+            // Calculating threshold which is 90% of the blocks.
             let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_length;
 
             let active_validator = Stats::node_heuristics({{validatorInfo.validator_address}}, start_block_height, end_block_height);
