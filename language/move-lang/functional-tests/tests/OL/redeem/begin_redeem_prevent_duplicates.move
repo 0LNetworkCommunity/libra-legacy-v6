@@ -32,4 +32,4 @@ fun main() {
     Redeem::begin_redeem(proof);
 }
 }
-// check: ABORTED 0100080001
+// check: ABORTED 100080001
