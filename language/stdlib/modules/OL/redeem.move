@@ -38,14 +38,16 @@ address 0x0 {
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
       let global_redemption_state = borrow_global_mut<T>(default_redeem_address());
       let blob_redeemed = Vector::contains(&global_redemption_state.history, &vdf_proof_blob.solution);
-      Transaction::assert(blob_redeemed == false, 10000);
+      Transaction::assert(blob_redeemed == false, 0100080001);
+      // TODO: need an erorr message that gets surfaced to Node logss.
+      // Should also surface to client since ClientProxy for submit redeem tx is async.
 
       // QUESTION: Should we save a UserProof that is false so that we know it's been attempted multiple times?
       Vector::push_back(&mut global_redemption_state.history, *&vdf_proof_blob.solution);
 
       // Checks that the user did run the delay (VDF). Calling Verify() to check the validity of Blob
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-      Transaction::assert(valid == true, 13371);
+      Transaction::assert(valid == true, 0100080002);
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());
@@ -57,12 +59,12 @@ address 0x0 {
     public fun end_redeem(redeemed_addr: address) acquires InProcess,T {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
-      Transaction::assert(sender == default_redeem_address(), 10003);
+      Transaction::assert(sender == default_redeem_address(), 0100080003);
 
       // Account do not have proof to verify.
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
       let counts = Vector::length(&in_process_redemption.proofs);
-      Transaction::assert(counts > 0, 10002);
+      Transaction::assert(counts > 0, 0100080004);
 
       let global_redemption_state = borrow_global_mut<T>(default_redeem_address());
       global_redemption_state.tower_height = global_redemption_state.tower_height + 1;

@@ -193,11 +193,8 @@ impl ClientProxy {
         let challenge = space_delim_strings[2].as_bytes().to_vec();
         let difficulty = space_delim_strings[3].parse::<u64>()?;
 
-        // fix receivig hex encoding from shell
         // TODO: determine how this will be serialized.
-
-
-        //let proof = space_delim_strings[4].as_bytes();
+        // Note: Was producing error because hex was being submitted and not decoded.
         let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
 
         // create the transaction script
@@ -205,9 +202,9 @@ impl ClientProxy {
             StdlibScript::Redeem.compiled_bytes().into_vec(),
             vec![],
             vec![
-                TransactionArgument::U8Vector(space_delim_strings[2].as_bytes().to_vec()), // Challenge
-                TransactionArgument::U64(space_delim_strings[3].parse::<u64>()?), // Difficulty
-                TransactionArgument::U8Vector(space_delim_strings[4].as_bytes().to_vec()), // proof
+                TransactionArgument::U8Vector(challenge),
+                TransactionArgument::U64(difficulty),
+                TransactionArgument::U8Vector(proof),
             ],
         );
 
