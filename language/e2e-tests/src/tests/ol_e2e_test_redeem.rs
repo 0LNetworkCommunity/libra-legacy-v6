@@ -19,14 +19,14 @@ fn submit_proofs_transaction() {
 
     println!("address:{:?}", sender.address() );
 
-    let initialization_output = executor.execute_and_apply(
-        // TODO: Describe what is happening here. What are we initializing?
-        redeem_initialize_txn(&sender.account(), sequence_number)
-    );
-    assert_eq!(
-        initialization_output.status(),
-        &TransactionStatus::Keep(VMStatus::new(StatusCode::EXECUTED))
-    );
+    // let initialization_output = executor.execute_and_apply(
+    //     // TODO: Describe what is happening here. What are we initializing?
+    //     redeem_initialize_txn(&sender.account(), sequence_number)
+    // );
+    // assert_eq!(
+    //     initialization_output.status(),
+    //     &TransactionStatus::Keep(VMStatus::new(StatusCode::EXECUTED))
+    // );
 
     // test data for the VDF proof
     let challenge = b"test preimage";
