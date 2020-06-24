@@ -25,7 +25,7 @@ pub fn librablock_helper_tx(
         vec![lbr_type_tag()], // TODO: what is this parameter, and why do we need to pass an lbr type? Fails if removed.
         args, //TODO: Why does args not match the previous param ty_args in length?
         seq_num,
-        gas_costs::TXN_RESERVED * 3,
+        gas_costs::TXN_RESERVED,
         0,
         LBR_NAME.to_owned(),
     )
