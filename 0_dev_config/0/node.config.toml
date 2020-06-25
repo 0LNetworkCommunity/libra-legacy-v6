@@ -1,5 +1,5 @@
 [admission_control]
-address = "0.0.0.0:65025"
+address = "0.0.0.0:65350"
 need_to_check_mempool_before_validation = false
 max_concurrent_inbound_syncs = 100
 
@@ -8,7 +8,7 @@ secs = 1
 nanos = 0
 
 [rpc]
-address = "0.0.0.0:65037"
+address = "0.0.0.0:65362"
 
 [base]
 data_dir = "./0_dev_config/0"
@@ -19,7 +19,7 @@ type = "from_config"
 
 [base.waypoint.waypoint]
 version = 0
-value = "d9a24edcf9b83a1eb8d013141ed696fdb7ce3a990b8a1b94ebaeb5d10722319a"
+value = "6065c18ea57502d3a8a5dfe48c69671dca52ee10a8161ef3d0da6d393fa23e89"
 
 [consensus]
 max_block_size = 1000
@@ -38,9 +38,9 @@ type = "in_memory_storage"
 type = "thread"
 
 [debug_interface]
-admission_control_node_debug_port = 65027
-metrics_server_port = 65029
-public_metrics_server_port = 65031
+admission_control_node_debug_port = 65352
+metrics_server_port = 65354
+public_metrics_server_port = 65356
 address = "0.0.0.0"
 
 [execution]
@@ -79,8 +79,8 @@ max_timeout_ms = 120000
 sync_request_timeout_ms = 60000
 
 [storage]
-address = "127.0.0.1:65033"
-backup_service_port = 65035
+address = "127.0.0.1:65358"
+backup_service_port = 65360
 dir = "libradb/db"
 grpc_max_receive_len = 100000000
 
@@ -96,8 +96,8 @@ upstream_peers = []
 fallback_networks = []
 
 [validator_network]
-listen_address = "/ip4/0.0.0.0/tcp/65039"
-advertised_address = "/ip4/0.0.0.0/tcp/65039"
+listen_address = "/ip4/0.0.0.0/tcp/65364"
+advertised_address = "/ip4/0.0.0.0/tcp/65364"
 discovery_interval_ms = 1000
 connectivity_check_interval_ms = 5000
 enable_remote_authentication = true

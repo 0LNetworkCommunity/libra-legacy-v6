@@ -70,7 +70,7 @@ fn create_client_proxy () {
         /* sync_on_wallet_recovery */ false,
         /* faucet server */ None,
         /* menmonic file */ Some("./client.mnemonic".to_string()),
-        /* waypoint */ None // TODO: Get from /0_Config/
+        /* waypoint */ WaypointConfig::None, // TODO: Get from /0_Config/
     );
 }
 
