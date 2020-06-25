@@ -197,6 +197,17 @@ impl ClientProxy {
         // Note: Was producing error because hex was being submitted and not decoded.
         let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
 
+        self.execute_send_proof(sender, sender_ref_id, sequence_number, challenge, difficulty, proof)
+    }
+
+    pub fn execute_send_proof(
+        &mut self,
+        sender: &AccountData,
+        sender_ref_id: usize,
+        sequence_number: u64,
+        challenge: Vec<u8>,
+        difficulty: u64,
+        proof: Vec<u8> ) -> Result<()>{
         // create the transaction script
         let script = Script::new(
             StdlibScript::Redeem.compiled_bytes().into_vec(),
