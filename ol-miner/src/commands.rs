@@ -13,8 +13,10 @@
 mod keygen;
 mod start;
 mod version;
+mod submit;
 
-use self::{keygen::KeyGenCmd, start::StartCmd, version::VersionCmd};
+
+use self::{keygen::KeyGenCmd, start::StartCmd, version::VersionCmd, submit::SubmitCmd };
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -42,6 +44,12 @@ pub enum OlMinerCmd {
     /// The `keygen` subcommand
     #[options(help = "generate a keypair ")]
     KeyGen(KeyGenCmd),
+
+    /// The `submit` subcommand
+    #[options(help = "submit proofs")]
+    Submit(SubmitCmd),
+
+
 }
 
 /// This trait allows you to define how application configuration is loaded.

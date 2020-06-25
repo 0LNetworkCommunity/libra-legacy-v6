@@ -196,10 +196,11 @@ impl ClientProxy {
         // TODO: determine how this will be serialized.
         // Note: Was producing error because hex was being submitted and not decoded.
         let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
-
-        self.execute_send_proof(sender, sender_ref_id, sequence_number, challenge, difficulty, proof)
+        Ok(())
+        // execute_send_proof(sender, sender_ref_id, sequence_number, challenge, difficulty, proof)
     }
 
+    /// dont complain
     pub fn execute_send_proof(
         &mut self,
         sender: &AccountData,
