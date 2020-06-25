@@ -10,6 +10,8 @@ address 0x0 {
         use 0x0::Subsidy;
         use 0x0::NodeWeight;
         use 0x0::LibraSystem;
+        use 0x0::GAS;
+        use 0x0::TransactionFee;
         // This function is called in block-prologue once after n blocks. 
         // Takes in list of validators, runs stats and node weights and updates the validator set
         public fun reconfigure(account: &signer, current_block_height: u64){
@@ -40,7 +42,7 @@ address 0x0 {
             Subsidy::process_subsidy(account, &selected_validators, subsidy_units, total_voting_power);
 
             // Distribute transaction fees here before updating validators
-
+            TransactionFee::distribute_transaction_fees<GAS::T>();
             // Call bulkUpdate module
             LibraSystem::bulk_update_validators(account, selected_validators, current_block_height); 
         }
