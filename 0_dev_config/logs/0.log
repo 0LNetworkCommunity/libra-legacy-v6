@@ -1,0 +1,703 @@
+Using node config NodeConfig { admission_control: AdmissionControlConfig { address: V4(0.0.0.0:65025), need_to_check_mempool_before_validation: false, max_concurrent_inbound_syncs: 100, upstream_proxy_timeout: 1s }, rpc: RpcConfig { address: V4(0.0.0.0:65037) }, base: BaseConfig { data_dir: "./0_dev_config/0", role: Validator, waypoint: FromConfig { waypoint: Waypoint { version: 0, value: HashValue(d9a24edcf9b83a1eb8d013141ed696fdb7ce3a990b8a1b94ebaeb5d10722319a) } } }, consensus: ConsensusConfig { max_block_size: 1000, contiguous_rounds: 2, max_pruned_blocks_in_mem: 10000, round_initial_timeout_ms: 1000, proposer_type: LeaderReputation(LeaderReputationConfig { active_weights: 99, inactive_weights: 1 }), safety_rules: SafetyRulesConfig { backend: InMemoryStorage, service: Thread } }, debug_interface: DebugInterfaceConfig { admission_control_node_debug_port: 65027, metrics_server_port: 65029, public_metrics_server_port: 65031, address: "0.0.0.0" }, execution: ExecutionConfig { genesis: Some(...), genesis_file_location: "genesis.blob" }Thread, full_node_networks: [], logger: LoggerConfig { is_async: true, chan_size: 256, level: Info }, metrics: MetricsConfig { collection_interval_ms: 1000, dir: "metrics", enabled: false, data_dir: "./0_dev_config/0" }, mempool: MempoolConfig { broadcast_transactions: true, shared_mempool_tick_interval_ms: 50, shared_mempool_batch_size: 100, shared_mempool_max_concurrent_inbound_syncs: 100, shared_mempool_min_broadcast_recipient_count: None, max_broadcasts_per_peer: 25, capacity: 1000000, capacity_per_user: 100, system_transaction_timeout_secs: 86400, system_transaction_gc_interval_ms: 180000 }, state_sync: StateSyncConfig { chunk_limit: 250, tick_interval_ms: 100, long_poll_timeout_ms: 30000, max_chunk_limit: 1000, max_timeout_ms: 120000, sync_request_timeout_ms: 60000 }, storage: StorageConfig { address: V4(127.0.0.1:65033), backup_service_port: 65035, dir: "libradb/db", grpc_max_receive_len: Some(100000000), prune_window: None, data_dir: "./0_dev_config/0" }, test: Some(TestConfig { auth_key: Some(AuthenticationKey([23, 150, 130, 76, 220, 195, 171, 32, 92, 37, 242, 96, 225, 93, 198, 112, 89, 66, 211, 86, 241, 20, 8, 157, 74, 70, 242, 243, 176, 177, 91, 82])), operator_keypair: Some(KeyPair { private_key: Some(<elided secret for Ed25519PrivateKey>), public_key: Ed25519PublicKey(1a3201a76a32a948bb8b89496d137243df86fddcbac2bec67baaf78a5a36d3d1) }), consensus_keypair: Some(KeyPair { private_key: Some(<elided secret for Ed25519PrivateKey>), public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2) }), initialize_storage: true, temp_dir: None, publishing_option: None }), upstream: UpstreamConfig { primary_networks: [5942d356f114089d4a46f2f3b0b15b52], upstream_peers: {}, fallback_networks: [] }, validator_network: Some(NetworkConfig { listen_address: /ip4/0.0.0.0/tcp/65039, advertised_address: /ip4/0.0.0.0/tcp/65039, discovery_interval_ms: 1000, connectivity_check_interval_ms: 5000, enable_remote_authentication: true, discovery_method: Gossip, network_peers: <0 keys>, network_peers_file: "", seed_peers: SeedPeersConfig { seed_peers: {5942d356f114089d4a46f2f3b0b15b52: [/ip4/0.0.0.0/tcp/65039/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0]} }, seed_peers_file: "5942d356f114089d4a46f2f3b0b15b52.seed_peers.toml", identity: FromConfig(IdentityFromConfig { keypair: KeyPair { private_key: Some(<elided secret for PrivateKey>), public_key: [X25519 public key: bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77] }, peer_id: 5942d356f114089d4a46f2f3b0b15b52 }), network_id: Validator }) }
+INFO 2020-06-25 19:05:25 storage/libradb/src/lib.rs:168 Opened LibraDB at "./0_dev_config/0/libradb/db/libradb" in 147 ms
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:154 Waiting for downstream to connect
+INFO 2020-06-25 19:05:25 execution/executor/src/db_bootstrapper.rs:135 Genesis calculated: ledger_info_with_sigs V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 0, round: 0, id: HashValue(0000000000000000000000000000000000000000000000000000000000000000), executed_state_id: HashValue(6b517b2edfc71655b094780c1b1f4f850420e6c409945b770786992d847a6411), version: 0, timestamp_usecs: 0, next_epoch_state: Some(EpochState { epoch: 1, verifier: ValidatorVerifier { address_to_validator_info: {5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 1 }}, quorum_voting_power: 1, total_voting_power: 1 } }) }, consensus_data_hash: HashValue(0000000000000000000000000000000000000000000000000000000000000000) }, signatures: {} }), waypoint Waypoint { version: 0, value: HashValue(d9a24edcf9b83a1eb8d013141ed696fdb7ce3a990b8a1b94ebaeb5d10722319a) }
+DEBUG 2020-06-25 19:05:25 execution/executor/src/lib.rs:663 Received request to commit block 0000000000000000000000000000000000000000000000000000000000000000.
+DEBUG 2020-06-25 19:05:25 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block 154a6d10 as a virtual block of reconfiguration block 00000000
+DEBUG 2020-06-25 19:05:25 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 00000000 is dropped.
+INFO 2020-06-25 19:05:25 execution/executor/src/db_bootstrapper.rs:69 Genesis commited.
+DEBUG 2020-06-25 19:05:25 libra-node/src/main_node.rs:231 Storage service started in 366 ms
+DEBUG 2020-06-25 19:05:25 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block 154a6d10 as a virtual block of reconfiguration block 00000000
+DEBUG 2020-06-25 19:05:25 libra-node/src/main_node.rs:238 ChunkExecutor setup in 0 ms
+DEBUG 2020-06-25 19:05:25 network/src/validator_network/network_builder.rs:400 Started health checker
+INFO 2020-06-25 19:05:25 libra-node/src/main_node.rs:158 network setup: role: validator, seed_peers: {5942d356f114089d4a46f2f3b0b15b52: [/ip4/0.0.0.0/tcp/65039/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0]}, trusted_peers: {}
+INFO 2020-06-25 19:05:25 network/src/connectivity_manager/mod.rs:161 ConnectivityManager: 0 seed peers
+DEBUG 2020-06-25 19:05:25 network/src/validator_network/network_builder.rs:380 Started discovery protocol actor
+DEBUG 2020-06-25 19:05:25 network/src/protocols/discovery/mod.rs:204 Starting Discovery actor event loop
+DEBUG 2020-06-25 19:05:25 libra-node/src/main_node.rs:352 Mempool started in 5 ms
+DEBUG 2020-06-25 19:05:25 network/src/peer_manager/mod.rs:743 listening on /ip4/0.0.0.0/tcp/65039/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0
+DEBUG 2020-06-25 19:05:25 network/src/validator_network/network_builder.rs:475 Started peer manager
+DEBUG 2020-06-25 19:05:25 libra-node/src/main_node.rs:368 Network started for peer_id: 5942d356f114089d4a46f2f3b0b15b52
+DEBUG 2020-06-25 19:05:25 libra-node/src/main_node.rs:374 Wait until state synchronizer is initialized
+INFO 2020-06-25 19:05:25 network/simple-onchain-discovery/src/lib.rs:136 Update validator Network about new Node IDs
+DEBUG 2020-06-25 19:05:25 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:25 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 1
+DEBUG 2020-06-25 19:05:25 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:25 network/src/peer_manager/mod.rs:759 Incoming connections listener Task started
+DEBUG 2020-06-25 19:05:25 libra-node/src/main_node.rs:377 State synchronizer initialization complete.
+INFO 2020-06-25 19:05:25 consensus/src/consensusdb/mod.rs:39 Opened ConsensusDB at "./0_dev_config/0/libradb/db/consensusdb" in 21 ms
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:85 Attempting to connect to upstream 127.0.0.1:65033
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:98 Connection established to upstream 127.0.0.1:65033
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:160 Connection established with downstream 127.0.0.1:65047
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:154 Waiting for downstream to connect
+DEBUG 2020-06-25 19:05:25 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block 154a6d10 as a virtual block of reconfiguration block 00000000
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:154 Waiting for downstream to connect
+DEBUG 2020-06-25 19:05:25 consensus/src/consensus_provider.rs:70 Consensus started.
+DEBUG 2020-06-25 19:05:25 libra-node/src/main_node.rs:390 Consensus started in 28 ms
+INFO 2020-06-25 19:05:25 consensus/src/persistent_liveness_storage.rs:319 Start consensus recovery.
+INFO 2020-06-25 19:05:25 consensus/src/persistent_liveness_storage.rs:335 The following blocks were restored from ConsensusDB : 
+INFO 2020-06-25 19:05:25 consensus/src/persistent_liveness_storage.rs:343 The following quorum certs were restored from ConsensusDB: 
+INFO 2020-06-25 19:05:25 consensus/src/persistent_liveness_storage.rs:81 The last committed block id as recorded in storage: LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 6b517b2e, version: 0, timestamp (us): 0, next_epoch_state: EpochState [epoch: 1, validator: ValidatorSet: [5942d356: 1, ]]]]
+INFO 2020-06-25 19:05:25 consensus/src/persistent_liveness_storage.rs:121 Consensus root block is [id: 154a6d10, epoch: 1, round: 00, parent_id: 00000000]
+INFO 2020-06-25 19:05:25 consensus/src/persistent_liveness_storage.rs:387 Starting up the consensus state machine with recovery data - [last_vote None], [highest timeout certificate: None]
+INFO 2020-06-25 19:05:25 consensus/src/epoch_manager.rs:258 Starting EpochState [epoch: 1, validator: ValidatorSet: [5942d356: 1, ]] with genesis [id: 154a6d10, epoch: 1, round: 00, parent_id: 00000000]
+INFO 2020-06-25 19:05:25 consensus/src/epoch_manager.rs:265 Create BlockStore
+INFO 2020-06-25 19:05:25 consensus/src/epoch_manager.rs:273 Update SafetyRules
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:85 Attempting to connect to upstream 127.0.0.1:65048
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:98 Connection established to upstream 127.0.0.1:65048
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:160 Connection established with downstream 127.0.0.1:65050
+INFO 2020-06-25 19:05:25 consensus/src/epoch_manager.rs:289 Create ProposalGenerator
+INFO 2020-06-25 19:05:25 consensus/src/epoch_manager.rs:300 Create RoundState
+INFO 2020-06-25 19:05:25 consensus/src/epoch_manager.rs:304 Create ProposerElection
+DEBUG 2020-06-25 19:05:25 consensus/src/liveness/round_state.rs:311 "237.852µs" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:25 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:25 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 1, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:25 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 1, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:25 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111925.647787s, early_duration: 1593111925.647787s } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:25 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:25 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:25 consensus/src/round_manager.rs:287 Propose [id: c7602c14, epoch: 1, round: 01, parent_id: 154a6d10]
+INFO 2020-06-25 19:05:25 consensus/src/epoch_manager.rs:327 RoundManager started
+DEBUG 2020-06-25 19:05:25 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: c7602c14, epoch: 1, round: 01, parent_id: 154a6d10]
+DEBUG 2020-06-25 19:05:25 consensus/src/state_computer.rs:60 Executing block c7602c146e64c78fb910dc06f2ddc76c2a5127939b6bec3411a197ddb6d14e3c. Parent: 154a6d109159f32c969e4a728f206fd0d7e9e2759581d01678edd96a70d54672.
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:85 Attempting to connect to upstream 127.0.0.1:65045
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:98 Connection established to upstream 127.0.0.1:65045
+DEBUG 2020-06-25 19:05:25 secure/net/src/lib.rs:160 Connection established with downstream 127.0.0.1:65051
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111926.111585s, early_duration: 463.798ms } for being able to vote
+DEBUG 2020-06-25 19:05:26 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: c7602c14, epoch: 1, round: 01, parent_block_id: 154a6d10, parent_block_round: 00], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:511 Round: 1 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: c7602c14, epoch: 1, round: 01, parent_block_id: 154a6d10, parent_block_round: 00], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: c7602c14, epoch: 1, round: 01, parent_block_id: 154a6d10, parent_block_round: 00], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:316 Set round deadline to 1.5s from now
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 2, reason: QCReady, timeout: 1.5s]
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 2, reason: QCReady, timeout: 1.5s]
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111926.117673s, early_duration: 469.886ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:26 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:26 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:287 Propose [id: 4ae287ce, epoch: 1, round: 02, parent_id: c7602c14]
+DEBUG 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 4ae287ce, epoch: 1, round: 02, parent_id: c7602c14]
+DEBUG 2020-06-25 19:05:26 consensus/src/state_computer.rs:60 Executing block 4ae287ce06e56b1e3e566608ab415d471e6545068ffbbd8530e404bf04fddcd6. Parent: c7602c146e64c78fb910dc06f2ddc76c2a5127939b6bec3411a197ddb6d14e3c.
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111926.536516s, early_duration: 418.843ms } for being able to vote
+DEBUG 2020-06-25 19:05:26 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 4ae287ce, epoch: 1, round: 02, parent_block_id: c7602c14, parent_block_round: 01], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 0, id: 154a6d10, executed_state_id: 6b517b2e, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 4ae287ce, epoch: 1, round: 02, parent_block_id: c7602c14, parent_block_round: 01], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 0, id: 154a6d10, executed_state_id: 6b517b2e, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 4ae287ce, epoch: 1, round: 02, parent_block_id: c7602c14, parent_block_round: 01], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 0, id: 154a6d10, executed_state_id: 6b517b2e, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:316 Set round deadline to 2.25s from now
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 3, reason: QCReady, timeout: 2.25s]
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 3, reason: QCReady, timeout: 2.25s]
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111926.5431s, early_duration: 425.427ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:26 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:26 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:287 Propose [id: 45b9fa5b, epoch: 1, round: 03, parent_id: 4ae287ce]
+DEBUG 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:511 Round: 3 Committed Round: 0 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 45b9fa5b, epoch: 1, round: 03, parent_id: 4ae287ce]
+DEBUG 2020-06-25 19:05:26 consensus/src/state_computer.rs:60 Executing block 45b9fa5bcab758f636fcec16ad3804db4eb855adaed3d6e7a5b226cb818fee50. Parent: 4ae287ce06e56b1e3e566608ab415d471e6545068ffbbd8530e404bf04fddcd6.
+DEBUG 2020-06-25 19:05:26 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:26 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 2
+DEBUG 2020-06-25 19:05:26 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111926.958468s, early_duration: 415.368ms } for being able to vote
+DEBUG 2020-06-25 19:05:26 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 45b9fa5b, epoch: 1, round: 03, parent_block_id: 4ae287ce, parent_block_round: 02], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 1, id: c7602c14, executed_state_id: 945aeac5, version: 1, timestamp (us): 1593111925647787, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:511 Round: 3 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 45b9fa5b, epoch: 1, round: 03, parent_block_id: 4ae287ce, parent_block_round: 02], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 1, id: c7602c14, executed_state_id: 945aeac5, version: 1, timestamp (us): 1593111925647787, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:511 Round: 3 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 45b9fa5b, epoch: 1, round: 03, parent_block_id: 4ae287ce, parent_block_round: 02], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 1, id: c7602c14, executed_state_id: 945aeac5, version: 1, timestamp (us): 1593111925647787, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 45b9fa5b, epoch: 1, round: 03, parent_block_id: 4ae287ce, parent_block_round: 02], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 1, id: c7602c14, executed_state_id: 945aeac5, version: 1, timestamp (us): 1593111925647787, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:26 execution/executor/src/lib.rs:663 Received request to commit block c7602c146e64c78fb910dc06f2ddc76c2a5127939b6bec3411a197ddb6d14e3c.
+DEBUG 2020-06-25 19:05:26 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block c7602c14
+DEBUG 2020-06-25 19:05:26 execution/executor/src/speculation_cache/mod.rs:87 Speculation block c7602c14 is dropped.
+DEBUG 2020-06-25 19:05:26 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: c7602c14, epoch: 1, round: 01, parent_id: 154a6d10]
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 4, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 4, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:26 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111926.973714s, early_duration: 430.614ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:26 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:26 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:287 Propose [id: 99397d69, epoch: 1, round: 04, parent_id: 45b9fa5b]
+DEBUG 2020-06-25 19:05:26 consensus/src/epoch_manager.rs:511 Round: 4 Committed Round: 1 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:26 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 99397d69, epoch: 1, round: 04, parent_id: 45b9fa5b]
+DEBUG 2020-06-25 19:05:26 consensus/src/state_computer.rs:60 Executing block 99397d6914f98f0483ad52a7f46d5c8fab628e24c4eefc666281f2086688f562. Parent: 45b9fa5bcab758f636fcec16ad3804db4eb855adaed3d6e7a5b226cb818fee50.
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111927.384857s, early_duration: 411.143ms } for being able to vote
+DEBUG 2020-06-25 19:05:27 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 99397d69, epoch: 1, round: 04, parent_block_id: 45b9fa5b, parent_block_round: 03], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 2, id: 4ae287ce, executed_state_id: 0dde81ba, version: 2, timestamp (us): 1593111926117673, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:27 consensus/src/epoch_manager.rs:511 Round: 4 Committed Round: 1 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 99397d69, epoch: 1, round: 04, parent_block_id: 45b9fa5b, parent_block_round: 03], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 2, id: 4ae287ce, executed_state_id: 0dde81ba, version: 2, timestamp (us): 1593111926117673, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 99397d69, epoch: 1, round: 04, parent_block_id: 45b9fa5b, parent_block_round: 03], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 2, id: 4ae287ce, executed_state_id: 0dde81ba, version: 2, timestamp (us): 1593111926117673, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:27 execution/executor/src/lib.rs:663 Received request to commit block 4ae287ce06e56b1e3e566608ab415d471e6545068ffbbd8530e404bf04fddcd6.
+DEBUG 2020-06-25 19:05:27 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 4ae287ce
+DEBUG 2020-06-25 19:05:27 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 4ae287ce is dropped.
+DEBUG 2020-06-25 19:05:27 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 4ae287ce, epoch: 1, round: 02, parent_id: c7602c14]
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 5, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 5, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111927.39891s, early_duration: 425.196ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:27 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:27 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:287 Propose [id: 818bf66c, epoch: 1, round: 05, parent_id: 99397d69]
+DEBUG 2020-06-25 19:05:27 consensus/src/epoch_manager.rs:511 Round: 5 Committed Round: 2 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 818bf66c, epoch: 1, round: 05, parent_id: 99397d69]
+DEBUG 2020-06-25 19:05:27 consensus/src/state_computer.rs:60 Executing block 818bf66cf4067d379c07b8fa832b6146d100af477a4322aa95638552f8eae32c. Parent: 99397d6914f98f0483ad52a7f46d5c8fab628e24c4eefc666281f2086688f562.
+DEBUG 2020-06-25 19:05:27 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:27 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 3
+DEBUG 2020-06-25 19:05:27 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111927.809266s, early_duration: 410.356ms } for being able to vote
+DEBUG 2020-06-25 19:05:27 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 818bf66c, epoch: 1, round: 05, parent_block_id: 99397d69, parent_block_round: 04], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: 45b9fa5b, executed_state_id: 96f0aa65, version: 3, timestamp (us): 1593111926543100, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:27 consensus/src/epoch_manager.rs:511 Round: 5 Committed Round: 2 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 818bf66c, epoch: 1, round: 05, parent_block_id: 99397d69, parent_block_round: 04], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: 45b9fa5b, executed_state_id: 96f0aa65, version: 3, timestamp (us): 1593111926543100, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:27 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:27 consensus/src/epoch_manager.rs:511 Round: 5 Committed Round: 2 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 818bf66c, epoch: 1, round: 05, parent_block_id: 99397d69, parent_block_round: 04], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: 45b9fa5b, executed_state_id: 96f0aa65, version: 3, timestamp (us): 1593111926543100, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 818bf66c, epoch: 1, round: 05, parent_block_id: 99397d69, parent_block_round: 04], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: 45b9fa5b, executed_state_id: 96f0aa65, version: 3, timestamp (us): 1593111926543100, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:27 execution/executor/src/lib.rs:663 Received request to commit block 45b9fa5bcab758f636fcec16ad3804db4eb855adaed3d6e7a5b226cb818fee50.
+DEBUG 2020-06-25 19:05:27 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 45b9fa5b
+DEBUG 2020-06-25 19:05:27 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 45b9fa5b is dropped.
+DEBUG 2020-06-25 19:05:27 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 45b9fa5b, epoch: 1, round: 03, parent_id: 4ae287ce]
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 6, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 6, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:27 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111927.822376s, early_duration: 423.466ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:27 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:27 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:287 Propose [id: 21085dfb, epoch: 1, round: 06, parent_id: 818bf66c]
+DEBUG 2020-06-25 19:05:27 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:27 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 21085dfb, epoch: 1, round: 06, parent_id: 818bf66c]
+DEBUG 2020-06-25 19:05:27 consensus/src/state_computer.rs:60 Executing block 21085dfb30566146885b2f7adbd70b1c0653771eff3793aae3d569e320a4b0f2. Parent: 818bf66cf4067d379c07b8fa832b6146d100af477a4322aa95638552f8eae32c.
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111928.235191s, early_duration: 412.815ms } for being able to vote
+DEBUG 2020-06-25 19:05:28 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 21085dfb, epoch: 1, round: 06, parent_block_id: 818bf66c, parent_block_round: 05], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: 99397d69, executed_state_id: 07a61571, version: 4, timestamp (us): 1593111926973714, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 21085dfb, epoch: 1, round: 06, parent_block_id: 818bf66c, parent_block_round: 05], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: 99397d69, executed_state_id: 07a61571, version: 4, timestamp (us): 1593111926973714, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 21085dfb, epoch: 1, round: 06, parent_block_id: 818bf66c, parent_block_round: 05], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: 99397d69, executed_state_id: 07a61571, version: 4, timestamp (us): 1593111926973714, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 21085dfb, epoch: 1, round: 06, parent_block_id: 818bf66c, parent_block_round: 05], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: 99397d69, executed_state_id: 07a61571, version: 4, timestamp (us): 1593111926973714, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:28 execution/executor/src/lib.rs:663 Received request to commit block 99397d6914f98f0483ad52a7f46d5c8fab628e24c4eefc666281f2086688f562.
+DEBUG 2020-06-25 19:05:28 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 99397d69
+DEBUG 2020-06-25 19:05:28 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 99397d69 is dropped.
+DEBUG 2020-06-25 19:05:28 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 99397d69, epoch: 1, round: 04, parent_id: 45b9fa5b]
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 7, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 7, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111928.249439s, early_duration: 427.063ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:28 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:28 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:287 Propose [id: 5684127f, epoch: 1, round: 07, parent_id: 21085dfb]
+DEBUG 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 5684127f, epoch: 1, round: 07, parent_id: 21085dfb]
+DEBUG 2020-06-25 19:05:28 consensus/src/state_computer.rs:60 Executing block 5684127f2e27a4637e76dc3e8c54b2e4eda3883df80e149bdd45675943d2aa5d. Parent: 21085dfb30566146885b2f7adbd70b1c0653771eff3793aae3d569e320a4b0f2.
+DEBUG 2020-06-25 19:05:28 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 4
+DEBUG 2020-06-25 19:05:28 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:28 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111928.678403s, early_duration: 428.964ms } for being able to vote
+DEBUG 2020-06-25 19:05:28 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 5684127f, epoch: 1, round: 07, parent_block_id: 21085dfb, parent_block_round: 06], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: 818bf66c, executed_state_id: 139ae3e9, version: 5, timestamp (us): 1593111927398910, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 5684127f, epoch: 1, round: 07, parent_block_id: 21085dfb, parent_block_round: 06], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: 818bf66c, executed_state_id: 139ae3e9, version: 5, timestamp (us): 1593111927398910, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 5684127f, epoch: 1, round: 07, parent_block_id: 21085dfb, parent_block_round: 06], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: 818bf66c, executed_state_id: 139ae3e9, version: 5, timestamp (us): 1593111927398910, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 5684127f, epoch: 1, round: 07, parent_block_id: 21085dfb, parent_block_round: 06], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: 818bf66c, executed_state_id: 139ae3e9, version: 5, timestamp (us): 1593111927398910, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:28 execution/executor/src/lib.rs:663 Received request to commit block 818bf66cf4067d379c07b8fa832b6146d100af477a4322aa95638552f8eae32c.
+DEBUG 2020-06-25 19:05:28 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 818bf66c
+DEBUG 2020-06-25 19:05:28 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 818bf66c is dropped.
+DEBUG 2020-06-25 19:05:28 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 818bf66c, epoch: 1, round: 05, parent_id: 99397d69]
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 8, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 8, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:28 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111928.692455s, early_duration: 443.016ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:28 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:28 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:287 Propose [id: 4e774472, epoch: 1, round: 08, parent_id: 5684127f]
+DEBUG 2020-06-25 19:05:28 consensus/src/epoch_manager.rs:511 Round: 8 Committed Round: 5 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:28 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 4e774472, epoch: 1, round: 08, parent_id: 5684127f]
+DEBUG 2020-06-25 19:05:28 consensus/src/state_computer.rs:60 Executing block 4e774472ac4b4c3790266fbc63e09c00842bffa147e51ae365a16b87b9d46190. Parent: 5684127f2e27a4637e76dc3e8c54b2e4eda3883df80e149bdd45675943d2aa5d.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111929.112308s, early_duration: 419.853ms } for being able to vote
+DEBUG 2020-06-25 19:05:29 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 4e774472, epoch: 1, round: 08, parent_block_id: 5684127f, parent_block_round: 07], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 21085dfb, executed_state_id: 214d5fed, version: 6, timestamp (us): 1593111927822376, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 8 Committed Round: 5 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 4e774472, epoch: 1, round: 08, parent_block_id: 5684127f, parent_block_round: 07], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 21085dfb, executed_state_id: 214d5fed, version: 6, timestamp (us): 1593111927822376, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 8 Committed Round: 5 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 4e774472, epoch: 1, round: 08, parent_block_id: 5684127f, parent_block_round: 07], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 21085dfb, executed_state_id: 214d5fed, version: 6, timestamp (us): 1593111927822376, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 8 Committed Round: 5 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 4e774472, epoch: 1, round: 08, parent_block_id: 5684127f, parent_block_round: 07], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 21085dfb, executed_state_id: 214d5fed, version: 6, timestamp (us): 1593111927822376, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 4e774472, epoch: 1, round: 08, parent_block_id: 5684127f, parent_block_round: 07], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 21085dfb, executed_state_id: 214d5fed, version: 6, timestamp (us): 1593111927822376, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 execution/executor/src/lib.rs:663 Received request to commit block 21085dfb30566146885b2f7adbd70b1c0653771eff3793aae3d569e320a4b0f2.
+DEBUG 2020-06-25 19:05:29 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 21085dfb
+DEBUG 2020-06-25 19:05:29 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 21085dfb is dropped.
+DEBUG 2020-06-25 19:05:29 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 21085dfb, epoch: 1, round: 06, parent_id: 818bf66c]
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 9, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 9, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111929.127329s, early_duration: 434.874ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:29 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:29 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:287 Propose [id: 77033be6, epoch: 1, round: 09, parent_id: 4e774472]
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 9 Committed Round: 6 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 77033be6, epoch: 1, round: 09, parent_id: 4e774472]
+DEBUG 2020-06-25 19:05:29 consensus/src/state_computer.rs:60 Executing block 77033be64f7bd182afaff704c425c7368277a02c10b9571d444eaa6fc5e6afdf. Parent: 4e774472ac4b4c3790266fbc63e09c00842bffa147e51ae365a16b87b9d46190.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111929.532685s, early_duration: 405.356ms } for being able to vote
+DEBUG 2020-06-25 19:05:29 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 77033be6, epoch: 1, round: 09, parent_block_id: 4e774472, parent_block_round: 08], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 7, id: 5684127f, executed_state_id: bc1a4169, version: 7, timestamp (us): 1593111928249439, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 9 Committed Round: 6 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 77033be6, epoch: 1, round: 09, parent_block_id: 4e774472, parent_block_round: 08], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 7, id: 5684127f, executed_state_id: bc1a4169, version: 7, timestamp (us): 1593111928249439, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 9 Committed Round: 6 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 77033be6, epoch: 1, round: 09, parent_block_id: 4e774472, parent_block_round: 08], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 7, id: 5684127f, executed_state_id: bc1a4169, version: 7, timestamp (us): 1593111928249439, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 77033be6, epoch: 1, round: 09, parent_block_id: 4e774472, parent_block_round: 08], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 7, id: 5684127f, executed_state_id: bc1a4169, version: 7, timestamp (us): 1593111928249439, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 execution/executor/src/lib.rs:663 Received request to commit block 5684127f2e27a4637e76dc3e8c54b2e4eda3883df80e149bdd45675943d2aa5d.
+DEBUG 2020-06-25 19:05:29 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 5684127f
+DEBUG 2020-06-25 19:05:29 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 5684127f is dropped.
+DEBUG 2020-06-25 19:05:29 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 5684127f, epoch: 1, round: 07, parent_id: 21085dfb]
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 10, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 10, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111929.548594s, early_duration: 421.265ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:29 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:29 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:287 Propose [id: 243024d3, epoch: 1, round: 10, parent_id: 77033be6]
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 10 Committed Round: 7 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 243024d3, epoch: 1, round: 10, parent_id: 77033be6]
+DEBUG 2020-06-25 19:05:29 consensus/src/state_computer.rs:60 Executing block 243024d33f1c8978ce7021f68b882c9d6c72d23fb02af328e93975b4c6e524c3. Parent: 77033be64f7bd182afaff704c425c7368277a02c10b9571d444eaa6fc5e6afdf.
+DEBUG 2020-06-25 19:05:29 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:29 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 5
+DEBUG 2020-06-25 19:05:29 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111929.972284s, early_duration: 423.69ms } for being able to vote
+DEBUG 2020-06-25 19:05:29 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 243024d3, epoch: 1, round: 10, parent_block_id: 77033be6, parent_block_round: 09], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 4e774472, executed_state_id: 6d65654d, version: 8, timestamp (us): 1593111928692455, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 10 Committed Round: 7 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 243024d3, epoch: 1, round: 10, parent_block_id: 77033be6, parent_block_round: 09], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 4e774472, executed_state_id: 6d65654d, version: 8, timestamp (us): 1593111928692455, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 10 Committed Round: 7 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 243024d3, epoch: 1, round: 10, parent_block_id: 77033be6, parent_block_round: 09], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 4e774472, executed_state_id: 6d65654d, version: 8, timestamp (us): 1593111928692455, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 243024d3, epoch: 1, round: 10, parent_block_id: 77033be6, parent_block_round: 09], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 4e774472, executed_state_id: 6d65654d, version: 8, timestamp (us): 1593111928692455, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:29 execution/executor/src/lib.rs:663 Received request to commit block 4e774472ac4b4c3790266fbc63e09c00842bffa147e51ae365a16b87b9d46190.
+DEBUG 2020-06-25 19:05:29 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 4e774472
+DEBUG 2020-06-25 19:05:29 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 4e774472 is dropped.
+DEBUG 2020-06-25 19:05:29 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 4e774472, epoch: 1, round: 08, parent_id: 5684127f]
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 11, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 11, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:29 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111929.986434s, early_duration: 437.84ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:29 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:29 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:287 Propose [id: fa279e9f, epoch: 1, round: 11, parent_id: 243024d3]
+DEBUG 2020-06-25 19:05:29 consensus/src/epoch_manager.rs:511 Round: 11 Committed Round: 8 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:29 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: fa279e9f, epoch: 1, round: 11, parent_id: 243024d3]
+DEBUG 2020-06-25 19:05:29 consensus/src/state_computer.rs:60 Executing block fa279e9f3cd7a303918e6d3fb378916c290fa0494dafe7080db851a5103534cd. Parent: 243024d33f1c8978ce7021f68b882c9d6c72d23fb02af328e93975b4c6e524c3.
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111930.435507s, early_duration: 449.073ms } for being able to vote
+DEBUG 2020-06-25 19:05:30 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: fa279e9f, epoch: 1, round: 11, parent_block_id: 243024d3, parent_block_round: 10], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 9, id: 77033be6, executed_state_id: a8bc5077, version: 9, timestamp (us): 1593111929127329, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:511 Round: 11 Committed Round: 8 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: fa279e9f, epoch: 1, round: 11, parent_block_id: 243024d3, parent_block_round: 10], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 9, id: 77033be6, executed_state_id: a8bc5077, version: 9, timestamp (us): 1593111929127329, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:511 Round: 11 Committed Round: 8 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: fa279e9f, epoch: 1, round: 11, parent_block_id: 243024d3, parent_block_round: 10], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 9, id: 77033be6, executed_state_id: a8bc5077, version: 9, timestamp (us): 1593111929127329, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: fa279e9f, epoch: 1, round: 11, parent_block_id: 243024d3, parent_block_round: 10], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 9, id: 77033be6, executed_state_id: a8bc5077, version: 9, timestamp (us): 1593111929127329, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:30 execution/executor/src/lib.rs:663 Received request to commit block 77033be64f7bd182afaff704c425c7368277a02c10b9571d444eaa6fc5e6afdf.
+DEBUG 2020-06-25 19:05:30 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 77033be6
+DEBUG 2020-06-25 19:05:30 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 77033be6 is dropped.
+DEBUG 2020-06-25 19:05:30 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 77033be6, epoch: 1, round: 09, parent_id: 4e774472]
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 12, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 12, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111930.449239s, early_duration: 462.805ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:30 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:30 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:287 Propose [id: 6ead79ce, epoch: 1, round: 12, parent_id: fa279e9f]
+DEBUG 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:511 Round: 12 Committed Round: 9 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 6ead79ce, epoch: 1, round: 12, parent_id: fa279e9f]
+DEBUG 2020-06-25 19:05:30 consensus/src/state_computer.rs:60 Executing block 6ead79ce8d66ba0a9939536606e353358a7f5970bce320489583da55c07f4299. Parent: fa279e9f3cd7a303918e6d3fb378916c290fa0494dafe7080db851a5103534cd.
+DEBUG 2020-06-25 19:05:30 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:30 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 6
+DEBUG 2020-06-25 19:05:30 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111930.879394s, early_duration: 430.155ms } for being able to vote
+DEBUG 2020-06-25 19:05:30 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 6ead79ce, epoch: 1, round: 12, parent_block_id: fa279e9f, parent_block_round: 11], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 243024d3, executed_state_id: bb714c5c, version: 10, timestamp (us): 1593111929548594, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:511 Round: 12 Committed Round: 9 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 6ead79ce, epoch: 1, round: 12, parent_block_id: fa279e9f, parent_block_round: 11], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 243024d3, executed_state_id: bb714c5c, version: 10, timestamp (us): 1593111929548594, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:511 Round: 12 Committed Round: 9 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 6ead79ce, epoch: 1, round: 12, parent_block_id: fa279e9f, parent_block_round: 11], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 243024d3, executed_state_id: bb714c5c, version: 10, timestamp (us): 1593111929548594, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 6ead79ce, epoch: 1, round: 12, parent_block_id: fa279e9f, parent_block_round: 11], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 243024d3, executed_state_id: bb714c5c, version: 10, timestamp (us): 1593111929548594, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:30 execution/executor/src/lib.rs:663 Received request to commit block 243024d33f1c8978ce7021f68b882c9d6c72d23fb02af328e93975b4c6e524c3.
+DEBUG 2020-06-25 19:05:30 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 243024d3
+DEBUG 2020-06-25 19:05:30 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 243024d3 is dropped.
+DEBUG 2020-06-25 19:05:30 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 243024d3, epoch: 1, round: 10, parent_id: 77033be6]
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 13, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 13, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:30 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111930.894356s, early_duration: 445.117ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:30 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:30 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:287 Propose [id: f118de8e, epoch: 1, round: 13, parent_id: 6ead79ce]
+DEBUG 2020-06-25 19:05:30 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:30 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: f118de8e, epoch: 1, round: 13, parent_id: 6ead79ce]
+DEBUG 2020-06-25 19:05:30 consensus/src/state_computer.rs:60 Executing block f118de8e17e68a48fd73958658fab8bbee6e8f575063e45ae86612f3e6cfee11. Parent: 6ead79ce8d66ba0a9939536606e353358a7f5970bce320489583da55c07f4299.
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111931.308328s, early_duration: 413.972ms } for being able to vote
+DEBUG 2020-06-25 19:05:31 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: f118de8e, epoch: 1, round: 13, parent_block_id: 6ead79ce, parent_block_round: 12], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: fa279e9f, executed_state_id: a3160551, version: 11, timestamp (us): 1593111929986434, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: f118de8e, epoch: 1, round: 13, parent_block_id: 6ead79ce, parent_block_round: 12], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: fa279e9f, executed_state_id: a3160551, version: 11, timestamp (us): 1593111929986434, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: f118de8e, epoch: 1, round: 13, parent_block_id: 6ead79ce, parent_block_round: 12], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: fa279e9f, executed_state_id: a3160551, version: 11, timestamp (us): 1593111929986434, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: f118de8e, epoch: 1, round: 13, parent_block_id: 6ead79ce, parent_block_round: 12], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: fa279e9f, executed_state_id: a3160551, version: 11, timestamp (us): 1593111929986434, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:31 execution/executor/src/lib.rs:663 Received request to commit block fa279e9f3cd7a303918e6d3fb378916c290fa0494dafe7080db851a5103534cd.
+DEBUG 2020-06-25 19:05:31 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block fa279e9f
+DEBUG 2020-06-25 19:05:31 execution/executor/src/speculation_cache/mod.rs:87 Speculation block fa279e9f is dropped.
+DEBUG 2020-06-25 19:05:31 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: fa279e9f, epoch: 1, round: 11, parent_id: 243024d3]
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 14, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 14, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111931.323603s, early_duration: 429.247ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:31 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:31 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:287 Propose [id: 936ca860, epoch: 1, round: 14, parent_id: f118de8e]
+DEBUG 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:511 Round: 14 Committed Round: 11 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 936ca860, epoch: 1, round: 14, parent_id: f118de8e]
+DEBUG 2020-06-25 19:05:31 consensus/src/state_computer.rs:60 Executing block 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6. Parent: f118de8e17e68a48fd73958658fab8bbee6e8f575063e45ae86612f3e6cfee11.
+DEBUG 2020-06-25 19:05:31 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 7
+DEBUG 2020-06-25 19:05:31 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:31 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1593111931.730014s, early_duration: 406.411ms } for being able to vote
+DEBUG 2020-06-25 19:05:31 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 936ca860, epoch: 1, round: 14, parent_block_id: f118de8e, parent_block_round: 13], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 12, id: 6ead79ce, executed_state_id: ce9efc7c, version: 12, timestamp (us): 1593111930449239, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:511 Round: 14 Committed Round: 11 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 936ca860, epoch: 1, round: 14, parent_block_id: f118de8e, parent_block_round: 13], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 12, id: 6ead79ce, executed_state_id: ce9efc7c, version: 12, timestamp (us): 1593111930449239, next_epoch_state: None]]]
+ERROR 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:511 Round: 14 Committed Round: 11 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 936ca860, epoch: 1, round: 14, parent_block_id: f118de8e, parent_block_round: 13], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 12, id: 6ead79ce, executed_state_id: ce9efc7c, version: 12, timestamp (us): 1593111930449239, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 936ca860, epoch: 1, round: 14, parent_block_id: f118de8e, parent_block_round: 13], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 12, id: 6ead79ce, executed_state_id: ce9efc7c, version: 12, timestamp (us): 1593111930449239, next_epoch_state: None]]]
+DEBUG 2020-06-25 19:05:31 execution/executor/src/lib.rs:663 Received request to commit block 6ead79ce8d66ba0a9939536606e353358a7f5970bce320489583da55c07f4299.
+DEBUG 2020-06-25 19:05:31 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 6ead79ce
+DEBUG 2020-06-25 19:05:31 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 6ead79ce is dropped.
+DEBUG 2020-06-25 19:05:31 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 6ead79ce, epoch: 1, round: 12, parent_id: fa279e9f]
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 15, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 15, reason: QCReady, timeout: 1s]
+DEBUG 2020-06-25 19:05:31 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1593111931.74464s, early_duration: 421.037ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-06-25 19:05:31 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-06-25 19:05:31 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:287 Propose [id: f7817cf3, epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:31 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:31 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: f7817cf3, epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:31 consensus/src/state_computer.rs:60 Executing block f7817cf3e9e2092d6349571a581334c71166b2675a7dcf313fcebd5721ee39fa. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:32 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:32 consensus/src/epoch_manager.rs:508 [RoundManager] Process proposal
+
+Caused by:
+    0: [RoundManager] Failed to execute_and_insert the block
+    1: Execution failure for block [id: f7817cf3, epoch: 1, round: 15, parent_id: 936ca860]
+    2: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:32 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+ERROR 2020-06-25 19:05:32 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:32 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+ERROR 2020-06-25 19:05:32 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-06-25 19:05:32 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:32 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:32 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 8
+DEBUG 2020-06-25 19:05:32 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:32 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:32 consensus/src/liveness/round_state.rs:311 "6.50767ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:32 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:32 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:32 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:33 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:33 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:33 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:33 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:33 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 9
+DEBUG 2020-06-25 19:05:33 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:34 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:34 consensus/src/liveness/round_state.rs:311 "415.261859ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:34 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:34 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:34 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:34 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:34 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 10
+DEBUG 2020-06-25 19:05:34 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+ERROR 2020-06-25 19:05:34 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:34 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:34 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:35 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 11
+DEBUG 2020-06-25 19:05:35 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:35 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:35 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:35 consensus/src/liveness/round_state.rs:311 "438.735158ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:35 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:35 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:35 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:36 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:36 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:36 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:36 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:36 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 12
+DEBUG 2020-06-25 19:05:36 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:37 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:37 consensus/src/liveness/round_state.rs:311 "417.293068ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:37 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:37 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:37 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:37 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:37 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:37 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:37 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:37 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 13
+DEBUG 2020-06-25 19:05:37 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:38 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:38 consensus/src/liveness/round_state.rs:311 "402.892367ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:38 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:38 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:38 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:38 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 14
+DEBUG 2020-06-25 19:05:38 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:38 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+ERROR 2020-06-25 19:05:38 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:38 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:38 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:39 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 15
+DEBUG 2020-06-25 19:05:39 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:39 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:39 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:39 consensus/src/liveness/round_state.rs:311 "417.28463ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:39 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:39 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:39 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:40 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:40 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:40 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:40 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:40 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 16
+DEBUG 2020-06-25 19:05:40 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:41 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:41 consensus/src/liveness/round_state.rs:311 "409.816152ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:41 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:41 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:41 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:41 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 17
+DEBUG 2020-06-25 19:05:41 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:41 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+ERROR 2020-06-25 19:05:41 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:41 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:41 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:42 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 18
+DEBUG 2020-06-25 19:05:42 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:42 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+WARN 2020-06-25 19:05:42 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:42 consensus/src/liveness/round_state.rs:311 "427.645862ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:42 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:42 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:42 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:43 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:43 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:43 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:43 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:43 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 19
+DEBUG 2020-06-25 19:05:43 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:44 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:44 consensus/src/liveness/round_state.rs:311 "416.854782ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:44 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:44 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:44 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:44 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:44 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:44 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:44 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 20
+DEBUG 2020-06-25 19:05:44 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:44 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+WARN 2020-06-25 19:05:45 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:45 consensus/src/liveness/round_state.rs:311 "425.265802ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:45 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:45 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:45 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:45 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 21
+DEBUG 2020-06-25 19:05:45 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:45 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+ERROR 2020-06-25 19:05:46 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:46 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:46 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:46 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 22
+DEBUG 2020-06-25 19:05:46 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:46 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+WARN 2020-06-25 19:05:47 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:47 consensus/src/liveness/round_state.rs:311 "553.467883ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:47 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:47 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:47 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:47 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:47 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:47 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:47 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 23
+DEBUG 2020-06-25 19:05:47 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:47 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:48 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:48 consensus/src/liveness/round_state.rs:311 "429.401745ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:48 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:48 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:48 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:48 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:48 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 24
+DEBUG 2020-06-25 19:05:48 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+ERROR 2020-06-25 19:05:48 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:48 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:48 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:49 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 25
+DEBUG 2020-06-25 19:05:49 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:49 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+WARN 2020-06-25 19:05:49 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:49 consensus/src/liveness/round_state.rs:311 "428.585773ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:49 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:49 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:49 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:50 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:50 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:50 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:50 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:50 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 26
+DEBUG 2020-06-25 19:05:50 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:51 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:51 consensus/src/liveness/round_state.rs:311 "417.574715ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:51 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:51 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:51 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:51 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 27
+DEBUG 2020-06-25 19:05:51 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:51 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+ERROR 2020-06-25 19:05:51 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:51 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:51 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:52 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 28
+DEBUG 2020-06-25 19:05:52 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:52 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+WARN 2020-06-25 19:05:52 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:52 consensus/src/liveness/round_state.rs:311 "483.632262ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:52 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:52 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:52 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:53 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:53 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:53 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:53 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:53 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 29
+DEBUG 2020-06-25 19:05:53 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:54 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:54 consensus/src/liveness/round_state.rs:311 "421.211918ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:54 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:54 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:54 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:54 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 30
+DEBUG 2020-06-25 19:05:54 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:54 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+ERROR 2020-06-25 19:05:54 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:54 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:54 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:55 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 31
+DEBUG 2020-06-25 19:05:55 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:55 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:55 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:55 consensus/src/liveness/round_state.rs:311 "405.333713ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:55 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:55 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:55 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:56 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:56 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:56 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:56 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:56 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 32
+DEBUG 2020-06-25 19:05:56 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+WARN 2020-06-25 19:05:57 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:57 consensus/src/liveness/round_state.rs:311 "468.685808ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:57 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:57 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:57 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+ERROR 2020-06-25 19:05:57 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:57 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:57 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:57 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 33
+DEBUG 2020-06-25 19:05:57 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:57 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+WARN 2020-06-25 19:05:58 consensus/src/liveness/round_state.rs:219 Local timeout for round 15
+DEBUG 2020-06-25 19:05:58 consensus/src/liveness/round_state.rs:311 "410.700052ms" passed since the previous deadline.
+DEBUG 2020-06-25 19:05:58 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-06-25 19:05:58 consensus/src/round_manager.rs:425 Planning to vote for a NIL block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+DEBUG 2020-06-25 19:05:58 consensus/src/state_computer.rs:60 Executing block 296305f429112474c1cbf2d298fba69112f765529f9e8550865a890e2b5e7383. Parent: 936ca8600b806bf2e595570245b263ccfc8cbcd93f1ae7c7eea0229c8a94a5e6.
+DEBUG 2020-06-25 19:05:58 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 34
+DEBUG 2020-06-25 19:05:58 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-06-25 19:05:58 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+ERROR 2020-06-25 19:05:58 language/move-vm/runtime/src/data_operations.rs:108 [VM] (BorrowGlobal) Error reading data for AccessPath { address: 00000000000000000000000000000000, type: Resource, hash: "2701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305", suffix: "" } : VMStatus { major_status: MISSING_DATA, sub_status: None, message: Some("Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }") }
+ERROR 2020-06-25 19:05:58 consensus/src/epoch_manager.rs:508 [RoundManager] Failed to execute_and_insert the block
+
+Caused by:
+    0: Execution failure for block [id: 296305f4 (NIL), epoch: 1, round: 15, parent_id: 936ca860]
+    1: Internal error: "status MISSING_DATA of type Execution and message Cannot find 00000000000000000000000000000000::Subsidy::SubsidyInfo for Access Path: AccessPath { address: 00000000000000000000000000000000, path: 012701699a92f3407d712149b482676ac484709c1b46252921059103d335e51305 }"
+DEBUG 2020-06-25 19:05:58 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: None
+DEBUG 2020-06-25 19:05:59 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 35
+DEBUG 2020-06-25 19:05:59 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-06-25 19:05:59 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping

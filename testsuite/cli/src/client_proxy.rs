@@ -175,7 +175,8 @@ impl ClientProxy {
         })
     }
 
-    /// Send a VDF proof.
+    /// 0L: Send a VDF proof from the Libra Shell with delimited strings
+    /// Wraps execute_send_proof
     pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
         ensure!(
             space_delim_strings.len() != 6 ,
@@ -200,7 +201,7 @@ impl ClientProxy {
         // execute_send_proof(sender, sender_ref_id, sequence_number, challenge, difficulty, proof)
     }
 
-    /// dont complain
+    /// 0L: submits a redeem transaction with the VDF proof.
     pub fn execute_send_proof(
         &mut self,
         sender: &AccountData,
@@ -209,7 +210,7 @@ impl ClientProxy {
         challenge: Vec<u8>,
         difficulty: u64,
         proof: Vec<u8> ) -> Result<()>{
-        // create the transaction script
+        // create the Redeem transaction script
         let script = Script::new(
             StdlibScript::Redeem.compiled_bytes().into_vec(),
             vec![],
@@ -224,14 +225,13 @@ impl ClientProxy {
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(script),
             &sender,
-            None,    /* max_gas_amount */
-            None,    /* gas_unit_price */
+            None, /* max_gas_amount */
+            None, /* gas_unit_price */
             None, /* gas_currency_code */
         )?;
 
         // Submit the transaction with the client proxy
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        self.client.submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
 
         // TODO: This was making the client fail.
         // if is_blocking {
