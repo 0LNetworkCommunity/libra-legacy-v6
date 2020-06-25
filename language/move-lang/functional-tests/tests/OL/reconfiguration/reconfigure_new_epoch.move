@@ -5,17 +5,6 @@
 //! account: sha, 100000, 0, validator
 //! account: ram, 100000, 0, validator
 
-// Initialize Redeem Module
-//! new-transaction
-//! sender: config
-script {
-use 0x0::Redeem;
-fun main(s: &signer) {
-    Redeem::initialize(s);
-}
-}
-// check: EXECUTED
-
 // Test to check the current validator list.
 //! new-transaction
 //! sender: association
@@ -50,36 +39,36 @@ fun main() {
 // check: EXECUTED
 
 
-// CRUX OF TEST CASE
-// Triggered reconfigure - only alice should be present in next epoch. 
-// New epoch - so validator universe should be null.
-//! new-transaction
-//! sender: association
-script {
+// // CRUX OF TEST CASE
+// // Triggered reconfigure - only alice should be present in next epoch. 
+// // New epoch - so validator universe should be null.
+// //! new-transaction
+// //! sender: association
+// script {
     
-    use 0x0::Transaction;
-    use 0x0::LibraSystem;
-    use 0x0::ReconfigureOL;
-    use 0x0::Redeem;
-    use 0x0::Vector;
+//     use 0x0::Transaction;
+//     use 0x0::LibraSystem;
+//     use 0x0::ReconfigureOL;
+//     use 0x0::Redeem;
+//     use 0x0::Vector;
 
-    fun main(account: &signer) {
-        // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 1000);
-        Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 98);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
+//     fun main(account: &signer) {
+//         // Tests on initial size of validators 
+//         Transaction::assert(LibraSystem::validator_set_size() == 5, 1000);
+//         Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 98);
+//         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
         
-        // reconfigure call
-        ReconfigureOL::reconfigure(account);
+//         // reconfigure call
+//         ReconfigureOL::reconfigure(account);
         
-        // Validators in current epoch
-        Transaction::assert(LibraSystem::validator_set_size() == 1, 1000);
-        Transaction::assert(!LibraSystem::is_validator({{sha}}) == true, 98);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
+//         // Validators in current epoch
+//         Transaction::assert(LibraSystem::validator_set_size() == 1, 1000);
+//         Transaction::assert(!LibraSystem::is_validator({{sha}}) == true, 98);
+//         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
 
-        // Check validator universe
-        let validators = Redeem::query_eligible_validators(account);
-        Transaction::assert(Vector::length<address>(&validators) == 0, 1);   
-    }
-}
-// check: EXECUTED
+//         // Check validator universe
+//         let validators = Redeem::query_eligible_validators(account);
+//         Transaction::assert(Vector::length<address>(&validators) == 0, 1);   
+//     }
+// }
+// // check: EXECUTED

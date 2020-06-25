@@ -312,7 +312,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: ValidatorUniverse::update_validator_weight(account_address, index, current_block_height),
+                consensus_voting_power: ValidatorUniverse::update_validator_weight(account_address, current_block_height)
             });
 
             index = index + 1;

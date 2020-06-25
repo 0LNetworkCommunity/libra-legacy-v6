@@ -7,6 +7,7 @@ address 0x0 {
     use 0x0::ValidatorUniverse;
     use 0x0::Signer;
     use 0x0::Transaction;
+    use 0x0::Option;
     
     public fun top_n_accounts(account: &signer, n: u64): (vector<address>, u64) {
       let sender = Signer::address_of(account);
@@ -27,10 +28,13 @@ address 0x0 {
       let total_voting_power = 0;
       let k = 0;
       while (k < length) {
-          let cur_address = Vector::borrow<address>(&eligible_validators, k);
-          let cur_weight = ValidatorUniverse::get_validator_weight({{*cur_address}}, k);
-          Vector::push_back<u64>(&mut weights, cur_weight);
-          total_voting_power = total_voting_power + cur_weight;
+          let cur_address = *Vector::borrow<address>(&eligible_validators, k);
+          // Ensure that this address is an active validator
+          let validator_weight_vec = ValidatorUniverse::get_validator_weight(cur_address);
+          Transaction::assert(Option::is_some(&validator_weight_vec), 8002);
+          let validator_weight = *Option::borrow(&validator_weight_vec);
+          Vector::push_back<u64>(&mut weights, validator_weight);
+          total_voting_power = total_voting_power + validator_weight;
           k = k + 1;
       };
 
