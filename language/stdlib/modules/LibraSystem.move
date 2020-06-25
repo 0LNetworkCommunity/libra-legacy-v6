@@ -282,7 +282,8 @@ module LibraSystem {
     // Tests for this method are written in move-lang/functional-tests/OL/reconfiguration/bulk_update.move
     public fun bulk_update_validators(        
         account: &signer,
-        new_validators: vector<address>) acquires CapabilityHolder {
+        new_validators: vector<address>,
+        current_block_height: u64) acquires CapabilityHolder {
         
         Transaction::assert(is_authorized_to_reconfigure_(account), 22);
 
@@ -307,7 +308,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: ValidatorUniverse::update_validator_weight(account_address, index),
+                consensus_voting_power: ValidatorUniverse::update_validator_weight(account_address, index, current_block_height),
             });
 
             index = index + 1;

@@ -3,7 +3,6 @@ address 0x0 {
         use 0x0::Vector;
         use 0x0::Transaction;
         use 0x0::Signer;
-        use 0x0::LibraBlock;
         use 0x0::FixedPoint32;
         use 0x0::Stats;
 
@@ -94,7 +93,7 @@ address 0x0 {
             };
         }
 
-        public fun update_validator_weight(addr: address, index: u64): u64 acquires ValidatorUniverse{
+        public fun update_validator_weight(addr: address, index: u64, current_block_height: u64): u64 acquires ValidatorUniverse{
             let sender = Transaction::sender();
             Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
@@ -111,7 +110,7 @@ address 0x0 {
             // Calculate start and end block height for the current epoch
             // What about empty blocks that get created after every epoch? 
             let epoch_length = 15;
-            let end_block_height = LibraBlock::get_current_block_height();
+            let end_block_height = current_block_height;
             let start_block_height = end_block_height - epoch_length;
             
             // Calculating threshold which is 90% of the blocks.
@@ -134,6 +133,23 @@ address 0x0 {
             let validatorInfo = Vector::borrow<ValidatorEpochInfo>(validator_list, index);
             Transaction::assert(validatorInfo.validator_address == addr, 8002);
             validatorInfo.weight
+        }
+
+        public fun get_total_voting_power(): u64 acquires ValidatorUniverse {
+            let sender = Transaction::sender();
+            Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
+
+            let collection = borrow_global<ValidatorUniverse>(0xA550C18);
+            let validator_list = &collection.validators;
+            let i = 0;
+            let total_voting_power = 0;
+            let len = Vector::length<ValidatorEpochInfo>(validator_list);
+            while (i < len) {
+            let validatorInfo = Vector::borrow<ValidatorEpochInfo>(validator_list, i); 
+            total_voting_power = total_voting_power + validatorInfo.weight;
+            i = i + 1;
+            };
+            total_voting_power
         }
     }
 }

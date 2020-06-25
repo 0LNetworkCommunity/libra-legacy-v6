@@ -58,12 +58,10 @@ module LibraBlock {
     ) acquires BlockMetadata {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
-
         {
           let block_metadata_ref = borrow_global<BlockMetadata>(0xA550C18);
           Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
         };
-
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
@@ -71,7 +69,7 @@ module LibraBlock {
         // OL implementation of reconfiguration.
         // TODO : This should be intialized as Constant
         if ( round == 15 ) 
-          ReconfigureOL::reconfigure(vm);
+          ReconfigureOL::reconfigure(vm, get_current_block_height());
     }
 
     // Update the BlockMetadata resource with the new blockmetada coming from the consensus.

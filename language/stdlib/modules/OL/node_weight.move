@@ -8,7 +8,7 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::Transaction;
     
-    public fun top_n_accounts(account: &signer, n: u64): vector<address> {
+    public fun top_n_accounts(account: &signer, n: u64): (vector<address>, u64) {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
@@ -20,14 +20,17 @@ address 0x0 {
       //BASE CASE
       // If n is greater than or equal to accounts vector length - return the vector.
       if(length<=n)
-        return eligible_validators;
+        return (eligible_validators, ValidatorUniverse::get_total_voting_power());
 
       // Vector to store node_weights
       let weights = Vector::empty<u64>();
+      let total_voting_power = 0;
       let k = 0;
       while (k < length) {
           let cur_address = Vector::borrow<address>(&eligible_validators, k);
-          Vector::push_back<u64>(&mut weights, ValidatorUniverse::get_validator_weight({{*cur_address}}, k));
+          let cur_weight = ValidatorUniverse::get_validator_weight({{*cur_address}}, k);
+          Vector::push_back<u64>(&mut weights, cur_weight);
+          total_voting_power = total_voting_power + cur_weight;
           k = k + 1;
       };
 
@@ -55,7 +58,7 @@ address 0x0 {
         Vector::pop_back<address>(&mut eligible_validators);
         index = index + 1;
       };
-      return eligible_validators
+      return (eligible_validators, total_voting_power)
     }
   }
 }
