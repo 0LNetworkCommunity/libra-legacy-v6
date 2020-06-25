@@ -32,9 +32,6 @@ address 0x0 {
 
         // This function is called to add validator to the validator universe.
         public fun add_validator(addr: address) acquires ValidatorUniverse {
-            let sender = Transaction::sender();
-            Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-            
             let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
             if(!validator_exists_in_universe(collection, addr))
             Vector::push_back<ValidatorEpochInfo>(&mut collection.validators,

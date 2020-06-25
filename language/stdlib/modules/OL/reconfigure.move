@@ -29,6 +29,7 @@ address 0x0 {
             // What about empty blocks that get created after every epoch? 
             let epoch_length = 15;
             let end_block_height = current_block_height;
+            Transaction::assert(end_block_height >= epoch_length, 8003);
             let start_block_height = end_block_height - epoch_length;
 
             // Calculate and pay subsidy for the current epoch
