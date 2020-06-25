@@ -32,15 +32,15 @@ use 0x0::Debug;
 // checking for MintEvent fails for some reason but checking 
 // maket_cap (total minted amount) succeeds. Don't know why
 
-//! new-transaction
-//! sender: alice
-script {
-    use 0x0::GAS;
-    use 0x0::TransactionFee;
+// //! new-transaction
+// //! sender: association
+// script {
+//     use 0x0::GAS;
+//     use 0x0::TransactionFee;
 
-    fun main() {
-        // Distribute transaction fees.
-        TransactionFee::distribute_transaction_fees<GAS::T>();
-    }
-}
-// check: EXECUTED
+//     fun main() {
+//         // Distribute transaction fees.
+//         TransactionFee::distribute_transaction_fees<GAS::T>();
+//     }
+// }
+// // check: EXECUTED
