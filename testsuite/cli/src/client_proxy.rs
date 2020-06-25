@@ -56,6 +56,7 @@ use std::{
 };
 use stdlib::{transaction_scripts::StdlibScript, StdLibOptions};
 use transaction_builder::encode_register_validator_script;
+use hex;
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -172,6 +173,59 @@ impl ClientProxy {
             sync_on_wallet_recovery,
             temp_files: vec![],
         })
+    }
+
+    /// Send a VDF proof.
+    pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() != 6 ,
+            "Invalid number of arguments for sending proof"
+        );
+
+        println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1])?;
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let challenge = space_delim_strings[2].as_bytes().to_vec();
+        let difficulty = space_delim_strings[3].parse::<u64>()?;
+
+        // TODO: determine how this will be serialized.
+        // Note: Was producing error because hex was being submitted and not decoded.
+        let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+
+        // create the transaction script
+        let script = Script::new(
+            StdlibScript::Redeem.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(challenge),
+                TransactionArgument::U64(difficulty),
+                TransactionArgument::U8Vector(proof),
+            ],
+        );
+
+        // sign the transaction script
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(script),
+            &sender,
+            None,    /* max_gas_amount */
+            None,    /* gas_unit_price */
+            None, /* gas_currency_code */
+        )?;
+
+        // Submit the transaction with the client proxy
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+
+        // TODO: This was making the client fail.
+        // if is_blocking {
+        //     self.wait_for_transaction(sender_address, sequence_number)?;
+        // }
+        Ok(())
     }
 
     fn get_account_ref_id(&self, sender_account_address: &AccountAddress) -> Result<usize> {
@@ -654,8 +708,8 @@ impl ClientProxy {
             None,
         )?;
         self.client.submit_transaction(Some(&mut sender), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender.address, sender.sequence_number)?;
+        if is_blocking && sender.sequence_number > 1{
+            self.wait_for_transaction(sender.address, sender.sequence_number )?;
         }
         Ok(())
     }

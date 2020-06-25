@@ -9,6 +9,7 @@ use anyhow::Error;
 use libra_metrics::counters::*;
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use std::{collections::HashMap, sync::Arc};
+use crate::ol_commands::OLCommand;
 
 /// Print the error and bump up error counter.
 pub fn report_error(msg: &str, e: Error) {
@@ -48,6 +49,7 @@ pub fn get_commands(
         Arc::new(AccountCommand {}),
         Arc::new(QueryCommand {}),
         Arc::new(TransferCommand {}),
+        Arc::new(OLCommand{}),
     ];
     if include_dev {
         commands.push(Arc::new(DevCommand {}));

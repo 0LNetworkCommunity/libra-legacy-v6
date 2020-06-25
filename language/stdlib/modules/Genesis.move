@@ -26,6 +26,7 @@ module Genesis {
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
+    use 0x0::Redeem;
 
     fun initialize(
         association: &signer,
@@ -49,6 +50,7 @@ module Genesis {
 
         // Currency setup
         Libra::initialize(config_account);
+        Redeem::initialize(config_account);
 
         // Stats module 
         Stats::initialize(association);
@@ -84,10 +86,11 @@ module Genesis {
 
         // Register transaction fee accounts
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
-        TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
-        TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
-        TransactionFee::initialize(tc_account, fee_account);
-        
+        // TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
+        // TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
+        // TransactionFee::initialize(tc_account, fee_account);
+        TransactionFee::initialize(fee_account);
+
         // Create the treasury compliance account
         LibraAccount::create_treasury_compliance_account<GAS::T>(
             association,

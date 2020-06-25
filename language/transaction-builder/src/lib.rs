@@ -108,6 +108,13 @@ encode_txn_script! {
 }
 
 encode_txn_script! {
+    name: encode_send_proof_script,
+    args: [challenge: Bytes, difficulty: U64, proof: Bytes],
+    script: Redeem,
+    doc: "Redeem Script"
+}
+
+encode_txn_script! {
     name: encode_burn_script,
     type_arg: type_,
     args: [nonce: U64, preburn_address: Address],
@@ -117,14 +124,15 @@ encode_txn_script! {
           `MintCapability` stored under their account and `preburn_address` has a pending burn request"
 }
 
-encode_txn_script! {
-    name: encode_burn_txn_fees_script,
-    type_arg: currency,
-    args: [],
-    script: BurnTxnFees,
-    doc: "Burn transaction fees that have been collected in the given `currency`,\
-          and relinquish to the association. The currency must be non-synthetic."
-}
+// 0L change. This is a deprecated tx script in 0L
+// encode_txn_script! {
+//     name: encode_burn_txn_fees_script,
+//     type_arg: currency,
+//     args: [],
+//     script: BurnTxnFees,
+//     doc: "Burn transaction fees that have been collected in the given `currency`,\
+//           and relinquish to the association. The currency must be non-synthetic."
+// }
 
 encode_txn_script! {
     name: encode_cancel_burn_script,

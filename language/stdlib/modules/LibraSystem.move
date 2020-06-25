@@ -191,6 +191,10 @@ module LibraSystem {
         Vector::borrow(&get_validator_set().validators, i).addr
     }
 
+    // This function is used in transaction_fee.move to distribute transaction fees among validators
+    public fun get_ith_validator_weight(i: u64): u64 {
+        Vector::borrow(&get_validator_set().validators, i).consensus_voting_power
+    }
     ///////////////////////////////////////////////////////////////////////////
     // Private functions
     ///////////////////////////////////////////////////////////////////////////

@@ -288,7 +288,7 @@ pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) ->
 /// Generate an artificial genesis `ChangeSet` for testing
 pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, FatStructType> {
     let stdlib_modules = stdlib_modules(StdLibOptions::Staged);
-    let swarm = libra_config::generator::validator_swarm_for_testing(10);
+    let swarm = libra_config::generator::validator_swarm_for_testing(4);
 
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,

@@ -407,7 +407,8 @@ module LibraAccount {
     public fun withdraw_with_capability<Token>(
         cap: &WithdrawCapability, amount: u64
     ): Libra::T<Token> acquires Balance, AccountOperationsCapability {
-        Association::assert_addr_is_association(cap.account_address);
+        Transaction::assert(Association::addr_is_association(cap.account_address)
+            || cap.account_address == 0xFEE, 1);
         let balance = borrow_global_mut<Balance<Token>>(cap.account_address);
         withdraw_from_balance<Token>(cap.account_address, balance , amount)
     }
