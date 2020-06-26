@@ -9,6 +9,9 @@ use libra_types::{
     on_chain_config::ValidatorSet
 };
 
+use crate::application::{MINER_MNEMONIC, SWARM_DEV_PORT};
+
+
 pub mod submit_tx {
     pub fn submit_vdf_proof_tx_to_network(challenge: Vec<u8>, difficulty: u64, proof: Vec<u8>) {
         //! Functions for submitting proofs on chain
