@@ -10,24 +10,29 @@ use libra_types::{
 };
 
 pub mod submit_tx {
-    pub fn submit_vdf_proof_tx_to_network(
-        challenge: Vec<u8>,// challenge;
-        difficulty: u64,// difficulty;
-        proof: Vec<u8>// proof;
-    ) {
+    pub fn submit_vdf_proof_tx_to_network() {
         //! Functions for submitting proofs on chain
 
-        // NOTE (LG): So that the miner has its own client connection to network, well use
-        // a testing tool ClientProxy. ClientProxy is an abstraction on top of Libra Client and other modules.
-        // As with all testing tools it is unstable and in develoment.
-        // TODO? Once POC is achieved, we should replace this implementation with LibraClient method directly,
+        // NOTE (LG): We're using a testing tool ClientProxy so that the miner has
+        // its own client connection to network.
+        // ClientProxy is an abstraction on top of Libra Client and other modules. (as with all testing tools) is unstable and in develoment.
+        // TODO? Replace this implementation with LibraClient method,
         // instead of clientproxy which appears to be for testing.
         // There are API's for test servers, including faucet etc, which should not be there production.
 
         // 1.Set Private Key file
 
-        const MINER_MNEMONIC: str = "./miner.mnemonic";
+        MINER_MNEMONIC = "./miner.mnemonic";
 
+        // 2. Format Transaction
+
+        let port = 2344; // TODO: get port from /0_config/ files
+        let sender;
+        let sender_ref_id;
+        let sequence_number;
+        let challenge;
+        let difficulty;
+        let proof;
 
         // create the ClientProxy, with credentials, and point to network with a waypoint.
         let libra_client = ClientProxy::new(
@@ -39,24 +44,13 @@ pub mod submit_tx {
             /* waypoint */ WaypointConfig::None, // TODO: Get from /0_Config/
         );
 
-
-        // 2. Format Transaction
-        // transaction data
-        let port = 2344; // TODO: get port from /0_config/ files
-        let sender;//: AccountData = ; // The miner's user's Address
-        let sender_ref_id: usize = 0; // The user's index.???
-        let sequence_number: u64 = 0; // should come from the network
-
-        self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
-
         libra_client.execute_send_proof(
             // sender: &AccountData,
-            sender_ref_id = self.get_account_ref_id(sender), // sender_ref_id: usize,
-            sequence_number, // sequence_number: u64,
-            challenge, // challenge: Vec<u8>,
-            difficulty, // difficulty: u64,
-            proof// proof: Vec<u8>
+            // sender_ref_id: usize,
+            // sequence_number: u64,
+            // challenge: Vec<u8>,
+            // difficulty: u64,
+            // proof: Vec<u8>
         )
 
 
