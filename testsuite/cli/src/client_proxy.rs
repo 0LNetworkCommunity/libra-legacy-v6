@@ -178,32 +178,39 @@ impl ClientProxy {
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
     /// Wraps execute_send_proof
     pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        ensure!(
-            space_delim_strings.len() != 6 ,
-            "Invalid number of arguments for sending proof"
-        );
-
-        println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
-
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1])?;
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
-
-        let challenge = space_delim_strings[2].as_bytes().to_vec();
-        let difficulty = space_delim_strings[3].parse::<u64>()?;
-
-        // TODO: determine how this will be serialized.
-        // Note: Was producing error because hex was being submitted and not decoded.
-        let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
-
-        self.execute_send_proof(sender, sender_ref_id, sequence_number, challenge, difficulty, proof)?;
+        // ensure!(
+        //     space_delim_strings.len() != 6 ,
+        //     "Invalid number of arguments for sending proof"
+        // );
+        //
+        // println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
+        //
+        // let (sender_address, _) =
+        //     self.get_account_address_from_parameter(space_delim_strings[1])?;
+        // let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        // let sender = self.accounts.get(sender_ref_id).unwrap();
+        // let sequence_number = sender.sequence_number;
+        //
+        // let challenge = space_delim_strings[2].as_bytes().to_vec();
+        // let difficulty = space_delim_strings[3].parse::<u64>()?;
+        //
+        // // TODO: determine how this will be serialized.
+        // // Note: Was producing error because hex was being submitted and not decoded.
+        // let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+        //
+        // self.execute_send_proof(
+        //     sender.to_owned(),
+        //     sender_ref_id.to_owned(),
+        //     sequence_number.to_owned(),
+        //     challenge,
+        //     difficulty,
+        //     proof
+        // )?;
         Ok(())
     }
     /// 0L: submits a redeem transaction with the VDF proof.
     pub fn execute_send_proof(
-        &self,
+        &mut self,
         sender: &AccountData,
         sender_ref_id: usize,
         sequence_number: u64,

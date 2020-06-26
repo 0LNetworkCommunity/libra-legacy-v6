@@ -10,7 +10,7 @@ use libra_types::{
 };
 
 pub mod submit_tx {
-    pub fn submit_vdf_proof_tx_to_network() {
+    pub fn submit_vdf_proof_tx_to_network(challenge: Vec<u8>, difficulty: u64, proof: Vec<u8>) {
         //! Functions for submitting proofs on chain
 
         // NOTE (LG): We're using a testing tool ClientProxy so that the miner has
@@ -20,23 +20,9 @@ pub mod submit_tx {
         // instead of clientproxy which appears to be for testing.
         // There are API's for test servers, including faucet etc, which should not be there production.
 
-        // 1.Set Private Key file
-
-        MINER_MNEMONIC = "./miner.mnemonic";
-
-        // 2. Format Transaction
-
-        let port = 2344; // TODO: get port from /0_config/ files
-        let sender;
-        let sender_ref_id;
-        let sequence_number;
-        let challenge;
-        let difficulty;
-        let proof;
-
         // create the ClientProxy, with credentials, and point to network with a waypoint.
-        let libra_client = ClientProxy::new(
-            /* url */ &format!("http://localhost:{}", port),
+        let libra_client = clientproxy::ClientProxy::new(
+            /* url */ &format!("http://localhost:{}", SWARM_DEV_PORT),
             /* association keys for testing faucet */  &self.faucet_key.1, // TODO This is not needed for OL.
             /* sync_on_wallet_recovery */ false, // TODO (ZM): Should this be true?
             /* faucet server */ None,
@@ -44,15 +30,22 @@ pub mod submit_tx {
             /* waypoint */ WaypointConfig::None, // TODO: Get from /0_Config/
         );
 
+        // 2. Format Transaction
+        // transaction data
+        let sender;//: AccountData = ; // The miner's user's Address
+        let sender_ref_id: usize = 0; // The user's index.???
+        let sequence_number: u64 = 0; // should come from the network
+
+        self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
         libra_client.execute_send_proof(
-            // sender: &AccountData,
-            // sender_ref_id: usize,
-            // sequence_number: u64,
-            // challenge: Vec<u8>,
-            // difficulty: u64,
-            // proof: Vec<u8>
+            sender, // sender: &AccountData,
+            sender_ref_id, // sender_ref_id: usize,
+            sequence_number, // sequence_number: u64,
+            challenge, // challenge: Vec<u8>,
+            difficulty, // difficulty: u64,
+            proof // proof: Vec<u8>
         )
-
-
     }
 }
