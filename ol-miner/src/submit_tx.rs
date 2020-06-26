@@ -50,9 +50,6 @@ pub mod submit_tx {
     }
 }
 
-fn get_wallet() {
-
-}
 fn create_client_proxy () {
     // // TODO: This is copied from the Testsuite/client there may be a a different API.
 
