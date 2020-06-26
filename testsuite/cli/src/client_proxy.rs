@@ -188,7 +188,19 @@ impl ClientProxy {
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
+        
+        let mut _sender = None;
+        // The below borrow structure is used so that the immutable
+        // borrow will go out of scope. This will allow the mutable
+        // borrow used later on.
+
+        // TODO: This syntax was implemented so the immutable borrow goes
+        // out of scope, but the error still shows up. Not sure why.
+        {
+            let b = self.accounts.get(sender_ref_id).unwrap();
+            _sender = Some(b.clone());
+        };
+        let sender = _sender.unwrap();
         let sequence_number = sender.sequence_number;
 
         let challenge = space_delim_strings[2].as_bytes().to_vec();
@@ -203,7 +215,7 @@ impl ClientProxy {
     }
     /// 0L: submits a redeem transaction with the VDF proof.
     pub fn execute_send_proof(
-        &self,
+        &mut self,
         sender: &AccountData,
         sender_ref_id: usize,
         sequence_number: u64,
