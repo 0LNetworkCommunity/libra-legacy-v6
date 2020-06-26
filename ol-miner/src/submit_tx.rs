@@ -26,12 +26,12 @@ pub mod submit_tx {
 
         // 1.Set Private Key file
 
-        const MINER_MNEMONIC: str = "./miner.mnemonic";
+
 
 
         // create the ClientProxy, with credentials, and point to network with a waypoint.
-        let libra_client = ClientProxy::new(
-            /* url */ &format!("http://localhost:{}", port),
+        let libra_client = clientproxy::ClientProxy::new(
+            /* url */ &format!("http://localhost:{}", SWARM_DEV_PORT),
             /* association keys for testing faucet */  &self.faucet_key.1, // TODO This is not needed for OL.
             /* sync_on_wallet_recovery */ false, // TODO (ZM): Should this be true?
             /* faucet server */ None,
@@ -42,7 +42,6 @@ pub mod submit_tx {
 
         // 2. Format Transaction
         // transaction data
-        let port = 2344; // TODO: get port from /0_config/ files
         let sender;//: AccountData = ; // The miner's user's Address
         let sender_ref_id: usize = 0; // The user's index.???
         let sequence_number: u64 = 0; // should come from the network
@@ -58,7 +57,5 @@ pub mod submit_tx {
             difficulty, // difficulty: u64,
             proof// proof: Vec<u8>
         )
-
-
     }
 }

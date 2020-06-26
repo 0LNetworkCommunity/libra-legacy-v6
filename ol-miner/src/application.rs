@@ -8,9 +8,15 @@ use abscissa_core::{
 
 pub(crate) const SECURITY_PARAM: u16 = 4096;
 #[cfg(not(test))]
-pub(crate) const DELAY_ITERATIONS: u64 = 2400000; //10 Minutes approximately
+pub(crate) const DELAY_ITERATIONS: u64 = 2400000; // 10 Minutes approximately
+pub(crate) const MINER_MNEMONIC: str = "./miner.mnemonic"; // TODO: change this
+pub(crate) const PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
+
 #[cfg(test)]
 pub(crate) const DELAY_ITERATIONS: u64 = 100;
+pub(crate) const MINER_MNEMONIC: str = "./miner.mnemonic";
+pub(crate) const PORT: u64 = 2344; // TODO: get port from /0_config/ files for local dev testing
+
 
 /// Application state
 pub static APPLICATION: AppCell<OlMinerApp> = AppCell::new();
