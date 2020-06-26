@@ -44,6 +44,7 @@ address 0x0 {
 
             // Distribute transaction fees here before updating validators
             TransactionFee::distribute_transaction_fees<GAS::T>();
+            
             // Call bulkUpdate module
             LibraSystem::bulk_update_validators(account, selected_validators, current_block_height); 
         }

@@ -315,6 +315,8 @@ module LibraSystem {
                 consensus_voting_power: ValidatorUniverse::update_validator_weight(account_address, current_block_height)
             });
 
+            // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+            ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
         };
 

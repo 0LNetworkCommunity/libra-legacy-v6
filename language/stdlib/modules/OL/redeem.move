@@ -64,7 +64,7 @@ address 0x0 {
     public fun end_redeem(redeemed_addr: address) acquires InProcess,T {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
-      Transaction::assert(sender == default_redeem_address(), 0100080003);
+      Transaction::assert(sender == default_redeem_address() || sender == 0x0 || sender == 0xA550C18, 0100080003);
 
       // Account do not have proof to verify.
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
@@ -76,9 +76,6 @@ address 0x0 {
 
       // TODO: Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
-
-      // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
-      ValidatorUniverse::update_validator_epoch_count(redeemed_addr);
 
       // Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
       // TBD
