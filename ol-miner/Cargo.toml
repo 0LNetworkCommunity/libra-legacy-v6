@@ -18,7 +18,7 @@ libra-crypto = { path = "../crypto/crypto", version = "0.1.0" }
 libra-wallet = { path = "../testsuite/cli/libra-wallet", version = "0.1.0" }
 cli = { path = "../testsuite/cli/", version = "0.1.0" }
 libra-types = { path = "../types/", version = "0.1.0" }
-
+libra-config = { path = "../config/", version = "0.1.0" }
 
 
 [dependencies.abscissa_core]
