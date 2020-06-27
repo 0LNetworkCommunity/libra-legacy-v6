@@ -16,7 +16,7 @@ pub mod submit_tx {
         //! Functions for submitting proofs on chain
 
 
-        let mut expected = NodeConfig::load(DEFAULT_NODE).expect("Unable to load config");
+        let mut swarm_configs = NodeConfig::load(DEFAULT_NODE).expect("Unable to load config");
 
         // NOTE (LG): We're using a testing tool ClientProxy so that the miner has
         // its own client connection to network.
@@ -32,7 +32,7 @@ pub mod submit_tx {
             /* sync_on_wallet_recovery */ false, // TODO (ZM): Should this be true?
             /* faucet server */ None,
             /* menmonic file */ Some(MINER_MNEMONIC.to_string()),
-            None/* waypoint */  // TODO: Get from /0_Config/
+            /* waypoint */  // TODO: get from configs for tests something like: swarm_configs::BaseConfig.waypoint,
         );
         //
         // 2. Format Transaction
