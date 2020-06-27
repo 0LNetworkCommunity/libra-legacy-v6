@@ -8,7 +8,11 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Option;
-    
+
+    // Recommend a new validator set. This uses a Proof of Weight calculation in
+    // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
+    // is now eligible for the second step of the proof of work of running a validator.
+    // the validator weight will determine the subsidy and transaction fees.
     public fun top_n_accounts(account: &signer, n: u64): (vector<address>, u64) {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
@@ -18,12 +22,12 @@ address 0x0 {
 
       let length = Vector::length<address>(&eligible_validators);
 
-      //BASE CASE
+      // Base Case: The universe of validators is under the limit of the BFT consensus.
       // If n is greater than or equal to accounts vector length - return the vector.
       if(length<=n)
         return (eligible_validators, ValidatorUniverse::get_total_voting_power());
 
-      // Vector to store node_weights
+      // Vector to store the addrees's node_weight
       let weights = Vector::empty<u64>();
       let total_voting_power = 0;
       let k = 0;
