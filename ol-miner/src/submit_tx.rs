@@ -15,7 +15,7 @@ pub mod submit_tx {
     pub fn submit_vdf_proof_tx_to_network(challenge: Vec<u8>, difficulty: u64, proof: Vec<u8>) {
         //! Functions for submitting proofs on chain
 
-
+        // TODO (ZM): I think this can generate a number of configs including Waypoint.
         let mut swarm_configs = NodeConfig::load(DEFAULT_NODE).expect("Unable to load config");
 
         // NOTE (LG): We're using a testing tool ClientProxy so that the miner has
@@ -32,7 +32,7 @@ pub mod submit_tx {
             /* sync_on_wallet_recovery */ false, // TODO (ZM): Should this be true?
             /* faucet server */ None,
             /* menmonic file */ Some(MINER_MNEMONIC.to_string()),
-            /* waypoint */  // TODO: get from configs for tests something like: swarm_configs::BaseConfig.waypoint,
+            /* waypoint */  // TODO (ZM): get from configs for tests something like: swarm_configs::BaseConfig.waypoint,
         );
         //
         // 2. Format Transaction

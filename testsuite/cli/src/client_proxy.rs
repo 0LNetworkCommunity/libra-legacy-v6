@@ -175,39 +175,6 @@ impl ClientProxy {
         })
     }
 
-    /// 0L: Send a VDF proof from the Libra Shell with delimited strings
-    /// Wraps execute_send_proof
-    pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        // ensure!(
-        //     space_delim_strings.len() != 6 ,
-        //     "Invalid number of arguments for sending proof"
-        // );
-        //
-        // println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
-        //
-        // let (sender_address, _) =
-        //     self.get_account_address_from_parameter(space_delim_strings[1])?;
-        // let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        // let sender = self.accounts.get(sender_ref_id).unwrap();
-        // let sequence_number = sender.sequence_number;
-        //
-        // let challenge = space_delim_strings[2].as_bytes().to_vec();
-        // let difficulty = space_delim_strings[3].parse::<u64>()?;
-        //
-        // // TODO: determine how this will be serialized.
-        // // Note: Was producing error because hex was being submitted and not decoded.
-        // let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
-        //
-        // self.execute_send_proof(
-        //     sender.to_owned(),
-        //     sender_ref_id.to_owned(),
-        //     sequence_number.to_owned(),
-        //     challenge,
-        //     difficulty,
-        //     proof
-        // )?;
-        Ok(())
-    }
     /// 0L: submits a redeem transaction with the VDF proof.
     pub fn execute_send_proof(
         &mut self,
@@ -248,45 +215,41 @@ impl ClientProxy {
         // }
 
     }
+    
+    /// 0L: Send a VDF proof from the Libra Shell with delimited strings
+    /// Wraps execute_send_proof
+    pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() != 6 ,
+            "Invalid number of arguments for sending proof"
+        );
 
-    // /// 0L: submits a redeem transaction with the VDF proof.
-    // pub fn execute_send_proof(
-    //     &mut self,
-    //     sender: &AccountData,
-    //     sender_ref_id: usize,
-    //     sequence_number: u64,
-    //     challenge: Vec<u8>,
-    //     difficulty: u64,
-    //     proof: Vec<u8> ) -> Result<()>{
-    //     // create the Redeem transaction script
-    //     let script = Script::new(
-    //         StdlibScript::Redeem.compiled_bytes().into_vec(),
-    //         vec![],
-    //         vec![
-    //             TransactionArgument::U8Vector(challenge),
-    //             TransactionArgument::U64(difficulty),
-    //             TransactionArgument::U8Vector(proof),
-    //         ],
-    //     );
-    //
-    //     // sign the transaction script
-    //     let txn = self.create_txn_to_submit(
-    //         TransactionPayload::Script(script),
-    //         &sender,
-    //         None, /* max_gas_amount */
-    //         None, /* gas_unit_price */
-    //         None, /* gas_currency_code */
-    //     )?;
-    //
-    //     // Submit the transaction with the client proxy
-    //     self.client.submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-    //
-    //     // TODO: This was making the client fail.
-    //     // if is_blocking {
-    //     //     self.wait_for_transaction(sender_address, sequence_number)?;
-    //     // }
-    //     Ok(())
-    // }
+        println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1])?;
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let challenge = space_delim_strings[2].as_bytes().to_vec();
+        let difficulty = space_delim_strings[3].parse::<u64>()?;
+
+        // TODO: determine how this will be serialized.
+        // Note: Was producing error because hex was being submitted and not decoded.
+        let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+
+        self.execute_send_proof(
+            sender.to_owned(),
+            sender_ref_id.to_owned(),
+            sequence_number.to_owned(),
+            challenge,
+            difficulty,
+            proof
+        )?;
+        Ok(())
+    }
+
 
     fn get_account_ref_id(&self, sender_account_address: &AccountAddress) -> Result<usize> {
         Ok(*self
