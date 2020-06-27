@@ -68,7 +68,7 @@ module LibraBlock {
 
         // OL implementation of reconfiguration.
         // TODO : This should be intialized as Constant
-        if ( round == 15 ) 
+        if ( round == ReconfigureOL::get_epoch_length() ) 
           ReconfigureOL::reconfigure(vm, get_current_block_height());
     }
 

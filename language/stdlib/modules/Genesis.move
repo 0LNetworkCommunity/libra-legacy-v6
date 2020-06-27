@@ -27,6 +27,7 @@ module Genesis {
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
     use 0x0::Redeem;
+    use 0x0::ReconfigureOL;
 
     fun initialize(
         association: &signer,
@@ -50,6 +51,13 @@ module Genesis {
 
         // Currency setup
         Libra::initialize(config_account);
+
+        // Reconfigure module setup 
+        // This will initialize epoch_length and validator count for each epoch
+        let epoch_length = 15; 
+        let validator_count_per_epoch = 10; 
+        ReconfigureOL::initialize(association, epoch_length, validator_count_per_epoch);
+        
         Redeem::initialize(association);
 
         // Stats module 

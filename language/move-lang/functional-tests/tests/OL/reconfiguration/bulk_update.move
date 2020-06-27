@@ -31,7 +31,7 @@ script {
         ValidatorUniverse::add_validator({{carol}});
         Transaction::assert(Vector::length<address>(&vec) == 3, 1);
 
-        LibraSystem::bulk_update_validators(account, vec, 1);
+        LibraSystem::bulk_update_validators(account, vec, 15, 1);
 
         // Check if updates are done
         Transaction::assert(LibraSystem::validator_set_size() == 3, 1000);

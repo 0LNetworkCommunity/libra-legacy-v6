@@ -88,7 +88,7 @@ address 0x0 {
             validatorInfo.mining_epoch_count = validatorInfo.mining_epoch_count + 1; 
         }
 
-        public fun proposed_upcoming_validator_set_weights(addr: address, current_block_height: u64): u64 acquires ValidatorUniverse{
+        public fun proposed_upcoming_validator_set_weights(addr: address, epoch_length:u64, current_block_height: u64): u64 acquires ValidatorUniverse{
             let sender = Transaction::sender();
             Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
@@ -104,23 +104,9 @@ address 0x0 {
             // We want miners that have been mining for longest amount of new_epoch_validator_universe_update
             // How many epochs has the validator submitted VDF proofs for.
             let weight = validatorInfo.mining_epoch_count;
-            
-            // Calculate start and end block height for the current epoch
-            // What about empty blocks that get created after every epoch? 
-            let epoch_length = 15;
-            let end_block_height = current_block_height;
-            
-            // Abort if epoch_length is greater than current block height
-            Transaction::assert(end_block_height >= epoch_length, 8003);
-            
-            let start_block_height = end_block_height - epoch_length;
-            
-            // Calculating threshold which is 90% of the blocks.
-            let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_length;
-
-            let active_validator = Stats::node_heuristics({{validatorInfo.validator_address}}, start_block_height, end_block_height);
-            if (active_validator < threshold_signing) {
-                weight = 0;
+            if (!check_if_active_validator({{validatorInfo.validator_address}}, epoch_length, current_block_height))
+            {
+                weight = 0
             };
             validatorInfo.weight = weight;
             weight
@@ -143,6 +129,27 @@ address 0x0 {
             };
 
             return Option::none()
+        }
+
+        public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
+            // Calculate start and end block height for the current epoch
+            // What about empty blocks that get created after every epoch? 
+            let epoch_length = epoch_length;
+            let end_block_height = current_block_height;
+            
+            // Abort if epoch_length is greater than current block height
+            Transaction::assert(end_block_height >= epoch_length, 010008003);
+            
+            let start_block_height = end_block_height - epoch_length;
+            
+            // Calculating threshold which is 90% of the blocks.
+            let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_length;
+
+            let active_validator = Stats::node_heuristics(addr, start_block_height, end_block_height);
+            if (active_validator < threshold_signing) {
+                return false
+            };
+            true
         }
 
         public fun get_validator_weight(addr: address): Option::T<u64> acquires ValidatorUniverse{

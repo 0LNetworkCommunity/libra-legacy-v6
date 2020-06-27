@@ -287,6 +287,7 @@ module LibraSystem {
     public fun bulk_update_validators(        
         account: &signer,
         new_validators: vector<address>,
+        epoch_length: u64,
         current_block_height: u64) acquires CapabilityHolder {
         
         Transaction::assert(is_authorized_to_reconfigure_(account), 22);
@@ -312,7 +313,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: ValidatorUniverse::proposed_upcoming_validator_set_weights(account_address, current_block_height)
+                consensus_voting_power: ValidatorUniverse::proposed_upcoming_validator_set_weights(account_address, epoch_length, current_block_height)
             });
 
             // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
@@ -335,7 +336,7 @@ module LibraSystem {
     }
 
     // Get all validators addresses, weights and sum_of_all_validator_weights
-    public fun get_outgoing_validators_with_weights(): (vector<address>, vector<u64>, u64) {
+    public fun get_outgoing_validators_with_weights(epoch_length: u64, current_block_height: u64): (vector<address>, vector<u64>, u64) {
         let validators = &get_validator_set().validators; 
         let outgoing_validators = Vector::empty<address>();
         let outgoing_validator_weights = Vector::empty<u64>();
@@ -344,9 +345,11 @@ module LibraSystem {
         let i = 0;
         while (i < size) {
             let validator_info_ref = Vector::borrow(validators, i);
-            Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
-            Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
-            sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;
+            if(ValidatorUniverse::check_if_active_validator(validator_info_ref.addr, epoch_length, current_block_height)){
+                Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
+                Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
+                sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;
+            };
             i = i + 1;
         }; 
         (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
