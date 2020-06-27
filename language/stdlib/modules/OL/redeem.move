@@ -37,7 +37,6 @@ address 0x0 {
       // Insert a new VdfProofBlob into a temp storage, while
       if (!has_in_process()) {
            init_in_process();
-           Debug::print(&counts);
       };
 
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
