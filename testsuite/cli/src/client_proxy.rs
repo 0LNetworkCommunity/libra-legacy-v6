@@ -178,12 +178,17 @@ impl ClientProxy {
     /// 0L: submits a redeem transaction with the VDF proof.
     pub fn execute_send_proof(
         &mut self,
-        sender: &AccountData,
-        sender_ref_id: usize,
-        sequence_number: u64,
+        sender_address: AccountAddress,
         challenge: Vec<u8>,
         difficulty: u64,
         proof: Vec<u8> ) -> Result<()>{
+
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+
+
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+
+
         // create the Redeem transaction script
         let script = Script::new(
             StdlibScript::Redeem.compiled_bytes().into_vec(),
@@ -228,9 +233,6 @@ impl ClientProxy {
 
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
 
         let challenge = space_delim_strings[2].as_bytes().to_vec();
         let difficulty = space_delim_strings[3].parse::<u64>()?;
@@ -240,9 +242,7 @@ impl ClientProxy {
         let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
 
         self.execute_send_proof(
-            sender.to_owned(),
-            sender_ref_id.to_owned(),
-            sequence_number.to_owned(),
+            sender_address,
             challenge,
             difficulty,
             proof
