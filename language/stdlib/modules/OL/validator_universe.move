@@ -88,7 +88,7 @@ address 0x0 {
             validatorInfo.mining_epoch_count = validatorInfo.mining_epoch_count + 1; 
         }
 
-        public fun update_validator_weight(addr: address, current_block_height: u64): u64 acquires ValidatorUniverse{
+        public fun proposed_upcoming_validator_set_weights(addr: address, current_block_height: u64): u64 acquires ValidatorUniverse{
             let sender = Transaction::sender();
             Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 

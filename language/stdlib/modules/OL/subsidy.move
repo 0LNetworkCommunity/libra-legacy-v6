@@ -8,8 +8,6 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::FixedPoint32;
     use 0x0::Stats;
-    use 0x0::LibraSystem;
-    use 0x0::Option;
 
     // Subsidy ceiling yet to be updated from gas schedule. 
     // Subsidy Ceiling = Max Trans Per Block (20) * 
@@ -91,20 +89,18 @@ address 0x0 {
       subsidy_units
     }
 
-    public fun process_subsidy(account: &signer, eligible_validators: &vector<address>, 
-                               subsidy_units: u64, total_voting_power: u64) {
+    public fun process_subsidy(account: &signer, outgoing_validators: &vector<address>, 
+                               outgoing_validator_weights: &vector<u64>, subsidy_units: u64, 
+                               total_voting_power: u64) {
       // Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
       
-      let length = Vector::length<address>(eligible_validators);
+      let length = Vector::length<address>(outgoing_validators);
       let k = 0;
       while (k < length) {
-          let node_address = *(Vector::borrow<address>(eligible_validators, k));
-          // get node voting power
-          let voting_power_vec = LibraSystem::get_validator_voting_power(node_address);
-          Transaction::assert(Option::is_some(&voting_power_vec), 8003);
-          let voting_power = *Option::borrow(&voting_power_vec);
+          let node_address = *(Vector::borrow<address>(outgoing_validators, k));
+          let voting_power = *(Vector::borrow<u64>(outgoing_validator_weights, k));
 
           // % weight for calculating the subsidy units
           let subsidy_owed = FixedPoint32::divide_u64(subsidy_units * voting_power, 

@@ -50,7 +50,7 @@ module Genesis {
 
         // Currency setup
         Libra::initialize(config_account);
-        Redeem::initialize(config_account);
+        Redeem::initialize(association);
 
         // Stats module 
         Stats::initialize(association);

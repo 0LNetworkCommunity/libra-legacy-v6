@@ -51,7 +51,7 @@ use 0x0::ValidatorUniverse;
 fun main() {
     // Borrow validator universe for modification
     ValidatorUniverse::add_validator(0xDEADBEEF);
-    ValidatorUniverse::update_validator_weight(0xDEADBEEF, 0);
+    ValidatorUniverse::proposed_upcoming_validator_set_weights(0xDEADBEEF, 0);
 }
 }
 // check: ABORTED

@@ -7,8 +7,8 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Transaction;
     use 0x0::Debug;
-    use 0x0::LibraConfig;
     use 0x0::ValidatorUniverse;
+    use 0x0::Signer;
 
     struct VdfProofBlob {
         challenge: vector<u8>,
@@ -64,7 +64,7 @@ address 0x0 {
     public fun end_redeem(redeemed_addr: address) acquires InProcess,T {
       // Permissions: Only a specified address (0x0 address i.e. default_redeem_address) can call this, when an epoch ends.
       let sender = Transaction::sender();
-      Transaction::assert(sender == default_redeem_address() || sender == 0x0 || sender == 0xA550C18, 0100080003);
+      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
 
       // Account do not have proof to verify.
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
@@ -88,6 +88,20 @@ address 0x0 {
       in_process_redemption.proofs = Vector::empty();
     }
 
+    public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
+    acquires InProcess, T {
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
+      
+      let size = Vector::length(outgoing_validators);
+        
+      let i = 0;
+      while (i < size) {
+          end_redeem(*Vector::borrow(outgoing_validators, i));
+          i = i + 1;
+      };
+    }
+
     // This can only be invoked by the default redeem address to instantiate
     // the resource under that address.
     // It can only be called a single time. it should be invoked in the genesis transaction.
@@ -97,7 +111,7 @@ address 0x0 {
     }
 
     fun default_redeem_address(): address {
-        LibraConfig::default_config_address()
+        0xA550C18
     }
 
     fun has_in_process(): bool {

@@ -312,7 +312,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: ValidatorUniverse::update_validator_weight(account_address, current_block_height)
+                consensus_voting_power: ValidatorUniverse::proposed_upcoming_validator_set_weights(account_address, current_block_height)
             });
 
             // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
@@ -334,26 +334,22 @@ module LibraSystem {
         set_validator_set(updated_validator_set);
     }
 
-    //TODO:OL:This is untested. Need to figure a way to test this. 
-    //Method to get validator voting power. To be used in node subsidy
-    public fun get_validator_voting_power(validator_address: address): Option::T<u64> {
-        let validator_set = get_validator_set();
-        let size = Vector::length(&validator_set.validators);
-        if (size == 0) {
-            return Option::none()
-        };
-
+    // Get all validators addresses, weights and sum_of_all_validator_weights
+    public fun get_outgoing_validators_with_weights(): (vector<address>, vector<u64>, u64) {
+        let validators = &get_validator_set().validators; 
+        let outgoing_validators = Vector::empty<address>();
+        let outgoing_validator_weights = Vector::empty<u64>();
+        let sum_of_all_validator_weights = 0;
+        let size = Vector::length(validators);
         let i = 0;
         while (i < size) {
-            let validator_info_ref = Vector::borrow<ValidatorInfo>(&validator_set.validators, i);
-            if (validator_info_ref.addr == validator_address) {
-                return Option::some(validator_info_ref.consensus_voting_power)
-            };
+            let validator_info_ref = Vector::borrow(validators, i);
+            Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
+            Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
+            sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;
             i = i + 1;
-        };
-
-        return Option::none()
-    }
- 
+        }; 
+        (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
+    } 
 }
 }
