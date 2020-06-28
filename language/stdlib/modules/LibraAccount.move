@@ -407,7 +407,8 @@ module LibraAccount {
     public fun withdraw_with_capability<Token>(
         cap: &WithdrawCapability, amount: u64
     ): Libra::T<Token> acquires Balance, AccountOperationsCapability {
-        Association::assert_addr_is_association(cap.account_address);
+        Transaction::assert(Association::addr_is_association(cap.account_address)
+            || cap.account_address == 0xFEE, 1);
         let balance = borrow_global_mut<Balance<Token>>(cap.account_address);
         withdraw_from_balance<Token>(cap.account_address, balance , amount)
     }
@@ -653,6 +654,20 @@ module LibraAccount {
         Libra::publish_burn_capability<Coin2::T>(&new_account, coin2_burn_cap);
         SlidingNonce::publish_nonce_resource(association, &new_account);
         // TODO: add Association or TreasuryCompliance role instead of using Empty?
+        Event::publish_generator(&new_account);
+        make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
+    }
+
+    /// Create a burn account at `new_account_address` with authentication key
+    /// `auth_key_prefix` | `new_account_address`
+    public fun create_burn_account<Token>(
+        association: &signer,
+        new_account_address: address,
+        auth_key_prefix: vector<u8>
+    ) {
+        Association::assert_is_root(association);
+        let new_account = create_signer(new_account_address);
+        Association::grant_association_address(association, &new_account);
         Event::publish_generator(&new_account);
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
     }

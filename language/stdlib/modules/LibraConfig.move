@@ -188,6 +188,11 @@ module LibraConfig {
         0xF1A95
     }
 
+    public fun get_current_epoch(): u64 acquires Configuration {
+        let config_ref = borrow_global<Configuration>(default_config_address());
+        config_ref.epoch
+    }
+
     // **************** Specifications ****************
 
     spec module {

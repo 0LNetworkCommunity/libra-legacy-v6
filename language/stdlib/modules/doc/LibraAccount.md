@@ -57,6 +57,7 @@
 -  [Function `make_account`](#0x0_LibraAccount_make_account)
 -  [Function `create_genesis_account`](#0x0_LibraAccount_create_genesis_account)
 -  [Function `create_treasury_compliance_account`](#0x0_LibraAccount_create_treasury_compliance_account)
+-  [Function `create_subsidy_account`](#0x0_LibraAccount_create_subsidy_account)
 -  [Function `is_designated_dealer`](#0x0_LibraAccount_is_designated_dealer)
 -  [Function `add_tier`](#0x0_LibraAccount_add_tier)
 -  [Function `update_tier`](#0x0_LibraAccount_update_tier)
@@ -1874,6 +1875,45 @@ Create a treasury/compliance account at
     // TODO: add <a href="Association.md#0x0_Association">Association</a> or TreasuryCompliance role instead of using <a href="Empty.md#0x0_Empty">Empty</a>?
     <a href="Event.md#0x0_Event_publish_generator">Event::publish_generator</a>(&new_account);
     <a href="#0x0_LibraAccount_make_account">make_account</a>&lt;Token, <a href="Empty.md#0x0_Empty_T">Empty::T</a>&gt;(new_account, auth_key_prefix, <a href="Empty.md#0x0_Empty_create">Empty::create</a>(), <b>false</b>)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x0_LibraAccount_create_subsidy_account"></a>
+
+## Function `create_subsidy_account`
+
+Create a treasury/compliance account at
+<code>new_account_address</code> with authentication key
+<code>auth_key_prefix</code> |
+<code>new_account_address</code>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_create_subsidy_account">create_subsidy_account</a>&lt;Token&gt;(association: &signer, subsidy_account_address: address, auth_key_prefix: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="#0x0_LibraAccount_create_subsidy_account">create_subsidy_account</a>&lt;Token&gt;(
+    association: &signer,
+    subsidy_account_address: address,
+    auth_key_prefix: vector&lt;u8&gt;
+) {
+    <a href="Association.md#0x0_Association_assert_is_root">Association::assert_is_root</a>(association);
+    <b>let</b> subsidy_account = <a href="#0x0_LibraAccount_create_signer">create_signer</a>(subsidy_account_address);
+    <a href="Association.md#0x0_Association_grant_association_address">Association::grant_association_address</a>(association, &subsidy_account);
+    <a href="Association.md#0x0_Association_grant_privilege">Association::grant_privilege</a>&lt;<a href="#0x0_LibraAccount_FreezingPrivilege">FreezingPrivilege</a>&gt;(association, &subsidy_account);
+    <a href="Libra.md#0x0_Libra_grant_mint_capability_to_subsidy">Libra::grant_mint_capability_to_subsidy</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(&subsidy_account);
+    <a href="Libra.md#0x0_Libra_grant_burn_capability_to_subsidy">Libra::grant_burn_capability_to_subsidy</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(&subsidy_account);
+    <a href="Event.md#0x0_Event_publish_generator">Event::publish_generator</a>(&subsidy_account);
+    <a href="#0x0_LibraAccount_make_account">make_account</a>&lt;Token, <a href="Empty.md#0x0_Empty_T">Empty::T</a>&gt;(subsidy_account, auth_key_prefix, <a href="Empty.md#0x0_Empty_create">Empty::create</a>(), <b>false</b>)
 }
 </code></pre>
 
