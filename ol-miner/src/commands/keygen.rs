@@ -22,10 +22,10 @@ impl Runnable for KeygenCmd {
 
         let (auth_key, _) = wallet.new_address().expect("Could not generate address");
 
-        let hex_key = hex::encode(auth_key.to_bytes());
+        
         let mnemonic_string =  wallet.mnemonic(); //wallet.mnemonic()
 
-        println!("OL key:{}", hex_key);
+        println!("OL Address:{:x}", auth_key.derived_address());
         println!("OL mnemonic: {:?}", &mnemonic_string);
 
         let mut file = fs::File::create("./miner.mnemonic").unwrap();

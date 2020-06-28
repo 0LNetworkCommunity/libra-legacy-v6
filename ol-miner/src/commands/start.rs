@@ -18,9 +18,6 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct StartCmd {
-    /// To whom are we saying hello?
-    #[options(free)]
-    recipient: Vec<String>,
 }
 
 impl Runnable for StartCmd {
