@@ -6,10 +6,10 @@ module LibraBlock {
     use 0x0::LibraTimestamp;
     use 0x0::Signer;
     use 0x0::Transaction;
-    use 0x0::Debug;
     use 0x0::Vector;
     use 0x0::Stats;
-
+    use 0x0::ReconfigureOL;
+    
     resource struct BlockMetadata {
       // Height of the current block
       height: u64,
@@ -58,15 +58,18 @@ module LibraBlock {
     ) acquires BlockMetadata {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
-
         {
           let block_metadata_ref = borrow_global<BlockMetadata>(0xA550C18);
           Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
         };
-
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
+
+        // OL implementation of reconfiguration.
+        // TODO : This should be intialized as Constant
+        if ( round == ReconfigureOL::get_epoch_length() ) 
+          ReconfigureOL::reconfigure(vm, get_current_block_height());
     }
 
     // Update the BlockMetadata resource with the new blockmetada coming from the consensus.
@@ -78,10 +81,6 @@ module LibraBlock {
         proposer: address
     ) acquires BlockMetadata {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0xA550C18);
-        // Debug::print(&0x7E5700001);
-        // Debug::print(&previous_block_votes);
-        // Debug::print(&round);
-
         // TODO OL (Dev): Call the Stats module from here with previous_block_votes.
 
         // TODO: Figure out a story for errors in the system transactions.
@@ -110,9 +109,6 @@ module LibraBlock {
     // Get the previous block voters
     public fun get_previous_voters(): vector<address> acquires BlockMetadata {
        let voters = *&borrow_global<BlockMetadata>(0xA550C18).voters;
-       Debug::print(&0x7E5700002);
-       Debug::print(&voters);
-       // Debug::print(what.counter);
        return voters //vector<address>
     }
 }

@@ -15,7 +15,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="#0x0_Genesis_initialize">initialize</a>(association: &signer, config_account: &signer, fee_account: &signer, tc_account: &signer, tc_addr: address, genesis_auth_key: vector&lt;u8&gt;)
+<pre><code><b>fun</b> <a href="#0x0_Genesis_initialize">initialize</a>(association: &signer, config_account: &signer, fee_account: &signer, tc_account: &signer, subsidy_account: &signer, tc_addr: address, subsidy_addr: address, genesis_auth_key: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -29,7 +29,9 @@
     config_account: &signer,
     fee_account: &signer,
     tc_account: &signer,
+    subsidy_account: &signer,
     tc_addr: address,
+    subsidy_addr: address,
     genesis_auth_key: vector&lt;u8&gt;,
 ) {
     <b>let</b> dummy_auth_key_prefix = x"00000000000000000000000000000000";
@@ -82,6 +84,12 @@
         coin2_burn_cap,
     );
 
+    <a href="LibraAccount.md#0x0_LibraAccount_create_subsidy_account">LibraAccount::create_subsidy_account</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(
+        association,
+        subsidy_addr,
+        <b>copy</b> dummy_auth_key_prefix
+    );
+
     // Create the config account
     <a href="LibraAccount.md#0x0_LibraAccount_create_genesis_account">LibraAccount::create_genesis_account</a>&lt;<a href="gas.md#0x0_GAS_T">GAS::T</a>&gt;(
         <a href="LibraConfig.md#0x0_LibraConfig_default_config_address">LibraConfig::default_config_address</a>(),
@@ -98,7 +106,8 @@
     <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(association, <b>copy</b> genesis_auth_key);
     <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(config_account, <b>copy</b> genesis_auth_key);
     <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(fee_account, <b>copy</b> genesis_auth_key);
-    <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(tc_account, genesis_auth_key);
+    <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(tc_account, <b>copy</b> genesis_auth_key);
+    <a href="LibraAccount.md#0x0_LibraAccount_rotate_authentication_key">LibraAccount::rotate_authentication_key</a>(subsidy_account, <b>copy</b> genesis_auth_key);
 }
 </code></pre>
 

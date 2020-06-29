@@ -4,36 +4,43 @@ address 0x0 {
   module NodeWeight {
 
     use 0x0::Vector;
-    use 0x0::LibraAccount;
-    use 0x0::GAS;
+    use 0x0::ValidatorUniverse;
+    use 0x0::Signer;
+    use 0x0::Transaction;
+    use 0x0::Option;
 
-    // Input: a vector of account addresses
-    //Output: Top n according to weight (Just account balance for now)
-    public fun top_n_accounts(accounts: vector<address>, n: u64): vector<address> {
+    // Recommend a new validator set. This uses a Proof of Weight calculation in
+    // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
+    // is now eligible for the second step of the proof of work of running a validator.
+    // the validator weight will determine the subsidy and transaction fees.
+    public fun top_n_accounts(account: &signer, n: u64): (vector<address>, u64) {
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
-      let length = Vector::length<address>(&accounts);
+      //Get eligible validators from Redeem
+      let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
 
-      //BASE CASE
+      let length = Vector::length<address>(&eligible_validators);
+
+      // Base Case: The universe of validators is under the limit of the BFT consensus.
       // If n is greater than or equal to accounts vector length - return the vector.
       if(length<=n)
-        return accounts;
+        return (eligible_validators, ValidatorUniverse::get_total_voting_power());
 
-      // Now we rank to find out top n accounts based on weights.
-      //Weight - currently only considers the account balance.
-      // TODO: Stats module results.
-
-      // Vector to store node_weights
+      // Vector to store the addrees's node_weight
       let weights = Vector::empty<u64>();
+      let total_voting_power = 0;
       let k = 0;
       while (k < length) {
-          let cur_address = Vector::borrow<address>(&accounts, k);
-          // Retrieve balance for the current account
-          let balance = LibraAccount::balance<GAS::T>({{*cur_address}});
-          // Weight is just account balance for now.
-          Vector::push_back<u64>(&mut weights, balance);
+          let cur_address = *Vector::borrow<address>(&eligible_validators, k);
+          // Ensure that this address is an active validator
+          let validator_weight_vec = ValidatorUniverse::get_validator_weight(cur_address);
+          Transaction::assert(Option::is_some(&validator_weight_vec), 8002);
+          let validator_weight = *Option::borrow(&validator_weight_vec);
+          Vector::push_back<u64>(&mut weights, validator_weight);
+          total_voting_power = total_voting_power + validator_weight;
           k = k + 1;
       };
-
 
       // Sorting the accounts vector based on value (weights).
       // Bubble sort algorithm
@@ -45,7 +52,7 @@ address 0x0 {
           let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
           if(value_j > value_jp1){
             Vector::swap<u64>(&mut weights, j, j+1);
-            Vector::swap<address>(&mut accounts, j, j+1);
+            Vector::swap<address>(&mut eligible_validators, j, j+1);
           };
           j = j + 1;
         };
@@ -53,13 +60,13 @@ address 0x0 {
       };
 
       // Reverse to have sorted order - high to low.
-      Vector::reverse<address>(&mut accounts);
+      Vector::reverse<address>(&mut eligible_validators);
       let index = n;
       while(index < length){
-        Vector::pop_back<address>(&mut accounts);
+        Vector::pop_back<address>(&mut eligible_validators);
         index = index + 1;
       };
-      return accounts
+      return (eligible_validators, total_voting_power)
     }
   }
 }
