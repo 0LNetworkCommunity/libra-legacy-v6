@@ -73,10 +73,10 @@ address 0x0 {
       // Permissions: Only system addresses (0x0 address i.e. default_redeem_address) can call this, in an Epoch Prologue i.e. reconfigure event.
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
-      
+
       if( ! ::exists<InProcess>( redeemed_addr ) ){
-        return; // should not abort.
-      }
+        return // should not abort.
+    };
 
       // Account may not have any proofs submitted recently.
 
