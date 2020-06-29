@@ -1,6 +1,6 @@
 address 0x0 {
 
-module LibraVMConfig {
+module LibraVMConfig { // TODO: OL: (nelaturuk) Why is this file mirroring gas_schedule.rs, will .move eventually be the source of gas costs?
     use 0x0::LibraConfig;
 
     // The struct to hold all config data needed to operate the LibraVM.
@@ -33,9 +33,11 @@ module LibraVMConfig {
         global_memory_per_byte_cost: u64,
 
         /// The cost per-byte written to storage.
+        /// 0L NOTE: This price is for 5 years of storage. To be enforced at a later date :)
         global_memory_per_byte_write_cost: u64,
 
         /// We charge one unit of gas per-byte for the first 600 bytes
+        /// 0L Note: This is the rationale for a baseline transaction fee.
         min_transaction_gas_units: u64,
 
         /// Any transaction over this size will be charged `INTRINSIC_GAS_PER_BYTE` per byte
@@ -48,6 +50,7 @@ module LibraVMConfig {
         /// computational time of any given transaction at 10 milliseconds. We want this number and
         /// `MAX_PRICE_PER_GAS_UNIT` to always satisfy the inequality that
         ///         MAXIMUM_NUMBER_OF_GAS_UNITS * MAX_PRICE_PER_GAS_UNIT < min(u64::MAX, GasUnits<GasCarrier>::MAX)
+        /// 0L Change: Targeting max transactions of 100ms because of crypto/vdf instructions.
         maximum_number_of_gas_units: u64,
 
         /// The minimum gas price that a transaction can be submitted with.
@@ -57,6 +60,10 @@ module LibraVMConfig {
         max_price_per_gas_unit: u64,
 
         max_transaction_size_in_bytes: u64,
+
+        /// 0L change: a reference number for estimating the total network max gas units per block.
+        /// This is not enforced.
+        reference_max_transactions_per_block: u64,
     }
 
     // Initialize the table under the association account
@@ -72,10 +79,12 @@ module LibraVMConfig {
             min_transaction_gas_units: 600,
             large_transaction_cutoff: 600,
             instrinsic_gas_per_byte: 8,
-            maximum_number_of_gas_units: 20000000,
+            maximum_number_of_gas_units: 100000000, //NOTE: OL Change, this implies 100ms transaction time
             min_price_per_gas_unit: 0,
-            max_price_per_gas_unit: 10000,
+            max_price_per_gas_unit: 10000, // TODO: 0L: (LG) What's the rationale behind this max?
             max_transaction_size_in_bytes: 4096,
+            // TODO: OL: (LG): This implies a max block time of 2 seconds.
+            reference_max_transactions_per_block: 20
         };
 
 

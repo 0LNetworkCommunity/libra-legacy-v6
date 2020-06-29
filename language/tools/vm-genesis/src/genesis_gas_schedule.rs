@@ -14,6 +14,8 @@ use vm::{
     file_format_common::instruction_key,
 };
 
+// TODO: 0L: These values must be updated before Genesis.
+
 pub(crate) static INITIAL_GAS_SCHEDULE: Lazy<(Vec<u8>, Vec<u8>)> = Lazy::new(|| {
     use Bytecode::*;
     let mut instrs = vec![
