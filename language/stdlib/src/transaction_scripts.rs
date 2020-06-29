@@ -64,7 +64,8 @@ pub enum StdlibScript {
     TxFeeTestHelper,// 0L Change
     TxFeeTestMint,  // 0L Change
     TxFeeTestMove,  // 0L Change
-    TxFeeTestDistr  // 0L Change
+    TxFeeTestDistr, // 0L Change
+    ReconfigBulkUpdate      // 0L Change
 }
 
 impl StdlibScript {
@@ -115,7 +116,8 @@ impl StdlibScript {
             TxFeeTestHelper,    // 0L Change
             TxFeeTestMint,      // 0L Change
             TxFeeTestMove,      // 0L Change
-            TxFeeTestDistr
+            TxFeeTestDistr,     // 0L Change
+            ReconfigBulkUpdate      // 0L Change
         ]
     }
 
@@ -244,7 +246,8 @@ impl fmt::Display for StdlibScript {
                 TxFeeTestHelper => "tx_fees_e2e_test_helper",// 0L Change
                 TxFeeTestMint => "txn_fee_test_mint",       // 0L Change
                 TxFeeTestMove => "txn_fee_test_move",       // 0L Change
-                TxFeeTestDistr => "txn_fee_test_distr"
+                TxFeeTestDistr => "txn_fee_test_distr",     // 0L Change
+                ReconfigBulkUpdate => "reconfig_bulk_update"// 0L Change
             }
         )
     }
