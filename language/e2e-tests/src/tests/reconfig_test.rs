@@ -5,8 +5,9 @@ use crate::{
     account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier},
     common_transactions::{create_validator_account_txn, register_validator_txn},
     executor::FakeExecutor,
-    reconfig_setup::{bulk_update}
+    reconfig_setup::{bulk_update},
 };
+use libra_types::account_config::lbr_type_tag;
 use transaction_builder::*;
 // new_epoch
 
@@ -88,41 +89,47 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
     // give the validators some money
     let mint_amount = 10_000_000;
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&alice.address(), vec![], mint_amount),
+        encode_mint_script(lbr_type_tag(), &alice.address(), vec![], mint_amount),
         6,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&bob.address(), vec![], mint_amount),
+        encode_mint_script(lbr_type_tag(), &bob.address(), vec![], mint_amount),
         7,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&carol.address(), vec![], mint_amount),
+        encode_mint_script(lbr_type_tag(), &carol.address(), vec![], mint_amount),
         8,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&sha.address(), vec![], mint_amount),
+        encode_mint_script(lbr_type_tag(), &sha.address(), vec![], mint_amount),
         9,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&ram.address(), vec![], mint_amount),
+        encode_mint_gas_to_address_script(&ram.address(), vec![], mint_amount),
         10,
     ));
     executor.new_block();
 
     txn = register_validator_txn(&alice, vec![255; 32], vec![254; 32], vec![], 
-        vec![253; 32], vec![], 1);
+        vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
+
+    println!("Hi1");
+
     txn = register_validator_txn(&bob, vec![255; 32], vec![254; 32], vec![], 
-        vec![253; 32], vec![], 1);
+        vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
+
+    println!("Hi2");
+
     txn = register_validator_txn(&carol, vec![255; 32], vec![254; 32], vec![], 
-        vec![253; 32], vec![], 1);
+        vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
     txn = register_validator_txn(&sha, vec![255; 32], vec![254; 32], vec![], 
-        vec![253; 32], vec![], 1);
+        vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
     txn = register_validator_txn(&ram, vec![255; 32], vec![254; 32], vec![], 
-        vec![253; 32], vec![], 1);
+        vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
     
     // construct a valid and signed tx script.

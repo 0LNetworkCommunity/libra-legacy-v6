@@ -361,6 +361,17 @@ module LibraAccount {
         deposit(account, payee, LBR::mint(account, amount));
     }
 
+    // Create `amount` GAS and send them to `payee`.
+    // `mint_gas_to_address` can only be called by accounts with Libra::MintCapability<GAS>
+    public fun mint_gas_to_address(
+        account: &signer,
+        payee: address,
+        amount: u64
+    ) acquires T, Balance, AccountOperationsCapability, Role {
+        // Mint and deposit the coin
+        deposit(account, payee, Libra::mint<GAS::T>(account, amount));
+    }
+
     // Cancel the oldest burn request from `preburn_address` and return the funds.
     // Fails if the sender does not have a published MintCapability.
     public fun cancel_burn<Token>(
