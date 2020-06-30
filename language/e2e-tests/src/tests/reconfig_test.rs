@@ -114,23 +114,26 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
 
-    println!("Hi1");
+    executor.new_block();
 
     txn = register_validator_txn(&bob, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
 
-    println!("Hi2");
+    executor.new_block();
 
     txn = register_validator_txn(&carol, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
+    executor.new_block();
     txn = register_validator_txn(&sha, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
+    executor.new_block();
     txn = register_validator_txn(&ram, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
+    executor.new_block();
     
     // construct a valid and signed tx script.
     let bulk_update = bulk_update(&assoc_acc_data.account(), &alice, 
