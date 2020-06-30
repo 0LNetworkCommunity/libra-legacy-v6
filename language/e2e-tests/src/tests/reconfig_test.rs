@@ -38,7 +38,7 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
 
     println!("0x7E570");
 
-    // Add the account datas
+    // // Add the account datas
     let assoc_acc_data = AccountData::with_account(
         association_account, 1_000_000,
         lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
@@ -88,47 +88,47 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
     // give the validators some money
     let mint_amount = 10_000_000;
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&alice_data.address(), vec![], mint_amount),
+        encode_mint_lbr_to_address_script(&alice.address(), vec![], mint_amount),
         6,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&bob_data.address(), vec![], mint_amount),
+        encode_mint_lbr_to_address_script(&bob.address(), vec![], mint_amount),
         7,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&carol_data.address(), vec![], mint_amount),
+        encode_mint_lbr_to_address_script(&carol.address(), vec![], mint_amount),
         8,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&sha_data.address(), vec![], mint_amount),
+        encode_mint_lbr_to_address_script(&sha.address(), vec![], mint_amount),
         9,
     ));
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
-        encode_mint_lbr_to_address_script(&ram_data.address(), vec![], mint_amount),
+        encode_mint_lbr_to_address_script(&ram.address(), vec![], mint_amount),
         10,
     ));
     executor.new_block();
 
-    txn = register_validator_txn(alice_data.account(), vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&alice, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 1);
     executor.execute_and_apply(txn);
-    txn = register_validator_txn(bob_data.account(), vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&bob, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 1);
     executor.execute_and_apply(txn);
-    txn = register_validator_txn(carol_data.account(), vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&carol, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 1);
     executor.execute_and_apply(txn);
-    txn = register_validator_txn(sha_data.account(), vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&sha, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 1);
     executor.execute_and_apply(txn);
-    txn = register_validator_txn(ram_data.account(), vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&ram, vec![255; 32], vec![254; 32], vec![], 
         vec![253; 32], vec![], 1);
     executor.execute_and_apply(txn);
     
     // construct a valid and signed tx script.
-    let bulk_update = bulk_update(&assoc_acc_data.account(), &alice_data.account(), 
-                    &bob_data.account(), &carol_data.account(), &sha_data.account(), 
-                    &ram_data.account(), 11);
+    let bulk_update = bulk_update(&assoc_acc_data.account(), &alice, 
+                    &bob, &carol, &sha, 
+                    &ram, 11);
     // let distr = txn_fee_tx_distr(&assoc_acc_data.account(), 2);
 
     executor.new_block(); 
