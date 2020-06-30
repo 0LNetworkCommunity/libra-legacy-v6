@@ -9,27 +9,44 @@ address 0x0 {
     use 0x0::Debug;
     use 0x0::ValidatorUniverse;
     use 0x0::Signer;
+    use 0x0::LibraConfig;
 
     struct VdfProofBlob {
-        // TODO: This should include the netork epoch number. Also change "height" name to disambiguate.
-        // This should be called tower_height.
         challenge: vector<u8>,
         difficulty: u64,
         solution: vector<u8>,
-        height: u64, // tower_height?
+        tower_height: u64,
+        epoch: u64,
     }
 
+    // Saves all submitted proofs as a global variable.
+    // This is going to be a very large blob. consider to save proof's hash to reduce disk spaces.
     resource struct T {
         history: vector<vector<u8>>,
-        tower_height: u64,
+    }
+
+    // separated from T for performance, because this is frequent read variable.
+    resource struct TowerHeight {
+        value: u64,
     }
 
     resource struct InProcess {
         proofs: vector<VdfProofBlob>,
     }
 
-    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>) : VdfProofBlob {
-       VdfProofBlob {challenge,  difficulty, solution, height: 0 }
+    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>) : VdfProofBlob acquires TowerHeight {
+       let epoch = LibraConfig::get_current_epoch();
+       let tower_height = get_current_tower_height();
+       VdfProofBlob {challenge, difficulty, solution, tower_height, epoch }
+    }
+
+    public fun get_current_tower_height(): u64 acquires TowerHeight {
+       borrow_global_mut<TowerHeight>(default_redeem_address()).value
+    }
+
+    public fun increment_tower_height() acquires TowerHeight {
+       let tower_height = borrow_global_mut<TowerHeight>(default_redeem_address());
+       tower_height.value = tower_height.value + 1;
     }
 
     public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess {
@@ -61,32 +78,29 @@ address 0x0 {
       ValidatorUniverse::add_validator(Transaction::sender());
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
+      // TODO: check if we should change "Transaction::sender()" to a input parameters "redeemed_addr"
+      // TODO: or we can find out which proof is submitted for someone else.
       let in_process = borrow_global_mut<InProcess>(Transaction::sender());
-      vdf_proof_blob.height = global_redemption_state.tower_height;
       Vector::push_back(&mut in_process.proofs, vdf_proof_blob);
     }
 
     // Redeem::end_redeem() checks that the miner has been doing
     // validation AND that there are mining proofs presented in the last/current epoch.
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
-    public fun end_redeem(redeemed_addr: address) acquires InProcess,T {
+    public fun end_redeem(redeemed_addr: address) acquires InProcess {
       // Permissions: Only system addresses (0x0 address i.e. default_redeem_address) can call this, in an Epoch Prologue i.e. reconfigure event.
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
 
       if( ! ::exists<InProcess>( redeemed_addr ) ){
         return // should not abort.
-    };
+      };
 
       // Account may not have any proofs submitted recently.
 
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
       let counts = Vector::length(&in_process_redemption.proofs);
       Transaction::assert(counts > 0, 0100080004);
-
-      // Note: why is this called "global", looks like it is storing in a user account.
-      let global_redemption_state = borrow_global_mut<T>(default_redeem_address());
-      global_redemption_state.tower_height = global_redemption_state.tower_height + 1;
 
       // TODO: Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
@@ -102,7 +116,7 @@ address 0x0 {
 
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
-    acquires InProcess, T {
+    acquires InProcess {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
 
@@ -120,7 +134,8 @@ address 0x0 {
     // It can only be called a single time in the genesis transaction.
     public fun initialize(config_account: &signer) {
         //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
-        move_to<T>( config_account ,T{ history: Vector::empty(), tower_height: 0 });
+        move_to<T>( config_account ,T{ history: Vector::empty(),});
+        move_to<TowerHeight>( config_account ,TowerHeight{ value: 0 }); // separated for performance
     }
 
     fun default_redeem_address(): address {
