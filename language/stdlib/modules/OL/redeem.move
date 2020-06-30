@@ -74,6 +74,10 @@ address 0x0 {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
 
+      if( ! ::exists<InProcess>( redeemed_addr ) ){
+        return // should not abort.
+    };
+
       // Account may not have any proofs submitted recently.
 
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);

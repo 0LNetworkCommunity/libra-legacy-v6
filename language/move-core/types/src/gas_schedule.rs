@@ -162,9 +162,11 @@ pub struct GasConstants {
 
     /// The cost per-byte written to storage.
     /// TODO: Fill this in with a proper number once it's determined.
+    /// 0L NOTE: This price is for 5 years of storage. To be enforced at a later date :)
     pub global_memory_per_byte_write_cost: GasUnits<GasCarrier>,
 
     /// We charge one unit of gas per-byte for the first 600 bytes
+    /// 0L Note: This is the rationale for a baseline transaction fee.
     pub min_transaction_gas_units: GasUnits<GasCarrier>,
 
     /// Any transaction over this size will be charged `INTRINSIC_GAS_PER_BYTE` per byte
@@ -177,6 +179,7 @@ pub struct GasConstants {
     /// computational time of any given transaction at 10 milliseconds. We want this number and
     /// `MAX_PRICE_PER_GAS_UNIT` to always satisfy the inequality that
     /// MAXIMUM_NUMBER_OF_GAS_UNITS * MAX_PRICE_PER_GAS_UNIT < min(u64::MAX, GasUnits<GasCarrier>::MAX)
+    /// 0L Change: Targeting max transactions of 100ms because of crypto/vdf instructions.
     pub maximum_number_of_gas_units: GasUnits<GasCarrier>,
 
     /// The minimum gas price that a transaction can be submitted with.
@@ -186,6 +189,11 @@ pub struct GasConstants {
     pub max_price_per_gas_unit: GasPrice<GasCarrier>,
 
     pub max_transaction_size_in_bytes: u64,
+
+    /// 0L change: a reference number for estimating the total network max gas units per block.
+    /// This is not enforced.
+    pub reference_max_transactions_per_block: u64,
+
 }
 
 impl Default for GasConstants {
@@ -196,10 +204,11 @@ impl Default for GasConstants {
             min_transaction_gas_units: GasUnits(600),
             large_transaction_cutoff: AbstractMemorySize(600),
             instrinsic_gas_per_byte: GasUnits(8),
-            maximum_number_of_gas_units: GasUnits(2_000_000),
+            maximum_number_of_gas_units: GasUnits(10_000_000), // 0L Change.
             min_price_per_gas_unit: GasPrice(0),
-            max_price_per_gas_unit: GasPrice(10_000),
+            max_price_per_gas_unit: GasPrice(10_000), // TODO: 0L: (LG) What's the rationale behind this max?
             max_transaction_size_in_bytes: 4096,
+            reference_max_transactions_per_block: 20, // TODO: LG: This implies a max block time of 2 seconds.
         }
     }
 }
