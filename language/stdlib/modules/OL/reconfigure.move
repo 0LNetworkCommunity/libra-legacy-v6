@@ -59,9 +59,9 @@ address 0x0 {
                  = LibraSystem::get_outgoing_validators_with_weights(get_epoch_length(), current_block_height);
 
             // Step 1: End redeem for all validators
-            Debug::print(&0x000000000000007E5700000000000001);
+            Debug::print(&0x0000000000012EC011F1600000000001);
             Redeem::end_redeem_outgoing_validators(account, &outgoing_validators);
-            Debug::print(&0x000000000000007E5700000000000002);
+            Debug::print(&0x0000000000012EC011F1600000000002);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
@@ -70,20 +70,20 @@ address 0x0 {
             let epoch_length = get_epoch_length();
             let end_block_height = current_block_height;
             Transaction::assert(end_block_height >= epoch_length, 8003);
-            Debug::print(&0x000000000000007E5700000000000003);
+            Debug::print(&0x0000000000012EC011F1600000000003);
             let start_block_height = end_block_height - epoch_length;
             // Get the subsidy units and burn units after deducting transaction fees
             let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, end_block_height);
             Subsidy::process_subsidy(account, &outgoing_validators, &outgoing_validator_weights,
                                      subsidy_units, sum_of_all_validator_weights);
-            Debug::print(&0x000000000000007E5700000000000004);
+            Debug::print(&0x0000000000012EC011F1600000000004);
             // Step 3: Distribute transaction fees here before updating validators
             TransactionFee::distribute_transaction_fees<GAS::T>();
-            Debug::print(&0x000000000000007E5700000000000005);
+            Debug::print(&0x0000000000012EC011F1600000000005);
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
             if (LibraConfig::get_current_epoch() != 0) {
               Subsidy::burn_subsidy(account);
-              Debug::print(&0x000000000000007E5700000000000006);
+              Debug::print(&0x0000000000012EC011F1600000000006);
             }
 
 
