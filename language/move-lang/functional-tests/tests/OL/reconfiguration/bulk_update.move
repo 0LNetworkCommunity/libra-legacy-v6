@@ -7,7 +7,8 @@
 
 
 // Test to check the current validator list . Then trigger update to the list of validators, then re-run it. 
-// OL:Currently will fail because current block height is less than single epoch
+// This test is run with the function passing in the wrong current block on purpose.
+// This avoids an error when a reconfig function happens before the first epoch is completed
 //! new-transaction
 //! sender: association
 script {
@@ -31,7 +32,7 @@ script {
         ValidatorUniverse::add_validator({{carol}});
         Transaction::assert(Vector::length<address>(&vec) == 3, 1);
 
-        LibraSystem::bulk_update_validators(account, vec, 15, 1);
+        LibraSystem::bulk_update_validators(account, vec, 15, 20);
 
         // Check if updates are done
         Transaction::assert(LibraSystem::validator_set_size() == 3, 1000);
@@ -39,4 +40,4 @@ script {
         Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 98);
     }
 }
-// check: ABORTED
+// check: EXECUTED

@@ -36,6 +36,7 @@ pub enum StdlibScript {
     Mint,
     MintLbr,
     MintLbrToAddress,
+    MintGasToAddress,
     ModifyPublishingOption,
     PeerToPeerWithMetadata,
     Preburn,
@@ -64,7 +65,8 @@ pub enum StdlibScript {
     TxFeeTestHelper,// 0L Change
     TxFeeTestMint,  // 0L Change
     TxFeeTestMove,  // 0L Change
-    TxFeeTestDistr  // 0L Change
+    TxFeeTestDistr, // 0L Change
+    ReconfigBulkUpdate      // 0L Change
 }
 
 impl StdlibScript {
@@ -87,6 +89,7 @@ impl StdlibScript {
             Mint,
             MintLbr,
             MintLbrToAddress,
+            MintGasToAddress,
             ModifyPublishingOption,
             PeerToPeerWithMetadata,
             Preburn,
@@ -115,7 +118,8 @@ impl StdlibScript {
             TxFeeTestHelper,    // 0L Change
             TxFeeTestMint,      // 0L Change
             TxFeeTestMove,      // 0L Change
-            TxFeeTestDistr
+            TxFeeTestDistr,     // 0L Change
+            ReconfigBulkUpdate      // 0L Change
         ]
     }
 
@@ -216,6 +220,7 @@ impl fmt::Display for StdlibScript {
                 Mint => "mint",
                 MintLbr => "mint_lbr",
                 MintLbrToAddress => "mint_lbr_to_address",
+                MintGasToAddress => "mint_gas_to_address",
                 ModifyPublishingOption => "modify_publishing_option",
                 PeerToPeerWithMetadata => "peer_to_peer_with_metadata",
                 Preburn => "preburn",
@@ -244,7 +249,8 @@ impl fmt::Display for StdlibScript {
                 TxFeeTestHelper => "tx_fees_e2e_test_helper",// 0L Change
                 TxFeeTestMint => "txn_fee_test_mint",       // 0L Change
                 TxFeeTestMove => "txn_fee_test_move",       // 0L Change
-                TxFeeTestDistr => "txn_fee_test_distr"
+                TxFeeTestDistr => "txn_fee_test_distr",     // 0L Change
+                ReconfigBulkUpdate => "reconfig_bulk_update"// 0L Change
             }
         )
     }
