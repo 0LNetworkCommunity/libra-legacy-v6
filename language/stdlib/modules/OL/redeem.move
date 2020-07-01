@@ -76,7 +76,7 @@ address 0x0 {
 
       if( ! ::exists<InProcess>( redeemed_addr ) ){
         return // should not abort.
-    };
+      };
 
       // Account may not have any proofs submitted recently.
 
@@ -110,8 +110,11 @@ address 0x0 {
 
       let i = 0;
       while (i < size) {
-          end_redeem(*Vector::borrow(outgoing_validators, i));
-          i = i + 1;
+          let redeemed_addr = *Vector::borrow(outgoing_validators, i);
+          if ( ::exists<InProcess>( redeemed_addr ) ){
+              end_redeem(redeemed_addr);
+              i = i + 1;
+          };
       };
     }
 
