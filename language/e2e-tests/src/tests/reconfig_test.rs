@@ -37,8 +37,6 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
     let sha = Account::new();
     let ram = Account::new();
 
-    println!("0x7E570");
-
     // // Add the account datas
     let assoc_acc_data = AccountData::with_account(
         association_account, 1_000_000,
@@ -70,8 +68,6 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
     //     lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
     // executor.add_account_data(&ram_data);
 
-    println!("0x7E571");
-
     // register the accounts as validators
     let mut txn = create_validator_account_txn(&assoc_acc_data.account(), &alice, 1);
     executor.execute_and_apply(txn);
@@ -83,8 +79,6 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
     executor.execute_and_apply(txn);
     txn = create_validator_account_txn(&assoc_acc_data.account(), &ram, 5);
     executor.execute_and_apply(txn);
-
-    println!("0x7E572");
 
     // give the validators some money
     let mint_amount = 10_000_000;
