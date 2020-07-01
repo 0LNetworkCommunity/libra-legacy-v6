@@ -1,5 +1,5 @@
 // 401- Unauthrized access (only association allowed)
-address 0x0 {
+  address 0x0 {
 
   // Note: This module needs a key-value store.
   module Redeem {
@@ -11,32 +11,32 @@ address 0x0 {
     use 0x0::Signer;
 
     struct VdfProofBlob {
-        // TODO: This should include the netork epoch number. Also change "height" name to disambiguate.
-        // This should be called tower_height.
-        challenge: vector<u8>,
-        difficulty: u64,
-        solution: vector<u8>,
-        height: u64, // tower_height?
+      // TODO: This should include the netork epoch number. Also change "height" name to disambiguate.
+      // This should be called tower_height.
+      challenge: vector<u8>,
+      difficulty: u64,
+      solution: vector<u8>,
+      height: u64, // tower_height?
     }
 
     resource struct T {
-        history: vector<vector<u8>>,
-        tower_height: u64,
+      history: vector<vector<u8>>,
+      tower_height: u64,
     }
 
     resource struct InProcess {
-        proofs: vector<VdfProofBlob>,
+      proofs: vector<VdfProofBlob>,
     }
 
     public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>) : VdfProofBlob {
-       VdfProofBlob {challenge,  difficulty, solution, height: 0 }
+      VdfProofBlob {challenge,  difficulty, solution, height: 0 }
     }
 
     public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess {
 
       // Insert a new VdfProofBlob into a temp storage, while
       if (!has_in_process()) {
-           init_in_process();
+        init_in_process();
       };
 
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
@@ -111,6 +111,7 @@ address 0x0 {
       let i = 0;
       while (i < size) {
           let redeemed_addr = *Vector::borrow(outgoing_validators, i);
+          // For testing: don't call end_redeem because there may not be any account state for the address.
           if ( ::exists<InProcess>( redeemed_addr ) ){
               end_redeem(redeemed_addr);
               i = i + 1;
@@ -122,24 +123,24 @@ address 0x0 {
     // the resource under that address.
     // It can only be called a single time in the genesis transaction.
     public fun initialize(config_account: &signer) {
-        //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
-        move_to<T>( config_account ,T{ history: Vector::empty(), tower_height: 0 });
+      //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
+      move_to<T>( config_account ,T{ history: Vector::empty(), tower_height: 0 });
     }
 
     fun default_redeem_address(): address {
-        0xA550C18
+      0xA550C18
     }
 
     fun has_in_process(): bool {
-       ::exists<InProcess>(Transaction::sender())
+      ::exists<InProcess>(Transaction::sender())
     }
 
     fun init_in_process(){
-        move_to_sender<InProcess>(InProcess{ proofs: Vector::empty()})
+      move_to_sender<InProcess>(InProcess{ proofs: Vector::empty()})
     }
 
     fun has(addr: address): bool {
-       ::exists<T>(addr)
+      ::exists<T>(addr)
     }
   }
-}
+  }
