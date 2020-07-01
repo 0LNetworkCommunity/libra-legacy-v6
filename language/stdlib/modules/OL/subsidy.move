@@ -21,11 +21,13 @@ address 0x0 {
       burn_accounts: vector<address>
     }
 
-    struct T { }
-
-    public fun initialize(account: &signer) acquires SubsidyInfo{
+    public fun initialize(account: &signer) {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18, 8001);
+
+      let burn_accounts = Vector::empty();
+      Vector::push_back(&mut burn_accounts, 0xDEADDEAD);
+
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {
           subsidy_ceiling: 296, //TODO:OL:Update this with actually subsidy ceiling
@@ -33,12 +35,8 @@ address 0x0 {
           max_node_density: 300,
           subsidy_units: 0,
           burn_units: 0,
-          burn_accounts: Vector::empty<address>()
+          burn_accounts: burn_accounts
         });
-
-      //Adding burn account
-      //TODO:OL:Add more accounts later
-      add_burn_account(account, 0xDEADDEAD);
     }
 
     // Minting subsidy called in the EpochPrologue/reconfiguration for the next validator set's upcoming epoch subsidies.
