@@ -49,6 +49,7 @@ address 0x0 {
             // Skip this step on the first epoch, which is exceptional.
             if (current_block_height > get_epoch_length()) {
               process_outgoing_validators(account, current_block_height);
+              Debug::print(&0x12EC011F160000000000000000000001);
 
             };
             // Recommend upcoming validator set
@@ -57,38 +58,41 @@ address 0x0 {
             // Step 3: Bulk update validator weights
             // Step 4: Mint subsidy for upcoming epoch
             prepare_upcoming_validator_set(account, current_block_height);
+            Debug::print(&0x12EC011F160000000000000000000002);
+
         }
 
         fun process_outgoing_validators(account: &signer, current_block_height: u64) acquires EpochInfo {
+            Debug::print(&0x12EC011F160000000000000000001001);
+
             // Get outgoing validator and sum of all validator weights
             let (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
                  = LibraSystem::get_outgoing_validators_with_weights(get_epoch_length(), current_block_height);
-
             // Step 1: End redeem for all validators
-            Debug::print(&0x12EC011F160000000000000000001001);
-            Redeem::end_redeem_outgoing_validators(account, &outgoing_validators);
             Debug::print(&0x12EC011F160000000000000000001002);
+            Redeem::end_redeem_outgoing_validators(account, &outgoing_validators);
+            Debug::print(&0x12EC011F160000000000000000001003);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
             // Calculate start and end block height for the current epoch
-            Debug::print(&0x12EC011F160000000000000000001003);
+            Debug::print(&0x12EC011F160000000000000000001004);
             let start_block_height = current_block_height - get_epoch_length();
             // Get the subsidy units and burn units after deducting transaction fees
             // NOTE: current block height is the end of the epoch.
             let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, current_block_height);
-            Debug::print(&0x12EC011F160000000000000000001004);
+            Debug::print(&0x12EC011F160000000000000000001005);
 
             Subsidy::process_subsidy(account, &outgoing_validators, &outgoing_validator_weights,
                                      subsidy_units, sum_of_all_validator_weights);
-            Debug::print(&0x12EC011F160000000000000000001005);
+            Debug::print(&0x12EC011F160000000000000000001006);
             // Step 3: Distribute transaction fees here before updating validators
             TransactionFee::distribute_transaction_fees<GAS::T>();
-            Debug::print(&0x12EC011F160000000000000000001006);
+            Debug::print(&0x12EC011F160000000000000000001007);
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
             if (LibraConfig::get_current_epoch() != 0) {
               Subsidy::burn_subsidy(account);
-              Debug::print(&0x12EC011F160000000000000000001007);
+              Debug::print(&0x12EC011F160000000000000000001008);
             }
 
 
@@ -97,29 +101,32 @@ address 0x0 {
         fun prepare_upcoming_validator_set(account: &signer, current_block_height: u64) acquires EpochInfo {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
             // TODO: OL: N should be made constant in Genesis
+            Debug::print(&0x12EC011F160000000000000000002001);
             let (eligible_validators, _sum_of_all_validator_weights) = NodeWeight::top_n_accounts(account, get_validator_count_in_epoch());
-            Debug::print(&0x12EC011F160000000000000000002007);
+            Debug::print(&0x12EC011F160000000000000000002002);
 
             // Step 2: Call bulkUpdate module
             LibraSystem::bulk_update_validators(account, eligible_validators, get_epoch_length(), current_block_height);
-            Debug::print(&0x12EC011F160000000000000000002008);
+            Debug::print(&0x12EC011F160000000000000000002003);
 
             // Step 3: Mint subsidy units for upcoming epoch
             Subsidy::mint_subsidy(account);
-            Debug::print(&0x12EC011F160000000000000000002009);
+            Debug::print(&0x12EC011F160000000000000000002004);
         }
 
         public fun get_epoch_length(): u64 acquires EpochInfo {
+          Debug::print(&0x12EC011F160000000000000000003001);
+
             // Get epoch info from association
             let epochInfo = borrow_global<EpochInfo>(0xA550C18);
             epochInfo.epoch_length
         }
 
         public fun get_validator_count_in_epoch(): u64 acquires EpochInfo {
+          Debug::print(&0x12EC011F160000000000000000004001);
             // Get epoch info from association
             let epochInfo = borrow_global<EpochInfo>(0xA550C18);
             epochInfo.validator_count_epoch
         }
-
   }
 }
