@@ -53,6 +53,7 @@ module Genesis {
         Libra::initialize(config_account);
 
         // Reconfigure module setup
+        // TODO: Let's keep all constants in code, and not in on-chain resources.
         // This will initialize epoch_length and validator count for each epoch
         let epoch_length = 15;
         let validator_count_per_epoch = 10;
