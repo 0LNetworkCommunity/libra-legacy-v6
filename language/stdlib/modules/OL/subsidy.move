@@ -21,11 +21,13 @@ address 0x0 {
       burn_accounts: vector<address>
     }
 
-    struct T { }
-
-    public fun initialize(account: &signer) acquires SubsidyInfo{
+    public fun initialize(account: &signer) {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18, 8001);
+
+      let burn_accounts = Vector::empty();
+      Vector::push_back(&mut burn_accounts, 0xDEADDEAD);
+
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {
           subsidy_ceiling: 296, //TODO:OL:Update this with actually subsidy ceiling
@@ -33,12 +35,8 @@ address 0x0 {
           max_node_density: 300,
           subsidy_units: 0,
           burn_units: 0,
-          burn_accounts: Vector::empty<address>()
+          burn_accounts: burn_accounts
         });
-
-      //Adding burn account
-      //TODO:OL:Add more accounts later
-      add_burn_account(account, 0xDEADDEAD);
     }
 
     // Minting subsidy called in the EpochPrologue/reconfiguration for the next validator set's upcoming epoch subsidies.
@@ -48,7 +46,7 @@ address 0x0 {
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
       //Acquire subsidy info
-      let subsidy_info = borrow_global<SubsidyInfo>(sender);
+      let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
       let old_gas_balance = LibraAccount::balance<GAS::T>(sender);
 
       //Mint gas coin not returning the coin
@@ -74,7 +72,7 @@ address 0x0 {
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
 
       // Calculate the split for subsidy and burn
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(sender);
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0xA550C18);
 
       let (subsidy_units, burn_units) = subsidy_curve(
         subsidy_info.subsidy_ceiling,
@@ -138,7 +136,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
-      let subsidy_info = borrow_global<SubsidyInfo>(sender);
+      let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
       Transaction::assert(Vector::length(&subsidy_info.burn_accounts) > 0, 8005);
 
       //Preburning coins to burn account
@@ -160,7 +158,7 @@ address 0x0 {
 
       //TODO:OL:Need to check if account exists already
       //Get mutable burn accounts vector from association
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(sender);
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0xA550C18);
       Vector::push_back(&mut subsidy_info.burn_accounts, new_burn_account);
     }
 
@@ -168,7 +166,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
-      let subsidy_info = borrow_global<SubsidyInfo>(sender);
+      let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
       Vector::length(&subsidy_info.burn_accounts)
     }
   }
