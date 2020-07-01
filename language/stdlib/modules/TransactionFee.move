@@ -156,13 +156,15 @@ address 0x0 {
 
     //     /// Sets ups the needed transaction fee state for a given `CoinType`
     //     /// currency.
-    //     public fun add_txn_fee_currency<CoinType>(fee_account: &signer, burn_cap: &BurnCapability<CoinType>) {
-    //         Transaction::assert(Signer::address_of(fee_account) == 0xFEE, 0);
-    //         LibraAccount::add_currency<CoinType>(fee_account);
-    //         move_to(fee_account, TransactionFeePreburn<CoinType>{
-    //             preburn: Libra::new_preburn_with_capability(burn_cap)
-    //         })
-    //     }
+
+    // NOTE: Do we need this?
+    // public fun add_txn_fee_currency<CoinType>(fee_account: &signer) {
+    //     Transaction::assert(Signer::address_of(fee_account) == 0xFEE, 0);
+    //     LibraAccount::add_currency<CoinType>(fee_account);
+    //     // move_to(fee_account, TransactionFeePreburn<CoinType>{
+    //     //     preburn: Libra::new_preburn_with_capability(burn_cap)
+    //     // })
+    // }
 
     //     /// Returns whether `CoinType` is LBR or not. This is needed since we
     //     /// will need to unpack LBR before burning it when collecting the

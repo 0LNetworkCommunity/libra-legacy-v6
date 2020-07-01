@@ -71,27 +71,27 @@
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
     public fun end_redeem(redeemed_addr: address) acquires InProcess,T {
       // Permissions: Only system addresses (0x0 address i.e. default_redeem_address) can call this, in an Epoch Prologue i.e. reconfigure event.
-      Debug::print(&0x0000000E11D0012EDEE1110000000001);
+      Debug::print(&0xE11D0012EDEE11100000000000001001);
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
-      Debug::print(&0x0000000E11D0012EDEE1110000000002);
+      Debug::print(&0xE11D0012EDEE11100000000000001002);
 
       if( ! ::exists<InProcess>( redeemed_addr ) ){
         return // should not abort.
       };
-      Debug::print(&0x0000000E11D0012EDEE1110000000003);
+      Debug::print(&0xE11D0012EDEE11100000000000001003);
 
       // Account may not have any proofs submitted recently.
 
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
       let counts = Vector::length(&in_process_redemption.proofs);
       Transaction::assert(counts > 0, 0100080004);
-      Debug::print(&0x0000000E11D0012EDEE1110000000004);
+      Debug::print(&0xE11D0012EDEE11100000000000001004);
 
       // Note: why is this called "global", looks like it is storing in a user account.
       let global_redemption_state = borrow_global_mut<T>(default_redeem_address());
       global_redemption_state.tower_height = global_redemption_state.tower_height + 1;
-      Debug::print(&0x0000000E11D0012EDEE1110000000005);
+      Debug::print(&0xE11D0012EDEE11100000000000001005);
 
       // TODO: Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
       // Stats(pubkey, block)
@@ -108,27 +108,29 @@
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
     acquires InProcess, T {
-      Debug::print(&0x0000000000012EDEE111000000000001);
+      Debug::print(&0x12EDEE11100000000000000000001001);
 
       let sender = Signer::address_of(account);
-      Debug::print(&0x0000000000012EDEE111000000000002);
+      Debug::print(&0x12EDEE11100000000000000000001002);
 
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
-      Debug::print(&0x0000000000012EDEE111000000000003);
+      Debug::print(&0x12EDEE11100000000000000000001003);
 
       let size = Vector::length(outgoing_validators);
 
       let i = 0;
       while (i < size) {
           let redeemed_addr = *Vector::borrow(outgoing_validators, i);
+          Debug::print(&0x12EDEE11100000000000000000001004);
+
           Debug::print(&redeemed_addr);
 
           // For testing: don't call end_redeem because there may not be any account state for the address.
           if ( ::exists<InProcess>( redeemed_addr ) ){
               end_redeem(redeemed_addr);
-              Debug::print(&0x0000000000012EDEE111000000000004);
-              i = i + 1;
+              Debug::print(&0x12EDEE11100000000000000000001005);
           };
+          i = i + 1;
       };
     }
 

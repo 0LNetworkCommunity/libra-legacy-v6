@@ -38,19 +38,25 @@ address 0x0 {
             let sender = Signer::address_of(account);
             Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
 
+            // TODO: one more check in reconfigure.move to confirm it's executing in epoch boundary.
+
             // Process outgoing validators
             // Step 1: End redeem for all validators
             // Step 2: Subsidy payments
             // Step 3: Distribute transaction fees to all outgoing validators
             // Step 4: Burn subsidy units
-            process_outgoing_validators(account, current_block_height);
 
+            // Skip this step on the first epoch, which is exceptional.
+            if (current_block_height > get_epoch_length()) {
+              process_outgoing_validators(account, current_block_height);
+
+            };
             // Recommend upcoming validator set
             // Step 1: Get all eligible validators
             // Step 2: Sort Top N validators
             // Step 3: Bulk update validator weights
             // Step 4: Mint subsidy for upcoming epoch
-            recommend_upcoming_validator_set(account, current_block_height);
+            prepare_upcoming_validator_set(account, current_block_height);
         }
 
         fun process_outgoing_validators(account: &signer, current_block_height: u64) acquires EpochInfo {
@@ -59,50 +65,48 @@ address 0x0 {
                  = LibraSystem::get_outgoing_validators_with_weights(get_epoch_length(), current_block_height);
 
             // Step 1: End redeem for all validators
-            Debug::print(&0x0000000000012EC011F1600000000001);
+            Debug::print(&0x12EC011F160000000000000000001001);
             Redeem::end_redeem_outgoing_validators(account, &outgoing_validators);
-            Debug::print(&0x0000000000012EC011F1600000000002);
+            Debug::print(&0x12EC011F160000000000000000001002);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
             // Calculate start and end block height for the current epoch
-            // TODO: OL: Create constant for epoch length
-            let epoch_length = get_epoch_length();
-            let end_block_height = current_block_height;
-            Transaction::assert(end_block_height >= epoch_length, 8003);
-            Debug::print(&0x0000000000012EC011F1600000000003);
-            let start_block_height = end_block_height - epoch_length;
+            Debug::print(&0x12EC011F160000000000000000001003);
+            let start_block_height = current_block_height - get_epoch_length();
             // Get the subsidy units and burn units after deducting transaction fees
-            let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, end_block_height);
+            // NOTE: current block height is the end of the epoch.
+            let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, current_block_height);
+            Debug::print(&0x12EC011F160000000000000000001004);
+
             Subsidy::process_subsidy(account, &outgoing_validators, &outgoing_validator_weights,
                                      subsidy_units, sum_of_all_validator_weights);
-            Debug::print(&0x0000000000012EC011F1600000000004);
+            Debug::print(&0x12EC011F160000000000000000001005);
             // Step 3: Distribute transaction fees here before updating validators
             TransactionFee::distribute_transaction_fees<GAS::T>();
-            Debug::print(&0x0000000000012EC011F1600000000005);
+            Debug::print(&0x12EC011F160000000000000000001006);
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
             if (LibraConfig::get_current_epoch() != 0) {
               Subsidy::burn_subsidy(account);
-              Debug::print(&0x0000000000012EC011F1600000000006);
+              Debug::print(&0x12EC011F160000000000000000001007);
             }
 
 
         }
 
-        fun recommend_upcoming_validator_set(account: &signer, current_block_height: u64) acquires EpochInfo {
+        fun prepare_upcoming_validator_set(account: &signer, current_block_height: u64) acquires EpochInfo {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
             // TODO: OL: N should be made constant in Genesis
             let (eligible_validators, _sum_of_all_validator_weights) = NodeWeight::top_n_accounts(account, get_validator_count_in_epoch());
-            Debug::print(&0x000000000000007E5700000000000007);
+            Debug::print(&0x12EC011F160000000000000000002007);
 
             // Step 2: Call bulkUpdate module
             LibraSystem::bulk_update_validators(account, eligible_validators, get_epoch_length(), current_block_height);
-            Debug::print(&0x000000000000007E5700000000000008);
+            Debug::print(&0x12EC011F160000000000000000002008);
 
             // Step 3: Mint subsidy units for upcoming epoch
             Subsidy::mint_subsidy(account);
-            Debug::print(&0x000000000000007E5700000000000009);
-
+            Debug::print(&0x12EC011F160000000000000000002009);
         }
 
         public fun get_epoch_length(): u64 acquires EpochInfo {

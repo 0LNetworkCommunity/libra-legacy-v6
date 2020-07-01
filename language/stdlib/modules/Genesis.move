@@ -52,15 +52,15 @@ module Genesis {
         // Currency setup
         Libra::initialize(config_account);
 
-        // Reconfigure module setup 
+        // Reconfigure module setup
         // This will initialize epoch_length and validator count for each epoch
-        let epoch_length = 15; 
-        let validator_count_per_epoch = 10; 
+        let epoch_length = 15;
+        let validator_count_per_epoch = 10;
         ReconfigureOL::initialize(association, epoch_length, validator_count_per_epoch);
-        
+
         Redeem::initialize(association);
 
-        // Stats module 
+        // Stats module
         Stats::initialize(association);
 
         // Validator Universe setup
@@ -84,17 +84,21 @@ module Genesis {
             Signer::address_of(association),
             copy dummy_auth_key_prefix,
         );
+
+        // Remove these coints...
         Libra::grant_mint_capability_to_association<Coin1::T>(association);
         Libra::grant_mint_capability_to_association<Coin2::T>(association);
 
         //Granting minting and burn capability to association
         Libra::grant_mint_capability_to_association<GAS::T>(association);
         Libra::grant_burn_capability_to_association<GAS::T>(association);
+
+        // NOTE: What is this?
         Libra::publish_preburn(association, Libra::new_preburn<GAS::T>());
 
         // Register transaction fee accounts
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
-        // TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
+        // TransactionFee::add_txn_fee_currency<GAS::T>(fee_account);
         // TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
         // TransactionFee::initialize(tc_account, fee_account);
         TransactionFee::initialize(fee_account);
@@ -109,7 +113,7 @@ module Genesis {
             coin2_mint_cap,
             coin2_burn_cap,
         );
-        
+
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
             association,
