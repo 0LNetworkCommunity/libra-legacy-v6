@@ -3,6 +3,7 @@ script {
     use 0x0::LibraSystem;
     use 0x0::Vector;
     use 0x0::ValidatorUniverse;
+    use 0x0::Debug;
     fun main(account: &signer, alice: address, bob: address, carol: address,
             sha: address, _ram: address) {
         // // Initialize the nodes as validators
@@ -22,7 +23,10 @@ script {
         // LibraSystem::bulk_update_validators(account, vec, 15, 19);
 
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 1000);
+        let a = LibraSystem::validator_set_size();
+        Debug::print(&a);
+        // 15 because the e2e test framework is initialized with 10 validators
+        Transaction::assert(LibraSystem::validator_set_size() == 15, 1000);
         Transaction::assert(LibraSystem::is_validator(sha) == true, 98);
         Transaction::assert(LibraSystem::is_validator(alice) == true, 98);
 
@@ -39,6 +43,8 @@ script {
         LibraSystem::bulk_update_validators(account, vec, 15, 20);
 
         // Check if updates are done
+        a = LibraSystem::validator_set_size();
+        Debug::print(&a);
         Transaction::assert(LibraSystem::validator_set_size() == 3, 1000);
         Transaction::assert(LibraSystem::is_validator(sha) == false, 98);
         Transaction::assert(LibraSystem::is_validator(bob) == true, 98);

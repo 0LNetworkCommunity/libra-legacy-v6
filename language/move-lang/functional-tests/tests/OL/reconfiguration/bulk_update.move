@@ -16,8 +16,11 @@ script {
     use 0x0::LibraSystem;
     use 0x0::Vector;
     use 0x0::ValidatorUniverse;
+    use 0x0::Debug;
     fun main(account: &signer) {
         // Tests on initial size of validators 
+        let a = LibraSystem::validator_set_size();
+        Debug::print(&a);
         Transaction::assert(LibraSystem::validator_set_size() == 5, 1000);
         Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 98);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
