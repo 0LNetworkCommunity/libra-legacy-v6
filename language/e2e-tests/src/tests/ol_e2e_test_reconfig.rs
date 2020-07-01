@@ -43,31 +43,6 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
         lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
     executor.add_account_data(&assoc_acc_data);
 
-    // let alice_data = AccountData::with_account(
-    //     alice, 5_000_000,
-    //     lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
-    // executor.add_account_data(&alice_data);
-    
-    // let bob_data = AccountData::with_account(
-    //     bob, 5_000_000,
-    //     lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
-    // executor.add_account_data(&bob_data);
-
-    // let carol_data = AccountData::with_account(
-    //     carol, 5_000_000,
-    //     lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
-    // executor.add_account_data(&carol_data);
-
-    // let sha_data = AccountData::with_account(
-    //     sha, 5_000_000,
-    //     lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
-    // executor.add_account_data(&sha_data);
-
-    // let ram_data = AccountData::with_account(
-    //     ram, 5_000_000,
-    //     lbr_currency_code(),sequence_number, AccountTypeSpecifier::Empty);
-    // executor.add_account_data(&ram_data);
-
     // register the accounts as validators
     let mut txn = create_validator_account_txn(&assoc_acc_data.account(), &alice, 1);
     executor.execute_and_apply(txn);
@@ -98,44 +73,49 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
         encode_mint_script(lbr_type_tag(), &sha.address(), vec![], mint_amount),
         9,
     ));
+
+    // NOTE: Why is this different?
     executor.execute_and_apply(assoc_acc_data.account().signed_script_txn(
         encode_mint_gas_to_address_script(&ram.address(), vec![], mint_amount),
         10,
     ));
     executor.new_block();
 
-    txn = register_validator_txn(&alice, vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&alice, vec![255; 32], vec![254; 32], vec![],
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
 
     executor.new_block();
 
-    txn = register_validator_txn(&bob, vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&bob, vec![255; 32], vec![254; 32], vec![],
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
 
     executor.new_block();
 
-    txn = register_validator_txn(&carol, vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&carol, vec![255; 32], vec![254; 32], vec![],
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
     executor.new_block();
-    txn = register_validator_txn(&sha, vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&sha, vec![255; 32], vec![254; 32], vec![],
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
     executor.new_block();
-    txn = register_validator_txn(&ram, vec![255; 32], vec![254; 32], vec![], 
+    txn = register_validator_txn(&ram, vec![255; 32], vec![254; 32], vec![],
         vec![253; 32], vec![], 0);
     executor.execute_and_apply(txn);
     executor.new_block();
-    
+
     // construct a valid and signed tx script.
-    let bulk_update = bulk_update(&assoc_acc_data.account(), &alice, 
-                    &bob, &carol, &sha, 
+
+    let bulk_update = bulk_update(&assoc_acc_data.account(), &alice,
+                    &bob, &carol, &sha,
                     &ram, 11);
+
+    print!("bulk_update\n{:?}", bulk_update);
     // let distr = txn_fee_tx_distr(&assoc_acc_data.account(), 2);
 
-    executor.new_block(); 
+    executor.new_block();
     let tx_out = executor.execute_and_apply(bulk_update);
 
     // println!("gas used: {:?}, running second", tx_out.gas_used());
