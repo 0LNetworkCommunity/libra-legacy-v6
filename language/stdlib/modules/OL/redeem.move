@@ -159,38 +159,48 @@ address 0x0 {
     // Redeem::end_redeem() checks that the miner has been doing
     // validation AND that there are mining proofs presented in the last/current epoch.
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
-    public fun end_redeem(redeemed_addr: address) acquires ProofsInEpoch {
+    public fun end_redeem(miner_addr: address) acquires ProofsInEpoch, MinerStateDup {
       // The goal of end_redeem is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
-
-      //1. Check that there was mining and validating in period.
-      //2. Update the statistics.
-
-
+      //0. Check for errors and authorization
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
 
       // may not have been initialized
-      if( ! ::exists<ProofsInEpoch>( redeemed_addr ) ){
+      if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
         return // should not abort.
       };
-      // Account may not have any proofs submitted recently.
-      let in_process_redemption = borrow_global_mut<ProofsInEpoch>(redeemed_addr);
-      let counts = Vector::length(&in_process_redemption.proofs);
+
+
+      //1. Check that there was mining and validating in period.
+      // Account may not have any proofs submitted in epoch, since the resource was last emptied.
+      let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
+      let counts = Vector::length(&proofs_in_epoch.proofs);
       Transaction::assert(counts > 0, 0100080004);
+      //2. Update the statistics.
+      let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
+      // TODO: get actual epoch number
+      let previous_epoch_which_mined = miner_redemption_state.latest_epoch_mining ;
+      let this_epoch = LibraConfig::get_current_epoch();
+      miner_redemption_state.latest_epoch_mining = this_epoch;
+      miner_redemption_state.epochs_validating_and_mining +1;
 
-      // TODO: add a check for proof existing in current Epoch. Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
-      // TBD
-      Debug::print(&counts);
-
-      // Clear the state of these in_process proofs.
+      if (previous_epoch_which_mined - this_epoch == 1) {
+        // increment if contiguous epochs
+        miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
+      } else {
+        // reset
+        miner_redemption_state.contiguous_epochs_validating_and_mining = 1
+      };
+      Debug::print(miner_redemption_state);
+      // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
-      in_process_redemption.proofs = Vector::empty();
+      proofs_in_epoch.proofs = Vector::empty();
     }
 
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
-    acquires ProofsInEpoch {
+    acquires ProofsInEpoch, MinerStateDup {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
 
