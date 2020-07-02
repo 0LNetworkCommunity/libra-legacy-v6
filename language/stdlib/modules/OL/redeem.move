@@ -40,13 +40,13 @@ address 0x0 {
     }
 
     resource struct ProofsInEpoch { // every proof since the last epoch.
-        verified_tower_height: u64, // don't need this here
+        // verified_tower_height: u64
         proofs: vector<VdfProofBlob>
     }
 
     public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>, reported_tower_height: u64) : VdfProofBlob{
        let epoch = LibraConfig::get_current_epoch();
-       VdfProofBlob {challenge, difficulty, solution, reported_tower_height, epoch }
+       VdfProofBlob { challenge, difficulty, solution, reported_tower_height, epoch }
     }
 
     // public fun get_current_tower_height(): u64 acquires T {
@@ -187,7 +187,7 @@ address 0x0 {
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
       let counts = Vector::length(&proofs_in_epoch.proofs);
       Transaction::assert(counts > 0, 0100080004);
-      
+
       //2. Update the statistics.
       let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
       // TODO: get actual epoch number

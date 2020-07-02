@@ -96,6 +96,7 @@ address 0x0 {
 
             // update the Resource with +1 epoch increment. This is enforced by
             // validation AND that there are mining proofs presented in the last/current epoch.
+            // TODO: VAlidator Univers: validatorInfo.mining_epoch_count must come from Redeem State.
             validatorInfo.mining_epoch_count = validatorInfo.mining_epoch_count + 1;
         }
 
