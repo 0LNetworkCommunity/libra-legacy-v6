@@ -32,12 +32,19 @@ address 0x0 {
         // longest_epoch_streak: u64,
     }
 
+    resource struct MinerStateDup {
+        history: vector<vector<u8>>,
+        proofs: vector<VdfProofBlob>,
+        tower_height: u64, // user's latest tower_height
+        // longest_epoch_streak: u64,
+    }
+
     resource struct InProcess {
         tower_height: u64, // user's latest tower_height
         proofs: vector<VdfProofBlob>
     }
 
-    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>) : VdfProofBlob{
+    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>, tower_height: u64) : VdfProofBlob{
        let epoch = LibraConfig::get_current_epoch();
        VdfProofBlob {challenge, difficulty, solution, tower_height, epoch }
     }
@@ -56,7 +63,7 @@ address 0x0 {
     //    t.tower_height = t.tower_height + 1;
     // }
 
-    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, InProcess {
+    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, MinerStateDup, InProcess {
 
       let miner_addr = Signer::address_of( miner );
 
@@ -74,7 +81,7 @@ address 0x0 {
 
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
       let global_redemption_state = borrow_global_mut<MinerState>(default_redeem_address());
-      let miner_redemption_state= borrow_global_mut<MinerState>(miner);
+      let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
 
       let blob_redeemed = Vector::contains(&global_redemption_state.history, &vdf_proof_blob.solution);
       let blob_redeemed_miner = Vector::contains(&miner_redemption_state.history, &vdf_proof_blob.solution);
@@ -107,7 +114,8 @@ address 0x0 {
       if(in_process.tower_height < vdf_proof_blob.tower_height) {
             in_process.tower_height = vdf_proof_blob.tower_height;  //update miner's on-chain tower_height
       };
-      Vector::push_back(&mut in_process.proofs, vdf_proof_blob);
+
+      Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
 
       // Update MinerState
       let miner_state = borrow_global_mut<MinerState>(miner_addr);
@@ -166,7 +174,9 @@ address 0x0 {
     public fun initialize(config_account: &signer) {
         //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
         // move_to<T>( config_account, T{ tower_height: 0 });
-        move_to<MinerState>( config_account, MinerState{ history: Vector::empty() }); // separated for performance
+        move_to<MinerState>( config_account, MinerState{ history: Vector::empty(),
+                            proofs: Vector::empty(),
+                            tower_height: 0u64 });
     }
 
     fun default_redeem_address(): address {
