@@ -118,6 +118,8 @@ address 0x0 {
       // let test = copy vdf_proof_blob.solution;
       // add the correct proof
       Vector::push_back(&mut miner_redemption_state.verified_proof_history, *&vdf_proof_blob.solution);
+      // Debug::print(&Vector::length(&miner_redemption_state.verified_proof_history));
+
       Transaction::assert(Vector::length(&miner_redemption_state.verified_proof_history) > 0, 100080011);
 
 
