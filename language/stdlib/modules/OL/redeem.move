@@ -132,7 +132,15 @@ address 0x0 {
       Transaction::assert(valid == true, 0100080002);
 
       // 5. Update the miner's state with pending statistics.
+      // remove the proof that was placed provisionally in invalid_proofs, since it passed.
+      let removed_solution = Vector::pop_back(&mut miner_redemption_state.invalid_proof_history);
+      Transaction::assert(&removed_solution == &vdf_proof_blob.solution, 0100080002);
+
+      // add the correct proof
       Vector::push_back(&mut miner_redemption_state.verified_proof_history, *&vdf_proof_blob.solution);
+
+
+
       // Update ProofsInEpoch
       // If successfully verified, store a proof blob in a transitional resource ProofsInEpoch
       let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
@@ -207,9 +215,9 @@ address 0x0 {
 
     }
 
-    fun default_redeem_address(): address {
-        0xA550C18
-    }
+    // fun default_redeem_address(): address {
+    //     0xA550C18
+    // }
 
     fun has_in_process(miner: &signer): bool {
        ::exists<ProofsInEpoch>(Signer::address_of(miner))
