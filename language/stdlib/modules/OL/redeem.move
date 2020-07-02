@@ -19,45 +19,51 @@ address 0x0 {
         epoch: u64,
     }
 
+    resource struct T {
+        tower_height: u64, // current tower_height of the network
+    }
+
     // Saves all submitted proofs as a global variable.
     // This is going to be a very large blob. consider to save proof's hash to reduce disk spaces.
-    resource struct T {
+    resource struct MinerState {
         history: vector<vector<u8>>,
     }
 
-    // separated from T for performance, because this is frequent read variable.
-    resource struct TowerHeight {
-        value: u64,
-    }
-
     resource struct InProcess {
+        tower_height: u64, //user's latest tower_height
         proofs: vector<VdfProofBlob>,
     }
 
-    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>) : VdfProofBlob acquires TowerHeight {
+    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>, tower_height: u64) : VdfProofBlob{
        let epoch = LibraConfig::get_current_epoch();
-       let tower_height = get_current_tower_height();
        VdfProofBlob {challenge, difficulty, solution, tower_height, epoch }
     }
 
-    public fun get_current_tower_height(): u64 acquires TowerHeight {
-       borrow_global_mut<TowerHeight>(default_redeem_address()).value
+    public fun get_current_tower_height(): u64 acquires T {
+       borrow_global_mut<T>(default_redeem_address()).tower_height
     }
 
-    public fun increment_tower_height() acquires TowerHeight {
-       let tower_height = borrow_global_mut<TowerHeight>(default_redeem_address());
-       tower_height.value = tower_height.value + 1;
+    public fun get_miner_tower_height(miner_addr: address): u64 acquires InProcess {
+       borrow_global_mut<InProcess>(miner_addr).tower_height
     }
 
-    public fun begin_redeem(vdf_proof_blob: VdfProofBlob) acquires T, InProcess {
+    public fun increment_tower_height() acquires T {
+       let t = borrow_global_mut<T>(default_redeem_address());
+       t.tower_height = t.tower_height + 1;
+    }
+
+    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, InProcess {
+
+      let miner_addr = Signer::address_of( miner );
 
       // Insert a new VdfProofBlob into a temp storage, while
-      if (!has_in_process()) {
-           init_in_process();
+      // Save all of miner's proofs to the its own address, including the first proof sent by someone else.
+      if (!has_in_process(miner)) {
+           init_in_process(miner);
       };
 
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
-      let global_redemption_state = borrow_global_mut<T>(default_redeem_address());
+      let global_redemption_state = borrow_global_mut<MinerState>(default_redeem_address());
       let blob_redeemed = Vector::contains(&global_redemption_state.history, &vdf_proof_blob.solution);
       Transaction::assert(blob_redeemed == false, 0100080001);
       // TODO: need an erorr message that gets surfaced to Node logs
@@ -75,12 +81,13 @@ address 0x0 {
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
-      ValidatorUniverse::add_validator(Transaction::sender());
+      ValidatorUniverse::add_validator( miner_addr );
 
       // If successfully verified, store the pubkey, proof_blob, mint_transaction to the Redeem k-v marked as a "redemption in process"
-      // TODO: check if we should change "Transaction::sender()" to a input parameters "redeemed_addr"
-      // TODO: or we can find out which proof is submitted for someone else.
-      let in_process = borrow_global_mut<InProcess>(Transaction::sender());
+      let in_process = borrow_global_mut<InProcess>(miner_addr);
+      if(in_process.tower_height < vdf_proof_blob.tower_height) {
+            in_process.tower_height = vdf_proof_blob.tower_height;  //update miner's on-chain tower_height
+      };
       Vector::push_back(&mut in_process.proofs, vdf_proof_blob);
     }
 
@@ -134,20 +141,20 @@ address 0x0 {
     // It can only be called a single time in the genesis transaction.
     public fun initialize(config_account: &signer) {
         //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
-        move_to<T>( config_account ,T{ history: Vector::empty(),});
-        move_to<TowerHeight>( config_account ,TowerHeight{ value: 0 }); // separated for performance
+        move_to<T>( config_account, T{ tower_height: 0 });
+        move_to<MinerState>( config_account, MinerState{ history: Vector::empty() }); // separated for performance
     }
 
     fun default_redeem_address(): address {
         0xA550C18
     }
 
-    fun has_in_process(): bool {
-       ::exists<InProcess>(Transaction::sender())
+    fun has_in_process(miner: &signer): bool {
+       ::exists<InProcess>(Signer::address_of(miner))
     }
 
-    fun init_in_process(){
-        move_to_sender<InProcess>(InProcess{ proofs: Vector::empty()})
+    fun init_in_process(miner: &signer){
+        move_to<InProcess>( miner, InProcess{ tower_height: 0u64, proofs: Vector::empty()});
     }
 
     fun has(addr: address): bool {
