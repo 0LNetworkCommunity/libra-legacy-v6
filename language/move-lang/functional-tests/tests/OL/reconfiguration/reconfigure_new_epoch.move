@@ -33,7 +33,6 @@ fun main(sender: &signer) {
     let tower_height = 1;
     let proof = Redeem::create_proof_blob(challenge, difficulty, solution, tower_height);
     Redeem::begin_redeem(sender, proof);
-
     // TODO: reconfigure_new_epoch test. Need to check that the ValidatorUniverse state has changed.
 
 }
