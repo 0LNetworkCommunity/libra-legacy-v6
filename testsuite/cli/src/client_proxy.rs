@@ -36,7 +36,7 @@ use libra_types::{
     vm_error::StatusCode,
     waypoint::Waypoint,
 };
-use libra_wallet::{io_utils, WalletLibrary};
+use libra_wallet::{io_utils, WalletLibrary, ChildNumber};
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
     identities::Zero,
@@ -187,12 +187,14 @@ impl ClientProxy {
         let mut client = LibraClient::new(url.clone(), waypoint)?;
 
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
+        let main_addr= wallet.new_address_at_child_number(ChildNumber::new(1)).unwrap();
 
         let vec_addresses = wallet.get_addresses().unwrap();
         // Expect this to be zero before we haven't populated the address map in the repo
-        assert!(vec_addresses.len() ==0);
+        assert!(vec_addresses.len() ==1);
         // Empty hashmap should be fine 
         let mut vec_account_data = Vec::new();
+
         for address in vec_addresses {
             vec_account_data.push(Self::get_account_data_from_address(
                 &mut client,
@@ -203,7 +205,8 @@ impl ClientProxy {
             )?);
         }
 
-        let address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
+        let mut address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
+        address_to_ref_id.insert(main_addr,1);
         Ok(ClientProxy {
             client,
             accounts: vec_account_data, //Vec<AccountData>

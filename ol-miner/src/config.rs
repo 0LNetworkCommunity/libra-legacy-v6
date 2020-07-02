@@ -25,8 +25,8 @@ impl OlMinerConfig {
         let mut padded_key_bytes = match hex::decode(self.profile.public_key.clone()) {
             Err(x) => panic!("Invalid OL Key{}", x),
             Ok(key_bytes) => {
-                if key_bytes.len() != 32 {
-                    panic!("Expected a 32 byte OL Key . Got{}", key_bytes.len());
+                if key_bytes.len() != 16 {
+                    panic!("Expected a 16 byte OL Key . Got{}", key_bytes.len());
                 }
                 key_bytes
             }
@@ -83,7 +83,7 @@ impl OlMinerConfig {
         assert!(
             preimage.len()
                 == (
-                    32 // OL Key
+                    16 // OL Key
                     +64 // chain_id
                     +8 // iterations/difficulty
                     +1024
