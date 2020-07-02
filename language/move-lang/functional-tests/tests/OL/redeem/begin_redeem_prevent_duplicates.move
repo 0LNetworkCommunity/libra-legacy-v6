@@ -1,4 +1,5 @@
-// Bob Submits a CORRECT VDF Proof
+// Prepare the state for the next test.
+// Bob Submits a CORRECT VDF Proof, and that updates the state.
 //! account: alice, 10000000GAS
 //! account: bob, 10000000GAS
 //! new-transaction
@@ -19,7 +20,7 @@ fun main(sender: &signer) {
 }
 // check: EXECUTED
 
-// Alice Submit the Duplicated CORRECT VDF Proof.
+// Alice Submit the Duplicated CORRECT VDF Proof, which bob just sent.
 //! new-transaction
 //! sender: alice
 script {
@@ -34,4 +35,4 @@ fun main(sender: &signer) {
     Redeem::begin_redeem(sender, proof);
 }
 }
-// check: ABORTED 100080001
+// check: ABORTED 100080002

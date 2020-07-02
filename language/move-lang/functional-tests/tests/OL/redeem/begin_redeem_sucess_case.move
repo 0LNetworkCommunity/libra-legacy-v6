@@ -6,7 +6,7 @@ script {
 use 0x0::Redeem;
 // use 0x0::Transaction;
 
-fun main(sender: &signer) {    
+fun main(sender: &signer) {
     let difficulty = 100;
     let challenge = x"aa";
     // Generate solutions with cd ./verfiable-delay/ cargo run -- -l=4096 aa 100
