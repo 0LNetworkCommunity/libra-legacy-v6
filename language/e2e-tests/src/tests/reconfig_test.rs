@@ -37,7 +37,7 @@ fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-test
 
     // register the accounts as validators
     for i in 0..5 {
-        let txn = create_validator_account_txn(&assoc_acc_data.account(), accounts.get(i + 1).unwrap(), 1);
+        let txn = create_validator_account_txn(&assoc_acc_data.account(), accounts.get(i).unwrap(), (i + 1).try_into().unwrap());
         executor.execute_and_apply(txn);
     }
 
