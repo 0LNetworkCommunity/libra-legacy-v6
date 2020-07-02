@@ -42,26 +42,39 @@ address 0x0 {
     }
 
     // Minting subsidy called in the EpochPrologue/reconfiguration for the next validator set's upcoming epoch subsidies.
-    public fun mint_subsidy(account: &signer) acquires SubsidyInfo{
+    public fun mint_subsidy(account: &signer) {
+
+
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
       Debug::print(&0x50B51DE0000000000000000000001001);
+      //// Important Constant ////
+      let subsidy_ceiling_gas = 296u64; //TODO:OL:Update this with actually subsidy ceiling in in GAS
+      //// Important Constant ////
 
       //Acquire subsidy info
-      let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
-      let old_gas_balance = LibraAccount::balance<GAS::T>(sender);
+      // let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
+
+      // NOTE: Balance should be zero in this account at time of minting, because subsidies have
+      // been paid in previous step.
       Debug::print(&0x50B51DE0000000000000000000001002);
 
-      //Mint gas coin not returning the coin
-      let minted_coins = Libra::mint<GAS::T>(account, subsidy_info.subsidy_ceiling_gas);
+      // TODO: mint_subsidy needs LibraAccount Balance, but reconfig is failing because there is
+      // no balance initialized.
+      let minted_coins = Libra::mint<GAS::T>(account, subsidy_ceiling_gas);
       LibraAccount::deposit_to(account, minted_coins);
       Debug::print(&0x50B51DE0000000000000000000001003);
 
       //Check if balance is increased
       let new_gas_balance = LibraAccount::balance<GAS::T>(sender);
+      Debug::print(&new_gas_balance);
       Debug::print(&0x50B51DE0000000000000000000001004);
-      Transaction::assert(new_gas_balance == old_gas_balance + subsidy_info.subsidy_ceiling_gas, 8002);
+
+
+      // confirm transaction math.
+      // let old_gas_balance = LibraAccount::balance<GAS::T>(sender);
+      // Transaction::assert(new_gas_balance == old_gas_balance + subsidy_ceiling_gas, 8002);
     }
 
     // Method to calculate subsidy split for an epoch.

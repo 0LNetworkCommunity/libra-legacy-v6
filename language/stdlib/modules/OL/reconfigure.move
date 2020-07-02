@@ -102,7 +102,7 @@ address 0x0 {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
             // TODO: OL: N should be made constant in Genesis
             Debug::print(&0x12EC011F160000000000000000002001);
-            let (eligible_validators, _sum_of_all_validator_weights) = NodeWeight::top_n_accounts(account, get_validator_count_in_epoch());
+            let (eligible_validators, _sum_of_all_validator_weights) = NodeWeight::top_n_accounts(account, get_max_validator_count_const());
             Debug::print(&0x12EC011F160000000000000000002002);
 
             // Step 2: Call bulkUpdate module
@@ -114,6 +114,7 @@ address 0x0 {
             Debug::print(&0x12EC011F160000000000000000002004);
         }
 
+        //TODO: Reconfig::get_epoch_length is being called on every block, should not be.
         public fun get_epoch_length(): u64 acquires EpochInfo {
           Debug::print(&0x12EC011F160000000000000000003001);
 
@@ -122,7 +123,7 @@ address 0x0 {
             epochInfo.epoch_length
         }
 
-        public fun get_validator_count_in_epoch(): u64 acquires EpochInfo {
+        public fun get_max_validator_count_const(): u64 acquires EpochInfo {
           Debug::print(&0x12EC011F160000000000000000004001);
             // Get epoch info from association
             let epochInfo = borrow_global<EpochInfo>(0xA550C18);
