@@ -4,7 +4,7 @@ script {
     use 0x0::Vector;
     use 0x0::ValidatorUniverse;
     fun main(account: &signer, alice: address, bob: address, carol: address,
-            sha: address, _ram: address) {
+        sha: address, _ram: address) {
         // // Initialize the nodes as validators
         // ValidatorUniverse::add_validator(alice);
         // ValidatorUniverse::add_validator(bob);
