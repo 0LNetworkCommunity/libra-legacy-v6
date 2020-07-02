@@ -175,29 +175,67 @@ impl ClientProxy {
         })
     }
 
-    /// Send a VDF proof.
-    pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        ensure!(
-            space_delim_strings.len() != 6 ,
-            "Invalid number of arguments for sending proof"
-        );
+    /// Construct a new client for 0L purposes.
+    pub fn new_for_ol(
+        url: &str,
+        // sync_on_wallet_recovery: bool,
+        mnemonic_string: &str,
+        waypoint: Waypoint,
+    ) -> Result<Self> {
+        // fail fast if url is not valid
+        let url = Url::parse(url)?;
+        let mut client = LibraClient::new(url.clone(), waypoint)?;
 
-        println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
+        let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
+        let vec_addresses = wallet.get_addresses().unwrap();
 
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1])?;
+        let mut vec_account_data = Vec::new();
+        for address in vec_addresses {
+            vec_account_data.push(Self::get_account_data_from_address(
+                &mut client,
+                address,
+                false,
+                None,
+                None,
+            )?);
+        }
+
+        // TODO: try this for address_to_ref_id:  HashMap<AccountAddress, usize>
+        // let address_to_ref_id = vec_addresses
+        //     .iter()
+        //     .enumerate()
+        //     .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
+        //     .collect::<HashMap<AccountAddress, usize>>();
+
+        Ok(ClientProxy {
+            client,
+            accounts: vec_account_data, //Vec<AccountData>
+            address_to_ref_id, // TODO this is a different struct than addr_map
+            faucet_server: "".to_owned(),
+            faucet_account: None,
+            wallet, //wallet: WalletLibrary::Mnemonic::from(mnemonic_string)?,
+            sync_on_wallet_recovery: false, // sync_on_wallet_recovery,
+            temp_files: vec![]
+        })
+    }
+
+    /// 0L: submits a redeem transaction with the VDF proof.
+    pub fn execute_send_proof(
+        &mut self,
+        sender_address: AccountAddress,
+        challenge: Vec<u8>,
+        difficulty: u64,
+        proof: Vec<u8>,
+        is_blocking: bool
+        ) -> Result<()>{
+
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+
+
         let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
 
-        let challenge = space_delim_strings[2].as_bytes().to_vec();
-        let difficulty = space_delim_strings[3].parse::<u64>()?;
 
-        // TODO: determine how this will be serialized.
-        // Note: Was producing error because hex was being submitted and not decoded.
-        let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
-
-        // create the transaction script
+        // create the Redeem transaction script
         let script = Script::new(
             StdlibScript::Redeem.compiled_bytes().into_vec(),
             vec![],
@@ -212,21 +250,56 @@ impl ClientProxy {
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(script),
             &sender,
-            None,    /* max_gas_amount */
-            None,    /* gas_unit_price */
+            None, /* max_gas_amount */
+            None, /* gas_unit_price */
             None, /* gas_currency_code */
         )?;
 
         // Submit the transaction with the client proxy
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        let sender_account = self.accounts.get_mut(sender_ref_id);
+        &mut self.client.submit_transaction(sender_account, txn)?;
 
         // TODO: This was making the client fail.
-        // if is_blocking {
-        //     self.wait_for_transaction(sender_address, sequence_number)?;
-        // }
+        if is_blocking {
+            let sequence_number = self
+                .get_account_resource_and_update(sender_address)?
+                .sequence_number;
+            self.wait_for_transaction(sender_address, sequence_number)?;
+        }
+        Ok(())
+
+    }
+
+    /// 0L: Send a VDF proof from the Libra Shell with delimited strings
+    /// Wraps execute_send_proof
+    pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() != 6 ,
+            "Invalid number of arguments for sending proof"
+        );
+
+        println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1])?;
+
+        let challenge = space_delim_strings[2].as_bytes().to_vec();
+        let difficulty = space_delim_strings[3].parse::<u64>()?;
+
+        // TODO: determine how this will be serialized.
+        // Note: Was producing error because hex was being submitted and not decoded.
+        let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+
+        self.execute_send_proof(
+            sender_address,
+            challenge,
+            difficulty,
+            proof,
+            false
+        )?;
         Ok(())
     }
+
 
     fn get_account_ref_id(&self, sender_account_address: &AccountAddress) -> Result<usize> {
         Ok(*self

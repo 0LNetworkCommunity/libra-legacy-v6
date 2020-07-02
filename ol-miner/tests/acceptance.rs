@@ -22,6 +22,8 @@ use abscissa_core::testing::prelude::*;
 // use ol_miner::config::OlMinerConfig;
 use once_cell::sync::Lazy;
 use std::time::Duration;
+use libra_types::waypoint::Waypoint;
+use libra_crypto::hash::{CryptoHash, HashValue};
 
 /// Executes your application binary via `cargo run`.
 ///
@@ -41,8 +43,28 @@ fn start_no_args() {
         .timeout(Duration::new(1, 0))
         .capture_stdout()
         .run();
-    cmd.stdout().expect_line("Mining...");
+    cmd.stdout().expect_line("Enter your OL mnemonic");
+
+
 
     // TODO: This test fails because the miner runs in a loop, the process doesn't exit as expected.
     //cmd.wait().unwrap().expect_success();
+}
+
+#[test]
+fn test_waypoint_parsing() {
+    // let mut runner = RUNNER.clone();
+    // let mut cmd = runner
+    //     .arg("start")
+    //     .arg("--waypoint=0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b")
+    //     .timeout(Duration::new(1, 0))
+    //     .capture_stdout()
+    //     .run();
+    // cmd.stdout().expect_line("Enter your OL mnemonic");
+
+    let waypoint_str = "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b";
+
+    println!("waypoint \n{:?}", waypoint_str);
+    let parsed_waypoint: Waypoint = waypoint_str.parse().unwrap();
+    assert_eq!(waypoint_str, parsed_waypoint.to_string());
 }

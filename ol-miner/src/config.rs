@@ -115,6 +115,9 @@ pub struct ChainInfo {
     pub chain_id: String,
     /// Directory to store blocks in
     pub block_dir: String,
+    /// Node ip Address to submit transactions to
+    pub node: Option<String>,
+    pub base_waypoint: String,
 }
 
 // TODO: These defaults serving as test fixtures.
@@ -123,6 +126,9 @@ impl Default for ChainInfo {
         Self {
             chain_id: "Ol testnet".to_owned(),
             block_dir: "blocks".to_owned(),
+            base_waypoint: "None".to_owned(),
+            node: None,
+
         }
     }
 }

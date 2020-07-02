@@ -48,6 +48,13 @@ impl WalletLibrary {
         Self::new_from_mnemonic(mnemonic)
     }
 
+    pub fn new_from_string(s: &str) -> Self {
+        // let mut rng = OsRng;
+        // let data: [u8; 32] = rng.gen();
+        let mnemonic = Mnemonic::from(s).unwrap();
+        Self::new_from_mnemonic(mnemonic)
+    }
+
     /// Constructor that instantiates a new WalletLibrary from Mnemonic
     pub fn new_from_mnemonic(mnemonic: Mnemonic) -> Self {
         let seed = Seed::new(&mnemonic, "LIBRA");
