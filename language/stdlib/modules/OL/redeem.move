@@ -79,9 +79,17 @@ address 0x0 {
         init_in_process(miner);
       };
 
+      if (!has_miner_state(miner)) {
+        Debug::print(&0x00000012123123123);
+
+        init_miner_state(miner);
+      };
+
+
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
       let global_redemption_state = borrow_global_mut<MinerState>(default_redeem_address());
       let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
+
 
       let blob_redeemed = Vector::contains(&global_redemption_state.history, &vdf_proof_blob.solution);
       let blob_redeemed_miner = Vector::contains(&miner_redemption_state.history, &vdf_proof_blob.solution);
@@ -103,6 +111,7 @@ address 0x0 {
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid == true, 0100080002);
 
+
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
@@ -116,10 +125,8 @@ address 0x0 {
       };
 
       Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
-
       // Update MinerState
-      let miner_state = borrow_global_mut<MinerState>(miner_addr);
-      Vector::push_back(&mut miner_state.proofs, vdf_proof_blob);
+      Vector::push_back(&mut miner_redemption_state.proofs, vdf_proof_blob);
     }
 
     // Redeem::end_redeem() checks that the miner has been doing
@@ -177,6 +184,9 @@ address 0x0 {
         move_to<MinerState>( config_account, MinerState{ history: Vector::empty(),
                             proofs: Vector::empty(),
                             tower_height: 0u64 });
+
+        // move_to<MinerStateDup>( miner, MinerStateDup{ history: Vector::empty(), proofs: Vector::empty(), tower_height: 0u64});
+
     }
 
     fun default_redeem_address(): address {
@@ -187,12 +197,16 @@ address 0x0 {
        ::exists<InProcess>(Signer::address_of(miner))
     }
 
+    fun has_miner_state(miner: &signer): bool {
+       ::exists<MinerStateDup>(Signer::address_of(miner))
+    }
+
     fun init_in_process(miner: &signer){
         move_to<InProcess>( miner, InProcess{ tower_height: 0u64, proofs: Vector::empty()});
     }
 
     fun init_miner_state(miner: &signer){
-        move_to<MinerState>( miner, MinerState{ history: Vector::empty(), proofs: Vector::empty(), tower_height: 0u64});
+        move_to<MinerStateDup>( miner, MinerStateDup{ history: Vector::empty(), proofs: Vector::empty(), tower_height: 0u64});
     }
 
     // fun has(addr: address): bool {

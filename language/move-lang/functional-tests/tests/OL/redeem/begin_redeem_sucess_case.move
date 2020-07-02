@@ -4,10 +4,9 @@
 //! sender: alice
 script {
 use 0x0::Redeem;
-use 0x0::Transaction;
+// use 0x0::Transaction;
 
-fun main(sender: &signer) {
-
+fun main(sender: &signer) {    
     let difficulty = 100;
     let challenge = x"aa";
     // Generate solutions with cd ./verfiable-delay/ cargo run -- -l=4096 aa 100
@@ -17,8 +16,6 @@ fun main(sender: &signer) {
 
     // return solution
     let proof = Redeem::create_proof_blob(challenge, difficulty, solution, tower_height);
-    Transaction::assert(5 == 5, 1);
-
     Redeem::begin_redeem(sender, proof);
 
 }
