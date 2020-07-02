@@ -187,8 +187,11 @@ impl ClientProxy {
         let mut client = LibraClient::new(url.clone(), waypoint)?;
 
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
-        let vec_addresses = wallet.get_addresses().unwrap();
 
+        let vec_addresses = wallet.get_addresses().unwrap();
+        // Expect this to be zero before we haven't populated the address map in the repo
+        assert!(vec_addresses.len() ==0);
+        // Empty hashmap should be fine 
         let mut vec_account_data = Vec::new();
         for address in vec_addresses {
             vec_account_data.push(Self::get_account_data_from_address(
@@ -200,13 +203,7 @@ impl ClientProxy {
             )?);
         }
 
-        // TODO: try this for address_to_ref_id:  HashMap<AccountAddress, usize>
-        // let address_to_ref_id = vec_addresses
-        //     .iter()
-        //     .enumerate()
-        //     .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
-        //     .collect::<HashMap<AccountAddress, usize>>();
-
+        let address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
         Ok(ClientProxy {
             client,
             accounts: vec_account_data, //Vec<AccountData>
