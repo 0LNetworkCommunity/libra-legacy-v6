@@ -163,10 +163,18 @@ module Libra {
     // Fails if the sender does not have a published MintCapability.
     public fun mint<Token>(account: &signer, amount: u64): T<Token>
     acquires CurrencyInfo, MintCapability {
-        mint_with_capability(
-            amount,
-            borrow_global<MintCapability<Token>>(Signer::address_of(account))
-        )
+        let sender = Signer::address_of(account);
+        if(sender == 0x0) {
+            mint_with_capability(
+                amount,
+                borrow_global<MintCapability<Token>>(0xA550C18)
+            )
+        } else {
+            mint_with_capability(
+                amount,
+                borrow_global<MintCapability<Token>>(sender)
+            )
+        }
     }
 
     // Burn the coins currently held in the preburn holding area under `preburn_address`.
@@ -175,10 +183,19 @@ module Libra {
         account: &signer,
         preburn_address: address
     ) acquires BurnCapability, CurrencyInfo, Preburn {
-        burn_with_capability(
-            preburn_address,
-            borrow_global<BurnCapability<Token>>(Signer::address_of(account))
-        )
+        let sender = Signer::address_of(account);
+        if(sender == 0x0) {
+            burn_with_capability(
+                preburn_address,
+                borrow_global<BurnCapability<Token>>(0xA550C18)
+            )
+        } else {
+            burn_with_capability(
+                preburn_address,
+                borrow_global<BurnCapability<Token>>(sender)
+            )
+        }
+        
     }
 
     // Cancel the oldest burn request from `preburn_address`

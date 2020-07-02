@@ -59,22 +59,29 @@ address 0x0 {
       // NOTE: Balance should be zero in this account at time of minting, because subsidies have
       // been paid in previous step.
       Debug::print(&0x50B51DE0000000000000000000001002);
+      //Debug::print(account);
+
+      let old_gas_balance = LibraAccount::balance<GAS::T>(0xA550C18);
 
       // TODO: mint_subsidy needs LibraAccount Balance, but reconfig is failing because there is
       // no balance initialized.
       let minted_coins = Libra::mint<GAS::T>(account, subsidy_ceiling_gas);
-      LibraAccount::deposit_to(account, minted_coins);
+      LibraAccount::vm_deposit_with_metadata<GAS::T>(
+        account,
+        0xA550C18,
+        minted_coins,
+        x"", x""
+      );
       Debug::print(&0x50B51DE0000000000000000000001003);
 
       //Check if balance is increased
-      let new_gas_balance = LibraAccount::balance<GAS::T>(sender);
+      let new_gas_balance = LibraAccount::balance<GAS::T>(0xA550C18);
       Debug::print(&new_gas_balance);
       Debug::print(&0x50B51DE0000000000000000000001004);
 
 
       // confirm transaction math.
-      // let old_gas_balance = LibraAccount::balance<GAS::T>(sender);
-      // Transaction::assert(new_gas_balance == old_gas_balance + subsidy_ceiling_gas, 8002);
+      Transaction::assert(new_gas_balance == old_gas_balance + subsidy_ceiling_gas, 8002);
     }
 
     // Method to calculate subsidy split for an epoch.
