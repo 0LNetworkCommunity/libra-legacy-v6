@@ -39,8 +39,8 @@ address 0x0 {
         contiguous_epochs_validating_and_mining: u64,
     }
 
-    resource struct InProcess {
-        verified_tower_height: u64, // user's latest verified_tower_height
+    resource struct ProofsInEpoch { // every proof since the last epoch.
+        verified_tower_height: u64, // don't need this here
         proofs: vector<VdfProofBlob>
     }
 
@@ -53,9 +53,9 @@ address 0x0 {
     //    borrow_global_mut<T>(default_redeem_address()).verified_tower_height
     // }
 
-    public fun get_miner_tower_height(miner_addr: address): u64 acquires InProcess {
+    public fun get_miner_tower_height(miner_addr: address): u64 acquires ProofsInEpoch {
       // NOTE: Should get tower height from global.
-       borrow_global_mut<InProcess>(miner_addr).verified_tower_height
+       borrow_global_mut<ProofsInEpoch>(miner_addr).verified_tower_height
     }
 
     // public fun increment_tower_height() acquires T {
@@ -63,8 +63,10 @@ address 0x0 {
     //    t.verified_tower_height = t.verified_tower_height + 1;
     // }
 
-    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, MinerStateDup, InProcess {
+    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, MinerStateDup, ProofsInEpoch {
       // check if the miner's state is initialized
+      // check if it's the first vdf proof, and if so, use the challenge to confirm the miner address.
+
       // add redeem attempt to invalid_proof_history, which will later be popped if successful.
       // check if this proof has been submitted before.
       // verify the proof.
@@ -127,9 +129,9 @@ address 0x0 {
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
       ValidatorUniverse::add_validator( miner_addr );
 
-      // Update InProcess
-      // If successfully verified, store a proof blob in a transitional resource InProcess
-      let in_process = borrow_global_mut<InProcess>(miner_addr);
+      // Update ProofsInEpoch
+      // If successfully verified, store a proof blob in a transitional resource ProofsInEpoch
+      let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
       if(in_process.verified_tower_height < vdf_proof_blob.reported_tower_height) {
             in_process.verified_tower_height + 1;  //update miner's on-chain verified_tower_height
       };
@@ -142,7 +144,7 @@ address 0x0 {
     // Redeem::end_redeem() checks that the miner has been doing
     // validation AND that there are mining proofs presented in the last/current epoch.
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
-    public fun end_redeem(redeemed_addr: address) acquires InProcess {
+    public fun end_redeem(redeemed_addr: address) acquires ProofsInEpoch {
       // The goal of end_redeem is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
 
@@ -150,11 +152,11 @@ address 0x0 {
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
 
       // may not have been initialized
-      if( ! ::exists<InProcess>( redeemed_addr ) ){
+      if( ! ::exists<ProofsInEpoch>( redeemed_addr ) ){
         return // should not abort.
       };
       // Account may not have any proofs submitted recently.
-      let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
+      let in_process_redemption = borrow_global_mut<ProofsInEpoch>(redeemed_addr);
       let counts = Vector::length(&in_process_redemption.proofs);
       Transaction::assert(counts > 0, 0100080004);
 
@@ -169,7 +171,7 @@ address 0x0 {
 
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
-    acquires InProcess {
+    acquires ProofsInEpoch {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
 
@@ -199,7 +201,7 @@ address 0x0 {
     }
 
     fun has_in_process(miner: &signer): bool {
-       ::exists<InProcess>(Signer::address_of(miner))
+       ::exists<ProofsInEpoch>(Signer::address_of(miner))
     }
 
     fun has_miner_state(miner: &signer): bool {
@@ -207,7 +209,7 @@ address 0x0 {
     }
 
     fun init_in_process(miner: &signer){
-        move_to<InProcess>( miner, InProcess{ verified_tower_height: 0u64, proofs: Vector::empty()});
+        move_to<ProofsInEpoch>( miner, ProofsInEpoch{ verified_tower_height: 0u64, proofs: Vector::empty()});
     }
 
     fun init_miner_state(miner: &signer){
