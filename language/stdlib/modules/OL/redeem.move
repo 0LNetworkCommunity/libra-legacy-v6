@@ -144,7 +144,6 @@ address 0x0 {
 
       // Update ProofsInEpoch
       // If successfully verified, store a proof blob in a transitional resource ProofsInEpoch
-      // let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
       // if(in_process.verified_tower_height < vdf_proof_blob.reported_tower_height) {
       //       in_process.verified_tower_height + 1;  //update miner's on-chain verified_tower_height
       // };
@@ -154,6 +153,8 @@ address 0x0 {
       // NOTE: this is used by end_redeem
       miner_redemption_state.latest_epoch_mining = LibraConfig::get_current_epoch();
 
+      // prepare list of proofs in epoch for end of epoch statistics
+      let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
       Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
@@ -180,9 +181,13 @@ address 0x0 {
 
       //1. Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
+      // TODO: count the number of proofs in epoch, and don't count validation that is not credible.
+      // BODY: need to make this check more sophisticated. Placeholder for now.
+
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
       let counts = Vector::length(&proofs_in_epoch.proofs);
       Transaction::assert(counts > 0, 0100080004);
+      
       //2. Update the statistics.
       let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
       // TODO: get actual epoch number
@@ -198,6 +203,8 @@ address 0x0 {
         // reset
         miner_redemption_state.contiguous_epochs_validating_and_mining = 1
       };
+
+
       Debug::print(miner_redemption_state);
       // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
