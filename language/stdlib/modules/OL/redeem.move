@@ -136,6 +136,7 @@ address 0x0 {
       let removed_solution = Vector::pop_back(&mut miner_redemption_state.invalid_proof_history);
       Transaction::assert(&removed_solution == &vdf_proof_blob.solution, 0100080002);
 
+      // 6. Update resources and statistics.
       // add the correct proof
       Vector::push_back(&mut miner_redemption_state.verified_proof_history, *&vdf_proof_blob.solution);
 
@@ -143,10 +144,15 @@ address 0x0 {
 
       // Update ProofsInEpoch
       // If successfully verified, store a proof blob in a transitional resource ProofsInEpoch
-      let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
-      if(in_process.verified_tower_height < vdf_proof_blob.reported_tower_height) {
-            in_process.verified_tower_height + 1;  //update miner's on-chain verified_tower_height
-      };
+      // let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
+      // if(in_process.verified_tower_height < vdf_proof_blob.reported_tower_height) {
+      //       in_process.verified_tower_height + 1;  //update miner's on-chain verified_tower_height
+      // };
+
+      // increment the verified_tower_height
+      miner_redemption_state.verified_tower_height +1; // user's latest verified_tower_height
+      // NOTE: this is used by end_redeem
+      miner_redemption_state.latest_epoch_mining = LibraConfig::get_current_epoch();
 
       Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
       // Adds the address to the Validator Universe state. TBD if this is forever.
@@ -183,9 +189,9 @@ address 0x0 {
       let previous_epoch_which_mined = miner_redemption_state.latest_epoch_mining ;
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
-      miner_redemption_state.epochs_validating_and_mining +1;
+      miner_redemption_state.epochs_validating_and_mining + 1;
 
-      if (previous_epoch_which_mined - this_epoch == 1) {
+      if (previous_epoch_which_mined - this_epoch <= 1) {
         // increment if contiguous epochs
         miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
       } else {
