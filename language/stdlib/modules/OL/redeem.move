@@ -15,7 +15,7 @@ address 0x0 {
         challenge: vector<u8>,
         difficulty: u64,
         solution: vector<u8>,
-        tower_height: u64,
+        reported_tower_height: u64,
         epoch: u64,
     }
 
@@ -26,44 +26,54 @@ address 0x0 {
     // Saves all submitted proofs as a global variable.
     // This is going to be a very large blob. consider to save proof's hash to reduce disk spaces.
     resource struct MinerState {
-        history: vector<vector<u8>>,
-        proofs: vector<VdfProofBlob>,
-        tower_height: u64, // user's latest tower_height
-        // longest_epoch_streak: u64,
+        proof_history: vector<vector<u8>>,
     }
 
     resource struct MinerStateDup {
-        history: vector<vector<u8>>,
-        proofs: vector<VdfProofBlob>,
-        tower_height: u64, // user's latest tower_height
-        // longest_epoch_streak: u64,
+        verified_proof_history: vector<vector<u8>>,
+        invalid_proof_history: vector<vector<u8>>,
+        reported_tower_height: u64,
+        verified_tower_height: u64, // user's latest verified_tower_height
+        latest_epoch_mining: u64,
+        epochs_validating_and_mining: u64,
+        contiguous_epochs_validating_and_mining: u64,
     }
 
     resource struct InProcess {
-        tower_height: u64, // user's latest tower_height
+        verified_tower_height: u64, // user's latest verified_tower_height
         proofs: vector<VdfProofBlob>
     }
 
-    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>, tower_height: u64) : VdfProofBlob{
+    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64, solution: vector<u8>, reported_tower_height: u64) : VdfProofBlob{
        let epoch = LibraConfig::get_current_epoch();
-       VdfProofBlob {challenge, difficulty, solution, tower_height, epoch }
+       VdfProofBlob {challenge, difficulty, solution, reported_tower_height, epoch }
     }
 
     // public fun get_current_tower_height(): u64 acquires T {
-    //    borrow_global_mut<T>(default_redeem_address()).tower_height
+    //    borrow_global_mut<T>(default_redeem_address()).verified_tower_height
     // }
 
     public fun get_miner_tower_height(miner_addr: address): u64 acquires InProcess {
       // NOTE: Should get tower height from global.
-       borrow_global_mut<InProcess>(miner_addr).tower_height
+       borrow_global_mut<InProcess>(miner_addr).verified_tower_height
     }
 
     // public fun increment_tower_height() acquires T {
     //    let t = borrow_global_mut<T>(default_redeem_address());
-    //    t.tower_height = t.tower_height + 1;
+    //    t.verified_tower_height = t.verified_tower_height + 1;
     // }
 
     public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, MinerStateDup, InProcess {
+      // check if the miner's state is initialized
+      // add redeem attempt to invalid_proof_history, which will later be popped if successful.
+      // check if this proof has been submitted before.
+      // verify the proof.
+      // update the miner's state with pending statistics.
+
+      //after validation
+      // check that there was mining and validating in period.
+      // update the statistics.
+
 
       let miner_addr = Signer::address_of( miner );
 
@@ -91,8 +101,8 @@ address 0x0 {
       let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
 
 
-      let blob_redeemed = Vector::contains(&global_redemption_state.history, &vdf_proof_blob.solution);
-      let blob_redeemed_miner = Vector::contains(&miner_redemption_state.history, &vdf_proof_blob.solution);
+      let blob_redeemed = Vector::contains(&global_redemption_state.proof_history, &vdf_proof_blob.solution);
+      let blob_redeemed_miner = Vector::contains(&miner_redemption_state.verified_proof_history, &vdf_proof_blob.solution);
 
 
       Transaction::assert(blob_redeemed == false, 0100080001);
@@ -103,8 +113,8 @@ address 0x0 {
       //    Debug::print(0100080005);
       // }
       // Should also surface to client since ClientProxy for submit redeem tx is async.
-      Vector::push_back(&mut global_redemption_state.history, *&vdf_proof_blob.solution);
-      Vector::push_back(&mut miner_redemption_state.history, *&vdf_proof_blob.solution);
+      Vector::push_back(&mut global_redemption_state.proof_history, *&vdf_proof_blob.solution);
+      Vector::push_back(&mut miner_redemption_state.verified_proof_history, *&vdf_proof_blob.solution);
 
       // The main point of this Redeem: Checks that the user did run the delay (VDF).
       // Calling Verify() to check the validity of Blob
@@ -120,13 +130,13 @@ address 0x0 {
       // Update InProcess
       // If successfully verified, store a proof blob in a transitional resource InProcess
       let in_process = borrow_global_mut<InProcess>(miner_addr);
-      if(in_process.tower_height < vdf_proof_blob.tower_height) {
-            in_process.tower_height = vdf_proof_blob.tower_height;  //update miner's on-chain tower_height
+      if(in_process.verified_tower_height < vdf_proof_blob.reported_tower_height) {
+            in_process.verified_tower_height + 1;  //update miner's on-chain verified_tower_height
       };
 
       Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
       // Update MinerState
-      Vector::push_back(&mut miner_redemption_state.proofs, vdf_proof_blob);
+      Vector::push_back(&mut miner_redemption_state.verified_proof_history, *&vdf_proof_blob.solution);
     }
 
     // Redeem::end_redeem() checks that the miner has been doing
@@ -139,17 +149,14 @@ address 0x0 {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 0100080003);
 
+      // may not have been initialized
       if( ! ::exists<InProcess>( redeemed_addr ) ){
         return // should not abort.
       };
-
       // Account may not have any proofs submitted recently.
       let in_process_redemption = borrow_global_mut<InProcess>(redeemed_addr);
       let counts = Vector::length(&in_process_redemption.proofs);
       Transaction::assert(counts > 0, 0100080004);
-
-      // TODO: Calls Stats module to check that pubkey was engaged in consensus, that the n% liveness above.
-      // Stats(pubkey, block)
 
       // TODO: add a check for proof existing in current Epoch. Also counts that the minimum amount of VDFs were completed during a time (cannot submit proofs that were done concurrently with same information on different CPUs).
       // TBD
@@ -180,12 +187,10 @@ address 0x0 {
     // It can only be called a single time in the genesis transaction.
     public fun initialize(config_account: &signer) {
         //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
-        // move_to<T>( config_account, T{ tower_height: 0 });
-        move_to<MinerState>( config_account, MinerState{ history: Vector::empty(),
-                            proofs: Vector::empty(),
-                            tower_height: 0u64 });
+        // move_to<T>( config_account, T{ verified_tower_height: 0 });
+        move_to<MinerState>( config_account, MinerState{ proof_history: Vector::empty() });
 
-        // move_to<MinerStateDup>( miner, MinerStateDup{ history: Vector::empty(), proofs: Vector::empty(), tower_height: 0u64});
+        // move_to<MinerStateDup>( miner, MinerStateDup{ proof_history: Vector::empty(), proofs: Vector::empty(), verified_tower_height: 0u64});
 
     }
 
@@ -202,11 +207,19 @@ address 0x0 {
     }
 
     fun init_in_process(miner: &signer){
-        move_to<InProcess>( miner, InProcess{ tower_height: 0u64, proofs: Vector::empty()});
+        move_to<InProcess>( miner, InProcess{ verified_tower_height: 0u64, proofs: Vector::empty()});
     }
 
     fun init_miner_state(miner: &signer){
-        move_to<MinerStateDup>( miner, MinerStateDup{ history: Vector::empty(), proofs: Vector::empty(), tower_height: 0u64});
+        move_to<MinerStateDup>(miner, MinerStateDup{
+          verified_proof_history: Vector::empty(),
+          invalid_proof_history: Vector::empty(),
+          reported_tower_height: 0u64,
+          verified_tower_height: 0u64, // user's latest verified_tower_height
+          latest_epoch_mining: 0u64,
+          epochs_validating_and_mining: 0u64,
+          contiguous_epochs_validating_and_mining: 0u64,
+        });
     }
 
     // fun has(addr: address): bool {
