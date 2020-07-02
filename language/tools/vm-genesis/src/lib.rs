@@ -35,7 +35,7 @@ use vm::access::ModuleAccess;
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
 
-const GENESIS_MODULE_NAME: &str = "Genesis";
+const GENESIS_MODULE_NAME: &str = "GenesisOL";
 
 pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::new(|| {
     let mut rng = StdRng::from_seed(GENESIS_SEED);
