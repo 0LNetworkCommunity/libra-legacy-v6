@@ -19,17 +19,7 @@ address 0x0 {
         epoch: u64,
     }
 
-    // resource struct T {
-    //     tower_height: u64, // current tower_height of the network
-    // }
-
-    // Saves all submitted proofs as a global variable.
-    // This is going to be a very large blob. consider to save proof's hash to reduce disk spaces.
-    // resource struct MinerState {
-    //     proof_history: vector<vector<u8>>,
-    // }
-
-    resource struct MinerStateDup {
+    resource struct MinerState {
         verified_proof_history: vector<vector<u8>>,
         invalid_proof_history: vector<vector<u8>>,
         reported_tower_height: u64,
@@ -49,42 +39,34 @@ address 0x0 {
        VdfProofBlob { challenge, difficulty, solution, reported_tower_height, epoch }
     }
 
-    // public fun get_current_tower_height(): u64 acquires T {
-    //    borrow_global_mut<T>(default_redeem_address()).verified_tower_height
-    // }
-
-    public fun get_miner_tower_height(miner_addr: address): u64 acquires ProofsInEpoch {
+    public fun get_miner_tower_height(miner_addr: address): u64 acquires MinerState {
       // NOTE: Should get tower height from global.
-       borrow_global_mut<ProofsInEpoch>(miner_addr).verified_tower_height
+       borrow_global_mut<MinerState>(miner_addr).verified_tower_height
     }
 
-    // public fun increment_tower_height() acquires T {
-    //    let t = borrow_global_mut<T>(default_redeem_address());
-    //    t.verified_tower_height = t.verified_tower_height + 1;
-    // }
+    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
+      Debug::print(&0x12edee11100000000000000000001000);
 
-    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerStateDup, ProofsInEpoch {
       //0. Check for errors
       let miner_addr = Signer::address_of( miner );
       // Check difficulty is correct
       // will be different in tests than in production.
+      //// IMPORTANT CONSTANT ////
+      // TODO: Difficulty constant needs to switch between test configuration and production.
       let difficulty_constant = 100u64;
+      //// IMPORTANT CONSTANT ////
+
       Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 0100080001);
 
       // 1. check if the miner's state is initialized
       // Insert a new VdfProofBlob into a temp storage, while
       // Save all of miner's proofs to the its own address, including the first proof sent by someone else.
-      if (!has_in_process(miner)) {
-        // this may be the first time the miner is redeeming.
-        // check if it is the genesis tower proof.
-        // the challenge should be easily parsed by the bitlength.
-        // TODO: check the first challenge.
 
-        // TODO: initialize miner state in miner account.
+      // this may be the first time the miner is redeeming. If so, both resources are uninitialized.
+      if (!::exists<ProofsInEpoch>(miner_addr)) {
         init_in_process(miner);
       };
-
-      if (!has_miner_state(miner)) {
+      if (!::exists<MinerState>(miner_addr)) {
         init_miner_state(miner);
       };
 
@@ -105,25 +87,17 @@ address 0x0 {
 
       // 2. check if this proof has been submitted before.
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
-      // let global_redemption_state = borrow_global_mut<MinerState>(default_redeem_address());
-      let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
+      let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
 
+      let is_previously_submitted_proof = Vector::contains(&miner_redemption_state.verified_proof_history, &vdf_proof_blob.solution);
+      Transaction::assert(is_previously_submitted_proof == false, 0100080002);
+      let is_previously_submitted_invalid_proof = Vector::contains(&miner_redemption_state.invalid_proof_history, &vdf_proof_blob.solution);
+      Transaction::assert(is_previously_submitted_invalid_proof == false, 0100080002);
 
-      // let blob_redeemed = Vector::contains(&global_redemption_state.proof_history, &vdf_proof_blob.solution);
-      let blob_redeemed_miner = Vector::contains(&miner_redemption_state.verified_proof_history, &vdf_proof_blob.solution);
-      let blob_redeemed_miner_invalid = Vector::contains(&miner_redemption_state.invalid_proof_history, &vdf_proof_blob.solution);
-
-
-      // Transaction::assert(blob_redeemed == false, 0100080001);
-      Transaction::assert(blob_redeemed_miner == false, 0100080002);
-      Transaction::assert(blob_redeemed_miner_invalid == false, 0100080002);
-
-      // 3. Add redeem attempt to invalid_proof_history, which will later be popped if successful.
+      // 3. Add redeem attempt to invalid_proof_history, which will later be removed with successful verification.
       // Should also surface to client since ClientProxy for submit redeem tx is async.
       // Vector::push_back(&mut global_redemption_state.proof_history, *&vdf_proof_blob.solution);
-
       Vector::push_back(&mut miner_redemption_state.invalid_proof_history, *&vdf_proof_blob.solution);
-
 
       // 4. Verify the proof.
       // The main point of this Redeem: Checks that the user did run the delay (VDF).
@@ -140,14 +114,6 @@ address 0x0 {
       // add the correct proof
       Vector::push_back(&mut miner_redemption_state.verified_proof_history, *&vdf_proof_blob.solution);
 
-
-
-      // Update ProofsInEpoch
-      // If successfully verified, store a proof blob in a transitional resource ProofsInEpoch
-      // if(in_process.verified_tower_height < vdf_proof_blob.reported_tower_height) {
-      //       in_process.verified_tower_height + 1;  //update miner's on-chain verified_tower_height
-      // };
-
       // increment the verified_tower_height
       miner_redemption_state.verified_tower_height +1; // user's latest verified_tower_height
       // NOTE: this is used by end_redeem
@@ -160,13 +126,14 @@ address 0x0 {
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
       ValidatorUniverse::add_validator( miner_addr );
-
     }
 
     // Redeem::end_redeem() checks that the miner has been doing
     // validation AND that there are mining proofs presented in the last/current epoch.
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
-    public fun end_redeem(miner_addr: address) acquires ProofsInEpoch, MinerStateDup {
+    public fun end_redeem(miner_addr: address) acquires ProofsInEpoch, MinerState {
+      Debug::print(&0x12edee11100000000000000000002000);
+
       // The goal of end_redeem is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
       //0. Check for errors and authorization
@@ -177,20 +144,17 @@ address 0x0 {
       if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
         return // should not abort.
       };
-
-
       //1. Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
-      // TODO: count the number of proofs in epoch, and don't count validation that is not credible.
-      // BODY: need to make this check more sophisticated. Placeholder for now.
 
+      // TODO: Redeem.move count the number of proofs in epoch, and don't count validation that is not credible.
+      // BODY: need to make this check more sophisticated. Placeholder for now.
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
       let counts = Vector::length(&proofs_in_epoch.proofs);
       Transaction::assert(counts > 0, 0100080004);
 
       //2. Update the statistics.
-      let miner_redemption_state= borrow_global_mut<MinerStateDup>(miner_addr);
-      // TODO: get actual epoch number
+      let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
       let previous_epoch_which_mined = miner_redemption_state.latest_epoch_mining ;
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
@@ -203,9 +167,6 @@ address 0x0 {
         // reset
         miner_redemption_state.contiguous_epochs_validating_and_mining = 1
       };
-
-
-      Debug::print(miner_redemption_state);
       // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
       proofs_in_epoch.proofs = Vector::empty();
@@ -213,7 +174,9 @@ address 0x0 {
 
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
-    acquires ProofsInEpoch, MinerStateDup {
+    acquires ProofsInEpoch, MinerState {
+      Debug::print(&0x12edee11100000000000000000003000);
+
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
 
@@ -229,33 +192,25 @@ address 0x0 {
     // Initialize the module and state. This can only be invoked by the default system address to instantiate
     // the resource under that address.
     // It can only be called a single time in the genesis transaction.
-    public fun initialize(_config_account: &signer) {
-        //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
-        // move_to<T>( config_account, T{ verified_tower_height: 0 });
-        // move_to<MinerState>( config_account, MinerState{ proof_history: Vector::empty() });
-
-        // move_to<MinerStateDup>( miner, MinerStateDup{ proof_history: Vector::empty(), proofs: Vector::empty(), verified_tower_height: 0u64});
-
-    }
+    // public fun initialize(_config_account: &signer) {
+    //     //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
+    //     // move_to<T>( config_account, T{ verified_tower_height: 0 });
+    //     // move_to<MinerState>( config_account, MinerState{ proof_history: Vector::empty() });
+    //
+    //     // move_to<MinerState>( miner, MinerState{ proof_history: Vector::empty(), proofs: Vector::empty(), verified_tower_height: 0u64});
+    //
+    // }
 
     // fun default_redeem_address(): address {
     //     0xA550C18
     // }
 
-    fun has_in_process(miner: &signer): bool {
-       ::exists<ProofsInEpoch>(Signer::address_of(miner))
-    }
-
-    fun has_miner_state(miner: &signer): bool {
-       ::exists<MinerStateDup>(Signer::address_of(miner))
-    }
-
     fun init_in_process(miner: &signer){
-        move_to<ProofsInEpoch>( miner, ProofsInEpoch{ verified_tower_height: 0u64, proofs: Vector::empty()});
+        move_to<ProofsInEpoch>( miner, ProofsInEpoch{proofs: Vector::empty()});
     }
 
     fun init_miner_state(miner: &signer){
-        move_to<MinerStateDup>(miner, MinerStateDup{
+        move_to<MinerState>(miner, MinerState{
           verified_proof_history: Vector::empty(),
           invalid_proof_history: Vector::empty(),
           reported_tower_height: 0u64,
