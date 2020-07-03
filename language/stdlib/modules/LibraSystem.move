@@ -320,8 +320,7 @@ module LibraSystem {
                   is_validator(account_address))
             });
 
-            //NOTE: Move this to Redeem
-            // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+            // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
             // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
         };
