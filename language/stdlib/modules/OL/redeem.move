@@ -43,6 +43,11 @@
        borrow_global<MinerState>(miner_addr).verified_tower_height
     }
 
+    public fun get_miner_epochs(miner_addr: address): u64 acquires MinerState {
+      // Get tower height from miner's state.
+       borrow_global<MinerState>(miner_addr).epochs_validating_and_mining
+    }
+
     public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
       Debug::print(&0x12edee11100000000000000000001000);
 
@@ -70,6 +75,15 @@
       };
 
       //TODO: advanced check before initializing state, chech the tower belongs to the miner.
+      // FROM OL-miner:
+      // preimage.len()
+      //     == (
+      //         32 // OL Key
+      //         +64 // chain_id
+      //         +8 // iterations/difficulty
+      //         +1024
+      //         // statement
+      //     ),
       // if (!has_miner_state(miner)) {
       //   Debug::print(&0x00000012123123123);
       //     // check if it's the first vdf proof, and if so, use the challenge to confirm the miner address.
@@ -124,7 +138,7 @@
       Debug::print(&0x12edee11100000000000000000001002);
 
       // increment the verified_tower_height
-      miner_redemption_state.verified_tower_height + 1; // user's latest verified_tower_height
+      miner_redemption_state.verified_tower_height = miner_redemption_state.verified_tower_height + 1; // user's latest verified_tower_height
       // NOTE: this is used by end_redeem
       miner_redemption_state.latest_epoch_mining = LibraConfig::get_current_epoch();
       Debug::print(&0x12edee11100000000000000000001003);
@@ -135,6 +149,7 @@
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
+
       ValidatorUniverse::add_validator( miner_addr );
       Debug::print(&0x12edee11100000000000000000001004);
 
@@ -156,6 +171,8 @@
       if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
         return // should not abort.
       };
+      Debug::print(&0x12edee11100000000000000000002001);
+
       //1. Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
 
@@ -164,21 +181,30 @@
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
       let counts = Vector::length(&proofs_in_epoch.proofs);
       Transaction::assert(counts > 0, 100080007);
+      Debug::print(&0x12edee11100000000000000000002002);
 
       //2. Update the statistics.
       let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
-      let previous_epoch_which_mined = miner_redemption_state.latest_epoch_mining ;
+      let previous_epoch_which_mined = miner_redemption_state.latest_epoch_mining;
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
-      miner_redemption_state.epochs_validating_and_mining + 1;
+      miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
+
+      // NOTE: this is duplicate data because calling Redeem from Validator universe causes a dependency cycling error.
+      ValidatorUniverse::update_validator_epoch_count(miner_addr);
+
+      Debug::print(&0x12edee11100000000000000000002003);
 
       if (previous_epoch_which_mined - this_epoch <= 1) {
         // increment if contiguous epochs
-        miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
+        miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
       } else {
         // reset
-        miner_redemption_state.contiguous_epochs_validating_and_mining = 1
+        miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
       };
+
+      Debug::print(&0x12edee11100000000000000000002004);
+
       // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
       proofs_in_epoch.proofs = Vector::empty();

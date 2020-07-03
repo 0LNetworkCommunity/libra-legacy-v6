@@ -29,10 +29,10 @@ address 0x0 {
 
       // Base Case: The universe of validators is under the limit of the BFT consensus.
       // If n is greater than or equal to accounts vector length - return the vector.
-      if(length<=n)
+      if(length <= n)
         return (eligible_validators, ValidatorUniverse::get_total_voting_power());
 
-      // Vector to store the addrees's node_weight
+      // Vector to store each address's node_weight
       let weights = Vector::empty<u64>();
       let total_voting_power = 0;
       let k = 0;
