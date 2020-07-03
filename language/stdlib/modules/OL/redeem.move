@@ -149,6 +149,7 @@ address 0x0 {
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
+
       ValidatorUniverse::add_validator( miner_addr );
       Debug::print(&0x12edee11100000000000000000001004);
 
@@ -188,6 +189,10 @@ address 0x0 {
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
       miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
+
+      // NOTE: this is duplicate data because calling Redeem from Validator universe causes a dependency cycling error.
+      ValidatorUniverse::update_validator_epoch_count(miner_addr);
+
       Debug::print(&0x12edee11100000000000000000002003);
 
       if (previous_epoch_which_mined - this_epoch <= 1) {

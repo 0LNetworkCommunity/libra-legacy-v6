@@ -6,6 +6,9 @@ address 0x0 {
     use 0x0::FixedPoint32;
     use 0x0::Stats;
     use 0x0::Option;
+    // use 0x0::LibraSystem;
+
+
     // use 0x0::Redeem;
 
 
@@ -106,7 +109,10 @@ address 0x0 {
 
     // This function is the Proof of Weight. This is what calculates the values
     // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
-    public fun proof_of_weight(addr: address, epoch_length:u64, current_block_height: u64): u64 acquires ValidatorUniverse{
+    public fun proof_of_weight(addr: address,
+      epoch_length:u64,
+      current_block_height: u64,
+      is_outgoing_validator: bool): u64 acquires ValidatorUniverse {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
@@ -126,20 +132,22 @@ address 0x0 {
       // And are also validators withithin our liveness requirements.
       // mining_epoch_count is many continuous epochs has the validator submitted VDF proofs for.
 
-      // 1. Get mining statistics from MinerState.
-      let weight = get_validator_weight(addr);
+      // 2A. Get mining statistics from MinerState.
+
+      // NOTE: this is duplicate data because calling Redeem from Validator universe causes a dependency cycling error.
+      let weight = validatorInfo.mining_epoch_count;
 
 
-      // Validator cannot join next round, if failed liveness requirements in outgoing epoch.
-      // Algorithim will pick them up on the following epoch.
-      // NOTE: check that this is only evaluating past validators.
-      // if (is validating in this epoch){
-      // and failed to do the liveness requirements.
-      if (!check_if_active_validator({{validatorInfo.validator_address}}, epoch_length, current_block_height))
-      {
-        weight = 0
+      // 2B. Check if failed liveness requirements in outgoing epoch.
+      // Validator cannot join immediate next epoch, but algorithim will pick them up on the following epoch.
+
+      // let is_in_outgoing_validator_set = Vector::contains(&outgoing_validators, &addr);
+      if (is_outgoing_validator) {
+        if (!check_if_active_validator({{validatorInfo.validator_address}}, epoch_length,
+                                      current_block_height)) {
+          weight = 0
+        };
       };
-      //}
 
       // NOTE: This resource, weight is not necessary. Perhaps keep as a convenience.
       validatorInfo.weight = weight;

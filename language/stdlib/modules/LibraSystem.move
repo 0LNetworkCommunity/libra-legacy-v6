@@ -313,11 +313,16 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: ValidatorUniverse::proof_of_weight(account_address, epoch_length, current_block_height)
+                consensus_voting_power: ValidatorUniverse::proof_of_weight(
+                  account_address,
+                  epoch_length,
+                  current_block_height,
+                  is_validator(account_address))
             });
 
+            //NOTE: Move this to Redeem
             // Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
-            ValidatorUniverse::update_validator_epoch_count(account_address);
+            // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
         };
 
