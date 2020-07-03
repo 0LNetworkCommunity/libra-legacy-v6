@@ -236,6 +236,47 @@
       };
     }
 
+    // public fun make_account_from_keys () {
+    //
+    //   fun make_account<Token, RoleData: copyable>(
+    //       new_account: signer,
+    //       auth_key_prefix: vector<u8>,
+    //       role_data: RoleData,
+    //       add_all_currencies: bool
+    //     );
+    // };
+
+    public fun first_challenge_matches_address(add: vector<u8>, challenge: vector<u8>) {
+      let hex_len =
+              32 // OL Key
+              +64 // chain_id
+              +8 // iterations/difficulty
+              +1024; // statement
+
+      Debug::print(&hex_len);
+      Debug::print(&add);
+
+
+      Debug::print(&challenge);
+
+      // let test = Vector::borrow(&mut challenge, 1);
+      // Debug::print(test);
+
+      let _size = Vector::length(&challenge);
+
+      let new_hex = Vector::empty<u8>();
+      let i = 0;
+      while (i < 16) {
+        let test = *Vector::borrow(&challenge, i);
+        Vector::push_back(&mut new_hex, *&test);
+        Debug::print(&test);
+
+        i = i + 1;
+      };
+
+      Debug::print(&new_hex);
+      Debug::print(&add);
+    }
     // Initialize the module and state. This can only be invoked by the default system address to instantiate
     // the resource under that address.
     // It can only be called a single time in the genesis transaction.
