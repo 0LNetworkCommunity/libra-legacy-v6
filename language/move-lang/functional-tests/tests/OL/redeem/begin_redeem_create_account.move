@@ -17,7 +17,8 @@ fun main(sender: &signer) {
   let auth_key_prefix = x"232fb6ae7221c853232fb6ae7221c853";
 
   // Redeem::first_challenge_matches_address(add, challenge);
-
+  // GOAL: it would be ideal that these accounts could be created by any Alice, for any Bob, i.e.
+  // if it didn't need to be the association or system account.
   LibraAccount::create_validator_account<GAS::T>(sender, new_account_address, auth_key_prefix);
 }
 }

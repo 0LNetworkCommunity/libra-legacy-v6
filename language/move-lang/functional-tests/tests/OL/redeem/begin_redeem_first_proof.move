@@ -1,4 +1,4 @@
-// Test that validator accounts can be created from account addresses.
+// GOAL: To check that the preimage/challenge of a VDF proof contains a given address.
 
 // Prepare the state for the next test.
 // Bob Submits a CORRECT VDF Proof, and that updates the state.

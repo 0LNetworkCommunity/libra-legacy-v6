@@ -247,6 +247,8 @@
     // };
 
     public fun first_challenge_includes_address(new_account_address: address, challenge: vector<u8>) {
+      // GOAL: To check that the preimage/challenge of a VDF proof contains a given address.
+
       let hex_len =
               32 // OL Key
               +64 // chain_id
@@ -256,8 +258,6 @@
       // Debug::print(&new_account_address);
       Debug::print(&hex_len);
       // Debug::print(&add);
-
-
       Debug::print(&challenge);
 
       // let test = Vector::borrow(&mut challenge, 1);
