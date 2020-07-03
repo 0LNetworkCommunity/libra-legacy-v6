@@ -201,8 +201,8 @@
 
           Debug::print(&redeemed_addr);
 
-          // For testing: don't call end_redeem because there may not be any account state for the address.
-          if ( ::exists<InProcess>( redeemed_addr ) ){
+          // For testing: don't call end_redeem unless there is account state for the address.
+          if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
               end_redeem(redeemed_addr);
               Debug::print(&0x12EDEE11100000000000000000001005);
           };
