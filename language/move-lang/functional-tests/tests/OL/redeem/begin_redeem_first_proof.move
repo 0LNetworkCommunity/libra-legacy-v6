@@ -7,18 +7,17 @@
 //! new-transaction
 //! sender: association
 script {
-// use 0x0::Redeem;
-use 0x0::LibraAccount;
-use 0x0::GAS;
+use 0x0::Redeem;
 
-fun main(sender: &signer) {
-  let _challenge = x"232fb6ae7221c853232fb6ae7221c8538765432123";
+fun main() {
+  //NOTE: A valid ed25519 pubkey is 64 byte hex.
+  //NOTE: A libra address is 32 byte hex.
+
+  let challenge = x"232fb6ae7221c853232fb6ae7221c853232fb6ae7221c853232fb6ae7221c853";
   let new_account_address = 0x232fb6ae7221c853232fb6ae7221c853;
-  let auth_key_prefix = x"232fb6ae7221c853232fb6ae7221c853";
+  // let auth_key_prefix = x"b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde";
 
-  // Redeem::first_challenge_matches_address(add, challenge);
-
-  LibraAccount::create_validator_account<GAS::T>(sender, new_account_address, auth_key_prefix);
+  Redeem::first_challenge_includes_address(new_account_address, challenge);
 }
 }
 // check: EXECUTED

@@ -246,15 +246,16 @@
     //     );
     // };
 
-    public fun first_challenge_matches_address(add: vector<u8>, challenge: vector<u8>) {
+    public fun first_challenge_includes_address(new_account_address: address, challenge: vector<u8>) {
       let hex_len =
               32 // OL Key
               +64 // chain_id
               +8 // iterations/difficulty
               +1024; // statement
 
+      // Debug::print(&new_account_address);
       Debug::print(&hex_len);
-      Debug::print(&add);
+      // Debug::print(&add);
 
 
       Debug::print(&challenge);
@@ -275,7 +276,7 @@
       };
 
       Debug::print(&new_hex);
-      Debug::print(&add);
+      Debug::print(&new_account_address);
     }
     // Initialize the module and state. This can only be invoked by the default system address to instantiate
     // the resource under that address.
