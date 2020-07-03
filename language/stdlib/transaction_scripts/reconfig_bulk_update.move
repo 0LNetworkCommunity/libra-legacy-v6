@@ -21,7 +21,7 @@ script {
 
         // LibraSystem::bulk_update_validators(account, vec, 15, 19);
 
-        // Tests on initial size of validators 
+        // Tests on initial size of validators
         // 15 because the e2e test framework is initialized with 10 validators
         Transaction::assert(LibraSystem::validator_set_size() == 15, 1000);
         Transaction::assert(LibraSystem::is_validator(sha) == true, 98);

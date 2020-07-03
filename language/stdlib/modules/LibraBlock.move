@@ -9,7 +9,7 @@ module LibraBlock {
     use 0x0::Vector;
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
-    
+
     resource struct BlockMetadata {
       // Height of the current block
       height: u64,
@@ -67,8 +67,8 @@ module LibraBlock {
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
 
         // OL implementation of reconfiguration.
-        // TODO : This should be intialized as Constant
-        if ( round == ReconfigureOL::get_epoch_length() ) 
+        if ( round == ReconfigureOL::get_epoch_length() )
+          // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata.
           ReconfigureOL::reconfigure(vm, get_current_block_height());
     }
 

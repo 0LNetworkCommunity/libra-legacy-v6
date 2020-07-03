@@ -6,7 +6,7 @@ use libra_types::{
 };
 use stdlib::transaction_scripts::StdlibScript;
 use move_core_types::{
-    language_storage::TypeTag, 
+    language_storage::TypeTag,
 };
 
 

@@ -1,5 +1,5 @@
 // 401- Unauthrized access (only association allowed)
-address 0x0 {
+  address 0x0 {
 
   // Note: This module needs a key-value store.
   module Redeem {
@@ -222,7 +222,16 @@ address 0x0 {
 
       let i = 0;
       while (i < size) {
-          end_redeem(*Vector::borrow(outgoing_validators, i));
+          let redeemed_addr = *Vector::borrow(outgoing_validators, i);
+          Debug::print(&0x12EDEE11100000000000000000001004);
+
+          Debug::print(&redeemed_addr);
+
+          // For testing: don't call end_redeem unless there is account state for the address.
+          if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
+              end_redeem(redeemed_addr);
+              Debug::print(&0x12EDEE11100000000000000000001005);
+          };
           i = i + 1;
       };
     }
@@ -263,4 +272,4 @@ address 0x0 {
     //    ::exists<T>(addr)
     // }
   }
-}
+  }

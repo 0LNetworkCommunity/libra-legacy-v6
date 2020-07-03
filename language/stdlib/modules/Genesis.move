@@ -3,7 +3,7 @@
 // however, that there are certain calls that remain in Rust code in
 // genesis (for now).
 address 0x0 {
-module Genesis {
+  module Genesis {
     use 0x0::Association;
     use 0x0::Coin1;
     use 0x0::Coin2;
@@ -30,15 +30,16 @@ module Genesis {
     use 0x0::ReconfigureOL;
 
     fun initialize(
-        association: &signer,
-        config_account: &signer,
-        fee_account: &signer,
-        tc_account: &signer,
-        burn_account: &signer,
-        tc_addr: address,
-        burn_account_addr: address,
-        genesis_auth_key: vector<u8>,
-    ) {
+      //NOTE: The System accounts need to be merged into one, except for 0xFEE and possibly Burn.
+      //BODY: Check where else we initialized burn_account.
+      association: &signer, // NOTE: MERGE WITH CONFIG ACCOUNT
+      config_account: &signer, // NOTE: MERGE WITH CONFIG ACCOUNT
+      fee_account: &signer, // NOTE: SHOULD ONLY BE ADDRESS
+      tc_account: &signer, // NOTE: don't need
+      burn_account: &signer, // NOTE: don't need
+      tc_addr: address, // NOTE: Don't need
+      burn_account_addr: address, // NOTE: Keep
+      genesis_auth_key: vector<u8>) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
         // Association root setup
@@ -53,6 +54,7 @@ module Genesis {
         Libra::initialize(config_account);
 
         // Reconfigure module setup
+        // TODO: Let's keep all constants in code, and not in on-chain resources.
         // This will initialize epoch_length and validator count for each epoch
         let epoch_length = 15;
         let validator_count_per_epoch = 10;
@@ -84,59 +86,69 @@ module Genesis {
             Signer::address_of(association),
             copy dummy_auth_key_prefix,
         );
-        Libra::grant_mint_capability_to_association<Coin1::T>(association);
-        Libra::grant_mint_capability_to_association<Coin2::T>(association);
 
-        //Granting minting and burn capability to association
-        Libra::grant_mint_capability_to_association<GAS::T>(association);
-        Libra::grant_burn_capability_to_association<GAS::T>(association);
-        Libra::publish_preburn(association, Libra::new_preburn<GAS::T>());
+      // Remove these coints...
+      Libra::grant_mint_capability_to_association<Coin1::T>(association);
+      Libra::grant_mint_capability_to_association<Coin2::T>(association);
 
-        // Register transaction fee accounts
-        LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
-        // TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
-        // TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
-        // TransactionFee::initialize(tc_account, fee_account);
-        TransactionFee::initialize(fee_account);
+      //Granting minting and burn capability to association
+      Libra::grant_mint_capability_to_association<GAS::T>(association);
+      Libra::grant_burn_capability_to_association<GAS::T>(association);
 
-        // Create the treasury compliance account
-        LibraAccount::create_treasury_compliance_account<GAS::T>(
-            association,
-            tc_addr,
-            copy dummy_auth_key_prefix,
-            coin1_mint_cap,
-            coin1_burn_cap,
-            coin2_mint_cap,
-            coin2_burn_cap,
-        );
+      //TODO: Remove bootstrapping GAS minted to association, as it is for testing only
+      //BODY: minting to association on genesis because mint_subsidy aborts on LibraAccount::balance
+      // let minted_coins = Libra::mint<GAS::T>(association, 1u64);
+      // LibraAccount::deposit_to(association, minted_coins);
 
-        // Create a burn account and publish preburn
-        LibraAccount::create_burn_account<GAS::T>(
-            association,
-            burn_account_addr,
-            copy dummy_auth_key_prefix
-        );
-        Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
+      // NOTE: What is this?
+      Libra::publish_preburn(association, Libra::new_preburn<GAS::T>());
 
-        // Create the config account
-        LibraAccount::create_genesis_account<GAS::T>(
-            LibraConfig::default_config_address(),
-            dummy_auth_key_prefix
-        );
+      // Register transaction fee accounts
+      LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
+      // TransactionFee::add_txn_fee_currency<GAS::T>(fee_account);
+      // TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
+      // TransactionFee::initialize(tc_account, fee_account);
+      TransactionFee::initialize(fee_account);
 
-        LibraTransactionTimeout::initialize(association);
-        LibraSystem::initialize_validator_set(config_account);
-        LibraVersion::initialize(config_account);
+      // TODO: Remove create_treasury_compliance_account from Genesis.move
+      LibraAccount::create_treasury_compliance_account<GAS::T>(
+          association,
+          tc_addr,
+          copy dummy_auth_key_prefix,
+          coin1_mint_cap,
+          coin1_burn_cap,
+          coin2_mint_cap,
+          coin2_burn_cap,
+      );
 
-        LibraBlock::initialize_block_metadata(association);
-        LibraWriteSetManager::initialize(association);
-        LibraTimestamp::initialize(association);
-        LibraAccount::rotate_authentication_key(association, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(tc_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
+      // NOTE: Remove preburn account.
+      // Create a burn account and publish preburn
+      LibraAccount::create_burn_account<GAS::T>(
+          association,
+          burn_account_addr,
+          copy dummy_auth_key_prefix
+      );
+      Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
+
+      // Create the config account
+      LibraAccount::create_genesis_account<GAS::T>(
+          LibraConfig::default_config_address(),
+          dummy_auth_key_prefix
+      );
+
+      LibraTransactionTimeout::initialize(association);
+      LibraSystem::initialize_validator_set(config_account);
+      LibraVersion::initialize(config_account);
+
+      LibraBlock::initialize_block_metadata(association);
+      LibraWriteSetManager::initialize(association);
+      LibraTimestamp::initialize(association);
+
+      LibraAccount::rotate_authentication_key(association, copy genesis_auth_key);
+      LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
+      LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
+      LibraAccount::rotate_authentication_key(tc_account, copy genesis_auth_key);
+      LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
     }
-
-}
+  }
 }
