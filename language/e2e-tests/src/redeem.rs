@@ -5,11 +5,13 @@ use crate::gas_costs;
 use libra_types::account_config::LBR_NAME;
 
 /// This is test infrastructure. Helps build a signed transaction script of the Redeem module.
-pub fn redeem_txn(sender: &Account, seq_num: u64, challenge: Vec<u8>, difficulty: u64, solution: Vec<u8> ) -> SignedTransaction {
+pub fn redeem_txn(sender: &Account, seq_num: u64, challenge: Vec<u8>, difficulty: u64, solution: Vec<u8>, tower_height: u64 ) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(challenge),
         TransactionArgument::U64(difficulty),
         TransactionArgument::U8Vector(solution),
+        TransactionArgument::U64(tower_height),
+
     ];
     sender.create_signed_txn_with_args(
         StdlibScript::Redeem

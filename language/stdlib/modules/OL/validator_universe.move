@@ -95,8 +95,8 @@ address 0x0 {
             let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
 
             // update the Resource with +1 epoch increment. This is enforced by
-            // Redeem::end_redeem() to check that the miner has been doing
             // validation AND that there are mining proofs presented in the last/current epoch.
+            // TODO: VAlidator Univers: validatorInfo.mining_epoch_count must come from Redeem State.
             validatorInfo.mining_epoch_count = validatorInfo.mining_epoch_count + 1;
         }
 
@@ -148,15 +148,15 @@ address 0x0 {
 
         public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
             // Calculate start and end block height for the current epoch
-            // What about empty blocks that get created after every epoch? 
+            // What about empty blocks that get created after every epoch?
             let epoch_length = epoch_length;
             let end_block_height = current_block_height;
-            
+
             // Abort if epoch_length is greater than current block height
             Transaction::assert(end_block_height >= epoch_length, 010008003);
-            
+
             let start_block_height = end_block_height - epoch_length;
-            
+
             // Calculating threshold which is 90% of the blocks.
             let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_length;
 
