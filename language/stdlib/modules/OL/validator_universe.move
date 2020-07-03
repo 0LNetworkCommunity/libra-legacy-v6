@@ -6,6 +6,8 @@ address 0x0 {
     use 0x0::FixedPoint32;
     use 0x0::Stats;
     use 0x0::Option;
+    // use 0x0::Redeem;
+
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -80,6 +82,7 @@ address 0x0 {
 
     //increment the number of epochs the validator has beeing mining
     //vdf proofs for. updates resource ValidatorEpochInfo in system address.
+    // TODO: This is duplicated with miner state.
     public fun update_validator_epoch_count(addr: address) acquires ValidatorUniverse{
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
@@ -103,11 +106,11 @@ address 0x0 {
 
     // This function is the Proof of Weight. This is what calculates the values
     // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
-    public fun proposed_upcoming_validator_set_weights(addr: address, epoch_length:u64, current_block_height: u64): u64 acquires ValidatorUniverse{
+    public fun proof_of_weight(addr: address, epoch_length:u64, current_block_height: u64): u64 acquires ValidatorUniverse{
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
-      // borrow the state/resource of ValidatorUniverse
+      //1. borrow the Validator's ValidatorEpochInfo
       let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
 
       // Getting index of the validator
@@ -117,13 +120,28 @@ address 0x0 {
 
       let validator_list = &mut collection.validators;
       let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
-      // We want miners that have been mining for longest continuous amount of epochs
+
+      // 2. Do proof of weight algorithm.
+      // We want miners that have been mining for longest continuous amount of epochs.
+      // And are also validators withithin our liveness requirements.
       // mining_epoch_count is many continuous epochs has the validator submitted VDF proofs for.
-      let weight = validatorInfo.mining_epoch_count;
+
+      // 1. Get mining statistics from MinerState.
+      let weight = get_validator_weight(addr);
+
+
+      // Validator cannot join next round, if failed liveness requirements in outgoing epoch.
+      // Algorithim will pick them up on the following epoch.
+      // NOTE: check that this is only evaluating past validators.
+      // if (is validating in this epoch){
+      // and failed to do the liveness requirements.
       if (!check_if_active_validator({{validatorInfo.validator_address}}, epoch_length, current_block_height))
       {
-          weight = 0
+        weight = 0
       };
+      //}
+
+      // NOTE: This resource, weight is not necessary. Perhaps keep as a convenience.
       validatorInfo.weight = weight;
       weight
     }
