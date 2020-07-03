@@ -26,7 +26,7 @@ module Genesis {
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
-    use 0x0::Redeem;
+    // use 0x0::Redeem;
     use 0x0::ReconfigureOL;
 
     fun initialize(
@@ -52,15 +52,15 @@ module Genesis {
         // Currency setup
         Libra::initialize(config_account);
 
-        // Reconfigure module setup 
+        // Reconfigure module setup
         // This will initialize epoch_length and validator count for each epoch
-        let epoch_length = 15; 
-        let validator_count_per_epoch = 10; 
+        let epoch_length = 15;
+        let validator_count_per_epoch = 10;
         ReconfigureOL::initialize(association, epoch_length, validator_count_per_epoch);
-        
-        Redeem::initialize(association);
 
-        // Stats module 
+        // Redeem::initialize(association);
+
+        // Stats module
         Stats::initialize(association);
 
         // Validator Universe setup
@@ -109,7 +109,7 @@ module Genesis {
             coin2_mint_cap,
             coin2_burn_cap,
         );
-        
+
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
             association,
