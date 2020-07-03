@@ -6,26 +6,20 @@ use libra_types::{
 };
 use stdlib::transaction_scripts::StdlibScript;
 use move_core_types::{
-    language_storage::TypeTag, 
+    language_storage::TypeTag,
 };
 
 
 pub fn bulk_update(
     sender: &Account,
-    alice: &Account,
-    bob: &Account,
-    carol: &Account,
-    sha: &Account,
-    ram: &Account,
+    accounts: &Vec<Account>,
     seq_num: u64
 ) -> SignedTransaction {
     let mut args: Vec<TransactionArgument> = Vec::new();
     let type_vec: Vec<TypeTag> = Vec::new();
-    args.push(TransactionArgument::Address(alice.addr));
-    args.push(TransactionArgument::Address(bob.addr));
-    args.push(TransactionArgument::Address(carol.addr));
-    args.push(TransactionArgument::Address(sha.addr));
-    args.push(TransactionArgument::Address(ram.addr));
+    for i in 0..5 {
+        args.insert(i, TransactionArgument::Address(accounts.get(i).unwrap().addr));
+    }
 
     sender.create_signed_txn_with_args(
         StdlibScript::ReconfigBulkUpdate
