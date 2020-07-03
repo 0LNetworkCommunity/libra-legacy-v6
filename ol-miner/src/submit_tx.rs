@@ -1,13 +1,13 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
 
-use cli::client_proxy::ClientProxy;
-use libra_types::{waypoint::Waypoint,account_address::AccountAddress};
 use crate::error::{Error, ErrorKind};
+use cli::client_proxy::ClientProxy;
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
-// const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
+                                // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
 const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
 
 pub fn submit_vdf_proof_tx_to_network(
@@ -16,7 +16,8 @@ pub fn submit_vdf_proof_tx_to_network(
     proof: Vec<u8>,
     waypoint: Waypoint,
     mnemonic_string: String,
-    node: String) -> Result<(), Error> {
+    node: String,
+) -> Result<(), Error> {
     //! Functions for submitting proofs on chain
 
     // TODO (ZM): I think this can generate a number of configs including Waypoint.
@@ -32,20 +33,22 @@ pub fn submit_vdf_proof_tx_to_network(
     let mut libra_client = ClientProxy::new_for_ol(
         /* url */ &node,
         /* mnemonic file */ &mnemonic_string,
-        /* waypoint */  waypoint
-    ).map_err(|err|ErrorKind::Wallet.context(err))?;
-
+        /* waypoint */ waypoint,
+    )
+    .map_err(|err| ErrorKind::Wallet.context(err))?;
 
     //TODO: ol-miner/submit_tx LibraWallet is not recovering all accounts.
     let sender_account = libra_client.accounts[0].address;
 
-    libra_client.execute_send_proof(
-        sender_account, // sender: &AccountData,
-        challenge, // challenge: Vec<u8>,
-        difficulty, // difficulty: u64,
-        proof, // proof: Vec<u8>
-        true
-    ).map_err(|err|ErrorKind::Transaction.context(err))?;
+    libra_client
+        .execute_send_proof(
+            sender_account, // sender: &AccountData,
+            challenge,      // challenge: Vec<u8>,
+            difficulty,     // difficulty: u64,
+            proof,          // proof: Vec<u8>
+            true,
+        )
+        .map_err(|err| ErrorKind::Transaction.context(err))?;
 
     Ok(())
 }

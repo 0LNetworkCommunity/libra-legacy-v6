@@ -20,10 +20,10 @@
 
 use abscissa_core::testing::prelude::*;
 // use ol_miner::config::OlMinerConfig;
+use libra_crypto::hash::{CryptoHash, HashValue};
+use libra_types::waypoint::Waypoint;
 use once_cell::sync::Lazy;
 use std::time::Duration;
-use libra_types::waypoint::Waypoint;
-use libra_crypto::hash::{CryptoHash, HashValue};
 
 /// Executes your application binary via `cargo run`.
 ///
@@ -44,8 +44,6 @@ fn start_no_args() {
         .capture_stdout()
         .run();
     cmd.stdout().expect_line("Enter your OL mnemonic");
-
-
 
     // TODO: This test fails because the miner runs in a loop, the process doesn't exit as expected.
     //cmd.wait().unwrap().expect_success();

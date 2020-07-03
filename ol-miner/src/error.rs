@@ -26,7 +26,6 @@ pub enum ErrorKind {
     /// Input/output error
     #[error("Transaction Error")]
     Transaction,
-
 }
 
 impl ErrorKind {

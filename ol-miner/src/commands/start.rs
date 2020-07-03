@@ -4,10 +4,10 @@
 use crate::block::*;
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
+use anyhow::Error;
+use libra_types::waypoint::Waypoint;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use libra_types::waypoint::Waypoint;
-use anyhow::Error;
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
@@ -23,7 +23,7 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 #[derive(Command, Debug, Options)]
 pub struct StartCmd {
     #[options(help = "Provide a waypoint for the libra chain")]
-    waypoint: String //Option<Waypoint>,
+    waypoint: String, //Option<Waypoint>,
 }
 
 impl Runnable for StartCmd {
@@ -42,31 +42,30 @@ impl Runnable for StartCmd {
                 println!("Mnemonic: \n{}", line);
 
                 let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
-                match parsed_waypoint  {
+                match parsed_waypoint {
                     Ok(v) => {
-                        println!("Using Waypoint from CLI args:\n{}",v);
+                        println!("Using Waypoint from CLI args:\n{}", v);
                     }
                     Err(e) => {
                         println!("Waypoint cannot be parsed, check delimiter: Error:\n{:?}\n WILL FALLBACK TO WAYPOINT FROM ol_miner.toml", miner_configs.chain_info.base_waypoint);
-                        return
+                        return;
                     }
                 }
 
                 build_block::mine_and_submit(&miner_configs, line, parsed_waypoint.unwrap());
-            },
+            }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
-            },
+            }
             Err(ReadlineError::Eof) => {
                 println!("CTRL-D");
-            },
+            }
             Err(err) => {
                 println!("Error: {:?}", err);
+            }
         }
-    }
 
         status_ok!("Start mining...", "ok"); //TODO: Print something more interesting here.
-
     }
 }
 

@@ -1,11 +1,12 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
-use ol_miner::submit_tx::submit_vdf_proof_tx_to_network;
-use ol_miner::delay;
 use libra_types::waypoint::Waypoint;
+use ol_miner::delay;
+use ol_miner::submit_tx::submit_vdf_proof_tx_to_network;
 
 #[test]
+#[ignore]
 fn test_submit() {
     // let mnemonic = "culture stone oblige practice embrace cable snow rich parent bubble robot post skull ankle reason accident coral liar ginger concert bachelor zebra vacuum cream";
     let mnemonic_string = "culture stone oblige practice embrace cable snow rich parent bubble robot post skull ankle reason accident coral liar ginger concert bachelor zebra vacuum cream";
@@ -17,15 +18,14 @@ fn test_submit() {
 
     submit_vdf_proof_tx_to_network(
         b"test preimage".to_vec(), // challenge: Vec<u8>,
-        100, // difficulty: u64,
-        block_data, // proof: Vec<u8>,
-        parsed_waypoint, // waypoint: Waypoint,
+        100,                       // difficulty: u64,
+        block_data,                // proof: Vec<u8>,
+        parsed_waypoint,           // waypoint: Waypoint,
         mnemonic_string.to_owned(),
         node.to_owned(),
     );
-    assert_eq!(1,1, "test");
+    assert_eq!(1, 1, "test");
 }
-
 
 // #[test]
 // #[ignore]
