@@ -80,6 +80,7 @@ address 0x0 {
 
     //increment the number of epochs the validator has beeing mining
     //vdf proofs for. updates resource ValidatorEpochInfo in system address.
+    // TODO: This is duplicated with miner state.
     public fun update_validator_epoch_count(addr: address) acquires ValidatorUniverse{
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
