@@ -30,7 +30,6 @@ address 0x0 {
     }
 
     resource struct ProofsInEpoch { // every proof since the last epoch.
-        // verified_tower_height: u64
         proofs: vector<VdfProofBlob>
     }
 
@@ -40,8 +39,8 @@ address 0x0 {
     }
 
     public fun get_miner_tower_height(miner_addr: address): u64 acquires MinerState {
-      // NOTE: Should get tower height from global.
-       borrow_global_mut<MinerState>(miner_addr).verified_tower_height
+      // Get tower height from miner's state.
+       borrow_global<MinerState>(miner_addr).verified_tower_height
     }
 
     public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
