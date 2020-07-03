@@ -26,7 +26,7 @@ address 0x0 {
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
-    use 0x0::Redeem;
+    // use 0x0::Redeem;
     use 0x0::ReconfigureOL;
 
     fun initialize(
@@ -86,6 +86,39 @@ address 0x0 {
             Signer::address_of(association),
             copy dummy_auth_key_prefix,
         );
+        Libra::grant_mint_capability_to_association<Coin1::T>(association);
+        Libra::grant_mint_capability_to_association<Coin2::T>(association);
+
+        //Granting minting and burn capability to association
+        Libra::grant_mint_capability_to_association<GAS::T>(association);
+        Libra::grant_burn_capability_to_association<GAS::T>(association);
+        Libra::publish_preburn(association, Libra::new_preburn<GAS::T>());
+
+        // Register transaction fee accounts
+        LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
+        // TransactionFee::add_txn_fee_currency(fee_account, &coin1_burn_cap);
+        // TransactionFee::add_txn_fee_currency(fee_account, &coin2_burn_cap);
+        // TransactionFee::initialize(tc_account, fee_account);
+        TransactionFee::initialize(fee_account);
+
+        // Create the treasury compliance account
+        LibraAccount::create_treasury_compliance_account<GAS::T>(
+            association,
+            tc_addr,
+            copy dummy_auth_key_prefix,
+            coin1_mint_cap,
+            coin1_burn_cap,
+            coin2_mint_cap,
+            coin2_burn_cap,
+        );
+
+        // Create a burn account and publish preburn
+        LibraAccount::create_burn_account<GAS::T>(
+            association,
+            burn_account_addr,
+            copy dummy_auth_key_prefix
+        );
+        Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
 
       // Remove these coints...
       Libra::grant_mint_capability_to_association<Coin1::T>(association);
