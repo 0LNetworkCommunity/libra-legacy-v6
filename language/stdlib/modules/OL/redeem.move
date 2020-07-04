@@ -294,9 +294,5 @@
       Debug::print(&slice_challenge_to_address);
       Debug::print(&new_account_address);
     }
-
-    // fun has(addr: address): bool {
-    //    ::exists<T>(addr)
-    // }
   }
   }

@@ -177,7 +177,7 @@ fn initialize_validators(
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address();
 
-        // Create an account
+        // Create a validator account
 
         context.exec(
             "LibraAccount",
@@ -189,6 +189,8 @@ fn initialize_validators(
                 Value::vector_u8(auth_key.prefix().to_vec()),
             ],
         );
+
+        // TODO: 0L: add miner to Validator Universe.
 
         context.set_sender(account);
         context.exec_script(registration);
