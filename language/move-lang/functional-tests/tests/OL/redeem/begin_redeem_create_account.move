@@ -13,7 +13,7 @@ use 0x0::GAS;
 
 fun main(sender: &signer) {
   let _challenge = x"232fb6ae7221c853232fb6ae7221c8538765432123";
-  let new_account_address = 0x232fb6ae7221c853232fb6ae7221c853;
+  let new_account_address = 0xDEADBEEF;
   let auth_key_prefix = x"232fb6ae7221c853232fb6ae7221c853";
 
   // Redeem::first_challenge_matches_address(add, challenge);
