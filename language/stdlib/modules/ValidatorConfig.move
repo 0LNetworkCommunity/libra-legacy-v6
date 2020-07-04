@@ -39,8 +39,9 @@ module ValidatorConfig {
     // Validator setup methods
     ///////////////////////////////////////////////////////////////////////////
 
-    public fun publish(creator: &signer, account: &signer) {
-        Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
+    public fun publish(_creator: &signer, account: &signer) {
+        // TODO: unsure this is safe.
+        // Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
         move_to(account, T {
             config: Option::none(),
             operator_account: Option::none(),

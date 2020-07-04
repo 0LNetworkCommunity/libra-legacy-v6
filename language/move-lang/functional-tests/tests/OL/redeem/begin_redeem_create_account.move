@@ -1,11 +1,8 @@
 // Test that validator accounts can be created from account addresses.
 
-// Prepare the state for the next test.
-// Bob Submits a CORRECT VDF Proof, and that updates the state.
-//! account: alice, 10000000GAS
 //! account: bob, 10000000GAS
 //! new-transaction
-//! sender: association
+//! sender: bob
 script {
 // use 0x0::Redeem;
 use 0x0::LibraAccount;
