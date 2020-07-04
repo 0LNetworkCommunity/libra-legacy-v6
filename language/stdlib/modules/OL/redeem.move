@@ -62,6 +62,14 @@
 
       Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 100080002);
 
+      // 4. Verify the proof.
+      // before anything else, check that this is not spam.
+      // The main point of this Redeem: Checks that the user did run the delay (VDF).
+      // Calling Verify() to check the validity of Blob
+      let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
+      Transaction::assert(valid == true, 100080004);
+      Debug::print(&0x12edee11100000000000000000001001);
+
       // 1. check if the miner's state is initialized
       // Insert a new VdfProofBlob into a temp storage, while
       // Save all of miner's proofs to the its own address, including the first proof sent by someone else.
@@ -77,6 +85,8 @@
         // // public key is 64 byte hex, and address is a 16 byte hex.
         // LibraAccount::create_validator_account<GAS::T>(sender, new_account_address, auth_key_prefix);
 
+        // let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
+
         // initialize the miner state.
         init_miner_state(miner);
         //TODO: This is duplicated.
@@ -88,7 +98,7 @@
       }
     }
 
-    fun verify_and_update_state(miner_addr: address, vdf_proof_blob: VdfProofBlob ) acquires MinerState, ProofsInEpoch{
+    fun verify_and_update_state(miner_addr: address, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch{
       // 2. check if this proof has been submitted before.
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
       let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
@@ -106,12 +116,7 @@
       // Vector::push_back(&mut global_redemption_state.proof_history, *&vdf_proof_blob.solution);
       Vector::push_back(&mut miner_redemption_state.invalid_proof_history, *&vdf_proof_blob.solution);
 
-      // 4. Verify the proof.
-      // The main point of this Redeem: Checks that the user did run the delay (VDF).
-      // Calling Verify() to check the validity of Blob
-      let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-      Transaction::assert(valid == true, 100080004);
-      Debug::print(&0x12edee11100000000000000000001001);
+
 
       // 5. Update the miner's state with pending statistics.
       // remove the proof that was placed provisionally in invalid_proofs, since it passed.
