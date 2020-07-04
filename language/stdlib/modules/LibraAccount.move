@@ -1052,7 +1052,8 @@ module LibraAccount {
         new_account_address: address,
         auth_key_prefix: vector<u8>,
     ) {
-        // TODO: Remove this.
+        // NOTE: 0L: This check is removed to allow any address to create a new validator account.
+        // should check that this is done with a VDF proof, so that it's not abused.
         // Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
         let new_account = create_signer(new_account_address);
         Event::publish_generator(&new_account);

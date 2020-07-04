@@ -70,33 +70,20 @@
       if (!::exists<ProofsInEpoch>(miner_addr)) {
         init_in_process(miner);
       };
+
       if (!::exists<MinerState>(miner_addr)) {
+        // // TODO: Check the First VDF proof CHALLENGE, for the address the miner wants to register.
+        // // Then create a validator account with that address (and public key)
+        // let new_address = first_challenge_includes_address(challenge);
+        //
+        // //2. create a new validator account.
+        // // TODO: we need the public key as well as the address for this.
+        // // public key is 64 byte hex, and address is a 16 byte hex.
+        // LibraAccount::create_validator_account<GAS::T>(sender, new_account_address, auth_key_prefix);
+
+        // initialize the miner state.
         init_miner_state(miner);
       };
-
-      //TODO: advanced check before initializing state, chech the tower belongs to the miner.
-      // FROM OL-miner:
-      // preimage.len()
-      //     == (
-      //         32 // OL Key
-      //         +64 // chain_id
-      //         +8 // iterations/difficulty
-      //         +1024
-      //         // statement
-      //     ),
-      // if (!has_miner_state(miner)) {
-      //   Debug::print(&0x00000012123123123);
-      //     // check if it's the first vdf proof, and if so, use the challenge to confirm the miner address.
-      //     if (reported_tower_height == 0 ) {
-      //       //parse the bit strings
-      //       let pubkey = vdf_proof_blob.solution[0..32];
-      //       if( miner.address = pubkey){
-      //         init_miner_state(miner);
-      //       } else {
-      //         return
-      //       }
-      //     }
-      // };
 
       // 2. check if this proof has been submitted before.
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
@@ -246,38 +233,7 @@
     //     );
     // };
 
-    public fun first_challenge_includes_address(new_account_address: address, challenge: vector<u8>) {
-      // GOAL: To check that the preimage/challenge of a VDF proof contains a given address.
 
-      let hex_len =
-              32 // OL Key
-              +64 // chain_id
-              +8 // iterations/difficulty
-              +1024; // statement
-
-      // Debug::print(&new_account_address);
-      Debug::print(&hex_len);
-      // Debug::print(&add);
-      Debug::print(&challenge);
-
-      // let test = Vector::borrow(&mut challenge, 1);
-      // Debug::print(test);
-
-      let _size = Vector::length(&challenge);
-
-      let new_hex = Vector::empty<u8>();
-      let i = 0;
-      while (i < 16) {
-        let test = *Vector::borrow(&challenge, i);
-        Vector::push_back(&mut new_hex, *&test);
-        Debug::print(&test);
-
-        i = i + 1;
-      };
-
-      Debug::print(&new_hex);
-      Debug::print(&new_account_address);
-    }
     // Initialize the module and state. This can only be invoked by the default system address to instantiate
     // the resource under that address.
     // It can only be called a single time in the genesis transaction.
@@ -299,15 +255,43 @@
     }
 
     fun init_miner_state(miner: &signer){
-        move_to<MinerState>(miner, MinerState{
-          verified_proof_history: Vector::empty(),
-          invalid_proof_history: Vector::empty(),
-          reported_tower_height: 0u64,
-          verified_tower_height: 0u64, // user's latest verified_tower_height
-          latest_epoch_mining: 0u64,
-          epochs_validating_and_mining: 0u64,
-          contiguous_epochs_validating_and_mining: 0u64,
-        });
+
+      move_to<MinerState>(miner, MinerState{
+        verified_proof_history: Vector::empty(),
+        invalid_proof_history: Vector::empty(),
+        reported_tower_height: 0u64,
+        verified_tower_height: 0u64, // user's latest verified_tower_height
+        latest_epoch_mining: 0u64,
+        epochs_validating_and_mining: 0u64,
+        contiguous_epochs_validating_and_mining: 0u64,
+      });
+    }
+
+    public fun first_challenge_includes_address(new_account_address: address, challenge: vector<u8>) {
+      // GOAL: To check that the preimage/challenge of the FIRST VDF proof blob contains a given address.
+      // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
+      // the address of a miner.
+      // Note: The bytes of the miner challenge is as follows:
+      //         32 // OL Key
+      //         +64 // chain_id
+      //         +8 // iterations/difficulty
+      //         +1024; // statement
+
+      let slice_challenge_to_address = Vector::empty<u8>();
+
+      let i = 0;
+      while (i < 16) {
+        let test = *Vector::borrow(&challenge, i);
+        Vector::push_back(&mut new_hex, *&test);
+        Debug::print(&test);
+
+        i = i + 1;
+      };
+
+      Transaction::assert(new_account_address == slice_challenge_to_address, 100080002);
+
+      Debug::print(&new_hex);
+      Debug::print(&new_account_address);
     }
 
     // fun has(addr: address): bool {
