@@ -76,6 +76,8 @@ pub fn encode_genesis_change_set(
 
     let mut genesis_context = GenesisContext::new(&data_cache, stdlib_modules);
 
+
+    // 0L Load the default currency. LBR_MODULE maps to GAS.
     let lbr_ty = TypeTag::Struct(StructTag {
         address: *account_config::LBR_MODULE.address(),
         module: account_config::LBR_MODULE.name().to_owned(),
@@ -86,6 +88,8 @@ pub fn encode_genesis_change_set(
     // generate the genesis WriteSet
     create_and_initialize_main_accounts(&mut genesis_context, &public_key, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
+    initialize_miners(&mut genesis_context);
+
     setup_vm_config(&mut genesis_context, vm_publishing_option);
     reconfigure(&mut genesis_context);
 
@@ -176,6 +180,12 @@ fn initialize_validators(
         context.set_sender(account_config::association_address());
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address();
+        // let account = "0xDEADBEEF";
+        // 0L Mods:
+        // 1. Load miner challenge and solution for those included in genesis.
+        // 2. Map auth_key to address (users don't get to pick their addresses).
+        //         let account = auth_key.derived_address();
+        // 3. Redeem the proof (will attempt to create account but those)
 
         // Create a validator account
 
@@ -190,21 +200,31 @@ fn initialize_validators(
             ],
         );
 
-        // TODO: 0L: submit miner proofs.
-        // context.exec(
-        //     "LibraAccount",
-        //     "create_validator_account",
-        //     vec![lbr_ty.clone()],
-        //     vec![
-        //         Value::transaction_argument_signer_reference(account_config::association_address()),
-        //         Value::address(account),
-        //         Value::vector_u8(auth_key.prefix().to_vec()),
-        //     ],
-        // );
-
         context.set_sender(account);
         context.exec_script(registration);
     }
+}
+
+/// Initialize each validator.
+fn initialize_miners(context: &mut GenesisContext) {
+    // Genesis will abort if mining can't be confirmed.
+    context.set_sender(account_config::association_address());
+    context.exec(
+        "Redeem",
+        "test_genesis",
+        vec![],
+        vec![],
+    );
+
+        // let auth_key = AuthenticationKey::ed25519(&account_key);
+        // let account = auth_key.derived_address();
+        // let account = "0xDEADBEEF";
+        // 0L Mods:
+        // 1. Load miner challenge and solution for those included in genesis.
+        // 2. Map auth_key to address (users don't get to pick their addresses).
+        //         let account = auth_key.derived_address();
+        // 3. Redeem the proof (will attempt to create account but those)
+
 }
 
 fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishingOption) {

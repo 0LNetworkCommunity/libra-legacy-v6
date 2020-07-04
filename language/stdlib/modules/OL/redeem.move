@@ -48,6 +48,14 @@
        borrow_global<MinerState>(miner_addr).epochs_validating_and_mining
     }
 
+    public fun test_genesis(): bool {
+      // Get tower height from miner's state.
+      Debug::print(&0x01EE7);
+      true
+       // borrow_global<MinerState>(miner_addr).epochs_validating_and_mining
+    }
+
+    // TODO: Change miner to address type.
     public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
       Debug::print(&0x12edee11100000000000000000001000);
 
@@ -88,17 +96,23 @@
         // let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
 
         // initialize the miner state.
+        // TODO: Create account if there is no account
         init_miner_state(miner);
-        //TODO: This is duplicated.
+
         // init_in_process(miner);
         verify_and_update_state(miner_addr,vdf_proof_blob  );
 
       } else {
+
+        // TODO: check that the transaction sender is also the miner.
         verify_and_update_state(miner_addr,vdf_proof_blob  );
       }
     }
 
-    fun verify_and_update_state(miner_addr: address, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch{
+
+    fun verify_and_update_state(miner_addr: address, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
+
+      // TODO: duplicated.
       // 2. check if this proof has been submitted before.
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
       let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
@@ -115,8 +129,6 @@
       // Should also surface to client since ClientProxy for submit redeem tx is async.
       // Vector::push_back(&mut global_redemption_state.proof_history, *&vdf_proof_blob.solution);
       Vector::push_back(&mut miner_redemption_state.invalid_proof_history, *&vdf_proof_blob.solution);
-
-
 
       // 5. Update the miner's state with pending statistics.
       // remove the proof that was placed provisionally in invalid_proofs, since it passed.
