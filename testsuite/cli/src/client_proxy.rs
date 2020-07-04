@@ -36,7 +36,7 @@ use libra_types::{
     vm_error::StatusCode,
     waypoint::Waypoint,
 };
-use libra_wallet::{io_utils, WalletLibrary};
+use libra_wallet::{io_utils, WalletLibrary, ChildNumber};
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
     identities::Zero,
@@ -175,13 +175,59 @@ impl ClientProxy {
         })
     }
 
+    /// Construct a new client for 0L purposes.
+    pub fn new_for_ol(
+        url: &str,
+        // sync_on_wallet_recovery: bool,
+        mnemonic_string: &str,
+        waypoint: Waypoint,
+    ) -> Result<Self> {
+        // fail fast if url is not valid
+        let url = Url::parse(url)?;
+        let mut client = LibraClient::new(url.clone(), waypoint)?;
+
+        let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
+        let main_addr= wallet.new_address_at_child_number(ChildNumber::new(1)).unwrap();
+
+        let vec_addresses = wallet.get_addresses().unwrap();
+        // Expect this to be zero before we haven't populated the address map in the repo
+        assert!(vec_addresses.len() ==1);
+        // Empty hashmap should be fine 
+        let mut vec_account_data = Vec::new();
+
+        for address in vec_addresses {
+            vec_account_data.push(Self::get_account_data_from_address(
+                &mut client,
+                address,
+                false,
+                None,
+                None,
+            )?);
+        }
+
+        let mut address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
+        address_to_ref_id.insert(main_addr,1);
+        Ok(ClientProxy {
+            client,
+            accounts: vec_account_data, //Vec<AccountData>
+            address_to_ref_id, // TODO this is a different struct than addr_map
+            faucet_server: "".to_owned(),
+            faucet_account: None,
+            wallet, //wallet: WalletLibrary::Mnemonic::from(mnemonic_string)?,
+            sync_on_wallet_recovery: false, // sync_on_wallet_recovery,
+            temp_files: vec![]
+        })
+    }
+
     /// 0L: submits a redeem transaction with the VDF proof.
     pub fn execute_send_proof(
         &mut self,
         sender_address: AccountAddress,
         challenge: Vec<u8>,
         difficulty: u64,
-        proof: Vec<u8> ) -> Result<()>{
+        proof: Vec<u8>,
+        is_blocking: bool
+        ) -> Result<()>{
 
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
 
@@ -212,15 +258,18 @@ impl ClientProxy {
         // Submit the transaction with the client proxy
         let sender_account = self.accounts.get_mut(sender_ref_id);
         &mut self.client.submit_transaction(sender_account, txn)?;
-        Ok(())
 
         // TODO: This was making the client fail.
-        // if is_blocking {
-        //     self.wait_for_transaction(sender_address, sequence_number)?;
-        // }
+        if is_blocking {
+            let sequence_number = self
+                .get_account_resource_and_update(sender_address)?
+                .sequence_number;
+            self.wait_for_transaction(sender_address, sequence_number)?;
+        }
+        Ok(())
 
     }
-    
+
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
     /// Wraps execute_send_proof
     pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
@@ -245,7 +294,8 @@ impl ClientProxy {
             sender_address,
             challenge,
             difficulty,
-            proof
+            proof,
+            false
         )?;
         Ok(())
     }
