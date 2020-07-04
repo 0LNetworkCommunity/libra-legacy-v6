@@ -26,7 +26,7 @@ pub fn txn_fee_tx_mint(
         type_vec,
         args,
         seq_num,
-        gas_costs::TXN_RESERVED * 3,
+        19_000_000,
         0,
         LBR_NAME.to_owned(),
     )
@@ -46,7 +46,7 @@ pub fn txn_fee_tx_move(
         type_vec,
         args,
         seq_num,
-        gas_costs::TXN_RESERVED * 4,
+        19_000_000,
         0,
         LBR_NAME.to_owned(),
     )
@@ -66,7 +66,7 @@ pub fn txn_fee_tx_distr(
         type_vec,
         args,
         seq_num,
-        gas_costs::TXN_RESERVED * 4,
+        19_000_000,
         0,
         LBR_NAME.to_owned(),
     )

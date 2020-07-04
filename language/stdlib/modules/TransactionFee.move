@@ -8,7 +8,7 @@ address 0x0 {
         use 0x0::Transaction;
         // use 0x0::Debug;
         use 0x0::Vector;
-    
+
         ///////////////////////////////////////////////////////////////////////////
         // Transaction Fee Distribution
         ///////////////////////////////////////////////////////////////////////////
@@ -23,11 +23,11 @@ address 0x0 {
         //    these remaining fees will be included in the calculations for the transaction fee
         //    distribution in the next epoch. This distribution strategy is meant to in part minimize the
         //    benefit of being the first validator in the validator set.
-    
+
         resource struct TransactionFees {
             fee_withdrawal_capability: LibraAccount::WithdrawCapability,
         }
-    
+
         // Initialize the transaction fee distribution module in genesis. We keep track of the last paid block
         // height in order to ensure that we don't try to pay more than once per-block. We also
         // encapsulate the withdrawal capability to the transaction fee account so that we can withdraw
@@ -38,45 +38,50 @@ address 0x0 {
                 fee_withdrawal_capability: LibraAccount::extract_withdraw_capability(fee_account),
             });
         }
-    
+
         public fun distribute_transaction_fees<Token>() acquires TransactionFees {
           // Can only be invoked by LibraVM privilege.
           // Allowed association to invoke for testing purposes.
-          Transaction::assert(Transaction::sender() == 0x0 
-                || Association::addr_is_association(Transaction::sender()), 33);
-    
+          Transaction::assert(Transaction::sender() == 0x0
+            || Association::addr_is_association(Transaction::sender()), 33);
+          // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+          // LibraAccount::balance<Token>(0xFEE);
+          let amount_collected = LibraAccount::balance<Token>(0xFEE);
+          // If amount_collected == 0, this will also return early
+          if (amount_collected == 0) { return };
+
           let i = 0;
           let total_weight = 0;
           let num_validators = LibraSystem::validator_set_size();
-    
+
           while (i < num_validators) {
             total_weight = total_weight + LibraSystem::get_ith_validator_weight(i);
             i = i + 1;
           };
-    
-          let amount_collected = LibraAccount::balance<Token>(0xFEE);
+
+          // let amount_collected = LibraAccount::balance<Token>(0xFEE);
           // If amount_collected == 0, this will also return early
           if (amount_collected < total_weight) { return };
-    
+
           // TODO: Currently, this will give no gas if the sum of validator
           // weights is too high. This may be a problem since we cannot give
           // fractional gas amounts. For example:
           // Lucas has 1000 voting power. Dev has 1 voting power.
           // amount_collected is 500 GAS to distribute.
           // In the above scenario, no GAS will be distibuted.
-    
+
           // Calculate the amount of money to be dispursed, along with the remainder.
           let amount_to_distribute_per_weight = per_weight_distribution_amount(
               amount_collected,
               total_weight
           );
-    
+
           // Iterate through the validators distributing fees according to weight
           distribute_transaction_fees_internal<Token>(
               amount_to_distribute_per_weight
           );
         }
-    
+
         // After the book keeping has been performed, this then distributes the
         // transaction fees equally to all validators with the exception that
         // any remainder (in the case that the number of validators does not
@@ -88,14 +93,14 @@ address 0x0 {
             let distribution_resource = borrow_global<TransactionFees>(0xFEE);
             let index = 0;
             let num_validators = LibraSystem::validator_set_size();
-    
+
             while (index < num_validators) {
                 let addr = LibraSystem::get_ith_validator_address(index);
                 let weight = LibraSystem::get_ith_validator_weight(index);
 
                 // Increment the index into the validator set.
                 index = index + 1;
-    
+
                 LibraAccount::pay_from_capability<Token>(
                     addr,
                     &distribution_resource.fee_withdrawal_capability,
@@ -105,7 +110,7 @@ address 0x0 {
                 );
             };
         }
-    
+
         // This calculates the amount to be distributed to each validator equally. We do this by calculating
         // the integer division of the transaction fees collected by the number of validators. In
         // particular, this means that if the number of validators does not evenly divide the
@@ -119,7 +124,7 @@ address 0x0 {
         }
     }
     }
-    
+
     //     /// The `TransactionFeeCollection` resource holds the
     //     /// `LibraAccount::withdraw_with_capability` for the `0xFEE` account.
     //     /// This is used for the collection of the transaction fees since it
@@ -127,19 +132,19 @@ address 0x0 {
     //     resource struct TransactionFeeCollection {
     //         cap: LibraAccount::WithdrawCapability,
     //     }
-    
+
     //     /// The `TransactionFeePreburn` holds a preburn resource for each
     //     /// fiat `CoinType` that can be collected as a transaction fee.
     //     resource struct TransactionFeePreburn<CoinType> {
     //         preburn: Preburn<CoinType>
     //     }
-    
+
     //     /// We need to be able to determine if `CoinType` is LBR or not in
     //     /// order to unpack it properly before burning it. This resource is
     //     /// instantiated with `LBR` and published in `TransactionFee::initialize`.
     //     /// We then use this to determine if the / `CoinType` is LBR in `TransactionFee::is_lbr`.
     //     resource struct LBRIdent<CoinType> { }
-    
+
     //     /// Called in genesis. Sets up the needed resources to collect
     //     /// transaction fees by the `0xB1E55ED` account.
     //     public fun initialize(blessed_account: &signer, fee_account: &signer) {
@@ -148,24 +153,26 @@ address 0x0 {
     //         move_to(blessed_account, TransactionFeeCollection { cap });
     //         move_to(blessed_account, LBRIdent<LBR>{})
     //     }
-    
+
     //     /// Sets ups the needed transaction fee state for a given `CoinType`
     //     /// currency.
-    //     public fun add_txn_fee_currency<CoinType>(fee_account: &signer, burn_cap: &BurnCapability<CoinType>) {
-    //         Transaction::assert(Signer::address_of(fee_account) == 0xFEE, 0);
-    //         LibraAccount::add_currency<CoinType>(fee_account);
-    //         move_to(fee_account, TransactionFeePreburn<CoinType>{
-    //             preburn: Libra::new_preburn_with_capability(burn_cap)
-    //         })
-    //     }
-    
+
+    // NOTE: Do we need this?
+    // public fun add_txn_fee_currency<CoinType>(fee_account: &signer) {
+    //     Transaction::assert(Signer::address_of(fee_account) == 0xFEE, 0);
+    //     LibraAccount::add_currency<CoinType>(fee_account);
+    //     // move_to(fee_account, TransactionFeePreburn<CoinType>{
+    //     //     preburn: Libra::new_preburn_with_capability(burn_cap)
+    //     // })
+    // }
+
     //     /// Returns whether `CoinType` is LBR or not. This is needed since we
     //     /// will need to unpack LBR before burning it when collecting the
     //     /// transaction fees.
     //     public fun is_lbr<CoinType>(): bool {
     //         exists<LBRIdent<CoinType>>(0xB1E55ED)
     //     }
-    
+
     //     /// Preburns the transaction fees collected in the `CoinType` currency.
     //     /// If the `CoinType` is LBR, it unpacks the coin and preburns the
     //     /// underlying fiat.
@@ -189,7 +196,7 @@ address 0x0 {
     //             preburn_coin(coins)
     //         }
     //     }
-    
+
     //     /// Burns the already preburned fees from a previous call to `preburn_fees`.
     //     public fun burn_fees<CoinType>(blessed_account: &signer, burn_cap: &BurnCapability<CoinType>)
     //     acquires TransactionFeePreburn {
@@ -201,7 +208,7 @@ address 0x0 {
     //             burn_cap
     //         )
     //     }
-    
+
     //     fun preburn_coin<CoinType>(coin: Libra<CoinType>)
     //     acquires TransactionFeePreburn {
     //         let preburn = &mut borrow_global_mut<TransactionFeePreburn<CoinType>>(0xFEE).preburn;
@@ -213,4 +220,3 @@ address 0x0 {
     //     }
     // }
     // }
-    

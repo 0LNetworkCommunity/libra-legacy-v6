@@ -24,6 +24,7 @@ pub mod redeem;
 pub mod librablock_setup;
 pub mod txfee_setup;
 pub mod txn_fee_setup;
+pub mod reconfig_setup;
 mod proptest_types;
 
 pub fn assert_status_eq(s1: &VMStatus, s2: &VMStatus) -> bool {

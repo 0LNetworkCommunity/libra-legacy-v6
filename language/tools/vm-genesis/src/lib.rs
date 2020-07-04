@@ -35,7 +35,7 @@ use vm::access::ModuleAccess;
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
 
-const GENESIS_MODULE_NAME: &str = "Genesis";
+const GENESIS_MODULE_NAME: &str = "GenesisOL";
 
 pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::new(|| {
     let mut rng = StdRng::from_seed(GENESIS_SEED);
@@ -128,9 +128,7 @@ fn create_and_initialize_main_accounts(
     lbr_ty: &TypeTag,
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);
-
     let root_association_address = account_config::association_address();
-    let tc_account_address = account_config::treasury_compliance_account_address();
     let fee_account_address = account_config::transaction_fee_address();
     let burn_account_address = account_config::burn_account_address();
 
@@ -143,9 +141,7 @@ fn create_and_initialize_main_accounts(
             Value::transaction_argument_signer_reference(root_association_address),
             Value::transaction_argument_signer_reference(config_address()),
             Value::transaction_argument_signer_reference(fee_account_address),
-            Value::transaction_argument_signer_reference(tc_account_address),
             Value::transaction_argument_signer_reference(burn_account_address),
-            Value::address(tc_account_address),
             Value::address(burn_account_address),
             Value::vector_u8(genesis_auth_key.to_vec()),
         ],

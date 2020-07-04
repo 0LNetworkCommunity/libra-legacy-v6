@@ -279,29 +279,30 @@ module LibraSystem {
     // Utils required for OpenLibra
     ///////////////////////////////////////////////////////////////////////////
 
-    // This function takes in a set of top n validators and updates the validator set. 
+    // This function takes in a set of top n validators and updates the validator set.
     // NewEpochEvent event will be fired.
     // The Association, the VM, the validator operator or the validator from the current validator set
     // are authorized to update the set of validator infos and add/remove validators
     // Tests for this method are written in move-lang/functional-tests/OL/reconfiguration/bulk_update.move
-    public fun bulk_update_validators(        
+    public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>,
+        epoch_length: u64,
         current_block_height: u64) acquires CapabilityHolder {
-        
+
         Transaction::assert(is_authorized_to_reconfigure_(account), 22);
 
         // Either check for each validator and add/remove them or clear the current list and append the list.
-        // The first way might be computationally expensive, so I choose to go with second approach. 
+        // The first way might be computationally expensive, so I choose to go with second approach.
 
         // Clear all the current validators  ==> Intialize new validators
         let next_epoch_validators = Vector::empty();
 
         let n = Vector::length<address>(&new_validators);
-         
-        // Get the current validator and append it to list 
+
+        // Get the current validator and append it to list
         let index = 0;
-        while (index < n) { 
+        while (index < n) {
             let account_address = *(Vector::borrow<address>(&new_validators, index));
 
             // A prospective validator must have a validator config resource
@@ -312,46 +313,50 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: ValidatorUniverse::update_validator_weight(account_address, index, current_block_height),
+                consensus_voting_power: ValidatorUniverse::proof_of_weight(
+                  account_address,
+                  epoch_length,
+                  current_block_height,
+                  is_validator(account_address))
             });
 
+            // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+            // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
         };
 
         // We have vector of validators - updated!
-        // Next, let us get the current validator set for the current parameters 
+        // Next, let us get the current validator set for the current parameters
         let outgoing_validator_set = get_validator_set();
-        
-        // We create a new Validator set using scheme from outgoingValidatorset and update the validator set. 
+
+        // We create a new Validator set using scheme from outgoingValidatorset and update the validator set.
         let updated_validator_set = T {
             scheme: outgoing_validator_set.scheme,
             validators: next_epoch_validators,
         };
-       
+
         // Updated the configuration using updated validator set. Now, start new epoch
         set_validator_set(updated_validator_set);
     }
 
-    //TODO:OL:This is untested. Need to figure a way to test this. 
-    //Method to get validator voting power. To be used in node subsidy
-    public fun get_validator_voting_power(validator_address: address): Option::T<u64> {
-        let validator_set = get_validator_set();
-        let size = Vector::length(&validator_set.validators);
-        if (size == 0) {
-            return Option::none()
-        };
-
+    // Get all validators addresses, weights and sum_of_all_validator_weights
+    public fun get_outgoing_validators_with_weights(epoch_length: u64, current_block_height: u64): (vector<address>, vector<u64>, u64) {
+        let validators = &get_validator_set().validators;
+        let outgoing_validators = Vector::empty<address>();
+        let outgoing_validator_weights = Vector::empty<u64>();
+        let sum_of_all_validator_weights = 0;
+        let size = Vector::length(validators);
         let i = 0;
         while (i < size) {
-            let validator_info_ref = Vector::borrow<ValidatorInfo>(&validator_set.validators, i);
-            if (validator_info_ref.addr == validator_address) {
-                return Option::some(validator_info_ref.consensus_voting_power)
+            let validator_info_ref = Vector::borrow(validators, i);
+            if(ValidatorUniverse::check_if_active_validator(validator_info_ref.addr, epoch_length, current_block_height)){
+                Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
+                Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
+                sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;
             };
             i = i + 1;
         };
-
-        return Option::none()
+        (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
     }
- 
 }
 }
