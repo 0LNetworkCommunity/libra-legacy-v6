@@ -281,16 +281,17 @@
 
       let i = 0;
       while (i < 16) {
-        let test = *Vector::borrow(&challenge, i);
-        Vector::push_back(&mut new_hex, *&test);
-        Debug::print(&test);
+        let byte = *Vector::borrow(&challenge, i);
+        Vector::push_back(&mut slice_challenge_to_address, *&byte);
+        Debug::print(&byte);
 
         i = i + 1;
       };
 
-      Transaction::assert(new_account_address == slice_challenge_to_address, 100080002);
+      //TODO: how do we compare these two?
+      // Transaction::assert(new_account_address == slice_challenge_to_address, 100080002);
 
-      Debug::print(&new_hex);
+      Debug::print(&slice_challenge_to_address);
       Debug::print(&new_account_address);
     }
 
