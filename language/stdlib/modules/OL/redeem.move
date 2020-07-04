@@ -67,10 +67,6 @@
       // Save all of miner's proofs to the its own address, including the first proof sent by someone else.
 
       // this may be the first time the miner is redeeming. If so, both resources are uninitialized.
-      if (!::exists<ProofsInEpoch>(miner_addr)) {
-        init_in_process(miner);
-      };
-
       if (!::exists<MinerState>(miner_addr)) {
         // // TODO: Check the First VDF proof CHALLENGE, for the address the miner wants to register.
         // // Then create a validator account with that address (and public key)
@@ -83,8 +79,16 @@
 
         // initialize the miner state.
         init_miner_state(miner);
-      };
+        //TODO: This is duplicated.
+        // init_in_process(miner);
+        verify_and_update_state(miner_addr,vdf_proof_blob  );
 
+      } else {
+        verify_and_update_state(miner_addr,vdf_proof_blob  );
+      }
+    }
+
+    fun verify_and_update_state(miner_addr: address, vdf_proof_blob: VdfProofBlob ) acquires MinerState, ProofsInEpoch{
       // 2. check if this proof has been submitted before.
       // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
       let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
@@ -111,8 +115,8 @@
 
       // 5. Update the miner's state with pending statistics.
       // remove the proof that was placed provisionally in invalid_proofs, since it passed.
-      // let removed_solution = Vector::pop_back(&mut miner_redemption_state.invalid_proof_history);
-      // Transaction::assert(&removed_solution == &vdf_proof_blob.solution, 100080005);
+      let removed_solution = Vector::pop_back(&mut miner_redemption_state.invalid_proof_history);
+      Transaction::assert(&removed_solution == &vdf_proof_blob.solution, 100080005);
 
       // 6. Update resources and statistics.
       // let test = copy vdf_proof_blob.solution;
@@ -139,7 +143,6 @@
 
       ValidatorUniverse::add_validator( miner_addr );
       Debug::print(&0x12edee11100000000000000000001004);
-
     }
 
     // Redeem::end_redeem() checks that the miner has been doing
@@ -223,38 +226,8 @@
       };
     }
 
-    // public fun make_account_from_keys () {
-    //
-    //   fun make_account<Token, RoleData: copyable>(
-    //       new_account: signer,
-    //       auth_key_prefix: vector<u8>,
-    //       role_data: RoleData,
-    //       add_all_currencies: bool
-    //     );
-    // };
-
-
-    // Initialize the module and state. This can only be invoked by the default system address to instantiate
-    // the resource under that address.
-    // It can only be called a single time in the genesis transaction.
-    // public fun initialize(_config_account: &signer) {
-    //     //Transaction::assert( Signer::address_of(account) == default_redeem_address(), 10003);
-    //     // move_to<T>( config_account, T{ verified_tower_height: 0 });
-    //     // move_to<MinerState>( config_account, MinerState{ proof_history: Vector::empty() });
-    //
-    //     // move_to<MinerState>( miner, MinerState{ proof_history: Vector::empty(), proofs: Vector::empty(), verified_tower_height: 0u64});
-    //
-    // }
-
-    // fun default_redeem_address(): address {
-    //     0xA550C18
-    // }
-
-    fun init_in_process(miner: &signer){
-        move_to<ProofsInEpoch>( miner, ProofsInEpoch{proofs: Vector::empty()});
-    }
-
     fun init_miner_state(miner: &signer){
+      move_to<ProofsInEpoch>( miner, ProofsInEpoch{proofs: Vector::empty()});
 
       move_to<MinerState>(miner, MinerState{
         verified_proof_history: Vector::empty(),

@@ -190,7 +190,17 @@ fn initialize_validators(
             ],
         );
 
-        // TODO: 0L: add miner to Validator Universe.
+        // TODO: 0L: submit miner proofs.
+        // context.exec(
+        //     "LibraAccount",
+        //     "create_validator_account",
+        //     vec![lbr_ty.clone()],
+        //     vec![
+        //         Value::transaction_argument_signer_reference(account_config::association_address()),
+        //         Value::address(account),
+        //         Value::vector_u8(auth_key.prefix().to_vec()),
+        //     ],
+        // );
 
         context.set_sender(account);
         context.exec_script(registration);
