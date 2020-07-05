@@ -201,6 +201,8 @@ fn initialize_validators(
         );
 
         context.set_sender(account);
+
+        //registration script that runs for each validator
         context.exec_script(registration);
     }
 }
@@ -224,6 +226,7 @@ fn initialize_miners(context: &mut GenesisContext) {
         // 2. Map auth_key to address (users don't get to pick their addresses).
         //         let account = auth_key.derived_address();
         // 3. Redeem the proof (will attempt to create account but those)
+        // --  Redeeming the proof will also add the miner to the validator universe.
 
 }
 
@@ -306,7 +309,7 @@ pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) ->
 
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
-        &validator_registrations(&swarm.nodes),
+        &validator_registrations(&swarm.nodes).0,
         stdlib_modules,
         VMPublishingOption::Open,
     )
@@ -320,15 +323,15 @@ pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, FatStructType> {
 
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
-        &validator_registrations(&swarm.nodes),
+        &validator_registrations(&swarm.nodes).0,
         stdlib_modules,
         VMPublishingOption::Open,
     )
     .1
 }
 
-pub fn validator_registrations(node_configs: &[NodeConfig]) -> Vec<ValidatorRegistration> {
-    node_configs
+pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorRegistration>, &[NodeConfig])  {
+    let registrations = node_configs
         .iter()
         .map(|n| {
             let test = n.test.as_ref().unwrap();
@@ -353,7 +356,9 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> Vec<ValidatorRegi
                 identity_key.to_bytes(),
                 raw_advertised_address.into(),
             );
+            // 0L Change. Adding node configs
             (account_key, script)
         })
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>();
+        (registrations, node_configs)
 }

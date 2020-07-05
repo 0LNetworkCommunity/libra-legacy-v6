@@ -107,6 +107,8 @@ impl Genesis {
                 .value;
             let txn = txn.transaction().unwrap();
             let txn = txn.as_signed_user_txn().unwrap().payload();
+
+            //TODO: What is this transaction script that goes with the validator list?
             let txn = if let TransactionPayload::Script(script) = txn {
                 script.clone()
             } else {

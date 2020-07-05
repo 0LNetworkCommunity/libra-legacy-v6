@@ -144,7 +144,7 @@ impl ValidatorConfig {
         // present at genesis time.
         let nodes_in_genesis = self.num_nodes_in_genesis.unwrap_or(self.num_nodes);
 
-        let validators = vm_genesis::validator_registrations(&nodes[..nodes_in_genesis]);
+        let validators = vm_genesis::validator_registrations(&nodes[..nodes_in_genesis]).0;
 
         let genesis = vm_genesis::encode_genesis_transaction_with_validator(
             faucet_key.public_key(),
