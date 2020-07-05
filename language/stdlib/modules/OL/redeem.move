@@ -49,6 +49,8 @@
     }
 
     public fun test_genesis(): bool {
+      // Testing that VM genesis can call Redeem
+      // language/tools/vm-genesis/src/lib.rs
       // Get tower height from miner's state.
       Debug::print(&0x01EE7);
       true

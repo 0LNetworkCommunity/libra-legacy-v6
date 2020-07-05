@@ -180,15 +180,8 @@ fn initialize_validators(
         context.set_sender(account_config::association_address());
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address();
-        // let account = "0xDEADBEEF";
-        // 0L Mods:
-        // 1. Load miner challenge and solution for those included in genesis.
-        // 2. Map auth_key to address (users don't get to pick their addresses).
-        //         let account = auth_key.derived_address();
-        // 3. Redeem the proof (will attempt to create account but those)
 
         // Create a validator account
-
         context.exec(
             "LibraAccount",
             "create_validator_account",
@@ -208,8 +201,36 @@ fn initialize_validators(
 }
 
 /// Initialize each validator.
-fn initialize_miners(context: &mut GenesisContext) {
+fn initialize_miners(context: &mut GenesisContext, _validators: &[ValidatorRegistration], _node_configs: &[NodeConfig]
+) {
     // Genesis will abort if mining can't be confirmed.
+
+    // IDEA:
+    // 1. The miner who participates in genesis ceremony, will add the first vdf proof block to the node.config.toml file.
+    // TODO: This file will be parsed as usual, but the NodeConfig object needs to be modified and the data be vailable here.
+    // 2. The Challenge of the first VDF proof needs to be parsed, and the first 32 bytes sliced (is the account public key). A new account needs to be generated with                 Value::address(account),
+    // PSEUDOCODE...
+    // let first_32 = _node_configs.challenge[..32]
+    // AuthenticationKey::ed25519(&account_key);
+    // let account = auth_key.derived_address();
+    // let address = Value::address(account);
+
+    // 3. this function initialize_miners() will directly call the Redeem::begin_redeem() with context.exec here. Note the miners get initialized as usual in the above initialize_validators() (Done)
+
+    // context.set_sender(account_config::association_address());
+    // context.exec(
+    //     "Redeem",
+    //     "begin_redeem",
+    //     vec![],
+    //     vec![miner, vdf_proof_blob],
+    // );
+
+    // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
+    // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
+
+
+
+    // testing
     context.set_sender(account_config::association_address());
     context.exec(
         "Redeem",
@@ -217,16 +238,6 @@ fn initialize_miners(context: &mut GenesisContext) {
         vec![],
         vec![],
     );
-
-        // let auth_key = AuthenticationKey::ed25519(&account_key);
-        // let account = auth_key.derived_address();
-        // let account = "0xDEADBEEF";
-        // 0L Mods:
-        // 1. Load miner challenge and solution for those included in genesis.
-        // 2. Map auth_key to address (users don't get to pick their addresses).
-        //         let account = auth_key.derived_address();
-        // 3. Redeem the proof (will attempt to create account but those)
-        // --  Redeeming the proof will also add the miner to the validator universe.
 
 }
 
