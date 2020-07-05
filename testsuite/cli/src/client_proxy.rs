@@ -286,7 +286,7 @@ impl ClientProxy {
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
 
-        let challenge = space_delim_strings[2].as_bytes().to_vec();
+        let challenge = hex::decode(space_delim_strings[2]).unwrap().to_vec();
         let difficulty = space_delim_strings[3].parse::<u64>()?;
 
         // TODO: determine how this will be serialized.
