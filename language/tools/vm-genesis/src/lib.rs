@@ -31,6 +31,7 @@ use rand::prelude::*;
 use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
+use move_vm_types::values::Struct;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -239,15 +240,31 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
         context.set_sender( account );
+
         context.exec(
             "Redeem",
             "begin_redeem",
             vec![],
             vec![
                 Value::transaction_argument_signer_reference(account ),
-                Value::vector_u8(proof.challenge.clone() ),  // don't know how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
-                Value::u64(proof.difficulty ),
-                Value::vector_u8(proof.solution.clone()),
+                //    struct VdfProofBlob {
+                //         challenge: vector<u8>,
+                //         difficulty: u64,
+                //         solution: vector<u8>,
+                //         reported_tower_height: u64,
+                //         epoch: u64,
+                //     }
+                Value::struct_( // construct vdf_proof_blob, // not sure if this is how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
+                    Struct::pack(
+                        vec![
+                            Value::vector_u8(proof.challenge.clone() ),
+                            Value::u64(proof.difficulty ),
+                            Value::vector_u8(proof.solution.clone()),
+                            Value::u64(0 ), // reported_tower_height
+                            Value::u64(0 ), // epoch
+                        ],
+                        false
+                    )),
             ],
         );
     }
