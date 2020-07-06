@@ -44,7 +44,7 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
     (private_key, public_key)
 });
 
-pub type ValidatorRegistration = (Ed25519PublicKey, Script);
+pub type ValidatorRegistration = (Ed25519PublicKey, Script); // 0L Change.
 
 pub fn encode_genesis_transaction_with_validator(
     public_key: Ed25519PublicKey,
@@ -88,7 +88,7 @@ pub fn encode_genesis_change_set(
     // generate the genesis WriteSet
     create_and_initialize_main_accounts(&mut genesis_context, &public_key, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
-    initialize_miners(&mut genesis_context);
+    initialize_miners(&mut genesis_context, &validators);
 
     setup_vm_config(&mut genesis_context, vm_publishing_option);
     reconfigure(&mut genesis_context);
@@ -201,8 +201,7 @@ fn initialize_validators(
 }
 
 /// Initialize each validator.
-fn initialize_miners(context: &mut GenesisContext, _validators: &[ValidatorRegistration], _node_configs: &[NodeConfig]
-) {
+fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegistration]) {
     // Genesis will abort if mining can't be confirmed.
 
     // IDEA:
@@ -314,10 +313,10 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
 }
 
 /// Generate an artificial genesis `ChangeSet` for testing
+// 0L Follow this for e2e testing
 pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) -> ChangeSet {
     let stdlib_modules = stdlib_modules(stdlib_options);
     let swarm = libra_config::generator::validator_swarm_for_testing(10);
-
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
         &validator_registrations(&swarm.nodes).0,
@@ -345,6 +344,7 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
     let registrations = node_configs
         .iter()
         .map(|n| {
+            // println!("node_configs\n{:?}", node_configs);
             let test = n.test.as_ref().unwrap();
             let account_key = test.operator_keypair.as_ref().unwrap().public_key();
             let consensus_key = test.consensus_keypair.as_ref().unwrap().public_key();
@@ -368,7 +368,7 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
                 raw_advertised_address.into(),
             );
             // 0L Change. Adding node configs
-            (account_key, script)
+            (account_key, script) // 0L Change.
         })
         .collect::<Vec<_>>();
         (registrations, node_configs)

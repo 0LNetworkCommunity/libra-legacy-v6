@@ -101,7 +101,7 @@ impl FakeExecutor {
 
             vm_genesis::encode_genesis_change_set(
                 &GENESIS_KEYPAIR.1,
-                &vm_genesis::validator_registrations(&swarm.nodes),
+                &vm_genesis::validator_registrations(&swarm.nodes).0,
                 &genesis_modules,
                 publishing_options,
             )

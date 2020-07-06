@@ -87,7 +87,28 @@ pub struct NodeConfig {
     pub upstream: UpstreamConfig,
     #[serde(default)]
     pub validator_network: Option<NetworkConfig>,
+    #[serde(default)]
+    pub configs_ol_miner: GenesisMiningProof
 }
+
+// 0L Change: Necessary for genesis transaction.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct GenesisMiningProof {
+    pub preimage: String,
+    pub proof: String,
+}
+//0LChange: these defaults exist only for validator_swarm_for_testing
+// TODO: Remove these defaults. And warn when they are empty.
+impl Default for GenesisMiningProof {
+    fn default() -> GenesisMiningProof {
+        GenesisMiningProof {
+            preimage: "hello".to_owned(),
+            proof: "moto".to_string()
+        }
+    }
+}
+
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(default, deny_unknown_fields)]
@@ -100,7 +121,7 @@ pub struct BaseConfig {
 impl Default for BaseConfig {
     fn default() -> BaseConfig {
         BaseConfig {
-            data_dir: PathBuf::from("/opt/libra/data/commmon"),
+            data_dir: PathBuf::from("/opt/libra/data/commmons"),
             role: RoleType::Validator,
             waypoint: WaypointConfig::None,
         }
@@ -205,6 +226,7 @@ impl NodeConfig {
                 .validator_network
                 .as_ref()
                 .map(|n| n.clone_for_template()),
+            configs_ol_miner: self.configs_ol_miner.clone() // 0L change.
         }
     }
 
@@ -297,8 +319,8 @@ impl NodeConfig {
 
     fn random_internal(&mut self, rng: &mut StdRng) {
         let mut test = TestConfig::new_with_temp_dir();
-
         if self.base.role == RoleType::Validator {
+
             test.initialize_storage = true;
             test.random_account_key(rng);
             let peer_id = libra_types::account_address::from_public_key(
