@@ -31,6 +31,7 @@ use rand::prelude::*;
 use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
+use libra_prost_test_helpers::MessageExt;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -44,7 +45,13 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
     (private_key, public_key)
 });
 
-pub type ValidatorRegistration = (Ed25519PublicKey, Script); // 0L Change.
+pub type ValidatorRegistration = (Ed25519PublicKey, Script, VdfProof); // 0L Change.
+
+pub struct VdfProof {
+    challenge: Vec<u8>,
+    difficulty: u64,
+    solution: Vec<u8>,
+}
 
 pub fn encode_genesis_transaction_with_validator(
     public_key: Ed25519PublicKey,
@@ -204,6 +211,7 @@ fn initialize_validators(
 fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegistration]) {
     // Genesis will abort if mining can't be confirmed.
 
+    println!("initialize_miners");
     // IDEA:
     // 1. The miner who participates in genesis ceremony, will add the first vdf proof block to the node.config.toml file.
     // TODO: This file will be parsed as usual, but the NodeConfig object needs to be modified and the data be vailable here.
@@ -227,16 +235,22 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
     // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
     // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
 
-
-
-    // testing
-    context.set_sender(account_config::association_address());
-    context.exec(
-        "Redeem",
-        "test_genesis",
-        vec![],
-        vec![],
-    );
+    for (account_key, _ , proof) in validators {
+        let auth_key = AuthenticationKey::ed25519(&account_key);
+        let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
+        context.set_sender( account );
+        context.exec(
+            "Redeem",
+            "begin_redeem",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(account ),
+                Value::vector_u8(&proof.challenge ),  // don't know how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
+                Value::u64(proof.difficulty ),
+                Value::vector_u8(&proof.solution),
+            ],
+        );
+    }
 
 }
 
@@ -368,7 +382,16 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
                 raw_advertised_address.into(),
             );
             // 0L Change. Adding node configs
-            (account_key, script) // 0L Change.
+
+            let challenge = n.configs_ol_miner.preimage.as_bytes().to_vec(); // TODO might need hex::decode() here
+            let solution = n.configs_ol_miner.proof.as_bytes().to_vec(); // TODO might need hex::decode() here
+            let vdf_proof = VdfProof{
+                challenge,
+                difficulty: 100, // set 100 as default value for test.
+                solution,
+            };
+
+            (account_key, script, vdf_proof) // 0L Change.
         })
         .collect::<Vec<_>>();
         (registrations, node_configs)
