@@ -8,7 +8,8 @@ use libra_secure_storage::Storage;
 use libra_types::transaction::{Transaction, TransactionPayload};
 use std::{convert::TryInto, fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
-use vm_genesis::ValidatorRegistration;
+use vm_genesis::{ValidatorRegistration, VdfProof};
+
 
 // TODO(davidiw) add operator_address, since that will eventually be the identity producing this.
 /// Note, it is implicitly expected that the storage supports
@@ -115,7 +116,7 @@ impl Genesis {
                 return Err(Error::UnexpectedError("Found invalid registration".into()));
             };
 
-            validators.push((key, txn));
+            validators.push((key, txn, VdfProof::default()));
         }
 
         Ok(validators)

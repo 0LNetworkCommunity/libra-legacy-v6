@@ -46,6 +46,7 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
 
 pub type ValidatorRegistration = (Ed25519PublicKey, Script, VdfProof); // 0L Change.
 
+#[derive(Default)]
 pub struct VdfProof {
     challenge: Vec<u8>,
     difficulty: u64,
