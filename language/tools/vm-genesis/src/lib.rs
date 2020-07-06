@@ -31,7 +31,6 @@ use rand::prelude::*;
 use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
-use libra_prost_test_helpers::MessageExt;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -183,7 +182,7 @@ fn initialize_validators(
     validators: &[ValidatorRegistration],
     lbr_ty: &TypeTag,
 ) {
-    for (account_key, registration) in validators {
+    for (account_key, registration, _ ) in validators {
         context.set_sender(account_config::association_address());
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address();
@@ -245,9 +244,9 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
             vec![],
             vec![
                 Value::transaction_argument_signer_reference(account ),
-                Value::vector_u8(&proof.challenge ),  // don't know how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
+                Value::vector_u8(proof.challenge.clone() ),  // don't know how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
                 Value::u64(proof.difficulty ),
-                Value::vector_u8(&proof.solution),
+                Value::vector_u8(proof.solution.clone()),
             ],
         );
     }
