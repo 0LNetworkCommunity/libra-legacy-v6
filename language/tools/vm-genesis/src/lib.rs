@@ -333,7 +333,7 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
 // 0L Follow this for e2e testing
 pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) -> ChangeSet {
     let stdlib_modules = stdlib_modules(stdlib_options);
-    let swarm = libra_config::generator::validator_swarm_for_testing(4);
+    let swarm = libra_config::generator::validator_swarm_for_testing(3);
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
         &validator_registrations(&swarm.nodes).0,

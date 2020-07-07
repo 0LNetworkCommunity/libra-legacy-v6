@@ -6,11 +6,7 @@ address 0x0 {
     use 0x0::FixedPoint32;
     use 0x0::Stats;
     use 0x0::Option;
-    // use 0x0::LibraSystem;
-
-
-    // use 0x0::Redeem;
-
+    use 0x0::Debug;
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -53,6 +49,7 @@ address 0x0 {
     // Eligible validators are all those nodes who have mined a VDF proof at any time.
     // TODO (nelaturuk): Wonder if this helper is necessary since it is just stripping the Validator Universe vector of other fields.
     public fun get_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
+      Debug::print(&0x1eed8012000000000000000000000001);
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
@@ -60,13 +57,19 @@ address 0x0 {
       // Create a vector with all eligible validator addresses
       // Get all the data from the ValidatorUniverse resource stored in the association/system address.
       let collection = borrow_global<ValidatorUniverse>(0xA550C18);
+      Debug::print(&0x1eed8012000000000000000000000002);
+
       let i = 0;
       let validator_list = &collection.validators;
       let len = Vector::length<ValidatorEpochInfo>(validator_list);
+      Debug::print(&0x1eed8012000000000000000000000003);
+
       while (i < len) {
           Vector::push_back(&mut eligible_validators, Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address);
           i = i + 1;
       };
+
+      Debug::print(&0x1eed8012000000000000000000000004);
 
       eligible_validators
     }
