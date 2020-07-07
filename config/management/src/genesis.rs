@@ -8,7 +8,7 @@ use libra_secure_storage::Storage;
 use libra_types::transaction::{Transaction, TransactionPayload};
 use std::{convert::TryInto, fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
-use vm_genesis::{ValidatorRegistration, VdfProof};
+use vm_genesis::{ValidatorRegistration};
 use libra_config::config::{GenesisMiningProof};
 
 
