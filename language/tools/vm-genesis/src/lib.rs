@@ -46,22 +46,6 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
 
 pub type ValidatorRegistration = (Ed25519PublicKey, Script, GenesisMiningProof); // 0L Change.
 
-pub struct VdfProof {
-    challenge: Vec<u8>,
-    difficulty: u64,
-    solution: Vec<u8>,
-}
-//
-// impl Default for VdfProof {
-//     fn default() -> VdfProof {
-//         VdfProof {
-//             challenge: hex::decode("aa").unwrap(),
-//
-//             difficulty: 100u64,
-//             solution: hex::decode(&n.configs_ol_miner.proof).unwrap()
-//         }
-//     }
-// }
 
 pub fn encode_genesis_transaction_with_validator(
     public_key: Ed25519PublicKey,

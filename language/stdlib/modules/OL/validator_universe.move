@@ -109,7 +109,8 @@ address 0x0 {
 
     // This function is the Proof of Weight. This is what calculates the values
     // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
-    public fun proof_of_weight(addr: address,
+    public fun proof_of_weight(
+      addr: address,
       epoch_length:u64,
       current_block_height: u64,
       is_outgoing_validator: bool): u64 acquires ValidatorUniverse {
@@ -143,8 +144,10 @@ address 0x0 {
 
       // let is_in_outgoing_validator_set = Vector::contains(&outgoing_validators, &addr);
       if (is_outgoing_validator) {
-        if (!check_if_active_validator({{validatorInfo.validator_address}}, epoch_length,
-                                      current_block_height)) {
+        if (!check_if_active_validator(
+          {{validatorInfo.validator_address}},
+          epoch_length,
+          current_block_height)) {
           weight = 0
         };
       };
