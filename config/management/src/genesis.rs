@@ -9,6 +9,7 @@ use libra_types::transaction::{Transaction, TransactionPayload};
 use std::{convert::TryInto, fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{ValidatorRegistration, VdfProof};
+use libra_config::config::{GenesisMiningProof};
 
 
 // TODO(davidiw) add operator_address, since that will eventually be the identity producing this.
@@ -116,7 +117,8 @@ impl Genesis {
                 return Err(Error::UnexpectedError("Found invalid registration".into()));
             };
 
-            validators.push((key, txn, VdfProof::default()));
+            //TODO (ZM): This is where we need to place the miner proof.
+            validators.push((key, txn, GenesisMiningProof::default()));
         }
 
         Ok(validators)

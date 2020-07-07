@@ -101,14 +101,6 @@ pub struct GenesisMiningProof {
 }
 //0LChange: these defaults exist only for validator_swarm_for_testing
 // TODO: Remove these defaults. And warn when they are empty.
-// impl Default for GenesisMiningProof {
-//     fn default() -> GenesisMiningProof {
-//         GenesisMiningProof {
-//             preimage: "hello".to_owned(),
-//             proof: "moto".to_string()
-//         }
-//     }
-// }
 
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
