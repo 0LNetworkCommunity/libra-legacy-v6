@@ -29,4 +29,4 @@ mod transaction_fees_new;
 mod txn_fee_test;
 mod ol_e2e_test_redeem;
 mod ol_e2e_test_librablock;
-mod reconfig_test;
+mod ol_e2e_test_reconfig;
