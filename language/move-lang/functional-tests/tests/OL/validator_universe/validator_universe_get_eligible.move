@@ -5,7 +5,6 @@ script{
 use 0x0::ValidatorUniverse;
 use 0x0::Vector;
 use 0x0::Transaction;
-use 0x0::Debug;
 
 fun main(account: &signer) {
     // NOTE: in functional and e2e tests the genesis block includes 3 validators.
