@@ -32,6 +32,7 @@ use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
 
+
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
 
@@ -243,8 +244,8 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
             "genesis_helper",
             vec![],
             vec![
-                Value::transaction_argument_signer_reference(account ),
-                Value::vector_u8(proof.challenge.clone() ),  // don't know how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
+                Value::transaction_argument_signer_reference(account),
+                Value::vector_u8(proof.challenge.clone() ), // serialize for move.
                 Value::u64(proof.difficulty),
                 Value::vector_u8(proof.solution.clone()),
             ],
@@ -382,8 +383,8 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
             );
             // 0L Change. Adding node configs
 
-            let challenge = n.configs_ol_miner.preimage.as_bytes().to_vec(); // TODO might need hex::decode() here
-            let solution = n.configs_ol_miner.proof.as_bytes().to_vec(); // TODO might need hex::decode() here
+            let challenge = hex::decode(&n.configs_ol_miner.preimage).unwrap();//.as_bytes().to_vec(); // TODO might need hex::decode() here
+            let solution = hex::decode(&n.configs_ol_miner.proof).unwrap(); // .as_bytes().to_vec(); // TODO might need hex::decode() here
             let vdf_proof = VdfProof{
                 challenge,
                 difficulty: 100u64, // set 100 as default value for test.
