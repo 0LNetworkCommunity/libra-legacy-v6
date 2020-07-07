@@ -330,7 +330,7 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
 // 0L Follow this for e2e testing
 pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) -> ChangeSet {
     let stdlib_modules = stdlib_modules(stdlib_options);
-    let swarm = libra_config::generator::validator_swarm_for_testing(10);
+    let swarm = libra_config::generator::validator_swarm_for_testing(4);
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
         &validator_registrations(&swarm.nodes).0,
@@ -383,8 +383,8 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
             );
             // 0L Change. Adding node configs
 
-            let challenge = hex::decode(&n.configs_ol_miner.preimage).unwrap();//.as_bytes().to_vec(); // TODO might need hex::decode() here
-            let solution = hex::decode(&n.configs_ol_miner.proof).unwrap(); // .as_bytes().to_vec(); // TODO might need hex::decode() here
+            let challenge = hex::decode(&n.configs_ol_miner.preimage).unwrap();
+            let solution = hex::decode(&n.configs_ol_miner.proof).unwrap();
             let vdf_proof = VdfProof{
                 challenge,
                 difficulty: 100u64, // set 100 as default value for test.
