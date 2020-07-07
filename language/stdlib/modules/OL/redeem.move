@@ -57,6 +57,17 @@
        // borrow_global<MinerState>(miner_addr).epochs_validating_and_mining
     }
 
+    public fun genesis_helper (miner: &signer, challenge: vector<u8>, difficulty: u64 , solution: vector<u8> ) acquires MinerState, ProofsInEpoch{
+      let vdf_proof_blob = VdfProofBlob {
+        challenge,
+        difficulty,
+        solution,
+        reported_tower_height: 0,
+        epoch: 0,
+      };
+      begin_redeem(miner, vdf_proof_blob)
+    }
+
     // TODO: Change miner to address type.
     public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
       Debug::print(&0x12edee11100000000000000000001000);
@@ -72,20 +83,19 @@
 
       Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 100080002);
 
-      // 4. Verify the proof.
-      // before anything else, check that this is not spam.
-      // The main point of this Redeem: Checks that the user did run the delay (VDF).
-      // Calling Verify() to check the validity of Blob
-      let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-      Transaction::assert(valid == true, 100080004);
-      Debug::print(&0x12edee11100000000000000000001001);
-
       // 1. check if the miner's state is initialized
       // Insert a new VdfProofBlob into a temp storage, while
-      // Save all of miner's proofs to the its own address, including the first proof sent by someone else.
-
-      // this may be the first time the miner is redeeming. If so, both resources are uninitialized.
+      // Save all of miner's proofs to the miner's own address, including the first proof sent by someone else.
+      // This may be the first time the miner is redeeming. If so, both resources are uninitialized.
       if (!::exists<MinerState>(miner_addr)) {
+        // Verify the proof before anything else.
+        // TODO: A faster way to check for minor errors, since it's an expensive operation.
+        // The main point of this Redeem: Checks that the user did run the delay (VDF).
+        // Calling Verify() to check the validity of Blob
+        let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
+        Transaction::assert(valid == true, 100080004);
+        Debug::print(&0x12edee11100000000000000000001001);
+
         // // TODO: Check the First VDF proof CHALLENGE, for the address the miner wants to register.
         // // Then create a validator account with that address (and public key)
         // let new_address = first_challenge_includes_address(challenge);
@@ -102,30 +112,42 @@
         init_miner_state(miner);
 
         // init_in_process(miner);
-        verify_and_update_state(miner_addr,vdf_proof_blob  );
+        verify_and_update_state(miner_addr,vdf_proof_blob , false );
 
       } else {
 
         // TODO: check that the transaction sender is also the miner.
-        verify_and_update_state(miner_addr,vdf_proof_blob  );
+        verify_and_update_state(miner_addr,vdf_proof_blob, true  );
       }
     }
 
 
-    fun verify_and_update_state(miner_addr: address, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
-
-      // TODO: duplicated.
-      // 2. check if this proof has been submitted before.
-      // Checks that the blob was not previously redeemed, if previously redeemed its a no-op, with error message.
+    fun verify_and_update_state(miner_addr: address, vdf_proof_blob: VdfProofBlob, initialized_miner: bool) acquires MinerState, ProofsInEpoch {
       let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
-      let is_previously_submitted_proof = Vector::contains(&miner_redemption_state.verified_proof_history, &vdf_proof_blob.solution);
-      Debug::print(&is_previously_submitted_proof);
 
-      Transaction::assert(is_previously_submitted_proof == false, 100080002);
-      let is_previously_submitted_invalid_proof = Vector::contains(&miner_redemption_state.invalid_proof_history, &vdf_proof_blob.solution);
-      Debug::print(&is_previously_submitted_invalid_proof);
+       if (initialized_miner) {
+         // TODO: move this to own function.
+         // For returning miners. Don't bother verifying if there's an error.
+         // checks that the blob was not previously submitted, if previously redeemed its a no-op, with error message.
+         let is_previously_submitted_proof = Vector::contains(&miner_redemption_state.verified_proof_history, &vdf_proof_blob.solution);
+         Debug::print(&is_previously_submitted_proof);
+         Transaction::assert(is_previously_submitted_proof == false, 100080002);
+         let is_previously_submitted_invalid_proof = Vector::contains(&miner_redemption_state.invalid_proof_history, &vdf_proof_blob.solution);
+         Debug::print(&is_previously_submitted_invalid_proof);
+         Transaction::assert(is_previously_submitted_invalid_proof == false, 100080003);
+         // Check that the proof presented previously matches the current preimage.
+         // let proofs_count = Vector::length(&miner_redemption_state.verified_proof_history);
+         // let last_verified_proof = Vector::borrow_mut<vector<u8>>(
+         //   &miner_redemption_state.verified_proof_history,
+         //   proofs_count);
+         // Transaction::assert(last_verified_proof == *&vdf_proof_blob.challenge, 100080004);
 
-      Transaction::assert(is_previously_submitted_invalid_proof == false, 100080003);
+         // run the verifier.
+         let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
+         Transaction::assert(valid == true, 100080005);
+         Debug::print(&0x12edee11100000000000000000001001);
+       };
+
 
       // 3. Add redeem attempt to invalid_proof_history, which will later be removed with successful verification.
       // Should also surface to client since ClientProxy for submit redeem tx is async.

@@ -31,9 +31,6 @@ use rand::prelude::*;
 use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
-use move_vm_types::values::Struct;
-use hex;
-
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -49,14 +46,11 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
 
 pub type ValidatorRegistration = (Ed25519PublicKey, Script, VdfProof); // 0L Change.
 
-#[derive(Default)]
 pub struct VdfProof {
     challenge: Vec<u8>,
     difficulty: u64,
     solution: Vec<u8>,
 }
-
-
 
 pub fn encode_genesis_transaction_with_validator(
     public_key: Ed25519PublicKey,
@@ -241,35 +235,18 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
     // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
 
     for (account_key, _ , proof) in validators {
-        println!("proof\n{:?}", proof.challenge);
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
         context.set_sender( account );
-
         context.exec(
             "Redeem",
-            "begin_redeem",
+            "genesis_helper",
             vec![],
             vec![
                 Value::transaction_argument_signer_reference(account ),
-                //    struct VdfProofBlob {
-                //         challenge: vector<u8>,
-                //         difficulty: u64,
-                //         solution: vector<u8>,
-                //         reported_tower_height: u64,
-                //         epoch: u64,
-                //     }
-                Value::struct_( // construct vdf_proof_blob, // not sure if this is how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
-                    Struct::pack(
-                        vec![
-                            Value::vector_u8(proof.challenge.clone() ),
-                            Value::u64(proof.difficulty ),
-                            Value::vector_u8(proof.solution.clone()),
-                            Value::u64(0), // reported_tower_height
-                            Value::u64(0), // epoch
-                        ],
-                        false
-                    )),
+                Value::vector_u8(proof.challenge.clone() ),  // don't know how to pass vdf_proof_blob. might need modify the arguments of Redeem::begin_redeem()
+                Value::u64(proof.difficulty),
+                Value::vector_u8(proof.solution.clone()),
             ],
         );
     }
@@ -405,11 +382,11 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
             );
             // 0L Change. Adding node configs
 
-            let challenge = hex::decode(&n.configs_ol_miner.preimage).unwrap(); // TODO might need hex::decode() here
-            let solution = hex::decode(&n.configs_ol_miner.proof).unwrap(); // TODO might need hex::decode() here
+            let challenge = n.configs_ol_miner.preimage.as_bytes().to_vec(); // TODO might need hex::decode() here
+            let solution = n.configs_ol_miner.proof.as_bytes().to_vec(); // TODO might need hex::decode() here
             let vdf_proof = VdfProof{
                 challenge,
-                difficulty: 100, // set 100 as default value for test.
+                difficulty: 100u64, // set 100 as default value for test.
                 solution,
             };
 
