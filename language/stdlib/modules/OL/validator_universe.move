@@ -196,11 +196,18 @@ address 0x0 {
 
       // Calculating threshold which is 90% of the blocks.
       let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_length;
+      Debug::print(&0x1eed8012000000000000000000200002);
 
       let active_validator = Stats::node_heuristics(addr, start_block_height, end_block_height);
+      Debug::print(&0x1eed8012000000000000000000200003);
+
       if (active_validator < threshold_signing) {
+        Debug::print(&0x1eed8012000000000000000000200004);
+
           return false
       };
+      Debug::print(&0x1eed8012000000000000000000200005);
+
       true
     }
 
