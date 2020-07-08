@@ -1,4 +1,5 @@
 // Test that validator accounts can be created from account addresses.
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
 
 //! account: bob, 10000000GAS
 //! new-transaction

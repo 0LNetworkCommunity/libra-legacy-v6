@@ -1,4 +1,5 @@
 // GOAL: To check that the preimage/challenge of a VDF proof contains a given address.
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
 
 // Prepare the state for the next test.
 // Bob Submits a CORRECT VDF Proof, and that updates the state.

@@ -1,3 +1,5 @@
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 //! new-transaction
 // Subsidy minting should work
 //! sender: association
@@ -5,7 +7,7 @@ script {
 use 0x0::Subsidy;
 fun main(account: &signer) {
     Subsidy::mint_subsidy(account);
-}   
+}
 }
 
 // check: MintEvent
@@ -17,7 +19,7 @@ script {
 use 0x0::Subsidy;
 fun main(account: &signer) {
     Subsidy::mint_subsidy(account);
-}   
+}
 }
 
 // check: ABORTED
@@ -33,7 +35,7 @@ use 0x0::Subsidy;
 fun main(account: &signer) {
     Subsidy::burn_subsidy(account);
     Transaction::assert(Libra::preburn_value<GAS::T>() == 0, 8005);
-}   
+}
 }
 
 // check: PreburnEvent
@@ -51,7 +53,7 @@ fun main(account: &signer) {
 //     Subsidy::add_burn_account(account, 0xDEADDEAD);
 //     let size = Subsidy::get_burn_accounts_size(account);
 //     Transaction::assert(size == 2, 8004);
-// }   
+// }
 // }
 
 // //check: EXECUTED
@@ -67,7 +69,7 @@ fun main(account: &signer) {
 //     let (subsidy_units, burn_units) = Subsidy::subsidy_curve(296, 4, 300, 150);
 //     Debug::print(&subsidy_units);
 //     Debug::print(&burn_units);
-// }   
+// }
 // }
 
 // //! new-transaction
@@ -80,8 +82,5 @@ fun main(account: &signer) {
 //     let (subsidy_units, burn_units) = Subsidy::calculate_Subsidy(account, 0, 0);
 //     Debug::print(&subsidy_units);
 //     Debug::print(&burn_units);
-// }   
 // }
-
-
-    
+// }

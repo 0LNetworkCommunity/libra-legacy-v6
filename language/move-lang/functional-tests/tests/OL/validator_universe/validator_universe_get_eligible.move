@@ -1,4 +1,6 @@
 // Adding new validator epoch info
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 //! new-transaction
 //! sender: association
 script{
