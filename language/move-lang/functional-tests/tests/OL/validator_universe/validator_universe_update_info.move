@@ -1,5 +1,6 @@
 // Temporary tests for non-public methods written for OL.
 // Not to be executed once code is merged with OLv3
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
 
 // Updating existing validator epoch info
 //! new-transaction
