@@ -14,6 +14,7 @@ address 0x0 {
         use 0x0::TransactionFee;
         use 0x0::Redeem;
         use 0x0::Debug;
+        use 0x0::Vector;
 
         resource struct EpochInfo {
             epoch_length: u64,
@@ -47,7 +48,8 @@ address 0x0 {
             // Step 4: Burn subsidy units
 
             // Skip this step on the first epoch, which is exceptional.
-            if (current_block_height > get_epoch_length()) {
+            // TODO: Are the buffer blocks causing this problem?
+            if (current_block_height > get_epoch_length() + 3) {
               process_outgoing_validators(account, current_block_height);
               Debug::print(&0x12EC011F160000000000000000000001);
 
@@ -104,6 +106,9 @@ address 0x0 {
             Debug::print(&0x12EC011F160000000000000000002001);
             let (eligible_validators, _sum_of_all_validator_weights) = NodeWeight::top_n_accounts(account, get_max_validator_count_const());
             Debug::print(&0x12EC011F160000000000000000002002);
+            let n = Vector::length<address>(&eligible_validators);
+            Debug::print(&n);
+
 
             // Step 2: Call bulkUpdate module
             LibraSystem::bulk_update_validators(account, eligible_validators, get_epoch_length(), current_block_height);

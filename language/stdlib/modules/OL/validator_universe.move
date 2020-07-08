@@ -63,6 +63,8 @@ address 0x0 {
       let validator_list = &collection.validators;
       let len = Vector::length<ValidatorEpochInfo>(validator_list);
       Debug::print(&0x1eed8012000000000000000000000003);
+      Debug::print(&len);
+
 
       while (i < len) {
           Vector::push_back(&mut eligible_validators, Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address);
@@ -147,11 +149,12 @@ address 0x0 {
 
       // let is_in_outgoing_validator_set = Vector::contains(&outgoing_validators, &addr);
       if (is_outgoing_validator) {
+        Debug::print(&0x1eed8012000000000000000000100001);
         if (!check_if_active_validator(
           {{validatorInfo.validator_address}},
           epoch_length,
           current_block_height)) {
-          weight = 0
+            weight = 0
         };
       };
 
@@ -182,10 +185,11 @@ address 0x0 {
     public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
       // Calculate start and end block height for the current epoch
       // What about empty blocks that get created after every epoch?
-      let epoch_length = epoch_length;
+      Debug::print(&0x1eed8012000000000000000000200001);
+
       let end_block_height = current_block_height;
 
-      // Abort if epoch_length is greater than current block height
+      // The current block_height needs to be at least the length of one (the first) epoch.
       Transaction::assert(end_block_height >= epoch_length, 010008003);
 
       let start_block_height = end_block_height - epoch_length;

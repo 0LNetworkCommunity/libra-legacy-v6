@@ -26,6 +26,8 @@ address 0x0 {
       Debug::print(&0x110DE00111E161170000000000001002);
 
       let length = Vector::length<address>(&eligible_validators);
+      Debug::print(&length);
+
 
       // Base Case: The universe of validators is under the limit of the BFT consensus.
       // If n is greater than or equal to accounts vector length - return the vector.

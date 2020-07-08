@@ -41,7 +41,6 @@ module ValidatorConfig {
 
     //NOTE: 0L This is only used for genesis.
     public fun publish(creator: &signer, account: &signer) {
-        // TODO: unsure this is safe.
         Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
         move_to(account, T {
             config: Option::none(),
