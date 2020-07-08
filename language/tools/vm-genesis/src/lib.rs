@@ -305,14 +305,14 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
     // (1) The genesis tx should emit 1 event: a NewEpochEvent.
     assert_eq!(
         events.len(),
-        1,
+        4,
         "Genesis transaction should emit one event, but found {} events: {:?}",
         events.len(),
         events,
     );
 
     // (2) The first event should be the new epoch event
-    let new_epoch_event = &events[0];
+    let new_epoch_event = &events[3];
     assert_eq!(
         *new_epoch_event.key(),
         new_epoch_event_key(),
