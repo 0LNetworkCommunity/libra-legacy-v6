@@ -1,9 +1,9 @@
 [profile]
-public_key = "5ffd9856978b5020be7f72339e41a401"
+public_key = "c82573d01fe624ef83619299430eaced"
 statement = "test"
 
 [chain_info]
 chain_id = "experimental"
 block_dir= "./blocks/"
-node ="http://localhost:63845" #should be the same as 0_dev_config/node.config.toml for local testing
+node ="http://localhost:54439" #should be the same as 0_dev_config/node.config.toml for local testing
 base_waypoint="0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b"

@@ -187,7 +187,7 @@ impl ClientProxy {
         let mut client = LibraClient::new(url.clone(), waypoint)?;
 
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
-        let main_addr= wallet.new_address_at_child_number(ChildNumber::new(1)).unwrap();
+        let (main_addr, _ )= wallet.new_address().unwrap();
 
         let vec_addresses = wallet.get_addresses().unwrap();
         // Expect this to be zero before we haven't populated the address map in the repo
@@ -206,7 +206,7 @@ impl ClientProxy {
         }
 
         let mut address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
-        address_to_ref_id.insert(main_addr,1);
+        address_to_ref_id.insert(main_addr.derived_address(),0);
         Ok(ClientProxy {
             client,
             accounts: vec_account_data, //Vec<AccountData>
@@ -214,7 +214,7 @@ impl ClientProxy {
             faucet_server: "".to_owned(),
             faucet_account: None,
             wallet, //wallet: WalletLibrary::Mnemonic::from(mnemonic_string)?,
-            sync_on_wallet_recovery: false, // sync_on_wallet_recovery,
+            sync_on_wallet_recovery: true, // sync_on_wallet_recovery,
             temp_files: vec![]
         })
     }
@@ -229,10 +229,13 @@ impl ClientProxy {
         is_blocking: bool
         ) -> Result<()>{
 
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        // let sender_ref_id = self.get_account_ref_id(&sender_address)?;
 
+        // let sender_og = self.accounts.get(sender_ref_id).unwrap();
 
-        let sender = self.accounts.get(sender_ref_id).unwrap();
+         
+        let mut sender = Self::get_account_data_from_address(&mut self.client,sender_address,true,None,None).unwrap();
+        // let sender = self.accounts.get(sender_ref_id).unwrap();
 
 
         // create the Redeem transaction script
@@ -256,8 +259,8 @@ impl ClientProxy {
         )?;
 
         // Submit the transaction with the client proxy
-        let sender_account = self.accounts.get_mut(sender_ref_id);
-        &mut self.client.submit_transaction(sender_account, txn)?;
+        // let sender_account = self.accounts.get_mut(sender_ref_id);
+        &mut self.client.submit_transaction(Some(&mut sender), txn)?;
 
         // TODO: This was making the client fail.
         if is_blocking {
@@ -283,7 +286,7 @@ impl ClientProxy {
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
 
-        let challenge = space_delim_strings[2].as_bytes().to_vec();
+        let challenge = hex::decode(space_delim_strings[2]).unwrap().to_vec();
         let difficulty = space_delim_strings[3].parse::<u64>()?;
 
         // TODO: determine how this will be serialized.

@@ -55,7 +55,7 @@ pub mod build_block {
         let mut now = Instant::now();
         let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
         let elapsed_secs = now.elapsed().as_secs();
-        println!("Delay: {:?}", elapsed_secs);
+        println!("Delay: {:?} seconds", elapsed_secs);
 
         let block = Block {
             height: 0u64,
@@ -92,7 +92,7 @@ pub mod build_block {
             let mut now = Instant::now();
             let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
             let elapsed_secs = now.elapsed().as_secs();
-            println!("Delay: {:?}", elapsed_secs);
+            println!("Delay: {:?} seconds", elapsed_secs);
 
             let block = Block {
                 height,
@@ -147,7 +147,8 @@ pub mod build_block {
                             waypoint,                             // waypoint: Waypoint,
                             mnemonic.to_string(),
                             node.to_string(),
-                        );
+                        ).unwrap();
+                        status_ok!("Submitted {}",block.height.to_string());
                     } else {
                         return Err(ErrorKind::Config
                             .context("No Node for submitting transactions")
@@ -161,6 +162,62 @@ pub mod build_block {
             }
         }
     }
+
+    /// Submit a block stored in the file system
+    pub fn submit_block(
+        config: &OlMinerConfig,
+        mnemonic: String,
+        waypoint: Waypoint,
+        height:usize,
+    ) -> Result<(), Error> {
+
+        let blocks_dir = Path::new(&config.chain_info.block_dir);
+
+        let mut file = fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let reader = BufReader::new(file);
+        let block: Block = serde_json::from_reader(reader).unwrap();
+
+        if let Some(ref node) = config.chain_info.node {
+            // get preimage
+            submit_vdf_proof_tx_to_network(
+                block.preimage,                       // challenge: Vec<u8>,
+                crate::application::DELAY_ITERATIONS, // difficulty: u64,
+                block.data,                           // proof: Vec<u8>,
+                waypoint,                             // waypoint: Waypoint,
+                mnemonic.to_string(),
+                node.to_string(),
+            ).unwrap();
+            status_ok!("Submitted {}",block.height.to_string());
+        } else {
+            // // TODO (Ping): 1. Catch these errors instead of panic.
+            // // 2. Save the latest succesfull tower_height to a local file. LocalMinerState.json
+            // // PSEUDOCODE:
+            // Struct LocalMinerState {
+            //     pubkey: &str,
+            //     local_tower_height: u64,
+            //     last_succesful_tx_height: u64,
+            //     retrying_height: u64, // if there is a resubmission in process, we need to know.
+            // }
+            // let state: LocalMinerState
+            // let mut latest_block_path = blocks_dir;
+            // latest_block_path.push(format!("0_LocalMinerState.json"));
+            // let mut file = fs::File::create(&latest_block_path).unwrap();
+            // file.write_all(serde_json::to_string(&state).unwrap().as_bytes())
+            //     .expect("Could not write block");
+            // // 2. Resend transactions with a timer, e.g 30 seconds (use an exponential backoff). Stop retrying after 10 times or max_retries.
+            // // 2a. Add retrying_height to LocalMinerState. OR clear it if Stop retrying.
+            // for i in max_retries {
+            // submit_vdf_proof_tx_to_network(xxxxxx)
+            // }
+
+            return Err(ErrorKind::Config
+                .context("No Node for submitting transactions")
+                .into());
+        }
+
+    Ok(())
+    }
+
 
     fn write_json(block: &Block, blocks_dir: PathBuf) {
         if !&blocks_dir.exists() {
@@ -205,6 +262,19 @@ pub mod build_block {
         }
         (max_block, max_block_path)
     }
+
+    pub fn get_proof(config: &OlMinerConfig , height: u64) -> Vec<u8> {
+
+        let blocks_dir = Path::new(&config.chain_info.block_dir);
+
+        let mut file = fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let reader = BufReader::new(file);
+        let block: Block = serde_json::from_reader(reader).unwrap();
+
+        return block.data.clone();
+
+    }
+
 
     /* ////////////// */
     /* / Unit tests / */
