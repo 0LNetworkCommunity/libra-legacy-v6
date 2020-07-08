@@ -291,21 +291,12 @@
       //         +8 // iterations/difficulty
       //         +1024; // statement
 
-      let slice_challenge_to_address = Vector::empty<u8>();
-
-      let i = 0;
-      while (i < 16) {
-        let byte = *Vector::borrow(&challenge, i);
-        Vector::push_back(&mut slice_challenge_to_address, *&byte);
-        Debug::print(&byte);
-
-        i = i + 1;
-      };
+      let parsed_address = address_from_key(challenge);
 
       //TODO: how do we compare these two?
       // Transaction::assert(new_account_address == slice_challenge_to_address, 100080002);
 
-      Debug::print(&slice_challenge_to_address);
+      Debug::print(&parsed_address);
       Debug::print(&new_account_address);
     }
   }

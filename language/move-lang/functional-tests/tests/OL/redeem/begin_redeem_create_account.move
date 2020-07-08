@@ -14,7 +14,7 @@ fun main(sender: &signer) {
   let new_account_address = 0xDEADBEEF;
   let auth_key_prefix = x"232fb6ae7221c853232fb6ae7221c853";
 
-  // Redeem::first_challenge_includes_address(add, challenge);
+  Redeem::first_challenge_includes_address(add, challenge);
   // GOAL: it would be ideal that these accounts could be created by any Alice, for any Bob, i.e.
   // if it didn't need to be the association or system account.
   LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, new_account_address, auth_key_prefix);
