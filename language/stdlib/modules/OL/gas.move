@@ -3,6 +3,8 @@ address 0x0 {
 module GAS {
     use 0x0::FixedPoint32;
     use 0x0::Libra;
+    use 0x0::Transaction;
+    use 0x0::Signer;
 
     // The type tag for this coin type.
     resource struct T { }
@@ -22,19 +24,22 @@ module GAS {
     // both be the correct address and have the correct permissions. These
     // restrictions are enforced in the Libra::register_currency function.
     public fun initialize(account: &signer) {
-        // Register the LBR currency.
-        let (mint_cap, burn_cap) = Libra::register_currency<T>(
-            account,
-            FixedPoint32::create_from_rational(1, 1), // exchange rate to LBR
-            false,    // is_synthetic
-            1000000, // scaling_factor = 10^6
-            1000,    // fractional_part = 10^3
-            b"GAS"
-        );
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
-        //NOTE: 0L does not neet a preburn capability.
-        let preburn_cap = Libra::new_preburn_with_capability(&burn_cap);
-        move_to(account, Reserve { mint_cap, burn_cap, preburn_cap });
+      // Register the LBR currency.
+      let (mint_cap, burn_cap) = Libra::register_currency<T>(
+          account,
+          FixedPoint32::create_from_rational(1, 1), // exchange rate to LBR
+          false,    // is_synthetic
+          1000000, // scaling_factor = 10^6
+          1000,    // fractional_part = 10^3
+          b"GAS"
+      );
+
+      //NOTE: 0L does not neet a preburn capability.
+      let preburn_cap = Libra::new_preburn_with_capability(&burn_cap);
+      move_to(account, Reserve { mint_cap, burn_cap, preburn_cap });
     }
 }
 }
