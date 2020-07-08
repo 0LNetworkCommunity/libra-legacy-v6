@@ -1175,7 +1175,7 @@ pub enum Bytecode {
     Nop,
 }
 
-pub const NUMBER_OF_NATIVE_FUNCTIONS: usize = 17;
+pub const NUMBER_OF_NATIVE_FUNCTIONS: usize = 19;
 
 impl ::std::fmt::Debug for Bytecode {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {

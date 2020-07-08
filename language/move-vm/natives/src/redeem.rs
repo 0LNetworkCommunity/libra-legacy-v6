@@ -22,9 +22,10 @@ pub fn address_from_key(
     .value_as::<Vec<u8>>()?;
     let auth_key_len = authenticator::AuthenticationKey::LENGTH;
     let mut auth_key_arr: [u8; authenticator::AuthenticationKey::LENGTH] = 
-        [0; authenticator::AuthenticationKey::LENGTH];
+         [0; authenticator::AuthenticationKey::LENGTH];
+    assert!(auth_key_len <= auth_key_vec.len(), "Challenge input was invalid (too short).");
     for i in 0..auth_key_len {
-        auth_key_arr[auth_key_len - i - 1] = auth_key_vec.pop().unwrap();
+        auth_key_arr[i] = auth_key_vec.remove(0);
     };
     let auth_key = authenticator::AuthenticationKey::new(auth_key_arr);
     let address = auth_key.derived_address();
