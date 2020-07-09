@@ -1,3 +1,5 @@
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 //! account: alice, 0GAS
 //! account: preburner, 0GAS
 

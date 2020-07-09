@@ -1,25 +1,10 @@
-//! account: alice, 1000000, 0
+// This test is to check if new epoch is triggered at end of 15 blocks.
+// Here EPOCH-LENGTH = 15 Blocks.
+// TO DO: Genesis function call to have 15 round epochs.
+// NOTE: This test will fail in test-net and Production, only for Debug - due to epoch length.
+
+//! account: alice, 1000000, 0, validator
 //! account: vivian, 1000000, 0, validator
-
-//! sender: alice
-module FooConfig {
-    use 0x0::LibraConfig;
-
-    struct T {
-        version: u64,
-    }
-
-    public fun new(account: &signer, version: u64) {
-        LibraConfig::publish_new_config<T>(account, T { version: version });
-    }
-
-    public fun set(account: &signer, version: u64) {
-        LibraConfig::set(
-            account,
-            T { version }
-        )
-    }
-}
 
 //! block-prologue
 //! proposer: vivian
@@ -77,44 +62,25 @@ module FooConfig {
 //! proposer: vivian
 //! block-time: 14
 
-//! new-transaction
-//! sender: config
-// Publish a new config item.
-script {
-use {{alice}}::FooConfig;
-fun main(account: &signer) {
-    FooConfig::new(account, 0);
-}
-}
-// check: EXECUTED
-
 //! block-prologue
 //! proposer: vivian
 //! block-time: 15
+//! round: 15
 
-//! new-transaction
-//! sender: config
-// Update the value.
-script {
-use {{alice}}::FooConfig;
-fun main(account: &signer) {
-    FooConfig::set(account, 0);
-}
-}
-// Should trigger a reconfiguration
 // check: NewEpochEvent
-// check: EXECUTED
-
-//! block-prologue
-//! proposer: vivian
-//! block-time: 16
 
 //! new-transaction
 //! sender: alice
 script {
-use {{alice}}::FooConfig;
-fun main(account: &signer) {
-    FooConfig::set(account, 0);
+  use 0x0::LibraBlock;
+  use 0x0::Debug;
+  use 0x0::Transaction;
+  fun main(_account: &signer) {
+    let block_height =  LibraBlock::get_current_block_height(); //borrow_global<BlockMetadata>(0xA550C18);
+    Debug::print(&0x000000000013370000001);
+    Debug::print(&block_height);
+    Transaction::assert(block_height == 15, 98);
+
+    }
 }
-}
-// check: ABORT
+// check: EXECUTED

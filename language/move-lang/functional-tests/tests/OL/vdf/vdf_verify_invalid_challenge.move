@@ -1,3 +1,7 @@
+// NOTE: TEST SETUP: If you add a "validator", functional tests will add only that validator to genesis.
+// By default 0L tests load 3 random validators on genesis. This is slow. So adding a dummy validator will only run the initialize_miners once instead of three times, and speeds up testing.
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 //! new-transaction
 script{
 use 0x0::VDF;
@@ -23,4 +27,3 @@ fun main() {
   Transaction::assert(move re ==false, 1);
 }
 }
-

@@ -1,3 +1,5 @@
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 // Prepare the state for the next test.
 // Bob Submits a CORRECT VDF Proof, and that updates the state.
 //! account: alice, 10000000GAS
