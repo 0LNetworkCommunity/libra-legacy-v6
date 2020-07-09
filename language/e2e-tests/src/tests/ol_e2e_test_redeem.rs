@@ -1,6 +1,6 @@
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
-use crate::redeem::{redeem_txn, redeem_initialize_txn};
+use crate::redeem::redeem_txn;
 use ol_miner::delay::delay;
 use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};

@@ -26,20 +26,20 @@ pub fn redeem_txn(sender: &Account, seq_num: u64, challenge: Vec<u8>, difficulty
     )
 }
 
-/// This is test infrastructure. Helps build a signed transaction script TO INITIALIZE THE REDEEM module
-/// TODO: This may not be necessary if the Redeem module is initialized in the Genesis.move
-pub fn redeem_initialize_txn(sender: &Account, seq_num: u64 ) -> SignedTransaction {
-    let args = vec![];
-
-    sender.create_signed_txn_with_args(
-        StdlibScript::RedeemInitialize
-            .compiled_bytes()
-            .into_vec(),
-        vec![],
-        args,
-        seq_num,
-        gas_costs::TXN_RESERVED,
-        0,
-        LBR_NAME.to_owned(),
-    )
-}
+// This is test infrastructure. Helps build a signed transaction script TO INITIALIZE THE REDEEM module
+// TODO: This may not be necessary if the Redeem module is initialized in the Genesis.move
+// pub fn redeem_initialize_txn(sender: &Account, seq_num: u64 ) -> SignedTransaction {
+//     let args = vec![];
+//
+//     sender.create_signed_txn_with_args(
+//         StdlibScript::RedeemInitialize
+//             .compiled_bytes()
+//             .into_vec(),
+//         vec![],
+//         args,
+//         seq_num,
+//         gas_costs::TXN_RESERVED,
+//         0,
+//         LBR_NAME.to_owned(),
+//     )
+// }
