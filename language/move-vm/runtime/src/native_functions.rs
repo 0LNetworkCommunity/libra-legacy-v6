@@ -5,9 +5,10 @@ use crate::{data_operations::move_resource_to, interpreter::Interpreter, loader:
 use libra_types::{
     access_path::AccessPath, account_address::AccountAddress, account_config::CORE_CODE_ADDRESS,
     contract_event::ContractEvent,
+    ol_config
 };
 use move_core_types::{gas_schedule::CostTable, identifier::IdentStr, language_storage::ModuleId};
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector, olconfig};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,
@@ -47,6 +48,7 @@ pub(crate) enum NativeFunction {
     CreateSigner,
     DestroySigner,
     VDFVerify,
+    GETOLU64CONSTANT
 }
 
 impl NativeFunction {
@@ -82,6 +84,7 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
             (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
+            (&CORE_CODE_ADDRESS, "OLConfig", "get_ol_u64constant") => GETOLU64CONSTANT,
             _ => return None,
         })
     }
@@ -118,6 +121,7 @@ impl NativeFunction {
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
             Self::VDFVerify => vdf::verify(ctx, t, v),
+            Self::GETOLU64CONSTANT => olconfig::get_ol_u64constant(ctx, t, v),
         }
     }
 }
