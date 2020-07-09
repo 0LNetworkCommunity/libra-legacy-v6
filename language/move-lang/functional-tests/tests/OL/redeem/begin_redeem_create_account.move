@@ -2,13 +2,14 @@
 
 //! account: bob, 10000000GAS
 //! new-transaction
-//! sender: bob
+//! sender: association
 script {
 use 0x0::Redeem;
 use 0x0::LibraAccount;
 use 0x0::GAS;
 use 0x0::Transaction;
 use 0x0::Debug;
+use 0x0::LibraSystem;
 
 fun main(sender: &signer) {
   let challenge = x"232fb6ae7221c853232fb6ae7221c853000000000000000000000000DEADBEEF";
@@ -28,3 +29,15 @@ fun main(sender: &signer) {
 }
 }
 // check: EXECUTED
+
+//! new-transaction
+//! sender: 0xDEADBEEF
+script {
+  use 0x0::LibraSystem;
+  use 0x0::Transaction;
+
+  fun main(sender: &signer) {
+    LibraSystem::add_validator(sender, 0xDEADBEEF);
+    Transaction::assert(LibraSystem::is_validator(0xDEADBEEF), 67);
+  }
+}
