@@ -68,12 +68,30 @@
       begin_redeem(miner, vdf_proof_blob)
     }
 
+    // public fun exists_or_create(vdf_proof_blob: VdfProofBlob) {
+    //   miner_addr = address_from_key(&vdf_proof_blob.challenge);
+    //   // possibly created the account before submitting proof.
+    //   if !LibraAccount::exists(miner_addr) {
+    //     LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, new_account_address, auth_key_prefix);
+    //   }
+    //   return
+    // }
+
+
     // TODO: Change miner to address type.
     public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
       Debug::print(&0x12edee11100000000000000000001000);
 
-      //0. Check for errors
+      //0. Check for address
       let miner_addr = Signer::address_of( miner );
+
+      // let miner_addr;
+      //
+      // if (is_onboarding) {
+      //   exists_or_create(vdf_proof_blob);
+      // } else {
+      //   miner_addr = Signer::address_of( miner );
+      // }
       // Check difficulty is correct
       // will be different in tests than in production.
       //// IMPORTANT CONSTANT ////
@@ -87,6 +105,7 @@
       // Insert a new VdfProofBlob into a temp storage, while
       // Save all of miner's proofs to the miner's own address, including the first proof sent by someone else.
       // This may be the first time the miner is redeeming. If so, both resources are uninitialized.
+
       if (!::exists<MinerState>(miner_addr)) {
         // Verify the proof before anything else.
         // TODO: A faster way to check for minor errors, since it's an expensive operation.
