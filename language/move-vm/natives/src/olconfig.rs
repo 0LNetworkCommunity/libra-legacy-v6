@@ -4,7 +4,7 @@ use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
     natives::function::{native_gas, NativeContext, NativeResult},
-    values::{Reference, Value},
+    values::{Value},
 };
 
 use libra_types::{ 
@@ -31,7 +31,7 @@ pub fn get_ol_u64constant(
 
     // Getting constant value (Currently u64 as index value)
     // TODO::Change format to HEX
-    let constant = pop_arg!(arguments, u64);
+    let constant_index = pop_arg!(arguments, u64);
     // Getting the environment 
     let env = pop_arg!(arguments, u64);
 
@@ -47,13 +47,13 @@ pub fn get_ol_u64constant(
 
     match env {
         0 => {
-            match constant {
+            match constant_index {
                 0 => Ok(NativeResult::ok(cost, vec![Value::u64(ol_config::test::EPOCH_LENGTH)])),
                 _ => Err(VMStatus::new(StatusCode::INVALID_DATA).with_message(msg))
             }
         },
         1 => {
-            match constant {
+            match constant_index {
                 0 => Ok(NativeResult::ok(cost, vec![Value::u64(ol_config::prod::EPOCH_LENGTH)])),
                 _ => Err(VMStatus::new(StatusCode::INVALID_DATA).with_message(msg))
             }
