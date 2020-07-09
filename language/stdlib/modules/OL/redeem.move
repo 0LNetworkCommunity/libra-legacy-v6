@@ -292,15 +292,10 @@
       //         +1024; // statement
 
       // Calling native function to do this is rust
-      Debug::print(&0x11e110);
       let parsed_address = address_from_key(&challenge);
-      Debug::print(&0x11e11007);
-
-      //TODO: how do we compare these two?
+      // Confirm the address is corect and included in challenge
       Transaction::assert(new_account_address == parsed_address, 100080002);
 
-      Debug::print(&parsed_address);
-      Debug::print(&new_account_address);
     }
 
     native fun address_from_key(challenge: &vector<u8>): address;

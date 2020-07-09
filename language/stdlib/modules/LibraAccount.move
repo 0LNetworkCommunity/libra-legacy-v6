@@ -1077,9 +1077,7 @@ module LibraAccount {
         Event::publish_generator(&new_account);
         // TODO: This publish fails if the creator is not association.
         ValidatorConfig::publish_from_mining_0L(creator, &new_account);
-        ValidatorConfig::set_operator(&new_account, Signer::address_of(&new_account));
-        ValidatorConfig::set_config(&new_account, Signer::address_of(&new_account), x"", x"", x"", x"", x"");
-
+        
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);
 
