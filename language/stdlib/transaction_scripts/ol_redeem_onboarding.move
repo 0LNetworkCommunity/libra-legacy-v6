@@ -3,9 +3,13 @@
 script {
 use 0x0::Redeem;
 use 0x0::Debug;
+use 0x0::LibraAccount;
+use 0x0::GAS;
+use 0x0::Transaction;
 fun main(
   sender: &signer,
   challenge: vector<u8>,
+  auth_key_prefix: vector<u8>,
   difficulty: u64,
   solution: vector<u8>,
   tower_height: u64,
@@ -21,11 +25,11 @@ fun main(
     // if it didn't need to be the association or system account.
 
     // Parse key and check
-    Redeem::first_challenge_includes_address(expected_address, challenge);
+    Redeem::first_challenge_includes_address(expected_address, &challenge);
     //create an account if it doesn't yet exist.
     let proof = Redeem::create_proof_blob(challenge, difficulty, solution, tower_height);
 
-    LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, new_account_address, auth_key_prefix);
+    LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, expected_address, auth_key_prefix);
     // Check the account exists and the balance is 0
     Transaction::assert(LibraAccount::balance<GAS::T>(0xDEADBEEF) == 0, 0);
 

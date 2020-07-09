@@ -26,8 +26,9 @@ fn submit_proofs_transaction_onboarding() {
 
     println!("address:{:?}", sender.address() );
 
-    let challenge = b"aa";
-    let difficulty = 100;
+    let challenge = b"ca11e1019e";
+    let expected_addess = b"aa";
+    let difficulty = 100u64;
     // Generate solutions with cd ./verfiable-delay/ cargo run -- -l=4096 aa 100
     // the -l=4096 is important because this is the security paramater of 0L miner.
     let proof_computed = delay::do_delay(challenge, difficulty);
@@ -39,8 +40,8 @@ fn submit_proofs_transaction_onboarding() {
     //run the transaction script
     let output = executor.execute_and_apply(
         // build the transaction script binary.
-        redeem_txn_onboarding(&sender.account(), sequence_number, challenge.to_vec(), difficulty,
-                    proof.to_vec(), tower_height)
+        redeem_txn_onboarding(&sender.account(), sequence_number, challenge.to_vec(), auth_key_prefix.to_vec(),
+                    difficulty, proof.to_vec(), tower_height, expected_addess)
     );
 
     assert_eq!(
