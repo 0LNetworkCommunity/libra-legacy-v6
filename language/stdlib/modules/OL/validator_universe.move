@@ -121,9 +121,7 @@ address 0x0 {
       is_outgoing_validator: bool): u64 acquires ValidatorUniverse {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-      Debug::print(&861996);
-      Debug::print(&epoch_length);
-
+    
       //1. borrow the Validator's ValidatorEpochInfo
       let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
 
