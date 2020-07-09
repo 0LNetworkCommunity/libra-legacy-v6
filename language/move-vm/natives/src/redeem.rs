@@ -23,7 +23,6 @@ pub fn address_from_key(
     let auth_key_len = authenticator::AuthenticationKey::LENGTH;
     let mut auth_key_arr: [u8; authenticator::AuthenticationKey::LENGTH] = 
          [0; authenticator::AuthenticationKey::LENGTH];
-    assert!(auth_key_len <= auth_key_vec.len(), "Challenge input was invalid (too short).");
     for i in 0..auth_key_len {
         auth_key_arr[i] = auth_key_vec.remove(0);
     };
