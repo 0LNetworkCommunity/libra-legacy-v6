@@ -314,4 +314,5 @@ pub enum NativeCostIndex {
     SIGNER_BORROW = 15,
     CREATE_SIGNER = 16,
     DESTROY_SIGNER = 17,
+    PARSE_AUTH_KEY = 18,
 }

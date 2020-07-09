@@ -13,3 +13,4 @@ pub mod signature;
 pub mod signer;
 pub mod vdf;
 pub mod vector;
+pub mod parse_vdf_preimage;
