@@ -9,6 +9,12 @@ module LibraBlock {
     use 0x0::Vector;
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
+    use 0x0::Testnet;
+
+    resource struct BlockConstants {
+      epoch_length: u64, 
+      max_validator_per_epoch: u64
+    }
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -41,7 +47,25 @@ module LibraBlock {
               voters: Vector::singleton(0xA550C18), // OL Change TODO: OL: (Nelaturuk) Remove this. It's a placeholder.
               new_block_events: Event::new_event_handle<Self::NewBlockEvent>(account),
           }
-      );
+      );  
+
+      if (Testnet::is_testnet()) {
+        move_to<BlockConstants>(
+          account,
+          BlockConstants {
+              epoch_length: 15, 
+              max_validator_per_epoch: 4
+          }
+        );
+      } else {
+        move_to<BlockConstants>(
+          account,
+          BlockConstants {
+              epoch_length: 100000, 
+              max_validator_per_epoch: 10
+          }
+        );
+      };
     }
 
     // Set the metadata for the current block.
@@ -55,7 +79,7 @@ module LibraBlock {
         timestamp: u64,
         previous_block_votes: vector<address>,
         proposer: address
-    ) acquires BlockMetadata {
+    ) acquires BlockMetadata, BlockConstants {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
         {
@@ -67,7 +91,7 @@ module LibraBlock {
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
 
         // OL implementation of reconfiguration.
-        if ( round == ReconfigureOL::get_epoch_length() )
+        if ( round == get_epoch_length() )
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata.
           ReconfigureOL::reconfigure(vm, get_current_block_height());
     }
@@ -110,6 +134,16 @@ module LibraBlock {
     public fun get_previous_voters(): vector<address> acquires BlockMetadata {
        let voters = *&borrow_global<BlockMetadata>(0xA550C18).voters;
        return voters //vector<address>
+    }
+
+    // Get the epoch length
+    public fun get_epoch_length(): u64 acquires BlockConstants {
+       borrow_global<BlockConstants>(0xA550C18).epoch_length
+    }
+
+    // Get max validator per epoch
+    public fun get_max_validator_per_epoch(): u64 acquires BlockConstants {
+       borrow_global<BlockConstants>(0xA550C18).max_validator_per_epoch
     }
 }
 
