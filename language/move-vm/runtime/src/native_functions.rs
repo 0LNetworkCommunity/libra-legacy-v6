@@ -7,7 +7,7 @@ use libra_types::{
     contract_event::ContractEvent,
 };
 use move_core_types::{gas_schedule::CostTable, identifier::IdentStr, language_storage::ModuleId};
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector, parse_vdf_preimage};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,
@@ -47,6 +47,7 @@ pub(crate) enum NativeFunction {
     CreateSigner,
     DestroySigner,
     VDFVerify,
+    RedeemAuthKeyParse,     // 0L change
 }
 
 impl NativeFunction {
@@ -82,6 +83,7 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
             (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
+            (&CORE_CODE_ADDRESS, "Redeem", "address_from_key") => RedeemAuthKeyParse,   // 0L change
             _ => return None,
         })
     }
@@ -118,6 +120,7 @@ impl NativeFunction {
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
             Self::VDFVerify => vdf::verify(ctx, t, v),
+            Self::RedeemAuthKeyParse => parse_vdf_preimage::address_from_key(ctx, t, v),    // 0L change
         }
     }
 }
