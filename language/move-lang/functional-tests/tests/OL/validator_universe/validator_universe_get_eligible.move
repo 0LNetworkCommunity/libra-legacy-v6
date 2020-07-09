@@ -1,4 +1,5 @@
 // Adding new validator epoch info
+
 //! new-transaction
 //! sender: association
 script{

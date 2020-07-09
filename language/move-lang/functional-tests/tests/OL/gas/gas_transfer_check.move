@@ -1,3 +1,5 @@
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 //! account: bob, 0GAS
 //! account: alice, 10GAS
 
