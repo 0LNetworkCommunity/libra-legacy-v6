@@ -9,11 +9,15 @@ use 0x0::Redeem;
 use 0x0::LibraAccount;
 use 0x0::GAS;
 use 0x0::Transaction;
+use 0x0::Debug;
+
 
 fun main(sender: &signer) {
   let challenge = x"232fb6ae7221c853232fb6ae7221c853000000000000000000000000DEADBEEF";
   let new_account_address = 0xDEADBEEF;
   let auth_key_prefix = x"232fb6ae7221c853232fb6ae7221c853";
+
+  Debug::print(&b"Parameters for Redeem Transaction:");
 
   // Parse key and check
   Redeem::first_challenge_includes_address(new_account_address, challenge);
