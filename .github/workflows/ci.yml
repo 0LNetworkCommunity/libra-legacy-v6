@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: Rust project
+    name: 0L Functional Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,5 +26,3 @@ jobs:
         run: cargo check
       - name: Run OL functional tests
         run: cd language/move-lang/functional-tests && cargo test OL
-      - name: Run OL e2e tests
-        run: cd language/e2e-tests && cargo xtest -p language-e2e-tests ol -- --nocapture
