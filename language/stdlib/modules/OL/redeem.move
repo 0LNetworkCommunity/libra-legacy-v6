@@ -300,7 +300,7 @@
       });
     }
 
-    public fun first_challenge_includes_address(new_account_address: address, challenge: vector<u8>) {
+    public fun first_challenge_includes_address(new_account_address: address, challenge: &vector<u8>) {
       // GOAL: To check that the preimage/challenge of the FIRST VDF proof blob contains a given address.
       // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
       // the address of a miner.
@@ -313,12 +313,12 @@
       // Calling native function to do this is rust
       // The auth_key must be at least 32 bytes long
       Transaction::assert(Vector::length(&challenge) >= 32, 100080001);
-      let parsed_address = address_from_key(&challenge);
+      let (parsed_address, _auth_key) = address_from_key(&challenge);
       // Confirm the address is corect and included in challenge
       Transaction::assert(new_account_address == parsed_address, 100080002);
 
     }
 
-    native fun address_from_key(challenge: &vector<u8>): address;
+    native fun address_from_key(challenge: &vector<u8>): (address, vector<u8>);
   }
   }
