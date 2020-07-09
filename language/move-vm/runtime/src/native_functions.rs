@@ -7,7 +7,7 @@ use libra_types::{
     contract_event::ContractEvent,
 };
 use move_core_types::{gas_schedule::CostTable, identifier::IdentStr, language_storage::ModuleId};
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector, redeem};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vdf, vector, parse_vdf_preimage};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,
@@ -120,7 +120,7 @@ impl NativeFunction {
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
             Self::VDFVerify => vdf::verify(ctx, t, v),
-            Self::RedeemAuthKeyParse => redeem::address_from_key(ctx, t, v),    // 0L change
+            Self::RedeemAuthKeyParse => parse_vdf_preimage::address_from_key(ctx, t, v),    // 0L change
         }
     }
 }
