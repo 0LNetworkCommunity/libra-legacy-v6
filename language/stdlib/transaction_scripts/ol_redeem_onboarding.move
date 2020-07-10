@@ -10,7 +10,7 @@ fun main(
   challenge: vector<u8>,
   difficulty: u64,
   solution: vector<u8>,
-  expected_address: address // TODO: add this to doubly check the user knows his address.
+  _expected_address: address // TODO: add this to doubly check the user knows his address.
 ) {
     // GOAL: it would be ideal that these accounts could be created by any Alice, for any Bob, i.e.
     // if it didn't need to be the association or system account.
