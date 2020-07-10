@@ -319,6 +319,6 @@
 
     }
 
-    native fun address_from_challenge(challenge: &vector<u8>): (address, vector<u8>);
+    native public fun address_from_challenge(challenge: &vector<u8>): (address, vector<u8>);
   }
   }
