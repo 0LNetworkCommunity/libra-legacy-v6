@@ -46,10 +46,10 @@ fn submit_proofs_transaction_onboarding() {
             &sender.account(),
             sequence_number,
             challenge,
-            auth_key_prefix,
+            // auth_key_prefix,
             difficulty,
             proof,
-            tower_height,
+            // tower_height,
             AccountAddress::from_hex_literal(expected_addess).unwrap())
     );
 

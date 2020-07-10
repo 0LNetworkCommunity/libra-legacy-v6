@@ -30,10 +30,10 @@ pub fn redeem_txn(sender: &Account, seq_num: u64, challenge: Vec<u8>, difficulty
 pub fn redeem_txn_onboarding(sender: &Account, seq_num: u64, challenge: Vec<u8>, auth_key_prefix: Vec<u8>, difficulty: u64, solution: Vec<u8>, tower_height: u64, expected_address: AccountAddress) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(challenge),
-        TransactionArgument::U8Vector(auth_key_prefix),
         TransactionArgument::U64(difficulty),
         TransactionArgument::U8Vector(solution),
-        TransactionArgument::U64(tower_height),
+        TransactionArgument::U8Vector(auth_key_prefix),
+        // TransactionArgument::U64(tower_height),
         TransactionArgument::Address(expected_address),
     ];
     sender.create_signed_txn_with_args(
