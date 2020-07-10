@@ -26,13 +26,8 @@ jobs:
         run: cd language/stdlib && cargo run --release
       - name: Run OL functional tests
         run: cd language/move-lang/functional-tests && cargo test OL
-<<<<<<< HEAD
   miner:
     name: Miner Tests
-=======
-  check:
-    name: 0L Miner Tests
->>>>>>> 88430027d18f0b3672479bc19c077de1310fb01c
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -48,13 +43,8 @@ jobs:
 
       - name: Run Miner tests
         run: cd ol-miner && cargo test
-<<<<<<< HEAD
   e2e:
     name: E2E Tests
-=======
-  check:
-    name: 0L E2E Tests
->>>>>>> 88430027d18f0b3672479bc19c077de1310fb01c
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
