@@ -1,7 +1,7 @@
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
 use crate::redeem_setup:: {redeem_txn, redeem_txn_onboarding};
-use ol_miner::delay::delay;
+use ol_miner::delay;
 use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};
 use move_core_types::account_address::AccountAddress;
