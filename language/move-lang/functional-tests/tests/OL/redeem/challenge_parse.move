@@ -1,4 +1,6 @@
-//! account: bob, 10000000GAS, validator
+
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+//! account: bob, 10000000GAS
 //! new-transaction
 //! sender: bob
 script {
