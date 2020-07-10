@@ -1,4 +1,4 @@
-name: CI - Functional
+name: CI - E2E
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: 0L Functional Tests
+    name: 0L E2E Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -24,5 +24,5 @@ jobs:
 
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
-      - name: Run OL functional tests
-        run: cd language/move-lang/functional-tests && cargo test OL
+      - name: Run OL e2e tests
+        run: cd language/e2e-tests && cargo xtest -p language-e2e-tests ol -- --nocapture
