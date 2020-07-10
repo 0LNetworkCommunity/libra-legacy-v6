@@ -93,7 +93,7 @@
         // The main point of this Redeem: Checks that the user did run the delay (VDF).
         // Calling Verify() to check the validity of Blob
         let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-        Transaction::assert(valid == true, 100080004);
+        Transaction::assert(valid, 100080004);
         Debug::print(&0x12edee11100000000000000000001001);
 
         // // TODO: Check the First VDF proof CHALLENGE, for the address the miner wants to register.
@@ -103,12 +103,12 @@
         // //2. create a new validator account.
         // // TODO: we need the public key as well as the address for this.
         // // public key is 64 byte hex, and address is a 16 byte hex.
-        // LibraAccount::create_validator_account<GAS::T>(sender, new_account_address, auth_key_prefix);
-
-        // let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
+        // Address is being parsed from auth_key for now in above function call first_challenge_includes_address
+        // LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, new_account_address, auth_key_prefix);
 
         // initialize the miner state.
         // TODO: Create account if there is no account
+        //  ^ this is written in above but untested for now
         init_miner_state(miner);
 
         // init_in_process(miner);
@@ -144,7 +144,7 @@
 
          // run the verifier.
          let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-         Transaction::assert(valid == true, 100080005);
+         Transaction::assert(valid, 100080005);
          Debug::print(&0x12edee11100000000000000000001001);
        };
 
@@ -291,22 +291,15 @@
       //         +8 // iterations/difficulty
       //         +1024; // statement
 
-      let slice_challenge_to_address = Vector::empty<u8>();
+      // Calling native function to do this is rust
+      // The auth_key must be at least 32 bytes long
+      Transaction::assert(Vector::length(&challenge) >= 32, 100080001);
+      let parsed_address = address_from_key(&challenge);
+      // Confirm the address is corect and included in challenge
+      Transaction::assert(new_account_address == parsed_address, 100080002);
 
-      let i = 0;
-      while (i < 16) {
-        let byte = *Vector::borrow(&challenge, i);
-        Vector::push_back(&mut slice_challenge_to_address, *&byte);
-        Debug::print(&byte);
-
-        i = i + 1;
-      };
-
-      //TODO: how do we compare these two?
-      // Transaction::assert(new_account_address == slice_challenge_to_address, 100080002);
-
-      Debug::print(&slice_challenge_to_address);
-      Debug::print(&new_account_address);
     }
+
+    native fun address_from_key(challenge: &vector<u8>): address;
   }
   }

@@ -121,7 +121,7 @@ address 0x0 {
       is_outgoing_validator: bool): u64 acquires ValidatorUniverse {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-
+    
       //1. borrow the Validator's ValidatorEpochInfo
       let collection = borrow_global_mut<ValidatorUniverse>(0x0);
 
@@ -188,14 +188,15 @@ address 0x0 {
       Debug::print(&0x1eed8012000000000000000000200001);
 
       let end_block_height = current_block_height;
+      let epoch_count = epoch_length - 2;  // Not all blocks are committed at current block height.
 
       // The current block_height needs to be at least the length of one (the first) epoch.
-      Transaction::assert(end_block_height >= epoch_length, 010008003);
+      Transaction::assert(end_block_height >= epoch_count, 010008003);
 
-      let start_block_height = end_block_height - epoch_length;
+      let start_block_height = end_block_height - epoch_count;
 
       // Calculating threshold which is 90% of the blocks.
-      let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_length;
+      let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_count;
       Debug::print(&0x1eed8012000000000000000000200002);
 
       let active_validator = Stats::node_heuristics(addr, start_block_height, end_block_height);

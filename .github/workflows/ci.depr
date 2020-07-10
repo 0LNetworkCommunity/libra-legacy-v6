@@ -1,14 +1,14 @@
-name: CI
+name: CI - Functional
 
 on:
   push:
-    branches: [ OLv3, onboarding, ci ]
+    branches: [ OLv3, ci ]
   pull_request:
-    branches: [ OLv3, onboarding ]
+    branches: [ OLv3 ]
 
 jobs:
-  functional:
-    name: Functional Tests
+  check:
+    name: 0L Functional Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -26,8 +26,8 @@ jobs:
         run: cd language/stdlib && cargo run --release
       - name: Run OL functional tests
         run: cd language/move-lang/functional-tests && cargo test OL
-  miner:
-    name: Miner Tests
+  check:
+    name: 0L Miner Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,8 +43,8 @@ jobs:
 
       - name: Run Miner tests
         run: cd ol-miner && cargo test
-  e2e:
-    name: E2E Tests
+  check:
+    name: 0L E2E Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
