@@ -11,9 +11,7 @@ fun main(
   challenge: vector<u8>,
   difficulty: u64,
   solution: vector<u8>,
-  // auth_key_prefix: vector<u8>,
-  // tower_height: u64,
-  expected_address: address
+  // expected_address: address TODO: add this to doubly check the user knows his address.
 ) {
 
     Debug::print(&challenge);
@@ -28,7 +26,7 @@ fun main(
 
     let (parsed_address, auth_key_prefix) = Redeem::address_from_challenge(&challenge);
     // TODO: Check parsed_address matches expected_address
-    Debug::print(&expected_address);
+    // Debug::print(&expected_address);
     LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, parsed_address, auth_key_prefix);
     // Check the account exists and the balance is 0
     Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 0);
