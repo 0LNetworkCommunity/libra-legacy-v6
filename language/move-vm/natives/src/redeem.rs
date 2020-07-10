@@ -44,6 +44,6 @@ pub fn address_from_challenge(
     let auth_key = AuthenticationKey::try_from(auth_key_vec).expect("Check length");
     let address = auth_key.derived_address();
     println!("address\n{:?}", &address);
-    let return_values = vec![Value::address(address), Value::vector_u8(vec!())];
+    let return_values = vec![Value::address(address), Value::vector_u8(auth_key_vec.to_owned())];
     Ok(NativeResult::ok(cost, return_values))
 }
