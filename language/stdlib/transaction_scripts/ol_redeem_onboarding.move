@@ -17,7 +17,8 @@ fun main(
 
     // Parse key and check
     let (parsed_address, auth_key_prefix) = Redeem::address_from_challenge(&challenge);
-
+    // TODO: uncomment the following line to ensure that user knows his address
+    // Transaction::assert(_expected_address == parsed_address);
     LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, parsed_address, auth_key_prefix);
     // Check the account exists and the balance is 0
     Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 12);
