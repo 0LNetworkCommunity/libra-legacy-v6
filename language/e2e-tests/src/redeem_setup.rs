@@ -27,18 +27,12 @@ pub fn redeem_txn(sender: &Account, seq_num: u64, challenge: Vec<u8>, difficulty
     )
 }
 
-pub fn redeem_txn_onboarding(
-    sender: &Account,
-    seq_num: u64,
-    challenge: Vec<u8>,
-    difficulty: u64,
-    solution: Vec<u8>,
-    _expected_address: AccountAddress) -> SignedTransaction {
+pub fn redeem_txn_onboarding(sender: &Account, seq_num: u64, challenge: Vec<u8>, difficulty: u64, solution: Vec<u8>, expected_address: AccountAddress) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(challenge),
         TransactionArgument::U64(difficulty),
         TransactionArgument::U8Vector(solution),
-        // TransactionArgument::Address(expected_address),
+        TransactionArgument::Address(expected_address),
     ];
     sender.create_signed_txn_with_args(
         StdlibScript::RedeemOnboarding
@@ -47,7 +41,7 @@ pub fn redeem_txn_onboarding(
         vec![],
         args,
         seq_num,
-        gas_costs::TXN_RESERVED,
+        gas_costs::TXN_RESERVED * 4,
         0,
         LBR_NAME.to_owned(),
     )
