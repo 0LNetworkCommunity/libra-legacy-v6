@@ -83,7 +83,7 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
             (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
-            (&CORE_CODE_ADDRESS, "Redeem", "address_from_key") => RedeemAuthKeyParse,   // 0L change
+            (&CORE_CODE_ADDRESS, "Redeem", "address_from_challenge") => RedeemAuthKeyParse,   // 0L change
             _ => return None,
         })
     }
@@ -119,8 +119,8 @@ impl NativeFunction {
             Self::SignerBorrowAddress => signer::native_borrow_address(ctx, t, v),
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
-            Self::VDFVerify => vdf::verify(ctx, t, v),
-            Self::RedeemAuthKeyParse => parse_vdf_preimage::address_from_key(ctx, t, v),    // 0L change
+            Self::VDFVerify => vdf::verify(ctx, t, v), // 0L change
+            Self::RedeemAuthKeyParse => parse_vdf_preimage::address_from_challenge(ctx, t, v),// 0L change
         }
     }
 }
