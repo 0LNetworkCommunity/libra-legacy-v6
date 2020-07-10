@@ -19,9 +19,9 @@ module LibraTransactionTimeout {
 
   public fun set_timeout(association: &signer, new_duration: u64) acquires TTL {
     // Only callable by the Association address
-    Transaction::assert(Signer::address_of(association) == 0xA550C18, 1);
+    Transaction::assert(Signer::address_of(association) == 0x0, 1);
 
-    let timeout = borrow_global_mut<TTL>(0xA550C18);
+    let timeout = borrow_global_mut<TTL>(0x0);
     timeout.duration_microseconds = new_duration;
   }
 
@@ -32,7 +32,7 @@ module LibraTransactionTimeout {
     };
 
     let current_block_time = LibraTimestamp::now_microseconds();
-    let timeout = borrow_global<TTL>(0xA550C18).duration_microseconds;
+    let timeout = borrow_global<TTL>(0x0).duration_microseconds;
     let _max_txn_time = current_block_time + timeout;
 
     let txn_time_microseconds = timestamp * 1000000;

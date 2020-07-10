@@ -164,7 +164,7 @@ module AccountLimits {
     // The address where the default (unhosted) account limits are
     // published
     public fun default_limits_addr(): address {
-        0xA550C18
+        0x0
     }
 
     ///////////////////////////////////////////////////////////////////////////

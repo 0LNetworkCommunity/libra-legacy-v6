@@ -24,11 +24,9 @@ module GenesisOL {
     use 0x0::Subsidy;
     use 0x0::Signer;
     use 0x0::ReconfigureOL;
-    use 0x0::Debug;
-
+    
     fun initialize(
         vm: &signer,
-        _association: &signer,
         config_account: &signer,
         fee_account: &signer,
         burn_account: &signer,
@@ -37,7 +35,6 @@ module GenesisOL {
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
-        let x = 42;
         // Association root setup
         Association::initialize(vm);
         Association::grant_privilege<Libra::AddCurrency>(vm, vm);
@@ -109,6 +106,7 @@ module GenesisOL {
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
         
+        LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);

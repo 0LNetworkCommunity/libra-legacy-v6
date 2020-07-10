@@ -167,7 +167,7 @@ module Libra {
         if(sender == 0x0) {
             mint_with_capability(
                 amount,
-                borrow_global<MintCapability<Token>>(0xA550C18)
+                borrow_global<MintCapability<Token>>(0x0)
             )
         } else {
             mint_with_capability(
@@ -187,7 +187,7 @@ module Libra {
         if(sender == 0x0) {
             burn_with_capability(
                 preburn_address,
-                borrow_global<BurnCapability<Token>>(0xA550C18)
+                borrow_global<BurnCapability<Token>>(0x0)
             )
         } else {
             burn_with_capability(
@@ -231,7 +231,7 @@ module Libra {
         Transaction::assert(value <= 1000000000 * 1000000, 11);
         let currency_code = currency_code<Token>();
         // update market cap resource to reflect minting
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         Transaction::assert(info.can_mint, 4);
         info.total_value = info.total_value + (value as u128);
         // don't emit mint events for synthetic currenices
@@ -269,7 +269,7 @@ module Libra {
             coin
         );
         let currency_code = currency_code<Token>();
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         info.preburn_value = info.preburn_value + coin_value;
         // don't emit preburn events for synthetic currencies
         if (!info.is_synthetic) {
@@ -342,7 +342,7 @@ module Libra {
         let T { value } = Vector::remove(&mut preburn.requests, 0);
         // update the market cap
         let currency_code = currency_code<Token>();
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         info.total_value = info.total_value - (value as u128);
         info.preburn_value = info.preburn_value - value;
         // don't emit burn events for synthetic currencies
@@ -372,7 +372,7 @@ module Libra {
         let coin = Vector::remove(&mut preburn.requests, 0);
         // update the market cap
         let currency_code = currency_code<Token>();
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         let amount = value(&coin);
         info.preburn_value = info.preburn_value - amount;
         // Don't emit cancel burn events for synthetic currencies. cancel burn shouldn't be be used
@@ -425,7 +425,7 @@ module Libra {
 
     // Return the total value of Libra to be burned
     public fun preburn_value<Token>(): u64 acquires CurrencyInfo {
-        borrow_global<CurrencyInfo<Token>>(0xA550C18).preburn_value
+        borrow_global<CurrencyInfo<Token>>(0x0).preburn_value
     }
 
     // Create a new Libra::T<CoinType> with a value of 0
