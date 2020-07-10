@@ -9,7 +9,6 @@ use 0x0::Redeem;
 use 0x0::LibraAccount;
 use 0x0::GAS;
 use 0x0::Transaction;
-// use 0x0::Debug;
 
 
 fun main(sender: &signer) {

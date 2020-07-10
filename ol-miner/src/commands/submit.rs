@@ -1,33 +1,32 @@
-//! `start` subcommand - example of how to write a subcommand
+//! `submit` subcommand
 
-// use crate::block::Block;
-use crate::block::*;
-use crate::config::OlMinerConfig;
+
+use super::OlMinerCmd;
+use abscissa_core::{Command, Options, Runnable};
+use libra_crypto::traits::ValidCryptoMaterial;
+use libra_wallet::WalletLibrary;
+use std::fs;
+use std::io::Write;
 use crate::prelude::*;
-use anyhow::Error;
+use crate::block;
 use libra_types::waypoint::Waypoint;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+use crate::block::*;
+use anyhow::Error;
 
-/// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
-/// accessors along with logging macros. Customize as you see fit.
-use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 
-/// `start` subcommand
-///
-/// The `Options` proc macro generates an option parser based on the struct
-/// definition, and is defined in the `gumdrop` crate. See their documentation
-/// for a more comprehensive example:
-///
-/// <https://docs.rs/gumdrop/>
-#[derive(Command, Debug, Options)]
-pub struct StartCmd {
+
+#[derive(Command, Debug, Default, Options)]
+pub struct SubmitCmd {
     #[options(help = "Provide a waypoint for the libra chain")]
     waypoint: String, //Option<Waypoint>,
+
+    #[options(help = "Already mined height to submit")]
+    height: usize,
 }
 
-impl Runnable for StartCmd {
-    /// Start the application.
+impl Runnable for SubmitCmd {
     fn run(&self) {
         let miner_configs = app_config();
 
@@ -36,6 +35,7 @@ impl Runnable for StartCmd {
         println!("Enter your OL mnemonic");
 
         let readline = rl.readline(">> ");
+
 
         match readline {
             Ok(line) => {
@@ -52,7 +52,7 @@ impl Runnable for StartCmd {
                     }
                 }
 
-                build_block::mine_and_submit(&miner_configs, line, parsed_waypoint.unwrap());
+                build_block::submit_block(&miner_configs, line, parsed_waypoint.unwrap(),self.height);
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
@@ -65,15 +65,5 @@ impl Runnable for StartCmd {
             }
         }
 
-        status_ok!("Start mining...", "ok"); //TODO: Print something more interesting here.
-    }
-}
-
-impl config::Override<OlMinerConfig> for StartCmd {
-    // Process the given command line options, overriding settings from
-    // a configuration file using explicit flags taken from command-line
-    // arguments.
-    fn override_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
-        Ok(config)
     }
 }

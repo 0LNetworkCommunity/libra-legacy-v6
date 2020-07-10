@@ -5,6 +5,7 @@
 //! sender: bob
 script {
     use 0x0::Redeem;
+    
     fun main() {
         // First 32 bytes (64 hex characters) make up the auth_key. Of this,
         // the first 16 bytes (32 hex characters) make up the auth_key pefix
