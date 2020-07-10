@@ -112,7 +112,7 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
 
         // Mint subsidy for the initial validator set
-        Subsidy::mint_subsidy(association);
+        Subsidy::mint_subsidy(vm);
     }
 
 }

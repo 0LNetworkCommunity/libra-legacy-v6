@@ -11,7 +11,7 @@ pub fn vm_address() -> AccountAddress {
 }
 
 pub fn association_address() -> AccountAddress {
-    AccountAddress::from_hex_literal("0xA550C18")
+    AccountAddress::from_hex_literal("0x0")
         .expect("Parsing valid hex literal should always succeed")
 }
 

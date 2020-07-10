@@ -227,7 +227,7 @@ address 0x0 {
 
       // Calculate subsidy equally for all the validators based on subsidy curve
       // Calculate the split for subsidy and burn
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(0xA550C18);
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
       let (subsidy_units, _burn_units) = subsidy_curve(
         subsidy_info.subsidy_ceiling_gas,
         subsidy_info.min_node_density,
