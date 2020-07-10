@@ -41,7 +41,7 @@ pub fn redeem_txn_onboarding(
         // TransactionArgument::Address(expected_address),
     ];
     sender.create_signed_txn_with_args(
-        StdlibScript::Redeem
+        StdlibScript::RedeemOnboarding
             .compiled_bytes()
             .into_vec(),
         vec![],
