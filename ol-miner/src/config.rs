@@ -25,8 +25,8 @@ impl OlMinerConfig {
         let mut padded_key_bytes = match hex::decode(self.profile.public_key.clone()) {
             Err(x) => panic!("Invalid OL Key{}", x),
             Ok(key_bytes) => {
-                if key_bytes.len() != 32 {
-                    panic!("Expected a 32 byte OL Key . Got{}", key_bytes.len());
+                if key_bytes.len() != 16 {
+                    panic!("Expected a 16 byte OL Key . Got{}", key_bytes.len());
                 }
                 key_bytes
             }
@@ -83,7 +83,7 @@ impl OlMinerConfig {
         assert!(
             preimage.len()
                 == (
-                    32 // OL Key
+                    16 // OL Key
                     +64 // chain_id
                     +8 // iterations/difficulty
                     +1024
@@ -115,6 +115,9 @@ pub struct ChainInfo {
     pub chain_id: String,
     /// Directory to store blocks in
     pub block_dir: String,
+    /// Node ip Address to submit transactions to
+    pub node: Option<String>,
+    pub base_waypoint: String,
 }
 
 // TODO: These defaults serving as test fixtures.
@@ -123,6 +126,8 @@ impl Default for ChainInfo {
         Self {
             chain_id: "Ol testnet".to_owned(),
             block_dir: "blocks".to_owned(),
+            base_waypoint: "None".to_owned(),
+            node: None,
         }
     }
 }
@@ -140,8 +145,7 @@ impl Default for Profile {
     fn default() -> Self {
         Self {
             // TODO: change this public key.
-            public_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
-                .to_owned(),
+            public_key: "5ffd9856978b5020be7f72339e41a401".to_owned(),
             statement: "protests rage across America".to_owned(),
         }
     }

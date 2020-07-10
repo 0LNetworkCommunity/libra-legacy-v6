@@ -1,4 +1,4 @@
-name: CI - Functional
+name: CI - Miner
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: 0L Functional Tests
+    name: 0L Miner Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -22,7 +22,5 @@ jobs:
       # `cargo check` command here will use installed `nightly`
       # as it is set as an "override" for current directory
 
-      - name: Build stdlib
-        run: cd language/stdlib && cargo run --release
-      - name: Run OL functional tests
-        run: cd language/move-lang/functional-tests && cargo test OL
+      - name: Run Miner tests
+        run: cd ol-miner && cargo test
