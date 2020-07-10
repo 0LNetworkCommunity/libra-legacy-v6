@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: 0L Functional Tests
+    name: 0L Miner Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -23,4 +23,4 @@ jobs:
       # as it is set as an "override" for current directory
 
       - name: Run Miner tests
-        run: cd language/ol-miner && cargo test
+        run: cd ol-miner && cargo test
