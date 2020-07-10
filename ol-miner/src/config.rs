@@ -23,10 +23,10 @@ impl OlMinerConfig {
         let mut preimage: Vec<u8> = vec![];
 
         let mut padded_key_bytes = match hex::decode(self.profile.public_key.clone()) {
-            Err(x) => panic!("Invalid OL Key{}", x),
+            Err(x) => panic!("Invalid OL Auth Key{}", x),
             Ok(key_bytes) => {
-                if key_bytes.len() != 16 {
-                    panic!("Expected a 16 byte OL Key . Got{}", key_bytes.len());
+                if key_bytes.len() != 32 {
+                    panic!("Expected a 32 byte OL Key . Got{}", key_bytes.len());
                 }
                 key_bytes
             }
@@ -63,17 +63,17 @@ impl OlMinerConfig {
             let mut statement_bytes = self.profile.statement.clone().into_bytes();
 
             match statement_bytes.len() {
-                d if d > 1024 => panic!(
+                d if d > 1008 => panic!(
                     "Chain Id is longer than 1024 bytes. Got {} bytes",
                     statement_bytes.len()
                 ),
-                d if d < 1024 => {
-                    let padding_length = 1024 - statement_bytes.len() as usize;
+                d if d < 1008 => {
+                    let padding_length = 1008 - statement_bytes.len() as usize;
                     let mut padding_bytes: Vec<u8> = vec![0; padding_length];
                     padding_bytes.append(&mut statement_bytes);
                     padding_bytes
                 }
-                d if d == 1024 => statement_bytes,
+                d if d == 1008 => statement_bytes,
                 _ => unreachable!(),
             }
         };
@@ -83,10 +83,10 @@ impl OlMinerConfig {
         assert!(
             preimage.len()
                 == (
-                    16 // OL Key
+                    32 // 0L Auth_Key
                     +64 // chain_id
                     +8 // iterations/difficulty
-                    +1024
+                    +1008
                     // statement
                 ),
             "preimage is the incorrect size"
