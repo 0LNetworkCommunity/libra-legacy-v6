@@ -201,7 +201,7 @@ module LibraAccount {
     }
 
     public fun initialize(association: &signer) {
-        Transaction::assert(Signer::address_of(association) == 0xA550C18, 0);
+        Transaction::assert(Signer::address_of(association) == 0x0, 0);
         move_to(
             association,
             AccountOperationsCapability {
@@ -612,7 +612,7 @@ module LibraAccount {
     ) {
         let new_account_addr = Signer::address_of(&new_account);
         // cannot create an account at the reserved address 0x0
-        Transaction::assert(new_account_addr != 0x0, 0);
+        // Transaction::assert(new_account_addr != 0x0, 0);
 
         // (1) publish Account::T
         let authentication_key = auth_key_prefix;

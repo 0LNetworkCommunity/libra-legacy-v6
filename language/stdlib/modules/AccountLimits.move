@@ -54,7 +54,7 @@ module AccountLimits {
     // Grant a capability to call this module. This does not necessarily
     // need to be a unique capability.
     public fun grant_calling_capability(account: &signer): CallingCapability {
-        Transaction::assert(Signer::address_of(account) == 0xA550C18, 3000);
+        Transaction::assert(Signer::address_of(account) == 0x0, 3000);
         CallingCapability{}
     }
 

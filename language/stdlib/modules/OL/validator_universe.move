@@ -24,7 +24,7 @@ address 0x0 {
     public fun initialize(account: &signer){
       // Check for transactions sender is association
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       move_to<ValidatorUniverse>(account, ValidatorUniverse {
           validators: Vector::empty<ValidatorEpochInfo>()
@@ -33,7 +33,7 @@ address 0x0 {
 
     // This function is called to add validator to the validator universe.
     public fun add_validator(addr: address) acquires ValidatorUniverse {
-      let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+      let collection = borrow_global_mut<ValidatorUniverse>(0x0);
       if(!validator_exists_in_universe(collection, addr))
       Vector::push_back<ValidatorEpochInfo>(
         &mut collection.validators,
@@ -56,7 +56,7 @@ address 0x0 {
       let eligible_validators = Vector::empty<address>();
       // Create a vector with all eligible validator addresses
       // Get all the data from the ValidatorUniverse resource stored in the association/system address.
-      let collection = borrow_global<ValidatorUniverse>(0xA550C18);
+      let collection = borrow_global<ValidatorUniverse>(0x0);
       Debug::print(&0x1eed8012000000000000000000000002);
 
       let i = 0;
@@ -94,7 +94,7 @@ address 0x0 {
     public fun update_validator_epoch_count(addr: address) acquires ValidatorUniverse{
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-      let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+      let collection = borrow_global_mut<ValidatorUniverse>(0x0);
 
       // Getting index of the validator
       let index_vec = get_validator_index_(&collection.validators, addr); //tODO: get_validator_index_
@@ -123,7 +123,7 @@ address 0x0 {
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
       //1. borrow the Validator's ValidatorEpochInfo
-      let collection = borrow_global_mut<ValidatorUniverse>(0xA550C18);
+      let collection = borrow_global_mut<ValidatorUniverse>(0x0);
 
       // Getting index of the validator
       let index_vec = get_validator_index_(&collection.validators, addr);
@@ -214,7 +214,7 @@ address 0x0 {
     public fun get_validator_weight(addr: address): Option::T<u64> acquires ValidatorUniverse{
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-      let collection = borrow_global<ValidatorUniverse>(0xA550C18);
+      let collection = borrow_global<ValidatorUniverse>(0x0);
 
       // Getting index of the validator
       let index_vec = get_validator_index_(&collection.validators, addr);
@@ -231,7 +231,7 @@ address 0x0 {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
 
-      let collection = borrow_global<ValidatorUniverse>(0xA550C18);
+      let collection = borrow_global<ValidatorUniverse>(0x0);
       let validator_list = &collection.validators;
       let i = 0;
       let total_voting_power = 0;

@@ -12,7 +12,7 @@ module LibraTransactionTimeout {
 
   public fun initialize(association: &signer) {
     // Only callable by the Association address
-    Transaction::assert(Signer::address_of(association) == 0xA550C18, 1);
+    Transaction::assert(Signer::address_of(association) == 0x0, 1);
     // Currently set to 1day.
     move_to(association, TTL {duration_microseconds: 86400000000});
   }

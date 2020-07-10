@@ -136,12 +136,12 @@ module Libra {
 
     // TODO: temporary, we should ideally make MintCapability unique eventually...
     public fun grant_mint_capability_to_association<CoinType>(association: &signer) {
-        assert_assoc_and_currency<CoinType>(association);
+        assert_vm_and_currency<CoinType>(association);
         move_to(association, MintCapability<CoinType>{})
     }
 
     public fun grant_burn_capability_to_association<CoinType>(association: &signer) {
-        assert_assoc_and_currency<CoinType>(association);
+        assert_vm_and_currency<CoinType>(association);
         move_to(association, BurnCapability<CoinType>{})
     }
 
@@ -498,6 +498,7 @@ module Libra {
         currency_code: vector<u8>,
     ): (MintCapability<CoinType>, BurnCapability<CoinType>)
     acquires CurrencyRegistrationCapability {
+
         // And only callable by the designated currency address.
         Transaction::assert(
             Association::has_privilege<AddCurrency>(Signer::address_of(account)),
@@ -518,10 +519,12 @@ module Libra {
             preburn_events: Event::new_event_handle<PreburnEvent>(account),
             cancel_burn_events: Event::new_event_handle<CancelBurnEvent>(account)
         });
+
         RegisteredCurrencies::add_currency_code(
             currency_code,
             &borrow_global<CurrencyRegistrationCapability>(LibraConfig::default_config_address()).cap
         );
+
         (MintCapability<CoinType>{}, BurnCapability<CoinType>{})
     }
 
@@ -614,13 +617,20 @@ module Libra {
     // The (singleton) address under which the currency registration
     // information is published.
     fun currency_addr(): address {
-        0xA550C18
+        0x0
     }
 
     // Assert that the sender is an association account, and that
     // `CoinType` is a regstered currency type.
     fun assert_assoc_and_currency<CoinType>(account: &signer) {
         Association::assert_is_association(account);
+        assert_is_coin<CoinType>();
+    }
+
+    // Assert that the sender is an vm account, and that
+    // `CoinType` is a regstered currency type.
+    fun assert_vm_and_currency<CoinType>(account: &signer) {
+        Transaction::assert(Signer::address_of(account) == 0x0, 1002);
         assert_is_coin<CoinType>();
     }
 

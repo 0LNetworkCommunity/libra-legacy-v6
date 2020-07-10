@@ -17,7 +17,7 @@ module LibraWriteSetManager {
     }
 
     public fun initialize(account: &signer) {
-        Transaction::assert(Signer::address_of(account) == 0xA550C18, 1);
+        Transaction::assert(Signer::address_of(account) == 0x0, 1);
 
         move_to(
             account,

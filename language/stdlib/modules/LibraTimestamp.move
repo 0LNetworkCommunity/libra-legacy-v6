@@ -12,7 +12,7 @@ module LibraTimestamp {
     // Initialize the global wall clock time resource.
     public fun initialize(association: &signer) {
         // Only callable by the Association address
-        Transaction::assert(Signer::address_of(association) == 0xA550C18, 1);
+        Transaction::assert(Signer::address_of(association) == 0x0, 1);
 
         // TODO: Should the initialized value be passed in to genesis?
         let timer = CurrentTimeMicroseconds { microseconds: 0 };

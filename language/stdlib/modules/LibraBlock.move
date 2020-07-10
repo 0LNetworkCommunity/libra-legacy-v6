@@ -32,7 +32,7 @@ module LibraBlock {
     // Currently, it is invoked in the genesis transaction
     public fun initialize_block_metadata(account: &signer) {
       // Only callable by the Association address
-      Transaction::assert(Signer::address_of(account) == 0xA550C18, 1);
+      Transaction::assert(Signer::address_of(account) == 0x0, 1);
 
       move_to<BlockMetadata>(
           account,
