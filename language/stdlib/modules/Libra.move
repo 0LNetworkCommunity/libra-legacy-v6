@@ -140,6 +140,11 @@ module Libra {
         move_to(association, MintCapability<CoinType>{})
     }
 
+    public fun grant_burn_capability_to_association<CoinType>(association: &signer) {
+        assert_assoc_and_currency<CoinType>(association);
+        move_to(association, BurnCapability<CoinType>{})
+    }
+
     // Publish the `MintCapability` `cap` for the `CoinType` currency under `account`. `CoinType`
     // must be a registered currency type.
     public fun publish_mint_capability<CoinType>(account: &signer, cap: MintCapability<CoinType>) {
@@ -158,10 +163,18 @@ module Libra {
     // Fails if the sender does not have a published MintCapability.
     public fun mint<Token>(account: &signer, amount: u64): T<Token>
     acquires CurrencyInfo, MintCapability {
-        mint_with_capability(
-            amount,
-            borrow_global<MintCapability<Token>>(Signer::address_of(account))
-        )
+        let sender = Signer::address_of(account);
+        if(sender == 0x0) {
+            mint_with_capability(
+                amount,
+                borrow_global<MintCapability<Token>>(0xA550C18)
+            )
+        } else {
+            mint_with_capability(
+                amount,
+                borrow_global<MintCapability<Token>>(sender)
+            )
+        }
     }
 
     // Burn the coins currently held in the preburn holding area under `preburn_address`.
@@ -170,10 +183,19 @@ module Libra {
         account: &signer,
         preburn_address: address
     ) acquires BurnCapability, CurrencyInfo, Preburn {
-        burn_with_capability(
-            preburn_address,
-            borrow_global<BurnCapability<Token>>(Signer::address_of(account))
-        )
+        let sender = Signer::address_of(account);
+        if(sender == 0x0) {
+            burn_with_capability(
+                preburn_address,
+                borrow_global<BurnCapability<Token>>(0xA550C18)
+            )
+        } else {
+            burn_with_capability(
+                preburn_address,
+                borrow_global<BurnCapability<Token>>(sender)
+            )
+        }
+        
     }
 
     // Cancel the oldest burn request from `preburn_address`
@@ -282,6 +304,11 @@ module Libra {
     public fun preburn_to<Token>(account: &signer, coin: T<Token>) acquires CurrencyInfo, Preburn {
         let sender = Signer::address_of(account);
         preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(sender), sender);
+    }
+
+    //OL:Method to preburn using address instead of account
+    public fun preburn_to_address<Token>(preburn_address: address, coin: T<Token>) acquires CurrencyInfo, Preburn {
+        preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(preburn_address), preburn_address);
     }
 
     // Permanently remove the coins held in the `Preburn` resource stored at `preburn_address` and

@@ -31,6 +31,8 @@ module GAS {
             1000,    // fractional_part = 10^3
             b"GAS"
         );
+
+        //NOTE: 0L does not neet a preburn capability.
         let preburn_cap = Libra::new_preburn_with_capability(&burn_cap);
         move_to(account, Reserve { mint_cap, burn_cap, preburn_cap });
     }

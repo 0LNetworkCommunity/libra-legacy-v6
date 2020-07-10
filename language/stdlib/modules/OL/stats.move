@@ -3,9 +3,7 @@
 address 0x0 {
   module Stats {
     use 0x0::Vector;
-    // use 0x0::Transaction;
     use 0x0::Signer;
-    // use 0x0::Debug;
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
     struct Chunk {
@@ -72,7 +70,6 @@ address 0x0 {
         i = i + 1;
       };
       num_voted
-      // This should be added to get a percentage eventually: num_voted / (end_height - start_height + 1)
     }
 
     // TODO: OL: (dranade) This should actually return a fixed decimal as a percentage, but this hasn't been implemented yet.

@@ -215,14 +215,16 @@ module LibraAccount {
     // Deposits the `to_deposit` coin into the `payee`'s account balance
     public fun deposit<Token>(payer: &signer, payee: address, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
-        Association::assert_is_association(payer);
+        let sender = Signer::address_of(payer);
+        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
         deposit_with_metadata(payer, payee, to_deposit, x"", x"")
     }
 
     // Deposits the `to_deposit` coin into `account`
     public fun deposit_to<Token>(account: &signer, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
-        Association::assert_is_association(account);
+        let sender = Signer::address_of(account);
+        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
         deposit(account, Signer::address_of(account), to_deposit)
     }
 
@@ -237,6 +239,27 @@ module LibraAccount {
         deposit_with_sender_and_metadata(
             payee,
             Signer::address_of(payer),
+            to_deposit,
+            metadata,
+            metadata_signature
+        );
+    }
+
+    // OL::Methods for vm to deposit
+    // Deposits the `to_deposit` coin into the `payee`'s account balance with the attached `metadata`
+    public fun vm_deposit_with_metadata<Token>(
+        payer: &signer,
+        payee: address,
+        to_deposit: Libra::T<Token>,
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>
+    ) acquires T, Balance, AccountOperationsCapability, Role {
+        let sender = Signer::address_of(payer);
+        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+
+        deposit_with_sender_and_metadata(
+            payee,
+            0xA550C18,
             to_deposit,
             metadata,
             metadata_signature
@@ -361,6 +384,17 @@ module LibraAccount {
         deposit(account, payee, LBR::mint(account, amount));
     }
 
+    // Create `amount` GAS and send them to `payee`.
+    // `mint_gas_to_address` can only be called by accounts with Libra::MintCapability<GAS>
+    public fun mint_gas_to_address(
+        account: &signer,
+        payee: address,
+        amount: u64
+    ) acquires T, Balance, AccountOperationsCapability, Role {
+        // Mint and deposit the coin
+        deposit(account, payee, Libra::mint<GAS::T>(account, amount));
+    }
+
     // Cancel the oldest burn request from `preburn_address` and return the funds.
     // Fails if the sender does not have a published MintCapability.
     public fun cancel_burn<Token>(
@@ -393,7 +427,8 @@ module LibraAccount {
     // Withdraw `amount` Libra::T<Token> from the transaction sender's account balance
     public fun withdraw_from<Token>(account: &signer, amount: u64): Libra::T<Token>
     acquires T, Balance, AccountOperationsCapability {
-        Association::assert_is_association(account);
+        let sender = Signer::address_of(account);
+        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
         let sender = Signer::address_of(account);
         let sender_account = borrow_global_mut<T>(sender);
         let sender_balance = borrow_global_mut<Balance<Token>>(sender);
@@ -407,7 +442,8 @@ module LibraAccount {
     public fun withdraw_with_capability<Token>(
         cap: &WithdrawCapability, amount: u64
     ): Libra::T<Token> acquires Balance, AccountOperationsCapability {
-        Association::assert_addr_is_association(cap.account_address);
+        Transaction::assert(Association::addr_is_association(cap.account_address)
+            || cap.account_address == 0xFEE, 1);
         let balance = borrow_global_mut<Balance<Token>>(cap.account_address);
         withdraw_from_balance<Token>(cap.account_address, balance , amount)
     }
@@ -479,7 +515,8 @@ module LibraAccount {
     // Creates the `payee` account if it does not exist
     public fun pay_from<Token>(payer: &signer, payee: address, amount: u64)
     acquires T, Balance, AccountOperationsCapability, Role {
-        Association::assert_is_association(payer);
+        let sender = Signer::address_of(payer);
+        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
         pay_from_with_metadata<Token>(payer, payee, amount, x"", x"");
     }
 
@@ -653,6 +690,20 @@ module LibraAccount {
         Libra::publish_burn_capability<Coin2::T>(&new_account, coin2_burn_cap);
         SlidingNonce::publish_nonce_resource(association, &new_account);
         // TODO: add Association or TreasuryCompliance role instead of using Empty?
+        Event::publish_generator(&new_account);
+        make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
+    }
+
+    /// Create a burn account at `new_account_address` with authentication key
+    /// `auth_key_prefix` | `new_account_address`
+    public fun create_burn_account<Token>(
+        association: &signer,
+        new_account_address: address,
+        auth_key_prefix: vector<u8>
+    ) {
+        Association::assert_is_root(association);
+        let new_account = create_signer(new_account_address);
+        Association::grant_association_address(association, &new_account);
         Event::publish_generator(&new_account);
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
     }

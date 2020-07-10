@@ -25,7 +25,7 @@ pub enum StdlibScript {
     AddValidator,
     AddCurrencyToAccount,
     Burn,
-    BurnTxnFees,
+    // BurnTxnFees, // 0L deprecated
     CancelBurn,
     CreateChildVaspAccount,
     CreateDesignatedDealer,
@@ -36,9 +36,9 @@ pub enum StdlibScript {
     Mint,
     MintLbr,
     MintLbrToAddress,
+    MintGasToAddress,
     ModifyPublishingOption,
     PeerToPeerWithMetadata,
-    LibraBlockTestHelper,  // OL Change
     Preburn,
     PublishSharedEd2551PublicKey,
     RegisterPreburner,
@@ -58,9 +58,15 @@ pub enum StdlibScript {
     UpdateLibraVersion,
     UpdateExchangeRate,
     UpdateMintingAbility,
-    // ...add new scripts here
+    // ...add new 0L scripts here
     Redeem,
     RedeemInitialize,
+    LibraBlockTestHelper, // 0L Change
+    TxFeeTestHelper,// 0L Change
+    TxFeeTestMint,  // 0L Change
+    TxFeeTestMove,  // 0L Change
+    TxFeeTestDistr, // 0L Change
+    ReconfigBulkUpdate      // 0L Change
 }
 
 impl StdlibScript {
@@ -72,7 +78,7 @@ impl StdlibScript {
             AddValidator,
             AddCurrencyToAccount,
             Burn,
-            BurnTxnFees,
+            // BurnTxnFees, // 0L deprecated,
             CancelBurn,
             CreateChildVaspAccount,
             CreateDesignatedDealer,
@@ -83,9 +89,9 @@ impl StdlibScript {
             Mint,
             MintLbr,
             MintLbrToAddress,
+            MintGasToAddress,
             ModifyPublishingOption,
             PeerToPeerWithMetadata,
-            LibraBlockTestHelper, // OL Change
             Preburn,
             PublishSharedEd2551PublicKey,
             RegisterPreburner,
@@ -105,9 +111,15 @@ impl StdlibScript {
             UpdateLibraVersion,
             UpdateExchangeRate,
             UpdateMintingAbility,
-            // ...add new scripts here
+            // ...add new 0L scripts here
             Redeem,
             RedeemInitialize,
+            LibraBlockTestHelper, // 0L Change
+            TxFeeTestHelper,    // 0L Change
+            TxFeeTestMint,      // 0L Change
+            TxFeeTestMove,      // 0L Change
+            TxFeeTestDistr,     // 0L Change
+            ReconfigBulkUpdate      // 0L Change
         ]
     }
 
@@ -136,7 +148,6 @@ impl StdlibScript {
         // read from disk
         let mut path = PathBuf::from(self.name());
         path.set_extension("mv");
-        println!("{:?}", path);
         CompiledBytes(
             STAGED_TXN_SCRIPTS_DIR
                 .get_file(path.clone())
@@ -198,7 +209,7 @@ impl fmt::Display for StdlibScript {
                 AddValidator => "add_validator",
                 AddCurrencyToAccount => "add_currency_to_account",
                 Burn => "burn",
-                BurnTxnFees => "burn_txn_fees",
+                // BurnTxnFees => "burn_txn_fees",
                 CancelBurn => "cancel_burn",
                 CreateChildVaspAccount => "create_child_vasp_account",
                 CreateDesignatedDealer => "create_designated_dealer",
@@ -209,9 +220,9 @@ impl fmt::Display for StdlibScript {
                 Mint => "mint",
                 MintLbr => "mint_lbr",
                 MintLbrToAddress => "mint_lbr_to_address",
+                MintGasToAddress => "mint_gas_to_address",
                 ModifyPublishingOption => "modify_publishing_option",
                 PeerToPeerWithMetadata => "peer_to_peer_with_metadata",
-                LibraBlockTestHelper => "libra_block_test_helper", // OL Change
                 Preburn => "preburn",
                 PublishSharedEd2551PublicKey => "publish_shared_ed25519_public_key",
                 RegisterPreburner => "register_preburner",
@@ -231,8 +242,15 @@ impl fmt::Display for StdlibScript {
                 UpdateLibraVersion => "update_libra_version",
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
-                Redeem => "redeem",
-                RedeemInitialize => "redeem_init"
+                // 0L Changes
+                Redeem => "redeem", // 0L Change
+                RedeemInitialize => "redeem_init", // 0L Change
+                LibraBlockTestHelper => "libra_block_test_helper", // 0L Change
+                TxFeeTestHelper => "tx_fees_e2e_test_helper",// 0L Change
+                TxFeeTestMint => "txn_fee_test_mint",       // 0L Change
+                TxFeeTestMove => "txn_fee_test_move",       // 0L Change
+                TxFeeTestDistr => "txn_fee_test_distr",     // 0L Change
+                ReconfigBulkUpdate => "reconfig_bulk_update"// 0L Change
             }
         )
     }

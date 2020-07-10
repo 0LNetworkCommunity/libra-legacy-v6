@@ -124,14 +124,15 @@ encode_txn_script! {
           `MintCapability` stored under their account and `preburn_address` has a pending burn request"
 }
 
-encode_txn_script! {
-    name: encode_burn_txn_fees_script,
-    type_arg: currency,
-    args: [],
-    script: BurnTxnFees,
-    doc: "Burn transaction fees that have been collected in the given `currency`,\
-          and relinquish to the association. The currency must be non-synthetic."
-}
+// 0L change. This is a deprecated tx script in 0L
+// encode_txn_script! {
+//     name: encode_burn_txn_fees_script,
+//     type_arg: currency,
+//     args: [],
+//     script: BurnTxnFees,
+//     doc: "Burn transaction fees that have been collected in the given `currency`,\
+//           and relinquish to the association. The currency must be non-synthetic."
+// }
 
 encode_txn_script! {
     name: encode_cancel_burn_script,
@@ -286,6 +287,24 @@ pub fn encode_mint_lbr_to_address_script(
     validate_auth_key_prefix(&auth_key_prefix);
     Script::new(
         StdlibScript::MintLbrToAddress.compiled_bytes().into_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(*address),
+            TransactionArgument::U8Vector(auth_key_prefix),
+            TransactionArgument::U64(amount),
+        ],
+    )
+}
+
+/// Encode a program creating `amount` GAS for `address`
+pub fn encode_mint_gas_to_address_script(
+    address: &AccountAddress,
+    auth_key_prefix: Vec<u8>,
+    amount: u64,
+) -> Script {
+    validate_auth_key_prefix(&auth_key_prefix);
+    Script::new(
+        StdlibScript::MintGasToAddress.compiled_bytes().into_vec(),
         vec![],
         vec![
             TransactionArgument::Address(*address),
