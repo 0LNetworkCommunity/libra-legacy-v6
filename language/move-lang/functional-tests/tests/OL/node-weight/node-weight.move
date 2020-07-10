@@ -1,3 +1,5 @@
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 //! account: alice, 8
 //! account: bob, 7
 //! account: carol, 6

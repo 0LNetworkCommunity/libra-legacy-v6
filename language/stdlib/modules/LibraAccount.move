@@ -1047,17 +1047,40 @@ module LibraAccount {
         borrow_global_mut<Role_temp<RoleType>>(addr).is_certified = true;
     }
 
+    // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
     public fun create_validator_account<Token>(
         creator: &signer,
         new_account_address: address,
         auth_key_prefix: vector<u8>,
     ) {
+        // NOTE: 0L: This check is removed to allow any address to create a new validator account.
+        // should check that this is done with a VDF proof, so that it's not abused.
         Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
         let new_account = create_signer(new_account_address);
         Event::publish_generator(&new_account);
+        // TODO: This publish fails if the creator is not association.
         ValidatorConfig::publish(creator, &new_account);
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
+    }
+
+    // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
+    public fun create_validator_account_from_mining_0L<Token>(
+        creator: &signer,
+        new_account_address: address,
+        auth_key_prefix: vector<u8>,
+    ) {
+        // NOTE: 0L: This check is removed to allow any address to create a new validator account.
+        // should check that this is done with a VDF proof, so that it's not abused.
+        // Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
+        let new_account = create_signer(new_account_address);
+        Event::publish_generator(&new_account);
+        // TODO: This publish fails if the creator is not association.
+        ValidatorConfig::publish_from_mining_0L(creator, &new_account);
+        
+        move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
+        make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);
+
     }
 
     ///////////////////////////////////////////////////////////////////////////

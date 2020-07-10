@@ -11,7 +11,7 @@ use crate::{
     genesis_gas_schedule::INITIAL_GAS_SCHEDULE,
 };
 use bytecode_verifier::VerifiedModule;
-use libra_config::config::{NodeConfig, HANDSHAKE_VERSION};
+use libra_config::config::{NodeConfig, GenesisMiningProof, HANDSHAKE_VERSION};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform, ValidCryptoMaterial,
@@ -44,7 +44,8 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
     (private_key, public_key)
 });
 
-pub type ValidatorRegistration = (Ed25519PublicKey, Script);
+pub type ValidatorRegistration = (Ed25519PublicKey, Script, GenesisMiningProof); // 0L Change.
+
 
 pub fn encode_genesis_transaction_with_validator(
     public_key: Ed25519PublicKey,
@@ -76,6 +77,8 @@ pub fn encode_genesis_change_set(
 
     let mut genesis_context = GenesisContext::new(&data_cache, stdlib_modules);
 
+
+    // 0L Load the default currency. LBR_MODULE maps to GAS.
     let lbr_ty = TypeTag::Struct(StructTag {
         address: *account_config::LBR_MODULE.address(),
         module: account_config::LBR_MODULE.name().to_owned(),
@@ -86,6 +89,9 @@ pub fn encode_genesis_change_set(
     // generate the genesis WriteSet
     create_and_initialize_main_accounts(&mut genesis_context, &public_key, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
+    initialize_miners(&mut genesis_context, &validators);
+    distribute_genesis_subsidy(&mut genesis_context);
+
     setup_vm_config(&mut genesis_context, vm_publishing_option);
     reconfigure(&mut genesis_context);
 
@@ -172,13 +178,12 @@ fn initialize_validators(
     validators: &[ValidatorRegistration],
     lbr_ty: &TypeTag,
 ) {
-    for (account_key, registration) in validators {
+    for (account_key, registration, _ ) in validators {
         context.set_sender(account_config::association_address());
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address();
 
-        // Create an account
-
+        // Create a validator account
         context.exec(
             "LibraAccount",
             "create_validator_account",
@@ -191,8 +196,76 @@ fn initialize_validators(
         );
 
         context.set_sender(account);
+
+        //registration script that runs for each validator
         context.exec_script(registration);
     }
+}
+
+/// Initialize each validator.
+fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegistration]) {
+    // Genesis will abort if mining can't be confirmed.
+
+    println!("initialize_miners");
+    // IDEA:
+    // 1. The miner who participates in genesis ceremony, will add the first vdf proof block to the node.config.toml file.
+    // TODO: This file will be parsed as usual, but the NodeConfig object needs to be modified and the data be vailable here.
+    // 2. The Challenge of the first VDF proof needs to be parsed, and the first 32 bytes sliced (is the account public key). A new account needs to be generated with                 Value::address(account),
+    // PSEUDOCODE...
+    // let first_32 = _node_configs.challenge[..32]
+    // AuthenticationKey::ed25519(&account_key);
+    // let account = auth_key.derived_address();
+    // let address = Value::address(account);
+
+    // 3. this function initialize_miners() will directly call the Redeem::begin_redeem() with context.exec here. Note the miners get initialized as usual in the above initialize_validators() (Done)
+
+    // context.set_sender(account_config::association_address());
+    // context.exec(
+    //     "Redeem",
+    //     "begin_redeem",
+    //     vec![],
+    //     vec![miner, vdf_proof_blob],
+    // );
+
+    // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
+    // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
+
+    // #[cfg(test)]
+    //TODO: Make this difficulty switch between genesis/production and testing (default should be testing)
+    const DIFFICULTY: u64 = 100;
+    // #[cfg(not(test))]
+    // const DIFFICULTY: u64 = 1000000;
+
+
+    for (account_key, _ , mining_proof) in validators {
+        let auth_key = AuthenticationKey::ed25519(&account_key);
+        let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
+        let preimage = hex::decode(&mining_proof.preimage).unwrap();
+        let proof = hex::decode(&mining_proof.proof).unwrap();
+        context.set_sender( account );
+        context.exec(
+            "Redeem",
+            "genesis_helper",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(account),
+                Value::vector_u8(preimage), // serialize for move.
+                Value::u64(DIFFICULTY), // TODO: This constant needs to be set
+                Value::vector_u8(proof),
+            ],
+        );
+    }
+
+}
+
+/// Distribute genesis subsidy to initialized validators
+fn distribute_genesis_subsidy(context: &mut GenesisContext) {
+    println!("distributing genesis subsidy to validators");
+
+    let root_association_address = account_config::association_address();
+    context.set_sender(root_association_address);
+    context.exec("Subsidy","genesis",vec![],
+                 vec![Value::transaction_argument_signer_reference(account_config::association_address())]);
 }
 
 fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishingOption) {
@@ -241,16 +314,16 @@ fn reconfigure(context: &mut GenesisContext) {
 fn verify_genesis_write_set(events: &[ContractEvent]) {
     // Sanity checks on emitted events:
     // (1) The genesis tx should emit 1 event: a NewEpochEvent.
-    assert_eq!(
-        events.len(),
-        1,
-        "Genesis transaction should emit one event, but found {} events: {:?}",
-        events.len(),
-        events,
-    );
+    // assert_eq!(
+    //     events.len(),
+    //     1,
+    //     "Genesis transaction should emit one event, but found {} events: {:?}",
+    //     events.len(),
+    //     events,
+    // );
 
     // (2) The first event should be the new epoch event
-    let new_epoch_event = &events[0];
+    let new_epoch_event = &events[events.len()-1];
     assert_eq!(
         *new_epoch_event.key(),
         new_epoch_event_key(),
@@ -268,13 +341,13 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
 }
 
 /// Generate an artificial genesis `ChangeSet` for testing
+// 0L Follow this for e2e testing
 pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) -> ChangeSet {
     let stdlib_modules = stdlib_modules(stdlib_options);
-    let swarm = libra_config::generator::validator_swarm_for_testing(10);
-
+    let swarm = libra_config::generator::validator_swarm_for_testing(4);
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
-        &validator_registrations(&swarm.nodes),
+        &validator_registrations(&swarm.nodes).0,
         stdlib_modules,
         VMPublishingOption::Open,
     )
@@ -288,17 +361,18 @@ pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, FatStructType> {
 
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
-        &validator_registrations(&swarm.nodes),
+        &validator_registrations(&swarm.nodes).0,
         stdlib_modules,
         VMPublishingOption::Open,
     )
     .1
 }
 
-pub fn validator_registrations(node_configs: &[NodeConfig]) -> Vec<ValidatorRegistration> {
-    node_configs
+pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorRegistration>, &[NodeConfig])  {
+    let registrations = node_configs
         .iter()
         .map(|n| {
+            // println!("node_configs\n{:?}", node_configs);
             let test = n.test.as_ref().unwrap();
             let account_key = test.operator_keypair.as_ref().unwrap().public_key();
             let consensus_key = test.consensus_keypair.as_ref().unwrap().public_key();
@@ -321,7 +395,18 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> Vec<ValidatorRegi
                 identity_key.to_bytes(),
                 raw_advertised_address.into(),
             );
-            (account_key, script)
+            // 0L Change. Adding node configs
+
+
+            let preimage = n.configs_ol_miner.preimage.to_owned();
+            let proof = n.configs_ol_miner.proof.to_owned();
+            let vdf_proof = GenesisMiningProof{
+                preimage,
+                proof,
+            };
+
+            (account_key, script, vdf_proof) // 0L Change.
         })
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>();
+        (registrations, node_configs)
 }

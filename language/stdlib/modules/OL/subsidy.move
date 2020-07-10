@@ -9,6 +9,7 @@ address 0x0 {
     use 0x0::FixedPoint32;
     use 0x0::Stats;
     use 0x0::Debug;
+    use 0x0::ValidatorUniverse;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -212,6 +213,43 @@ address 0x0 {
       Debug::print(&0x50B51DE0000000000000000000005003);
 
       Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (subsidy_info.burn_units as u128), 8006);
+    }
+
+    public fun genesis(account: &signer) acquires SubsidyInfo {
+      //Need to check for association or vm account
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Debug::print(&0x50B51DE0000000000000000000008002);
+
+      // Get eligible validators list
+      let genesis_validators = ValidatorUniverse::get_eligible_validators(account);
+      let len = Vector::length(&genesis_validators);
+
+      // Calculate subsidy equally for all the validators based on subsidy curve
+      // Calculate the split for subsidy and burn
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0xA550C18);
+      let (subsidy_units, _burn_units) = subsidy_curve(
+        subsidy_info.subsidy_ceiling_gas,
+        subsidy_info.min_node_density,
+        subsidy_info.max_node_density,
+        len
+      );
+      
+      // Distribute gas coins to initial validators
+      let distribution_units = subsidy_units / len;
+      let i = 0;
+      while (i < len) {
+        let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+        let old_association_balance = LibraAccount::balance<GAS::T>(sender);
+        let old_validator_balance = LibraAccount::balance<GAS::T>(node_address);
+
+        //Transfer gas from association to validator
+        LibraAccount::pay_from<GAS::T>(account, node_address, distribution_units);
+        Transaction::assert(LibraAccount::balance<GAS::T>(sender) == old_association_balance - distribution_units, 8008);
+        // confirm the calculations, and that the ending balance is incremented accordingly.
+        Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_balance + distribution_units, 8009);
+        i = i + 1;
+      };
     }
 
     fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {

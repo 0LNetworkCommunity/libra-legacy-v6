@@ -21,6 +21,7 @@ use vm::{errors::*, CompiledModule};
 use vm_genesis::generate_genesis_change_set_for_testing;
 
 /// Dummy genesis ChangeSet for testing
+// 0L Follow this for e2e testing
 pub static GENESIS_CHANGE_SET: Lazy<ChangeSet> =
     Lazy::new(|| generate_genesis_change_set_for_testing(StdLibOptions::Staged));
 

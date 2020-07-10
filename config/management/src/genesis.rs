@@ -8,7 +8,9 @@ use libra_secure_storage::Storage;
 use libra_types::transaction::{Transaction, TransactionPayload};
 use std::{convert::TryInto, fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
-use vm_genesis::ValidatorRegistration;
+use vm_genesis::{ValidatorRegistration};
+use libra_config::config::{GenesisMiningProof};
+
 
 // TODO(davidiw) add operator_address, since that will eventually be the identity producing this.
 /// Note, it is implicitly expected that the storage supports
@@ -107,13 +109,16 @@ impl Genesis {
                 .value;
             let txn = txn.transaction().unwrap();
             let txn = txn.as_signed_user_txn().unwrap().payload();
+
+            //TODO: What is this transaction script that goes with the validator list?
             let txn = if let TransactionPayload::Script(script) = txn {
                 script.clone()
             } else {
                 return Err(Error::UnexpectedError("Found invalid registration".into()));
             };
 
-            validators.push((key, txn));
+            //TODO (ZM): This is where we need to place the miner proof.
+            validators.push((key, txn, GenesisMiningProof::default()));
         }
 
         Ok(validators)

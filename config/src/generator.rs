@@ -11,7 +11,7 @@ use rand::{rngs::StdRng, SeedableRng};
 pub struct ValidatorSwarm {
     pub nodes: Vec<NodeConfig>,
 }
-
+// 0L Follow this for e2e testing
 pub fn validator_swarm(
     template: &NodeConfig,
     count: usize,
@@ -47,6 +47,7 @@ pub fn validator_swarm(
     ValidatorSwarm { nodes }
 }
 
+// 0L Follow this for e2e testing
 pub fn validator_swarm_for_testing(nodes: usize) -> ValidatorSwarm {
     let mut config = NodeConfig::default();
     config.test = Some(TestConfig::open_module());
