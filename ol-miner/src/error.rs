@@ -18,6 +18,14 @@ pub enum ErrorKind {
     /// Input/output error
     #[error("I/O error")]
     Io,
+
+    /// Input/output error
+    #[error("Wallet")]
+    Wallet,
+
+    /// Input/output error
+    #[error("Transaction Error")]
+    Transaction,
 }
 
 impl ErrorKind {
