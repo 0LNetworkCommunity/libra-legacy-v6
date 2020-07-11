@@ -58,13 +58,13 @@ pub fn resubmit_backlog(quick_check: bool){
    //  // 1. Find the most recent LOCAL tower height. We can store this in a json file.
    //  let parsed_file = fs::read(Pathbuf(LocalMinerState))
    //  let local_tower_height = parsed_file.local_tower_height
-   //  let last_succesful_tx_height = parsed_file.last_succesful_tx_height
+   //  let last_successful_tx_height = parsed_file.last_successful_tx_height
    //
    //  // 1a. Check if there is a resubmission in progress. Exit gracefully.
    //   if (parsed_file.retrying_height){ return }
    // // 1b. quickly check if there is a problem, from local state.
-   //  if (quick_check && (last_succesful_tx_height< local_tower_height)) {
-   //   println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run withouth quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
+   //  if (quick_check && (last_successful_tx_height< local_tower_height)) {
+   //   println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run without quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
    //  }
    //  // 2. Query network for most recent reported_tower_height of the user.
    //  let mut libra_client = ClientProxy::new_for_ol(

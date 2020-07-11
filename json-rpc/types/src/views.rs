@@ -25,6 +25,7 @@ use move_core_types::{
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, convert::TryFrom};
 use transaction_builder::get_transaction_name;
+use libra_types::account_config::resources::miner_state::MinerStateResource;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -501,6 +502,28 @@ impl From<CurrencyInfoResource> for CurrencyInfoView {
             code: info.currency_code().to_string(),
             scaling_factor: info.scaling_factor(),
             fractional_part: info.fractional_part(),
+        }
+    }
+}
+
+/// MinerStat View implementation by OL
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct MinerStateView {
+    reported_tower_height: u64,
+    verified_tower_height: u64, // user's latest verified_tower_height
+    latest_epoch_mining: u64,
+    epochs_validating_and_mining: u64,
+    contiguous_epochs_validating_and_mining: u64,
+}
+
+impl From<MinerStateResource> for MinerStateView {
+    fn from(info: MinerStateResource) -> MinerStateView {
+        MinerStateView {
+            reported_tower_height: info.reported_tower_height(),
+            verified_tower_height: info.verified_tower_height(), // user's latest verified_tower_height
+            latest_epoch_mining: info.latest_epoch_mining(),
+            epochs_validating_and_mining: info.epochs_validating_and_mining(),
+            contiguous_epochs_validating_and_mining: info.contiguous_epochs_validating_and_mining(),
         }
     }
 }
