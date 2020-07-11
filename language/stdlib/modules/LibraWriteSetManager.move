@@ -17,7 +17,7 @@ module LibraWriteSetManager {
     }
 
     public fun initialize(account: &signer) {
-        Transaction::assert(Signer::address_of(account) == 0xA550C18, 1);
+        Transaction::assert(Signer::address_of(account) == 0x0, 1);
 
         move_to(
             account,
@@ -33,7 +33,7 @@ module LibraWriteSetManager {
         writeset_public_key: vector<u8>,
     ) {
         let sender = Signer::address_of(account);
-        Transaction::assert(sender == 0xA550C18, 33);
+        Transaction::assert(sender == 0x0, 33);
 
         let association_auth_key = LibraAccount::authentication_key(sender);
         let sequence_number = LibraAccount::sequence_number(sender);
@@ -48,7 +48,7 @@ module LibraWriteSetManager {
     }
 
     fun epilogue(account: &signer, writeset_payload: vector<u8>) acquires T {
-        let t_ref = borrow_global_mut<T>(0xA550C18);
+        let t_ref = borrow_global_mut<T>(0x0);
 
         Event::emit_event<Self::UpgradeEvent>(
             &mut t_ref.upgrade_events,

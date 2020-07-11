@@ -12,7 +12,7 @@ module LibraTimestamp {
     // Initialize the global wall clock time resource.
     public fun initialize(association: &signer) {
         // Only callable by the Association address
-        Transaction::assert(Signer::address_of(association) == 0xA550C18, 1);
+        Transaction::assert(Signer::address_of(association) == 0x0, 1);
 
         // TODO: Should the initialized value be passed in to genesis?
         let timer = CurrentTimeMicroseconds { microseconds: 0 };
@@ -28,7 +28,7 @@ module LibraTimestamp {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(account) == 0x0, 33);
 
-        let global_timer = borrow_global_mut<CurrentTimeMicroseconds>(0xA550C18);
+        let global_timer = borrow_global_mut<CurrentTimeMicroseconds>(0x0);
         if (proposer == 0x0) {
             // NIL block with null address as proposer. Timestamp must be equal.
             Transaction::assert(timestamp == global_timer.microseconds, 5001);
@@ -41,12 +41,12 @@ module LibraTimestamp {
 
     // Get the timestamp representing `now` in microseconds.
     public fun now_microseconds(): u64 acquires CurrentTimeMicroseconds {
-        borrow_global<CurrentTimeMicroseconds>(0xA550C18).microseconds
+        borrow_global<CurrentTimeMicroseconds>(0x0).microseconds
     }
 
     // Helper function to determine if the blockchain is at genesis state.
     public fun is_genesis(): bool acquires CurrentTimeMicroseconds {
-        !::exists<CurrentTimeMicroseconds>(0xA550C18) || now_microseconds() == 0
+        !::exists<CurrentTimeMicroseconds>(0x0) || now_microseconds() == 0
     }
 }
 

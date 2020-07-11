@@ -25,7 +25,7 @@ address 0x0 {
         public fun initialize(account: &signer, epoch_length: u64, validator_count_epoch: u64){
             // Check for transactions sender is association
             let sender = Signer::address_of(account);
-            Transaction::assert(sender == 0xA550C18, 8001);
+            Transaction::assert(sender == 0x0, 8001);
 
             move_to<EpochInfo>(account, EpochInfo {
                 epoch_length: epoch_length,
@@ -124,14 +124,14 @@ address 0x0 {
           Debug::print(&0x12EC011F160000000000000000003001);
 
             // Get epoch info from association
-            let epochInfo = borrow_global<EpochInfo>(0xA550C18);
+            let epochInfo = borrow_global<EpochInfo>(0x0);
             epochInfo.epoch_length
         }
 
         public fun get_max_validator_count_const(): u64 acquires EpochInfo {
           Debug::print(&0x12EC011F160000000000000000004001);
             // Get epoch info from association
-            let epochInfo = borrow_global<EpochInfo>(0xA550C18);
+            let epochInfo = borrow_global<EpochInfo>(0x0);
             epochInfo.validator_count_epoch
         }
   }

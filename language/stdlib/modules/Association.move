@@ -101,7 +101,7 @@ module Association {
 
     /// The address at which the root account will be published.
     public fun root_address(): address {
-        0xA550C18
+        0x0
     }
 
     /// Assert that `addr` is an association account.
