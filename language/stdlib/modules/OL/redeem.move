@@ -72,16 +72,8 @@
     public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerState, ProofsInEpoch {
       Debug::print(&0x12edee11100000000000000000001000);
 
-      //0. Check for address
+      //0. Check for errors
       let miner_addr = Signer::address_of( miner );
-
-      // let miner_addr;
-      //
-      // if (is_onboarding) {
-      //   exists_or_create(vdf_proof_blob);
-      // } else {
-      //   miner_addr = Signer::address_of( miner );
-      // }
       // Check difficulty is correct
       // will be different in tests than in production.
       //// IMPORTANT CONSTANT ////
@@ -289,7 +281,7 @@
       });
     }
 
-    public fun first_challenge_includes_address(new_account_address: address, challenge: &vector<u8>) {
+    public fun first_challenge_includes_address(new_account_address: address, challenge: vector<u8>) {
       // GOAL: To check that the preimage/challenge of the FIRST VDF proof blob contains a given address.
       // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
       // the address of a miner.
@@ -301,13 +293,13 @@
 
       // Calling native function to do this is rust
       // The auth_key must be at least 32 bytes long
-      // Transaction::assert(Vector::length(challenge) >= 32, 100080001);
-      let (parsed_address, _auth_key) = address_from_challenge(challenge);
+      Transaction::assert(Vector::length(&challenge) >= 32, 100080001);
+      let parsed_address = address_from_key(&challenge);
       // Confirm the address is corect and included in challenge
-      Transaction::assert(new_account_address == parsed_address, 19990080002);
+      Transaction::assert(new_account_address == parsed_address, 100080002);
 
     }
 
-    native public fun address_from_challenge(challenge: &vector<u8>): (address, vector<u8>);
+    native fun address_from_key(challenge: &vector<u8>): address;
   }
   }

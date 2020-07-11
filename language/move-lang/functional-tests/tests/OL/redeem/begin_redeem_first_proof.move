@@ -18,7 +18,7 @@ fun main() {
   let new_account_address = 0x232fb6ae7221c853232fb6ae7221c853;
   // let auth_key_prefix = x"b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde";
 
-  Redeem::first_challenge_includes_address(new_account_address, &challenge);
+  Redeem::first_challenge_includes_address(new_account_address, challenge);
 }
 }
 // check: EXECUTED
