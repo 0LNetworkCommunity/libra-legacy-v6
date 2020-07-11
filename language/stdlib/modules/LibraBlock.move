@@ -32,13 +32,13 @@ module LibraBlock {
     // Currently, it is invoked in the genesis transaction
     public fun initialize_block_metadata(account: &signer) {
       // Only callable by the Association address
-      Transaction::assert(Signer::address_of(account) == 0xA550C18, 1);
+      Transaction::assert(Signer::address_of(account) == 0x0, 1);
 
       move_to<BlockMetadata>(
           account,
           BlockMetadata {
               height: 0,
-              voters: Vector::singleton(0xA550C18), // OL Change TODO: OL: (Nelaturuk) Remove this. It's a placeholder.
+              voters: Vector::singleton(0x0), // OL Change TODO: OL: (Nelaturuk) Remove this. It's a placeholder.
               new_block_events: Event::new_event_handle<Self::NewBlockEvent>(account),
           }
       );
@@ -59,7 +59,7 @@ module LibraBlock {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
         {
-          let block_metadata_ref = borrow_global<BlockMetadata>(0xA550C18);
+          let block_metadata_ref = borrow_global<BlockMetadata>(0x0);
           Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
         };
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
@@ -80,7 +80,7 @@ module LibraBlock {
         previous_block_votes: vector<address>,
         proposer: address
     ) acquires BlockMetadata {
-        let block_metadata_ref = borrow_global_mut<BlockMetadata>(0xA550C18);
+        let block_metadata_ref = borrow_global_mut<BlockMetadata>(0x0);
         // TODO OL (Dev): Call the Stats module from here with previous_block_votes.
 
         // TODO: Figure out a story for errors in the system transactions.
@@ -103,12 +103,12 @@ module LibraBlock {
 
     // Get the current block height
     public fun get_current_block_height(): u64 acquires BlockMetadata {
-      borrow_global<BlockMetadata>(0xA550C18).height
+      borrow_global<BlockMetadata>(0x0).height
     }
 
     // Get the previous block voters
     public fun get_previous_voters(): vector<address> acquires BlockMetadata {
-       let voters = *&borrow_global<BlockMetadata>(0xA550C18).voters;
+       let voters = *&borrow_global<BlockMetadata>(0x0).voters;
        return voters //vector<address>
     }
 }

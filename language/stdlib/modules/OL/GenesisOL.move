@@ -16,18 +16,17 @@ module GenesisOL {
     use 0x0::LibraTransactionTimeout;
     use 0x0::LibraVersion;
     use 0x0::LibraWriteSetManager;
-    use 0x0::Signer;
     use 0x0::Stats;
     use 0x0::Testnet;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
-    // use 0x0::Redeem;
+    use 0x0::Signer;
     use 0x0::ReconfigureOL;
-
+    
     fun initialize(
-        association: &signer,
+        vm: &signer,
         config_account: &signer,
         fee_account: &signer,
         burn_account: &signer,
@@ -37,12 +36,12 @@ module GenesisOL {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
         // Association root setup
-        Association::initialize(association);
-        Association::grant_privilege<Libra::AddCurrency>(association, association);
+        Association::initialize(vm);
+        Association::grant_privilege<Libra::AddCurrency>(vm, vm);
 
         // On-chain config setup
         Event::publish_generator(config_account);
-        LibraConfig::initialize(config_account, association);
+        LibraConfig::initialize(config_account, vm);
 
         // Currency setup
         Libra::initialize(config_account);
@@ -51,44 +50,43 @@ module GenesisOL {
         // This will initialize epoch_length and validator count for each epoch
         let epoch_length = 15;
         let validator_count_per_epoch = 10;
-        ReconfigureOL::initialize(association, epoch_length, validator_count_per_epoch);
-
-        // Redeem::initialize(association);
-
+        ReconfigureOL::initialize(vm, epoch_length, validator_count_per_epoch);
+        
         // Stats module
-        Stats::initialize(association);
-
+        Stats::initialize(vm);
+        
         // Validator Universe setup
-        ValidatorUniverse::initialize(association);
+        ValidatorUniverse::initialize(vm);
         //Subsidy module setup and burn account initialization
-        Subsidy::initialize(association);
+        Subsidy::initialize(vm);
 
         // Set that this is testnet
-        Testnet::initialize(association);
+        Testnet::initialize(vm);
 
         // Event and currency setup
-        Event::publish_generator(association);
-        GAS::initialize(association);
+        Event::publish_generator(vm);
+        GAS::initialize(vm);
 
-        LibraAccount::initialize(association);
-        Unhosted::publish_global_limits_definition(association);
+        LibraAccount::initialize(vm);
+        Unhosted::publish_global_limits_definition(vm);
         LibraAccount::create_genesis_account<GAS::T>(
-            Signer::address_of(association),
+            Signer::address_of(vm),
             copy dummy_auth_key_prefix,
         );
+        
         //Granting minting and burn capability to association
-        Libra::grant_mint_capability_to_association<GAS::T>(association);
-        Libra::grant_burn_capability_to_association<GAS::T>(association);
-        Libra::publish_preburn(association, Libra::new_preburn<GAS::T>());
-
+        Libra::grant_mint_capability_to_association<GAS::T>(vm);
+        Libra::grant_burn_capability_to_association<GAS::T>(vm);
+        Libra::publish_preburn(vm, Libra::new_preburn<GAS::T>());
+        
         // Register transaction fee accounts
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
         // TransactionFee::initialize(tc_account, fee_account);
         TransactionFee::initialize(fee_account);
-
+        
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
-            association,
+            vm,
             burn_account_addr,
             copy dummy_auth_key_prefix
         );
@@ -99,21 +97,22 @@ module GenesisOL {
             LibraConfig::default_config_address(),
             dummy_auth_key_prefix
         );
-
-        LibraTransactionTimeout::initialize(association);
+        
+        LibraTransactionTimeout::initialize(vm);
         LibraSystem::initialize_validator_set(config_account);
         LibraVersion::initialize(config_account);
-
-        LibraBlock::initialize_block_metadata(association);
-        LibraWriteSetManager::initialize(association);
-        LibraTimestamp::initialize(association);
-        LibraAccount::rotate_authentication_key(association, copy genesis_auth_key);
+        
+        LibraBlock::initialize_block_metadata(vm);
+        LibraWriteSetManager::initialize(vm);
+        LibraTimestamp::initialize(vm);
+        
+        LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
 
         // Mint subsidy for the initial validator set
-        Subsidy::mint_subsidy(association);
+        Subsidy::mint_subsidy(vm);
     }
 
 }

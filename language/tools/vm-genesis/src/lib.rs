@@ -94,10 +94,8 @@ pub fn encode_genesis_change_set(
 
     setup_vm_config(&mut genesis_context, vm_publishing_option);
     reconfigure(&mut genesis_context);
-
     let mut interpreter_context = genesis_context.into_data_store();
     publish_stdlib(&mut interpreter_context, stdlib_modules);
-
     verify_genesis_write_set(interpreter_context.events());
     (
         ChangeSet::new(
@@ -134,17 +132,16 @@ fn create_and_initialize_main_accounts(
     lbr_ty: &TypeTag,
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);
-    let root_association_address = account_config::association_address();
+    let vm_address = account_config::vm_address();
     let fee_account_address = account_config::transaction_fee_address();
     let burn_account_address = account_config::burn_account_address();
 
-    context.set_sender(root_association_address);
     context.exec(
         GENESIS_MODULE_NAME,
         "initialize",
         vec![],
         vec![
-            Value::transaction_argument_signer_reference(root_association_address),
+            Value::transaction_argument_signer_reference(vm_address),
             Value::transaction_argument_signer_reference(config_address()),
             Value::transaction_argument_signer_reference(fee_account_address),
             Value::transaction_argument_signer_reference(burn_account_address),
@@ -153,7 +150,6 @@ fn create_and_initialize_main_accounts(
         ],
     );
 
-    context.set_sender(root_association_address);
     // Bump the sequence number for the Association account. If we don't do this and a
     // subsequent transaction (e.g., minting) is sent from the Assocation account, a problem
     // arises: both the genesis transaction and the subsequent transaction have sequence
@@ -163,7 +159,7 @@ fn create_and_initialize_main_accounts(
         "epilogue",
         vec![lbr_ty.clone()],
         vec![
-            Value::transaction_argument_signer_reference(root_association_address),
+            Value::transaction_argument_signer_reference(vm_address),
             Value::u64(/* txn_sequence_number */ 0),
             Value::u64(/* txn_gas_price */ 0),
             Value::u64(/* txn_max_gas_units */ 0),
@@ -179,7 +175,6 @@ fn initialize_validators(
     lbr_ty: &TypeTag,
 ) {
     for (account_key, registration, _ ) in validators {
-        context.set_sender(account_config::association_address());
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address();
 
@@ -189,7 +184,7 @@ fn initialize_validators(
             "create_validator_account",
             vec![lbr_ty.clone()],
             vec![
-                Value::transaction_argument_signer_reference(account_config::association_address()),
+                Value::transaction_argument_signer_reference(account_config::vm_address()),
                 Value::address(account),
                 Value::vector_u8(auth_key.prefix().to_vec()),
             ],
@@ -306,7 +301,7 @@ fn publish_stdlib(interpreter_context: &mut dyn DataStore, stdlib: &[VerifiedMod
 
 /// Trigger a reconfiguration. This emits an event that will be passed along to the storage layer.
 fn reconfigure(context: &mut GenesisContext) {
-    context.set_sender(account_config::association_address());
+    context.set_sender(account_config::vm_address());
     context.exec("LibraConfig", "emit_reconfiguration_event", vec![], vec![]);
 }
 

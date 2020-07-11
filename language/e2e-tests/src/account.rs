@@ -103,7 +103,7 @@ impl Account {
     /// The address will be [`association_address`][account_config::association_address], and
     /// the account will use [`GENESIS_KEYPAIR`][struct@GENESIS_KEYPAIR] as its keypair.
     pub fn new_association() -> Self {
-        Self::new_genesis_account(account_config::association_address())
+        Self::new_genesis_account(account_config::vm_address())
     }
 
     /// Creates a new account representing treasury compliance in memory.

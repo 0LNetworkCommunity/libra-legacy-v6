@@ -128,7 +128,7 @@ module VASP {
     }
 
     fun singleton_addr(): address {
-        0xA550C18
+        0x0
     }
 
     // A year in microseconds
