@@ -8,6 +8,7 @@ use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
                                 // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
+// TODO: I don't think this is being used
 const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
 
 pub fn submit_vdf_proof_tx_to_network(
@@ -35,7 +36,7 @@ pub fn submit_vdf_proof_tx_to_network(
     )
     .map_err(|err| ErrorKind::Wallet.context(err))?;
 
-    //TODO: ol-miner/submit_tx LibraWallet is not recovering all accounts.
+    //TODO: 0L-miner/submit_tx LibraWallet is not recovering all accounts.
     let sender_account = libra_client.accounts[0].address;
 
     libra_client
