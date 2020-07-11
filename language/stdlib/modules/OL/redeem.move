@@ -216,29 +216,17 @@
       // TODO: Redeem.move count the number of proofs in epoch, and don't count validation that is not credible.
       // BODY: need to make this check more sophisticated. Placeholder for now.
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
-      let counts = Vector::length(&proofs_in_epoch.proofs);
-      Transaction::assert(counts > 0, 100080007);
       Debug::print(&0x12edee11100000000000000000002002);
 
       //2. Update the statistics.
       let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
-      let previous_epoch_which_mined = miner_redemption_state.latest_epoch_mining;
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
       miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
 
-      // NOTE: this is duplicate data because calling Redeem from Validator universe causes a dependency cycling error.
-      ValidatorUniverse::update_validator_epoch_count(miner_addr);
-
       Debug::print(&0x12edee11100000000000000000002003);
 
-      if (previous_epoch_which_mined - this_epoch <= 1) {
-        // increment if contiguous epochs
-        miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
-      } else {
-        // reset
-        miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
-      };
+      miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
 
       Debug::print(&0x12edee11100000000000000000002004);
 
