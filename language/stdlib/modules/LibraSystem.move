@@ -288,8 +288,8 @@ module LibraSystem {
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>,
-        epoch_length: u64,
-        current_block_height: u64) acquires CapabilityHolder {
+        _epoch_length: u64,
+        _current_block_height: u64) acquires CapabilityHolder {
           Debug::print(&0x71B12A05157E11100000000000010001);
 
         Transaction::assert(is_authorized_to_reconfigure_(account), 22);
@@ -314,18 +314,20 @@ module LibraSystem {
             let config = ValidatorConfig::get_config(account_address);
             Debug::print(&0x71B12A05157E11100000000000030001);
 
+
+            //TODO: Correct Proof of Weight algorithm 
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: ValidatorUniverse::proof_of_weight(
+                consensus_voting_power: 1 //ValidatorUniverse::proof_of_weight(
                   // addr: address,
                   // epoch_length:u64,
                   // current_block_height: u64,
                   // is_outgoing_validator: bool
-                  account_address,
-                  epoch_length,
-                  current_block_height,
-                  is_validator(account_address))
+                //   account_address,
+                //   epoch_length,
+                //   current_block_height,
+                //   is_validator(account_address))
             });
 
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
