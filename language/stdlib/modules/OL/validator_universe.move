@@ -198,22 +198,5 @@ address 0x0 {
       Transaction::assert(validatorInfo.validator_address != 0x0, 201);
       return validatorInfo.weight
     }
-
-    public fun get_total_voting_power(): u64 acquires ValidatorUniverse {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-
-      let collection = borrow_global<ValidatorUniverse>(0x0);
-      let validator_list = &collection.validators;
-      let i = 0;
-      let total_voting_power = 0;
-      let len = Vector::length<ValidatorEpochInfo>(validator_list);
-      while (i < len) {
-        let validatorInfo = Vector::borrow<ValidatorEpochInfo>(validator_list, i);
-        total_voting_power = total_voting_power + validatorInfo.weight;
-        i = i + 1;
-      };
-      total_voting_power
-    }
   }
 }

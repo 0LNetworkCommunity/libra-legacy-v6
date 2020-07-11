@@ -13,7 +13,7 @@ address 0x0 {
     // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
-    public fun top_n_accounts(account: &signer, n: u64): (vector<address>, u64) {
+    public fun top_n_accounts(account: &signer, n: u64): vector<address> {
       Debug::print(&0x110DE00111E161170000000000001001);
 
 
@@ -31,11 +31,10 @@ address 0x0 {
       // Base Case: The universe of validators is under the limit of the BFT consensus.
       // If n is greater than or equal to accounts vector length - return the vector.
       if(length <= n)
-        return (eligible_validators, ValidatorUniverse::get_total_voting_power());
+        return eligible_validators;
 
       // Vector to store each address's node_weight
       let weights = Vector::empty<u64>();
-      let total_voting_power = 0;
       let k = 0;
       while (k < length) {
         Debug::print(&0x110DE00111E161170000000000001003);
@@ -44,7 +43,6 @@ address 0x0 {
         // Ensure that this address is an active validator
         let validator_weight= ValidatorUniverse::get_validator_weight(cur_address);
         Vector::push_back<u64>(&mut weights, validator_weight);
-        total_voting_power = total_voting_power + validator_weight;
         k = k + 1;
       };
       Debug::print(&0x110DE00111E161170000000000001004);
@@ -78,7 +76,7 @@ address 0x0 {
         index = index + 1;
       };
       Debug::print(&0x110DE00111E161170000000000001007);
-      return (eligible_validators, total_voting_power)
+      return eligible_validators
     }
   }
 }

@@ -104,7 +104,7 @@ address 0x0 {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
             // TODO: OL: N should be made constant in Genesis
             Debug::print(&0x12EC011F160000000000000000002001);
-            let (eligible_validators, _sum_of_all_validator_weights) = NodeWeight::top_n_accounts(account, get_max_validator_count_const());
+            let eligible_validators = NodeWeight::top_n_accounts(account, get_max_validator_count_const());
             Debug::print(&0x12EC011F160000000000000000002002);
             let n = Vector::length<address>(&eligible_validators);
             Debug::print(&n);

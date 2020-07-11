@@ -9,7 +9,7 @@ use 0x0::ValidatorUniverse;
 fun main() {
     // Borrow validator universe for modification
     ValidatorUniverse::add_validator(0xDEADBEEF);
-    ValidatorUniverse::proof_of_weight(0xDEADBEEF,15, 0, true);
+    ValidatorUniverse::proof_of_weight(0xDEADBEEF, true);
 }
 }
-// check: ABORTED
+// check: EXECUTED
