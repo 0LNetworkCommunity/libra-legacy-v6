@@ -5,7 +5,7 @@
 //! sender: bob
 script {
     use 0x0::Redeem;
-    
+
     fun main() {
         // First 32 bytes (64 hex characters) make up the auth_key. Of this,
         // the first 16 bytes (32 hex characters) make up the auth_key pefix
@@ -30,21 +30,3 @@ script {
     }
 }
 // check: EXECUTED
-
-
-// //! new-transaction
-// //! sender: bob
-// script {
-//     use 0x0::Redeem;
-//
-//     fun main() {
-//         // This will fail because the challenge is too small to ever contain the auth
-//         // key which is 32 bytes (64 hex characters) itself
-//         let challenge = x"232fb6ae7221c853232";
-//         let new_account_address = 0x000000000000000000000000deadbeef;
-//
-//         // Parse key and check
-//         Redeem::first_challenge_includes_address(new_account_address, &challenge);
-//     }
-// }
-// // check: ABORTED
