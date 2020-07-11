@@ -288,8 +288,8 @@ module LibraSystem {
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>,
-        _epoch_length: u64,
-        _current_block_height: u64) acquires CapabilityHolder {
+        epoch_length: u64,
+        current_block_height: u64) acquires CapabilityHolder {
           Debug::print(&0x71B12A05157E11100000000000010001);
 
         Transaction::assert(is_authorized_to_reconfigure_(account), 22);
@@ -314,22 +314,22 @@ module LibraSystem {
             let config = ValidatorConfig::get_config(account_address);
             Debug::print(&0x71B12A05157E11100000000000030001);
 
+            let liveness = true;
 
-            //TODO: Correct Proof of Weight algorithm 
-            Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
-                addr: account_address,
-                config, // copy the config over to ValidatorSet
-                consensus_voting_power: 1 //ValidatorUniverse::proof_of_weight(
-                  // addr: address,
-                  // epoch_length:u64,
-                  // current_block_height: u64,
-                  // is_outgoing_validator: bool
-                //   account_address,
-                //   epoch_length,
-                //   current_block_height,
-                //   is_validator(account_address))
-            });
+            // Check liveness in previous epoch
+            if(is_validator(account_address) && !ValidatorUniverse::check_if_active_validator(account_address,epoch_length, current_block_height)){
+                liveness= false;
+            };
 
+            if(liveness){
+                //TODO: Correct Proof of Weight algorithm 
+                Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                    addr: account_address,
+                    config, // copy the config over to ValidatorSet
+                    consensus_voting_power: ValidatorUniverse::proof_of_weight(account_address, is_validator(account_address)),
+                   });
+            
+            };    
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
             // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
@@ -342,10 +342,6 @@ module LibraSystem {
         Transaction::assert(next_count > 0, 90000000001 );
         // Transaction::assert(next_count > n, 90000000002 );
         Transaction::assert(next_count == n, 90000000002 );
-
-
-
-
 
         // We have vector of validators - updated!
         // Next, let us get the current validator set for the current parameters

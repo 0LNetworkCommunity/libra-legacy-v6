@@ -7,7 +7,6 @@ address 0x0 {
     use 0x0::ValidatorUniverse;
     use 0x0::Signer;
     use 0x0::Transaction;
-    use 0x0::Option;
     use 0x0::Debug;
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
@@ -43,9 +42,7 @@ address 0x0 {
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
         // Ensure that this address is an active validator
-        let validator_weight_vec = ValidatorUniverse::get_validator_weight(cur_address);
-        Transaction::assert(Option::is_some(&validator_weight_vec), 8002);
-        let validator_weight = *Option::borrow(&validator_weight_vec);
+        let validator_weight= ValidatorUniverse::get_validator_weight(cur_address);
         Vector::push_back<u64>(&mut weights, validator_weight);
         total_voting_power = total_voting_power + validator_weight;
         k = k + 1;
