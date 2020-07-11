@@ -1,4 +1,4 @@
-name: CI
+name: CI - Functional
 
 on:
   push:
