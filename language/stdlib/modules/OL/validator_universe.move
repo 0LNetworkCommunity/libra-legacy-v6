@@ -94,22 +94,28 @@ address 0x0 {
     
       //1. borrow the Validator's ValidatorEpochInfo
       // Get the validator
-      let validatorInfo = get_validator(addr);
+      let collection =  borrow_global_mut<ValidatorUniverse>(0x0);
 
-      // If the validator is not in ValidatorUniverse, likely the new validator did not submit VDF, so give it a weight of 0. 
-      if(validatorInfo.validator_address != addr){
-        return 0
-      };
+      // Getting index of the validator
+      let index_vec = get_validator_index_(&collection.validators, addr);
+      Transaction::assert(Option::is_some(&index_vec), 8002);
+      let index = *Option::borrow(&index_vec);
+
+      let validator_list = &mut collection.validators;
+      let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
+
  
-      // Weight is metric based on: The number of epochs the miners have been mining for.
-
-      //Default weight
+      // Weight is metric based on: The number of epochs the miners have been mining for
       let weight = 1;
       
+      Debug::print(&011111110000001111);
+
+      Debug::print(&weight);
+    
       // If the validator mined in current epoch, increment it's weight.
       if(is_validator_in_current_epoch)
         weight = validatorInfo.weight + 1;
-      
+
       validatorInfo.weight = weight;
       weight
     }
