@@ -60,8 +60,7 @@ pub enum StdlibScript {
     UpdateMintingAbility,
     // ...add new 0L scripts here
     Redeem,
-    RedeemOnboarding,
-    // RedeemInitialize,
+    RedeemInitialize,
     LibraBlockTestHelper, // 0L Change
     TxFeeTestHelper,// 0L Change
     TxFeeTestMint,  // 0L Change
@@ -114,8 +113,7 @@ impl StdlibScript {
             UpdateMintingAbility,
             // ...add new 0L scripts here
             Redeem,
-            RedeemOnboarding,
-            // RedeemInitialize,
+            RedeemInitialize,
             LibraBlockTestHelper, // 0L Change
             TxFeeTestHelper,    // 0L Change
             TxFeeTestMint,      // 0L Change
@@ -245,15 +243,14 @@ impl fmt::Display for StdlibScript {
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
                 // 0L Changes
-                Redeem => "ol_redeem", // 0L Change
-                RedeemOnboarding => "ol_redeem_onboarding", // 0L Change
-                // RedeemInitialize => "redeem_init", // 0L Change
-                LibraBlockTestHelper => "ol_libra_block_test_helper", // 0L Change
-                TxFeeTestHelper => "ol_tx_fees_e2e_test_helper", // 0L Change
-                TxFeeTestMint => "ol_txn_fee_test_mint",       // 0L Change
-                TxFeeTestMove => "ol_txn_fee_test_move",       // 0L Change
-                TxFeeTestDistr => "ol_txn_fee_test_distr",     // 0L Change
-                ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper"// 0L Change
+                Redeem => "redeem", // 0L Change
+                RedeemInitialize => "redeem_init", // 0L Change
+                LibraBlockTestHelper => "libra_block_test_helper", // 0L Change
+                TxFeeTestHelper => "tx_fees_e2e_test_helper",// 0L Change
+                TxFeeTestMint => "txn_fee_test_mint",       // 0L Change
+                TxFeeTestMove => "txn_fee_test_move",       // 0L Change
+                TxFeeTestDistr => "txn_fee_test_distr",     // 0L Change
+                ReconfigBulkUpdate => "reconfig_bulk_update"// 0L Change
             }
         )
     }
