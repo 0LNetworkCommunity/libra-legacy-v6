@@ -17,7 +17,7 @@ fun main(sender: &signer) {
   // GOAL: it would be ideal that these accounts could be created by any Alice, for any Bob, i.e.
   // if it didn't need to be the association or system account.
   //  ^ I think this is working with `create_validator_account_from_mining_0L`
-  LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, new_account_address, auth_key_prefix);
+  LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, parsed_address, auth_key);
 
   // Check the account exists and the balance is 0
   Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 0);
