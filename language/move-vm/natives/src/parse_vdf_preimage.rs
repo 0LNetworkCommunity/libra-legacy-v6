@@ -1,4 +1,4 @@
-use libra_types::transaction::authenticator;
+use libra_types::transaction::authenticator::*;
 use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
@@ -9,27 +9,41 @@ use libra_types::vm_error::{StatusCode, VMStatus};
 use std::collections::VecDeque;
 use std::convert::TryInto;
 use vm::errors::VMResult;
-
-// Extracts the first x bits of the auth_key which is the account address
-// (at least for the POC). x is the length of AccountAddress
-pub fn address_from_key(
+use hex;
+use std::convert::TryFrom;
+// use ed25519_dalek::PublicKey;
+const DEFAULT_ERROR_CODE: u64 = 0xadd_000;
+// Extracts the first 32 bits of the vdf challenge which is the auth_key
+// Auth Keys can be turned into an AccountAddress type, to be serialized to a move address type.
+pub fn address_from_challenge(
     context: &impl NativeContext,
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> VMResult<NativeResult> {
-    let mut auth_key_vec = pop_arg!(arguments, Reference)
+    let cost = native_gas(context.cost_table(), NativeCostIndex::PARSE_AUTH_KEY, 1);
+
+    let challenge_vec = pop_arg!(arguments, Reference)
     .read_ref()?
     .value_as::<Vec<u8>>()?;
-    let auth_key_len = authenticator::AuthenticationKey::LENGTH;
-    let mut auth_key_arr: [u8; authenticator::AuthenticationKey::LENGTH] = 
-         [0; authenticator::AuthenticationKey::LENGTH];
-    for i in 0..auth_key_len {
-        auth_key_arr[i] = auth_key_vec.remove(0);
-    };
-    let auth_key = authenticator::AuthenticationKey::new(auth_key_arr);
+
+    println!("pub_key_vec\n{:?}", hex::encode(&challenge_vec));
+
+    let auth_key_vec = &challenge_vec[..32];
+    let len = auth_key_vec.len();
+    println!("len\n{:?}", &len);
+
+    // TODO: Error handle on wrong size.
+    // if len < 32 {
+    //     return Err(NativeResult::err(
+    //         cost,
+    //         VMStatus::new(StatusCode::NATIVE_FUNCTION_ERROR)
+    //             .with_sub_status(DEFAULT_ERROR_CODE),
+    //     ));
+    // };
+
+    let auth_key = AuthenticationKey::try_from(auth_key_vec).expect("Check length");
     let address = auth_key.derived_address();
-    
-    let cost = native_gas(context.cost_table(), NativeCostIndex::PARSE_AUTH_KEY, 1);
-    let return_values = vec![Value::address(address)];
+    println!("address\n{:?}", &address);
+    let return_values = vec![Value::address(address), Value::vector_u8(auth_key_vec[..16].to_owned())];
     Ok(NativeResult::ok(cost, return_values))
 }
