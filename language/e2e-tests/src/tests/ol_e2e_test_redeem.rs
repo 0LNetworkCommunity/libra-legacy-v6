@@ -1,6 +1,6 @@
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
-use crate::redeem::{redeem_txn, redeem_initialize_txn};
+use crate::redeem_setup::{redeem_txn, redeem_txn_onboarding};
 use ol_miner::delay;
 use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};
@@ -52,8 +52,11 @@ fn submit_proofs_transaction() {
     //run the transaction script
     let output = executor.execute_and_apply(
         // build the transaction script binary.
-        redeem_txn(&sender.account(), sequence_number, challenge.to_vec(), difficulty,
-                    proof.to_vec(), tower_height)
+        redeem_txn(&sender.account(), sequence_number,
+        challenge.to_vec(),
+        difficulty,
+        proof.to_vec(),
+        tower_height)
     );
 
     assert_eq!(
