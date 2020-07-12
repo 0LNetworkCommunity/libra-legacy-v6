@@ -33,7 +33,7 @@ impl Runnable for StartCmd {
 
         let mut rl = Editor::<()>::new();
 
-        println!("Enter your OL mnemonic");
+        println!("Enter your 0L mnemonic");
 
         let readline = rl.readline(">> ");
 

@@ -43,7 +43,7 @@ fn start_no_args() {
         .timeout(Duration::new(1, 0))
         .capture_stdout()
         .run();
-    cmd.stdout().expect_line("Enter your OL mnemonic");
+    cmd.stdout().expect_line("Enter your 0L mnemonic");
 
     // TODO: This test fails because the miner runs in a loop, the process doesn't exit as expected.
     //cmd.wait().unwrap().expect_success();
@@ -58,7 +58,7 @@ fn test_waypoint_parsing() {
     //     .timeout(Duration::new(1, 0))
     //     .capture_stdout()
     //     .run();
-    // cmd.stdout().expect_line("Enter your OL mnemonic");
+    // cmd.stdout().expect_line("Enter your 0L mnemonic");
 
     let waypoint_str = "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b";
 
