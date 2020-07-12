@@ -15,6 +15,7 @@ module Globals {
       subsidy_ceiling_gas: u64,
       min_node_density: u64,
       max_node_density: u64,
+      burn_accounts: vector<address>
     }
 
     // Some global state needs to be accesible to every module. Using Librablock causes
@@ -92,6 +93,9 @@ module Globals {
           subsidy_ceiling_gas: 296,
           min_node_density: 4,
           max_node_density: 300,
+          burn_accounts: Vector::singleton(0xDEADDEAD),
+          // Vector::push_back(&mut burn_accounts, 0xDEADDEAD);
+
         }
 
       } else {
@@ -100,7 +104,8 @@ module Globals {
           max_validator_per_epoch: 300,
           subsidy_ceiling_gas: 2000000,
           min_node_density: 4,
-          max_node_density: 300
+          max_node_density: 300,
+          burn_accounts: Vector::singleton(0xDEADDEAD),
         }
       }
     }
