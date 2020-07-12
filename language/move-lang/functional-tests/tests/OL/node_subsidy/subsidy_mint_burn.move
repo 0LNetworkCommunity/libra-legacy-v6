@@ -22,6 +22,7 @@ fun main(account: &signer) {
 
 // check: ABORTED
 
+// TODO (nelaturuk): We don't need this test.
 //! new-transaction
 // Subsidy pre-burn should work
 //! sender: association
