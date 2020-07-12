@@ -1,6 +1,6 @@
 // Epoch Prologue
 // This module is responsible for reconfiguration - updating validator set after each epoch.
-// Also has test in /language/ir-testsuite/tests/OL
+// Also has test in /language/ir-testsuite/tests/OL 
 
 address 0x0 {
     module ReconfigureOL {
