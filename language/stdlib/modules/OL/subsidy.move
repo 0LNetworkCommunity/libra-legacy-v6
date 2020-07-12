@@ -33,7 +33,7 @@ address 0x0 {
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {// TODO : SubsidyInfo Constants can be hard coded in the Calc module instead of being a mutable resource.
           // subsidy ceiling is
-          subsidy_ceiling_gas: 296, //TODO:OL:Update this with actually subsidy ceiling in in GAS
+          subsidy_ceiling_gas: 296, //TODO: OL:Update this with actually subsidy ceiling in in GAS
           min_node_density: 4,
           max_node_density: 300,
           subsidy_units: 0,
@@ -234,7 +234,7 @@ address 0x0 {
         subsidy_info.max_node_density,
         len
       );
-      
+
       // Distribute gas coins to initial validators
       let distribution_units = subsidy_units / len;
       let i = 0;

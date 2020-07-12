@@ -6,11 +6,19 @@ module Globals {
     use 0x0::Vector;
     use 0x0::Testnet;
 
+    // Some constants need to changed based on environment; dev, testing, prod.
     struct GlobalConstants {
+      // For validator set.
       epoch_length: u64,
-      max_validator_per_epoch: u64
+      max_validator_per_epoch: u64,
+      // For subsidy calcs.
+      subsidy_ceiling_gas: u64,
+      min_node_density: u64,
+      max_node_density: u64,
     }
 
+    // Some global state needs to be accesible to every module. Using Librablock causes
+    // cyclic dependency issues.
     resource struct BlockMetadataGlobal {
       // TODO: This is duplicated with LibraBlockGlobal, but that one causes a cyclic dependency issue because of stats.
       height: u64,
@@ -39,7 +47,7 @@ module Globals {
 
 
     ////////////////////
-    //// Metadata ////
+    //// Metadata /////
     ///////////////////
     // Get the current block height
     public fun get_current_block_height(): u64 acquires BlockMetadataGlobal {
@@ -66,17 +74,23 @@ module Globals {
        get_constants().max_validator_per_epoch
     }
 
-    public fun get_constants(): GlobalConstants  {
+    fun get_constants(): GlobalConstants  {
       if (Testnet::is_testnet()){
         return GlobalConstants {
           epoch_length: 15,
-          max_validator_per_epoch: 10
+          max_validator_per_epoch: 10,
+          subsidy_ceiling_gas: 296,
+          min_node_density: 4,
+          max_node_density: 300,
         }
 
       } else {
         return GlobalConstants {
           epoch_length: 2000000,
-          max_validator_per_epoch: 300
+          max_validator_per_epoch: 300,
+          subsidy_ceiling_gas: 2000000,
+          min_node_density: 4,
+          max_node_density: 300,
         }
       }
     }

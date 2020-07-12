@@ -24,7 +24,7 @@ module GenesisOL {
     use 0x0::Subsidy;
     use 0x0::Signer;
     use 0x0::ReconfigureOL;
-    
+
     fun initialize(
         vm: &signer,
         config_account: &signer,
@@ -50,11 +50,12 @@ module GenesisOL {
         // This will initialize epoch_length and validator count for each epoch
         let epoch_length = 15;
         let validator_count_per_epoch = 10;
+        // TODO: These variables don't need to be passed, they are in Globals
         ReconfigureOL::initialize(vm, epoch_length, validator_count_per_epoch);
-        
+
         // Stats module
         Stats::initialize(vm);
-        
+
         // Validator Universe setup
         ValidatorUniverse::initialize(vm);
         //Subsidy module setup and burn account initialization
@@ -73,17 +74,17 @@ module GenesisOL {
             Signer::address_of(vm),
             copy dummy_auth_key_prefix,
         );
-        
+
         //Granting minting and burn capability to association
         Libra::grant_mint_capability_to_association<GAS::T>(vm);
         Libra::grant_burn_capability_to_association<GAS::T>(vm);
         Libra::publish_preburn(vm, Libra::new_preburn<GAS::T>());
-        
+
         // Register transaction fee accounts
         LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
         // TransactionFee::initialize(tc_account, fee_account);
         TransactionFee::initialize(fee_account);
-        
+
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
             vm,
@@ -97,15 +98,15 @@ module GenesisOL {
             LibraConfig::default_config_address(),
             dummy_auth_key_prefix
         );
-        
+
         LibraTransactionTimeout::initialize(vm);
         LibraSystem::initialize_validator_set(config_account);
         LibraVersion::initialize(config_account);
-        
+
         LibraBlock::initialize_block_metadata(vm);
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
-        
+
         LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
