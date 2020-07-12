@@ -7,6 +7,7 @@ module GenesisOL {
     use 0x0::Association;
     use 0x0::Event;
     use 0x0::GAS;
+    use 0x0::Globals;
     use 0x0::Libra;
     use 0x0::LibraAccount;
     use 0x0::LibraBlock;
@@ -18,6 +19,7 @@ module GenesisOL {
     use 0x0::LibraWriteSetManager;
     use 0x0::Stats;
     use 0x0::Testnet;
+    use 0x0::Transaction;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
@@ -47,10 +49,6 @@ module GenesisOL {
         Libra::initialize(config_account);
 
         // Reconfigure module setup
-        // This will initialize epoch_length and validator count for each epoch
-        // let epoch_length = 15;
-        // let validator_count_per_epoch = 10;
-        // TODO: These variables don't need to be passed, they are in Globals
         ReconfigureOL::initialize(vm);
 
         // Stats module
@@ -112,8 +110,27 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
 
+        // Sanity check all the econ constants are what we expect.
+        // This will initialize epoch_length and validator count for each epoch
+        if (Testnet::is_testnet()) {
+          Transaction::assert(Globals::get_epoch_length() == 15, 9992001);
+          Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 9992002);
+          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 9992003);
+          Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
+        } else {
+          Transaction::assert(Globals::get_epoch_length() == 15, 9992001);
+          Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 9992002);
+          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 9992003);
+          Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
+        };
+
+
         // Mint subsidy for the initial validator set
         Subsidy::mint_subsidy(vm);
+
+        // TODO: mint for the genesis set.
+        // Assert that validators have funds.
+
     }
 
 }
