@@ -79,7 +79,7 @@ module LibraVMConfig { // TODO: OL: (nelaturuk) Why is this file mirroring gas_s
             min_transaction_gas_units: 600,
             large_transaction_cutoff: 600,
             instrinsic_gas_per_byte: 8,
-            maximum_number_of_gas_units: 100000000, //NOTE: OL Change, this implies 100ms transaction time
+            maximum_number_of_gas_units: 100000000, //NOTE: 0L Change, this implies 100ms transaction time
             min_price_per_gas_unit: 0,
             max_price_per_gas_unit: 10000, // TODO: 0L: (LG) What's the rationale behind this max?
             max_transaction_size_in_bytes: 4096,

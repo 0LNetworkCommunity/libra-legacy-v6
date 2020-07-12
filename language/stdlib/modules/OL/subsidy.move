@@ -10,15 +10,16 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::Debug;
     use 0x0::ValidatorUniverse;
+    use 0x0::Globals;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
     // Max gas units per transaction (10_000_000) * blocks epoch (1_000_000)
     resource struct SubsidyInfo {
-      subsidy_ceiling_gas: u64,
-      min_node_density: u64,
-      max_node_density: u64,
-      subsidy_units: u64,
+      // subsidy_ceiling_gas: u64,
+      // min_node_density: u64,
+      // max_node_density: u64,
+      // subsidy_units: u64,
       burn_units: u64,
       burn_accounts: vector<address>
     }
@@ -33,10 +34,10 @@ address 0x0 {
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {// TODO : SubsidyInfo Constants can be hard coded in the Calc module instead of being a mutable resource.
           // subsidy ceiling is
-          subsidy_ceiling_gas: 296, //TODO:OL:Update this with actually subsidy ceiling in in GAS
-          min_node_density: 4,
-          max_node_density: 300,
-          subsidy_units: 0,
+          // subsidy_ceiling_gas: 296, //TODO: OL:Update this with actually subsidy ceiling in in GAS
+          // min_node_density: 4,
+          // max_node_density: 300,
+          // subsidy_units: 0,
           burn_units: 0,
           burn_accounts: burn_accounts
         });
@@ -103,22 +104,25 @@ address 0x0 {
       Debug::print(&0x50B51DE0000000000000000000002003);
 
       // Calculate the split for subsidy and burn
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
-      Debug::print(&0x50B51DE0000000000000000000002004);
-      Debug::print(&subsidy_info.subsidy_ceiling_gas);
-      Debug::print(&subsidy_info.min_node_density);
-      Debug::print(&subsidy_info.max_node_density);
-      Debug::print(&node_density);
+      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+      // Debug::print(&0x50B51DE0000000000000000000002004);
+      // Debug::print(&subsidy_info.subsidy_ceiling_gas);
+      // Debug::print(&subsidy_info.min_node_density);
+      // Debug::print(&Globals::get_max_node_density());
+      // Debug::print(&node_density);
 
       let (subsidy_units, burn_units) = subsidy_curve(
-        subsidy_info.subsidy_ceiling_gas,
-        subsidy_info.min_node_density,
-        subsidy_info.max_node_density,
+        Globals::get_subsidy_ceiling_gas(),
+        4u64, // minimum number of nodes to be in consensus.
+        Globals::get_max_node_density(),
         node_density
       );
       Debug::print(&0x50B51DE0000000000000000000002005);
 
       // Deducting the txn fees from subsidy_units to get maximum subsidy for all validators
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+
+      //deduct transaction fees from minimum guarantee.
       subsidy_units = subsidy_units - txn_fee_amount;
       burn_units = burn_units + txn_fee_amount; //Adding the fee amount to be burned
       subsidy_info.burn_units = burn_units;
@@ -215,7 +219,7 @@ address 0x0 {
       Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (subsidy_info.burn_units as u128), 8006);
     }
 
-    public fun genesis(account: &signer) acquires SubsidyInfo {
+    public fun genesis(account: &signer) {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
@@ -227,14 +231,14 @@ address 0x0 {
 
       // Calculate subsidy equally for all the validators based on subsidy curve
       // Calculate the split for subsidy and burn
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
       let (subsidy_units, _burn_units) = subsidy_curve(
-        subsidy_info.subsidy_ceiling_gas,
-        subsidy_info.min_node_density,
-        subsidy_info.max_node_density,
+        Globals::get_subsidy_ceiling_gas(),
+        4,
+        Globals::get_max_node_density(),
         len
       );
-      
+
       // Distribute gas coins to initial validators
       let distribution_units = subsidy_units / len;
       let i = 0;
