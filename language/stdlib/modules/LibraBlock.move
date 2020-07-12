@@ -9,7 +9,8 @@ module LibraBlock {
     use 0x0::Vector;
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
-    use 0x0::Testnet;
+    use 0x0::Globals;
+    // use 0x0::Testnet;
 
     // resource struct BlockConstants {
     //   epoch_length: u64,
@@ -79,7 +80,7 @@ module LibraBlock {
         timestamp: u64,
         previous_block_votes: vector<address>,
         proposer: address
-    ) acquires BlockMetadata, BlockConstants {
+    ) acquires BlockMetadata {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
         {
@@ -91,7 +92,7 @@ module LibraBlock {
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
 
         // OL implementation of reconfiguration.
-        if ( round == get_epoch_length() )
+        if ( round == Globals::get_epoch_length() )
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata.
           ReconfigureOL::reconfigure(vm, get_current_block_height());
     }
@@ -144,7 +145,7 @@ module LibraBlock {
     // // Get max validator per epoch
     // public fun get_max_validator_per_epoch(): u64 acquires BlockConstants {
     //    borrow_global<BlockConstants>(0x0).max_validator_per_epoch
-    }
+    // }
 }
 
 }
