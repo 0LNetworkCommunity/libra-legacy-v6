@@ -118,19 +118,16 @@ module GenesisOL {
           Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 9992003);
           Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
         } else {
-          Transaction::assert(Globals::get_epoch_length() == 15, 9992001);
-          Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 9992002);
-          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 9992003);
+          Transaction::assert(Globals::get_epoch_length() == 2736000, 9992001);
+          Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 9992002);
+          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 9120, 9992003);
           Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
         };
 
 
-        // Mint subsidy for the initial validator set
+        // Mint subsidy for the initial validator set, not to be confused with the minting for the
+        // genesis block.
         Subsidy::mint_subsidy(vm);
-
-        // TODO: mint for the genesis set.
-        // Assert that validators have funds.
-
     }
 
 }
