@@ -108,7 +108,7 @@ module Globals {
           // subsidy ceiling: tx fee guarantee in GAS, at starting prices assuming starting auction price of
           // 1 GAS Coin = 1000000 gas_units, at 50% network capacity.
           // i.e. starting market for gas is 1 GAS coin for 1 sec of compute time.
-          subsidy_ceiling_gas: 9120 //coins = 10,000,000.00*20*2,736,000/60,000,000,000.00,
+          subsidy_ceiling_gas: 9120, //coins = 10,000,000.00*20*2,736,000/60,000,000,000.00,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
