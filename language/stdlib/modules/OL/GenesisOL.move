@@ -48,10 +48,10 @@ module GenesisOL {
 
         // Reconfigure module setup
         // This will initialize epoch_length and validator count for each epoch
-        let epoch_length = 15;
-        let validator_count_per_epoch = 10;
+        // let epoch_length = 15;
+        // let validator_count_per_epoch = 10;
         // TODO: These variables don't need to be passed, they are in Globals
-        ReconfigureOL::initialize(vm, epoch_length, validator_count_per_epoch);
+        ReconfigureOL::initialize(vm);
 
         // Stats module
         Stats::initialize(vm);
