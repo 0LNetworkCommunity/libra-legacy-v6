@@ -11,7 +11,11 @@ module Globals {
     // use 0x0::ReconfigureOL;
     use 0x0::Testnet;
 
-    resource struct BlockConstantsGlobal {
+    // resource struct BlockConstantsGlobal {
+    //   epoch_length: u64,
+    //   max_validator_per_epoch: u64
+    // }
+    struct GlobalConstants {
       epoch_length: u64,
       max_validator_per_epoch: u64
     }
@@ -40,27 +44,12 @@ module Globals {
             time_microseconds: 0,
           }
       );
-
-      if (Testnet::is_testnet()) {
-        move_to<BlockConstantsGlobal>(
-          account,
-          BlockConstantsGlobal {
-              epoch_length: 15,
-              max_validator_per_epoch: 4
-          }
-        );
-      } else {
-        move_to<BlockConstantsGlobal>(
-          account,
-          BlockConstantsGlobal {
-              epoch_length: 100000,
-              max_validator_per_epoch: 10
-          }
-        );
-      };
     }
 
 
+    ////////////////////
+    //// Metadata ////
+    ///////////////////
     // Get the current block height
     public fun get_current_block_height(): u64 acquires BlockMetadataGlobal {
       borrow_global<BlockMetadataGlobal>(0x0).height
@@ -72,18 +61,37 @@ module Globals {
        return voters //vector<address>
     }
 
+    ////////////////////
+    //// Constants ////
+    ///////////////////
+
     // Get the epoch length
-    public fun get_epoch_length(): u64 acquires BlockConstantsGlobal {
-       borrow_global<BlockConstantsGlobal>(0x0).epoch_length
+    public fun get_epoch_length(): u64 {
+       get_constants().epoch_length
     }
 
     // Get max validator per epoch
-    public fun get_max_validator_per_epoch(): u64 acquires BlockConstantsGlobal {
-       borrow_global<BlockConstantsGlobal>(0x0).max_validator_per_epoch
+    public fun get_max_validator_per_epoch(): u64 {
+       get_constants().max_validator_per_epoch
+    }
+
+    public fun get_constants(): GlobalConstants  {
+      if (Testnet::is_testnet()){
+        return GlobalConstants {
+          epoch_length: 15,
+          max_validator_per_epoch: 10
+        }
+
+      } else {
+        return GlobalConstants {
+          epoch_length: 2000000,
+          max_validator_per_epoch: 300
+        }
+      }
     }
 
     // Get the current block height
-    public fun update_globals(vm: &signer) acquires BlockMetadataGlobal {
+    public fun update_global_metadata(vm: &signer) acquires BlockMetadataGlobal {
       Transaction::assert(Signer::address_of(vm) == 0x0, 33);
       let data = borrow_global_mut<BlockMetadataGlobal>(0x0);
       data.height = 999
