@@ -1,20 +1,11 @@
 address 0x0 {
 
 module Globals {
-    // use 0x0::Event;
-    // use 0x0::LibraSystem;
-    // use 0x0::LibraTimestamp;
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Vector;
-    // use 0x0::Stats;
-    // use 0x0::ReconfigureOL;
     use 0x0::Testnet;
 
-    // resource struct BlockConstantsGlobal {
-    //   epoch_length: u64,
-    //   max_validator_per_epoch: u64
-    // }
     struct GlobalConstants {
       epoch_length: u64,
       max_validator_per_epoch: u64
