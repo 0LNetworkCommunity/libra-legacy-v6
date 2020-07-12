@@ -76,7 +76,7 @@ module Globals {
 
     // Get max validator per epoch
     public fun get_subsidy_ceiling_gas(): u64 {
-       get_constants().min_node_density
+       get_constants().subsidy_ceiling_gas
     }
 
     // Get max validator per epoch
@@ -100,7 +100,7 @@ module Globals {
           max_validator_per_epoch: 300,
           subsidy_ceiling_gas: 2000000,
           min_node_density: 4,
-          max_node_density: 300,
+          max_node_density: 300
         }
       }
     }

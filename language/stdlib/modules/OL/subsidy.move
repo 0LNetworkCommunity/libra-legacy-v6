@@ -112,8 +112,8 @@ address 0x0 {
       Debug::print(&node_density);
 
       let (subsidy_units, burn_units) = subsidy_curve(
-        subsidy_info.subsidy_ceiling_gas,
-        subsidy_info.min_node_density,
+        Globals::get_subsidy_ceiling_gas(),
+        4u64, // minimum number of nodes to be in consensus.
         Globals::get_max_node_density(),
         node_density
       );
