@@ -26,6 +26,7 @@ use libra_types::{
     waypoint::Waypoint,
 };
 use reqwest::Url;
+use libra_json_rpc_client::views::MinerStateView;
 
 /// A client connection to an AdmissionControl (AC) service. `LibraClient` also
 /// handles verifying the server's responses, retrying on non-fatal failures, and
@@ -101,6 +102,30 @@ impl LibraClient {
                     }
                 }
                 bail!("Transaction submission failed with error: {:?}", e)
+            }
+        }
+    }
+
+    /// Retrieves miner state
+    /// added by OL
+    pub fn get_miner_state(
+        &mut self,
+        account: AccountAddress,
+    ) -> Result<Option<MinerStateView>> {
+        // form request
+        let mut batch = JsonRpcBatch::new();
+        batch.add_get_miner_state_request( account);
+
+        let responses = self.client.execute(batch)?;
+        match get_response_from_batch(0, &responses)? {
+            Ok(response) => {
+                match response {
+                    JsonRpcResponse::MinerStateResponse(msv) => Ok( msv.to_owned() ),
+                    _ => bail!("Received miner state response payload: {:?}: {:?}", account, response) ,
+                }
+            }
+            Err(e) => {
+                bail!("Fetching Miner State failed with error: {:?}", e)
             }
         }
     }
