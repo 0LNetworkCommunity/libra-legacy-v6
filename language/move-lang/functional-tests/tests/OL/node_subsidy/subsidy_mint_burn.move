@@ -59,7 +59,7 @@ fun main(account: &signer) {
         Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == 74, 8006);
         i = i + 1;
     };
-}   
+}
 }
 
 // Commenting as the function is private
@@ -87,19 +87,6 @@ fun main(account: &signer) {
 // use 0x0::Subsidy;
 // fun main() {
 //     let (subsidy_units, burn_units) = Subsidy::subsidy_curve(296, 4, 300, 150);
-//     Debug::print(&subsidy_units);
-//     Debug::print(&burn_units);
-// }
-// }
-
-// //! new-transaction
-// //  Testing calculate subsidy
-// //! sender: association
-// script {
-// use 0x0::Debug;
-// use 0x0::Subsidy;
-// fun main(account: &signer) {
-//     let (subsidy_units, burn_units) = Subsidy::calculate_Subsidy(account, 0, 0);
 //     Debug::print(&subsidy_units);
 //     Debug::print(&burn_units);
 // }

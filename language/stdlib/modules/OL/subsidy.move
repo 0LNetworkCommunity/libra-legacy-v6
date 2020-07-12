@@ -10,6 +10,7 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::Debug;
     use 0x0::ValidatorUniverse;
+    use 0x0::Globals;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -107,13 +108,13 @@ address 0x0 {
       Debug::print(&0x50B51DE0000000000000000000002004);
       Debug::print(&subsidy_info.subsidy_ceiling_gas);
       Debug::print(&subsidy_info.min_node_density);
-      Debug::print(&subsidy_info.max_node_density);
+      Debug::print(&Globals::get_max_node_density());
       Debug::print(&node_density);
 
       let (subsidy_units, burn_units) = subsidy_curve(
         subsidy_info.subsidy_ceiling_gas,
         subsidy_info.min_node_density,
-        subsidy_info.max_node_density,
+        Globals::get_max_node_density(),
         node_density
       );
       Debug::print(&0x50B51DE0000000000000000000002005);

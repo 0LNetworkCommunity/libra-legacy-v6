@@ -74,6 +74,16 @@ module Globals {
        get_constants().max_validator_per_epoch
     }
 
+    // Get max validator per epoch
+    public fun get_subsidy_ceiling_gas(): u64 {
+       get_constants().min_node_density
+    }
+
+    // Get max validator per epoch
+    public fun get_max_node_density(): u64 {
+       get_constants().max_node_density
+    }
+
     fun get_constants(): GlobalConstants  {
       if (Testnet::is_testnet()){
         return GlobalConstants {
