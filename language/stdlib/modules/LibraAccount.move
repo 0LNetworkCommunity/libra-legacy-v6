@@ -982,10 +982,12 @@ module LibraAccount {
 
         // Check that the hash of the transaction's public key matches the account's auth key
         // TODO: should this apply to the 0x0 account?
-        Transaction::assert(
-            Hash::sha3_256(txn_public_key) == *&sender_account.authentication_key,
-            2
-        );
+        if (transaction_sender != 0x0){
+          Transaction::assert(
+              Hash::sha3_256(txn_public_key) == *&sender_account.authentication_key,
+              60010001
+          );
+        };
 
         // Check that the account has enough balance for all of the gas
         let max_transaction_fee = txn_gas_price * txn_max_gas_units;

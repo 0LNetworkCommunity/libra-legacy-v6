@@ -33,7 +33,7 @@ module GenesisOL {
         fee_account: &signer,
         burn_account: &signer,
         // burn_account_addr: address,
-        genesis_auth_key: vector<u8>,
+        _genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
@@ -124,7 +124,7 @@ module GenesisOL {
         /////////////////////////////////////////////////////
         //TODO: Why does the vm have an authentication key?
         // if this is removed most tests fail.
-        LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(vm, copy no_owner_auth_key);
         /////////////////////////////////////////////////////
 
         // Brick the other accounts after being created.
