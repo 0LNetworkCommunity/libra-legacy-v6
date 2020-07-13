@@ -36,7 +36,7 @@ module GenesisOL {
         fee_account: &signer,
         burn_account: &signer,
         burn_account_addr: address,
-        genesis_auth_key: vector<u8>,
+        _genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
@@ -74,19 +74,36 @@ module GenesisOL {
 
         LibraAccount::initialize(vm);
         Unhosted::publish_global_limits_definition(vm);
+
+
+        //Create the vm's account
+        // TODO: Do we need to do this?
         LibraAccount::create_genesis_account<GAS::T>(
             Signer::address_of(vm),
             copy dummy_auth_key_prefix,
         );
 
-        //Granting minting and burn capability to association
-        //TODO: Remove
+        //Granting minting and burn capability to vm account
         Libra::grant_mint_capability_to_association<GAS::T>(vm);
         Libra::grant_burn_capability_to_association<GAS::T>(vm);
         Libra::publish_preburn(vm, Libra::new_preburn<GAS::T>());
 
         // Register transaction fee accounts
-        LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
+        // LibraAccount::create_genesis_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
+        //TODO: This will fail in production, because it's a testnet account.
+        // LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
+
+        // Create fee address
+        LibraAccount::create_fee_account<GAS::T>(
+            vm,
+            0xFEE,
+            copy dummy_auth_key_prefix
+        );
+        // LibraAccount::create_genesis_account<GAS::T>(
+        //     0xFEE,
+        //     copy dummy_auth_key_prefix
+        // );
+
         // TransactionFee::initialize(tc_account, fee_account);
         TransactionFee::initialize(fee_account);
 
@@ -112,11 +129,13 @@ module GenesisOL {
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
 
+        let no_owner_auth_key = x"0100000000000000000000000000000000000000000000000000000000001ee7";
+
         //TODO: Why does the vm have an authentication key?
-        LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
+        LibraAccount::rotate_authentication_key(vm, copy no_owner_auth_key);
+        LibraAccount::rotate_authentication_key(config_account, copy no_owner_auth_key);
+        LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
+        LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch

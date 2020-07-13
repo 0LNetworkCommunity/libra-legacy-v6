@@ -714,6 +714,21 @@ module LibraAccount {
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
     }
 
+    public fun create_fee_account<Token>(
+        association: &signer,
+        new_account_address: address,
+        auth_key_prefix: vector<u8>
+    ) {
+        // Association::assert_is_root(association);
+        //0L change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
+        let new_account = create_signer(new_account_address);
+        Association::grant_association_address(association, &new_account);
+        Event::publish_generator(&new_account);
+        make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////
     // Designated Dealer API
