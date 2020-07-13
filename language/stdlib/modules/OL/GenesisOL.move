@@ -30,9 +30,9 @@ module GenesisOL {
     fun initialize(
         vm: &signer,
         config_account: &signer,
-        fee_account: &signer,
-        burn_account: &signer,
-        burn_account_addr: address,
+        // fee_account: &signer,
+        // burn_account: &signer,
+        // burn_account_addr: address,
         genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
@@ -99,7 +99,7 @@ module GenesisOL {
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
             vm,
-            burn_account_addr,
+            0xDEADDEAD, //burn_account_addr,
             copy dummy_auth_key_prefix
         );
         //TODO: Do we still need preburn?

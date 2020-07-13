@@ -133,8 +133,8 @@ fn create_and_initialize_main_accounts(
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);
     let vm_address = account_config::vm_address();
-    let fee_account_address = account_config::transaction_fee_address();
-    let burn_account_address = account_config::burn_account_address();
+    // let fee_account_address = account_config::transaction_fee_address();
+    // let burn_account_address = account_config::burn_account_address();
 
     context.exec(
         GENESIS_MODULE_NAME,
@@ -143,9 +143,9 @@ fn create_and_initialize_main_accounts(
         vec![
             Value::transaction_argument_signer_reference(vm_address),
             Value::transaction_argument_signer_reference(config_address()),
-            Value::transaction_argument_signer_reference(fee_account_address),
-            Value::transaction_argument_signer_reference(burn_account_address),
-            Value::address(burn_account_address),
+            // Value::transaction_argument_signer_reference(fee_account_address),
+            // Value::transaction_argument_signer_reference(burn_account_address),
+            // Value::address(burn_account_address),
             Value::vector_u8(genesis_auth_key.to_vec()),
         ],
     );
@@ -257,11 +257,14 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
 fn distribute_genesis_subsidy(context: &mut GenesisContext) {
     println!("distributing genesis subsidy to validators");
 
-    let root_association_address = account_config::association_address();
-    context.set_sender(root_association_address);
-    context.exec("Subsidy","genesis",vec![],
-                 vec![Value::transaction_argument_signer_reference(account_config::association_address())]);
-}
+    // let root_association_address = account_config::vm_address();
+    context.set_sender(account_config::vm_address());
+    context.exec(
+        "Subsidy",
+        "genesis",
+        vec![],
+        vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
+    }
 
 fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishingOption) {
     context.set_sender(config_address());
@@ -281,6 +284,8 @@ fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishing
     );
 }
 
+// get all move modules escept for genesis.
+//TODO: we still have the old genesis.
 fn remove_genesis(stdlib_modules: &[VerifiedModule]) -> impl Iterator<Item = &VerifiedModule> {
     stdlib_modules
         .iter()
