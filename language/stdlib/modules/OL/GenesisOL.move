@@ -27,21 +27,17 @@ module GenesisOL {
     use 0x0::Signer;
     use 0x0::ReconfigureOL;
 
-    // use 0x0::Debug;
-
-
     fun initialize(
         vm: &signer,
         config_account: &signer,
         fee_account: &signer,
         burn_account: &signer,
         burn_account_addr: address,
-        _genesis_auth_key: vector<u8>,
+        genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
         // Association root setup
-        //TODO: Remove
         // Association::initialize(vm);
 
         //TODO: Does the VM need the privilege to add a currency?
@@ -86,23 +82,16 @@ module GenesisOL {
         //Granting minting and burn capability to vm account
         Libra::grant_mint_capability_to_association<GAS::T>(vm);
         Libra::grant_burn_capability_to_association<GAS::T>(vm);
+
+        //TODO: Do we still need preburn.
         Libra::publish_preburn(vm, Libra::new_preburn<GAS::T>());
 
         // Register transaction fee accounts
-        // LibraAccount::create_genesis_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
-        //TODO: This will fail in production, because it's a testnet account.
-        // LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
-
-        // Create fee address
         LibraAccount::create_fee_account<GAS::T>(
             vm,
             0xFEE,
             copy dummy_auth_key_prefix
         );
-        // LibraAccount::create_genesis_account<GAS::T>(
-        //     0xFEE,
-        //     copy dummy_auth_key_prefix
-        // );
 
         // TransactionFee::initialize(tc_account, fee_account);
         TransactionFee::initialize(fee_account);
@@ -113,8 +102,10 @@ module GenesisOL {
             burn_account_addr,
             copy dummy_auth_key_prefix
         );
+        //TODO: Do we still need preburn?
         Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
 
+        //TODO: What do we need this for?
         // Create the config account
         LibraAccount::create_genesis_account<GAS::T>(
             LibraConfig::default_config_address(),
@@ -124,15 +115,19 @@ module GenesisOL {
         LibraTransactionTimeout::initialize(vm);
         LibraSystem::initialize_validator_set(config_account);
         LibraVersion::initialize(config_account);
-
         LibraBlock::initialize_block_metadata(vm);
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
 
         let no_owner_auth_key = x"0100000000000000000000000000000000000000000000000000000000001ee7";
 
+        /////////////////////////////////////////////////////
         //TODO: Why does the vm have an authentication key?
-        LibraAccount::rotate_authentication_key(vm, copy no_owner_auth_key);
+        // if this is removed most tests fail.
+        LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
+        /////////////////////////////////////////////////////
+
+        // Brick the other accounts after being created.
         LibraAccount::rotate_authentication_key(config_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
