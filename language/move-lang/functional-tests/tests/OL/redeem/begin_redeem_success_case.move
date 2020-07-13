@@ -1,3 +1,5 @@
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 // Alice Submit VDF Proof
 //! new-transaction
 //! account: alice, 10000000GAS

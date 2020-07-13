@@ -24,11 +24,8 @@ impl Runnable for KeygenCmd {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
 
-        println!("OL Address:{:x}", auth_key.derived_address());
-        println!("OL mnemonic: {:?}", &mnemonic_string);
-
-        // let mut file = fs::File::create("./miner.mnemonic").unwrap();
-        // file.write_all(mnemonic_string.as_bytes())
-        //     .expect("Could not write mnemonic");
+        println!("0L Auth Key:\nYou will need this in your ol_miner.toml configs.\n---------\n{:x}\n", auth_key);
+        println!("0L Address:\nThis address is derived from your Auth Key, it has not yet been created onchain. You'll need to submit a genesis miner proof for that.\n---------\n{:x}\n", auth_key.derived_address());
+        println!("0L mnemonic:\nPlease god don't lose this. It's not saved anywhere on disk\n---------\n{:?}\n", &mnemonic_string);
     }
 }

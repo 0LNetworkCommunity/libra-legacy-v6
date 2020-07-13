@@ -136,12 +136,12 @@ module Libra {
 
     // TODO: temporary, we should ideally make MintCapability unique eventually...
     public fun grant_mint_capability_to_association<CoinType>(association: &signer) {
-        assert_assoc_and_currency<CoinType>(association);
+        assert_vm_and_currency<CoinType>(association);
         move_to(association, MintCapability<CoinType>{})
     }
 
     public fun grant_burn_capability_to_association<CoinType>(association: &signer) {
-        assert_assoc_and_currency<CoinType>(association);
+        assert_vm_and_currency<CoinType>(association);
         move_to(association, BurnCapability<CoinType>{})
     }
 
@@ -167,7 +167,7 @@ module Libra {
         if(sender == 0x0) {
             mint_with_capability(
                 amount,
-                borrow_global<MintCapability<Token>>(0xA550C18)
+                borrow_global<MintCapability<Token>>(0x0)
             )
         } else {
             mint_with_capability(
@@ -187,7 +187,7 @@ module Libra {
         if(sender == 0x0) {
             burn_with_capability(
                 preburn_address,
-                borrow_global<BurnCapability<Token>>(0xA550C18)
+                borrow_global<BurnCapability<Token>>(0x0)
             )
         } else {
             burn_with_capability(
@@ -231,7 +231,7 @@ module Libra {
         Transaction::assert(value <= 1000000000 * 1000000, 11);
         let currency_code = currency_code<Token>();
         // update market cap resource to reflect minting
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         Transaction::assert(info.can_mint, 4);
         info.total_value = info.total_value + (value as u128);
         // don't emit mint events for synthetic currenices
@@ -269,7 +269,7 @@ module Libra {
             coin
         );
         let currency_code = currency_code<Token>();
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         info.preburn_value = info.preburn_value + coin_value;
         // don't emit preburn events for synthetic currencies
         if (!info.is_synthetic) {
@@ -342,7 +342,7 @@ module Libra {
         let T { value } = Vector::remove(&mut preburn.requests, 0);
         // update the market cap
         let currency_code = currency_code<Token>();
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         info.total_value = info.total_value - (value as u128);
         info.preburn_value = info.preburn_value - value;
         // don't emit burn events for synthetic currencies
@@ -372,7 +372,7 @@ module Libra {
         let coin = Vector::remove(&mut preburn.requests, 0);
         // update the market cap
         let currency_code = currency_code<Token>();
-        let info = borrow_global_mut<CurrencyInfo<Token>>(0xA550C18);
+        let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
         let amount = value(&coin);
         info.preburn_value = info.preburn_value - amount;
         // Don't emit cancel burn events for synthetic currencies. cancel burn shouldn't be be used
@@ -425,7 +425,7 @@ module Libra {
 
     // Return the total value of Libra to be burned
     public fun preburn_value<Token>(): u64 acquires CurrencyInfo {
-        borrow_global<CurrencyInfo<Token>>(0xA550C18).preburn_value
+        borrow_global<CurrencyInfo<Token>>(0x0).preburn_value
     }
 
     // Create a new Libra::T<CoinType> with a value of 0
@@ -498,6 +498,7 @@ module Libra {
         currency_code: vector<u8>,
     ): (MintCapability<CoinType>, BurnCapability<CoinType>)
     acquires CurrencyRegistrationCapability {
+
         // And only callable by the designated currency address.
         Transaction::assert(
             Association::has_privilege<AddCurrency>(Signer::address_of(account)),
@@ -518,10 +519,12 @@ module Libra {
             preburn_events: Event::new_event_handle<PreburnEvent>(account),
             cancel_burn_events: Event::new_event_handle<CancelBurnEvent>(account)
         });
+
         RegisteredCurrencies::add_currency_code(
             currency_code,
             &borrow_global<CurrencyRegistrationCapability>(LibraConfig::default_config_address()).cap
         );
+
         (MintCapability<CoinType>{}, BurnCapability<CoinType>{})
     }
 
@@ -614,13 +617,20 @@ module Libra {
     // The (singleton) address under which the currency registration
     // information is published.
     fun currency_addr(): address {
-        0xA550C18
+        0x0
     }
 
     // Assert that the sender is an association account, and that
     // `CoinType` is a regstered currency type.
     fun assert_assoc_and_currency<CoinType>(account: &signer) {
         Association::assert_is_association(account);
+        assert_is_coin<CoinType>();
+    }
+
+    // Assert that the sender is an vm account, and that
+    // `CoinType` is a regstered currency type.
+    fun assert_vm_and_currency<CoinType>(account: &signer) {
+        Transaction::assert(Signer::address_of(account) == 0x0, 1002);
         assert_is_coin<CoinType>();
     }
 

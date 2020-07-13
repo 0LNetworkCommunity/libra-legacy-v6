@@ -8,6 +8,7 @@ use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
                                 // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
+// TODO: I don't think this is being used
 const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
 
 pub fn submit_vdf_proof_tx_to_network(
@@ -35,7 +36,7 @@ pub fn submit_vdf_proof_tx_to_network(
     )
     .map_err(|err| ErrorKind::Wallet.context(err))?;
 
-    //TODO: ol-miner/submit_tx LibraWallet is not recovering all accounts.
+    //TODO: 0L-miner/submit_tx LibraWallet is not recovering all accounts.
     let sender_account = libra_client.accounts[0].address;
 
     libra_client
@@ -58,13 +59,13 @@ pub fn resubmit_backlog(quick_check: bool){
    //  // 1. Find the most recent LOCAL tower height. We can store this in a json file.
    //  let parsed_file = fs::read(Pathbuf(LocalMinerState))
    //  let local_tower_height = parsed_file.local_tower_height
-   //  let last_successful_tx_height = parsed_file.last_successful_tx_height
+   //  let last_succesful_tx_height = parsed_file.last_succesful_tx_height
    //
    //  // 1a. Check if there is a resubmission in progress. Exit gracefully.
    //   if (parsed_file.retrying_height){ return }
    // // 1b. quickly check if there is a problem, from local state.
-   //  if (quick_check && (last_successful_tx_height< local_tower_height)) {
-   //   println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run without quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
+   //  if (quick_check && (last_succesful_tx_height< local_tower_height)) {
+   //   println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run withouth quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
    //  }
    //  // 2. Query network for most recent reported_tower_height of the user.
    //  let mut libra_client = ClientProxy::new_for_ol(

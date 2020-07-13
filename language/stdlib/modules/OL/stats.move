@@ -25,7 +25,7 @@ address 0x0 {
 
     public fun initialize(association: &signer): u64 {
       // TODO: OL: (nelaturuk) This should happen only once in genesis
-      if (Signer::address_of(association) == 0xA550C18) {
+      if (Signer::address_of(association) == 0x0) {
         move_to_sender<History>(History{ val_list: Vector::empty() });
         return 1u64
       } else {
@@ -38,7 +38,7 @@ address 0x0 {
     public fun node_heuristics(node_addr: address, start_height: u64,
       end_height: u64): u64 acquires History{
       if (start_height > end_height) return 0;
-      let history = borrow_global<History>(0xA550C18);
+      let history = borrow_global<History>(0x0);
 
       // This is the case where the validator has voted on nothing and does not have a Node
       if (!exists(history, node_addr)) return 0;
@@ -48,7 +48,7 @@ address 0x0 {
       let i = 0;
       let len = Vector::length<Chunk>(chunks);
       let num_voted = 0;
-      if(node_addr == 0xA550C18) return 1;
+      if(node_addr == 0x0) return 1;
 
       // Go though all the chunks of the validator's node and accumulate
       while (i < len) {
@@ -76,7 +76,7 @@ address 0x0 {
     // For now, it will be returned as an unsigned int and be a confidence level
     public fun network_heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
-      let history = borrow_global<History>(0xA550C18);
+      let history = borrow_global<History>(0x0);
       let val_list = &history.val_list;
 
       // This keeps track of how many voters voted on every single block in the range
@@ -131,7 +131,7 @@ address 0x0 {
     }
 
     fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
-      let history = borrow_global_mut<History>(0xA550C18);
+      let history = borrow_global_mut<History>(0x0);
 
       // Add the a Node for the validator if one doesn't aleady exist
       if (!exists(history, node_addr)) {

@@ -1,5 +1,5 @@
 [profile]
-public_key = "c82573d01fe624ef83619299430eaced"
+auth_key = "c82573d01fe624ef83619299430eacedc82573d01fe624ef83619299430eaced"
 statement = "test"
 
 [chain_info]

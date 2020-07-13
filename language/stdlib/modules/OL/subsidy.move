@@ -9,22 +9,24 @@ address 0x0 {
     use 0x0::FixedPoint32;
     use 0x0::Stats;
     use 0x0::Debug;
+    use 0x0::ValidatorUniverse;
+    use 0x0::Globals;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
     // Max gas units per transaction (10_000_000) * blocks epoch (1_000_000)
     resource struct SubsidyInfo {
-      subsidy_ceiling_gas: u64,
-      min_node_density: u64,
-      max_node_density: u64,
-      subsidy_units: u64,
+      // subsidy_ceiling_gas: u64,
+      // min_node_density: u64,
+      // max_node_density: u64,
+      // subsidy_units: u64,
       burn_units: u64,
       burn_accounts: vector<address>
     }
 
     public fun initialize(account: &signer) {
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       let burn_accounts = Vector::empty();
       Vector::push_back(&mut burn_accounts, 0xDEADDEAD);
@@ -32,10 +34,10 @@ address 0x0 {
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {// TODO : SubsidyInfo Constants can be hard coded in the Calc module instead of being a mutable resource.
           // subsidy ceiling is
-          subsidy_ceiling_gas: 296, //TODO:OL:Update this with actually subsidy ceiling in in GAS
-          min_node_density: 4,
-          max_node_density: 300,
-          subsidy_units: 0,
+          // subsidy_ceiling_gas: 296, //TODO: OL:Update this with actually subsidy ceiling in in GAS
+          // min_node_density: 4,
+          // max_node_density: 300,
+          // subsidy_units: 0,
           burn_units: 0,
           burn_accounts: burn_accounts
         });
@@ -61,21 +63,21 @@ address 0x0 {
       Debug::print(&0x50B51DE0000000000000000000001002);
       //Debug::print(account);
 
-      let old_gas_balance = LibraAccount::balance<GAS::T>(0xA550C18);
+      let old_gas_balance = LibraAccount::balance<GAS::T>(0x0);
 
       // TODO: mint_subsidy needs LibraAccount Balance, but reconfig is failing because there is
       // no balance initialized.
       let minted_coins = Libra::mint<GAS::T>(account, subsidy_ceiling_gas);
       LibraAccount::vm_deposit_with_metadata<GAS::T>(
         account,
-        0xA550C18,
+        0x0,
         minted_coins,
         x"", x""
       );
       Debug::print(&0x50B51DE0000000000000000000001003);
 
       //Check if balance is increased
-      let new_gas_balance = LibraAccount::balance<GAS::T>(0xA550C18);
+      let new_gas_balance = LibraAccount::balance<GAS::T>(0x0);
       Debug::print(&new_gas_balance);
       Debug::print(&0x50B51DE0000000000000000000001004);
 
@@ -102,22 +104,25 @@ address 0x0 {
       Debug::print(&0x50B51DE0000000000000000000002003);
 
       // Calculate the split for subsidy and burn
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(0xA550C18);
-      Debug::print(&0x50B51DE0000000000000000000002004);
-      Debug::print(&subsidy_info.subsidy_ceiling_gas);
-      Debug::print(&subsidy_info.min_node_density);
-      Debug::print(&subsidy_info.max_node_density);
-      Debug::print(&node_density);
+      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+      // Debug::print(&0x50B51DE0000000000000000000002004);
+      // Debug::print(&subsidy_info.subsidy_ceiling_gas);
+      // Debug::print(&subsidy_info.min_node_density);
+      // Debug::print(&Globals::get_max_node_density());
+      // Debug::print(&node_density);
 
       let (subsidy_units, burn_units) = subsidy_curve(
-        subsidy_info.subsidy_ceiling_gas,
-        subsidy_info.min_node_density,
-        subsidy_info.max_node_density,
+        Globals::get_subsidy_ceiling_gas(),
+        4u64, // minimum number of nodes to be in consensus.
+        Globals::get_max_node_density(),
         node_density
       );
       Debug::print(&0x50B51DE0000000000000000000002005);
 
       // Deducting the txn fees from subsidy_units to get maximum subsidy for all validators
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+
+      //deduct transaction fees from minimum guarantee.
       subsidy_units = subsidy_units - txn_fee_amount;
       burn_units = burn_units + txn_fee_amount; //Adding the fee amount to be burned
       subsidy_info.burn_units = burn_units;
@@ -195,7 +200,7 @@ address 0x0 {
       Debug::print(&0x50B51DE0000000000000000000005001);
 
 
-      let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
+      let subsidy_info = borrow_global<SubsidyInfo>(0x0);
       Transaction::assert(Vector::length(&subsidy_info.burn_accounts) > 0, 8005);
 
       //Preburning coins to burn account
@@ -214,6 +219,43 @@ address 0x0 {
       Transaction::assert(Libra::market_cap<GAS::T>() == old_market_cap - (subsidy_info.burn_units as u128), 8006);
     }
 
+    public fun genesis(account: &signer) {
+      //Need to check for association or vm account
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Debug::print(&0x50B51DE0000000000000000000008002);
+
+      // Get eligible validators list
+      let genesis_validators = ValidatorUniverse::get_eligible_validators(account);
+      let len = Vector::length(&genesis_validators);
+
+      // Calculate subsidy equally for all the validators based on subsidy curve
+      // Calculate the split for subsidy and burn
+      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+      let (subsidy_units, _burn_units) = subsidy_curve(
+        Globals::get_subsidy_ceiling_gas(),
+        4,
+        Globals::get_max_node_density(),
+        len
+      );
+
+      // Distribute gas coins to initial validators
+      let distribution_units = subsidy_units / len;
+      let i = 0;
+      while (i < len) {
+        let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+        let old_association_balance = LibraAccount::balance<GAS::T>(sender);
+        let old_validator_balance = LibraAccount::balance<GAS::T>(node_address);
+
+        //Transfer gas from association to validator
+        LibraAccount::pay_from<GAS::T>(account, node_address, distribution_units);
+        Transaction::assert(LibraAccount::balance<GAS::T>(sender) == old_association_balance - distribution_units, 8008);
+        // confirm the calculations, and that the ending balance is incremented accordingly.
+        Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_balance + distribution_units, 8009);
+        i = i + 1;
+      };
+    }
+
     fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {
       Debug::print(&0x50B51DE0000000000000000000006001);
 
@@ -223,7 +265,7 @@ address 0x0 {
 
       //TODO:OL:Need to check if account exists already
       //Get mutable burn accounts vector from association
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(0xA550C18);
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
       Vector::push_back(&mut subsidy_info.burn_accounts, new_burn_account);
     }
 
@@ -233,7 +275,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
 
-      let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
+      let subsidy_info = borrow_global<SubsidyInfo>(0x0);
       Vector::length(&subsidy_info.burn_accounts)
     }
   }

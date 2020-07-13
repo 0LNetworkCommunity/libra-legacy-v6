@@ -54,6 +54,7 @@ impl<'a> GenesisContext<'a> {
 
         Self {
             vm,
+            //TODO: need a real cost schedule.
             gas_schedule: zero_cost_schedule(),
             data_store,
             sender: AccountAddress::default(),

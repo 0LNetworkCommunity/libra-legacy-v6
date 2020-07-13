@@ -192,7 +192,7 @@ module LibraAccount {
         compliance_public_key: vector<u8>,
     ) {
         Transaction::assert(exists(addr), 0);
-        Transaction::assert(Signer::address_of(association) == 0xA550C18, 0);
+        Transaction::assert(Signer::address_of(association) == 0x0, 0);
         let role_data =
             VASP::create_parent_vasp_credential(human_name, base_url, compliance_public_key);
         let account = create_signer(addr);
@@ -201,7 +201,7 @@ module LibraAccount {
     }
 
     public fun initialize(association: &signer) {
-        Transaction::assert(Signer::address_of(association) == 0xA550C18, 0);
+        Transaction::assert(Signer::address_of(association) == 0x0, 0);
         move_to(
             association,
             AccountOperationsCapability {
@@ -259,7 +259,7 @@ module LibraAccount {
 
         deposit_with_sender_and_metadata(
             payee,
-            0xA550C18,
+            0x0,
             to_deposit,
             metadata,
             metadata_signature
@@ -317,12 +317,12 @@ module LibraAccount {
 
         // Ensure that this deposit is compliant with the account limits on
         // this account.
-        let _ = borrow_global<AccountOperationsCapability>(0xA550C18);
+        let _ = borrow_global<AccountOperationsCapability>(0x0);
         /*Transaction::assert(
             AccountLimits::update_deposit_limits<Token>(
                 deposit_value,
                 payee,
-                &borrow_global<AccountOperationsCapability>(0xA550C18).limits_cap
+                &borrow_global<AccountOperationsCapability>(0x0).limits_cap
             ),
             9
         );*/
@@ -414,11 +414,11 @@ module LibraAccount {
         // Association::assert_addr_is_association(_addr);
         // Make sure that this withdrawal is compliant with the limits on
         // the account.
-        let _  = borrow_global<AccountOperationsCapability>(0xA550C18);
+        let _  = borrow_global<AccountOperationsCapability>(0x0);
         /*let can_withdraw = AccountLimits::update_withdrawal_limits<Token>(
             amount,
             addr,
-            &borrow_global<AccountOperationsCapability>(0xA550C18).limits_cap
+            &borrow_global<AccountOperationsCapability>(0x0).limits_cap
         );
         Transaction::assert(can_withdraw, 11);*/
         Libra::withdraw(&mut balance.coin, amount)
@@ -612,7 +612,7 @@ module LibraAccount {
     ) {
         let new_account_addr = Signer::address_of(&new_account);
         // cannot create an account at the reserved address 0x0
-        Transaction::assert(new_account_addr != 0x0, 0);
+        // Transaction::assert(new_account_addr != 0x0, 0);
 
         // (1) publish Account::T
         let authentication_key = auth_key_prefix;
@@ -899,7 +899,7 @@ module LibraAccount {
         Transaction::assert(frozen_address != Association::root_address(), 14);
         borrow_global_mut<T>(frozen_address).is_frozen = true;
         Event::emit_event<FreezeAccountEvent>(
-            &mut borrow_global_mut<AccountOperationsCapability>(0xA550C18).freeze_event_handle,
+            &mut borrow_global_mut<AccountOperationsCapability>(0x0).freeze_event_handle,
             FreezeAccountEvent {
                 initiator_address,
                 frozen_address
@@ -914,7 +914,7 @@ module LibraAccount {
         assert_can_freeze(initiator_address);
         borrow_global_mut<T>(unfrozen_address).is_frozen = false;
         Event::emit_event<UnfreezeAccountEvent>(
-            &mut borrow_global_mut<AccountOperationsCapability>(0xA550C18).unfreeze_event_handle,
+            &mut borrow_global_mut<AccountOperationsCapability>(0x0).unfreeze_event_handle,
             UnfreezeAccountEvent {
                 initiator_address,
                 unfrozen_address
@@ -1047,17 +1047,40 @@ module LibraAccount {
         borrow_global_mut<Role_temp<RoleType>>(addr).is_certified = true;
     }
 
+    // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
     public fun create_validator_account<Token>(
         creator: &signer,
         new_account_address: address,
         auth_key_prefix: vector<u8>,
     ) {
+        // NOTE: 0L: This check is removed to allow any address to create a new validator account.
+        // should check that this is done with a VDF proof, so that it's not abused.
         Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
         let new_account = create_signer(new_account_address);
         Event::publish_generator(&new_account);
+        // TODO: This publish fails if the creator is not association.
         ValidatorConfig::publish(creator, &new_account);
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
+    }
+
+    // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
+    public fun create_validator_account_from_mining_0L<Token>(
+        creator: &signer,
+        new_account_address: address,
+        auth_key_prefix: vector<u8>,
+    ) {
+        // NOTE: 0L: This check is removed to allow any address to create a new validator account.
+        // should check that this is done with a VDF proof, so that it's not abused.
+        // Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
+        let new_account = create_signer(new_account_address);
+        Event::publish_generator(&new_account);
+        // TODO: This publish fails if the creator is not association.
+        ValidatorConfig::publish_from_mining_0L(creator, &new_account);
+        
+        move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
+        make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);
+
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -13,7 +13,8 @@ module ValidatorConfig {
     use 0x0::Option;
     use 0x0::Transaction;
     use 0x0::Signer;
-
+    use 0x0::Debug;
+    
     struct Config {
         consensus_pubkey: vector<u8>,
         // TODO(philiphayes): restructure
@@ -39,8 +40,20 @@ module ValidatorConfig {
     // Validator setup methods
     ///////////////////////////////////////////////////////////////////////////
 
+    //NOTE: 0L This is only used for genesis.
     public fun publish(creator: &signer, account: &signer) {
-        Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
+        Debug::print(&Signer::address_of(creator));
+        Transaction::assert(Signer::address_of(creator) == 0x0, 1101);
+        move_to(account, T {
+            config: Option::none(),
+            operator_account: Option::none(),
+        });
+    }
+
+    //NOTE: 0L This is how validator accounts are initialized from mining.
+    public fun publish_from_mining_0L(_creator: &signer, account: &signer) {
+        // TODO: unsure this is safe.
+        // Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
         move_to(account, T {
             config: Option::none(),
             operator_account: Option::none(),

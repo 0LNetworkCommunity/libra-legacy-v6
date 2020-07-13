@@ -46,7 +46,7 @@ pub enum OlMinerCmd {
     Keygen(KeygenCmd),
 
     /// The `genesis` subcommand
-    #[options(help = "show the command for genesis tx in the ol client ")]
+    #[options(help = "show the command for genesis tx in the 0L client ")]
     Genesis(GenesisCmd),
 
     /// The `submit` subcommand

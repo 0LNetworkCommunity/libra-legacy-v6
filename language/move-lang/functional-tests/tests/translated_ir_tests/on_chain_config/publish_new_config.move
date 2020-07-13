@@ -23,7 +23,59 @@ module FooConfig {
 
 //! block-prologue
 //! proposer: vivian
+//! block-time: 1
+
+//! block-prologue
+//! proposer: vivian
 //! block-time: 2
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 3
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 4
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 5
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 6
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 7
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 8
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 9
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 10
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 11
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 12
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 13
+
+//! block-prologue
+//! proposer: vivian
+//! block-time: 14
 
 //! new-transaction
 //! sender: config
@@ -38,7 +90,7 @@ fun main(account: &signer) {
 
 //! block-prologue
 //! proposer: vivian
-//! block-time: 3
+//! block-time: 15
 
 //! new-transaction
 //! sender: config
@@ -55,7 +107,7 @@ fun main(account: &signer) {
 
 //! block-prologue
 //! proposer: vivian
-//! block-time: 4
+//! block-time: 16
 
 //! new-transaction
 //! sender: alice

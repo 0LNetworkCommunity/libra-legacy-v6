@@ -1,3 +1,5 @@
+//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+
 //! new-transaction
 script{
 use 0x0::VDF;
