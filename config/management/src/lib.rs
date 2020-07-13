@@ -7,6 +7,7 @@ mod error;
 mod genesis;
 mod key;
 mod layout;
+mod mining;
 mod secure_backend;
 mod validator_config;
 mod verify;
@@ -54,6 +55,8 @@ pub enum Command {
     ValidatorConfig(crate::validator_config::ValidatorConfig),
     #[structopt(about = "Verifies and prints the current configuration state")]
     Verify(crate::verify::Verify),
+    #[structopt(about = "Verifies and prints the current configuration state")]
+    Mining(crate::mining::Mining),
 }
 
 #[derive(Debug, PartialEq)]
@@ -66,6 +69,7 @@ pub enum CommandName {
     SetLayout,
     ValidatorConfig,
     Verify,
+    Mining,
 }
 
 impl From<&Command> for CommandName {
@@ -79,6 +83,7 @@ impl From<&Command> for CommandName {
             Command::SetLayout(_) => CommandName::SetLayout,
             Command::ValidatorConfig(_) => CommandName::ValidatorConfig,
             Command::Verify(_) => CommandName::Verify,
+            Command::Mining(_) => CommandName::Mining,
         }
     }
 }
@@ -94,6 +99,7 @@ impl std::fmt::Display for CommandName {
             CommandName::SetLayout => "set-layout",
             CommandName::ValidatorConfig => "validator-config",
             CommandName::Verify => "verify",
+            CommandName::Mining => "mining",
         };
         write!(f, "{}", name)
     }
@@ -110,6 +116,7 @@ impl Command {
             Command::SetLayout(_) => self.set_layout().unwrap().to_string(),
             Command::ValidatorConfig(_) => format!("{:?}", self.validator_config().unwrap()),
             Command::Verify(_) => self.verify().unwrap(),
+            Command::Mining(_) => self.mining().unwrap(),
         }
     }
 
@@ -193,6 +200,17 @@ impl Command {
     pub fn verify(self) -> Result<String, Error> {
         if let Command::Verify(verify) = self {
             verify.execute()
+        } else {
+            Err(Error::UnexpectedCommand(
+                CommandName::Verify,
+                CommandName::from(&self),
+            ))
+        }
+    }
+
+    pub fn mining(self) -> Result<String, Error> {
+        if let Command::Mining(mining) = self {
+            mining.execute()
         } else {
             Err(Error::UnexpectedCommand(
                 CommandName::Verify,

@@ -31,6 +31,28 @@ where
     decode(s).map_err(D::Error::custom)
 }
 
+impl Block {
+    pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
+
+
+        let mut file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
+        return Ok((hex::encode(block.preimage),hex::encode(block.data)));
+    }
+
+    pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
+
+        let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
+
+        let mut file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let reader = std::io::BufReader::new(file);
+        let block: Block = serde_json::from_reader(reader).unwrap();
+
+        return block.data.clone();
+    }
+}
+
 pub mod build_block {
     //! Functions for generating the OL delay proof and writing data to file system.
     use super::Block;
@@ -263,17 +285,8 @@ pub mod build_block {
         (max_block, max_block_path)
     }
 
-    pub fn get_proof(config: &OlMinerConfig , height: u64) -> Vec<u8> {
 
-        let blocks_dir = Path::new(&config.chain_info.block_dir);
 
-        let mut file = fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
-        let reader = BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).unwrap();
-
-        return block.data.clone();
-
-    }
 
 
     /* ////////////// */
