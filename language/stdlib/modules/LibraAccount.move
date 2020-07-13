@@ -681,6 +681,9 @@ module LibraAccount {
         coin2_burn_cap: Libra::BurnCapability<Coin2::T>,
     ) {
         // Association::assert_is_root(association);
+        //0L change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
         let new_account = create_signer(new_account_address);
         Association::grant_association_address(association, &new_account);
         Association::grant_privilege<FreezingPrivilege>(association, &new_account);
@@ -702,6 +705,9 @@ module LibraAccount {
         auth_key_prefix: vector<u8>
     ) {
         // Association::assert_is_root(association);
+        //0L change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
         let new_account = create_signer(new_account_address);
         Association::grant_association_address(association, &new_account);
         Event::publish_generator(&new_account);
@@ -776,7 +782,7 @@ module LibraAccount {
     /// all available currencies in the system will also be added.
     /// This can only be invoked by an Association account.
     public fun create_parent_vasp_account<Token>(
-        _account: &signer,
+        account: &signer,
         new_account_address: address,
         auth_key_prefix: vector<u8>,
         human_name: vector<u8>,
@@ -785,6 +791,9 @@ module LibraAccount {
         add_all_currencies: bool
     ) {
         //Association::assert_is_association(account);
+        //0L change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
+
         let vasp_parent =
             VASP::create_parent_vasp_credential(human_name, base_url, compliance_public_key);
         let new_account = create_signer(new_account_address);

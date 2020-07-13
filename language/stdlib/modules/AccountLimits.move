@@ -147,17 +147,21 @@ module AccountLimits {
 
     // Certify the limits definition published under the account at
     // `limits_addr`. Only callable by the association.
-    public fun certify_limits_definition(_account: &signer, limits_addr: address)
+    public fun certify_limits_definition(account: &signer, limits_addr: address)
     acquires LimitsDefinition {
         //Association::assert_is_association(account);
+        // 0L Change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
         borrow_global_mut<LimitsDefinition>(limits_addr).is_certified = true;
     }
 
     // Decertify the limits_definition published under the account at
     // `limits_addr`. Only callable by the association.
-    public fun decertify_limits_definition(_account: &signer, limits_addr: address)
+    public fun decertify_limits_definition(account: &signer, limits_addr: address)
     acquires LimitsDefinition {
         //Association::assert_is_association(account);
+        //0L Change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
         borrow_global_mut<LimitsDefinition>(limits_addr).is_certified = false;
     }
 

@@ -43,6 +43,8 @@ module GenesisOL {
         // Association root setup
         //TODO: Remove
         // Association::initialize(vm);
+
+        //TODO: Does the VM need the privilege to add a currency?
         // Association::grant_privilege<Libra::AddCurrency>(vm, vm);
 
         // On-chain config setup

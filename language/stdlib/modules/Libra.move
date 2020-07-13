@@ -626,8 +626,11 @@ module Libra {
 
     // Assert that the sender is an association account, and that
     // `CoinType` is a regstered currency type.
-    fun assert_assoc_and_currency<CoinType>(_account: &signer) {
+    fun assert_assoc_and_currency<CoinType>(account: &signer) {
         //Association::assert_is_association(account);
+        //0L change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
+
         assert_is_coin<CoinType>();
     }
 
