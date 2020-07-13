@@ -4,7 +4,7 @@
 // genesis (for now).
 address 0x0 {
 module GenesisOL {
-    use 0x0::Association;
+    // use 0x0::Association;
     use 0x0::Event;
     use 0x0::GAS;
     use 0x0::Globals;
@@ -27,6 +27,9 @@ module GenesisOL {
     use 0x0::Signer;
     use 0x0::ReconfigureOL;
 
+    // use 0x0::Debug;
+
+
     fun initialize(
         vm: &signer,
         config_account: &signer,
@@ -38,8 +41,9 @@ module GenesisOL {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
         // Association root setup
-        Association::initialize(vm);
-        Association::grant_privilege<Libra::AddCurrency>(vm, vm);
+        //TODO: Remove
+        // Association::initialize(vm);
+        // Association::grant_privilege<Libra::AddCurrency>(vm, vm);
 
         // On-chain config setup
         Event::publish_generator(config_account);
@@ -74,6 +78,7 @@ module GenesisOL {
         );
 
         //Granting minting and burn capability to association
+        //TODO: Remove
         Libra::grant_mint_capability_to_association<GAS::T>(vm);
         Libra::grant_burn_capability_to_association<GAS::T>(vm);
         Libra::publish_preburn(vm, Libra::new_preburn<GAS::T>());
