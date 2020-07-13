@@ -25,7 +25,7 @@ module GAS {
     // restrictions are enforced in the Libra::register_currency function.
     public fun initialize(account: &signer) {
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       // Register the LBR currency.
       let (mint_cap, burn_cap) = Libra::register_currency<T>(

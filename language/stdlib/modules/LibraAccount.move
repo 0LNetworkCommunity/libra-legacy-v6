@@ -981,6 +981,7 @@ module LibraAccount {
         let sender_account = borrow_global_mut<T>(transaction_sender);
 
         // Check that the hash of the transaction's public key matches the account's auth key
+        // TODO: should this apply to the 0x0 account?
         Transaction::assert(
             Hash::sha3_256(txn_public_key) == *&sender_account.authentication_key,
             2

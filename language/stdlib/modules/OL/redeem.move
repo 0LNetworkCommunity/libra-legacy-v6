@@ -202,7 +202,7 @@
       // an epoch, but also that there were mining proofs submitted in that epoch.
       //0. Check for errors and authorization
       let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 100080006);
+      Transaction::assert(sender == 0x0, 100080006);
 
       // may not have been initialized
       if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
@@ -241,7 +241,7 @@
       Debug::print(&0x12edee11100000000000000000003000);
 
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 100080008);
+      Transaction::assert(sender == 0x0, 100080008);
 
       let size = Vector::length(outgoing_validators);
 

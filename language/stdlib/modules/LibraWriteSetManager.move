@@ -40,6 +40,7 @@ module LibraWriteSetManager {
 
         Transaction::assert(writeset_sequence_number >= sequence_number, 3);
 
+        // TODO: Cehck that there is an auth key.
         Transaction::assert(writeset_sequence_number == sequence_number, 11);
         Transaction::assert(
             Hash::sha3_256(writeset_public_key) == association_auth_key,
