@@ -47,10 +47,10 @@ module GenesisOL {
         //TODO: Does the VM need the privilege to add a currency?
         // Association::grant_privilege<Libra::AddCurrency>(vm, vm);
 
+        //TODO: Do these initializations need to be from a config account?
         // On-chain config setup
         Event::publish_generator(config_account);
         LibraConfig::initialize(config_account, vm);
-
         // Currency setup
         Libra::initialize(config_account);
 
@@ -101,7 +101,7 @@ module GenesisOL {
         // Create the config account
         LibraAccount::create_genesis_account<GAS::T>(
             LibraConfig::default_config_address(),
-            dummy_auth_key_prefix
+            copy dummy_auth_key_prefix
         );
 
         LibraTransactionTimeout::initialize(vm);
@@ -112,6 +112,7 @@ module GenesisOL {
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
 
+        //TODO: Why does the vm have an authentication key?
         LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);

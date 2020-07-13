@@ -216,7 +216,7 @@ module LibraAccount {
     public fun deposit<Token>(payer: &signer, payee: address, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(payer);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         deposit_with_metadata(payer, payee, to_deposit, x"", x"")
     }
 
@@ -224,7 +224,7 @@ module LibraAccount {
     public fun deposit_to<Token>(account: &signer, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(account);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         deposit(account, Signer::address_of(account), to_deposit)
     }
 
@@ -255,7 +255,7 @@ module LibraAccount {
         metadata_signature: vector<u8>
     ) acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(payer);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
 
         deposit_with_sender_and_metadata(
             payee,
@@ -428,7 +428,7 @@ module LibraAccount {
     public fun withdraw_from<Token>(account: &signer, amount: u64): Libra::T<Token>
     acquires T, Balance, AccountOperationsCapability {
         let sender = Signer::address_of(account);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         let sender = Signer::address_of(account);
         let sender_account = borrow_global_mut<T>(sender);
         let sender_balance = borrow_global_mut<Balance<Token>>(sender);
@@ -516,13 +516,13 @@ module LibraAccount {
     public fun pay_from<Token>(payer: &signer, payee: address, amount: u64)
     acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(payer);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         pay_from_with_metadata<Token>(payer, payee, amount, x"", x"");
     }
 
     fun rotate_authentication_key_for_account(account: &mut T, new_authentication_key: vector<u8>) {
       // Don't allow rotating to clearly invalid key
-      Transaction::assert(Vector::length(&new_authentication_key) == 32, 12);
+      Transaction::assert(Vector::length(&new_authentication_key) == 32, 90090012);
       account.authentication_key = new_authentication_key;
     }
 
