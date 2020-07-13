@@ -16,6 +16,8 @@ use libra_swarm::swarm::{LibraNode, LibraSwarm, LibraSwarmDir};
 use libra_temppath::TempPath;
 use libra_types::account_address;
 use std::path::{Path, PathBuf};
+use std::fs;
+
 
 struct ManagementBuilder {
     configs: Vec<NodeConfig>,
@@ -27,11 +29,40 @@ impl BuildSwarm for ManagementBuilder {
         Ok((self.configs.clone(), self.faucet_key.clone()))
     }
 }
+#[test]
+#[ignore]
+fn parse_fixtures() {
+    for i in 1..5 {
+        let ns = i.to_string();
+        // let ns_shared = ns.clone() + shared;
+
+        // Using fixtures to skip the offline steps a person would take to set up their miner.
+        // 1. Generate a keypair, and save a mnemonic.
+        // 2. Run the ol-miner app for creating a genesis proof. block_0.json
+
+        //NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+        // NOTE there are only fixtures for 5 validators in the /test_fixtures/ directory.
+        let mnemonic = fs::read_to_string(format!(
+            "./test_fixtures/miner_{}/miner_{}.mnem",
+            &ns,
+            &ns
+        )).unwrap();
+        print!("{}\n", mnemonic);
+
+        let helper = StorageHelper::new();
+
+        helper.initialize_with_menmonic(ns.clone(), mnemonic.to_string());
+        // helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
+        print!("{}\n", format!("./test_fixtures/miner_{}/block_0.json", &ns) );
+        // Mine a block in the OL miner folder
+        helper.mining(&format!("./test_fixtures/miner_{}/block_0.json", &ns), &(ns + "_shared")).unwrap();
+    }
+}
 
 #[test]
 fn smoke_test() {
     LibraNode::prepare();
-    let helper = StorageHelper::new();
+        let helper = StorageHelper::new();
     let num_validators = 5;
     let shared = "_shared";
     let association = "association";
@@ -51,7 +82,11 @@ fn smoke_test() {
         .unwrap();
 
     // Step 2) Set association key
-    helper.initialize(association.into());
+    // Init with Key
+    // Pub Key: 52bb9a899e48a286ed08d194c62bf18dfe43ce7183bd7c36348dd37cb0a86442
+    // Address: fe43ce7183bd7c36348dd37cb0a86442
+
+    helper.initialize_with_menmonic(association.into(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
     helper
         .association_key(&association, &association_shared)
         .unwrap();
@@ -65,7 +100,23 @@ fn smoke_test() {
     for i in 0..num_validators {
         let ns = i.to_string();
         let ns_shared = ns.clone() + shared;
-        helper.initialize(ns.clone());
+
+        // Using fixtures to skip the offline steps a person would take to set up their miner.
+        // 1. Generate a keypair, and save a mnemonic.
+        // 2. Run the ol-miner app for creating a genesis proof. block_0.json
+
+        //NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+        // NOTE there are only fixtures for 5 validators in the /test_fixtures/ directory.
+        let mnemonic = fs::read_to_string(format!(
+            "./test_fixtures/miner_{}/miner_{}.mnem",
+            &ns,
+            &ns
+        )).unwrap();
+        helper.initialize_with_menmonic(ns.clone(), mnemonic.to_string());
+        // helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
+
+        // Mine a block in the OL miner folder
+        helper.mining(&format!("./test_fixtures/miner_{}/block_0.json", &ns), &ns_shared).unwrap();
 
         let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
 

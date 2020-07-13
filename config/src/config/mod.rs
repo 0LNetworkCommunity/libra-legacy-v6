@@ -99,6 +99,8 @@ pub struct GenesisMiningProof {
     pub preimage: String,
     pub proof: String,
 }
+
+
 //0LChange: these defaults exist only for validator_swarm_for_testing
 // TODO: Remove these defaults. And warn when they are empty.
 
