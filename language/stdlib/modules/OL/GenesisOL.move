@@ -94,7 +94,7 @@ module GenesisOL {
         );
 
         // TransactionFee::initialize(tc_account, fee_account);
-        TransactionFee::initialize(fee_account);
+        TransactionFee::initialize(0xFEE);
 
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
@@ -103,7 +103,7 @@ module GenesisOL {
             copy dummy_auth_key_prefix
         );
         //TODO: Do we still need preburn?
-        Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
+        Libra::publish_preburn(0xDEADDEAD, Libra::new_preburn<GAS::T>());
 
         //TODO: What do we need this for?
         // Create the config account
@@ -129,8 +129,8 @@ module GenesisOL {
 
         // Brick the other accounts after being created.
         LibraAccount::rotate_authentication_key(config_account, copy no_owner_auth_key);
-        LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
-        LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
+        LibraAccount::rotate_authentication_key(0xFEE, copy no_owner_auth_key);
+        LibraAccount::rotate_authentication_key(0xDEADDEAD, copy no_owner_auth_key);
 
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch
