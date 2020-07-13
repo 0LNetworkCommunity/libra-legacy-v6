@@ -133,8 +133,8 @@ fn create_and_initialize_main_accounts(
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);
     let vm_address = account_config::vm_address();
-    // let fee_account_address = account_config::transaction_fee_address();
-    // let burn_account_address = account_config::burn_account_address();
+    let fee_account_address = account_config::transaction_fee_address();
+    let burn_account_address = account_config::burn_account_address();
 
     context.exec(
         GENESIS_MODULE_NAME,
@@ -143,8 +143,8 @@ fn create_and_initialize_main_accounts(
         vec![
             Value::transaction_argument_signer_reference(vm_address),
             Value::transaction_argument_signer_reference(config_address()),
-            // Value::transaction_argument_signer_reference(fee_account_address),
-            // Value::transaction_argument_signer_reference(burn_account_address),
+            Value::transaction_argument_signer_reference(fee_account_address),
+            Value::transaction_argument_signer_reference(burn_account_address),
             // Value::address(burn_account_address),
             Value::vector_u8(genesis_auth_key.to_vec()),
         ],
