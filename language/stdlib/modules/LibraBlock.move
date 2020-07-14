@@ -10,13 +10,7 @@ module LibraBlock {
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
     use 0x0::Globals;
-    // use 0x0::Testnet;
-
-    // resource struct BlockConstants {
-    //   epoch_length: u64,
-    //   max_validator_per_epoch: u64
-    // }
-
+    
     resource struct BlockMetadata {
       // Height of the current block
       height: u64,
@@ -50,23 +44,6 @@ module LibraBlock {
           }
       );
 
-      // if (Testnet::is_testnet()) {
-      //   move_to<BlockConstants>(
-      //     account,
-      //     BlockConstants {
-      //         epoch_length: 15,
-      //         max_validator_per_epoch: 4
-      //     }
-      //   );
-      // } else {
-      //   move_to<BlockConstants>(
-      //     account,
-      //     BlockConstants {
-      //         epoch_length: 100000,
-      //         max_validator_per_epoch: 10
-      //     }
-      //   );
-      // };
     }
 
     // Set the metadata for the current block.
@@ -136,16 +113,6 @@ module LibraBlock {
        let voters = *&borrow_global<BlockMetadata>(0x0).voters;
        return voters //vector<address>
     }
-
-    // // Get the epoch length
-    // public fun get_epoch_length(): u64 acquires BlockConstants {
-    //    borrow_global<BlockConstants>(0x0).epoch_length
-    // }
-    //
-    // // Get max validator per epoch
-    // public fun get_max_validator_per_epoch(): u64 acquires BlockConstants {
-    //    borrow_global<BlockConstants>(0x0).max_validator_per_epoch
-    // }
 }
 
 }
