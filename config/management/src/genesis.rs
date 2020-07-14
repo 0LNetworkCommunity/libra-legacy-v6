@@ -140,7 +140,6 @@ impl Genesis {
                 return Err(Error::UnexpectedError("Found invalid registration".into()));
             };
 
-            //TODO (ZM): This is where we need to place the miner proof.
             validators.push((key, txn, GenesisMiningProof { preimage, proof }));
         }
 

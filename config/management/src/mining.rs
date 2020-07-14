@@ -1,4 +1,4 @@
-use crate::{error::Error, SecureBackends};
+use crate::{error::Error, SingleBackend};
 use libra_secure_storage::{Storage, Value};
 use ol_miner::block::Block;
 use std::convert::TryInto;
@@ -9,7 +9,7 @@ use structopt::StructOpt;
 pub struct Mining {
     pub path_to_genesis_pow: PathBuf,
     #[structopt(flatten)]
-    pub secure_backends: SecureBackends,
+    pub backend: SingleBackend,
 }
 
 impl Mining {
@@ -17,10 +17,9 @@ impl Mining {
         let (preimage, proof) = Block::get_genesis_tx_data(self.path_to_genesis_pow)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
 
-        if let Some(remote) = self.secure_backends.remote {
             let preimage = Value::String(preimage);
             let proof = Value::String(proof);
-            let mut remote: Box<dyn Storage> = remote.try_into()?;
+            let mut remote: Box<dyn Storage> = self.backend.backend.try_into()?;
             remote
                 .available()
                 .map_err(|e| Error::RemoteStorageUnavailable(e.to_string()))?;
@@ -38,7 +37,6 @@ impl Mining {
                 .map_err(|e| {
                     Error::RemoteStorageWriteError("proof_of_work_proof", e.to_string())
                 })?;
-        }
 
         Ok("Sent Proof".to_string())
     }

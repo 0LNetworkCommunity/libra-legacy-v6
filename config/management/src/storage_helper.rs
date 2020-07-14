@@ -182,6 +182,28 @@ impl StorageHelper {
         command.set_layout()
     }
 
+    pub fn mining(&self, path: &str, namespace: &str) -> Result<String, Error> {
+        let args = format!(
+            "
+                management
+                mining
+                --path_to_genesis_pow {path}
+                --backend backend={backend};\
+                    path={storage_path};\
+                    namespace={ns}
+            ",
+            path = path,
+            backend = crate::secure_backend::DISK,
+            storage_path = self.path_string(),
+            ns = namespace,
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.mining()
+    }
+
+
+
     pub fn validator_config(
         &self,
         owner_address: AccountAddress,
