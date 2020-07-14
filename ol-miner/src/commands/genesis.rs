@@ -22,19 +22,9 @@ impl Runnable for GenesisCmd {
 
         let preimage = miner_config.genesis_preimage();
 
-        let genesis_proof = block::Block::get_proof(&miner_config, 0);
-
-
-        
-
-        println!("ol s 0 {} {} {}",hex::encode(preimage),crate::application::DELAY_ITERATIONS,hex::encode(genesis_proof));
-
-
-
-
-
-
-
+        let genesis_proof = block::build_block::get_proof(&miner_config, 0);
+                
+        println!("0L s 0 {} {} {}",hex::encode(preimage),crate::application::DELAY_ITERATIONS,hex::encode(genesis_proof));
     }
-    
+
 }
