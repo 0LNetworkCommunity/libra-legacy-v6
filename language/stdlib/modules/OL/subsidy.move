@@ -2,7 +2,7 @@ address 0x0 {
   module Subsidy {
     ///////////////////////////////////////////////////////////////////////////
     // OpenLibra Module
-    // Epoch Prologue - the prologue for transitioning to next epoch. 
+    // Subsidy - the logic for determining the appropriate level of subsidies at a given time in the network
     // File Prefix for errors: 1901
     ///////////////////////////////////////////////////////////////////////////
 
