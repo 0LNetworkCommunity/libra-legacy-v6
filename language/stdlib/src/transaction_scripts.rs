@@ -62,12 +62,13 @@ pub enum StdlibScript {
     Redeem,
     RedeemOnboarding,
     // RedeemInitialize,
-    LibraBlockTestHelper, // 0L Change
-    TxFeeTestHelper,// 0L Change
-    TxFeeTestMint,  // 0L Change
-    TxFeeTestMove,  // 0L Change
-    TxFeeTestDistr, // 0L Change
-    ReconfigBulkUpdate      // 0L Change
+    LibraBlockTestHelper,
+    TxFeeTestHelper,
+    TxFeeTestMint,
+    TxFeeTestMove,
+    TxFeeTestDistr,
+    ReconfigBulkUpdate,
+    ReconfigSetup,
 }
 
 impl StdlibScript {
@@ -116,12 +117,13 @@ impl StdlibScript {
             Redeem,
             RedeemOnboarding,
             // RedeemInitialize,
-            LibraBlockTestHelper, // 0L Change
-            TxFeeTestHelper,    // 0L Change
-            TxFeeTestMint,      // 0L Change
-            TxFeeTestMove,      // 0L Change
-            TxFeeTestDistr,     // 0L Change
-            ReconfigBulkUpdate      // 0L Change
+            LibraBlockTestHelper,
+            TxFeeTestHelper,
+            TxFeeTestMint,
+            TxFeeTestMove,
+            TxFeeTestDistr,
+            ReconfigBulkUpdate,
+            ReconfigSetup,
         ]
     }
 
@@ -244,16 +246,19 @@ impl fmt::Display for StdlibScript {
                 UpdateLibraVersion => "update_libra_version",
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
-                // 0L Changes
-                Redeem => "ol_redeem", // 0L Change
-                RedeemOnboarding => "ol_redeem_onboarding", // 0L Change
-                // RedeemInitialize => "redeem_init", // 0L Change
-                LibraBlockTestHelper => "ol_libra_block_test_helper", // 0L Change
-                TxFeeTestHelper => "ol_tx_fees_e2e_test_helper", // 0L Change
-                TxFeeTestMint => "ol_txn_fee_test_mint",       // 0L Change
-                TxFeeTestMove => "ol_txn_fee_test_move",       // 0L Change
-                TxFeeTestDistr => "ol_txn_fee_test_distr",     // 0L Change
-                ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper"// 0L Change
+                //
+                // Below are 0L Changes
+                //
+                Redeem => "ol_redeem",
+                RedeemOnboarding => "ol_redeem_onboarding",
+                // RedeemInitialize => "redeem_init",
+                LibraBlockTestHelper => "ol_libra_block_test_helper",
+                TxFeeTestHelper => "ol_tx_fees_e2e_test_helper",
+                TxFeeTestMint => "ol_txn_fee_test_mint",
+                TxFeeTestMove => "ol_txn_fee_test_move",
+                TxFeeTestDistr => "ol_txn_fee_test_distr",
+                ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper",
+                ReconfigSetup => "ol_reconfig_bulk_update_setup",
             }
         )
     }
