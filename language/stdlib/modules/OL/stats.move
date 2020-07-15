@@ -4,10 +4,12 @@
 // From within the VM context the statistics available are those in the 
 // BlockMetadata type.
 
+
 address 0x0 {
   module Stats {
     use 0x0::Vector;
     use 0x0::Signer;
+
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
     // NOTE: As currently written, boundaries are inclusive
@@ -16,12 +18,14 @@ address 0x0 {
       end_block: u64
     }
 
+
     // Each Node represents one validator. Each node will store a vector of chunks
     // on which the node voted
     struct Node {
       validator: address,
       chunks: vector<Chunk>
     }
+
 
     // This stores the full history. For proof of concept (POC), it is a vector
     // which stores one entry for each validator.
@@ -30,6 +34,7 @@ address 0x0 {
     resource struct History {
       val_list: vector<Node>,
     }
+
 
     // Initialize the storage mechanism in a specific account
     public fun initialize(storage_acc: &signer): u64 {
@@ -41,6 +46,7 @@ address 0x0 {
         0u64
       }
     }
+
 
     // Returns the number of blocks this node has signed in the period of 
     // start_height to end_height
@@ -95,6 +101,7 @@ address 0x0 {
       };
       num_voted
     }
+
 
     // Returns the number of nodes which have voted on every block in the input range
     public fun network_heuristics(start_height: u64, 
@@ -166,53 +173,82 @@ address 0x0 {
       num_voters
     }
 
+
+    // Performs a number of batch inserts input through a vector votes
     public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
-        // TODO: OL: (Nelaturuk) This needs a capability/permission to prevent the general public from calling this function.
+      // Check permission
+      Transaction::assert(Transaction::sender() == 0x0, 190204014010)
+
+      // Iterate through the input vector
       let i = 0;
       let len = Vector::length<address>(votes);
       while (i < len) {
+        // Insert each element using the private insert function
         insert(*Vector::borrow(votes, i), height, height);
         i = i + 1;
       };
     }
 
+
+    // Insert one chunk into the storage
     fun insert(node_addr: address, start_block: u64, end_block: u64) acquires History {
+      // Get write access to the storage.
       let history = borrow_global_mut<History>(0x0);
 
-      // Add the a Node for the validator if one doesn't aleady exist
+      // Add a new Node for the validator if one doesn't aleady exist.
       if (!exists(history, node_addr)) {
         Vector::push_back(&mut history.val_list, Node{ validator: node_addr, chunks: Vector::empty() });
       };
 
+      // Get read write access to the node.
       let node = get_node_mut(history, node_addr);
-      let i = 0;
       let len = Vector::length<Chunk>(&node.chunks);
 
+      // If node has no chunks stored, add a new chunk and return.
       if (len == 0) {
         Vector::push_back(&mut node.chunks, Chunk{ start_block: start_block, end_block: end_block });
         return
       };
 
-      // This is a temporary reference to an existing chunk. Assuming there are no
-      // conflicts and it is not adjacent to an existing chunk, it will be discarded.
-      // If it is adjacent, we will assign this reference to the adjacent chunk so
-      // we don't have to search for it again.
-      // This should all be simpler in the final implementation in Rust since we will
-      // be able to use binary trees and the Option<T> type.
-      let adjacent = false;
+      // To do the actual insert, we must consider the case where an existing chunk can
+      // simply be modified. For example, if a chunk exists with end=5 and we need to add
+      // a new chunk which has start=6, it doesn't make sense to add a new chunk. We should
+      // just find the adjacent node and modify it.
+      // 
+      // `chunk` is a temporary reference to an existing (possibly adjacent) chunk. 
+      // it will be discarded if there are no conflicts and the new chunk is not adjacent
+      // to an existing chunk.
+      //
+      // If an adjacent chunk exists, we will assign this reference to the adjacent chunk
+      // so we don't have to search for it again.
+      // This should all be simpler if the final implementation is in Rust since we will
+      // be able to use binary trees and the Option<T> type instead of this complex setup.
       let chunk = Vector::borrow_mut(&mut node.chunks, 0);
+      
+      // This boolean is a flag which keeps track of whether or not the new chunk has 
+      // an adjacent chunk existing in the structure
+      let adjacent = false;
 
-      // Check to see if the insert conflicts with what is already stored
+      let i = 0;
+      // Iterate through chunks to find conflicts and/or adjacent chunks
       while (i < len) {
+        // Get a write access reference to an existing chunk.
         chunk = Vector::borrow_mut(&mut node.chunks, i);
 
+        // This is the case where the new block is not connected to the old
+        // one we are comparing with. Continue searching.
         if ((chunk.start_block > end_block) || (chunk.end_block < start_block - 1)){
-          // This is the case where the new block is not connected to the old
-          // one we are comparing with
           i = i + 1;
           continue
+
+          // Note: The case where chunk.start_block - 1 = end_block does not need
+          // consideration because this would imply that an insert is being done
+          // regarding chunks in the past (since the existing chunk is ahead of the 
+          // chunk being inserted). This will never happen since only 0x0 can insert
+          // and it inserts in order of height periodically.
         };
-        // If chunk.end_block == start_block, then we are just adding on to the last block
+
+        // If chunk.end_block == start_block, then we are just adding on to the last block.
         if (chunk.end_block == start_block - 1) {
           adjacent = true;
           break
@@ -220,7 +256,7 @@ address 0x0 {
         i = i + 1;
       };
 
-      // Add in the new chunk
+      // Add in the new chunk (or update an existing chunk depending)
       if (adjacent){
         chunk.end_block = end_block
       } else {
@@ -228,14 +264,20 @@ address 0x0 {
       }
     }
 
-    // This function goes through the vector in history and gets the desired node (immutable reference).
-    // By the time this runs, we already know that the node exists in the history
-    fun get_node(hist: &History, add: address): &Node {
-      let i = 0;
-      let node_list = &hist.val_list;
-      let len = Vector::length<Node>(node_list);
-      let node = Vector::borrow<Node>(node_list, i);
 
+    // Goes through the vector in history and gets the desired node (immutable reference).
+    // By the time this runs, we already know that the node exists in the history so we
+    // don't need to run existence checks again.
+    fun get_node(hist: &History, add: address): &Node {
+      // Get an immutable reference to the vector of nodes.
+      let node_list = &hist.val_list;
+
+      // Grab an immutable reference to a candidate node.
+      let node = Vector::borrow<Node>(node_list, 0);
+
+      // Iterate through the vector of nodes seaching for desired address.
+      let i = 0;
+      let len = Vector::length<Node>(node_list);
       while (i < len) {
         node = Vector::borrow<Node>(node_list, i);
         i = i + 1;
@@ -244,14 +286,20 @@ address 0x0 {
       node
     }
 
-    // This function goes through the vector in history and gets the desired node (mutable reference).
-    // By the time this runs, we already know that the node exists in the history
-    fun get_node_mut(hist: &mut History, add: address): &mut Node {
-      let i = 0;
-      let node_list = &mut hist.val_list;
-      let len = Vector::length<Node>(node_list);
-      let node = Vector::borrow_mut<Node>(node_list, i);
 
+    // Goes through the vector in history and gets the desired node (mutable reference).
+    // By the time this runs, we already know that the node exists in the history so we
+    // don't need to run existence checks again.
+    fun get_node_mut(hist: &mut History, add: address): &mut Node {
+      // Get a mutable reference to the vector of nodes.
+      let node_list = &mut hist.val_list;
+
+      // Grab a mutable eference to a candidate node.
+      let node = Vector::borrow_mut<Node>(node_list, 0);
+
+      // Iterate through the vector of nodes searching for desired address.
+      let i = 0;
+      let len = Vector::length<Node>(node_list);
       while (i < len) {
         node = Vector::borrow_mut<Node>(node_list, i);
         i = i + 1;
@@ -260,13 +308,17 @@ address 0x0 {
       node
     }
 
-    // This must be included since does not suppot the Option<T> data type.
-    // Since there is no way to return Some<Node> or None, we must do this check separately.
-    fun exists(hist: &History, add: address): bool {
-      let i = 0;
-      let node_list = &hist.val_list;
-      let len = Vector::length<Node>(node_list);
 
+    // Checks for existence of a node in the storage.
+    // Since there is no way to return Some<Node> or None (using Rust's Option<T>),
+    // we must do this check and actually get the object separately.
+    fun exists(hist: &History, add: address): bool {
+      // Get read access to the list of nodes
+      let node_list = &hist.val_list;
+
+      // Iterate through them to check if desired node exists
+      let i = 0;
+      let len = Vector::length<Node>(node_list);
       while (i < len) {
         if (Vector::borrow<Node>(node_list, i).validator == add) return true;
         i = i + 1;
@@ -277,7 +329,8 @@ address 0x0 {
 }
 
 
-// Code which might be useful when moving beyond POC stage
+// Code which might be useful when moving beyond POC stage (when lists are turned
+// into trees)
 
 //     struct TreeNode{
 //       validator: address,
