@@ -1,11 +1,10 @@
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
 //! account: charlie, 1000000
-//! account: storage, 4000000
 
 
 //! new-transaction
-//! sender: storage
+//! sender: association
 script {
     use 0x0::Stats;
     use 0x0::Vector;
@@ -30,7 +29,7 @@ script {
 
 
 //! new-transaction
-//! sender: storage
+//! sender: association
 script{
     use 0x0::Stats;
     use 0x0::Transaction;
