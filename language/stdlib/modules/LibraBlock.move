@@ -83,9 +83,6 @@ module LibraBlock {
         proposer: address
     ) acquires BlockMetadata {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0x0);
-        // TODO OL (Dev): Call the Stats module from here with previous_block_votes.
-
-        // TODO: Figure out a story for errors in the system transactions.
         if(proposer != 0x0) Transaction::assert(LibraSystem::is_validator(proposer), 5002);
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
 
@@ -111,7 +108,7 @@ module LibraBlock {
     // Get the previous block voters
     public fun get_previous_voters(): vector<address> acquires BlockMetadata {
        let voters = *&borrow_global<BlockMetadata>(0x0).voters;
-       return voters //vector<address>
+       return voters
     }
 }
 

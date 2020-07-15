@@ -75,10 +75,6 @@ module LibraSystem {
             22
         );
 
-        // Debug::print(&0x017E57);
-        // Debug::print(&account_address);
-
-
         // A prospective validator must have a validator config resource
         Transaction::assert(is_valid_and_certified(account_address), 33);
 
@@ -318,7 +314,6 @@ module LibraSystem {
             };
 
             if(liveness){
-                //TODO: Correct Proof of Weight algorithm 
                 Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                     addr: account_address,
                     config, // copy the config over to ValidatorSet

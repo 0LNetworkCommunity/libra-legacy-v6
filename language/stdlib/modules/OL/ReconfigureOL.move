@@ -3,7 +3,7 @@ address 0x0 {
 
     ///////////////////////////////////////////////////////////////////////////
     // OpenLibra Module
-    // Epoch Prologue - the prologue for transitioning to next epoch. 
+    // Epoch Prologue - the prologue for transitioning to next epoch after every n blocks. 
     // File Prefix for errors: 1801
     ///////////////////////////////////////////////////////////////////////////
 
@@ -17,10 +17,8 @@ address 0x0 {
         use 0x0::TransactionFee;
         use 0x0::Redeem;
         use 0x0::Globals;
-   
       
-        // This function is called in block-prologue once after n blocks.
-        // Takes in list of validators, runs stats and node weights and updates the validator set
+        // This function is called by block-prologue once after n blocks.
         // Function code: 01. Prefix: 180101
         public fun reconfigure(account: &signer, current_block_height: u64) {
             let sender = Signer::address_of(account);
@@ -33,7 +31,6 @@ address 0x0 {
             // Step 2: Subsidy payments
             // Step 3: Distribute transaction fees to all outgoing validators
             // Step 4: Burn subsidy units
-
             // Skip this step on the first epoch, which is exceptional.
             if (current_block_height > Globals::get_epoch_length() + 3) {
               process_outgoing_validators(account, current_block_height);

@@ -55,7 +55,7 @@ address 0x0 {
 
           let value_j = *(Vector::borrow<u64>(&weights, j));
           let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
-          if(value_j < value_jp1){
+          if(value_j > value_jp1){
             Vector::swap<u64>(&mut weights, j, j+1);
             Vector::swap<address>(&mut eligible_validators, j, j+1);
           };
@@ -65,7 +65,7 @@ address 0x0 {
       };
 
       // Reverse to have sorted order - high to low.
-     // Vector::reverse<address>(&mut eligible_validators);
+      Vector::reverse<address>(&mut eligible_validators);
       let index = n;
       while(index < length){
         Vector::pop_back<address>(&mut eligible_validators);
