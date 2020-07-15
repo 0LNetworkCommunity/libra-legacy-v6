@@ -187,7 +187,7 @@ impl StorageHelper {
             "
                 management
                 mining
-                --path_to_genesis_pow {path}
+                --path-to-genesis-pow {path}
                 --backend backend={backend};\
                     path={storage_path};\
                     namespace={ns}

@@ -7,6 +7,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct Mining {
+    #[structopt(long, short)]
     pub path_to_genesis_pow: PathBuf,
     #[structopt(flatten)]
     pub backend: SingleBackend,
