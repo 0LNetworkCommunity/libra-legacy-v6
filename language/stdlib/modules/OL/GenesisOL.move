@@ -32,8 +32,6 @@ module GenesisOL {
         config_account: &signer,
         fee_account: &signer,
         burn_account: &signer,
-        // burn_account_addr: address,
-        _genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
