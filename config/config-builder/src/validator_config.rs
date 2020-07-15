@@ -147,7 +147,6 @@ impl ValidatorConfig {
         let validators = vm_genesis::validator_registrations(&nodes[..nodes_in_genesis]).0;
 
         let genesis = vm_genesis::encode_genesis_transaction_with_validator(
-            faucet_key.public_key(),
             &validators,
             self.template
                 .test
