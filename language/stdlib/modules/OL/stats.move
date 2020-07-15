@@ -178,6 +178,8 @@ address 0x0 {
     // Performs a number of batch inserts input through a vector votes
     public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
       // Check permission
+      // TODO: The functional test cannot send transactions from 0x0 so using this 
+      // permission check will cause the test to fail.
       // Transaction::assert(Transaction::sender() == 0x0, 190204014010);
 
       // Iterate through the input vector
