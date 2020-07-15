@@ -9,6 +9,7 @@ address 0x0 {
   module Stats {
     use 0x0::Vector;
     use 0x0::Signer;
+    // use 0x0::Transaction;
 
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
@@ -177,7 +178,7 @@ address 0x0 {
     // Performs a number of batch inserts input through a vector votes
     public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
       // Check permission
-      Transaction::assert(Transaction::sender() == 0x0, 190204014010)
+      // Transaction::assert(Transaction::sender() == 0x0, 190204014010);
 
       // Iterate through the input vector
       let i = 0;
@@ -294,12 +295,14 @@ address 0x0 {
       // Get a mutable reference to the vector of nodes.
       let node_list = &mut hist.val_list;
 
+      // Length borrow must happen before mutable borrow because ownership rules
+      let len = Vector::length<Node>(node_list);
+
       // Grab a mutable eference to a candidate node.
       let node = Vector::borrow_mut<Node>(node_list, 0);
 
       // Iterate through the vector of nodes searching for desired address.
       let i = 0;
-      let len = Vector::length<Node>(node_list);
       while (i < len) {
         node = Vector::borrow_mut<Node>(node_list, i);
         i = i + 1;
