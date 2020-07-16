@@ -88,9 +88,6 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      RUSTFLAGS: "-Dwarnings"
     steps:
       - uses: actions/checkout@v2
       # Uses the cache done in the parent job (compile) with the same "key"
