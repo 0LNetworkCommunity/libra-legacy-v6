@@ -81,11 +81,7 @@ fn smoke_test() {
         .unwrap();
 
     // Step 2) Set association key
-    // Init with Key
-    // Pub Key: 52bb9a899e48a286ed08d194c62bf18dfe43ce7183bd7c36348dd37cb0a86442
-    // Address: fe43ce7183bd7c36348dd37cb0a86442
-
-    helper.initialize_with_menmonic(association.into(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
+    helper.initialize(association.into());
     // helper
     //     .association_key(&association, &association_shared)
     //     .unwrap();
