@@ -4,7 +4,7 @@
 // genesis (for now).
 address 0x0 {
 module GenesisOL {
-    use 0x0::Association;
+    // use 0x0::Association;
     use 0x0::Event;
     use 0x0::GAS;
     use 0x0::Globals;
@@ -32,19 +32,19 @@ module GenesisOL {
         config_account: &signer,
         fee_account: &signer,
         burn_account: &signer,
-        burn_account_addr: address,
-        genesis_auth_key: vector<u8>,
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
         // Association root setup
-        Association::initialize(vm);
-        Association::grant_privilege<Libra::AddCurrency>(vm, vm);
+        // Association::initialize(vm);
 
+        //TODO: Does the VM need the privilege to add a currency?
+        // Association::grant_privilege<Libra::AddCurrency>(vm, vm);
+
+        //TODO: Do these initializations need to be from a config account?
         // On-chain config setup
         Event::publish_generator(config_account);
         LibraConfig::initialize(config_account, vm);
-
         // Currency setup
         Libra::initialize(config_account);
 
@@ -68,47 +68,67 @@ module GenesisOL {
 
         LibraAccount::initialize(vm);
         Unhosted::publish_global_limits_definition(vm);
+
+
+        //Create the vm's account
+        // TODO: Do we need to do this?
         LibraAccount::create_genesis_account<GAS::T>(
             Signer::address_of(vm),
             copy dummy_auth_key_prefix,
         );
 
-        //Granting minting and burn capability to association
+        //Granting minting and burn capability to vm account
         Libra::grant_mint_capability_to_association<GAS::T>(vm);
         Libra::grant_burn_capability_to_association<GAS::T>(vm);
+
+        //TODO: Do we still need preburn.
         Libra::publish_preburn(vm, Libra::new_preburn<GAS::T>());
 
         // Register transaction fee accounts
-        LibraAccount::create_testnet_account<GAS::T>(0xFEE, copy dummy_auth_key_prefix);
+        LibraAccount::create_fee_account<GAS::T>(
+            vm,
+            0xFEE,
+            copy dummy_auth_key_prefix
+        );
+
         // TransactionFee::initialize(tc_account, fee_account);
         TransactionFee::initialize(fee_account);
 
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
             vm,
-            burn_account_addr,
+            0xDEADDEAD, //burn_account_addr,
             copy dummy_auth_key_prefix
         );
+        //TODO: Do we still need preburn?
         Libra::publish_preburn(burn_account, Libra::new_preburn<GAS::T>());
 
+        //TODO: What do we need this for?
         // Create the config account
         LibraAccount::create_genesis_account<GAS::T>(
             LibraConfig::default_config_address(),
-            dummy_auth_key_prefix
+            copy dummy_auth_key_prefix
         );
 
         LibraTransactionTimeout::initialize(vm);
         LibraSystem::initialize_validator_set(config_account);
         LibraVersion::initialize(config_account);
-
         LibraBlock::initialize_block_metadata(vm);
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
 
-        LibraAccount::rotate_authentication_key(vm, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(config_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(fee_account, copy genesis_auth_key);
-        LibraAccount::rotate_authentication_key(burn_account, copy genesis_auth_key);
+        let no_owner_auth_key = x"0100000000000000000000000000000000000000000000000000000000001ee7";
+
+        /////////////////////////////////////////////////////
+        //TODO: Why does the vm have an authentication key?
+        // if this is removed most tests fail.
+        LibraAccount::rotate_authentication_key(vm, copy no_owner_auth_key);
+        /////////////////////////////////////////////////////
+
+        // Brick the other accounts after being created.
+        LibraAccount::rotate_authentication_key(config_account, copy no_owner_auth_key);
+        LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
+        LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch

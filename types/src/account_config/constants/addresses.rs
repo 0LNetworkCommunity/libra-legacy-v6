@@ -10,11 +10,13 @@ pub fn vm_address() -> AccountAddress {
         .expect("Parsing valid hex literal should always succeed")
 }
 
+//0L change, this is not called anywhere.
 pub fn association_address() -> AccountAddress {
     AccountAddress::from_hex_literal("0x0")
         .expect("Parsing valid hex literal should always succeed")
 }
 
+//0L change, this is not called anywhere.
 pub fn transaction_fee_address() -> AccountAddress {
     AccountAddress::from_hex_literal("0xFEE")
         .expect("Parsing valid hex literal should always succeed")
@@ -24,11 +26,13 @@ pub fn validator_set_address() -> AccountAddress {
     crate::on_chain_config::config_address()
 }
 
+//0L change, this is not called anywhere.
 pub fn treasury_compliance_account_address() -> AccountAddress {
     AccountAddress::from_hex_literal("0xB1E55ED")
         .expect("Parsing valid hex literal should always succeed")
 }
 
+//0L change, this is not called anywhere.
 pub fn burn_account_address() -> AccountAddress {
     AccountAddress::from_hex_literal("0xDEADDEAD")
         .expect("Parsing valid hex literal should always succeed")

@@ -9,6 +9,7 @@ use libra_crypto::{
     hash::{CryptoHash, HashValue},
     PrivateKey, SigningKey, Uniform,
 };
+use libra_crypto::Genesis;
 use libra_logger::prelude::*;
 use libra_types::{
     account_address::AccountAddress,
@@ -55,9 +56,6 @@ struct TransactionGenerator {
     /// so generated transactions are guaranteed to be successfully executed.
     accounts: Vec<AccountData>,
 
-    /// Used to mint accounts.
-    genesis_key: Ed25519PrivateKey,
-
     /// For deterministic transaction generation.
     rng: StdRng,
 
@@ -68,7 +66,6 @@ struct TransactionGenerator {
 
 impl TransactionGenerator {
     fn new(
-        genesis_key: Ed25519PrivateKey,
         num_accounts: usize,
         block_sender: mpsc::SyncSender<Vec<Transaction>>,
     ) -> Self {
@@ -91,7 +88,6 @@ impl TransactionGenerator {
 
         Self {
             accounts,
-            genesis_key,
             rng,
             block_sender: Some(block_sender),
         }
@@ -105,6 +101,7 @@ impl TransactionGenerator {
     /// Generates transactions that allocate `init_account_balance` to every account.
     fn gen_mint_transactions(&self, init_account_balance: u64, block_size: usize) {
         let genesis_account = association_address();
+        let genesis_key = Ed25519PrivateKey::genesis();
 
         for (i, block) in self.accounts.chunks(block_size).enumerate() {
             let mut transactions = Vec::with_capacity(block_size);
@@ -112,8 +109,8 @@ impl TransactionGenerator {
                 let txn = create_transaction(
                     genesis_account,
                     (i * block_size + j + 1) as u64,
-                    &self.genesis_key,
-                    self.genesis_key.public_key(),
+                    &genesis_key,
+                    genesis_key.public_key(),
                     encode_mint_lbr_to_address_script(
                         &account.address,
                         account.auth_key_prefix(),
@@ -287,7 +284,7 @@ pub fn run_benchmark(
     num_transfer_blocks: usize,
     db_dir: Option<PathBuf>,
 ) {
-    let (mut config, genesis_key) = config_builder::test_config();
+    let mut config = config_builder::test_config();
     if let Some(path) = db_dir {
         config.storage.dir = path;
     }
@@ -301,7 +298,7 @@ pub fn run_benchmark(
     let gen_thread = std::thread::Builder::new()
         .name("txn_generator".to_string())
         .spawn(move || {
-            let mut generator = TransactionGenerator::new(genesis_key, num_accounts, block_sender);
+            let mut generator = TransactionGenerator::new(num_accounts, block_sender);
             generator.run(init_account_balance, block_size, num_transfer_blocks);
             generator
         })

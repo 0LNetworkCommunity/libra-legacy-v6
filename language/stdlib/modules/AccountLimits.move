@@ -6,7 +6,7 @@
 address 0x0 {
 
 module AccountLimits {
-    use 0x0::Association;
+    // use 0x0::Association;
     use 0x0::LibraTimestamp;
     use 0x0::Signer;
     use 0x0::Transaction;
@@ -149,7 +149,9 @@ module AccountLimits {
     // `limits_addr`. Only callable by the association.
     public fun certify_limits_definition(account: &signer, limits_addr: address)
     acquires LimitsDefinition {
-        Association::assert_is_association(account);
+        //Association::assert_is_association(account);
+        // 0L Change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
         borrow_global_mut<LimitsDefinition>(limits_addr).is_certified = true;
     }
 
@@ -157,7 +159,9 @@ module AccountLimits {
     // `limits_addr`. Only callable by the association.
     public fun decertify_limits_definition(account: &signer, limits_addr: address)
     acquires LimitsDefinition {
-        Association::assert_is_association(account);
+        //Association::assert_is_association(account);
+        //0L Change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
         borrow_global_mut<LimitsDefinition>(limits_addr).is_certified = false;
     }
 
