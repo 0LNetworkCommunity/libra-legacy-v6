@@ -1,5 +1,7 @@
 address 0x0 {
 
+// This module is not complete, as Metadata has not been implemented.
+
 module Globals {
     // use 0x0::Signer;
     // use 0x0::Transaction;
