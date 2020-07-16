@@ -1,6 +1,6 @@
 address 0x0 {
 module SlidingNonce {
-    use 0x0::Association;
+    // use 0x0::Association;
     use 0x0::Signer;
     use 0x0::Transaction;
 
@@ -70,7 +70,10 @@ module SlidingNonce {
     // Only association can create this resource for different account
     // Alternative is publish_nonce_resource_for_user that publishes resource into current account
     public fun publish_nonce_resource(association: &signer, account: &signer) {
-        Association::assert_is_root(association);
+        // Association::assert_is_root(association);
+        // 0L Change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
         let new_resource = T {
             min_nonce: 0,
             nonce_mask: 0,

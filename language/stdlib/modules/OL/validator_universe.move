@@ -49,7 +49,7 @@ address 0x0 {
     public fun get_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
       Debug::print(&0x1eed8012000000000000000000000001);
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
+      Transaction::assert(sender == 0x0, 401);
 
       let eligible_validators = Vector::empty<address>();
       // Create a vector with all eligible validator addresses
@@ -90,8 +90,8 @@ address 0x0 {
     // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
     public fun proof_of_weight(addr: address, is_validator_in_current_epoch: bool): u64 acquires ValidatorUniverse {
       let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
-    
+      Transaction::assert(sender == 0x0, 401);
+
       //1. borrow the Validator's ValidatorEpochInfo
       // Get the validator
       let collection =  borrow_global_mut<ValidatorUniverse>(0x0);
@@ -104,14 +104,14 @@ address 0x0 {
       let validator_list = &mut collection.validators;
       let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
 
- 
+
       // Weight is metric based on: The number of epochs the miners have been mining for
       let weight = 1;
-      
+
       Debug::print(&011111110000001111);
 
       Debug::print(&weight);
-    
+
       // If the validator mined in current epoch, increment it's weight.
       if(is_validator_in_current_epoch)
         weight = validatorInfo.weight + 1;
@@ -138,7 +138,7 @@ address 0x0 {
 
     // Get the validatorInfo by address in the `validators` vector
     fun get_validator(addr: address): ValidatorEpochInfo acquires ValidatorUniverse{
-     
+
       let validators = &borrow_global_mut<ValidatorUniverse>(0x0).validators;
       let size = Vector::length(validators);
 
@@ -190,7 +190,7 @@ address 0x0 {
 
     public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse{
       let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 401);
+      Transaction::assert(sender == 0x0, 401);
 
       let validatorInfo = get_validator(addr);
 

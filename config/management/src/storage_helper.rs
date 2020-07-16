@@ -41,7 +41,7 @@ impl StorageHelper {
     pub fn initialize(&self, namespace: String) {
         let mut storage = self.storage(namespace);
 
-        storage.create_key(ASSOCIATION_KEY).unwrap();
+        // storage.create_key(ASSOCIATION_KEY).unwrap();
         storage.create_key(CONSENSUS_KEY).unwrap();
         storage.create_key(FULLNODE_NETWORK_KEY).unwrap();
         storage.create_key(OWNER_KEY).unwrap();

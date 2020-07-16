@@ -49,7 +49,7 @@ address 0x0 {
 
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
       Debug::print(&0x50B51DE0000000000000000000001001);
       //// Important Constant ////
       let subsidy_ceiling_gas = 296u64; //TODO:OL:Update this with actually subsidy ceiling in in GAS
@@ -91,7 +91,7 @@ address 0x0 {
     public fun calculate_Subsidy(account: &signer, start_height: u64, end_height: u64)
     :u64 acquires SubsidyInfo {
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
       Debug::print(&0x50B51DE0000000000000000000002001);
 
       // Gets the proxy for liveness from Stats
@@ -135,7 +135,7 @@ address 0x0 {
                                total_voting_power: u64) {
       // Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
       Debug::print(&0x50B51DE0000000000000000000003001);
 
 
@@ -196,7 +196,7 @@ address 0x0 {
     public fun burn_subsidy(account: &signer) acquires SubsidyInfo{
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
       Debug::print(&0x50B51DE0000000000000000000005001);
 
 
@@ -222,7 +222,7 @@ address 0x0 {
     public fun genesis(account: &signer) {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
       Debug::print(&0x50B51DE0000000000000000000008002);
 
       // Get eligible validators list
@@ -261,7 +261,7 @@ address 0x0 {
 
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       //TODO:OL:Need to check if account exists already
       //Get mutable burn accounts vector from association
@@ -273,7 +273,7 @@ address 0x0 {
       Debug::print(&0x50B51DE0000000000000000000007001);
 
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       let subsidy_info = borrow_global<SubsidyInfo>(0x0);
       Vector::length(&subsidy_info.burn_accounts)
