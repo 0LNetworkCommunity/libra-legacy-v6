@@ -97,7 +97,7 @@ fn smoke_test() {
     let swarm_path = temppath.path().to_path_buf();
 
     let mut configs = Vec::new();
-    for i in 1..(num_validators+1) {
+    for i in 0..num_validators {
         let ns = i.to_string();
         let ns_shared = ns.clone() + shared;
 
