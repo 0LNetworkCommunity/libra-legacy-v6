@@ -26,11 +26,9 @@ pub struct Genesis {
 impl Genesis {
     pub fn execute(self) -> Result<Transaction, Error> {
         let layout = self.layout()?;
-        let association_key = self.association(&layout)?;
         let validators = self.validators(&layout)?;
 
         let genesis = vm_genesis::encode_genesis_transaction_with_validator(
-            association_key,
             &validators,
             None,
         );

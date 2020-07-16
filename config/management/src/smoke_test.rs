@@ -19,12 +19,11 @@ use std::path::{Path, PathBuf};
 
 struct ManagementBuilder {
     configs: Vec<NodeConfig>,
-    faucet_key: Ed25519PrivateKey,
 }
 
 impl BuildSwarm for ManagementBuilder {
-    fn build_swarm(&self) -> anyhow::Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
-        Ok((self.configs.clone(), self.faucet_key.clone()))
+    fn build_swarm(&self) -> anyhow::Result<(Vec<NodeConfig>)> {
+        Ok((self.configs.clone()))
     }
 }
 
@@ -34,12 +33,12 @@ fn smoke_test() {
     let helper = StorageHelper::new();
     let num_validators = 5;
     let shared = "_shared";
-    let association = "association";
-    let association_shared = association.to_string() + shared;
+    let association = "vm";
+    // let association_shared = association.to_string() + shared;
 
     // Step 1) Prepare the layout
     let mut layout = Layout::default();
-    layout.association = vec![association_shared.to_string()];
+    // layout.association = vec![association_shared.to_string()];
     layout.operators = (0..num_validators)
         .map(|v| (v.to_string() + shared))
         .collect();
@@ -52,9 +51,9 @@ fn smoke_test() {
 
     // Step 2) Set association key
     helper.initialize(association.into());
-    helper
-        .association_key(&association, &association_shared)
-        .unwrap();
+    // helper
+    //     .association_key(&association, &association_shared)
+    //     .unwrap();
 
     // Step 3) Prepare validators
     let temppath = TempPath::new();
@@ -138,13 +137,8 @@ fn smoke_test() {
     }
 
     // Step 6) Build configuration for Swarm
-    let faucet_key = helper
-        .storage(association.into())
-        .export_private_key(libra_global_constants::ASSOCIATION_KEY)
-        .unwrap();
     let management_builder = ManagementBuilder {
-        configs,
-        faucet_key,
+        configs
     };
 
     let mut swarm = LibraSwarm {
