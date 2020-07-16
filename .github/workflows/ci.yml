@@ -51,12 +51,12 @@ jobs:
           # A cache "key" is created from a hash of the cargo.lock.
           key: ${{ runner.os }}-test-functional-cache-${{ hashFiles('**/Cargo.lock') }}
       # Uses the cache done in the parent job (compile) with the same "key"
-      # - name: Install latest nightly
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #       toolchain: nightly
-      #       override: true
-      #       components: rustfmt, clippy
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            override: true
+            components: rustfmt, clippy
 
       # `cargo check` command here will use installed `nightly`
       # as it is set as an "override" for current directory
@@ -91,11 +91,6 @@ jobs:
     env:
       CARGO_INCREMENTAL: 0
       RUSTFLAGS: "-Dwarnings"
-<<<<<<< HEAD
-=======
-      CARGO_TARGET_DIR: ~/target_test
-    # needs: compile
->>>>>>> ffd3574e8ff4766c28e3300a9eb74cfd5e98efbe
     steps:
       - uses: actions/checkout@v2
       # Uses the cache done in the parent job (compile) with the same "key"
@@ -105,7 +100,6 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-            ~/target_test
           key: ${{ runner.os }}-test1-e2e-${{ hashFiles('**/Cargo.lock') }}
 
       # `cargo check` command here will use installed `nightly`
