@@ -157,6 +157,7 @@ address 0x0 {
     }
 
     // Check the liveness of the validator in the previous epoch
+    // Function code: 07 Prefix: 220107
     public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
       // Calculate start and end block height for the current epoch
       // What about empty blocks that get created after every epoch?
@@ -165,7 +166,7 @@ address 0x0 {
       let epoch_count = epoch_length - 2;  // Not all blocks are committed at current block height.
 
       // The current block_height needs to be at least the length of one (the first) epoch.
-      Transaction::assert(end_block_height >= epoch_count, 010008003);
+      Transaction::assert(end_block_height >= epoch_count, 220107015120);
 
       let start_block_height = end_block_height - epoch_count;
 

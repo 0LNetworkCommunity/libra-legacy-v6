@@ -21,10 +21,6 @@ address 0x0 {
     // Subsidy Ceiling = Max Trans Per Block (20) *
     // Max gas units per transaction (10_000_000) * blocks epoch (1_000_000)
     resource struct SubsidyInfo {
-      // subsidy_ceiling_gas: u64,
-      // min_node_density: u64,
-      // max_node_density: u64,
-      // subsidy_units: u64,
       burn_units: u64,
       burn_accounts: vector<address>
     }
@@ -39,11 +35,6 @@ address 0x0 {
 
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {// TODO : SubsidyInfo Constants can be hard coded in the Calc module instead of being a mutable resource.
-          // subsidy ceiling is
-          // subsidy_ceiling_gas: 296, //TODO: OL:Update this with actually subsidy ceiling in in GAS
-          // min_node_density: 4,
-          // max_node_density: 300,
-          // subsidy_units: 0,
           burn_units: 0,
           burn_accounts: burn_accounts
         });
@@ -53,14 +44,12 @@ address 0x0 {
     // Function code: 02 Prefix: 190102
     public fun mint_subsidy(account: &signer) {
 
-
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190102014010);
       //// Important Constant ////
       let subsidy_ceiling_gas = 296u64; //TODO:OL:Update this with actually subsidy ceiling in in GAS
       //// Important Constant ////
-
 
       // NOTE: Balance should be zero in this account at time of minting, because subsidies have
       // been paid in previous step.
@@ -88,7 +77,7 @@ address 0x0 {
     public fun calculate_Subsidy(account: &signer, start_height: u64, end_height: u64)
     :u64 acquires SubsidyInfo {
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       // Gets the proxy for liveness from Stats
       let node_density = Stats::network_heuristics(start_height, end_height);
@@ -98,7 +87,6 @@ address 0x0 {
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
 
       // Calculate the split for subsidy and burn
-      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
       let (subsidy_units, burn_units) = subsidy_curve(
         Globals::get_subsidy_ceiling_gas(),
         4u64, // minimum number of nodes to be in consensus.
