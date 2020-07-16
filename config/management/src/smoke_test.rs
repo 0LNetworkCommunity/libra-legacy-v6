@@ -51,7 +51,11 @@ fn smoke_test() {
         .unwrap();
 
     // Step 2) Set association key
-    helper.initialize(association.into());
+    // Init with Key
+    // Pub Key: 52bb9a899e48a286ed08d194c62bf18dfe43ce7183bd7c36348dd37cb0a86442
+    // Address: fe43ce7183bd7c36348dd37cb0a86442
+
+    helper.initialize_with_menmonic(association.into(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
     helper
         .association_key(&association, &association_shared)
         .unwrap();
@@ -65,7 +69,7 @@ fn smoke_test() {
     for i in 0..num_validators {
         let ns = i.to_string();
         let ns_shared = ns.clone() + shared;
-        helper.initialize(ns.clone());
+        helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
 
         let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
 

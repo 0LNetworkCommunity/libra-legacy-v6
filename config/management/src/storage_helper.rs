@@ -12,6 +12,7 @@ use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
 use libra_types::{account_address::AccountAddress, transaction::Transaction, waypoint::Waypoint};
 use std::{fs::File, path::Path};
 use structopt::StructOpt;
+use libra_wallet::{key_factory::{KeyFactory, Seed, ChildNumber}, Mnemonic};
 
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
@@ -53,6 +54,31 @@ impl StorageHelper {
         storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
         storage.set(WAYPOINT, Value::String("".into())).unwrap();
     }
+
+    pub fn initialize_with_menmonic(&self, namespace: String, mnemonic: String) {
+
+        let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "OL");
+
+        let kf = KeyFactory::new(&seed).unwrap();
+        let child_0 =kf.private_child(ChildNumber::new(0)).unwrap();
+
+
+        let mut storage = self.storage(namespace);
+
+
+        storage.import_private_key(ASSOCIATION_KEY,child_0.export_priv_key()).unwrap();
+        storage.import_private_key(CONSENSUS_KEY,child_0.export_priv_key()).unwrap();
+        storage.import_private_key(FULLNODE_NETWORK_KEY, child_0.export_priv_key()).unwrap();
+        storage.import_private_key(OWNER_KEY,child_0.export_priv_key()).unwrap();
+        storage.import_private_key(OPERATOR_KEY,child_0.export_priv_key()).unwrap();
+        storage.import_private_key(VALIDATOR_NETWORK_KEY,child_0.export_priv_key()).unwrap();
+
+        storage.set(EPOCH, Value::U64(0)).unwrap();
+        storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
+        storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
+        storage.set(WAYPOINT, Value::String("".into())).unwrap();
+    }
+
 
     pub fn association_key(
         &self,
