@@ -38,19 +38,26 @@ fn main() {
     let num_nodes = args.num_nodes;
     let num_full_nodes = args.num_full_nodes;
     let mut dev_config = NodeConfig::default();
+
     dev_config.test = Some({
         let mut config = TestConfig::default();
         config.publishing_option = Some(VMPublishingOption::Open);
         config
     });
 
+    // TODO: get config from file here in a type that can spin up a node: 
+    let mut config_from_file = NodeConfig::load("./0_dev_config/0/node.config.toml");
+    println!("config{:?}", config);
+
+
     libra_logger::Logger::new().init();
 
+    // TODO: use config from file here:
     let mut validator_swarm = LibraSwarm::configure_swarm(
         num_nodes,
         RoleType::Validator,
         args.config_dir.clone(),
-        Some(dev_config.clone()), /* template config */
+        Some(dev_config.clone()), /* template config */ //
         None,                     /* upstream_config_dir */
     )
     .expect("Failed to configure validator swarm");
@@ -85,7 +92,7 @@ fn main() {
             .expect("Failed to launch full node swarm");
     }
 
-    let faucet_key_file_path = &validator_swarm.config.faucet_key_path;
+    let faucet_key_file_path = ".";
     let validator_config = NodeConfig::load(&validator_swarm.config.config_files[0]).unwrap();
     let waypoint = validator_config
         .base

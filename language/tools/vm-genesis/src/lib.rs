@@ -48,12 +48,10 @@ pub type ValidatorRegistration = (Ed25519PublicKey, Script, GenesisMiningProof);
 
 
 pub fn encode_genesis_transaction_with_validator(
-    public_key: Ed25519PublicKey,
     validators: &[ValidatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
 ) -> Transaction {
     encode_genesis_transaction(
-        public_key,
         validators,
         stdlib_modules(StdLibOptions::Staged), // Must use staged stdlib
         vm_publishing_option
@@ -62,7 +60,6 @@ pub fn encode_genesis_transaction_with_validator(
 }
 
 pub fn encode_genesis_change_set(
-    public_key: &Ed25519PublicKey,
     validators: &[ValidatorRegistration],
     stdlib_modules: &[VerifiedModule],
     vm_publishing_option: VMPublishingOption,
@@ -87,7 +84,7 @@ pub fn encode_genesis_change_set(
     });
 
     // generate the genesis WriteSet
-    create_and_initialize_main_accounts(&mut genesis_context, &public_key, &lbr_ty);
+    create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
     initialize_miners(&mut genesis_context, &validators);
     distribute_genesis_subsidy(&mut genesis_context);
@@ -109,14 +106,12 @@ pub fn encode_genesis_change_set(
 }
 
 pub fn encode_genesis_transaction(
-    public_key: Ed25519PublicKey,
     validators: &[ValidatorRegistration],
     stdlib_modules: &[VerifiedModule],
     vm_publishing_option: VMPublishingOption,
 ) -> Transaction {
     Transaction::WaypointWriteSet(
         encode_genesis_change_set(
-            &public_key,
             validators,
             stdlib_modules,
             vm_publishing_option,
@@ -128,10 +123,8 @@ pub fn encode_genesis_transaction(
 /// Create an initialize Association, Transaction Fee and Core Code accounts.
 fn create_and_initialize_main_accounts(
     context: &mut GenesisContext,
-    public_key: &Ed25519PublicKey,
     lbr_ty: &TypeTag,
 ) {
-    let genesis_auth_key = AuthenticationKey::ed25519(public_key);
     let vm_address = account_config::vm_address();
     let fee_account_address = account_config::transaction_fee_address();
     let burn_account_address = account_config::burn_account_address();
@@ -145,8 +138,6 @@ fn create_and_initialize_main_accounts(
             Value::transaction_argument_signer_reference(config_address()),
             Value::transaction_argument_signer_reference(fee_account_address),
             Value::transaction_argument_signer_reference(burn_account_address),
-            Value::address(burn_account_address),
-            Value::vector_u8(genesis_auth_key.to_vec()),
         ],
     );
 
@@ -257,11 +248,14 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
 fn distribute_genesis_subsidy(context: &mut GenesisContext) {
     println!("distributing genesis subsidy to validators");
 
-    let root_association_address = account_config::association_address();
-    context.set_sender(root_association_address);
-    context.exec("Subsidy","genesis",vec![],
-                 vec![Value::transaction_argument_signer_reference(account_config::association_address())]);
-}
+    // let root_association_address = account_config::vm_address();
+    context.set_sender(account_config::vm_address());
+    context.exec(
+        "Subsidy",
+        "genesis",
+        vec![],
+        vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
+    }
 
 fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishingOption) {
     context.set_sender(config_address());
@@ -281,6 +275,8 @@ fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishing
     );
 }
 
+// get all move modules escept for genesis.
+//TODO: we still have the old genesis.
 fn remove_genesis(stdlib_modules: &[VerifiedModule]) -> impl Iterator<Item = &VerifiedModule> {
     stdlib_modules
         .iter()
@@ -341,7 +337,6 @@ pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) ->
     let stdlib_modules = stdlib_modules(stdlib_options);
     let swarm = libra_config::generator::validator_swarm_for_testing(4);
     encode_genesis_change_set(
-        &GENESIS_KEYPAIR.1,
         &validator_registrations(&swarm.nodes).0,
         stdlib_modules,
         VMPublishingOption::Open,
@@ -355,7 +350,6 @@ pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, FatStructType> {
     let swarm = libra_config::generator::validator_swarm_for_testing(4);
 
     encode_genesis_change_set(
-        &GENESIS_KEYPAIR.1,
         &validator_registrations(&swarm.nodes).0,
         stdlib_modules,
         VMPublishingOption::Open,

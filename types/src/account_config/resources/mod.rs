@@ -7,6 +7,7 @@ pub mod balance;
 pub mod currency_info;
 pub mod role;
 pub mod vasp;
+pub mod miner_state;
 
 pub use account::*;
 pub use association_capability::*;

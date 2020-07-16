@@ -216,7 +216,7 @@ module LibraAccount {
     public fun deposit<Token>(payer: &signer, payee: address, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(payer);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         deposit_with_metadata(payer, payee, to_deposit, x"", x"")
     }
 
@@ -224,7 +224,7 @@ module LibraAccount {
     public fun deposit_to<Token>(account: &signer, to_deposit: Libra::T<Token>)
     acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(account);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         deposit(account, Signer::address_of(account), to_deposit)
     }
 
@@ -255,7 +255,7 @@ module LibraAccount {
         metadata_signature: vector<u8>
     ) acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(payer);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
 
         deposit_with_sender_and_metadata(
             payee,
@@ -428,7 +428,7 @@ module LibraAccount {
     public fun withdraw_from<Token>(account: &signer, amount: u64): Libra::T<Token>
     acquires T, Balance, AccountOperationsCapability {
         let sender = Signer::address_of(account);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         let sender = Signer::address_of(account);
         let sender_account = borrow_global_mut<T>(sender);
         let sender_balance = borrow_global_mut<Balance<Token>>(sender);
@@ -516,13 +516,13 @@ module LibraAccount {
     public fun pay_from<Token>(payer: &signer, payee: address, amount: u64)
     acquires T, Balance, AccountOperationsCapability, Role {
         let sender = Signer::address_of(payer);
-        Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+        Transaction::assert(sender == 0x0, 8001);
         pay_from_with_metadata<Token>(payer, payee, amount, x"", x"");
     }
 
     fun rotate_authentication_key_for_account(account: &mut T, new_authentication_key: vector<u8>) {
       // Don't allow rotating to clearly invalid key
-      Transaction::assert(Vector::length(&new_authentication_key) == 32, 12);
+      Transaction::assert(Vector::length(&new_authentication_key) == 32, 90090012);
       account.authentication_key = new_authentication_key;
     }
 
@@ -680,7 +680,10 @@ module LibraAccount {
         coin2_mint_cap: Libra::MintCapability<Coin2::T>,
         coin2_burn_cap: Libra::BurnCapability<Coin2::T>,
     ) {
-        Association::assert_is_root(association);
+        // Association::assert_is_root(association);
+        //0L change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
         let new_account = create_signer(new_account_address);
         Association::grant_association_address(association, &new_account);
         Association::grant_privilege<FreezingPrivilege>(association, &new_account);
@@ -701,7 +704,25 @@ module LibraAccount {
         new_account_address: address,
         auth_key_prefix: vector<u8>
     ) {
-        Association::assert_is_root(association);
+        // Association::assert_is_root(association);
+        //0L change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
+        let new_account = create_signer(new_account_address);
+        Association::grant_association_address(association, &new_account);
+        Event::publish_generator(&new_account);
+        make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
+    }
+
+    public fun create_fee_account<Token>(
+        association: &signer,
+        new_account_address: address,
+        auth_key_prefix: vector<u8>
+    ) {
+        // Association::assert_is_root(association);
+        //0L change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
         let new_account = create_signer(new_account_address);
         Association::grant_association_address(association, &new_account);
         Event::publish_generator(&new_account);
@@ -784,7 +805,10 @@ module LibraAccount {
         compliance_public_key: vector<u8>,
         add_all_currencies: bool
     ) {
-        Association::assert_is_association(account);
+        //Association::assert_is_association(account);
+        //0L change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
+
         let vasp_parent =
             VASP::create_parent_vasp_credential(human_name, base_url, compliance_public_key);
         let new_account = create_signer(new_account_address);
@@ -957,10 +981,13 @@ module LibraAccount {
         let sender_account = borrow_global_mut<T>(transaction_sender);
 
         // Check that the hash of the transaction's public key matches the account's auth key
-        Transaction::assert(
-            Hash::sha3_256(txn_public_key) == *&sender_account.authentication_key,
-            2
-        );
+        // TODO: should this apply to the 0x0 account?
+        if (transaction_sender != 0x0){
+          Transaction::assert(
+              Hash::sha3_256(txn_public_key) == *&sender_account.authentication_key,
+              60010001
+          );
+        };
 
         // Check that the account has enough balance for all of the gas
         let max_transaction_fee = txn_gas_price * txn_max_gas_units;
@@ -1055,7 +1082,9 @@ module LibraAccount {
     ) {
         // NOTE: 0L: This check is removed to allow any address to create a new validator account.
         // should check that this is done with a VDF proof, so that it's not abused.
-        Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
+        Transaction::assert(Signer::address_of(creator) == 0x0, 8001);
+
+        // Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
         let new_account = create_signer(new_account_address);
         Event::publish_generator(&new_account);
         // TODO: This publish fails if the creator is not association.
@@ -1077,7 +1106,7 @@ module LibraAccount {
         Event::publish_generator(&new_account);
         // TODO: This publish fails if the creator is not association.
         ValidatorConfig::publish_from_mining_0L(creator, &new_account);
-        
+
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);
 

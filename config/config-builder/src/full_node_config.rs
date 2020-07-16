@@ -79,7 +79,7 @@ impl FullNodeConfig {
     }
 
     pub fn build(&self) -> Result<NodeConfig> {
-        let (mut configs, _) = self.build_internal(false)?;
+        let mut configs = self.build_internal(false)?;
 
         let validator_config = configs.last().ok_or(Error::NoConfigs)?;
         let seed_config = &validator_config
@@ -101,7 +101,7 @@ impl FullNodeConfig {
     }
 
     pub fn extend_validator(&self, config: &mut NodeConfig) -> Result<()> {
-        let (mut configs, _) = self.build_internal(false)?;
+        let mut configs = self.build_internal(false)?;
 
         let mut new_net = configs.swap_remove(configs.len() - 1);
         let seed_config = &new_net
@@ -133,7 +133,7 @@ impl FullNodeConfig {
     fn build_internal(
         &self,
         randomize_ports: bool,
-    ) -> Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
+    ) -> Result<Vec<NodeConfig>> {
         ensure!(self.num_full_nodes > 0, Error::NonZeroNetwork);
         ensure!(
             self.full_node_index < self.num_full_nodes,
@@ -146,7 +146,7 @@ impl FullNodeConfig {
         // Don't randomize ports. Until we better separate genesis generation,
         // we don't want to accidentally randomize initial discovery set addresses.
         let randomize_validator_ports = false;
-        let (validator_configs, faucet_key) = self
+        let validator_configs = self
             .validator_config
             .build_common(randomize_validator_ports)?;
         let validator_config = validator_configs.first().ok_or(Error::NoConfigs)?;
@@ -222,15 +222,15 @@ impl FullNodeConfig {
             config.upstream = upstream;
         }
 
-        Ok((configs, faucet_key))
+        Ok(configs)
     }
 }
 
 impl BuildSwarm for FullNodeConfig {
-    fn build_swarm(&self) -> Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
-        let (mut configs, faucet_key) = self.build_internal(true)?;
+    fn build_swarm(&self) -> Result<Vec<NodeConfig>> {
+        let mut configs = self.build_internal(true)?;
         configs.swap_remove(configs.len() - 1);
-        Ok((configs, faucet_key))
+        Ok(configs)
     }
 }
 

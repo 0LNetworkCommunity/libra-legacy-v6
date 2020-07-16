@@ -18,7 +18,7 @@ address 0x0 {
 
 
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       //Get eligible validators from Validator Universe
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
