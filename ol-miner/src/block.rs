@@ -2,6 +2,7 @@
 
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize)]
 pub struct Block {
@@ -71,6 +72,8 @@ pub mod build_block {
         path::Path,
         path::PathBuf,
     };
+    use libra_wallet::WalletLibrary;
+
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
@@ -343,6 +346,76 @@ pub mod build_block {
 
         test_helper_clear_block_dir(blocks_dir);
     }
+#[test]
+#[ignore]
+fn create_fixtures() {
+    // if no file is found, the block height is 0
+    //let blocks_dir = Path::new("./test_blocks");
+    for i in 0..6 {
+        let ns = i.to_string();
+        let mut wallet = WalletLibrary::new();
+
+        let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+
+        let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
+
+        let configs_fixture = OlMinerConfig {
+            profile: Profile {
+                auth_key: auth_key.to_string(),
+                statement: "Protests rage across the Nation".to_owned(),
+            },
+            chain_info: ChainInfo {
+                chain_id: "0L testnet".to_owned(),
+                block_dir: "test_fixtures_miner_".to_owned() + &ns, //  path should be unique for concurrent tests.
+                base_waypoint: "None".to_owned(),
+                node: None,
+            },
+        };
+        //clear from sideffects.
+        let blocks_dir = Path::new(&configs_fixture.chain_info.block_dir);
+        // test_helper_clear_block_dir(blocks_dir);
+
+        // mine
+        mine_genesis(&configs_fixture);
+
+        // fs::create_dir(blocks_dir).unwrap();
+        let mut latest_block_path = blocks_dir.to_path_buf();
+        latest_block_path.push(format!("miner_{}.mnemonic", ns));
+        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");;
+        file.write_all(mnemonic_string.as_bytes())
+            .expect("Could not write mnemonic");
+    }
+    // test_helper_clear_block_dir(blocks_dir);
+}
+    // simulate the offline steps a person would take to set up their miner.
+    // 1. Generate a keypair, and save a mnemonic.
+
+    // for each validator create a dynamic key pair, and mnemonic_string
+    // let mut wallet = WalletLibrary::new();
+    //
+    // let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+    //
+    // let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
+
+    //2. Run the ol-miner app for creating a genesis proof. block_0.JSON
+    // if no file is found, the block height is 0
+    // use ol-miner::OlMinerConfig;
+
+    // let configs_fixture = OlMinerConfig {
+    //     profile: Profile {
+    //         auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
+    //         statement: "Protests rage across the Nation".to_owned(),
+    //     },
+    //     chain_info: ChainInfo {
+    //         chain_id: "0L testnet".to_owned(),
+    //         block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
+    //         base_waypoint: "None".to_owned(),
+    //         node: None,
+    //     },
+    // };
+    // this will output a file to test_blocks_temp_1/block_0.json
+    // mine
+    // mine_genesis(&configs_fixture);
 
     #[test]
     fn test_mine_once() {
