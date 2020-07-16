@@ -91,6 +91,7 @@ jobs:
     env:
       CARGO_INCREMENTAL: 0
       RUSTFLAGS: "-Dwarnings"
+      CARGO_TARGET_DIR: ~/target_test
     # needs: compile
     steps:
       - uses: actions/checkout@v2
@@ -101,7 +102,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-test-e2e-${{ hashFiles('**/Cargo.lock') }}
+            ~/target_test
+          key: ${{ runner.os }}-test1-e2e-${{ hashFiles('**/Cargo.lock') }}
 
       # `cargo check` command here will use installed `nightly`
       # as it is set as an "override" for current directory
