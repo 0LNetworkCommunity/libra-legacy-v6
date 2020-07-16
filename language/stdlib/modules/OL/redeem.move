@@ -170,13 +170,10 @@ address 0x0 {
       Transaction::assert(Vector::length(&miner_redemption_state.verified_proof_history) > 0, 100080011);
 
 
-      Debug::print(&0x12edee11100000000000000000001005);
-
       // increment the verified_tower_height
       miner_redemption_state.verified_tower_height = miner_redemption_state.verified_tower_height + 1; // user's latest verified_tower_height
       // NOTE: this is used by end_redeem
       miner_redemption_state.latest_epoch_mining = LibraConfig::get_current_epoch();
-      Debug::print(&0x12edee11100000000000000000001006);
 
       // prepare list of proofs in epoch for end of epoch statistics
       let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
@@ -186,7 +183,6 @@ address 0x0 {
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
 
       ValidatorUniverse::add_validator( miner_addr );
-      Debug::print(&0x12edee11100000000000000000001007);
     }
 
     
@@ -217,19 +213,17 @@ address 0x0 {
     // validation AND that there are mining proofs presented in the last/current epoch.
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
     public fun end_redeem(miner_addr: address) acquires ProofsInEpoch, MinerState {
-      Debug::print(&0x12edee11100000000000000000002000);
 
       // The goal of end_redeem is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
       //0. Check for errors and authorization
       let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 100080006);
+      Transaction::assert(sender == 0x0, 100080006);
 
       // may not have been initialized
       if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
         return // should not abort.
       };
-      Debug::print(&0x12edee11100000000000000000002001);
 
       //1. Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
@@ -237,7 +231,6 @@ address 0x0 {
       // TODO: Redeem.move count the number of proofs in epoch, and don't count validation that is not credible.
       // BODY: need to make this check more sophisticated. Placeholder for now.
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
-      Debug::print(&0x12edee11100000000000000000002002);
 
       //2. Update the statistics.
       let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
@@ -245,11 +238,9 @@ address 0x0 {
       miner_redemption_state.latest_epoch_mining = this_epoch;
       miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
 
-      Debug::print(&0x12edee11100000000000000000002003);
 
       miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
 
-      Debug::print(&0x12edee11100000000000000000002004);
 
       // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
@@ -259,10 +250,9 @@ address 0x0 {
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
     acquires ProofsInEpoch, MinerState {
-      Debug::print(&0x12edee11100000000000000000003000);
 
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 100080008);
+      Transaction::assert(sender == 0x0, 100080008);
 
       let size = Vector::length(outgoing_validators);
 
@@ -277,6 +267,29 @@ address 0x0 {
           if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
               end_redeem(redeemed_addr);
               Debug::print(&0x12EDEE11100000000000000000001005);
+          };
+          i = i + 1;
+      };
+    }
+
+    // Bulk update the end_redeem state with the vector of validators from current epoch.
+    public fun end_redeem_validator_universe(account: &signer)
+    acquires ProofsInEpoch, MinerState {
+
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0x0, 100080008);
+
+      let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
+      let size = Vector::length<address>(&eligible_validators);
+
+
+      let i = 0;
+      while (i < size) {
+          let redeemed_addr = *Vector::borrow(&eligible_validators, i);
+
+          // For testing: don't call end_redeem unless there is account state for the address.
+          if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
+              end_redeem(redeemed_addr);
           };
           i = i + 1;
       };

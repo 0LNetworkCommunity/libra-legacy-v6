@@ -94,6 +94,11 @@ module Globals {
        get_constants().max_node_density
     }
 
+    // Get the burn accounts
+    public fun get_burn_accounts(): vector<address> {
+       *&get_constants().burn_accounts
+    }
+
     fun get_constants(): GlobalConstants  {
       if (Testnet::is_testnet()){
         return GlobalConstants {
@@ -103,7 +108,6 @@ module Globals {
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
-          // Vector::push_back(&mut burn_accounts, 0xDEADDEAD);
         }
 
       } else {

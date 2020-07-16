@@ -30,8 +30,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190101014010);
 
-      let burn_accounts = Vector::empty();
-      Vector::push_back(&mut burn_accounts, 0xDEADDEAD);
+      let burn_accounts = Globals::get_burn_accounts();
 
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {// TODO : SubsidyInfo Constants can be hard coded in the Calc module instead of being a mutable resource.
@@ -48,8 +47,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190102014010);
       //// Important Constant ////
-      let subsidy_ceiling_gas = 296u64; //TODO:OL:Update this with actually subsidy ceiling in in GAS
-      //// Important Constant ////
+      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas(); 
 
       // NOTE: Balance should be zero in this account at time of minting, because subsidies have
       // been paid in previous step.
@@ -110,7 +108,7 @@ address 0x0 {
                                total_voting_power: u64) {
       // Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 8001);
 
       let length = Vector::length<address>(outgoing_validators);
 
@@ -167,7 +165,7 @@ address 0x0 {
     public fun burn_subsidy(account: &signer) acquires SubsidyInfo{
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0xA550C18 || sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 190105014010);
 
       let subsidy_info = borrow_global<SubsidyInfo>(0x0);
       Transaction::assert(Vector::length(&subsidy_info.burn_accounts) > 0, 8005);
@@ -222,27 +220,5 @@ address 0x0 {
       };
     }
 
-    // Function code: 07 Prefix: 190107
-    fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {
-      
-      //Need to check for association or vm account
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 190107014010);
-
-      //TODO:OL:Need to check if account exists already
-      //Get mutable burn accounts vector from association
-      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
-      Vector::push_back(&mut subsidy_info.burn_accounts, new_burn_account);
-    }
-
-    // Function code: 08 Prefix: 190108
-    public fun get_burn_accounts_size(account: &signer): u64 acquires SubsidyInfo {
-      
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 190108014010);
-
-      let subsidy_info = borrow_global<SubsidyInfo>(0x0);
-      Vector::length(&subsidy_info.burn_accounts)
-    }
   }
 }
