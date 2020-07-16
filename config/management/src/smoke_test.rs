@@ -16,6 +16,8 @@ use libra_swarm::swarm::{LibraNode, LibraSwarm, LibraSwarmDir};
 use libra_temppath::TempPath;
 use libra_types::account_address;
 use std::path::{Path, PathBuf};
+use std::fs;
+
 
 struct ManagementBuilder {
     configs: Vec<NodeConfig>,
@@ -80,12 +82,12 @@ fn smoke_test() {
             "../test_fixtures/miner_{}/miner_{}.mnem",
             &ns,
             &ns
-        ))?.parse()?;
+        )).unwrap();
         helper.initialize_with_menmonic(ns.clone(), mnemonic.to_string());
         // helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
 
         // Mine a block in the OL miner folder
-        helper.mining(format!("../test_fixtures/miner_{}/block_0.json", &ns), &ns_shared).unwrap();
+        helper.mining(&format!("../test_fixtures/miner_{}/block_0.json", &ns), &ns_shared).unwrap();
 
         let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
 
