@@ -58,6 +58,34 @@ jobs:
             override: true
             components: rustfmt, clippy
 
+      # Note: build all binaries is too heavy for testing the CI flow.
+      # implement when caching is consistent.
+      - name: Build stdlib
+        run: cd language/stdlib && cargo run --release
+      - name: Build all binaries
+        run: cargo build --all --bins --exclude cluster-test
+  functional:
+    name: Functional Tests
+    # needs: compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          # A cache "key" is created from a hash of the cargo.lock.
+          key: ${{ runner.os }}-test-functional-cache-${{ hashFiles('**/Cargo.lock') }}
+      # Uses the cache done in the parent job (compile) with the same "key"
+      # - name: Install latest nightly
+      #   uses: actions-rs/toolchain@v1
+      #   with:
+      #       toolchain: nightly
+      #       override: true
+      #       components: rustfmt, clippy
+
       # `cargo check` command here will use installed `nightly`
       # as it is set as an "override" for current directory
 
@@ -88,6 +116,7 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+    # needs: compile
     steps:
       - uses: actions/checkout@v2
       # Uses the cache done in the parent job (compile) with the same "key"

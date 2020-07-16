@@ -64,9 +64,13 @@ fn smoke_test() {
     for i in 0..num_validators {
         let ns = i.to_string();
         let ns_shared = ns.clone() + shared;
-        helper.initialize(ns.clone());
+        helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
 
         let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
+
+
+        // Mine a block in the OL miner folder
+        helper.mining("../../../ol-miner/blocks/block_0.json", &ns_shared).unwrap();
 
         let validator_account = account_address::from_public_key(&operator_key);
         let mut config = NodeConfig::default();
