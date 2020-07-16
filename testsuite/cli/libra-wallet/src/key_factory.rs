@@ -109,6 +109,11 @@ impl ExtendedPrivKey {
         AuthenticationKey::ed25519(&self.get_public())
     }
 
+    /// Compute the authentication key for this account's public key
+    pub fn export_priv_key(&self) -> Ed25519PrivateKey {
+        self.private_key.clone()
+    }
+
     /// Libra specific sign function that is capable of signing an arbitrary HashValue
     /// NOTE: In Libra, we do not sign the raw bytes of a transaction, instead we sign the raw
     /// bytes of the sha3 hash of the raw bytes of a transaction. It is important to note that the
