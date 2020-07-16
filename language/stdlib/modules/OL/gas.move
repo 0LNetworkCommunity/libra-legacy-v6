@@ -37,7 +37,7 @@ module GAS {
           b"GAS"
       );
 
-      //NOTE: 0L does not neet a preburn capability.
+      // NOTE: 0L does not neet a preburn capability.
       let preburn_cap = Libra::new_preburn_with_capability(&burn_cap);
       move_to(account, Reserve { mint_cap, burn_cap, preburn_cap });
     }
