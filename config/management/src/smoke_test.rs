@@ -73,9 +73,9 @@ fn smoke_test() {
 
         let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
 
-        
+
         // Mine a block in the OL miner folder
-        helper.mining("../../../ol-miner/blocks/block_0.json", &ns_shared).unwrap();
+        helper.mining("../test_fixtures/block_0.json", &ns_shared).unwrap();
 
         let validator_account = account_address::from_public_key(&operator_key);
         let mut config = NodeConfig::default();
