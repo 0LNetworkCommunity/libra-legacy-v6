@@ -69,13 +69,43 @@ fn smoke_test() {
     for i in 0..num_validators {
         let ns = i.to_string();
         let ns_shared = ns.clone() + shared;
+
+        // simulate the offline steps a person would take to set up their miner.
+        // 1. Generate a keypair, and save a mnemonic.
+
+        // for each validator create a dynamic key pair, and mnemonic_string
+        // let mut wallet = WalletLibrary::new();
+        //
+        // let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+        //
+        // let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
+
+        //2. Run the ol-miner app for creating a genesis proof. block_0.JSON
+        // if no file is found, the block height is 0
+        // use ol-miner::OlMinerConfig;
+
+        // let configs_fixture = OlMinerConfig {
+        //     profile: Profile {
+        //         auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
+        //         statement: "Protests rage across the Nation".to_owned(),
+        //     },
+        //     chain_info: ChainInfo {
+        //         chain_id: "0L testnet".to_owned(),
+        //         block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
+        //         base_waypoint: "None".to_owned(),
+        //         node: None,
+        //     },
+        // };
+        // this will output a file to test_blocks_temp_1/block_0.json
+        // mine
+        // mine_genesis(&configs_fixture);
+
         helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
-
-        let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
-
 
         // Mine a block in the OL miner folder
         helper.mining("../test_fixtures/block_0.json", &ns_shared).unwrap();
+
+        let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
 
         let validator_account = account_address::from_public_key(&operator_key);
         let mut config = NodeConfig::default();
