@@ -30,6 +30,7 @@ impl BuildSwarm for ManagementBuilder {
     }
 }
 #[test]
+#[ignore]
 fn parse_fixtures() {
     for i in 1..5 {
         let ns = i.to_string();
@@ -46,13 +47,13 @@ fn parse_fixtures() {
             &ns,
             &ns
         )).unwrap();
-        print!("{}", mnemonic);
+        print!("{}\n", mnemonic);
 
         let helper = StorageHelper::new();
 
         helper.initialize_with_menmonic(ns.clone(), mnemonic.to_string());
         // helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
-        print!("\n{}", format!("./test_fixtures/miner_{}/block_0.json", &ns) );
+        print!("{}\n", format!("./test_fixtures/miner_{}/block_0.json", &ns) );
         // Mine a block in the OL miner folder
         helper.mining(&format!("./test_fixtures/miner_{}/block_0.json", &ns), &(ns + "_shared")).unwrap();
     }
@@ -96,7 +97,7 @@ fn smoke_test() {
     let swarm_path = temppath.path().to_path_buf();
 
     let mut configs = Vec::new();
-    for i in 0..num_validators {
+    for i in 1..(num_validators+1) {
         let ns = i.to_string();
         let ns_shared = ns.clone() + shared;
 
