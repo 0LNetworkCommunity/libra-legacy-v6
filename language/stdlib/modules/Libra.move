@@ -127,7 +127,7 @@ module Libra {
     public fun initialize(config_account: &signer) {
         Transaction::assert(
             Signer::address_of(config_account) == LibraConfig::default_config_address(),
-            0
+            8000010003
         );
         let cap = RegisteredCurrencies::initialize(config_account);
         move_to(config_account, CurrencyRegistrationCapability{ cap })
@@ -195,7 +195,7 @@ module Libra {
                 borrow_global<BurnCapability<Token>>(sender)
             )
         }
-        
+
     }
 
     // Cancel the oldest burn request from `preburn_address`
@@ -228,11 +228,11 @@ module Libra {
         // minting. This will not be a problem in the production Libra system because coins will
         // be backed with real-world assets, and thus minting will be correspondingly rarer.
         // * 1000000 here because the unit is microlibra
-        Transaction::assert(value <= 1000000000 * 1000000, 11);
+        Transaction::assert(value <= 1000000000 * 1000000, 8000010004);
         let currency_code = currency_code<Token>();
         // update market cap resource to reflect minting
         let info = borrow_global_mut<CurrencyInfo<Token>>(0x0);
-        Transaction::assert(info.can_mint, 4);
+        Transaction::assert(info.can_mint, 8000010005);
         info.total_value = info.total_value + (value as u128);
         // don't emit mint events for synthetic currenices
         if (!info.is_synthetic) {
@@ -453,7 +453,7 @@ module Libra {
     // OL Update: Checking if sender is association
     public fun withdraw<CoinType>(coin: &mut T<CoinType>, amount: u64): T<CoinType> {
         // Check that `amount` is less than the coin's value
-        Transaction::assert(coin.value >= amount, 10);
+        Transaction::assert(coin.value >= amount, 8000010006);
         coin.value = coin.value - amount;
         T { value: amount }
     }
@@ -480,7 +480,7 @@ module Libra {
     // so you cannot "burn" any non-zero amount of LibraCoin.T
     public fun destroy_zero<CoinType>(coin: T<CoinType>) {
         let T { value } = coin;
-        Transaction::assert(value == 0, 5)
+        Transaction::assert(value == 0, 8000010007)
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -499,11 +499,15 @@ module Libra {
     ): (MintCapability<CoinType>, BurnCapability<CoinType>)
     acquires CurrencyRegistrationCapability {
 
-        // And only callable by the designated currency address.
-        Transaction::assert(
-            Association::has_privilege<AddCurrency>(Signer::address_of(account)),
-            8
-        );
+        // Transaction::assert(
+        //     Association::has_privilege<AddCurrency>(Signer::address_of(account)),
+        //     8000010001
+        // );
+
+        // 0L change
+        // Only callable by the vm on genesis.
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
+
 
         move_to(account, CurrencyInfo<CoinType> {
             total_value: 0,
@@ -623,14 +627,17 @@ module Libra {
     // Assert that the sender is an association account, and that
     // `CoinType` is a regstered currency type.
     fun assert_assoc_and_currency<CoinType>(account: &signer) {
-        Association::assert_is_association(account);
+        //Association::assert_is_association(account);
+        //0L change
+        Transaction::assert(Signer::address_of(account) == 0x0, 8001);
+
         assert_is_coin<CoinType>();
     }
 
     // Assert that the sender is an vm account, and that
     // `CoinType` is a regstered currency type.
     fun assert_vm_and_currency<CoinType>(account: &signer) {
-        Transaction::assert(Signer::address_of(account) == 0x0, 1002);
+        Transaction::assert(Signer::address_of(account) == 0x0, 8000010002);
         assert_is_coin<CoinType>();
     }
 

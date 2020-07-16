@@ -85,7 +85,7 @@ fn main() {
             .expect("Failed to launch full node swarm");
     }
 
-    let faucet_key_file_path = &validator_swarm.config.faucet_key_path;
+    let faucet_key_file_path = ".";
     let validator_config = NodeConfig::load(&validator_swarm.config.config_files[0]).unwrap();
     let waypoint = validator_config
         .base

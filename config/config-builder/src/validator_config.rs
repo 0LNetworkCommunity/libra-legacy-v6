@@ -98,26 +98,24 @@ impl ValidatorConfig {
     }
 
     pub fn build_set(&self) -> Result<Vec<NodeConfig>> {
-        let (configs, _) = self.build_common(false)?;
+        let (configs) = self.build_common(false)?;
         Ok(configs)
     }
 
-    pub fn build_faucet_client(&self) -> Result<(Ed25519PrivateKey, Waypoint)> {
-        let (configs, faucet_key) = self.build_common(false)?;
-        Ok((
-            faucet_key,
-            configs[0]
+    pub fn build_faucet_client(&self) -> Result<(Waypoint)> {
+        let (configs) = self.build_common(false)?;
+        Ok(configs[0]
                 .base
                 .waypoint
                 .waypoint_from_config()
                 .ok_or_else(|| format_err!("Waypoint not generated"))?,
-        ))
+        )
     }
 
     pub fn build_common(
         &self,
         randomize_ports: bool,
-    ) -> Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
+    ) -> Result<(Vec<NodeConfig>)> {
         ensure!(self.num_nodes > 0, Error::NonZeroNetwork);
         ensure!(
             self.node_index < self.num_nodes,
@@ -147,7 +145,6 @@ impl ValidatorConfig {
         let validators = vm_genesis::validator_registrations(&nodes[..nodes_in_genesis]).0;
 
         let genesis = vm_genesis::encode_genesis_transaction_with_validator(
-            faucet_key.public_key(),
             &validators,
             self.template
                 .test
@@ -175,7 +172,7 @@ impl ValidatorConfig {
             node.execution.genesis = genesis.clone();
         }
 
-        Ok((nodes, faucet_key))
+        Ok((nodes))
     }
 
     pub fn build_faucet_key(&self) -> (Ed25519PrivateKey, [u8; 32]) {
@@ -220,15 +217,15 @@ impl ValidatorConfig {
 }
 
 impl BuildSwarm for ValidatorConfig {
-    fn build_swarm(&self) -> Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
+    fn build_swarm(&self) -> Result<Vec<NodeConfig>> {
         self.build_common(true)
     }
 }
 
-pub fn test_config() -> (NodeConfig, Ed25519PrivateKey) {
+pub fn test_config() -> (NodeConfig) {
     let validator_config = ValidatorConfig::new();
-    let (mut configs, key) = validator_config.build_swarm().unwrap();
-    (configs.swap_remove(0), key)
+    let mut configs = validator_config.build_swarm().unwrap();
+    (configs.swap_remove(0))
 }
 
 #[cfg(test)]
