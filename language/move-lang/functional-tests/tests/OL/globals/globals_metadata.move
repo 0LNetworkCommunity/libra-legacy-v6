@@ -2,12 +2,12 @@
 //! new-transaction
 //! sender: association
 script {
-use 0x0::Globals;
+// use 0x0::Globals;
 use 0x0::Debug;
 // use 0x0::Transaction;
 
 // TODO:: Globals metadata is not implemented yet. 
-    fun main(sender: &signer) {
+    fun main(_sender: &signer) {
         Debug::print(&0x7E57);
         // initialize_block_metadata
         // Globals::initialize_block_metadata(sender);

@@ -16,7 +16,7 @@ use libra_types::{
 use std::convert::TryInto;
 use transaction_builder::*;
 
-#[test]
+#[test] #[ignore]
 fn reconfig_bulk_update_test () {
     // Run with: `cargo xtest -p language-e2e-tests reconfig_bulk_update_test -- --nocapture`
     let mut executor = FakeExecutor::from_genesis_file();
