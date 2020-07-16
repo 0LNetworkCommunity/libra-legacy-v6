@@ -5,6 +5,7 @@
 
 mod error;
 mod genesis;
+mod initialize;
 mod key;
 mod layout;
 mod mining;
@@ -12,12 +13,12 @@ mod secure_backend;
 mod validator_config;
 mod verify;
 mod waypoint;
+mod storage_helper;
+
 
 #[cfg(test)]
 mod smoke_test;
 
-#[cfg(test)]
-mod storage_helper;
 
 use crate::{error::Error, layout::SetLayout, secure_backend::SecureBackend};
 use libra_crypto::ed25519::Ed25519PublicKey;
@@ -45,6 +46,8 @@ pub enum Command {
     CreateWaypoint(crate::waypoint::CreateWaypoint),
     #[structopt(about = "Retrieves data from a store to produce genesis")]
     Genesis(crate::genesis::Genesis),
+    #[structopt(about = "Intitialize keys for the ceremony from mnemonic")]
+    Initialize(crate::initialize::Initialize),
     #[structopt(about = "Submits an Ed25519PublicKey for the operator")]
     OperatorKey(crate::key::OperatorKey),
     #[structopt(about = "Submits an Ed25519PublicKey for the owner")]
@@ -70,6 +73,7 @@ pub enum CommandName {
     ValidatorConfig,
     Verify,
     Mining,
+    Initialize,
 }
 
 impl From<&Command> for CommandName {
@@ -84,6 +88,7 @@ impl From<&Command> for CommandName {
             Command::ValidatorConfig(_) => CommandName::ValidatorConfig,
             Command::Verify(_) => CommandName::Verify,
             Command::Mining(_) => CommandName::Mining,
+            Command::Initialize(_) => CommandName::Initialize,
         }
     }
 }
@@ -100,6 +105,7 @@ impl std::fmt::Display for CommandName {
             CommandName::ValidatorConfig => "validator-config",
             CommandName::Verify => "verify",
             CommandName::Mining => "mining",
+            CommandName::Initialize => "initialize",
         };
         write!(f, "{}", name)
     }
@@ -117,6 +123,7 @@ impl Command {
             Command::ValidatorConfig(_) => format!("{:?}", self.validator_config().unwrap()),
             Command::Verify(_) => self.verify().unwrap(),
             Command::Mining(_) => self.mining().unwrap(),
+            Command::Initialize(_) => self.initialize().unwrap(),
         }
     }
 
@@ -211,6 +218,17 @@ impl Command {
     pub fn mining(self) -> Result<String, Error> {
         if let Command::Mining(mining) = self {
             mining.execute()
+        } else {
+            Err(Error::UnexpectedCommand(
+                CommandName::Verify,
+                CommandName::from(&self),
+            ))
+        }
+    }
+
+    pub fn initialize(self) -> Result<String, Error> {
+        if let Command::Initialize(initialize) = self {
+            initialize.execute()
         } else {
             Err(Error::UnexpectedCommand(
                 CommandName::Verify,
