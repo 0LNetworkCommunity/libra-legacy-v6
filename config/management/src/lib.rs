@@ -184,6 +184,7 @@ impl Command {
 
     pub fn set_layout(self) -> Result<crate::layout::Layout, Error> {
         if let Command::SetLayout(set_layout) = self {
+            println!("set_layout");
             set_layout.execute()
         } else {
             Err(Error::UnexpectedCommand(

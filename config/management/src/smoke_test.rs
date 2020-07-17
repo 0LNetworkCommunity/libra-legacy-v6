@@ -30,6 +30,7 @@ impl BuildSwarm for ManagementBuilder {
 }
 
 #[test]
+// NOTE: Run this with: cargo xtest -p libra-management smoke_test
 fn smoke_test() {
     LibraNode::prepare();
         let helper = StorageHelper::new();
@@ -116,6 +117,7 @@ fn smoke_test() {
 
         configs.push(config);
 
+        //TODO: Duplicated here.
         helper.operator_key(&ns, &ns_shared).unwrap();
         helper
             .validator_config(
