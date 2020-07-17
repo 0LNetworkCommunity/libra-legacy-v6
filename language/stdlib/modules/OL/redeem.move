@@ -239,12 +239,58 @@ address 0x0 {
     }
 
 
+    // Get weight of validator identified by address
+    public fun get_validator_weight(miner_addr: address): u64 acquires MinerState {
+      // Permission check
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 180210014010);
+
+      // Miner may not have been initialized. (don't abort, just return 0)
+      if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
+        return 0
+      };
+
+      // Update the statistics.
+      let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
+      let this_epoch = LibraConfig::get_current_epoch();
+      miner_redemption_state.latest_epoch_mining = this_epoch;
+      
+      // Return it's weight
+      miner_redemption_state.epochs_validating_and_mining
+    }
+
+    
+    // Bulk update the end_redeem state with the vector of validators from current epoch.
+    public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
+    acquires ProofsInEpoch, MinerState {
+
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0x0, 100080008);
+
+      let size = Vector::length(outgoing_validators);
+
+      let i = 0;
+      while (i < size) {
+          let redeemed_addr = *Vector::borrow(outgoing_validators, i);
+          Debug::print(&0x12EDEE11100000000000000000001004);
+
+          Debug::print(&redeemed_addr);
+
+          // For testing: don't call end_redeem unless there is account state for the address.
+          if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
+              end_redeem(redeemed_addr);
+              Debug::print(&0x12EDEE11100000000000000000001005);
+          };
+          i = i + 1;
+      };
+    }
+
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_validator_universe(account: &signer) 
                   acquires ProofsInEpoch, MinerState {
       // Check permissions
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 180210014010);
+      Transaction::assert(sender == 0x0 || sender == 0xA550C18, 180211014010);
 
       // Get list of validators from ValidatorUniverse
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
@@ -296,10 +342,10 @@ address 0x0 {
 
       // Calling native function to do this parsing in rust
       // The auth_key must be at least 32 bytes long
-      Transaction::assert(Vector::length(challenge) >= 32, 180212011000);
+      Transaction::assert(Vector::length(challenge) >= 32, 180213011000);
       let (parsed_address, _auth_key) = address_from_challenge(challenge);
       // Confirm the address is corect and included in challenge
-      Transaction::assert(new_account_address == parsed_address, 180212021010);
+      Transaction::assert(new_account_address == parsed_address, 180213021010);
 
     }
 
