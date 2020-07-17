@@ -94,7 +94,7 @@ address 0x0 {
     public fun proof_of_weight(addr: address, is_validator_in_current_epoch: bool): u64 acquires ValidatorUniverse {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0, 22010105014010);
-    
+
       //1. borrow the Validator's ValidatorEpochInfo
       // Get the validator
       let collection =  borrow_global_mut<ValidatorUniverse>(0x0);
@@ -107,10 +107,10 @@ address 0x0 {
       let validator_list = &mut collection.validators;
       let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
 
- 
+
       // Weight is metric based on: The number of epochs the miners have been mining for
       let weight = 1;
-          
+
       // If the validator mined in current epoch, increment it's weight.
       if(is_validator_in_current_epoch)
         weight = validatorInfo.weight + 1;
@@ -137,7 +137,7 @@ address 0x0 {
 
     // Get the validatorInfo by address in the `validators` vector
     fun get_validator(addr: address): ValidatorEpochInfo acquires ValidatorUniverse{
-     
+
       let validators = &borrow_global_mut<ValidatorUniverse>(0x0).validators;
       let size = Vector::length(validators);
 

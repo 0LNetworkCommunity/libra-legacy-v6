@@ -9,6 +9,7 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
+use libra_json_rpc_types::views::MinerStateView;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]
@@ -24,6 +25,9 @@ pub enum JsonRpcResponse {
     AccountStateWithProofResponse(AccountStateWithProofView),
     NetworkStatusResponse(Number),
     UnknownResponse(Value),
+
+    // added by OL
+    MinerStateResponse(Option<MinerStateView>),
 }
 
 impl TryFrom<(String, Value)> for JsonRpcResponse {
@@ -90,6 +94,16 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                 Ok(JsonRpcResponse::NetworkStatusResponse(
                     connected_peers_count,
                 ))
+            }
+            "get_miner_state" => {
+                let state = match value {
+                    Value::Null => None,
+                    _ => {
+                        let ms: MinerStateView = serde_json::from_value(value)?;
+                        Some(ms)
+                    }
+                };
+                Ok(JsonRpcResponse::MinerStateResponse(state))
             }
             _ => Ok(JsonRpcResponse::UnknownResponse(value)),
         }

@@ -3,7 +3,7 @@ address 0x0 {
 
     ///////////////////////////////////////////////////////////////////////////
     // OpenLibra Module
-    // Epoch Prologue - the prologue for transitioning to next epoch after every n blocks. 
+    // Epoch Prologue - the prologue for transitioning to next epoch after every n blocks.
     // File Prefix for errors: 1801
     ///////////////////////////////////////////////////////////////////////////
 
@@ -17,7 +17,7 @@ address 0x0 {
         use 0x0::TransactionFee;
         use 0x0::Redeem;
         use 0x0::Globals;
-      
+
         // This function is called by block-prologue once after n blocks.
         // Function code: 01. Prefix: 180101
         public fun reconfigure(account: &signer, current_block_height: u64) {
