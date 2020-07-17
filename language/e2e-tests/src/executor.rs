@@ -100,7 +100,6 @@ impl FakeExecutor {
             let swarm = generator::validator_swarm_for_testing(validator_count);
 
             vm_genesis::encode_genesis_change_set(
-                &GENESIS_KEYPAIR.1,
                 &vm_genesis::validator_registrations(&swarm.nodes).0,
                 &genesis_modules,
                 publishing_options,

@@ -39,7 +39,7 @@ address 0x0 {
         // Takes in list of validators, runs stats and node weights and updates the validator set
         public fun reconfigure(account: &signer, current_block_height: u64) {
             let sender = Signer::address_of(account);
-            Transaction::assert(sender == 0x0 || sender == 0xA550C18, 8001);
+            Transaction::assert(sender == 0x0, 8001);
 
             // TODO: one more check in reconfigure.move to confirm it's executing in epoch boundary.
 
