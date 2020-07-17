@@ -10,7 +10,7 @@ use libra_global_constants::{
 use libra_network_address::NetworkAddress;
 use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
 use libra_types::{account_address::AccountAddress, transaction::Transaction, waypoint::Waypoint};
-use std::{fs::File, path::Path};
+use std::{fs::File, path::{Path,PathBuf}};
 use structopt::StructOpt;
 use libra_wallet::{key_factory::{KeyFactory, Seed, ChildNumber}, Mnemonic};
 
@@ -24,6 +24,14 @@ impl StorageHelper {
         temppath.create_as_file().unwrap();
         File::create(temppath.path()).unwrap();
         Self { temppath }
+    }
+
+    pub fn new_with_path(path: PathBuf) -> Self {
+
+        let path = libra_temppath::TempPath::new_with_dir(path);
+        path.create_as_file().unwrap();
+        File::create(path.path()).unwrap();
+        Self { temppath:path }
     }
 
     pub fn storage(&self, namespace: String) -> Box<dyn Storage> {
@@ -61,6 +69,10 @@ impl StorageHelper {
 
         let kf = KeyFactory::new(&seed).unwrap();
         let child_0 =kf.private_child(ChildNumber::new(0)).unwrap();
+        let child_1 =kf.private_child(ChildNumber::new(1)).unwrap();
+        let child_2 =kf.private_child(ChildNumber::new(2)).unwrap();
+        let child_3 =kf.private_child(ChildNumber::new(3)).unwrap();
+        let child_4 =kf.private_child(ChildNumber::new(4)).unwrap();
 
 
         let mut storage = self.storage(namespace);
@@ -68,10 +80,10 @@ impl StorageHelper {
 
         // storage.import_private_key(ASSOCIATION_KEY,child_0.export_priv_key()).unwrap();
         storage.import_private_key(CONSENSUS_KEY,child_0.export_priv_key()).unwrap();
-        storage.import_private_key(FULLNODE_NETWORK_KEY, child_0.export_priv_key()).unwrap();
-        storage.import_private_key(OWNER_KEY,child_0.export_priv_key()).unwrap();
-        storage.import_private_key(OPERATOR_KEY,child_0.export_priv_key()).unwrap();
-        storage.import_private_key(VALIDATOR_NETWORK_KEY,child_0.export_priv_key()).unwrap();
+        storage.import_private_key(FULLNODE_NETWORK_KEY, child_1.export_priv_key()).unwrap();
+        storage.import_private_key(OWNER_KEY,child_2.export_priv_key()).unwrap();
+        storage.import_private_key(OPERATOR_KEY,child_3.export_priv_key()).unwrap();
+        storage.import_private_key(VALIDATOR_NETWORK_KEY,child_4.export_priv_key()).unwrap();
 
         storage.set(EPOCH, Value::U64(0)).unwrap();
         storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
