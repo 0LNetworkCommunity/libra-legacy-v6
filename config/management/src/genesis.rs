@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{constants, error::Error, layout::Layout, SingleBackend};
+use libra_config::config::GenesisMiningProof;
 use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{ASSOCIATION_KEY, OPERATOR_KEY};
+use libra_global_constants::{
+    ASSOCIATION_KEY, OPERATOR_KEY, OPERATOR_PROOF_OF_WORK_PREIMAGE, OPERATOR_PROOF_OF_WORK_PROOF,
+};
 use libra_secure_storage::Storage;
 use libra_types::transaction::{Transaction, TransactionPayload};
 use std::{convert::TryInto, fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
-use vm_genesis::{ValidatorRegistration};
-use libra_config::config::{GenesisMiningProof};
-
+use vm_genesis::ValidatorRegistration;
 
 // TODO(davidiw) add operator_address, since that will eventually be the identity producing this.
 /// Note, it is implicitly expected that the storage supports
@@ -108,6 +109,28 @@ impl Genesis {
             let txn = txn.transaction().unwrap();
             let txn = txn.as_signed_user_txn().unwrap().payload();
 
+            let preimage = validator
+                .get(OPERATOR_PROOF_OF_WORK_PREIMAGE)
+                .map_err(|e| {
+                    Error::RemoteStorageReadError(OPERATOR_PROOF_OF_WORK_PREIMAGE, e.to_string())
+                })?
+                .value
+                .string()
+                .map_err(|e| {
+                    Error::RemoteStorageReadError(OPERATOR_PROOF_OF_WORK_PREIMAGE, e.to_string())
+                })?;
+
+            let proof = validator
+                .get(OPERATOR_PROOF_OF_WORK_PROOF)
+                .map_err(|e| {
+                    Error::RemoteStorageReadError(OPERATOR_PROOF_OF_WORK_PROOF, e.to_string())
+                })?
+                .value
+                .string()
+                .map_err(|e| {
+                    Error::RemoteStorageReadError(OPERATOR_PROOF_OF_WORK_PROOF, e.to_string())
+                })?;
+
             //TODO: What is this transaction script that goes with the validator list?
             let txn = if let TransactionPayload::Script(script) = txn {
                 script.clone()
@@ -115,8 +138,7 @@ impl Genesis {
                 return Err(Error::UnexpectedError("Found invalid registration".into()));
             };
 
-            //TODO (ZM): This is where we need to place the miner proof.
-            validators.push((key, txn, GenesisMiningProof::default()));
+            validators.push((key, txn, GenesisMiningProof { preimage, proof }));
         }
 
         Ok(validators)
