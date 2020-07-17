@@ -247,6 +247,23 @@ address 0x0 {
       proofs_in_epoch.proofs = Vector::empty();
     }
 
+  public fun get_validator_weight(miner_addr: address): u64 acquires MinerState {
+
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0, 100080006);
+
+      // may not have been initialized
+      if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
+        return 0// should not abort.
+      };
+
+      // Get the statistics.
+      let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
+      let this_epoch = LibraConfig::get_current_epoch();
+      miner_redemption_state.latest_epoch_mining = this_epoch;
+      return miner_redemption_state.epochs_validating_and_mining
+    }
+
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
     acquires ProofsInEpoch, MinerState {
