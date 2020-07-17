@@ -53,7 +53,7 @@ pub fn submit_vdf_proof_tx_to_network(
 }
 
 
-pub fn resubmit_backlog(quick_check: bool){
+pub fn resubmit_backlog(client: ClientProxy, quick_check: bool){
     //TODO (Ping): If there are any proofs which have not been verified on-chian, send them.
 
    //  // 1. Find the most recent LOCAL tower height. We can store this in a json file.

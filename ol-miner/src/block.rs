@@ -93,13 +93,12 @@ pub mod build_block {
         //TODO: check for overwriting file...
         let block_dir_buf = Path::new(&config.chain_info.block_dir).to_path_buf();
 
-        write_json(&block, block_dir_buf)
+        write_json(&block, &block_dir_buf)
     }
     /// Mine one block
     pub fn mine_once(config: &OlMinerConfig) -> Result<Block, Error> {
-        let block_dir = Path::new(&config.chain_info.block_dir);
 
-        let (_current_block_number, current_block_path) = parse_block_height(block_dir);
+        let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir() );
         // If there are files in path, continue mining.
         if let Some(max_block_path) = current_block_path {
             // current_block_path is Option type, check if destructures to Some.
@@ -128,13 +127,12 @@ pub mod build_block {
                 data: data.clone(), //data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
             };
 
-            let block_dir_buf = block_dir.to_path_buf();
-            write_json(&block, block_dir_buf);
+            write_json(&block, &config.get_block_dir() );
             Ok(block)
         // Err(ErrorKind::Io.context(format!("submit_vdf_proof_tx_to_network {:?}", block_dir)).into())
         } else {
             return Err(ErrorKind::Io
-                .context(format!("No files found in {:?}", block_dir))
+                .context(format!("No files found in {:?}", &config.get_block_dir()))
                 .into());
         }
     }
@@ -145,8 +143,9 @@ pub mod build_block {
         waypoint: Waypoint,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
-        let blocks_dir = Path::new(&config.chain_info.block_dir);
-        let (current_block_number, _current_block_path) = parse_block_height(blocks_dir);
+        let mut blocks_dir = config.workspace.home.clone();
+        blocks_dir.push(&config.chain_info.block_dir);
+        let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
         // If there are NO files in path, mine the genesis proof.
         if current_block_number.is_none() {
@@ -196,9 +195,7 @@ pub mod build_block {
         height:usize,
     ) -> Result<(), Error> {
 
-        let blocks_dir = Path::new(&config.chain_info.block_dir);
-
-        let mut file = fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let mut file = fs::File::open(format!("{:?}/block_{}.json", &config.get_block_dir(),height)).expect("Could not open block file");
         let reader = BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -244,14 +241,14 @@ pub mod build_block {
     }
 
 
-    fn write_json(block: &Block, blocks_dir: PathBuf) {
+    fn write_json(block: &Block, blocks_dir: &PathBuf) {
         if !&blocks_dir.exists() {
             // first run, create the directory if there is none, or if the user changed the configs.
             // note: user may have blocks but they are in a different directory than what ol_miner.toml says.
             fs::create_dir(&blocks_dir).unwrap();
         };
         // Write the file.
-        let mut latest_block_path = blocks_dir;
+        let mut latest_block_path = blocks_dir.clone();
         latest_block_path.push(format!("block_{}.json", block.height));
         //println!("{:?}", &latest_block_path);
         let mut file = fs::File::create(&latest_block_path).unwrap();
@@ -261,7 +258,7 @@ pub mod build_block {
 
     // parse the existing blocks in the miner's path. This function receives any path.
     // Note: the path is configured in ol_miner.toml which abscissa Configurable parses, see commands.rs.
-    fn parse_block_height(blocks_dir: &Path) -> (Option<u64>, Option<PathBuf>) {
+    fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
         let mut max_block: Option<u64> = None;
         let mut max_block_path = None;
 
@@ -270,7 +267,7 @@ pub mod build_block {
             .expect("Failed to read glob pattern")
         {
             if let Ok(entry) = entry {
-                let mut file = fs::File::open(&entry).expect("Could not open block file");
+                let file = fs::File::open(&entry).expect("Could not open block file");
                 let reader = BufReader::new(file);
                 let block: Block = serde_json::from_reader(reader).unwrap();
                 let blocknumber = block.height;
@@ -298,7 +295,7 @@ pub mod build_block {
 
     // TODO: Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
     #[allow(dead_code)]
-    fn test_helper_clear_block_dir(blocks_dir: &Path) {
+    fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
         // delete the temporary test file and directory.
         // remove_dir_all is scary: be careful with this.
         if blocks_dir.exists() {
@@ -311,6 +308,9 @@ pub mod build_block {
         // if no file is found, the block height is 0
         //let blocks_dir = Path::new("./test_blocks");
         let configs_fixture = OlMinerConfig {
+            workspace: Workspace{
+                home: PathBuf::from("."),
+            },
             profile: Profile {
                 auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
@@ -323,8 +323,7 @@ pub mod build_block {
             },
         };
         //clear from sideffects.
-        let blocks_dir = Path::new(&configs_fixture.chain_info.block_dir);
-        test_helper_clear_block_dir(blocks_dir);
+        test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
 
         // mine
         mine_genesis(&configs_fixture);
@@ -360,6 +359,9 @@ fn create_fixtures() {
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
 
         let configs_fixture = OlMinerConfig {
+            workspace: Workspace{
+                home: PathBuf::from("."),
+            },
             profile: Profile {
                 auth_key: auth_key.to_string(),
                 statement: "Protests rage across the Nation".to_owned(),
@@ -423,6 +425,9 @@ fn create_fixtures() {
         //let blocks_dir = Path::new("./test_blocks");
 
         let configs_fixture = OlMinerConfig {
+            workspace: Workspace{
+                home: PathBuf::from("."),
+            },
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                     .to_owned(),
@@ -436,9 +441,8 @@ fn create_fixtures() {
             },
         };
 
-        let blocks_dir = Path::new(&configs_fixture.chain_info.block_dir);
         // Clear at start. Clearing at end can pollute the path when tests fail.
-        test_helper_clear_block_dir(blocks_dir);
+        test_helper_clear_block_dir(&configs_fixture.get_block_dir() );
 
         let fixture_previous_proof = hex::decode("005f6371e754d98dd0230d051fce8462cd64257717e988ffbff95ed9b84d130b6ee1a97bff4eedc4cd28721b1f78358f8ce1a7f0b0a2e75a4740af0f328414daad2b3c205a82bbd334b7fc9ae70b8628fb7f02247b0c6416a25662202d8c63de116876b8fb575d2cffae9ea48bd511142ea5f737a9278106093e143f8c6b8d0dd13804ca601310c059ce1db3fd58eb3068dde0658a4e330cc8e5934ab2fe41e4b757e69b2edce436ceac8b0e801b66fcf453f36a4300c286039143e36dfbc100c5d0f40cd7d74a9421b3b8e547de5e82797f365c5524d35813820de538c6ef2ef980995d071a6fa26826335626f1b1b4ee256b67603b1b7df338b4607137bd433affba8a94c6f234defb09ef6d5cc697a73a5b57caf9ef8992ccf4ab35affd997c8294be37b1cfae93fe89781062cc50435fadc9be416279e02ba2eddbdbb659fbc60d8eb76f2bed5adf4a26c6a81f39eea20d65b81e91e52a38eab6229cb975bc75f46dfa65ada848234dd362aa086091fd95a0df21cb2a59d34b155a5105aef71c1a6c7ef340194f1ea3697ec59feb5ce3ea67a00149b36af5de44d2c3863e580267cffee49b9f5ba20104d65f5333c05839e5877006de9dd4c203953cc103faf82fb50a76856333fbe5b36fb6ea76123c343f2bd56192d5c300e17699659cea5acf5991643ba05fef2e399ca68d027a74c6c7c908c03adfa1b7f5c56d163ee37b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001").unwrap();
 
@@ -450,7 +454,7 @@ fn create_fixtures() {
             data: fixture_previous_proof,
         };
 
-        write_json(&fixture_block, blocks_dir.to_path_buf());
+        write_json(&fixture_block, &configs_fixture.get_block_dir() );
 
         // confirm this fixture was written to systems.
         // let block_file =fs::read_to_string("./test_blocks/block_0.json")
@@ -486,8 +490,8 @@ fn create_fixtures() {
     #[test]
     fn test_parse_no_files() {
         // if no file is found, the block height is 0
-        let blocks_dir = Path::new(".");
-        assert_eq!(parse_block_height(blocks_dir).0, None);
+        let blocks_dir = PathBuf::from(".");
+        assert_eq!(parse_block_height(&blocks_dir).0, None);
     }
 
     #[test]
@@ -504,9 +508,9 @@ fn create_fixtures() {
         };
 
         // write the file temporarilty
-        let blocks_dir = Path::new("./test_blocks_temp_3");
+        let blocks_dir = PathBuf::from("./test_blocks_temp_3");
         // Clear at start. Clearing at end can pollute the path when tests fail.
-        test_helper_clear_block_dir(blocks_dir);
+        test_helper_clear_block_dir(&blocks_dir);
 
         fs::create_dir(blocks_dir).unwrap();
         let mut latest_block_path = blocks_dir.to_path_buf();
@@ -516,8 +520,8 @@ fn create_fixtures() {
             .expect("Could not write block");
 
         // block height
-        assert_eq!(parse_block_height(blocks_dir).0, Some(33));
+        assert_eq!(parse_block_height(&blocks_dir).0, Some(33));
 
-        test_helper_clear_block_dir(blocks_dir)
+        test_helper_clear_block_dir(&blocks_dir)
     }
 }

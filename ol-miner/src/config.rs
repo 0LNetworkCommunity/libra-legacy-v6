@@ -6,7 +6,7 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-use abscissa_core::path::PathBuf;
+use abscissa_core::path::{PathBuf, Path};
 
 /// OlMiner Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -89,18 +89,20 @@ impl OlMinerConfig {
 
         preimage.append(&mut padded_statements_bytes);
 
-        assert!(
-            preimage.len()
-                == (
-                    AUTH_KEY_BYTES // 0L Auth_Key
-                    +CHAIN_ID_BYTES // chain_id
-                    +8 // iterations/difficulty
-                    +STATEMENT_BYTES
-                    // statement
-                ),
-            "Preimage is the incorrect byte length"
-        );
+        assert_eq!(preimage.len(), (
+            AUTH_KEY_BYTES // 0L Auth_Key
+                + CHAIN_ID_BYTES // chain_id
+                + 8 // iterations/difficulty
+                + STATEMENT_BYTES
+            // statement
+        ), "Preimage is the incorrect byte length");
         return preimage;
+    }
+
+    pub fn get_block_dir(&self)-> PathBuf {
+        let mut home = self.workspace.home.clone();
+        home.push(&self.chain_info.block_dir);
+        home
     }
 }
 
