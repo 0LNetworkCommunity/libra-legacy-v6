@@ -259,31 +259,6 @@ address 0x0 {
       miner_redemption_state.epochs_validating_and_mining
     }
 
-    
-    // Bulk update the end_redeem state with the vector of validators from current epoch.
-    public fun end_redeem_outgoing_validators(account: &signer, outgoing_validators: &vector<address>)
-    acquires ProofsInEpoch, MinerState {
-
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 100080008);
-
-      let size = Vector::length(outgoing_validators);
-
-      let i = 0;
-      while (i < size) {
-          let redeemed_addr = *Vector::borrow(outgoing_validators, i);
-          Debug::print(&0x12EDEE11100000000000000000001004);
-
-          Debug::print(&redeemed_addr);
-
-          // For testing: don't call end_redeem unless there is account state for the address.
-          if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
-              end_redeem(redeemed_addr);
-              Debug::print(&0x12EDEE11100000000000000000001005);
-          };
-          i = i + 1;
-      };
-    }
 
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_validator_universe(account: &signer) 
