@@ -1,30 +1,63 @@
 TODO
-1. Create Set Layout File (as association)
+1. Create Set Layout File (as association) - ok
 2. Create a mnemonic - ok
 3. create a proof - ok
-4. Initialize with mnemonic. Stores private keys to disk (json). - ok
+4. (initialize). Initialize local storage with mnemonic. Private keys saved to disk (json). - ok
+5. (mining) Add proof data from mining to key_store.json - ok
+6. (operator-key) Add operator key to remote storage. (and collect account address)
+7. (validator-config) generate validator config transaction for remote
+-- needs network address.
+8. Build genesis.
+9. Create waypoint
+9. Update Node.config.toml file with all data
 
-5. Add proof data from mining to key_store.json - ok
-6. Add operator key to remote storage. (and collect account address)
-7. generate node.config file_name
+#association create the layout of the initial validators
+cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=common' --path ./test_fixtures/set_layout.toml
 
-5. Build genesis.
-7. Node.config.toml needs output to json file.
+https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
 
+3a5480b9ef196045b3ba6fbe3e3a7239f82f6e7b
+
+
+#initialize with Mnemonic
+cargo run initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./alices_stuff --namespace=alice
 
 # POW mining
 Add the mining details to the local key_store.json.
-cargo run mining --path-to-genesis-pow ./test_fixtures/miner_0/block_0.json --backend 'backend=disk;path=./bobs_stuff/key_store.json;namespace=bob'
+cargo run mining --path-to-genesis-pow ./test_fixtures/miner_0/block_0.json --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=bob'
+
+cargo run mining --path-to-genesis-pow ./test_fixtures/miner_0/block_0.json --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+
 # Operator key to remote storages
 
 cargo run operator-key --local 'backend=disk;path=./bobs_stuff/key_store.json;namespace=bob' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=bob_shared'
+
+cargo run operator-key --local 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice_shared'
+
 ## Get public key from response
 9336f9ff1d9ea89f6872517b1919fea147693aa1c2ccb3e32c2d9fe224faf1fc
-## creat address from derived.
+
+alice
+b1d103522b1ff9dbb7cb134e654882efe0abe06f40514321bdbe2cc19f7784ee
+## create address from derived.
 402e9aaf54ca8c39bab641b0c9829070
+
+alice
+5e7891b719c305941e62867ffe730f48
 
 # Generate Node config
 cargo run validator-config --owner-address 402e9aaf54ca8c39bab641b0c9829070 --validator-address "/ip4/0.0.0.0/tcp/6180" --fullnode-address "/ip4/0.0.0.0/tcp/6180" --local 'backend=disk;path=./bobs_stuff/key_store.json;namespace=bob' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=bob_shared'
+
+cargo run validator-config --owner-address 5e7891b719c305941e62867ffe730f48 --validator-address "/ip4/0.0.0.0/tcp/6180" --fullnode-address "/ip4/0.0.0.0/tcp/6180" --local 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+
+# Build Genesis from remote
+ cargo run genesis --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token' --path ./bobs_stuff/genesis.blob
+
+#create WAYPOINT
+cargo run create-waypoint --local 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+
+cargo run create-waypoint --local 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'  --remote 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice'
+
 
 # Libra Config Manager
 
@@ -127,12 +160,6 @@ cargo run -p libra-management -- \
     --path PATH_TO_LAYOUT \
     --backend 'backend=github;owner=OWNER;repository=REPOSITORY;token=PATH_TO_GITHUB_TOKEN;namespace=common'
 ```
-
-cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=common' --path ./test_fixtures/set_layout.toml
-
-https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
-
-3a5480b9ef196045b3ba6fbe3e3a7239f82f6e7b
 
 * Each Member of the Association will upload their key to GitHub:
 ```
