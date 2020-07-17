@@ -4,6 +4,7 @@
 use libra_types::waypoint::Waypoint;
 use ol_miner::block::build_block;
 use ol_miner::config::*;
+use std::path::PathBuf;
 
 #[test]
 #[ignore]
@@ -11,6 +12,9 @@ use ol_miner::config::*;
 // This test doesn't pass because of the loop. Panics with: 'terminal streams not yet initialized!'
 fn test_mine_and_submit() {
     let configs = OlMinerConfig {
+        workspace: Workspace {
+            home: PathBuf::from("."),
+        },
         profile: Profile {
             // public_key: "5ffd9856978b5020be7f72339e41a401".to_owned(),
             // statement: "protests rage across America".to_owned(),

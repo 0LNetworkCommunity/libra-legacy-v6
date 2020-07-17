@@ -86,3 +86,23 @@ pub fn resubmit_backlog(client: ClientProxy, quick_check: bool){
 
 
 }
+
+/// LocalMinerState
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct LocalMinerState {
+    pubkey: String,
+    local_tower_height: u64,
+    last_succesful_tx_height: u64,
+    retrying_height: u64, // if there is a resubmission in process, we need to know.
+}
+
+/// LocalMinerState
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct VDFProof {
+    challenge: Vec<u8>,
+    difficulty: u64,
+    solution: Vec<u8>, // if there is a resubmission in process, we need to know.
+}
+

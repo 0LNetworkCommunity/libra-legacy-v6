@@ -104,6 +104,12 @@ impl OlMinerConfig {
         home.push(&self.chain_info.block_dir);
         home
     }
+
+    pub fn get_local_backlog_path(&self)-> PathBuf {
+        let mut home = self.workspace.home.clone();
+        home.push("backlog.json");
+        home
+    }
 }
 
 /// Default configuration settings.

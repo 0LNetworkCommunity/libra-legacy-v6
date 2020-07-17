@@ -36,7 +36,7 @@ impl Block {
     pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
 
 
-        let mut file = std::fs::File::open(path)?;
+        let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
         return Ok((hex::encode(block.preimage),hex::encode(block.data)));
@@ -44,9 +44,9 @@ impl Block {
 
     pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
 
-        let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
+        let blocks_dir = config.get_block_dir();
 
-        let mut file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.as_path().display(),height)).expect("Could not open block file");
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -78,7 +78,7 @@ pub mod build_block {
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
         let preimage = config.genesis_preimage();
-        let mut now = Instant::now();
+        let now = Instant::now();
         let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
         let elapsed_secs = now.elapsed().as_secs();
         println!("Delay: {:?} seconds", elapsed_secs);
@@ -91,9 +91,7 @@ pub mod build_block {
             data,
         };
         //TODO: check for overwriting file...
-        let block_dir_buf = Path::new(&config.chain_info.block_dir).to_path_buf();
-
-        write_json(&block, &block_dir_buf)
+        write_json(&block, &config.get_block_dir())
     }
     /// Mine one block
     pub fn mine_once(config: &OlMinerConfig) -> Result<Block, Error> {
@@ -113,7 +111,7 @@ pub mod build_block {
             let height = latest_block.height + 1;
             // TODO: cleanup this duplication with mine_genesis_once?
 
-            let mut now = Instant::now();
+            let now = Instant::now();
             let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
             let elapsed_secs = now.elapsed().as_secs();
             println!("Delay: {:?} seconds", elapsed_secs);
@@ -195,7 +193,7 @@ pub mod build_block {
         height:usize,
     ) -> Result<(), Error> {
 
-        let mut file = fs::File::open(format!("{:?}/block_{}.json", &config.get_block_dir(),height)).expect("Could not open block file");
+        let file = fs::File::open(format!("{:?}/block_{}.json", &config.get_block_dir(),height)).expect("Could not open block file");
         let reader = BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -343,7 +341,7 @@ pub mod build_block {
         let correct_proof = "0072c747e2b03d52a7c48497386dbac0ab8916d1a555d840f4a7d8357200c3266d6e026bfc981ab7abc1872bbc06832e6ebf0b493106f0074d56d066d73554d65c3cf209eb1eee739df5ffaacb4b88a7e487915b2255e7193e98b2db282fd9327ca21bd57af06330c4121153b132bf8b440fda42de67847b9ea80423f35c4f117cfde1560db693fbeff434900ed98c96264d4389773652d53569a1ae9e0855c4400afa4d86d094a262d7df403419952eecfc9ef4636569c25f892eb36158a6b99fbe2bb053f8deacd0b67346824a8b324412d2458f8e961998daa8efc79d8cd2a399fb40d9bb6fdb6014b464872322d96b97f6795d78ad9c749bc680fb7685792effbf344beed33a994bd20ab9da3c5ac17e70790b1d026a168751bdb1bc17e4339041e1869634a36be9e7c328a5cea9262f393714cd2470201a3db008d88f5d444cad63f874adfbfbf2a94ddd5b64be9e2a51539f844f1dadc0773ce37ad8b13b7a3e851e9faeafd1ebca9e1fdea2627116b28c2ec6d681838b803ff86c072e60bf4ab5f8a731df9463208bb33eb5faa8806bb0420d598d91a5f6ebe6917d2f90d9798d4e79b5e3bad254d17bf7412c9ae9c221139e4586b2cb73206b9a20930aa1b2d9a58b1335eff2a844344c1fe9cc70def78078f8d9a3dae999d7fde7ce8da8dff5a6430e6a9cbfa72e5162df258a2bf980428847ba273bcf935a2e60ce7bff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
         assert_eq!(hex::encode(&latest_block.data), correct_proof, "test");
 
-        test_helper_clear_block_dir(blocks_dir);
+        test_helper_clear_block_dir(&configs_fixture.get_block_dir());
     }
 #[test]
 #[ignore]
@@ -484,7 +482,7 @@ fn create_fixtures() {
             "Not the proof of the new block created"
         );
 
-        test_helper_clear_block_dir(blocks_dir);
+        test_helper_clear_block_dir(&configs_fixture.get_block_dir() );
     }
 
     #[test]
@@ -512,8 +510,8 @@ fn create_fixtures() {
         // Clear at start. Clearing at end can pollute the path when tests fail.
         test_helper_clear_block_dir(&blocks_dir);
 
-        fs::create_dir(blocks_dir).unwrap();
-        let mut latest_block_path = blocks_dir.to_path_buf();
+        fs::create_dir(&blocks_dir).unwrap();
+        let mut latest_block_path = blocks_dir.clone();
         latest_block_path.push(format!("block_{}.json", current_block_number));
         let mut file = fs::File::create(&latest_block_path).unwrap();
         file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
