@@ -17,7 +17,8 @@ module Globals {
       subsidy_ceiling_gas: u64,
       min_node_density: u64,
       max_node_density: u64,
-      burn_accounts: vector<address>
+      burn_accounts: vector<address>,
+      difficulty: u64,
     }
 
     // // Some global state needs to be accesible to every module. Using Librablock causes
@@ -99,6 +100,10 @@ module Globals {
        *&get_constants().burn_accounts
     }
 
+    public fun get_difficulty(): u64 {
+      get_constants().difficulty
+    }
+
     fun get_constants(): GlobalConstants  {
       if (Testnet::is_testnet()){
         return GlobalConstants {
@@ -108,6 +113,7 @@ module Globals {
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
+          difficulty: 100,
         }
 
       } else {
@@ -125,6 +131,7 @@ module Globals {
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
+          difficulty: 2400000,
         }
       }
     }
