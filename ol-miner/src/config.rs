@@ -6,11 +6,14 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
+use abscissa_core::path::PathBuf;
 
 /// OlMiner Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct OlMinerConfig {
+    /// Workspace config
+    pub workspace: Workspace,
     /// User Profile
     pub profile: Profile,
     /// Chain Info for all users
@@ -108,11 +111,29 @@ impl OlMinerConfig {
 impl Default for OlMinerConfig {
     fn default() -> Self {
         Self {
+            workspace: Workspace::default(),
             profile: Profile::default(),
             chain_info: ChainInfo::default(),
         }
     }
 }
+
+/// Information about the Chain to mined for
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Workspace {
+    /// home directory of ol_miner
+    pub home: PathBuf,
+}
+
+impl Default for Workspace {
+    fn default() -> Self {
+        Self{
+            home: PathBuf::from(".")
+        }
+    }
+}
+
 /// Information about the Chain to mined for
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
