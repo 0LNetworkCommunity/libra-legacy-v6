@@ -31,6 +31,8 @@ use network::counters;
 use serde_json::Value;
 use std::{collections::HashMap, convert::TryFrom, ops::Deref, pin::Pin, str::FromStr, sync::Arc};
 use storage_interface::DbReader;
+use libra_json_rpc_types::views::MinerStateView;
+use libra_types::account_config::resources::miner_state::MinerStateResource;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -54,7 +56,7 @@ impl JsonRpcService {
 }
 
 type RpcHandler =
-    Box<fn(JsonRpcService, JsonRpcRequest) -> Pin<Box<dyn Future<Output = Result<Value>> + Send>>>;
+Box<fn(JsonRpcService, JsonRpcRequest) -> Pin<Box<dyn Future<Output=Result<Value>> + Send>>>;
 
 pub(crate) type RpcRegistry = HashMap<String, RpcHandler>;
 
@@ -292,6 +294,28 @@ async fn currencies_info(
     Ok(currencies)
 }
 
+/// Returns Miner states for a miner
+async fn get_miner_state(
+    service: JsonRpcService,
+    request: JsonRpcRequest,
+) -> Result<Option<MinerStateView>> {
+
+    ensure!(request.params.len() == 1, "invalid size of parameters");
+    let address: String = serde_json::from_value(request.get_param(0))?;
+    let account_address = AccountAddress::from_str(&address).expect("Invalid address format");
+    let response = service
+        .db
+        .deref()
+        .batch_fetch_resources_by_version(vec![MinerStateResource::resource_path( account_address )], request.version())?;
+
+    if response.len() > 0 {
+        let raw = response.get(0).expect("Miner states does not exists.").as_slice();
+        let miner_state_resource = MinerStateResource::try_from_bytes(raw )?;
+        return Ok( Some( MinerStateView::from( miner_state_resource) ) );
+    }
+    Ok(None)
+}
+
 /// Returns proof of new state relative to version known to client
 async fn get_state_proof(
     service: JsonRpcService,
@@ -362,6 +386,9 @@ pub(crate) fn build_registry() -> RpcRegistry {
         3
     );
     register_rpc_method!(registry, "get_network_status", get_network_status, 0);
+
+    // added by OL
+    register_rpc_method!(registry, "get_miner_state", get_miner_state, 0);
 
     registry
 }

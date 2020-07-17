@@ -47,7 +47,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190102014010);
       //// Important Constant ////
-      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas(); 
+      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
 
       // NOTE: Balance should be zero in this account at time of minting, because subsidies have
       // been paid in previous step.
@@ -188,7 +188,7 @@ address 0x0 {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190106014010);
-      
+
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(account);
       let len = Vector::length(&genesis_validators);
@@ -220,5 +220,25 @@ address 0x0 {
       };
     }
 
+    fun add_burn_account(account:&signer, new_burn_account: address) acquires SubsidyInfo {
+
+      //Need to check for association or vm account
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0x0, 190107014010);
+
+      //TODO:OL:Need to check if account exists already
+      //Get mutable burn accounts vector from association
+      let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+      Vector::push_back(&mut subsidy_info.burn_accounts, new_burn_account);
+    }
+
+    public fun get_burn_accounts_size(account: &signer): u64 acquires SubsidyInfo {
+
+      let sender = Signer::address_of(account);
+      Transaction::assert(sender == 0x0, 190107014011);
+
+      let subsidy_info = borrow_global<SubsidyInfo>(0x0);
+      Vector::length(&subsidy_info.burn_accounts)
+    }
   }
 }

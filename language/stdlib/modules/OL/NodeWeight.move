@@ -24,7 +24,7 @@ address 0x0 {
 
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 140101014010);
-      
+
       //Get eligible validators from Validator Universe
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
 
