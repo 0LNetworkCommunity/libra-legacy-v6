@@ -16,6 +16,7 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
+    use 0x0::Debug;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -108,7 +109,7 @@ address 0x0 {
                                total_voting_power: u64) {
       // Need to check for association or vm account
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 190103014010);
 
       let length = Vector::length<address>(outgoing_validators);
 
@@ -128,11 +129,14 @@ address 0x0 {
         let old_association_balance = LibraAccount::balance<GAS::T>(sender);
         let old_validator_balance = LibraAccount::balance<GAS::T>(node_address);
 
+        Debug::print(&old_association_balance);
+        Debug::print(&old_validator_balance);
+
         //Transfer gas from association to validator
         LibraAccount::pay_from<GAS::T>(account, node_address, subsidy_allowed);
-        Transaction::assert(LibraAccount::balance<GAS::T>(sender) == old_association_balance - subsidy_allowed, 8004);
+        // Transaction::assert(LibraAccount::balance<GAS::T>(sender) == old_association_balance - subsidy_allowed, 8004);
         // confirm the calculations, and that the ending balance is incremented accordingly.
-        Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_balance + subsidy_allowed, 8004);
+        // Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_balance + subsidy_allowed, 8004);
         k = k + 1;
       };
 
@@ -188,6 +192,7 @@ address 0x0 {
       //Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190106014010);
+      mint_subsidy(account);
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(account);
