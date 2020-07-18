@@ -128,7 +128,7 @@ impl StorageHelperGithub {
         command.association_key()
     }
 
-    pub fn create_waypoint_local(&self, namespace: &str) -> Result<Waypoint, Error> {
+    pub fn create_waypoint(&self, namespace: &str) -> Result<Waypoint, Error> {
         let args = format!(
             //Note: Remote and Local are opposite of what we would expect. In the libra worksflow the association does this step.
             "
@@ -137,9 +137,12 @@ impl StorageHelperGithub {
                 --local backend=disk;\
                  path=./test_fixtures/miner_{namespace}/key_store.json;\
                 namespace={namespace}
-                --remote backend=disk;\
-                 path=./test_fixtures/miner_{namespace}/key_store.json;\
-                namespace={namespace}
+                --remote backend=github;\
+                    owner=OLSF;\
+                    repository=test;\
+                    namespace={namespace};\
+                    token=./test_fixtures/github_token
+
             ",
 
             // create-waypoint

@@ -281,8 +281,7 @@ fn smoke_test_github() {
             println!("\nwaypoint\n");
 
             // TODO: PLZ HALP.
-            let waypoint = helper.create_waypoint_remote(&ns).unwrap();
-            let waypoint = helper.create_waypoint_local(&ns).unwrap();
+            let waypoint = helper.create_waypoint(&ns).unwrap();
 
             println!("\nverify\n");
             //

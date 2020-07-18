@@ -25,9 +25,10 @@ pub struct CreateWaypoint {
 impl CreateWaypoint {
     pub fn execute(self) -> Result<Waypoint, Error> {
         println!("CreateWaypoint 0");
-        let backend = self.secure_backends.local;
+        if let Some(remote) = self.secure_backends.remote {
+
         let genesis_helper = crate::genesis::Genesis {
-            backend: SingleBackend { backend },
+            backend: SingleBackend { backend:remote.clone() },
             path: None,
         };
         println!("CreateWaypoint 1");
@@ -49,7 +50,6 @@ impl CreateWaypoint {
 
         println!("CreateWaypoint 4");
 
-        if let Some(remote) = self.secure_backends.remote {
             println!("CreateWaypoint 5");
 
             let mut remote: Box<dyn Storage> = remote.try_into()?;
@@ -63,10 +63,11 @@ impl CreateWaypoint {
                 .map_err(|e| {
                     Error::RemoteStorageWriteError(libra_global_constants::WAYPOINT, e.to_string())
                 })?;
+                println!("CreateWaypoint 6");
+
+                return Ok(waypoint);
         }
 
-        println!("CreateWaypoint 6");
-
-        Ok(waypoint)
+        Err(Error::RemoteStorageWriteError(libra_global_constants::WAYPOINT,"No remote backend set".to_string()))
     }
 }
