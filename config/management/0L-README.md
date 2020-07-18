@@ -13,6 +13,8 @@ TODO
 #association create the layout of the initial validators
 cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=common' --path ./test_fixtures/set_layout.toml
 
+cargo run set-layout --backend 'backend=disk;path=./test_fixtures/miner_0/key_store.json;namespace=0'
+
 https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
 
 3a5480b9ef196045b3ba6fbe3e3a7239f82f6e7b
@@ -54,11 +56,15 @@ cargo run validator-config --owner-address 5e7891b719c305941e62867ffe730f48 --va
 
 #create waypoint
 
-cargo run create-waypoint --local 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+NOTE: This is backwards here: local v remote. In libra, the association needs to do this step.
+
+cargo run create-waypoint --local 'backend=github;owner=OLSF;repository=test;token=./test_fixtures/github_token;namespace=common' --remote 'backend=disk;path=./test_fixtures/miner_0/key_store.json;namespace=0'
 
 Note it's unclear why this is called "local" here.
 
-
+# verify genesis
+Checks the local data works with genesis. Including waypoint. Waypoint must be stored locally.
+cargo run verify --backend 'backend=disk;path=./test_fixtures/miner_0/key_store.json;namespace=0' --genesis-path ./test_fixtures/genesis.blob
 
 # Libra Config Manager
 

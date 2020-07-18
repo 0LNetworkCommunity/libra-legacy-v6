@@ -128,20 +128,53 @@ impl StorageHelperGithub {
         command.association_key()
     }
 
-    pub fn create_waypoint(&self) -> Result<Waypoint, Error> {
+    pub fn create_waypoint_local(&self, namespace: &str) -> Result<Waypoint, Error> {
         let args = format!(
+            //Note: Remote and Local are opposite of what we would expect. In the libra worksflow the association does this step.
+            "
+                management
+                create-waypoint
+                --local backend=disk;\
+                 path=./test_fixtures/miner_{namespace}/key_store.json;\
+                namespace={namespace}
+                --remote backend=disk;\
+                 path=./test_fixtures/miner_{namespace}/key_store.json;\
+                namespace={namespace}
+            ",
+
+            // create-waypoint
+            // --local backend=disk;\
+            // path=./test_fixtures/miner_{namespace}/key_store.json
+            // --remote backend=github;\
+            //     owner=OLSF;\
+            //     repository=test;\
+            //     token=./test_fixtures/github_token
+
+            // backend = crate::secure_backend::DISK,
+            // path = self.path_string(),
+            namespace = namespace,
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.create_waypoint()
+    }
+
+    pub fn create_waypoint_remote(&self, namespace: &str) -> Result<Waypoint, Error> {
+        let args = format!(
+            //Note: Remote and Local are opposite of what we would expect. In the libra worksflow the association does this step.
             "
                 management
                 create-waypoint
                 --local backend=github;\
                     owner=OLSF;\
                     repository=test;\
-                    token=./test_fixtures/github_token;\
-                    namespace=common
-            ",
-            // backend = crate::secure_backend::DISK,
-            // path = self.path_string(),
-            // remote_ns = remote_ns,
+                    token=./test_fixtures/github_token
+                --remote backend=github;\
+                    owner=OLSF;\
+                    repository=test;\
+                    token=./test_fixtures/github_token
+            "
+            // namespace = namespace,
         );
 
         let command = Command::from_iter(args.split_whitespace());
@@ -210,19 +243,36 @@ impl StorageHelperGithub {
         command.owner_key()
     }
 
-    pub fn set_layout(&self) -> Result<crate::layout::Layout, Error> {
-        let args =
+    pub fn set_layout_local(&self, namespace: &str, local_path: &str) -> Result<crate::layout::Layout, Error> {
+        let args = format!(
             "
                 management
                 set-layout
                 --path ./test_fixtures/set_layout.toml
-                --backend backend=github;\
-                    owner=OLSF;\
-                    repository=test;\
-                    token=./test_fixtures/github_token;\
-                    namespace=common
-            ";
+                --backend backend=disk;\
+                    path={local_path};\
+                    namespace={namespace}
+            ",
+            namespace = namespace,
+            local_path = local_path,
+        );
 
+        let command = Command::from_iter(args.split_whitespace());
+        command.set_layout()
+    }
+
+    pub fn set_layout_remote(&self) -> Result<crate::layout::Layout, Error> {
+        let args =
+         "
+            management
+            set-layout
+            --path ./test_fixtures/set_layout.toml
+            --backend backend=github;\
+                owner=OLSF;\
+                repository=test;\
+                token=./test_fixtures/github_token;\
+                namespace=common
+        ";
         let command = Command::from_iter(args.split_whitespace());
         command.set_layout()
     }
@@ -303,21 +353,35 @@ impl StorageHelperGithub {
         command.verify()
     }
 
-    pub fn verify_genesis(&self, namespace: &str, genesis_path: &str) -> Result<String, Error> {
+    pub fn verify_genesis(&self, local_path: &str, genesis_path: &str) -> Result<String, Error> {
         let args = format!(
             "
                 management
                 verify
                 --backend backend=disk;\
-                    path={path};\
-                    namespace={namespace}
+                    path={local_path}
                 --genesis-path {genesis_path}
             ",
-            path = self.path_string(),
-            namespace = namespace,
+            // namespace = namespace,
+            local_path = local_path,
             genesis_path = genesis_path,
         );
 
+        let command = Command::from_iter(args.split_whitespace());
+        command.verify()
+    }
+
+    pub fn verify_genesis_remote(&self) -> Result<String, Error> {
+        let args =
+         "
+            management
+            verify
+            --backend backend=github;\
+                owner=OLSF;\
+                repository=test;\
+                token=./test_fixtures/github_token;\
+                namespace=common
+        ";
         let command = Command::from_iter(args.split_whitespace());
         command.verify()
     }

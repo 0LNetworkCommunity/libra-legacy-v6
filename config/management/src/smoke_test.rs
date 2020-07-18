@@ -192,21 +192,25 @@ fn smoke_test_github() {
 
     LibraNode::prepare();
     let helper = StorageHelperGithub::new();
-    let num_validators = 2;
+    let num_validators = 1;
     let _association = "vm";
 
     // Step 1) Prepare the layout
-    // NOTE: Complains if there is no OWNER or ASSOCIATION fields
-    helper.set_layout();
 
-    // // Step 3) Prepare validators
+    // TODO: Remove this step if possible. This is duplicated with set layout below.
+    // TODO: verify_genesis complains if there is no REMOTE information on the SetLayout
+    // TODO: set_layout fails silently if there is no OWNER or ASSOCIATION fields
+    helper.set_layout_remote();
 
+    // Step 3) Prepare validators.
+    // This simulates EACH validator going through their genesis ceremony steps.
     for i in 0..num_validators {
+
         println!("Validator #{}", i );
         let ns = i.to_string();
 
-    //     //NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
-    //     // NOTE there are only fixtures for 5 validators in the /test_fixtures/ directory.
+    // NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+    // there are only fixtures for 5 validators in the /test_fixtures/ directory.
         let mnemonic = fs::read_to_string(format!(
             "./test_fixtures/miner_{}/miner_{}.mnem",
             &ns,
@@ -222,14 +226,26 @@ fn smoke_test_github() {
             ns.clone()
         );
 
-    println!("mining\n");
+        println!("mining\n");
 
-    helper.mining(
-        &format!("./test_fixtures/miner_{}/block_0.json", &ns),
-        &ns
-    ).unwrap();
+        helper.mining(
+            &format!("./test_fixtures/miner_{}/block_0.json", &ns),
+            &ns
+        ).unwrap();
 
-    println!("operator key\n");
+        println!("set layout\n");
+
+        //TODO: create_waypoint complains if there is no local information on the SetLayout
+        helper.set_layout_local(
+            &ns,
+            &format!(
+                "./test_fixtures/miner_{}/miner_{}.mnem",
+                &ns,
+                &ns
+            )
+        );
+
+        println!("operator key\n");
 
         let operator_key = helper.operator_key(&ns).unwrap();
 
@@ -248,18 +264,38 @@ fn smoke_test_github() {
                 &ns
             )
             .unwrap();
-    }
-    //
-    // // Step 4) Produce genesis and introduce into node configs
-    println!("genesis\n");
+        }
 
-    let genesis = helper.genesis("./test_fixtures/genesis.blob").unwrap();
-    //
-    // // Step 5) Introduce waypoint and genesis into the configs and verify along the way
-    let waypoint = helper.create_waypoint().unwrap();
-    println!("waypoint\n{}", waypoint);
+        // Assuming all steps above are OK. The validators can now build the genesis.
+        println!("genesis\n");
 
-    //     let output = helper.verify_genesis(&ns, genesis_path.path()).unwrap();
+        let genesis = helper.genesis("./test_fixtures/genesis.blob").unwrap();
+
+        for i in 0..num_validators {
+            // Each validator again can generate a waypoint and save to storage.
+
+            // Step 5) Introduce waypoint and genesis into the configs and verify along the way
+
+            println!("\nValidator #{}\n", i );
+            let ns = i.to_string();
+            println!("\nwaypoint\n");
+
+            // TODO: PLZ HALP.
+            let waypoint = helper.create_waypoint_remote(&ns).unwrap();
+            let waypoint = helper.create_waypoint_local(&ns).unwrap();
+
+            println!("\nverify\n");
+            //
+            let output = helper.verify_genesis(
+                &format!("./test_fixtures/miner_{}/key_store.json", &ns),
+                "./test_fixtures/genesis.blob"
+            ).unwrap();
+
+            // let output =  helper.verify_genesis_remote().unwrap();
+            println!("{}", output);
+
+            //TODO: Validators need to create/update a node.config.file.
+        }
 
 }
 
