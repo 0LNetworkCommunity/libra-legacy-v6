@@ -1,7 +1,11 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{layout::Layout, storage_helper::StorageHelper};
+use crate::{
+    layout::Layout,
+    storage_helper::StorageHelper,
+    storage_helper_github::StorageHelperGithub
+};
 use config_builder::{BuildSwarm, SwarmConfig};
 use libra_config::{
     config::{
@@ -33,7 +37,7 @@ impl BuildSwarm for ManagementBuilder {
 // NOTE: Run this with: cargo xtest -p libra-management smoke_test
 fn smoke_test() {
     LibraNode::prepare();
-        let helper = StorageHelper::new();
+    let helper = StorageHelper::new();
     let num_validators = 5;
     let shared = "_shared";
     let association = "vm";
@@ -169,6 +173,94 @@ fn smoke_test() {
 
     // Step 7) Launch and exit!
     swarm.launch_attempt(RoleType::Validator, false).unwrap();
+}
+
+
+#[test]
+// NOTE: Run this with: cargo xtest -p libra-management smoke_test
+fn smoke_test_github() {
+    // 1. Create Set Layout File (as association) - ok
+    // 2. Create a mnemonic - ok
+    // 3. create a proof - ok
+    // 4. (initialize). Initialize local storage with mnemonic. Private keys saved to disk (json). - ok
+    // 5. (mining) Add proof data from mining to key_store.json - ok
+    // 6. (operator-key) Add operator key to remote storage. (and collect account address) - ok
+    // 7. (validator-config) generate validator config transaction for remote NOTE: needs network address. - ok
+    // 8. Build genesis - ok
+    // 9. Create waypoint - ok
+    // 10. Update Node.config.toml file with all data
+
+    LibraNode::prepare();
+    let helper = StorageHelperGithub::new();
+    let num_validators = 2;
+    let _association = "vm";
+
+    // Step 1) Prepare the layout
+    // NOTE: Complains if there is no OWNER or ASSOCIATION fields
+    helper.set_layout();
+
+    // // Step 3) Prepare validators
+
+    for i in 0..num_validators {
+        println!("Validator #{}", i );
+        let ns = i.to_string();
+
+    //     //NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+    //     // NOTE there are only fixtures for 5 validators in the /test_fixtures/ directory.
+        let mnemonic = fs::read_to_string(format!(
+            "./test_fixtures/miner_{}/miner_{}.mnem",
+            &ns,
+            &ns
+        )).unwrap();
+        println!("mnemonic\n");
+
+        fs::remove_file(format!("./test_fixtures/miner_{}/key_store.json", &ns));
+
+        helper.initialize_command(
+            mnemonic.to_string(),
+            format!("./test_fixtures/miner_{}", &ns),
+            ns.clone()
+        );
+
+    println!("mining\n");
+
+    helper.mining(
+        &format!("./test_fixtures/miner_{}/block_0.json", &ns),
+        &ns
+    ).unwrap();
+
+    println!("operator key\n");
+
+        let operator_key = helper.operator_key(&ns).unwrap();
+
+        let validator_account = account_address::from_public_key(&operator_key);
+
+        // TODO: Get node.config.toml file with network info.
+        // let mut config = NodeConfig::default();
+
+        println!("validator config\n");
+        helper
+            .validator_config(
+                validator_account,
+                "/ip4/0.0.0.0/tcp/6180",
+                "/ip4/0.0.0.0/tcp/6180",
+                &format!("./test_fixtures/miner_{}/key_store.json", &ns),
+                &ns
+            )
+            .unwrap();
+    }
+    //
+    // // Step 4) Produce genesis and introduce into node configs
+    println!("genesis\n");
+
+    let genesis = helper.genesis("./test_fixtures/genesis.blob").unwrap();
+    //
+    // // Step 5) Introduce waypoint and genesis into the configs and verify along the way
+    let waypoint = helper.create_waypoint().unwrap();
+    println!("waypoint\n{}", waypoint);
+
+    //     let output = helper.verify_genesis(&ns, genesis_path.path()).unwrap();
+
 }
 
 fn secure_backend(original: &Path, dst_base: &Path, ns: &str, usage: &str) -> SecureBackend {

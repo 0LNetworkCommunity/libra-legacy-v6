@@ -14,6 +14,8 @@ mod validator_config;
 mod verify;
 mod waypoint;
 mod storage_helper;
+mod storage_helper_github;
+
 
 
 #[cfg(test)]

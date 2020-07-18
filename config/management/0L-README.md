@@ -4,12 +4,11 @@ TODO
 3. create a proof - ok
 4. (initialize). Initialize local storage with mnemonic. Private keys saved to disk (json). - ok
 5. (mining) Add proof data from mining to key_store.json - ok
-6. (operator-key) Add operator key to remote storage. (and collect account address)
-7. (validator-config) generate validator config transaction for remote
--- needs network address.
-8. Build genesis.
-9. Create waypoint
-9. Update Node.config.toml file with all data
+6. (operator-key) Add operator key to remote storage. (and collect account address) - ok
+7. (validator-config) generate validator config transaction for remote NOTE: needs network address. - ok
+8. Build genesis - ok
+9. Create waypoint - ok
+10. Update Node.config.toml file with all data
 
 #association create the layout of the initial validators
 cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=common' --path ./test_fixtures/set_layout.toml
@@ -53,10 +52,12 @@ cargo run validator-config --owner-address 5e7891b719c305941e62867ffe730f48 --va
 # Build Genesis from remote
  cargo run genesis --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token' --path ./bobs_stuff/genesis.blob
 
-#create WAYPOINT
-cargo run create-waypoint --local 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+#create waypoint
 
-cargo run create-waypoint --local 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'  --remote 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice'
+cargo run create-waypoint --local 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+
+Note it's unclear why this is called "local" here.
+
 
 
 # Libra Config Manager
