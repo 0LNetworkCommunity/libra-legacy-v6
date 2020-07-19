@@ -23,8 +23,8 @@ pub mod keygen;
 mod proptest_types;
 //0L CHanges
 pub mod redeem_setup;
-pub mod librablock_setup;
-pub mod txfee_setup;
+// pub mod librablock_setup;
+// pub mod txfee_setup;
 pub mod txn_fee_setup;
 pub mod reconfig_setup;
 

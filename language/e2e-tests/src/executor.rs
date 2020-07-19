@@ -183,7 +183,7 @@ impl FakeExecutor {
     /// data store. Panics if execution fails
     pub fn execute_and_apply(&mut self, transaction: SignedTransaction) -> TransactionOutput {
 
-        let mut tx_vec = vec![transaction];
+        let tx_vec = vec![transaction];
 
         let mut outputs = self.execute_block(tx_vec).unwrap();
         assert!(outputs.len() == 1, "transaction outputs size mismatch");
