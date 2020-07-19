@@ -14,7 +14,7 @@ use libra_state_view::StateView;
 use libra_types::{
     access_path::AccessPath,
     account_config::{AccountResource, BalanceResource},
-    block_metadata::{new_block_event_key, BlockMetadata, NewBlockEvent},
+    block_metadata::{BlockMetadata, NewBlockEvent},
     on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet},
     transaction::{
         SignedTransaction, Transaction, TransactionOutput, TransactionStatus, VMValidatorResult,
@@ -26,7 +26,7 @@ use libra_vm::{LibraVM, VMExecutor, VMValidator};
 use move_core_types::{identifier::Identifier, language_storage::ModuleId};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::CompiledModule;
-use vm_genesis::GENESIS_KEYPAIR;
+
 
 /// Provides an environment to run a VM instance.
 ///

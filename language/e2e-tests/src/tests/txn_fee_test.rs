@@ -5,7 +5,7 @@ use crate::{
     account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier},
     // common_transactions::peer_to_peer_txn,
     executor::FakeExecutor,
-    txn_fee_setup::{txn_fee_tx_mint, txn_fee_tx_move, txn_fee_tx_distr}
+    txn_fee_setup::{txn_fee_tx_mint, txn_fee_tx_distr}
 };
 
 
