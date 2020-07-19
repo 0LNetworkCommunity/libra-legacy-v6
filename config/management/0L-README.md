@@ -65,7 +65,7 @@ Add the mining details to the REMOTE key_store.json.
 cargo run mining --path-to-genesis-pow ./test_fixtures/miner_1/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=./lucas_stuff/github_token;namespace=lucas'
 ```
 
-# Operator key to remote storages
+## Operator key to remote storages
 This step creates public keys and adds them to the github repo.
 
 ```
@@ -90,7 +90,7 @@ Note the IP address of your machine.
 cargo run validator-config --owner-address <address> --validator-address "/ip4/104.131.20.59/tcp/6180" --fullnode-address "/ip4/104.131.20.59/tcp/6180" --local 'backend=disk;path=./my_configs/key_store.json;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=<address>'
 ```
 
-# Create Layout file.
+## Create Layout file.
 A set-layout file needs to be created by any one of the participants.
 
 This is done with:
