@@ -1,72 +1,114 @@
-TODO
-1. Create Set Layout File (as association) - ok
-2. Create a mnemonic - ok
-3. create a proof - ok
-4. (initialize). Initialize local storage with mnemonic. Private keys saved to disk (json). - ok
-5. (mining) Add proof data from mining to key_store.json - ok
-6. (operator-key) Add operator key to remote storage. (and collect account address) - ok
-7. (validator-config) generate validator config transaction for remote NOTE: needs network address. - ok
-8. Build genesis - ok
-9. Create waypoint - ok
-10. Update Node.config.toml file with all data
+# 0L Experimental Genesis
 
-#association create the layout of the initial validators
-cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=common' --path ./test_fixtures/set_layout.toml
+#Create a github API key.
+These tools will be storing data to a github repository which coordinates files needed for genesis.
+The repo is (temporarily): https://github.com/OLSF/test-genesis
 
-cargo run set-layout --backend 'backend=disk;path=./test_fixtures/miner_0/key_store.json;namespace=0'
+To create a personal key follow these steps: https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
 
-https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token
+This will be your `github_key`
+You will now add this to a new file and folder here:
+```
+cd libra/config/management
+mkdir my_configs
+cd my_configs
+echo "<github_key>" > myfile.txt
+```
 
-3a5480b9ef196045b3ba6fbe3e3a7239f82f6e7b
+# Build the project
+On a machine you will use for validation, build the project the project root dir, with:
 
+`libra/ cargo build --all --bins --exclude cluster-test`
 
-#initialize with Mnemonic
-cargo run initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./alices_stuff --namespace=alice
+If you are starting a new server you will need the following dependencies (Ububtu instructions):
 
-# POW mining
-Add the mining details to the local key_store.json.
-cargo run mining --path-to-genesis-pow ./test_fixtures/miner_0/block_0.json --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=bob'
+sudo apt-get update
+sudo apt-get install build-essential cmake clang llvm libgmp-dev
 
-cargo run mining --path-to-genesis-pow ./test_fixtures/miner_0/block_0.json --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+# Mining
+Your working directory is now:
+`libra/ol-miner/`
+## Create and account and Mnemonic
+In the ol-miner project create account credentials, which will be needed for mining, and also validation.
+`ol-miner/ cargo run keygen`
+
+the response will be a print of the mnemonic, account address, and auth key.
+
+DO NOT LOSE THE MNEMONIC. SAVE IT IN YOUR PASSWORD VAULT. WRITE IT ON PAPER NOW.
+
+## Include account data in ol-miner.toml
+There is a template for ol-miner.toml in /ol-miner/ update it wieht the credentials.
+
+## Mine one proof, your miner's genesis proof.
+This will take at least 10 minutes.
+A file called `blocks/block_0.json` will be produced. You will need this for registering your validator for genesis.
+
+# Genesis Ceremony Registration
+A github repository will be used to collect credentials from participants.
+Your working directory is now:
+`libra/config/management/`
+## Initialize with Mnemonic
+This step initialized a local data store, which will have a number of private keys needed for future steps.
+The namespace will identify your validator's data, locally but also in the remote Github repo which coordinates genesis info.
+
+Using the mnemonic, and address from above steps, you will run:
+
+```
+mkdir my_configs
+cargo run initialize --mnemonic '<mnemonic string, single quotes around>' --path ./my_configs --namespace=<account address>
+```
+
+## Add genesis proof from mining
+Add the mining details to the REMOTE key_store.json.
+
+```
+cargo run mining --path-to-genesis-pow ./test_fixtures/miner_1/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=./lucas_stuff/github_token;namespace=lucas'
+```
 
 # Operator key to remote storages
+This step creates public keys and adds them to the github repo.
 
-cargo run operator-key --local 'backend=disk;path=./bobs_stuff/key_store.json;namespace=bob' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=bob_shared'
+```
+cargo run operator-key --local 'backend=disk;path=./my_configs/key_store.json;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=<address>'
+```
 
-cargo run operator-key --local 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice_shared'
 
-## Get public key from response
+## Save the public key from response
+The step above produces a key and an address. You will need these for the next step.
+
+Key:
 9336f9ff1d9ea89f6872517b1919fea147693aa1c2ccb3e32c2d9fe224faf1fc
-
-alice
-b1d103522b1ff9dbb7cb134e654882efe0abe06f40514321bdbe2cc19f7784ee
-## create address from derived.
-402e9aaf54ca8c39bab641b0c9829070
-
-alice
+Address
 5e7891b719c305941e62867ffe730f48
 
-# Generate Node config
-cargo run validator-config --owner-address 402e9aaf54ca8c39bab641b0c9829070 --validator-address "/ip4/0.0.0.0/tcp/6180" --fullnode-address "/ip4/0.0.0.0/tcp/6180" --local 'backend=disk;path=./bobs_stuff/key_store.json;namespace=bob' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=bob_shared'
+## Generate Node config
+Add IP addresses and the address above to a validator registration transactions, to be stored on github.
 
-cargo run validator-config --owner-address 5e7891b719c305941e62867ffe730f48 --validator-address "/ip4/0.0.0.0/tcp/6180" --fullnode-address "/ip4/0.0.0.0/tcp/6180" --local 'backend=disk;path=./alices_stuff/key_store.json;namespace=alice' --remote 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token;namespace=alice'
+Note the IP address of your machine.
 
-# Build Genesis from remote
- cargo run genesis --backend 'backend=github;owner=OLSF;repository=test;token=./bobs_stuff/github_token' --path ./bobs_stuff/genesis.blob
+```
+cargo run validator-config --owner-address <address> --validator-address "/ip4/104.131.20.59/tcp/6180" --fullnode-address "/ip4/104.131.20.59/tcp/6180" --local 'backend=disk;path=./my_configs/key_store.json;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=<address>'
+```
 
-#create waypoint
+## Build Genesis from remote
+Now each validator will build the genesis. The tool combines data from github and from the local data store.
+```
+ cargo run genesis --backend 'backend=github;owner=OLSF;repository=test;token=./my_configs/github_token' --path ./my_configs/genesis.blob
+```
 
-NOTE: This is backwards here: local v remote. In libra, the association needs to do this step.
+## Create waypoint
+```
+cargo run create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=common' --local 'backend=disk;path=./my_configs/key_store;namespace=<address>'
+```
 
-cargo run create-waypoint --local 'backend=github;owner=OLSF;repository=test;token=./test_fixtures/github_token;namespace=common' --remote 'backend=disk;path=./test_fixtures/miner_0/key_store.json;namespace=0'
+# WIP: Configure node.config.toml
+All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
 
-Note it's unclear why this is called "local" here.
+TODO: help needed here. We need to place the above keys, and network data into the node.config.toml.
 
-# verify genesis
-Checks the local data works with genesis. Including waypoint. Waypoint must be stored locally.
-cargo run verify --backend 'backend=disk;path=./test_fixtures/miner_0/key_store.json;namespace=0' --genesis-path ./test_fixtures/genesis.blob
+-------------
 
-# Libra Config Manager
+# Libra Config Manager - Libra instructions
 
 The Libra Config Manager provides a tool for end-to-end management of the Libra
 blockchain from genesis to maintenance. The functionality of the tool is
