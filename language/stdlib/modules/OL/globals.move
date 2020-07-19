@@ -105,10 +105,7 @@ module Globals {
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs
           // target transaction per sec max gas: 20
-          // subsidy ceiling: tx fee guarantee in GAS, at starting prices assuming starting auction price of
-          // 1 GAS Coin = 1000000 gas_units, at 50% network capacity.
-          // i.e. starting market for gas is 1 GAS coin for 1 sec of compute time.
-          subsidy_ceiling_gas: 547200, //coins = 10,000,000.00*20*2,736,000/1,000,000,000.00,
+          subsidy_ceiling_gas: 8640000, // coins assumes 24 hour epoch lengths.
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
