@@ -75,10 +75,14 @@ script {
   use 0x0::LibraBlock;
   use 0x0::Debug;
   use 0x0::Transaction;
+  // use 0x0::Globals;
+
   fun main(_account: &signer) {
-    let block_height =  LibraBlock::get_current_block_height(); //borrow_global<BlockMetadata>(0xA550C18);
+    let block_height =  LibraBlock::get_current_block_height(); 
     Debug::print(&0x000000000013370000001);
     Debug::print(&block_height);
+    // Debug::print(&Globals::get_current_block_height());
+
     Transaction::assert(block_height == 15, 98);
 
     }

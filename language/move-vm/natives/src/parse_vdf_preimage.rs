@@ -5,14 +5,14 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::{Reference, Value},
 };
-use libra_types::vm_error::{StatusCode, VMStatus};
+// use libra_types::vm_error::{StatusCode, VMStatus};
 use std::collections::VecDeque;
-use std::convert::TryInto;
+// use std::convert::TryInto;
 use vm::errors::VMResult;
 use hex;
 use std::convert::TryFrom;
 // use ed25519_dalek::PublicKey;
-const DEFAULT_ERROR_CODE: u64 = 0xadd_000;
+
 // Extracts the first 32 bits of the vdf challenge which is the auth_key
 // Auth Keys can be turned into an AccountAddress type, to be serialized to a move address type.
 pub fn address_from_challenge(

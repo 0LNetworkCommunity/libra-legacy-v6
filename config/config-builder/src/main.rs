@@ -214,28 +214,28 @@ fn main() {
     };
 }
 
-fn build_faucet(args: FaucetArgs) {
-    let mut config_builder = ValidatorConfig::new();
-    config_builder.num_nodes = args.validators_in_genesis;
-
-    if let Some(seed) = args.seed.as_ref() {
-        let seed = hex::decode(seed).expect("Invalid hex in seed.");
-        config_builder.seed = seed[..32].try_into().expect("Invalid seed");
-    }
-
-    let waypoint = config_builder
-        .build_faucet_client()
-        .expect("Unable to build faucet");
-    // let key_path = args.output_dir.join("mint.key");
-    fs::create_dir_all(&args.output_dir).expect("Unable to create output directory");
-    // generate_key::save_key(faucet_key, key_path);
-
-    let waypoint_path = args.output_dir.join("waypoint.txt");
-    let mut file =
-        File::create(waypoint_path).expect("Unable to create/truncate file at specified path");
-    file.write_all(waypoint.to_string().as_bytes())
-        .expect("Unable to write waypoint to file at specified path");
-}
+// fn build_faucet(args: FaucetArgs) {
+//     let mut config_builder = ValidatorConfig::new();
+//     config_builder.num_nodes = args.validators_in_genesis;
+//
+//     if let Some(seed) = args.seed.as_ref() {
+//         let seed = hex::decode(seed).expect("Invalid hex in seed.");
+//         config_builder.seed = seed[..32].try_into().expect("Invalid seed");
+//     }
+//
+//     let waypoint = config_builder
+//         .build_faucet_client()
+//         .expect("Unable to build faucet");
+//     // let key_path = args.output_dir.join("mint.key");
+//     fs::create_dir_all(&args.output_dir).expect("Unable to create output directory");
+//     // generate_key::save_key(faucet_key, key_path);
+//
+//     let waypoint_path = args.output_dir.join("waypoint.txt");
+//     let mut file =
+//         File::create(waypoint_path).expect("Unable to create/truncate file at specified path");
+//     file.write_all(waypoint.to_string().as_bytes())
+//         .expect("Unable to write waypoint to file at specified path");
+// }
 
 fn build_full_node(command: FullNodeCommand) {
     let config_builder = match &command {

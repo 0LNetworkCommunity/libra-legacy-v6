@@ -8,11 +8,13 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 pub struct Block {
     /// Block Height
     pub height: u64,
+    /// Time taken to compute, for reference only.
     pub elapsed_secs: u64,
-    /// VDF Output
+    /// VDF input preimage. AKA challenge
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub preimage: Vec<u8>,
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    /// VDF proof. AKA solution
     pub data: Vec<u8>,
 }
 
@@ -36,7 +38,7 @@ impl Block {
     pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
 
 
-        let file = std::fs::File::open(path)?;
+        let mut file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
         return Ok((hex::encode(block.preimage),hex::encode(block.data)));
@@ -44,9 +46,9 @@ impl Block {
 
     pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
 
-        let blocks_dir = config.get_block_dir();
+        let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
 
-        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.as_path().display(),height)).expect("Could not open block file");
+        let mut file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -64,15 +66,15 @@ pub mod build_block {
     use crate::submit_tx::submit_vdf_proof_tx_to_network;
     use glob::glob;
     use libra_crypto::hash::HashValue;
-    use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
-    use std::time::{Duration, Instant};
+    use libra_types::waypoint::Waypoint;
+    use std::time::Instant;
     use std::{
         fs,
         io::{BufReader, Write},
         path::Path,
         path::PathBuf,
     };
-    use libra_wallet::WalletLibrary;
+
 
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
@@ -91,7 +93,7 @@ pub mod build_block {
             data,
         };
         //TODO: check for overwriting file...
-        write_json(&block, &config.get_block_dir())
+        write_json(&block, &config.get_block_dir());
     }
     /// Mine one block
     pub fn mine_once(config: &OlMinerConfig) -> Result<Block, Error> {
@@ -159,7 +161,7 @@ pub mod build_block {
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
-                if waypoint.version() >= 0 {
+                if waypoint.version() >= 0u64 {
                     if let Some(ref node) = config.chain_info.node {
                         // get preimage
                         submit_vdf_proof_tx_to_network(
@@ -346,6 +348,8 @@ pub mod build_block {
 #[test]
 #[ignore]
 fn create_fixtures() {
+    use libra_wallet::WalletLibrary;
+
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     for i in 0..6 {
