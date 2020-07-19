@@ -2,12 +2,12 @@
 
 #![allow(clippy::never_loop)]
 
-use super::OlMinerCmd;
+
 use abscissa_core::{Command, Options, Runnable};
-use libra_crypto::traits::ValidCryptoMaterial;
+
 use libra_wallet::WalletLibrary;
-use std::fs;
-use std::io::Write;
+
+
 // use crate:submit_tx::*;
 
 /// `version` subcommand

@@ -20,7 +20,7 @@
 
 use abscissa_core::testing::prelude::*;
 // use ol_miner::config::OlMinerConfig;
-use libra_crypto::hash::{CryptoHash, HashValue};
+
 use libra_types::waypoint::Waypoint;
 use once_cell::sync::Lazy;
 use std::time::Duration;

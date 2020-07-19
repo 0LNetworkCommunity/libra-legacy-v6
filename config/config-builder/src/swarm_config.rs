@@ -3,9 +3,9 @@
 
 use anyhow::Result;
 use libra_config::config::NodeConfig;
-use libra_crypto::ed25519::Ed25519PrivateKey;
+// use libra_crypto::ed25519::Ed25519PrivateKey;
 use libra_types::waypoint::Waypoint;
-use std::{fs::File, io::Write, path::PathBuf};
+use std::path::PathBuf;
 
 pub trait BuildSwarm {
     /// Generate the configs for a swarm

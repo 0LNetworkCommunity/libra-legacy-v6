@@ -8,13 +8,16 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 pub struct Block {
     /// Block Height
     pub height: u64,
+    /// Time taken to compute, for reference only.
     pub elapsed_secs: u64,
-    /// VDF Output
+    /// VDF input preimage. AKA challenge
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub preimage: Vec<u8>,
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    /// VDF proof. AKA solution
     pub data: Vec<u8>,
 }
+
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -33,20 +36,22 @@ where
 }
 
 impl Block {
+    /// Get the genesis proof from file
     pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
 
 
-        let mut file = std::fs::File::open(path)?;
+        let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
         return Ok((hex::encode(block.preimage),hex::encode(block.data)));
     }
 
+    /// Get the genesis proof only, without preimage.
     pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
 
         let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
 
-        let mut file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -64,21 +69,21 @@ pub mod build_block {
     use crate::submit_tx::submit_vdf_proof_tx_to_network;
     use glob::glob;
     use libra_crypto::hash::HashValue;
-    use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
-    use std::time::{Duration, Instant};
+    use libra_types::waypoint::Waypoint;
+    use std::time::Instant;
     use std::{
         fs,
         io::{BufReader, Write},
         path::Path,
         path::PathBuf,
     };
-    use libra_wallet::WalletLibrary;
+
 
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
         let preimage = config.genesis_preimage();
-        let mut now = Instant::now();
+        let now = Instant::now();
         let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
         let elapsed_secs = now.elapsed().as_secs();
         println!("Delay: {:?} seconds", elapsed_secs);
@@ -114,7 +119,7 @@ pub mod build_block {
             let height = latest_block.height + 1;
             // TODO: cleanup this duplication with mine_genesis_once?
 
-            let mut now = Instant::now();
+            let now = Instant::now();
             let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
             let elapsed_secs = now.elapsed().as_secs();
             println!("Delay: {:?} seconds", elapsed_secs);
@@ -162,7 +167,7 @@ pub mod build_block {
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
-                if waypoint.version() >= 0 {
+                if waypoint.version() >= 0u64 {
                     if let Some(ref node) = config.chain_info.node {
                         // get preimage
                         submit_vdf_proof_tx_to_network(
@@ -198,7 +203,7 @@ pub mod build_block {
 
         let blocks_dir = Path::new(&config.chain_info.block_dir);
 
-        let mut file = fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let file = fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
         let reader = BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -270,7 +275,7 @@ pub mod build_block {
             .expect("Failed to read glob pattern")
         {
             if let Ok(entry) = entry {
-                let mut file = fs::File::open(&entry).expect("Could not open block file");
+                let file = fs::File::open(&entry).expect("Could not open block file");
                 let reader = BufReader::new(file);
                 let block: Block = serde_json::from_reader(reader).unwrap();
                 let blocknumber = block.height;
@@ -349,6 +354,8 @@ pub mod build_block {
 #[test]
 #[ignore]
 fn create_fixtures() {
+    use libra_wallet::WalletLibrary;
+
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     for i in 0..6 {
@@ -381,7 +388,7 @@ fn create_fixtures() {
         // fs::create_dir(blocks_dir).unwrap();
         let mut latest_block_path = blocks_dir.to_path_buf();
         latest_block_path.push(format!("miner_{}.mnemonic", ns));
-        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");;
+        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
     }
