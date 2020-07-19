@@ -1,14 +1,14 @@
 //! `submit` subcommand
 
 
-use super::OlMinerCmd;
+
 use abscissa_core::{Command, Options, Runnable};
-use libra_crypto::traits::ValidCryptoMaterial;
-use libra_wallet::WalletLibrary;
-use std::fs;
-use std::io::Write;
+
+
+
+
 use crate::prelude::*;
-use crate::block;
+
 use libra_types::waypoint::Waypoint;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -48,7 +48,7 @@ impl Runnable for SubmitCmd {
                         println!("Using Waypoint from CLI args:\n{}", v);
                         waypoint = parsed_waypoint.unwrap();
                     }
-                    Err(e) => {
+                    Err(_e) => {
                         println!("Error: Waypoint cannot be parsed from command line args. Received: {:?}\nDid you pass --waypoint=0:<hash>? \n WILL FALLBACK TO WAYPOINT FROM ol_miner.toml\n {:?}",
                         self.waypoint,
                         miner_configs.chain_info.base_waypoint);

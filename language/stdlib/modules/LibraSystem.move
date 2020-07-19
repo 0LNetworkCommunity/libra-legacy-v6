@@ -12,7 +12,6 @@ module LibraSystem {
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
     use 0x0::ValidatorUniverse;
-    use 0x0::Debug;
 
     struct ValidatorInfo {
         addr: address,
@@ -75,10 +74,6 @@ module LibraSystem {
             Signer::address_of(operator) == ValidatorConfig::get_operator(account_address),
             22
         );
-
-        // Debug::print(&0x017E57);
-        // Debug::print(&account_address);
-
 
         // A prospective validator must have a validator config resource
         Transaction::assert(is_valid_and_certified(account_address), 33);
@@ -290,7 +285,6 @@ module LibraSystem {
         new_validators: vector<address>,
         epoch_length: u64,
         current_block_height: u64) acquires CapabilityHolder {
-          Debug::print(&0x71B12A05157E11100000000000010001);
 
         Transaction::assert(is_authorized_to_reconfigure_(account), 22);
 
@@ -301,7 +295,6 @@ module LibraSystem {
         let next_epoch_validators = Vector::empty();
 
         let n = Vector::length<address>(&new_validators);
-        Debug::print(&0x71B12A05157E11100000000000020001);
 
         // Get the current validator and append it to list
         let index = 0;
@@ -312,7 +305,6 @@ module LibraSystem {
             Transaction::assert(is_valid_and_certified(account_address), 33);
 
             let config = ValidatorConfig::get_config(account_address);
-            Debug::print(&0x71B12A05157E11100000000000030001);
 
             let liveness = true;
 
@@ -322,7 +314,6 @@ module LibraSystem {
             };
 
             if(liveness){
-                //TODO: Correct Proof of Weight algorithm 
                 Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                     addr: account_address,
                     config, // copy the config over to ValidatorSet
@@ -335,10 +326,7 @@ module LibraSystem {
             index = index + 1;
         };
 
-        Debug::print(&0x71B12A05157E11100000000000000001);
-        Debug::print(&n);
         let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
-        Debug::print(&next_count);
         Transaction::assert(next_count > 0, 90000000001 );
         // Transaction::assert(next_count > n, 90000000002 );
         Transaction::assert(next_count == n, 90000000002 );
@@ -367,7 +355,6 @@ module LibraSystem {
         let i = 0;
         while (i < size) {
             let validator_info_ref = Vector::borrow(validators, i);
-            Debug::print(&0x71B12A05157E11100000000000100001);
 
             if(ValidatorUniverse::check_if_active_validator(validator_info_ref.addr, epoch_length, current_block_height)){
                 Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);

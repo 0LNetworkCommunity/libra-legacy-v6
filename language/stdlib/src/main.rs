@@ -11,7 +11,10 @@ use std::{
     time::Instant,
 };
 use stdlib::{
-    build_stdlib, build_stdlib_doc, build_transaction_script_doc, compile_script,
+    build_stdlib,
+    // build_stdlib_doc,
+    // build_transaction_script_doc,
+    compile_script,
     filter_move_files, STAGED_EXTENSION, STAGED_OUTPUT_PATH, STAGED_STDLIB_NAME,
     TRANSACTION_SCRIPTS,
 };
@@ -34,7 +37,7 @@ fn main() {
                 .help("only generate documentation"),
         );
     let matches = cli.get_matches();
-    let no_doc = matches.is_present("no-doc");
+    // let no_doc = matches.is_present("no-doc");
     let doc_only = matches.is_present("doc-only");
 
     #[cfg(debug_assertions)]
