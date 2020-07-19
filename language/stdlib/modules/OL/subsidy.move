@@ -16,7 +16,7 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
-    use 0x0::Debug;
+    // use 0x0::Debug;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -122,15 +122,6 @@ address 0x0 {
         // % weight for calculating the subsidy units
         let subsidy_allowed = FixedPoint32::divide_u64(subsidy_units * voting_power,
                           FixedPoint32::create_from_rational(total_voting_power, 1));
-
-        //Get balances before transfer from association and node_address
-        // TODO: The GAS for subsidy needs to be stored elsewhere than association account. Perhaps 0x0?
-        // this fails on the first epoch as there is no gas.
-        let old_association_balance = LibraAccount::balance<GAS::T>(sender);
-        let old_validator_balance = LibraAccount::balance<GAS::T>(node_address);
-
-        Debug::print(&old_association_balance);
-        Debug::print(&old_validator_balance);
 
         //Transfer gas from association to validator
         LibraAccount::pay_from<GAS::T>(account, node_address, subsidy_allowed);
