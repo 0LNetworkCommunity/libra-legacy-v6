@@ -39,4 +39,4 @@ fun main(sender: &signer) {
     Redeem::begin_redeem(bob, proof);
 }
 }
-// check: ABORTED 100080002
+// check: ABORTED 180208011020

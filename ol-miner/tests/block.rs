@@ -28,6 +28,7 @@ fn test_mine_and_submit() {
 
     let parsed_waypoint: Waypoint = configs.chain_info.base_waypoint.parse().unwrap();
 
-    build_block::mine_and_submit(&configs, "test mnemonic".to_string(), parsed_waypoint);
-    assert_eq!(true, true, "not true");
+    let _start_app = build_block::mine_and_submit(&configs, "test mnemonic".to_string(), parsed_waypoint);
+
+    // assert_eq!(Ok(()), start_app, "not true");
 }

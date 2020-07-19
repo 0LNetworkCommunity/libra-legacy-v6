@@ -3,13 +3,13 @@
 
 use crate::error::{Error, ErrorKind};
 use cli::client_proxy::ClientProxy;
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use libra_types::waypoint::Waypoint;
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
-const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
+// const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
                                 // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
 // TODO: I don't think this is being used
-const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
+// const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
 
 pub fn submit_vdf_proof_tx_to_network(
     challenge: Vec<u8>,
@@ -28,7 +28,7 @@ pub fn submit_vdf_proof_tx_to_network(
     // its own client connection to network.
     // ClientProxy is an abstraction on top of Libra Client and other modules. (as with all testing tools) is unstable and in develoment.
 
-    /// create the ClientProxy, with credentials, and point to network with a waypoint.
+    // create the ClientProxy, with credentials, and point to network with a waypoint.
     let mut libra_client = ClientProxy::new_for_ol(
         /* url */ &node,
         /* mnemonic file */ &mnemonic_string,
@@ -52,9 +52,9 @@ pub fn submit_vdf_proof_tx_to_network(
     Ok(())
 }
 
-
-pub fn resubmit_backlog(quick_check: bool){
-    //TODO (Ping): If there are any proofs which have not been verified on-chian, send them.
+/// If there are any proofs which have not been verified on-chain send them
+pub fn resubmit_backlog(_quick_check: bool){
+    //TODO (Ping):
 
    //  // 1. Find the most recent LOCAL tower height. We can store this in a json file.
    //  let parsed_file = fs::read(Pathbuf(LocalMinerState))

@@ -4,7 +4,7 @@
 use crate::{error::Error, Command};
 use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_global_constants::{
-    ASSOCIATION_KEY, CONSENSUS_KEY, EPOCH, FULLNODE_NETWORK_KEY, LAST_VOTED_ROUND, OPERATOR_KEY,
+    CONSENSUS_KEY, EPOCH, FULLNODE_NETWORK_KEY, LAST_VOTED_ROUND, OPERATOR_KEY,
     OWNER_KEY, PREFERRED_ROUND, VALIDATOR_NETWORK_KEY, WAYPOINT,
 };
 use libra_network_address::NetworkAddress;

@@ -37,7 +37,7 @@ fn main() {
                 .help("only generate documentation"),
         );
     let matches = cli.get_matches();
-    let _no_doc = matches.is_present("no-doc");
+    // let no_doc = matches.is_present("no-doc");
     let doc_only = matches.is_present("doc-only");
 
     #[cfg(debug_assertions)]
