@@ -10,7 +10,7 @@ module LibraBlock {
     use 0x0::Stats;
     use 0x0::ReconfigureOL;
     use 0x0::Globals;
-    
+
     resource struct BlockMetadata {
       // Height of the current block
       height: u64,
@@ -83,12 +83,6 @@ module LibraBlock {
         proposer: address
     ) acquires BlockMetadata {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0x0);
-<<<<<<< HEAD:language/stdlib/modules/OL/LibraBlock.move
-        // TODO 0L (Dev): Call the Stats module from here with previous_block_votes.
-
-        // TODO: Figure out a story for errors in the system transactions.
-=======
->>>>>>> OLv3:language/stdlib/modules/LibraBlock.move
         if(proposer != 0x0) Transaction::assert(LibraSystem::is_validator(proposer), 5002);
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
 
