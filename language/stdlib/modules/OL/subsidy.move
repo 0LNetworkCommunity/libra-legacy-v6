@@ -56,7 +56,6 @@ address 0x0 {
       //// Important Constant ////
 
       //Acquire subsidy info
-      // let subsidy_info = borrow_global<SubsidyInfo>(0xA550C18);
 
       // NOTE: Balance should be zero in this account at time of minting, because subsidies have
       // been paid in previous step.

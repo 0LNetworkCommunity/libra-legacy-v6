@@ -14,7 +14,7 @@ module ValidatorConfig {
     use 0x0::Transaction;
     use 0x0::Signer;
     use 0x0::Debug;
-    
+
     struct Config {
         consensus_pubkey: vector<u8>,
         // TODO(philiphayes): restructure
@@ -52,7 +52,9 @@ module ValidatorConfig {
 
     //NOTE: 0L This is how validator accounts are initialized from mining.
     public fun publish_from_mining_0L(_creator: &signer, account: &signer) {
-        // TODO: unsure this is safe.
+        // TODO: This is not safe. There needs to be a permission check here.
+        // anyone can call this even if they are not in the onboarding flow.
+        
         // Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
         move_to(account, T {
             config: Option::none(),
