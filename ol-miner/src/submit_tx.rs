@@ -4,6 +4,10 @@
 use crate::error::{Error, ErrorKind};
 use cli::client_proxy::ClientProxy;
 use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use std::fs::File;
+use std::io::BufReader;
+use libra
+use libra_json_rpc_types::views::MinerStateView;
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
@@ -53,37 +57,55 @@ pub fn submit_vdf_proof_tx_to_network(
 }
 
 
-pub fn resubmit_backlog(client: ClientProxy, quick_check: bool){
+pub fn resubmit_backlog(client: &mut ClientProxy, quick_check: bool){
     //TODO (Ping): If there are any proofs which have not been verified on-chian, send them.
 
-   //  // 1. Find the most recent LOCAL tower height. We can store this in a json file.
-   //  let parsed_file = fs::read(Pathbuf(LocalMinerState))
-   //  let local_tower_height = parsed_file.local_tower_height
-   //  let last_succesful_tx_height = parsed_file.last_succesful_tx_height
-   //
-   //  // 1a. Check if there is a resubmission in progress. Exit gracefully.
-   //   if (parsed_file.retrying_height){ return }
-   // // 1b. quickly check if there is a problem, from local state.
-   //  if (quick_check && (last_succesful_tx_height< local_tower_height)) {
-   //   println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run withouth quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
-   //  }
-   //  // 2. Query network for most recent reported_tower_height of the user.
-   //  let mut libra_client = ClientProxy::new_for_ol(
-   //      /* url */ &node,
-   //      /* mnemonic file */ &mnemonic_string,
-   //      /* waypoint */ waypoint,
-   //  )
-   //  remote_height = libra_client.query_tower_height(); // TODO: Implement this in ClientProxy
-   //  remember to do error handling
-   //
-   // //3. Use Block::submit_block() to submit the oldest proof NOT registered onchain.
-   //  if (remote_height<local_tower_height) {
-   //  let mut file = fs::File::open(&entry).expect("Could not open block file");
-   //  let reader = BufReader::new(file);
-   //  let missing_block: Block = serde_json::from_reader(reader).unwrap();
-   //  crate::block::submit_block( missing_block , etc. )
-   //  }
+    // 1. Find the most recent LOCAL tower height. We can store this in a json file.
+    // Open the file in read-only mode with buffer.
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    let local_state: LocalMinerState = serde_json::from_reader(reader)?;
 
+    let local_tower_height = local_state.local_tower_height;
+    let last_succesful_tx_height = local_state.last_succesful_tx_height;
+
+    // 1a. Check if there is a resubmission in progress. Exit gracefully.
+    if local_state.retrying_height > 0 { return }
+
+    // 1b. quickly check if there is a problem, from local state.
+    if quick_check && (last_succesful_tx_height < local_tower_height) {
+       println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run withouth quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
+    }
+    // 2. Query network for most recent reported_tower_height of the user.
+    // let mut libra_client = ClientProxy::new_for_ol(
+    //     /* url */ &node,
+    //     /* mnemonic file */ &mnemonic_string,
+    //     /* waypoint */ waypoint,
+    // )
+
+    let sender_account = client.accounts[0].address;
+    let remote_state: MinerStateView  = match client.get_miner_state(sender_account) {
+        Ok( s ) => { match s {
+            Some( state) => state,
+            None=> {
+                println!("No remote state found");
+                return
+            }
+        } },
+        Err( e) => {
+            println!("error: {:?}", e);
+            return
+        },
+    };
+    let remote_height = remote_state.verified_tower_height;
+
+    //3. Use Block::submit_block() to submit the oldest proof NOT registered onchain.
+    if remote_height < local_tower_height {
+        // let mut file = fs::File::open(&entry).expect("Could not open block file");
+        // let reader = BufReader::new(file);
+        // let missing_block: Block = serde_json::from_reader(reader).unwrap();
+        // crate::block::submit_block( missing_block , etc. )
+    }
 
 }
 
@@ -97,12 +119,19 @@ pub struct LocalMinerState {
     retrying_height: u64, // if there is a resubmission in process, we need to know.
 }
 
-/// LocalMinerState
+/// VDF Proofs
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct VDFProof {
     challenge: Vec<u8>,
     difficulty: u64,
     solution: Vec<u8>, // if there is a resubmission in process, we need to know.
+}
+
+/// backlog of LocalMinerState
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Backlog {
+
 }
 
