@@ -5,14 +5,14 @@
 //! account: bob, 1000000, 0, validator
 //! account: charlie, 1000000, 0, validator
 //! account: diana, 1000000, 0, validator
-//! account: eustance, 1000000, 0, validator
+//! account: ethel, 1000000, 0, validator
 //! account: frank, 1000000, 0, validator
 //! account: vivian, 1000000, 0, validator
 
 //! new-transaction
 //! sender: association
 script {
-  use 0x0::Debug;
+  // use 0x0::Debug;
   use 0x0::Transaction;
   use 0x0::Subsidy;
   use 0x0::Vector;
@@ -30,19 +30,19 @@ script {
     let len = Vector::length<address>(&validators);
 
     Transaction::assert(len == 4, 1001);
-    Debug::print(&validators);
+    // Debug::print(&validators);
 
     // create dummy validator network Statistics
     Stats::insert_voter_list(1u64, &validators);
     Stats::insert_voter_list(2u64, &validators);
     Stats::insert_voter_list(3u64, &validators);
     let subsidy_units = Subsidy::calculate_Subsidy(signer, 1, 3);
-    Debug::print(&subsidy_units);
+    // Debug::print(&subsidy_units);
     Transaction::assert(subsidy_units == 296, 1001);
 
     //example range of blocks with 7 validators
     Vector::push_back(&mut validators, {{diana}});
-    Vector::push_back(&mut validators, {{eustance}});
+    Vector::push_back(&mut validators, {{ethel}});
     Vector::push_back(&mut validators, {{frank}});
 
     let newlen = Vector::length<address>(&validators);
@@ -53,12 +53,8 @@ script {
     Stats::insert_voter_list(6u64, &validators);
 
     let subsidy_units = Subsidy::calculate_Subsidy(signer, 4, 6);
-    Debug::print(&subsidy_units);
+    // Debug::print(&subsidy_units);
     Transaction::assert(subsidy_units == 293, 1004);
-
-
-
-
     }
 }
 // check: EXECUTED

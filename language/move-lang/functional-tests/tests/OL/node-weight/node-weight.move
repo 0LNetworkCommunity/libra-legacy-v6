@@ -1,18 +1,15 @@
 //! account: dummy-prevents-genesis-reload, 100000 ,0, validator
-
 //! account: alice, 8
 //! account: bob, 7
 //! account: carol, 6
 //! account: sha, 9
 //! account: hola, 10
 
-
 //! new-transaction
 //! sender: association
 script {
     use 0x0::Vector;
     use 0x0::Transaction;
-    use 0x0::Debug;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
     // Base Case: If n is greater than or equal to vector length, return vector itself
@@ -31,8 +28,6 @@ script {
         ValidatorUniverse::add_validator({{sha}});
         Vector::push_back<address>(&mut vec, {{hola}});
         ValidatorUniverse::add_validator({{hola}});
-        Debug::print(&41654);
-
         let list_of_addresses = NodeWeight::top_n_accounts(account,5);
         Transaction::assert(Vector::length<address>(&list_of_addresses) == 5, 2);
     }
