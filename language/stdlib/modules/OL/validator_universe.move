@@ -6,7 +6,7 @@ address 0x0 {
     use 0x0::FixedPoint32;
     use 0x0::Stats;
     use 0x0::Option;
-    use 0x0::Debug;
+    // use 0x0::Debug;
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -47,7 +47,7 @@ address 0x0 {
     // Eligible validators are all those nodes who have mined a VDF proof at any time.
     // TODO (nelaturuk): Wonder if this helper is necessary since it is just stripping the Validator Universe vector of other fields.
     public fun get_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
-      Debug::print(&0x1eed8012000000000000000000000001);
+      // Debug::print(&0x1eed8012000000000000000000000001);
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 401);
 
@@ -55,13 +55,13 @@ address 0x0 {
       // Create a vector with all eligible validator addresses
       // Get all the data from the ValidatorUniverse resource stored in the association/system address.
       let collection = borrow_global<ValidatorUniverse>(0x0);
-      Debug::print(&0x1eed8012000000000000000000000002);
+      // Debug::print(&0x1eed8012000000000000000000000002);
 
       let i = 0;
       let validator_list = &collection.validators;
       let len = Vector::length<ValidatorEpochInfo>(validator_list);
-      Debug::print(&0x1eed8012000000000000000000000003);
-      Debug::print(&len);
+      // Debug::print(&0x1eed8012000000000000000000000003);
+      // Debug::print(&len);
 
 
       while (i < len) {
@@ -69,7 +69,7 @@ address 0x0 {
           i = i + 1;
       };
 
-      Debug::print(&0x1eed8012000000000000000000000004);
+      // Debug::print(&0x1eed8012000000000000000000000004);
 
       eligible_validators
     }
@@ -108,9 +108,9 @@ address 0x0 {
       // Weight is metric based on: The number of epochs the miners have been mining for
       let weight = 1;
 
-      Debug::print(&011111110000001111);
+      // Debug::print(&011111110000001111);
 
-      Debug::print(&weight);
+      // Debug::print(&weight);
 
       // If the validator mined in current epoch, increment it's weight.
       if(is_validator_in_current_epoch)
@@ -161,7 +161,7 @@ address 0x0 {
     public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
       // Calculate start and end block height for the current epoch
       // What about empty blocks that get created after every epoch?
-      Debug::print(&0x1eed8012000000000000000000200001);
+      // Debug::print(&0x1eed8012000000000000000000200001);
 
       let end_block_height = current_block_height;
       let epoch_count = epoch_length - 2;  // Not all blocks are committed at current block height.
@@ -173,17 +173,17 @@ address 0x0 {
 
       // Calculating threshold which is 90% of the blocks.
       let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_count;
-      Debug::print(&0x1eed8012000000000000000000200002);
+      // Debug::print(&0x1eed8012000000000000000000200002);
 
       let active_validator = Stats::node_heuristics(addr, start_block_height, end_block_height);
-      Debug::print(&0x1eed8012000000000000000000200003);
+      // Debug::print(&0x1eed8012000000000000000000200003);
 
       if (active_validator < threshold_signing) {
-        Debug::print(&0x1eed8012000000000000000000200004);
+        // Debug::print(&0x1eed8012000000000000000000200004);
 
           return false
       };
-      Debug::print(&0x1eed8012000000000000000000200005);
+      // Debug::print(&0x1eed8012000000000000000000200005);
 
       true
     }

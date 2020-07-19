@@ -13,7 +13,7 @@ module ValidatorConfig {
     use 0x0::Option;
     use 0x0::Transaction;
     use 0x0::Signer;
-    use 0x0::Debug;
+    // use 0x0::Debug;
 
     struct Config {
         consensus_pubkey: vector<u8>,
@@ -42,7 +42,7 @@ module ValidatorConfig {
 
     //NOTE: 0L This is only used for genesis.
     public fun publish(creator: &signer, account: &signer) {
-        Debug::print(&Signer::address_of(creator));
+        // Debug::print(&Signer::address_of(creator));
         Transaction::assert(Signer::address_of(creator) == 0x0, 1101);
         move_to(account, T {
             config: Option::none(),
@@ -54,7 +54,7 @@ module ValidatorConfig {
     public fun publish_from_mining_0L(_creator: &signer, account: &signer) {
         // TODO: This is not safe. There needs to be a permission check here.
         // anyone can call this even if they are not in the onboarding flow.
-        
+
         // Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
         move_to(account, T {
             config: Option::none(),

@@ -3,7 +3,7 @@
 //! new-transaction
 script{
 use 0x0::VDF;
-use 0x0::Debug;
+// use 0x0::Debug;
 use 0x0::Transaction;
 fun main() {
   // Test for the script handling an invalid "solution".
@@ -21,8 +21,6 @@ fun main() {
 
   re = VDF::verify(&challenge, &difficulty, &solution);
 
-  // Issue: doesn't look like the Debug is printing.
-  Debug::print<bool>(&re);
 
   // Issue: this assertion should evaluate to false==false so that the test *passes* when an invalid proof is submitted.
   Transaction::assert(move re ==false, 1);

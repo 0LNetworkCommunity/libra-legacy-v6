@@ -7,14 +7,14 @@ address 0x0 {
     use 0x0::ValidatorUniverse;
     use 0x0::Signer;
     use 0x0::Transaction;
-    use 0x0::Debug;
+    // use 0x0::Debug;
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
     // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
     public fun top_n_accounts(account: &signer, n: u64): vector<address> {
-      Debug::print(&0x110DE00111E161170000000000001001);
+      // Debug::print(&0x110DE00111E161170000000000001001);
 
 
       let sender = Signer::address_of(account);
@@ -22,10 +22,10 @@ address 0x0 {
 
       //Get eligible validators from Validator Universe
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
-      Debug::print(&0x110DE00111E161170000000000001002);
+      // Debug::print(&0x110DE00111E161170000000000001002);
 
       let length = Vector::length<address>(&eligible_validators);
-      Debug::print(&length);
+      // Debug::print(&length);
 
 
       // Base Case: The universe of validators is under the limit of the BFT consensus.
@@ -37,7 +37,7 @@ address 0x0 {
       let weights = Vector::empty<u64>();
       let k = 0;
       while (k < length) {
-        Debug::print(&0x110DE00111E161170000000000001003);
+        // Debug::print(&0x110DE00111E161170000000000001003);
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
         // Ensure that this address is an active validator
@@ -45,7 +45,7 @@ address 0x0 {
         Vector::push_back<u64>(&mut weights, validator_weight);
         k = k + 1;
       };
-      Debug::print(&0x110DE00111E161170000000000001004);
+      // Debug::print(&0x110DE00111E161170000000000001004);
 
       // Sorting the accounts vector based on value (weights).
       // Bubble sort algorithm
@@ -53,7 +53,7 @@ address 0x0 {
       while (i < length){
         let j = 0;
         while(j < length-i-1){
-          Debug::print(&0x110DE00111E161170000000000001005);
+          // Debug::print(&0x110DE00111E161170000000000001005);
 
           let value_j = *(Vector::borrow<u64>(&weights, j));
           let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
@@ -66,7 +66,7 @@ address 0x0 {
         i = i + 1;
       };
 
-      Debug::print(&0x110DE00111E161170000000000001006);
+      // Debug::print(&0x110DE00111E161170000000000001006);
 
       // Reverse to have sorted order - high to low.
       Vector::reverse<address>(&mut eligible_validators);
@@ -75,7 +75,7 @@ address 0x0 {
         Vector::pop_back<address>(&mut eligible_validators);
         index = index + 1;
       };
-      Debug::print(&0x110DE00111E161170000000000001007);
+      // Debug::print(&0x110DE00111E161170000000000001007);
       return eligible_validators
     }
   }

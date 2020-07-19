@@ -6,7 +6,7 @@
 //! sender: alice
 script {
 use 0x0::Redeem;
-use 0x0::Debug;
+// use 0x0::Debug;
 use 0x0::Transaction;
 
 fun main(sender: &signer) {
@@ -21,7 +21,7 @@ fun main(sender: &signer) {
     let proof = Redeem::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
     Redeem::begin_redeem(sender, proof);
     let verified_tower_height_after = Redeem::get_miner_tower_height({{alice}});
-    Debug::print(&verified_tower_height_after);
+    // Debug::print(&verified_tower_height_after);
 
     Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
 
@@ -35,7 +35,7 @@ fun main(sender: &signer) {
 //! sender: alice
 script {
 use 0x0::Redeem;
-use 0x0::Debug;
+// use 0x0::Debug;
 use 0x0::Transaction;
 
 fun main(sender: &signer) {
@@ -52,7 +52,7 @@ fun main(sender: &signer) {
     let proof = Redeem::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
     Redeem::begin_redeem(sender, proof);
     let verified_tower_height_after = Redeem::get_miner_tower_height({{alice}});
-    Debug::print(&verified_tower_height_after);
+    // Debug::print(&verified_tower_height_after);
 
     Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
 

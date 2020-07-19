@@ -29,7 +29,7 @@ fun main(sender: &signer) {
 //! sender: association
 script {
 use 0x0::Redeem;
-use 0x0::Debug;
+// use 0x0::Debug;
 use 0x0::Transaction;
 
 fun main() {
@@ -40,7 +40,7 @@ fun main() {
     Redeem::end_redeem({{bob}});
 
     let miner_epochs_after = Redeem::get_miner_epochs({{bob}});
-    Debug::print(&miner_epochs_after);
+    // Debug::print(&miner_epochs_after);
 
     Transaction::assert(miner_epochs_after > miner_epochs_before, 1000);
 
