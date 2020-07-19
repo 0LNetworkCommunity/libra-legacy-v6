@@ -107,7 +107,7 @@ impl LibraClient {
     }
 
     /// Retrieves miner state
-    /// added by OL
+    /// added by 0L
     pub fn get_miner_state(
         &mut self,
         account: AccountAddress,

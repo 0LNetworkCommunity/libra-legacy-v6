@@ -1,4 +1,4 @@
-// This module returns statistics about the network at any given block, or window of blocks. A number of core OL modules depend on Statistics. The relevant statistics in an MVP are "liveness accountability" statistics. From within the VM context the statistics available are those in the BlockMetadata type.
+// This module returns statistics about the network at any given block, or window of blocks. A number of core 0L modules depend on Statistics. The relevant statistics in an MVP are "liveness accountability" statistics. From within the VM context the statistics available are those in the BlockMetadata type.
 
 address 0x0 {
   module Stats {
@@ -24,7 +24,7 @@ address 0x0 {
     }
 
     public fun initialize(association: &signer): u64 {
-      // TODO: OL: (nelaturuk) This should happen only once in genesis
+      // TODO: 0L: (nelaturuk) This should happen only once in genesis
       if (Signer::address_of(association) == 0x0) {
         move_to_sender<History>(History{ val_list: Vector::empty() });
         return 1u64
@@ -72,7 +72,7 @@ address 0x0 {
       num_voted
     }
 
-    // TODO: OL: (dranade) This should actually return a fixed decimal as a percentage, but this hasn't been implemented yet.
+    // TODO: 0L: (dranade) This should actually return a fixed decimal as a percentage, but this hasn't been implemented yet.
     // For now, it will be returned as an unsigned int and be a confidence level
     public fun network_heuristics(start_height: u64, end_height: u64): u64 acquires History {
       if (start_height > end_height) return 0;
@@ -121,7 +121,7 @@ address 0x0 {
     }
 
     public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
-        // TODO: OL: (Nelaturuk) This needs a capability/permission to prevent the general public from calling this function.
+        // TODO: 0L: (Nelaturuk) This needs a capability/permission to prevent the general public from calling this function.
       let i = 0;
       let len = Vector::length<address>(votes);
       while (i < len) {

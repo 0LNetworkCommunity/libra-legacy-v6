@@ -34,7 +34,7 @@ address 0x0 {
       move_to_sender<SubsidyInfo>(
         SubsidyInfo {// TODO : SubsidyInfo Constants can be hard coded in the Calc module instead of being a mutable resource.
           // subsidy ceiling is
-          // subsidy_ceiling_gas: 296, //TODO: OL:Update this with actually subsidy ceiling in in GAS
+          // subsidy_ceiling_gas: 296, //TODO: 0L:Update this with actually subsidy ceiling in in GAS
           // min_node_density: 4,
           // max_node_density: 300,
           // subsidy_units: 0,
@@ -52,7 +52,7 @@ address 0x0 {
       Transaction::assert(sender == 0x0, 8001);
       Debug::print(&0x50B51DE0000000000000000000001001);
       //// Important Constant ////
-      let subsidy_ceiling_gas = 296u64; //TODO:OL:Update this with actually subsidy ceiling in in GAS
+      let subsidy_ceiling_gas = 296u64; //TODO:0L:Update this with actually subsidy ceiling in in GAS
       //// Important Constant ////
 
       //Acquire subsidy info
@@ -262,7 +262,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 8001);
 
-      //TODO:OL:Need to check if account exists already
+      //TODO:0L:Need to check if account exists already
       //Get mutable burn accounts vector from association
       let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
       Vector::push_back(&mut subsidy_info.burn_accounts, new_burn_account);

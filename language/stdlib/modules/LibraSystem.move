@@ -284,7 +284,7 @@ module LibraSystem {
     // NewEpochEvent event will be fired.
     // The Association, the VM, the validator operator or the validator from the current validator set
     // are authorized to update the set of validator infos and add/remove validators
-    // Tests for this method are written in move-lang/functional-tests/OL/reconfiguration/bulk_update.move
+    // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>,

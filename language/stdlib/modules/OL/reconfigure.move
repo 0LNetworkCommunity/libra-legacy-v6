@@ -1,6 +1,6 @@
 // Epoch Prologue
 // This module is responsible for reconfiguration - updating validator set after each epoch.
-// Also has test in /language/ir-testsuite/tests/OL
+// Also has test in /language/ir-testsuite/tests/0L
 
 address 0x0 {
     module ReconfigureOL {
@@ -104,7 +104,7 @@ address 0x0 {
 
         fun prepare_upcoming_validator_set(account: &signer, current_block_height: u64) {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
-            // TODO: OL: N should be made constant in Genesis
+            // TODO: 0L: N should be made constant in Genesis
             Debug::print(&0x12EC011F160000000000000000002001);
             let eligible_validators = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch());
             Debug::print(&0x12EC011F160000000000000000002002);

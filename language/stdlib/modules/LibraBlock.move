@@ -20,7 +20,7 @@ module LibraBlock {
     resource struct BlockMetadata {
       // Height of the current block
       height: u64,
-      // TODO OL: prefer not modifying this struct. Need to find a way to read from new_block_events.
+      // TODO 0L: prefer not modifying this struct. Need to find a way to read from new_block_events.
       voters: vector<address>,
       // Handle where events with the time of new blocks are emitted
       new_block_events: Event::EventHandle<Self::NewBlockEvent>,
@@ -45,7 +45,7 @@ module LibraBlock {
           account,
           BlockMetadata {
               height: 0,
-              voters: Vector::singleton(0x0), // OL Change TODO: OL: (Nelaturuk) Remove this. It's a placeholder.
+              voters: Vector::singleton(0x0), // 0L Change TODO: 0L: (Nelaturuk) Remove this. It's a placeholder.
               new_block_events: Event::new_event_handle<Self::NewBlockEvent>(account),
           }
       );
@@ -91,7 +91,7 @@ module LibraBlock {
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
 
-        // OL implementation of reconfiguration.
+        // 0L implementation of reconfiguration.
         if ( round == Globals::get_epoch_length() )
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata.
           ReconfigureOL::reconfigure(vm, get_current_block_height());
@@ -106,7 +106,7 @@ module LibraBlock {
         proposer: address
     ) acquires BlockMetadata {
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(0x0);
-        // TODO OL (Dev): Call the Stats module from here with previous_block_votes.
+        // TODO 0L (Dev): Call the Stats module from here with previous_block_votes.
 
         // TODO: Figure out a story for errors in the system transactions.
         if(proposer != 0x0) Transaction::assert(LibraSystem::is_validator(proposer), 5002);

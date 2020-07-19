@@ -1,9 +1,9 @@
 # network-move-modules
-Minimum viable modules to start and run OL
+Minimum viable modules to start and run 0L
 
 ## What
 
-These are all Move code artifacts which are to be deployed on the OL network.
+These are all Move code artifacts which are to be deployed on the 0L network.
 
 The modules fall into four categories: consensus, economics, information, helpers.
 
