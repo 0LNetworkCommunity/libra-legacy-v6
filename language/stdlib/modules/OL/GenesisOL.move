@@ -25,7 +25,6 @@ module GenesisOL {
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
     use 0x0::Signer;
-    use 0x0::ReconfigureOL;
 
     fun initialize(
         vm: &signer,
@@ -47,9 +46,6 @@ module GenesisOL {
         LibraConfig::initialize(config_account, vm);
         // Currency setup
         Libra::initialize(config_account);
-
-        // Reconfigure module setup
-        ReconfigureOL::initialize(vm);
 
         // Stats module
         Stats::initialize(vm);

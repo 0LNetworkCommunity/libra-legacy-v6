@@ -35,7 +35,7 @@ fn txn_fees_new_calc_one_tx_fees() {
 
     // Let's do a simple no-op operation to create a state transition
     // librablock_helper_tx this with print some helpful debugs. Look for places with a 7e57 to lookup your print (hex for "TEST")
-    let txn = librablock_helper_tx(&association_account, &validator_account, 1);
+    let txn = librablock_helper_tx(&association_account, 1);
     executor.execute_and_apply(txn);
 
     // measure the gas used.
@@ -77,11 +77,10 @@ fn txn_fees_new_check_distribute_gas() {
     executor.new_block();
 
     let association_account = Account::new_association();
-    let validator_account = Account::new();
 
     // Let's do a simple no-op operation to create a state transition
     // librablock_helper_tx this with print some helpful debugs. Look for places with a 7e57 to lookup your print (hex for "TEST")
-    let txn = librablock_helper_tx(&association_account, &validator_account, 1);
+    let txn = librablock_helper_tx(&association_account, 1);
     executor.execute_and_apply(txn);
 
     // measure the gas used.
@@ -90,7 +89,7 @@ fn txn_fees_new_check_distribute_gas() {
     executor.add_account_data(&sender);
 
     // PERHAPS FIND A WAY TO DEPOSIT FUNDS DIRECTLY INTO 0xFEE
-    let setup_fees_txn = librablock_helper_tx(&association_account, &validator_account, 2); // make sure you have the right "sequence number" in this tx
+    let setup_fees_txn = librablock_helper_tx(&association_account, 2); // make sure you have the right "sequence number" in this tx
     executor.execute_and_apply(setup_fees_txn);
 
 }

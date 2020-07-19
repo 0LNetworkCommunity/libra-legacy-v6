@@ -10,7 +10,7 @@ use libra_config::{
     },
     network_id::NetworkId,
 };
-use libra_crypto::ed25519::Ed25519PrivateKey;
+
 use libra_secure_storage::Value;
 use libra_swarm::swarm::{LibraNode, LibraSwarm, LibraSwarmDir};
 use libra_temppath::TempPath;
@@ -24,8 +24,8 @@ struct ManagementBuilder {
 }
 
 impl BuildSwarm for ManagementBuilder {
-    fn build_swarm(&self) -> anyhow::Result<(Vec<NodeConfig>)> {
-        Ok((self.configs.clone()))
+    fn build_swarm(&self) -> anyhow::Result<Vec<NodeConfig>> {
+        Ok(self.configs.clone())
     }
 }
 

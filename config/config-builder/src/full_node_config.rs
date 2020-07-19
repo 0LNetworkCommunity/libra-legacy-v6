@@ -11,7 +11,7 @@ use libra_config::{
     network_id::NetworkId,
     utils,
 };
-use libra_crypto::ed25519::Ed25519PrivateKey;
+// use libra_crypto::ed25519::Ed25519PrivateKey;
 use libra_network_address::NetworkAddress;
 use libra_types::transaction::Transaction;
 use rand::{rngs::StdRng, SeedableRng};
