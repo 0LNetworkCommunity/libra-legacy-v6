@@ -115,14 +115,10 @@ impl StdlibScript {
             UpdateLibraVersion,
             UpdateExchangeRate,
             UpdateMintingAbility,
-            //
+
             // Below are 0L Changes
-            //
             Redeem,
             RedeemOnboarding,
-            // RedeemInitialize,
-            LibraBlockTestHelper,
-            TxFeeTestHelper,
             TxFeeTestMint,
             TxFeeTestMove,
             TxFeeTestDistr,

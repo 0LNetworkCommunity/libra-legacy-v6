@@ -26,7 +26,7 @@ pub enum JsonRpcResponse {
     NetworkStatusResponse(Number),
     UnknownResponse(Value),
 
-    // added by OL
+    // added by 0L
     MinerStateResponse(Option<MinerStateView>),
 }
 

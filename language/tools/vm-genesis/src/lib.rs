@@ -192,7 +192,7 @@ fn initialize_validators(
 fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegistration]) {
     // Genesis will abort if mining can't be confirmed.
 
-    println!("initialize_miners");
+    // println!("initialize_miners");
     // IDEA:
     // 1. The miner who participates in genesis ceremony, will add the first vdf proof block to the node.config.toml file.
     // TODO: This file will be parsed as usual, but the NodeConfig object needs to be modified and the data be vailable here.
@@ -246,7 +246,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
 
 /// Distribute genesis subsidy to initialized validators
 fn distribute_genesis_subsidy(context: &mut GenesisContext) {
-    println!("distributing genesis subsidy to validators");
+    // println!("distributing genesis subsidy to validators");
 
     // let root_association_address = account_config::vm_address();
     context.set_sender(account_config::vm_address());

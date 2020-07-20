@@ -31,7 +31,7 @@ jobs:
             components: rustfmt, clippy
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
-      - name: Run OL functional tests
+      - name: Run 0L functional tests
         run: cd language/move-lang/functional-tests && cargo test OL
 
   miner:
@@ -82,5 +82,5 @@ jobs:
             components: rustfmt, clippy
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
-      - name: Run OL e2e tests
+      - name: Run 0L e2e tests
         run: cd language/e2e-tests && cargo xtest -p language-e2e-tests ol -- --nocapture
