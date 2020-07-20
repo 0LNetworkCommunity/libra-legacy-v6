@@ -22,8 +22,10 @@ On a machine you will use for validation, build the project the project root dir
 
 If you are starting a new server you will need the following dependencies (Ububtu instructions):
 
+```
 sudo apt-get update
 sudo apt-get install build-essential cmake clang llvm libgmp-dev
+```
 
 # Mining
 Your working directory is now:
