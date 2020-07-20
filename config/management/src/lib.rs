@@ -4,6 +4,7 @@
 #![forbid(unsafe_code)]
 
 mod error;
+mod config;
 mod genesis;
 mod initialize;
 mod key;
@@ -60,8 +61,11 @@ pub enum Command {
     ValidatorConfig(crate::validator_config::ValidatorConfig),
     #[structopt(about = "Verifies and prints the current configuration state")]
     Verify(crate::verify::Verify),
-    #[structopt(about = "Verifies and prints the current configuration state")]
+    #[structopt(about = "Collects Mining inforatmion from validator operators")]
     Mining(crate::mining::Mining),
+    #[structopt(about = "Print a sample config file for a fullnode")]
+    Config(crate::config::Config),
+
 }
 
 #[derive(Debug, PartialEq)]
@@ -76,6 +80,7 @@ pub enum CommandName {
     Verify,
     Mining,
     Initialize,
+    Config,
 }
 
 impl From<&Command> for CommandName {
@@ -91,6 +96,7 @@ impl From<&Command> for CommandName {
             Command::Verify(_) => CommandName::Verify,
             Command::Mining(_) => CommandName::Mining,
             Command::Initialize(_) => CommandName::Initialize,
+            Command::Config(_) => CommandName::Config,
         }
     }
 }
@@ -108,6 +114,7 @@ impl std::fmt::Display for CommandName {
             CommandName::Verify => "verify",
             CommandName::Mining => "mining",
             CommandName::Initialize => "initialize",
+            CommandName::Config => "config",
         };
         write!(f, "{}", name)
     }
@@ -126,6 +133,7 @@ impl Command {
             Command::Verify(_) => self.verify().unwrap(),
             Command::Mining(_) => self.mining().unwrap(),
             Command::Initialize(_) => self.initialize().unwrap(),
+            Command::Config(_) => self.config().unwrap(),
         }
     }
 
@@ -232,6 +240,16 @@ impl Command {
     pub fn initialize(self) -> Result<String, Error> {
         if let Command::Initialize(initialize) = self {
             initialize.execute()
+        } else {
+            Err(Error::UnexpectedCommand(
+                CommandName::Verify,
+                CommandName::from(&self),
+            ))
+        }
+    }
+    pub fn config(self) -> Result<String, Error> {
+        if let Command::Config(config) = self {
+            config.execute()
         } else {
             Err(Error::UnexpectedCommand(
                 CommandName::Verify,
