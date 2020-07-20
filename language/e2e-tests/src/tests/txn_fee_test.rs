@@ -46,7 +46,7 @@ fn txn_fees_test () { // Run with: `cargo xtest -p language-e2e-tests txn_fee_te
     let distr = txn_fee_tx_distr(&assoc_acc_data.account(), 2);
 
     executor.new_block(); 
-    let mut tx_out = executor.execute_and_apply(mint);
+    executor.execute_and_apply(mint);
 
     // println!("gas used: {:?}, running second", tx_out.gas_used());
     // executor.new_block();
@@ -54,7 +54,7 @@ fn txn_fees_test () { // Run with: `cargo xtest -p language-e2e-tests txn_fee_te
 
     // println!("gas used: {:?}, running third", tx_out.gas_used());
     executor.new_block();
-    tx_out = executor.execute_and_apply(distr);
+    let tx_out = executor.execute_and_apply(distr);
     println!("gas used: {:?}", tx_out.gas_used());
 
     // let account_state = executor

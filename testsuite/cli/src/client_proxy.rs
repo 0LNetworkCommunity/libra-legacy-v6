@@ -36,7 +36,7 @@ use libra_types::{
     vm_error::StatusCode,
     waypoint::Waypoint,
 };
-use libra_wallet::{io_utils, WalletLibrary, ChildNumber};
+use libra_wallet::{io_utils, WalletLibrary};
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
     identities::Zero,
@@ -275,7 +275,7 @@ impl ClientProxy {
 
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
     /// Wraps execute_send_proof
-    pub fn send_proof(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+    pub fn send_proof(&mut self, space_delim_strings: &[&str], _is_blocking: bool) -> Result<()> {
         ensure!(
             space_delim_strings.len() != 6 ,
             "Invalid number of arguments for sending proof"

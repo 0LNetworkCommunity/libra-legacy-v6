@@ -123,6 +123,7 @@ pub struct ChainInfo {
     pub block_dir: String,
     /// Node ip Address to submit transactions to
     pub node: Option<String>,
+    /// String of base waypoint
     pub base_waypoint: String,
 }
 

@@ -2,10 +2,8 @@ use crate::{account::Account, gas_costs};
 
 
 use libra_types::{
-    account_address::AccountAddress,
-    account_config,
     account_config::{lbr_type_tag, LBR_NAME},
-    transaction::{RawTransaction, SignedTransaction, TransactionArgument},
+    transaction::{SignedTransaction, TransactionArgument},
 };
 
 use stdlib::transaction_scripts::StdlibScript;

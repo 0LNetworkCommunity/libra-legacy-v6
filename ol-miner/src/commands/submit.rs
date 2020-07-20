@@ -1,14 +1,8 @@
 //! `submit` subcommand
 
 
-use super::OlMinerCmd;
 use abscissa_core::{Command, Options, Runnable};
-use libra_crypto::traits::ValidCryptoMaterial;
-use libra_wallet::WalletLibrary;
-use std::fs;
-use std::io::Write;
 use crate::prelude::*;
-use crate::block;
 use libra_types::waypoint::Waypoint;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -46,13 +40,19 @@ impl Runnable for SubmitCmd {
                     Ok(v) => {
                         println!("Using Waypoint from CLI args:\n{}", v);
                     }
-                    Err(e) => {
+                    Err(_e) => {
                         println!("Waypoint cannot be parsed, check delimiter: Error:\n{:?}\n WILL FALLBACK TO WAYPOINT FROM ol_miner.toml", miner_configs.chain_info.base_waypoint);
                         return;
                     }
                 }
 
-                build_block::submit_block(&miner_configs, line, parsed_waypoint.unwrap(),self.height);
+                let result = build_block::submit_block(&miner_configs, line, parsed_waypoint.unwrap(),self.height);
+                match result {
+                    Ok(_val) => { }
+                    Err(_) => {
+                        println!("Failed to submit block")
+                    }
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
