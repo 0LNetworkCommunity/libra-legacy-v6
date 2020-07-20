@@ -130,6 +130,10 @@ cargo run create-waypoint --remote 'backend=github;owner=OLSF;repository=test-ge
 ```
 
 # WIP: Configure node.config.toml
+
+cargo run config --validator-address "/ip4/104.131.20.59/tcp/6180" --validator-listen-address "/ip4/0.0.0.0/tcp/6180" --backend 'backend=disk;path=./lucas_stuff/key_store.json;namespace=lucas' --fullnode-address "/ip4/104.131.20.59/tcp/6179" --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
+
+
 All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
 
 TODO: help needed here. We need to place the above keys, and network data into the node.config.toml.

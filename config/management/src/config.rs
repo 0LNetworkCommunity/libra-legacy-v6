@@ -32,11 +32,11 @@ impl Config {
         let mut config = NodeConfig::default();
 
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-        network.discovery_method = DiscoveryMethod::None;
+        network.discovery_method = DiscoveryMethod::Onchain;
         config.validator_network = Some(network);
 
         let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
-        network.discovery_method = DiscoveryMethod::None;
+        network.discovery_method = DiscoveryMethod::Onchain;
         config.full_node_networks = vec![network];
 
 
@@ -62,15 +62,16 @@ impl Config {
 
 
 
+        //TODO: The data is unecessary here, but may be good to include the actual data.
         config.configs_ol_miner.preimage ="".to_string();
         config.configs_ol_miner.proof ="".to_string();
 
 
         Ok(toml::to_string_pretty(&config).unwrap())
 
-        
 
-        
+
+
 
     }
 
