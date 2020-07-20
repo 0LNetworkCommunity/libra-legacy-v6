@@ -41,8 +41,9 @@ Your working directory is now:
 `libra/ol-miner/`
 ## Create and account and Mnemonic
 In the ol-miner project create account credentials, which will be needed for mining, and also validation.
+```
 `ol-miner/ cargo run keygen`
-
+```
 the response will be a print of the mnemonic, account address, and auth key.
 
 DO NOT LOSE THE MNEMONIC. SAVE IT IN YOUR PASSWORD VAULT. WRITE IT ON PAPER NOW.
