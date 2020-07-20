@@ -20,9 +20,9 @@ pub struct Config {
     #[structopt(long)]
     validator_listen_address: NetworkAddress,
     #[structopt(long)]
-    fullnode_address: Option<NetworkAddress>,
+    fullnode_address: NetworkAddress,
     #[structopt(long)]
-    fullnode_listen_address: Option<NetworkAddress>,
+    fullnode_listen_address: NetworkAddress,
 }
 
 impl Config {
@@ -45,10 +45,22 @@ impl Config {
             network.advertised_address = self.validator_address;
             network.identity = Identity::from_storage(
                 libra_global_constants::VALIDATOR_NETWORK_KEY.into(),
+                ///Nod
                 libra_global_constants::OPERATOR_ACCOUNT.into(),
-                self.backend.backend.try_into().unwrap(),
+                self.backend.backend.clone().try_into().unwrap(),
             );
         }
+
+        let fullnode_network = &mut config.full_node_networks[0];
+        fullnode_network.listen_address = self.fullnode_listen_address;
+        fullnode_network.advertised_address= self.fullnode_address;
+        fullnode_network.identity = Identity::from_storage(
+            libra_global_constants::FULLNODE_NETWORK_KEY.into(),
+            libra_global_constants::OPERATOR_ACCOUNT.into(),
+            self.backend.backend.try_into().unwrap(),
+        );
+
+
 
         config.configs_ol_miner.preimage ="".to_string();
         config.configs_ol_miner.proof ="".to_string();
