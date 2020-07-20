@@ -7,6 +7,8 @@ use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use std::fs::File;
 use std::io::BufReader;
 use libra_json_rpc_types::views::MinerStateView;
+use std::path::Path;
+use serde::{Serialize, Deserialize};
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 // const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
@@ -56,14 +58,14 @@ pub fn submit_vdf_proof_tx_to_network(
 }
 
 
-pub fn resubmit_backlog(client: &mut ClientProxy, quick_check: bool){
+pub fn resubmit_backlog(path: &Path, client: &mut ClientProxy, quick_check: bool){
     //TODO (Ping): If there are any proofs which have not been verified on-chian, send them.
 
     // 1. Find the most recent LOCAL tower height. We can store this in a json file.
     // Open the file in read-only mode with buffer.
-    let file = File::open(path)?;
+    let file = File::open(path).expect("local state file does not exists");
     let reader = BufReader::new(file);
-    let local_state: LocalMinerState = serde_json::from_reader(reader)?;
+    let local_state: LocalMinerState = serde_json::from_reader(reader).expect("Can deserilize local state file.");
 
     let local_tower_height = local_state.local_tower_height;
     let last_succesful_tx_height = local_state.last_succesful_tx_height;
