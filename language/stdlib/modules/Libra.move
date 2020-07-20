@@ -306,7 +306,7 @@ module Libra {
         preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(sender), sender);
     }
 
-    //OL:Method to preburn using address instead of account
+    //0L:Method to preburn using address instead of account
     public fun preburn_to_address<Token>(preburn_address: address, coin: T<Token>) acquires CurrencyInfo, Preburn {
         preburn_with_resource(coin, borrow_global_mut<Preburn<Token>>(preburn_address), preburn_address);
     }
@@ -450,7 +450,7 @@ module Libra {
     // The original coin will have value = original value - `amount`
     // The new coin will have a value = `amount`
     // Fails if the coins value is less than `amount`
-    // OL Update: Checking if sender is association
+    // 0L Update: Checking if sender is association
     public fun withdraw<CoinType>(coin: &mut T<CoinType>, amount: u64): T<CoinType> {
         // Check that `amount` is less than the coin's value
         Transaction::assert(coin.value >= amount, 8000010006);
@@ -468,7 +468,7 @@ module Libra {
     // "Merges" the two coins
     // The coin passed in by reference will have a value equal to the sum of the two coins
     // The `check` coin is consumed in the process
-    // OL Update: Checking if sender is association
+    // 0L Update: Checking if sender is association
     public fun deposit<CoinType>(coin: &mut T<CoinType>, check: T<CoinType>) {
         let T { value } = check;
         coin.value = coin.value + value;

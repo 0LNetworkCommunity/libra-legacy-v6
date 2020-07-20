@@ -205,7 +205,7 @@ fn test_key_derivation() {
         mnemonic.to_string(),
         Mnemonic::mnemonic(&data).unwrap().to_string()
     );
-    let seed = Seed::new(&mnemonic, "OL");
+    let seed = Seed::new(&mnemonic, "0L");
 
     let key_factory = KeyFactory::new(&seed).unwrap();
     assert_eq!(
