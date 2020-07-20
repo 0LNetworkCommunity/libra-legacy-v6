@@ -16,7 +16,7 @@ use libra_types::{
 use std::convert::TryInto;
 use transaction_builder::*;
 
-#[test]
+#[test] #[ignore]
 fn reconfig_bulk_update_test () { // Run with: `cargo xtest -p language-e2e-tests reconfig_bulk_update_test -- --nocapture`
     // TODO: This is using the Fake Executor, like all the other e2e tests. Is there a way to use a libra-swarm node?
     let mut executor = FakeExecutor::from_genesis_file();
