@@ -1,3 +1,9 @@
+# Pull the project
+
+Use git to clone the project onto your machine.
+
+`git clone https://github.com/OLSF/libra.git`
+
 # 0L Experimental Genesis
 
 #Create a github API key.
@@ -16,16 +22,19 @@ echo "<github_key>" > myfile.txt
 ```
 
 # Build the project
-On a machine you will use for validation, build the project the project root dir, with:
-
-`libra/ cargo build --all --bins --exclude cluster-test`
-
 If you are starting a new server you will need the following dependencies (Ububtu instructions):
 
 ```
 sudo apt-get update
 sudo apt-get install build-essential cmake clang llvm libgmp-dev
 ```
+
+If you are going to do anything with cargo, install it:
+`sudo apt install cargo`
+
+On a machine you will use for validation, build the project from within the project root dir, with:
+
+`cargo build --all --bins --exclude cluster-test`
 
 # Mining
 Your working directory is now:
