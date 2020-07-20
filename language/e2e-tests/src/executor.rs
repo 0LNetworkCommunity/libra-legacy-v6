@@ -14,7 +14,7 @@ use libra_state_view::StateView;
 use libra_types::{
     access_path::AccessPath,
     account_config::{AccountResource, BalanceResource},
-    block_metadata::{new_block_event_key, BlockMetadata, NewBlockEvent},
+    block_metadata::{BlockMetadata, NewBlockEvent},
     on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet},
     transaction::{
         SignedTransaction, Transaction, TransactionOutput, TransactionStatus, VMValidatorResult,
@@ -184,7 +184,7 @@ impl FakeExecutor {
     /// data store. Panics if execution fails
     pub fn execute_and_apply(&mut self, transaction: SignedTransaction) -> TransactionOutput {
 
-        let mut tx_vec = vec![transaction];
+        let tx_vec = vec![transaction];
 
         let mut outputs = self.execute_block(tx_vec).unwrap();
         assert!(outputs.len() == 1, "transaction outputs size mismatch");
