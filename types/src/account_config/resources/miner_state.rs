@@ -26,7 +26,7 @@ pub struct MinerStateResource {
 }
 
 impl MoveResource for MinerStateResource {
-    const MODULE_NAME: &'static str = "Redeem";
+    const MODULE_NAME: &'static str = "MinerState";
     const STRUCT_NAME: &'static str = "MinerState";
 }
 

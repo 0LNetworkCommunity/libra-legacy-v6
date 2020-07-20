@@ -192,7 +192,7 @@ impl ClientProxy {
         let vec_addresses = wallet.get_addresses().unwrap();
         // Expect this to be zero before we haven't populated the address map in the repo
         assert!(vec_addresses.len() ==1);
-        // Empty hashmap should be fine 
+        // Empty hashmap should be fine
         let mut vec_account_data = Vec::new();
 
         for address in vec_addresses {
@@ -233,12 +233,12 @@ impl ClientProxy {
 
         // let sender_og = self.accounts.get(sender_ref_id).unwrap();
 
-         
+
         let mut sender = Self::get_account_data_from_address(&mut self.client,sender_address,true,None,None).unwrap();
         // let sender = self.accounts.get(sender_ref_id).unwrap();
 
 
-        // create the Redeem transaction script
+        // create the MinerState transaction script
         let script = Script::new(
             StdlibScript::Redeem.compiled_bytes().into_vec(),
             vec![],
