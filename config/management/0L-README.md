@@ -29,6 +29,8 @@ sudo apt-get update
 sudo apt-get install build-essential cmake clang llvm libgmp-dev
 ```
 
+You will also need to make sure that rust is installed and that you are running NIGHTLY.
+
 If you are going to do anything with cargo, install it:
 `sudo apt install cargo`
 
