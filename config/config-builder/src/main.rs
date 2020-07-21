@@ -17,8 +17,8 @@ const NODE_CONFIG: &str = "node.config.toml";
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Tool to create and extend Libra Configs")]
 enum Args {
-    #[structopt(about = "Generate a Libra faucet key")]
-    Faucet(FaucetArgs),
+    // #[structopt(about = "Generate a Libra faucet key")]
+    // Faucet(FaucetArgs),
     #[structopt(about = "Create a new FullNode config XOR extend a Validator config")]
     FullNode(FullNodeCommand),
     #[structopt(about = "Create a new KeyManager config")]
@@ -206,7 +206,7 @@ fn main() {
     let args = Args::from_args();
 
     match args {
-        Args::Faucet(faucet_args) => build_faucet(faucet_args),
+        // Args::Faucet(faucet_args) => build_faucet(faucet_args),
         Args::FullNode(full_node_args) => build_full_node(full_node_args),
         Args::KeyManager(key_manager_args) => build_key_manager(key_manager_args),
         Args::SafetyRules(safety_rules_args) => build_safety_rules(safety_rules_args),
@@ -214,28 +214,28 @@ fn main() {
     };
 }
 
-fn build_faucet(args: FaucetArgs) {
-    let mut config_builder = ValidatorConfig::new();
-    config_builder.num_nodes = args.validators_in_genesis;
-
-    if let Some(seed) = args.seed.as_ref() {
-        let seed = hex::decode(seed).expect("Invalid hex in seed.");
-        config_builder.seed = seed[..32].try_into().expect("Invalid seed");
-    }
-
-    let (faucet_key, waypoint) = config_builder
-        .build_faucet_client()
-        .expect("Unable to build faucet");
-    let key_path = args.output_dir.join("mint.key");
-    fs::create_dir_all(&args.output_dir).expect("Unable to create output directory");
-    generate_key::save_key(faucet_key, key_path);
-
-    let waypoint_path = args.output_dir.join("waypoint.txt");
-    let mut file =
-        File::create(waypoint_path).expect("Unable to create/truncate file at specified path");
-    file.write_all(waypoint.to_string().as_bytes())
-        .expect("Unable to write waypoint to file at specified path");
-}
+// fn build_faucet(args: FaucetArgs) {
+//     let mut config_builder = ValidatorConfig::new();
+//     config_builder.num_nodes = args.validators_in_genesis;
+//
+//     if let Some(seed) = args.seed.as_ref() {
+//         let seed = hex::decode(seed).expect("Invalid hex in seed.");
+//         config_builder.seed = seed[..32].try_into().expect("Invalid seed");
+//     }
+//
+//     let waypoint = config_builder
+//         .build_faucet_client()
+//         .expect("Unable to build faucet");
+//     // let key_path = args.output_dir.join("mint.key");
+//     fs::create_dir_all(&args.output_dir).expect("Unable to create output directory");
+//     // generate_key::save_key(faucet_key, key_path);
+//
+//     let waypoint_path = args.output_dir.join("waypoint.txt");
+//     let mut file =
+//         File::create(waypoint_path).expect("Unable to create/truncate file at specified path");
+//     file.write_all(waypoint.to_string().as_bytes())
+//         .expect("Unable to write waypoint to file at specified path");
+// }
 
 fn build_full_node(command: FullNodeCommand) {
     let config_builder = match &command {

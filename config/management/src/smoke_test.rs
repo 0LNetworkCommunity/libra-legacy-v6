@@ -10,36 +10,37 @@ use libra_config::{
     },
     network_id::NetworkId,
 };
-use libra_crypto::ed25519::Ed25519PrivateKey;
+
 use libra_secure_storage::Value;
 use libra_swarm::swarm::{LibraNode, LibraSwarm, LibraSwarmDir};
 use libra_temppath::TempPath;
 use libra_types::account_address;
 use std::path::{Path, PathBuf};
+use std::fs;
+
 
 struct ManagementBuilder {
     configs: Vec<NodeConfig>,
-    faucet_key: Ed25519PrivateKey,
 }
 
 impl BuildSwarm for ManagementBuilder {
-    fn build_swarm(&self) -> anyhow::Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
-        Ok((self.configs.clone(), self.faucet_key.clone()))
+    fn build_swarm(&self) -> anyhow::Result<Vec<NodeConfig>> {
+        Ok(self.configs.clone())
     }
 }
 
 #[test]
 fn smoke_test() {
     LibraNode::prepare();
-    let helper = StorageHelper::new();
+        let helper = StorageHelper::new();
     let num_validators = 5;
     let shared = "_shared";
-    let association = "association";
-    let association_shared = association.to_string() + shared;
+    let association = "vm";
+    // let association_shared = association.to_string() + shared;
 
     // Step 1) Prepare the layout
     let mut layout = Layout::default();
-    layout.association = vec![association_shared.to_string()];
+    // layout.association = vec![association_shared.to_string()];
     layout.operators = (0..num_validators)
         .map(|v| (v.to_string() + shared))
         .collect();
@@ -52,9 +53,9 @@ fn smoke_test() {
 
     // Step 2) Set association key
     helper.initialize(association.into());
-    helper
-        .association_key(&association, &association_shared)
-        .unwrap();
+    // helper
+    //     .association_key(&association, &association_shared)
+    //     .unwrap();
 
     // Step 3) Prepare validators
     let temppath = TempPath::new();
@@ -65,7 +66,23 @@ fn smoke_test() {
     for i in 0..num_validators {
         let ns = i.to_string();
         let ns_shared = ns.clone() + shared;
-        helper.initialize(ns.clone());
+
+        // Using fixtures to skip the offline steps a person would take to set up their miner.
+        // 1. Generate a keypair, and save a mnemonic.
+        // 2. Run the ol-miner app for creating a genesis proof. block_0.json
+
+        //NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+        // NOTE there are only fixtures for 5 validators in the /test_fixtures/ directory.
+        let mnemonic = fs::read_to_string(format!(
+            "./test_fixtures/miner_{}/miner_{}.mnem",
+            &ns,
+            &ns
+        )).unwrap();
+        helper.initialize_with_menmonic(ns.clone(), mnemonic.to_string());
+        // helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
+
+        // Mine a block in the 0L miner folder
+        helper.mining(&format!("./test_fixtures/miner_{}/block_0.json", &ns), &ns_shared).unwrap();
 
         let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
 
@@ -138,13 +155,8 @@ fn smoke_test() {
     }
 
     // Step 6) Build configuration for Swarm
-    let faucet_key = helper
-        .storage(association.into())
-        .export_private_key(libra_global_constants::ASSOCIATION_KEY)
-        .unwrap();
     let management_builder = ManagementBuilder {
-        configs,
-        faucet_key,
+        configs
     };
 
     let mut swarm = LibraSwarm {

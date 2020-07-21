@@ -58,7 +58,9 @@ pub enum StdlibScript {
     UpdateLibraVersion,
     UpdateExchangeRate,
     UpdateMintingAbility,
-    // ...add new 0L scripts here
+    //
+    // Below are 0L Changes
+    //
     Redeem,
     RedeemOnboarding,
     // RedeemInitialize,
@@ -75,7 +77,6 @@ impl StdlibScript {
     /// Return a vector containing all of the standard library scripts (i.e., all inhabitants of the
     /// StdlibScript enum)
     pub fn all() -> Vec<Self> {
-        use StdlibScript::*;
         vec![
             AddValidator,
             AddCurrencyToAccount,
@@ -113,7 +114,8 @@ impl StdlibScript {
             UpdateLibraVersion,
             UpdateExchangeRate,
             UpdateMintingAbility,
-            // ...add new 0L scripts here
+
+            // Below are 0L Changes
             Redeem,
             RedeemOnboarding,
             // RedeemInitialize,

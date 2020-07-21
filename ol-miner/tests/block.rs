@@ -12,6 +12,8 @@ use ol_miner::config::*;
 fn test_mine_and_submit() {
     let configs = OlMinerConfig {
         profile: Profile {
+            // public_key: "5ffd9856978b5020be7f72339e41a401".to_owned(),
+            // statement: "protests rage across America".to_owned(),
             auth_key: "5ffd9856978b5020be7f72339e41a401".to_owned(),
             statement: "Protests rage across the nation".to_owned(),
         },
@@ -26,6 +28,7 @@ fn test_mine_and_submit() {
 
     let parsed_waypoint: Waypoint = configs.chain_info.base_waypoint.parse().unwrap();
 
-    build_block::mine_and_submit(&configs, "test mnemonic".to_string(), parsed_waypoint);
-    assert_eq!(true, true, "not true");
+    let _start_app = build_block::mine_and_submit(&configs, "test mnemonic".to_string(), parsed_waypoint);
+
+    // assert_eq!(Ok(()), start_app, "not true");
 }

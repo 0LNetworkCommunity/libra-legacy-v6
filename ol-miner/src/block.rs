@@ -2,6 +2,7 @@
 
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize)]
 pub struct Block {
@@ -9,13 +10,15 @@ pub struct Block {
     pub height: u64,
     /// Elapsed Time in seconds
     pub elapsed_secs: u64,
-    /// VDF Output
+    /// VDF input preimage. AKA challenge
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub preimage: Vec<u8>,
     /// Data for Block
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    /// VDF proof. AKA solution
     pub data: Vec<u8>,
 }
+
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -31,6 +34,30 @@ where
     let s: String = Deserialize::deserialize(deserializer)?;
     // do better hex decoding than this
     decode(s).map_err(D::Error::custom)
+}
+
+impl Block {
+    /// Get the genesis proof from file
+    pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
+
+
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
+        return Ok((hex::encode(block.preimage),hex::encode(block.data)));
+    }
+
+    /// Get the genesis proof only, without preimage.
+    pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
+
+        let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
+
+        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let reader = std::io::BufReader::new(file);
+        let block: Block = serde_json::from_reader(reader).unwrap();
+
+        return block.data.clone();
+    }
 }
 
 pub mod build_block {
@@ -51,6 +78,8 @@ pub mod build_block {
         path::Path,
         path::PathBuf,
     };
+
+
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
@@ -271,19 +300,8 @@ pub mod build_block {
         (max_block, max_block_path)
     }
 
-    /// Function to get proof
-    pub fn get_proof(config: &OlMinerConfig , height: u64) -> Vec<u8> {
 
-        let blocks_dir = Path::new(&config.chain_info.block_dir);
-
-        let file = fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
-        let reader = BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).unwrap();
-
-        return block.data.clone();
-
-    }
-
+    
 
     /* ////////////// */
     /* / Unit tests / */
@@ -339,6 +357,78 @@ pub mod build_block {
 
         test_helper_clear_block_dir(blocks_dir);
     }
+#[test]
+#[ignore]
+fn create_fixtures() {
+    use libra_wallet::WalletLibrary;
+
+    // if no file is found, the block height is 0
+    //let blocks_dir = Path::new("./test_blocks");
+    for i in 0..6 {
+        let ns = i.to_string();
+        let mut wallet = WalletLibrary::new();
+
+        let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+
+        let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
+
+        let configs_fixture = OlMinerConfig {
+            profile: Profile {
+                auth_key: auth_key.to_string(),
+                statement: "Protests rage across the Nation".to_owned(),
+            },
+            chain_info: ChainInfo {
+                chain_id: "0L testnet".to_owned(),
+                block_dir: "test_fixtures_miner_".to_owned() + &ns, //  path should be unique for concurrent tests.
+                base_waypoint: "None".to_owned(),
+                node: None,
+            },
+        };
+        //clear from sideffects.
+        let blocks_dir = Path::new(&configs_fixture.chain_info.block_dir);
+        // test_helper_clear_block_dir(blocks_dir);
+
+        // mine
+        mine_genesis(&configs_fixture);
+
+        // fs::create_dir(blocks_dir).unwrap();
+        let mut latest_block_path = blocks_dir.to_path_buf();
+        latest_block_path.push(format!("miner_{}.mnemonic", ns));
+        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
+        file.write_all(mnemonic_string.as_bytes())
+            .expect("Could not write mnemonic");
+    }
+    // test_helper_clear_block_dir(blocks_dir);
+}
+    // simulate the offline steps a person would take to set up their miner.
+    // 1. Generate a keypair, and save a mnemonic.
+
+    // for each validator create a dynamic key pair, and mnemonic_string
+    // let mut wallet = WalletLibrary::new();
+    //
+    // let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+    //
+    // let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
+
+    //2. Run the ol-miner app for creating a genesis proof. block_0.JSON
+    // if no file is found, the block height is 0
+    // use ol-miner::OlMinerConfig;
+
+    // let configs_fixture = OlMinerConfig {
+    //     profile: Profile {
+    //         auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
+    //         statement: "Protests rage across the Nation".to_owned(),
+    //     },
+    //     chain_info: ChainInfo {
+    //         chain_id: "0L testnet".to_owned(),
+    //         block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
+    //         base_waypoint: "None".to_owned(),
+    //         node: None,
+    //     },
+    // };
+    // this will output a file to test_blocks_temp_1/block_0.json
+    // mine
+    // mine_genesis(&configs_fixture);
 
     #[test]
     fn test_mine_once() {

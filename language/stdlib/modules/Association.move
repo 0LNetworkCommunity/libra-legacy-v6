@@ -47,7 +47,10 @@ module Association {
 
     /// Certify the privileged capability published under `association`.
     public fun grant_privilege<Privilege>(association: &signer, recipient: &signer) {
-        assert_is_root(association);
+        // assert_is_root(association);
+        // 0L change
+        Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
         move_to(recipient, PrivilegedCapability<Privilege>{ });
     }
 
@@ -68,9 +71,11 @@ module Association {
     /// Aborts if `addr` is the address of the root account
     public fun remove_privilege<Privilege>(association: &signer, addr: address)
     acquires PrivilegedCapability {
-        assert_is_root(association);
+      Transaction::assert(Signer::address_of(association) == 0x0, 8001);
+
+        // assert_is_root(association);
         // root should not be able to remove its own privileges
-        Transaction::assert(Signer::address_of(association) != addr, 1005);
+        // Transaction::assert(Signer::address_of(association) != addr, 1005);
         Transaction::assert(exists<PrivilegedCapability<Privilege>>(addr), 1004);
         PrivilegedCapability<Privilege>{ } = move_from<PrivilegedCapability<Privilege>>(addr);
     }
@@ -82,7 +87,7 @@ module Association {
 
     /// Assert that the sender is the root association account.
     public fun assert_is_root(account: &signer) {
-        Transaction::assert(exists<Root>(Signer::address_of(account)), 1001);
+        Transaction::assert(exists<Root>(Signer::address_of(account)), 1001909);
     }
 
     /// Return whether the account at `addr` is an association account.

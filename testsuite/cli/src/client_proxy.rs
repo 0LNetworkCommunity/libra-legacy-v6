@@ -13,7 +13,7 @@ use libra_crypto::{
     traits::ValidCryptoMaterial,
     x25519, ValidCryptoMaterialStringExt,
 };
-use libra_json_rpc_client::views::{AccountView, BlockMetadata, EventView, TransactionView};
+use libra_json_rpc_client::views::{AccountView, BlockMetadata, EventView, TransactionView, MinerStateView};
 use libra_logger::prelude::*;
 use libra_network_address::{NetworkAddress, RawNetworkAddress};
 use libra_temppath::TempPath;
@@ -301,6 +301,23 @@ impl ClientProxy {
             false
         )?;
         Ok(())
+    }
+
+    /// 0L: Send a VDF proof from the Libra Shell with delimited strings
+    /// Wraps execute_send_proof
+    pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
+        // ensure!(
+        //     space_delim_strings.len() != 6 ,
+        //     "Invalid number of arguments for sending proof"
+        // );
+
+        println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings );
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
+
+        let response = self.client.get_miner_state(sender_address );
+        response.unwrap()
     }
 
 

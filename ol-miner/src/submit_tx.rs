@@ -52,10 +52,9 @@ pub fn submit_vdf_proof_tx_to_network(
     Ok(())
 }
 
-
-/// Function to resubmit backlog
+/// If there are any proofs which have not been verified on-chain send them
 pub fn resubmit_backlog(_quick_check: bool){
-    //TODO (Ping): If there are any proofs which have not been verified on-chian, send them.
+    //TODO (Ping):
 
    //  // 1. Find the most recent LOCAL tower height. We can store this in a json file.
    //  let parsed_file = fs::read(Pathbuf(LocalMinerState))

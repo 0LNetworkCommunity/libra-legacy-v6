@@ -26,7 +26,7 @@ use libra_vm::{LibraVM, VMExecutor, VMValidator};
 use move_core_types::{identifier::Identifier, language_storage::ModuleId};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::CompiledModule;
-use vm_genesis::GENESIS_KEYPAIR;
+
 
 /// Provides an environment to run a VM instance.
 ///
@@ -100,7 +100,6 @@ impl FakeExecutor {
             let swarm = generator::validator_swarm_for_testing(validator_count);
 
             vm_genesis::encode_genesis_change_set(
-                &GENESIS_KEYPAIR.1,
                 &vm_genesis::validator_registrations(&swarm.nodes).0,
                 &genesis_modules,
                 publishing_options,
@@ -242,7 +241,7 @@ impl FakeExecutor {
             .expect("Unable to retrieve the validator set from storage");
         self.block_time += 1;
 
-        // OL: Mocking the validator signatures in previous block.
+        // 0L: Mocking the validator signatures in previous block.
         let mut vec_validator_adresses = vec![];
         for i in validator_set.payload().iter() {
             //println!("\nvalidator: \n{:?}",i );
@@ -251,9 +250,9 @@ impl FakeExecutor {
 
         let new_block = BlockMetadata::new(
             HashValue::zero(),
-            111, // OL: block height/round TODO: This does not appear in tests.
+            111, // 0L: block height/round TODO: This does not appear in tests.
             self.block_time,
-            vec_validator_adresses, // OL: Mocking the validator signatures in previous block.
+            vec_validator_adresses, // 0L: Mocking the validator signatures in previous block.
             *validator_set.payload()[0].account_address(),
         );
 
@@ -266,7 +265,7 @@ impl FakeExecutor {
         let event = output.events()[0].clone();
 
 
-        // TODO: OL: (nelaturuk) This check seems to be failing for the executor.new_block() in librablock_test.rs
+        // TODO: 0L: (nelaturuk) This check seems to be failing for the executor.new_block() in librablock_test.rs
         // println!("event.key() \n{:?}", event.key());
         // println!("new_block_event_key() \n{:?}", new_block_event_key());
         //assert!(event.key() == &new_block_event_key());
