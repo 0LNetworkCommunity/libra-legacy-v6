@@ -8,6 +8,8 @@ use move_vm_types::{
 use std::collections::VecDeque;
 use vm::errors::VMResult;
 use std::convert::TryFrom;
+use libra_types::vm_error::{VMStatus, StatusCode};
+use crate::signature::DEFAULT_ERROR_CODE;
 
 // Extracts the first 32 bits of the vdf challenge which is the auth_key
 // Auth Keys can be turned into an AccountAddress type, to be serialized to a move address type.
