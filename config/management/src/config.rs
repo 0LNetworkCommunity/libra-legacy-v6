@@ -8,7 +8,8 @@ use libra_config::{
     },
     network_id::NetworkId,
 };
-use std::convert::TryInto;
+// use std::convert::TryInto;
+use std::{convert::TryInto, fs, fs::File, io::Write, net::SocketAddr, path::PathBuf};
 
 
 #[derive(Debug, StructOpt)]
@@ -30,6 +31,23 @@ impl Config {
 
 
         let mut config = NodeConfig::default();
+
+        // NOTE: There's something strange with calling libra-node from a path different from where this storage is located.
+
+
+        //TODO:
+        // Check consensus safety_rules
+        // check storage Paths
+        // where to output config.toml file
+        // how to add seed peers file.
+        //path to genesis.blob
+        // waypoint.
+        // [base.waypoint]
+        // type = "from_config"
+        //
+        // [base.waypoint.waypoint]
+        // version = 0
+        // value = "c20d50e14ca7cd0ef8fc209033f3f9ef7c0d0a169267cea8ec4ccda942868e19"
 
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         network.discovery_method = DiscoveryMethod::Onchain;
@@ -68,6 +86,13 @@ impl Config {
         config.configs_ol_miner.preimage ="".to_string();
         config.configs_ol_miner.proof ="".to_string();
 
+        let output_dir = PathBuf::from("~/my_configs");
+
+        // Save file
+        fs::create_dir_all(output_dir).expect("Unable to create output directory");
+        config
+            .save(output_dir)
+            .expect("Unable to save node configs");
 
         Ok(toml::to_string_pretty(&config).unwrap())
 
