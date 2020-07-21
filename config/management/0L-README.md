@@ -69,30 +69,42 @@ Using the mnemonic, and address from above steps, you will run:
 
 ```
 mkdir my_configs
-cargo run initialize --mnemonic '<mnemonic string, single quotes around>' --path ./my_configs --namespace=<account address>
+cargo run initialize --mnemonic '<mnemonic string, single quotes around>' --path=<path to my_configs> --namespace=<account address>
 ```
+
+cargo run initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ~/code/rust/ol/my_configs --namespace=lucas
+
+
 
 ## Add genesis proof from mining
 Add the mining details to the REMOTE key_store.json.
 
+
 ```
-cargo run mining --path-to-genesis-pow ./test_fixtures/miner_1/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=./lucas_stuff/github_token;namespace=lucas'
+cargo run mining --path-to-genesis-pow <path to block_0.json, can be relative> --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to token>github_token;namespace=<address'
 ```
+
+cargo run mining --path-to-genesis-pow ~/code/rust/ol/my_configs/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=lucas'
+
 
 ## Operator key to remote storages
 This step creates public keys and adds them to the github repo.
 
 ```
-cargo run operator-key --local 'backend=disk;path=./my_configs/key_store.json;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=<address>'
+cargo run operator-key --local 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to token>;namespace=<address>'
 ```
+
+cargo run operator-key --local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store.json;namespace=lucas' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=lucas'
 
 
 ## Save the public key from response
 The step above produces a key and an address. You will need these for the next step.
 
+TODO: Output to file
+
 Key:
-9336f9ff1d9ea89f6872517b1919fea147693aa1c2ccb3e32c2d9fe224faf1fc
-Address
+b1d103522b1ff9dbb7cb134e654882efe0abe06f40514321bdbe2cc19f7784ee
+Address:
 5e7891b719c305941e62867ffe730f48
 
 ## Generate Node config
@@ -101,16 +113,30 @@ Add IP addresses and the address above to a validator registration transactions,
 Note the IP address of your machine.
 
 ```
-cargo run validator-config --owner-address <address> --validator-address "/ip4/104.131.20.59/tcp/6180" --fullnode-address "/ip4/104.131.20.59/tcp/6180" --local 'backend=disk;path=./my_configs/key_store.json;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=<address>'
+cargo run validator-config \
+--owner-address <address> \
+--validator-address "/ip4/104.131.20.59/tcp/6180" \
+--fullnode-address "/ip4/104.131.20.59/tcp/6180" \
+--local 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>' \
+--remote 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>;namespace=<address>'
 ```
 
+cargo run validator-config \
+--owner-address 5e7891b719c305941e62867ffe730f48 \
+--validator-address "/ip4/104.131.20.59/tcp/6180" \
+--fullnode-address "/ip4/104.131.20.59/tcp/6180" \
+--local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store.json;namespace=lucas' \
+--remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=lucas'
+
 ## Create Layout file.
-A set-layout file needs to be created by any one of the participants.
+A set-layout file needs to be created by ANY one of the participants.
 
 This is done with:
 ```
-cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=common' --path ./my_configs/set_layout.toml
+cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>;namespace=common' --path <path to set_layout.toml, can be relative>
 ```
+
+cargo run set-layout --backend 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=common' --path ~/code/rust/ol/my_configs/set_layout.toml
 
 The set_layout.toml looks like this. Needs to include all the addresses as they appear in the storage of the github repo.
 
@@ -123,17 +149,42 @@ The set_layout.toml looks like this. Needs to include all the addresses as they 
 ## Build Genesis from remote
 Now each validator will build the genesis. The tool combines data from github and from the local data store.
 ```
- cargo run genesis --backend 'backend=github;owner=OLSF;repository=test;token=./my_configs/github_token' --path ./my_configs/genesis.blob
+ cargo run genesis --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>' --path <path to genesis.blob, can be relative>
 ```
+
+cargo run genesis --backend 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token' --path ~/code/rust/ol/my_configs/genesis.blob
+
 
 ## Create waypoint
 ```
-cargo run create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=./my_configs/github_token;namespace=common' --local 'backend=disk;path=./my_configs/key_store;namespace=<address>'
+cargo run create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>;namespace=common' --local 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>'
 ```
+
+cargo run create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=common' --local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store;namespace=lucas'
+
+TODO: output to files
+0:c20d50e14ca7cd0ef8fc209033f3f9ef7c0d0a169267cea8ec4ccda942868e19
+
 
 # WIP: Configure node.config.toml
 
-cargo run config --validator-address "/ip4/104.131.20.59/tcp/6180" --validator-listen-address "/ip4/0.0.0.0/tcp/6180" --backend 'backend=disk;path=./lucas_stuff/key_store.json;namespace=lucas' --fullnode-address "/ip4/104.131.20.59/tcp/6179" --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
+```
+cargo run config \
+--validator-address \
+"/ip4/104.131.20.59/tcp/6180" \
+--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
+--backend 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>' \
+--fullnode-address "/ip4/104.131.20.59/tcp/6179" \
+--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
+```
+
+cargo run config \
+--validator-address \
+"/ip4/104.131.20.59/tcp/6180" \
+--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
+--backend 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store.json;namespace=lucas' \
+--fullnode-address "/ip4/104.131.20.59/tcp/6179" \
+--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 
 All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
