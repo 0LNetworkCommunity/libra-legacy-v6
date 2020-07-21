@@ -6,6 +6,7 @@
 mod genesis_context;
 mod genesis_gas_schedule;
 
+
 use crate::{
     genesis_context::{GenesisContext, GenesisStateView},
     genesis_gas_schedule::INITIAL_GAS_SCHEDULE,
@@ -19,6 +20,7 @@ use libra_crypto::{
 use libra_network_address::RawNetworkAddress;
 use libra_types::{
     account_config,
+    ol_config::vdf,
     contract_event::ContractEvent,
     on_chain_config::{config_address, new_epoch_event_key, VMPublishingOption},
     transaction::{authenticator::AuthenticationKey, ChangeSet, Script, Transaction},
@@ -215,14 +217,9 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
 
     // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
     // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
-
-    // #[cfg(test)]
-    //TODO: Make this difficulty switch between genesis/production and testing (default should be testing)
-    const DIFFICULTY: u64 = 100;
-    // #[cfg(not(test))]
-    // const DIFFICULTY: u64 = 1000000;
-
-
+    
+    println!("Diffuculty: {}", vdf::get_difficulty());
+    
     for (account_key, _ , mining_proof) in validators {
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
@@ -236,7 +233,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
             vec![
                 Value::transaction_argument_signer_reference(account),
                 Value::vector_u8(preimage), // serialize for move.
-                Value::u64(DIFFICULTY), // TODO: This constant needs to be set
+                Value::u64(vdf::get_difficulty()), // TODO: This constant needs to be set
                 Value::vector_u8(proof),
             ],
         );

@@ -34,6 +34,7 @@ pub mod validator_verifier;
 pub mod vm_error;
 pub mod waypoint;
 pub mod write_set;
+pub mod ol_config;
 
 pub use account_address::AccountAddress as PeerId;
 
