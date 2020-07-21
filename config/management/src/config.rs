@@ -57,8 +57,10 @@ impl Config {
         fullnode_network.identity = Identity::from_storage(
             libra_global_constants::FULLNODE_NETWORK_KEY.into(),
             libra_global_constants::OPERATOR_ACCOUNT.into(),
-            self.backend.backend.try_into().unwrap(),
+            self.backend.backend.clone().try_into().unwrap(),
         );
+
+        config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
 
 
 
