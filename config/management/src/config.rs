@@ -84,7 +84,11 @@ impl Config {
 
         config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
 
-
+        // Load waypoint
+        config.base.waypoint = 
+        
+        // Adding genesis file location
+        config.execution.genesis_file_location = PathBuf::from("genesis.blob");
 
         //TODO: The data is unecessary here, but may be good to include the actual data.
         config.configs_ol_miner.preimage ="".to_string();
