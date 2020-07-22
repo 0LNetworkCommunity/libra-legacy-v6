@@ -203,7 +203,7 @@ cargo run -p libra-management config \
 --validator-address \
 "/ip4/104.131.20.59/tcp/6180" \
 --validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
---backend 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store.json;namespace=lucas' \
+--backend 'backend=disk;path=./key_store.json;namespace=lucas' \
 --fullnode-address "/ip4/104.131.20.59/tcp/6179" \
 --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 

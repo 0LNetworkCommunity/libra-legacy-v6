@@ -87,14 +87,12 @@ impl Config {
         config.configs_ol_miner.proof ="".to_string();
 
         // TODO: place in path with other files.
-        let output_dir = PathBuf::from("/node_files/");
+        // Save file
+        let output_dir = PathBuf::from("./");
 
         fs::create_dir_all(&output_dir).expect("Unable to create output directory");
-
-        // Save file
-        // fs::create_dir_all(&output_dir).expect("Unable to create output directory");
         config
-            .save(&output_dir.join("0l.node.configs.toml"))
+            .save(&output_dir.join("node.configs.toml"))
             .expect("Unable to save node configs");
 
         Ok(toml::to_string_pretty(&config).unwrap())
