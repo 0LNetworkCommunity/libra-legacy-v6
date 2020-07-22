@@ -94,7 +94,7 @@ impl Config {
         // Save file
         // fs::create_dir_all(&output_dir).expect("Unable to create output directory");
         config
-            .save(&output_dir.join("node.configs.toml"))
+            .save(&output_dir.join("0l.node.configs.toml"))
             .expect("Unable to save node configs");
 
         Ok(toml::to_string_pretty(&config).unwrap())
