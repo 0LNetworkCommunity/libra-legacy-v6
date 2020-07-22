@@ -207,6 +207,12 @@ cargo run -p libra-management config \
 --fullnode-address "/ip4/104.131.20.59/tcp/6179" \
 --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
+cargo run -p config-builder validator \
+--advertised /ip4/104.131.20.59/tcp/6180 \
+--bootstrap /ip4/104.131.20.59/tcp/6180 \
+--data-dir ./ \
+--listen /ip4/0.0.0.0/tcp/6180 \
+--output-dir ./node_files
 
 All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
 
