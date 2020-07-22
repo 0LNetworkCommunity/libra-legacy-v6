@@ -78,6 +78,7 @@ pub mod build_block {
         path::Path,
         path::PathBuf,
     };
+    use hex::{encode, decode};
 
 
 
