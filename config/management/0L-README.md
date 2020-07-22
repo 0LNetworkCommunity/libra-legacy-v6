@@ -181,9 +181,11 @@ libra/my_configs $
 cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>;namespace=common' --local 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>'
 ```
 
-cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=common' --local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store;namespace=lucas'
+cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=common' --local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store;namespace=5e7891b719c305941e62867ffe730f48'
 
-TODO: output to files
+TODO: output waypoint to a file.
+
+Sample waypoint:
 0:c20d50e14ca7cd0ef8fc209033f3f9ef7c0d0a169267cea8ec4ccda942868e19
 
 
@@ -219,3 +221,11 @@ cargo run -p config-builder validator \
 All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
 
 TODO: help needed here. We need to place the above keys, and network data into the node.config.toml.
+
+# Start a libra node
+
+From the `my_configs` directory, start a libra node with the following command.
+
+```
+my_configs/ cargo run -p libra-node -- --config node.configs.toml
+```
