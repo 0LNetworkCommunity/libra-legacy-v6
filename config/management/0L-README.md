@@ -26,10 +26,10 @@ If you are starting a new server you will need the following dependencies (Ububt
 
 ```
 sudo apt-get update
-sudo apt-get install build-essential cmake clang llvm libgmp-dev
+sudo apt-get install build-essential cmake clang llvm libgmp-dev cargo
 ```
 
-You will also need to make sure that rust is installed and that you are running NIGHTLY.
+You will also need to make sure that rust is installed and that you are running rust NIGHTLY.
 
 If you are going to do anything with cargo, install it:
 `sudo apt install cargo`
@@ -78,12 +78,14 @@ The namespace will identify your validator's data, locally but also in the remot
 
 Using the mnemonic, and address from above steps, you will run:
 
+TODO: Ask to overwrite the file, instead of fail on already exists.
+
 ```
 libra/my_configs $
 cargo run -p libra-management initialize --mnemonic '<mnemonic string, single quotes around>' --path=<path to my_configs> --namespace=<account address>
 ```
 
-cargo run -p libra-management initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./ --namespace=lucas
+cargo run -p libra-management initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./ --namespace=5e7891b719c305941e62867ffe730f48
 
 
 
@@ -97,6 +99,9 @@ cargo run -p libra-management mining --path-to-genesis-pow <path to block_0.json
 ```
 
 cargo run -p libra-management mining --path-to-genesis-pow ~/code/rust/ol/my_configs/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=5e7891b719c305941e62867ffe730f48'
+
+AUTH KEY:
+200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
 
 
 ## Operator key to remote storages
@@ -116,7 +121,7 @@ The step above produces a key and an address. You will need these for the next s
 TODO: Output to file
 
 Key:
-b1d103522b1ff9dbb7cb134e654882efe0abe06f40514321bdbe2cc19f7784ee
+200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
 Address:
 5e7891b719c305941e62867ffe730f48
 
