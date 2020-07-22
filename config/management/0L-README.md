@@ -216,13 +216,6 @@ cargo run -p libra-management config \
 --fullnode-address "/ip4/104.131.20.59/tcp/6179" \
 --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
-cargo run -p config-builder validator \
---advertised /ip4/104.131.20.59/tcp/6180 \
---bootstrap /ip4/104.131.20.59/tcp/6180 \
---data-dir ./ \
---listen /ip4/0.0.0.0/tcp/6180 \
---output-dir ./node_files
-
 All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
 
 TODO: help needed here. We need to place the above keys, and network data into the node.config.toml.
@@ -232,5 +225,6 @@ TODO: help needed here. We need to place the above keys, and network data into t
 From the `my_configs` directory, start a libra node with the following command.
 
 ```
-my_configs/ cargo run -p libra-node -- --config node.configs.toml
+my_configs/
+cargo run -p libra-node -- --config node.configs.toml
 ```
