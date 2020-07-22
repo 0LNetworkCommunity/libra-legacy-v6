@@ -87,6 +87,9 @@ cargo run -p libra-management initialize --mnemonic '<mnemonic string, single qu
 
 cargo run -p libra-management initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./ --namespace=5e7891b719c305941e62867ffe730f48
 
+cargo run -p libra-management initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./ --namespace=lucas
+
+
 
 
 ## Add genesis proof from mining
@@ -98,7 +101,7 @@ libra/my_configs $
 cargo run -p libra-management mining --path-to-genesis-pow <path to block_0.json, can be relative> --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to token>github_token;namespace=<address>'
 ```
 
-cargo run -p libra-management mining --path-to-genesis-pow ~/code/rust/ol/my_configs/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=5e7891b719c305941e62867ffe730f48'
+cargo run -p libra-management mining --path-to-genesis-pow ~/code/rust/ol/my_configs/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=lu'
 
 AUTH KEY:
 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
@@ -180,13 +183,19 @@ cargo run -p libra-management genesis --backend 'backend=github;owner=OLSF;repos
 
 
 ## Create waypoint
+
+TODO:
+- key_store.json (bug, it's not doing this) Note: in the next step (config) this needs to appear in node.config.toml.
+
 ```
 libra/my_configs $
 
 cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>;namespace=common' --local 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>'
 ```
 
-cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=common' --local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store;namespace=5e7891b719c305941e62867ffe730f48'
+
+
+cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=common' --local 'backend=disk;path=key_store.json;namespace=lucas'
 
 TODO: output waypoint to a file.
 
@@ -195,6 +204,15 @@ Sample waypoint:
 
 
 # WIP: Configure node.config.toml
+
+TODO for node.config.toml:
+- data_dir = "./"
+- genesis_file_location = "genesis.blob"
+- base.waypoint & base.waypoint.waypoint. include from key_store.json.
+- MAYBE? Seed peers file and configs.
+- remove, cleanup all data for full_node_networks
+- consensus.safety_rules.backend, Review to see how libra_swarm does it, we are doing it with a on_disk backend. But swarm does in memory.
+
 
 ```
 libra/my_configs $
@@ -216,21 +234,13 @@ cargo run -p libra-management config \
 --fullnode-address "/ip4/104.131.20.59/tcp/6179" \
 --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
-cargo run -p config-builder validator \
---advertised /ip4/104.131.20.59/tcp/6180 \
---bootstrap /ip4/104.131.20.59/tcp/6180 \
---data-dir ./ \
---listen /ip4/0.0.0.0/tcp/6180 \
---output-dir ./node_files
-
 All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
-
-TODO: help needed here. We need to place the above keys, and network data into the node.config.toml.
 
 # Start a libra node
 
 From the `my_configs` directory, start a libra node with the following command.
 
 ```
-my_configs/ cargo run -p libra-node -- --config node.configs.toml
+my_configs/
+cargo run -p libra-node -- --config node.configs.toml
 ```
