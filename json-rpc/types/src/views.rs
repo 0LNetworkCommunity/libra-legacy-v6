@@ -506,7 +506,7 @@ impl From<CurrencyInfoResource> for CurrencyInfoView {
     }
 }
 
-/// MinerStat View implementation by OL
+/// MinerStat View implementation by 0L
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MinerStateView {
     reported_tower_height: u64,

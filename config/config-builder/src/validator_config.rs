@@ -12,7 +12,7 @@ use libra_config::{
     generator,
     network_id::NetworkId,
 };
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use libra_crypto::{ed25519::Ed25519PrivateKey, Uniform};
 use libra_network_address::NetworkAddress;
 use libra_temppath::TempPath;
 use libra_types::waypoint::Waypoint;
@@ -98,12 +98,12 @@ impl ValidatorConfig {
     }
 
     pub fn build_set(&self) -> Result<Vec<NodeConfig>> {
-        let (configs) = self.build_common(false)?;
+        let configs = self.build_common(false)?;
         Ok(configs)
     }
 
-    pub fn build_faucet_client(&self) -> Result<(Waypoint)> {
-        let (configs) = self.build_common(false)?;
+    pub fn build_faucet_client(&self) -> Result<Waypoint> {
+        let configs = self.build_common(false)?;
         Ok(configs[0]
                 .base
                 .waypoint
@@ -115,7 +115,7 @@ impl ValidatorConfig {
     pub fn build_common(
         &self,
         randomize_ports: bool,
-    ) -> Result<(Vec<NodeConfig>)> {
+    ) -> Result<Vec<NodeConfig>> {
         ensure!(self.num_nodes > 0, Error::NonZeroNetwork);
         ensure!(
             self.node_index < self.num_nodes,
@@ -125,7 +125,7 @@ impl ValidatorConfig {
             }
         );
 
-        let (faucet_key, config_seed) = self.build_faucet_key();
+        let (_faucet_key, config_seed) = self.build_faucet_key();
         let generator::ValidatorSwarm { mut nodes, .. } = generator::validator_swarm(
             &self.template,
             self.num_nodes,
@@ -172,7 +172,7 @@ impl ValidatorConfig {
             node.execution.genesis = genesis.clone();
         }
 
-        Ok((nodes))
+        Ok(nodes)
     }
 
     pub fn build_faucet_key(&self) -> (Ed25519PrivateKey, [u8; 32]) {
@@ -222,10 +222,10 @@ impl BuildSwarm for ValidatorConfig {
     }
 }
 
-pub fn test_config() -> (NodeConfig) {
+pub fn test_config() -> NodeConfig {
     let validator_config = ValidatorConfig::new();
     let mut configs = validator_config.build_swarm().unwrap();
-    (configs.swap_remove(0))
+    configs.swap_remove(0)
 }
 
 #[cfg(test)]

@@ -7,6 +7,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct Mining {
+    #[structopt(long, short)]
     pub path_to_genesis_pow: PathBuf,
     #[structopt(flatten)]
     pub backend: SingleBackend,
@@ -25,7 +26,7 @@ impl Mining {
                 .map_err(|e| Error::RemoteStorageUnavailable(e.to_string()))?;
 
             remote
-                .set("proof_of_work_preimage", preimage)
+                .set(libra_global_constants::OPERATOR_PROOF_OF_WORK_PREIMAGE, preimage)
                 .map_err(|e| {
                     Error::RemoteStorageWriteError(
                         libra_global_constants::OPERATOR_PROOF_OF_WORK_PREIMAGE,
@@ -35,7 +36,7 @@ impl Mining {
             remote
                 .set(libra_global_constants::OPERATOR_PROOF_OF_WORK_PROOF, proof)
                 .map_err(|e| {
-                    Error::RemoteStorageWriteError("proof_of_work_proof", e.to_string())
+                    Error::RemoteStorageWriteError(libra_global_constants::OPERATOR_PROOF_OF_WORK_PROOF, e.to_string())
                 })?;
 
         Ok("Sent Proof".to_string())
