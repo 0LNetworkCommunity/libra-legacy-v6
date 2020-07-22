@@ -57,12 +57,14 @@ DO NOT LOSE THE MNEMONIC. SAVE IT IN YOUR PASSWORD VAULT. WRITE IT ON PAPER NOW.
 There is a template for ol-miner.toml in /ol-miner/ update it with the auth key that you generated as part of the credentials in the previous step.
 
 ## Mine one proof, your miner's genesis proof.
-This will take at least 10 minutes.
+This will take at least 10 minutes. The current version of the program will stop on its own when one block has been completed.
 
 ```
 libra/ol-miner $
 ol-miner/ cargo run start
 ```
+
+You will be prompted to enter your mnemonic.
 
 A file called `blocks/block_0.json` will be produced. You will need this for registering your validator for genesis.
 
