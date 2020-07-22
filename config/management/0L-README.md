@@ -54,7 +54,7 @@ the response will be a print of the mnemonic, account address, and auth key.
 DO NOT LOSE THE MNEMONIC. SAVE IT IN YOUR PASSWORD VAULT. WRITE IT ON PAPER NOW.
 
 ## Include account data in ol-miner.toml
-There is a template for ol-miner.toml in /ol-miner/ update it wieht the credentials.
+There is a template for ol-miner.toml in /ol-miner/ update it with the auth key that you generated as part of the credentials in the previous step.
 
 ## Mine one proof, your miner's genesis proof.
 This will take at least 10 minutes.
