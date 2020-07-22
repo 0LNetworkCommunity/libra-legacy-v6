@@ -85,7 +85,7 @@ impl Config {
         config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
 
         // Load waypoint
-        config.base.waypoint = 
+        config.base.waypoint = WaypointConfig::FromStorage { backend: self.backend.backend.clone().try_into().unwrap() };
         
         // Adding genesis file location
         config.execution.genesis_file_location = PathBuf::from("genesis.blob");
