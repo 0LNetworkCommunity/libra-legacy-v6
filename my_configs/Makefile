@@ -6,14 +6,17 @@ SHELL=/usr/bin/env bash
 # Don't put the MNEM here, add that by command line only.
 DATA_PATH = ./
 # TODO: namespace and account will be the same data. Testing with human readable names.
-NAME = zaki
-ACC = 402e9aaf54ca8c39bab641b0c9829070
-IP = 192.241.147.210
+#NAME = zaki
+#ACC = 402e9aaf54ca8c39bab641b0c9829070
+#IP = 192.241.147.210
 
 #NAME = lucas
 #ACC = 5e7891b719c305941e62867ffe730f48
 #IP = 104.131.20.59
 
+NAME = keerthi
+ACC = 027c83aeb3b9c085f5a1506b418d08cf
+IP = 64.227.28.81
 ###########################
 
 compile : all-bins
