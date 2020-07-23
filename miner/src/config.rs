@@ -130,7 +130,7 @@ impl Default for OlMinerConfig {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
-    /// home directory of ol_miner
+    /// home directory of miner
     pub home: PathBuf,
 }
 

@@ -49,7 +49,7 @@ impl Runnable for SubmitCmd {
                         waypoint = parsed_waypoint.unwrap();
                     }
                     Err(_e) => {
-                        println!("Error: Waypoint cannot be parsed from command line args. Received: {:?}\nDid you pass --waypoint=0:<hash>? \n WILL FALLBACK TO WAYPOINT FROM ol_miner.toml\n {:?}",
+                        println!("Error: Waypoint cannot be parsed from command line args. Received: {:?}\nDid you pass --waypoint=0:<hash>? \n WILL FALLBACK TO WAYPOINT FROM miner.toml\n {:?}",
                         self.waypoint,
                         miner_configs.chain_info.base_waypoint);
                         waypoint = miner_configs.chain_info.base_waypoint.parse().unwrap();

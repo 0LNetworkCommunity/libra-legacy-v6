@@ -19,7 +19,7 @@
 )]
 
 use abscissa_core::testing::prelude::*;
-// use ol_miner::config::OlMinerConfig;
+// use miner::config::OlMinerConfig;
 
 use libra_types::waypoint::Waypoint;
 use once_cell::sync::Lazy;

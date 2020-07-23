@@ -249,7 +249,7 @@ pub mod build_block {
     fn write_json(block: &Block, blocks_dir: &PathBuf) {
         if !&blocks_dir.exists() {
             // first run, create the directory if there is none, or if the user changed the configs.
-            // note: user may have blocks but they are in a different directory than what ol_miner.toml says.
+            // note: user may have blocks but they are in a different directory than what miner.toml says.
             fs::create_dir(&blocks_dir).unwrap();
         };
         // Write the file.
@@ -262,7 +262,7 @@ pub mod build_block {
     }
 
     // parse the existing blocks in the miner's path. This function receives any path.
-    // Note: the path is configured in ol_miner.toml which abscissa Configurable parses, see commands.rs.
+    // Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
     fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
         let mut max_block: Option<u64> = None;
         let mut max_block_path = None;

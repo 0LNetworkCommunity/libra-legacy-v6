@@ -3,7 +3,7 @@
 #![deny(warnings, missing_docs, trivial_casts, unused_qualifications)]
 #![forbid(unsafe_code)]
 
-use ol_miner::application::APPLICATION;
+use miner::application::APPLICATION;
 
 /// Boot OlMiner
 fn main() {

@@ -24,7 +24,7 @@ use abscissa_core::{
 use std::path::PathBuf;
 
 /// OlMiner Configuration Filename
-pub const CONFIG_FILE: &str = "ol_miner.toml";
+pub const CONFIG_FILE: &str = "miner.toml";
 
 /// OlMiner Subcommands
 #[derive(Command, Debug, Options, Runnable)]
