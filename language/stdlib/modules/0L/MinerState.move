@@ -10,6 +10,7 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::LibraConfig;
     use 0x0::Globals;
+    use 0x0::Hash;
 
     // Struct to store information about a VDF proof submitted
     struct VdfProofBlob {
@@ -148,18 +149,18 @@ address 0x0 {
       // 3. Add redeem attempt to invalid_proof_history, which will later be removed with successful verification.
       // Should also surface to client since ClientProxy for submit redeem tx is async.
       // Vector::push_back(&mut global_redemption_state.proof_history, *&vdf_proof_blob.solution);
-      Vector::push_back(&mut miner_redemption_state.invalid_proof_history, *&vdf_proof_blob.solution);
+      Vector::push_back(&mut miner_redemption_state.invalid_proof_history, Hash::sha3_256(*&vdf_proof_blob.solution));
 
       // TODO: Is there a missing 4th step here?
 
       // 5. Update the miner's state with pending statistics.
       // remove the proof that was placed provisionally in invalid_proofs, since it passed.
       let removed_solution = Vector::pop_back(&mut miner_redemption_state.invalid_proof_history);
-      Transaction::assert(&removed_solution == &vdf_proof_blob.solution, 180207011010);
+      Transaction::assert(&removed_solution == &Hash::sha3_256(*&vdf_proof_blob.solution), 180207011010);
 
       // 6. Update resources and statistics.
       // Add the correct proof
-      Vector::push_back(&mut miner_redemption_state.verified_proof_history, *&vdf_proof_blob.solution);
+      Vector::push_back(&mut miner_redemption_state.verified_proof_history, Hash::sha3_256(*&vdf_proof_blob.solution));
       Transaction::assert(Vector::length(&miner_redemption_state.verified_proof_history) > 0, 180207021010);
 
       // Increment the verified_tower_height
@@ -184,9 +185,10 @@ address 0x0 {
                                     (&mut MinerProofHistory, VdfProofBlob) {
       // Checks that the blob was not previously submitted.
       // If previously redeemed, its a no-op with error.
-      let is_previously_submitted_proof = Vector::contains(&miner_redemption_state.verified_proof_history, &vdf_proof_blob.solution);
+      let hash_of_solution = Hash::sha3_256(*&vdf_proof_blob.solution);
+      let is_previously_submitted_proof = Vector::contains(&miner_redemption_state.verified_proof_history, &hash_of_solution );
       Transaction::assert(is_previously_submitted_proof == false, 180208011020);
-      let is_previously_submitted_invalid_proof = Vector::contains(&miner_redemption_state.invalid_proof_history, &vdf_proof_blob.solution);
+      let is_previously_submitted_invalid_proof = Vector::contains(&miner_redemption_state.invalid_proof_history, &hash_of_solution );
       Transaction::assert(is_previously_submitted_invalid_proof == false, 180208021020);
 
       // Check that the proof presented previously matches the current preimage.
@@ -194,7 +196,7 @@ address 0x0 {
       let last_verified_proof = Vector::borrow(
         &miner_redemption_state.verified_proof_history,
         proofs_count - 1);
-      Transaction::assert(last_verified_proof == &vdf_proof_blob.challenge, 180208031010);
+      Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 180208031010);
 
       // Verify proof is valid
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
