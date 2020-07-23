@@ -30,3 +30,20 @@ script {
     }
 }
 // check: EXECUTED
+
+
+//! new-transaction
+//! sender: bob
+script {
+    use 0x0::MinerState;
+
+    fun main() {
+        // Another key whose parsing will fail because it's too short.
+        let challenge = x"7005110127";
+        let new_account_address = 0x000000000000000000000000deadbeef;
+
+        // Parse key and check
+        MinerState::first_challenge_includes_address(new_account_address, &challenge);
+    }
+}
+// check: NATIVE_FUNCTION_ERROR

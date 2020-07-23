@@ -5,23 +5,19 @@ use crate::{
     account::{Account, AccountData},
     executor::FakeExecutor,
     gas_costs,
-    librablock_setup::librablock_helper_tx,
-    txfee_setup::txfee_helper_tx
+    librablock_setup::librablock_helper_tx
 
 };
 use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use libra_types::{
-    account_config::{self, BurnEvent, LBR_NAME},
+    account_config::{LBR_NAME},
     transaction::{authenticator::AuthenticationKey, TransactionArgument},
     vm_error::StatusCode,
 };
-use move_core_types::{
-    identifier::Identifier,
-    language_storage::{StructTag, TypeTag},
-};
-use std::convert::TryFrom;
+
+
 use stdlib::transaction_scripts::StdlibScript;
-use transaction_builder::{encode_mint_lbr_to_address_script};
+
 
 
 #[test]
@@ -44,7 +40,7 @@ fn txn_fees_new_calc_one_tx_fees() {
     executor.add_account_data(&sender);
 
 
-    let gas_used = {
+    let _gas_used = {
         let privkey = Ed25519PrivateKey::generate_for_testing();
         let pubkey = privkey.public_key();
         let new_key_hash = AuthenticationKey::ed25519(&pubkey).to_vec();
