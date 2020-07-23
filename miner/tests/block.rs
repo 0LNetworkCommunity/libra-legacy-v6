@@ -2,8 +2,8 @@
 
 #![forbid(unsafe_code)]
 use libra_types::waypoint::Waypoint;
-use ol_miner::block::build_block;
-use ol_miner::config::*;
+use miner::block::build_block;
+use miner::config::*;
 use std::path::PathBuf;
 
 #[test]

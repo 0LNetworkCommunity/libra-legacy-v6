@@ -1,7 +1,7 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
-use ol_miner::delay;
+use miner::delay;
 
 #[test]
 fn test_do_delay() {

@@ -1,7 +1,7 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
-use ol_miner::config::*;
+use miner::config::*;
 use abscissa_core::path::PathBuf;
 
 #[test]

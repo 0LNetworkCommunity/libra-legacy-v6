@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use libra_types::waypoint::Waypoint;
 
-use ol_miner::submit_tx::submit_vdf_proof_tx_to_network;
+use miner::submit_tx::submit_vdf_proof_tx_to_network;
 
 #[test]
 #[ignore]
