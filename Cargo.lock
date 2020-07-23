@@ -3880,6 +3880,7 @@ dependencies = [
  "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libra-config 0.1.0",
  "libra-crypto 0.1.0",
+ "libra-json-rpc-types 0.1.0",
  "libra-types 0.1.0",
  "libra-wallet 0.1.0",
  "once_cell 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",

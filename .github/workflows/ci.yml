@@ -32,7 +32,7 @@ jobs:
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L functional tests
-        run: cd language/move-lang/functional-tests && cargo test OL
+        run: cd language/move-lang/functional-tests && cargo test 0L
 
   miner:
     name: Miner Tests
@@ -57,7 +57,7 @@ jobs:
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
-        run: cd ol-miner && cargo test
+        run: cd miner && cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
