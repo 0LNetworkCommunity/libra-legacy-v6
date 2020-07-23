@@ -6,7 +6,7 @@ Use git to clone the project onto your machine.
 
 # 0L Experimental Genesis
 
-#Create a github API key.
+# Prep: Create a github API key.
 These tools will be storing data to a github repository which coordinates files needed for genesis.
 The repo is (temporarily): https://github.com/OLSF/test-genesis
 
@@ -21,7 +21,7 @@ cd my_configs
 echo "<github_key>" > myfile.txt
 ```
 
-# Build the project
+# Prep: Build the project
 If you are starting a new server you will need the following dependencies (Ububtu instructions):
 
 ```
@@ -37,6 +37,30 @@ If you are going to do anything with cargo, install it:
 On a machine you will use for validation, build the project from within the project root dir, with:
 
 `cargo build --all --bins --exclude cluster-test`
+
+# Layout File
+
+Someone creates a layout file on the github backend.
+A set-layout file needs to be created by ANY one of the participants.
+
+This is done with:
+```
+libra/my_configs $
+
+cargo run -p libra-management set-layout --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>;namespace=common' --path <path to set_layout.toml, can be relative>
+```
+
+
+
+cargo run -p libra-management set-layout --backend 'backend=github;owner=OLSF;repository=test-genesis;token=./github_token;namespace=common' --path ./set_layout.toml
+
+The set_layout.toml looks like this. Needs to include all the addresses as they appear in the storage of the github repo.
+
+```
+operators = ["zaki", "lucas", "sha", "keerthi"]
+owners = ["zaki", "lucas", "sha", "keerthi"]
+association = ["vm"]
+```
 
 # Mining
 Your working directory is now:
@@ -68,6 +92,7 @@ You will be prompted to enter your mnemonic.
 
 A file called `blocks/block_0.json` will be produced. You will need this for registering your validator for genesis.
 
+
 # Genesis Ceremony Registration
 A github repository will be used to collect credentials from participants.
 Your working directory is now:
@@ -78,6 +103,8 @@ The namespace will identify your validator's data, locally but also in the remot
 
 Using the mnemonic, and address from above steps, you will run:
 
+NOTE: If there is a key_store.json present in your my_configs/ you will get an error that the file already exists.
+
 TODO: Ask to overwrite the file, instead of fail on already exists.
 
 ```
@@ -85,10 +112,7 @@ libra/my_configs $
 cargo run -p libra-management initialize --mnemonic '<mnemonic string, single quotes around>' --path=<path to my_configs> --namespace=<account address>
 ```
 
-cargo run -p libra-management initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./ --namespace=5e7891b719c305941e62867ffe730f48
-
-cargo run -p libra-management initialize --mnemonic 'owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' --path ./ --namespace=lucas
-
+cargo run -p libra-management initialize --mnemonic 'average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice' --path ./ --namespace=zaki
 
 
 
@@ -101,7 +125,7 @@ libra/my_configs $
 cargo run -p libra-management mining --path-to-genesis-pow <path to block_0.json, can be relative> --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to token>github_token;namespace=<address>'
 ```
 
-cargo run -p libra-management mining --path-to-genesis-pow ~/code/rust/ol/my_configs/block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=lu'
+cargo run -p libra-management mining --path-to-genesis-pow block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=zaki'
 
 AUTH KEY:
 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
@@ -115,18 +139,13 @@ libra/my_configs $
 cargo run -p libra-management operator-key --local 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to token>;namespace=<address>'
 ```
 
-cargo run -p libra-management operator-key --local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store.json;namespace=5e7891b719c305941e62867ffe730f48' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=5e7891b719c305941e62867ffe730f48'
+cargo run -p libra-management operator-key --local 'backend=disk;path=key_store.json;namespace=zaki' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=zaki'
 
 
 ## Save the public key from response
 The step above produces a key and an address. You will need these for the next step.
 
 TODO: Output to file
-
-Key:
-200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
-Address:
-5e7891b719c305941e62867ffe730f48
 
 ## Generate Node config
 Add IP addresses and the address above to a validator registration transactions, to be stored on github.
@@ -145,31 +164,13 @@ cargo run -p libra-management validator-config \
 ```
 
 cargo run -p libra-management validator-config \
---owner-address 5e7891b719c305941e62867ffe730f48 \
---validator-address "/ip4/104.131.20.59/tcp/6180" \
---fullnode-address "/ip4/104.131.20.59/tcp/6180" \
---local 'backend=disk;path=/Users/lucas/code/rust/ol/my_configs/key_store.json;namespace=5e7891b719c305941e62867ffe730f48' \
---remote 'backend=github;owner=OLSF;repository=test-genesis;token=/Users/lucas/code/rust/ol/my_configs/github_token;namespace=5e7891b719c305941e62867ffe730f48'
+--owner-address 027c83aeb3b9c085f5a1506b418d08cf \
+--validator-address "/ip4/64.227.28.81/tcp/6180" \
+--fullnode-address "/ip4/64.227.28.81/tcp/6180" \
+--local 'backend=disk;path=key_store.json;namespace=keerthi' \
+--remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=keerthi'
 
-## Create Layout file.
-A set-layout file needs to be created by ANY one of the participants.
 
-This is done with:
-```
-libra/my_configs $
-
-cargo run -p libra-management set-layout --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to github_token>;namespace=common' --path <path to set_layout.toml, can be relative>
-```
-
-cargo run -p libra-management set-layout --backend 'backend=github;owner=OLSF;repository=test-genesis;token=./github_token;namespace=common' --path ./set_layout.toml
-
-The set_layout.toml looks like this. Needs to include all the addresses as they appear in the storage of the github repo.
-
-```
-[operator] = ["alice's address", "bob's address"]
-[owner] = ["alice's address", "bob's address"]
-[association] = ["vm"]
-```
 
 ## Build Genesis from remote
 Now each validator will build the genesis. The tool combines data from github and from the local data store.
@@ -195,12 +196,14 @@ cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLS
 
 
 
-cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=common' --local 'backend=disk;path=key_store.json;namespace=lucas'
+cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=common' --local 'backend=disk;path=key_store.json;namespace=zaki'
 
 TODO: output waypoint to a file.
 
-Sample waypoint:
-0:c20d50e14ca7cd0ef8fc209033f3f9ef7c0d0a169267cea8ec4ccda942868e19
+DEBUG DATA:
+Waypoint
+0:b585a31469dad89c818f41ba3238afedb524c238f9f1500dc051413f13c683b5
+
 
 
 # WIP: Configure node.config.toml
@@ -228,10 +231,10 @@ cargo run -p libra-management config \
 
 cargo run -p libra-management config \
 --validator-address \
-"/ip4/104.131.20.59/tcp/6180" \
+"/ip4/192.241.147.210/tcp/6180" \
 --validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
---backend 'backend=disk;path=./key_store.json;namespace=lucas' \
---fullnode-address "/ip4/104.131.20.59/tcp/6179" \
+--backend 'backend=disk;path=key_store.json;namespace=zaki' \
+--fullnode-address "/ip4/192.241.147.210/tcp/6179" \
 --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 All the information above in exists in my_configs/key_store.json, much of this needs to go into appropriate fiels in `node.config.toml` which is the file libra-node needs to be able to start.
@@ -242,5 +245,14 @@ From the `my_configs` directory, start a libra node with the following command.
 
 ```
 my_configs/
-cargo run -p libra-node -- --config node.configs.toml
+
+# Run libra-node with the config file, and output stdout/err logs to output.log
+cargo run -p libra-node -- --config node.configs.toml &> output.log
+
+```
+Open firewall ports. Ubuntu instructions:
+```
+sudo ufw allow 6180/tcp
+sudo ufw allow 6179/tcp
+sudo ufw enable
 ```
