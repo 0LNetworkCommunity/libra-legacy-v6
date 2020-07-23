@@ -4,11 +4,11 @@ SHELL=/usr/bin/env bash
 ###########################
 ## UPDATE YOUR DATA HERE ##
 # Don't put the MNEM here, add that by command line only.
-DATA_PATH = ~/libra/my_configs/
+DATA_PATH = ./my_configs/
 # TODO: namespace and account will be the same data. Testing with human readable names.
-NAME = lucas
-ACC = 5e7891b719c305941e62867ffe730f48
-IP = 104.131.20.59
+NAME = keerthi
+ACC = 027c83aeb3b9c085f5a1506b418d08cf
+IP = 64.227.28.81
 
 ###########################
 
