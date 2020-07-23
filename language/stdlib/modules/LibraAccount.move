@@ -245,7 +245,7 @@ module LibraAccount {
         );
     }
 
-    // OL::Methods for vm to deposit
+    // 0L::Methods for vm to deposit
     // Deposits the `to_deposit` coin into the `payee`'s account balance with the attached `metadata`
     public fun vm_deposit_with_metadata<Token>(
         payer: &signer,

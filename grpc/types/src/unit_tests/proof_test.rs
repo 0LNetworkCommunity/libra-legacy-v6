@@ -1,12 +1,12 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_prost_test_helpers::assert_protobuf_encode_decode;
-use libra_types::proof::{
-    AccountStateProof, AccumulatorConsistencyProof, EventProof, SparseMerkleProof,
-    SparseMerkleRangeProof, TestAccumulatorProof, TestAccumulatorRangeProof,
-    TransactionInfoWithProof, TransactionListProof,
-};
+// use libra_prost_test_helpers::assert_protobuf_encode_decode;
+// use libra_types::proof::{
+//     // AccountStateProof, AccumulatorConsistencyProof, EventProof, SparseMerkleProof,
+//     // SparseMerkleRangeProof, TestAccumulatorProof, TestAccumulatorRangeProof,
+//     // TransactionInfoWithProof, TransactionListProof,
+// };
 use proptest::prelude::*;
 
 proptest! {
@@ -14,7 +14,6 @@ proptest! {
     fn test_accumulator_proto_roundtrip(proof in any::<TestAccumulatorProof>()) {
         assert_protobuf_encode_decode::<crate::proto::types::AccumulatorProof, TestAccumulatorProof>(&proof);
     }
-
 
     #[test]
     fn test_sparse_merkle_proto_roundtrip(proof in any::<SparseMerkleProof>()) {

@@ -46,7 +46,7 @@ fn main() {
     });
 
     // TODO: get config from file here in a type that can spin up a node:
-    let mut config_from_file = NodeConfig::load("./0_dev_config/0/node.config.toml");
+    // let mut config_from_file = NodeConfig::load("./0_dev_config/0/node.config.toml");
 
     libra_logger::Logger::new().init();
 
