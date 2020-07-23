@@ -12,7 +12,7 @@ fun main(sender: &signer, challenge: vector<u8>,
     // Debug::print(&tower_height);
 
     let proof = MinerState::create_proof_blob(challenge, difficulty, solution, tower_height);
-    MinerState::begin_redeem(sender, proof);
+    MinerState::commit_state(sender, proof);
 
 }
 }
