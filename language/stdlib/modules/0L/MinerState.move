@@ -318,12 +318,10 @@ address 0x0 {
       // Calling native function to do this parsing in rust
       // The auth_key must be at least 32 bytes long
       Transaction::assert(Vector::length(challenge) >= 32, 180213011000);
-      let (parsed_address, _auth_key) = address_from_challenge(challenge);
+      let (parsed_address, _auth_key) = VDF::extract_address_from_challenge(challenge);
       // Confirm the address is corect and included in challenge
       Transaction::assert(new_account_address == parsed_address, 180213021010);
 
     }
-
-    native public fun address_from_challenge(challenge: &vector<u8>): (address, vector<u8>);
   }
 }
