@@ -8,11 +8,12 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 pub struct Block {
     /// Block Height
     pub height: u64,
-    /// Time taken to compute, for reference only.
+    /// Elapsed Time in seconds
     pub elapsed_secs: u64,
     /// VDF input preimage. AKA challenge
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub preimage: Vec<u8>,
+    /// Data for Block
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     /// VDF proof. AKA solution
     pub data: Vec<u8>,
@@ -43,7 +44,7 @@ impl Block {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        return Ok((hex::encode(block.preimage),hex::encode(block.data)));
+        return Ok((encode(block.preimage),encode(block.data)));
     }
 
     /// Get the genesis proof only, without preimage.
@@ -167,7 +168,10 @@ pub mod build_block {
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
-                if waypoint.version() >= 0u64 {
+                // TODO:
+                //  Version is an unsigned int. By definition, it must always be >= 0
+                //  This if statement is redundant, and this error check needs to be fixed.
+                if waypoint.version() >= 0 {
                     if let Some(ref node) = config.chain_info.node {
                         // get preimage
                         submit_vdf_proof_tx_to_network(
@@ -185,6 +189,7 @@ pub mod build_block {
                             .into());
                     }
                 } else {
+                    // TODO: This code can never run
                     return Err(ErrorKind::Config
                         .context("No Waypoint for client provided")
                         .into());
@@ -292,7 +297,6 @@ pub mod build_block {
         }
         (max_block, max_block_path)
     }
-
 
 
 

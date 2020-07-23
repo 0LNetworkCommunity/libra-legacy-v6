@@ -56,7 +56,13 @@ impl Runnable for StartCmd {
                     }
                 }
 
-                build_block::mine_and_submit(&miner_configs, line, waypoint);
+                let result = build_block::mine_and_submit(&miner_configs, line, waypoint);
+                match result {
+                    Ok(_val) => { }
+                    Err(_) => {
+                        println!("Failed to mine_and_submit");
+                    }
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
