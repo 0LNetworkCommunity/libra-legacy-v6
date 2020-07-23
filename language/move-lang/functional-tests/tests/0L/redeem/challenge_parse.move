@@ -46,4 +46,4 @@ script {
         MinerState::first_challenge_includes_address(new_account_address, &challenge);
     }
 }
-// check: NATIVE_FUNCTION_ERROR
+// check: ABORTED
