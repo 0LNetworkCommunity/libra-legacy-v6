@@ -76,12 +76,12 @@ address 0x0 {
         reported_tower_height: 0,
         epoch: 0,
       };
-      begin_redeem(miner, vdf_proof_blob)
+      commit_state(miner, vdf_proof_blob)
     }
 
 
     // This function starts the redeem process.
-    public fun begin_redeem(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
+    public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
       // Get address
       let miner_addr = Signer::address_of( miner );
 
@@ -203,10 +203,10 @@ address 0x0 {
     }
 
 
-    // MinerState::end_redeem() checks that the miner has been doing validation AND that
+    // MinerState::update_metrics() checks that the miner has been doing validation AND that
     // there are mining proofs presented in the last/current epoch.
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
-    public fun end_redeem(miner_addr: address) acquires ProofsInEpoch, MinerProofHistory {
+    public fun update_metrics(miner_addr: address) acquires ProofsInEpoch, MinerProofHistory {
       // The goal of end_redeem is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
 
@@ -279,7 +279,7 @@ address 0x0 {
 
           // For testing: don't call end_redeem unless there is account state for the address.
           if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
-              end_redeem(redeemed_addr);
+              update_metrics(redeemed_addr);
           };
           i = i + 1;
       };

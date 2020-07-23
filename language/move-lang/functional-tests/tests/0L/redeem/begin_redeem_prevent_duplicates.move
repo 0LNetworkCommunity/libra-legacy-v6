@@ -17,7 +17,7 @@ fun main(sender: &signer) {
 
     let bob = sender; // bob is the miner who is submitting the proof for himself. Using sender for convenience.
     let proof = MinerState::create_proof_blob(challenge, difficulty, solution, tower_height);
-    MinerState::begin_redeem(bob, proof);
+    MinerState::commit_state(bob, proof);
 
 }
 }
@@ -36,7 +36,7 @@ fun main(sender: &signer) {
 
     let bob = sender; // bob is the miner who is submitting the proof for himself.
     let proof = MinerState::create_proof_blob(challenge, difficulty, solution, tower_height);
-    MinerState::begin_redeem(bob, proof);
+    MinerState::commit_state(bob, proof);
 }
 }
 // check: ABORTED 180208011020

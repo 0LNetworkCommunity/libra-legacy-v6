@@ -18,7 +18,7 @@ fun main(sender: &signer) {
 
     let bob = sender; // bob is the miner who is submitting the proof for himself. Using sender for convenience.
     let proof = MinerState::create_proof_blob(challenge, difficulty, solution, tower_height);
-    MinerState::begin_redeem(bob, proof);
+    MinerState::commit_state(bob, proof);
 
 }
 }
@@ -37,7 +37,7 @@ fun main() {
     // Check bob's state before updating his miner_redemption_statw
     // let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
     let miner_epochs_before = MinerState::get_miner_epochs({{bob}});
-    MinerState::end_redeem({{bob}});
+    MinerState::update_metrics({{bob}});
 
     let miner_epochs_after = MinerState::get_miner_epochs({{bob}});
     // Debug::print(&miner_epochs_after);
