@@ -203,15 +203,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
     // let account = auth_key.derived_address();
     // let address = Value::address(account);
 
-    // 3. this function initialize_miners() will directly call the Redeem::begin_redeem() with context.exec here. Note the miners get initialized as usual in the above initialize_validators() (Done)
-
-    // context.set_sender(account_config::association_address());
-    // context.exec(
-    //     "Redeem",
-    //     "begin_redeem",
-    //     vec![],
-    //     vec![miner, vdf_proof_blob],
-    // );
+    // 3. this function initialize_miners() will directly call the MinerState::begin_redeem() with context.exec here. Note the miners get initialized as usual in the above initialize_validators() (Done)
 
     // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
     // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
@@ -230,7 +222,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
         let proof = hex::decode(&mining_proof.proof).unwrap();
         context.set_sender( account );
         context.exec(
-            "Redeem",
+            "MinerState",
             "genesis_helper",
             vec![],
             vec![

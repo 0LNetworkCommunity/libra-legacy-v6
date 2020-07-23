@@ -7,7 +7,7 @@
 //! new-transaction
 //! sender: bob
 script {
-use 0x0::Redeem;
+use 0x0::MinerState;
 fun main(sender: &signer) {
 
     let difficulty = 100;
@@ -16,8 +16,8 @@ fun main(sender: &signer) {
     let tower_height = 1;
 
     let bob = sender; // bob is the miner who is submitting the proof for himself. Using sender for convenience.
-    let proof = Redeem::create_proof_blob(challenge, difficulty, solution, tower_height);
-    Redeem::begin_redeem(bob, proof);
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, tower_height);
+    MinerState::commit_state(bob, proof);
 
 }
 }
@@ -27,7 +27,7 @@ fun main(sender: &signer) {
 //! new-transaction
 //! sender: bob
 script {
-use 0x0::Redeem;
+use 0x0::MinerState;
 fun main(sender: &signer) {
     let difficulty = 100;
     let challenge = x"aa";
@@ -35,8 +35,8 @@ fun main(sender: &signer) {
     let tower_height = 1;
 
     let bob = sender; // bob is the miner who is submitting the proof for himself.
-    let proof = Redeem::create_proof_blob(challenge, difficulty, solution, tower_height);
-    Redeem::begin_redeem(bob, proof);
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, tower_height);
+    MinerState::commit_state(bob, proof);
 }
 }
 // check: ABORTED 180208011020
