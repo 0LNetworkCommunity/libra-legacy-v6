@@ -25,6 +25,7 @@ pub struct CreateWaypoint {
 impl CreateWaypoint {
     pub fn execute(self) -> Result<Waypoint, Error> {
         println!("CreateWaypoint 0");
+
         if let Some(remote) = self.secure_backends.remote {
 
         let genesis_helper = crate::genesis::Genesis {
@@ -49,6 +50,19 @@ impl CreateWaypoint {
             .ok_or_else(|| Error::UnexpectedError("Unable to generate a waypoint".to_string()))?;
 
         println!("CreateWaypoint 4");
+
+
+        let mut local: Box<dyn Storage> = self.secure_backends.local.try_into()?;
+        local
+            .available()
+            .map_err(|e| Error::LocalStorageUnavailable(e.to_string()))?;
+        
+        let waypoint_value = Value::String(waypoint.to_string());
+        local
+            .set(libra_global_constants::WAYPOINT, waypoint_value)
+            .map_err(|e| {
+                Error::RemoteStorageWriteError(libra_global_constants::WAYPOINT, e.to_string())
+            })?;
 
             println!("CreateWaypoint 5");
 
