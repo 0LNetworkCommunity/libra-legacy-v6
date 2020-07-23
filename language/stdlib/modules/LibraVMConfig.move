@@ -1,6 +1,6 @@
 address 0x0 {
 
-module LibraVMConfig { // TODO: OL: (nelaturuk) Why is this file mirroring gas_schedule.rs, will .move eventually be the source of gas costs?
+module LibraVMConfig { // TODO: 0L: (nelaturuk) Why is this file mirroring gas_schedule.rs, will .move eventually be the source of gas costs?
     use 0x0::LibraConfig;
 
     // The struct to hold all config data needed to operate the LibraVM.
@@ -83,7 +83,7 @@ module LibraVMConfig { // TODO: OL: (nelaturuk) Why is this file mirroring gas_s
             min_price_per_gas_unit: 0,
             max_price_per_gas_unit: 10000, // TODO: 0L: (LG) What's the rationale behind this max?
             max_transaction_size_in_bytes: 4096,
-            // TODO: OL: (LG): This implies a max block time of 2 seconds.
+            // TODO: 0L: (LG): This implies a max block time of 2 seconds.
             reference_max_transactions_per_block: 20
         };
 

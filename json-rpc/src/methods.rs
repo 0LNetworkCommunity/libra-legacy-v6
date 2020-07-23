@@ -387,7 +387,7 @@ pub(crate) fn build_registry() -> RpcRegistry {
     );
     register_rpc_method!(registry, "get_network_status", get_network_status, 0);
 
-    // added by OL
+    // added by 0L
     register_rpc_method!(registry, "get_miner_state", get_miner_state, 0);
 
     registry

@@ -43,7 +43,7 @@ pub fn verify(
     let v = vdf::WesolowskiVDFParams(4096).new();
 
     let result = v.verify(&challenge, difficulty, &alleged_solution);
-    println!("vdf.rs result {:?}", result);
+    // println!("vdf.rs result {:?}", result);
     let return_values = vec![Value::bool(result.is_ok())];
     Ok(NativeResult::ok(cost, return_values))
 }
