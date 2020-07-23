@@ -1,0 +1,1168 @@
+Using node config NodeConfig { admission_control: AdmissionControlConfig { address: V4(0.0.0.0:59069), need_to_check_mempool_before_validation: false, max_concurrent_inbound_syncs: 100, upstream_proxy_timeout: 1s }, rpc: RpcConfig { address: V4(0.0.0.0:59081) }, base: BaseConfig { data_dir: "./0_dev_config/1", role: Validator, waypoint: FromConfig { waypoint: Waypoint { version: 0, value: HashValue(1c1446da4fd924caba65e08257f3a0dc21593958f2b58c44f11c1da203d37514) } } }, consensus: ConsensusConfig { max_block_size: 1000, contiguous_rounds: 2, max_pruned_blocks_in_mem: 10000, round_initial_timeout_ms: 1000, proposer_type: LeaderReputation(LeaderReputationConfig { active_weights: 99, inactive_weights: 1 }), safety_rules: SafetyRulesConfig { backend: InMemoryStorage, service: Thread } }, debug_interface: DebugInterfaceConfig { admission_control_node_debug_port: 59071, metrics_server_port: 59073, public_metrics_server_port: 59075, address: "0.0.0.0" }, execution: ExecutionConfig { genesis: Some(...), genesis_file_location: "genesis.blob" }Thread, full_node_networks: [], logger: LoggerConfig { is_async: true, chan_size: 256, level: Info }, metrics: MetricsConfig { collection_interval_ms: 1000, dir: "metrics", enabled: false, data_dir: "./0_dev_config/1" }, mempool: MempoolConfig { broadcast_transactions: true, shared_mempool_tick_interval_ms: 50, shared_mempool_batch_size: 100, shared_mempool_max_concurrent_inbound_syncs: 100, shared_mempool_min_broadcast_recipient_count: None, max_broadcasts_per_peer: 25, capacity: 1000000, capacity_per_user: 100, system_transaction_timeout_secs: 86400, system_transaction_gc_interval_ms: 180000 }, state_sync: StateSyncConfig { chunk_limit: 250, tick_interval_ms: 100, long_poll_timeout_ms: 30000, max_chunk_limit: 1000, max_timeout_ms: 120000, sync_request_timeout_ms: 60000 }, storage: StorageConfig { address: V4(127.0.0.1:59077), backup_service_port: 59079, dir: "libradb/db", grpc_max_receive_len: Some(100000000), prune_window: None, data_dir: "./0_dev_config/1" }, test: Some(TestConfig { auth_key: Some(AuthenticationKey([48, 234, 76, 236, 226, 4, 222, 207, 192, 3, 62, 229, 217, 96, 243, 74, 33, 80, 123, 89, 182, 231, 241, 183, 44, 0, 144, 54, 104, 39, 54, 183])), operator_keypair: Some(KeyPair { private_key: Some(<elided secret for Ed25519PrivateKey>), public_key: Ed25519PublicKey(1b14e0767993630a34eb6e9f2bd38a240baf870bfaea25797525b6442d3d0b1a) }), consensus_keypair: Some(KeyPair { private_key: Some(<elided secret for Ed25519PrivateKey>), public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162) }), initialize_storage: true, temp_dir: None, publishing_option: None }), upstream: UpstreamConfig { primary_networks: [21507b59b6e7f1b72c009036682736b7], upstream_peers: {}, fallback_networks: [] }, validator_network: Some(NetworkConfig { listen_address: /ip4/0.0.0.0/tcp/59083, advertised_address: /ip4/0.0.0.0/tcp/59083, discovery_interval_ms: 1000, connectivity_check_interval_ms: 5000, enable_remote_authentication: true, discovery_method: Gossip, network_peers: <0 keys>, network_peers_file: "", seed_peers: SeedPeersConfig { seed_peers: {5942d356f114089d4a46f2f3b0b15b52: [/ip4/0.0.0.0/tcp/59067/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0]} }, seed_peers_file: "21507b59b6e7f1b72c009036682736b7.seed_peers.toml", identity: FromConfig(IdentityFromConfig { keypair: KeyPair { private_key: Some(<elided secret for PrivateKey>), public_key: [X25519 public key: c64c3fa3f0060a1308216a53a54378c027c3d71b16803832733a8d5fca8dfd2b] }, peer_id: 21507b59b6e7f1b72c009036682736b7 }), network_id: Validator }), configs_ol_miner: GenesisMiningProof { preimage: "aa", proof: "002fb6ae7221c8593fb21599fdbee8837426761b328f76609295c9175d5f061bb29792236d22366d0d9305040661b54f59cea3f8e143a584f178981549b462bdc96a3ef270dc1457985390a3401c484b721fdd00f0330b894755d34a311c547b73065aec1a71528d0dc350c13fa68aaf34d206a5fa56f7391b889f1226d7aacc3624eca7f27d523db4f2f18e4ca0bd4cd91b4133cce16b40245d9d393a0c32013f91c5d2bfaca7e5e4c4f71ea90bdc9047657e02e7a429b3f4988b3a7f0789a6c4e0b60af26139dba0c5a83eecc785dbdde0012e47ef3af7fe60e366b8e87ac437da111c8ffb57f400980513b47db04c47787380ea564ffaf1653aa5889e5b31340022cfdd5956cf2fc9130ea4e45a700a5fbd990aae8a4643b22508b6d0b6b80186b5eea2c656296ad2d2043867bd93d48a284b90c2792aeeb25f6a7f0dacac617e7660074e18109e6675480ebc6340f4b01d74d8e5943b9bc8f9acdb3d8ebef5f593858913ebbc2f0d4b1fc76dacca4b032bb8d97e018a614e667bbbb07da891d23028b60275bc2c715e975b347c2e72e5753282959973f34742a43393d76b025b6444e4cabf4272eceae3d94a19ae1f24edf725e8892eb45f34e8a224a5ee56effa8f4b5a3a3bf810579cba99f0e954ce8459afe963bbb2c2578bd5de48e6df56a29ef03dda9e03e19c08fed8b467065afd38720f634c646698a1841c4a21037700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001" } }
+INFO 2020-07-22 15:53:27 storage/libradb/src/lib.rs:168 Opened LibraDB at "./0_dev_config/1/libradb/db/libradb" in 199 ms
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:154 Waiting for downstream to connect
+INFO 2020-07-22 15:53:27 execution/executor/src/db_bootstrapper.rs:135 Genesis calculated: ledger_info_with_sigs V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 0, round: 0, id: HashValue(0000000000000000000000000000000000000000000000000000000000000000), executed_state_id: HashValue(6f3cc5d5b5d71c03f0424ae376cb54f54fd3bb3998c2669f78f95b9bda17469b), version: 0, timestamp_usecs: 0, next_epoch_state: Some(EpochState { epoch: 1, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 1 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 1 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 1 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 1 }}, quorum_voting_power: 3, total_voting_power: 4 } }) }, consensus_data_hash: HashValue(0000000000000000000000000000000000000000000000000000000000000000) }, signatures: {} }), waypoint Waypoint { version: 0, value: HashValue(1c1446da4fd924caba65e08257f3a0dc21593958f2b58c44f11c1da203d37514) }
+DEBUG 2020-07-22 15:53:27 execution/executor/src/lib.rs:663 Received request to commit block 0000000000000000000000000000000000000000000000000000000000000000.
+DEBUG 2020-07-22 15:53:27 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block f99b3dc3 as a virtual block of reconfiguration block 00000000
+DEBUG 2020-07-22 15:53:27 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 00000000 is dropped.
+INFO 2020-07-22 15:53:27 execution/executor/src/db_bootstrapper.rs:69 Genesis commited.
+DEBUG 2020-07-22 15:53:27 libra-node/src/main_node.rs:231 Storage service started in 612 ms
+DEBUG 2020-07-22 15:53:27 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block f99b3dc3 as a virtual block of reconfiguration block 00000000
+DEBUG 2020-07-22 15:53:27 libra-node/src/main_node.rs:238 ChunkExecutor setup in 1 ms
+DEBUG 2020-07-22 15:53:27 network/src/validator_network/network_builder.rs:400 Started health checker
+INFO 2020-07-22 15:53:27 libra-node/src/main_node.rs:158 network setup: role: validator, seed_peers: {5942d356f114089d4a46f2f3b0b15b52: [/ip4/0.0.0.0/tcp/59067/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0]}, trusted_peers: {}
+INFO 2020-07-22 15:53:27 network/src/connectivity_manager/mod.rs:161 ConnectivityManager: 1 seed peers
+DEBUG 2020-07-22 15:53:27 network/src/validator_network/network_builder.rs:380 Started discovery protocol actor
+DEBUG 2020-07-22 15:53:27 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 1
+DEBUG 2020-07-22 15:53:27 network/src/protocols/health_checker/mod.rs:180 No connected peer to ping
+DEBUG 2020-07-22 15:53:27 network/src/protocols/discovery/mod.rs:204 Starting Discovery actor event loop
+DEBUG 2020-07-22 15:53:27 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:27 libra-node/src/main_node.rs:352 Mempool started in 5 ms
+INFO 2020-07-22 15:53:27 network/simple-onchain-discovery/src/lib.rs:136 Update validator Network about new Node IDs
+DEBUG 2020-07-22 15:53:27 network/src/peer_manager/mod.rs:743 listening on /ip4/0.0.0.0/tcp/59083/ln-noise-ik/c64c3fa3f0060a1308216a53a54378c027c3d71b16803832733a8d5fca8dfd2b/ln-handshake/0
+DEBUG 2020-07-22 15:53:27 network/src/validator_network/network_builder.rs:475 Started peer manager
+DEBUG 2020-07-22 15:53:27 libra-node/src/main_node.rs:368 Network started for peer_id: 21507b59b6e7f1b72c009036682736b7
+DEBUG 2020-07-22 15:53:27 libra-node/src/main_node.rs:374 Wait until state synchronizer is initialized
+DEBUG 2020-07-22 15:53:27 network/src/peer_manager/mod.rs:759 Incoming connections listener Task started
+DEBUG 2020-07-22 15:53:27 libra-node/src/main_node.rs:377 State synchronizer initialization complete.
+DEBUG 2020-07-22 15:53:27 network/src/peer_manager/mod.rs:762 Incoming connection from /ip4/127.0.0.1/tcp/59135
+DEBUG 2020-07-22 15:53:27 network/src/peer_manager/mod.rs:893 Connection from c8448531 at /ip4/127.0.0.1/tcp/59135 successfully upgraded
+INFO 2020-07-22 15:53:27 network/src/peer_manager/mod.rs:356 New connection established: Connection { socket: NoiseStream { socket: TcpSocket { inner: IoCompat { inner: TcpStream { addr: V4(127.0.0.1:59083), peer: V4(127.0.0.1:59135), fd: 52 } } }, session: NoiseSession[...], buffers: NoiseBuffers, read_state: Init, write_state: Init }, metadata: ConnectionMetadata { peer_id: c8448531bae86542754f6078ed94af0f, connection_id: ConnectionId(0), addr: /ip4/127.0.0.1/tcp/59135/ln-noise-ik/5561c53a38b63c959516aec8e9ac973a497d431a190473a1ad42bca3c398cb49/ln-handshake/0, origin: Inbound, messaging_protocol: V1, application_protocols: SupportedProtocols(BitVec { inner: [252] }) } }
+INFO 2020-07-22 15:53:27 network/src/peer/mod.rs:117 Starting Peer actor for peer: "c8448531"
+DEBUG 2020-07-22 15:53:27 state-synchronizer/src/coordinator.rs:161 [state sync] new peer PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f)
+DEBUG 2020-07-22 15:53:27 state-synchronizer/src/peer_manager.rs:85 [state sync] state before: {}
+INFO 2020-07-22 15:53:27 network/src/protocols/direct_send/mod.rs:100 Starting direct send actor for peer: c8448531
+DEBUG 2020-07-22 15:53:27 state-synchronizer/src/peer_manager.rs:92 [state sync] state after: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 100.0 }}
+INFO 2020-07-22 15:53:27 consensus/src/consensusdb/mod.rs:39 Opened ConsensusDB at "./0_dev_config/1/libradb/db/consensusdb" in 78 ms
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:85 Attempting to connect to upstream 127.0.0.1:59077
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:98 Connection established to upstream 127.0.0.1:59077
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:160 Connection established with downstream 127.0.0.1:59141
+DEBUG 2020-07-22 15:53:27 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block f99b3dc3 as a virtual block of reconfiguration block 00000000
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:154 Waiting for downstream to connect
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:154 Waiting for downstream to connect
+DEBUG 2020-07-22 15:53:27 consensus/src/network.rs:281 Peer c8448531bae86542754f6078ed94af0f connected
+DEBUG 2020-07-22 15:53:27 consensus/src/consensus_provider.rs:70 Consensus started.
+DEBUG 2020-07-22 15:53:27 libra-node/src/main_node.rs:390 Consensus started in 100 ms
+INFO 2020-07-22 15:53:27 consensus/src/persistent_liveness_storage.rs:319 Start consensus recovery.
+INFO 2020-07-22 15:53:27 consensus/src/persistent_liveness_storage.rs:335 The following blocks were restored from ConsensusDB : 
+INFO 2020-07-22 15:53:27 consensus/src/persistent_liveness_storage.rs:343 The following quorum certs were restored from ConsensusDB: 
+INFO 2020-07-22 15:53:27 consensus/src/persistent_liveness_storage.rs:81 The last committed block id as recorded in storage: LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 6f3cc5d5, version: 0, timestamp (us): 0, next_epoch_state: EpochState [epoch: 1, validator: ValidatorSet: [21507b59: 1, 2ccabeb1: 1, 5942d356: 1, c8448531: 1, ]]]]
+INFO 2020-07-22 15:53:27 consensus/src/persistent_liveness_storage.rs:121 Consensus root block is [id: f99b3dc3, epoch: 1, round: 00, parent_id: 00000000]
+INFO 2020-07-22 15:53:27 consensus/src/persistent_liveness_storage.rs:387 Starting up the consensus state machine with recovery data - [last_vote None], [highest timeout certificate: None]
+INFO 2020-07-22 15:53:27 consensus/src/epoch_manager.rs:258 Starting EpochState [epoch: 1, validator: ValidatorSet: [21507b59: 1, 2ccabeb1: 1, 5942d356: 1, c8448531: 1, ]] with genesis [id: f99b3dc3, epoch: 1, round: 00, parent_id: 00000000]
+INFO 2020-07-22 15:53:27 consensus/src/epoch_manager.rs:265 Create BlockStore
+INFO 2020-07-22 15:53:27 consensus/src/epoch_manager.rs:273 Update SafetyRules
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:85 Attempting to connect to upstream 127.0.0.1:59143
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:98 Connection established to upstream 127.0.0.1:59143
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:160 Connection established with downstream 127.0.0.1:59147
+INFO 2020-07-22 15:53:27 consensus/src/epoch_manager.rs:289 Create ProposalGenerator
+INFO 2020-07-22 15:53:27 consensus/src/epoch_manager.rs:300 Create RoundState
+INFO 2020-07-22 15:53:27 consensus/src/epoch_manager.rs:304 Create ProposerElection
+DEBUG 2020-07-22 15:53:27 consensus/src/liveness/round_state.rs:311 "214.377µs" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:27 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:27 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 1, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:27 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 1, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:27 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1595433207.939622s, early_duration: 1595433207.939622s } for getting a valid timestamp for the next proposal
+DEBUG 2020-07-22 15:53:27 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-07-22 15:53:27 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-07-22 15:53:27 consensus/src/round_manager.rs:287 Propose [id: c6c0a22d, epoch: 1, round: 01, parent_id: f99b3dc3]
+WARN 2020-07-22 15:53:27 network/src/peer_manager/mod.rs:471 Peer 2ccabeb1 is not connected
+INFO 2020-07-22 15:53:27 consensus/src/epoch_manager.rs:327 RoundManager started
+WARN 2020-07-22 15:53:27 network/src/peer_manager/mod.rs:471 Peer 5942d356 is not connected
+DEBUG 2020-07-22 15:53:27 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: c6c0a22d, epoch: 1, round: 01, parent_id: f99b3dc3]
+DEBUG 2020-07-22 15:53:27 consensus/src/state_computer.rs:60 Executing block c6c0a22dd92469242f1a9d8c6e7872b07e774752746f312b8ae56f89db6ca0c5. Parent: f99b3dc3bff423a4657b254d80a6bfe34e560e9be30543ecb109ff85dad2c441.
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:85 Attempting to connect to upstream 127.0.0.1:59137
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:98 Connection established to upstream 127.0.0.1:59137
+DEBUG 2020-07-22 15:53:27 secure/net/src/lib.rs:160 Connection established with downstream 127.0.0.1:59153
+DEBUG 2020-07-22 15:53:28 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433208.614757s, early_duration: 675.135ms } for being able to vote
+DEBUG 2020-07-22 15:53:28 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:28 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: c6c0a22d, epoch: 1, round: 01, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:28 consensus/src/epoch_manager.rs:511 Round: 1 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: c6c0a22d, epoch: 1, round: 01, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:28 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 2
+DEBUG 2020-07-22 15:53:28 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:28 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 2868502275
+DEBUG 2020-07-22 15:53:28 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+INFO 2020-07-22 15:53:28 network/src/protocols/discovery/mod.rs:310 Received updated note for peer: c8448531 from peer: c8448531
+DEBUG 2020-07-22 15:53:28 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 2
+DEBUG 2020-07-22 15:53:28 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+WARN 2020-07-22 15:53:28 consensus/src/liveness/round_state.rs:219 Local timeout for round 1
+DEBUG 2020-07-22 15:53:28 consensus/src/liveness/round_state.rs:311 "5.246391ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:28 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+WARN 2020-07-22 15:53:28 consensus/src/round_manager.rs:432 Round 1 timed out: already executed and voted at this round, expected round proposer was 21507b59b6e7f1b72c009036682736b7, broadcasting the vote to all replicas
+DEBUG 2020-07-22 15:53:28 consensus/safety-rules/src/safety_rules.rs:281 Incoming timeout message for round 1
+DEBUG 2020-07-22 15:53:28 consensus/safety-rules/src/safety_rules.rs:308 Successfully signed timeout message.
+WARN 2020-07-22 15:53:28 network/src/peer_manager/mod.rs:471 Peer 2ccabeb1 is not connected
+DEBUG 2020-07-22 15:53:28 consensus/src/epoch_manager.rs:511 Round: 1 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: c6c0a22d, epoch: 1, round: 01, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+WARN 2020-07-22 15:53:28 network/src/peer_manager/mod.rs:471 Peer 5942d356 is not connected
+DEBUG 2020-07-22 15:53:28 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: c6c0a22d, epoch: 1, round: 01, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:28 consensus/src/epoch_manager.rs:511 Round: 1 Committed Round: 0 PendingVotes: [LI f43098e8 has 1 votes [21507b59b6e7f1b72c009036682736b7] Round 1 has 1 timeout [21507b59b6e7f1b72c009036682736b7]] Self Vote: Vote: [vote data: VoteData: [block id: c6c0a22d, epoch: 1, round: 01, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:29 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: c6c0a22d, epoch: 1, round: 01, parent_block_id: f99b3dc3, parent_block_round: 00], author: c8448531, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:29 consensus/src/epoch_manager.rs:511 Round: 1 Committed Round: 0 PendingVotes: [LI f43098e8 has 2 votes [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f] Round 1 has 2 timeout [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f]] Self Vote: Vote: [vote data: VoteData: [block id: c6c0a22d, epoch: 1, round: 01, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:29 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 0, HCC: 0, HTC: None] is stale than peer c8448531 remote state SyncInfo[HQC: 0, HCC: 0, HTC: 1]
+DEBUG 2020-07-22 15:53:29 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:29 consensus/src/liveness/round_state.rs:316 Set round deadline to 1.5s from now
+DEBUG 2020-07-22 15:53:29 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 2, reason: TCReady, timeout: 1.5s]
+DEBUG 2020-07-22 15:53:29 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 2, reason: TCReady, timeout: 1.5s]
+DEBUG 2020-07-22 15:53:29 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 9d7ac2a1, epoch: 1, round: 02, parent_id: f99b3dc3]
+DEBUG 2020-07-22 15:53:29 consensus/src/state_computer.rs:60 Executing block 9d7ac2a1879d43052ffd94bbaa0d0bd3364134c5d32ad9afb8afafca3a098439. Parent: f99b3dc3bff423a4657b254d80a6bfe34e560e9be30543ecb109ff85dad2c441.
+DEBUG 2020-07-22 15:53:29 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 3
+DEBUG 2020-07-22 15:53:29 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:29 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 2806066419
+DEBUG 2020-07-22 15:53:29 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:29 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 3
+DEBUG 2020-07-22 15:53:29 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+INFO 2020-07-22 15:53:29 network/src/protocols/discovery/mod.rs:310 Received updated note for peer: 2ccabeb1 from peer: c8448531
+DEBUG 2020-07-22 15:53:30 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433210.345986s, early_duration: 730.309ms } for being able to vote
+DEBUG 2020-07-22 15:53:30 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:30 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:30 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:30 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:30 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+WARN 2020-07-22 15:53:30 network/src/peer_manager/mod.rs:471 Peer 2ccabeb1 is not connected
+DEBUG 2020-07-22 15:53:30 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 4
+DEBUG 2020-07-22 15:53:30 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:30 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 4230187665
+DEBUG 2020-07-22 15:53:30 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:30 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 4
+DEBUG 2020-07-22 15:53:30 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:31 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: c8448531, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:31 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [LI 94eda2dc has 1 votes [c8448531bae86542754f6078ed94af0f] Round 2 has 1 timeout [c8448531bae86542754f6078ed94af0f]] Self Vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:31 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 5
+DEBUG 2020-07-22 15:53:31 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:31 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 3112465851
+DEBUG 2020-07-22 15:53:31 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:31 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 5
+DEBUG 2020-07-22 15:53:31 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+WARN 2020-07-22 15:53:31 consensus/src/liveness/round_state.rs:219 Local timeout for round 2
+DEBUG 2020-07-22 15:53:31 consensus/src/liveness/round_state.rs:311 "723.779228ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:31 consensus/src/liveness/round_state.rs:316 Set round deadline to 1.5s from now
+WARN 2020-07-22 15:53:31 consensus/src/round_manager.rs:432 Round 2 timed out: already executed and voted at this round, expected round proposer was c8448531bae86542754f6078ed94af0f, broadcasting the vote to all replicas
+DEBUG 2020-07-22 15:53:31 consensus/safety-rules/src/safety_rules.rs:281 Incoming timeout message for round 2
+DEBUG 2020-07-22 15:53:31 consensus/safety-rules/src/safety_rules.rs:308 Successfully signed timeout message.
+WARN 2020-07-22 15:53:31 network/src/peer_manager/mod.rs:471 Peer 2ccabeb1 is not connected
+DEBUG 2020-07-22 15:53:31 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [LI 94eda2dc has 1 votes [c8448531bae86542754f6078ed94af0f] Round 2 has 1 timeout [c8448531bae86542754f6078ed94af0f]] Self Vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+WARN 2020-07-22 15:53:31 network/src/peer_manager/mod.rs:471 Peer 5942d356 is not connected
+DEBUG 2020-07-22 15:53:31 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:31 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [LI 94eda2dc has 2 votes [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f] Round 2 has 2 timeout [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f]] Self Vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:32 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:32 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 6
+DEBUG 2020-07-22 15:53:32 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:32 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 3019596913
+INFO 2020-07-22 15:53:32 network/src/connectivity_manager/mod.rs:319 Create dial future: peer: 5942d356, at address: /ip4/0.0.0.0/tcp/59067/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0, after delay: 2s
+INFO 2020-07-22 15:53:32 network/src/connectivity_manager/mod.rs:319 Create dial future: peer: 2ccabeb1, at address: /ip4/0.0.0.0/tcp/59115/ln-noise-ik/2692e75fe78dc905c553c61028b7e394b0bb26f349c538886ca52150e7e62e42/ln-handshake/0, after delay: 2s
+INFO 2020-07-22 15:53:32 network/src/connectivity_manager/mod.rs:329 Dial future: dialing peer: 5942d356, at address: /ip4/0.0.0.0/tcp/59067/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0, after delay: 2.000001073s
+INFO 2020-07-22 15:53:32 network/src/connectivity_manager/mod.rs:329 Dial future: dialing peer: 2ccabeb1, at address: /ip4/0.0.0.0/tcp/59115/ln-noise-ik/2692e75fe78dc905c553c61028b7e394b0bb26f349c538886ca52150e7e62e42/ln-handshake/0, after delay: 2.000000757s
+DEBUG 2020-07-22 15:53:32 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 6
+DEBUG 2020-07-22 15:53:32 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:32 network/src/peer_manager/mod.rs:762 Incoming connection from /ip4/127.0.0.1/tcp/59174
+DEBUG 2020-07-22 15:53:32 network/src/peer_manager/mod.rs:893 Connection from 5942d356 at /ip4/127.0.0.1/tcp/59174 successfully upgraded
+INFO 2020-07-22 15:53:32 network/src/peer_manager/mod.rs:356 New connection established: Connection { socket: NoiseStream { socket: TcpSocket { inner: IoCompat { inner: TcpStream { addr: V4(127.0.0.1:59083), peer: V4(127.0.0.1:59174), fd: 81 } } }, session: NoiseSession[...], buffers: NoiseBuffers, read_state: Init, write_state: Init }, metadata: ConnectionMetadata { peer_id: 5942d356f114089d4a46f2f3b0b15b52, connection_id: ConnectionId(1), addr: /ip4/127.0.0.1/tcp/59174/ln-noise-ik/bc9e1e478585fa19da7e09de7031d1836357969f9807f58c954a4b8c84ed9a77/ln-handshake/0, origin: Inbound, messaging_protocol: V1, application_protocols: SupportedProtocols(BitVec { inner: [252] }) } }
+INFO 2020-07-22 15:53:32 network/src/peer/mod.rs:117 Starting Peer actor for peer: "5942d356"
+INFO 2020-07-22 15:53:32 network/src/protocols/direct_send/mod.rs:100 Starting direct send actor for peer: 5942d356
+INFO 2020-07-22 15:53:32 network/src/connectivity_manager/mod.rs:454 Cancelled pending dial to peer: 5942d356
+DEBUG 2020-07-22 15:53:32 state-synchronizer/src/coordinator.rs:161 [state sync] new peer PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52)
+DEBUG 2020-07-22 15:53:32 state-synchronizer/src/peer_manager.rs:85 [state sync] state before: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 100.0 }}
+DEBUG 2020-07-22 15:53:32 state-synchronizer/src/peer_manager.rs:92 [state sync] state after: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52): PeerInfo { is_alive: true, score: 100.0 }}
+DEBUG 2020-07-22 15:53:32 consensus/src/network.rs:281 Peer 5942d356f114089d4a46f2f3b0b15b52 connected
+WARN 2020-07-22 15:53:33 consensus/src/liveness/round_state.rs:219 Local timeout for round 2
+DEBUG 2020-07-22 15:53:33 consensus/src/liveness/round_state.rs:311 "9.293392ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:33 consensus/src/liveness/round_state.rs:316 Set round deadline to 1.5s from now
+WARN 2020-07-22 15:53:33 consensus/src/round_manager.rs:432 Round 2 timed out: already executed and voted at this round, expected round proposer was c8448531bae86542754f6078ed94af0f, broadcasting the vote to all replicas
+DEBUG 2020-07-22 15:53:33 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [LI 94eda2dc has 2 votes [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f] Round 2 has 2 timeout [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f]] Self Vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+WARN 2020-07-22 15:53:33 network/src/peer_manager/mod.rs:471 Peer 2ccabeb1 is not connected
+DEBUG 2020-07-22 15:53:33 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:33 consensus/src/epoch_manager.rs:511 Round: 2 Committed Round: 0 PendingVotes: [LI 94eda2dc has 2 votes [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f] Round 2 has 2 timeout [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f]] Self Vote: Vote: [vote data: VoteData: [block id: 9d7ac2a1, epoch: 1, round: 02, parent_block_id: f99b3dc3, parent_block_round: 00], author: 21507b59, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:33 consensus/src/round_manager.rs:399 Received a sync info msg: SyncInfo[HQC: 2, HCC: 0, HTC: None]
+DEBUG 2020-07-22 15:53:33 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 0, HCC: 0, HTC: 1] is stale than peer c8448531 remote state SyncInfo[HQC: 2, HCC: 0, HTC: None]
+DEBUG 2020-07-22 15:53:33 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:33 consensus/src/liveness/round_state.rs:316 Set round deadline to 2.25s from now
+DEBUG 2020-07-22 15:53:33 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 3, reason: QCReady, timeout: 2.25s]
+DEBUG 2020-07-22 15:53:33 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 3, reason: QCReady, timeout: 2.25s]
+DEBUG 2020-07-22 15:53:33 consensus/src/epoch_manager.rs:511 Round: 3 Committed Round: 0 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:33 consensus/src/network.rs:266 Received block retrieval request [BlockRetrievalRequest starting from id 9d7ac2a1 with 1 blocks]
+DEBUG 2020-07-22 15:53:33 consensus/src/epoch_manager.rs:511 Round: 3 Committed Round: 0 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:33 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 7
+DEBUG 2020-07-22 15:53:33 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:33 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 2312835999
+DEBUG 2020-07-22 15:53:33 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:33 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 7
+DEBUG 2020-07-22 15:53:33 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:34 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: cbece9ac, epoch: 1, round: 03, parent_block_id: 9d7ac2a1, parent_block_round: 02], author: c8448531, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 0, round: 0, id: 00000000, executed_state_id: 00000000, version: 0, timestamp (us): 0, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:34 consensus/src/epoch_manager.rs:511 Round: 3 Committed Round: 0 PendingVotes: [LI f32b10d6 has 1 votes [c8448531bae86542754f6078ed94af0f] Round 3 has 1 timeout [c8448531bae86542754f6078ed94af0f]] Self Vote: None
+DEBUG 2020-07-22 15:53:34 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 2, HCC: 0, HTC: None] is stale than peer c8448531 remote state SyncInfo[HQC: 3, HCC: 0, HTC: None]
+DEBUG 2020-07-22 15:53:34 consensus/src/block_storage/sync_manager.rs:282 Fetching cbece9ac from c8448531, attempt 1
+DEBUG 2020-07-22 15:53:34 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:34 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 8
+DEBUG 2020-07-22 15:53:34 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:53:34 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 3846352927
+INFO 2020-07-22 15:53:34 network/src/connectivity_manager/mod.rs:339 Dialing peer: 2ccabeb1, at addr: /ip4/0.0.0.0/tcp/59115/ln-noise-ik/2692e75fe78dc905c553c61028b7e394b0bb26f349c538886ca52150e7e62e42/ln-handshake/0
+DEBUG 2020-07-22 15:53:34 network/src/peer_manager/mod.rs:762 Incoming connection from /ip4/127.0.0.1/tcp/59176
+DEBUG 2020-07-22 15:53:34 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 8
+DEBUG 2020-07-22 15:53:34 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:53:34 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3411479728
+DEBUG 2020-07-22 15:53:34 network/src/peer_manager/mod.rs:893 Connection from 2ccabeb1 at /ip4/127.0.0.1/tcp/59176 successfully upgraded
+DEBUG 2020-07-22 15:53:34 network/src/peer_manager/mod.rs:842 Peer '2ccabeb1' successfully dialed at '/ip4/0.0.0.0/tcp/59115/ln-noise-ik/2692e75fe78dc905c553c61028b7e394b0bb26f349c538886ca52150e7e62e42/ln-handshake/0'
+INFO 2020-07-22 15:53:34 network/src/connectivity_manager/mod.rs:447 Successfully connected to peer: 2ccabeb1 at address: /ip4/0.0.0.0/tcp/59115/ln-noise-ik/2692e75fe78dc905c553c61028b7e394b0bb26f349c538886ca52150e7e62e42/ln-handshake/0
+INFO 2020-07-22 15:53:34 network/src/peer_manager/mod.rs:356 New connection established: Connection { socket: NoiseStream { socket: TcpSocket { inner: IoCompat { inner: TcpStream { addr: V4(127.0.0.1:59083), peer: V4(127.0.0.1:59176), fd: 82 } } }, session: NoiseSession[...], buffers: NoiseBuffers, read_state: Init, write_state: Init }, metadata: ConnectionMetadata { peer_id: 2ccabeb1d31ac67b185d683439bb7e52, connection_id: ConnectionId(2), addr: /ip4/127.0.0.1/tcp/59176/ln-noise-ik/2692e75fe78dc905c553c61028b7e394b0bb26f349c538886ca52150e7e62e42/ln-handshake/0, origin: Inbound, messaging_protocol: V1, application_protocols: SupportedProtocols(BitVec { inner: [252] }) } }
+DEBUG 2020-07-22 15:53:34 consensus/src/network.rs:281 Peer 2ccabeb1d31ac67b185d683439bb7e52 connected
+DEBUG 2020-07-22 15:53:34 state-synchronizer/src/coordinator.rs:161 [state sync] new peer PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52)
+INFO 2020-07-22 15:53:34 network/src/peer/mod.rs:117 Starting Peer actor for peer: "2ccabeb1"
+INFO 2020-07-22 15:53:34 network/src/peer_manager/mod.rs:356 New connection established: Connection { socket: NoiseStream { socket: TcpSocket { inner: IoCompat { inner: TcpStream { addr: V4(127.0.0.1:59177), peer: V4(127.0.0.1:59115), fd: 83 } } }, session: NoiseSession[...], buffers: NoiseBuffers, read_state: Init, write_state: Init }, metadata: ConnectionMetadata { peer_id: 2ccabeb1d31ac67b185d683439bb7e52, connection_id: ConnectionId(3), addr: /ip4/0.0.0.0/tcp/59115/ln-noise-ik/2692e75fe78dc905c553c61028b7e394b0bb26f349c538886ca52150e7e62e42/ln-handshake/0, origin: Outbound, messaging_protocol: V1, application_protocols: SupportedProtocols(BitVec { inner: [252] }) } }
+INFO 2020-07-22 15:53:34 network/src/peer_manager/mod.rs:547 Closing incoming connection with Peer 2ccabeb1 to mitigate simultaneous dial
+DEBUG 2020-07-22 15:53:34 state-synchronizer/src/peer_manager.rs:85 [state sync] state before: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52): PeerInfo { is_alive: true, score: 100.0 }}
+INFO 2020-07-22 15:53:34 network/src/protocols/direct_send/mod.rs:100 Starting direct send actor for peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:34 state-synchronizer/src/peer_manager.rs:92 [state sync] state after: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52): PeerInfo { is_alive: true, score: 100.0 }}
+WARN 2020-07-22 15:53:34 network/src/protocols/rpc/mod.rs:419 Error making outbound rpc request with request_id 6 to c8448531: TimedOut
+WARN 2020-07-22 15:53:34 consensus/src/block_storage/sync_manager.rs:304 Failed to fetch block cbece9ac from c8448531: Rpc timed out, trying another peer
+DEBUG 2020-07-22 15:53:34 consensus/src/block_storage/sync_manager.rs:282 Fetching cbece9ac from 2ccabeb1, attempt 2
+WARN 2020-07-22 15:53:35 network/src/protocols/rpc/mod.rs:419 Error making outbound rpc request with request_id 0 to 2ccabeb1: TimedOut
+WARN 2020-07-22 15:53:35 consensus/src/block_storage/sync_manager.rs:304 Failed to fetch block cbece9ac from 2ccabeb1: Rpc timed out, trying another peer
+DEBUG 2020-07-22 15:53:35 consensus/src/block_storage/sync_manager.rs:282 Fetching cbece9ac from 5942d356, attempt 3
+DEBUG 2020-07-22 15:53:35 consensus/src/state_computer.rs:60 Executing block cbece9ac7058d84acadd3e094d67d170bff2cffc4c59814edd0b3ce092fec90a. Parent: 9d7ac2a1879d43052ffd94bbaa0d0bd3364134c5d32ad9afb8afafca3a098439.
+INFO 2020-07-22 15:53:35 network/src/protocols/rpc/mod.rs:305 Received response for expired request from "c8448531". Discarding.
+INFO 2020-07-22 15:53:35 network/src/protocols/rpc/mod.rs:305 Received response for expired request from "2ccabeb1". Discarding.
+DEBUG 2020-07-22 15:53:35 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:35 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 9
+DEBUG 2020-07-22 15:53:35 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:35 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 4281433973
+INFO 2020-07-22 15:53:35 network/src/protocols/discovery/mod.rs:310 Received updated note for peer: 5942d356 from peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:35 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 4017237112
+DEBUG 2020-07-22 15:53:35 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 9
+DEBUG 2020-07-22 15:53:35 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:36 consensus/src/liveness/round_state.rs:311 "567.906317ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:36 consensus/src/liveness/round_state.rs:316 Set round deadline to 3.375s from now
+DEBUG 2020-07-22 15:53:36 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 4, reason: QCReady, timeout: 3.375s]
+DEBUG 2020-07-22 15:53:36 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 4, reason: QCReady, timeout: 3.375s]
+DEBUG 2020-07-22 15:53:36 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: e531cad2, epoch: 1, round: 04, parent_id: cbece9ac]
+DEBUG 2020-07-22 15:53:36 consensus/src/state_computer.rs:60 Executing block e531cad2eb6ed25dd6b262d0f167d5ca86d2dc65ed0cbc5f0d100034d5592db5. Parent: cbece9ac7058d84acadd3e094d67d170bff2cffc4c59814edd0b3ce092fec90a.
+DEBUG 2020-07-22 15:53:36 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433216.729519s, early_duration: 2.024093s } for being able to vote
+DEBUG 2020-07-22 15:53:36 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:36 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: e531cad2, epoch: 1, round: 04, parent_block_id: cbece9ac, parent_block_round: 03], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 2, id: 9d7ac2a1, executed_state_id: cb15fb71, version: 1, timestamp (us): 1595433209615677, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:36 consensus/src/epoch_manager.rs:511 Round: 4 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: e531cad2, epoch: 1, round: 04, parent_block_id: cbece9ac, parent_block_round: 03], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 2, id: 9d7ac2a1, executed_state_id: cb15fb71, version: 1, timestamp (us): 1595433209615677, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:36 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:36 consensus/src/epoch_manager.rs:511 Round: 4 Committed Round: 0 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: e531cad2, epoch: 1, round: 04, parent_block_id: cbece9ac, parent_block_round: 03], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 2, id: 9d7ac2a1, executed_state_id: cb15fb71, version: 1, timestamp (us): 1595433209615677, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:36 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 3, HCC: 0, HTC: None] is stale than peer 5942d356 remote state SyncInfo[HQC: 4, HCC: 2, HTC: None]
+DEBUG 2020-07-22 15:53:36 execution/executor/src/lib.rs:663 Received request to commit block 9d7ac2a1879d43052ffd94bbaa0d0bd3364134c5d32ad9afb8afafca3a098439.
+DEBUG 2020-07-22 15:53:36 execution/executor/src/speculation_cache/mod.rs:87 Speculation block c6c0a22d is dropped.
+DEBUG 2020-07-22 15:53:36 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 9d7ac2a1
+DEBUG 2020-07-22 15:53:36 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 9d7ac2a1 is dropped.
+DEBUG 2020-07-22 15:53:36 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 10
+DEBUG 2020-07-22 15:53:36 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:36 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 655607863
+DEBUG 2020-07-22 15:53:36 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 9d7ac2a1, epoch: 1, round: 02, parent_id: f99b3dc3]
+DEBUG 2020-07-22 15:53:36 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:36 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 1393399271
+DEBUG 2020-07-22 15:53:36 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 10
+DEBUG 2020-07-22 15:53:36 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:36 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:36 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:36 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 5, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:36 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 5, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:36 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: bf559faa, epoch: 1, round: 05, parent_id: e531cad2]
+DEBUG 2020-07-22 15:53:36 consensus/src/state_computer.rs:60 Executing block bf559faa72b844f9846a1b169a9048838171d94e9c4068d62bc6ac727f8d2bce. Parent: e531cad2eb6ed25dd6b262d0f167d5ca86d2dc65ed0cbc5f0d100034d5592db5.
+DEBUG 2020-07-22 15:53:36 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 687762991
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433217.261641s, early_duration: 1.72947s } for being able to vote
+DEBUG 2020-07-22 15:53:37 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:511 Round: 5 Committed Round: 2 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:511 Round: 5 Committed Round: 2 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 5942d356, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:511 Round: 5 Committed Round: 2 PendingVotes: [LI 707564f1 has 1 votes [5942d356f114089d4a46f2f3b0b15b52] Round 5 has 1 timeout [5942d356f114089d4a46f2f3b0b15b52]] Self Vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 2ccabeb1, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:511 Round: 5 Committed Round: 2 PendingVotes: [LI 707564f1 has 2 votes [2ccabeb1d31ac67b185d683439bb7e52, 5942d356f114089d4a46f2f3b0b15b52] Round 5 has 1 timeout [5942d356f114089d4a46f2f3b0b15b52]] Self Vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: c8448531, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 execution/executor/src/lib.rs:663 Received request to commit block cbece9ac7058d84acadd3e094d67d170bff2cffc4c59814edd0b3ce092fec90a.
+DEBUG 2020-07-22 15:53:37 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block cbece9ac
+DEBUG 2020-07-22 15:53:37 execution/executor/src/speculation_cache/mod.rs:87 Speculation block cbece9ac is dropped.
+DEBUG 2020-07-22 15:53:37 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: cbece9ac, epoch: 1, round: 03, parent_id: 9d7ac2a1]
+DEBUG 2020-07-22 15:53:37 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:37 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:37 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 6, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 6, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:37 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1595433217.323448s, early_duration: 1.791277s } for getting a valid timestamp for the next proposal
+DEBUG 2020-07-22 15:53:37 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-07-22 15:53:37 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:287 Propose [id: 8afa1d6f, epoch: 1, round: 06, parent_id: bf559faa]
+DEBUG 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:399 Received a sync info msg: SyncInfo[HQC: 4, HCC: 2, HTC: None]
+DEBUG 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:353 Peer 21507b59 has stale state SyncInfo[HQC: 4, HCC: 2, HTC: None], send it back SyncInfo[HQC: 5, HCC: 3, HTC: None]
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: bf559faa, epoch: 1, round: 05, parent_block_id: e531cad2, parent_block_round: 04], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 3, id: cbece9ac, executed_state_id: 6bd33872, version: 2, timestamp (us): 1595433213384138, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:37 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:37 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 8afa1d6f, epoch: 1, round: 06, parent_id: bf559faa]
+DEBUG 2020-07-22 15:53:37 consensus/src/state_computer.rs:60 Executing block 8afa1d6f98805db8a22310ad2c1b79b4a3add040d2ef008b40a5c1acfb27f7ee. Parent: bf559faa72b844f9846a1b169a9048838171d94e9c4068d62bc6ac727f8d2bce.
+WARN 2020-07-22 15:53:37 network/src/peer_manager/mod.rs:471 Peer 21507b59 is not connected
+DEBUG 2020-07-22 15:53:37 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 11
+DEBUG 2020-07-22 15:53:37 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:37 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 3375056002
+DEBUG 2020-07-22 15:53:37 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:37 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 11
+DEBUG 2020-07-22 15:53:37 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:37 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 2798605113
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433218.14113s, early_duration: 817.682ms } for being able to vote
+DEBUG 2020-07-22 15:53:38 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [LI e844b3ce has 1 votes [21507b59b6e7f1b72c009036682736b7] ] Self Vote: Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: 2ccabeb1, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 consensus/src/epoch_manager.rs:511 Round: 6 Committed Round: 3 PendingVotes: [LI e844b3ce has 2 votes [21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52] ] Self Vote: Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: c8448531, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 execution/executor/src/lib.rs:663 Received request to commit block e531cad2eb6ed25dd6b262d0f167d5ca86d2dc65ed0cbc5f0d100034d5592db5.
+DEBUG 2020-07-22 15:53:38 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block e531cad2
+DEBUG 2020-07-22 15:53:38 execution/executor/src/speculation_cache/mod.rs:87 Speculation block e531cad2 is dropped.
+DEBUG 2020-07-22 15:53:38 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: e531cad2, epoch: 1, round: 04, parent_id: cbece9ac]
+DEBUG 2020-07-22 15:53:38 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:38 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:38 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 7, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 7, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:38 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1595433218.245738s, early_duration: 922.29ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-07-22 15:53:38 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-07-22 15:53:38 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:287 Propose [id: a7415b36, epoch: 1, round: 07, parent_id: 8afa1d6f]
+DEBUG 2020-07-22 15:53:38 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:353 Peer 5942d356 has stale state SyncInfo[HQC: 5, HCC: 3, HTC: None], send it back SyncInfo[HQC: 6, HCC: 4, HTC: None]
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 8afa1d6f, epoch: 1, round: 06, parent_block_id: bf559faa, parent_block_round: 05], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 4, id: e531cad2, executed_state_id: a36ec694, version: 3, timestamp (us): 1595433214705426, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:38 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:38 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: a7415b36, epoch: 1, round: 07, parent_id: 8afa1d6f]
+DEBUG 2020-07-22 15:53:38 consensus/src/state_computer.rs:60 Executing block a7415b36fb0b6f8ea0a3c517a5e470b9a22831e2689dd51642a05ee250329cc7. Parent: 8afa1d6f98805db8a22310ad2c1b79b4a3add040d2ef008b40a5c1acfb27f7ee.
+DEBUG 2020-07-22 15:53:38 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:38 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 12
+DEBUG 2020-07-22 15:53:38 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:53:38 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 1028238356
+DEBUG 2020-07-22 15:53:38 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 4022876468
+DEBUG 2020-07-22 15:53:38 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 12
+DEBUG 2020-07-22 15:53:38 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:53:39 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433219.032375s, early_duration: 786.637ms } for being able to vote
+DEBUG 2020-07-22 15:53:39 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:39 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: a7415b36, epoch: 1, round: 07, parent_block_id: 8afa1d6f, parent_block_round: 06], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: bf559faa, executed_state_id: 63713c99, version: 4, timestamp (us): 1595433215532171, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: a7415b36, epoch: 1, round: 07, parent_block_id: 8afa1d6f, parent_block_round: 06], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: bf559faa, executed_state_id: 63713c99, version: 4, timestamp (us): 1595433215532171, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: a7415b36, epoch: 1, round: 07, parent_block_id: 8afa1d6f, parent_block_round: 06], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: bf559faa, executed_state_id: 63713c99, version: 4, timestamp (us): 1595433215532171, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:511 Round: 7 Committed Round: 4 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: a7415b36, epoch: 1, round: 07, parent_block_id: 8afa1d6f, parent_block_round: 06], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 5, id: bf559faa, executed_state_id: 63713c99, version: 4, timestamp (us): 1595433215532171, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:39 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 6, HCC: 4, HTC: None] is stale than peer c8448531 remote state SyncInfo[HQC: 7, HCC: 5, HTC: None]
+DEBUG 2020-07-22 15:53:39 execution/executor/src/lib.rs:663 Received request to commit block bf559faa72b844f9846a1b169a9048838171d94e9c4068d62bc6ac727f8d2bce.
+DEBUG 2020-07-22 15:53:39 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block bf559faa
+DEBUG 2020-07-22 15:53:39 execution/executor/src/speculation_cache/mod.rs:87 Speculation block bf559faa is dropped.
+DEBUG 2020-07-22 15:53:39 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: bf559faa, epoch: 1, round: 05, parent_id: e531cad2]
+DEBUG 2020-07-22 15:53:39 consensus/src/liveness/round_state.rs:311 "6.568424ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:39 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:39 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 8, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:39 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 8, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:39 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 8843ddac, epoch: 1, round: 08, parent_id: a7415b36]
+DEBUG 2020-07-22 15:53:39 consensus/src/state_computer.rs:60 Executing block 8843ddace272c4c8909835f88b4e35f1dcf76a09b83f5dc03f3409e17df240d2. Parent: a7415b36fb0b6f8ea0a3c517a5e470b9a22831e2689dd51642a05ee250329cc7.
+DEBUG 2020-07-22 15:53:39 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 13
+DEBUG 2020-07-22 15:53:39 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:39 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:39 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 2994418813
+DEBUG 2020-07-22 15:53:39 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 13
+DEBUG 2020-07-22 15:53:39 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:39 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433219.995921s, early_duration: 843.137ms } for being able to vote
+DEBUG 2020-07-22 15:53:39 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:39 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 8843ddac, epoch: 1, round: 08, parent_block_id: a7415b36, parent_block_round: 07], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 8afa1d6f, executed_state_id: 1f02947f, version: 5, timestamp (us): 1595433217323448, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:511 Round: 8 Committed Round: 5 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 8843ddac, epoch: 1, round: 08, parent_block_id: a7415b36, parent_block_round: 07], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 8afa1d6f, executed_state_id: 1f02947f, version: 5, timestamp (us): 1595433217323448, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:39 consensus/src/epoch_manager.rs:511 Round: 8 Committed Round: 5 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 8843ddac, epoch: 1, round: 08, parent_block_id: a7415b36, parent_block_round: 07], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 6, id: 8afa1d6f, executed_state_id: 1f02947f, version: 5, timestamp (us): 1595433217323448, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:40 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 7, HCC: 5, HTC: None] is stale than peer 5942d356 remote state SyncInfo[HQC: 8, HCC: 6, HTC: None]
+DEBUG 2020-07-22 15:53:40 execution/executor/src/lib.rs:663 Received request to commit block 8afa1d6f98805db8a22310ad2c1b79b4a3add040d2ef008b40a5c1acfb27f7ee.
+DEBUG 2020-07-22 15:53:40 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 8afa1d6f
+DEBUG 2020-07-22 15:53:40 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 8afa1d6f is dropped.
+DEBUG 2020-07-22 15:53:40 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 8afa1d6f, epoch: 1, round: 06, parent_id: bf559faa]
+DEBUG 2020-07-22 15:53:40 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:40 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:40 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 9, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:40 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 9, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:40 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 13a37cba, epoch: 1, round: 09, parent_id: 8843ddac]
+DEBUG 2020-07-22 15:53:40 consensus/src/state_computer.rs:60 Executing block 13a37cba6b7968f7bb6848d70d52750edabc1b0c86db20d78db2eadd7ea6e7b8. Parent: 8843ddace272c4c8909835f88b4e35f1dcf76a09b83f5dc03f3409e17df240d2.
+DEBUG 2020-07-22 15:53:40 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 14
+DEBUG 2020-07-22 15:53:40 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:53:40 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 2746822
+DEBUG 2020-07-22 15:53:40 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 2329679389
+DEBUG 2020-07-22 15:53:40 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:40 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 14
+DEBUG 2020-07-22 15:53:40 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:53:40 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 407948074
+DEBUG 2020-07-22 15:53:40 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433220.908706s, early_duration: 842.894ms } for being able to vote
+DEBUG 2020-07-22 15:53:40 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:40 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 13a37cba, epoch: 1, round: 09, parent_block_id: 8843ddac, parent_block_round: 08], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 7, id: a7415b36, executed_state_id: 51e0e829, version: 6, timestamp (us): 1595433218245738, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:40 consensus/src/epoch_manager.rs:511 Round: 9 Committed Round: 6 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 13a37cba, epoch: 1, round: 09, parent_block_id: 8843ddac, parent_block_round: 08], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 7, id: a7415b36, executed_state_id: 51e0e829, version: 6, timestamp (us): 1595433218245738, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:40 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:40 consensus/src/epoch_manager.rs:511 Round: 9 Committed Round: 6 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 13a37cba, epoch: 1, round: 09, parent_block_id: 8843ddac, parent_block_round: 08], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 7, id: a7415b36, executed_state_id: 51e0e829, version: 6, timestamp (us): 1595433218245738, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:40 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 8, HCC: 6, HTC: None] is stale than peer 2ccabeb1 remote state SyncInfo[HQC: 9, HCC: 7, HTC: None]
+DEBUG 2020-07-22 15:53:40 execution/executor/src/lib.rs:663 Received request to commit block a7415b36fb0b6f8ea0a3c517a5e470b9a22831e2689dd51642a05ee250329cc7.
+DEBUG 2020-07-22 15:53:41 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block a7415b36
+DEBUG 2020-07-22 15:53:41 execution/executor/src/speculation_cache/mod.rs:87 Speculation block a7415b36 is dropped.
+DEBUG 2020-07-22 15:53:41 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: a7415b36, epoch: 1, round: 07, parent_id: 8afa1d6f]
+DEBUG 2020-07-22 15:53:41 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:41 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:41 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 10, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:41 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 10, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:41 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 4fbf9db0, epoch: 1, round: 10, parent_id: 13a37cba]
+DEBUG 2020-07-22 15:53:41 consensus/src/state_computer.rs:60 Executing block 4fbf9db0ed21e3ddeb0e67f049ff94e62e7b38a47b3c14c5235daa5fa1a90413. Parent: 13a37cba6b7968f7bb6848d70d52750edabc1b0c86db20d78db2eadd7ea6e7b8.
+DEBUG 2020-07-22 15:53:41 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:41 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 15
+DEBUG 2020-07-22 15:53:41 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:53:41 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 1533885030
+DEBUG 2020-07-22 15:53:41 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 15
+DEBUG 2020-07-22 15:53:41 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:41 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 181006298
+DEBUG 2020-07-22 15:53:41 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433221.861459s, early_duration: 888.304ms } for being able to vote
+DEBUG 2020-07-22 15:53:41 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:41 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 4fbf9db0, epoch: 1, round: 10, parent_block_id: 13a37cba, parent_block_round: 09], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 8843ddac, executed_state_id: a5deccba, version: 7, timestamp (us): 1595433219152784, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:41 consensus/src/epoch_manager.rs:511 Round: 10 Committed Round: 7 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 4fbf9db0, epoch: 1, round: 10, parent_block_id: 13a37cba, parent_block_round: 09], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 8843ddac, executed_state_id: a5deccba, version: 7, timestamp (us): 1595433219152784, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:41 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:41 consensus/src/epoch_manager.rs:511 Round: 10 Committed Round: 7 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 4fbf9db0, epoch: 1, round: 10, parent_block_id: 13a37cba, parent_block_round: 09], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 8843ddac, executed_state_id: a5deccba, version: 7, timestamp (us): 1595433219152784, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:41 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:41 consensus/src/epoch_manager.rs:511 Round: 10 Committed Round: 7 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 4fbf9db0, epoch: 1, round: 10, parent_block_id: 13a37cba, parent_block_round: 09], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 8, id: 8843ddac, executed_state_id: a5deccba, version: 7, timestamp (us): 1595433219152784, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:41 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 9, HCC: 7, HTC: None] is stale than peer c8448531 remote state SyncInfo[HQC: 10, HCC: 8, HTC: None]
+DEBUG 2020-07-22 15:53:41 execution/executor/src/lib.rs:663 Received request to commit block 8843ddace272c4c8909835f88b4e35f1dcf76a09b83f5dc03f3409e17df240d2.
+DEBUG 2020-07-22 15:53:42 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 8843ddac
+DEBUG 2020-07-22 15:53:42 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 8843ddac is dropped.
+DEBUG 2020-07-22 15:53:42 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 8843ddac, epoch: 1, round: 08, parent_id: a7415b36]
+DEBUG 2020-07-22 15:53:42 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:42 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:42 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 11, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 11, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: ec7301bc, epoch: 1, round: 11, parent_id: 4fbf9db0]
+DEBUG 2020-07-22 15:53:42 consensus/src/state_computer.rs:60 Executing block ec7301bca837fe6e021f9350a82e8fcaba45cead3576bef45d647e0d37e11680. Parent: 4fbf9db0ed21e3ddeb0e67f049ff94e62e7b38a47b3c14c5235daa5fa1a90413.
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433222.767728s, early_duration: 856.296ms } for being able to vote
+DEBUG 2020-07-22 15:53:42 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: ec7301bc, epoch: 1, round: 11, parent_block_id: 4fbf9db0, parent_block_round: 10], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 9, id: 13a37cba, executed_state_id: 8ec22eb4, version: 8, timestamp (us): 1595433220065812, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:42 consensus/src/epoch_manager.rs:511 Round: 11 Committed Round: 8 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: ec7301bc, epoch: 1, round: 11, parent_block_id: 4fbf9db0, parent_block_round: 10], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 9, id: 13a37cba, executed_state_id: 8ec22eb4, version: 8, timestamp (us): 1595433220065812, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:399 Received a sync info msg: SyncInfo[HQC: 10, HCC: 8, HTC: None]
+DEBUG 2020-07-22 15:53:42 consensus/src/epoch_manager.rs:511 Round: 11 Committed Round: 8 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: ec7301bc, epoch: 1, round: 11, parent_block_id: 4fbf9db0, parent_block_round: 10], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 9, id: 13a37cba, executed_state_id: 8ec22eb4, version: 8, timestamp (us): 1595433220065812, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:42 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 16
+DEBUG 2020-07-22 15:53:42 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:53:42 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:42 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 2828388510
+DEBUG 2020-07-22 15:53:42 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 16
+DEBUG 2020-07-22 15:53:42 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 10, HCC: 8, HTC: None] is stale than peer 5942d356 remote state SyncInfo[HQC: 11, HCC: 9, HTC: None]
+DEBUG 2020-07-22 15:53:42 execution/executor/src/lib.rs:663 Received request to commit block 13a37cba6b7968f7bb6848d70d52750edabc1b0c86db20d78db2eadd7ea6e7b8.
+DEBUG 2020-07-22 15:53:42 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 13a37cba
+DEBUG 2020-07-22 15:53:42 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 13a37cba is dropped.
+DEBUG 2020-07-22 15:53:42 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 13a37cba, epoch: 1, round: 09, parent_id: 8843ddac]
+DEBUG 2020-07-22 15:53:42 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:42 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:42 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 12, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 12, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:42 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 483b2d20, epoch: 1, round: 12, parent_id: ec7301bc]
+DEBUG 2020-07-22 15:53:42 consensus/src/state_computer.rs:60 Executing block 483b2d20a8bf76d6ed200ac186300f06415b3ad2e984931c6e0bd9facfe3514e. Parent: ec7301bca837fe6e021f9350a82e8fcaba45cead3576bef45d647e0d37e11680.
+DEBUG 2020-07-22 15:53:43 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433223.707046s, early_duration: 871.261ms } for being able to vote
+DEBUG 2020-07-22 15:53:43 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:43 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 483b2d20, epoch: 1, round: 12, parent_block_id: ec7301bc, parent_block_round: 11], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 4fbf9db0, executed_state_id: d081c968, version: 9, timestamp (us): 1595433220973155, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:43 consensus/src/epoch_manager.rs:511 Round: 12 Committed Round: 9 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 483b2d20, epoch: 1, round: 12, parent_block_id: ec7301bc, parent_block_round: 11], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 4fbf9db0, executed_state_id: d081c968, version: 9, timestamp (us): 1595433220973155, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:43 consensus/src/round_manager.rs:399 Received a sync info msg: SyncInfo[HQC: 11, HCC: 9, HTC: None]
+DEBUG 2020-07-22 15:53:43 consensus/src/epoch_manager.rs:511 Round: 12 Committed Round: 9 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 483b2d20, epoch: 1, round: 12, parent_block_id: ec7301bc, parent_block_round: 11], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 4fbf9db0, executed_state_id: d081c968, version: 9, timestamp (us): 1595433220973155, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:43 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:43 consensus/src/epoch_manager.rs:511 Round: 12 Committed Round: 9 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 483b2d20, epoch: 1, round: 12, parent_block_id: ec7301bc, parent_block_round: 11], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 10, id: 4fbf9db0, executed_state_id: d081c968, version: 9, timestamp (us): 1595433220973155, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:43 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 11, HCC: 9, HTC: None] is stale than peer c8448531 remote state SyncInfo[HQC: 12, HCC: 10, HTC: None]
+DEBUG 2020-07-22 15:53:43 execution/executor/src/lib.rs:663 Received request to commit block 4fbf9db0ed21e3ddeb0e67f049ff94e62e7b38a47b3c14c5235daa5fa1a90413.
+DEBUG 2020-07-22 15:53:43 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:43 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 17
+DEBUG 2020-07-22 15:53:43 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:53:43 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 1203616387
+DEBUG 2020-07-22 15:53:43 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 17
+DEBUG 2020-07-22 15:53:43 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:43 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 4fbf9db0
+DEBUG 2020-07-22 15:53:43 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 4fbf9db0 is dropped.
+DEBUG 2020-07-22 15:53:43 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 4fbf9db0, epoch: 1, round: 10, parent_id: 13a37cba]
+DEBUG 2020-07-22 15:53:43 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:43 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:43 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 13, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:43 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 13, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:43 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: 9e6d29b4, epoch: 1, round: 13, parent_id: 483b2d20]
+DEBUG 2020-07-22 15:53:43 consensus/src/state_computer.rs:60 Executing block 9e6d29b4fe4ee406850d24fbad58fce5c0c7dd3d8ee0c25f36b229769c27df84. Parent: 483b2d20a8bf76d6ed200ac186300f06415b3ad2e984931c6e0bd9facfe3514e.
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433224.626201s, early_duration: 860.696ms } for being able to vote
+DEBUG 2020-07-22 15:53:44 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:399 Received a sync info msg: SyncInfo[HQC: 12, HCC: 10, HTC: None]
+DEBUG 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: c8448531, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [LI 3bcb9a16 has 1 votes [c8448531bae86542754f6078ed94af0f] ] Self Vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:511 Round: 13 Committed Round: 10 PendingVotes: [LI 3bcb9a16 has 2 votes [21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f] ] Self Vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 5942d356, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 execution/executor/src/lib.rs:663 Received request to commit block ec7301bca837fe6e021f9350a82e8fcaba45cead3576bef45d647e0d37e11680.
+DEBUG 2020-07-22 15:53:44 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block ec7301bc
+DEBUG 2020-07-22 15:53:44 execution/executor/src/speculation_cache/mod.rs:87 Speculation block ec7301bc is dropped.
+DEBUG 2020-07-22 15:53:44 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: ec7301bc, epoch: 1, round: 11, parent_id: 4fbf9db0]
+DEBUG 2020-07-22 15:53:44 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:44 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:44 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 14, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 14, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:44 consensus/src/liveness/proposal_generator.rs:147 Success with NoWaitRequired { current_duration_since_epoch: 1595433224.695806s, early_duration: 930.301ms } for getting a valid timestamp for the next proposal
+DEBUG 2020-07-22 15:53:44 mempool/src/core_mempool/mempool.rs:220 mempool::get_block: seen_consensus=0, walked=0, seen_after=0, result_size=0, block_size=0
+DEBUG 2020-07-22 15:53:44 consensus/safety-rules/src/safety_rules.rs:238 Incoming proposal to sign.
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:287 Propose [id: bdb2cd04, epoch: 1, round: 14, parent_id: 9e6d29b4]
+DEBUG 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:511 Round: 14 Committed Round: 11 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:353 Peer 2ccabeb1 has stale state SyncInfo[HQC: 12, HCC: 10, HTC: None], send it back SyncInfo[HQC: 13, HCC: 11, HTC: None]
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: 9e6d29b4, epoch: 1, round: 13, parent_block_id: 483b2d20, parent_block_round: 12], author: 2ccabeb1, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 11, id: ec7301bc, executed_state_id: 3427c6e6, version: 10, timestamp (us): 1595433221911432, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:44 consensus/src/epoch_manager.rs:511 Round: 14 Committed Round: 11 PendingVotes: [] Self Vote: None
+DEBUG 2020-07-22 15:53:44 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: bdb2cd04, epoch: 1, round: 14, parent_id: 9e6d29b4]
+DEBUG 2020-07-22 15:53:44 consensus/src/state_computer.rs:60 Executing block bdb2cd0482f60630e4724ab7d9154e1d6122c48d3f2c1cd89fb9228875848b8e. Parent: 9e6d29b4fe4ee406850d24fbad58fce5c0c7dd3d8ee0c25f36b229769c27df84.
+DEBUG 2020-07-22 15:53:44 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:44 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 18
+DEBUG 2020-07-22 15:53:44 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:53:44 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 975741124
+DEBUG 2020-07-22 15:53:44 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 18
+DEBUG 2020-07-22 15:53:44 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:53:44 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 2142969169
+DEBUG 2020-07-22 15:53:45 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433225.49822s, early_duration: 802.414ms } for being able to vote
+DEBUG 2020-07-22 15:53:45 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:45 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: bdb2cd04, epoch: 1, round: 14, parent_block_id: 9e6d29b4, parent_block_round: 13], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 12, id: 483b2d20, executed_state_id: 8edd8f6c, version: 11, timestamp (us): 1595433222835785, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:45 consensus/src/epoch_manager.rs:511 Round: 14 Committed Round: 11 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: bdb2cd04, epoch: 1, round: 14, parent_block_id: 9e6d29b4, parent_block_round: 13], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 12, id: 483b2d20, executed_state_id: 8edd8f6c, version: 11, timestamp (us): 1595433222835785, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:45 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:45 consensus/src/epoch_manager.rs:511 Round: 14 Committed Round: 11 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: bdb2cd04, epoch: 1, round: 14, parent_block_id: 9e6d29b4, parent_block_round: 13], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 12, id: 483b2d20, executed_state_id: 8edd8f6c, version: 11, timestamp (us): 1595433222835785, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:45 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 13, HCC: 11, HTC: None] is stale than peer 5942d356 remote state SyncInfo[HQC: 14, HCC: 12, HTC: None]
+DEBUG 2020-07-22 15:53:45 execution/executor/src/lib.rs:663 Received request to commit block 483b2d20a8bf76d6ed200ac186300f06415b3ad2e984931c6e0bd9facfe3514e.
+DEBUG 2020-07-22 15:53:45 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 483b2d20
+DEBUG 2020-07-22 15:53:45 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 483b2d20 is dropped.
+DEBUG 2020-07-22 15:53:45 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 483b2d20, epoch: 1, round: 12, parent_id: ec7301bc]
+DEBUG 2020-07-22 15:53:45 consensus/src/liveness/round_state.rs:311 "27.906306ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:45 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:45 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 15, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:45 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 15, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:45 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: b4fcab54, epoch: 1, round: 15, parent_id: bdb2cd04]
+DEBUG 2020-07-22 15:53:45 consensus/src/state_computer.rs:60 Executing block b4fcab540a120318572aa617dc33cd92ad77d993b94468f03332dd9332e1aeba. Parent: bdb2cd0482f60630e4724ab7d9154e1d6122c48d3f2c1cd89fb9228875848b8e.
+DEBUG 2020-07-22 15:53:45 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 19
+DEBUG 2020-07-22 15:53:45 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:53:45 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 3101041145
+DEBUG 2020-07-22 15:53:45 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:45 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 19
+DEBUG 2020-07-22 15:53:45 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:45 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 2297024440
+[debug] 12ec011f160000000000000000002001
+[debug] 110de00111e161170000000000001001
+[debug] 1eed8012000000000000000000000001
+[debug] 1eed8012000000000000000000000002
+[debug] 1eed8012000000000000000000000003
+[debug] 4u64
+[debug] 1eed8012000000000000000000000004
+[debug] 110de00111e161170000000000001002
+[debug] 4u64
+[debug] 12ec011f160000000000000000002002
+[debug] 4u64
+[debug] 71b12a05157e11100000000000010001
+[debug] 71b12a05157e11100000000000020001
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000000001
+[debug] 4u64
+[debug] 4u64
+[debug] 12ec011f160000000000000000002003
+[debug] 50b51de0000000000000000000001001
+[debug] 50b51de0000000000000000000001002
+[debug] 50b51de0000000000000000000001003
+[debug] 296u64
+[debug] 50b51de0000000000000000000001004
+[debug] 12ec011f160000000000000000002004
+[debug] 12ec011f160000000000000000000002
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433226.565156s, early_duration: 944.965ms } for being able to vote
+DEBUG 2020-07-22 15:53:46 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: b4fcab54, epoch: 1, round: 15, parent_block_id: bdb2cd04, parent_block_round: 14], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 13, id: 9e6d29b4, executed_state_id: f243d795, version: 12, timestamp (us): 1595433223765505, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: b4fcab54, epoch: 1, round: 15, parent_block_id: bdb2cd04, parent_block_round: 14], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 13, id: 9e6d29b4, executed_state_id: f243d795, version: 12, timestamp (us): 1595433223765505, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: b4fcab54, epoch: 1, round: 15, parent_block_id: bdb2cd04, parent_block_round: 14], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 13, id: 9e6d29b4, executed_state_id: f243d795, version: 12, timestamp (us): 1595433223765505, next_epoch_state: None]]]
+ERROR 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: b4fcab54, epoch: 1, round: 15, parent_block_id: bdb2cd04, parent_block_round: 14], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 13, id: 9e6d29b4, executed_state_id: f243d795, version: 12, timestamp (us): 1595433223765505, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:678 Add vote: Vote: [vote data: VoteData: [block id: b4fcab54, epoch: 1, round: 15, parent_block_id: bdb2cd04, parent_block_round: 14], author: 5942d356, is_timeout: true, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 13, id: 9e6d29b4, executed_state_id: f243d795, version: 12, timestamp (us): 1595433223765505, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:511 Round: 15 Committed Round: 12 PendingVotes: [LI f5b00264 has 1 votes [5942d356f114089d4a46f2f3b0b15b52] Round 15 has 1 timeout [5942d356f114089d4a46f2f3b0b15b52]] Self Vote: Vote: [vote data: VoteData: [block id: b4fcab54, epoch: 1, round: 15, parent_block_id: bdb2cd04, parent_block_round: 14], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 13, id: 9e6d29b4, executed_state_id: f243d795, version: 12, timestamp (us): 1595433223765505, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 14, HCC: 12, HTC: None] is stale than peer c8448531 remote state SyncInfo[HQC: 15, HCC: 13, HTC: None]
+DEBUG 2020-07-22 15:53:46 execution/executor/src/lib.rs:663 Received request to commit block 9e6d29b4fe4ee406850d24fbad58fce5c0c7dd3d8ee0c25f36b229769c27df84.
+DEBUG 2020-07-22 15:53:46 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block 9e6d29b4
+DEBUG 2020-07-22 15:53:46 execution/executor/src/speculation_cache/mod.rs:87 Speculation block 9e6d29b4 is dropped.
+DEBUG 2020-07-22 15:53:46 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: 9e6d29b4, epoch: 1, round: 13, parent_id: 483b2d20]
+DEBUG 2020-07-22 15:53:46 consensus/src/liveness/round_state.rs:311 "19.844536ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:46 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:46 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 16, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 16, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: bb4d0416, epoch: 1, round: 16, parent_id: b4fcab54]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433226.744484s, early_duration: 1.124293s } for being able to vote
+DEBUG 2020-07-22 15:53:46 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: bb4d0416, epoch: 1, round: 16, parent_block_id: b4fcab54, parent_block_round: 15], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 14, id: bdb2cd04, executed_state_id: 51a22968, version: 13, timestamp (us): 1595433224695806, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:511 Round: 16 Committed Round: 13 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: bb4d0416, epoch: 1, round: 16, parent_block_id: b4fcab54, parent_block_round: 15], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 14, id: bdb2cd04, executed_state_id: 51a22968, version: 13, timestamp (us): 1595433224695806, next_epoch_state: None]]]
+DEBUG 2020-07-22 15:53:46 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 20
+DEBUG 2020-07-22 15:53:46 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:46 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 2742268782
+DEBUG 2020-07-22 15:53:46 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:46 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 1319578711
+DEBUG 2020-07-22 15:53:46 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 20
+DEBUG 2020-07-22 15:53:46 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:46 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3246134568
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 15, HCC: 13, HTC: None] is stale than peer 5942d356 remote state SyncInfo[HQC: 16, HCC: 14, HTC: None]
+DEBUG 2020-07-22 15:53:46 execution/executor/src/lib.rs:663 Received request to commit block bdb2cd0482f60630e4724ab7d9154e1d6122c48d3f2c1cd89fb9228875848b8e.
+DEBUG 2020-07-22 15:53:46 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block bdb2cd04
+DEBUG 2020-07-22 15:53:46 execution/executor/src/speculation_cache/mod.rs:87 Speculation block bdb2cd04 is dropped.
+DEBUG 2020-07-22 15:53:46 consensus/src/block_storage/block_store.rs:211 [38;5;4mCommitted[39m [id: bdb2cd04, epoch: 1, round: 14, parent_id: 9e6d29b4]
+DEBUG 2020-07-22 15:53:46 consensus/src/liveness/round_state.rs:311 "0 ms" passed since the previous deadline.
+DEBUG 2020-07-22 15:53:46 consensus/src/liveness/round_state.rs:316 Set round deadline to 1s from now
+DEBUG 2020-07-22 15:53:46 consensus/src/liveness/round_state.rs:249 Starting new round: NewRoundEvent: [round: 17, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:242 Processing NewRoundEvent: [round: 17, reason: QCReady, timeout: 1s]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:473 RoundManager: process_proposed_block [id: dc9ab8fa, epoch: 1, round: 17, parent_id: bb4d0416]
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:512 Success with NoWaitRequired { current_duration_since_epoch: 1595433226.9323s, early_duration: 1.312109s } for being able to vote
+DEBUG 2020-07-22 15:53:46 consensus/safety-rules/src/safety_rules.rs:179 Incoming vote proposal to sign.
+DEBUG 2020-07-22 15:53:46 consensus/src/round_manager.rs:491 [38;5;2mVoted: [39m Vote: [vote data: VoteData: [block id: dc9ab8fa, epoch: 1, round: 17, parent_block_id: bb4d0416, parent_block_round: 16], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 15, id: b4fcab54, executed_state_id: 5353a611, version: 14, timestamp (us): 1595433225620191, next_epoch_state: EpochState [epoch: 2, validator: ValidatorSet: [21507b59: 2, 2ccabeb1: 2, 5942d356: 2, c8448531: 2, ]]]]]
+DEBUG 2020-07-22 15:53:46 consensus/src/epoch_manager.rs:511 Round: 17 Committed Round: 14 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: dc9ab8fa, epoch: 1, round: 17, parent_block_id: bb4d0416, parent_block_round: 16], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 15, id: b4fcab54, executed_state_id: 5353a611, version: 14, timestamp (us): 1595433225620191, next_epoch_state: EpochState [epoch: 2, validator: ValidatorSet: [21507b59: 2, 2ccabeb1: 2, 5942d356: 2, c8448531: 2, ]]]]]
+DEBUG 2020-07-22 15:53:47 consensus/src/epoch_manager.rs:236 Received epoch change to 2
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:307 [state sync] sync requested. Known LI: LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 14, id: bdb2cd04, executed_state_id: 51a22968, version: 13, timestamp (us): 1595433224695806, next_epoch_state: None]], requested_version: 14
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/peer_manager.rs:155 [state sync] (pick_peer) state: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52): PeerInfo { is_alive: true, score: 100.0 }}
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:883 [state sync] request next chunk. peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f), chunk req: [ChunkRequest: known version: 13, epoch: 1, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 1, round: 15, id: HashValue(b4fcab540a120318572aa617dc33cd92ad77d993b94468f03332dd9332e1aeba), executed_state_id: HashValue(5353a61120956209f90d83ebe487bd837fc9ef2e94147b1cb5f8a8c5f25766b7), version: 14, timestamp_usecs: 1595433225620191, next_epoch_state: Some(EpochState { epoch: 2, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 2 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 2 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 2 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 2 }}, quorum_voting_power: 6, total_voting_power: 8 } }) }, consensus_data_hash: HashValue(8039c7f668f01a4de982b5846180121a4c8298486ce370419a2d08cc3534ff5b) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(7d338a708c5bf8d16d216f05b3e50cd15f317c81ca519264f626e34596937b885ba903ce43aef2579e71f064c1ea79eac060772ea0bbc853168ab4b5c29df70d), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(3765b3f782a9775cb90791ecae68fa03c2175043920847b48adfc09388f4baf1759beabde5a46701921b318229cc589eb36eaa145c04c8ea5690b90dc83def05), c8448531bae86542754f6078ed94af0f: Ed25519Signature(97daa9668519dcdadd6dcc5bf7b2ab77246a515def752b9749eef21f62bbf76606ddb2e1d05b1dc865d6e2650b107f98bde45d5542c2b29115696ccc2733fe07)} }))]
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:444 [state sync] chunk request: peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52), local li version: 13, req: [ChunkRequest: known version: 13, epoch: 1, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 1, round: 15, id: HashValue(b4fcab540a120318572aa617dc33cd92ad77d993b94468f03332dd9332e1aeba), executed_state_id: HashValue(5353a61120956209f90d83ebe487bd837fc9ef2e94147b1cb5f8a8c5f25766b7), version: 14, timestamp_usecs: 1595433225620191, next_epoch_state: Some(EpochState { epoch: 2, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 2 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 2 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 2 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 2 }}, quorum_voting_power: 6, total_voting_power: 8 } }) }, consensus_data_hash: HashValue(8039c7f668f01a4de982b5846180121a4c8298486ce370419a2d08cc3534ff5b) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(7d338a708c5bf8d16d216f05b3e50cd15f317c81ca519264f626e34596937b885ba903ce43aef2579e71f064c1ea79eac060772ea0bbc853168ab4b5c29df70d), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(3765b3f782a9775cb90791ecae68fa03c2175043920847b48adfc09388f4baf1759beabde5a46701921b318229cc589eb36eaa145c04c8ea5690b90dc83def05), c8448531bae86542754f6078ed94af0f: Ed25519Signature(97daa9668519dcdadd6dcc5bf7b2ab77246a515def752b9749eef21f62bbf76606ddb2e1d05b1dc865d6e2650b107f98bde45d5542c2b29115696ccc2733fe07)} }))]
+ERROR 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:218 [state sync] failed to serve chunk request from PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52), local LI version 13: Txn 14 not found.
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/peer_manager.rs:155 [state sync] (pick_peer) state: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 95.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52): PeerInfo { is_alive: true, score: 100.0 }}
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:883 [state sync] request next chunk. peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52), chunk req: [ChunkRequest: known version: 13, epoch: 1, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 1, round: 15, id: HashValue(b4fcab540a120318572aa617dc33cd92ad77d993b94468f03332dd9332e1aeba), executed_state_id: HashValue(5353a61120956209f90d83ebe487bd837fc9ef2e94147b1cb5f8a8c5f25766b7), version: 14, timestamp_usecs: 1595433225620191, next_epoch_state: Some(EpochState { epoch: 2, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 2 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 2 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 2 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 2 }}, quorum_voting_power: 6, total_voting_power: 8 } }) }, consensus_data_hash: HashValue(8039c7f668f01a4de982b5846180121a4c8298486ce370419a2d08cc3534ff5b) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(7d338a708c5bf8d16d216f05b3e50cd15f317c81ca519264f626e34596937b885ba903ce43aef2579e71f064c1ea79eac060772ea0bbc853168ab4b5c29df70d), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(3765b3f782a9775cb90791ecae68fa03c2175043920847b48adfc09388f4baf1759beabde5a46701921b318229cc589eb36eaa145c04c8ea5690b90dc83def05), c8448531bae86542754f6078ed94af0f: Ed25519Signature(97daa9668519dcdadd6dcc5bf7b2ab77246a515def752b9749eef21f62bbf76606ddb2e1d05b1dc865d6e2650b107f98bde45d5542c2b29115696ccc2733fe07)} }))]
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:627 [state sync] Processing chunk response [ChunkResponse: response li: [verifiable LI LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 15, id: b4fcab54, executed_state_id: 5353a611, version: 14, timestamp (us): 1595433225620191, next_epoch_state: EpochState [epoch: 2, validator: ValidatorSet: [21507b59: 2, 2ccabeb1: 2, 5942d356: 2, c8448531: 2, ]]]]], txns: versions [14 - 14]]
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/peer_manager.rs:155 [state sync] (pick_peer) state: {PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52): PeerInfo { is_alive: true, score: 100.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f): PeerInfo { is_alive: true, score: 95.0 }, PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 5942d356f114089d4a46f2f3b0b15b52): PeerInfo { is_alive: true, score: 100.0 }}
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:871 [state sync] Reached version 14, no need to send more requests
+DEBUG 2020-07-22 15:53:47 execution/executor/src/speculation_cache/mod.rs:172 updated with a new root block bdb2cd04
+INFO 2020-07-22 15:53:47 execution/executor/src/lib.rs:449 Local synced version: 13. First transaction version in request: Some(14). Number of transactions in request: 1.
+INFO 2020-07-22 15:53:47 execution/executor/src/lib.rs:463 Skipping the first 0 transactions.
+[debug] 12ec011f160000000000000000002001
+[debug] 110de00111e161170000000000001001
+[debug] 1eed8012000000000000000000000001
+[debug] 1eed8012000000000000000000000002
+[debug] 1eed8012000000000000000000000003
+[debug] 4u64
+[debug] 1eed8012000000000000000000000004
+[debug] 110de00111e161170000000000001002
+[debug] 4u64
+[debug] 12ec011f160000000000000000002002
+[debug] 4u64
+[debug] 71b12a05157e11100000000000010001
+[debug] 71b12a05157e11100000000000020001
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000030001
+[debug] 1eed8012000000000000000000200001
+[debug] 1eed8012000000000000000000200002
+[debug] 1eed8012000000000000000000200003
+[debug] 1eed8012000000000000000000200005
+[debug] 11111110000001111u64
+[debug] 1u64
+[debug] 71b12a05157e11100000000000000001
+[debug] 4u64
+[debug] 4u64
+[debug] 12ec011f160000000000000000002003
+[debug] 50b51de0000000000000000000001001
+[debug] 50b51de0000000000000000000001002
+[debug] 50b51de0000000000000000000001003
+[debug] 296u64
+[debug] 50b51de0000000000000000000001004
+[debug] 12ec011f160000000000000000002004
+[debug] 12ec011f160000000000000000000002
+DEBUG 2020-07-22 15:53:47 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:47 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 21
+DEBUG 2020-07-22 15:53:47 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:53:47 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 4052697331
+DEBUG 2020-07-22 15:53:47 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block a098dda2 as a virtual block of reconfiguration block b4fcab54
+INFO 2020-07-22 15:53:47 execution/executor/src/lib.rs:587 Synced to version 14, the corresponding LedgerInfo is committed.
+DEBUG 2020-07-22 15:53:47 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 21
+DEBUG 2020-07-22 15:53:47 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:673 [state sync] applied chunk. Previous version: 13, new version: 14, chunk size: 1
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:247 [state sync] Trusted epoch moved from 1 to 2
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:399 [state sync] synchronization to 14 is finished
+INFO 2020-07-22 15:53:47 network/simple-onchain-discovery/src/lib.rs:136 Update validator Network about new Node IDs
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:444 [state sync] chunk request: peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f), local li version: 14, req: [ChunkRequest: known version: 13, epoch: 1, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 1, round: 15, id: HashValue(b4fcab540a120318572aa617dc33cd92ad77d993b94468f03332dd9332e1aeba), executed_state_id: HashValue(5353a61120956209f90d83ebe487bd837fc9ef2e94147b1cb5f8a8c5f25766b7), version: 14, timestamp_usecs: 1595433225620191, next_epoch_state: Some(EpochState { epoch: 2, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 2 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 2 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 2 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 2 }}, quorum_voting_power: 6, total_voting_power: 8 } }) }, consensus_data_hash: HashValue(8039c7f668f01a4de982b5846180121a4c8298486ce370419a2d08cc3534ff5b) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(7d338a708c5bf8d16d216f05b3e50cd15f317c81ca519264f626e34596937b885ba903ce43aef2579e71f064c1ea79eac060772ea0bbc853168ab4b5c29df70d), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(3765b3f782a9775cb90791ecae68fa03c2175043920847b48adfc09388f4baf1759beabde5a46701921b318229cc589eb36eaa145c04c8ea5690b90dc83def05), c8448531bae86542754f6078ed94af0f: Ed25519Signature(97daa9668519dcdadd6dcc5bf7b2ab77246a515def752b9749eef21f62bbf76606ddb2e1d05b1dc865d6e2650b107f98bde45d5542c2b29115696ccc2733fe07)} }))]
+DEBUG 2020-07-22 15:53:47 execution/executor/src/speculation_cache/mod.rs:164 Updated with a new root block a098dda2 as a virtual block of reconfiguration block b4fcab54
+DEBUG 2020-07-22 15:53:47 execution/executor/src/speculation_cache/mod.rs:87 Speculation block b4fcab54 is dropped.
+DEBUG 2020-07-22 15:53:47 consensus/src/epoch_manager.rs:511 Round: 17 Committed Round: 14 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: dc9ab8fa, epoch: 1, round: 17, parent_block_id: bb4d0416, parent_block_round: 16], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 15, id: b4fcab54, executed_state_id: 5353a611, version: 14, timestamp (us): 1595433225620191, next_epoch_state: EpochState [epoch: 2, validator: ValidatorSet: [21507b59: 2, 2ccabeb1: 2, 5942d356: 2, c8448531: 2, ]]]]]
+ERROR 2020-07-22 15:53:47 consensus/src/epoch_manager.rs:508 [RoundManager] local timeout is stale
+DEBUG 2020-07-22 15:53:47 consensus/src/epoch_manager.rs:511 Round: 17 Committed Round: 14 PendingVotes: [] Self Vote: Vote: [vote data: VoteData: [block id: dc9ab8fa, epoch: 1, round: 17, parent_block_id: bb4d0416, parent_block_round: 16], author: 21507b59, is_timeout: false, LedgerInfo: [commit_info: BlockInfo: [epoch: 1, round: 15, id: b4fcab54, executed_state_id: 5353a611, version: 14, timestamp (us): 1595433225620191, next_epoch_state: EpochState [epoch: 2, validator: ValidatorSet: [21507b59: 2, 2ccabeb1: 2, 5942d356: 2, c8448531: 2, ]]]]]
+DEBUG 2020-07-22 15:53:47 state-synchronizer/src/coordinator.rs:444 [state sync] chunk request: peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52), local li version: 14, req: [ChunkRequest: known version: 13, epoch: 1, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 1, round: 15, id: HashValue(b4fcab540a120318572aa617dc33cd92ad77d993b94468f03332dd9332e1aeba), executed_state_id: HashValue(5353a61120956209f90d83ebe487bd837fc9ef2e94147b1cb5f8a8c5f25766b7), version: 14, timestamp_usecs: 1595433225620191, next_epoch_state: Some(EpochState { epoch: 2, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 2 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 2 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 2 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 2 }}, quorum_voting_power: 6, total_voting_power: 8 } }) }, consensus_data_hash: HashValue(8039c7f668f01a4de982b5846180121a4c8298486ce370419a2d08cc3534ff5b) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(7d338a708c5bf8d16d216f05b3e50cd15f317c81ca519264f626e34596937b885ba903ce43aef2579e71f064c1ea79eac060772ea0bbc853168ab4b5c29df70d), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(3765b3f782a9775cb90791ecae68fa03c2175043920847b48adfc09388f4baf1759beabde5a46701921b318229cc589eb36eaa145c04c8ea5690b90dc83def05), c8448531bae86542754f6078ed94af0f: Ed25519Signature(97daa9668519dcdadd6dcc5bf7b2ab77246a515def752b9749eef21f62bbf76606ddb2e1d05b1dc865d6e2650b107f98bde45d5542c2b29115696ccc2733fe07)} }))]
+DEBUG 2020-07-22 15:53:47 consensus/src/round_manager.rs:399 Received a sync info msg: SyncInfo[HQC: 17, HCC: 15, HTC: None]
+DEBUG 2020-07-22 15:53:47 consensus/src/round_manager.rs:362 Local state SyncInfo[HQC: 16, HCC: 14, HTC: None] is stale than peer 5942d356 remote state SyncInfo[HQC: 17, HCC: 15, HTC: None]
+DEBUG 2020-07-22 15:53:47 execution/executor/src/lib.rs:663 Received request to commit block b4fcab540a120318572aa617dc33cd92ad77d993b94468f03332dd9332e1aeba.
+DEBUG 2020-07-22 15:53:48 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 22
+DEBUG 2020-07-22 15:53:48 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:48 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 150110827
+DEBUG 2020-07-22 15:53:48 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:48 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 22
+DEBUG 2020-07-22 15:53:48 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:48 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 2865384201
+DEBUG 2020-07-22 15:53:49 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:49 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 23
+DEBUG 2020-07-22 15:53:49 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:49 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 292301554
+DEBUG 2020-07-22 15:53:49 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 23
+DEBUG 2020-07-22 15:53:49 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:49 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 335582612
+DEBUG 2020-07-22 15:53:50 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 24
+DEBUG 2020-07-22 15:53:50 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:50 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1081006944
+DEBUG 2020-07-22 15:53:50 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:50 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 24
+DEBUG 2020-07-22 15:53:50 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:50 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 772125163
+DEBUG 2020-07-22 15:53:51 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:51 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 25
+DEBUG 2020-07-22 15:53:51 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:51 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 3800007712
+DEBUG 2020-07-22 15:53:51 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 1980960596
+DEBUG 2020-07-22 15:53:51 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 25
+DEBUG 2020-07-22 15:53:51 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:52 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 26
+DEBUG 2020-07-22 15:53:52 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:53:52 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 1737628598
+DEBUG 2020-07-22 15:53:52 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:52 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 26
+DEBUG 2020-07-22 15:53:52 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:53 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 27
+DEBUG 2020-07-22 15:53:53 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:53 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1548637510
+DEBUG 2020-07-22 15:53:53 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:53 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 27
+DEBUG 2020-07-22 15:53:53 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:53 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3589131667
+DEBUG 2020-07-22 15:53:54 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 28
+DEBUG 2020-07-22 15:53:54 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:53:54 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 2030684954
+DEBUG 2020-07-22 15:53:54 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:54 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 28
+DEBUG 2020-07-22 15:53:54 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:53:54 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 610174947
+DEBUG 2020-07-22 15:53:55 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:55 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 29
+DEBUG 2020-07-22 15:53:55 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:55 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1152283597
+DEBUG 2020-07-22 15:53:55 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 2798012847
+DEBUG 2020-07-22 15:53:55 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 29
+DEBUG 2020-07-22 15:53:55 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:56 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 30
+DEBUG 2020-07-22 15:53:56 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:56 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:56 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1640633062
+DEBUG 2020-07-22 15:53:56 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 30
+DEBUG 2020-07-22 15:53:56 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:56 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 2653442245
+DEBUG 2020-07-22 15:53:56 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 4039182049
+DEBUG 2020-07-22 15:53:57 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 31
+DEBUG 2020-07-22 15:53:57 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:57 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 2685447595
+DEBUG 2020-07-22 15:53:57 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:57 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 397217453
+DEBUG 2020-07-22 15:53:57 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 31
+DEBUG 2020-07-22 15:53:57 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:53:57 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 1382277532
+DEBUG 2020-07-22 15:53:58 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:58 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 32
+DEBUG 2020-07-22 15:53:58 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:53:58 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 3985168226
+DEBUG 2020-07-22 15:53:58 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 32
+DEBUG 2020-07-22 15:53:58 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:53:59 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 33
+DEBUG 2020-07-22 15:53:59 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:53:59 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1976690463
+DEBUG 2020-07-22 15:53:59 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:53:59 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 108441781
+DEBUG 2020-07-22 15:53:59 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 33
+DEBUG 2020-07-22 15:53:59 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:00 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:00 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 34
+DEBUG 2020-07-22 15:54:00 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:00 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 3098309794
+DEBUG 2020-07-22 15:54:00 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 34
+DEBUG 2020-07-22 15:54:00 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:01 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 35
+DEBUG 2020-07-22 15:54:01 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:01 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:54:01 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 447291626
+DEBUG 2020-07-22 15:54:01 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 35
+DEBUG 2020-07-22 15:54:01 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:01 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 765193337
+DEBUG 2020-07-22 15:54:02 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:02 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 36
+DEBUG 2020-07-22 15:54:02 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:54:02 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 3317096891
+DEBUG 2020-07-22 15:54:02 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 4117787658
+DEBUG 2020-07-22 15:54:02 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 36
+DEBUG 2020-07-22 15:54:02 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:03 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 37
+DEBUG 2020-07-22 15:54:03 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:54:03 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 3404471125
+DEBUG 2020-07-22 15:54:03 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:03 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 459180992
+DEBUG 2020-07-22 15:54:03 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 37
+DEBUG 2020-07-22 15:54:03 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:54:03 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 2379198845
+DEBUG 2020-07-22 15:54:04 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:04 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 38
+DEBUG 2020-07-22 15:54:04 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:04 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 2853291552
+DEBUG 2020-07-22 15:54:04 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3114982964
+DEBUG 2020-07-22 15:54:04 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 38
+DEBUG 2020-07-22 15:54:04 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:05 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 39
+DEBUG 2020-07-22 15:54:05 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:54:05 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 4270760650
+DEBUG 2020-07-22 15:54:05 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:05 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 39
+DEBUG 2020-07-22 15:54:05 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:05 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 4045950971
+DEBUG 2020-07-22 15:54:06 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 40
+DEBUG 2020-07-22 15:54:06 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:54:06 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1493468526
+DEBUG 2020-07-22 15:54:06 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:06 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 40
+DEBUG 2020-07-22 15:54:06 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:06 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 682828407
+DEBUG 2020-07-22 15:54:07 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:07 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 41
+DEBUG 2020-07-22 15:54:07 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:07 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 556116741
+DEBUG 2020-07-22 15:54:07 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 41
+DEBUG 2020-07-22 15:54:07 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:08 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 42
+DEBUG 2020-07-22 15:54:08 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:08 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:54:08 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 2543806415
+DEBUG 2020-07-22 15:54:08 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 2682358971
+DEBUG 2020-07-22 15:54:08 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 42
+DEBUG 2020-07-22 15:54:08 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:54:08 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 3858151282
+DEBUG 2020-07-22 15:54:09 state-synchronizer/src/coordinator.rs:444 [state sync] chunk request: peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52), local li version: 14, req: [ChunkRequest: known version: 28, epoch: 2, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 2, round: 15, id: HashValue(4525d930bfe4a1bf32781a96561b371ce50f5db1398c144bd629b22d4d77adb2), executed_state_id: HashValue(11f354bc8e81d8e4e29f701f041b40a3af7dd21ffd8e8a7ea53c155625043121), version: 29, timestamp_usecs: 1595433248305900, next_epoch_state: Some(EpochState { epoch: 3, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 3 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 3 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 3 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 3 }}, quorum_voting_power: 9, total_voting_power: 12 } }) }, consensus_data_hash: HashValue(38bb171a2f3eb29dc2d63435ab16aca3cbf523cac85c8c3ff2fee5c1133a8eae) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(9ba30a40f0ed90cea76fd8b50ed6b736175352206eabc019d239254919f30526acb4c29ff86275cb71b3c6f387420fd6d1521199b694d7dc12abccd31e946b06), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(571f3465b804c7d7b24e5d9c92e5073854c55f66aeae7d3ef92b6bde1435bf5be2ec4bcaa09e5f8596dd2f272e034edc8cb861b0386c3cce0ee0f53669607e0f), c8448531bae86542754f6078ed94af0f: Ed25519Signature(1fa3efd59ab61ef08afa126c7e7f9ac8a7ca70848d366b2d89a89a598c3c12d29a7fe570b970f7de5f5e06a8d4e796a8421bb28548244f795526b38e1f9c5b01)} }))]
+ERROR 2020-07-22 15:54:09 state-synchronizer/src/coordinator.rs:218 [state sync] failed to serve chunk request from PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52), local LI version 14: Txn 29 not found.
+DEBUG 2020-07-22 15:54:09 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 43
+DEBUG 2020-07-22 15:54:09 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:09 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 3896555866
+DEBUG 2020-07-22 15:54:09 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:09 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 515870029
+DEBUG 2020-07-22 15:54:09 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 43
+DEBUG 2020-07-22 15:54:09 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:09 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 3133951139
+DEBUG 2020-07-22 15:54:10 state-synchronizer/src/coordinator.rs:444 [state sync] chunk request: peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f), local li version: 14, req: [ChunkRequest: known version: 28, epoch: 2, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 2, round: 15, id: HashValue(4525d930bfe4a1bf32781a96561b371ce50f5db1398c144bd629b22d4d77adb2), executed_state_id: HashValue(11f354bc8e81d8e4e29f701f041b40a3af7dd21ffd8e8a7ea53c155625043121), version: 29, timestamp_usecs: 1595433248305900, next_epoch_state: Some(EpochState { epoch: 3, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 3 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 3 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 3 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 3 }}, quorum_voting_power: 9, total_voting_power: 12 } }) }, consensus_data_hash: HashValue(38bb171a2f3eb29dc2d63435ab16aca3cbf523cac85c8c3ff2fee5c1133a8eae) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(9ba30a40f0ed90cea76fd8b50ed6b736175352206eabc019d239254919f30526acb4c29ff86275cb71b3c6f387420fd6d1521199b694d7dc12abccd31e946b06), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(571f3465b804c7d7b24e5d9c92e5073854c55f66aeae7d3ef92b6bde1435bf5be2ec4bcaa09e5f8596dd2f272e034edc8cb861b0386c3cce0ee0f53669607e0f), c8448531bae86542754f6078ed94af0f: Ed25519Signature(1fa3efd59ab61ef08afa126c7e7f9ac8a7ca70848d366b2d89a89a598c3c12d29a7fe570b970f7de5f5e06a8d4e796a8421bb28548244f795526b38e1f9c5b01)} }))]
+ERROR 2020-07-22 15:54:10 state-synchronizer/src/coordinator.rs:218 [state sync] failed to serve chunk request from PeerNetworkId(21507b59b6e7f1b72c009036682736b7, c8448531bae86542754f6078ed94af0f), local LI version 14: Txn 29 not found.
+DEBUG 2020-07-22 15:54:10 state-synchronizer/src/coordinator.rs:444 [state sync] chunk request: peer_id: PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52), local li version: 14, req: [ChunkRequest: known version: 28, epoch: 2, limit: 250, target: TargetLedgerInfo(V0(LedgerInfoWithV0 { ledger_info: LedgerInfo { commit_info: BlockInfo { epoch: 2, round: 15, id: HashValue(4525d930bfe4a1bf32781a96561b371ce50f5db1398c144bd629b22d4d77adb2), executed_state_id: HashValue(11f354bc8e81d8e4e29f701f041b40a3af7dd21ffd8e8a7ea53c155625043121), version: 29, timestamp_usecs: 1595433248305900, next_epoch_state: Some(EpochState { epoch: 3, verifier: ValidatorVerifier { address_to_validator_info: {21507b59b6e7f1b72c009036682736b7: ValidatorConsensusInfo { public_key: Ed25519PublicKey(bb141059eccb42f08719aacb65335f6891e74c21ebb0583ddf86568f86e03162), voting_power: 3 }, 2ccabeb1d31ac67b185d683439bb7e52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(972e30a447fda6331d7bcde6fa987ae07c021ad03e02862138cdc183f8783804), voting_power: 3 }, 5942d356f114089d4a46f2f3b0b15b52: ValidatorConsensusInfo { public_key: Ed25519PublicKey(7e3c4c48f406240433b116ee1566d19570b4e2a65d8a4264a1f1835715392ca2), voting_power: 3 }, c8448531bae86542754f6078ed94af0f: ValidatorConsensusInfo { public_key: Ed25519PublicKey(c2f1b259e9cb237b4d94d507946198cf8bc7a30a31045e9bd9d543c725392698), voting_power: 3 }}, quorum_voting_power: 9, total_voting_power: 12 } }) }, consensus_data_hash: HashValue(38bb171a2f3eb29dc2d63435ab16aca3cbf523cac85c8c3ff2fee5c1133a8eae) }, signatures: {2ccabeb1d31ac67b185d683439bb7e52: Ed25519Signature(9ba30a40f0ed90cea76fd8b50ed6b736175352206eabc019d239254919f30526acb4c29ff86275cb71b3c6f387420fd6d1521199b694d7dc12abccd31e946b06), 5942d356f114089d4a46f2f3b0b15b52: Ed25519Signature(571f3465b804c7d7b24e5d9c92e5073854c55f66aeae7d3ef92b6bde1435bf5be2ec4bcaa09e5f8596dd2f272e034edc8cb861b0386c3cce0ee0f53669607e0f), c8448531bae86542754f6078ed94af0f: Ed25519Signature(1fa3efd59ab61ef08afa126c7e7f9ac8a7ca70848d366b2d89a89a598c3c12d29a7fe570b970f7de5f5e06a8d4e796a8421bb28548244f795526b38e1f9c5b01)} }))]
+ERROR 2020-07-22 15:54:10 state-synchronizer/src/coordinator.rs:218 [state sync] failed to serve chunk request from PeerNetworkId(21507b59b6e7f1b72c009036682736b7, 2ccabeb1d31ac67b185d683439bb7e52), local LI version 14: Txn 29 not found.
+DEBUG 2020-07-22 15:54:10 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:10 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 44
+DEBUG 2020-07-22 15:54:10 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:10 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 190488266
+DEBUG 2020-07-22 15:54:10 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 44
+DEBUG 2020-07-22 15:54:10 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:11 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 45
+DEBUG 2020-07-22 15:54:11 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:54:11 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 1324099919
+DEBUG 2020-07-22 15:54:11 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:11 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 45
+DEBUG 2020-07-22 15:54:11 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:54:11 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3116350824
+DEBUG 2020-07-22 15:54:12 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 46
+DEBUG 2020-07-22 15:54:12 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:12 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 2449419539
+DEBUG 2020-07-22 15:54:12 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:12 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 375669521
+DEBUG 2020-07-22 15:54:12 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 46
+DEBUG 2020-07-22 15:54:12 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:13 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:13 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 47
+DEBUG 2020-07-22 15:54:13 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:54:13 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 3229243510
+DEBUG 2020-07-22 15:54:13 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 3578589268
+DEBUG 2020-07-22 15:54:13 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 47
+DEBUG 2020-07-22 15:54:13 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:14 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:14 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 48
+DEBUG 2020-07-22 15:54:14 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:54:14 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 1422438981
+DEBUG 2020-07-22 15:54:14 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 48
+DEBUG 2020-07-22 15:54:14 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:54:15 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:15 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 49
+DEBUG 2020-07-22 15:54:15 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:15 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 647631948
+DEBUG 2020-07-22 15:54:15 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 49
+DEBUG 2020-07-22 15:54:15 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:15 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 3024116012
+DEBUG 2020-07-22 15:54:16 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 50
+DEBUG 2020-07-22 15:54:16 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:16 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:54:16 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1788853593
+DEBUG 2020-07-22 15:54:16 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 50
+DEBUG 2020-07-22 15:54:16 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:16 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3903940278
+DEBUG 2020-07-22 15:54:17 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 51
+DEBUG 2020-07-22 15:54:17 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:54:17 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 2565583728
+DEBUG 2020-07-22 15:54:17 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:17 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 51
+DEBUG 2020-07-22 15:54:17 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:54:17 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3720335537
+DEBUG 2020-07-22 15:54:18 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 52
+DEBUG 2020-07-22 15:54:18 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:18 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 897967485
+DEBUG 2020-07-22 15:54:18 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:18 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 2579571646
+DEBUG 2020-07-22 15:54:18 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 52
+DEBUG 2020-07-22 15:54:18 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:19 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 53
+DEBUG 2020-07-22 15:54:19 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:19 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:54:19 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 967323927
+DEBUG 2020-07-22 15:54:19 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 53
+DEBUG 2020-07-22 15:54:19 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:54:19 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 901662302
+DEBUG 2020-07-22 15:54:20 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:20 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 54
+DEBUG 2020-07-22 15:54:20 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:20 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 344819887
+DEBUG 2020-07-22 15:54:20 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 54
+DEBUG 2020-07-22 15:54:20 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:20 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 2ccabeb1 with nonce: 234683102
+DEBUG 2020-07-22 15:54:20 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 2792658221
+DEBUG 2020-07-22 15:54:21 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 55
+DEBUG 2020-07-22 15:54:21 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:21 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 2342185011
+DEBUG 2020-07-22 15:54:21 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:21 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 55
+DEBUG 2020-07-22 15:54:21 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:22 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 56
+DEBUG 2020-07-22 15:54:22 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:22 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 2739293460
+DEBUG 2020-07-22 15:54:22 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:22 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 56
+DEBUG 2020-07-22 15:54:22 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:22 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: 5942d356 with nonce: 832504182
+DEBUG 2020-07-22 15:54:23 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:23 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 57
+DEBUG 2020-07-22 15:54:23 network/src/protocols/health_checker/mod.rs:180 Will ping: 2ccabeb1
+DEBUG 2020-07-22 15:54:23 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 2ccabeb1 with nonce: 2542267722
+DEBUG 2020-07-22 15:54:23 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 57
+DEBUG 2020-07-22 15:54:23 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 2ccabeb1
+DEBUG 2020-07-22 15:54:24 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:24 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 58
+DEBUG 2020-07-22 15:54:24 network/src/protocols/health_checker/mod.rs:180 Will ping: 5942d356
+DEBUG 2020-07-22 15:54:24 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: 5942d356 with nonce: 1404664591
+DEBUG 2020-07-22 15:54:24 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 58
+DEBUG 2020-07-22 15:54:24 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: 5942d356
+DEBUG 2020-07-22 15:54:25 network/src/protocols/health_checker/mod.rs:180 Tick: Round number: 59
+DEBUG 2020-07-22 15:54:25 network/src/protocols/health_checker/mod.rs:180 Will ping: c8448531
+DEBUG 2020-07-22 15:54:25 network/src/protocols/health_checker/mod.rs:344 Sending Ping request to peer: c8448531 with nonce: 1825576872
+DEBUG 2020-07-22 15:54:25 network/src/protocols/discovery/mod.rs:226 Discovery interval tick
+DEBUG 2020-07-22 15:54:25 network/src/protocols/health_checker/mod.rs:276 Got result for ping round: 59
+DEBUG 2020-07-22 15:54:25 network/src/protocols/health_checker/mod.rs:280 Ping successful for peer: c8448531
+DEBUG 2020-07-22 15:54:25 network/src/protocols/health_checker/mod.rs:261 Sending Pong response to peer: c8448531 with nonce: 3238047131
+ERROR 2020-07-22 15:54:26 common/crash-handler/src/lib.rs:38 details = '''panicked at 'Failed to persist commit: Cannot find speculation result for block id b4fcab54', consensus/src/block_storage/block_store.rs:203:9'''
+backtrace = '''
+   0:        0x10699ecbd - backtrace::backtrace::libunwind::trace::h4a30e0efa58f79ba
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.48/src/backtrace/libunwind.rs:86
+                           backtrace::backtrace::trace_unsynchronized::h617a863566666d02
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.48/src/backtrace/mod.rs:66
+   1:        0x10699ec43 - backtrace::backtrace::trace::h80f2bdd30757ad3e
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.48/src/backtrace/mod.rs:53
+   2:        0x1069bbe87 - backtrace::capture::Backtrace::create::h1b3d726e82ae044c
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.48/src/capture.rs:164
+   3:        0x1069bbdc6 - backtrace::capture::Backtrace::new::hd9398e65428d2eee
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/backtrace-0.3.48/src/capture.rs:128
+   4:        0x10696c3d7 - crash_handler::handle_panic::he2b4ed2d5af7ddc1
+                               at /Users/lucas/code/rust/ol-lg/common/crash-handler/src/lib.rs:35
+   5:        0x10696d678 - crash_handler::setup_panic_handler::{{closure}}::h36f51f8dece1d1ab
+                               at /Users/lucas/code/rust/ol-lg/common/crash-handler/src/lib.rs:27
+   6:        0x10766aed5 - std::panicking::rust_panic_with_hook::h2cd47f71d6d55501
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:515
+   7:        0x10766a9c2 - rust_begin_unwind
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:419
+   8:        0x1076b694f - core::panicking::panic_fmt::h299f54c72477a62a
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/panicking.rs:111
+   9:        0x1076b6855 - core::option::expect_none_failed::h07b7c1add83ba342
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/option.rs:1268
+  10:        0x1070a8f1a - core::result::Result<T,E>::expect::h9b6549e33f88dad2
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/result.rs:963
+  11:        0x1051533f3 - consensus::block_storage::block_store::BlockStore::commit::{{closure}}::h9ca72ec7c561f665
+                               at /Users/lucas/code/rust/ol/consensus/src/block_storage/block_store.rs:203
+  12:        0x1050399a0 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::h881870c7e4ac7339
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  13:        0x1050494cb - consensus::block_storage::block_store::sync_manager::<impl consensus::block_storage::block_store::BlockStore>::insert_quorum_cert::{{closure}}::h88321f24f2140224
+                               at /Users/lucas/code/rust/ol/consensus/src/block_storage/sync_manager.rs:108
+  14:        0x1050395f0 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::h655b54fdf70cfbab
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  15:        0x105048724 - consensus::block_storage::block_store::sync_manager::<impl consensus::block_storage::block_store::BlockStore>::add_certs::{{closure}}::h0192eb663f4438bb
+                               at /Users/lucas/code/rust/ol/consensus/src/block_storage/sync_manager.rs:84
+  16:        0x10503a4b0 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::hc4d87065726d1fce
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  17:        0x105066e7f - consensus::round_manager::RoundManager::sync_up::{{closure}}::h9ede4b9eab2dfcb6
+                               at /Users/lucas/code/rust/ol/consensus/src/round_manager.rs:379
+  18:        0x105039030 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::h304bc0ebbb6b68bb
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  19:        0x105068280 - consensus::round_manager::RoundManager::process_sync_info_msg::{{closure}}::h73faf10c0430095b
+                               at /Users/lucas/code/rust/ol/consensus/src/round_manager.rs:402
+  20:        0x105038c80 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::h119609ad104ce485
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  21:        0x1050841e0 - consensus::epoch_manager::EpochManager::process_event::{{closure}}::hd53b920eccc04233
+                               at /Users/lucas/code/rust/ol/consensus/src/epoch_manager.rs:446
+  22:        0x105039be0 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::h8ff10d719035f4b7
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  23:        0x10508167b - consensus::epoch_manager::EpochManager::process_message::{{closure}}::h835a0be2f7569361
+                               at /Users/lucas/code/rust/ol/consensus/src/epoch_manager.rs:384
+  24:        0x10503aaf0 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::hd64b3a20d3997650
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  25:        0x1050863d7 - consensus::epoch_manager::EpochManager::start::{{closure}}::hec21d4b2de2170a7
+                               at /Users/lucas/code/rust/ol/consensus/src/epoch_manager.rs:488
+  26:        0x10503af40 - <core::future::from_generator::GenFuture<T> as core::future::future::Future>::poll::hea3480071d3c879b
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/future/mod.rs:66
+  27:        0x105110383 - tokio::runtime::task::core::Core<T,S>::poll::{{closure}}::h2b3fe39abc28ac62
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/core.rs:173
+  28:        0x105005cc0 - tokio::loom::std::unsafe_cell::UnsafeCell<T>::with_mut::h19c5ddf864f3f5d3
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/loom/std/unsafe_cell.rs:14
+  29:        0x1051100a1 - tokio::runtime::task::core::Core<T,S>::poll::hedd6177b8cb8f4f4
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/core.rs:158
+  30:        0x1050cbd27 - tokio::runtime::task::harness::Harness<T,S>::poll::{{closure}}::h58080132045e59f2
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/harness.rs:107
+  31:        0x1050d3120 - core::ops::function::FnOnce::call_once::had28bafa463a2c83
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/ops/function.rs:232
+  32:        0x105134cec - <std::panic::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once::h3000980260395f70
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panic.rs:318
+  33:        0x105041326 - std::panicking::try::do_call::h262e23f033545ded
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:331
+  34:        0x105041d1d - ___rust_try
+  35:        0x105040d47 - std::panicking::try::hb693aaaffc0b861d
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:274
+  36:        0x105134f6c - std::panic::catch_unwind::h7c56442f08e769bc
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panic.rs:394
+  37:        0x1050cb414 - tokio::runtime::task::harness::Harness<T,S>::poll::h3c98fac77963aab0
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/harness.rs:89
+  38:        0x105092f02 - tokio::runtime::task::raw::poll::h9b3f55666db898da
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/raw.rs:104
+  39:        0x1068f0abe - tokio::runtime::task::raw::RawTask::poll::h4d22c366006a58ef
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/raw.rs:66
+  40:        0x1068d53bd - tokio::runtime::task::Notified<S>::run::h3ec2f49e28a4bd77
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/mod.rs:169
+  41:        0x1068ec0cf - tokio::runtime::thread_pool::worker::Context::run_task::{{closure}}::h5b43ed9cc70c0c08
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/thread_pool/worker.rs:349
+  42:        0x106897846 - tokio::coop::with_budget::{{closure}}::h04946ad07f1327a8
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/coop.rs:127
+  43:        0x10689cd14 - std::thread::local::LocalKey<T>::try_with::h7225a658edfdc5c2
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/thread/local.rs:263
+  44:        0x10689bebc - std::thread::local::LocalKey<T>::with::hac058fccb2449ea5
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/thread/local.rs:239
+  45:        0x1068ebf83 - tokio::coop::with_budget::hb7e3ba286d3a59a7
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/coop.rs:120
+                           tokio::coop::budget::h6456b924481c29d0
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/coop.rs:96
+                           tokio::runtime::thread_pool::worker::Context::run_task::h289885ef49b4340f
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/thread_pool/worker.rs:348
+  46:        0x1068eba55 - tokio::runtime::thread_pool::worker::Context::run::hb5f228d5f81eb0c5
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/thread_pool/worker.rs:320
+  47:        0x1068eb8a5 - tokio::runtime::thread_pool::worker::run::{{closure}}::hcc05ba7836f96e4d
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/thread_pool/worker.rs:305
+  48:        0x1068d4614 - tokio::macros::scoped_tls::ScopedKey<T>::set::h0392d7e9c4f1299a
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/macros/scoped_tls.rs:63
+  49:        0x1068eb7f9 - tokio::runtime::thread_pool::worker::run::h1315d82c2b6993cb
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/thread_pool/worker.rs:302
+  50:        0x1068eb6a1 - tokio::runtime::thread_pool::worker::Launch::launch::{{closure}}::h7bb9e18402fe1693
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/thread_pool/worker.rs:281
+  51:        0x1068b90a8 - <tokio::runtime::blocking::task::BlockingTask<T> as core::future::future::Future>::poll::h94a44735a46e21bb
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/blocking/task.rs:38
+  52:        0x1068b81b3 - tokio::runtime::task::core::Core<T,S>::poll::{{closure}}::h92f43d2e6af378cb
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/core.rs:173
+  53:        0x1068b4ed0 - tokio::loom::std::unsafe_cell::UnsafeCell<T>::with_mut::hb799f65b07249115
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/loom/std/unsafe_cell.rs:14
+  54:        0x1068b802b - tokio::runtime::task::core::Core<T,S>::poll::h895022b46ef5d4eb
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/core.rs:158
+  55:        0x1068db727 - tokio::runtime::task::harness::Harness<T,S>::poll::{{closure}}::h3a5f2943011209a5
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/harness.rs:107
+  56:        0x1068cb700 - core::ops::function::FnOnce::call_once::ha81cd9470402fd49
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/ops/function.rs:232
+  57:        0x1068755ec - <std::panic::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once::h317f9250d1f88477
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panic.rs:318
+  58:        0x1068de176 - std::panicking::try::do_call::h086216b7bac1be4a
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:331
+  59:        0x1068e4f9d - ___rust_try
+  60:        0x1068ddc17 - std::panicking::try::h0245e03e5f0b5107
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:274
+  61:        0x106875c1c - std::panic::catch_unwind::hb23b7288f770f3a1
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panic.rs:394
+  62:        0x1068dadf4 - tokio::runtime::task::harness::Harness<T,S>::poll::h5ffc0f2d9670cd9e
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/harness.rs:89
+  63:        0x1068f0c32 - tokio::runtime::task::raw::poll::hfc3a992e611c5631
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/raw.rs:104
+  64:        0x1068f0abe - tokio::runtime::task::raw::RawTask::poll::h4d22c366006a58ef
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/raw.rs:66
+  65:        0x1068d535d - tokio::runtime::task::Notified<S>::run::h11da927a8fab8a42
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/task/mod.rs:169
+  66:        0x1068f3dd6 - tokio::runtime::blocking::pool::Inner::run::h5627988733ab7ee0
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/blocking/pool.rs:230
+  67:        0x1068f3b97 - tokio::runtime::blocking::pool::Spawner::spawn_thread::{{closure}}::{{closure}}::h0c75d90d064e3333
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/blocking/pool.rs:210
+  68:        0x10687c4c9 - tokio::runtime::context::enter::h878ceaa584851092
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/context.rs:72
+  69:        0x1068b5f82 - tokio::runtime::handle::Handle::enter::h0996191201d35179
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/handle.rs:76
+  70:        0x1068f3c19 - tokio::runtime::blocking::pool::Spawner::spawn_thread::{{closure}}::h70e7b61a60ff3cac
+                               at /Users/lucas/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-0.2.21/src/runtime/blocking/pool.rs:209
+  71:        0x1068bb141 - std::sys_common::backtrace::__rust_begin_short_backtrace::h0a34ac7d2f42fc12
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/sys_common/backtrace.rs:130
+  72:        0x106876f31 - std::thread::Builder::spawn_unchecked::{{closure}}::{{closure}}::h62fc9dee375baaca
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/thread/mod.rs:475
+  73:        0x106875651 - <std::panic::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once::hb80448ea3ae606b4
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panic.rs:318
+  74:        0x1068de27f - std::panicking::try::do_call::h34b0b8a8e827b902
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:331
+  75:        0x1068e4f9d - ___rust_try
+  76:        0x1068dddde - std::panicking::try::h12eb823b2fcc9b36
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panicking.rs:274
+  77:        0x106875be1 - std::panic::catch_unwind::h349443072b1faea2
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/panic.rs:394
+  78:        0x106876d77 - std::thread::Builder::spawn_unchecked::{{closure}}::h13f517298ab1991d
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/thread/mod.rs:474
+  79:        0x1068cb3e1 - core::ops::function::FnOnce::call_once{{vtable.shim}}::h5b21d8372a4513e3
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libcore/ops/function.rs:232
+  80:        0x10766e9dd - <alloc::boxed::Box<F> as core::ops::function::FnOnce<A>>::call_once::h307bc2fd9d7d309b
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/liballoc/boxed.rs:1008
+                           <alloc::boxed::Box<F> as core::ops::function::FnOnce<A>>::call_once::hf381279f6518a852
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/liballoc/boxed.rs:1008
+                           std::sys::unix::thread::Thread::new::thread_start::h2b28b74d30bce841
+                               at /rustc/49cae55760da0a43428eba73abcb659bb70cf2e4/src/libstd/sys/unix/thread.rs:87
+  81:     0x7fff6edc5109 - __pthread_start
+'''
+
