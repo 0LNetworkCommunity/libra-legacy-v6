@@ -21,7 +21,7 @@ use vm::errors::VMResult;
 const BITMAP_SIZE: usize = 32;
 
 /// Starting error code number
-const DEFAULT_ERROR_CODE: u64 = 0x0ED2_5519;
+pub const DEFAULT_ERROR_CODE: u64 = 0x0ED2_5519;
 /// Batch signature verification failed
 const SIGNATURE_VERIFICATION_FAILURE: u64 = DEFAULT_ERROR_CODE + 1;
 /// Public keys deserialization error

@@ -1,4 +1,4 @@
-//! `submit` subcommand
+// `submit` subcommand
 
 
 
@@ -57,11 +57,17 @@ impl Runnable for SubmitCmd {
                     }
                 }
 
-                build_block::submit_block(
+                let result = build_block::submit_block(
                     &miner_configs,
                     line,
                     waypoint,
                     self.height);
+                match result {
+                    Ok(_val) => { }
+                    Err(_) => {
+                        println!("Failed to submit block");
+                    }
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
