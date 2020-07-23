@@ -46,3 +46,6 @@ move_build_output/
 
 # local node database
 0_dev_config/0/**
+
+#github api token
+github_token
