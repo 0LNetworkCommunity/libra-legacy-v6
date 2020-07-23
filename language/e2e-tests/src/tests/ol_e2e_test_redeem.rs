@@ -1,7 +1,10 @@
+// Copyright (c) 0lsf
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
-use crate::redeem_setup::{redeem_txn, redeem_txn_onboarding};
-use ol_miner::delay;
+use crate::redeem_setup::{redeem_txn};
+use miner::delay;
 use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};
 use hex;

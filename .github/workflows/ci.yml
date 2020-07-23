@@ -31,8 +31,8 @@ jobs:
             components: rustfmt, clippy
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
-      - name: Run OL functional tests
-        run: cd language/move-lang/functional-tests && cargo test OL
+      - name: Run 0L functional tests
+        run: cd language/move-lang/functional-tests && cargo test 0L
 
   miner:
     name: Miner Tests
@@ -57,7 +57,7 @@ jobs:
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
-        run: cd ol-miner && cargo test
+        run: cd miner && cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
@@ -116,7 +116,7 @@ jobs:
 #           key: ${{ runner.os }}-test-swarm-${{ hashFiles('**/Cargo.lock') }}
 #       - name: Start swarm & grep logs
 #         run: chmod +x 0L_swarm_test.sh && ./0L_swarm_test.sh
-  # 
+  #
   # compile:
   #   name: Compile and Cache
   #   runs-on: ubuntu-latest

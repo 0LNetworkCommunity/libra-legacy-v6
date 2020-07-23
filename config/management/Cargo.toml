@@ -32,7 +32,7 @@ libradb = { path = "../../storage/libradb", version = "0.1.0" }
 storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
 transaction-builder = { path = "../../language/transaction-builder", version = "0.1.0" }
 vm-genesis = { path = "../../language/tools/vm-genesis", version = "0.1.0" }
-ol_miner = {path ="../../ol-miner", version = "0.1.0"}
+miner = {path ="../../miner", version = "0.1.0"}
 libra-wallet = { path = "../../testsuite/cli/libra-wallet", version = "0.1.0"}
 # libra-swarm is actually a dev-dependency, but because libra-management is a default workspace member,
 # cargo's V1 resolver will make it take part in feature resolution. Setting it as optional works, but it

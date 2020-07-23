@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{tests::suite, PersistentSafetyStorage, SafetyRulesManager, TSafetyRules};
-use libra_secure_storage::{KVStorage, VaultStorage};
+use libra_secure_storage::{VaultStorage};
 use libra_types::{validator_signer::ValidatorSigner, waypoint::Waypoint};
 
 /// A test for verifying VaultStorage properly supports the SafetyRule backend.  This test

@@ -27,7 +27,6 @@ address 0x0 {
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
     // use 0x0::Redeem;
-    use 0x0::ReconfigureOL;
 
     fun initialize(
       //NOTE: The System accounts need to be merged into one, except for 0xFEE and possibly Burn.
@@ -52,13 +51,6 @@ address 0x0 {
 
         // Currency setup
         Libra::initialize(config_account);
-
-        // Reconfigure module setup
-        // TODO: Let's keep all constants in code, and not in on-chain resources.
-        // This will initialize epoch_length and validator count for each epoch
-        // let epoch_length = 15;
-        // let validator_count_per_epoch = 10;
-        ReconfigureOL::initialize(association);
 
         // Redeem::initialize(association);
 
