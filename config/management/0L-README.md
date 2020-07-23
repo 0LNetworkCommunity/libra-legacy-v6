@@ -40,13 +40,13 @@ On a machine you will use for validation, build the project from within the proj
 
 # Mining
 Your working directory is now:
-`libra/ol-miner/`
-TODO: How to call ol-miner from the my_configs path.
+`libra/miner/`
+TODO: How to call `miner` from the my_configs path.
 
 ## Create and account and Mnemonic
-In the ol-miner project create account credentials, which will be needed for mining, and also validation.
+In the miner project create account credentials, which will be needed for mining, and also validation.
 ```
-libra/ol-miner $
+libra/miner $
 cargo run keygen
 ```
 the response will be a print of the mnemonic, account address, and auth key.
@@ -54,14 +54,14 @@ the response will be a print of the mnemonic, account address, and auth key.
 DO NOT LOSE THE MNEMONIC. SAVE IT IN YOUR PASSWORD VAULT. WRITE IT ON PAPER NOW.
 
 ## Include account data in ol-miner.toml
-There is a template for ol-miner.toml in /ol-miner/ update it with the auth key that you generated as part of the credentials in the previous step.
+There is a template for miner.toml in /miner/ update it with the auth key that you generated as part of the credentials in the previous step.
 
 ## Mine one proof, your miner's genesis proof.
 This will take at least 10 minutes. The current version of the program will stop on its own when one block has been completed.
 
 ```
-libra/ol-miner $
-ol-miner/ cargo run start
+libra/miner $
+miner/ cargo run start
 ```
 
 You will be prompted to enter your mnemonic.
