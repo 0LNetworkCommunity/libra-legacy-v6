@@ -303,9 +303,9 @@ impl ClientProxy {
         Ok(())
     }
 
-    /// 0L: Send a VDF proof from the Libra Shell with delimited strings
-    /// Wraps execute_send_proof
-    pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
+    /// 0L: Get Miner State
+    /// A wrap for libra cli to execute query miner state command.
+    pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
         // ensure!(
         //     space_delim_strings.len() != 6 ,
         //     "Invalid number of arguments for sending proof"
@@ -316,8 +316,12 @@ impl ClientProxy {
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
-        let response = self.client.get_miner_state(sender_address );
-        response.unwrap()
+        self.client.get_miner_state(sender_address ).unwrap()
+    }
+
+    /// Get minter state for Ol_miner
+    pub fn get_miner_state(&mut self, account: AccountAddress) -> Result<Option<MinerStateView>, Error>{
+        self.client.get_miner_state(account )
     }
 
 

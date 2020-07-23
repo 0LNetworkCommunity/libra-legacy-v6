@@ -6,11 +6,14 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
+use abscissa_core::path::{PathBuf, Path};
 
 /// OlMiner Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct OlMinerConfig {
+    /// Workspace config
+    pub workspace: Workspace,
     /// User Profile
     pub profile: Profile,
     /// Chain Info for all users
@@ -86,18 +89,26 @@ impl OlMinerConfig {
 
         preimage.append(&mut padded_statements_bytes);
 
-        assert!(
-            preimage.len()
-                == (
-                    AUTH_KEY_BYTES // 0L Auth_Key
-                    +CHAIN_ID_BYTES // chain_id
-                    +8 // iterations/difficulty
-                    +STATEMENT_BYTES
-                    // statement
-                ),
-            "Preimage is the incorrect byte length"
-        );
+        assert_eq!(preimage.len(), (
+            AUTH_KEY_BYTES // 0L Auth_Key
+                + CHAIN_ID_BYTES // chain_id
+                + 8 // iterations/difficulty
+                + STATEMENT_BYTES
+            // statement
+        ), "Preimage is the incorrect byte length");
         return preimage;
+    }
+
+    pub fn get_block_dir(&self)-> PathBuf {
+        let mut home = self.workspace.home.clone();
+        home.push(&self.chain_info.block_dir);
+        home
+    }
+
+    pub fn get_local_backlog_path(&self)-> PathBuf {
+        let mut home = self.workspace.home.clone();
+        home.push("backlog.json");
+        home
     }
 }
 
@@ -108,11 +119,29 @@ impl OlMinerConfig {
 impl Default for OlMinerConfig {
     fn default() -> Self {
         Self {
+            workspace: Workspace::default(),
             profile: Profile::default(),
             chain_info: ChainInfo::default(),
         }
     }
 }
+
+/// Information about the Chain to mined for
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Workspace {
+    /// home directory of ol_miner
+    pub home: PathBuf,
+}
+
+impl Default for Workspace {
+    fn default() -> Self {
+        Self{
+            home: PathBuf::from(".")
+        }
+    }
+}
+
 /// Information about the Chain to mined for
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]

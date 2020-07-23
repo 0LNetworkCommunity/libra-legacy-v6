@@ -2,11 +2,15 @@
 
 #![forbid(unsafe_code)]
 use ol_miner::config::*;
+use abscissa_core::path::PathBuf;
 
 #[test]
 fn test_genesis_preimage() {
     // Create fixtures.
     let configs = OlMinerConfig {
+        workspace: Workspace {
+            home: PathBuf::from("."),
+        },
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_owned(),
             statement: "Protests rage across the Nation".to_owned(),
