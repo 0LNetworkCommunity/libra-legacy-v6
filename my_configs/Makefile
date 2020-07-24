@@ -35,7 +35,7 @@ register: stdlib clear init mining keys register
 
 # > make register MNEM='owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' NAME=lucas ACC=5e7891b719c305941e62867ffe730f48 IP=104.131.20.59
 
-genesis: build-genesis waypoint toml
+genesis: stdlib build-genesis waypoint toml
 
 
 # Add other binaries later.
