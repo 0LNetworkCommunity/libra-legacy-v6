@@ -32,7 +32,7 @@ IP = 64.227.28.81
 MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
-compile : all-bins
+install: deps all-bins copy
 
 # pipelines for genesis ceremony
 register: clear init mining keys register
@@ -43,9 +43,10 @@ genesis: stdlib build-genesis waypoint toml
 
 
 # Add other binaries later.
-install:
-	cp -f target/release/ol_miner /usr/local/bin/ol_miner
+copy:
+	#cp -f target/release/ol_miner /usr/local/bin/ol_miner
 	cp -f target/release/libra-management /usr/local/bin/libra-management
+	cp -f target/release/libra-node /usr/local/bin/libra-node
 
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
