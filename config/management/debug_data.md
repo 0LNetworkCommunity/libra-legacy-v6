@@ -1,9 +1,7 @@
-DEBUG instructions
-
-### DEBUG DATA:
+#DEBUG DATA:
 namespace:zaki
 
-#miner: 0
+# miner: 0
 
 mnemonic: average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
 
@@ -27,7 +25,7 @@ auth_key:200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
 
 ip: 104.131.20.59
 
-#miner: 2
+# miner: 2
 namespace: sha
 
 mnemonic: motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
@@ -38,7 +36,7 @@ auth_key: edb1e1423793ebdd7ef184b1a21667059739b1548df3149b2a2a5f1ea7cafd29
 
 ip: 64.227.20.31
 
-#miner: 3
+# miner: 3
 namespace: keerthi
 
 mnemonic: advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
