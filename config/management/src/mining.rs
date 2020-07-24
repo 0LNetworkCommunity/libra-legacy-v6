@@ -1,6 +1,6 @@
 use crate::{error::Error, SingleBackend};
 use libra_secure_storage::{Storage, Value};
-use ol_miner::block::Block;
+use miner::block::Block;
 use std::convert::TryInto;
 use std::path::PathBuf;
 use structopt::StructOpt;
