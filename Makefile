@@ -6,10 +6,10 @@ SHELL=/usr/bin/env bash
 # Don't put the MNEM here, add that by command line only.
 DATA_PATH = ~/libra/my_configs/
 # TODO: namespace and account will be the same data. Testing with human readable names.
-NAME = lucas
+NAME = ping01
 ACC = 5e7891b719c305941e62867ffe730f48
-IP = 104.131.20.59
-
+IP = 64.227.30.144
+REPO = gene-ping
 ###########################
 
 compile : all-bins
@@ -43,12 +43,12 @@ init:
 mining:
 	libra-management mining \
 	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
-	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}/github_token.txt;namespace=${NAME}'
+	--backend 'backend=github;owner=OLSF;repository=${REPO};token=${DATA_PATH}/github_token.txt;namespace=${NAME}'
 
 keys:
 	libra-management operator-key \
 	--local 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAME}' \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}/github_token.txt;namespace=${NAME}'
+	--remote 'backend=github;owner=OLSF;repository=${REPO};token=${DATA_PATH}/github_token.txt;namespace=${NAME}'
 
 register:
 	libra-management validator-config \
@@ -56,16 +56,16 @@ register:
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--local 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAME}' \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}/github_token.txt;namespace=${NAME}'
+	--remote 'backend=github;owner=OLSF;repository=${REPO};token=${DATA_PATH}/github_token.txt;namespace=${NAME}'
 
 build-genesis:
 	libra-management genesis \
-	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}/github_token.txt' \
+	--backend 'backend=github;owner=OLSF;repository=${REPO};token=${DATA_PATH}/github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
 	libra-management create-waypoint \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--remote 'backend=github;owner=OLSF;repository=${REPO};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAME}'
 
 toml:
