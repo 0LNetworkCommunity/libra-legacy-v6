@@ -26,8 +26,10 @@ IP = 64.227.28.81
 compile : all-bins
 
 # pipelines for genesis ceremony
-register: init mining keys register
+register: clear init mining keys register
+
 # > make register MNEM='owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' NAME=lucas ACC=5e7891b719c305941e62867ffe730f48 IP=104.131.20.59
+
 genesis: build-genesis waypoint toml
 
 
@@ -44,6 +46,8 @@ deps:
 	sudo apt-get install build-essential cmake clang llvm libgmp-dev
 
 #GENESIS CEREMONY
+clear:
+	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
 init:
 	cargo run -p libra-management initialize \
 	--mnemonic '${MNEM}' \
