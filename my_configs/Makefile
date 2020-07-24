@@ -3,24 +3,29 @@ SHELL=/usr/bin/env bash
 
 ###########################
 ## UPDATE YOUR DATA HERE ##
-# Don't put the MNEM here, add that by command line only.
+# Don't put the MNEM here for production, add that by command line only.
 DATA_PATH = ./
 # TODO: namespace and account will be the same data. Testing with human readable names.
 #NAME = zaki
 #ACC = 402e9aaf54ca8c39bab641b0c9829070
 #IP = 192.241.147.210
+#MNEM = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice"
 
 NAME = lucas
 ACC = 5e7891b719c305941e62867ffe730f48
 IP = 104.131.20.59
+#TODO: Remove MNEM, this is here for debugging only
+MNEM = "owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city"
 
 # NAME = sha
 # ACC = b2f38139f75a271fd8f8fae4a87c2679
 # IP = 64.227.20.31
+# MNEM = "motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day"
 
 #NAME = keerthi
 #ACC = 027c83aeb3b9c085f5a1506b418d08cf
 #IP = 64.227.28.81
+#MNEM = "advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power"
 ###########################
 
 compile : all-bins
