@@ -77,5 +77,10 @@ toml:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
+layout:
+    libra-management set-layout \
+    --backend 'backend=github;owner=OLSF;repository=${REPO};token=${DATA_PATH}/github_token.txt;namespace=common' \
+    --path ./set_layout.toml
+
 start:
 	libra-node -- --config ${DATA_PATH}/node.configs.toml
