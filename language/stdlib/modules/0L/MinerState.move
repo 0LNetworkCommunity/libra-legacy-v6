@@ -70,6 +70,8 @@ address 0x0 {
     public fun genesis_helper (miner: &signer, challenge: vector<u8>,
                                 difficulty: u64 , solution: vector<u8> )
                                 acquires MinerProofHistory, ProofsInEpoch {
+      //Transaction::assert(sender == 0x0, 180101014010);
+
       let vdf_proof_blob = VdfProofBlob {
         challenge,
         difficulty,

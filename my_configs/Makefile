@@ -10,17 +10,17 @@ DATA_PATH = ./
 #ACC = 402e9aaf54ca8c39bab641b0c9829070
 #IP = 192.241.147.210
 
-#NAME = lucas
-#ACC = 5e7891b719c305941e62867ffe730f48
-#IP = 104.131.20.59
+NAME = lucas
+ACC = 5e7891b719c305941e62867ffe730f48
+IP = 104.131.20.59
 
 # NAME = sha
 # ACC = b2f38139f75a271fd8f8fae4a87c2679
 # IP = 64.227.20.31
 
-NAME = keerthi
-ACC = 027c83aeb3b9c085f5a1506b418d08cf
-IP = 64.227.28.81
+#NAME = keerthi
+#ACC = 027c83aeb3b9c085f5a1506b418d08cf
+#IP = 64.227.28.81
 ###########################
 
 compile : all-bins

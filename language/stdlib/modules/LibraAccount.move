@@ -26,6 +26,9 @@ module LibraAccount {
     use 0x0::DesignatedDealer;
     use 0x0::Libra;
 
+    use 0x0::Debug;
+
+
     // Every Libra account has a LibraAccount::T resource
     resource struct T {
         // The current authentication key.
@@ -1080,16 +1083,23 @@ module LibraAccount {
         new_account_address: address,
         auth_key_prefix: vector<u8>,
     ) {
-        // NOTE: 0L: This check is removed to allow any address to create a new validator account.
-        // should check that this is done with a VDF proof, so that it's not abused.
         Transaction::assert(Signer::address_of(creator) == 0x0, 8001);
 
-        // Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
+        Debug::print(&0x0C12EA7E000001);
+
         let new_account = create_signer(new_account_address);
+        Debug::print(&0x0C12EA7E000002);
+
         Event::publish_generator(&new_account);
+        Debug::print(&0x0C12EA7E000003);
+
         // TODO: This publish fails if the creator is not association.
         ValidatorConfig::publish(creator, &new_account);
+        Debug::print(&0x0C12EA7E000004);
+
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
+        Debug::print(&0x0C12EA7E000005);
+
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
     }
 
@@ -1108,6 +1118,7 @@ module LibraAccount {
         ValidatorConfig::publish_from_mining_0L(creator, &new_account);
 
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
+
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);
 
     }

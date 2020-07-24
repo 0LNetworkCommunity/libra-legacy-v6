@@ -177,6 +177,7 @@ fn smoke_test() {
 
 
 #[test]
+#[ignore]
 // NOTE: Run this with: cargo xtest -p libra-management smoke_test
 fn smoke_test_github() {
     // 1. Create Set Layout File (as association) - ok

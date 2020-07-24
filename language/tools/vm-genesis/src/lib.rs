@@ -84,8 +84,11 @@ pub fn encode_genesis_change_set(
     });
 
     // generate the genesis WriteSet
+    print!("create_and_initialize_main_accounts");
     create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
+    print!("initialize_validators");
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
+    print!("initialize_miners");
     initialize_miners(&mut genesis_context, &validators);
     distribute_genesis_subsidy(&mut genesis_context);
 
