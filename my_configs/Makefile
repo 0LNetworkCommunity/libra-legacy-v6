@@ -31,7 +31,7 @@ MNEM = "owner city siege lamp code utility humor inherit plug tuna orchard lion 
 compile : all-bins
 
 # pipelines for genesis ceremony
-register: stdlib clear init mining keys register
+register: clear init mining keys register
 
 # > make register MNEM='owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' NAME=lucas ACC=5e7891b719c305941e62867ffe730f48 IP=104.131.20.59
 
@@ -52,9 +52,11 @@ deps:
 
 #GENESIS CEREMONY
 stdlib:
-	cd ../language/stdlib && cargo run
+	cd ../language/stdlib && cargo run --release
+
 clear:
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+
 init:
 	cargo run -p libra-management initialize \
 	--mnemonic '${MNEM}' \
