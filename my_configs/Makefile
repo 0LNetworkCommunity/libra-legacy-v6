@@ -39,7 +39,7 @@ register: clear init mining keys register
 
 # > make register MNEM='owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' NAME=lucas ACC=5e7891b719c305941e62867ffe730f48 IP=104.131.20.59
 
-genesis: stdlib build-genesis waypoint toml
+genesis: build-genesis waypoint toml
 
 
 # Add other binaries later.
@@ -60,8 +60,8 @@ stdlib:
 	cd ../language/stdlib && cargo run --release
 
 clear:
-	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
-
+	rm -rf libradb *.seed_peers.toml block_0.json node.configs.toml genesis.blob key_store.json
+	cp block_0.json.${NAME} block_0.json
 init:
 	cargo run -p libra-management initialize \
 	--mnemonic '${MNEM}' \
