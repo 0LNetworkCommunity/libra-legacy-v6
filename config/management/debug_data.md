@@ -1,4 +1,4 @@
-#Debug-net Environments:
+# Debug-net Environments:
 
 Note: set_layout is already in the OLSF/test-genesis repo.
 
@@ -18,9 +18,9 @@ Build genesis, waypoint, and node.config.toml
 Start a node
 - make start
 
-#Debug-net fixtures:
+# Debug-net fixtures:
 
-#miner: 0
+## miner: 0
 
 namespace:zaki
 
@@ -33,7 +33,7 @@ auth_key:9336f9ff1d9ea89f6872517b1919fea147693aa1c2ccb3e32c2d9fe224faf1fc
 
 ip: 192.241.147.210
 
-#miner: 1
+##  miner: 1
 
 namespace: lucas
 
@@ -45,7 +45,7 @@ auth_key:200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
 
 ip: 104.131.20.59
 
-#miner: 2
+## miner: 2
 
 namespace: sha
 
@@ -57,7 +57,7 @@ auth_key: edb1e1423793ebdd7ef184b1a21667059739b1548df3149b2a2a5f1ea7cafd29
 
 ip: 64.227.20.31
 
-#miner: 3
+## miner: 3
 
 namespace: keerthi
 
