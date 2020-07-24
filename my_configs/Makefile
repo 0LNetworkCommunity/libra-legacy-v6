@@ -28,7 +28,7 @@ endif
 
 ifeq ($(NAME), keerthi)
 ACC = 027c83aeb3b9c085f5a1506b418d08cf
-IP = 64.227.28.81
+IP = 157.245.133.106
 MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
