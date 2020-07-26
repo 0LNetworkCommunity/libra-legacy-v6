@@ -10,6 +10,7 @@ use libra_config::{
 };
 // use std::convert::TryInto;
 use std::{convert::TryInto, fs, fs::File, io::Write, net::SocketAddr, path::PathBuf};
+use log::Level;
 
 
 #[derive(Debug, StructOpt)]
@@ -62,6 +63,8 @@ impl Config {
 
         network.discovery_method = DiscoveryMethod::Onchain;
         config.full_node_networks = vec![network];
+
+        config.logger.level= Level::Debug;
 
 
         if let Some(network) = config.validator_network.as_mut() {
