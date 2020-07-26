@@ -45,15 +45,15 @@ genesis: build-genesis waypoint toml
 # Add other binaries later.
 copy:
 	#cp -f target/release/ol_miner /usr/local/bin/ol_miner
-	cp -f target/release/libra-management /usr/local/bin/libra-management
-	cp -f target/release/libra-node /usr/local/bin/libra-node
+	cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	cp -f ../target/release/libra-node /usr/local/bin/libra-node
 
 bins:
 	cargo build -p libra-node --release
 	cargo build -p libra-management --release
 	cargo build -p miner --release
-	cp -f target/release/libra-management /usr/local/bin/libra-management
-	cp -f target/release/libra-node /usr/local/bin/libra-node
+	cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	cp -f ../target/release/libra-node /usr/local/bin/libra-node
 
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
@@ -74,7 +74,10 @@ init:
 	--mnemonic '${MNEM}' \
 	--path=${DATA_PATH} \
 	--namespace=${NAME}
-
+layout:
+	libra-management set-layout \
+	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
+	--path=set_layout.toml
 mining:
 	libra-management mining \
 	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
@@ -113,4 +116,4 @@ toml:
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 start:
-	libra-node -- --config ${DATA_PATH}node.configs.toml
+	libra-node --config ${DATA_PATH}node.configs.toml
