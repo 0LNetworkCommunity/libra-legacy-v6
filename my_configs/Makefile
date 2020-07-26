@@ -54,8 +54,8 @@ bins:
 	cargo build -p libra-management --release
 	cargo build -p miner --release
 	cd ../language/stdlib && cargo run --release
-	cp -f target/release/libra-management /usr/local/bin/libra-management
-	cp -f target/release/libra-node /usr/local/bin/libra-node
+	cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	cp -f ../target/release/libra-node /usr/local/bin/libra-node
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
