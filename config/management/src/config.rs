@@ -55,6 +55,8 @@ impl Config {
         network.discovery_method = DiscoveryMethod::Onchain;
         config.validator_network = Some(network);
 
+        config.consensus.round_initial_timeout_ms = 5000; 
+
         let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
         println!("network\n{:?}", network);
 

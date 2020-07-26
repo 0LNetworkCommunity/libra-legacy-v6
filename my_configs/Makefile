@@ -32,35 +32,34 @@ IP = 157.245.133.106
 MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
-install: deps all-bins copy
-
+# set up the environment
+install: deps bins
 # pipelines for genesis ceremony
 register: clear init mining keys register
-
-# > make register MNEM='owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' NAME=lucas ACC=5e7891b719c305941e62867ffe730f48 IP=104.131.20.59
-
+# do genesis
 genesis: build-genesis waypoint toml
+# starts a node:
+# >make start
 
-
-# Add other binaries later.
+# Add other binaries later
 copy:
 	#cp -f target/release/ol_miner /usr/local/bin/ol_miner
 	cp -f ../target/release/libra-management /usr/local/bin/libra-management
 	cp -f ../target/release/libra-node /usr/local/bin/libra-node
-
+deps:
+	sudo apt-get update
+	sudo apt-get install build-essential cmake clang llvm libgmp-dev
 bins:
 	cargo build -p libra-node --release
 	cargo build -p libra-management --release
 	cargo build -p miner --release
-	cp -f ../target/release/libra-management /usr/local/bin/libra-management
-	cp -f ../target/release/libra-node /usr/local/bin/libra-node
-
+	cd ../language/stdlib && cargo run --release
+	cp -f target/release/libra-management /usr/local/bin/libra-management
+	cp -f target/release/libra-node /usr/local/bin/libra-node
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
-deps:
-	sudo apt-get update
-	sudo apt-get install build-essential cmake clang llvm libgmp-dev
+
 
 #GENESIS CEREMONY
 stdlib:
