@@ -125,7 +125,7 @@ pub struct BaseConfig {
 impl Default for BaseConfig {
     fn default() -> BaseConfig {
         BaseConfig {
-            data_dir: PathBuf::from("/opt/libra/data/commmons"),
+            data_dir: PathBuf::from("./"),
             role: RoleType::Validator,
             waypoint: WaypointConfig::None,
         }
@@ -274,16 +274,27 @@ impl NodeConfig {
     }
 
     pub fn save<P: AsRef<Path>>(&mut self, output_path: P) -> Result<()> {
+        println!("NodeConfig save 0");
         let output_dir = RootPath::new(&output_path);
         self.execution.save(&output_dir)?;
+        println!("NodeConfig save 1");
+
         if let Some(network) = &mut self.validator_network {
+            println!("NodeConfig save 2");
+
             network.save(&output_dir)?;
         }
         for network in &mut self.full_node_networks {
+            println!("NodeConfig save 3");
+
             network.save(&output_dir)?;
         }
         // This must be last as calling save on subconfigs may change their fields
+        println!("NodeConfig save 4");
+
         self.save_config(&output_path)?;
+        println!("NodeConfig save 5");
+
         Ok(())
     }
 
@@ -363,9 +374,16 @@ pub trait PersistableConfig: Serialize + DeserializeOwned {
     }
 
     fn save_config<P: AsRef<Path>>(&self, output_file: P) -> Result<()> {
+        println!("save_config 0");
         let contents = toml::to_vec(&self)?;
+        println!("save_config 1");
+
         let mut file = File::create(output_file)?;
+        println!("save_config 2");
+
         file.write_all(&contents)?;
+        println!("save_config 3");
+
         // @TODO This causes a major perf regression that needs to be evaluated before enabling
         // file.sync_all()?;
         Ok(())

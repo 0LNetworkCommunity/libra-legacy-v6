@@ -207,7 +207,7 @@ module LibraSystem {
     fun is_authorized_to_reconfigure_(account: &signer): bool {
         let sender = Signer::address_of(account);
         // succeed fast
-        if (sender == 0xA550C18 || sender == 0x0) {
+        if ( sender == 0x0) {
             return true
         };
         let validators = &get_validator_set().validators;
@@ -319,8 +319,8 @@ module LibraSystem {
                     config, // copy the config over to ValidatorSet
                     consensus_voting_power: ValidatorUniverse::proof_of_weight(account_address, is_validator(account_address)),
                    });
-            
-            };    
+
+            };
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
             // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;

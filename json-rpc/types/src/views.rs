@@ -509,11 +509,11 @@ impl From<CurrencyInfoResource> for CurrencyInfoView {
 /// MinerStat View implementation by 0L
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MinerStateView {
-    reported_tower_height: u64,
-    verified_tower_height: u64, // user's latest verified_tower_height
-    latest_epoch_mining: u64,
-    epochs_validating_and_mining: u64,
-    contiguous_epochs_validating_and_mining: u64,
+    pub reported_tower_height: u64,
+    pub verified_tower_height: u64, // user's latest verified_tower_height
+    pub latest_epoch_mining: u64,
+    pub epochs_validating_and_mining: u64,
+    pub contiguous_epochs_validating_and_mining: u64,
 }
 
 impl From<MinerStateResource> for MinerStateView {

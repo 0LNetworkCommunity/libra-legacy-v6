@@ -1,6 +1,6 @@
 use crate::{error::Error, SingleBackend};
 use libra_secure_storage::{Storage, Value};
-use ol_miner::block::Block;
+use miner::block::Block;
 use std::convert::TryInto;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -15,8 +15,11 @@ pub struct Mining {
 
 impl Mining {
     pub fn execute(self) -> Result<String, Error> {
+        println!("mining execute 0");
         let (preimage, proof) = Block::get_genesis_tx_data(self.path_to_genesis_pow)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
+
+            println!("mining execute1");
 
             let preimage = Value::String(preimage);
             let proof = Value::String(proof);

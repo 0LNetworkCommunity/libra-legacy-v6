@@ -7,7 +7,7 @@
 //! new-transaction
 //! sender: bob
 script {
-use 0x0::Redeem;
+use 0x0::MinerState;
 
 fun main(sender: &signer) {
 
@@ -17,8 +17,8 @@ fun main(sender: &signer) {
     let tower_height = 1;
 
     let bob = sender; // bob is the miner who is submitting the proof for himself. Using sender for convenience.
-    let proof = Redeem::create_proof_blob(challenge, difficulty, solution, tower_height);
-    Redeem::begin_redeem(bob, proof);
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, tower_height);
+    MinerState::commit_state(bob, proof);
 
 }
 }
@@ -28,7 +28,7 @@ fun main(sender: &signer) {
 //! new-transaction
 //! sender: association
 script {
-use 0x0::Redeem;
+use 0x0::MinerState;
 // use 0x0::Debug;
 use 0x0::Transaction;
 
@@ -36,10 +36,10 @@ fun main() {
 
     // Check bob's state before updating his miner_redemption_statw
     // let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
-    let miner_epochs_before = Redeem::get_miner_epochs({{bob}});
-    Redeem::end_redeem({{bob}});
+    let miner_epochs_before = MinerState::get_miner_epochs({{bob}});
+    MinerState::update_metrics({{bob}});
 
-    let miner_epochs_after = Redeem::get_miner_epochs({{bob}});
+    let miner_epochs_after = MinerState::get_miner_epochs({{bob}});
     // Debug::print(&miner_epochs_after);
 
     Transaction::assert(miner_epochs_after > miner_epochs_before, 1000);
