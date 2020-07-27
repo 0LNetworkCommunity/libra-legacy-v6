@@ -10,11 +10,7 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::LibraConfig;
     use 0x0::Globals;
-<<<<<<< HEAD:language/stdlib/modules/0L/redeem.move
-    use 0x0::Debug;
-=======
     use 0x0::Hash;
->>>>>>> OLv3:language/stdlib/modules/0L/MinerState.move
 
     // Struct to store information about a VDF proof submitted
     struct VdfProofBlob {
@@ -94,7 +90,6 @@ address 0x0 {
       // Globals initializes this accordingly
       let difficulty_constant = Globals::get_difficulty();
 
-      Debug::print(&vdf_proof_blob.difficulty);
       Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 180206011010);
 
       // 1. The Onboarding path (miner not yet initialized):
