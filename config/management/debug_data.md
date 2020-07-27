@@ -80,7 +80,8 @@ cli -u http://157.245.133.106:8080 --waypoint 0:8859e663dfc13a44d2b67b11bfa4bf76
 Note: if you don't know the RIGHT waypoint, you can use above one to start first and get the RIGHT one by runing:
 ```
 libra% q b 027c83aeb3b9c085f5a1506b418d08cf
-[ERROR] Failed to get balances: Waypoint value mismatch: waypoint value = 8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b, given value = 59515aa3e6e416a7138dc2d3c81defb95e03aa68657bd9910a0d2e89d342637c
+[ERROR] Failed to get balances: Waypoint value mismatch: waypoint value = 8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b, 
+given value = 59515aa3e6e416a7138dc2d3c81defb95e03aa68657bd9910a0d2e89d342637c
 ```
 the restart cli with `--waypoint 0:59515aa3e6e416a7138dc2d3c81defb95e03aa68657bd9910a0d2e89d342637c`
 
