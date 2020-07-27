@@ -5,7 +5,7 @@
 //! account: alice, 10000000GAS
 //! sender: alice
 script {
-use 0x0::Redeem;
+use 0x0::MinerState;
 // use 0x0::Debug;
 use 0x0::Transaction;
 
@@ -18,9 +18,9 @@ fun main(sender: &signer) {
     let reported_tower_height = 1;
 
     // return solution
-    let proof = Redeem::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
-    Redeem::begin_redeem(sender, proof);
-    let verified_tower_height_after = Redeem::get_miner_tower_height({{alice}});
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
+    MinerState::commit_state(sender, proof);
+    let verified_tower_height_after = MinerState::get_miner_tower_height({{alice}});
     // Debug::print(&verified_tower_height_after);
 
     Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
@@ -34,7 +34,7 @@ fun main(sender: &signer) {
 //! new-transaction
 //! sender: alice
 script {
-use 0x0::Redeem;
+use 0x0::MinerState;
 use 0x0::Debug;
 use 0x0::Transaction;
 
@@ -51,9 +51,9 @@ fun main(sender: &signer) {
     let reported_tower_height = 2;
 
     // return solution
-    let proof = Redeem::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
-    Redeem::begin_redeem(sender, proof);
-    let verified_tower_height_after = Redeem::get_miner_tower_height({{alice}});
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
+    MinerState::commit_state(sender, proof);
+    let verified_tower_height_after = MinerState::get_miner_tower_height({{alice}});
     Debug::print(&verified_tower_height_after);
 
     Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);

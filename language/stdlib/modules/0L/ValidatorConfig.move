@@ -55,7 +55,6 @@ module ValidatorConfig {
         // TODO: This is not safe. There needs to be a permission check here.
         // anyone can call this even if they are not in the onboarding flow.
 
-        // Transaction::assert(Signer::address_of(creator) == 0xA550C18, 1101);
         move_to(account, T {
             config: Option::none(),
             operator_account: Option::none(),

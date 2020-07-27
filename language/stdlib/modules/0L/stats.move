@@ -1,7 +1,7 @@
-// This module returns statistics about the network at any given block, 
-// or window of blocks. A number of core OL modules depend on Statistics. 
-// The relevant statistics in an MVP are "liveness accountability" statistics. 
-// From within the VM context the statistics available are those in the 
+// This module returns statistics about the network at any given block,
+// or window of blocks. A number of core OL modules depend on Statistics.
+// The relevant statistics in an MVP are "liveness accountability" statistics.
+// From within the VM context the statistics available are those in the
 // BlockMetadata type.
 
 
@@ -49,14 +49,14 @@ address 0x0 {
     }
 
 
-    // Returns the number of blocks this node has signed in the period of 
+    // Returns the number of blocks this node has signed in the period of
     // start_height to end_height
     public fun node_heuristics(node_addr: address, start_height: u64,
       end_height: u64): u64 acquires History {
-      
+
       // Edge case
       if(node_addr == 0x0) return 1;
-      
+
       // Ensue inputs (start_height and end_height) are valid
       if (start_height > end_height) return 0;
 
@@ -79,7 +79,7 @@ address 0x0 {
       let len = Vector::length<Chunk>(chunks);
       while (i < len) {
         let chunk = Vector::borrow<Chunk>(chunks, i);
-        // Check if the chunk has segments in desired region. In a timeline 
+        // Check if the chunk has segments in desired region. In a timeline
         // where |        | represents the desired region and \        \ represents
         // a chunk, we are looking for situations of the following format
         // --> \   |  \   |  -->         or      -->  |         \    |            \
@@ -105,9 +105,9 @@ address 0x0 {
 
 
     // Returns the number of nodes which have voted on every block in the input range
-    public fun network_heuristics(start_height: u64, 
+    public fun network_heuristics(start_height: u64,
       end_height: u64): u64 acquires History {
-  
+
       // Ensure inputs (start_height, end_height) are a valid range.
       if (start_height > end_height) return 0;
 
@@ -115,10 +115,10 @@ address 0x0 {
       let history = borrow_global<History>(0x0);
       let val_list = &history.val_list;
 
-      // This accumulator keeps track of how many voters voted on every single block 
+      // This accumulator keeps track of how many voters voted on every single block
       // in the range.
       let num_voters = 0;
-      
+
       // Iterate though all the nodes and accumulate the ones that participated
       let node_idx = 0;
       let num_nodes = Vector::length<Node>(val_list);
@@ -131,7 +131,7 @@ address 0x0 {
         let chunk_idx = 0;
 
         // If the node has participated in every single block in a range, then that entire
-        // range will be a subset of one of the chunks in the data structure since the chunks 
+        // range will be a subset of one of the chunks in the data structure since the chunks
         // are contiguous. So, we need only to find the chunk whose start_block is just below
         // (or equal to) the start_height. This will be faster in a BST, but we do a linear
         // search for the POC implementation
@@ -148,8 +148,8 @@ address 0x0 {
         // and it doesn't include the entire range specified, the node cannot possibly have
         // voted on all blocks in the range
 
-        // chunk is a vector that keeps track of the latest chunk (biggest height) visited 
-        // whose start is still before (or equal to) the range in question. After iterating 
+        // chunk is a vector that keeps track of the latest chunk (biggest height) visited
+        // whose start is still before (or equal to) the range in question. After iterating
         // though all the chunks, this variable will be the desired ovelapping chunk (if it
         // exists)
         let chunk = Vector::borrow<Chunk>(chunks, 0);
@@ -178,8 +178,7 @@ address 0x0 {
     // Performs a number of batch inserts input through a vector votes
     public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
       // Check permission
-      Transaction::assert(Transaction::sender() == 0x0 ||
-                          Transaction::sender() == 0xA550C18, 190204014010);
+      Transaction::assert(Transaction::sender() == 0x0, 190204014010);
 
       // Iterate through the input vector
       let i = 0;
@@ -216,8 +215,8 @@ address 0x0 {
       // simply be modified. For example, if a chunk exists with end=5 and we need to add
       // a new chunk which has start=6, it doesn't make sense to add a new chunk. We should
       // just find the adjacent node and modify it.
-      // 
-      // `chunk` is a temporary reference to an existing (possibly adjacent) chunk. 
+      //
+      // `chunk` is a temporary reference to an existing (possibly adjacent) chunk.
       // it will be discarded if there are no conflicts and the new chunk is not adjacent
       // to an existing chunk.
       //
@@ -226,8 +225,8 @@ address 0x0 {
       // This should all be simpler if the final implementation is in Rust since we will
       // be able to use binary trees and the Option<T> type instead of this complex setup.
       let chunk = Vector::borrow_mut(&mut node.chunks, 0);
-      
-      // This boolean is a flag which keeps track of whether or not the new chunk has 
+
+      // This boolean is a flag which keeps track of whether or not the new chunk has
       // an adjacent chunk existing in the structure
       let adjacent = false;
 
@@ -245,7 +244,7 @@ address 0x0 {
 
           // Note: The case where chunk.start_block - 1 = end_block does not need
           // consideration because this would imply that an insert is being done
-          // regarding chunks in the past (since the existing chunk is ahead of the 
+          // regarding chunks in the past (since the existing chunk is ahead of the
           // chunk being inserted). This will never happen since only 0x0 can insert
           // and it inserts in order of height periodically.
         };
