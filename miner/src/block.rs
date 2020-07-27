@@ -81,14 +81,12 @@ pub mod build_block {
     pub fn mine_genesis(config: &OlMinerConfig) {
         let preimage = config.genesis_preimage();
         let now = Instant::now();
-        let data = do_delay(&preimage, delay_difficulty());
+        let data = do_delay(&preimage);
         let elapsed_secs = now.elapsed().as_secs();
         println!("Delay: {:?} seconds", elapsed_secs);
         let block = Block {
             height: 0u64,
             elapsed_secs,
-            // note: do_delay() sigature is (challenge, delay difficulty).
-            // note: trait serializes data field.
             preimage,
             data,
         };
@@ -114,17 +112,15 @@ pub mod build_block {
             // TODO: cleanup this duplication with mine_genesis_once?
 
             let now = Instant::now();
-            let data = do_delay(&preimage, delay_difficulty());
+            let data = do_delay(&preimage);
             let elapsed_secs = now.elapsed().as_secs();
             println!("Delay: {:?} seconds", elapsed_secs);
 
             let block = Block {
                 height,
                 elapsed_secs,
-                // note: do_delay() sigature is (challenge, delay difficulty).
-                // note: trait serializes data field.
                 preimage,
-                data: data.clone(), //data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
+                data: data.clone(),
             };
 
             write_json(&block, &config.get_block_dir() );
@@ -508,8 +504,6 @@ fn create_fixtures() {
             height: current_block_number,
             elapsed_secs: 0u64,
             preimage: Vec::new(),
-            // note: do_delay() sigature is (challenge, delay difficulty).
-            // note: trait serializes data field.
             data: Vec::new(),
         };
 

@@ -14,7 +14,7 @@ use ol_miner::delay;
 
 fn bench_delay(c: &mut Criterion) {
     c.bench_function("do_delay_100", |b| {
-        b.iter(|| delay::do_delay(b"test preimage", 100))
+        b.iter(|| delay::do_delay(b"test preimage"))
     });
 
     // example code

@@ -20,7 +20,7 @@ pub fn delay_difficulty() -> u64 {
     return 100 // difficulty for test suites and on local for debugging purposes.
 }
 
-pub fn do_delay(preimage: &[u8], _delay_old: u64) -> Vec<u8> {
+pub fn do_delay(preimage: &[u8]) -> Vec<u8> {
     let delay_length = delay_difficulty();
     // Functions for running the VDF.
     let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(SECURITY_PARAM).new();
