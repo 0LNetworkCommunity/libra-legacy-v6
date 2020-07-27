@@ -23,7 +23,6 @@ libra-json-rpc-types = { path = "../json-rpc/types", version = "0.1.0"}
 rustyline = "6.2.0"
 anyhow = "1.0.31"
 
-
 [dependencies.abscissa_core]
 version = "0.5.2"
 
