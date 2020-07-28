@@ -32,7 +32,9 @@ address 0x0 {
             // Step 3: Distribute transaction fees to all outgoing validators
             // Step 4: Burn subsidy units
             // Skip this step on the first epoch, which is exceptional.
-            process_outgoing_validators(account, current_block_height);
+            if (current_block_height > Globals::get_epoch_length() + 3) {
+              process_outgoing_validators(account, current_block_height);
+            };
 
             // Recommend upcoming validator set
             // Step 1: Get all eligible validators
