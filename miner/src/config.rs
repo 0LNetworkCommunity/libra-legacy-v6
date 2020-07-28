@@ -7,6 +7,7 @@
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf, Path};
+use crate::delay::delay_difficulty;
 
 /// OlMiner Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -65,9 +66,12 @@ impl OlMinerConfig {
         preimage.append(&mut padded_chain_id_bytes);
 
         preimage
-            .write_u64::<LittleEndian>(crate::application::DELAY_ITERATIONS)
+            .write_u64::<LittleEndian>(delay_difficulty())
             .unwrap();
 
+        // preimage
+        //     .write_u64::<LittleEndian>(delay_difficulty())
+        //     .unwrap();
         let mut padded_statements_bytes = {
             let mut statement_bytes = self.profile.statement.clone().into_bytes();
 

@@ -4,12 +4,9 @@
 
 
 use abscissa_core::{Command, Options, Runnable};
-
-
-
-
 use crate::prelude::*;
 use crate::block;
+use crate::delay::delay_difficulty;
 
 
 #[derive(Command, Debug, Default, Options)]
@@ -24,7 +21,12 @@ impl Runnable for GenesisCmd {
 
         let genesis_proof = block::Block::get_proof(&miner_config, 0);
 
-        println!("0L s 0 {} {} {}",hex::encode(preimage),crate::application::DELAY_ITERATIONS,hex::encode(genesis_proof));
+        //command to run in the libra client to submit a genesis proof.
+        println!("0L s 0 {} {} {}",
+            hex::encode(preimage),
+            delay_difficulty(),
+            hex::encode(genesis_proof)
+        );
     }
 
 }
