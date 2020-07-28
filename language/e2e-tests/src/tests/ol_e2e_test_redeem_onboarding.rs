@@ -39,7 +39,7 @@ fn submit_proofs_transaction_onboarding() {
     let difficulty = 100u64;
     // Generate solutions with cd ./verfiable-delay/ cargo run -- -l=4096 aa 100
     // the -l=4096 is important because this is the security paramater of 0L miner.
-    // let proof_computed = delay::do_delay(challenge, difficulty);
+    // let proof_computed = delay::do_delay(challenge);
     use crate::account::Account;
 
 

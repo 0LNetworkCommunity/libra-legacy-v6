@@ -6,6 +6,7 @@
 mod genesis_context;
 mod genesis_gas_schedule;
 
+
 use crate::{
     genesis_context::{GenesisContext, GenesisStateView},
     genesis_gas_schedule::INITIAL_GAS_SCHEDULE,
@@ -31,6 +32,7 @@ use rand::prelude::*;
 use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
+use std::env;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -84,6 +86,15 @@ pub fn encode_genesis_change_set(
     });
 
     // generate the genesis WriteSet
+    let node_env = match env::var("NODE_ENV") {
+        Ok(val) => val,
+        _ => "test".to_string()
+    };
+
+    // Initializing testnet only when env is set to test
+    if(node_env != "prod") {
+        initialize_testnet(&mut genesis_context);
+    }
     create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
     initialize_miners(&mut genesis_context, &validators);
@@ -207,14 +218,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
 
     // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
     // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
-
-    // #[cfg(test)]
-    //TODO: Make this difficulty switch between genesis/production and testing (default should be testing)
-    const DIFFICULTY: u64 = 100;
-    // #[cfg(not(test))]
-    // const DIFFICULTY: u64 = 1000000;
-
-
+    
     for (account_key, _ , mining_proof) in validators {
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
@@ -228,7 +232,6 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
             vec![
                 Value::transaction_argument_signer_reference(account),
                 Value::vector_u8(preimage), // serialize for move.
-                Value::u64(DIFFICULTY), // TODO: This constant needs to be set
                 Value::vector_u8(proof),
             ],
         );
@@ -248,6 +251,14 @@ fn distribute_genesis_subsidy(context: &mut GenesisContext) {
         vec![],
         vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
     }
+
+fn initialize_testnet(context: &mut GenesisContext) {
+    context.exec(
+        "Testnet",
+        "initialize",
+        vec![],
+        vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
+}
 
 fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishingOption) {
     context.set_sender(config_address());
