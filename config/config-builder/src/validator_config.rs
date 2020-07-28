@@ -141,6 +141,7 @@ impl ValidatorConfig {
         // Optionally choose a limited subset of generated validators to be
         // present at genesis time.
         let nodes_in_genesis = self.num_nodes_in_genesis.unwrap_or(self.num_nodes);
+        println!("nodes_in_genesis\n{}", nodes_in_genesis);
 
         let validators = vm_genesis::validator_registrations(&nodes[..nodes_in_genesis]).0;
 

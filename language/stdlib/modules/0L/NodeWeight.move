@@ -12,7 +12,7 @@ address 0x0 {
     use 0x0::ValidatorUniverse;
     use 0x0::Signer;
     use 0x0::Transaction;
-    use 0x0::Redeem;
+    use 0x0::MinerState;
 
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
@@ -42,7 +42,7 @@ address 0x0 {
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
         // Ensure that this address is an active validator
-        let validator_weight= Redeem::get_validator_weight(cur_address);
+        let validator_weight= MinerState::get_validator_weight(cur_address);
         Vector::push_back<u64>(&mut weights, validator_weight);
         k = k + 1;
       };

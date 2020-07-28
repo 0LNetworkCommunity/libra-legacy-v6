@@ -55,9 +55,6 @@ module GenesisOL {
         //Subsidy module setup and burn account initialization
         Subsidy::initialize(vm);
 
-        // Set that this is testnet
-        Testnet::initialize(vm);
-
         // Event and currency setup
         Event::publish_generator(vm);
         GAS::initialize(vm);

@@ -1,7 +1,11 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{layout::Layout, storage_helper::StorageHelper};
+use crate::{
+    layout::Layout,
+    storage_helper::StorageHelper,
+    storage_helper_github::StorageHelperGithub
+};
 use config_builder::{BuildSwarm, SwarmConfig};
 use libra_config::{
     config::{
@@ -30,9 +34,10 @@ impl BuildSwarm for ManagementBuilder {
 }
 
 #[test]
+// NOTE: Run this with: cargo xtest -p libra-management smoke_test
 fn smoke_test() {
     LibraNode::prepare();
-        let helper = StorageHelper::new();
+    let helper = StorageHelper::new();
     let num_validators = 5;
     let shared = "_shared";
     let association = "vm";
@@ -116,6 +121,7 @@ fn smoke_test() {
 
         configs.push(config);
 
+        //TODO: Duplicated here.
         helper.operator_key(&ns, &ns_shared).unwrap();
         helper
             .validator_config(
@@ -167,6 +173,129 @@ fn smoke_test() {
 
     // Step 7) Launch and exit!
     swarm.launch_attempt(RoleType::Validator, false).unwrap();
+}
+
+
+#[test]
+// NOTE: Run this with: cargo xtest -p libra-management smoke_test
+fn smoke_test_github() {
+    // 1. Create Set Layout File (as association) - ok
+    // 2. Create a mnemonic - ok
+    // 3. create a proof - ok
+    // 4. (initialize). Initialize local storage with mnemonic. Private keys saved to disk (json). - ok
+    // 5. (mining) Add proof data from mining to key_store.json - ok
+    // 6. (operator-key) Add operator key to remote storage. (and collect account address) - ok
+    // 7. (validator-config) generate validator config transaction for remote NOTE: needs network address. - ok
+    // 8. Build genesis - ok
+    // 9. Create waypoint - ok
+    // 10. Update Node.config.toml file with all data
+
+    LibraNode::prepare();
+    let helper = StorageHelperGithub::new();
+    let num_validators = 1;
+    let _association = "vm";
+
+    // Step 1) Prepare the layout
+
+    // TODO: Remove this step if possible. This is duplicated with set layout below.
+    // TODO: verify_genesis complains if there is no REMOTE information on the SetLayout
+    // TODO: set_layout fails silently if there is no OWNER or ASSOCIATION fields
+    helper.set_layout_remote();
+
+    // Step 3) Prepare validators.
+    // This simulates EACH validator going through their genesis ceremony steps.
+    for i in 0..num_validators {
+
+        println!("Validator #{}", i );
+        let ns = i.to_string();
+
+    // NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+    // there are only fixtures for 5 validators in the /test_fixtures/ directory.
+        let mnemonic = fs::read_to_string(format!(
+            "./test_fixtures/miner_{}/miner_{}.mnem",
+            &ns,
+            &ns
+        )).unwrap();
+        println!("mnemonic\n");
+
+        fs::remove_file(format!("./test_fixtures/miner_{}/key_store.json", &ns));
+
+        helper.initialize_command(
+            mnemonic.to_string(),
+            format!("./test_fixtures/miner_{}", &ns),
+            ns.clone()
+        );
+
+        println!("mining\n");
+
+        helper.mining(
+            &format!("./test_fixtures/miner_{}/block_0.json", &ns),
+            &ns
+        ).unwrap();
+
+        println!("set layout\n");
+
+        //TODO: create_waypoint complains if there is no local information on the SetLayout
+        helper.set_layout_local(
+            &ns,
+            &format!(
+                "./test_fixtures/miner_{}/miner_{}.mnem",
+                &ns,
+                &ns
+            )
+        );
+
+        println!("operator key\n");
+
+        let operator_key = helper.operator_key(&ns).unwrap();
+
+        let validator_account = account_address::from_public_key(&operator_key);
+
+        // TODO: Get node.config.toml file with network info.
+        // let mut config = NodeConfig::default();
+
+        println!("validator config\n");
+        helper
+            .validator_config(
+                validator_account,
+                "/ip4/0.0.0.0/tcp/6180",
+                "/ip4/0.0.0.0/tcp/6180",
+                &format!("./test_fixtures/miner_{}/key_store.json", &ns),
+                &ns
+            )
+            .unwrap();
+        }
+
+        // Assuming all steps above are OK. The validators can now build the genesis.
+        println!("genesis\n");
+
+        let genesis = helper.genesis("./test_fixtures/genesis.blob").unwrap();
+
+        for i in 0..num_validators {
+            // Each validator again can generate a waypoint and save to storage.
+
+            // Step 5) Introduce waypoint and genesis into the configs and verify along the way
+
+            println!("\nValidator #{}\n", i );
+            let ns = i.to_string();
+            println!("\nwaypoint\n");
+
+            // TODO: PLZ HALP.
+            let waypoint = helper.create_waypoint(&ns).unwrap();
+
+            println!("\nverify\n");
+            //
+            let output = helper.verify_genesis(
+                &format!("./test_fixtures/miner_{}/key_store.json", &ns),
+                "./test_fixtures/genesis.blob"
+            ).unwrap();
+
+            // let output =  helper.verify_genesis_remote().unwrap();
+            println!("{}", output);
+
+            //TODO: Validators need to create/update a node.config.file.
+        }
+
 }
 
 fn secure_backend(original: &Path, dst_base: &Path, ns: &str, usage: &str) -> SecureBackend {

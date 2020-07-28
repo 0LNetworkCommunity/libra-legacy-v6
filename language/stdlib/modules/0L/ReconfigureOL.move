@@ -15,7 +15,7 @@ address 0x0 {
         use 0x0::LibraSystem;
         use 0x0::GAS;
         use 0x0::TransactionFee;
-        use 0x0::Redeem;
+        use 0x0::MinerState;
         use 0x0::Globals;
 
         // This function is called by block-prologue once after n blocks.
@@ -33,7 +33,7 @@ address 0x0 {
             // Step 4: Burn subsidy units
             // Skip this step on the first epoch, which is exceptional.
             process_outgoing_validators(account, current_block_height);
-            
+
             // Recommend upcoming validator set
             // Step 1: Get all eligible validators
             // Step 2: Sort Top N validators
@@ -49,7 +49,7 @@ address 0x0 {
             let (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
                  = LibraSystem::get_outgoing_validators_with_weights(Globals::get_epoch_length(), current_block_height);
             // Step 1: End redeem for all validators
-           Redeem::end_redeem_validator_universe(account);
+           MinerState::end_redeem_validator_universe(account);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
