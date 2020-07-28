@@ -9,9 +9,12 @@ use libra_types::{
 };
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-
-use libra_wallet::{WalletLibrary, Mnemonic};
+use std::{
+    path::{Path, PathBuf},
+    fs,
+    io::Write,
+};
+use libra_wallet::Mnemonic;
 
 type AccountKeyPair = KeyPair<Ed25519PrivateKey>;
 type ConsensusKeyPair = KeyPair<Ed25519PrivateKey>;
@@ -84,12 +87,23 @@ impl TestConfig {
     pub fn random_account_key(&mut self, rng: &mut StdRng) {
         let privkey = Ed25519PrivateKey::generate(rng);
 
-        // TODO remove this before mainnet launch
+        // 0L TODO: Confirm this is for testing only.
         let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
         println!("Mnemonic: {:?}", mnemonic.to_string() );
 
         self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
         self.operator_keypair = Some(AccountKeyPair::load(privkey));
+
+        // 0L write test miner.toml file for validators
+        let mut latest_block_path = PathBuf::from(r"./miner");
+        latest_block_path.push(format!("miner_test.toml"));
+        //println!("{:?}", &latest_block_path);
+        let miner_toml_string = toml::to_string(&self).expect("Could not write toml");
+
+        let mut file = fs::File::create(&latest_block_path).unwrap();
+        file.write_all(&miner_toml_string.as_bytes())
+            .expect("Could not write toml");
+
     }
 
     pub fn random_consensus_key(&mut self, rng: &mut StdRng) {
