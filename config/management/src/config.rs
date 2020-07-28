@@ -1,6 +1,4 @@
-use structopt::StructOpt;
-use crate::{storage_helper::StorageHelper,error::Error,SingleBackend};
-use libra_network_address::{NetworkAddress, RawNetworkAddress};
+use crate::{error::Error, storage_helper::StorageHelper, SingleBackend};
 use libra_config::{
     config::{
         DiscoveryMethod, Identity, NetworkConfig, NodeConfig, OnDiskStorageConfig, RoleType,
@@ -8,9 +6,11 @@ use libra_config::{
     },
     network_id::NetworkId,
 };
+use libra_network_address::{NetworkAddress, RawNetworkAddress};
+use structopt::StructOpt;
 // use std::convert::TryInto;
+use log::Level;
 use std::{convert::TryInto, fs, fs::File, io::Write, net::SocketAddr, path::PathBuf};
-
 
 #[derive(Debug, StructOpt)]
 pub struct Config {
@@ -28,12 +28,9 @@ pub struct Config {
 
 impl Config {
     pub fn execute(self) -> Result<String, Error> {
-
-
         let mut config = NodeConfig::default();
 
         // NOTE: There's something strange with calling libra-node from a path different from where this storage is located.
-
 
         //TODO:
         // Check consensus safety_rules
@@ -55,12 +52,15 @@ impl Config {
         network.discovery_method = DiscoveryMethod::Onchain;
         config.validator_network = Some(network);
 
+        config.consensus.round_initial_timeout_ms = 5000;
+
         let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
         println!("network\n{:?}", network);
 
         network.discovery_method = DiscoveryMethod::Onchain;
         config.full_node_networks = vec![network];
 
+        config.logger.level = Level::Debug;
 
         if let Some(network) = config.validator_network.as_mut() {
             network.listen_address = self.validator_listen_address;
@@ -75,7 +75,7 @@ impl Config {
 
         let fullnode_network = &mut config.full_node_networks[0];
         fullnode_network.listen_address = self.fullnode_listen_address;
-        fullnode_network.advertised_address= self.fullnode_address;
+        fullnode_network.advertised_address = self.fullnode_address;
         fullnode_network.identity = Identity::from_storage(
             libra_global_constants::FULLNODE_NETWORK_KEY.into(),
             libra_global_constants::OPERATOR_ACCOUNT.into(),
@@ -85,14 +85,16 @@ impl Config {
         config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
 
         // Load waypoint
-        config.base.waypoint = WaypointConfig::FromStorage { backend: self.backend.backend.clone().try_into().unwrap() };
-        
+        config.base.waypoint = WaypointConfig::FromStorage {
+            backend: self.backend.backend.clone().try_into().unwrap(),
+        };
+
         // Adding genesis file location
         config.execution.genesis_file_location = PathBuf::from("genesis.blob");
 
         //TODO: The data is unecessary here, but may be good to include the actual data.
-        config.configs_ol_miner.preimage ="".to_string();
-        config.configs_ol_miner.proof ="".to_string();
+        config.configs_ol_miner.preimage = "".to_string();
+        config.configs_ol_miner.proof = "".to_string();
 
         // TODO: place in path with other files.
         // Save file
@@ -105,7 +107,6 @@ impl Config {
 
         Ok(toml::to_string_pretty(&config).unwrap())
     }
-
 }
 
 // fn save_node_config(mut node_config: NodeConfig, output_dir: &PathBuf) {
