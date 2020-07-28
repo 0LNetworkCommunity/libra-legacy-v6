@@ -67,10 +67,10 @@ impl Seeds {
             seeds.insert(info.account_address().clone(),vec![NetworkAddress::try_from(&info.config().full_node_network_address).unwrap()]);
         }
 
-        seeds.save_config("seed_peers.yaml")
+        seeds.save_config("seed_peers.toml")
         .expect("Unable to save seed peers config");
 
-        Ok("Hello".to_string())
+        Ok("Wrote seed_peers.toml".to_string())
 
     }
 }
