@@ -92,7 +92,7 @@ pub fn encode_genesis_change_set(
     };
 
     // Initializing testnet only when env is set to test
-    if(node_env != "prod") {
+    if node_env != "prod" {
         initialize_testnet(&mut genesis_context);
     }
     create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
@@ -218,7 +218,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
 
     // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
     // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
-    
+
     for (account_key, _ , mining_proof) in validators {
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
