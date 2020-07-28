@@ -65,7 +65,7 @@ impl Seeds {
         for info in info.iter() {
             seeds.seed_peers.insert(
                 info.account_address().clone(),
-                vec![NetworkAddress::try_from(&info.config().full_node_network_address).unwrap()],
+                vec![NetworkAddress::try_from(&info.config().validator_network_address).unwrap()],
             );
         }
 
