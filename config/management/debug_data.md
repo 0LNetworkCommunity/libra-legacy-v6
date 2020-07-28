@@ -70,6 +70,33 @@ auth_key: fceea8f54505869796f6d7cba94d8e3e105c0b6ea8ff89b8736437409a6fee60
 ip: 157.245.133.106
 
 
+# Connect network With Remote client
+
+1. Start cli
+
+```
+cli -u http://157.245.133.106:8080 --waypoint 0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b
+```
+Note: if you don't know the RIGHT waypoint, you can use above one to start first and get the RIGHT one by runing:
+```
+libra% q b 027c83aeb3b9c085f5a1506b418d08cf
+[ERROR] Failed to get balances: Waypoint value mismatch: waypoint value = 8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b, 
+given value = 59515aa3e6e416a7138dc2d3c81defb95e03aa68657bd9910a0d2e89d342637c
+```
+the restart cli with `--waypoint 0:59515aa3e6e416a7138dc2d3c81defb95e03aa68657bd9910a0d2e89d342637c`
+
+2. Query Balance
+```
+libra% query balance 402e9aaf54ca8c39bab641b0c9829070
+[ERROR] Failed to get balances: No account exists at 402e9aaf54ca8c39bab641b0c9829070
+libra% query balance 5e7891b719c305941e62867ffe730f48
+[ERROR] Failed to get balances: No account exists at 5e7891b719c305941e62867ffe730f48
+```
+
+
+
+
+
 
 
 
