@@ -42,22 +42,29 @@ genesis: build-genesis waypoint toml
 # >make start
 
 # Add other binaries later
+
+deps:
+	sudo apt-get update
+	sudo apt-get install build-essential cmake clang llvm libgmp-dev
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+	source ~/.cargo/env
+	rustup default nightly
+	
+bins:
+	cd ../language/stdlib && cargo run --release
+	cargo build -p libra-node --release
+	cargo build -p libra-management --release
+	cargo build -p miner --release
+	cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	cp -f ../target/release/libra-node /usr/local/bin/libra-node
+
+all-bins:
+	cargo build --all --bins --release --exclude cluster-test
+
 copy:
 	#cp -f target/release/ol_miner /usr/local/bin/ol_miner
 	cp -f ../target/release/libra-management /usr/local/bin/libra-management
 	cp -f ../target/release/libra-node /usr/local/bin/libra-node
-deps:
-	sudo apt-get update
-	sudo apt-get install build-essential cmake clang llvm libgmp-dev
-bins:
-	cargo build -p libra-node --release
-	cargo build -p libra-management --release
-	cargo build -p miner --release
-	cd ../language/stdlib && cargo run --release
-	cp -f ../target/release/libra-management /usr/local/bin/libra-management
-	cp -f ../target/release/libra-node /usr/local/bin/libra-node
-all-bins:
-	cargo build --all --bins --release --exclude cluster-test
 
 
 
