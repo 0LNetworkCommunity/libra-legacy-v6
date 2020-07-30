@@ -10,9 +10,15 @@ use libra_global_constants::{
 use libra_network_address::NetworkAddress;
 use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
 use libra_types::{account_address::AccountAddress, transaction::Transaction, waypoint::Waypoint};
-use std::{fs::File, path::{Path,PathBuf}};
+use libra_wallet::{
+    key_factory::{ChildNumber, KeyFactory, Seed},
+    Mnemonic,
+};
+use std::{
+    fs::File,
+    path::{Path, PathBuf},
+};
 use structopt::StructOpt;
-use libra_wallet::{key_factory::{KeyFactory, Seed, ChildNumber}, Mnemonic};
 
 pub struct StorageHelperGithub {
     temppath: libra_temppath::TempPath,
@@ -27,11 +33,10 @@ impl StorageHelperGithub {
     }
 
     pub fn new_with_path(path: PathBuf) -> Self {
-
         let path = libra_temppath::TempPath::new_with_dir(path);
         path.create_as_file().unwrap();
         File::create(path.path()).unwrap();
-        Self { temppath:path }
+        Self { temppath: path }
     }
 
     pub fn storage(&self, namespace: String) -> Box<dyn Storage> {
@@ -47,14 +52,19 @@ impl StorageHelperGithub {
         self.temppath.path().to_str().unwrap()
     }
 
-    pub fn initialize_command(&self, mnemonic: String, path: String, namespace: String) -> Result<String, Error>  {
+    pub fn initialize_command(
+        &self,
+        mnemonic: String,
+        path: String,
+        namespace: String,
+    ) -> Result<String, Error> {
         let command = Command::from_iter(vec![
             "management",
             "initialize",
-            &format!("--mnemonic={}",mnemonic),
+            &format!("--mnemonic={}", mnemonic),
             &format!("--path={}", path),
-            &format!("--namespace={}",namespace),
-            ]);
+            &format!("--namespace={}", namespace),
+        ]);
         command.initialize()
     }
 
@@ -75,32 +85,38 @@ impl StorageHelperGithub {
     }
 
     pub fn initialize_with_menmonic(&self, namespace: String, mnemonic: String) {
-
         let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "OL");
 
         let kf = KeyFactory::new(&seed).unwrap();
-        let child_0 =kf.private_child(ChildNumber::new(0)).unwrap();
-        let child_1 =kf.private_child(ChildNumber::new(1)).unwrap();
-        let child_2 =kf.private_child(ChildNumber::new(2)).unwrap();
-        let child_3 =kf.private_child(ChildNumber::new(3)).unwrap();
-
+        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+        let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
+        let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
+        let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
 
         let mut storage = self.storage(namespace);
 
-
         // storage.import_private_key(ASSOCIATION_KEY,child_0.export_priv_key()).unwrap();
-        storage.import_private_key(CONSENSUS_KEY,child_1.export_priv_key()).unwrap();
-        storage.import_private_key(FULLNODE_NETWORK_KEY, child_2.export_priv_key()).unwrap();
-        storage.import_private_key(OWNER_KEY,child_0.export_priv_key()).unwrap();
-        storage.import_private_key(OPERATOR_KEY,child_0.export_priv_key()).unwrap();
-        storage.import_private_key(VALIDATOR_NETWORK_KEY,child_3.export_priv_key()).unwrap();
+        storage
+            .import_private_key(CONSENSUS_KEY, child_1.export_priv_key())
+            .unwrap();
+        storage
+            .import_private_key(FULLNODE_NETWORK_KEY, child_2.export_priv_key())
+            .unwrap();
+        storage
+            .import_private_key(OWNER_KEY, child_0.export_priv_key())
+            .unwrap();
+        storage
+            .import_private_key(OPERATOR_KEY, child_0.export_priv_key())
+            .unwrap();
+        storage
+            .import_private_key(VALIDATOR_NETWORK_KEY, child_3.export_priv_key())
+            .unwrap();
 
         storage.set(EPOCH, Value::U64(0)).unwrap();
         storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
         storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
         storage.set(WAYPOINT, Value::String("".into())).unwrap();
     }
-
 
     pub fn association_key(
         &self,
@@ -144,7 +160,6 @@ impl StorageHelperGithub {
                     token=./test_fixtures/github_token
 
             ",
-
             // create-waypoint
             // --local backend=disk;\
             // path=./test_fixtures/miner_{namespace}/key_store.json
@@ -246,7 +261,11 @@ impl StorageHelperGithub {
         command.owner_key()
     }
 
-    pub fn set_layout_local(&self, namespace: &str, local_path: &str) -> Result<crate::layout::Layout, Error> {
+    pub fn set_layout_local(
+        &self,
+        namespace: &str,
+        local_path: &str,
+    ) -> Result<crate::layout::Layout, Error> {
         let args = format!(
             "
                 management
@@ -265,8 +284,7 @@ impl StorageHelperGithub {
     }
 
     pub fn set_layout_remote(&self) -> Result<crate::layout::Layout, Error> {
-        let args =
-         "
+        let args = "
             management
             set-layout
             --path ./test_fixtures/set_layout.toml
@@ -300,8 +318,6 @@ impl StorageHelperGithub {
         let command = Command::from_iter(args.split_whitespace());
         command.mining()
     }
-
-
 
     pub fn validator_config(
         &self,
@@ -375,8 +391,7 @@ impl StorageHelperGithub {
     }
 
     pub fn verify_genesis_remote(&self) -> Result<String, Error> {
-        let args =
-         "
+        let args = "
             management
             verify
             --backend backend=github;\

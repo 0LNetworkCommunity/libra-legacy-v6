@@ -1,0 +1,118 @@
+[admission_control]
+address = "0.0.0.0:43191"
+need_to_check_mempool_before_validation = false
+max_concurrent_inbound_syncs = 100
+
+[admission_control.upstream_proxy_timeout]
+secs = 1
+nanos = 0
+
+[rpc]
+address = "0.0.0.0:35809"
+
+[base]
+data_dir = "./saved_logs/0"
+role = "validator"
+
+[base.waypoint]
+type = "from_config"
+
+[base.waypoint.waypoint]
+version = 0
+value = "6af0c57f232d566e34c9490a5a167d8f0bb5b73b464e0dde37971da4a8d1b8d4"
+
+[consensus]
+max_block_size = 1000
+contiguous_rounds = 2
+max_pruned_blocks_in_mem = 10000
+round_initial_timeout_ms = 1000
+
+[consensus.proposer_type]
+type = "leader_reputation"
+active_weights = 99
+inactive_weights = 1
+[consensus.safety_rules.backend]
+type = "in_memory_storage"
+
+[consensus.safety_rules.service]
+type = "thread"
+
+[debug_interface]
+admission_control_node_debug_port = 45273
+metrics_server_port = 38885
+public_metrics_server_port = 34159
+address = "0.0.0.0"
+
+[execution]
+genesis_file_location = "genesis.blob"
+
+[execution.service]
+type = "thread"
+
+[logger]
+is_async = true
+chan_size = 256
+level = "INFO"
+
+[metrics]
+collection_interval_ms = 1000
+dir = "metrics"
+enabled = false
+
+[mempool]
+broadcast_transactions = true
+shared_mempool_tick_interval_ms = 50
+shared_mempool_batch_size = 100
+shared_mempool_max_concurrent_inbound_syncs = 100
+max_broadcasts_per_peer = 25
+capacity = 1000000
+capacity_per_user = 100
+system_transaction_timeout_secs = 86400
+system_transaction_gc_interval_ms = 180000
+
+[state_sync]
+chunk_limit = 250
+tick_interval_ms = 100
+long_poll_timeout_ms = 30000
+max_chunk_limit = 1000
+max_timeout_ms = 120000
+sync_request_timeout_ms = 60000
+
+[storage]
+address = "127.0.0.1:39331"
+backup_service_port = 34719
+dir = "libradb/db"
+grpc_max_receive_len = 100000000
+
+[test]
+auth_key = "1796824cdcc3ab205c25f260e15dc6705942d356f114089d4a46f2f3b0b15b52"
+operator_private_key = "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3"
+consensus_private_key = "50e53de2ca2006b933a4053cf4766c20ff773570e4af2d9d6ebca5ef02a49840"
+initialize_storage = true
+
+[upstream]
+primary_networks = ["5942d356f114089d4a46f2f3b0b15b52"]
+upstream_peers = []
+fallback_networks = []
+
+[validator_network]
+listen_address = "/ip4/0.0.0.0/tcp/45331"
+advertised_address = "/ip4/0.0.0.0/tcp/45331"
+discovery_interval_ms = 1000
+connectivity_check_interval_ms = 5000
+enable_remote_authentication = true
+discovery_method = "gossip"
+network_peers_file = ""
+seed_peers_file = "5942d356f114089d4a46f2f3b0b15b52.seed_peers.toml"
+
+[validator_network.identity]
+type = "from_config"
+key = "e8485074628c5cde1b9c58b70a90b7de778cbdfc6148044f4373008dacd9bc5d"
+peer_id = "5942d356f114089d4a46f2f3b0b15b52"
+
+[validator_network.network_id]
+type = "Validator"
+
+[configs_ol_miner]
+preimage = "aa"
+proof = "002fb6ae7221c8593fb21599fdbee8837426761b328f76609295c9175d5f061bb29792236d22366d0d9305040661b54f59cea3f8e143a584f178981549b462bdc96a3ef270dc1457985390a3401c484b721fdd00f0330b894755d34a311c547b73065aec1a71528d0dc350c13fa68aaf34d206a5fa56f7391b889f1226d7aacc3624eca7f27d523db4f2f18e4ca0bd4cd91b4133cce16b40245d9d393a0c32013f91c5d2bfaca7e5e4c4f71ea90bdc9047657e02e7a429b3f4988b3a7f0789a6c4e0b60af26139dba0c5a83eecc785dbdde0012e47ef3af7fe60e366b8e87ac437da111c8ffb57f400980513b47db04c47787380ea564ffaf1653aa5889e5b31340022cfdd5956cf2fc9130ea4e45a700a5fbd990aae8a4643b22508b6d0b6b80186b5eea2c656296ad2d2043867bd93d48a284b90c2792aeeb25f6a7f0dacac617e7660074e18109e6675480ebc6340f4b01d74d8e5943b9bc8f9acdb3d8ebef5f593858913ebbc2f0d4b1fc76dacca4b032bb8d97e018a614e667bbbb07da891d23028b60275bc2c715e975b347c2e72e5753282959973f34742a43393d76b025b6444e4cabf4272eceae3d94a19ae1f24edf725e8892eb45f34e8a224a5ee56effa8f4b5a3a3bf810579cba99f0e954ce8459afe963bbb2c2578bd5de48e6df56a29ef03dda9e03e19c08fed8b467065afd38720f634c646698a1841c4a21037700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"

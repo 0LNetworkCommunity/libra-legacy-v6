@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    layout::Layout,
-    storage_helper::StorageHelper,
-    storage_helper_github::StorageHelperGithub
+    layout::Layout, storage_helper::StorageHelper, storage_helper_github::StorageHelperGithub,
 };
 use config_builder::{BuildSwarm, SwarmConfig};
 use libra_config::{
@@ -19,9 +17,8 @@ use libra_secure_storage::Value;
 use libra_swarm::swarm::{LibraNode, LibraSwarm, LibraSwarmDir};
 use libra_temppath::TempPath;
 use libra_types::account_address;
-use std::path::{Path, PathBuf};
 use std::fs;
-
+use std::path::{Path, PathBuf};
 
 struct ManagementBuilder {
     configs: Vec<NodeConfig>,
@@ -78,16 +75,19 @@ fn smoke_test() {
 
         //NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
         // NOTE there are only fixtures for 5 validators in the /test_fixtures/ directory.
-        let mnemonic = fs::read_to_string(format!(
-            "./test_fixtures/miner_{}/miner_{}.mnem",
-            &ns,
-            &ns
-        )).unwrap();
+        let mnemonic =
+            fs::read_to_string(format!("./test_fixtures/miner_{}/miner_{}.mnem", &ns, &ns))
+                .unwrap();
         helper.initialize_with_menmonic(ns.clone(), mnemonic.to_string());
         // helper.initialize_with_menmonic(ns.clone(),"version expect kiwi trade flock barely version kangaroo believe estate two wash kingdom fringe evoke unfold grass time lyrics blade robot door tomorrow rail".to_string());
 
         // Mine a block in the 0L miner folder
-        helper.mining(&format!("./test_fixtures/miner_{}/block_0.json", &ns), &ns_shared).unwrap();
+        helper
+            .mining(
+                &format!("./test_fixtures/miner_{}/block_0.json", &ns),
+                &ns_shared,
+            )
+            .unwrap();
 
         let operator_key = helper.operator_key(&ns, &ns_shared).unwrap();
 
@@ -161,9 +161,7 @@ fn smoke_test() {
     }
 
     // Step 6) Build configuration for Swarm
-    let management_builder = ManagementBuilder {
-        configs
-    };
+    let management_builder = ManagementBuilder { configs };
 
     let mut swarm = LibraSwarm {
         dir: LibraSwarmDir::Temporary(temppath),
@@ -174,7 +172,6 @@ fn smoke_test() {
     // Step 7) Launch and exit!
     swarm.launch_attempt(RoleType::Validator, false).unwrap();
 }
-
 
 #[test]
 // NOTE: Run this with: cargo xtest -p libra-management smoke_test
@@ -205,17 +202,14 @@ fn smoke_test_github() {
     // Step 3) Prepare validators.
     // This simulates EACH validator going through their genesis ceremony steps.
     for i in 0..num_validators {
-
-        println!("Validator #{}", i );
+        println!("Validator #{}", i);
         let ns = i.to_string();
 
-    // NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
-    // there are only fixtures for 5 validators in the /test_fixtures/ directory.
-        let mnemonic = fs::read_to_string(format!(
-            "./test_fixtures/miner_{}/miner_{}.mnem",
-            &ns,
-            &ns
-        )).unwrap();
+        // NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+        // there are only fixtures for 5 validators in the /test_fixtures/ directory.
+        let mnemonic =
+            fs::read_to_string(format!("./test_fixtures/miner_{}/miner_{}.mnem", &ns, &ns))
+                .unwrap();
         println!("mnemonic\n");
 
         fs::remove_file(format!("./test_fixtures/miner_{}/key_store.json", &ns));
@@ -223,26 +217,21 @@ fn smoke_test_github() {
         helper.initialize_command(
             mnemonic.to_string(),
             format!("./test_fixtures/miner_{}", &ns),
-            ns.clone()
+            ns.clone(),
         );
 
         println!("mining\n");
 
-        helper.mining(
-            &format!("./test_fixtures/miner_{}/block_0.json", &ns),
-            &ns
-        ).unwrap();
+        helper
+            .mining(&format!("./test_fixtures/miner_{}/block_0.json", &ns), &ns)
+            .unwrap();
 
         println!("set layout\n");
 
         //TODO: create_waypoint complains if there is no local information on the SetLayout
         helper.set_layout_local(
             &ns,
-            &format!(
-                "./test_fixtures/miner_{}/miner_{}.mnem",
-                &ns,
-                &ns
-            )
+            &format!("./test_fixtures/miner_{}/miner_{}.mnem", &ns, &ns),
         );
 
         println!("operator key\n");
@@ -261,41 +250,42 @@ fn smoke_test_github() {
                 "/ip4/0.0.0.0/tcp/6180",
                 "/ip4/0.0.0.0/tcp/6180",
                 &format!("./test_fixtures/miner_{}/key_store.json", &ns),
-                &ns
+                &ns,
             )
             .unwrap();
-        }
+    }
 
-        // Assuming all steps above are OK. The validators can now build the genesis.
-        println!("genesis\n");
+    // Assuming all steps above are OK. The validators can now build the genesis.
+    println!("genesis\n");
 
-        let genesis = helper.genesis("./test_fixtures/genesis.blob").unwrap();
+    let genesis = helper.genesis("./test_fixtures/genesis.blob").unwrap();
 
-        for i in 0..num_validators {
-            // Each validator again can generate a waypoint and save to storage.
+    for i in 0..num_validators {
+        // Each validator again can generate a waypoint and save to storage.
 
-            // Step 5) Introduce waypoint and genesis into the configs and verify along the way
+        // Step 5) Introduce waypoint and genesis into the configs and verify along the way
 
-            println!("\nValidator #{}\n", i );
-            let ns = i.to_string();
-            println!("\nwaypoint\n");
+        println!("\nValidator #{}\n", i);
+        let ns = i.to_string();
+        println!("\nwaypoint\n");
 
-            // TODO: PLZ HALP.
-            let waypoint = helper.create_waypoint(&ns).unwrap();
+        // TODO: PLZ HALP.
+        let waypoint = helper.create_waypoint(&ns).unwrap();
 
-            println!("\nverify\n");
-            //
-            let output = helper.verify_genesis(
+        println!("\nverify\n");
+        //
+        let output = helper
+            .verify_genesis(
                 &format!("./test_fixtures/miner_{}/key_store.json", &ns),
-                "./test_fixtures/genesis.blob"
-            ).unwrap();
+                "./test_fixtures/genesis.blob",
+            )
+            .unwrap();
 
-            // let output =  helper.verify_genesis_remote().unwrap();
-            println!("{}", output);
+        // let output =  helper.verify_genesis_remote().unwrap();
+        println!("{}", output);
 
-            //TODO: Validators need to create/update a node.config.file.
-        }
-
+        //TODO: Validators need to create/update a node.config.file.
+    }
 }
 
 fn secure_backend(original: &Path, dst_base: &Path, ns: &str, usage: &str) -> SecureBackend {

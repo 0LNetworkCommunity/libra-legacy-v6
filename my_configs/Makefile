@@ -1,78 +1,101 @@
 SHELL=/usr/bin/env bash
 
-
 ###########################
 ## UPDATE YOUR DATA HERE ##
 # Don't put the MNEM here for production, add that by command line only.
 DATA_PATH = ./
 # TODO: namespace and account will be the same data. Testing with human readable names.
-#NAME = zaki
-#ACC = 402e9aaf54ca8c39bab641b0c9829070
-#IP = 192.241.147.210
-#MNEM = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice"
 
-NAME = lucas
+ifeq ($(NAME), zaki)
+ACC = 402e9aaf54ca8c39bab641b0c9829070
+IP = 192.241.147.210
+MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
+
+endif
+
+ifeq ($(NAME), lucas)
 ACC = 5e7891b719c305941e62867ffe730f48
 IP = 104.131.20.59
-#TODO: Remove MNEM, this is here for debugging only
-MNEM = "owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city"
+MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
+endif
 
-# NAME = sha
-# ACC = b2f38139f75a271fd8f8fae4a87c2679
-# IP = 64.227.20.31
-# MNEM = "motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day"
+ifeq ($(NAME), sha)
+ACC = b2f38139f75a271fd8f8fae4a87c2679
+IP = 64.227.20.31
+MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
 
-#NAME = keerthi
-#ACC = 027c83aeb3b9c085f5a1506b418d08cf
-#IP = 64.227.28.81
-#MNEM = "advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power"
-###########################
+endif
 
-compile : all-bins
+ifeq ($(NAME), keerthi)
+ACC = 027c83aeb3b9c085f5a1506b418d08cf
+IP = 157.245.133.106
+MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
+endif
 
+# set up the environment
+install: deps bins
 # pipelines for genesis ceremony
-register: stdlib clear init mining keys register
-
-# > make register MNEM='owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' NAME=lucas ACC=5e7891b719c305941e62867ffe730f48 IP=104.131.20.59
-
+register: clear init mining keys register
+# do genesis
 genesis: build-genesis waypoint toml
+# starts a node:
+# >make start
 
-
-# Add other binaries later.
-install:
-	cp -f target/release/ol_miner /usr/local/bin/ol_miner
-	cp -f target/release/libra-management /usr/local/bin/libra-management
-
-all-bins:
-	cargo build --all --bins --release --exclude cluster-test
+# Add other binaries later
 
 deps:
 	sudo apt-get update
 	sudo apt-get install build-essential cmake clang llvm libgmp-dev
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+	source ~/.cargo/env
+	rustup default nightly
+	
+bins:
+	cd ../language/stdlib && cargo run --release
+	cargo build -p libra-node --release
+	cargo build -p libra-management --release
+	cargo build -p miner --release
+	cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	cp -f ../target/release/libra-node /usr/local/bin/libra-node
+
+all-bins:
+	cargo build --all --bins --release --exclude cluster-test
+
+copy:
+	#cp -f target/release/ol_miner /usr/local/bin/ol_miner
+	cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	cp -f ../target/release/libra-node /usr/local/bin/libra-node
+
+
 
 #GENESIS CEREMONY
 stdlib:
-	cd ../language/stdlib && cargo run
+	cd ../language/stdlib && cargo run --release
+
 clear:
-	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+	rm -rf libradb *.seed_peers.toml block_0.json node.configs.toml genesis.blob key_store.json
+	cp block_0.json.${NAME} block_0.json
 init:
-	cargo run -p libra-management initialize \
+	libra-management initialize \
 	--mnemonic '${MNEM}' \
 	--path=${DATA_PATH} \
 	--namespace=${NAME}
-
+layout:
+	libra-management set-layout \
+	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
+	--path=set_layout.toml
 mining:
-	cargo run -p libra-management mining \
+	libra-management mining \
 	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
 	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 keys:
-	cargo run -p libra-management operator-key \
+	libra-management operator-key \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}' \
 	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 register:
-	cargo run -p libra-management validator-config \
+	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
@@ -80,17 +103,17 @@ register:
 	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 build-genesis:
-	cargo run -p libra-management genesis \
+	libra-management genesis \
 	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	cargo run -p libra-management create-waypoint \
+	libra-management create-waypoint \
 	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}'
 
 toml:
-	cargo run -p libra-management config \
+	libra-management config \
 	--validator-address \
 	"/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
@@ -99,4 +122,4 @@ toml:
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 start:
-	cargo run -p libra-node -- --config ${DATA_PATH}node.configs.toml
+	libra-node --config ${DATA_PATH}node.configs.toml
