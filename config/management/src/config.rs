@@ -2,7 +2,7 @@ use crate::{error::Error, storage_helper::StorageHelper, SingleBackend};
 use libra_config::{
     config::{
         DiscoveryMethod, Identity, NetworkConfig, NodeConfig, OnDiskStorageConfig, RoleType,
-        SecureBackend, WaypointConfig,
+        SecureBackend, WaypointConfig,UpstreamConfig
     },
     network_id::NetworkId,
 };
@@ -52,15 +52,18 @@ impl Config {
         network.discovery_method = DiscoveryMethod::Onchain;
         config.validator_network = Some(network);
 
+
         config.consensus.round_initial_timeout_ms = 5000;
 
         let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
         println!("network\n{:?}", network);
 
-        network.discovery_method = DiscoveryMethod::Onchain;
+        network.discovery_method = DiscoveryMethod::Gossip;
         config.full_node_networks = vec![network];
 
         config.logger.level = Level::Debug;
+
+        config.upstream =UpstreamConfig::default();
 
         if let Some(network) = config.validator_network.as_mut() {
             network.listen_address = self.validator_listen_address;
@@ -71,7 +74,10 @@ impl Config {
                 libra_global_constants::OPERATOR_ACCOUNT.into(),
                 self.backend.backend.clone().try_into().unwrap(),
             );
+            config.upstream.primary_networks= vec![network.peer_id()];
+
         }
+
 
         let fullnode_network = &mut config.full_node_networks[0];
         fullnode_network.listen_address = self.fullnode_listen_address;
