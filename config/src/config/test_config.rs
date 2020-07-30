@@ -99,7 +99,7 @@ impl TestConfig {
         fn write_ol_miner_toml (privkey: &Ed25519PrivateKey, auth_key: &AuthenticationKey) {
             // 0L TODO: Confirm this is for testing only.
             let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
-            println!("=========\n Auth_Key\n{:?}", &auth_key);
+            println!("=========\n Auth_Key\n{:?}", &auth_key.to_string());
             println!("Mnemonic:\n{:?}\n=========", mnemonic.to_string() );
 
             // TODO: use the OLMinerConfig struct here
