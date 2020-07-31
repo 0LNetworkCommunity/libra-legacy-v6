@@ -62,7 +62,7 @@ impl Config {
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         println!("network\n{:?}", network);
 
-        network.discovery_method = DiscoveryMethod::Onchain;
+        network.discovery_method = DiscoveryMethod::Gossip;
         config.validator_network = Some(network);
 
 
@@ -92,7 +92,6 @@ impl Config {
                 self.backend.backend.clone().try_into().unwrap(),
             );
             network.discovery_method = DiscoveryMethod::Gossip;
-
         }
 
 
