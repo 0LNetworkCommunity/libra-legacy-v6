@@ -31,7 +31,7 @@ use libra_config::config::SeedPeersConfig;
 pub struct Seeds {
     /// Path to genesis file to extract seed nodes
     #[structopt(long, verbatim_doc_comment)]
-    genesis_path: PathBuf,
+    pub genesis_path: PathBuf,
 }
 
 impl Seeds {

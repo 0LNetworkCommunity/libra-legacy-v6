@@ -2,7 +2,7 @@ use crate::{error::Error, storage_helper::StorageHelper, SingleBackend};
 use libra_config::{
     config::{
         DiscoveryMethod, Identity, NetworkConfig, NodeConfig, OnDiskStorageConfig, RoleType,
-        SecureBackend, WaypointConfig,UpstreamConfig
+        SecureBackend, WaypointConfig,UpstreamConfig, PeerNetworkId
     },
     network_id::NetworkId,
 };
@@ -39,14 +39,14 @@ impl Config {
     pub fn execute(self) -> Result<String, Error> {
         let mut config = NodeConfig::default();
 
-        // let mut local: Box<dyn Storage> = self.backend.backend.clone().try_into().unwrap();
-        // local
-        //     .available()
-        //     .map_err(|e| Error::LocalStorageUnavailable(e.to_string())).unwrap();
+        let mut local: Box<dyn Storage> = self.backend.backend.clone().try_into().unwrap();
+        local
+            .available()
+            .map_err(|e| Error::LocalStorageUnavailable(e.to_string())).unwrap();
 
 
-        // let key = local
-        // .get_public_key(libra_global_constants::OPERATOR_KEY).unwrap();
+        let key = local
+        .get_public_key(libra_global_constants::OPERATOR_KEY).unwrap();
 
 
 
@@ -90,13 +90,14 @@ impl Config {
             genesis_path: PathBuf::from("./genesis.blob")
         };
 
-        for p in peers.get_seed_info().iter() {
-            println!("{:?}", p);
-            config.upstream.primary_networks.push(key);
-            config.upstream.upstream_peers.push(key);
+        let upstream =AuthenticationKey::ed25519(&key.public_key).derived_address();
+        config.upstream.primary_networks.push(upstream);
+
+
+        for (acc, v) in peers.get_seed_info().unwrap().seed_peers.iter() {
+            config.upstream.upstream_peers.insert(PeerNetworkId(upstream,acc.clone()));
         }
 
-        // AuthenticationKey.try_from(libra_global_constants::OPERATOR_ACCOUNT);
         // let address = account_address::from_public_key(&libra_global_constants::OPERATOR_ACCOUNT);
         // config.upstream.primary_networks= vec![address];
 
