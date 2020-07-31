@@ -68,7 +68,7 @@ impl Config {
 
         config.consensus.round_initial_timeout_ms = 5000;
 
-        let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
+        // let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
         println!("network\n{:?}", network);
 
         network.discovery_method = DiscoveryMethod::Gossip;
@@ -78,8 +78,8 @@ impl Config {
 
 
 
-        config.upstream =UpstreamConfig::default();
-        // config.upstream.primary_networks= vec![key.public_key.account_address()];
+        // config.upstream = UpstreamConfig::default();
+        //config.upstream.primary_networks= vec![key.public_key.account_address()];
 
 
         if let Some(network) = config.validator_network.as_mut() {
@@ -95,14 +95,14 @@ impl Config {
         }
 
 
-        let fullnode_network = &mut config.full_node_networks[0];
-        fullnode_network.listen_address = self.fullnode_listen_address;
-        fullnode_network.advertised_address = self.fullnode_address;
-        fullnode_network.identity = Identity::from_storage(
-            libra_global_constants::FULLNODE_NETWORK_KEY.into(),
-            libra_global_constants::OPERATOR_ACCOUNT.into(),
-            self.backend.backend.clone().try_into().unwrap(),
-        );
+        // let fullnode_network = &mut config.full_node_networks[0];
+        // fullnode_network.listen_address = self.fullnode_listen_address;
+        // fullnode_network.advertised_address = self.fullnode_address;
+        // fullnode_network.identity = Identity::from_storage(
+        //     libra_global_constants::FULLNODE_NETWORK_KEY.into(),
+        //     libra_global_constants::OPERATOR_ACCOUNT.into(),
+        //     self.backend.backend.clone().try_into().unwrap(),
+        // );
 
         config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
 
