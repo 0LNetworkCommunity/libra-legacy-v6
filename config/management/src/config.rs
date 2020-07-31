@@ -6,6 +6,8 @@ use libra_config::{
     },
     network_id::NetworkId,
 };
+use libra_secure_storage::{Storage, Value};
+
 use libra_network_address::{NetworkAddress, RawNetworkAddress};
 use structopt::StructOpt;
 // use std::convert::TryInto;
@@ -29,6 +31,17 @@ pub struct Config {
 impl Config {
     pub fn execute(self) -> Result<String, Error> {
         let mut config = NodeConfig::default();
+
+        // let mut local: Box<dyn Storage> = self.backend.backend.clone().try_into().unwrap();
+        // local
+        //     .available()
+        //     .map_err(|e| Error::LocalStorageUnavailable(e.to_string())).unwrap();
+
+
+        // let key = local
+        // .get_public_key(libra_global_constants::OPERATOR_KEY).unwrap();
+
+
 
         // NOTE: There's something strange with calling libra-node from a path different from where this storage is located.
 
@@ -63,7 +76,11 @@ impl Config {
 
         config.logger.level = Level::Debug;
 
+
+
         config.upstream =UpstreamConfig::default();
+        // config.upstream.primary_networks= vec![key.public_key.account_address()];
+
 
         if let Some(network) = config.validator_network.as_mut() {
             network.listen_address = self.validator_listen_address;
@@ -74,7 +91,6 @@ impl Config {
                 libra_global_constants::OPERATOR_ACCOUNT.into(),
                 self.backend.backend.clone().try_into().unwrap(),
             );
-            config.upstream.primary_networks= vec![network.peer_id()];
 
         }
 
