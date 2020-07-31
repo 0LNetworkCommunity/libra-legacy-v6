@@ -37,7 +37,7 @@ install: deps bins
 # pipelines for genesis ceremony
 register: clear init mining keys register
 # do genesis
-genesis: build-genesis waypoint toml
+genesis: build-genesis waypoint toml peers
 # starts a node:
 # >make start
 
@@ -121,5 +121,8 @@ toml:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
+peers:
+	libra-management seeds --genesis-path genesis.blob
+	cp seed_peers.toml 00000000000000000000000000000000.seed_peers.toml
 start:
 	libra-node --config ${DATA_PATH}node.configs.toml
