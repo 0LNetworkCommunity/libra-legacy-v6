@@ -13,6 +13,13 @@ use structopt::StructOpt;
 // use std::convert::TryInto;
 use log::Level;
 use std::{convert::TryInto, fs, fs::File, io::Write, net::SocketAddr, path::PathBuf};
+use libra_types::{
+    account_address::{self, AccountAddress},
+    // authenticator::AuthenticationKey
+    transaction::authenticator::AuthenticationKey
+};
+
+use super::seeds::Seeds;
 
 #[derive(Debug, StructOpt)]
 pub struct Config {
@@ -77,9 +84,21 @@ impl Config {
         config.logger.level = Level::Debug;
 
 
+        config.upstream = UpstreamConfig::default();
 
-        // config.upstream = UpstreamConfig::default();
-        //config.upstream.primary_networks= vec![key.public_key.account_address()];
+        let peers = Seeds {
+            genesis_path: PathBuf::from("./genesis.blob")
+        };
+
+        for p in peers.get_seed_info().iter() {
+            println!("{:?}", p);
+            config.upstream.primary_networks.push(key);
+            config.upstream.upstream_peers.push(key);
+        }
+
+        // AuthenticationKey.try_from(libra_global_constants::OPERATOR_ACCOUNT);
+        // let address = account_address::from_public_key(&libra_global_constants::OPERATOR_ACCOUNT);
+        // config.upstream.primary_networks= vec![address];
 
 
         if let Some(network) = config.validator_network.as_mut() {

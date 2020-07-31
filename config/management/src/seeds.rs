@@ -36,6 +36,17 @@ pub struct Seeds {
 
 impl Seeds {
     pub fn execute(self) -> Result<String, Error> {
+
+        let seeds = self.get_seed_info();
+
+        seeds.unwrap()
+            .save_config("seed_peers.toml")
+            .expect("Unable to save seed peers config");
+
+        Ok("Wrote seed_peers.toml".to_string())
+    }
+
+    pub fn get_seed_info(self) -> Result<SeedPeersConfig, Error>  {
         let db_path = TempPath::new();
 
         let (db_rw, expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
@@ -69,13 +80,11 @@ impl Seeds {
             );
         }
 
-        seeds
-            .save_config("seed_peers.toml")
-            .expect("Unable to save seed peers config");
-
-        Ok("Wrote seed_peers.toml".to_string())
+        Ok(seeds)
     }
 }
+
+
 
 /// Compute the ledger given a genesis writeset transaction and return access to that ledger and
 /// the waypoint for that state.
