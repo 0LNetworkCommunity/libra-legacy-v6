@@ -91,6 +91,7 @@ impl Config {
                 libra_global_constants::OPERATOR_ACCOUNT.into(),
                 self.backend.backend.clone().try_into().unwrap(),
             );
+            network.discovery_method = DiscoveryMethod::Gossip;
 
         }
 
