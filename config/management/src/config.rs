@@ -95,7 +95,9 @@ impl Config {
 
 
         for (acc, v) in peers.get_seed_info().unwrap().seed_peers.iter() {
+            if upstream != *acc{
             config.upstream.upstream_peers.insert(PeerNetworkId(upstream,acc.clone()));
+            }
         }
 
         // let address = account_address::from_public_key(&libra_global_constants::OPERATOR_ACCOUNT);
