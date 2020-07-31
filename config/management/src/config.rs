@@ -60,7 +60,7 @@ impl Config {
         // value = "c20d50e14ca7cd0ef8fc209033f3f9ef7c0d0a169267cea8ec4ccda942868e19"
 
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-        println!("network\n{:?}", network);
+        // println!("network\n{:?}", network);
 
         network.discovery_method = DiscoveryMethod::Gossip;
         config.validator_network = Some(network);
@@ -69,10 +69,10 @@ impl Config {
         config.consensus.round_initial_timeout_ms = 5000;
 
         // let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
-        println!("network\n{:?}", network);
+        // println!("network\n{:?}", &network);
 
-        network.discovery_method = DiscoveryMethod::Gossip;
-        config.full_node_networks = vec![network];
+        // network.discovery_method = DiscoveryMethod::Gossip;
+        // config.full_node_networks = vec![network];
 
         config.logger.level = Level::Debug;
 
