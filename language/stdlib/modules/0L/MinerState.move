@@ -67,12 +67,13 @@ address 0x0 {
 
 
     // Helper function for genesis to begin redeem process.
-    public fun genesis_helper (miner: &signer, challenge: vector<u8>,
-                                difficulty: u64 , solution: vector<u8> )
+    public fun genesis_helper (miner: &signer, challenge: vector<u8>, solution: vector<u8> )
                                 acquires MinerProofHistory, ProofsInEpoch {
+
+      let difficulty = Globals::get_difficulty();
       let vdf_proof_blob = VdfProofBlob {
         challenge,
-        difficulty,
+        difficulty,  
         solution,
         reported_tower_height: 0,
         epoch: 0,

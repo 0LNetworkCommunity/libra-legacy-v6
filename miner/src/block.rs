@@ -68,28 +68,25 @@ pub mod build_block {
     use glob::glob;
     use libra_crypto::hash::HashValue;
     use libra_types::waypoint::Waypoint;
-    use std::time::Instant;
     use std::{
         fs,
         io::{BufReader, Write},
         path::Path,
         path::PathBuf,
+        time::Instant,
+        env,
     };
-
-
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
         let preimage = config.genesis_preimage();
         let now = Instant::now();
-        let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
+        let data = do_delay(&preimage);
         let elapsed_secs = now.elapsed().as_secs();
         println!("Delay: {:?} seconds", elapsed_secs);
         let block = Block {
             height: 0u64,
             elapsed_secs,
-            // note: do_delay() sigature is (challenge, delay difficulty).
-            // note: trait serializes data field.
             preimage,
             data,
         };
@@ -115,17 +112,15 @@ pub mod build_block {
             // TODO: cleanup this duplication with mine_genesis_once?
 
             let now = Instant::now();
-            let data = do_delay(&preimage, crate::application::DELAY_ITERATIONS);
+            let data = do_delay(&preimage);
             let elapsed_secs = now.elapsed().as_secs();
             println!("Delay: {:?} seconds", elapsed_secs);
 
             let block = Block {
                 height,
                 elapsed_secs,
-                // note: do_delay() sigature is (challenge, delay difficulty).
-                // note: trait serializes data field.
                 preimage,
-                data: data.clone(), //data: delay::do_delay(&preimage, crate::application::DELAY_ITERATIONS),
+                data: data.clone(),
             };
 
             write_json(&block, &config.get_block_dir() );
@@ -170,7 +165,7 @@ pub mod build_block {
                         // get preimage
                         submit_vdf_proof_tx_to_network(
                             block.preimage,                       // challenge: Vec<u8>,
-                            crate::application::DELAY_ITERATIONS, // difficulty: u64,
+                            delay_difficulty(), // difficulty: u64,
                             block.data,                           // proof: Vec<u8>,
                             waypoint,                             // waypoint: Waypoint,
                             mnemonic.to_string(),
@@ -208,7 +203,7 @@ pub mod build_block {
             // get preimage
             submit_vdf_proof_tx_to_network(
                 block.preimage,                       // challenge: Vec<u8>,
-                crate::application::DELAY_ITERATIONS, // difficulty: u64,
+                delay_difficulty(), // difficulty: u64,
                 block.data,                           // proof: Vec<u8>,
                 waypoint,                             // waypoint: Waypoint,
                 mnemonic.to_string(),
@@ -289,6 +284,7 @@ pub mod build_block {
         }
         (max_block, max_block_path)
     }
+
 
 
 
@@ -508,8 +504,6 @@ fn create_fixtures() {
             height: current_block_number,
             elapsed_secs: 0u64,
             preimage: Vec::new(),
-            // note: do_delay() sigature is (challenge, delay difficulty).
-            // note: trait serializes data field.
             data: Vec::new(),
         };
 

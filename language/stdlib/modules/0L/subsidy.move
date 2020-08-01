@@ -16,7 +16,6 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
-    // use 0x0::Debug;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -73,10 +72,13 @@ address 0x0 {
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
+    // Function code: 07 Prefix: 190107
     public fun calculate_Subsidy(account: &signer, start_height: u64, end_height: u64)
     :u64 acquires SubsidyInfo {
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 8001);
+      Transaction::assert(sender == 0x0, 190107014010);
+      
+      Transaction::assert(start_height >= 0, 190107025120);
 
       // Gets the proxy for liveness from Stats
       let node_density = Stats::network_heuristics(start_height, end_height);
@@ -85,7 +87,7 @@ address 0x0 {
       // TODO: Check the balance here
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
 
-      // Calculate the split for subsidy and burn
+      // // Calculate the split for subsidy and burn
       let (subsidy_units, burn_units) = subsidy_curve(
         Globals::get_subsidy_ceiling_gas(),
         4u64, // minimum number of nodes to be in consensus.
@@ -93,10 +95,10 @@ address 0x0 {
         node_density
       );
 
-      // Deducting the txn fees from subsidy_units to get maximum subsidy for all validators
+      // // Deducting the txn fees from subsidy_units to get maximum subsidy for all validators
       let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
 
-      //deduct transaction fees from minimum guarantee.
+      // //deduct transaction fees from minimum guarantee.
       subsidy_units = subsidy_units - txn_fee_amount;
       burn_units = burn_units + txn_fee_amount; //Adding the fee amount to be burned
       subsidy_info.burn_units = burn_units;
