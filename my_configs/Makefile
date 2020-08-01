@@ -128,3 +128,9 @@ peers:
 start:
 	# run in background and output logs
 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
+
+daemon-init:
+	cp libra_node.service /etc/systemd/system/
+	systemctl daemon-reload
+	systemctl enable libra_node.service
+	systemctl start libra_node.service

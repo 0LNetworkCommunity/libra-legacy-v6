@@ -107,7 +107,7 @@ module Globals {
     fun get_constants(): GlobalConstants  {
       if (Testnet::is_testnet()){
         return GlobalConstants {
-          epoch_length: 100,
+          epoch_length: 15,
           max_validator_per_epoch: 10,
           subsidy_ceiling_gas: 296,
           min_node_density: 4,
