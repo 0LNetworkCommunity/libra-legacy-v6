@@ -113,7 +113,7 @@ waypoint:
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}'
 
 toml:
-	cargo run -p libra-management config \
+	libra-management config \
 	--validator-address \
 	"/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
@@ -122,7 +122,8 @@ toml:
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 peers:
-	cargo run -p libra-management seeds --genesis-path genesis.blob
+	libra-management seeds --genesis-path genesis.blob
 	cp seed_peers.toml 00000000000000000000000000000000.seed_peers.toml
+
 start:
 	libra-node --config ${DATA_PATH}node.configs.toml
