@@ -90,7 +90,7 @@ impl Config {
             genesis_path: PathBuf::from("./genesis.blob")
         };
 
-        let upstream =AuthenticationKey::ed25519(&key.public_key).derived_address();
+        let upstream = AuthenticationKey::ed25519(&key.public_key).derived_address();
         config.upstream.primary_networks.push(upstream);
 
 
@@ -114,6 +114,8 @@ impl Config {
                 self.backend.backend.clone().try_into().unwrap(),
             );
             network.discovery_method = DiscoveryMethod::Gossip;
+            //network.network_peers_file = PathBuf::from("./network_peers.toml") ;
+            network.seed_peers_file = PathBuf::from("./seed_peers.toml") ;
         }
 
 
@@ -125,6 +127,7 @@ impl Config {
         //     libra_global_constants::OPERATOR_ACCOUNT.into(),
         //     self.backend.backend.clone().try_into().unwrap(),
         // );
+
 
         config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
 
