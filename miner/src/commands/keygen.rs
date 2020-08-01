@@ -26,6 +26,6 @@ impl Runnable for KeygenCmd {
 
         println!("0L Auth Key:\nYou will need this in your miner.toml configs.\n---------\n{:x}\n", auth_key);
         println!("0L Address:\nThis address is derived from your Auth Key, it has not yet been created onchain. You'll need to submit a genesis miner proof for that.\n---------\n{:x}\n", auth_key.derived_address());
-        println!("0L mnemonic:\nPlease god don't lose this. It's not saved anywhere on disk\n---------\n{}\n", &mnemonic_string.as_str());
+        println!("0L mnemonic:\nPlease don't lose this. It's not saved anywhere on disk\n---------\n{}\n", &mnemonic_string.as_str());
     }
 }
