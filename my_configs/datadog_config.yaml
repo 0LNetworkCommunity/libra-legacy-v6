@@ -1,5 +1,5 @@
 logs:
   - type: file
-    path: "/root/libra/my_configs/output.log"
+    path: "/root/output-libra-node.log"
     service: "libra_node"
     source: "validator"
