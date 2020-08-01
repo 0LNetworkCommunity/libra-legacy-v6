@@ -82,20 +82,21 @@ impl StorageHelper {
 
         // storage.import_private_key(ASSOCIATION_KEY,child_0.export_priv_key()).unwrap();
         storage
-            .import_private_key(CONSENSUS_KEY, child_0.export_priv_key())
-            .unwrap();
-        storage
-            .import_private_key(FULLNODE_NETWORK_KEY, child_0.export_priv_key())
-            .unwrap();
-        storage
             .import_private_key(OWNER_KEY, child_0.export_priv_key())
             .unwrap();
         storage
             .import_private_key(OPERATOR_KEY, child_0.export_priv_key())
             .unwrap();
         storage
-            .import_private_key(VALIDATOR_NETWORK_KEY, child_0.export_priv_key())
+            .import_private_key(CONSENSUS_KEY, child_1.export_priv_key())
             .unwrap();
+        storage
+            .import_private_key(VALIDATOR_NETWORK_KEY, child_2.export_priv_key())
+            .unwrap();
+        storage
+            .import_private_key(FULLNODE_NETWORK_KEY, child_3.export_priv_key())
+            .unwrap();
+
 
         storage.set(EPOCH, Value::U64(0)).unwrap();
         storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
