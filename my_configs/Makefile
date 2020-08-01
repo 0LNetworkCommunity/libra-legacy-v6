@@ -131,7 +131,9 @@ start:
 
 daemon-init:
 	cp libra_node.service /etc/systemd/system/
-	touch /root/output-libra-node.log
+	touch /root/libra/output-libra-node.log
+	chmod 655 /root/libra
+	chmod 655 /root/libra/output-libra-node.log
 	systemctl daemon-reload
 	systemctl enable libra_node.service
 	systemctl start libra_node.service
