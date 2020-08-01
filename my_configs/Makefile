@@ -126,4 +126,5 @@ peers:
 	cp seed_peers.toml 00000000000000000000000000000000.seed_peers.toml
 
 start:
-	libra-node --config ${DATA_PATH}node.configs.toml
+	# run in background and output logs
+	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
