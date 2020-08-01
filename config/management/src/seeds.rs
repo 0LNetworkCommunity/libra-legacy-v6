@@ -24,7 +24,7 @@ use std::{
 
 use storage_interface::{DbReader, DbReaderWriter};
 
-use libra_config::config::SeedPeersConfig;
+use libra_config::config::{SeedPeersConfig, NetworkPeersConfig, NetworkPeerInfo};
 
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
@@ -38,15 +38,19 @@ impl Seeds {
     pub fn execute(self) -> Result<String, Error> {
 
         let seeds = self.get_seed_info();
-
+        let peers = self.get_network_peers_info();
         seeds.unwrap()
             .save_config("seed_peers.toml")
             .expect("Unable to save seed peers config");
 
+        peers.unwrap()
+        .save_config("network_peers.toml")
+        .expect("Unable to save network peers config");
+
         Ok("Wrote seed_peers.toml".to_string())
     }
 
-    pub fn get_seed_info(self) -> Result<SeedPeersConfig, Error>  {
+    pub fn get_network_peers_info(&self)->Result<NetworkPeersConfig, Error> {
         let db_path = TempPath::new();
 
         let (db_rw, expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
@@ -71,12 +75,49 @@ impl Seeds {
 
         let info = validator_set.payload();
 
-        let mut seeds: SeedPeersConfig = Default::default();
+        let mut netpeers = NetworkPeersConfig::default();
+
+        for info in info.iter() {
+            netpeers.peers.insert(
+                info.account_address().clone(),
+                NetworkPeerInfo{identity_public_key: info.network_identity_public_key()},
+            );
+        }
+
+        Ok(netpeers)
+    }
+
+    pub fn get_seed_info(&self) -> Result<SeedPeersConfig, Error>  {
+        let db_path = TempPath::new();
+
+        let (db_rw, expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
+
+        let blob = db_rw
+            .reader
+            .get_latest_account_state(account_config::validator_set_address())
+            .map_err(|e| {
+                Error::UnexpectedError(format!("ValidatorSet Account issue {}", e.to_string()))
+            })
+            .unwrap()
+            .unwrap();
+
+        let account_state = AccountState::try_from(&blob)
+            .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))
+            .unwrap();
+
+        let validator_set: ValidatorSet = account_state
+            .get_validator_set()
+            .map_err(|e| Error::UnexpectedError(format!("ValidatorSet issue {}", e.to_string())))?
+            .ok_or_else(|| Error::UnexpectedError("ValidatorSet does not exist".into()))?;
+
+        let info = validator_set.payload();
+
+        let mut seeds = SeedPeersConfig::default();
 
         for info in info.iter() {
             seeds.seed_peers.insert(
                 info.account_address().clone(),
-                vec![NetworkAddress::try_from(&info.config().validator_network_address).unwrap(),NetworkAddress::try_from(&info.config().full_node_network_address).unwrap()],
+                vec![NetworkAddress::try_from(&info.config().validator_network_address).unwrap(),NetworkAddress::try_from(&info.config().validator_network_address).unwrap()],
             );
         }
 
