@@ -41,8 +41,8 @@ genesis: build-genesis waypoint toml peers
 
 deps:
 	sudo apt-get update
-	sudo apt-get install build-essential cmake clang llvm libgmp-dev
-	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
+	sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 	source ~/.cargo/env && rustup default nightly
 	
 	
