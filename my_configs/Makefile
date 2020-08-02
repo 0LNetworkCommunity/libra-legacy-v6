@@ -38,19 +38,16 @@ install: deps bins
 register: clear init mining keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
-# starts a node:
-# >make start
-
-# Add other binaries later
 
 deps:
 	sudo apt-get update
 	sudo apt-get install build-essential cmake clang llvm libgmp-dev
 	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-	source ~/.cargo/env
-	rustup default nightly
+	source ~/.cargo/env && rustup default nightly
+	
 	
 bins:
+	export NODE_ENV='prod'
 	cd ../language/stdlib && cargo run --release
 	cargo build -p libra-node --release
 	cargo build -p libra-management --release
@@ -59,31 +56,31 @@ bins:
 	cp -f ../target/release/libra-node /usr/local/bin/libra-node
 
 all-bins:
+	export NODE_ENV='prod'
 	cargo build --all --bins --release --exclude cluster-test
-
-copy:
-	#cp -f target/release/ol_miner /usr/local/bin/ol_miner
-	cp -f ../target/release/libra-management /usr/local/bin/libra-management
-	cp -f ../target/release/libra-node /usr/local/bin/libra-node
 
 
 
 #GENESIS CEREMONY
-stdlib:
-	cd ../language/stdlib && cargo run --release
+# stdlib:
+# 	export NODE_ENV='prod'
+# 	cd ../language/stdlib && cargo run --release
 
 clear:
 	rm -rf libradb *.seed_peers.toml block_0.json node.configs.toml genesis.blob key_store.json
 	cp block_0.json.${NAME} block_0.json
+
 init:
 	libra-management initialize \
 	--mnemonic '${MNEM}' \
 	--path=${DATA_PATH} \
 	--namespace=${NAME}
+
 layout:
 	libra-management set-layout \
 	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
 	--path=set_layout.toml
+
 mining:
 	libra-management mining \
 	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
@@ -103,11 +100,13 @@ register:
 	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 build-genesis:
+	export NODE_ENV='prod'
 	libra-management genesis \
 	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
+	export NODE_ENV='prod'
 	libra-management create-waypoint \
 	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}'
@@ -127,6 +126,7 @@ peers:
 
 start:
 	# run in background and output logs
+	export NODE_ENV='prod'
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 start-bg:
@@ -135,7 +135,7 @@ start-bg:
 
 
 
-daemon-init:
+daemon:
 	cp libra-node.service /lib/systemd/system/
 	touch /root/libra/output-libra-node.log
 	chmod 655 /root/libra
