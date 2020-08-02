@@ -33,7 +33,7 @@ MNEM = advice organ wage sick travel brief leave renew utility host roast barely
 endif
 
 # set up the environment
-install: deps bins
+install: deps rust bins
 # pipelines for genesis ceremony
 register: clear init mining keys register
 # do genesis
@@ -43,8 +43,12 @@ deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
 	sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-	source ~/.cargo/env && rustup default nightly
-	
+	# s
+
+rust:
+	## TODO: Cargo is not getting set to path until make exits. This next line doesn't run.
+	source ~/.cargo/env
+	rustup default nightly
 	
 bins:
 	export NODE_ENV='prod'
