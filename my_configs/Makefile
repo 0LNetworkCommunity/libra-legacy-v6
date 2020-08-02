@@ -127,7 +127,13 @@ peers:
 
 start:
 	# run in background and output logs
+	libra-node --config ${DATA_PATH}node.configs.toml
+
+start-bg:
+	# run in background and output logs
 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
+
+
 
 daemon-init:
 	cp libra-node.service /lib/systemd/system/
