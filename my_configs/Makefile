@@ -11,7 +11,6 @@ ACC = 402e9aaf54ca8c39bab641b0c9829070
 AUTH = 3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070
 IP = 192.241.147.210
 MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
-
 endif
 
 ifeq ($(NAME), lucas)
@@ -26,7 +25,6 @@ ACC = b2f38139f75a271fd8f8fae4a87c2679
 AUTH = 4b964ff86508164652cce32107cd7107b2f38139f75a271fd8f8fae4a87c2679
 IP = 64.227.20.31
 MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
-
 endif
 
 ifeq ($(NAME), keerthi)
