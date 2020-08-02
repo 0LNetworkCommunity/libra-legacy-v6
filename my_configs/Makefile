@@ -51,7 +51,6 @@ rust:
 	rustup default nightly
 	
 bins:
-	export NODE_ENV='prod'
 	cd ../language/stdlib && cargo run --release
 	cargo build -p libra-node --release
 	cargo build -p libra-management --release
@@ -104,7 +103,7 @@ register:
 	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 build-genesis:
-	export NODE_ENV='prod'
+	NODE_ENV='prod'
 	libra-management genesis \
 	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
@@ -130,7 +129,7 @@ peers:
 
 start:
 	# run in background and output logs
-	export NODE_ENV='prod'
+	NODE_ENV='prod'
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 start-bg:
@@ -149,7 +148,7 @@ daemon:
 	systemctl start libra-node.service
 
 datadog:
-	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=bc1d4e1501b29ec31f0e131fda7ba440 DD_SITE="datadoghq.com" bash -c \"$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
+	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=bc1d4e1501b29ec31f0e131fda7ba440 DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
 	# mkdir /etc/datadog-agent/conf.d/libra.d/
 	cp datadog_config.yaml /etc/datadog-agent/conf.d/libra.d/conf.yaml
 	service datadog-agent start
