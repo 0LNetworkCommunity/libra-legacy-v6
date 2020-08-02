@@ -33,7 +33,7 @@ MNEM = advice organ wage sick travel brief leave renew utility host roast barely
 endif
 
 # set up the environment
-install: deps rust bins
+install: deps rust stdlib bins
 # pipelines for genesis ceremony
 register: clear init mining keys register
 # do genesis
@@ -46,17 +46,21 @@ deps:
 	# s
 
 rust:
-	## TODO: Cargo is not getting set to path until make exits. This next line doesn't run.
-	source ~/.cargo/env
+	## TODO: Cargo is not getting set to path. This next line doesn't run.
+	source ~/.cargo/env 
 	rustup default nightly
 	
-bins:
+stdlib:
 	cd ../language/stdlib && cargo run --release
+
+bins:
 	cargo build -p libra-node --release
 	cargo build -p libra-management --release
 	cargo build -p miner --release
 	cp -f ../target/release/libra-management /usr/local/bin/libra-management
 	cp -f ../target/release/libra-node /usr/local/bin/libra-node
+
+
 
 all-bins:
 	export NODE_ENV='prod'
