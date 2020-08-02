@@ -77,6 +77,9 @@ impl StorageHelper {
         // let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
         // let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
         // let child_4 = kf.private_child(ChildNumber::new(4)).unwrap();
+        
+        let authentication_key = child_0.get_authentication_key();
+        println!("===== \nAuthentication Key:\n{:?}", authentication_key.to_string());
 
         let mut storage = self.storage(namespace);
 
