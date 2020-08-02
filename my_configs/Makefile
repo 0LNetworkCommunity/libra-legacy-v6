@@ -130,7 +130,7 @@ start:
 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
 
 daemon-init:
-	cp libra-node.service /etc/systemd/system/
+	cp libra-node.service /lib/systemd/system/
 	touch /root/libra/output-libra-node.log
 	chmod 655 /root/libra
 	chmod 655 /root/libra/output-libra-node.log
