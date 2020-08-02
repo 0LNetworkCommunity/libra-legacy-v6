@@ -6,7 +6,7 @@ use executor::db_bootstrapper;
 use libra_secure_storage::{Storage, Value};
 use libra_temppath::TempPath;
 // use libra_types::waypoint::Waypoint;
-use libra_types::{transaction::Transaction, waypoint::Waypoint};
+use libra_types::waypoint::Waypoint;
 
 use libra_vm::LibraVM;
 use libradb::LibraDB;
