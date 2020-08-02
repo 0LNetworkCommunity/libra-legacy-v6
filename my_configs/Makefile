@@ -76,10 +76,10 @@ all-bins:
 
 clear:
 	rm -rf libradb *.seed_peers.toml block_0.json node.configs.toml genesis.blob key_store.json
-	cp block_0.json.${NAME} block_0.json
+	cp block_0.json.hard.${NAME} block_0.json
 
 init:
-	cargo run -p libra-management initialize \
+	libra-management initialize \
 	--mnemonic '${MNEM}' \
 	--path=${DATA_PATH} \
 	--namespace=${NAME}
