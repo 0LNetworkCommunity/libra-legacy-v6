@@ -65,7 +65,6 @@ bins:
 
 
 all-bins:
-	export NODE_ENV='prod'
 	cargo build --all --bins --release --exclude cluster-test
 
 
@@ -109,7 +108,7 @@ register:
 	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 build-genesis:
-	NODE_ENV='prod' libra-management genesis \
+	NODE_ENV='prod' cargo run -p libra-management genesis \
 	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 

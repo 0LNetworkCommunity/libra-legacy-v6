@@ -42,9 +42,13 @@ pub fn verify(
     let cost = native_gas(context.cost_table(), NativeCostIndex::SHA3_256, 1);
 
     let v = vdf::WesolowskiVDFParams(4096).new();
+    
+    println!("vdf.rs difficulty {:?}", difficulty);
 
     let result = v.verify(&challenge, difficulty, &alleged_solution);
-    // println!("vdf.rs result {:?}", result);
+
+    println!("vdf.rs result {:?}", result);
+
     let return_values = vec![Value::bool(result.is_ok())];
     Ok(NativeResult::ok(cost, return_values))
 }
