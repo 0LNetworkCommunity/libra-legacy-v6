@@ -24,8 +24,6 @@ pub struct CreateWaypoint {
 
 impl CreateWaypoint {
     pub fn execute(self) -> Result<Waypoint, Error> {
-        println!("CreateWaypoint 0");
-
         if let Some(remote) = self.secure_backends.remote {
             let genesis_helper = crate::genesis::Genesis {
                 backend: SingleBackend {
@@ -33,26 +31,18 @@ impl CreateWaypoint {
                 },
                 path: None,
             };
-            println!("CreateWaypoint 1");
-
             let genesis = genesis_helper.execute()?;
-
-            println!("CreateWaypoint 2");
 
             let path = TempPath::new();
             let libradb = LibraDB::open(&path, false, None)
                 .map_err(|e| Error::UnexpectedError(e.to_string()))?;
             let db_rw = DbReaderWriter::new(libradb);
 
-            println!("CreateWaypoint 3");
-
             let waypoint = db_bootstrapper::bootstrap_db_if_empty::<LibraVM>(&db_rw, &genesis)
                 .map_err(|e| Error::UnexpectedError(e.to_string()))?
                 .ok_or_else(|| {
                     Error::UnexpectedError("Unable to generate a waypoint".to_string())
                 })?;
-
-            println!("CreateWaypoint 4");
 
             let mut local: Box<dyn Storage> = self.secure_backends.local.try_into()?;
             local
@@ -66,8 +56,6 @@ impl CreateWaypoint {
                     Error::RemoteStorageWriteError(libra_global_constants::WAYPOINT, e.to_string())
                 })?;
 
-            println!("CreateWaypoint 5");
-
             let mut remote: Box<dyn Storage> = remote.try_into()?;
             remote
                 .available()
@@ -79,8 +67,6 @@ impl CreateWaypoint {
                 .map_err(|e| {
                     Error::RemoteStorageWriteError(libra_global_constants::WAYPOINT, e.to_string())
                 })?;
-            println!("CreateWaypoint 6");
-
             return Ok(waypoint);
         }
 
