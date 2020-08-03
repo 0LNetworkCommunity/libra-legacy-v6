@@ -5,6 +5,9 @@ SHELL=/usr/bin/env bash
 # Don't put the MNEM here for production, add that by command line only.
 DATA_PATH = ./
 # TODO: namespace and account will be the same data. Testing with human readable names.
+REPO_ORG = lpgeiger
+REPO_NAME = maketest-genesis
+GITHUB_TOKEN = $(shell cat github_token.txt)
 
 ifeq ($(NAME), zaki)
 ACC = 402e9aaf54ca8c39bab641b0c9829070
@@ -68,11 +71,13 @@ all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
 
+# CONFIGURE GITHUB FOR TEST
+#Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
+
+github: 
+	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/user/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 #GENESIS CEREMONY
-# stdlib:
-# 	export NODE_ENV='prod'
-# 	cd ../language/stdlib && cargo run --release
 
 clear:
 	rm -rf libradb *.seed_peers.toml block_0.json node.configs.toml genesis.blob key_store.json
@@ -86,18 +91,18 @@ init:
 
 layout:
 	libra-management set-layout \
-	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
 	--path=set_layout.toml
 
 mining:
 	libra-management mining \
 	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
-	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 keys:
 	libra-management operator-key \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}' \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
+	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 register:
 	libra-management validator-config \
@@ -105,16 +110,16 @@ register:
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}' \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
+	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAME}'
 
 build-genesis:
 	NODE_ENV='prod' cargo run -p libra-management genesis \
-	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt' \
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
 	NODE_ENV='prod' libra-management create-waypoint \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
+	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}'
 
 toml:
