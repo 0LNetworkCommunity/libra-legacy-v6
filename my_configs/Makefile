@@ -6,7 +6,7 @@ SHELL=/usr/bin/env bash
 DATA_PATH = ./
 # TODO: namespace and account will be the same data. Testing with human readable names.
 REPO_ORG = lpgeiger
-REPO_NAME = maketest-genesis
+REPO_NAME = debug-genesis
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 ifeq ($(NAME), zaki)
