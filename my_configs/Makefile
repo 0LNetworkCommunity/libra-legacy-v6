@@ -4,33 +4,36 @@ SHELL=/usr/bin/env bash
 ## UPDATE YOUR DATA HERE ##
 # Don't put the MNEM here for production, add that by command line only.
 DATA_PATH = ./
-# TODO: namespace and account will be the same data. Testing with human readable names.
-REPO_ORG = lpgeiger
+
+
+REPO_ORG = OLSF
 REPO_NAME = debug-genesis
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
-ifeq ($(NAME), zaki)
+# TODO: namespace and account will be the same data. Testing with human readable names.
+
+ifeq ($(NAME), alice)
 ACC = 402e9aaf54ca8c39bab641b0c9829070
 AUTH = 3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070
 IP = 192.241.147.210
 MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
 endif
 
-ifeq ($(NAME), lucas)
+ifeq ($(NAME), bob)
 ACC = 5e7891b719c305941e62867ffe730f48
 AUTH = 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
 IP = 104.131.20.59
 MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
 endif
 
-ifeq ($(NAME), sha)
+ifeq ($(NAME), carol)
 ACC = b2f38139f75a271fd8f8fae4a87c2679
 AUTH = 4b964ff86508164652cce32107cd7107b2f38139f75a271fd8f8fae4a87c2679
 IP = 64.227.20.31
 MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
 endif
 
-ifeq ($(NAME), keerthi)
+ifeq ($(NAME), dave)
 ACC = 027c83aeb3b9c085f5a1506b418d08cf
 AUTH = 54cf55ab1aff7b757af9a6b07dba6011027c83aeb3b9c085f5a1506b418d08cf
 IP = 157.245.133.106
@@ -40,7 +43,7 @@ endif
 # set up the environment
 install: deps rust stdlib bins
 # pipelines for genesis ceremony
-register: clear init mining keys register
+register: clear init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
@@ -75,7 +78,7 @@ all-bins:
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
 
 github: 
-	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/user/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
+	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 #GENESIS CEREMONY
 
@@ -94,7 +97,7 @@ layout:
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
 	--path=set_layout.toml
 
-mining:
+add-proofs:
 	libra-management mining \
 	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAME}'
@@ -140,11 +143,13 @@ start:
 	NODE_ENV='prod'
 	libra-node --config ${DATA_PATH}node.configs.toml
 
-start-bg:
-	# run in background and output logs
-	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
+# start-bg:
+# 	# run in background and output logs
+# 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
 
-
+mine-genesis:
+	miner keygen
+	miner start
 
 daemon:
 	cp libra-node.service /lib/systemd/system/
