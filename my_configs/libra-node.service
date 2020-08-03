@@ -2,7 +2,7 @@
 Description=Libra Node Service
 
 [Service]
-LimitNOFILE=65536y
+LimitNOFILE=65536
 WorkingDirectory=/root/libra/my_configs
 ExecStart=/root/libra/target/release/libra-node --config /root/libra/my_configs/node.configs.toml
 
