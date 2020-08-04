@@ -7,7 +7,7 @@ use crate::config;
 use toml;
 use std::{
     fs,
-    io::{BufReader, Write},
+    io::Write,
     path::Path,
     path::PathBuf,
 };
@@ -57,7 +57,7 @@ impl Runnable for KeygenCmd {
         {:x}\n", auth_key.derived_address());
 
         println!("0L mnemonic:\n\
-        Please don't lose this. WRITE THIS DOWN NOW. Nobody can help you if you lose it.\n\
+        WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\
         ---------\n\
         {}\n", &mnemonic_string.as_str());
     }

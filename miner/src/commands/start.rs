@@ -48,7 +48,9 @@ impl Runnable for StartCmd {
                         waypoint = parsed_waypoint.unwrap();
                     }
                     Err(_e) => {
-                        println!("Error: Waypoint cannot be parsed from command line args. Received: {:?}\nDid you pass --waypoint=0:<hash>? \n WILL FALLBACK TO WAYPOINT FROM miner.toml\n {:?}",
+                        println!("Info: No waypoint parsed from command line args. Received: {:?}\n\
+                        Did you pass --waypoint=0:<hash>? \n\
+                        Will fallback to waypoint in miner.toml\n {:?}",
                         self.waypoint,
                         miner_configs.chain_info.base_waypoint);
                         waypoint = miner_configs.chain_info.base_waypoint.parse().unwrap();
