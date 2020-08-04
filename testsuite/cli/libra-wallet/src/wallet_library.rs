@@ -165,6 +165,7 @@ impl WalletLibrary {
         Ok(ret)
     }
 
+    /// 0L: Public function for canonical private key generation.
     pub fn get_privkey_at_child (&self, number: u64) -> ExtendedPrivKey {
         let child_num = ChildNumber::new(number);
 
