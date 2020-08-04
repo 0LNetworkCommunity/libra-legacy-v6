@@ -11,7 +11,13 @@ use libra_types::{
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use libra_wallet::Mnemonic;
+// use libra_wallet::Mnemonic;
+
+use libra_wallet::{
+    WalletLibrary,
+    key_factory::{ChildNumber, KeyFactory, Seed},
+    Mnemonic,
+};
 
 // 0L TODO: Use OlMinerConfig to generate miner Toml
 // use miner::config::OlMinerConfig;
@@ -92,31 +98,51 @@ impl TestConfig {
 
     pub fn random_account_key(&mut self, rng: &mut StdRng) {
         // 0L NOTE: This is for testing only, including libra-swarm.
-        let privkey = Ed25519PrivateKey::generate(rng);
+        // let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
+        // let privkey = Ed25519PrivateKey::generate(rng);
 
-        self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
+        let mut wallet = WalletLibrary::new();
+        let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
+        self.auth_key = Some(auth_key);
 
-        fn write_ol_miner_toml (privkey: &Ed25519PrivateKey, auth_key: &AuthenticationKey) {
-            // 0L TODO: Confirm this is for testing only.
-            let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
-            println!("=========\n Auth_Key\n{:?}", &auth_key.to_string());
-            println!("Mnemonic:\n{:?}\n=========", mnemonic.to_string() );
+        let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
 
-            // TODO: use the OLMinerConfig struct here
-            // ISSUE: Adding miner::OLMinerConfig creates a cyclic dependency.
-            // let miner_configs = OlMinerConfig::default();
-            // miner_configs.profile.auth_key = self.auth_key;
+        // Add asserts to test this
+        let seed = Seed::new(&Mnemonic::from(&mnemonic_string).unwrap(), "0L");
+        let kf = KeyFactory::new(&seed).unwrap();
+        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+        let privkey = child_0.export_priv_key();
 
-            // let miner_toml_string = toml::to_string(&miner_configs).expect("Could not write toml");
 
-            // let mut latest_block_path = PathBuf::from(r"./miner");
-            // latest_block_path.push(format!("miner_test.toml"));
-            // let mut file = fs::File::create(&latest_block_path).unwrap();
-            // file.write_all(&miner_toml_string.as_bytes())
-            //     .expect("Could not write toml");
-        }
+        println!("=========\n\
+        Auth_Key\n{:?}",
+        &auth_key.to_string());
 
-        write_ol_miner_toml(&privkey, &self.auth_key.unwrap());
+        println!("Mnemonic:\n\
+        {:?}\n\
+        =========", &mnemonic_string);
+
+        // fn write_ol_miner_toml (privkey: &Ed25519PrivateKey, auth_key: &AuthenticationKey) {
+        //     // 0L TODO: Confirm this is for testing only.
+        //     let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
+        //     println!("=========\n Auth_Key\n{:?}", &auth_key.to_string());
+        //     println!("Mnemonic:\n{:?}\n=========", mnemonic.to_string() );
+
+        //     // TODO: use the OLMinerConfig struct here
+        //     // ISSUE: Adding miner::OLMinerConfig creates a cyclic dependency.
+        //     // let miner_configs = OlMinerConfig::default();
+        //     // miner_configs.profile.auth_key = self.auth_key;
+
+        //     // let miner_toml_string = toml::to_string(&miner_configs).expect("Could not write toml");
+
+        //     // let mut latest_block_path = PathBuf::from(r"./miner");
+        //     // latest_block_path.push(format!("miner_test.toml"));
+        //     // let mut file = fs::File::create(&latest_block_path).unwrap();
+        //     // file.write_all(&miner_toml_string.as_bytes())
+        //     //     .expect("Could not write toml");
+        // }
+
+        // write_ol_miner_toml(&privkey, &self.auth_key.unwrap());
 
         self.operator_keypair = Some(AccountKeyPair::load(privkey));
     }

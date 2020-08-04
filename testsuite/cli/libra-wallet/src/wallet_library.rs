@@ -14,7 +14,7 @@
 use crate::{
     error::WalletError,
     io_utils,
-    key_factory::{ChildNumber, KeyFactory, Seed},
+    key_factory::{ChildNumber, KeyFactory, Seed, ExtendedPrivKey},
     mnemonic::Mnemonic,
 };
 use anyhow::Result;
@@ -117,6 +117,8 @@ impl WalletLibrary {
 
     /// Function that generates a new key and adds it to the addr_map and subsequently returns the
     /// AuthenticationKey associated to the PrivateKey, along with it's ChildNumber
+    // TODO 0L: Rename, this is not address, but AuthKey.
+
     pub fn new_address(&mut self) -> Result<(AuthenticationKey, ChildNumber)> {
         let child = self.key_factory.private_child(self.key_leaf)?;
         let authentication_key = child.get_authentication_key();
@@ -163,6 +165,16 @@ impl WalletLibrary {
         Ok(ret)
     }
 
+    pub fn get_privkey_at_child (&self, number: u64) -> ExtendedPrivKey {
+        let child_num = ChildNumber::new(number);
+
+        let seed = Seed::new(&self.mnemonic, "0L");
+        let kf = KeyFactory::new(&seed).unwrap();
+
+        let privkey = kf.private_child(child_num).unwrap();
+        privkey
+    }
+
     /// Simple public function that allows to sign a Libra RawTransaction with the PrivateKey
     /// associated to a particular AccountAddress. If the PrivateKey associated to an
     /// AccountAddress is not contained in the addr_map, then this function will return an Error
@@ -189,4 +201,27 @@ impl TransactionSigner for WalletLibrary {
     fn sign_txn(&self, raw_txn: RawTransaction) -> Result<SignedTransaction, anyhow::Error> {
         Ok(self.sign_txn(raw_txn)?)
     }
+}
+
+
+#[test]
+fn get_private_key(){
+    let mut wallet = WalletLibrary::new();
+
+    print!("mnemonic: {:?}\n", wallet.mnemonic.to_string());
+    print!("key_leaf: {:?}\n", wallet.key_leaf);
+
+    let (auth_key, child_num) = wallet.new_address().unwrap();
+
+    print!("auth_key: {:?}\n", auth_key.to_string());
+    print!("child_num: {:?}\n", child_num);
+
+    let ext_privkey = wallet.get_privkey_at_child(0);
+
+    // get_authentication_key
+    print!("auth_key2: {:?}\n", ext_privkey.get_authentication_key().to_string());
+    print!("pubkey: {:?}\n", ext_privkey.get_public().to_string());
+    print!("ext_privkey: {:?}", ext_privkey.export_priv_key().to_string());
+
+    assert_eq!(ext_privkey.get_authentication_key(), auth_key);
 }
