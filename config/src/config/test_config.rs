@@ -106,12 +106,13 @@ impl TestConfig {
         self.auth_key = Some(auth_key);
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
+        let privkey = wallet.get_privkey_at_child(0).export_priv_key();
 
         // Add asserts to test this
-        let seed = Seed::new(&Mnemonic::from(&mnemonic_string).unwrap(), "0L");
-        let kf = KeyFactory::new(&seed).unwrap();
-        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-        let privkey = child_0.export_priv_key();
+        // let seed = Seed::new(&Mnemonic::from(&mnemonic_string).unwrap(), "0L");
+        // let kf = KeyFactory::new(&seed).unwrap();
+        // let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+        // let privkey = child_0.export_priv_key();
 
 
         println!("=========\n\
@@ -122,27 +123,39 @@ impl TestConfig {
         {:?}\n\
         =========", &mnemonic_string);
 
-        // fn write_ol_miner_toml (privkey: &Ed25519PrivateKey, auth_key: &AuthenticationKey) {
-        //     // 0L TODO: Confirm this is for testing only.
-        //     let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
-        //     println!("=========\n Auth_Key\n{:?}", &auth_key.to_string());
-        //     println!("Mnemonic:\n{:?}\n=========", mnemonic.to_string() );
 
-        //     // TODO: use the OLMinerConfig struct here
-        //     // ISSUE: Adding miner::OLMinerConfig creates a cyclic dependency.
-        //     // let miner_configs = OlMinerConfig::default();
-        //     // miner_configs.profile.auth_key = self.auth_key;
+        // let layout_text = "\
+        //     operators = [\"alice\", \"bob\"]\n\
+        //     owners = [\"carol\"]\n\
+        //     association = [\"dave\"]\n\
+        // ";
 
-        //     // let miner_toml_string = toml::to_string(&miner_configs).expect("Could not write toml");
+        // "[workspace]\
+        // home = \".\"\
+        // \
+        // [profile]\
+        // auth_key = \"3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070\"\
+        // statement = \"test\"\
+        // \
+        // [chain_info]\
+        // chain_id = \"experimental\"\
+        // block_dir= \"./blocks/\"\
+        // node =\"http://192.241.147.210:8080\"\
+        // base_waypoint=\"0:84d016400cc028105965a4778507e451dee3c35fbbd4353bfcb564a7511e5316\"\
+        // "
 
-        //     // let mut latest_block_path = PathBuf::from(r"./miner");
-        //     // latest_block_path.push(format!("miner_test.toml"));
-        //     // let mut file = fs::File::create(&latest_block_path).unwrap();
-        //     // file.write_all(&miner_toml_string.as_bytes())
-        //     //     .expect("Could not write toml");
-        // }
 
-        // write_ol_miner_toml(&privkey, &self.auth_key.unwrap());
+        // let toml = toml::to_string(&miner_configs).unwrap();
+        // println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
+        // println!("==========================\n");
+        
+        // // let mut config_path = PathBuf::from("./test_miner.toml");
+        // // config_path.push(format!("test_miner.toml");
+        // //println!("{:?}", &latest_block_path);
+        // let miner_config_file = "./miner.toml";
+        // let mut file = fs::File::create(&miner_config_file).unwrap();
+        // file.write(&toml.as_bytes())
+        //     .expect("Could not write block");
 
         self.operator_keypair = Some(AccountKeyPair::load(privkey));
     }
