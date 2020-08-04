@@ -85,12 +85,14 @@ bins:
 	cargo build -p miner --release
 	cp -f ../target/release/libra-management /usr/local/bin/libra-management
 	cp -f ../target/release/libra-node /usr/local/bin/libra-node
+	cp -f ../target/release/miner /usr/local/bin/miner
+
 
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
 
-mine-genesis:
+miner:
 	miner keygen
 	miner start
 
