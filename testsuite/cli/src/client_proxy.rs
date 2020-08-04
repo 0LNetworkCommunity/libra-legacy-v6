@@ -187,7 +187,7 @@ impl ClientProxy {
         let mut client = LibraClient::new(url.clone(), waypoint)?;
 
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
-        let (main_addr, _ )= wallet.new_address().unwrap();
+        let (auth_key, _ )= wallet.new_address().unwrap();
 
         let vec_addresses = wallet.get_addresses().unwrap();
         // Expect this to be zero before we haven't populated the address map in the repo
@@ -206,8 +206,8 @@ impl ClientProxy {
         }
 
         let mut address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
-        address_to_ref_id.insert(main_addr.derived_address(),0);
-        Ok(ClientProxy {
+        address_to_ref_id.insert(auth_key.derived_address(),0);
+        let proxy = ClientProxy {
             client,
             accounts: vec_account_data, //Vec<AccountData>
             address_to_ref_id, // TODO this is a different struct than addr_map
@@ -216,7 +216,9 @@ impl ClientProxy {
             wallet, //wallet: WalletLibrary::Mnemonic::from(mnemonic_string)?,
             sync_on_wallet_recovery: true, // sync_on_wallet_recovery,
             temp_files: vec![]
-        })
+        };
+        
+        Ok(proxy)
     }
 
     /// 0L: submits a redeem transaction with the VDF proof.

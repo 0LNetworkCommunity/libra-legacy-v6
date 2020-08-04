@@ -22,7 +22,11 @@ impl Runnable for KeygenCmd {
         // submit_tx::create_account();
         let mut wallet = WalletLibrary::new();
 
-        let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+        let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
+
+        // assert!(child_number.into() == 0);
+
+
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         
@@ -61,4 +65,37 @@ impl Runnable for KeygenCmd {
         ---------\n\
         {}\n", &mnemonic_string.as_str());
     }
+}
+
+
+#[test]
+fn wallet () { 
+    // let mut wallet = WalletLibrary::new();
+
+    let mut wallet = WalletLibrary::new();
+
+    let (auth_key, child_number) = wallet.new_address().expect("Could not generate address");
+    let mnemonic_string = wallet.mnemonic(); //wallet
+
+    println!("auth_key:\n{:?}", auth_key.to_string());
+    println!("child_number:\n{:?}", child_number);
+    println!("mnemonic:\n{}", mnemonic_string);
+
+    // let mnemonic_string = r#"average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice"#;
+
+    let mut wallet = WalletLibrary::new_from_string(&mnemonic_string);
+
+    // println!("wallet\n:{:?}", wallet);
+
+    let (main_addr, child_number ) = wallet.new_address().unwrap();
+    println!("wallet\n:{:?} === {:x}", child_number, main_addr);
+
+    let vec_addresses = wallet.get_addresses().unwrap();
+
+    println!("vec_addresses\n:{:?}", vec_addresses);
+
+    // Expect this to be zero before we haven't populated the address map in the repo
+    assert!(vec_addresses.len() == 1);
+    // Empty hashmap should be fine
+    // let mut vec_account_data = Vec::new();
 }
