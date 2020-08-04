@@ -11,7 +11,7 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use libra_wallet::{WalletLibrary, Mnemonic};
+use libra_wallet::Mnemonic;
 
 type AccountKeyPair = KeyPair<Ed25519PrivateKey>;
 type ConsensusKeyPair = KeyPair<Ed25519PrivateKey>;
