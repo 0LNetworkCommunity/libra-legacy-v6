@@ -91,9 +91,10 @@ bins:
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
+keygen:
+	miner keygen
 
 miner:
-	miner keygen
 	miner start
 
 # CONFIGURE GITHUB FOR TEST
