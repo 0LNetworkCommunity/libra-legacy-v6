@@ -152,7 +152,7 @@ pub mod build_block {
         } else {
             // mine continuously from the last block in the file systems
             loop {
-                status_ok!("Generating Proof for block:", block.height.to_string());
+                status_ok!("Generating Proof for block:", current_block_number + 1);
                 let block = mine_once(&config)?;
                 status_ok!("Success", "block_1.json created.");
 
