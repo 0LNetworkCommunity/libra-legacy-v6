@@ -70,7 +70,6 @@ deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
 	sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-	# s
 
 rust:
 	## TODO: Cargo is not getting set to path. This next line doesn't run.
@@ -88,7 +87,6 @@ bins:
 	cp -f ../target/release/libra-node /usr/local/bin/libra-node
 	cp -f ../target/release/miner /usr/local/bin/miner
 
-
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
@@ -96,7 +94,7 @@ keygen:
 	cd ../miner && miner keygen
 
 miner:
-	cd ../miner && miner start
+	cd ../miner && NODE_ENV=prod miner start
 	cp ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
