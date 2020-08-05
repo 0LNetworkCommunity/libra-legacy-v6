@@ -108,11 +108,12 @@ github:
 #GENESIS CEREMONY
 
 clear:
-	rm -rf libradb *.seed_peers.toml block_0.json node.configs.toml genesis.blob key_store.json
-# ifdef $(TEST)
+	rm -rf libradb *.seed_peers.toml  node.configs.toml genesis.blob key_store.json
+ifdef TEST
 	echo ${NAMESPACE}
-# cp block_0.json.hard.${NAMESPACE} block_0.json
-# endif
+	rm block_0.json
+	cp block_0.json.hard.${NAMESPACE} block_0.json
+endif
 
 init:
 	libra-management initialize \
