@@ -168,12 +168,13 @@ impl WalletLibrary {
     /// 0L: Public function for canonical private key generation.
     pub fn get_privkey_at_child (&self, number: u64) -> ExtendedPrivKey {
         let child_num = ChildNumber::new(number);
+        let child = self.key_factory.private_child(child_num);
 
-        let seed = Seed::new(&self.mnemonic, "0L");
-        let kf = KeyFactory::new(&seed).unwrap();
+        // let seed = Seed::new(&self.mnemonic, "OL");
+        // let kf = KeyFactory::new(&seed).unwrap();
+        // let privkey = kf.private_child(child_num).unwrap();
 
-        let privkey = kf.private_child(child_num).unwrap();
-        privkey
+        child.unwrap()
     }
 
     /// Simple public function that allows to sign a Libra RawTransaction with the PrivateKey

@@ -70,9 +70,9 @@ script {
     use 0x0::ValidatorUniverse;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 2, 97);
-        Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 98);
-        Transaction::assert(ValidatorUniverse::get_validator_weight({{sha}}) == 1, 99);
+        Transaction::assert(LibraSystem::validator_set_size() == 2, 94);
+        Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 95);
+        Transaction::assert(ValidatorUniverse::get_validator_weight({{sha}}) == 1, 96);
     }
 }
 // check: EXECUTED

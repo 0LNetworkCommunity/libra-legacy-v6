@@ -13,20 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 // use libra_wallet::Mnemonic;
 
-use libra_wallet::{
-    WalletLibrary,
-    key_factory::{ChildNumber, KeyFactory, Seed},
-    Mnemonic,
-};
-
-// 0L TODO: Use OlMinerConfig to generate miner Toml
-// use miner::config::OlMinerConfig;
-// use std::{
-//
-//     // path::PathBuf,
-//     // fs,
-//     // io::Write,
-// };
+use libra_wallet::WalletLibrary;
 
 type AccountKeyPair = KeyPair<Ed25519PrivateKey>;
 type ConsensusKeyPair = KeyPair<Ed25519PrivateKey>;
@@ -96,7 +83,7 @@ impl TestConfig {
         }
     }
 
-    pub fn random_account_key(&mut self, rng: &mut StdRng) {
+    pub fn random_account_key(&mut self, _rng: &mut StdRng) {
         // 0L NOTE: This is for testing only, including libra-swarm.
         // let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
         // let privkey = Ed25519PrivateKey::generate(rng);
@@ -109,7 +96,7 @@ impl TestConfig {
         let privkey = wallet.get_privkey_at_child(0).export_priv_key();
 
         // Add asserts to test this
-        // let seed = Seed::new(&Mnemonic::from(&mnemonic_string).unwrap(), "0L");
+        // let seed = Seed::new(&Mnemonic::from(&mnemonic_string).unwrap(), "OL");
         // let kf = KeyFactory::new(&seed).unwrap();
         // let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
         // let privkey = child_0.export_priv_key();
@@ -144,10 +131,6 @@ impl TestConfig {
         // base_waypoint=\"0:84d016400cc028105965a4778507e451dee3c35fbbd4353bfcb564a7511e5316\"\
         // "
 
-
-        // let toml = toml::to_string(&miner_configs).unwrap();
-        // println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
-        // println!("==========================\n");
         
         // // let mut config_path = PathBuf::from("./test_miner.toml");
         // // config_path.push(format!("test_miner.toml");

@@ -14,7 +14,7 @@ pub struct Initialize {
 impl Initialize {
     pub fn execute(self) -> Result<String, Error> {
         let helper = StorageHelper::new_with_path(self.path.into());
-        helper.initialize_with_menmonic(self.namespace.clone(), self.mnemonic.clone());
+        helper.initialize_with_mnemonic(self.namespace.clone(), self.mnemonic.clone());
         Ok("Keys Generated".to_string())
     }
 }
