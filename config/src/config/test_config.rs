@@ -22,8 +22,6 @@ use libra_wallet::Mnemonic;
 //     // io::Write,
 // };
 
-use libra_wallet::Mnemonic;
-
 type AccountKeyPair = KeyPair<Ed25519PrivateKey>;
 type ConsensusKeyPair = KeyPair<Ed25519PrivateKey>;
 

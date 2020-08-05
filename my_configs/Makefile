@@ -21,6 +21,7 @@ REPO_NAME = experimental-genesis
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 echo:
+	cd ../miner && ls
 	echo ${NAMESPACE}
 
 ######################################
@@ -95,9 +96,8 @@ keygen:
 	cd ../miner && miner keygen
 
 miner:
-	cd ../miner
-	miner start
-	cp blocks/block_0.json ../my_configs/
+	cd ../miner && miner start
+	cp ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
