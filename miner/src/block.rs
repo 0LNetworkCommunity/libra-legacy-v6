@@ -171,7 +171,7 @@ pub mod build_block {
                             mnemonic.to_string(),
                             node.to_string(),
                         ).unwrap();
-                        status_ok!("Submitted {}",block.height.to_string());
+                        status_ok!("Submitted", format!("{}", block.height.to_string()));
                     } else {
                         return Err(ErrorKind::Config
                             .context("No Node for submitting transactions")
@@ -209,7 +209,7 @@ pub mod build_block {
                 mnemonic.to_string(),
                 node.to_string(),
             ).unwrap();
-            status_ok!("Submitted {}",block.height.to_string());
+            status_ok!("Submitted", format!("{}", block.height.to_string()));
         } else {
             // // TODO (Ping): 1. Catch these errors instead of panic.
             // // 2. Save the latest succesfull tower_height to a local file. LocalMinerState.json

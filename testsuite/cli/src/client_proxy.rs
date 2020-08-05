@@ -7,13 +7,16 @@ use crate::{
     AccountData, AccountStatus,
 };
 use anyhow::{bail, ensure, format_err, Error, Result};
+use hex;
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
     traits::ValidCryptoMaterial,
     x25519, ValidCryptoMaterialStringExt,
 };
-use libra_json_rpc_client::views::{AccountView, BlockMetadata, EventView, TransactionView, MinerStateView};
+use libra_json_rpc_client::views::{
+    AccountView, BlockMetadata, EventView, MinerStateView, TransactionView,
+};
 use libra_logger::prelude::*;
 use libra_network_address::{NetworkAddress, RawNetworkAddress};
 use libra_temppath::TempPath;
@@ -56,7 +59,6 @@ use std::{
 };
 use stdlib::{transaction_scripts::StdlibScript, StdLibOptions};
 use transaction_builder::encode_register_validator_script;
-use hex;
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -187,16 +189,16 @@ impl ClientProxy {
         let mut client = LibraClient::new(url.clone(), waypoint)?;
 
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
+        let (auth_key, child_number) = wallet.new_address().unwrap();
+        
         println!("client_proxy.rs - mnemonic:\n{:?}", &mnemonic_string);
-
-        let (auth_key, child_number )= wallet.new_address().unwrap();
-        println!("client_proxy.rs - auth_key:\n{:?}", auth_key);
+        println!("client_proxy.rs - auth_key:\n{:?}", auth_key.to_string());
         println!("client_proxy.rs - child_number:\n{:?}", child_number);
 
         let vec_addresses = wallet.get_addresses().unwrap();
 
         // Expect this to be zero before we haven't populated the address map in the repo
-        assert!(vec_addresses.len() ==1);
+        assert!(vec_addresses.len() == 1);
         // Empty hashmap should be fine
         let mut vec_account_data = Vec::new();
 
@@ -210,20 +212,23 @@ impl ClientProxy {
             )?);
         }
 
-        println!("client_proxy.rs - vec_account_data:\n{:?}", vec_account_data);
+        println!(
+            "client_proxy.rs - vec_account_data:\n{:?}",
+            vec_account_data
+        );
 
         let mut address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
-        address_to_ref_id.insert(auth_key.derived_address(),0);
+        address_to_ref_id.insert(auth_key.derived_address(), 0);
 
         let proxy = ClientProxy {
             client,
             accounts: vec_account_data, //Vec<AccountData>
-            address_to_ref_id, // TODO this is a different struct than addr_map
+            address_to_ref_id,          // TODO this is a different struct than addr_map
             faucet_server: "".to_owned(),
             faucet_account: None,
             wallet, //wallet: WalletLibrary::Mnemonic::from(mnemonic_string)?,
             sync_on_wallet_recovery: true, // sync_on_wallet_recovery,
-            temp_files: vec![]
+            temp_files: vec![],
         };
 
         Ok(proxy)
@@ -236,17 +241,16 @@ impl ClientProxy {
         challenge: Vec<u8>,
         difficulty: u64,
         proof: Vec<u8>,
-        is_blocking: bool
-        ) -> Result<()>{
-
+        is_blocking: bool,
+    ) -> Result<()> {
         // let sender_ref_id = self.get_account_ref_id(&sender_address)?;
 
         // let sender_og = self.accounts.get(sender_ref_id).unwrap();
 
-
-        let mut sender = Self::get_account_data_from_address(&mut self.client,sender_address,true,None,None).unwrap();
+        let mut sender =
+            Self::get_account_data_from_address(&mut self.client, sender_address, true, None, None)
+                .unwrap();
         // let sender = self.accounts.get(sender_ref_id).unwrap();
-
 
         // create the MinerState transaction script
         let script = Script::new(
@@ -279,19 +283,19 @@ impl ClientProxy {
                 .sequence_number;
             self.wait_for_transaction(sender_address, sequence_number)?;
         }
+        
         Ok(())
-
     }
 
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
     /// Wraps execute_send_proof
     pub fn send_proof(&mut self, space_delim_strings: &[&str], _is_blocking: bool) -> Result<()> {
         ensure!(
-            space_delim_strings.len() != 6 ,
+            space_delim_strings.len() != 6,
             "Invalid number of arguments for sending proof"
         );
 
-        println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings );
+        println!("Debug: send_proof \n\nargs: {:?}", space_delim_strings);
 
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
@@ -301,39 +305,39 @@ impl ClientProxy {
 
         // TODO: determine how this will be serialized.
         // Note: Was producing error because hex was being submitted and not decoded.
-        let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+        let proof = hex::decode(space_delim_strings[4]).unwrap().to_vec();
 
-        self.execute_send_proof(
-            sender_address,
-            challenge,
-            difficulty,
-            proof,
-            false
-        )?;
+        self.execute_send_proof(sender_address, challenge, difficulty, proof, false)?;
         Ok(())
     }
 
     /// 0L: Get Miner State
     /// A wrap for libra cli to execute query miner state command.
-    pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
+    pub fn query_miner_state_in_client(
+        &mut self,
+        space_delim_strings: &[&str],
+    ) -> Option<MinerStateView> {
         // ensure!(
         //     space_delim_strings.len() != 6 ,
         //     "Invalid number of arguments for sending proof"
         // );
 
-        println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings );
+        println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings);
 
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
+        let (sender_address, _) = self
+            .get_account_address_from_parameter(space_delim_strings[1])
+            .unwrap();
 
-        self.client.get_miner_state(sender_address ).unwrap()
+        self.client.get_miner_state(sender_address).unwrap()
     }
 
     /// Get minter state for Ol_miner
-    pub fn get_miner_state(&mut self, account: AccountAddress) -> Result<Option<MinerStateView>, Error>{
-        self.client.get_miner_state(account )
+    pub fn get_miner_state(
+        &mut self,
+        account: AccountAddress,
+    ) -> Result<Option<MinerStateView>, Error> {
+        self.client.get_miner_state(account)
     }
-
 
     fn get_account_ref_id(&self, sender_account_address: &AccountAddress) -> Result<usize> {
         Ok(*self
@@ -815,8 +819,8 @@ impl ClientProxy {
             None,
         )?;
         self.client.submit_transaction(Some(&mut sender), txn)?;
-        if is_blocking && sender.sequence_number > 1{
-            self.wait_for_transaction(sender.address, sender.sequence_number )?;
+        if is_blocking && sender.sequence_number > 1 {
+            self.wait_for_transaction(sender.address, sender.sequence_number)?;
         }
         Ok(())
     }
@@ -837,6 +841,7 @@ impl ClientProxy {
 
             match self
                 .client
+                // .get_txn_by_acc_seq(account, sequence_number - 1, true)
                 .get_txn_by_acc_seq(account, sequence_number - 1, true)
             {
                 Ok(Some(txn_view)) => {
