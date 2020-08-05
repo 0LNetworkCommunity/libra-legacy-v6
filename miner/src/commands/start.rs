@@ -61,8 +61,8 @@ impl Runnable for StartCmd {
                 let result = build_block::mine_and_submit(&miner_configs, line, waypoint);
                 match result {
                     Ok(_val) => { }
-                    Err(_) => {
-                        println!("Failed to mine_and_submit");
+                    Err(err) => {
+                        println!("Failed to mine_and_submit: {}", err);
                     }
                 }
             }
@@ -76,8 +76,6 @@ impl Runnable for StartCmd {
                 println!("Error: {:?}", err);
             }
         }
-
-        status_ok!("Start mining...", "ok"); //TODO: Print something more interesting here.
     }
 }
 
