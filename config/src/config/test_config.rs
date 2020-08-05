@@ -110,13 +110,6 @@ impl TestConfig {
         {:?}\n\
         =========", &mnemonic_string);
 
-
-        // let layout_text = "\
-        //     operators = [\"alice\", \"bob\"]\n\
-        //     owners = [\"carol\"]\n\
-        //     association = [\"dave\"]\n\
-        // ";
-
         // "[workspace]\
         // home = \".\"\
         // \
