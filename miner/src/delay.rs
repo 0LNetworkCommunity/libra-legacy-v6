@@ -14,7 +14,7 @@ pub fn delay_difficulty() -> u64 {
         _ => "test".to_string() // default to "test" if not set
     };
     // must explicitly set env to prod to use production difficulty.
-    if(node_env == "prod") {
+    if node_env == "prod" {
         return 2_400_000
     }
     return 100 // difficulty for test suites and on local for debugging purposes.

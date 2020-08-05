@@ -35,13 +35,14 @@ pub fn submit_vdf_proof_tx_to_network(
 
     // create the ClientProxy, with credentials, and point to network with a waypoint.
     let mut libra_client = ClientProxy::new_for_ol(
-        /* url */ &node,
-        /* mnemonic file */ &mnemonic_string,
-        /* waypoint */ waypoint,
+        &node, // url 
+        &mnemonic_string, // mnemonic file 
+        waypoint, // waypoint 
     )
     .map_err(|err| ErrorKind::Wallet.context(err))?;
 
     //TODO: 0L-miner/submit_tx LibraWallet is not recovering all accounts.
+    println!("Debug Libra Client Accounts: \n{:?}", libra_client.accounts);
     let sender_account = libra_client.accounts[0].address;
 
     libra_client
@@ -59,7 +60,7 @@ pub fn submit_vdf_proof_tx_to_network(
 
 
 pub fn resubmit_backlog(path: &Path, client: &mut ClientProxy, quick_check: bool){
-    //TODO (Ping): If there are any proofs which have not been verified on-chian, send them.
+    //! If there are any proofs which have not been verified on-chain, send them.
 
     // 1. Find the most recent LOCAL tower height. We can store this in a json file.
     // Open the file in read-only mode with buffer.

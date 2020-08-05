@@ -4,9 +4,9 @@
 use crate::{error::Error, SecureBackends};
 use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_secure_storage::{Storage, Value};
+use libra_types::account_address;
 use std::convert::TryInto;
 use structopt::StructOpt;
-use libra_types::account_address;
 
 #[derive(Debug, StructOpt)]
 pub struct AssociationKey {
@@ -91,7 +91,7 @@ fn submit_key(
     }
 
     let account_key = account_address::from_public_key(&key);
-    println!("Operator Account Key:\n{}",account_key);
+    println!("Operator Account Key:\n{}", account_key);
 
     Ok(key)
 }

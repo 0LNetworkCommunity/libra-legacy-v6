@@ -29,10 +29,7 @@ impl Genesis {
         let layout = self.layout()?;
         let validators = self.validators(&layout)?;
 
-        let genesis = vm_genesis::encode_genesis_transaction_with_validator(
-            &validators,
-            None,
-        );
+        let genesis = vm_genesis::encode_genesis_transaction_with_validator(&validators, None);
 
         if let Some(path) = self.path {
             let mut file = File::create(path).map_err(|e| {

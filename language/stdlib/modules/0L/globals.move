@@ -63,7 +63,7 @@ module Globals {
     //    let voters = *&borrow_global<BlockMetadataGlobal>(0x0).previous_block_votes;
     //    return voters //vector<address>
     // }
-    
+
     // Get the current block height
     // public fun update_global_metadata(vm: &signer) acquires BlockMetadataGlobal {
     //   Transaction::assert(Signer::address_of(vm) == 0x0, 33);
@@ -133,7 +133,7 @@ module Globals {
       }
     }
 
-   
+
 }
 
 }
