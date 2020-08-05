@@ -12,7 +12,7 @@ use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
 use libra_types::{account_address::AccountAddress, transaction::Transaction, waypoint::Waypoint};
 use libra_wallet::{
     key_factory::{ChildNumber, KeyFactory, Seed},
-    Mnemonic,
+    Mnemonic, WalletLibrary,
 };
 use std::{
     fs::File,
@@ -69,17 +69,18 @@ impl StorageHelper {
     }
 
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+        
+        let mnem_ty = Mnemonic::from(&mnemonic).unwrap();
+        let wallet = WalletLibrary::new_from_mnemonic(mnem_ty);
+        let child_0 = wallet.get_privkey_at_child(0);
 
-        let kf = KeyFactory::new(&seed).unwrap();
-        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-        // let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
-        // let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
-        // let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
-        // let child_4 = kf.private_child(ChildNumber::new(4)).unwrap();
+        // let authentication_key = wallet.get_authkey_at_child(childnum);
+        // let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+        // let kf = KeyFactory::new(&seed).unwrap();
+        // let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
         
         let authentication_key = child_0.get_authentication_key();
-        println!("===== \nAuthentication Key:\n{:?}", authentication_key.to_string());
+        // println!("===== \nAuthentication Key:\n{:?}", authentication_key.to_string());
 
         let mut storage = self.storage(namespace);
 

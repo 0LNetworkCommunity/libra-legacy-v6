@@ -138,6 +138,12 @@ impl WalletLibrary {
         }
     }
 
+    pub fn get_authkey_at_child(&mut self, number: u64) -> Result<(AuthenticationKey, ChildNumber)> {
+        let child = self.key_factory.private_child(ChildNumber::new(number))?;
+        let authentication_key = child.get_authentication_key();
+        Ok((authentication_key, ChildNumber::new(number)))
+    }
+
     /// Returns a list of all addresses controlled by this wallet that are currently held by the
     /// addr_map
     pub fn get_addresses(&self) -> Result<Vec<AccountAddress>> {
