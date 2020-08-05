@@ -152,8 +152,10 @@ pub mod build_block {
         } else {
             // mine continuously from the last block in the file systems
             loop {
-                let block = mine_once(&config)?;
                 status_ok!("Generating Proof for block:", block.height.to_string());
+                let block = mine_once(&config)?;
+                status_ok!("Success", "block_1.json created.");
+
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
