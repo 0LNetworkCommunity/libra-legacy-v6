@@ -147,8 +147,8 @@ pub mod build_block {
         if current_block_number.is_none() {
             status_ok!("Generating Genesis Proof", "0");
             mine_genesis(config);
-            status_ok!("Provide this proof to a friend who can submit it", "0");
-            std::process::exit(1);
+            status_ok!("Success", "Genesis block_0.json created, exiting.");
+            std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems
             loop {

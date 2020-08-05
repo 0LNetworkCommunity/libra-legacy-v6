@@ -93,6 +93,7 @@ all-bins:
 
 keygen:
 	miner keygen
+	cp miner.toml ../miner
 
 miner:
 	miner start
