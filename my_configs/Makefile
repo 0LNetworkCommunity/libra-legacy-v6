@@ -96,7 +96,7 @@ keygen:
 	cp miner.toml ../miner
 
 miner:
-	miner start
+	NODE_ENV=prod miner start
 	cp ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
