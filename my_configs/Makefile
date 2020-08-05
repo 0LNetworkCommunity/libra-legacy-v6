@@ -11,12 +11,12 @@ IP = 192.241.147.210
 ACC = 402e9aaf54ca8c39bab641b0c9829070
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
-REPO_NAME = debug-genesis
+REPO_NAME = experimental-genesis
 # Don't put the MNEM here for production, add that by command line only.
 else
 NAMESPACE = $(TEST)
 REPO_ORG = OLSF
-REPO_NAME = experimental-genesis
+REPO_NAME = debug-genesis
 endif
 
 DATA_PATH = ./
