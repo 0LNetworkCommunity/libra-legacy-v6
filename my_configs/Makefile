@@ -96,6 +96,7 @@ keygen:
 
 miner:
 	miner start
+	cp ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
