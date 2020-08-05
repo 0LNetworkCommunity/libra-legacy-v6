@@ -1243,11 +1243,18 @@ impl ClientProxy {
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
+        let mut addr_para = para.clone().to_owned();
+        if para.starts_with("0x") {
+            //          "8d3fe9ec9b6dd1b339eb416e287de265"
+            addr_para = "00000000000000000000000000000000".to_owned();
+            println!("query for address:{}", addr_para);
+            return Ok((ClientProxy::address_from_strings(addr_para.as_str() )?, None))
+        }
         if is_authentication_key(para) {
             let auth_key = ClientProxy::authentication_key_from_string(para)?;
             Ok((auth_key.derived_address(), Some(auth_key)))
-        } else if is_address(para) {
-            Ok((ClientProxy::address_from_strings(para)?, None))
+        } else if is_address(para ) {
+            Ok((ClientProxy::address_from_strings(para )?, None))
         } else {
             let account_ref_id = para.parse::<usize>().map_err(|error| {
                 format_parse_data_error(
