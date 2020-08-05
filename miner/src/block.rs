@@ -313,6 +313,7 @@ pub mod build_block {
             },
             profile: Profile {
                 auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
+                account: "000000000000000000000000deadbeef".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -366,6 +367,7 @@ fn create_fixtures() {
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
+                account: "000000000000000000000000deadbeef".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -433,6 +435,7 @@ fn create_fixtures() {
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                     .to_owned(),
+                account: "000000000000000000000000deadbeef".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {

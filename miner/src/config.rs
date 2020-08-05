@@ -176,9 +176,13 @@ impl Default for ChainInfo {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
-    ///Miner Authorization Key for 0L Blockchain. Note: note the same as public key pair.
+    ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
-    ///An opportunites for the Miner to argument for his value to the network
+
+    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
+    pub account: String,
+
+    ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
 }
 
@@ -187,6 +191,8 @@ impl Default for Profile {
         Self {
             // Mock Authkey
             auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
+            account: "5ffd9856978b5020be7f72339e41a401".to_owned(),
+
             statement: "Protests rage across the nation".to_owned(),
         }
     }
