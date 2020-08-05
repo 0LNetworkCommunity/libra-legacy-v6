@@ -10,19 +10,24 @@ IP = 192.241.147.210
 # Also is last 16 digits of auth_key hex.
 ACC = 402e9aaf54ca8c39bab641b0c9829070
 NAMESPACE = $(ACC)
+REPO_ORG = OLSF
+REPO_NAME = debug-genesis
 # Don't put the MNEM here for production, add that by command line only.
 else
 NAMESPACE = $(TEST)
+REPO_ORG = OLSF
+REPO_NAME = experimental-genesis
 endif
 
 DATA_PATH = ./
-REPO_ORG = OLSF
-REPO_NAME = experimental-genesis
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
-echo:
+confirm:
 	cd ../miner && ls
-	echo ${NAMESPACE}
+	@echo namespace: ${NAMESPACE}
+	@echo github org: ${REPO_ORG}
+	@echo github repo: ${REPO_NAME}
+
 
 ######################################
 ## THIS IS TEST DATA NOT FOR GENESIS##
@@ -135,6 +140,7 @@ keys:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 register:
+	@echo ${REPO_NAME}
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
