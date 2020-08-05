@@ -92,12 +92,12 @@ all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	miner keygen
-	cp miner.toml ../miner
+	cd ../miner && miner keygen
 
 miner:
-	NODE_ENV=prod miner start
-	cp ../miner/blocks/block_0.json ./
+	cd ../miner
+	miner start
+	cp blocks/block_0.json ../my_configs/
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
