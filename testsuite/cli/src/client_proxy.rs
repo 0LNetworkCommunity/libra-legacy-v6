@@ -315,8 +315,10 @@ impl ClientProxy {
 
         println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings );
 
+        // let (sender_address, _) =
+        //     self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
+        self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
         self.client.get_miner_state(sender_address ).unwrap()
     }
