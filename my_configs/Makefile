@@ -74,7 +74,7 @@ genesis: build-genesis waypoint toml peers
 deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
-	sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 
 rust:
 	## TODO: Cargo is not getting set to path. This next line doesn't run.
@@ -88,9 +88,9 @@ bins:
 	cargo build -p libra-node --release
 	cargo build -p libra-management --release
 	cargo build -p miner --release
-	cp -f ../target/release/libra-management /usr/local/bin/libra-management
-	cp -f ../target/release/libra-node /usr/local/bin/libra-node
-	cp -f ../target/release/miner /usr/local/bin/miner
+	sudo cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	sudo cp -f ../target/release/libra-node /usr/local/bin/libra-node
+	sudo cp -f ../target/release/miner /usr/local/bin/miner
 
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
