@@ -1,7 +1,7 @@
 address 0x0 {
   module NodeWeight {
   ///////////////////////////////////////////////////////////////////////////
-  // OpenLibra Module
+  // 0L Module
   // Node Weight - used for reconfiguring the network, for selecting top N validators to new validator set.
   // This module is used to select the validators who would participate in LibraBFT protocol. Due to the restrictions on throughput with increasing validators above a threshold,
   // we rank nodes based on node weight (i.e., stake they own, previous participation trends) to select the validators for an epoch.

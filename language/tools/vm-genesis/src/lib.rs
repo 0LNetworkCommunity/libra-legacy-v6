@@ -389,9 +389,8 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
                 identity_key.to_bytes(),
                 raw_advertised_address.into(),
             );
+            
             // 0L Change. Adding node configs
-
-
             let preimage = n.configs_ol_miner.preimage.to_owned();
             let proof = n.configs_ol_miner.proof.to_owned();
             let vdf_proof = GenesisMiningProof{

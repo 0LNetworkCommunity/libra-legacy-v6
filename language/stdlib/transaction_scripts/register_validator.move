@@ -24,5 +24,5 @@ script {
             fullnodes_network_address
         );
         LibraSystem::add_validator(account, sender)
-}
+    }
 }

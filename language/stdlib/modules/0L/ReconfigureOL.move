@@ -2,7 +2,7 @@ address 0x0 {
     module ReconfigureOL {
 
     ///////////////////////////////////////////////////////////////////////////
-    // OpenLibra Module
+    // 0L Module
     // Epoch Prologue - the prologue for transitioning to next epoch after every n blocks.
     // File Prefix for errors: 1801
     ///////////////////////////////////////////////////////////////////////////

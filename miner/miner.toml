@@ -2,11 +2,11 @@
 home = "."
 
 [profile]
-auth_key = "c82573d01fe624ef83619299430eacedc82573d01fe624ef83619299430eaced"
+auth_key = "4d14c237e1124876cbb65123a563cc4c084fed0bda477b3ca0531d9e2ffac5e0"
 statement = "test"
 
 [chain_info]
 chain_id = "experimental"
 block_dir= "./blocks/"
-node ="http://localhost:54439" #should be the same as 0_dev_config/node.config.toml for local testing
-base_waypoint="0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b"
+node ="http://localhost:46381" #should be the same as 0_dev_config/node.config.toml for local testing
+base_waypoint="0:01d8c354ecb81e6d979f921a9b91d49e21e5232ea126cc670d25ee406b34eb11"

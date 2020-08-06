@@ -1,7 +1,7 @@
 address 0x0 {
   module Subsidy {
     ///////////////////////////////////////////////////////////////////////////
-    // OpenLibra Module
+    // 0L Module
     // Subsidy - the logic for determining the appropriate level of subsidies at a given time in the network
     // File Prefix for errors: 1901
     ///////////////////////////////////////////////////////////////////////////
@@ -224,7 +224,7 @@ address 0x0 {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190107014010);
 
-      //TODO:OL:Need to check if account exists already
+      //TODO:0L:Need to check if account exists already
       //Get mutable burn accounts vector from association
       let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
       Vector::push_back(&mut subsidy_info.burn_accounts, new_burn_account);
