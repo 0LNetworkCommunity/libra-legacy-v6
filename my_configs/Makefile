@@ -65,7 +65,9 @@ endif
 
 
 # set up the environment
-install: deps rust stdlib bins
+install: env compile
+env: deps rust
+compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear init add-proofs keys register
 # do genesis
@@ -74,7 +76,7 @@ genesis: build-genesis waypoint toml peers
 deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
-	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
 
 rust:
 	## TODO: Cargo is not getting set to path. This next line doesn't run.
