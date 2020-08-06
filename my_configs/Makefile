@@ -76,12 +76,11 @@ genesis: build-genesis waypoint toml peers
 deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
-	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
+
 
 rust:
 	## TODO: Cargo is not getting set to path. This next line doesn't run.
-	source ~/.cargo/env 
-	rustup default nightly
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
 	
 stdlib:
 	cd ../language/stdlib && cargo run --release
