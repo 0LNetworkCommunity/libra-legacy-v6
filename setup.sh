@@ -12,6 +12,6 @@ echo "Enter ssh key for github (ctrl+d when done)"
 private_key=$(cat)
 echo $private_key > ~/.ssh/id_ed25519
 chmod 600 ~/.ssh/id_ed25519
-ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
+ssh-keygen -t ed25519 -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
 
 git clone git@github.com:OLSF/libra.git
