@@ -93,7 +93,8 @@ impl TestConfig {
     pub fn random_account_key(&mut self, rng: &mut StdRng) {
         // 0L NOTE: This is for testing only, including libra-swarm.
         let privkey = Ed25519PrivateKey::generate(rng);
-
+        let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
+        println!("Mnemonic: {:?}", mnemonic.to_string() );
         self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
 
         fn write_ol_miner_toml (privkey: &Ed25519PrivateKey, auth_key: &AuthenticationKey) {

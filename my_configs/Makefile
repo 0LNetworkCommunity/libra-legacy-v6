@@ -10,18 +10,24 @@ IP = 192.241.147.210
 # Also is last 16 digits of auth_key hex.
 ACC = 402e9aaf54ca8c39bab641b0c9829070
 NAMESPACE = $(ACC)
+REPO_ORG = OLSF
+REPO_NAME = experimental-genesis
 # Don't put the MNEM here for production, add that by command line only.
 else
 NAMESPACE = $(TEST)
+REPO_ORG = OLSF
+REPO_NAME = debug-genesis
 endif
 
 DATA_PATH = ./
-REPO_ORG = OLSF
-REPO_NAME = experimental-genesis
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
-echo:
-	echo ${NAMESPACE}
+confirm:
+	cd ../miner && ls
+	@echo namespace: ${NAMESPACE}
+	@echo github org: ${REPO_ORG}
+	@echo github repo: ${REPO_NAME}
+
 
 ######################################
 ## THIS IS TEST DATA NOT FOR GENESIS##
@@ -30,28 +36,28 @@ ifeq ($(NAMESPACE), alice)
 NAMESPACE = alice
 ACC = 402e9aaf54ca8c39bab641b0c9829070
 AUTH = 3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070
-IP = 192.241.147.210
+IP = 142.93.191.147
 MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
 endif
 
 ifeq ($(NAMESPACE), bob)
 ACC = 5e7891b719c305941e62867ffe730f48
 AUTH = 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
-IP = 104.131.20.59
+IP = 167.71.84.248
 MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
 endif
 
 ifeq ($(NAMESPACE), carol)
 ACC = b2f38139f75a271fd8f8fae4a87c2679
 AUTH = 4b964ff86508164652cce32107cd7107b2f38139f75a271fd8f8fae4a87c2679
-IP = 64.227.20.31
+IP = 104.131.56.224
 MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
 endif
 
 ifeq ($(NAMESPACE), dave)
 ACC = 027c83aeb3b9c085f5a1506b418d08cf
 AUTH = 54cf55ab1aff7b757af9a6b07dba6011027c83aeb3b9c085f5a1506b418d08cf
-IP = 157.245.133.106
+IP = 104.131.32.62
 MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
@@ -69,7 +75,6 @@ deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
 	sudo curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-	# s
 
 rust:
 	## TODO: Cargo is not getting set to path. This next line doesn't run.
@@ -87,16 +92,14 @@ bins:
 	cp -f ../target/release/libra-node /usr/local/bin/libra-node
 	cp -f ../target/release/miner /usr/local/bin/miner
 
-
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	miner keygen
-	cp miner.toml ../miner
+	cd ../miner && miner keygen
 
 miner:
-	NODE_ENV=prod miner start
+	cd ../miner && NODE_ENV=prod miner start
 	cp ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
@@ -108,11 +111,12 @@ github:
 #GENESIS CEREMONY
 
 clear:
-	rm -rf libradb *.seed_peers.toml block_0.json node.configs.toml genesis.blob key_store.json
-# ifdef $(TEST)
+	rm -rf libradb *.seed_peers.toml  node.configs.toml genesis.blob key_store.json
+ifdef TEST
 	echo ${NAMESPACE}
-# cp block_0.json.hard.${NAMESPACE} block_0.json
-# endif
+	rm block_0.json
+	cp block_0.json.hard.${NAMESPACE} block_0.json
+endif
 
 init:
 	libra-management initialize \
@@ -136,6 +140,7 @@ keys:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 register:
+	@echo ${REPO_NAME}
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
