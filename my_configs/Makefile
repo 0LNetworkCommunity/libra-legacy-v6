@@ -5,10 +5,10 @@ ifndef TEST
 ####################################
 ## GENESIS: UPDATE YOUR DATA HERE ##
 # The permanent IP address of your validator.
-IP = 192.241.147.210
+IP = 
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = 402e9aaf54ca8c39bab641b0c9829070
+ACC = 
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
 REPO_NAME = experimental-genesis
