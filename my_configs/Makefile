@@ -78,7 +78,7 @@ compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear blocks init add-proofs keys register
 # do genesis
-genesis: compile build-genesis waypoint toml peers
+genesis: build-genesis waypoint toml peers
 
 deps:
 	sudo apt-get update
@@ -155,7 +155,6 @@ keys:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 register:
-	@echo ${REPO_NAME}
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
