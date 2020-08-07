@@ -5,10 +5,12 @@ ifndef TEST
 ####################################
 ## GENESIS: UPDATE YOUR DATA HERE ##
 # The permanent IP address of your validator.
-IP = 
+IP = fill this in
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = 
+ACC = fill this in
+######################################
+
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
 REPO_NAME = experimental-genesis
@@ -17,6 +19,11 @@ else
 NAMESPACE = $(TEST)
 REPO_ORG = OLSF
 REPO_NAME = debug-genesis
+endif
+
+ifndef ENV
+# Default to prod settings for genesis and mining. Pass with ENV=test for test values.
+ENV=prod
 endif
 
 DATA_PATH = ./
@@ -101,7 +108,7 @@ keygen:
 	cd ../miner && miner keygen
 
 miner:
-	cd ../miner && NODE_ENV=prod miner start
+	cd ../miner && NODE_ENV=${ENV} miner start
 	cp ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
@@ -113,11 +120,15 @@ github:
 #GENESIS CEREMONY
 
 clear:
-	rm -rf libradb *.seed_peers.toml  node.configs.toml genesis.blob key_store.json
+	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
 ifdef TEST
 	echo ${NAMESPACE}
 	rm block_0.json
-	cp block_0.json.hard.${NAMESPACE} block_0.json
+ifeq (${ENV}, test)
+	cp block_0.json.test.${NAMESPACE} block_0.json
+else
+	cp block_0.json.prod.${NAMESPACE} block_0.json
+endif
 endif
 
 init:
@@ -151,12 +162,12 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	NODE_ENV='prod' cargo run -p libra-management genesis \
+	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	NODE_ENV='prod' libra-management create-waypoint \
+	NODE_ENV='${ENV}' libra-management create-waypoint \
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
 
@@ -175,7 +186,6 @@ peers:
 
 start:
 	# run in background and output logs
-	NODE_ENV='prod'
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 # start-bg:
