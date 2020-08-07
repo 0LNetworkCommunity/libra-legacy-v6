@@ -84,12 +84,11 @@ compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear blocks init add-proofs keys register
 # do genesis
-genesis: build-genesis waypoint toml peers
+genesis: compile build-genesis waypoint toml peers
 
 deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
-
 
 rust:
 	## TODO: Cargo is not getting set to path. This next line doesn't run.
@@ -174,7 +173,6 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	cd ../language/stdlib && cargo run --release
 	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
