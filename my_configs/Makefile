@@ -197,7 +197,7 @@ start:
 # 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
 
 
-daemon:
+daemon-config:
 	cp -f libra-node.service /lib/systemd/system/
 	cp -f miner.service /lib/systemd/system/
 	mkdir ~/logs
@@ -208,9 +208,13 @@ daemon:
 	# chmod 655 /root/libra/output-libra-node.log
 	systemctl daemon-reload
 	systemctl enable libra-node.service
-	systemctl start libra-node.service
 
 	systemctl enable miner.service
+
+daemon-start:
+	systemctl stop libra-node.service
+	systemctl stop miner.service
+	systemctl start libra-node.service
 	systemctl start miner.service
 
 datadog:
