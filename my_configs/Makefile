@@ -136,7 +136,6 @@ endif
 
 init:
 	libra-management initialize \
-	--mnemonic '${MNEM}' \
 	--path=${DATA_PATH} \
 	--namespace=${NAMESPACE}
 
