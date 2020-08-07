@@ -38,8 +38,8 @@ impl Runnable for StartCmd {
         let readline = rl.readline(">> ");
 
         match readline {
-            Ok(line) => {
-                println!("Mnemonic: \n{}", line);
+            Ok(mnemonic_string) => {
+                // println!("Mnemonic: \n{}", mnemonic_string);
                 let waypoint: Waypoint;
                 let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
                 match parsed_waypoint {
@@ -49,8 +49,7 @@ impl Runnable for StartCmd {
                     }
                     Err(_e) => {
                         println!("Info: No waypoint parsed from command line args. Received: {:?}\n\
-                        Did you pass --waypoint=0:<hash>? \n\
-                        Will fallback to waypoint in miner.toml\n {:?}",
+                        Using waypoint in miner.toml\n {:?}",
                         self.waypoint,
                         miner_configs.chain_info.base_waypoint);
                         waypoint = miner_configs.chain_info.base_waypoint.parse().unwrap();
@@ -58,9 +57,9 @@ impl Runnable for StartCmd {
                     }
                 }
 
-                let result = build_block::mine_and_submit(&miner_configs, line, waypoint);
+                let result = build_block::mine_and_submit(&miner_configs, mnemonic_string, waypoint);
                 match result {
-                    Ok(_val) => { }
+                    Ok(_val) => {}
                     Err(err) => {
                         println!("Failed to mine_and_submit: {}", err);
                     }
