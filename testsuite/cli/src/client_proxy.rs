@@ -189,6 +189,8 @@ impl ClientProxy {
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
         let (auth_key, _ )= wallet.new_address().unwrap();
 
+        println!("client_proxy.rs: auth_key: {:?}", auth_key);
+
         let vec_addresses = wallet.get_addresses().unwrap();
         // Expect this to be zero before we haven't populated the address map in the repo
         assert!(vec_addresses.len() ==1);
