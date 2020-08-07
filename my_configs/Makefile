@@ -174,6 +174,7 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
+	cd ../language/stdlib && cargo run --release
 	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
@@ -197,6 +198,7 @@ peers:
 	libra-management seeds --genesis-path genesis.blob
 
 start:
+
 	# run in background and output logs
 	libra-node --config ${DATA_PATH}node.configs.toml
 

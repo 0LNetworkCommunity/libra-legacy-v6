@@ -9,5 +9,5 @@ statement = "test"
 [chain_info]
 chain_id = "experimental"
 block_dir= "./blocks/"
-node ="http://localhost:8080" #should be the same as 0_dev_config/node.config.toml for local testing
-base_waypoint="1738:c5356ea8d2cc0d245040b19725ec86c17ec3361503557982b8b4e8821bfcba51"
+node ="http://142.93.191.147:8080" #should be the same as 0_dev_config/node.config.toml for local testing
+base_waypoint="0:161acd75774bcdefa3d9f30f453df28ba04716de1cc929723bf1e49efeaace31"
