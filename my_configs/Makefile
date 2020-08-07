@@ -77,7 +77,7 @@ env:
 	sudo bash ../setup.sh
 compile: stdlib bins
 # pipelines for genesis ceremony
-register: clear fixtures init add-proofs keys register
+register: clear blocks init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
