@@ -142,28 +142,6 @@ address 0x0{
       });
     }
 
-    public fun enable(uid: u64) acquires Data {
-      let index = find(Transaction::sender(), uid);
-      if (Option::is_none<u64>(&index)) {
-        // Case where payment doesn't exist for sender
-        Transaction::assert(false, 12);
-      };
-      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
-      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.enabled = true;
-    }
-
-    public fun disable(uid: u64) acquires Data {
-      let index = find(Transaction::sender(), uid);
-      if (Option::is_none<u64>(&index)) {
-        // Case where payment doesn't exist for sender
-        Transaction::assert(false, 12);
-      };
-      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
-      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.enabled = false;
-    }
-
     public fun delete(uid: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -186,6 +164,204 @@ address 0x0{
         };
       };
       Option::none<u64>()
+    }
+
+    public fun change_enabled(uid: u64, enabled: bool) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 12);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.enabled = enabled;
+    }
+
+    public fun get_enabled(account: address, uid: u64): bool acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 21);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.enabled
+    }
+
+    public fun change_name(uid: u64, name: u64) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 14);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.name = name;
+    }
+
+    public fun get_name(account: address, uid: u64): u64 acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 22);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.name
+    }
+
+    public fun change_frequency(uid: u64, frequency: u64) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 15);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.frequency = frequency;
+    }
+
+    public fun get_frequency(account: address, uid: u64): u64 acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 23);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.frequency
+    }
+
+    public fun change_start(uid: u64, start: u64) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 16);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.start = start;
+    }
+
+    public fun get_start(account: address, uid: u64): u64 acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 24);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.start
+    }
+
+    public fun change_end(uid: u64, end: u64) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 16);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.end = end;
+    }
+
+    public fun get_end(account: address, uid: u64): u64 acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 25);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.end
+    }
+
+    public fun change_fixed_fee(uid: u64, fee: u64) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 17);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.fixed_fee = fee;
+    }
+
+    public fun get_fixed_fee(account: address, uid: u64): u64 acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 26);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.fixed_fee
+    }
+
+    public fun change_variable_fee(uid: u64, fee: u64) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 18);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.variable_fee = fee;
+    }
+
+    public fun get_variable_fee(account: address, uid: u64): u64 acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 27);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.variable_fee
+    }
+
+    public fun change_currency(uid: u64, currency: u64) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 19);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.currency = currency;
+    }
+
+    public fun get_currency(account: address, uid: u64): u64 acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 28);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.currency
+    }
+
+    public fun change_from_earmarked(uid: u64, from_earmarked: bool) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 20);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.from_earmarked_transactions = from_earmarked;
+    }
+
+    public fun get_from_earmarked(account: address, uid: u64): bool acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 29);
+      };
+      let payments = &borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.from_earmarked_transactions
     }
   }
 }
