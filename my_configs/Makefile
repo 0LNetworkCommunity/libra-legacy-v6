@@ -1,102 +1,233 @@
 SHELL=/usr/bin/env bash
 
-
-###########################
-## UPDATE YOUR DATA HERE ##
-# Don't put the MNEM here for production, add that by command line only.
 DATA_PATH = ./
-# TODO: namespace and account will be the same data. Testing with human readable names.
-#NAME = zaki
-#ACC = 402e9aaf54ca8c39bab641b0c9829070
-#IP = 192.241.147.210
-#MNEM = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice"
+GITHUB_TOKEN = $(shell cat github_token.txt)
 
-NAME = lucas
+
+ifndef TEST
+####################################
+## GENESIS: UPDATE YOUR DATA HERE ##
+# The permanent IP address of your validator.
+IP = fill this in
+# The 0L account, which will be your namespace for all data
+# Also is last 16 digits of auth_key hex.
+ACC = fill this in
+######################################
+
+NAMESPACE = $(ACC)
+REPO_ORG = OLSF
+REPO_NAME = experimental-genesis
+# Don't put the MNEM here for production, add that by command line only.
+else
+HOST = $(shell hostname | cut -c4-10)
+NAMESPACE = $(HOST)
+REPO_ORG = OLSF
+REPO_NAME = debug-genesis
+endif
+
+ifndef ENV
+# Default to prod settings for genesis and mining. Pass with ENV=test for test values.
+ENV=prod
+endif
+
+
+
+
+confirm:
+	cd ../miner && ls
+	@echo namespace: ${NAMESPACE}
+	@echo github org: ${REPO_ORG}
+	@echo github repo: ${REPO_NAME}
+	@echo hostname: ${HOST}
+
+
+######################################
+## THIS IS TEST DATA NOT FOR GENESIS##
+
+ifeq ($(NAMESPACE), alice)
+NAMESPACE = alice
+ACC = 402e9aaf54ca8c39bab641b0c9829070
+AUTH = 3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070
+IP = 142.93.191.147
+MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
+endif
+
+ifeq ($(NAMESPACE), bob)
 ACC = 5e7891b719c305941e62867ffe730f48
-IP = 104.131.20.59
-#TODO: Remove MNEM, this is here for debugging only
-MNEM = "owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city"
+AUTH = 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
+IP = 167.71.84.248
+MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
+endif
 
-# NAME = sha
-# ACC = b2f38139f75a271fd8f8fae4a87c2679
-# IP = 64.227.20.31
-# MNEM = "motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day"
+ifeq ($(NAMESPACE), carol)
+ACC = b2f38139f75a271fd8f8fae4a87c2679
+AUTH = 4b964ff86508164652cce32107cd7107b2f38139f75a271fd8f8fae4a87c2679
+IP = 104.131.56.224
+MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
+endif
 
-#NAME = keerthi
-#ACC = 027c83aeb3b9c085f5a1506b418d08cf
-#IP = 64.227.28.81
-#MNEM = "advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power"
-###########################
+ifeq ($(NAMESPACE), dave)
+ACC = 027c83aeb3b9c085f5a1506b418d08cf
+AUTH = 54cf55ab1aff7b757af9a6b07dba6011027c83aeb3b9c085f5a1506b418d08cf
+IP = 104.131.32.62
+MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
+endif
 
-compile : all-bins
+##########################
 
+
+# set up the environment
+install: env compile
+env: 
+	sudo bash ../setup.sh
+compile: stdlib bins
 # pipelines for genesis ceremony
-register: stdlib clear init mining keys register
+register: clear blocks init add-proofs keys register
+# do genesis
+genesis: build-genesis waypoint toml peers
 
-# > make register MNEM='owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city' NAME=lucas ACC=5e7891b719c305941e62867ffe730f48 IP=104.131.20.59
+deps:
+	sudo apt-get update
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
 
-genesis: build-genesis waypoint toml
 
+rust:
+	## TODO: Cargo is not getting set to path. This next line doesn't run.
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
+	
+stdlib:
+	cd ../language/stdlib && cargo run --release
 
-# Add other binaries later.
-install:
-	cp -f target/release/ol_miner /usr/local/bin/ol_miner
-	cp -f target/release/libra-management /usr/local/bin/libra-management
+bins:
+	cargo build -p libra-node --release
+	cargo build -p libra-management --release
+	cargo build -p miner --release
+	sudo cp -f ../target/release/libra-management /usr/local/bin/libra-management
+	sudo cp -f ../target/release/libra-node /usr/local/bin/libra-node
+	sudo cp -f ../target/release/miner /usr/local/bin/miner
 
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
-deps:
-	sudo apt-get update
-	sudo apt-get install build-essential cmake clang llvm libgmp-dev
+keygen:
+	cd ../miner && miner keygen
+
+miner:
+	cd ../miner && NODE_ENV=${ENV} miner start
+	cp -f ../miner/blocks/block_0.json ./
+
+# CONFIGURE GITHUB FOR TEST
+#Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
+
+github: 
+	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 #GENESIS CEREMONY
-stdlib:
-	cd ../language/stdlib && cargo run
+
 clear:
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+
+blocks:
+	@echo fixtures
+ifdef TEST
+	echo ${NAMESPACE}
+	if test -f block_0.json; then \
+		rm block_0.json; \
+	fi 
+	cp ./fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
+
+ifeq (${ENV}, test)
+	cp ./fixtures/block_0.json.test.${NAMESPACE} block_0.json
+else
+	cp ./fixtures/block_0.json.prod.${NAMESPACE} block_0.json
+endif
+endif
+
 init:
-	cargo run -p libra-management initialize \
+	libra-management initialize \
 	--mnemonic '${MNEM}' \
 	--path=${DATA_PATH} \
-	--namespace=${NAME}
+	--namespace=${NAMESPACE}
 
-mining:
-	cargo run -p libra-management mining \
+layout:
+	libra-management set-layout \
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
+	--path=set_layout.toml
+
+add-proofs:
+	libra-management mining \
 	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
-	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 keys:
-	cargo run -p libra-management operator-key \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}' \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
+	libra-management operator-key \
+	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
+	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 register:
-	cargo run -p libra-management validator-config \
+	@echo ${REPO_NAME}
+	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}' \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=${NAME}'
+	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
+	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	cargo run -p libra-management genesis \
-	--backend 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt' \
+	cd ../language/stdlib && cargo run --release
+	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	cargo run -p libra-management create-waypoint \
-	--remote 'backend=github;owner=OLSF;repository=test-genesis;token=${DATA_PATH}github_token.txt;namespace=common' \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}'
+	NODE_ENV='${ENV}' libra-management create-waypoint \
+	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
+	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
 
 toml:
-	cargo run -p libra-management config \
+	libra-management config \
 	--validator-address \
 	"/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
-	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAME}' \
+	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
+peers:
+	cp -f seed_peers.toml backup.seed_peers.toml
+	libra-management seeds --genesis-path genesis.blob
+
 start:
-	cargo run -p libra-node -- --config ${DATA_PATH}node.configs.toml
+
+	# run in background and output logs
+	libra-node --config ${DATA_PATH}node.configs.toml
+
+# start-bg:
+# 	# run in background and output logs
+# 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
+
+daemon-node:
+	cp -f libra-node.service /lib/systemd/system/
+	# cp -f miner.service /lib/systemd/system/
+	systemctl daemon-reload
+
+	if test -d ~/logs; then \
+		echo "WIPING SYSTEMD LOGS"; \
+		rm -rf ~/logs*; \
+	fi 
+
+	mkdir ~/logs;
+	touch ~/logs/output-libra-node.log; \
+	touch ~/logs/output-miner.log; \
+
+	systemctl daemon-reload
+	systemctl stop libra-node.service
+	systemctl start libra-node.service
+	sleep 2 && systemctl status libra-node.service
+	tail -f ~/logs/output-libra-node.log
+
+datadog:
+	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=bc1d4e1501b29ec31f0e131fda7ba440 DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
+	# mkdir /etc/datadog-agent/conf.d/libra.d/
+	cp datadog_config.yaml /etc/datadog-agent/conf.d/libra.d/conf.yaml
+	service datadog-agent start

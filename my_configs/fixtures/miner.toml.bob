@@ -1,0 +1,12 @@
+[workspace]
+home = "."
+
+[profile]
+auth_key = "200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48"
+statement = "test"
+
+[chain_info]
+chain_id = "experimental"
+block_dir= "./blocks/"
+node ="http://localhost:54439" #should be the same as 0_dev_config/node.config.toml for local testing
+base_waypoint="0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b"

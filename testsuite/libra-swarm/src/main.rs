@@ -101,9 +101,8 @@ fn main() {
     println!("To run the Libra CLI client in a separate process and connect to the validator nodes you just spawned, use this command:");
 
     println!(
-        "\tcargo run --bin cli -- -u {} -m {:?} --waypoint {}",
+        "\tcargo run --bin cli -- -u {} --waypoint {}",
         format!("http://localhost:{}", validator_config.rpc.address.port()),
-        faucet_key_file_path,
         waypoint,
     );
 

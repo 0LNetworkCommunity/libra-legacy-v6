@@ -31,7 +31,6 @@ address 0x0 {
             // Step 2: Subsidy payments
             // Step 3: Distribute transaction fees to all outgoing validators
             // Step 4: Burn subsidy units
-            // Skip this step on the first epoch, which is exceptional.
             process_outgoing_validators(account, current_block_height);
 
             // Recommend upcoming validator set
@@ -49,15 +48,19 @@ address 0x0 {
             let (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
                  = LibraSystem::get_outgoing_validators_with_weights(Globals::get_epoch_length(), current_block_height);
             // Step 1: End redeem for all validators
-           MinerState::end_redeem_validator_universe(account);
+            MinerState::end_redeem_validator_universe(account);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
             // Calculate start and end block height for the current epoch
-            let start_block_height = current_block_height - Globals::get_epoch_length();
+            let start_block_height = 0;
+            
+            if(current_block_height> Globals::get_epoch_length()){
+                start_block_height = current_block_height - Globals::get_epoch_length();
+            };
             // Get the subsidy units and burn units after deducting transaction fees
             // NOTE: current block height is the end of the epoch.
-            let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, current_block_height);
+           let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, current_block_height);
 
             Subsidy::process_subsidy(account, &outgoing_validators, &outgoing_validator_weights,
                                     subsidy_units, sum_of_all_validator_weights);

@@ -38,6 +38,8 @@ libra-wallet = { path = "../../testsuite/cli/libra-wallet", version = "0.1.0"}
 # cargo's V1 resolver will make it take part in feature resolution. Setting it as optional works, but it
 # needs to be moved into the [dependencies] section for that to work.
 libra-swarm = { path = "../../testsuite/libra-swarm", version = "0.1.0", optional = false }
+log = { version = "0.4.8", features = ["serde"] }
+
 
 [dev-dependencies]
 config-builder = { path = "../config-builder", version = "0.1.0" }

@@ -1,5 +1,6 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
+// Modified 0L
 
 use crate::keys::KeyPair;
 use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
@@ -10,6 +11,16 @@ use libra_types::{
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use libra_wallet::Mnemonic;
+
+// 0L TODO: Use OlMinerConfig to generate miner Toml
+// use miner::config::OlMinerConfig;
+// use std::{
+//
+//     // path::PathBuf,
+//     // fs,
+//     // io::Write,
+// };
 
 type AccountKeyPair = KeyPair<Ed25519PrivateKey>;
 type ConsensusKeyPair = KeyPair<Ed25519PrivateKey>;
@@ -80,10 +91,38 @@ impl TestConfig {
     }
 
     pub fn random_account_key(&mut self, rng: &mut StdRng) {
+        // 0L NOTE: This is for testing only, including libra-swarm.
         let privkey = Ed25519PrivateKey::generate(rng);
+        let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
+        println!("Mnemonic: {:?}", mnemonic.to_string() );
         self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
+
+        fn write_ol_miner_toml (privkey: &Ed25519PrivateKey, auth_key: &AuthenticationKey) {
+            // 0L TODO: Confirm this is for testing only.
+            let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
+            println!("=========\n Auth_Key\n{:?}", &auth_key.to_string());
+            println!("Mnemonic:\n{:?}\n=========", mnemonic.to_string() );
+
+            // TODO: use the OLMinerConfig struct here
+            // ISSUE: Adding miner::OLMinerConfig creates a cyclic dependency.
+            // let miner_configs = OlMinerConfig::default();
+            // miner_configs.profile.auth_key = self.auth_key;
+
+            // let miner_toml_string = toml::to_string(&miner_configs).expect("Could not write toml");
+
+            // let mut latest_block_path = PathBuf::from(r"./miner");
+            // latest_block_path.push(format!("miner_test.toml"));
+            // let mut file = fs::File::create(&latest_block_path).unwrap();
+            // file.write_all(&miner_toml_string.as_bytes())
+            //     .expect("Could not write toml");
+        }
+
+        write_ol_miner_toml(&privkey, &self.auth_key.unwrap());
+
         self.operator_keypair = Some(AccountKeyPair::load(privkey));
     }
+
+
 
     pub fn random_consensus_key(&mut self, rng: &mut StdRng) {
         let privkey = Ed25519PrivateKey::generate(rng);

@@ -1,0 +1,19 @@
+[Unit]
+Description=0L Miner Service
+
+[Service]
+# Miner bin was copied to user/local/bins
+# Note 'start' after the path
+WorkingDirectory=/root/libra/miner
+ExecStart=/usr/local/bin/miner start
+ 
+Restart=always
+RestartSec=10s
+
+# Make sure you CREATE the directory and file for your output.log
+StandardOutput=file:/root/logs/output-miner.log 
+StandardError=file:/root/logs/output-miner.log
+
+[Install]
+WantedBy=multi-user.target
+Alias=miner.service

@@ -147,13 +147,18 @@ pub mod build_block {
         if current_block_number.is_none() {
             status_ok!("Generating Genesis Proof", "0");
             mine_genesis(config);
-            status_ok!("Provide this proof to a friend who can submit it", "0");
-            std::process::exit(1);
+            status_ok!("Success", "Genesis block_0.json created, exiting.");
+            std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems
+            let mut mining_height = current_block_number.unwrap() + 1; 
             loop {
+                status_ok!("Generating Proof for block:", format!("{}", mining_height));
+                
                 let block = mine_once(&config)?;
-                status_ok!("Generating Proof for block:", block.height.to_string());
+                status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
+
+                mining_height = block.height + 1;
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
@@ -163,15 +168,20 @@ pub mod build_block {
                 if waypoint.version() >= 0 {
                     if let Some(ref node) = config.chain_info.node {
                         // get preimage
-                        submit_vdf_proof_tx_to_network(
+                        match submit_vdf_proof_tx_to_network(
                             block.preimage,                       // challenge: Vec<u8>,
                             delay_difficulty(), // difficulty: u64,
                             block.data,                           // proof: Vec<u8>,
                             waypoint,                             // waypoint: Waypoint,
                             mnemonic.to_string(),
                             node.to_string(),
-                        ).unwrap();
-                        status_ok!("Submitted {}",block.height.to_string());
+                        ) {
+                            Ok(v) => println!("Submitted block: {:?}", block.height.to_string() ),
+                            Err(e) => println!("Error submitting mined block: {:?}", e),
+                        }
+                        // unwrap();
+
+                        // status_ok!("Submitted {}",block.height.to_string());
                     } else {
                         return Err(ErrorKind::Config
                             .context("No Node for submitting transactions")
@@ -313,6 +323,7 @@ pub mod build_block {
             },
             profile: Profile {
                 auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
+                account: "000000000000000000000000deadbeef".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -366,6 +377,7 @@ fn create_fixtures() {
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
+                account: "000000000000000000000000deadbeef".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -433,6 +445,7 @@ fn create_fixtures() {
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                     .to_owned(),
+                account: "000000000000000000000000deadbeef".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
