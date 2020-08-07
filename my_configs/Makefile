@@ -174,8 +174,7 @@ waypoint:
 
 toml:
 	libra-management config \
-	--validator-address \
-	"/ip4/${IP}/tcp/6180" \
+	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
 	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
