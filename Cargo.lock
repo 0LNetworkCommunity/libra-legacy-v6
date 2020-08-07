@@ -2806,6 +2806,7 @@ dependencies = [
  "libradb 0.1.0",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "miner 0.1.0",
+ "rustyline 6.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
  "storage-interface 0.1.0",
  "structopt 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
