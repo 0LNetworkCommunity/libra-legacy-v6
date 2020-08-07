@@ -30,16 +30,12 @@ ifndef ENV
 ENV=prod
 endif
 
-
-
-
 confirm:
 	cd ../miner && ls
 	@echo namespace: ${NAMESPACE}
 	@echo github org: ${REPO_ORG}
 	@echo github repo: ${REPO_NAME}
 	@echo hostname: ${HOST}
-
 
 ######################################
 ## THIS IS TEST DATA NOT FOR GENESIS##
@@ -77,9 +73,7 @@ endif
 
 
 # set up the environment
-install: env compile
-env: 
-	sudo bash ../setup.sh
+install: deps compile
 compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear blocks init add-proofs keys register
@@ -88,11 +82,8 @@ genesis: build-genesis waypoint toml peers
 
 deps:
 	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
-
-
-rust:
-	## TODO: Cargo is not getting set to path. This next line doesn't run.
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev secure-delete
+		## TODO: Cargo is not getting set to path. This next line doesn't run.
 	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
 	
 stdlib:
@@ -145,7 +136,6 @@ endif
 
 init:
 	libra-management initialize \
-	--mnemonic '${MNEM}' \
 	--path=${DATA_PATH} \
 	--namespace=${NAMESPACE}
 
@@ -165,7 +155,6 @@ keys:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 register:
-	@echo ${REPO_NAME}
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -174,7 +163,6 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	cd ../language/stdlib && cargo run --release
 	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
@@ -198,15 +186,10 @@ peers:
 	libra-management seeds --genesis-path genesis.blob
 
 start:
-
-	# run in background and output logs
+	# run in foreground. Only for testing, use a daemon for net.
 	libra-node --config ${DATA_PATH}node.configs.toml
 
-# start-bg:
-# 	# run in background and output logs
-# 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
-
-daemon-node:
+daemon:
 	cp -f libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
 	systemctl daemon-reload
@@ -226,8 +209,18 @@ daemon-node:
 	sleep 2 && systemctl status libra-node.service
 	tail -f ~/logs/output-libra-node.log
 
-datadog:
-	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=bc1d4e1501b29ec31f0e131fda7ba440 DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
-	# mkdir /etc/datadog-agent/conf.d/libra.d/
-	cp datadog_config.yaml /etc/datadog-agent/conf.d/libra.d/conf.yaml
-	service datadog-agent start
+
+wipe: 
+	shred ~/.bash_history
+	srm ~/.bash_history
+	history -c
+	smem
+	sswap
+	# sfill <mountpoint>
+
+
+# datadog:
+# 	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=xxxxxxxxxx DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
+# 	# mkdir /etc/datadog-agent/conf.d/libra.d/
+# 	cp datadog_config.yaml /etc/datadog-agent/conf.d/libra.d/conf.yaml
+# 	service datadog-agent start
