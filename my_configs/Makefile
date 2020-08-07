@@ -77,7 +77,7 @@ env:
 	sudo bash ../setup.sh
 compile: stdlib bins
 # pipelines for genesis ceremony
-register: clear init add-proofs keys register
+register: clear fixtures init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
@@ -109,7 +109,7 @@ keygen:
 
 miner:
 	cd ../miner && NODE_ENV=${ENV} miner start
-	cp ../miner/blocks/block_0.json ./
+	cp -f ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -121,13 +121,17 @@ github:
 
 clear:
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+
+fixtures:
 ifdef TEST
 	echo ${NAMESPACE}
 	rm block_0.json
+	cp fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
+
 ifeq (${ENV}, test)
-	cp block_0.json.test.${NAMESPACE} block_0.json
+	cp fixtures/block_0.json.test.${NAMESPACE} block_0.json
 else
-	cp block_0.json.prod.${NAMESPACE} block_0.json
+	cp fixtures/block_0.json.prod.${NAMESPACE} block_0.json
 endif
 endif
 
@@ -181,8 +185,8 @@ toml:
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 peers:
+	cp -f seed_peers.toml backup.seed_peers.toml
 	libra-management seeds --genesis-path genesis.blob
-	cp seed_peers.toml 00000000000000000000000000000000.seed_peers.toml
 
 start:
 	# run in background and output logs
@@ -195,9 +199,13 @@ start:
 
 daemon:
 	cp libra-node.service /lib/systemd/system/
-	touch /root/libra/output-libra-node.log
-	chmod 655 /root/libra
-	chmod 655 /root/libra/output-libra-node.log
+	cp miner.service /lib/systemd/system/
+	mkdir ~/logs
+	touch ~/logs/output-libra-node.log
+	touch ~/logs/output-miner.log
+
+	# chmod 655 /root/libra
+	# chmod 655 /root/libra/output-libra-node.log
 	systemctl daemon-reload
 	systemctl enable libra-node.service
 	systemctl start libra-node.service
