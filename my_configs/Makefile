@@ -5,10 +5,12 @@ ifndef TEST
 ####################################
 ## GENESIS: UPDATE YOUR DATA HERE ##
 # The permanent IP address of your validator.
-IP = 
+IP = fill this in
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = 
+ACC = fill this in
+######################################
+
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
 REPO_NAME = experimental-genesis
@@ -17,6 +19,11 @@ else
 NAMESPACE = $(TEST)
 REPO_ORG = OLSF
 REPO_NAME = debug-genesis
+endif
+
+ifndef ENV
+# Default to prod settings for genesis and mining. Pass with ENV=test for test values.
+ENV=prod
 endif
 
 DATA_PATH = ./
@@ -70,7 +77,7 @@ env:
 	sudo bash ../setup.sh
 compile: stdlib bins
 # pipelines for genesis ceremony
-register: clear init add-proofs keys register
+register: clear blocks init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
@@ -101,8 +108,8 @@ keygen:
 	cd ../miner && miner keygen
 
 miner:
-	cd ../miner && NODE_ENV=prod miner start
-	cp ../miner/blocks/block_0.json ./
+	cd ../miner && NODE_ENV=${ENV} miner start
+	cp -f ../miner/blocks/block_0.json ./
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -113,11 +120,22 @@ github:
 #GENESIS CEREMONY
 
 clear:
-	rm -rf libradb *.seed_peers.toml  node.configs.toml genesis.blob key_store.json
+	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+
+blocks:
+	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
-	rm block_0.json
-	cp block_0.json.hard.${NAMESPACE} block_0.json
+	if test -f block_0.json; then \
+		rm block_0.json; \
+	fi 
+	cp ./fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
+
+ifeq (${ENV}, test)
+	cp ./fixtures/block_0.json.test.${NAMESPACE} block_0.json
+else
+	cp ./fixtures/block_0.json.prod.${NAMESPACE} block_0.json
+endif
 endif
 
 init:
@@ -151,12 +169,12 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	NODE_ENV='prod' cargo run -p libra-management genesis \
+	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	NODE_ENV='prod' libra-management create-waypoint \
+	NODE_ENV='${ENV}' libra-management create-waypoint \
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
 
@@ -170,27 +188,36 @@ toml:
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 peers:
+	cp -f seed_peers.toml backup.seed_peers.toml
 	libra-management seeds --genesis-path genesis.blob
-	cp seed_peers.toml 00000000000000000000000000000000.seed_peers.toml
 
 start:
 	# run in background and output logs
-	NODE_ENV='prod'
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 # start-bg:
 # 	# run in background and output logs
 # 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
 
-
-daemon:
-	cp libra-node.service /lib/systemd/system/
-	touch /root/libra/output-libra-node.log
-	chmod 655 /root/libra
-	chmod 655 /root/libra/output-libra-node.log
+daemon-node:
+	cp -f libra-node.service /lib/systemd/system/
+	# cp -f miner.service /lib/systemd/system/
 	systemctl daemon-reload
-	systemctl enable libra-node.service
+
+	if test -d ~/logs; then \
+		echo "WIPING SYSTEMD LOGS"; \
+		rm -rf ~/logs*; \
+	fi 
+
+	mkdir ~/logs;
+	touch ~/logs/output-libra-node.log; \
+	touch ~/logs/output-miner.log; \
+
+	systemctl daemon-reload
+	systemctl stop libra-node.service
 	systemctl start libra-node.service
+	sleep 2 && systemctl status libra-node.service
+	tail -f ~/logs/output-libra-node.log
 
 datadog:
 	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=bc1d4e1501b29ec31f0e131fda7ba440 DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
