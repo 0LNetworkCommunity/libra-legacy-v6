@@ -4,6 +4,7 @@ Description=0L Miner Service
 [Service]
 # Miner bin was copied to user/local/bins
 # Note 'start' after the path
+WorkingDirectory=/root/libra/miner
 ExecStart=/usr/local/bin/miner start
  
 Restart=always

@@ -198,8 +198,8 @@ start:
 
 
 daemon:
-	cp libra-node.service /lib/systemd/system/
-	cp miner.service /lib/systemd/system/
+	cp -f libra-node.service /lib/systemd/system/
+	cp -f miner.service /lib/systemd/system/
 	mkdir ~/logs
 	touch ~/logs/output-libra-node.log
 	touch ~/logs/output-miner.log
@@ -209,6 +209,9 @@ daemon:
 	systemctl daemon-reload
 	systemctl enable libra-node.service
 	systemctl start libra-node.service
+
+	systemctl enable miner.service
+	systemctl start miner.service
 
 datadog:
 	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=bc1d4e1501b29ec31f0e131fda7ba440 DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
