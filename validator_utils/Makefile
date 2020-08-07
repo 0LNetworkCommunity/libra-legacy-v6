@@ -81,7 +81,6 @@ register: clear blocks init add-proofs keys register
 genesis: build-genesis waypoint toml peers
 
 
-
 deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
@@ -208,9 +207,8 @@ daemon:
 	systemctl daemon-reload
 	systemctl stop libra-node.service
 	systemctl start libra-node.service
-	sleep 2
-	systemctl status libra-node.service &
-	tail -f ~/logs/output.log
+	sleep 2 && systemctl status libra-node.service
+	tail -f ~/logs/output-libra-node.log
 
 
 wipe: 

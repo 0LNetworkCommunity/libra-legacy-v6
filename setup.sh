@@ -3,7 +3,11 @@
 # targeting ububtu
 export NODE_ENV=prod
 apt update
+<<<<<<< HEAD
 apt install -y git vim zip build-essential cmake clang llvm libgmp-dev secure-delete
+=======
+apt install -y git vim build-essential cmake clang llvm libgmp-dev secure-delete
+>>>>>>> b8c9921d0... Mnemonic fixes (#185) (#186)
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 source $HOME/.cargo/env
 
