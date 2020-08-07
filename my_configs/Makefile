@@ -196,28 +196,33 @@ start:
 # 	# run in background and output logs
 # 	libra-node --config ${DATA_PATH}node.configs.toml &> output.log &
 
-
 daemon-config:
 	cp -f libra-node.service /lib/systemd/system/
 	cp -f miner.service /lib/systemd/system/
-	@echo Wiping systemd logs!
-	[ -d "~/logs" ] && rm -rf ~/logs
-	[ ! -d "~/logs" ] && mkdir ~/logs
-	touch ~/logs/output-libra-node.log
-	touch ~/logs/output-miner.log
 
 	# chmod 655 /root/libra
 	# chmod 655 /root/libra/output-libra-node.log
 	systemctl daemon-reload
 	systemctl enable libra-node.service
-
 	systemctl enable miner.service
 
 daemon-start:
+	if test -d ~/logs; then \
+		echo "WIPING SYSTEMD LOGS"; \
+		rm -rf ~/logs*; \
+	fi 
+
+	mkdir ~/logs;
+	touch ~/logs/output-libra-node.log; \
+	touch ~/logs/output-miner.log; \
+
+	systemctl daemon-reload
 	systemctl stop libra-node.service
-	systemctl stop miner.service
+	# systemctl stop miner.service
 	systemctl start libra-node.service
-	systemctl start miner.service
+	sleep 5 && systemctl status libra-node.service
+
+	# systemctl start miner.service
 
 datadog:
 	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=bc1d4e1501b29ec31f0e131fda7ba440 DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"

@@ -10,8 +10,8 @@ Restart=always
 RestartSec=10s
 
 # Make sure you CREATE the directory and file for your output.log
-StandardOutput=file:/root/libra/logs/output-libra-node.log
-StandardError=file:/root/libra/logs/output-libra-node.log
+StandardOutput=file:/root/logs/output-libra-node.log
+StandardError=file:/root/logs/output-libra-node.log
 
 [Install]
 WantedBy=multi-user.target
