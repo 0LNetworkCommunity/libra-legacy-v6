@@ -151,13 +151,14 @@ pub mod build_block {
             std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems
+            let mut mining_height = current_block_number.unwrap() + 1; 
             loop {
-                status_ok!("Generating Proof for block:", format!("{}", current_block_number.unwrap() + 1));
+                status_ok!("Generating Proof for block:", format!("{}", mining_height));
                 
                 let block = mine_once(&config)?;
-
                 status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
 
+                mining_height = block.height + 1;
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
@@ -167,15 +168,20 @@ pub mod build_block {
                 if waypoint.version() >= 0 {
                     if let Some(ref node) = config.chain_info.node {
                         // get preimage
-                        submit_vdf_proof_tx_to_network(
+                        match submit_vdf_proof_tx_to_network(
                             block.preimage,                       // challenge: Vec<u8>,
                             delay_difficulty(), // difficulty: u64,
                             block.data,                           // proof: Vec<u8>,
                             waypoint,                             // waypoint: Waypoint,
                             mnemonic.to_string(),
                             node.to_string(),
-                        ).unwrap();
-                        status_ok!("Submitted {}",block.height.to_string());
+                        ) {
+                            Ok(v) => println!("Submitted block: {:?}", block.height.to_string() ),
+                            Err(e) => println!("Error submitting mined block: {:?}", e),
+                        }
+                        // unwrap();
+
+                        // status_ok!("Submitted {}",block.height.to_string());
                     } else {
                         return Err(ErrorKind::Config
                             .context("No Node for submitting transactions")

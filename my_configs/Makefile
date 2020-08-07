@@ -1,5 +1,8 @@
 SHELL=/usr/bin/env bash
 
+DATA_PATH = ./
+GITHUB_TOKEN = $(shell cat github_token.txt)
+
 
 ifndef TEST
 ####################################
@@ -16,7 +19,8 @@ REPO_ORG = OLSF
 REPO_NAME = experimental-genesis
 # Don't put the MNEM here for production, add that by command line only.
 else
-NAMESPACE = $(TEST)
+HOST = $(shell hostname | cut -c4-10)
+NAMESPACE = $(HOST)
 REPO_ORG = OLSF
 REPO_NAME = debug-genesis
 endif
@@ -26,14 +30,15 @@ ifndef ENV
 ENV=prod
 endif
 
-DATA_PATH = ./
-GITHUB_TOKEN = $(shell cat github_token.txt)
+
+
 
 confirm:
 	cd ../miner && ls
 	@echo namespace: ${NAMESPACE}
 	@echo github org: ${REPO_ORG}
 	@echo github repo: ${REPO_NAME}
+	@echo hostname: ${HOST}
 
 
 ######################################
@@ -79,12 +84,11 @@ compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear blocks init add-proofs keys register
 # do genesis
-genesis: build-genesis waypoint toml peers
+genesis: compile build-genesis waypoint toml peers
 
 deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
-
 
 rust:
 	## TODO: Cargo is not getting set to path. This next line doesn't run.
@@ -192,6 +196,7 @@ peers:
 	libra-management seeds --genesis-path genesis.blob
 
 start:
+
 	# run in background and output logs
 	libra-node --config ${DATA_PATH}node.configs.toml
 
