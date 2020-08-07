@@ -143,7 +143,7 @@ impl Config {
         config.configs_ol_miner.preimage = "".to_string();
         config.configs_ol_miner.proof = "".to_string();
 
-        config.storage.prune_window=Some(100000);
+        config.storage.prune_window=Some(5_000_000);
 
         // TODO: place in path with other files.
         // Save file

@@ -66,7 +66,8 @@ endif
 
 # set up the environment
 install: env compile
-env: deps rust
+env: 
+	sudo bash ../setup.sh
 compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear init add-proofs keys register
