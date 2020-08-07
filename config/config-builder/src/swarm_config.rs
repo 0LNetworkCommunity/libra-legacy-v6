@@ -23,6 +23,8 @@ impl SwarmConfig {
         let mut config_files = vec![];
 
         for (index, config) in configs.iter_mut().enumerate() {
+            println!("====\nNode:{:?}\nconfig{:?}", &index, &config.test);
+
             let node_dir = output_dir.join(index.to_string());
             std::fs::create_dir_all(&node_dir)?;
 

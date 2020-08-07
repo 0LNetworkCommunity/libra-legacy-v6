@@ -1,6 +1,5 @@
-use crate::{storage_helper::StorageHelper,error::Error};
+use crate::{error::Error, storage_helper::StorageHelper};
 use structopt::StructOpt;
-
 
 #[derive(Debug, StructOpt)]
 pub struct Initialize {

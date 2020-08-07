@@ -92,8 +92,10 @@ pub fn encode_genesis_change_set(
     };
 
     // Initializing testnet only when env is set to test
-    if(node_env != "prod") {
+    if node_env != "prod" {
         initialize_testnet(&mut genesis_context);
+    } else {
+        println!("INITIALIZING WITH PROD CONSTANTS")
     }
     create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);

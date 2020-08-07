@@ -187,9 +187,14 @@ impl ClientProxy {
         let mut client = LibraClient::new(url.clone(), waypoint)?;
 
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
-        let (main_addr, _ )= wallet.new_address().unwrap();
+        let (auth_key, _ )= wallet.new_address().unwrap();
+
+        println!("client_proxy.rs: auth_key: {:?}", auth_key.to_string());
 
         let vec_addresses = wallet.get_addresses().unwrap();
+
+        println!("client_proxy.rs: vec_addresses: {:?}", vec_addresses);
+
         // Expect this to be zero before we haven't populated the address map in the repo
         assert!(vec_addresses.len() ==1);
         // Empty hashmap should be fine
@@ -206,8 +211,8 @@ impl ClientProxy {
         }
 
         let mut address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
-        address_to_ref_id.insert(main_addr.derived_address(),0);
-        Ok(ClientProxy {
+        address_to_ref_id.insert(auth_key.derived_address(),0);
+        let proxy = ClientProxy {
             client,
             accounts: vec_account_data, //Vec<AccountData>
             address_to_ref_id, // TODO this is a different struct than addr_map
@@ -216,7 +221,9 @@ impl ClientProxy {
             wallet, //wallet: WalletLibrary::Mnemonic::from(mnemonic_string)?,
             sync_on_wallet_recovery: true, // sync_on_wallet_recovery,
             temp_files: vec![]
-        })
+        };
+        
+        Ok(proxy)
     }
 
     /// 0L: submits a redeem transaction with the VDF proof.
@@ -313,8 +320,10 @@ impl ClientProxy {
 
         println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings );
 
+        // let (sender_address, _) =
+        //     self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
+        self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
         self.client.get_miner_state(sender_address ).unwrap()
     }
@@ -1241,11 +1250,18 @@ impl ClientProxy {
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
+        let mut addr_para = para.clone().to_owned();
+        if para.starts_with("0x") {
+            //          "8d3fe9ec9b6dd1b339eb416e287de265"
+            addr_para = "00000000000000000000000000000000".to_owned();
+            println!("query for address:{}", addr_para);
+            return Ok((ClientProxy::address_from_strings(addr_para.as_str() )?, None))
+        }
         if is_authentication_key(para) {
             let auth_key = ClientProxy::authentication_key_from_string(para)?;
             Ok((auth_key.derived_address(), Some(auth_key)))
-        } else if is_address(para) {
-            Ok((ClientProxy::address_from_strings(para)?, None))
+        } else if is_address(para ) {
+            Ok((ClientProxy::address_from_strings(para )?, None))
         } else {
             let account_ref_id = para.parse::<usize>().map_err(|error| {
                 format_parse_data_error(

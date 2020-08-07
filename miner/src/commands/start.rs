@@ -38,8 +38,8 @@ impl Runnable for StartCmd {
         let readline = rl.readline(">> ");
 
         match readline {
-            Ok(line) => {
-                println!("Mnemonic: \n{}", line);
+            Ok(mnemonic_string) => {
+                // println!("Mnemonic: \n{}", mnemonic_string);
                 let waypoint: Waypoint;
                 let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
                 match parsed_waypoint {
@@ -48,7 +48,8 @@ impl Runnable for StartCmd {
                         waypoint = parsed_waypoint.unwrap();
                     }
                     Err(_e) => {
-                        println!("Error: Waypoint cannot be parsed from command line args. Received: {:?}\nDid you pass --waypoint=0:<hash>? \n WILL FALLBACK TO WAYPOINT FROM miner.toml\n {:?}",
+                        println!("Info: No waypoint parsed from command line args. Received: {:?}\n\
+                        Using waypoint in miner.toml\n {:?}",
                         self.waypoint,
                         miner_configs.chain_info.base_waypoint);
                         waypoint = miner_configs.chain_info.base_waypoint.parse().unwrap();
@@ -56,11 +57,11 @@ impl Runnable for StartCmd {
                     }
                 }
 
-                let result = build_block::mine_and_submit(&miner_configs, line, waypoint);
+                let result = build_block::mine_and_submit(&miner_configs, mnemonic_string, waypoint);
                 match result {
-                    Ok(_val) => { }
-                    Err(_) => {
-                        println!("Failed to mine_and_submit");
+                    Ok(_val) => {}
+                    Err(err) => {
+                        println!("Failed to mine_and_submit: {}", err);
                     }
                 }
             }
@@ -74,8 +75,6 @@ impl Runnable for StartCmd {
                 println!("Error: {:?}", err);
             }
         }
-
-        status_ok!("Start mining...", "ok"); //TODO: Print something more interesting here.
     }
 }
 
