@@ -200,7 +200,9 @@ start:
 daemon-config:
 	cp -f libra-node.service /lib/systemd/system/
 	cp -f miner.service /lib/systemd/system/
-	mkdir ~/logs
+	@echo Wiping systemd logs!
+	[ -d "~/logs" ] && rm -rf ~/logs
+	[ ! -d "~/logs" ] && mkdir ~/logs
 	touch ~/logs/output-libra-node.log
 	touch ~/logs/output-miner.log
 
