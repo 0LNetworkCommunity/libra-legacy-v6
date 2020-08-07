@@ -122,16 +122,19 @@ github:
 clear:
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
 
-fixtures:
+blocks:
+	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
-	rm block_0.json
-	cp fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
+	if test -f block_0.json; then \
+		rm block_0.json; \
+	fi 
+	cp ./fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
 
 ifeq (${ENV}, test)
-	cp fixtures/block_0.json.test.${NAMESPACE} block_0.json
+	cp ./fixtures/block_0.json.test.${NAMESPACE} block_0.json
 else
-	cp fixtures/block_0.json.prod.${NAMESPACE} block_0.json
+	cp ./fixtures/block_0.json.prod.${NAMESPACE} block_0.json
 endif
 endif
 
