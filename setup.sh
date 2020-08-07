@@ -3,7 +3,7 @@
 # targeting ububtu
 
 apt update
-apt install -y git nano build-essential cmake clang llvm libgmp-dev
+apt install -y git vim build-essential cmake clang llvm libgmp-dev secure-delete
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 source $HOME/.cargo/env
 
