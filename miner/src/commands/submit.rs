@@ -50,11 +50,15 @@ fn submit_test () -> Result<String,Error>{
     //unwrap().parse::<Waypoint>();
 
     let mut client = LibraClient::new(url.unwrap(), parsed_waypoint.unwrap()).unwrap();
-    let account_state = client.get_account_state(account_address, true);
-    dbg!(account_state);
-    // let sequence_number = client.get_seq
-    // get_sequence_number(account_address);
-    // dbg!(&sequence_number);
+    let account_state = client.get_account_state(account_address, true).unwrap();
+    dbg!(&account_state);
+
+    let mut sequence_number= 0u64;
+    if account_state.0.is_some() {
+        sequence_number = account_state.0.unwrap().sequence_number;
+    }
+
+    dbg!(&sequence_number);
 
     // let sender_account_data = AccountData {
     //     account_address,
