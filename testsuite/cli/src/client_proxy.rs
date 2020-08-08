@@ -204,7 +204,7 @@ impl ClientProxy {
             vec_account_data.push(Self::get_account_data_from_address(
                 &mut client,
                 address,
-                false,
+                true,
                 None,
                 None,
             )?);
