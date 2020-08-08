@@ -253,6 +253,8 @@ impl ClientProxy {
                 TransactionArgument::U8Vector(challenge),
                 TransactionArgument::U64(difficulty),
                 TransactionArgument::U8Vector(proof),
+                TransactionArgument::U64(10u64), //:x
+                
             ],
         );
 
