@@ -3,13 +3,8 @@
 
 
 use abscissa_core::{Command, Options, Runnable};
-
-
-
-
 use crate::prelude::*;
-
-use libra_types::{transaction::{TransactionArgument, helpers::create_user_txn, TransactionPayload}, waypoint::Waypoint};
+use libra_types::{transaction::{TransactionArgument, helpers::create_user_txn, TransactionPayload}, waypoint::Waypoint, account_address::AccountAddress};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use crate::{submit_tx, block::*, delay::delay_difficulty};
@@ -17,9 +12,8 @@ use anyhow::Error;
 use std::fs;
 use std::io::BufReader;
 use std::path::Path;
-use cli::AccountData;
-
-
+use cli::{libra_client::LibraClient, AccountData};
+use reqwest::Url;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct SubmitCmd {
@@ -36,64 +30,80 @@ impl Runnable for SubmitCmd {
         submit_test();
     }
 
-    fn submit_test () -> Result<String,Err>{
-        let miner_configs = app_config();
+}
 
-        let height = 1u64;
-        let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(),height)).expect("Could not open block file");
-        let reader = BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).unwrap();
+fn submit_test () -> Result<String,Error>{
+    let miner_configs = app_config();
 
+    let height = 1u64;
+    // let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(),height)).expect("Could not open block file");
+    // let reader = BufReader::new(file);
+    // let block: Block = serde_json::from_reader(reader).unwrap();
+    let hex_literal = format!("0x{}", &miner_configs.profile.account);
+    let account_address = AccountAddress::from_hex_literal(&hex_literal).unwrap();
+    dbg!(&account_address);
 
-        let sender_account_data = AccountData {
-            address: (),
-            authentication_key: (),
-            key_pair: (),
-            sequence_number: (),
-            status: (),
-        }
+    let url= miner_configs.chain_info.node.as_ref().unwrap().parse::<Url>();
+    // let url: Result<Url, Error> = miner_configs.chain_info.node;
+    let parsed_waypoint: Result<Waypoint, Error> = miner_configs.chain_info.base_waypoint.parse();
+    
+    //unwrap().parse::<Waypoint>();
 
-        // create the MinerState transaction script
-        let script = Script::new(
-            StdlibScript::Redeem.compiled_bytes().into_vec(),
-            vec![],
-            vec![
-                TransactionArgument::U8Vector(challenge),
-                TransactionArgument::U64(difficulty),
-                TransactionArgument::U8Vector(proof),
-                TransactionArgument::U64(tower_height),
-                
-            ],
-        );
+    let mut client = LibraClient::new(url.unwrap(), parsed_waypoint.unwrap()).unwrap();
+    let account_state = client.get_account_state(account_address, true);
+    dbg!(account_state);
+    // let sequence_number = client.get_seq
+    // get_sequence_number(account_address);
+    // dbg!(&sequence_number);
 
-        // sign the transaction script
-        let txn = create_user_txn(
-            txn_expiration,
-            signer,
-            payload,
-            sender_address,
-            sender_sequence_number,
-            max_gas_amount,
-            gas_unit_price,
-            gas_currency_code, // for compatibility with UTC's timestamp.
-        )?;
+    // let sender_account_data = AccountData {
+    //     account_address,
+    //     authentication_key: miner_configs.profile.auth_key,
+    //     key_pair: miner_configs.profile.private_key,
+    //     sequence_number,
+    //     status,
+    // };
 
-        // Submit the transaction with the client proxy
-        // let sender_account = self.accounts.get_mut(sender_ref_id);
-        libra_client.submit_transaction(
-            Some(&mut sender_account_data), 
-            txn
-        )?;
+    // // create the MinerState transaction script
+    // let script = Script::new(
+    //     StdlibScript::Redeem.compiled_bytes().into_vec(),
+    //     vec![],
+    //     vec![
+    //         TransactionArgument::U8Vector(challenge),
+    //         TransactionArgument::U64(difficulty),
+    //         TransactionArgument::U8Vector(proof),
+    //         TransactionArgument::U64(tower_height),
+            
+    //     ],
+    // );
 
-        // TODO: This was making the client fail.
-        // if is_blocking {
-        //     let sequence_number = self
-        //         .get_account_resource_and_update(sender_address)?
-        //         .sequence_number;
-        //     self.wait_for_transaction(sender_address, sequence_number)?;
-        // }
-        Ok("Succcess")
-    }
+    // // sign the transaction script
+    // let txn = create_user_txn(
+    //     txn_expiration,
+    //     signer,
+    //     payload,
+    //     sender_address,
+    //     sender_sequence_number,
+    //     max_gas_amount,
+    //     gas_unit_price,
+    //     gas_currency_code, // for compatibility with UTC's timestamp.
+    // )?;
+
+    // // Submit the transaction with the client proxy
+    // // let sender_account = self.accounts.get_mut(sender_ref_id);
+    // LibraClient::submit_transaction(
+    //     Some(&mut sender_account_data), 
+    //     txn
+    // )?;
+
+    // TODO: This was making the client fail.
+    // if is_blocking {
+    //     let sequence_number = self
+    //         .get_account_resource_and_update(sender_address)?
+    //         .sequence_number;
+    //     self.wait_for_transaction(sender_address, sequence_number)?;
+    // }
+    Ok("Succcess".to_owned())
 }
 // impl Runnable for SubmitCmd {
 //     fn run(&self) {

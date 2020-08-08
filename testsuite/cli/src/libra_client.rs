@@ -163,6 +163,7 @@ impl LibraClient {
         }
     }
 
+    /// get account state
     pub fn get_account_state_blob(
         &mut self,
         account: AccountAddress,
@@ -190,7 +191,7 @@ impl LibraClient {
             ),
         }
     }
-
+/// get events
     pub fn get_events(
         &mut self,
         event_key: String,
@@ -352,7 +353,7 @@ impl LibraClient {
             Some(account_view) => Ok(account_view.sequence_number),
         }
     }
-
+/// get events access path
     pub fn get_events_by_access_path(
         &mut self,
         access_path: AccessPath,

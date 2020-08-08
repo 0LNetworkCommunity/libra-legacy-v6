@@ -93,14 +93,14 @@ impl TestConfig {
     pub fn random_account_key(&mut self, rng: &mut StdRng) {
         // 0L NOTE: This is for testing only, including libra-swarm.
         let privkey = Ed25519PrivateKey::generate(rng);
-        // self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
-        // println!("=========\n\
-        // Swarm Auth_Key\n\
-        // {:?}", &self.auth_key.unwrap().to_string());
+        self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
+        println!("=========\n\
+        Swarm Auth_Key\n\
+        {:?}", &self.auth_key.unwrap().to_string());
 
-        // println!("Swarm Private Key:\n\
-        // {:?}\n\
-        // =========", privkey.to_string() );
+        println!("Swarm Private Key:\n\
+        {:?}\n\
+        =========", privkey.to_string() );
 
         self.operator_keypair = Some(AccountKeyPair::load(privkey));
         dbg!(&self.operator_keypair);
