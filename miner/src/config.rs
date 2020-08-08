@@ -168,7 +168,7 @@ impl Default for ChainInfo {
             block_dir: "./blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
             base_waypoint: "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b".to_owned(),
-            node: None,
+            node: Some("http://localhost:8080".to_owned()),
         }
     }
 }
