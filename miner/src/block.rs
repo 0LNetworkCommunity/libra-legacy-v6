@@ -158,7 +158,7 @@ pub mod build_block {
                 let block = mine_once(&config)?;
                 status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
 
-                mining_height = block.height + 1;
+                // mining_height = block.height + 1;
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
@@ -174,6 +174,7 @@ pub mod build_block {
                             block.data,                           // proof: Vec<u8>,
                             waypoint,                             // waypoint: Waypoint,
                             mnemonic.to_string(),
+                            block.height,
                             node.to_string(),
                         ) {
                             Ok(v) => println!("Submitted block: {:?}", block.height.to_string() ),
@@ -193,6 +194,8 @@ pub mod build_block {
                         .context("No Waypoint for client provided")
                         .into());
                 }
+            
+                mining_height = block.height + 1;
             }
         }
     }
@@ -217,6 +220,7 @@ pub mod build_block {
                 block.data,                           // proof: Vec<u8>,
                 waypoint,                             // waypoint: Waypoint,
                 mnemonic.to_string(),
+                block.height,
                 node.to_string(),
             ).unwrap();
             status_ok!("Submitted {}",block.height.to_string());

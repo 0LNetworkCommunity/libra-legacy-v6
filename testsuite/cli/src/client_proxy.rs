@@ -233,16 +233,11 @@ impl ClientProxy {
         challenge: Vec<u8>,
         difficulty: u64,
         proof: Vec<u8>,
+        tower_height: u64,
         is_blocking: bool
         ) -> Result<()>{
 
-        // let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-
-        // let sender_og = self.accounts.get(sender_ref_id).unwrap();
-
-
         let mut sender = Self::get_account_data_from_address(&mut self.client,sender_address,true,None,None).unwrap();
-        // let sender = self.accounts.get(sender_ref_id).unwrap();
 
 
         // create the MinerState transaction script
@@ -253,7 +248,7 @@ impl ClientProxy {
                 TransactionArgument::U8Vector(challenge),
                 TransactionArgument::U64(difficulty),
                 TransactionArgument::U8Vector(proof),
-                TransactionArgument::U64(10u64), //:x
+                TransactionArgument::U64(tower_height),
                 
             ],
         );
@@ -279,7 +274,6 @@ impl ClientProxy {
             self.wait_for_transaction(sender_address, sequence_number)?;
         }
         Ok(())
-
     }
 
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
@@ -301,12 +295,15 @@ impl ClientProxy {
         // TODO: determine how this will be serialized.
         // Note: Was producing error because hex was being submitted and not decoded.
         let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+        
+        let tower_height = space_delim_strings[5].parse::<u64>().unwrap();
 
         self.execute_send_proof(
             sender_address,
             challenge,
             difficulty,
             proof,
+            tower_height,
             false
         )?;
         Ok(())
@@ -835,6 +832,14 @@ impl ClientProxy {
         );
         loop {
             stdout().flush().unwrap();
+
+            // TODO: first transaction in sequence fails
+            // let prev_seq_num ;
+            // if sequence_number > 0 { 
+            //     prev_seq_num =0;
+            // } else {
+            //     prev_seq_num = sequence_number - 1;
+            // }
 
             match self
                 .client

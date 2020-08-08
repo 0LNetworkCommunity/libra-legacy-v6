@@ -22,16 +22,11 @@ pub fn submit_vdf_proof_tx_to_network(
     proof: Vec<u8>,
     waypoint: Waypoint,
     mnemonic_string: String,
+    tower_height: u64,
     node: String,
     // max_retries: Some(u64), // TODO (Ping): used below on retries.
 ) -> Result<(), Error> {
     //! Functions for submitting proofs on chain
-
-    // TODO (ZM): I think this can generate a number of configs including Waypoint.
-    // let mut swarm_configs = NodeConfig::load(DEFAULT_NODE).expect("Unable to load config");
-    // NOTE (LG): We're using a testing tool ClientProxy so that the miner has
-    // its own client connection to network.
-    // ClientProxy is an abstraction on top of Libra Client and other modules. (as with all testing tools) is unstable and in develoment.
 
     // create the ClientProxy, with credentials, and point to network with a waypoint.
     let mut libra_client = ClientProxy::new_for_ol(
@@ -51,9 +46,11 @@ pub fn submit_vdf_proof_tx_to_network(
             challenge,      // challenge: Vec<u8>,
             difficulty,     // difficulty: u64,
             proof,          // proof: Vec<u8>
-            false,
+            tower_height,   // tower_height: u64
+            true,           // is_blocking
         )
         .map_err(|err| ErrorKind::Transaction.context(err))?;
+
 
     Ok(())
 }
