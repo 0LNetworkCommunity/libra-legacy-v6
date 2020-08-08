@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 use abscissa_core::{Command, Options, Runnable};
-use libra_wallet::WalletLibrary;
+use libra_wallet::{ChildNumber, WalletLibrary};
 use crate::config;
 use toml;
 use std::{
@@ -33,7 +33,8 @@ impl Runnable for KeygenCmd {
 
         let mut miner_configs = config::OlMinerConfig::default();
         miner_configs.profile.auth_key = auth_key.to_string();
-
+        miner_configs.profile.account = auth_key.derived_address().to_string();
+        
         let toml = toml::to_string(&miner_configs).unwrap();
         println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
         println!("==========================\n");
