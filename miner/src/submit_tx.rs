@@ -51,7 +51,7 @@ pub fn submit_vdf_proof_tx_to_network(
             challenge,      // challenge: Vec<u8>,
             difficulty,     // difficulty: u64,
             proof,          // proof: Vec<u8>
-            true,
+            false,
         )
         .map_err(|err| ErrorKind::Transaction.context(err))?;
 
