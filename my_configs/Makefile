@@ -198,13 +198,14 @@ daemon:
 		rm -rf ~/logs*; \
 	fi 
 
-	mkdir ~/logs;
-	touch ~/logs/output-libra-node.log;
+	mkdir ~/logs
+	touch ~/logs/output-libra-node.log
 
 	systemctl daemon-reload
 	systemctl stop libra-node.service
 	systemctl start libra-node.service
-	sleep 2 && systemctl status libra-node.service
+	sleep 2
+	systemctl status libra-node.service &
 	tail -f ~/logs/output-libra-node.log
 
 
