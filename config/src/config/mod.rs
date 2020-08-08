@@ -374,15 +374,10 @@ pub trait PersistableConfig: Serialize + DeserializeOwned {
     }
 
     fn save_config<P: AsRef<Path>>(&self, output_file: P) -> Result<()> {
-        println!("save_config 0");
         let contents = toml::to_vec(&self)?;
-        println!("save_config 1");
-
         let mut file = File::create(output_file)?;
-        println!("save_config 2");
 
         file.write_all(&contents)?;
-        println!("save_config 3");
 
         // @TODO This causes a major perf regression that needs to be evaluated before enabling
         // file.sync_all()?;
