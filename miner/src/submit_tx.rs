@@ -40,7 +40,7 @@ pub fn submit_vdf_proof_tx_to_network(
     println!("Debug Libra Client Accounts: \n{:?}", libra_client.accounts);
     let sender_account = libra_client.accounts[0].address;
 
-    libra_client
+    Ok(match libra_client
         .execute_send_proof(
             sender_account, // sender: &AccountData,
             challenge,      // challenge: Vec<u8>,
@@ -48,11 +48,16 @@ pub fn submit_vdf_proof_tx_to_network(
             proof,          // proof: Vec<u8>
             tower_height,   // tower_height: u64
             true,           // is_blocking
-        )
-        .map_err(|err| ErrorKind::Transaction.context(err))?;
-
-
-    Ok(())
+        ){
+            Ok(_) => {
+                println!("execute_send_proof - proof submitted");
+            }
+            Err(e) => {
+                // TODO: ErrorKind::Transaction.context(e) is providing unresolved backtrace, and we don't see details.
+                // Move VM doesn't provide much more detail than "transaction failed to execute; status: ABORTED!"
+                println!("execute_send_proof - proof error: {:?}", ErrorKind::Transaction.context(e));
+            }
+        })
 }
 
 

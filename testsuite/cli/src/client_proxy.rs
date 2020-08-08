@@ -827,7 +827,7 @@ impl ClientProxy {
     ) -> Result<()> {
         let mut max_iterations = 5000;
         println!(
-            "waiting for {} with sequence number {}",
+            "waiting for tx from acc: {} with sequence number: {}",
             account, sequence_number
         );
         loop {
