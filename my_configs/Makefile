@@ -199,8 +199,7 @@ daemon:
 	fi 
 
 	mkdir ~/logs;
-	touch ~/logs/output-libra-node.log; \
-	touch ~/logs/output-miner.log; \
+	touch ~/logs/output-libra-node.log;
 
 	systemctl daemon-reload
 	systemctl stop libra-node.service
