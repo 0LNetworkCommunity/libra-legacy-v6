@@ -237,7 +237,14 @@ impl ClientProxy {
         is_blocking: bool
         ) -> Result<()>{
 
-        let mut sender = Self::get_account_data_from_address(&mut self.client,sender_address,true,None,None).unwrap();
+
+        // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
+        let mut sender_account_data = Self::get_account_data_from_address(
+            &mut self.client,sender_address,
+            true,
+            None, // Pass a keypair from swarm tests here.
+            None
+        ).unwrap();
 
 
         // create the MinerState transaction script
@@ -256,7 +263,7 @@ impl ClientProxy {
         // sign the transaction script
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(script),
-            &sender,
+            &sender_account_data,
             None, /* max_gas_amount */
             None, /* gas_unit_price */
             None, /* gas_currency_code */
@@ -264,7 +271,7 @@ impl ClientProxy {
 
         // Submit the transaction with the client proxy
         // let sender_account = self.accounts.get_mut(sender_ref_id);
-        &mut self.client.submit_transaction(Some(&mut sender), txn)?;
+        &mut self.client.submit_transaction(Some(&mut sender_account_data), txn)?;
 
         // TODO: This was making the client fail.
         if is_blocking {
