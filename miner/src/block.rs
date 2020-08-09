@@ -382,6 +382,7 @@ fn create_fixtures() {
             profile: Profile {
                 auth_key: auth_key.to_string(),
                 account: "000000000000000000000000deadbeef".to_owned(),
+                operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -450,6 +451,7 @@ fn create_fixtures() {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                     .to_owned(),
                 account: "000000000000000000000000deadbeef".to_owned(),
+                operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
