@@ -22,7 +22,7 @@ fn test_submit() {
         block_data,                // proof: Vec<u8>,
         parsed_waypoint,           // waypoint: Waypoint,
         mnemonic_string.to_owned(),
-        node.to_owned(),
+        10u64,
         "http://localhost:8080".to_owned(),
     );
     assert!(result.is_ok());

@@ -74,7 +74,6 @@ pub mod build_block {
         path::Path,
         path::PathBuf,
         time::Instant,
-        env,
     };
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
