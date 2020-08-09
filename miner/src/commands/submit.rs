@@ -2,7 +2,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::{block::Block, prelude::*};
-use libra_types::{waypoint::Waypoint, account_address::AccountAddress};
+use libra_types::{waypoint::Waypoint, account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
@@ -14,7 +14,7 @@ use anyhow::Error;
 //     account::{Account, AccountData, AccountTypeSpecifier},
 //     keygen::KeyGen,
 // };
-use cli::{libra_client::LibraClient, AccountData};
+use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
 use std::path::PathBuf;
 use libra_config::config::NodeConfig;
@@ -98,8 +98,10 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
         config.base.waypoint.waypoint_from_config().unwrap().clone()
     ).unwrap();
 
-    let private_key = config.test.unwrap().operator_keypair.unwrap();
-    let auth_key = config.test.unwrap().auth_key.unwrap();
+    
+    let mut private_key = config.test.unwrap().operator_keypair.unwrap();
+    let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
+
     let address = auth_key.derived_address();
     let account_state = client.get_account_state(address.clone(), true).unwrap();
     dbg!(&account_state);
@@ -127,7 +129,7 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     // Plz Halp (ZM):
     // sign the transaction script
     let txn = create_user_txn(
-        signer,
+        &KeyPair::from(private_key.take_private().clone().unwrap()),
         TransactionPayload::Script(script),
         address,
         sequence_number,
@@ -139,12 +141,12 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
 
     // Plz Halp  (ZM):
     // get account_data struct
-    let sender_account_data = AccountData {
+    let mut sender_account_data = AccountData {
         address,
         authentication_key: Some(auth_key.to_vec()),
-        key_pair: Some(KeyPair{private_key: operator_key.take_private(), public_key: operator_key.public_key()))},
+        key_pair: Some(KeyPair::from(private_key.take_private().unwrap())),
         sequence_number,
-        status,
+        status: AccountStatus::Persisted,
     };
 
     // Plz Halp (ZM):
