@@ -43,7 +43,7 @@ fn submit_test () -> Result<String,Error>{
     let account_address = AccountAddress::from_hex_literal(&hex_literal).unwrap();
     dbg!(&account_address);
 
-    let url= miner_configs.chain_info.node.as_ref().unwrap().parse::<Url>();
+    let url = miner_configs.chain_info.node.as_ref().unwrap().parse::<Url>();
     // let url: Result<Url, Error> = miner_configs.chain_info.node;
     let parsed_waypoint: Result<Waypoint, Error> = miner_configs.chain_info.base_waypoint.parse();
     
@@ -59,6 +59,9 @@ fn submit_test () -> Result<String,Error>{
     }
 
     dbg!(&sequence_number);
+
+    // let privkey: Result<Ed25519PrivateKey, Error> = miner_configs.profile.account.parse();
+    // let operator_keypair = Some(AccountKeyPair::load(privkey));
 
     // let sender_account_data = AccountData {
     //     account_address,
