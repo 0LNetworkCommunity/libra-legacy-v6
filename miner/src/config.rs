@@ -6,7 +6,7 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-use abscissa_core::path::{PathBuf, Path};
+use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 
 /// OlMiner Configuration

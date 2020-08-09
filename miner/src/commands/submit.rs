@@ -4,15 +4,15 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::prelude::*;
-use libra_types::{transaction::{TransactionArgument, helpers::create_user_txn, TransactionPayload}, waypoint::Waypoint, account_address::AccountAddress};
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
-use crate::{submit_tx, block::*, delay::delay_difficulty};
+use libra_types::{waypoint::Waypoint, account_address::AccountAddress};
+
+
+
 use anyhow::Error;
-use std::fs;
-use std::io::BufReader;
-use std::path::Path;
-use cli::{libra_client::LibraClient, AccountData};
+
+
+
+use cli::{libra_client::LibraClient};
 use reqwest::Url;
 
 #[derive(Command, Debug, Default, Options)]
@@ -35,7 +35,7 @@ impl Runnable for SubmitCmd {
 fn submit_test () -> Result<String,Error>{
     let miner_configs = app_config();
 
-    let height = 1u64;
+    let _height = 1u64;
     // let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(),height)).expect("Could not open block file");
     // let reader = BufReader::new(file);
     // let block: Block = serde_json::from_reader(reader).unwrap();

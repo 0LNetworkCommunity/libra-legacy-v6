@@ -23,6 +23,7 @@ fn test_submit() {
         parsed_waypoint,           // waypoint: Waypoint,
         mnemonic_string.to_owned(),
         node.to_owned(),
+        "http://localhost:8080".to_owned(),
     );
     assert!(result.is_ok());
     assert_eq!(1, 1, "test");

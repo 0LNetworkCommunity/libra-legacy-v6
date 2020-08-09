@@ -39,7 +39,7 @@ impl Block {
     pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
 
 
-        let mut file = std::fs::File::open(path)?;
+        let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
         return Ok((encode(block.preimage),encode(block.data)));
@@ -49,7 +49,7 @@ impl Block {
 
         let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
 
-        let mut file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -177,7 +177,7 @@ pub mod build_block {
                             block.height,
                             node.to_string(),
                         ) {
-                            Ok(v) => println!("Submitted block: {:?}", block.height.to_string() ),
+                            Ok(_v) => println!("Submitted block: {:?}", block.height.to_string() ),
                             Err(e) => println!("Error submitting mined block: {:?}", e),
                         }
                         // unwrap();

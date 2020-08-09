@@ -3,7 +3,7 @@
 
 use crate::error::{Error, ErrorKind};
 use cli::client_proxy::ClientProxy;
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use libra_types::{waypoint::Waypoint};
 use std::fs::File;
 use std::io::BufReader;
 use libra_json_rpc_types::views::MinerStateView;
