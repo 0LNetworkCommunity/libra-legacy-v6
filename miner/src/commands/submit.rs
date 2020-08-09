@@ -5,15 +5,18 @@
 use abscissa_core::{Command, Options, Runnable};
 use crate::prelude::*;
 use libra_types::{waypoint::Waypoint, account_address::AccountAddress};
-
-
-
+use libra_crypto::{
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
+    // test_utils::KeyPair,
+};
+use libra_crypto::test_utils;
 use anyhow::Error;
 
 
 
-use cli::{libra_client::LibraClient};
+use cli::{libra_client::LibraClient, AccountData};
 use reqwest::Url;
+use test_utils::KeyPair;
 
 #[derive(Command, Debug, Default, Options)]
 pub struct SubmitCmd {
@@ -36,9 +39,11 @@ fn submit_test () -> Result<String,Error>{
     let miner_configs = app_config();
 
     let _height = 1u64;
+    // // get an account height
     // let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(),height)).expect("Could not open block file");
     // let reader = BufReader::new(file);
     // let block: Block = serde_json::from_reader(reader).unwrap();
+
     let hex_literal = format!("0x{}", &miner_configs.profile.account);
     let account_address = AccountAddress::from_hex_literal(&hex_literal).unwrap();
     dbg!(&account_address);
@@ -48,6 +53,13 @@ fn submit_test () -> Result<String,Error>{
     let parsed_waypoint: Result<Waypoint, Error> = miner_configs.chain_info.base_waypoint.parse();
     
     //unwrap().parse::<Waypoint>();
+    let auth_key = &miner_configs.profile.auth_key;
+    dbg!(auth_key);
+    let privkey = &miner_configs.profile.operator_private_key;
+    // let operator_keypair = Some(AccountKeyPair::load(privkey));
+    dbg!(privkey);
+
+    // Create a client object
 
     let mut client = LibraClient::new(url.unwrap(), parsed_waypoint.unwrap()).unwrap();
     let account_state = client.get_account_state(account_address, true).unwrap();
@@ -57,21 +69,29 @@ fn submit_test () -> Result<String,Error>{
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
-
     dbg!(&sequence_number);
 
-    // let privkey: Result<Ed25519PrivateKey, Error> = miner_configs.profile.account.parse();
-    // let operator_keypair = Some(AccountKeyPair::load(privkey));
 
+    // // get a key key pair to use for signing transactions.
+    //    let key_pair = KeyPair {
+    //     /// the private key component
+    //     private_key: privkey,
+    //     /// the public key component
+    //     public_key: Ed25519PublicKey.from(privkey),
+    // };
+    // dbg!(key_pair);
+
+
+    // // get account_data struct
     // let sender_account_data = AccountData {
     //     account_address,
-    //     authentication_key: miner_configs.profile.auth_key,
-    //     key_pair: miner_configs.profile.private_key,
+    //     authentication_key: auth_key,
+    //     key_pair,
     //     sequence_number,
     //     status,
     // };
 
-    // // create the MinerState transaction script
+    // // Create the unsigned MinerState transaction script
     // let script = Script::new(
     //     StdlibScript::Redeem.compiled_bytes().into_vec(),
     //     vec![],
@@ -96,14 +116,13 @@ fn submit_test () -> Result<String,Error>{
     //     gas_currency_code, // for compatibility with UTC's timestamp.
     // )?;
 
-    // // Submit the transaction with the client proxy
-    // // let sender_account = self.accounts.get_mut(sender_ref_id);
-    // LibraClient::submit_transaction(
+    // // Submit the transaction with libra_client
+    // client.submit_transaction(
     //     Some(&mut sender_account_data), 
     //     txn
     // )?;
 
-    // TODO: This was making the client fail.
+    // TODO: Make synchronous.
     // if is_blocking {
     //     let sequence_number = self
     //         .get_account_resource_and_update(sender_address)?
@@ -112,59 +131,3 @@ fn submit_test () -> Result<String,Error>{
     // }
     Ok("Succcess".to_owned())
 }
-// impl Runnable for SubmitCmd {
-//     fn run(&self) {
-//         let miner_configs = app_config();
-
-//         let mut rl = Editor::<()>::new();
-
-//         println!("Enter your 0L mnemonic");
-
-//         let readline = rl.readline(">> ");
-
-
-//         match readline {
-//             Ok(line) => {
-//                 println!("Mnemonic: \n{}", line);
-
-//                 let waypoint: Waypoint;
-//                 let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
-//                 match parsed_waypoint {
-//                     Ok(v) => {
-//                         println!("Using Waypoint from CLI args:\n{}", v);
-//                         waypoint = parsed_waypoint.unwrap();
-//                     }
-//                     Err(_e) => {
-//                         println!("Error: Waypoint cannot be parsed from command line args. Received: {:?}\nDid you pass --waypoint=0:<hash>? \n WILL FALLBACK TO WAYPOINT FROM miner.toml\n {:?}",
-//                         self.waypoint,
-//                         miner_configs.chain_info.base_waypoint);
-//                         waypoint = miner_configs.chain_info.base_waypoint.parse().unwrap();
-
-//                     }
-//                 }
-
-//                 let result = build_block::submit_block(
-//                     &miner_configs,
-//                     line,
-//                     waypoint,
-//                     self.height);
-//                 match result {
-//                     Ok(_val) => { }
-//                     Err(_) => {
-//                         println!("Failed to submit block");
-//                     }
-//                 }
-//             }
-//             Err(ReadlineError::Interrupted) => {
-//                 println!("CTRL-C");
-//             }
-//             Err(ReadlineError::Eof) => {
-//                 println!("CTRL-D");
-//             }
-//             Err(err) => {
-//                 println!("Error: {:?}", err);
-//             }
-//         }
-
-//     }
-// }
