@@ -10,7 +10,7 @@ use miner::submit_tx::submit_vdf_proof_tx_to_network;
 fn test_submit() {
     // let mnemonic = "culture stone oblige practice embrace cable snow rich parent bubble robot post skull ankle reason accident coral liar ginger concert bachelor zebra vacuum cream";
     let mnemonic_string = "culture stone oblige practice embrace cable snow rich parent bubble robot post skull ankle reason accident coral liar ginger concert bachelor zebra vacuum cream";
-    let node = "http://localhost:63845";
+    let _node = "http://localhost:63845";
     let waypoint_str = "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b";
     println!("waypoint \n{:?}", waypoint_str);
     let parsed_waypoint: Waypoint = waypoint_str.parse().unwrap();
