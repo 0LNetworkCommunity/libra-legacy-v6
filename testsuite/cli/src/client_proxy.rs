@@ -6,12 +6,10 @@ use crate::{
     libra_client::LibraClient,
     AccountData, AccountStatus,
 };
-
 use anyhow::{bail, ensure, format_err, Error, Result};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
-    PrivateKey,
     traits::ValidCryptoMaterial,
     x25519, ValidCryptoMaterialStringExt,
 };
@@ -236,24 +234,15 @@ impl ClientProxy {
         difficulty: u64,
         proof: Vec<u8>,
         tower_height: u64,
-        is_blocking: bool,
-        key_pair: Option<KeyPair<Ed25519PrivateKey, Ed25519PublicKey>>
+        is_blocking: bool
         ) -> Result<()>{
-        
-        //TODO: if this is test environment
-        if true {
-
-            let privkey = Ed25519PrivateKey::from_encoded_string("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3");
-            dbg!(privkey);
-        }
 
 
         // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
         let mut sender_account_data = Self::get_account_data_from_address(
-            &mut self.client,
-            sender_address,
+            &mut self.client,sender_address,
             true,
-            key_pair, // Pass a keypair from swarm tests here.
+            None, // Pass a keypair from swarm tests here.
             None
         ).unwrap();
 
@@ -282,9 +271,7 @@ impl ClientProxy {
 
         // Submit the transaction with the client proxy
         // let sender_account = self.accounts.get_mut(sender_ref_id);
-        &mut self.client.submit_transaction(
-            Some(&mut sender_account_data), 
-            txn)?;
+        &mut self.client.submit_transaction(Some(&mut sender_account_data), txn)?;
 
         // TODO: This was making the client fail.
         if is_blocking {
@@ -324,8 +311,7 @@ impl ClientProxy {
             difficulty,
             proof,
             tower_height,
-            false,
-            None
+            false
         )?;
         Ok(())
     }
@@ -1480,7 +1466,7 @@ impl ClientProxy {
         key_pair: Option<KeyPair<Ed25519PrivateKey, Ed25519PublicKey>>,
         authentication_key_opt: Option<Vec<u8>>,
     ) -> Result<AccountData> {
-        let (sequence_number,authentication_key, status) = if sync_with_validator {
+        let (sequence_number, authentication_key, status) = if sync_with_validator {
             match client.get_account_state(address, true) {
                 Ok(resp) => match resp.0 {
                     Some(account_view) => (
