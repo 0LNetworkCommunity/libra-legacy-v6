@@ -87,7 +87,7 @@ address 0x0 {
     // This function starts the redeem process.
     public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
 
-      Debug::print(&7e5700013010000000001);
+      Debug::print(&0x7e5700013010000000001);
       Debug::print(&vdf_proof_blob);
 
 
@@ -99,7 +99,7 @@ address 0x0 {
       let difficulty_constant = Globals::get_difficulty();
 
       Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
-      Debug::print(&7e5700013010000000002);
+      Debug::print(&0x7e5700013010000000002);
 
       // 1. The Onboarding path (miner not yet initialized):
       //    Check if the miner's state is initialized.
@@ -109,7 +109,7 @@ address 0x0 {
       //    This may be the first time the miner is redeeming. If so, both
       //      resources are uninitialized. Initialize them
       if (!::exists<MinerProofHistory>(miner_addr)) {
-        Debug::print(&7e5700013010000000003);
+        Debug::print(&0x7e5700013010000000003);
 
         // Verify the proof before anything else (i.e. user actually did the delay)
         // TODO: A faster way to check for minor errors, since it's an expensive operation.
@@ -128,20 +128,20 @@ address 0x0 {
           // }
         // Initialize the miner state for the new miner
         init_miner_state(miner);
-        Debug::print(&7e5700013010000000005);
+        Debug::print(&0x7e5700013010000000005);
 
         // Verify the blob and update the newly initialized state
         verify_and_update_state(miner_addr,vdf_proof_blob , false );
-        Debug::print(&7e5700013010000000006);
+        Debug::print(&0x7e5700013010000000006);
 
       } else {
-        Debug::print(&7e5700013010000000007);
+        Debug::print(&0x7e5700013010000000007);
 
         //  2. Steady state path (miner has already been initialized)
 
         // Check to ensure the transaction sender is indeed the miner
         Transaction::assert(Transaction::sender() == miner_addr, 130106031010);
-        Debug::print(&7e5700013010000000008);
+        Debug::print(&0x7e5700013010000000008);
 
         // Verify the blob and update the state.
         verify_and_update_state(miner_addr,vdf_proof_blob, true  );
