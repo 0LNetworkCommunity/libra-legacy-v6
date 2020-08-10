@@ -7,8 +7,8 @@ module Globals {
     // use 0x0::Transaction;
     use 0x0::Vector;
     use 0x0::Testnet;
-    use 0x0::Libra;
-    use 0x0::GAS;
+    // use 0x0::Libra;
+    // use 0x0::GAS;
 
 
 
@@ -109,7 +109,7 @@ module Globals {
     }
 
     fun get_constants(): GlobalConstants  {
-      let coin_scale = Libra::scaling_factor<GAS::T>();
+      let coin_scale = 10000;
       if (Testnet::is_testnet()){
         return GlobalConstants {
           epoch_length: 15,
