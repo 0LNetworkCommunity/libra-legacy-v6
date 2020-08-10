@@ -16,7 +16,7 @@ use anyhow::Error;
 // };
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
-use std::{thread, path::PathBuf, time};
+use std::{thread, path::PathBuf, time, fs, io::BufReader};
 use libra_config::config::NodeConfig;
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{vm_error::StatusCode, transaction::helpers::*};
@@ -55,15 +55,13 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     let miner_configs = app_config();
     let mut tower_height: usize = 1;
 
-    // TODO (LG): get the block info.
     // let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height_to_submit)).expect("Could not open block file");
-    // let reader = BufReader::new(file);
-    // let block: Block = serde_json::from_reader(reader).unwrap();
-    // let challenge = block.preimage;
-    // let proof = block.data;
 
-    let challenge = "aa".as_bytes().to_vec();
-    let proof = "37485738".as_bytes().to_vec();
+    let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
+    let reader = BufReader::new(file);
+    let block: Block = serde_json::from_reader(reader).unwrap();
+    let challenge = block.preimage;
+    let proof = block.data;
 
     config_path.push("../saved_logs/0/node.config.toml");
 
@@ -143,10 +141,10 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
         TransactionPayload::Script(script),
         address,
         sequence_number,
-        700,
-        1,
+        700_000,
+        0,
         "GAS".parse()?,
-        50000, // for compatibility with UTC's timestamp.
+        5000000, // for compatibility with UTC's timestamp.
     )?;
 
     // Plz Halp  (ZM):
