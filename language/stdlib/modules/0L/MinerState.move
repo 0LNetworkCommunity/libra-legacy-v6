@@ -249,9 +249,9 @@ address 0x0 {
       // Debug::print(&vdf_proof_blob.solution);
 
       // TODO (LG): confirm hashes.
-      let last_verified_proof = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
+      let previous_verified_solution_hash = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
       // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
-      Transaction::assert(&vdf_proof_blob.challenge == &Hash::sha3_256(*last_verified_proof), 130108031010);
+      Transaction::assert(&vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
 
       Debug::print(&0x000000000013370020005);
 
