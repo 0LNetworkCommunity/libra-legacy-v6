@@ -48,7 +48,6 @@ pub fn submit_vdf_proof_tx_to_network(
             proof,
             tower_height,
             true,
-            None
         ){
             Ok(_) => {
                 println!("execute_send_proof - proof submitted");

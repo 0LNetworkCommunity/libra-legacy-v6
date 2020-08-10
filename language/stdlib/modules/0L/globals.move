@@ -7,8 +7,8 @@ module Globals {
     // use 0x0::Transaction;
     use 0x0::Vector;
     use 0x0::Testnet;
-    use 0x0::Libra;
-    use 0x0::GAS;
+    // use 0x0::Libra;
+    // use 0x0::GAS;
 
 
 
@@ -109,12 +109,12 @@ module Globals {
     }
 
     fun get_constants(): GlobalConstants  {
-      let coin_scale = Libra::scaling_factor<GAS::T>();
+      let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()){
         return GlobalConstants {
           epoch_length: 15,
           max_validator_per_epoch: 10,
-          subsidy_ceiling_gas: 296 * coin_scale,
+          subsidy_ceiling_gas: 296,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
