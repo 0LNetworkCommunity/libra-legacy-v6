@@ -52,10 +52,13 @@ fn submit_proofs_transaction() {
     assert_eq!(proof_computed, proof.to_vec());
 
     let tower_height = 1u64;
+    
     //run the transaction script
     let output = executor.execute_and_apply(
         // build the transaction script binary.
-        redeem_txn(&sender.account(), sequence_number,
+    redeem_txn(
+        &sender.account(), 
+        sequence_number,
         challenge.to_vec(),
         difficulty,
         proof.to_vec(),

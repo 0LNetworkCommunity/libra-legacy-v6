@@ -3,7 +3,7 @@
 
 use crate::error::{Error, ErrorKind};
 use cli::client_proxy::ClientProxy;
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use libra_types::{waypoint::Waypoint};
 use std::fs::File;
 use std::io::BufReader;
 use libra_json_rpc_types::views::MinerStateView;
@@ -36,18 +36,19 @@ pub fn submit_vdf_proof_tx_to_network(
     )
     .map_err(|err| ErrorKind::Wallet.context(err))?;
 
-    //TODO: 0L-miner/submit_tx LibraWallet is not recovering all accounts.
+
     println!("Debug Libra Client Accounts: \n{:?}", libra_client.accounts);
     let sender_account = libra_client.accounts[0].address;
 
     Ok(match libra_client
         .execute_send_proof(
-            sender_account, // sender: &AccountData,
-            challenge,      // challenge: Vec<u8>,
-            difficulty,     // difficulty: u64,
-            proof,          // proof: Vec<u8>
-            tower_height,   // tower_height: u64
-            true,           // is_blocking
+            sender_account,
+            challenge,
+            difficulty,
+            proof,
+            tower_height,
+            true,
+            None
         ){
             Ok(_) => {
                 println!("execute_send_proof - proof submitted");
@@ -59,7 +60,6 @@ pub fn submit_vdf_proof_tx_to_network(
             }
         })
 }
-
 
 pub fn resubmit_backlog(path: &Path, client: &mut ClientProxy, quick_check: bool){
     //! If there are any proofs which have not been verified on-chain, send them.

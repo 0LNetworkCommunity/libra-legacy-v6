@@ -2,12 +2,13 @@
 home = "."
 
 [profile]
-auth_key = "3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070"
-account = "402e9aaf54ca8c39bab641b0c9829070"
-statement = "test"
+auth_key = "1796824cdcc3ab205c25f260e15dc6705942d356f114089d4a46f2f3b0b15b52"
+account = "5942d356f114089d4a46f2f3b0b15b52"
+operator_private_key = "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3"
+statement = "Protests rage across the nation"
 
 [chain_info]
-chain_id = "experimental"
-block_dir= "./blocks/"
-node ="http://142.93.191.147:8080" #should be the same as 0_dev_config/node.config.toml for local testing
-base_waypoint="0:161acd75774bcdefa3d9f30f453df28ba04716de1cc929723bf1e49efeaace31"
+chain_id = "0L testnet"
+block_dir = "./blocks"
+node = "http://localhost:42221"
+base_waypoint = "0:66e1e7acff9bb5e3b3f75e3a2ea521d13841e4111b7a9453b0abca1a5289b7d2"
