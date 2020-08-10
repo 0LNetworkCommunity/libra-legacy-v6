@@ -5,18 +5,16 @@
 
 use libra_types::{waypoint::Waypoint};
 
-use std::io::BufReader;
-
-
-
+use crate::config::OlMinerConfig;
+use crate::prelude::*;
 use abscissa_core::{Command, Options, Runnable};
 use crate::{block::Block};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
     test_utils::KeyPair,
     PrivateKey,
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature}
 };
-use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
 // use libra_crypto::test_utils::KeyPair;
 use anyhow::Error;
 // use client::{
@@ -37,7 +35,7 @@ use stdlib::transaction_scripts;
                                 // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
 // TODO: I don't think this is being used
 // const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
-struct TxParams {
+pub struct TxParams {
     auth_key: AuthenticationKey,
     address: AccountAddress,
     url: Url,
@@ -66,9 +64,6 @@ pub fn test_runner () {
 
 
 pub fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<String, Error> {
-
-    let auth_key = tx_params.keypair;
-    let address = tx_params.keypair;
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url,tx_params.waypoint).unwrap();
@@ -104,7 +99,7 @@ pub fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_h
         tx_params.max_gas_unit_for_tx,
         tx_params.coin_price_per_unit,
         "GAS".parse()?,
-        tx_params.user_tx_timeout.try_into().unwrap(), // for compatibility with UTC's timestamp.
+        tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
     )?;
 
     // Plz Halp  (ZM):
@@ -179,7 +174,7 @@ fn get_params_from_swarm () -> Result<TxParams, Error> {
 
 
 fn get_block (height: u64) -> (Vec<u8>, Vec<u8>, u64){
-     
+    let miner_configs = app_config(); 
     let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height)).expect("Could not open block file");
     let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
     let reader = BufReader::new(file);

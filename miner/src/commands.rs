@@ -17,7 +17,8 @@ mod genesis;
 mod submit;
 mod start_test_swarm;
 
-use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd, genesis::GenesisCmd, submit::SubmitCmd};
+use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
+     genesis::GenesisCmd, submit::SubmitCmd, start_test_swarm::SwarmCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
