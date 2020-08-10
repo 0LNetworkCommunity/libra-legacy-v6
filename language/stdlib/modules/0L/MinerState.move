@@ -87,13 +87,9 @@ address 0x0 {
     // This function starts the redeem process.
     public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
 
-      Debug::print(&0x000000000013370000001);
-      Debug::print(&0x000000000013370000001);
-      Debug::print(&0x000000000013370000001);
+      Debug::print(&7e5700013010000000001);
       Debug::print(&vdf_proof_blob);
-      Debug::print(&0x000000000013370000001);
-      Debug::print(&0x000000000013370000001);
-      Debug::print(&0x000000000013370000001);
+
 
       // Get address
       let miner_addr = Signer::address_of( miner );
@@ -102,8 +98,8 @@ address 0x0 {
       // Globals initializes this accordingly
       let difficulty_constant = Globals::get_difficulty();
 
-      Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 180206011010);
-      Debug::print(&0x000000000013370000002);
+      Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
+      Debug::print(&7e5700013010000000002);
 
       // 1. The Onboarding path (miner not yet initialized):
       //    Check if the miner's state is initialized.
@@ -113,13 +109,14 @@ address 0x0 {
       //    This may be the first time the miner is redeeming. If so, both
       //      resources are uninitialized. Initialize them
       if (!::exists<MinerProofHistory>(miner_addr)) {
-        Debug::print(&0x000000000013370000003);
+        Debug::print(&7e5700013010000000003);
 
         // Verify the proof before anything else (i.e. user actually did the delay)
         // TODO: A faster way to check for minor errors, since it's an expensive operation.
         let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-        Transaction::assert(valid, 180206021021);
-        Debug::print(&0x000000000013370000004);
+        Transaction::assert(valid, 130106021021);
+        Debug::print(&0x7e5700013010000000004);
+
 
         // TODO: Create account if there is no account
         // This should look something like this. Below code is untested and can be
@@ -131,20 +128,20 @@ address 0x0 {
           // }
         // Initialize the miner state for the new miner
         init_miner_state(miner);
-        Debug::print(&0x000000000013370000005);
+        Debug::print(&7e5700013010000000005);
 
         // Verify the blob and update the newly initialized state
         verify_and_update_state(miner_addr,vdf_proof_blob , false );
-        Debug::print(&0x000000000013370000006);
+        Debug::print(&7e5700013010000000006);
 
       } else {
-        Debug::print(&0x000000000013370000007);
+        Debug::print(&7e5700013010000000007);
 
         //  2. Steady state path (miner has already been initialized)
 
         // Check to ensure the transaction sender is indeed the miner
-        Transaction::assert(Transaction::sender() == miner_addr, 180206031010);
-        Debug::print(&0x000000000013370000008);
+        Transaction::assert(Transaction::sender() == miner_addr, 130106031010);
+        Debug::print(&7e5700013010000000008);
 
         // Verify the blob and update the state.
         verify_and_update_state(miner_addr,vdf_proof_blob, true  );
@@ -157,7 +154,7 @@ address 0x0 {
                                 initialized_miner: bool)
                                 acquires MinerProofHistory, ProofsInEpoch {
 
-        Debug::print(&0x000000000013370010001);
+        Debug::print(&0x7e5700013010000010001);
 
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
@@ -165,21 +162,21 @@ address 0x0 {
       // If miner has already been initialized much perform extra checks to ensure
       // this proof is unique, etc
       if (initialized_miner) {
-        Debug::print(&0x000000000013370010002);
+        Debug::print(&0x7e5700013010000010002);
 
         (miner_redemption_state, vdf_proof_blob) = check_duplicate_and_verify(miner_redemption_state, vdf_proof_blob);
-        Debug::print(&0x000000000013370010003);
+        Debug::print(&0x7e5700013010000010003);
 
       };
 
-      Debug::print(&0x000000000013370010004);
+      Debug::print(&0x7e5700013010000010004);
 
       // 3. Add redeem attempt to invalid_proof_history, which will later be removed with successful verification.
       // Should also surface to client since ClientProxy for submit redeem tx is async.
       // Vector::push_back(&mut global_redemption_state.proof_history, *&vdf_proof_blob.solution);
       Vector::push_back(&mut miner_redemption_state.invalid_proof_history, Hash::sha3_256(*&vdf_proof_blob.solution));
 
-      Debug::print(&0x000000000013370010005);
+      Debug::print(&0x7e5700013010000010005);
 
 
       // TODO: Is there a missing 4th step here?
@@ -187,21 +184,21 @@ address 0x0 {
       // 5. Update the miner's state with pending statistics.
       // remove the proof that was placed provisionally in invalid_proofs, since it passed.
       let removed_solution = Vector::pop_back(&mut miner_redemption_state.invalid_proof_history);
-      Transaction::assert(&removed_solution == &Hash::sha3_256(*&vdf_proof_blob.solution), 180207011010);
-      Debug::print(&0x000000000013370010006);
+      Transaction::assert(&removed_solution == &Hash::sha3_256(*&vdf_proof_blob.solution), 130107011010);
+      Debug::print(&0x7e5700013010000010006);
 
       // 6. Update resources and statistics.
       // Add the correct proof
       Vector::push_back(&mut miner_redemption_state.verified_proof_history, Hash::sha3_256(*&vdf_proof_blob.solution));
-      Transaction::assert(Vector::length(&miner_redemption_state.verified_proof_history) > 0, 180207021010);
+      Transaction::assert(Vector::length(&miner_redemption_state.verified_proof_history) > 0, 130107021010);
 
-      Debug::print(&0x000000000013370010007);
+      Debug::print(&0x7e5700013010000010007);
 
       // Increment the verified_tower_height
       miner_redemption_state.verified_tower_height = miner_redemption_state.verified_tower_height + 1;
       // NOTE: this is used by end_redeem
       miner_redemption_state.latest_epoch_mining = LibraConfig::get_current_epoch();
-      Debug::print(&0x000000000013370010008);
+      Debug::print(&0x7e5700013010000010008);
 
       // Prepare list of proofs in epoch for end of epoch statistics
       let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
@@ -209,7 +206,7 @@ address 0x0 {
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
-      Debug::print(&0x000000000013370010009);
+      Debug::print(&0x7e5700013010000010009);
 
       ValidatorUniverse::add_validator( miner_addr );
     }
@@ -220,20 +217,20 @@ address 0x0 {
     fun check_duplicate_and_verify(miner_redemption_state: &mut MinerProofHistory,
                                     vdf_proof_blob: VdfProofBlob):
                                     (&mut MinerProofHistory, VdfProofBlob) {
-      Debug::print(&0x000000000013370020001);
+      Debug::print(&0x7e5700013010000020001);
 
       // Checks that the blob was not previously submitted.
       // If previously redeemed, its a no-op with error.
       // let hash_of_solution = Hash::sha3_256(*&vdf_proof_blob.solution);
       // let is_previously_submitted_proof = Vector::contains(&miner_redemption_state.verified_proof_history, &hash_of_solution );
-      // Debug::print(&0x000000000013370020002);
+      // Debug::print(&0x7e5700013010000020002);
 
-      // Transaction::assert(is_previously_submitted_proof == false, 180208011020);
-      // Debug::print(&0x000000000013370020003);
+      // Transaction::assert(is_previously_submitted_proof == false, 130108011020);
+      // Debug::print(&0x7e5700013010000020003);
 
       // let is_previously_submitted_invalid_proof = Vector::contains(&miner_redemption_state.invalid_proof_history, &hash_of_solution );
-      // Transaction::assert(is_previously_submitted_invalid_proof == false, 180208021020);
-      // Debug::print(&0x000000000013370020004);
+      // Transaction::assert(is_previously_submitted_invalid_proof == false, 130108021020);
+      // Debug::print(&0x7e5700013010000020004);
 
       // Check that the proof presented previously matches the current preimage.
       // let proofs_count = Vector::length(&miner_redemption_state.verified_proof_history);
@@ -242,8 +239,8 @@ address 0x0 {
       //   &miner_redemption_state.verified_proof_history,
       //   proofs_count - 1);
         
-      // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 180208031010);
-      // Debug::print(&0x000000000013370020005);
+      // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
+      // Debug::print(&0x7e5700013010000020005);
       
       Debug::print(&vdf_proof_blob.challenge);
       Debug::print(&vdf_proof_blob.difficulty);
@@ -251,11 +248,11 @@ address 0x0 {
 
       // Verify proof is valid
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-      Debug::print(&0x000000000013370020005);
+      Debug::print(&0x7e5700013010000020005);
       Debug::print(&valid);
 
-      // Transaction::assert(valid, 180208041021);
-      Debug::print(&0x000000000013370020006);
+      Transaction::assert(valid, 130108041021);
+      Debug::print(&0x7e5700013010000020006);
 
       (miner_redemption_state, vdf_proof_blob)
     }
@@ -270,7 +267,7 @@ address 0x0 {
 
       // 0. Check for errors and authorization
       let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 180209014010);
+      Transaction::assert(sender == 0x0, 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
       if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
@@ -301,7 +298,7 @@ address 0x0 {
     public fun get_validator_weight(miner_addr: address): u64 acquires MinerProofHistory {
       // Permission check
       let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 180210014010);
+      Transaction::assert(sender == 0x0, 130110014010);
 
       // Miner may not have been initialized. (don't abort, just return 0)
       if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
@@ -323,7 +320,7 @@ address 0x0 {
                   acquires ProofsInEpoch, MinerProofHistory {
       // Check permissions
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 180211014010);
+      Transaction::assert(sender == 0x0, 130111014010);
 
       // Get list of validators from ValidatorUniverse
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
@@ -375,10 +372,10 @@ address 0x0 {
 
       // Calling native function to do this parsing in rust
       // The auth_key must be at least 32 bytes long
-      Transaction::assert(Vector::length(challenge) >= 32, 180213011000);
+      Transaction::assert(Vector::length(challenge) >= 32, 130113011000);
       let (parsed_address, _auth_key) = VDF::extract_address_from_challenge(challenge);
       // Confirm the address is corect and included in challenge
-      Transaction::assert(new_account_address == parsed_address, 180213021010);
+      Transaction::assert(new_account_address == parsed_address, 130113021010);
 
     }
   }
