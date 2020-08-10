@@ -138,6 +138,23 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
         ],
     );
 
+    // Doing a no-op transaction here which will print
+    // [debug] 000000000000000011e110  in the logs if successful.
+    // NoOp => "ol_no_op.move",
+
+    // let script = Script::new(
+    //     transaction_scripts::StdlibScript::NoOp.compiled_bytes().into_vec(),
+    //     vec![],
+    //     vec![
+    //         // TransactionArgument::U8Vector(challenge),
+    //         // TransactionArgument::U64(delay_difficulty()),
+    //         // TransactionArgument::U8Vector(proof),
+    //         // TransactionArgument::U64(tower_height as u64),
+    //     ],
+    // );
+
+
+
 
     let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
     dbg!(&keypair);
