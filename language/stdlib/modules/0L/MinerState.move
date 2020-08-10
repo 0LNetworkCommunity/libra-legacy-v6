@@ -11,6 +11,8 @@ address 0x0 {
     use 0x0::LibraConfig;
     use 0x0::Globals;
     use 0x0::Hash;
+    use 0x0::Debug;
+
 
     // Struct to store information about a VDF proof submitted
     struct VdfProofBlob {
@@ -84,6 +86,15 @@ address 0x0 {
 
     // This function starts the redeem process.
     public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
+
+      Debug::print(&0x000000000013370000001);
+      Debug::print(&0x000000000013370000001);
+      Debug::print(&0x000000000013370000001);
+      Debug::print(&vdf_proof_blob);
+      Debug::print(&0x000000000013370000001);
+      Debug::print(&0x000000000013370000001);
+      Debug::print(&0x000000000013370000001);
+
       // Get address
       let miner_addr = Signer::address_of( miner );
 
