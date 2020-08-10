@@ -1,13 +1,15 @@
 //! `start` subcommand - example of how to write a subcommand
 
 // use crate::block::Block;
-use crate::block::*;
+
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
-use anyhow::Error;
-use libra_types::waypoint::Waypoint;
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
+
+
+
+
+
+
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
@@ -21,29 +23,29 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct StartCmd {
+pub struct SwarmCmd {
     #[options(help = "Provide a waypoint for the libra chain")]
     waypoint: String, //Option<Waypoint>,
 }
 
-impl Runnable for StartCmd {
+impl Runnable for SwarmCmd {
     /// Start the application.
     fn run(&self) {
         let miner_configs = app_config();
 
         println!("Testing Submit to Swarm. Using swarm private key");
 
-        let result = build_block::mine_and_submit(&miner_configs, mnemonic_string, waypoint);
-        match result {
-            Ok(_val) => {}
-            Err(err) => {
-                println!("Failed to mine_and_submit: {}", err);
-            }
-        }
+        // let result = build_block::mine_and_submit(&miner_configs, mnemonic_string, waypoint);
+        // match result {
+        //     Ok(_val) => {}
+        //     Err(err) => {
+        //         println!("Failed to mine_and_submit: {}", err);
+        //     }
+        // }
     }
 }
 
-impl config::Override<OlMinerConfig> for StartCmd {
+impl config::Override<OlMinerConfig> for SwarmCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.

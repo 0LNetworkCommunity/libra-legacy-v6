@@ -1,14 +1,36 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::error::{Error, ErrorKind};
-use cli::client_proxy::ClientProxy;
+
+
 use libra_types::{waypoint::Waypoint};
-use std::fs::File;
+
 use std::io::BufReader;
-use libra_json_rpc_types::views::MinerStateView;
-use std::path::Path;
-use serde::{Serialize, Deserialize};
+
+
+
+use abscissa_core::{Command, Options, Runnable};
+use crate::{block::Block};
+use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use libra_crypto::{
+    test_utils::KeyPair,
+    PrivateKey,
+};
+use crate::ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
+// use libra_crypto::test_utils::KeyPair;
+use anyhow::Error;
+// use client::{
+//     account::{Account, AccountData, AccountTypeSpecifier},
+//     keygen::KeyGen,
+// };
+use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use reqwest::Url;
+use std::{thread, path::PathBuf, time, fs, io::BufReader};
+use libra_config::config::NodeConfig;
+use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
+use libra_types::{transaction::helpers::*};
+use crate::delay::delay_difficulty;
+use stdlib::transaction_scripts;
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 // const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
@@ -16,9 +38,11 @@ use serde::{Serialize, Deserialize};
 // TODO: I don't think this is being used
 // const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
 struct TxParams {
+    auth_key: AuthenticationKey,
+    address: AccountAddress,
     url: Url,
     waypoint: Waypoint,
-    keypair: KeyPair,
+    keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,//KeyPair,
     max_gas_unit_for_tx: u64,
     coin_price_per_unit: u64,
     user_tx_timeout: u64, // for compatibility with UTC's timestamp.
@@ -32,22 +56,19 @@ struct TxParams {
 
 pub fn test_runner () {
     // PathBuf.new("./blocks")
-    let is_test = true
+    let is_test = true;
     if is_test {
-        let (preimage, proof) = get_block_fixtures();
-        let tx_params = get_params_from_fixtures();
-        submit_tx(tx_params: TxParams, preimage, proof);
-
-        // get preimage and proof
-        
+        let (preimage, proof, tower_height) = get_block_fixtures();
+        let tx_params = get_params_from_swarm().unwrap();
+        submit_tx(tx_params, preimage, proof, tower_height);        
     }
-
-
 }
 
 
-fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>) -> Result<String, Error> {
+pub fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<String, Error> {
 
+    let auth_key = tx_params.keypair;
+    let address = tx_params.keypair;
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url,tx_params.waypoint).unwrap();
@@ -67,7 +88,7 @@ fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>) -> Result<S
         transaction_scripts::StdlibScript::Redeem.compiled_bytes().into_vec(),
         vec![],
         vec![
-            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(preimage),
             TransactionArgument::U64(delay_difficulty()),
             TransactionArgument::U8Vector(proof),
             TransactionArgument::U64(tower_height as u64),
@@ -76,22 +97,22 @@ fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>) -> Result<S
 
     // sign the transaction script
     let txn = create_user_txn(
-        &keypair,
+        &tx_params.keypair,
         TransactionPayload::Script(script),
-        address,
+        tx_params.address,
         sequence_number,
-        700_000,
-        0,
+        tx_params.max_gas_unit_for_tx,
+        tx_params.coin_price_per_unit,
         "GAS".parse()?,
-        5000000, // for compatibility with UTC's timestamp.
+        tx_params.user_tx_timeout.try_into().unwrap(), // for compatibility with UTC's timestamp.
     )?;
 
     // Plz Halp  (ZM):
     // get account_data struct
     let mut sender_account_data = AccountData {
-        address,
-        authentication_key: Some(auth_key.to_vec()),
-        key_pair: Some(keypair),
+        address: tx_params.address,
+        authentication_key: Some(tx_params.auth_key.to_vec()),
+        key_pair: Some(tx_params.keypair),
         sequence_number,
         status: AccountStatus::Persisted,
     };
@@ -104,7 +125,7 @@ fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>) -> Result<S
         txn
     ){
         Ok(_) => {
-            ol_wait_for_tx(address, sequence_number, &mut client);
+            // ol_wait_for_tx(address, sequence_number, &mut client);
             Ok("Tx submitted".to_string())
 
         }
@@ -117,55 +138,58 @@ fn get_params_from_mnemonic () -> Result<TxParams, Error> {
 }
 
 fn get_params_from_swarm () -> Result<TxParams, Error> {
-    // let miner_configs = app_config();
+    let config_path = "~/libra/saved_logs/0/node.config.toml";
+
+    let config = NodeConfig::load(&config_path)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
+    match &config.test {
+        Some( conf) => {
+            println!("Swarm Keys : {:?}", conf);
+        },
+        None =>{
+            println!("test config does not set.");
+        }
+    }
     
     let mut private_key = config.test.unwrap().operator_keypair.unwrap();
     let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
-
     let address = auth_key.derived_address();
 
 
-    let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap()
+    let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap();
     // let url: Result<Url, Error> = miner_configs.chain_info.node;
-    let parsed_waypoint: Result<Waypoint, Error> = config.base.waypoint.waypoint_from_config().unwrap().clone()
+    let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     
     //unwrap().parse::<Waypoint>();
     let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
     dbg!(&keypair);
     let tx_params = TxParams {
-        
-    }
+        auth_key,
+        address,
+        url,
+        waypoint: parsed_waypoint,
+        keypair,
+        max_gas_unit_for_tx: 1_000_000,
+        coin_price_per_unit: 0,
+        user_tx_timeout: 5_000, // 
+    };
 
     Ok(tx_params)
 }
 
-fn get_params_from_fixtures () -> Result<TxParams, Error> {
-    let url = 
-    waypoint = "0:123"; // get from swarm.
 
-    
-    TxParams {
-        "localhost:8080".parse(); // get URL from swarm.,
-        "0:123", // get from swarm
-        keypair: KeyPair, // get from string.
-        max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 0,
-        user_tx_timeout: 5_000,
-    }
-
-}
-
-fn get_block (height: u64) -> (preimage: Vec<u8>, proof:  Vec<u8>){
-    let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height_to_submit)).expect("Could not open block file");
+fn get_block (height: u64) -> (Vec<u8>, Vec<u8>, u64){
+     
+    let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height)).expect("Could not open block file");
     let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
     let reader = BufReader::new(file);
     let block: Block = serde_json::from_reader(reader).unwrap();
     let preimage = block.preimage;
     let proof = block.data;
-    (preimage, proof)
+    (preimage, proof, height)
 }
 
-fn get_block_fixtures () -> (preimage: Vec<u8>, proof:  Vec<u8>){
+fn get_block_fixtures () -> (Vec<u8>, Vec<u8>, u64){
     let tower_height = 1u64;
     let preimage = hex::decode("3a18e936c07cb5760783d450f75c257e9a80a394bff06219637da0900df3b459").unwrap();
 
@@ -174,60 +198,60 @@ fn get_block_fixtures () -> (preimage: Vec<u8>, proof:  Vec<u8>){
     (preimage, proof, tower_height)
 }
 
-fn ol_wait_for_tx (
-    sender_address: AccountAddress,
-    sequence_number: u64,
-    client: &mut LibraClient) -> Result<(), Error>{
-        // if sequence_number == 0 {
-        //     println!("First transaction, cannot query.");
-        //     return Ok(());
-        // }
+// fn ol_wait_for_tx (
+//     sender_address: AccountAddress,
+//     sequence_number: u64,
+//     client: &mut LibraClient) -> Result<(), Error>{
+//         // if sequence_number == 0 {
+//         //     println!("First transaction, cannot query.");
+//         //     return Ok(());
+//         // }
 
-        let mut max_iterations = 10;
-        println!(
-            "waiting for tx from acc: {} with sequence number: {}",
-            sender_address, sequence_number
-        );
+//         let mut max_iterations = 10;
+//         println!(
+//             "waiting for tx from acc: {} with sequence number: {}",
+//             sender_address, sequence_number
+//         );
 
-        loop {
-            println!("test");
-        //     stdout().flush().unwrap();
+//         loop {
+//             println!("test");
+//         //     stdout().flush().unwrap();
 
-        //     // TODO: first transaction in sequence fails
+//         //     // TODO: first transaction in sequence fails
 
 
-            match &mut client
-                .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
-            {
-                Ok(Some(txn_view)) => {
-                    print!("txn_view: {:?}", txn_view);
-                    if txn_view.vm_status == StatusCode::EXECUTED {
-                        println!("transaction executed!");
-                        if txn_view.events.is_empty() {
-                            println!("no events emitted");
-                        }
-                        break Ok(());
-                    } else {
-                        // break Err(format_err!(
-                        //     "transaction failed to execute; status: {:?}!",
-                        //     txn_view.vm_status
-                        // ));
+//             match &mut client
+//                 .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
+//             {
+//                 Ok(Some(txn_view)) => {
+//                     print!("txn_view: {:?}", txn_view);
+//                     if txn_view.vm_status == StatusCode::EXECUTED {
+//                         println!("transaction executed!");
+//                         if txn_view.events.is_empty() {
+//                             println!("no events emitted");
+//                         }
+//                         break Ok(());
+//                     } else {
+//                         // break Err(format_err!(
+//                         //     "transaction failed to execute; status: {:?}!",
+//                         //     txn_view.vm_status
+//                         // ));
 
-                        break Ok(());
+//                         break Ok(());
 
-                    }
-                }
-                Err(e) => {
-                    println!("Response with error: {:?}", e);
-                }
-                _ => {
-                    print!(".");
-                }
-            }
-            max_iterations -= 1;
-        //     if max_iterations == 0 {
-        //         panic!("wait_for_transaction timeout");
-        //     }
-            thread::sleep(time::Duration::from_millis(100));
-    }
-}
+//                     }
+//                 }
+//                 Err(e) => {
+//                     println!("Response with error: {:?}", e);
+//                 }
+//                 _ => {
+//                     print!(".");
+//                 }
+//             }
+//             max_iterations -= 1;
+//         //     if max_iterations == 0 {
+//         //         panic!("wait_for_transaction timeout");
+//         //     }
+//             thread::sleep(time::Duration::from_millis(100));
+//     }
+// }
