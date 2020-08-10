@@ -16,10 +16,10 @@ use anyhow::Error;
 // };
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
-use std::path::PathBuf;
+use std::{thread, path::PathBuf, time};
 use libra_config::config::NodeConfig;
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
-use libra_types::transaction::helpers::*;
+use libra_types::{vm_error::StatusCode, transaction::helpers::*};
 use crate::delay::delay_difficulty;
 use stdlib::transaction_scripts;
 
@@ -38,7 +38,15 @@ pub struct SubmitCmd {
 impl Runnable for SubmitCmd {
     fn run(&self) {
         println!("TESTING SUBMITTING WITH KEYPAIR TO SWARM");
-        submit_test(self.path.clone(), self.height.clone());
+        match submit_test(self.path.clone(), self.height.clone()){
+            Ok(res) => {
+                println!("Ok: {}", &res)
+            }
+            Err(err) => {
+                println!("Err: {}", &err)
+
+            }
+        };
     }
 
 }
@@ -57,7 +65,7 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     let challenge = "aa".as_bytes().to_vec();
     let proof = "37485738".as_bytes().to_vec();
 
-    config_path.push("0/node.config.toml");
+    config_path.push("../saved_logs/0/node.config.toml");
 
     let config = NodeConfig::load(&config_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
@@ -126,15 +134,17 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     );
 
 
+    let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
+    dbg!(&keypair);
     // Plz Halp (ZM):
     // sign the transaction script
     let txn = create_user_txn(
-        &KeyPair::from(private_key.take_private().clone().unwrap()),
+        &keypair,
         TransactionPayload::Script(script),
         address,
         sequence_number,
-        0,
-        0,
+        700,
+        1,
         "GAS".parse()?,
         50000, // for compatibility with UTC's timestamp.
     )?;
@@ -144,24 +154,87 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     let mut sender_account_data = AccountData {
         address,
         authentication_key: Some(auth_key.to_vec()),
-        key_pair: Some(KeyPair::from(private_key.take_private().unwrap())),
+        key_pair: Some(keypair),
         sequence_number,
         status: AccountStatus::Persisted,
     };
 
+    dbg!(&sender_account_data);
     // Plz Halp (ZM):
     // // Submit the transaction with libra_client
-    client.submit_transaction(
+    match client.submit_transaction(
         Some(&mut sender_account_data),
         txn
-    )?;
+    ){
+        Ok(_) => {
+            ol_wait_for_tx(address, sequence_number, &mut client);
+            Ok("succes".to_string())
+
+        }
+        Err(err) => Err(err)
+    }
 
     // TODO (LG): Make synchronous to libra client.
-    // if is_blocking {
-    //     let sequence_number = self
-    //         .get_account_resource_and_update(sender_address)?
-    //         .sequence_number;
-    //     self.wait_for_transaction(sender_address, sequence_number)?;
-    // }
-    Ok("Succcess".to_owned())
+
+    // Ok(())
+    // Ok("Succcess".to_owned())
+}
+
+
+fn ol_wait_for_tx (
+    sender_address: AccountAddress,
+    sequence_number: u64,
+    client: &mut LibraClient) -> Result<(), Error>{
+        if sequence_number == 0 {
+            println!("First transaction, cannot query.");
+            return Ok(());
+        }
+
+        let mut max_iterations = 10;
+        println!(
+            "waiting for tx from acc: {} with sequence number: {}",
+            sender_address, sequence_number
+        );
+
+        loop {
+            println!("test");
+        //     stdout().flush().unwrap();
+
+        //     // TODO: first transaction in sequence fails
+
+
+            match &mut client
+                .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
+            {
+                Ok(Some(txn_view)) => {
+                    print!("txn_view: {:?}", txn_view);
+                    if txn_view.vm_status == StatusCode::EXECUTED {
+                        println!("transaction executed!");
+                        if txn_view.events.is_empty() {
+                            println!("no events emitted");
+                        }
+                        break Ok(());
+                    } else {
+                        // break Err(format_err!(
+                        //     "transaction failed to execute; status: {:?}!",
+                        //     txn_view.vm_status
+                        // ));
+
+                        break Ok(());
+
+                    }
+                }
+                Err(e) => {
+                    println!("Response with error: {:?}", e);
+                }
+                _ => {
+                    print!(".");
+                }
+            }
+            max_iterations -= 1;
+        //     if max_iterations == 0 {
+        //         panic!("wait_for_transaction timeout");
+        //     }
+            thread::sleep(time::Duration::from_millis(100));
+    }
 }
