@@ -275,9 +275,10 @@ impl ClientProxy {
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(script),
             &sender_account_data,
-            None, /* max_gas_amount */
-            None, /* gas_unit_price */
-            None, /* gas_currency_code */
+            700_000, /* max_gas_amount */
+            0, /* gas_unit_price */
+            "GAS".parse()?, /* gas_currency_code */
+            // 5000000, // for compatibility with UTC's timestamp.
         )?;
 
         // Submit the transaction with the client proxy
