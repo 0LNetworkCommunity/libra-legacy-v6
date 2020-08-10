@@ -167,8 +167,7 @@ address 0x0 {
       if (initialized_miner) {
         Debug::print(&0x000000000013370010002);
 
-        (miner_redemption_state, vdf_proof_blob) = check_duplicate_and_verify(
-                                              miner_redemption_state, vdf_proof_blob);
+        (miner_redemption_state, vdf_proof_blob) = check_duplicate_and_verify(miner_redemption_state, vdf_proof_blob);
         Debug::print(&0x000000000013370010003);
 
       };
@@ -221,13 +220,20 @@ address 0x0 {
     fun check_duplicate_and_verify(miner_redemption_state: &mut MinerProofHistory,
                                     vdf_proof_blob: VdfProofBlob):
                                     (&mut MinerProofHistory, VdfProofBlob) {
+      Debug::print(&0x000000000013370020001);
+
       // Checks that the blob was not previously submitted.
       // If previously redeemed, its a no-op with error.
       let hash_of_solution = Hash::sha3_256(*&vdf_proof_blob.solution);
       let is_previously_submitted_proof = Vector::contains(&miner_redemption_state.verified_proof_history, &hash_of_solution );
+      Debug::print(&0x000000000013370020002);
+
       Transaction::assert(is_previously_submitted_proof == false, 180208011020);
+      Debug::print(&0x000000000013370020003);
+
       let is_previously_submitted_invalid_proof = Vector::contains(&miner_redemption_state.invalid_proof_history, &hash_of_solution );
       Transaction::assert(is_previously_submitted_invalid_proof == false, 180208021020);
+      Debug::print(&0x000000000013370020004);
 
       // Check that the proof presented previously matches the current preimage.
       let proofs_count = Vector::length(&miner_redemption_state.verified_proof_history);
@@ -235,10 +241,13 @@ address 0x0 {
         &miner_redemption_state.verified_proof_history,
         proofs_count - 1);
       Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 180208031010);
+      Debug::print(&0x000000000013370020005);
 
       // Verify proof is valid
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid, 180208041021);
+      Debug::print(&0x000000000013370020006);
+
       (miner_redemption_state, vdf_proof_blob)
     }
 
