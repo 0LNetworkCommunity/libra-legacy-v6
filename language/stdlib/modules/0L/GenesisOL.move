@@ -123,17 +123,20 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
+        
+        let coin_scale = Libra::scaling_factor<GAS::T>();
+
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch
         if (Testnet::is_testnet()) {
           Transaction::assert(Globals::get_epoch_length() == 15, 9992001);
           Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 9992002);
-          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000, 9992003);
+          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 9992003);
           Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
         } else {
           Transaction::assert(Globals::get_epoch_length() == 2736000, 9992001);
           Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 9992002);
-          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000, 9992003);
+          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 9992003);
           Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
         };
 
