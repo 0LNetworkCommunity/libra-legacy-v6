@@ -168,7 +168,7 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     ){
         Ok(_) => {
             ol_wait_for_tx(address, sequence_number, &mut client);
-            Ok("succes".to_string())
+            Ok("Tx submitted".to_string())
 
         }
         Err(err) => Err(err)
