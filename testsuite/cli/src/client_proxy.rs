@@ -204,7 +204,7 @@ impl ClientProxy {
             vec_account_data.push(Self::get_account_data_from_address(
                 &mut client,
                 address,
-                false,
+                true,
                 None,
                 None,
             )?);
@@ -264,9 +264,9 @@ impl ClientProxy {
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(script),
             &sender_account_data,
-            None, /* max_gas_amount */
-            None, /* gas_unit_price */
-            None, /* gas_currency_code */
+            Some(700_000), /* max_gas_amount */
+            Some(0), /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
         )?;
 
         // Submit the transaction with the client proxy
