@@ -259,9 +259,13 @@ address 0x0 {
       let previous_verified_solution_hash = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
       Debug::print(&0x000000000013370020002);
 
+
+
       Debug::print(previous_verified_solution_hash);
       Debug::print(&vdf_proof_blob.challenge);
 
+      // let new_hash = Hash::sha3_256(*previous_verified_solution_hash);
+      // Debug::print(&new_hash);
       
       // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
 
