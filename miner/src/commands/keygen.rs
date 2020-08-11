@@ -2,14 +2,12 @@
 
 #![allow(clippy::never_loop)]
 use abscissa_core::{Command, Options, Runnable};
-use libra_wallet::WalletLibrary;
+use libra_wallet::{WalletLibrary};
 use crate::config;
 use toml;
 use std::{
     fs,
     io::Write,
-    path::Path,
-    path::PathBuf,
 };
 
 /// `version` subcommand
@@ -19,20 +17,15 @@ pub struct KeygenCmd {}
 impl Runnable for KeygenCmd {
     /// Print version message
     fn run(&self) {
-        // submit_tx::create_account();
         let mut wallet = WalletLibrary::new();
 
         let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
 
-        // assert!(child_number.into() == 0);
-
-
-
-        let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
-        
+        let mnemonic_string = wallet.mnemonic();
 
         let mut miner_configs = config::OlMinerConfig::default();
         miner_configs.profile.auth_key = auth_key.to_string();
+        miner_configs.profile.account = auth_key.derived_address().to_string();
 
         let toml = toml::to_string(&miner_configs).unwrap();
         println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);

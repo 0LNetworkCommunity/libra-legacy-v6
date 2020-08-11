@@ -204,7 +204,7 @@ impl ClientProxy {
             vec_account_data.push(Self::get_account_data_from_address(
                 &mut client,
                 address,
-                false,
+                true,
                 None,
                 None,
             )?);
@@ -233,16 +233,18 @@ impl ClientProxy {
         challenge: Vec<u8>,
         difficulty: u64,
         proof: Vec<u8>,
+        tower_height: u64,
         is_blocking: bool
         ) -> Result<()>{
 
-        // let sender_ref_id = self.get_account_ref_id(&sender_address)?;
 
-        // let sender_og = self.accounts.get(sender_ref_id).unwrap();
-
-
-        let mut sender = Self::get_account_data_from_address(&mut self.client,sender_address,true,None,None).unwrap();
-        // let sender = self.accounts.get(sender_ref_id).unwrap();
+        // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
+        let mut sender_account_data = Self::get_account_data_from_address(
+            &mut self.client,sender_address,
+            true,
+            None, // Pass a keypair from swarm tests here.
+            None
+        ).unwrap();
 
 
         // create the MinerState transaction script
@@ -253,21 +255,23 @@ impl ClientProxy {
                 TransactionArgument::U8Vector(challenge),
                 TransactionArgument::U64(difficulty),
                 TransactionArgument::U8Vector(proof),
+                TransactionArgument::U64(tower_height),
+                
             ],
         );
 
         // sign the transaction script
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(script),
-            &sender,
-            None, /* max_gas_amount */
-            None, /* gas_unit_price */
-            None, /* gas_currency_code */
+            &sender_account_data,
+            Some(700_000), /* max_gas_amount */
+            Some(0), /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
         )?;
 
         // Submit the transaction with the client proxy
         // let sender_account = self.accounts.get_mut(sender_ref_id);
-        &mut self.client.submit_transaction(Some(&mut sender), txn)?;
+        &mut self.client.submit_transaction(Some(&mut sender_account_data), txn)?;
 
         // TODO: This was making the client fail.
         if is_blocking {
@@ -277,7 +281,6 @@ impl ClientProxy {
             self.wait_for_transaction(sender_address, sequence_number)?;
         }
         Ok(())
-
     }
 
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
@@ -299,12 +302,15 @@ impl ClientProxy {
         // TODO: determine how this will be serialized.
         // Note: Was producing error because hex was being submitted and not decoded.
         let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+        
+        let tower_height = space_delim_strings[5].parse::<u64>().unwrap();
 
         self.execute_send_proof(
             sender_address,
             challenge,
             difficulty,
             proof,
+            tower_height,
             false
         )?;
         Ok(())
@@ -828,11 +834,19 @@ impl ClientProxy {
     ) -> Result<()> {
         let mut max_iterations = 5000;
         println!(
-            "waiting for {} with sequence number {}",
+            "waiting for tx from acc: {} with sequence number: {}",
             account, sequence_number
         );
         loop {
             stdout().flush().unwrap();
+
+            // TODO: first transaction in sequence fails
+            // let prev_seq_num ;
+            // if sequence_number > 0 { 
+            //     prev_seq_num =0;
+            // } else {
+            //     prev_seq_num = sequence_number - 1;
+            // }
 
             match self
                 .client

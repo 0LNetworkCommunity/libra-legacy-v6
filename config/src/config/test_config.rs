@@ -93,33 +93,17 @@ impl TestConfig {
     pub fn random_account_key(&mut self, rng: &mut StdRng) {
         // 0L NOTE: This is for testing only, including libra-swarm.
         let privkey = Ed25519PrivateKey::generate(rng);
-        let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
-        println!("Mnemonic: {:?}", mnemonic.to_string() );
         self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
+        println!("=========\n\
+        Swarm Auth_Key\n\
+        {:?}", &self.auth_key.unwrap().to_string());
 
-        fn write_ol_miner_toml (privkey: &Ed25519PrivateKey, auth_key: &AuthenticationKey) {
-            // 0L TODO: Confirm this is for testing only.
-            let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
-            println!("=========\n Auth_Key\n{:?}", &auth_key.to_string());
-            println!("Mnemonic:\n{:?}\n=========", mnemonic.to_string() );
-
-            // TODO: use the OLMinerConfig struct here
-            // ISSUE: Adding miner::OLMinerConfig creates a cyclic dependency.
-            // let miner_configs = OlMinerConfig::default();
-            // miner_configs.profile.auth_key = self.auth_key;
-
-            // let miner_toml_string = toml::to_string(&miner_configs).expect("Could not write toml");
-
-            // let mut latest_block_path = PathBuf::from(r"./miner");
-            // latest_block_path.push(format!("miner_test.toml"));
-            // let mut file = fs::File::create(&latest_block_path).unwrap();
-            // file.write_all(&miner_toml_string.as_bytes())
-            //     .expect("Could not write toml");
-        }
-
-        write_ol_miner_toml(&privkey, &self.auth_key.unwrap());
+        println!("Swarm Private Key:\n\
+        {:?}\n\
+        =========", privkey.to_string() );
 
         self.operator_keypair = Some(AccountKeyPair::load(privkey));
+        dbg!(&self.operator_keypair);
     }
 
 

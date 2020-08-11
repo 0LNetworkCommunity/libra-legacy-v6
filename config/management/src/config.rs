@@ -119,14 +119,14 @@ impl Config {
         }
 
 
-        let fullnode_network = &mut config.full_node_networks[0];
-        fullnode_network.listen_address = self.fullnode_listen_address;
-        fullnode_network.advertised_address = self.fullnode_address;
-        fullnode_network.identity = Identity::from_storage(
-            libra_global_constants::FULLNODE_NETWORK_KEY.into(),
-            libra_global_constants::OPERATOR_ACCOUNT.into(),
-            self.backend.backend.clone().try_into().unwrap(),
-        );
+        // let fullnode_network = &mut config.full_node_networks[0];
+        // fullnode_network.listen_address = self.fullnode_listen_address;
+        // fullnode_network.advertised_address = self.fullnode_address;
+        // fullnode_network.identity = Identity::from_storage(
+        //     libra_global_constants::FULLNODE_NETWORK_KEY.into(),
+        //     libra_global_constants::OPERATOR_ACCOUNT.into(),
+        //     self.backend.backend.clone().try_into().unwrap(),
+        // );
 
 
         config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
@@ -143,7 +143,7 @@ impl Config {
         config.configs_ol_miner.preimage = "".to_string();
         config.configs_ol_miner.proof = "".to_string();
 
-        config.storage.prune_window=Some(5_000_000);
+        config.storage.prune_window=Some(500_000);
 
         // TODO: place in path with other files.
         // Save file
