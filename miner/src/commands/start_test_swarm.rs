@@ -14,6 +14,7 @@ use crate::prelude::*;
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
+use crate::submit_tx_alt::test_runner;
 
 /// `start` subcommand
 ///
@@ -35,13 +36,9 @@ impl Runnable for SwarmCmd {
 
         println!("Testing Submit to Swarm. Using swarm private key");
 
-        // let result = build_block::mine_and_submit(&miner_configs, mnemonic_string, waypoint);
-        // match result {
-        //     Ok(_val) => {}
-        //     Err(err) => {
-        //         println!("Failed to mine_and_submit: {}", err);
-        //     }
-        // }
+        let result = test_runner();
+        println!("Print result");
+        println!("{:?}", result);
     }
 }
 

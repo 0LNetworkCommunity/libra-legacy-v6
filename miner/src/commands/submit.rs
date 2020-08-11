@@ -310,10 +310,10 @@ fn ol_wait_for_tx (
     sender_address: AccountAddress,
     sequence_number: u64,
     client: &mut LibraClient) -> Result<(), Error>{
-        // if sequence_number == 0 {
-        //     println!("First transaction, cannot query.");
-        //     return Ok(());
-        // }
+        if sequence_number == 0 {
+            println!("First transaction, cannot query.");
+            return Ok(());
+        }
 
         let mut max_iterations = 10;
         println!(

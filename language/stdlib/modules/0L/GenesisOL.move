@@ -124,7 +124,7 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
         
-        let coin_scale = Libra::scaling_factor<GAS::T>();
+        let coin_scale = 10000;
 
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch
