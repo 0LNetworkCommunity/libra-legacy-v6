@@ -129,13 +129,15 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     }
     dbg!(&sequence_number);
 
+    let difficulty = delay_difficulty();
+    println!("DELAY DIFFICULTY: {}", difficulty);
     // Create the unsigned MinerState transaction script
     let script = Script::new(
         transaction_scripts::StdlibScript::Redeem.compiled_bytes().into_vec(),
         vec![],
         vec![
             TransactionArgument::U8Vector(challenge),
-            TransactionArgument::U64(delay_difficulty()),
+            TransactionArgument::U64(difficulty),
             TransactionArgument::U8Vector(proof),
             TransactionArgument::U64(tower_height as u64),
         ],

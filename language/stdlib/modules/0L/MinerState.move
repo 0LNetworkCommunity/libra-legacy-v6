@@ -258,15 +258,21 @@ address 0x0 {
 
       // TODO (LG): confirm hashes.
       let previous_verified_solution_hash = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
+      Debug::print(&0x000000000013370020002);
+
+      Debug::print(previous_verified_solution_hash);
+      Debug::print(&vdf_proof_blob.challenge);
+
+      
       // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
       Transaction::assert(&vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
 
-      Debug::print(&0x000000000013370020005);
+      Debug::print(&0x000000000013370020003);
 
       // Verify proof is valid
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid, 130108041021);
-      Debug::print(&0x000000000013370020006);
+      Debug::print(&0x000000000013370020004);
 
       (miner_redemption_state, vdf_proof_blob)
     }
