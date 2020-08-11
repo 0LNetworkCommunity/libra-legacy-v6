@@ -3,7 +3,7 @@
 
 use crate::error::{Error, ErrorKind};
 use cli::client_proxy::ClientProxy;
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use libra_types::{waypoint::Waypoint};
 use std::fs::File;
 use std::io::BufReader;
 use libra_json_rpc_types::views::MinerStateView;
@@ -22,16 +22,11 @@ pub fn submit_vdf_proof_tx_to_network(
     proof: Vec<u8>,
     waypoint: Waypoint,
     mnemonic_string: String,
+    tower_height: u64,
     node: String,
     // max_retries: Some(u64), // TODO (Ping): used below on retries.
 ) -> Result<(), Error> {
     //! Functions for submitting proofs on chain
-
-    // TODO (ZM): I think this can generate a number of configs including Waypoint.
-    // let mut swarm_configs = NodeConfig::load(DEFAULT_NODE).expect("Unable to load config");
-    // NOTE (LG): We're using a testing tool ClientProxy so that the miner has
-    // its own client connection to network.
-    // ClientProxy is an abstraction on top of Libra Client and other modules. (as with all testing tools) is unstable and in develoment.
 
     // create the ClientProxy, with credentials, and point to network with a waypoint.
     let mut libra_client = ClientProxy::new_for_ol(
@@ -41,23 +36,29 @@ pub fn submit_vdf_proof_tx_to_network(
     )
     .map_err(|err| ErrorKind::Wallet.context(err))?;
 
-    //TODO: 0L-miner/submit_tx LibraWallet is not recovering all accounts.
+
     println!("Debug Libra Client Accounts: \n{:?}", libra_client.accounts);
     let sender_account = libra_client.accounts[0].address;
 
-    libra_client
+    Ok(match libra_client
         .execute_send_proof(
-            sender_account, // sender: &AccountData,
-            challenge,      // challenge: Vec<u8>,
-            difficulty,     // difficulty: u64,
-            proof,          // proof: Vec<u8>
+            sender_account,
+            challenge,
+            difficulty,
+            proof,
+            tower_height,
             true,
-        )
-        .map_err(|err| ErrorKind::Transaction.context(err))?;
-
-    Ok(())
+        ){
+            Ok(_) => {
+                println!("execute_send_proof - proof submitted");
+            }
+            Err(e) => {
+                // TODO: ErrorKind::Transaction.context(e) is providing unresolved backtrace, and we don't see details.
+                // Move VM doesn't provide much more detail than "transaction failed to execute; status: ABORTED!"
+                println!("execute_send_proof - proof error: {:?}", ErrorKind::Transaction.context(e));
+            }
+        })
 }
-
 
 pub fn resubmit_backlog(path: &Path, client: &mut ClientProxy, quick_check: bool){
     //! If there are any proofs which have not been verified on-chain, send them.

@@ -6,7 +6,7 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-use abscissa_core::path::{PathBuf, Path};
+use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 
 /// OlMiner Configuration
@@ -168,7 +168,7 @@ impl Default for ChainInfo {
             block_dir: "./blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
             base_waypoint: "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b".to_owned(),
-            node: None,
+            node: Some("http://localhost:8080".to_owned()),
         }
     }
 }
@@ -182,6 +182,9 @@ pub struct Profile {
     ///The 0L account for the Miner and prospective validator. This is derived from auth_key
     pub account: String,
 
+    ///The 0L private_key for signing transactions.
+    pub operator_private_key: String,
+
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
 }
@@ -192,7 +195,7 @@ impl Default for Profile {
             // Mock Authkey
             auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
             account: "5ffd9856978b5020be7f72339e41a401".to_owned(),
-
+            operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

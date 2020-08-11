@@ -174,8 +174,7 @@ waypoint:
 
 toml:
 	libra-management config \
-	--validator-address \
-	"/ip4/${IP}/tcp/6180" \
+	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
 	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
@@ -199,14 +198,14 @@ daemon:
 		rm -rf ~/logs*; \
 	fi 
 
-	mkdir ~/logs;
-	touch ~/logs/output-libra-node.log; \
-	touch ~/logs/output-miner.log; \
+	mkdir ~/logs
+	touch ~/logs/output-libra-node.log
 
 	systemctl daemon-reload
 	systemctl stop libra-node.service
 	systemctl start libra-node.service
-	sleep 2 && systemctl status libra-node.service
+	sleep 2
+	systemctl status libra-node.service &
 	tail -f ~/logs/output-libra-node.log
 
 
