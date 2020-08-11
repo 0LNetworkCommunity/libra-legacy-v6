@@ -87,14 +87,18 @@ address 0x0 {
     // This function starts the redeem process.
     public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
 
-      Debug::print(&0x000000000013370000001);
+      Debug::print(&0x100000000013370000001);
 
       // Get address
+      Debug::print(miner);
+
       let miner_addr = Signer::address_of( miner );
+      Debug::print(&0x000000000013370000011);
 
       // Get difficulty constant. Will be different in tests than in production.
       // Globals initializes this accordingly
       let difficulty_constant = Globals::get_difficulty();
+      Debug::print(&0x000000000013370000012);
 
       Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
       Debug::print(&0x000000000013370000002);
@@ -153,7 +157,7 @@ address 0x0 {
       initialized_miner: bool) acquires MinerProofHistory, ProofsInEpoch {
 
       Debug::print(&0x000000000013370010001);
-commi
+
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
 
