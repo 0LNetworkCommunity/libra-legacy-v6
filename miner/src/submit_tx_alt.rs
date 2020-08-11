@@ -29,6 +29,7 @@ use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
 use crate::delay::delay_difficulty;
 use stdlib::transaction_scripts;
+use libra_types::{vm_error::StatusCode};
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 // const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
@@ -110,14 +111,13 @@ pub fn submit_tx(tx_params: TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_h
     };
 
     dbg!(&sender_account_data);
-    // Plz Halp (ZM):
     // // Submit the transaction with libra_client
     match client.submit_transaction(
         Some(&mut sender_account_data),
         txn
     ){
         Ok(_) => {
-            // ol_wait_for_tx(address, sequence_number, &mut client);
+            ol_wait_for_tx(tx_params.address, sequence_number, &mut client);
             Ok("Tx submitted".to_string())
 
         }
@@ -190,60 +190,60 @@ fn get_block_fixtures () -> (Vec<u8>, Vec<u8>, u64){
     (preimage, proof, tower_height)
 }
 
-// fn ol_wait_for_tx (
-//     sender_address: AccountAddress,
-//     sequence_number: u64,
-//     client: &mut LibraClient) -> Result<(), Error>{
-//         // if sequence_number == 0 {
-//         //     println!("First transaction, cannot query.");
-//         //     return Ok(());
-//         // }
+fn ol_wait_for_tx (
+    sender_address: AccountAddress,
+    sequence_number: u64,
+    client: &mut LibraClient) -> Result<(), Error>{
+        // if sequence_number == 0 {
+        //     println!("First transaction, cannot query.");
+        //     return Ok(());
+        // }
 
-//         let mut max_iterations = 10;
-//         println!(
-//             "waiting for tx from acc: {} with sequence number: {}",
-//             sender_address, sequence_number
-//         );
+        let mut max_iterations = 10;
+        println!(
+            "waiting for tx from acc: {} with sequence number: {}",
+            sender_address, sequence_number
+        );
 
-//         loop {
-//             println!("test");
-//         //     stdout().flush().unwrap();
+        loop {
+            println!("test");
+        //     stdout().flush().unwrap();
 
-//         //     // TODO: first transaction in sequence fails
+        //     // TODO: first transaction in sequence fails
 
 
-//             match &mut client
-//                 .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
-//             {
-//                 Ok(Some(txn_view)) => {
-//                     print!("txn_view: {:?}", txn_view);
-//                     if txn_view.vm_status == StatusCode::EXECUTED {
-//                         println!("transaction executed!");
-//                         if txn_view.events.is_empty() {
-//                             println!("no events emitted");
-//                         }
-//                         break Ok(());
-//                     } else {
-//                         // break Err(format_err!(
-//                         //     "transaction failed to execute; status: {:?}!",
-//                         //     txn_view.vm_status
-//                         // ));
+            match &mut client
+                .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
+            {
+                Ok(Some(txn_view)) => {
+                    print!("txn_view: {:?}", txn_view);
+                    if txn_view.vm_status == StatusCode::EXECUTED {
+                        println!("transaction executed!");
+                        if txn_view.events.is_empty() {
+                            println!("no events emitted");
+                        }
+                        break Ok(());
+                    } else {
+                        // break Err(format_err!(
+                        //     "transaction failed to execute; status: {:?}!",
+                        //     txn_view.vm_status
+                        // ));
 
-//                         break Ok(());
+                        break Ok(());
 
-//                     }
-//                 }
-//                 Err(e) => {
-//                     println!("Response with error: {:?}", e);
-//                 }
-//                 _ => {
-//                     print!(".");
-//                 }
-//             }
-//             max_iterations -= 1;
-//         //     if max_iterations == 0 {
-//         //         panic!("wait_for_transaction timeout");
-//         //     }
-//             thread::sleep(time::Duration::from_millis(100));
-//     }
-// }
+                    }
+                }
+                Err(e) => {
+                    println!("Response with error: {:?}", e);
+                }
+                _ => {
+                    print!(".");
+                }
+            }
+            max_iterations -= 1;
+        //     if max_iterations == 0 {
+        //         panic!("wait_for_transaction timeout");
+        //     }
+            thread::sleep(time::Duration::from_millis(100));
+    }
+}
