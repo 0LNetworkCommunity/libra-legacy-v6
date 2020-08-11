@@ -30,7 +30,7 @@ pub struct SwarmCmd {
     waypoint: String, //Option<Waypoint>,
 
     #[options(help = "Provide a waypoint for the libra chain")]
-    home: PathBuf, //Option<Waypoint>,
+    home: PathBuf, 
 }
 
 impl Runnable for SwarmCmd {

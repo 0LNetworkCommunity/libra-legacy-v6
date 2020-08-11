@@ -162,7 +162,6 @@ address 0x0 {
       initialized_miner: bool) acquires MinerProofHistory, ProofsInEpoch {
 
       Debug::print(&0x000000000013370010001);
-
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
 
