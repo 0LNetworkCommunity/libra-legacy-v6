@@ -52,14 +52,11 @@ pub struct TxParams {
 //     }
 // }
 
-pub fn test_runner () {
+pub fn test_runner ()-> Result<String, Error> {
     // PathBuf.new("./blocks")
-    let is_test = true;
-    if is_test {
-        let (preimage, proof, tower_height) = get_block_fixtures();
+    let (preimage, proof, tower_height) = get_block_fixtures();
         let tx_params = get_params_from_swarm().unwrap();
-        submit_tx(tx_params, preimage, proof, tower_height);        
-    }
+        submit_tx(tx_params, preimage, proof, tower_height)      
 }
 
 
@@ -133,7 +130,7 @@ fn get_params_from_mnemonic () -> Result<TxParams, Error> {
 }
 
 fn get_params_from_swarm () -> Result<TxParams, Error> {
-    let config_path = "~/libra/saved_logs/0/node.config.toml";
+    let config_path = "../saved_logs/0/node.config.toml";
 
     let config = NodeConfig::load(&config_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
