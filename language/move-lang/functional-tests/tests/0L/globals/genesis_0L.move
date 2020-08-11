@@ -16,9 +16,9 @@ use 0x0::Vector;
 
         let verified_proof_history = MinerState::get_miner_state({{alice}});
         // should be atleast 1 at genesis, and never more than 1.
-        let len = Vector::length<vector<u8>>(&proof_vec);
-        Debug::print(&len);
-        Transaction::assert(&len == 1u64, 73570002);
+        let proof_len = Vector::length<vector<u8>>(&verified_proof_history);
+        Debug::print(&proof_len);
+        Transaction::assert(proof_len == 1u64, 73570002);
 
 
 
