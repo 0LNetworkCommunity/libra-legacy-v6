@@ -129,11 +129,11 @@ fn get_params_from_mnemonic () -> Result<TxParams, Error> {
     unimplemented!();
 }
 
-fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
-    //let config_path = "../saved_logs/0/node.config.toml";
-    home.push("0/node.config.toml");
-    let config = NodeConfig::load(&home)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", home));
+fn get_params_from_swarm () -> Result<TxParams, Error> {
+    let config_path = "../saved_logs/0/node.config.toml";
+    // home.push("~/libra/saved_logs/logs/0/node.config.toml");
+    let config = NodeConfig::load(&config_path)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
     match &config.test {
         Some( conf) => {
             println!("Swarm Keys : {:?}", conf);
