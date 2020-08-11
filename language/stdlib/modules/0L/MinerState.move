@@ -69,9 +69,12 @@ address 0x0 {
 
 
     // Helper function for genesis to begin redeem process.
-    public fun genesis_helper (miner: &signer, challenge: vector<u8>, solution: vector<u8> )
-                                acquires MinerProofHistory, ProofsInEpoch {
+    public fun genesis_helper (
+      miner: &signer,
+      challenge: vector<u8>,
+      solution: vector<u8> ) acquires MinerProofHistory, ProofsInEpoch {
 
+      Debug::print(&0x999999999000000001);
       let difficulty = Globals::get_difficulty();
       let vdf_proof_blob = VdfProofBlob {
         challenge,
@@ -87,14 +90,20 @@ address 0x0 {
     // This function starts the redeem process.
     public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
 
-      Debug::print(&0x000000000013370000001);
+      Debug::print(&0x100000000013370000001);
+      Debug::print(&0x100000000013370000002);
 
       // Get address
+
       let miner_addr = Signer::address_of( miner );
+      Debug::print(&miner_addr);
+
+      Debug::print(&0x000000000013370000011);
 
       // Get difficulty constant. Will be different in tests than in production.
       // Globals initializes this accordingly
       let difficulty_constant = Globals::get_difficulty();
+      Debug::print(&0x000000000013370000012);
 
       Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
       Debug::print(&0x000000000013370000002);
@@ -153,7 +162,6 @@ address 0x0 {
       initialized_miner: bool) acquires MinerProofHistory, ProofsInEpoch {
 
       Debug::print(&0x000000000013370010001);
-commi
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
 
@@ -207,7 +215,6 @@ commi
 
       // Prepare list of proofs in epoch for end of epoch statistics
       let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
-      in_process.proofs = Vector::empty();
       Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
@@ -250,15 +257,21 @@ commi
 
       // TODO (LG): confirm hashes.
       let previous_verified_solution_hash = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
+      Debug::print(&0x000000000013370020002);
+
+      Debug::print(previous_verified_solution_hash);
+      Debug::print(&vdf_proof_blob.challenge);
+
+      
       // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
       Transaction::assert(&vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
 
-      Debug::print(&0x000000000013370020005);
+      Debug::print(&0x000000000013370020003);
 
       // Verify proof is valid
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid, 130108041021);
-      Debug::print(&0x000000000013370020006);
+      Debug::print(&0x000000000013370020004);
 
       (miner_redemption_state, vdf_proof_blob)
     }
@@ -316,7 +329,7 @@ commi
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
 
-      // Return it's weight
+      // Return its weight
       miner_redemption_state.epochs_validating_and_mining
     }
 
@@ -384,5 +397,18 @@ commi
       Transaction::assert(new_account_address == parsed_address, 130113021010);
 
     }
+
+        // Get weight of validator identified by address
+    public fun get_miner_state(miner_addr: address): vector<vector<u8>> acquires MinerProofHistory {
+      // Permission check
+      // let sender = Transaction::sender();
+      // Transaction::assert(sender == 0x0, 130110014010);
+      let test = borrow_global<MinerProofHistory>(miner_addr);
+      *&test.verified_proof_history
+
+    
+    }
   }
 }
+
+
