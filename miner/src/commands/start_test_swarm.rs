@@ -15,6 +15,7 @@ use crate::prelude::*;
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use crate::submit_tx_alt::test_runner;
+use std::path::PathBuf;
 
 /// `start` subcommand
 ///
@@ -27,6 +28,9 @@ use crate::submit_tx_alt::test_runner;
 pub struct SwarmCmd {
     #[options(help = "Provide a waypoint for the libra chain")]
     waypoint: String, //Option<Waypoint>,
+
+    #[options(help = "Provide a waypoint for the libra chain")]
+    home: PathBuf, //Option<Waypoint>,
 }
 
 impl Runnable for SwarmCmd {
@@ -36,7 +40,7 @@ impl Runnable for SwarmCmd {
 
         println!("Testing Submit to Swarm. Using swarm private key");
 
-        let result = test_runner();
+        let result = test_runner(self.home.clone());
         println!("Print result");
         println!("{:?}", result);
     }

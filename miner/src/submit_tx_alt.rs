@@ -52,10 +52,10 @@ pub struct TxParams {
 //     }
 // }
 
-pub fn test_runner ()-> Result<String, Error> {
+pub fn test_runner (home: PathBuf)-> Result<String, Error> {
     // PathBuf.new("./blocks")
     let (preimage, proof, tower_height) = get_block_fixtures();
-        let tx_params = get_params_from_swarm().unwrap();
+        let tx_params = get_params_from_swarm(home).unwrap();
         submit_tx(tx_params, preimage, proof, tower_height)      
 }
 
@@ -129,11 +129,11 @@ fn get_params_from_mnemonic () -> Result<TxParams, Error> {
     unimplemented!();
 }
 
-fn get_params_from_swarm () -> Result<TxParams, Error> {
-    let config_path = "../saved_logs/0/node.config.toml";
-
-    let config = NodeConfig::load(&config_path)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
+fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
+    //let config_path = "../saved_logs/0/node.config.toml";
+    home.push("0/node.config.toml");
+    let config = NodeConfig::load(&home)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", home));
     match &config.test {
         Some( conf) => {
             println!("Swarm Keys : {:?}", conf);
