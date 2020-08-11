@@ -216,7 +216,6 @@ address 0x0 {
 
       // Prepare list of proofs in epoch for end of epoch statistics
       let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
-      in_process.proofs = Vector::empty();
       Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
@@ -393,5 +392,27 @@ address 0x0 {
       Transaction::assert(new_account_address == parsed_address, 130113021010);
 
     }
+
+        // Get weight of validator identified by address
+    public fun get_miner_state(miner_addr: address): MinerProofHistory acquires MinerProofHistory {
+      // Permission check
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0, 130110014010);
+
+      // Miner may not have been initialized. (don't abort, just return 0)
+      if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
+        return 0
+      };
+
+      // Update the statistics.
+      let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
+      let this_epoch = LibraConfig::get_current_epoch();
+      miner_redemption_state.latest_epoch_mining = this_epoch;
+
+      // Return it's weight
+      miner_redemption_state.epochs_validating_and_mining
+    }
   }
 }
+
+
