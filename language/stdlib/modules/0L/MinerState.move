@@ -324,7 +324,7 @@ address 0x0 {
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
 
-      // Return it's weight
+      // Return its weight
       miner_redemption_state.epochs_validating_and_mining
     }
 
@@ -394,23 +394,14 @@ address 0x0 {
     }
 
         // Get weight of validator identified by address
-    public fun get_miner_state(miner_addr: address): MinerProofHistory acquires MinerProofHistory {
+    public fun get_miner_state(miner_addr: address): vector<vector<u8>> acquires MinerProofHistory {
       // Permission check
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130110014010);
+      // let sender = Transaction::sender();
+      // Transaction::assert(sender == 0x0, 130110014010);
+      let test = borrow_global<MinerProofHistory>(miner_addr);
+      *&test.verified_proof_history
 
-      // Miner may not have been initialized. (don't abort, just return 0)
-      if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
-        return 0
-      };
-
-      // Update the statistics.
-      let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
-      let this_epoch = LibraConfig::get_current_epoch();
-      miner_redemption_state.latest_epoch_mining = this_epoch;
-
-      // Return it's weight
-      miner_redemption_state.epochs_validating_and_mining
+    
     }
   }
 }

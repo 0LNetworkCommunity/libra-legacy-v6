@@ -22,8 +22,6 @@ use 0x0::LibraSystem;
         } else {
             Transaction::assert(len == 196992u64, 73570001);
         }
-
-
     }
 }
 // check: EXECUTED
