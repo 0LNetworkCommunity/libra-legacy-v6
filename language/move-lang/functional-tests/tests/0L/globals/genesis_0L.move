@@ -19,22 +19,6 @@ use 0x0::Vector;
         let proof_len = Vector::length<vector<u8>>(&verified_proof_history);
         Debug::print(&proof_len);
         Transaction::assert(proof_len == 1u64, 73570002);
-
-
-
-        let len = Globals::get_epoch_length();
-        Debug::print(&len);
-        let set = LibraSystem::validator_set_size();
-        Debug::print(&set);
-
-
-        if (Testnet::is_testnet()){
-            Transaction::assert(len == 15u64, 73570001);
-        } else {
-            Transaction::assert(len == 196992u64, 73570001);
-        }
-
-
     }
 }
 // check: EXECUTED
