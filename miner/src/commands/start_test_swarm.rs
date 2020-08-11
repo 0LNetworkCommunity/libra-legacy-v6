@@ -40,7 +40,7 @@ impl Runnable for SwarmCmd {
 
         println!("Testing Submit to Swarm. Using swarm private key");
 
-        let result = test_runner(self.home.clone());
+        let result = test_runner();
         println!("Print result");
         println!("{:?}", result);
     }
