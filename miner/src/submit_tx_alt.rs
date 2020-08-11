@@ -55,8 +55,8 @@ pub struct TxParams {
 pub fn test_runner ()-> Result<String, Error> {
     // PathBuf.new("./blocks")
     let (preimage, proof, tower_height) = get_block_fixtures();
-        let tx_params = get_params_from_swarm().unwrap();
-        submit_tx(tx_params, preimage, proof, tower_height)      
+    let tx_params = get_params_from_swarm().unwrap();
+    submit_tx(tx_params, preimage, proof, tower_height)      
 }
 
 
