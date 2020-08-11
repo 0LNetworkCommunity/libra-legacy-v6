@@ -9,9 +9,9 @@ script {
     fun main(){
       PersistenceTrial::initialize();
 
-        PersistenceTrial::add_stuff();
-        Transaction::assert(PersistenceTrial::length() == 3, 0);
-        Transaction::assert(PersistenceTrial::contains(1), 1);
+      PersistenceTrial::add_stuff();
+      Transaction::assert(PersistenceTrial::length() == 3, 0);
+      Transaction::assert(PersistenceTrial::contains(1), 1);
     }
 }
 // check: EXECUTED

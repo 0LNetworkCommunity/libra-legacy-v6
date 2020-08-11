@@ -69,9 +69,12 @@ address 0x0 {
 
 
     // Helper function for genesis to begin redeem process.
-    public fun genesis_helper (miner: &signer, challenge: vector<u8>, solution: vector<u8> )
-                                acquires MinerProofHistory, ProofsInEpoch {
+    public fun genesis_helper (
+      miner: &signer,
+      challenge: vector<u8>,
+      solution: vector<u8> ) acquires MinerProofHistory, ProofsInEpoch {
 
+      Debug::print(&0x999999999000000001);
       let difficulty = Globals::get_difficulty();
       let vdf_proof_blob = VdfProofBlob {
         challenge,
@@ -88,11 +91,13 @@ address 0x0 {
     public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
 
       Debug::print(&0x100000000013370000001);
+      Debug::print(&0x100000000013370000002);
 
       // Get address
-      Debug::print(miner);
 
       let miner_addr = Signer::address_of( miner );
+      Debug::print(&miner_addr);
+
       Debug::print(&0x000000000013370000011);
 
       // Get difficulty constant. Will be different in tests than in production.
