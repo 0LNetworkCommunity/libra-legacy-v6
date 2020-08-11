@@ -170,8 +170,10 @@ address 0x0 {
 
       let start_block_height = end_block_height - epoch_count;
 
-      // Calculating threshold which is 90% of the blocks.
-      let threshold_signing = FixedPoint32::divide_u64(90, FixedPoint32::create_from_rational(100, 1)) * epoch_count;
+      // Calculating liveness threshold which is signing 66% of the blocks in epoch.
+      // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
+
+      let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * epoch_count;
 
       let active_validator = Stats::node_heuristics(addr, start_block_height, end_block_height);
 

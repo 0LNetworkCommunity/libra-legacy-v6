@@ -114,7 +114,7 @@ impl LibraClient {
     ) -> Result<Option<MinerStateView>> {
         // form request
         let mut batch = JsonRpcBatch::new();
-        batch.add_get_miner_state_request( account);
+        batch.add_get_miner_state_request(account);
 
         let responses = self.client.execute(batch)?;
         match get_response_from_batch(0, &responses)? {
@@ -163,6 +163,7 @@ impl LibraClient {
         }
     }
 
+    /// get account state
     pub fn get_account_state_blob(
         &mut self,
         account: AccountAddress,
@@ -190,7 +191,7 @@ impl LibraClient {
             ),
         }
     }
-
+/// get events
     pub fn get_events(
         &mut self,
         event_key: String,
@@ -352,7 +353,7 @@ impl LibraClient {
             Some(account_view) => Ok(account_view.sequence_number),
         }
     }
-
+/// get events access path
     pub fn get_events_by_access_path(
         &mut self,
         access_path: AccessPath,

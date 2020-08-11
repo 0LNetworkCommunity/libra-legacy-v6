@@ -3,25 +3,23 @@
 
 #![forbid(unsafe_code)]
 
-mod error;
 mod config;
+mod error;
 mod genesis;
 mod initialize;
 mod key;
 mod layout;
 mod mining;
 mod secure_backend;
+mod seeds;
+mod storage_helper;
+// mod storage_helper_github;
 mod validator_config;
 mod verify;
 mod waypoint;
-mod storage_helper;
-mod storage_helper_github;
-
-
 
 #[cfg(test)]
 mod smoke_test;
-
 
 use crate::{error::Error, layout::SetLayout, secure_backend::SecureBackend};
 use libra_crypto::ed25519::Ed25519PublicKey;
@@ -65,7 +63,8 @@ pub enum Command {
     Mining(crate::mining::Mining),
     #[structopt(about = "Print a sample config file for a fullnode")]
     Config(crate::config::Config),
-
+    #[structopt(about = "Generate a seed node file from the genesis file")]
+    Seeds(crate::seeds::Seeds),
 }
 
 #[derive(Debug, PartialEq)]
@@ -81,6 +80,7 @@ pub enum CommandName {
     Mining,
     Initialize,
     Config,
+    Seeds,
 }
 
 impl From<&Command> for CommandName {
@@ -97,6 +97,7 @@ impl From<&Command> for CommandName {
             Command::Mining(_) => CommandName::Mining,
             Command::Initialize(_) => CommandName::Initialize,
             Command::Config(_) => CommandName::Config,
+            Command::Seeds(_) => CommandName::Seeds,
         }
     }
 }
@@ -115,6 +116,7 @@ impl std::fmt::Display for CommandName {
             CommandName::Mining => "mining",
             CommandName::Initialize => "initialize",
             CommandName::Config => "config",
+            CommandName::Seeds => "seeds",
         };
         write!(f, "{}", name)
     }
@@ -134,6 +136,7 @@ impl Command {
             Command::Mining(_) => self.mining().unwrap(),
             Command::Initialize(_) => self.initialize().unwrap(),
             Command::Config(_) => self.config().unwrap(),
+            Command::Seeds(_) => self.seeds().unwrap(),
         }
     }
 
@@ -250,6 +253,17 @@ impl Command {
     pub fn config(self) -> Result<String, Error> {
         if let Command::Config(config) = self {
             config.execute()
+        } else {
+            Err(Error::UnexpectedCommand(
+                CommandName::Verify,
+                CommandName::from(&self),
+            ))
+        }
+    }
+
+    pub fn seeds(self) -> Result<String, Error> {
+        if let Command::Seeds(seeds) = self {
+            seeds.execute()
         } else {
             Err(Error::UnexpectedCommand(
                 CommandName::Verify,

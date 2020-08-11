@@ -6,7 +6,7 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-use abscissa_core::path::{PathBuf, Path};
+use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 
 /// OlMiner Configuration
@@ -165,9 +165,10 @@ impl Default for ChainInfo {
     fn default() -> Self {
         Self {
             chain_id: "0L testnet".to_owned(),
-            block_dir: "blocks".to_owned(),
-            base_waypoint: "None".to_owned(),
-            node: None,
+            block_dir: "./blocks".to_owned(),
+            // Mock Waypoint. Miner complains without.
+            base_waypoint: "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b".to_owned(),
+            node: Some("http://localhost:8080".to_owned()),
         }
     }
 }
@@ -175,18 +176,27 @@ impl Default for ChainInfo {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
-    ///Miner Authorization Key for 0L Blockchain. Note: note the same as public key pair.
+    ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
-    ///An opportunites for the Miner to argument for his value to the network
+
+    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
+    pub account: String,
+
+    ///The 0L private_key for signing transactions.
+    pub operator_private_key: String,
+
+    ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
 }
 
 impl Default for Profile {
     fn default() -> Self {
         Self {
-            // TODO: change this public key.
+            // Mock Authkey
             auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
-            statement: "Protests rage across the Nation".to_owned(),
+            account: "5ffd9856978b5020be7f72339e41a401".to_owned(),
+            operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
+            statement: "Protests rage across the nation".to_owned(),
         }
     }
 }
