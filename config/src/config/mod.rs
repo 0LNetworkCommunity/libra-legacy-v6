@@ -122,13 +122,14 @@ impl Default for GenesisMiningProof {
 
         if node_env == "prod"  {
             return GenesisMiningProof {
-                preimage: easy_preimage,
-                proof: easy_proof,
+                preimage: hard_preimage,
+                proof: hard_proof,
+
             }
         } else {
             return GenesisMiningProof {
-                preimage: hard_preimage,
-                proof: hard_proof,
+                preimage: easy_preimage,
+                proof: easy_proof,
             }
         }
 
