@@ -237,7 +237,6 @@ impl ClientProxy {
         proof: Vec<u8>,
         tower_height: u64,
         is_blocking: bool,
-        key_pair: Option<KeyPair<Ed25519PrivateKey, Ed25519PublicKey>>
         ) -> Result<()>{
         
         //TODO: if this is test environment
@@ -253,7 +252,7 @@ impl ClientProxy {
             &mut self.client,
             sender_address,
             true,
-            key_pair, // Pass a keypair from swarm tests here.
+            None, // Pass a keypair from swarm tests here.
             None
         ).unwrap();
 
@@ -325,7 +324,6 @@ impl ClientProxy {
             proof,
             tower_height,
             false,
-            None
         )?;
         Ok(())
     }
