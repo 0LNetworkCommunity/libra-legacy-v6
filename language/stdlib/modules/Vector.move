@@ -25,6 +25,22 @@ module Vector {
     // Swaps the elements at the i'th and j'th indices in the vector.
     native public fun swap<Element>(v: &mut vector<Element>, i: u64, j: u64);
 
+    // 0L Compare Vectors for equivalence
+    public fun compare<Element>(a: Element, b: Element ): bool {
+        let i = 0;
+        let len = length(&a);
+        while (i < len) {
+            let num_a = borrow(&a, i);
+            let num_b = borrow(&b, i);
+            if (num_a == num_b) {
+                i = i + 1;  
+            } else {
+                return false
+            }
+        };
+        true
+     }
+
     // Return an vector of size one containing `e`
     public fun singleton<Element>(e: Element): vector<Element> {
         let v = empty();

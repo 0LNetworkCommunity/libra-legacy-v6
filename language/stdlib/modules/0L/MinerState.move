@@ -264,7 +264,7 @@ address 0x0 {
 
       
       // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
-      Transaction::assert(&vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
+      Transaction::assert(vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
 
       Debug::print(&0x000000000013370020003);
 
