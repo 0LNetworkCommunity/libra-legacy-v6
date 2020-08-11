@@ -154,6 +154,8 @@ address 0x0 {
 
       Debug::print(&0x000000000013370010001);
 
+        Debug::print(&0x7e5700013010000010001);
+
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
 

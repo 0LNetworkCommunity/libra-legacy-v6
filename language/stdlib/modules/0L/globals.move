@@ -114,7 +114,7 @@ module Globals {
         return GlobalConstants {
           epoch_length: 15,
           max_validator_per_epoch: 10,
-          subsidy_ceiling_gas: 296,
+          subsidy_ceiling_gas: 8640000 * coin_scale,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
