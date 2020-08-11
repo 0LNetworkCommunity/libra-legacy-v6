@@ -1,9 +1,10 @@
 // `submit` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{prelude::*};
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use crate::{block::Block, prelude::*};
+use libra_types::{waypoint::Waypoint, account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
     PrivateKey,
 };
@@ -15,7 +16,7 @@ use anyhow::Error;
 // };
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
-use std::{thread, path::PathBuf, time};
+use std::{thread, path::PathBuf, time, fs, io::BufReader};
 use libra_config::config::NodeConfig;
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{vm_error::StatusCode, transaction::helpers::*};
@@ -310,10 +311,10 @@ fn ol_wait_for_tx (
     sender_address: AccountAddress,
     sequence_number: u64,
     client: &mut LibraClient) -> Result<(), Error>{
-        if sequence_number == 0 {
-            println!("First transaction, cannot query.");
-            return Ok(());
-        }
+        // if sequence_number == 0 {
+        //     println!("First transaction, cannot query.");
+        //     return Ok(());
+        // }
 
         let mut max_iterations = 10;
         println!(

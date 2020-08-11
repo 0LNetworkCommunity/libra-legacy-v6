@@ -109,7 +109,7 @@ module Globals {
     }
 
     fun get_constants(): GlobalConstants  {
-      let coin_scale = 10000;
+      let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()){
         return GlobalConstants {
           epoch_length: 15,
