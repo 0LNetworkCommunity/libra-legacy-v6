@@ -66,4 +66,4 @@ fun main(sender: &signer) {
 
 }
 }
-// check: EXECUTED
+// check: ABORTED
