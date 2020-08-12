@@ -202,6 +202,9 @@ daemon:
 
 	sudo mkdir ~/logs
 	sudo touch ~/logs/output.log
+	sudo chmod 777 ~/logs
+	sudo chmod 777 ~/logs/output.log
+
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service
