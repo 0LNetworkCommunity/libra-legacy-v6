@@ -25,6 +25,7 @@ module GenesisOL {
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
     use 0x0::Signer;
+    // use 0x0::FixedPoint32;
 
     fun initialize(
         vm: &signer,
