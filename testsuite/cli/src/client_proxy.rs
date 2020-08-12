@@ -242,15 +242,10 @@ impl ClientProxy {
         //TODO: if this is test environment
         if true {
 
-            let privkey = Ed25519PrivateKey::from_encoded_string("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3");
-            dbg!(privkey);
-        }
-
 
         // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
         let mut sender_account_data = Self::get_account_data_from_address(
-            &mut self.client,
-            sender_address,
+            &mut self.client,sender_address,
             true,
             None, // Pass a keypair from swarm tests here.
             None

@@ -190,7 +190,7 @@ pub struct Profile {
     pub auth_key: String,
 
     ///The 0L account for the Miner and prospective validator. This is derived from auth_key
-    pub account: String,
+    pub account: Option<String>,
 
     ///The 0L private_key for signing transactions.
     pub operator_private_key: Option<String>,
@@ -205,7 +205,7 @@ impl Default for Profile {
             // Mock Authkey
             auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
             account: "5ffd9856978b5020be7f72339e41a401".to_owned(),
-            operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
+            operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

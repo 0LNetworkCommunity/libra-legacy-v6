@@ -3,13 +3,8 @@ address 0x0 {
 // This module is not complete, as Metadata has not been implemented.
 
 module Globals {
-    // use 0x0::Signer;
-    // use 0x0::Transaction;
     use 0x0::Vector;
     use 0x0::Testnet;
-    // use 0x0::FixedPoint32;
-    // use 0x0::Libra;
-    // use 0x0::GAS;
 
 
 
@@ -110,7 +105,7 @@ module Globals {
     }
 
     fun get_constants(): GlobalConstants  {
-      // let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
+      let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()){
         return GlobalConstants {
           epoch_length: 15,

@@ -225,6 +225,7 @@ address 0x0 {
 
       // Prepare list of proofs in epoch for end of epoch statistics
       let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
+      in_process.proofs = Vector::empty();
       Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
