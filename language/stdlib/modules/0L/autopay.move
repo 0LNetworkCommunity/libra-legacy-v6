@@ -25,6 +25,7 @@ address 0x0{
       // TODO: name should be a string to store a memo
       name: u64,
       uid: u64,
+      payee: address,
       frequency: u64,             // pay every frequency blocks
       start: u64,                 // start paying in this block
       end: u64,                   // start and end are inclusive
@@ -32,7 +33,7 @@ address 0x0{
       variable_fee: u64,
       // TODO: assert that CoinType is a valid type of currency
       currency: u64,
-      // TODO: cannot make from_earmaked_tansactions a reference-type to be &signer
+      // TODO: cannot make from_earmaked_transactions a reference-type to be &signer
       //  Also don't want this struct to have ownership of the signer object
       from_earmarked_transactions: bool,
     }
@@ -101,6 +102,7 @@ address 0x0{
           enabled: true,
           name: 0,
           uid: 0,
+          payee: Transaction::sender(),
           frequency: 1,
           start: 0,
           end: 5,
@@ -163,6 +165,7 @@ address 0x0{
       enabled: bool,
       name: u64,
       uid: u64,
+      payee: address,
       frequency: u64,
       start: u64,
       end: u64,
@@ -181,6 +184,7 @@ address 0x0{
         enabled: enabled,
         name: name,
         uid: uid,
+        payee: payee,
         frequency: frequency,
         start: start,
         end: end,
@@ -257,6 +261,28 @@ address 0x0{
       let payments = &borrow_global<Data>(account).payments;
       let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
       payment.name
+    }
+
+    public fun change_payee(uid: u64, payee: address) acquires Data {
+      let index = find(Transaction::sender(), uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for sender
+        Transaction::assert(false, 30);
+      };
+      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
+      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.payee = payee;
+    }
+
+    public fun get_payee(account: address, uid: u64): address acquires Data {
+      let index = find(account, uid);
+      if (Option::is_none<u64>(&index)) {
+        // Case where payment doesn't exist for chosen account
+        Transaction::assert(false, 31);
+      };
+      let payments = & borrow_global<Data>(account).payments;
+      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
+      payment.payee
     }
 
     public fun change_frequency(uid: u64, frequency: u64) acquires Data {

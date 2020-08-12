@@ -18,7 +18,7 @@ script {
 script {
   use 0x0::AutoPay;
   fun main() {
-    AutoPay::create(true, 0, 0, 1, 0, 5, 0, 0, 0, true);
+    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 0, 0, 0, true);
   }
 }
 // check: EXECUTED
