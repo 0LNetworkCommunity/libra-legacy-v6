@@ -15,10 +15,10 @@ fi
 
 
 
-echo "Enter ssh id_rsa key for github (ctrl+d when done)"
-private_key=$(cat)
-echo $private_key > ~/.ssh/id_rsa
-chmod 400 ~/.ssh/id_rsa
-ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+# echo "Enter ssh id_rsa key for github (ctrl+d when done)"
+# private_key=$(cat)
+# echo $private_key > ~/.ssh/id_rsa
+# chmod 400 ~/.ssh/id_rsa
+# ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
 
-git clone git@github.com:OLSF/libra.git
+# git clone git@github.com:OLSF/libra.git
