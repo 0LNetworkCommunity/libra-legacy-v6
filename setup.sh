@@ -6,11 +6,11 @@ apt install -y git vim zip build-essential cmake clang llvm libgmp-dev secure-de
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 source $HOME/.cargo/env
 
-if test -d ~/my_configs/; then
-    zip -r ~/my_configs_bak.zip ~/my_configs/*
+if test -d ~/node_data/; then
+    zip -r ~/node_data.bak.zip ~/node_data/*
 else
-    mkdir ~/my_configs;
-    cp ~/libra/validator_utils/* ~/my_configs;
+    mkdir ~/node_data;
+    cp ~/libra/validator_utils/* ~/node_data;
 fi 
 
 
