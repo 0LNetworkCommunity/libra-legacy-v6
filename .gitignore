@@ -49,4 +49,4 @@ move_build_output/
 saved_logs
 
 #all user configs
-my_configs
+my_configs/*

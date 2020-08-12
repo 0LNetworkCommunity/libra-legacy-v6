@@ -14,6 +14,8 @@ else
     # cp ~/libra/my_configs/* ~/node_data/;
     cp ~/libra/my_configs/github_token.txt ~/node_data/
     cp ~/libra/my_configs/key_store.json ~/node_data/
+    cp ~/libra/miner/miner.toml.json ~/node_data/
+
 
     cp ~/libra/validator_utils/Makefile ~/node_data/
     mkdir ~/node_data/blocks
