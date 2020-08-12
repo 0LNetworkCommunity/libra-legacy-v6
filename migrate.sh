@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # targeting ububtu
+export NODE_ENV=prod
 apt update
 apt install -y zip
 
