@@ -150,7 +150,7 @@ layout:
 
 add-proofs:
 	libra-management mining \
-	--path-to-genesis-pow ${DATA_PATH}block_0.json \
+	--path-to-genesis-pow ${DATA_PATH}blocks/block_0.json \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 keys:
