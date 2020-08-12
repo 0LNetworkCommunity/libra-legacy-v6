@@ -49,4 +49,4 @@ move_build_output/
 saved_logs
 
 #github api token
-github_token
+my_configs/github_token.txt

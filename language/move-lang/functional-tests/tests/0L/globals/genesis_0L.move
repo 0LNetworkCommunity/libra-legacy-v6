@@ -2,9 +2,8 @@
 //! new-transaction
 //! sender: association
 script {
-use 0x0::Globals;
+// use 0x0::Globals;
 use 0x0::Debug;
-use 0x0::Testnet;
 use 0x0::Transaction;
 use 0x0::LibraSystem;
 use 0x0::MinerState;
