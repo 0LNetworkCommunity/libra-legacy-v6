@@ -193,7 +193,7 @@ start:
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 daemon:
-	cp -f libra-node.service /lib/systemd/system/
+	cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
 	systemctl daemon-reload
 
@@ -203,14 +203,14 @@ daemon:
 	fi 
 
 	mkdir ~/logs
-	touch ~/logs/output-libra-node.log
+	touch ~/logs/output.log
 
 	systemctl daemon-reload
 	systemctl stop libra-node.service
 	systemctl start libra-node.service
 	sleep 2
 	systemctl status libra-node.service &
-	tail -f ~/logs/output-libra-node.log
+	tail -f ~/logs/output.log
 
 
 wipe: 

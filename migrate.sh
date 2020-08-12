@@ -7,10 +7,14 @@ apt install -y zip
 
 if test -d ~/node_data/; then
     zip -r ~/node_data_bak.zip ~/node_data/*
+     mv ~/node_data/Makefile ~/node_data/Makefile.bak
+
 else
     mkdir ~/node_data;
-    cp ~/libra/my_configs/* ~/node_data/;
-    mv ~/node_data/Makefile ~/node_data/Makefile.bak
+    # cp ~/libra/my_configs/* ~/node_data/;
+    cp ~/libra/my_configs/github_token.txt ~/node_data/
+    cp ~/libra/my_configs/key_store.json ~/node_data/
+
     cp ~/libra/validator_utils/Makefile ~/node_data/
     mkdir ~/node_data/blocks
     cp ~/node_data/block_0.json ~/node_data/blocks/
