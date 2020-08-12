@@ -126,15 +126,15 @@ blocks:
 	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
-	if test -f block_0.json; then \
+	if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm block_0.json; \
 	fi 
-	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ~/libra/miner/miner.toml
+	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
 
 ifeq (${NODE_ENV}, test)
-	cp ~/libra/fixtures/block_0.json.test.${NAMESPACE} block_0.json
+	cp ~/libra/fixtures/block_0.json.test.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
 else
-	cp ~/libra/fixtures/block_0.json.prod.${NAMESPACE} block_0.json
+	cp ~/libra/fixtures/block_0.json.prod.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
 endif
 endif
 
