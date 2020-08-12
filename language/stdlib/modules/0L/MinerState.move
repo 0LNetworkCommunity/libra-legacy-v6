@@ -12,6 +12,7 @@ address 0x0 {
     use 0x0::Globals;
     use 0x0::Hash;
     use 0x0::Debug;
+    use 0x0::Testnet;
 
 
     // Struct to store information about a VDF proof submitted
@@ -100,13 +101,22 @@ address 0x0 {
 
       Debug::print(&0x000000000013370000011);
 
+
       // Get difficulty constant. Will be different in tests than in production.
       // Globals initializes this accordingly
-      let difficulty_constant = Globals::get_difficulty();
-      Debug::print(&0x000000000013370000012);
 
-      Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
+      // skip this check on test-net, we need tests to send different difficulties.
+      let difficulty_constant = Globals::get_difficulty();
+
+      if (!Testnet::is_testnet()){
+
+        Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
+        Debug::print(&0x000000000013370000012);
+
+      };
+
       Debug::print(&0x000000000013370000002);
+
 
       // 1. The Onboarding path (miner not yet initialized):
       //    Check if the miner's state is initialized.
@@ -269,10 +279,10 @@ address 0x0 {
       
       // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
 
-      let equal = Vector::compare(previous_verified_solution_hash, &vdf_proof_blob.challenge);
-      Debug::print(&equal);
-
-      // Transaction::assert(vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
+      // let equal = Vector::compare(previous_verified_solution_hash, &vdf_proof_blob.challenge);
+      // Debug::print(&equal);
+      // Transaction::assert(equal, 130108031010);
+      Transaction::assert(&vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
 
       Debug::print(&0x000000000013370020003);
 
