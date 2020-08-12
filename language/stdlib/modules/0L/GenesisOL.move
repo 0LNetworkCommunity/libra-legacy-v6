@@ -25,6 +25,7 @@ module GenesisOL {
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
     use 0x0::Signer;
+    use 0x0::AutoPay;
 
     fun initialize(
         vm: &signer,
@@ -122,6 +123,9 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(config_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
+
+        // Initialize the autopay module
+        AutoPay::initialize(vm);
 
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch

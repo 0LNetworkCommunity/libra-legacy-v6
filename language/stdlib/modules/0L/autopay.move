@@ -4,6 +4,7 @@ address 0x0{
     use 0x0::LibraBlock;
     use 0x0::Transaction;
     use 0x0::Option;
+    use 0x0::Signer;
 
     // Creating structs to be used
     resource struct Status {
@@ -13,6 +14,10 @@ address 0x0{
     // List of payments
     resource struct Data {
       payments: vector<Payment>,
+    }
+
+    resource struct AccountList {
+      accounts: vector<address>,
     }
 
     struct Payment {
@@ -32,18 +37,62 @@ address 0x0{
       from_earmarked_transactions: bool,
     }
 
+    public fun initialize(sender: &signer) {
+      Transaction::assert(Signer::address_of(sender) == 0x0, 8001);
+
+      move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), });
+    }
+
+
+    public fun verify_initialized() acquires AccountList {
+      // This will cause an error if it's not initiliazed because the data won't exist.
+      borrow_global_mut<AccountList>(0x0);
+    }
+    
+
     // Each account should initialize for themselves
-    public fun init_status(enabled: bool) {
+    public fun init_status(enabled: bool) acquires AccountList {
       move_to_sender<Status>(Status{ enabled: enabled });
+      if (enabled) {
+        let accounts = &mut borrow_global_mut<AccountList>(0x0).accounts;
+        if (!Vector::contains<address>(accounts, &Transaction::sender())) {
+          Vector::push_back<address>(accounts, Transaction::sender());
+        }
+      };
     }
 
     public fun init_data(payments: vector<Payment>) {
       move_to_sender<Data>(Data { payments: payments });
     }
 
-    public fun is_enabled(account: address): bool acquires Status {
+    public fun is_enabled(account: address): bool acquires Status, AccountList {
       let status = borrow_global<Status>(account);
-      status.enabled
+      if (status.enabled) {
+        let accounts = &mut borrow_global_mut<AccountList>(0x0).accounts;
+        if (Vector::contains<address>(accounts, &account)) {
+          return true
+        };
+      };
+      false
+    }
+
+    public fun enable_account() acquires Status, AccountList {
+      let status = borrow_global_mut<Status>(Transaction::sender());
+      status.enabled = true;
+      let accounts = &mut borrow_global_mut<AccountList>(0x0).accounts;
+      if (!Vector::contains<address>(accounts, &Transaction::sender())) {
+        Vector::push_back<address>(accounts, Transaction::sender());
+      }
+    }
+
+    public fun disable_account() acquires Status, AccountList {
+      let status = borrow_global_mut<Status>(Transaction::sender());
+      status.enabled = false;
+      let accounts = &mut borrow_global_mut<AccountList>(0x0).accounts;
+      let (status, index) = Vector::index_of<address>(accounts, &Transaction::sender());
+      if (status) {
+        Vector::remove<address>(accounts, index);
+      }
     }
 
     public fun make_dummy_payment_vec(): vector<Payment> {

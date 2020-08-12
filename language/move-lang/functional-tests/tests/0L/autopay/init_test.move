@@ -8,6 +8,7 @@ script {
   use 0x0::Transaction;
   use 0x0::Signer;
   fun main(sender: &signer) {
+    AutoPay::verify_initialized();
     AutoPay::init_status(true);
     let payments = AutoPay::make_dummy_payment_vec();
     AutoPay::init_data(payments);
