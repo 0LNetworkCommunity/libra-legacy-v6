@@ -1,6 +1,6 @@
 SHELL=/usr/bin/env bash
 
-DATA_PATH = ~/my_configs/
+DATA_PATH = ./
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
