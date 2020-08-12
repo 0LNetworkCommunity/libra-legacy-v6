@@ -50,3 +50,5 @@ saved_logs
 
 #all user configs
 my_configs/*
+miner.toml
+key_store.json
