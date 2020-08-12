@@ -146,7 +146,7 @@ init:
 layout:
 	libra-management set-layout \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
-	--path=set_layout.toml
+	--path=set_layout_prod.toml
 
 add-proofs:
 	libra-management mining \
@@ -193,22 +193,22 @@ start:
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 daemon:
-	cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
+	sudo cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		rm -rf ~/logs*; \
 	fi 
 
-	mkdir ~/logs
-	touch ~/logs/output.log
+	sudo mkdir ~/logs
+	sudo touch ~/logs/output.log
 
-	systemctl daemon-reload
-	systemctl stop libra-node.service
-	systemctl start libra-node.service
-	sleep 2
-	systemctl status libra-node.service &
-	tail -f ~/logs/output.log
+	sudo systemctl daemon-reload
+	sudo systemctl stop libra-node.service
+	sudo systemctl start libra-node.service
+	sudo sleep 2
+	sudo systemctl status libra-node.service &
+	sudo tail -f ~/logs/output.log
 
 
 wipe: 
