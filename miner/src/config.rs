@@ -32,7 +32,7 @@ impl OlMinerConfig {
         let mut conf = OlMinerConfig::default();
         // Load profile config
         conf.profile.auth_key = param.auth_key.to_string();
-        conf.profile.account = param.address.to_string();
+        conf.profile.account = Some(param.address.to_string());
         conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
         // Load chain info
         conf.chain_info.node = Some(param.url.to_string());
@@ -204,8 +204,8 @@ impl Default for Profile {
         Self {
             // Mock Authkey
             auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
-            account: "5ffd9856978b5020be7f72339e41a401".to_owned(),
-            operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
+            account: Some("5ffd9856978b5020be7f72339e41a401".to_owned()),
+            operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

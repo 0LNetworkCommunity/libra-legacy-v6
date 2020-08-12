@@ -239,9 +239,6 @@ impl ClientProxy {
         is_blocking: bool,
         ) -> Result<()>{
         
-        //TODO: if this is test environment
-        if true {
-
 
         // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
         let mut sender_account_data = Self::get_account_data_from_address(

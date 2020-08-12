@@ -126,7 +126,7 @@ module Globals {
           // target max block time: 2 secs
           // target transaction per sec max gas: 20
           // uses "scaled representation", since there are no decimals.
-          subsidy_ceiling_gas: 8640000, // coins assumes 24 hour epoch lengths.
+          subsidy_ceiling_gas: 8640000 * coin_scale, // coins assumes 24 hour epoch lengths.
           // FixedPoint32::multiply_u64(8640000, coin_scale)
           min_node_density: 4,
           max_node_density: 300,
