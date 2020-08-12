@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
-std::process::Command;
+use std::process::Command;
 #[test]
-pub fn test_command(&self, remote_ns: &str) -> Result<Waypoint, Error> {
+pub fn test_command() {
     let mut echo_hello = Command::new("sh");
     echo_hello.arg("-c")
             .arg("echo hello");
