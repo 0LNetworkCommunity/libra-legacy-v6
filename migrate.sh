@@ -2,12 +2,12 @@
 
 # targeting ububtu
 export NODE_ENV=prod
-apt update
-apt install -y zip
+sudo apt update
+sudo apt install -y zip
 
 if test -d ~/node_data/; then
     zip -r ~/node_data_bak.zip ~/node_data/*
-     mv ~/node_data/Makefile ~/node_data/Makefile.bak
+    mv ~/node_data/Makefile ~/node_data/Makefile.bak
 
 else
     mkdir ~/node_data;
