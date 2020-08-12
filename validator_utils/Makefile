@@ -167,7 +167,7 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	NODE_ENV='${NODE_ENV}' cargo run -p libra-management genesis \
+	NODE_ENV='${NODE_ENV}' libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
 	--path ${DATA_PATH}genesis.blob
 
