@@ -1,6 +1,6 @@
 SHELL=/usr/bin/env bash
 
-DATA_PATH = ./
+DATA_PATH = ~/my_configs/
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
@@ -25,9 +25,9 @@ REPO_ORG = OLSF
 REPO_NAME = debug-genesis
 endif
 
-ifndef ENV
+ifndef NODE_ENV
 # Default to prod settings for genesis and mining. Pass with ENV=test for test values.
-ENV=prod
+NODE_ENV=prod
 endif
 
 confirm:
@@ -80,9 +80,11 @@ register: clear blocks init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
+
+
 deps:
 	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev secure-delete
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
 		## TODO: Cargo is not getting set to path. This next line doesn't run.
 	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
 	
@@ -103,9 +105,9 @@ all-bins:
 keygen:
 	cd ../miner && miner keygen
 
-miner:
-	cd ../miner && NODE_ENV=${ENV} miner start
-	cp -f ../miner/blocks/block_0.json ./
+miner-genesis:
+	cd ../miner && NODE_ENV=${NODE_ENV} miner start
+	cp -f ../miner/blocks/block_0.json ${DATA_PATH}
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -116,7 +118,9 @@ github:
 #GENESIS CEREMONY
 
 clear:
+ifdef TEST
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+endif
 
 blocks:
 	@echo fixtures
@@ -127,7 +131,7 @@ ifdef TEST
 	fi 
 	cp ./fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
 
-ifeq (${ENV}, test)
+ifeq (${NODE_ENV}, test)
 	cp ./fixtures/block_0.json.test.${NAMESPACE} block_0.json
 else
 	cp ./fixtures/block_0.json.prod.${NAMESPACE} block_0.json
@@ -146,7 +150,7 @@ layout:
 
 add-proofs:
 	libra-management mining \
-	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
+	--path-to-genesis-pow ${DATA_PATH}block_0.json \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 keys:
@@ -163,12 +167,12 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
-	--path ${DATA_PATH}/genesis.blob
+	--path ${DATA_PATH}genesis.blob
 
 waypoint:
-	NODE_ENV='${ENV}' libra-management create-waypoint \
+	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
 
