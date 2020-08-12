@@ -16,6 +16,7 @@ use crate::prelude::*;
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use crate::submit_tx_alt::test_runner;
 use std::path::PathBuf;
+use std::borrow::BorrowMut;
 
 /// `start` subcommand
 ///
@@ -40,9 +41,8 @@ impl Runnable for SwarmCmd {
 
         println!("Testing Submit to Swarm. Using swarm private key");
 
-        let result = test_runner();
-        println!("Print result");
-        println!("{:?}", result);
+        let result = test_runner(self.home.to_owned(), &miner_configs);
+        println!("Executing Result: {:?}", result);
     }
 }
 

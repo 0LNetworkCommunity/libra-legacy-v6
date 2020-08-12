@@ -15,10 +15,10 @@ mod start;
 mod version;
 mod genesis;
 mod submit;
-mod start_test_swarm;
+mod swarm;
 
 use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
-     genesis::GenesisCmd, submit::SubmitCmd, start_test_swarm::SwarmCmd};
+           genesis::GenesisCmd, submit::SubmitCmd, swarm::SwarmCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,

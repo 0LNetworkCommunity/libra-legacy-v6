@@ -270,7 +270,7 @@ pub mod build_block {
 
     // parse the existing blocks in the miner's path. This function receives any path.
     // Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
-    fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
+    pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
         let mut max_block: Option<u64> = None;
         let mut max_block_path = None;
 
