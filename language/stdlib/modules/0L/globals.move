@@ -3,10 +3,10 @@ address 0x0 {
 // This module is not complete, as Metadata has not been implemented.
 
 module Globals {
-    // use 0x0::Signer;
-    // use 0x0::Transaction;
     use 0x0::Vector;
     use 0x0::Testnet;
+
+
 
     // Some constants need to changed based on environment; dev, testing, prod.
     struct GlobalConstants {
@@ -105,6 +105,7 @@ module Globals {
     }
 
     fun get_constants(): GlobalConstants  {
+      let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()){
         return GlobalConstants {
           epoch_length: 15,
@@ -118,13 +119,15 @@ module Globals {
 
       } else {
         return GlobalConstants {
-          epoch_length: 2736000, // approx 24 hours at 190 blocks/min
+          epoch_length: 196992, // approx 24 hours at 2.28 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
           // from LibraVMConfig.
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs
           // target transaction per sec max gas: 20
-          subsidy_ceiling_gas: 8640000, // coins assumes 24 hour epoch lengths.
+          // uses "scaled representation", since there are no decimals.
+          subsidy_ceiling_gas: 8640000 * coin_scale, // coins assumes 24 hour epoch lengths.
+          // FixedPoint32::multiply_u64(8640000, coin_scale)
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),

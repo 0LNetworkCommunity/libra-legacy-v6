@@ -48,5 +48,7 @@ move_build_output/
 0L_dev_config/0/**
 saved_logs
 
-#github api token
-github_token
+#all user configs
+my_configs/*
+miner.toml
+key_store.json

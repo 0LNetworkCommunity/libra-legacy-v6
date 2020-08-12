@@ -2,6 +2,7 @@
 
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use std::path::PathBuf;
 
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize)]
@@ -39,7 +40,7 @@ impl Block {
     pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
 
 
-        let mut file = std::fs::File::open(path)?;
+        let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
         return Ok((encode(block.preimage),encode(block.data)));
@@ -49,7 +50,7 @@ impl Block {
 
         let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
 
-        let mut file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
 
@@ -71,10 +72,8 @@ pub mod build_block {
     use std::{
         fs,
         io::{BufReader, Write},
-        path::Path,
-        path::PathBuf,
+        path::{Path, PathBuf},
         time::Instant,
-        env,
     };
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
@@ -158,7 +157,7 @@ pub mod build_block {
                 let block = mine_once(&config)?;
                 status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
 
-                mining_height = block.height + 1;
+                // mining_height = block.height + 1;
 
                 // if parameters for connecting to the network are passed
                 // try to submit transactions to network.
@@ -174,9 +173,10 @@ pub mod build_block {
                             block.data,                           // proof: Vec<u8>,
                             waypoint,                             // waypoint: Waypoint,
                             mnemonic.to_string(),
+                            block.height,
                             node.to_string(),
                         ) {
-                            Ok(v) => println!("Submitted block: {:?}", block.height.to_string() ),
+                            Ok(_v) => println!("Submitted block: {:?}", block.height.to_string() ),
                             Err(e) => println!("Error submitting mined block: {:?}", e),
                         }
                         // unwrap();
@@ -193,6 +193,8 @@ pub mod build_block {
                         .context("No Waypoint for client provided")
                         .into());
                 }
+            
+                mining_height = block.height + 1;
             }
         }
     }
@@ -217,6 +219,7 @@ pub mod build_block {
                 block.data,                           // proof: Vec<u8>,
                 waypoint,                             // waypoint: Waypoint,
                 mnemonic.to_string(),
+                block.height,
                 node.to_string(),
             ).unwrap();
             status_ok!("Submitted {}",block.height.to_string());
@@ -268,7 +271,7 @@ pub mod build_block {
 
     // parse the existing blocks in the miner's path. This function receives any path.
     // Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
-    fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
+    pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
         let mut max_block: Option<u64> = None;
         let mut max_block_path = None;
 
@@ -323,7 +326,8 @@ pub mod build_block {
             },
             profile: Profile {
                 auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
-                account: "000000000000000000000000deadbeef".to_owned(),
+                account: Some("000000000000000000000000deadbeef".to_owned()),
+                operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -377,7 +381,8 @@ fn create_fixtures() {
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
-                account: "000000000000000000000000deadbeef".to_owned(),
+                account: Some("000000000000000000000000deadbeef".to_owned()),
+                operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -445,7 +450,8 @@ fn create_fixtures() {
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                     .to_owned(),
-                account: "000000000000000000000000deadbeef".to_owned(),
+                account: Some("000000000000000000000000deadbeef".to_owned()),
+                operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {

@@ -6,8 +6,10 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-use abscissa_core::path::{PathBuf, Path};
+use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
+use crate::submit_tx_alt::TxParams;
+use libra_crypto::ValidCryptoMaterialStringExt;
 
 /// OlMiner Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -25,9 +27,17 @@ const AUTH_KEY_BYTES: usize = 32;
 const CHAIN_ID_BYTES: usize = 64;
 const STATEMENT_BYTES: usize = 1008;
 
-
-
 impl OlMinerConfig {
+    pub fn load_swarm_config(param: &TxParams) -> Self {
+        let mut conf = OlMinerConfig::default();
+        // Load profile config
+        conf.profile.auth_key = param.auth_key.to_string();
+        conf.profile.account = Some(param.address.to_string());
+        conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
+        // Load chain info
+        conf.chain_info.node = Some(param.url.to_string());
+        conf
+    }
     /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
     pub fn genesis_preimage(&self) -> Vec<u8> {
         let mut preimage: Vec<u8> = vec![];
@@ -168,7 +178,7 @@ impl Default for ChainInfo {
             block_dir: "./blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
             base_waypoint: "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b".to_owned(),
-            node: None,
+            node: Some("http://localhost:8080".to_owned()),
         }
     }
 }
@@ -180,7 +190,10 @@ pub struct Profile {
     pub auth_key: String,
 
     ///The 0L account for the Miner and prospective validator. This is derived from auth_key
-    pub account: String,
+    pub account: Option<String>,
+
+    ///The 0L private_key for signing transactions.
+    pub operator_private_key: Option<String>,
 
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
@@ -191,8 +204,8 @@ impl Default for Profile {
         Self {
             // Mock Authkey
             auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
-            account: "5ffd9856978b5020be7f72339e41a401".to_owned(),
-
+            account: Some("5ffd9856978b5020be7f72339e41a401".to_owned()),
+            operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

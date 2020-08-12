@@ -15,8 +15,10 @@ mod start;
 mod version;
 mod genesis;
 mod submit;
+mod swarm;
 
-use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd, genesis::GenesisCmd, submit::SubmitCmd};
+use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
+           genesis::GenesisCmd, submit::SubmitCmd, swarm::SwarmCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -52,6 +54,10 @@ pub enum OlMinerCmd {
     /// The `submit` subcommand
     #[options(help = "submit an already mined block")]
     Submit(SubmitCmd),
+
+    /// The `swarm` subcommand
+    #[options(help = "test connection to a local swarm")]
+    Swarm(SwarmCmd),
 
 }
 
