@@ -195,8 +195,6 @@ start:
 daemon:
 	cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
-	systemctl daemon-reload
-
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		rm -rf ~/logs*; \

@@ -4,7 +4,7 @@ Description=Libra Node Service
 [Service]
 LimitNOFILE=65536
 WorkingDirectory=/root/libra/my_configs
-ExecStart=/usr/local/bin/libra-node --config /root/libra/my_configs/node.configs.toml
+ExecStart=/usr/local/bin/libra-node --config /root/node_data/node.configs.toml
 
 Restart=always
 RestartSec=10s
