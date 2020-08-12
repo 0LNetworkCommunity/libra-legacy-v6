@@ -31,7 +31,7 @@ NODE_ENV=prod
 endif
 
 confirm:
-	cd ../miner && ls
+	cd ~/libra/miner && ls
 	@echo namespace: ${NAMESPACE}
 	@echo github org: ${REPO_ORG}
 	@echo github repo: ${REPO_NAME}
@@ -89,25 +89,25 @@ deps:
 	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
 	
 stdlib:
-	cd ../language/stdlib && cargo run --release
+	cd ~/libra/language/stdlib && cargo run --release
 
 bins:
 	cargo build -p libra-node --release
 	cargo build -p libra-management --release
 	cargo build -p miner --release
-	sudo cp -f ../target/release/libra-management /usr/local/bin/libra-management
-	sudo cp -f ../target/release/libra-node /usr/local/bin/libra-node
-	sudo cp -f ../target/release/miner /usr/local/bin/miner
+	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
 all-bins:
 	cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	cd ../miner && miner keygen
+	cd ~/libra/miner && miner keygen
 
 miner-genesis:
-	cd ../miner && NODE_ENV=${NODE_ENV} miner start
-	cp -f ../miner/blocks/block_0.json ${DATA_PATH}
+	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
+	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -129,12 +129,12 @@ ifdef TEST
 	if test -f block_0.json; then \
 		rm block_0.json; \
 	fi 
-	cp ./fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
+	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ~/libra/miner/miner.toml
 
 ifeq (${NODE_ENV}, test)
-	cp ./fixtures/block_0.json.test.${NAMESPACE} block_0.json
+	cp ~/libra/fixtures/block_0.json.test.${NAMESPACE} block_0.json
 else
-	cp ./fixtures/block_0.json.prod.${NAMESPACE} block_0.json
+	cp ~/libra/fixtures/block_0.json.prod.${NAMESPACE} block_0.json
 endif
 endif
 
