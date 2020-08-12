@@ -3,12 +3,8 @@ address 0x0 {
 // This module is not complete, as Metadata has not been implemented.
 
 module Globals {
-    // use 0x0::Signer;
-    // use 0x0::Transaction;
     use 0x0::Vector;
     use 0x0::Testnet;
-    // use 0x0::Libra;
-    // use 0x0::GAS;
 
 
 
@@ -131,6 +127,7 @@ module Globals {
           // target transaction per sec max gas: 20
           // uses "scaled representation", since there are no decimals.
           subsidy_ceiling_gas: 8640000 * coin_scale, // coins assumes 24 hour epoch lengths.
+          // FixedPoint32::multiply_u64(8640000, coin_scale)
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),

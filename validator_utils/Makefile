@@ -25,13 +25,13 @@ REPO_ORG = OLSF
 REPO_NAME = debug-genesis
 endif
 
-ifndef ENV
+ifndef NODE_ENV
 # Default to prod settings for genesis and mining. Pass with ENV=test for test values.
-ENV=prod
+NODE_ENV=prod
 endif
 
 confirm:
-	cd ../miner && ls
+	cd ~/libra/miner && ls
 	@echo namespace: ${NAMESPACE}
 	@echo github org: ${REPO_ORG}
 	@echo github repo: ${REPO_NAME}
@@ -80,32 +80,34 @@ register: clear blocks init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
+
+
 deps:
 	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev secure-delete
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
 		## TODO: Cargo is not getting set to path. This next line doesn't run.
 	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
 	
 stdlib:
-	cd ../language/stdlib && cargo run --release
+	cd ~/libra/language/stdlib && cargo run --release
 
 bins:
-	cargo build -p libra-node --release
-	cargo build -p libra-management --release
-	cargo build -p miner --release
-	sudo cp -f ../target/release/libra-management /usr/local/bin/libra-management
-	sudo cp -f ../target/release/libra-node /usr/local/bin/libra-node
-	sudo cp -f ../target/release/miner /usr/local/bin/miner
+	cd ~/libra && cargo build -p libra-node --release
+	cd ~/libra && cargo build -p libra-management --release
+	cd ~/libra && cargo build -p miner --release
+	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
 all-bins:
-	cargo build --all --bins --release --exclude cluster-test
+	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	cd ../miner && miner keygen
+	cd ~/libra/miner && miner keygen
 
-miner:
-	cd ../miner && NODE_ENV=${ENV} miner start
-	cp -f ../miner/blocks/block_0.json ./
+miner-genesis:
+	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
+	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -116,21 +118,23 @@ github:
 #GENESIS CEREMONY
 
 clear:
+ifdef TEST
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+endif
 
 blocks:
 	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
-	if test -f block_0.json; then \
+	if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm block_0.json; \
 	fi 
-	cp ./fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
+	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
 
-ifeq (${ENV}, test)
-	cp ./fixtures/block_0.json.test.${NAMESPACE} block_0.json
+ifeq (${NODE_ENV}, test)
+	cp ~/libra/fixtures/block_0.json.test.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
 else
-	cp ./fixtures/block_0.json.prod.${NAMESPACE} block_0.json
+	cp ~/libra/fixtures/block_0.json.prod.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
 endif
 endif
 
@@ -146,7 +150,7 @@ layout:
 
 add-proofs:
 	libra-management mining \
-	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
+	--path-to-genesis-pow ${DATA_PATH}block_0.json \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 keys:
@@ -163,12 +167,12 @@ register:
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
 
 build-genesis:
-	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
+	NODE_ENV='${NODE_ENV}' libra-management genesis \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
-	--path ${DATA_PATH}/genesis.blob
+	--path ${DATA_PATH}genesis.blob
 
 waypoint:
-	NODE_ENV='${ENV}' libra-management create-waypoint \
+	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
 	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
 	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
 
@@ -189,7 +193,7 @@ start:
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 daemon:
-	cp -f libra-node.service /lib/systemd/system/
+	cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
 	systemctl daemon-reload
 
@@ -199,14 +203,14 @@ daemon:
 	fi 
 
 	mkdir ~/logs
-	touch ~/logs/output-libra-node.log
+	touch ~/logs/output.log
 
 	systemctl daemon-reload
 	systemctl stop libra-node.service
 	systemctl start libra-node.service
 	sleep 2
 	systemctl status libra-node.service &
-	tail -f ~/logs/output-libra-node.log
+	tail -f ~/logs/output.log
 
 
 wipe: 
