@@ -125,7 +125,7 @@ github:
 
 clear:
 ifdef TEST
-	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+	cd ${DATA_PATH} && rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
 endif
 
 fixtures:
