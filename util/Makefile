@@ -82,7 +82,7 @@ LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 install: deps compile
 compile: stdlib bins
 # pipelines for genesis ceremony
-register: clear blocks init add-proofs keys register
+register: clear fixtures init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
@@ -128,15 +128,17 @@ ifdef TEST
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
 endif
 
-blocks:
+fixtures:
 	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
+
+	mkdir -p ${DATA_PATH}/blocks/
+
 	if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm block_0.json; \
-	else \
-		mkdir ${DATA_PATH}/blocks/; \
+		rm ${DATA_PATH}/blocks/block_0.json; \
 	fi 
+
 	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
 
 ifeq (${NODE_ENV}, test)
