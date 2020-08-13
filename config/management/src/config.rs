@@ -91,13 +91,13 @@ impl Config {
         let path: PathBuf;
 
         if self.genesis_path.is_none() {
-            path = PathBuf::from("./genesis.blob");
+            path = PathBuf::from("./");
         } else {
             path = self.genesis_path.unwrap();
         }
 
         let peers = Seeds {
-            genesis_path: path
+            genesis_path: path.join("genesis.blob")
         };
 
         let upstream = AuthenticationKey::ed25519(&key.public_key).derived_address();
@@ -125,7 +125,7 @@ impl Config {
             );
             network.discovery_method = DiscoveryMethod::Gossip;
             //network.network_peers_file = PathBuf::from("./network_peers.toml") ;
-            network.seed_peers_file = PathBuf::from("./seed_peers.toml") ;
+            network.seed_peers_file = path.join("seed_peers.toml") ;
         }
 
 
@@ -147,7 +147,7 @@ impl Config {
         };
 
         // Adding genesis file location
-        config.execution.genesis_file_location = PathBuf::from("genesis.blob");
+        config.execution.genesis_file_location = path.join("genesis.blob");
 
         //TODO: The data is unecessary here, but may be good to include the actual data.
         config.configs_ol_miner.preimage = "".to_string();
@@ -157,7 +157,7 @@ impl Config {
 
         // TODO: place in path with other files.
         // Save file
-        let output_dir = PathBuf::from("./");
+        let output_dir = path;
 
         fs::create_dir_all(&output_dir).expect("Unable to create output directory");
         config
