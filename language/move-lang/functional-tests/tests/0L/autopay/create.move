@@ -17,8 +17,10 @@ script {
 //! sender: alice
 script {
   use 0x0::AutoPay;
+  use 0x0::Transaction;
   fun main() {
-    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 0, 0, 0, true);
+    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 1, 0, true);
+    Transaction::assert(AutoPay::exists({{alice}}, 0), 5);
   }
 }
 // check: EXECUTED

@@ -1,10 +1,10 @@
 address 0x0{
   module AutoPay{
     use 0x0::Vector;
-    use 0x0::LibraBlock;
     use 0x0::Transaction;
     use 0x0::Option;
     use 0x0::Signer;
+    use 0x0::LibraAccount;
 
     // Creating structs to be used
     resource struct Status {
@@ -18,6 +18,7 @@ address 0x0{
 
     resource struct AccountList {
       accounts: vector<address>,
+      current_block: u64,
     }
 
     struct Payment {
@@ -29,19 +30,19 @@ address 0x0{
       frequency: u64,             // pay every frequency blocks
       start: u64,                 // start paying in this block
       end: u64,                   // start and end are inclusive
-      fixed_fee: u64,
-      variable_fee: u64,
+      amount: u64,
       // TODO: assert that CoinType is a valid type of currency
       currency: u64,
       // TODO: cannot make from_earmaked_transactions a reference-type to be &signer
       //  Also don't want this struct to have ownership of the signer object
       from_earmarked_transactions: bool,
+      last_block_paid: u64,
     }
 
     public fun initialize(sender: &signer) {
       Transaction::assert(Signer::address_of(sender) == 0x0, 8001);
 
-      move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), });
+      move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), current_block: 0, });
     }
 
 
@@ -64,6 +65,12 @@ address 0x0{
 
     public fun init_data(payments: vector<Payment>) {
       move_to_sender<Data>(Data { payments: payments });
+    }
+
+    public fun update_block(height: u64) acquires AccountList {
+      // If 0x0 is updating the block number, update it for the module in AccountList
+      Transaction::assert(Transaction::sender() == 0x0, 8001);
+      borrow_global_mut<AccountList>(0x0).current_block = height;
     }
 
     public fun is_enabled(account: address): bool acquires Status, AccountList {
@@ -96,20 +103,20 @@ address 0x0{
       }
     }
 
-    public fun make_dummy_payment_vec(): vector<Payment> {
+    public fun make_dummy_payment_vec(payee: address): vector<Payment> {
       let ret = Vector::empty<Payment>();
       Vector::push_back(&mut ret, Payment {
           enabled: true,
           name: 0,
           uid: 0,
-          payee: Transaction::sender(),
+          payee: payee,
           frequency: 1,
           start: 0,
           end: 5,
-          fixed_fee: 0,
-          variable_fee: 0,
+          amount: 1,
           currency: 0,
           from_earmarked_transactions: true,
+          last_block_paid: 0,
         } 
       );
       ret
@@ -121,7 +128,7 @@ address 0x0{
     }
 
     // Returns (number of historical payments, number of upcoming payments)
-    public fun query(account: address, uid: u64): (u64, u64) acquires Data {
+    public fun query(account: address, uid: u64): (u64, u64) acquires Data, AccountList {
       // TODO: This can be made faster if Data.payments is stored as a
       // BST sorted by 
       let index = find(Transaction::sender(), uid);
@@ -131,7 +138,7 @@ address 0x0{
       } else {
         let payments = &borrow_global_mut<Data>(account).payments;
         let payment = Vector::borrow(payments, Option::extract<u64>(&mut index));
-        let block = LibraBlock::get_current_block_height();
+        let block = borrow_global<AccountList>(0x0).current_block;
         let num_payments = (payment.end - payment.start + 1) / payment.frequency;
         if (block <= payment.start) {
           // This will front end round the result since the return types
@@ -169,8 +176,7 @@ address 0x0{
       frequency: u64,
       start: u64,
       end: u64,
-      fixed_fee: u64,
-      variable_fee: u64,
+      amount: u64,
       currency: u64,
       from_earmarked_transactions: bool) acquires Data {
       // Confirm that no payment exists with the same uid
@@ -188,10 +194,10 @@ address 0x0{
         frequency: frequency,
         start: start,
         end: end,
-        fixed_fee: fixed_fee,
-        variable_fee: variable_fee,
+        amount: amount,
         currency: currency,
-        from_earmarked_transactions: from_earmarked_transactions
+        from_earmarked_transactions: from_earmarked_transactions,
+        last_block_paid: 0,
       });
     }
 
@@ -218,6 +224,61 @@ address 0x0{
       };
       Option::none<u64>()
     }
+
+    public fun autopay<Token>(
+      signer: &signer,
+      block: u64
+    ) acquires AccountList, Data {
+      // Only account 0x0 should be triggering this autopayment each block
+      Transaction::assert(Signer::address_of(signer) == 0x0, 8001);
+      // Go through all accounts in AccountList
+      // This is the list of accounts which currently have autopay enabled
+      let account_list = &borrow_global<AccountList>(0x0).accounts;
+      let num_accounts = Vector::length<address>(account_list);
+      let account_idx = 0;
+      while (account_idx < num_accounts) {
+        let account_addr = Vector::borrow<address>(account_list, account_idx);
+        let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
+        let payments_len = Vector::length<Payment>(payments);
+        let payments_idx = 0;
+        // Go through all payments for this account and pay the ones which are due
+        while (payments_idx < payments_len) {
+          let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
+          if (!payment.enabled) {
+            // If payment is disabled, move on
+            payments_idx = payments_idx + 1;
+            continue
+          };
+          // If payment is due this block, pay
+          // Check if payment is starting this block
+          if (payment.start == block) {
+            // This is the case where the payment is starting this block.
+            // The last_block_paid field will be updated appopriately
+            payment.last_block_paid = block;
+          } else if (payment.start > block || payment.end < block) {
+            // This is the case where the payment isn't in the payment period
+            payments_idx = payments_idx + 1;
+            continue
+          } else {
+            // A payment might need to happen now and it's not the fist payment
+            if (payment.last_block_paid + payment.frequency != block) {
+              // No payment this block
+              payments_idx = payments_idx + 1;
+              continue
+            } else {
+              // Payment is happening this block
+              payment.last_block_paid = block;
+            };
+          };
+          // Actually pay. If payment is not due, a 'continue' statement would have
+          // moved on to the next iteration already and this statement is not reached
+          LibraAccount::make_payment<Token>(signer, *account_addr, payment.payee, payment.amount);
+          payments_idx = payments_idx + 1;
+        };
+        account_idx = account_idx + 1;
+      };
+    }
+
 
     public fun change_enabled(uid: u64, enabled: bool) acquires Data {
       let index = find(Transaction::sender(), uid);
@@ -351,7 +412,7 @@ address 0x0{
       payment.end
     }
 
-    public fun change_fixed_fee(uid: u64, fee: u64) acquires Data {
+    public fun change_amount(uid: u64, amount: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
         // Case where payment doesn't exist for sender
@@ -359,10 +420,10 @@ address 0x0{
       };
       let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
       let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.fixed_fee = fee;
+      payment.amount = amount;
     }
 
-    public fun get_fixed_fee(account: address, uid: u64): u64 acquires Data {
+    public fun get_amount(account: address, uid: u64): u64 acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
         // Case where payment doesn't exist for chosen account
@@ -370,29 +431,7 @@ address 0x0{
       };
       let payments = &borrow_global<Data>(account).payments;
       let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.fixed_fee
-    }
-
-    public fun change_variable_fee(uid: u64, fee: u64) acquires Data {
-      let index = find(Transaction::sender(), uid);
-      if (Option::is_none<u64>(&index)) {
-        // Case where payment doesn't exist for sender
-        Transaction::assert(false, 18);
-      };
-      let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
-      let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.variable_fee = fee;
-    }
-
-    public fun get_variable_fee(account: address, uid: u64): u64 acquires Data {
-      let index = find(account, uid);
-      if (Option::is_none<u64>(&index)) {
-        // Case where payment doesn't exist for chosen account
-        Transaction::assert(false, 27);
-      };
-      let payments = &borrow_global<Data>(account).payments;
-      let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.variable_fee
+      payment.amount
     }
 
     public fun change_currency(uid: u64, currency: u64) acquires Data {

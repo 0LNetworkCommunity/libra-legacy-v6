@@ -11,16 +11,15 @@ script {
   fun main() {
     AutoPay::init_status(true);
     AutoPay::init_data(Vector::empty());
-    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 0, 0, 0, true);
+    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 1, 0, true);
     Transaction::assert(AutoPay::get_enabled({{alice}}, 0), 1);
     Transaction::assert(AutoPay::get_name({{alice}}, 0) == 0, 2);
     Transaction::assert(AutoPay::get_frequency({{alice}}, 0) == 1, 3);
     Transaction::assert(AutoPay::get_start({{alice}}, 0) == 0, 4);
     Transaction::assert(AutoPay::get_end({{alice}}, 0) == 5, 5);
-    Transaction::assert(AutoPay::get_fixed_fee({{alice}}, 0) == 0, 6);
-    Transaction::assert(AutoPay::get_variable_fee({{alice}}, 0) == 0, 7);
-    Transaction::assert(AutoPay::get_from_earmarked({{alice}}, 0), 8);
-    Transaction::assert(AutoPay::get_payee({{alice}}, 0) == {{alice}}, 9);
+    Transaction::assert(AutoPay::get_amount({{alice}}, 0) == 1, 6);
+    Transaction::assert(AutoPay::get_from_earmarked({{alice}}, 0), 7);
+    Transaction::assert(AutoPay::get_payee({{alice}}, 0) == {{alice}}, 8);
   }
 }
 // check: EXECUTED
@@ -36,8 +35,7 @@ script {
     AutoPay::change_frequency(0, 2);
     AutoPay::change_start(0, 1);
     AutoPay::change_end(0, 6);
-    AutoPay::change_fixed_fee(0, 1);
-    AutoPay::change_variable_fee(0, 1);
+    AutoPay::change_amount(0, 2);
     AutoPay::change_from_earmarked(0, false);
     AutoPay::change_payee(0, {{bob}});
   }
@@ -56,10 +54,9 @@ script {
     Transaction::assert(AutoPay::get_frequency({{alice}}, 0) == 2, 3);
     Transaction::assert(AutoPay::get_start({{alice}}, 0) == 1, 4);
     Transaction::assert(AutoPay::get_end({{alice}}, 0) == 6, 5);
-    Transaction::assert(AutoPay::get_fixed_fee({{alice}}, 0) == 1, 6);
-    Transaction::assert(AutoPay::get_variable_fee({{alice}}, 0) == 1, 7);
-    Transaction::assert(!AutoPay::get_from_earmarked({{alice}}, 0), 8);
-    Transaction::assert(AutoPay::get_payee({{alice}}, 0) == {{bob}}, 9);
+    Transaction::assert(AutoPay::get_amount({{alice}}, 0) == 2, 6);
+    Transaction::assert(!AutoPay::get_from_earmarked({{alice}}, 0), 7);
+    Transaction::assert(AutoPay::get_payee({{alice}}, 0) == {{bob}}, 8);
   }
 }
 // check: EXECUTED

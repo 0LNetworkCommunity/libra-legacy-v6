@@ -1,5 +1,5 @@
 //! account: alice, 1000000
-//! account: bob, 1000000
+//! account: bob, 2000000
 
 //! new-transaction
 //! sender: alice
@@ -10,7 +10,7 @@ script {
   fun main(sender: &signer) {
     AutoPay::verify_initialized();
     AutoPay::init_status(true);
-    let payments = AutoPay::make_dummy_payment_vec();
+    let payments = AutoPay::make_dummy_payment_vec({{bob}});
     AutoPay::init_data(payments);
     Transaction::assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     Transaction::assert(AutoPay::num_payments(Signer::address_of(sender)) == 1, 1);

@@ -7,7 +7,7 @@ script {
   use 0x0::AutoPay;
   fun main() {
     AutoPay::init_status(true);
-    AutoPay::init_data(AutoPay::make_dummy_payment_vec());
+    AutoPay::init_data(AutoPay::make_dummy_payment_vec({{alice}}));
   }
 }
 // check: EXECUTED
