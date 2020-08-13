@@ -166,8 +166,6 @@ pub struct ChainInfo {
     pub block_dir: String,
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
-    /// ip address of the miner. May be different from transaction URL.
-    pub ip: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: String,
 }
@@ -181,7 +179,6 @@ impl Default for ChainInfo {
             // Mock Waypoint. Miner complains without.
             base_waypoint: "0:0000".to_owned(),
             node: Some("http://localhost:8080".to_owned()),
-            ip: Some("0.0.0.0".to_owned()),
         }
     }
 }
@@ -198,6 +195,9 @@ pub struct Profile {
     ///The 0L private_key for signing transactions.
     pub operator_private_key: Option<String>,
 
+    /// ip address of the miner. May be different from transaction URL.
+    pub ip: Option<String>,
+
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
 }
@@ -208,6 +208,7 @@ impl Default for Profile {
             auth_key: "".to_owned(),
             account: None,
             operator_private_key: None,
+            ip: Some("0.0.0.0".to_owned()),
             statement: "Protests rage across the nation".to_owned(),
         }
     }
