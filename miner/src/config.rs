@@ -164,7 +164,7 @@ pub struct ChainInfo {
     pub chain_id: String,
     /// Directory to store blocks in
     pub block_dir: String,
-    /// Node ip Address to submit transactions to
+    /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: String,
@@ -174,10 +174,10 @@ pub struct ChainInfo {
 impl Default for ChainInfo {
     fn default() -> Self {
         Self {
-            chain_id: "0L testnet".to_owned(),
+            chain_id: "experimental".to_owned(),
             block_dir: "./blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
-            base_waypoint: "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b".to_owned(),
+            base_waypoint: "0:0000".to_owned(),
             node: Some("http://localhost:8080".to_owned()),
         }
     }
@@ -195,6 +195,9 @@ pub struct Profile {
     ///The 0L private_key for signing transactions.
     pub operator_private_key: Option<String>,
 
+    /// ip address of the miner. May be different from transaction URL.
+    pub ip: Option<String>,
+
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
 }
@@ -202,10 +205,10 @@ pub struct Profile {
 impl Default for Profile {
     fn default() -> Self {
         Self {
-            // Mock Authkey
-            auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
-            account: Some("5ffd9856978b5020be7f72339e41a401".to_owned()),
-            operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
+            auth_key: "".to_owned(),
+            account: None,
+            operator_private_key: None,
+            ip: Some("0.0.0.0".to_owned()),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

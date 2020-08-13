@@ -1,18 +1,19 @@
 SHELL=/usr/bin/env bash
 
-DATA_PATH = ./
+ifndef DIR
+DIR = ~/node_data/
+endif
+DATA_PATH = $(shell readlink -f ${DIR})
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
 ifndef TEST
-####################################
-## GENESIS: UPDATE YOUR DATA HERE ##
+# requires 'rq' and 'jq' command line utils, install with `cargo install record-query`
 # The permanent IP address of your validator.
-IP = fill this in
+IP = $(shell rq -t < ~/node_data/miner.toml | jq '.profile.ip')
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = fill this in
-######################################
+ACC = $(shell rq -t < ~/node_data/miner.toml | jq '.profile.account')
 
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
@@ -30,12 +31,15 @@ ifndef NODE_ENV
 NODE_ENV=prod
 endif
 
-confirm:
-	cd ~/libra/miner && ls
-	@echo namespace: ${NAMESPACE}
-	@echo github org: ${REPO_ORG}
-	@echo github repo: ${REPO_NAME}
-	@echo hostname: ${HOST}
+echo:
+	@echo NAMESPACE: ${NAMESPACE}
+	@echo env: ${NODE_ENV}
+	@echo path: ${DATA_PATH}
+	@echo ip: ${IP}
+	@echo account: ${ACC}
+	@echo github_token: ${GITHUB_TOKEN}
+	@echo github_org: ${REPO_ORG}
+	@echo github_repo: ${REPO_NAME}
 
 ######################################
 ## THIS IS TEST DATA NOT FOR GENESIS##
@@ -71,12 +75,14 @@ endif
 
 ##########################
 
+REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NAMESPACE}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
 # set up the environment
 install: deps compile
 compile: stdlib bins
 # pipelines for genesis ceremony
-register: clear blocks init add-proofs keys register
+register: clear fixtures init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
@@ -86,7 +92,7 @@ deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
 		## TODO: Cargo is not getting set to path. This next line doesn't run.
-	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 	
 stdlib:
 	cd ~/libra/language/stdlib && cargo run --release
@@ -107,7 +113,7 @@ keygen:
 
 miner-genesis:
 	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
-	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}
+	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}/
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -122,13 +128,17 @@ ifdef TEST
 	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
 endif
 
-blocks:
+fixtures:
 	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
+
+	mkdir -p ${DATA_PATH}/blocks/
+
 	if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm block_0.json; \
+		rm ${DATA_PATH}/blocks/block_0.json; \
 	fi 
+
 	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
 
 ifeq (${NODE_ENV}, test)
@@ -145,55 +155,55 @@ init:
 
 layout:
 	libra-management set-layout \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
+	--backend ${REMOTE} \
 	--path=set_layout_prod.toml
 
 add-proofs:
 	libra-management mining \
-	--path-to-genesis-pow ${DATA_PATH}blocks/block_0.json \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+	--backend ${REMOTE}
 
 keys:
 	libra-management operator-key \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
 register:
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
 build-genesis:
 	NODE_ENV='${NODE_ENV}' libra-management genesis \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
-	--path ${DATA_PATH}genesis.blob
+	--backend ${REMOTE} \
+	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
 	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
+	--remote ${REMOTE} \
+	--local ${LOCAL}
 
 toml:
 	libra-management config \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
-	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
+	--backend ${LOCAL} \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 peers:
 	cp -f seed_peers.toml backup.seed_peers.toml
-	libra-management seeds --genesis-path genesis.blob
+	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
 
 start:
 	# run in foreground. Only for testing, use a daemon for net.
-	libra-node --config ${DATA_PATH}node.configs.toml
+	libra-node --config ${DATA_PATH}/node.configs.toml
 
 daemon:
-	sudo cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
+	sudo cp -f ~/libra/util/libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
@@ -202,9 +212,8 @@ daemon:
 
 	sudo mkdir ~/logs
 	sudo touch ~/logs/output.log
-	sudo chmod 777 ~/logs
-	sudo chmod 777 ~/logs/output.log
-
+	sudo chmod 644 ~/logs
+	sudo chmod 644 ~/logs/output.log
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service
