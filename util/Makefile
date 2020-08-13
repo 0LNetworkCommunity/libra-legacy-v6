@@ -20,8 +20,8 @@ REPO_ORG = OLSF
 REPO_NAME = experimental-genesis
 # Don't put the MNEM here for production, add that by command line only.
 else
-# HOST = $(shell hostname | cut -c4-10)
-# NAMESPACE = $(HOST)
+HOST = $(shell hostname | cut -c4-10)
+NAMESPACE = $(HOST)
 REPO_ORG = OLSF
 REPO_NAME = debug-genesis
 endif
