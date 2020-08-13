@@ -1,6 +1,9 @@
 SHELL=/usr/bin/env bash
 
-DATA_PATH = ~/node_data/
+ifndef DIR
+DIR = ~/node_data/
+endif
+DATA_PATH = $(shell readlink -f ${DIR})
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
@@ -30,7 +33,8 @@ endif
 
 echo:
 	@echo NAMESPACE: ${NAMESPACE}
-	@echo NODE_ENV: ${NODE_ENV}
+	@echo env: ${NODE_ENV}
+	@echo path: ${DATA_PATH}
 	@echo ip: ${IP}
 	@echo account: ${ACC}
 	@echo github_token: ${GITHUB_TOKEN}
@@ -71,6 +75,8 @@ endif
 
 ##########################
 
+REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NAMESPACE}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
 # set up the environment
 install: deps compile
@@ -107,7 +113,7 @@ keygen:
 
 miner-genesis:
 	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
-	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}
+	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}/
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -145,42 +151,42 @@ init:
 
 layout:
 	libra-management set-layout \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
+	--backend ${REMOTE} \
 	--path=set_layout_prod.toml
 
 add-proofs:
 	libra-management mining \
-	--path-to-genesis-pow ${DATA_PATH}blocks/block_0.json \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+	--backend ${REMOTE}
 
 keys:
 	libra-management operator-key \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
 register:
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
 build-genesis:
 	NODE_ENV='${NODE_ENV}' libra-management genesis \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
-	--path ${DATA_PATH}genesis.blob
+	--backend ${REMOTE}
+	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
 	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
+	--remote ${REMOTE} \
+	--local ${LOCAL}
 
 toml:
 	libra-management config \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
-	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
+	--backend ${LOCAL} \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
