@@ -6,7 +6,8 @@ apt update
 apt install -y git vim zip jq build-essential cmake clang llvm libgmp-dev secure-delete
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 export "$HOME/.cargo/bin:$PATH"
-cargo install record-query
+curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git dflemstr/rq
+
 
 mkdir ~/node_data;
 cp ~/libra/validator_utils/* ~/node_data;
