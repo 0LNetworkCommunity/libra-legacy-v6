@@ -178,7 +178,7 @@ register:
 
 build-genesis:
 	NODE_ENV='${NODE_ENV}' libra-management genesis \
-	--backend ${REMOTE}
+	--backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
