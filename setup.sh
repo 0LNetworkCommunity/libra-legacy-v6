@@ -12,7 +12,6 @@ curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git dflemstr/
 
 mkdir ~/node_data;
 mkdir ~/node_data/blocks;
-cp ~/libra/validator_utils/Makefile ~/node_data;
 
 echo "Enter ssh id_rsa key for github (ctrl+d when done)"
 private_key=$(cat)
