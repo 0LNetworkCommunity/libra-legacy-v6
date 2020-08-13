@@ -155,7 +155,8 @@ init:
 
 layout:
 	libra-management set-layout \
-	--backend ${REMOTE} \
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=
+	{DATA_PATH}github_token.txt;namespace=common' \
 	--path=set_layout_prod.toml
 
 add-proofs:
