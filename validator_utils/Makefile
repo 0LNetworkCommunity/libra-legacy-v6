@@ -5,14 +5,12 @@ GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
 ifndef TEST
-####################################
-## GENESIS: UPDATE YOUR DATA HERE ##
+# requires rc command line util, install with `cargo install record-query`
 # The permanent IP address of your validator.
-IP = fill this in
+IP = $(rq -t < miner.toml | jq '.profile.account')
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = fill this in
-######################################
+ACC = $(rq -t < miner.toml | jq '.profile.account')
 
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
@@ -30,12 +28,14 @@ ifndef NODE_ENV
 NODE_ENV=prod
 endif
 
-confirm:
-	cd ~/libra/miner && ls
-	@echo namespace: ${NAMESPACE}
-	@echo github org: ${REPO_ORG}
-	@echo github repo: ${REPO_NAME}
-	@echo hostname: ${HOST}
+echo:
+	@echo NAMESPACE: ${NAMESPACE}
+	@echo ip: ${IP}
+	@echo account: ${ACC}
+	@echo auth_key: ${AUTH_KEY}
+	@echo github_token: ${GITHUB_TOKEN}
+	@echo github_org: ${REPO_ORG}
+	@echo github_repo: ${REPO_NAME}
 
 ######################################
 ## THIS IS TEST DATA NOT FOR GENESIS##
@@ -86,7 +86,7 @@ deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
 		## TODO: Cargo is not getting set to path. This next line doesn't run.
-	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 	
 stdlib:
 	cd ~/libra/language/stdlib && cargo run --release
@@ -202,8 +202,8 @@ daemon:
 
 	sudo mkdir ~/logs
 	sudo touch ~/logs/output.log
-	sudo chmod 777 ~/logs
-	sudo chmod 777 ~/logs/output.log
+	sudo chmod 644 ~/logs
+	sudo chmod 644 ~/logs/output.log
 
 
 	sudo systemctl daemon-reload
