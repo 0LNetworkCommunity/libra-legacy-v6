@@ -1,18 +1,19 @@
 SHELL=/usr/bin/env bash
 
-DATA_PATH = ./
+ifndef DIR
+DIR = ~/node_data/
+endif
+DATA_PATH = $(shell readlink -f ${DIR})
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
 ifndef TEST
-####################################
-## GENESIS: UPDATE YOUR DATA HERE ##
+# requires 'rq' and 'jq' command line utils, install with `cargo install record-query`
 # The permanent IP address of your validator.
-IP = fill this in
+IP = $(shell rq -t < ~/node_data/miner.toml | jq '.profile.ip')
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = fill this in
-######################################
+ACC = $(shell rq -t < ~/node_data/miner.toml | jq '.profile.account')
 
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
@@ -25,17 +26,20 @@ REPO_ORG = OLSF
 REPO_NAME = debug-genesis
 endif
 
-ifndef ENV
+ifndef NODE_ENV
 # Default to prod settings for genesis and mining. Pass with ENV=test for test values.
-ENV=prod
+NODE_ENV=prod
 endif
 
-confirm:
-	cd ../miner && ls
-	@echo namespace: ${NAMESPACE}
-	@echo github org: ${REPO_ORG}
-	@echo github repo: ${REPO_NAME}
-	@echo hostname: ${HOST}
+echo:
+	@echo NAMESPACE: ${NAMESPACE}
+	@echo env: ${NODE_ENV}
+	@echo path: ${DATA_PATH}
+	@echo ip: ${IP}
+	@echo account: ${ACC}
+	@echo github_token: ${GITHUB_TOKEN}
+	@echo github_org: ${REPO_ORG}
+	@echo github_repo: ${REPO_NAME}
 
 ######################################
 ## THIS IS TEST DATA NOT FOR GENESIS##
@@ -71,41 +75,45 @@ endif
 
 ##########################
 
+REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NAMESPACE}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
 # set up the environment
 install: deps compile
 compile: stdlib bins
 # pipelines for genesis ceremony
-register: clear blocks init add-proofs keys register
+register: clear fixtures init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
+
+
 deps:
 	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev secure-delete
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
 		## TODO: Cargo is not getting set to path. This next line doesn't run.
-	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 	
 stdlib:
-	cd ../language/stdlib && cargo run --release
+	cd ~/libra/language/stdlib && cargo run --release
 
 bins:
-	cargo build -p libra-node --release
-	cargo build -p libra-management --release
-	cargo build -p miner --release
-	sudo cp -f ../target/release/libra-management /usr/local/bin/libra-management
-	sudo cp -f ../target/release/libra-node /usr/local/bin/libra-node
-	sudo cp -f ../target/release/miner /usr/local/bin/miner
+	cd ~/libra && cargo build -p libra-node --release
+	cd ~/libra && cargo build -p libra-management --release
+	cd ~/libra && cargo build -p miner --release
+	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
 all-bins:
-	cargo build --all --bins --release --exclude cluster-test
+	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	cd ../miner && miner keygen
+	cd ~/libra/miner && miner keygen
 
-miner:
-	cd ../miner && NODE_ENV=${ENV} miner start
-	cp -f ../miner/blocks/block_0.json ./
+miner-genesis:
+	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
+	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}/
 
 # CONFIGURE GITHUB FOR TEST
 #Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
@@ -116,21 +124,27 @@ github:
 #GENESIS CEREMONY
 
 clear:
-	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+ifdef TEST
+	cd ${DATA_PATH} && rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+endif
 
-blocks:
+fixtures:
 	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
-	if test -f block_0.json; then \
-		rm block_0.json; \
-	fi 
-	cp ./fixtures/miner.toml.${NAMESPACE} ../miner/miner.toml
 
-ifeq (${ENV}, test)
-	cp ./fixtures/block_0.json.test.${NAMESPACE} block_0.json
+	mkdir -p ${DATA_PATH}/blocks/
+
+	if test -f ${DATA_PATH}/blocks/block_0.json; then \
+		rm ${DATA_PATH}/blocks/block_0.json; \
+	fi 
+
+	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
+
+ifeq (${NODE_ENV}, test)
+	cp ~/libra/fixtures/block_0.json.test.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
 else
-	cp ./fixtures/block_0.json.prod.${NAMESPACE} block_0.json
+	cp ~/libra/fixtures/block_0.json.prod.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
 endif
 endif
 
@@ -141,72 +155,72 @@ init:
 
 layout:
 	libra-management set-layout \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
-	--path=set_layout.toml
+	--backend ${REMOTE} \
+	--path=set_layout_prod.toml
 
 add-proofs:
 	libra-management mining \
-	--path-to-genesis-pow ${DATA_PATH}/block_0.json \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+	--backend ${REMOTE}
 
 keys:
 	libra-management operator-key \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
 register:
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
 build-genesis:
-	NODE_ENV='${ENV}' cargo run -p libra-management genesis \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
+	NODE_ENV='${NODE_ENV}' libra-management genesis \
+	--backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	NODE_ENV='${ENV}' libra-management create-waypoint \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
+	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
+	--remote ${REMOTE} \
+	--local ${LOCAL}
 
 toml:
 	libra-management config \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
-	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
+	--backend ${LOCAL} \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 
 peers:
 	cp -f seed_peers.toml backup.seed_peers.toml
-	libra-management seeds --genesis-path genesis.blob
+	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
 
 start:
 	# run in foreground. Only for testing, use a daemon for net.
-	libra-node --config ${DATA_PATH}node.configs.toml
+	libra-node --config ${DATA_PATH}/node.configs.toml
 
 daemon:
-	cp -f libra-node.service /lib/systemd/system/
+	sudo cp -f ~/libra/util/libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
-	systemctl daemon-reload
-
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		rm -rf ~/logs*; \
 	fi 
 
-	mkdir ~/logs
-	touch ~/logs/output-libra-node.log
+	sudo mkdir ~/logs
+	sudo touch ~/logs/output.log
+	sudo chmod 644 ~/logs
+	sudo chmod 644 ~/logs/output.log
 
-	systemctl daemon-reload
-	systemctl stop libra-node.service
-	systemctl start libra-node.service
-	sleep 2
-	systemctl status libra-node.service &
-	tail -f ~/logs/output-libra-node.log
+	sudo systemctl daemon-reload
+	sudo systemctl stop libra-node.service
+	sudo systemctl start libra-node.service
+	sudo sleep 2
+	sudo systemctl status libra-node.service &
+	sudo tail -f ~/logs/output.log
 
 
 wipe: 

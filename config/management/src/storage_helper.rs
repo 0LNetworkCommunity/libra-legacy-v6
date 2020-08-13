@@ -73,9 +73,9 @@ impl StorageHelper {
 
         let kf = KeyFactory::new(&seed).unwrap();
         let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-        // let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
-        // let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
-        // let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
+        let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
+        let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
+        let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
         // let child_4 = kf.private_child(ChildNumber::new(4)).unwrap();
         
         let authentication_key = child_0.get_authentication_key();
@@ -83,13 +83,6 @@ impl StorageHelper {
 
         let mut storage = self.storage(namespace);
 
-        // storage.import_private_key(ASSOCIATION_KEY,child_0.export_priv_key()).unwrap();
-        storage
-            .import_private_key(CONSENSUS_KEY, child_0.export_priv_key())
-            .unwrap();
-        storage
-            .import_private_key(FULLNODE_NETWORK_KEY, child_0.export_priv_key())
-            .unwrap();
         storage
             .import_private_key(OWNER_KEY, child_0.export_priv_key())
             .unwrap();
@@ -97,7 +90,13 @@ impl StorageHelper {
             .import_private_key(OPERATOR_KEY, child_0.export_priv_key())
             .unwrap();
         storage
-            .import_private_key(VALIDATOR_NETWORK_KEY, child_0.export_priv_key())
+            .import_private_key(CONSENSUS_KEY, child_1.export_priv_key())
+            .unwrap();
+        storage
+            .import_private_key(VALIDATOR_NETWORK_KEY, child_2.export_priv_key())
+            .unwrap();
+        storage
+            .import_private_key(FULLNODE_NETWORK_KEY, child_3.export_priv_key())
             .unwrap();
 
         storage.set(EPOCH, Value::U64(0)).unwrap();
