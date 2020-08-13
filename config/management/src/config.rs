@@ -34,7 +34,7 @@ pub struct Config {
     #[structopt(long)]
     fullnode_listen_address: NetworkAddress,
     #[structopt(long)]
-    genesis_path: Option<PathBuf>,
+    path: Option<PathBuf>,
 }
 
 impl Config {
@@ -90,10 +90,10 @@ impl Config {
 
         let path: PathBuf;
 
-        if self.genesis_path.is_none() {
+        if self.path.is_none() {
             path = PathBuf::from("./");
         } else {
-            path = self.genesis_path.unwrap();
+            path = self.path.unwrap();
         }
 
         let peers = Seeds {
