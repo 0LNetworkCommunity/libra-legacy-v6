@@ -134,6 +134,8 @@ ifdef TEST
 	echo ${NAMESPACE}
 	if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm block_0.json; \
+	else \
+		mkdir ${DATA_PATH}/blocks/; \
 	fi 
 	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
 
@@ -199,7 +201,7 @@ start:
 	libra-node --config ${DATA_PATH}node.configs.toml
 
 daemon:
-	sudo cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
+	sudo cp -f ~/libra/util/libra-node.service /lib/systemd/system/
 	# cp -f miner.service /lib/systemd/system/
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
