@@ -73,9 +73,9 @@ impl StorageHelper {
 
         let kf = KeyFactory::new(&seed).unwrap();
         let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-        // let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
-        // let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
-        // let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
+        let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
+        let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
+        let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
         // let child_4 = kf.private_child(ChildNumber::new(4)).unwrap();
         
         let authentication_key = child_0.get_authentication_key();
