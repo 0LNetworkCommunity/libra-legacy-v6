@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 use std::process::{Command, Stdio};
-use std::{thread, time};
+use wait_timeout::ChildExt;
+use std::time::Duration;
 #[test]
 pub fn test_command() {
     std::env::set_var("RUST_LOG", "debug");
@@ -10,20 +11,30 @@ pub fn test_command() {
             .arg("-p").arg("libra-swarm")
             .arg("--").arg("-n").arg("4") 
             .arg("-l").arg("-c").arg("./saved_logs");
-    //let hello_1 = echo_swarm.output().expect("failed to execute process");
-    echo_swarm.stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap();
+    let cmd = echo_swarm.stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .spawn();
+
+    match cmd {
+        Ok(mut child) => {
+            let timeout = Duration::from_secs(540);
     
-    let mut echo_miner = Command::new("cargo");
-    echo_miner.arg("run")
-            .arg("submit");
-    echo_miner.stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap();
-    // thread::sleep(time::Duration::from_millis(60000));
-    // println!("{:?}", hello_1);
-    // println!("{:?}", hello_1.status.success());
+            match child.wait_timeout(timeout) {
+                Ok(Some(status)) => println!("Exited with status {}", status),
+                Ok(None) => {
+                        println!("timeout, process is still alive");
+
+                        let mut echo_miner = Command::new("cargo");
+                        echo_miner.arg("run")
+                                .arg("submit");
+                        echo_miner.stdout(Stdio::inherit())
+                                .stderr(Stdio::inherit())
+                                .spawn().unwrap();
+                        ()           
+                } ,
+                Err(e) => println!("Error waiting: {}", e),
+            }
+        }
+        Err(err) => println!("Process did not even start: {}", err)
+    }
 }
