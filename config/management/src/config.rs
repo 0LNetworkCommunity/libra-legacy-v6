@@ -33,6 +33,8 @@ pub struct Config {
     fullnode_address: NetworkAddress,
     #[structopt(long)]
     fullnode_listen_address: NetworkAddress,
+    #[structopt(long)]
+    genesis_path: Option<PathBuf>,
 }
 
 impl Config {
@@ -86,8 +88,16 @@ impl Config {
 
         config.upstream = UpstreamConfig::default();
 
+        let path: PathBuf;
+
+        if self.genesis_path.is_none() {
+            path = PathBuf::from("./genesis.blob");
+        } else {
+            path = self.genesis_path.unwrap();
+        }
+
         let peers = Seeds {
-            genesis_path: PathBuf::from("./genesis.blob")
+            genesis_path: path
         };
 
         let upstream = AuthenticationKey::ed25519(&key.public_key).derived_address();

@@ -187,12 +187,13 @@ waypoint:
 	--local ${LOCAL}
 
 toml:
-	libra-management config \
+	cargo run -p libra-management config \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
 	--backend ${LOCAL} \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
+	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179" \
+	--genesis-path ${DATA_PATH}/genesis.blob
 
 peers:
 	cp -f seed_peers.toml backup.seed_peers.toml
