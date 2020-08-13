@@ -5,12 +5,12 @@ GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
 ifndef TEST
-# requires rc command line util, install with `cargo install record-query`
+# requires 'rq' and 'jq' command line utils, install with `cargo install record-query`
 # The permanent IP address of your validator.
-IP = $(rq -t < miner.toml | jq '.profile.account')
+IP = $(rq -t < ~/node_data/miner.toml | jq '.profile.account')
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = $(rq -t < miner.toml | jq '.profile.account')
+ACC = $(rq -t < ~/node_data/miner.toml | jq '.profile.account')
 
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
@@ -204,7 +204,6 @@ daemon:
 	sudo touch ~/logs/output.log
 	sudo chmod 644 ~/logs
 	sudo chmod 644 ~/logs/output.log
-
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service

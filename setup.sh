@@ -3,7 +3,7 @@
 # targeting ububtu
 export NODE_ENV=prod
 apt update
-apt install -y git vim zip build-essential cmake clang llvm libgmp-dev secure-delete
+apt install -y git vim zip jq build-essential cmake clang llvm libgmp-dev secure-delete
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 export "$HOME/.cargo/bin:$PATH"
 cargo install record-query
