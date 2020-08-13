@@ -1,6 +1,6 @@
 SHELL=/usr/bin/env bash
 
-DATA_PATH = ./
+DATA_PATH = ~/node_data/
 GITHUB_TOKEN = $(shell cat github_token.txt)
 
 
@@ -30,6 +30,7 @@ endif
 
 echo:
 	@echo NAMESPACE: ${NAMESPACE}
+	@echo NODE_ENV: ${NODE_ENV}
 	@echo ip: ${IP}
 	@echo account: ${ACC}
 	@echo github_token: ${GITHUB_TOKEN}
