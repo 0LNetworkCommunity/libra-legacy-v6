@@ -250,7 +250,8 @@ else
 	# start attach to a screen process
 	screen -S ol
 	# pipe logs to scree and tee to miner logs
-	miner start 2> >(tee ~/logs/miner.log)
+	miner start 2> ~/logs/miner.log &
+	tail -f ~/logs/miner.log
 
 endif
 
