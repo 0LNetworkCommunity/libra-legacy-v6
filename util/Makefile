@@ -149,13 +149,22 @@ endif
 endif
 
 init:
+ifdef TEST
+	#for debug-net fill in mnemonic from fixtures
+	echo ${MNEM} | libra-management initialize \
+	--path=${DATA_PATH} \
+	--namespace=${NAMESPACE}
+else
 	libra-management initialize \
 	--path=${DATA_PATH} \
 	--namespace=${NAMESPACE}
+endif
+
 
 layout:
 	libra-management set-layout \
-	--backend ${REMOTE} \
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=
+	{DATA_PATH}github_token.txt;namespace=common' \
 	--path=set_layout_prod.toml
 
 add-proofs:
@@ -192,7 +201,8 @@ toml:
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
 	--backend ${LOCAL} \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
+	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179" \
+	--path ${DATA_PATH}/
 
 peers:
 	cp -f seed_peers.toml backup.seed_peers.toml
@@ -222,6 +232,14 @@ daemon:
 	sudo systemctl status libra-node.service &
 	sudo tail -f ~/logs/output.log
 
+miner:
+ifdef TEST
+	#for debug-net fill in mnemonic from fixtures
+	cd ${DATA_PATH} && echo ${MNEM} | miner start
+else
+	cd ${DATA_PATH} && echo ${MNEM} | miner start
+
+endif
 
 wipe: 
 	shred ~/.bash_history
