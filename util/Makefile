@@ -231,9 +231,9 @@ daemon:
 	fi 
 
 	sudo mkdir ~/logs
-	sudo touch ~/logs/output.log
+	sudo touch ~/logs/node.log
 	sudo chmod 644 ~/logs
-	sudo chmod 644 ~/logs/output.log
+	sudo chmod 644 ~/logs/node.log
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service
@@ -247,7 +247,10 @@ ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
 	cd ${DATA_PATH} && echo ${MNEM} | miner start
 else
-	cd ${DATA_PATH} && echo ${MNEM} | miner start
+	# start attach to a screen process
+	screen -S ol
+	# pipe logs to scree and tee to miner logs
+	miner start 2> >(tee ~/logs/miner.log)
 
 endif
 
