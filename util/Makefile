@@ -247,11 +247,8 @@ ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
 	cd ${DATA_PATH} && echo ${MNEM} | miner start
 else
-	# start attach to a screen process
-	screen -S ol
-	# pipe logs to scree and tee to miner logs
-	miner start 2> ~/logs/miner.log &
-	tail -f ~/logs/miner.log
+	# pipe logs to screen and tee to miner logs
+	miner start 2> >(tee ~/logs/miner.log)
 
 endif
 
