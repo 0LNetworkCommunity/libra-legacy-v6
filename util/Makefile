@@ -130,7 +130,6 @@ ifdef TEST
 endif
 
 fixtures:
-	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
 
@@ -152,9 +151,7 @@ endif
 init:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
-	echo ${MNEM} | libra-management initialize \
-	--path=${DATA_PATH} \
-	--namespace=${NAMESPACE}
+	echo ${MNEM} | head -c -1 | libra-management initialize --path=${DATA_PATH} --namespace=${NAMESPACE}
 else
 	libra-management initialize \
 	--path=${DATA_PATH} \
@@ -246,7 +243,7 @@ daemon:
 miner:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
-	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | miner start
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
 else
 	# pipe logs to screen and tee to miner logs
 	NODE_ENV='${NODE_ENV}' miner start 2> >(tee ~/logs/miner.log)
