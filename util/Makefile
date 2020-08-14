@@ -189,7 +189,7 @@ build-genesis:
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	NODE_ENV='${NODE_ENV}' cargo run -p libra-management create-waypoint \
+	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
 	--remote ${REMOTE} \
 	--local ${LOCAL} \
 	--path ${DATA_PATH}
