@@ -214,10 +214,15 @@ toml:
 peers:
 	# cp -f seed_peers.toml backup.seed_peers.toml
 	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
+	#TODO: Seed peers gets places in working path, deep in libra code.
+	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
+	mv seed_peers.toml  ${DATA_PATH}/network_peers.toml
+
 
 start:
 	# run in foreground. Only for testing, use a daemon for net.
 	libra-node --config ${DATA_PATH}/node.configs.toml
+	
 
 daemon:
 	sudo cp -f ~/libra/util/libra-node.service /lib/systemd/system/
