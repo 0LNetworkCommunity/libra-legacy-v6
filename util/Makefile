@@ -238,7 +238,7 @@ daemon:
 	sudo systemctl start libra-node.service
 	sudo sleep 2
 	sudo systemctl status libra-node.service &
-	sudo tail -f ~/logs/output.log
+	sudo tail -f ~/logs/node.log
 
 miner:
 ifdef TEST
