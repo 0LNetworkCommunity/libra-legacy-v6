@@ -161,9 +161,8 @@ endif
 
 layout:
 	libra-management set-layout \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=
-	{DATA_PATH}github_token.txt;namespace=common' \
-	--path=set_layout_prod.toml
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--path=set_layout_${NODE_ENV}.toml
 
 add-proofs:
 	libra-management mining \
