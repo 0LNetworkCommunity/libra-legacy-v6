@@ -33,6 +33,7 @@ endif
 
 echo:
 	@echo NAMESPACE: ${NAMESPACE}
+	@echo test: ${TEST}
 	@echo env: ${NODE_ENV}
 	@echo path: ${DATA_PATH}
 	@echo ip: ${IP}
