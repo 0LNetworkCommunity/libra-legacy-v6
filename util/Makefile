@@ -191,9 +191,19 @@ build-genesis:
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-management create-waypoint \
 	--remote ${REMOTE} \
-	--local ${LOCAL}
+	--local ${LOCAL} \
+	--path ${DATA_PATH}
+
+	$(eval WAY = $(shell cat ${DATA_PATH}/waypoint.txt))
+
+	# modify miner.toml to inlcude waypoint
+	rq -t < ${DATA_PATH}/miner.toml | \
+	jq '.["chain_info"]."base_waypoint" = "${WAY}"' | \
+	rq -jT > tmp
+	mv tmp ${DATA_PATH}/miner.toml
+	cat ${DATA_PATH}/miner.toml
 
 toml:
 	libra-management config \
