@@ -212,9 +212,9 @@ toml:
 	--path ${DATA_PATH}/
 
 peers:
-	# cp -f seed_peers.toml backup.seed_peers.toml
+# cp -f seed_peers.toml backup.seed_peers.toml
 	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
-	#TODO: Seed peers gets places in working path, deep in libra code.
+# TODO: Seed peers gets places in working path, deep in libra code.
 	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
 	mv seed_peers.toml  ${DATA_PATH}/network_peers.toml
 
