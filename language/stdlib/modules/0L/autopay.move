@@ -6,21 +6,29 @@ address 0x0{
     use 0x0::Signer;
     use 0x0::LibraAccount;
 
-    // Creating structs to be used
+    // This is a struct held by every account with autopay enabled
     resource struct Status {
       enabled: bool,
     }
 
-    // List of payments
+    // List of payments. Each account will own their own copy of this struct
     resource struct Data {
       payments: vector<Payment>,
     }
 
+    // One copy of this struct will be created. It will be stored in 0x0.
+    // It keeps track of all accounts that have autopay enabled and updates the 
+    // list as accounts change their Status structs
+    //
+    // It also keeps track of the current block fo efficiency (to prevent repeated
+    // queries to LibraBlock)
     resource struct AccountList {
       accounts: vector<address>,
       current_block: u64,
     }
 
+    // This is the structure of each Payment struct which represents one automatic
+    // payment held by an account
     struct Payment {
       enabled: bool,
       // TODO: name should be a string to store a memo
@@ -35,19 +43,25 @@ address 0x0{
       currency: u64,
       // TODO: cannot make from_earmaked_transactions a reference-type to be &signer
       //  Also don't want this struct to have ownership of the signer object
+      // TODO: Remove earmarked transactions as the balance is now being directly
+      //  withdrawn from the account
       from_earmarked_transactions: bool,
+      // This keeps track of the last block in which payment was made. It makes
+      // calculating the next payment easier
       last_block_paid: u64,
     }
 
+
+    // Initialize the entire module by creating an empty AccountList object
     public fun initialize(sender: &signer) {
       Transaction::assert(Signer::address_of(sender) == 0x0, 8001);
-
       move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), current_block: 0, });
     }
 
 
+    // Anyone can check at any time that the module has indeed been initialized
     public fun verify_initialized() acquires AccountList {
-      // This will cause an error if it's not initiliazed because the data won't exist.
+      // This will cause an error (MISSING_DATA) if it's not initiliazed because the data won't exist.
       borrow_global_mut<AccountList>(0x0);
     }
     
@@ -63,16 +77,24 @@ address 0x0{
       };
     }
 
+
+    // This is called by accounts who wish to create their own list of autopayments
     public fun init_data(payments: vector<Payment>) {
       move_to_sender<Data>(Data { payments: payments });
     }
 
+
+    // This function is only called by LibraBlock anytime the block number is changed
+    // This architecture avoids a cyclical dependency by using the Observer design pattern
     public fun update_block(height: u64) acquires AccountList {
       // If 0x0 is updating the block number, update it for the module in AccountList
       Transaction::assert(Transaction::sender() == 0x0, 8001);
       borrow_global_mut<AccountList>(0x0).current_block = height;
     }
 
+
+    // Any account can check to see if any othe account has autopay enabled
+    // by checking their Status enabled and also membership in 0x0's AccountList
     public fun is_enabled(account: address): bool acquires Status, AccountList {
       let status = borrow_global<Status>(account);
       if (status.enabled) {
@@ -84,6 +106,8 @@ address 0x0{
       false
     }
 
+
+    // Accounts call this to enable autopay for themselves
     public fun enable_account() acquires Status, AccountList {
       let status = borrow_global_mut<Status>(Transaction::sender());
       status.enabled = true;
@@ -93,6 +117,8 @@ address 0x0{
       }
     }
 
+
+    // Accounts call this to disable autopay for themeselves
     public fun disable_account() acquires Status, AccountList {
       let status = borrow_global_mut<Status>(Transaction::sender());
       status.enabled = false;
@@ -103,6 +129,9 @@ address 0x0{
       }
     }
 
+
+    // This is currently used only for testing purposes
+    // TODO: Remove this function eventually
     public fun make_dummy_payment_vec(payee: address): vector<Payment> {
       let ret = Vector::empty<Payment>();
       Vector::push_back(&mut ret, Payment {
@@ -122,12 +151,17 @@ address 0x0{
       ret
     }
 
+
+    // Any account can check to see details about other accounts' autopay status and/or
+    // details. This function queries an account's number of payments
     public fun num_payments(account: address): u64 acquires Data{
       let payments = &borrow_global<Data>(account).payments;
       Vector::length(payments)
     }
 
-    // Returns (number of historical payments, number of upcoming payments)
+
+    // Returns (number of past payments made, number of upcoming payments)
+    // based on calculation using the current block_height
     public fun query(account: address, uid: u64): (u64, u64) acquires Data, AccountList {
       // TODO: This can be made faster if Data.payments is stored as a
       // BST sorted by 
@@ -159,6 +193,11 @@ address 0x0{
       }
     }
 
+
+    // Any account can check for the existence of a payment for any other account.
+    // Example use case: Landlord wants to confirm that a renter still has their autopay
+    // payments enabled and wants to check details using the payment uid that the renter
+    // provided
     public fun exists(account: address, uid: u64): bool acquires Data {
       let index = find(account, uid);
       if (Option::is_some<u64>(&index)) {
@@ -168,6 +207,8 @@ address 0x0{
       }
     }
 
+
+    // Creates a payment in the sender's account
     public fun create(
       enabled: bool,
       name: u64,
@@ -201,6 +242,8 @@ address 0x0{
       });
     }
 
+
+    // Deletes the payment with uid from the sender's account
     public fun delete(uid: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -211,7 +254,9 @@ address 0x0{
       Vector::remove<Payment>(payments, Option::extract<u64>(&mut index));
     }
 
+
     // Retuns the index of the desired payment and an immutable reference to it
+    // This is used often as a helper function to check existence of payments
     fun find(account: address, uid: u64): Option::T<u64> acquires Data {
       let payments = &borrow_global<Data>(account).payments;
       let len = Vector::length(payments);
@@ -225,6 +270,14 @@ address 0x0{
       Option::none<u64>()
     }
 
+
+    // This is the main function for this module. It is called once every block
+    // by 0x0::LibraBlock in the block_prologue function.
+    //
+    // This function iterates through all autopay-enabled accounts and processes
+    // any payments they have due in the current block from their list of payments.
+    //
+    // Note: payments from block n are processed at the end of block n
     public fun autopay<Token>(
       signer: &signer,
       block: u64
@@ -280,6 +333,7 @@ address 0x0{
     }
 
 
+    // Accounts can change details about their own payments anytime
     public fun change_enabled(uid: u64, enabled: bool) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -291,6 +345,8 @@ address 0x0{
       payment.enabled = enabled;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_enabled(account: address, uid: u64): bool acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -302,6 +358,8 @@ address 0x0{
       payment.enabled
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_name(uid: u64, name: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -313,6 +371,8 @@ address 0x0{
       payment.name = name;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_name(account: address, uid: u64): u64 acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -324,6 +384,8 @@ address 0x0{
       payment.name
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_payee(uid: u64, payee: address) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -335,6 +397,8 @@ address 0x0{
       payment.payee = payee;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_payee(account: address, uid: u64): address acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -346,6 +410,8 @@ address 0x0{
       payment.payee
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_frequency(uid: u64, frequency: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -357,6 +423,8 @@ address 0x0{
       payment.frequency = frequency;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_frequency(account: address, uid: u64): u64 acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -368,6 +436,8 @@ address 0x0{
       payment.frequency
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_start(uid: u64, start: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -379,6 +449,8 @@ address 0x0{
       payment.start = start;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_start(account: address, uid: u64): u64 acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -390,6 +462,8 @@ address 0x0{
       payment.start
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_end(uid: u64, end: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -401,6 +475,8 @@ address 0x0{
       payment.end = end;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_end(account: address, uid: u64): u64 acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -412,6 +488,8 @@ address 0x0{
       payment.end
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_amount(uid: u64, amount: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -423,6 +501,8 @@ address 0x0{
       payment.amount = amount;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_amount(account: address, uid: u64): u64 acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -434,6 +514,8 @@ address 0x0{
       payment.amount
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_currency(uid: u64, currency: u64) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -445,6 +527,8 @@ address 0x0{
       payment.currency = currency;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_currency(account: address, uid: u64): u64 acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
@@ -456,6 +540,8 @@ address 0x0{
       payment.currency
     }
 
+
+    // Accounts can change details about their own payments anytime
     public fun change_from_earmarked(uid: u64, from_earmarked: bool) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
@@ -467,6 +553,8 @@ address 0x0{
       payment.from_earmarked_transactions = from_earmarked;
     }
 
+
+    // Any account can check on details for payments of other accounts given the uid
     public fun get_from_earmarked(account: address, uid: u64): bool acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
