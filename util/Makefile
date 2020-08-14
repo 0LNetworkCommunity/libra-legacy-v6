@@ -212,7 +212,7 @@ toml:
 	--path ${DATA_PATH}/
 
 peers:
-	cp -f seed_peers.toml backup.seed_peers.toml
+	# cp -f seed_peers.toml backup.seed_peers.toml
 	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
 
 start:

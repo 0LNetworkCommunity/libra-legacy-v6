@@ -1,5 +1,5 @@
-operators = ["alice, "bob", "carol", "dave"]
-owners = ["alice, "bob", "carol", "dave"]
+operators = ["alice", "bob", "carol", "dave"]
+owners = ["alice", "bob", "carol", "dave"]
 association = ["null"]
 
 
