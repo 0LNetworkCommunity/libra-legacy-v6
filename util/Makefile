@@ -84,7 +84,7 @@ compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear fixtures init add-proofs keys register
 # do genesis
-genesis: build-genesis waypoint toml peers
+genesis: build-genesis waypoint toml peers remove-keys
 
 #### ENVIRONMENT #####
 deps:
@@ -181,11 +181,6 @@ register:
 	--local ${LOCAL} \
 	--remote ${REMOTE}
 
-remove-keys:
-	cp ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.bak
-	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "alice/operator_previous", "alice/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp && mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
-# jq 'del(.["${NAMESPACE}/operator, ${NAMESPACE}/owner"])' ${DATA_PATH}/key_store.json
-
 
 # GENESIS STEPS
 build-genesis:
@@ -224,7 +219,11 @@ peers:
 	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
 	mv seed_peers.toml  ${DATA_PATH}/network_peers.toml
 
+remove-keys:
+	cp ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.bak
+	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "alice/operator_previous", "alice/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp && mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
 
+#### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
 	libra-node --config ${DATA_PATH}/node.configs.toml
