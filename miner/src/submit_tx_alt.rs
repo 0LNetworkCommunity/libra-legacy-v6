@@ -8,12 +8,12 @@ use libra_types::{waypoint::Waypoint};
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
 use abscissa_core::{Command, Options, Runnable};
-use crate::{block::Block};
+
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
     test_utils::KeyPair,
     PrivateKey,
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature}
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
 // use libra_crypto::test_utils::KeyPair;
 use anyhow::Error;

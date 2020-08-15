@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 use std::process::{Command, Stdio};
 use wait_timeout::ChildExt;
-use std::{path::PathBuf, time::{self, Duration}, fs, thread};
+use std::{path::PathBuf, time::{Duration}, fs, thread};
 #[test]
 pub fn integration() {
 

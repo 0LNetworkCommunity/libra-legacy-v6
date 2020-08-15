@@ -2,7 +2,7 @@
 
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use std::path::PathBuf;
+
 
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize)]
@@ -72,7 +72,7 @@ pub mod build_block {
     use std::{
         fs,
         io::{BufReader, Write},
-        path::{Path, PathBuf},
+        path::{PathBuf, Path},
         time::Instant,
     };
 

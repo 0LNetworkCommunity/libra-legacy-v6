@@ -1,10 +1,9 @@
 // `submit` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{block::Block, prelude::*};
-use libra_types::{waypoint::Waypoint, account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use crate::{prelude::*};
+use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
     PrivateKey,
 };
@@ -16,7 +15,7 @@ use anyhow::Error;
 // };
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
-use std::{thread, path::PathBuf, time, fs, io::BufReader};
+use std::{thread, path::PathBuf, time};
 use libra_config::config::NodeConfig;
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{vm_error::StatusCode, transaction::helpers::*};
@@ -54,8 +53,8 @@ impl Runnable for SubmitCmd {
 
 }
 
-fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<String, Error> {
-    let miner_configs = app_config();
+fn submit_test(mut config_path: PathBuf, _height_to_submit: usize ) -> Result<String, Error> {
+    let _miner_configs = app_config();
     let mut tower_height: usize = 1;
 
     // let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height_to_submit)).expect("Could not open block file");
@@ -207,7 +206,7 @@ fn submit_test(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     // Ok("Succcess".to_owned())
 }
 
-fn submit_noop(mut config_path: PathBuf, height_to_submit: usize ) -> Result<String, Error> {
+fn submit_noop(mut config_path: PathBuf, _height_to_submit: usize ) -> Result<String, Error> {
 
     config_path.push("../saved_logs/0/node.config.toml");
 
