@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 use std::process::{Command, Stdio};
 use wait_timeout::ChildExt;
-use std::{path::PathBuf, time::Duration, fs};
+use std::{path::PathBuf, time::{self, Duration}, fs, thread};
 #[test]
 pub fn integration() {
 
@@ -30,7 +30,7 @@ pub fn integration() {
     echo_swarm.current_dir("../");
     echo_swarm.arg("run")
             .arg("-p").arg("libra-swarm")
-            .arg("--").arg("-n").arg("4") 
+            .arg("--").arg("-n").arg("1") 
             .arg("-l").arg("-c").arg("./saved_logs");
     let cmd = echo_swarm.stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
@@ -39,27 +39,32 @@ pub fn integration() {
     match cmd {
         // Swarm has started
         Ok(mut swarm_child) => {
+            // need to wait for swarm to start-up before we have the configs needed to connect to it.
+            let wait_for_swarm = Duration::from_secs(60);
+            thread::sleep(wait_for_swarm);
 
-
+            let mut echo_miner = Command::new("cargo");
+            echo_miner.arg("run")
+                    .arg("swarm");
+            echo_miner.stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit())
+                    .spawn().unwrap();
             // what to do at timeout.
-            let timeout = Duration::from_secs(30);
+            // TODO: get output and evaluate with assert
+            // assert_eq!()
+            
+            let test_timeout = Duration::from_secs(600);
 
-            match swarm_child.wait_timeout(timeout) {
+            match swarm_child.wait_timeout(test_timeout) {
                 Ok(Some(status)) => println!("Exited with status {}", status),
                 Ok(None) => {
-                    println!("Process is still alive, starting integration test");
-                    let mut echo_miner = Command::new("cargo");
-                    echo_miner.arg("run")
-                            .arg("swarm");
-                    echo_miner.stdout(Stdio::inherit())
-                            .stderr(Stdio::inherit())
-                            .spawn().unwrap();
-                    // TODO: get output and evaluate with assert
-                    // assert_eq!()
-                    
+                    println!("Test will exit now, time taken: {:?}", test_timeout);
+
+
+
                     swarm_child.kill().unwrap();
                     // echo_swarm.kill().unwrap();
-                } ,
+                },
                 Err(e) => println!("Error waiting: {}", e),
             }
         }
