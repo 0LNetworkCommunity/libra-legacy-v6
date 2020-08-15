@@ -33,6 +33,7 @@ endif
 
 echo:
 	@echo NAMESPACE: ${NAMESPACE}
+	@echo test: ${TEST}
 	@echo env: ${NODE_ENV}
 	@echo path: ${DATA_PATH}
 	@echo ip: ${IP}
@@ -129,7 +130,6 @@ ifdef TEST
 endif
 
 fixtures:
-	@echo fixtures
 ifdef TEST
 	echo ${NAMESPACE}
 
@@ -151,9 +151,7 @@ endif
 init:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
-	echo ${MNEM} | libra-management initialize \
-	--path=${DATA_PATH} \
-	--namespace=${NAMESPACE}
+	echo ${MNEM} | head -c -1 | libra-management initialize --path=${DATA_PATH} --namespace=${NAMESPACE}
 else
 	libra-management initialize \
 	--path=${DATA_PATH} \
@@ -163,9 +161,8 @@ endif
 
 layout:
 	libra-management set-layout \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=
-	{DATA_PATH}github_token.txt;namespace=common' \
-	--path=set_layout_prod.toml
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--path=set_layout_${NODE_ENV}.toml
 
 add-proofs:
 	libra-management mining \
@@ -193,7 +190,17 @@ build-genesis:
 waypoint:
 	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
 	--remote ${REMOTE} \
-	--local ${LOCAL}
+	--local ${LOCAL} \
+	--path ${DATA_PATH}
+
+	$(eval WAY = $(shell cat ${DATA_PATH}/waypoint.txt))
+
+	# modify miner.toml to inlcude waypoint
+	rq -t < ${DATA_PATH}/miner.toml | \
+	jq '.["chain_info"]."base_waypoint" = "${WAY}"' | \
+	rq -jT > tmp
+	mv tmp ${DATA_PATH}/miner.toml
+	cat ${DATA_PATH}/miner.toml
 
 toml:
 	libra-management config \
@@ -205,12 +212,17 @@ toml:
 	--path ${DATA_PATH}/
 
 peers:
-	cp -f seed_peers.toml backup.seed_peers.toml
+# cp -f seed_peers.toml backup.seed_peers.toml
 	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
+# TODO: Seed peers gets places in working path, deep in libra code.
+	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
+	mv seed_peers.toml  ${DATA_PATH}/network_peers.toml
+
 
 start:
 	# run in foreground. Only for testing, use a daemon for net.
 	libra-node --config ${DATA_PATH}/node.configs.toml
+	
 
 daemon:
 	sudo cp -f ~/libra/util/libra-node.service /lib/systemd/system/
@@ -221,23 +233,24 @@ daemon:
 	fi 
 
 	sudo mkdir ~/logs
-	sudo touch ~/logs/output.log
+	sudo touch ~/logs/node.log
 	sudo chmod 644 ~/logs
-	sudo chmod 644 ~/logs/output.log
+	sudo chmod 644 ~/logs/node.log
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service
 	sudo systemctl start libra-node.service
 	sudo sleep 2
 	sudo systemctl status libra-node.service &
-	sudo tail -f ~/logs/output.log
+	sudo tail -f ~/logs/node.log
 
 miner:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
-	cd ${DATA_PATH} && echo ${MNEM} | miner start
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
 else
-	cd ${DATA_PATH} && echo ${MNEM} | miner start
+	# pipe logs to screen and tee to miner logs
+	NODE_ENV='${NODE_ENV}' miner start 2> >(tee ~/logs/miner.log)
 
 endif
 

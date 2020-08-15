@@ -1,0 +1,15 @@
+[chain_info]
+base_waypoint = "3245678 "
+block_dir = "./blocks/"
+chain_id = "experimental"
+node = "http://localhost:8080"
+
+[profile]
+account = "402e9aaf54ca8c39bab641b0c9829070"
+auth_key = "3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070"
+operator_private_key = "none"
+statement = "test"
+
+[workspace]
+home = "."
+
