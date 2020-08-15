@@ -193,7 +193,7 @@ waypoint:
 	--local ${LOCAL} \
 	--path ${DATA_PATH}
 
-	$(eval WAY = $(shell cat ${DATA_PATH}/waypoint.txt))
+	$(eval WAY = $(shell cat ${DATA_PATH}/genesis_waypoint.txt))
 
 	# modify miner.toml to inlcude waypoint
 	rq -t < ${DATA_PATH}/miner.toml | \
