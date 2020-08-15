@@ -22,7 +22,7 @@ pub fn integration() {
         fs::create_dir(&blocks_dir).unwrap();
     }
     // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
-    fs::copy("../fixtures/block_0.json.test.alice", blocks_dir.join("block_0.json"));
+    fs::copy("~/libra/fixtures/block_0.json.test.alice", "~/libra/miner/blocks/block_0.json");
     
     // TODO: Assert that block_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
@@ -40,7 +40,7 @@ pub fn integration() {
         // Swarm has started
         Ok(mut swarm_child) => {
             // need to wait for swarm to start-up before we have the configs needed to connect to it.
-            let wait_for_swarm = Duration::from_secs(60);
+            let wait_for_swarm = Duration::from_secs(15);
             thread::sleep(wait_for_swarm);
 
             let mut echo_miner = Command::new("cargo");
