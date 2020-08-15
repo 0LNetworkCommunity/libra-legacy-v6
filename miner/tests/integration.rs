@@ -3,6 +3,7 @@ use std::process::{Command, Stdio};
 use wait_timeout::ChildExt;
 use std::{path::PathBuf, time::{Duration}, fs, thread};
 #[test]
+#[ignore]
 pub fn integration() {
 
     // PREPARE FIXTURES
