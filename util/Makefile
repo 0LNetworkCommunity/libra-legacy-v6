@@ -1,12 +1,10 @@
+#### VARIABLES ####
 SHELL=/usr/bin/env bash
-
 ifndef DIR
 DIR = ~/node_data/
 endif
 DATA_PATH = $(shell readlink -f ${DIR})
 GITHUB_TOKEN = $(shell cat github_token.txt)
-
-
 ifndef TEST
 # requires 'rq' and 'jq' command line utils, install with `cargo install record-query`
 # The permanent IP address of your validator.
@@ -43,7 +41,7 @@ echo:
 	@echo github_repo: ${REPO_NAME}
 
 ######################################
-## THIS IS TEST DATA NOT FOR GENESIS##
+## THIS IS TEST DATA -- NOT FOR GENESIS##
 
 ifeq ($(NAMESPACE), alice)
 NAMESPACE = alice
@@ -79,6 +77,7 @@ endif
 REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NAMESPACE}'
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
+##### PIPELINES #####
 # set up the environment
 install: deps compile
 compile: stdlib bins
@@ -87,8 +86,7 @@ register: clear fixtures init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
-
-
+#### ENVIRONMENT #####
 deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
@@ -116,13 +114,7 @@ miner-genesis:
 	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
 	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}/
 
-# CONFIGURE GITHUB FOR TEST
-#Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
-
-github: 
-	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
-
-#GENESIS CEREMONY
+#### FOR TESTING ####
 
 clear:
 ifdef TEST
@@ -148,6 +140,17 @@ else
 endif
 endif
 
+#### GENESIS BACKEND SETUP ####
+github: 
+	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
+
+layout:
+	libra-management set-layout \
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--path=set_layout_${NODE_ENV}.toml
+
+
+# REGISTRATION STEPS
 init:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
@@ -159,10 +162,6 @@ else
 endif
 
 
-layout:
-	libra-management set-layout \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path=set_layout_${NODE_ENV}.toml
 
 add-proofs:
 	libra-management mining \
@@ -182,6 +181,13 @@ register:
 	--local ${LOCAL} \
 	--remote ${REMOTE}
 
+remove-keys:
+	cp ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.bak
+	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "alice/operator_previous", "alice/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp && mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
+# jq 'del(.["${NAMESPACE}/operator, ${NAMESPACE}/owner"])' ${DATA_PATH}/key_store.json
+
+
+# GENESIS STEPS
 build-genesis:
 	NODE_ENV='${NODE_ENV}' libra-management genesis \
 	--backend ${REMOTE} \
@@ -195,7 +201,7 @@ waypoint:
 
 	$(eval WAY = $(shell cat ${DATA_PATH}/genesis_waypoint.txt))
 
-	# modify miner.toml to inlcude waypoint
+# modify miner.toml to inlcude waypoint
 	rq -t < ${DATA_PATH}/miner.toml | \
 	jq '.["chain_info"]."base_waypoint" = "${WAY}"' | \
 	rq -jT > tmp
@@ -220,13 +226,13 @@ peers:
 
 
 start:
-	# run in foreground. Only for testing, use a daemon for net.
+# run in foreground. Only for testing, use a daemon for net.
 	libra-node --config ${DATA_PATH}/node.configs.toml
 	
 
 daemon:
 	sudo cp -f ~/libra/util/libra-node.service /lib/systemd/system/
-	# cp -f miner.service /lib/systemd/system/
+# cp -f miner.service /lib/systemd/system/
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		rm -rf ~/logs*; \
@@ -246,10 +252,10 @@ daemon:
 
 miner:
 ifdef TEST
-	#for debug-net fill in mnemonic from fixtures
+#for debug-net fill in mnemonic from fixtures
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
 else
-	# pipe logs to screen and tee to miner logs
+# pipe logs to screen and tee to miner logs
 	NODE_ENV='${NODE_ENV}' miner start 2> >(tee ~/logs/miner.log)
 
 endif
@@ -260,7 +266,7 @@ wipe:
 	history -c
 	smem
 	sswap
-	# sfill <mountpoint>
+# sfill <mountpoint>
 
 
 # datadog:
