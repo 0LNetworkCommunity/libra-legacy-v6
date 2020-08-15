@@ -23,13 +23,14 @@ use anyhow::Error;
 // };
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
-use std::{thread, path::PathBuf, time, fs, io::BufReader};
+use std::{thread, path::PathBuf, time, fs, io::{stdout, BufReader, Write}};
 use libra_config::config::NodeConfig;
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
-use libra_types::{transaction::helpers::*};
+use libra_types::{transaction::helpers::*, vm_error::StatusCode};
 use crate::delay::delay_difficulty;
 use stdlib::transaction_scripts;
 use crate::block::build_block::{parse_block_height, mine_genesis, mine_once};
+use libra_json_rpc_types::views::TransactionView;
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 // const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
@@ -53,19 +54,19 @@ pub struct TxParams {
 //     }
 // }
 
-pub fn test_runner (mut home: PathBuf, _paraent_config: &OlMinerConfig) {
+pub fn test_runner (home: PathBuf, _paraent_config: &OlMinerConfig) {
     // PathBuf.new("./blocks")
     let tx_params = get_params_from_swarm(home).unwrap();
 
     let conf = OlMinerConfig::load_swarm_config(&tx_params );
     loop {
         let (preimage, proof, tower_height) = get_block_fixtures(&conf);
-        submit_tx(&tx_params, preimage, proof, tower_height);
+        let _ = submit_tx(&tx_params, preimage, proof, tower_height);
     }
 }
 
 
-pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<String, Error> {
+pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<TransactionView, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -78,6 +79,7 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
+    sequence_number = sequence_number + 1;
     dbg!(&sequence_number);
 
     // Create the unsigned MinerState transaction script
@@ -122,17 +124,21 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
         txn
     ){
         Ok(_) => {
-            // ol_wait_for_tx(address, sequence_number, &mut client);
-            Ok("Tx submitted".to_string())
+            let res = ol_wait_for_tx(tx_params.address, sequence_number, &mut client);
+            match res {
+                Ok(tx_view) => Ok(tx_view),
+                Err(err) => Err(err)
+            }
+            // Ok("Tx submitted".to_string())
 
         }
         Err(err) => Err(err)
     }
 }
 
-fn get_params_from_mnemonic () -> Result<TxParams, Error> {
-    unimplemented!();
-}
+// fn get_params_from_mnemonic () -> Result<TxParams, Error> {
+//     unimplemented!();
+// }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     home.push("0/node.config.toml");
@@ -177,16 +183,16 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
 }
 
 
-fn get_block (height: u64) -> (Vec<u8>, Vec<u8>, u64){
-    let miner_configs = app_config(); 
-    let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height)).expect("Could not open block file");
-    let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
-    let reader = BufReader::new(file);
-    let block: Block = serde_json::from_reader(reader).unwrap();
-    let preimage = block.preimage;
-    let proof = block.data;
-    (preimage, proof, height)
-}
+// fn get_block (height: u64) -> (Vec<u8>, Vec<u8>, u64){
+//     let miner_configs = app_config();
+//     let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height)).expect("Could not open block file");
+//     let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
+//     let reader = BufReader::new(file);
+//     let block: Block = serde_json::from_reader(reader).unwrap();
+//     let preimage = block.preimage;
+//     let proof = block.data;
+//     (preimage, proof, height)
+// }
 
 fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
 
@@ -204,7 +210,7 @@ fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
     }
 
     // mine continuously from the last block in the file systems
-    let mut mining_height = current_block_number.unwrap() + 1;
+    let mining_height = current_block_number.unwrap() + 1;
     status_ok!("Generating Proof for block:", format!("{}", mining_height));
     let block = mine_once(&config).unwrap();
     status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
@@ -215,60 +221,59 @@ fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
     (block.preimage, block.data, block.height)
 }
 
-// fn ol_wait_for_tx (
-//     sender_address: AccountAddress,
-//     sequence_number: u64,
-//     client: &mut LibraClient) -> Result<(), Error>{
-//         // if sequence_number == 0 {
-//         //     println!("First transaction, cannot query.");
-//         //     return Ok(());
-//         // }
+fn ol_wait_for_tx (
+    sender_address: AccountAddress,
+    sequence_number: u64,
+    client: &mut LibraClient) -> Result<TransactionView, Error>{
+        // if sequence_number == 0 {
+        //     println!("First transaction, cannot query.");
+        //     return Ok(());
+        // }
 
-//         let mut max_iterations = 10;
-//         println!(
-//             "waiting for tx from acc: {} with sequence number: {}",
-//             sender_address, sequence_number
-//         );
+        let mut max_iterations = 10;
+        println!(
+            "waiting for tx from acc: {} with sequence number: {}",
+            sender_address, sequence_number
+        );
 
-//         loop {
-//             println!("test");
-//         //     stdout().flush().unwrap();
+        loop {
+            // prevent all the logging the client does while it loops through the query.
+            stdout().flush().unwrap();
 
-//         //     // TODO: first transaction in sequence fails
+            // TODO: the `sequence_number - 1` makes it not possible to query the first sequence number of an account. However all 0L accounts are initiated by submitted a mining proof. So we need to be able to produce user feedback on the submission of their first block.
 
+            match &mut client
+                .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
+            {
+                Ok(Some(txn_view)) => {
+                    print!("txn_view: {:?}", txn_view);
+                    if txn_view.vm_status == StatusCode::EXECUTED {
+                        println!("Transaction executed!");
+                        if txn_view.events.is_empty() {
+                            println!("no events emitted");
+                        }
+                        break Ok(txn_view.to_owned());
+                    } else {
+                        // break Err(format_err!(
+                        //     "transaction failed to execute; status: {:?}!",
+                        //     txn_view.vm_status
+                        // ));
 
-//             match &mut client
-//                 .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
-//             {
-//                 Ok(Some(txn_view)) => {
-//                     print!("txn_view: {:?}", txn_view);
-//                     if txn_view.vm_status == StatusCode::EXECUTED {
-//                         println!("transaction executed!");
-//                         if txn_view.events.is_empty() {
-//                             println!("no events emitted");
-//                         }
-//                         break Ok(());
-//                     } else {
-//                         // break Err(format_err!(
-//                         //     "transaction failed to execute; status: {:?}!",
-//                         //     txn_view.vm_status
-//                         // ));
+                        break Ok(txn_view.to_owned()); //Err(Error(txn_view));
 
-//                         break Ok(());
-
-//                     }
-//                 }
-//                 Err(e) => {
-//                     println!("Response with error: {:?}", e);
-//                 }
-//                 _ => {
-//                     print!(".");
-//                 }
-//             }
-//             max_iterations -= 1;
-//         //     if max_iterations == 0 {
-//         //         panic!("wait_for_transaction timeout");
-//         //     }
-//             thread::sleep(time::Duration::from_millis(100));
-//     }
-// }
+                    }
+                }
+                Err(e) => {
+                    println!("Response with error: {:?}", e);
+                }
+                _ => {
+                    print!(".");
+                }
+            }
+            max_iterations -= 1;
+        //     if max_iterations == 0 {
+        //         panic!("wait_for_transaction timeout");
+        //     }
+            thread::sleep(time::Duration::from_millis(100));
+    }
+}

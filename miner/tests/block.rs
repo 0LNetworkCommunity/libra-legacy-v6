@@ -19,8 +19,9 @@ fn test_mine_and_submit() {
             // public_key: "5ffd9856978b5020be7f72339e41a401".to_owned(),
             // statement: "protests rage across America".to_owned(),
             auth_key: "5ffd9856978b5020be7f72339e41a401".to_owned(),
-            account: Some("000000000000000000000000deadbeef".to_owned()),
-            operator_private_key: Some("da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned()),
+            account: None,
+            operator_private_key: None,
+            ip: None,
             statement: "Protests rage across the nation".to_owned(),
         },
         chain_info: ChainInfo {
