@@ -15,15 +15,20 @@ pub fn integration() {
     
     // remove all files in miner/blocks/
     let blocks_dir = PathBuf::from("./blocks/");
-
     if blocks_dir.exists() {
         fs::remove_dir_all(&blocks_dir).unwrap();
-    } else {
-        fs::create_dir(&blocks_dir).unwrap();
     }
+    fs::create_dir(&blocks_dir).unwrap();
+
     // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
-    fs::copy("../fixtures/block_0.json.test.alice", blocks_dir.join("block_0.json"));
-    
+    let _ = fs::copy("../fixtures/block_0.json.test.alice", "blocks/block_0.json");
+
+    // clean config dir
+    let config_dir = PathBuf::from("../saved_logs");
+    if config_dir.exists() {
+        fs::remove_dir_all(&config_dir).unwrap();
+    }
+
     // TODO: Assert that block_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
     let mut echo_swarm = Command::new("cargo");
@@ -31,7 +36,7 @@ pub fn integration() {
     echo_swarm.arg("run")
             .arg("-p").arg("libra-swarm")
             .arg("--").arg("-n").arg("1") 
-            .arg("-l").arg("-c").arg("./saved_logs");
+            .arg("-l").arg("-c").arg("saved_logs");
     let cmd = echo_swarm.stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
                 .spawn();
@@ -40,7 +45,7 @@ pub fn integration() {
         // Swarm has started
         Ok(mut swarm_child) => {
             // need to wait for swarm to start-up before we have the configs needed to connect to it.
-            let wait_for_swarm = Duration::from_secs(60);
+            let wait_for_swarm = Duration::from_secs(30);
             thread::sleep(wait_for_swarm);
 
             let mut echo_miner = Command::new("cargo");

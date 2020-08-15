@@ -54,14 +54,14 @@ pub struct TxParams {
 //     }
 // }
 
-pub fn test_runner (mut home: PathBuf, _paraent_config: &OlMinerConfig) {
+pub fn test_runner (home: PathBuf, _paraent_config: &OlMinerConfig) {
     // PathBuf.new("./blocks")
     let tx_params = get_params_from_swarm(home).unwrap();
 
     let conf = OlMinerConfig::load_swarm_config(&tx_params );
     loop {
         let (preimage, proof, tower_height) = get_block_fixtures(&conf);
-        submit_tx(&tx_params, preimage, proof, tower_height);
+        let _ = submit_tx(&tx_params, preimage, proof, tower_height);
     }
 }
 
@@ -79,6 +79,7 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
+    sequence_number = sequence_number + 1;
     dbg!(&sequence_number);
 
     // Create the unsigned MinerState transaction script
@@ -135,9 +136,9 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     }
 }
 
-fn get_params_from_mnemonic () -> Result<TxParams, Error> {
-    unimplemented!();
-}
+// fn get_params_from_mnemonic () -> Result<TxParams, Error> {
+//     unimplemented!();
+// }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     home.push("0/node.config.toml");
@@ -182,16 +183,16 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
 }
 
 
-fn get_block (height: u64) -> (Vec<u8>, Vec<u8>, u64){
-    let miner_configs = app_config(); 
-    let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height)).expect("Could not open block file");
-    let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
-    let reader = BufReader::new(file);
-    let block: Block = serde_json::from_reader(reader).unwrap();
-    let preimage = block.preimage;
-    let proof = block.data;
-    (preimage, proof, height)
-}
+// fn get_block (height: u64) -> (Vec<u8>, Vec<u8>, u64){
+//     let miner_configs = app_config();
+//     let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height)).expect("Could not open block file");
+//     let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
+//     let reader = BufReader::new(file);
+//     let block: Block = serde_json::from_reader(reader).unwrap();
+//     let preimage = block.preimage;
+//     let proof = block.data;
+//     (preimage, proof, height)
+// }
 
 fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
 
@@ -209,7 +210,7 @@ fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
     }
 
     // mine continuously from the last block in the file systems
-    let mut mining_height = current_block_number.unwrap() + 1;
+    let mining_height = current_block_number.unwrap() + 1;
     status_ok!("Generating Proof for block:", format!("{}", mining_height));
     let block = mine_once(&config).unwrap();
     status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
