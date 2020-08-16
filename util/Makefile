@@ -89,8 +89,11 @@ genesis: build-genesis waypoint toml peers remove-keys
 #### ENVIRONMENT #####
 deps:
 	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
-		## TODO: Cargo is not getting set to path. This next line doesn't run.
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete jq
+# TODO: Cargo is not getting set to path. This next line doesn't run.
+#install rq, a tool for manipulateing TOML
+	curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git dflemstr/rq
+# install rust
 	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 	
 stdlib:
@@ -111,7 +114,7 @@ keygen:
 	cd ~/libra/miner && miner keygen
 
 miner-genesis:
-	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
+	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
 	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}/blocks/
 
 #### FOR TESTING ####
