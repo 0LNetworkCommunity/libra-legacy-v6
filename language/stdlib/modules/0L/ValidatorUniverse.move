@@ -12,6 +12,7 @@ address 0x0 {
     use 0x0::FixedPoint32;
     use 0x0::Stats;
     use 0x0::Option;
+    use 0x0::Globals;
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -163,7 +164,7 @@ address 0x0 {
       // What about empty blocks that get created after every epoch?
 
       let end_block_height = current_block_height;
-      let epoch_count = epoch_length - 2;  // Not all blocks are committed at current block height.
+      let epoch_count = epoch_length - Globals::get_epoch_boundary_buffer();  // Not all blocks are committed at current block height.
 
       // The current block_height needs to be at least the length of one (the first) epoch.
       Transaction::assert(end_block_height >= epoch_count, 220107015120);
