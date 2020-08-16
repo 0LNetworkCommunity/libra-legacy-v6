@@ -47,43 +47,61 @@ pub fn integration() {
             .arg("-p").arg("libra-swarm")
             .arg("--").arg("-n").arg("1") 
             .arg("-l").arg("-c").arg("saved_logs");
-    let cmd = swarm_cmd.stdout(Stdio::piped())
-                .stderr(Stdio::piped())
+    let cmd = swarm_cmd.stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
                 .spawn();
-
     match cmd {
         // Swarm has started
         Ok(mut swarm_child) => {
             // set the timeout for the process
-            let test_timeout = Duration::from_secs(600);
-            match swarm_child.wait_timeout(test_timeout) {
-                Ok(Some(status)) => println!("Exited with status {}", status),
-                Ok(None) => {
-                    println!("Test will exit now, time taken: {:?}", test_timeout);
-                    swarm_child.kill().unwrap();
-                    // echo_swarm.kill().unwrap();
-                },
-                Err(e) => println!("Error waiting: {}", e),
-            }
+            // let test_timeout = Duration::from_secs(600);
+            // match swarm_child.wait_timeout(test_timeout) {
+            //     Ok(Some(status)) => println!("Exited with status {}", status),
+            //     Ok(None) => {
+            //         println!("Test will exit now, time taken: {:?}", test_timeout);
+            //         swarm_child.kill().unwrap();
+            //         // echo_swarm.kill().unwrap();
+            //     },
+            //     Err(e) => println!("Error waiting: {}", e),
+            // }
 
             // need to wait for swarm to start-up before we have the configs needed to connect to it. Check stdout.
 
             let pattern = Regex::new(r"(?x)
             (Successfully launched Swarm)").unwrap();
+            
+            match swarm_child.stdout {
+                Some(stdout) => {
+                    // let out = BufReader::new(stdout);
 
-            let output = swarm_child.wait_with_output().unwrap();
+                    let is_ready = BufReader::new(stdout)
+                    .lines()
+                    .filter_map(|line| line.ok())
+                    .for_each(|line| println!("{}", line));
+                    // TODO: this is not catching any lines....
+                    // .for_each(|line| {
+                    //     if line.is_ok() {
+                    //         println!("########### \n{:?}", line.as_ref().unwrap());
+        
+                    //         println!("{:?}", pattern.captures(&line.as_ref().unwrap()));
 
-            let out = BufReader::new(&*output.stdout);
+                    //     }
+                    
+                    // });
+        
+                    // if is_ready {
+                    //     println!("READY!");
+                    //     let mut miner_cmd = Command::new("cargo");
+                    //     miner_cmd.arg("run")
+                    //             .arg("swarm");
+                    //     miner_cmd.stdout(Stdio::inherit())
+                    //             .stderr(Stdio::inherit())
+                    //             .spawn().unwrap();
+                    // };        
+                }
+                None => {}
+            }
 
-            let is_ready = out.lines()
-            .any(|line| pattern.captures(&line.as_ref().unwrap()).is_some());
-
-            let mut miner_cmd = Command::new("cargo");
-            miner_cmd.arg("run")
-                    .arg("swarm");
-            miner_cmd.stdout(Stdio::inherit())
-                    .stderr(Stdio::inherit())
-                    .spawn().unwrap();
 
             // TODO: get output and evaluate with assert
             // assert_eq!()
