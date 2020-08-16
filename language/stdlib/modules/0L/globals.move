@@ -92,7 +92,7 @@ module Globals {
     }
 
     public fun get_epoch_boundary_buffer(): u64 {
-      get_constants().get_epoch_boundary_buffer
+      get_constants().epoch_boundary_buffer
     }
 
     // Get max validator per epoch
