@@ -10,6 +10,7 @@ use std::{
 };
 use anyhow::{bail, Error};
 use regex::Regex;
+use std::borrow::Borrow;
 
 #[test]
 pub fn integration() {
@@ -60,10 +61,8 @@ pub fn integration() {
             let pattern = Regex::new(r"(?x)
             (Successfully launched Swarm)").unwrap();
 
-
-            let output = swarm_child.wait_with_output().as_ref().unwrap();
-
-            let out = BufReader::new(&*output.stdout);
+            let output = swarm_child.wait_with_output().unwrap();
+            let out = BufReader::new(output.stdout);
 
             let is_ready = out.lines()
             .any(|line| pattern.captures(&line.as_ref().unwrap()).is_some());
@@ -76,30 +75,27 @@ pub fn integration() {
             // });
 
 
-            let mut echo_miner = Command::new("cargo");
-            echo_miner.arg("run")
-                    .arg("swarm");
-            echo_miner.stdout(Stdio::inherit())
-                    .stderr(Stdio::inherit())
-                    .spawn().unwrap();
+            // let mut echo_miner = Command::new("cargo");
+            // echo_miner.arg("run")
+            //         .arg("swarm");
+            // echo_miner.stdout(Stdio::inherit())
+            //         .stderr(Stdio::inherit())
+            //         .spawn().unwrap();
             // what to do at timeout.
             // TODO: get output and evaluate with assert
             // assert_eq!()
             
-            let test_timeout = Duration::from_secs(600);
-
-            match swarm_child.wait_timeout(test_timeout) {
-                Ok(Some(status)) => println!("Exited with status {}", status),
-                Ok(None) => {
-                    println!("Test will exit now, time taken: {:?}", test_timeout);
-
-
-
-                    swarm_child.kill().unwrap();
-                    // echo_swarm.kill().unwrap();
-                },
-                Err(e) => println!("Error waiting: {}", e),
-            }
+            // let test_timeout = Duration::from_secs(600);
+            // let timeout = &swarm_child.wait_timeout(test_timeout).unwrap();
+            // match timeout {
+            //     Some(status) => println!("Exited with status {}", status),
+            //     None => {
+            //         println!("Test will exit now, time taken: {:?}", test_timeout);
+            //
+            //         swarm_child.kill().unwrap();
+            //         // echo_swarm.kill().unwrap();
+            //     }
+            // }
         }
         Err(err) => println!("Process did not even start: {}", err)
     }
