@@ -35,8 +35,7 @@ use libra_json_rpc_types::views::TransactionView;
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 // const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
                                 // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
-// TODO: I don't think this is being used
-// const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
+
 pub struct TxParams {
     pub auth_key: AuthenticationKey,
     pub address: AccountAddress,
@@ -47,12 +46,6 @@ pub struct TxParams {
     coin_price_per_unit: u64,
     user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
-
-// impl Default for Txparams{ 
-//     fn default(){
-
-//     }
-// }
 
 pub fn test_runner (home: PathBuf, _paraent_config: &OlMinerConfig) {
     // PathBuf.new("./blocks")
@@ -65,8 +58,7 @@ pub fn test_runner (home: PathBuf, _paraent_config: &OlMinerConfig) {
     }
 }
 
-
-pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<TransactionView, Error> {
+pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -79,8 +71,7 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
-    sequence_number = sequence_number + 1;
-    dbg!(&sequence_number);
+    println!("##### SEQUENCE NUMBER ####### {}", sequence_number);
 
     // Create the unsigned MinerState transaction script
     let script = Script::new(
@@ -106,7 +97,6 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
         tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
     )?;
 
-    // Plz Halp  (ZM):
     // get account_data struct
     let mut sender_account_data = AccountData {
         address: tx_params.address,
@@ -116,29 +106,35 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
         status: AccountStatus::Persisted,
     };
 
-    dbg!(&sender_account_data);
-    // Plz Halp (ZM):
-    // // Submit the transaction with libra_client
+    // dbg!(&sender_account_data);
+    
+    // Submit the transaction with libra_client
     match client.submit_transaction(
         Some(&mut sender_account_data),
         txn
     ){
         Ok(_) => {
-            let res = ol_wait_for_tx(tx_params.address, sequence_number, &mut client);
-            match res {
-                Ok(tx_view) => Ok(tx_view),
-                Err(err) => Err(err)
+            // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
+            println!("### TX SUBMITTED ###");
+            if sequence_number != 0 {
+                let res = ol_wait_for_tx(tx_params.address, sequence_number, &mut client);
+                match res {
+                    Ok(tx_view) => {
+                        // println!("Transaction info: {:?}", &tx_view);
+                        dbg!(&tx_view);
+                        // println!("{:?}", serde_json::to_string_pretty(&tx_view).unwrap());
+                        Ok(Some(tx_view))
+                    },
+                    Err(err) => Err(err)
+                }
+            } else {
+                Ok(None)
             }
-            // Ok("Tx submitted".to_string())
-
         }
         Err(err) => Err(err)
     }
 }
 
-// fn get_params_from_mnemonic () -> Result<TxParams, Error> {
-//     unimplemented!();
-// }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     home.push("0/node.config.toml");
@@ -160,12 +156,10 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
     let address = auth_key.derived_address();
 
-
     let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap();
-    // let url: Result<Url, Error> = miner_configs.chain_info.node;
+
     let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     
-    //unwrap().parse::<Waypoint>();
     let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
     dbg!(&keypair);
     let tx_params = TxParams {
@@ -176,23 +170,11 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
         keypair,
         max_gas_unit_for_tx: 1_000_000,
         coin_price_per_unit: 0,
-        user_tx_timeout: 5_000, // 
+        user_tx_timeout: 5_000,
     };
 
     Ok(tx_params)
 }
-
-
-// fn get_block (height: u64) -> (Vec<u8>, Vec<u8>, u64){
-//     let miner_configs = app_config();
-//     let file = fs::File::open(format!("{:?}/block_{}.json", &miner_configs.get_block_dir(), height)).expect("Could not open block file");
-//     let file = fs::File::open("./blocks/block_1.json").expect("Could not open block file");
-//     let reader = BufReader::new(file);
-//     let block: Block = serde_json::from_reader(reader).unwrap();
-//     let preimage = block.preimage;
-//     let proof = block.data;
-//     (preimage, proof, height)
-// }
 
 fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
 
@@ -214,10 +196,6 @@ fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
     status_ok!("Generating Proof for block:", format!("{}", mining_height));
     let block = mine_once(&config).unwrap();
     status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
-
-    // let preimage = hex::decode("3a18e936c07cb5760783d450f75c257e9a80a394bff06219637da0900df3b459").unwrap();
-    // let proof = hex::decode("006b55ef8b3dcca6a37dd5358cace06f9a636ebf1f414177e486f39a62a27f7a45ea31cb0579a6cca00f9f6bd5fd3613a648f28b0d58563154db6ed33ff6b88ce1a3a0dc4ce2e78cecf9ba69a992aa1b4b4dabbe8a2e49ad10592f10ea5a8050a984aeaa9a61ea9724894e84d29577e261fcdd537b53937366de30df8daaa6d3570da85565286995dfa1fc73c2ddea5ae9dc3e620cbcc0b01f236f90a33b60cdab3f0b64c16987eb5e9993ebece8011e650547e9ac2a2d71e70c71a09f7826e284055ecdb227822aa282d46739929d8edbdc53ff6f555baa8834505dc77e2331c012f261c6dcd3c8c0d21ed8fc755e015fcfcfc852a142737e14030514e092ed5e005656b267a11bc3e3c1bf25c1dec218cd62dccf858957e6e9b356e713cf4904eb5272636908f65cf1603a733ae2b962fe5a01021bd26536c768f2c4abfb438ff0ed733e43410e64dfaeeb2354a3284af6d1b1e1170965d3effd2aa85faabc31003edb1cfccd5084cd733d9aa67b86dab75e9cf299c42fbdec5ffce82fc4ab8422eb3254759f133f98dfc849f182d4657f76bc83c69d1af258b52b60610a562224b9c6a152484e15597f50a503b0ba6aa604ce8b9675f237e3c2ab6988e45ca2712645cffc3fa054c292c21d73ab3b146c34353284d2c68c3f1b05351f7c551f6f0ceb666556469d81495003eb4d43fb28e772622398f41db5ddacfdefa2bd2ee500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001").unwrap();
-
     (block.preimage, block.data, block.height)
 }
 
@@ -225,11 +203,6 @@ fn ol_wait_for_tx (
     sender_address: AccountAddress,
     sequence_number: u64,
     client: &mut LibraClient) -> Result<TransactionView, Error>{
-        // if sequence_number == 0 {
-        //     println!("First transaction, cannot query.");
-        //     return Ok(());
-        // }
-
         let mut max_iterations = 10;
         println!(
             "waiting for tx from acc: {} with sequence number: {}",
