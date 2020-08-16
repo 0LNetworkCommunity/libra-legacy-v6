@@ -41,132 +41,64 @@ pub fn integration() {
 
     // TODO: Assert that block_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
-    let mut echo_swarm = Command::new("cargo");
-    echo_swarm.current_dir("../");
-    echo_swarm.arg("run")
+    let mut swarm_cmd = Command::new("cargo");
+    swarm_cmd.current_dir("../");
+    swarm_cmd.arg("run")
             .arg("-p").arg("libra-swarm")
             .arg("--").arg("-n").arg("1") 
             .arg("-l").arg("-c").arg("saved_logs");
-    let cmd = echo_swarm.stdout(Stdio::piped())
+    let cmd = swarm_cmd.stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn();
 
     match cmd {
         // Swarm has started
         Ok(mut swarm_child) => {
-            // need to wait for swarm to start-up before we have the configs needed to connect to it.
-            // let wait_for_swarm = Duration::from_secs(30);
-            // thread::sleep(wait_for_swarm);
+            // set the timeout for the process
+            let test_timeout = Duration::from_secs(600);
+            match swarm_child.wait_timeout(test_timeout) {
+                Ok(Some(status)) => println!("Exited with status {}", status),
+                Ok(None) => {
+                    println!("Test will exit now, time taken: {:?}", test_timeout);
+                    swarm_child.kill().unwrap();
+                    // echo_swarm.kill().unwrap();
+                },
+                Err(e) => println!("Error waiting: {}", e),
+            }
+
+            // need to wait for swarm to start-up before we have the configs needed to connect to it. Check stdout.
 
             let pattern = Regex::new(r"(?x)
             (Successfully launched Swarm)").unwrap();
 
             let output = swarm_child.wait_with_output().unwrap();
-            let out = BufReader::new(output.stdout);
+
+            let out = BufReader::new(&*output.stdout);
 
             let is_ready = out.lines()
             .any(|line| pattern.captures(&line.as_ref().unwrap()).is_some());
 
+            let mut miner_cmd = Command::new("cargo");
+            miner_cmd.arg("run")
+                    .arg("swarm");
+            miner_cmd.stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit())
+                    .spawn().unwrap();
 
-            // out.lines()
-            // .filter(|line| pattern.captures(&line.as_ref().unwrap()).is_some())
-            // .for_each(|line| {
-            // println!("out: {:?}", line);
-            // });
-
-
-            // let mut echo_miner = Command::new("cargo");
-            // echo_miner.arg("run")
-            //         .arg("swarm");
-            // echo_miner.stdout(Stdio::inherit())
-            //         .stderr(Stdio::inherit())
-            //         .spawn().unwrap();
-            // what to do at timeout.
             // TODO: get output and evaluate with assert
             // assert_eq!()
-            
-            // let test_timeout = Duration::from_secs(600);
-            // let timeout = &swarm_child.wait_timeout(test_timeout).unwrap();
-            // match timeout {
-            //     Some(status) => println!("Exited with status {}", status),
-            //     None => {
-            //         println!("Test will exit now, time taken: {:?}", test_timeout);
-            //
-            //         swarm_child.kill().unwrap();
-            //         // echo_swarm.kill().unwrap();
-            //     }
-            // }
+
         }
         Err(err) => println!("Process did not even start: {}", err)
     }
 }
 
-#[test]
-pub fn dir () {
-    assert_eq!( block_until_swarm_ready(), true);
-}
 
-
-pub fn block_until_swarm_ready () -> bool {
-    let swarm_configs_path = Path::new("../saved_logs/");
-    let mut timeout = 100;
-    let one_second = time::Duration::from_secs(1);
-
-    loop {
-        if timeout == 0 { 
-            return false
-        }
-        if Path::new("../saved_logs/").exists() {
-            return true
-        }
-
-        thread::sleep(one_second);
-        timeout -= 1;
-    }
-}
 
 #[test]
 pub fn test_echo () {
    echo();
 }
-
-
-
-
-#[derive(PartialEq, Default, Clone, Debug)]
-struct Commit {
-    hash: String,
-    message: String,
-}
-
-// fn echo()  {
-//     let child = Command::new("git").arg("log").arg("--oneline").spawn().unwrap();
-
-//     // if !child.success() {
-//     //     panic!("Command executed with failing error code");
-//     // }
-
-//     let pattern = Regex::new(r"(?x)
-//                                 ([0-9a-fA-F]+) # commit hash
-//                                 (.*)           # The commit message").unwrap();
-
-//     let reader = BufReader::new(child.stdout.unwrap());
-
-//     reader
-//         .lines()
-//         .filter_map(|line| {
-//            pattern.captures(&line)
-//         })
-//         .for_each(|line| {
-//             println!("{:?}", line)
-//         });
-
-//     // let git = String::from_utf8(output.stdout).unwrap()
-//     // .lines()
-//     // .for_each(|x| println!("line {:?}\n", x));
-//     // dbg!(git);
-// }
-
 
 
 fn echo() -> Result<bool, Error> {
@@ -187,12 +119,38 @@ fn echo() -> Result<bool, Error> {
 
     let out = BufReader::new(&*output.stdout);
 
-    out.lines()
-    .filter(|line| pattern.captures(&line.as_ref().unwrap()).is_some())
-    .for_each(|line| {
-        println!("out: {:?}", line);
-    });
+    let exists = out.lines()
+    .any(|line| pattern.captures(&line.as_ref().unwrap()).is_some());
+    // .for_each(|line| {
+    //     println!("out: {:?}", line);
+    // });
+    println!("exists: {:?}", exists);
 
-    Ok(false)
+    Ok(true)
 
 }
+
+
+// #[test]
+// pub fn dir () {
+    // assert_eq!( block_until_swarm_ready(), true);
+// }
+
+
+// pub fn block_until_swarm_ready () -> bool {
+//     let swarm_configs_path = Path::new("../saved_logs/");
+//     let mut timeout = 100;
+//     let one_second = time::Duration::from_secs(1);
+
+//     loop {
+//         if timeout == 0 { 
+//             return false
+//         }
+//         if Path::new("../saved_logs/").exists() {
+//             return true
+//         }
+
+//         thread::sleep(one_second);
+//         timeout -= 1;
+//     }
+// }
