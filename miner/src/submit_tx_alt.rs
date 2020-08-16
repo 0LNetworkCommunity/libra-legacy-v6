@@ -71,7 +71,7 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
-    println!("##### SEQUENCE NUMBER ####### {}", sequence_number);
+    println!("Received sequence number: {}", sequence_number);
 
     // Create the unsigned MinerState transaction script
     let script = Script::new(
@@ -115,7 +115,7 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     ){
         Ok(_) => {
             // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
-            println!("### TX SUBMITTED ###");
+            println!("Transacation Submitted Successfully");
             if sequence_number != 0 {
                 let res = ol_wait_for_tx(tx_params.address, sequence_number, &mut client);
                 match res {
