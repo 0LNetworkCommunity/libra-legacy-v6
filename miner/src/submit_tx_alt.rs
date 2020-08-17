@@ -120,12 +120,21 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
                 let res = ol_wait_for_tx(tx_params.address, sequence_number, &mut client);
                 match res {
                     Ok(tx_view) => {
-                        // println!("Transaction info: {:?}", &tx_view);
                         dbg!(&tx_view);
-                        // println!("{:?}", serde_json::to_string_pretty(&tx_view).unwrap());
+
+                        if tx_view.vm_status == StatusCode::EXECUTED {
+                            println!("Transaction executed.");
+                            if tx_view.events.is_empty() {
+                                println!("no events emitted");
+                            }
+                        } else {
+                            println!("TRANSACTION FAILED \n {:?}", tx_view.vm_status);
+                        }
+                            
                         Ok(Some(tx_view))
                     },
                     Err(err) => Err(err)
+
                 }
             } else {
                 Ok(None)
@@ -205,7 +214,7 @@ fn ol_wait_for_tx (
     client: &mut LibraClient) -> Result<TransactionView, Error>{
         let mut max_iterations = 10;
         println!(
-            "waiting for tx from acc: {} with sequence number: {}",
+            "Waiting for tx from acc: {} with sequence number: {}",
             sender_address, sequence_number
         );
 
@@ -216,26 +225,10 @@ fn ol_wait_for_tx (
             // TODO: the `sequence_number - 1` makes it not possible to query the first sequence number of an account. However all 0L accounts are initiated by submitted a mining proof. So we need to be able to produce user feedback on the submission of their first block.
 
             match &mut client
-                .get_txn_by_acc_seq(sender_address, sequence_number - 1, true)
-            {
+                .get_txn_by_acc_seq(sender_address, sequence_number - 1, true){
                 Ok(Some(txn_view)) => {
-                    print!("txn_view: {:?}", txn_view);
-                    if txn_view.vm_status == StatusCode::EXECUTED {
-                        println!("Transaction executed!");
-                        if txn_view.events.is_empty() {
-                            println!("no events emitted");
-                        }
-                        break Ok(txn_view.to_owned());
-                    } else {
-                        // break Err(format_err!(
-                        //     "transaction failed to execute; status: {:?}!",
-                        //     txn_view.vm_status
-                        // ));
-
-                        break Ok(txn_view.to_owned()); //Err(Error(txn_view));
-
-                    }
-                }
+                return Ok(txn_view.to_owned());
+            },
                 Err(e) => {
                     println!("Response with error: {:?}", e);
                 }
