@@ -54,7 +54,17 @@ pub fn test_runner (home: PathBuf, _paraent_config: &OlMinerConfig) {
     let conf = OlMinerConfig::load_swarm_config(&tx_params );
     loop {
         let (preimage, proof, tower_height) = get_block_fixtures(&conf);
-        let _ = submit_tx(&tx_params, preimage, proof, tower_height);
+        match submit_tx(&tx_params, preimage, proof, tower_height) {
+            Ok(result) => { match result {
+                Some(txn_view) => {
+                    if txn_view.vm_status == StatusCode::ABORTED {
+                        break;
+                    }
+                }
+                _ => println!("None")
+           }}
+           Err(_) => println!("Transaction failed!")
+        };
     }
 }
 
