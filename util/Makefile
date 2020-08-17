@@ -115,7 +115,6 @@ keygen:
 
 miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
-	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}/blocks/
 
 #### FOR TESTING ####
 
