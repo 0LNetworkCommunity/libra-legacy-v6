@@ -232,7 +232,8 @@ start:
 	
 
 daemon:
-	sudo cp -f ~/libra/util/libra-node.service /lib/systemd/system/
+# your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
+	sudo cp -f ~/node_data/libra-node.service /lib/systemd/system/
 # cp -f miner.service /lib/systemd/system/
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
@@ -241,8 +242,8 @@ daemon:
 
 	sudo mkdir ~/logs
 	sudo touch ~/logs/node.log
-	sudo chmod 644 ~/logs
-	sudo chmod 644 ~/logs/node.log
+	sudo chmod 660 ~/logs
+	sudo chmod 660 ~/logs/node.log
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service
@@ -256,6 +257,15 @@ ifdef TEST
 #for debug-net fill in mnemonic from fixtures
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
 else
+	if test -d ~/logs; then \
+		echo "WIPING MINER LOGS"; \
+		sudo rm -rf ~/logs*; \
+	fi 
+
+	sudo mkdir ~/logs
+	sudo touch ~/logs/miner.log
+	sudo chmod 660 ~/logs
+	sudo chmod 660 ~/logs/miner.log
 # pipe logs to screen and tee to miner logs
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start 2> >(tee ~/logs/miner.log)
 
