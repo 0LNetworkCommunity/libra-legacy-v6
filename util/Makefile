@@ -257,7 +257,7 @@ ifdef TEST
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
 else
 # pipe logs to screen and tee to miner logs
-	NODE_ENV='${NODE_ENV}' miner start 2> >(tee ~/logs/miner.log)
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start 2> >(tee ~/logs/miner.log)
 
 endif
 
