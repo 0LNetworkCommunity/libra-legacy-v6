@@ -236,7 +236,7 @@ daemon:
 # cp -f miner.service /lib/systemd/system/
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
-		rm -rf ~/logs*; \
+		sudo rm -rf ~/logs*; \
 	fi 
 
 	sudo mkdir ~/logs
