@@ -84,7 +84,7 @@ compile: stdlib bins
 # pipelines for genesis ceremony
 register: clear fixtures init add-proofs keys register
 # do genesis
-genesis: build-genesis waypoint toml peers remove-keys
+genesis: build-genesis waypoint toml peers
 
 #### ENVIRONMENT #####
 deps:
