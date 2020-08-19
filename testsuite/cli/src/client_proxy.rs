@@ -11,7 +11,6 @@ use anyhow::{bail, ensure, format_err, Error, Result};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
-    PrivateKey,
     traits::ValidCryptoMaterial,
     x25519, ValidCryptoMaterialStringExt,
 };
@@ -323,17 +322,11 @@ impl ClientProxy {
     /// 0L: Get Miner State
     /// A wrap for libra cli to execute query miner state command.
     pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
-        // ensure!(
-        //     space_delim_strings.len() != 6 ,
-        //     "Invalid number of arguments for sending proof"
-        // );
 
-        println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings );
-
-        // let (sender_address, _) =
-        //     self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
         let (sender_address, _) =
-        self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
+        // let (sender_address, _) =
+        // self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
         self.client.get_miner_state(sender_address ).unwrap()
     }
@@ -1268,10 +1261,8 @@ impl ClientProxy {
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
-        let mut addr_para = para.clone().to_owned();
         if para.starts_with("0x") {
-            //          "8d3fe9ec9b6dd1b339eb416e287de265"
-            addr_para = "00000000000000000000000000000000".to_owned();
+            let addr_para = "00000000000000000000000000000000".to_owned();
             println!("query for address:{}", addr_para);
             return Ok((ClientProxy::address_from_strings(addr_para.as_str() )?, None))
         }

@@ -303,6 +303,7 @@ async fn get_miner_state(
     ensure!(request.params.len() == 1, "invalid size of parameters");
     let address: String = serde_json::from_value(request.get_param(0))?;
     let account_address = AccountAddress::from_str(&address).expect("Invalid address format");
+
     let response = service
         .db
         .deref()
@@ -312,6 +313,14 @@ async fn get_miner_state(
         let raw = response.get(0).expect("Miner states does not exists.").as_slice();
         let miner_state_resource = MinerStateResource::try_from_bytes(raw )?;
         return Ok( Some( MinerStateView::from( miner_state_resource) ) );
+
+        // return Ok(Some(MinerStateView {
+        //     reported_tower_height: 0,
+        //     verified_tower_height: 1, // user's latest verified_tower_height
+        //     latest_epoch_mining: 1,
+        //     epochs_validating_and_mining: 1,
+        //     contiguous_epochs_validating_and_mining: 1,
+        // }));
     }
     Ok(None)
 }
@@ -388,7 +397,7 @@ pub(crate) fn build_registry() -> RpcRegistry {
     register_rpc_method!(registry, "get_network_status", get_network_status, 0);
 
     // added by 0L
-    register_rpc_method!(registry, "get_miner_state", get_miner_state, 0);
+    register_rpc_method!(registry, "get_miner_state", get_miner_state, 1);
 
     registry
 }
