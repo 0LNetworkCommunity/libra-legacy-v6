@@ -4,17 +4,10 @@
 
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
-
-
-
-
-
-
-
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use crate::submit_tx_alt::test_runner;
+use crate::swarm_test::test_runner;
 use std::path::PathBuf;
 use std::borrow::BorrowMut;
 
