@@ -219,7 +219,7 @@ peers:
 	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
 # TODO: Seed peers gets places in working path, deep in libra code.
 	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
-	mv seed_peers.toml  ${DATA_PATH}/network_peers.toml
+	mv seed_peers.toml  ${DATA_PATH}/seed_peers.toml
 
 remove-keys:
 	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "alice/operator_previous", "alice/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
