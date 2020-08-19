@@ -1,10 +1,7 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
 
-
-
 use libra_types::{waypoint::Waypoint};
-
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
 use abscissa_core::{Command, Options, Runnable};
@@ -15,12 +12,7 @@ use libra_crypto::{
     PrivateKey,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature}
 };
-// use libra_crypto::test_utils::KeyPair;
 use anyhow::Error;
-// use client::{
-//     account::{Account, AccountData, AccountTypeSpecifier},
-//     keygen::KeyGen,
-// };
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
 use std::{thread, path::PathBuf, time, fs, io::{stdout, BufReader, Write}};
