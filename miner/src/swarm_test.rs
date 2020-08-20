@@ -40,19 +40,19 @@ use libra_json_rpc_types::views::TransactionView;
 //     user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 // }
 
-pub fn test_runner (home: PathBuf, _parent_config: &OlMinerConfig) {
+pub fn test_runner (home: PathBuf, _parent_config: &OlMinerConfig, no_submit: bool) {
     // PathBuf.new("./blocks")
     let tx_params = get_params_from_swarm(home).unwrap();
 
     let conf = OlMinerConfig::load_swarm_config(&tx_params );
     loop {
         let (preimage, proof, tower_height) = get_block_fixtures(&conf);
-        let res = submit_tx(&tx_params, preimage, proof, tower_height);
-        if eval_tx_status(res) == false { break };
+        let res = submit_tx(&tx_params, preimage, proof, tower_height, no_submit);
+        if eval_tx_status(res) == false && !no_submit { break };
     }
 }
 
-pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<Option<TransactionView>, Error> {
+pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64, no_submit: bool) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -103,23 +103,28 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     // dbg!(&sender_account_data);
     
     // Submit the transaction with libra_client
-    match client.submit_transaction(
-        Some(&mut sender_account_data),
-        txn
-    ){
-        Ok(_) => {
-            // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
-            println!("Transacation submitted to network, waiting for status.");
-            if sequence_number != 0 {
-                match wait_for_tx(tx_params.address, sequence_number, &mut client){
-                    Ok(tx_view) => Ok(Some(tx_view)),
-                    Err(err) => Err(err)
+
+    if (!no_submit) {
+        match client.submit_transaction(
+            Some(&mut sender_account_data),
+            txn
+        ){
+            Ok(_) => {
+                // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
+                println!("Transacation submitted to network, waiting for status.");
+                if sequence_number != 0 {
+                    match wait_for_tx(tx_params.address, sequence_number, &mut client){
+                        Ok(tx_view) => Ok(Some(tx_view)),
+                        Err(err) => Err(err)
+                    }
+                } else {
+                    Ok(None)
                 }
-            } else {
-                Ok(None)
             }
+            Err(err) => Err(err)
         }
-        Err(err) => Err(err)
+    } else {
+        Ok(None)
     }
 }
 

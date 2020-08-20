@@ -156,7 +156,7 @@ fn wait_for_tx (
 }
 
 
-fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
+pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
     match result {
         Ok(tx_view) => {
             // We receive a tx object.

@@ -16,9 +16,10 @@ mod version;
 mod genesis;
 // mod submit;
 mod swarm;
+mod resubmit;
 
 use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
-           genesis::GenesisCmd, swarm::SwarmCmd};
+           genesis::GenesisCmd, swarm::SwarmCmd, resubmit::ResubmitCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -59,6 +60,8 @@ pub enum OlMinerCmd {
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
 
+    #[options(help = "Try resubmitting the blocks")]
+    Resubmit(ResubmitCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
