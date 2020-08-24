@@ -13,6 +13,7 @@ use regex::Regex;
 use std::borrow::Borrow;
 
 #[test]
+#[ignore]
 pub fn integration() {
 
     // PREPARE FIXTURES
@@ -86,61 +87,61 @@ pub fn integration() {
 
 
 
-#[test]
-pub fn test_echo () {
-   echo();
-}
+// #[test]
+// pub fn test_echo () {
+//    echo();
+// }
 
 
-fn echo() -> Result<bool, Error> {
-    let child = Command::new("git").arg("log").arg("--oneline")
-    .stdout(Stdio::piped())
-    .spawn()?;
+// fn echo() -> Result<bool, Error> {
+//     let child = Command::new("git").arg("log").arg("--oneline")
+//     .stdout(Stdio::piped())
+//     .spawn()?;
 
-    // if !output.status.success() {
-    //     bail!("Command executed with failing error code");
-    // }
+//     // if !output.status.success() {
+//     //     bail!("Command executed with failing error code");
+//     // }
 
-    let pattern = Regex::new(r"(?x)
-                               (competition) # commit hash
-                               (.*)           # The commit message")?;
+//     let pattern = Regex::new(r"(?x)
+//                                (competition) # commit hash
+//                                (.*)           # The commit message")?;
 
     
-    let output = child.wait_with_output().unwrap();
+//     let output = child.wait_with_output().unwrap();
 
-    let out = BufReader::new(&*output.stdout);
+//     let out = BufReader::new(&*output.stdout);
 
-    let exists = out.lines()
-    .any(|line| pattern.captures(&line.as_ref().unwrap()).is_some());
-    // .for_each(|line| {
-    //     println!("out: {:?}", line);
-    // });
-    println!("exists: {:?}", exists);
+//     let exists = out.lines()
+//     .any(|line| pattern.captures(&line.as_ref().unwrap()).is_some());
+//     // .for_each(|line| {
+//     //     println!("out: {:?}", line);
+//     // });
+//     println!("exists: {:?}", exists);
 
-    Ok(true)
+//     Ok(true)
 
-}
+// }
 
 
-#[test]
-pub fn dir () {
-    assert_eq!( block_until_swarm_ready(), true);
-}
+// #[test]
+// pub fn dir () {
+//     assert_eq!( block_until_swarm_ready(), true);
+// }
 
-fn block_until_swarm_ready () -> bool {
-    let swarm_configs_path = Path::new("../saved_logs/");
-    let mut timeout = 100;
-    let one_second = time::Duration::from_secs(1);
+// fn block_until_swarm_ready () -> bool {
+//     let swarm_configs_path = Path::new("../saved_logs/");
+//     let mut timeout = 100;
+//     let one_second = time::Duration::from_secs(1);
 
-    loop {
-        if timeout == 0 { 
-            return false
-        }
-        if Path::new("../saved_logs/").exists() {
-            return true
-        }
+//     loop {
+//         if timeout == 0 { 
+//             return false
+//         }
+//         if Path::new("../saved_logs/").exists() {
+//             return true
+//         }
 
-        thread::sleep(one_second);
-        timeout -= 1;
-    }
-}
+//         thread::sleep(one_second);
+//         timeout -= 1;
+//     }
+// }
