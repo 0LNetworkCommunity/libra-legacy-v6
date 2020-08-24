@@ -18,8 +18,10 @@ script {
 script {
   use 0x0::AutoPay;
   use 0x0::Transaction;
+  use 0x0::Libra;
+  use 0x0::GAS;
   fun main() {
-    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 1, 0, true);
+    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 1, Libra::currency_code<GAS::T>(), true);
     Transaction::assert(AutoPay::exists({{alice}}, 0), 5);
   }
 }

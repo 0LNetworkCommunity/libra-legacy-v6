@@ -8,10 +8,12 @@ script {
   use 0x0::AutoPay;
   use 0x0::Vector;
   use 0x0::Transaction;
+  use 0x0::Libra;
+  use 0x0::GAS;
   fun main() {
     AutoPay::init_status(true);
     AutoPay::init_data(Vector::empty());
-    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 1, 0, true);
+    AutoPay::create(true, 0, 0, {{alice}}, 1, 0, 5, 1, Libra::currency_code<GAS::T>(), true);
     Transaction::assert(AutoPay::get_enabled({{alice}}, 0), 1);
     Transaction::assert(AutoPay::get_name({{alice}}, 0) == 0, 2);
     Transaction::assert(AutoPay::get_frequency({{alice}}, 0) == 1, 3);

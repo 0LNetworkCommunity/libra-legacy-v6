@@ -11,10 +11,11 @@ script {
   use 0x0::Transaction;
   use 0x0::LibraAccount;
   use 0x0::GAS;
+  use 0x0::Libra;
   fun main() {
     AutoPay::init_status(true);
     AutoPay::init_data(Vector::empty());
-    AutoPay::create(true, 0, 0, {{bob}}, 2, 2, 5, 1, 0, true);
+    AutoPay::create(true, 0, 0, {{bob}}, 2, 2, 5, 1, Libra::currency_code<GAS::T>(), true);
     Transaction::assert(AutoPay::exists({{alice}}, 0), 1);
     Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 1000000, 1);
     Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 1000000, 2);

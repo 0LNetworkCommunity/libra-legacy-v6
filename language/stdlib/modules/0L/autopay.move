@@ -5,6 +5,8 @@ address 0x0{
     use 0x0::Option;
     use 0x0::Signer;
     use 0x0::LibraAccount;
+    use 0x0::Libra;
+    use 0x0::GAS;
 
     // This is a struct held by every account with autopay enabled
     resource struct Status {
@@ -40,7 +42,7 @@ address 0x0{
       end: u64,                   // start and end are inclusive
       amount: u64,
       // TODO: assert that CoinType is a valid type of currency
-      currency: u64,
+      currency_code: vector<u8>,
       // TODO: cannot make from_earmaked_transactions a reference-type to be &signer
       //  Also don't want this struct to have ownership of the signer object
       // TODO: Remove earmarked transactions as the balance is now being directly
@@ -143,7 +145,7 @@ address 0x0{
           start: 0,
           end: 5,
           amount: 1,
-          currency: 0,
+          currency_code: Libra::currency_code<GAS::T>(),
           from_earmarked_transactions: true,
           last_block_paid: 0,
         } 
@@ -218,7 +220,7 @@ address 0x0{
       start: u64,
       end: u64,
       amount: u64,
-      currency: u64,
+      currency_code: vector<u8>,
       from_earmarked_transactions: bool) acquires Data {
       // Confirm that no payment exists with the same uid
       let index = find(Transaction::sender(), uid);
@@ -236,7 +238,7 @@ address 0x0{
         start: start,
         end: end,
         amount: amount,
-        currency: currency,
+        currency_code: currency_code,
         from_earmarked_transactions: from_earmarked_transactions,
         last_block_paid: 0,
       });
@@ -305,7 +307,7 @@ address 0x0{
           // If payment is due this block, pay
           // Check if payment is starting this block
           if (payment.start == block) {
-            // This is the case where the payment is starting this block.
+            // This is the case where the recurring payment is starting this block.
             // The last_block_paid field will be updated appopriately
             payment.last_block_paid = block;
           } else if (payment.start > block || payment.end < block) {
@@ -325,6 +327,11 @@ address 0x0{
           };
           // Actually pay. If payment is not due, a 'continue' statement would have
           // moved on to the next iteration already and this statement is not reached
+          
+          // First, do not process the payment if the account doesn't have enough money
+          if (LibraAccount::balance<Token>(*account_addr) < payment.amount) {
+            continue
+          };
           LibraAccount::make_payment<Token>(signer, *account_addr, payment.payee, payment.amount);
           payments_idx = payments_idx + 1;
         };
@@ -516,7 +523,7 @@ address 0x0{
 
 
     // Accounts can change details about their own payments anytime
-    public fun change_currency(uid: u64, currency: u64) acquires Data {
+    public fun change_currency_code(uid: u64, currency_code: vector<u8>) acquires Data {
       let index = find(Transaction::sender(), uid);
       if (Option::is_none<u64>(&index)) {
         // Case where payment doesn't exist for sender
@@ -524,12 +531,12 @@ address 0x0{
       };
       let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
       let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.currency = currency;
+      payment.currency_code = currency_code;
     }
 
 
     // Any account can check on details for payments of other accounts given the uid
-    public fun get_currency(account: address, uid: u64): u64 acquires Data {
+    public fun get_currency_code(account: address, uid: u64): vector<u8> acquires Data {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
         // Case where payment doesn't exist for chosen account
@@ -537,7 +544,7 @@ address 0x0{
       };
       let payments = &borrow_global<Data>(account).payments;
       let payment = Vector::borrow<Payment>(payments, Option::extract<u64>(&mut index));
-      payment.currency
+      *&payment.currency_code
     }
 
 
