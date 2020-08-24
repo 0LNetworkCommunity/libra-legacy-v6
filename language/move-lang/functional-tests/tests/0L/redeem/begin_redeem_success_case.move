@@ -37,7 +37,7 @@ fun main(sender: &signer) {
 // use 0x0::MinerState;
 // fun main() {
 //
-//     MinerState::end_redeem({{alice}});
+//     MinerState::update_metrics({{alice}});
 // }
 // }
 // // check: EXECUTED
