@@ -88,14 +88,14 @@ pub fn resubmit_backlog(path: &Path, client: &mut ClientProxy, quick_check: bool
 
     let sender_account = client.accounts[0].address;
     let remote_state: MinerStateView  = match client.get_miner_state(sender_account) {
-        Ok( s ) => { match s {
+        Ok(s) => { match s {
             Some( state) => state,
             None=> {
                 println!("No remote state found");
                 return
             }
         } },
-        Err( e) => {
+        Err(e) => {
             println!("error: {:?}", e);
             return
         },

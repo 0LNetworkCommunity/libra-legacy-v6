@@ -3,11 +3,7 @@
 # targeting ububtu
 export NODE_ENV=prod
 apt update
-<<<<<<< HEAD
 apt install -y git vim zip build-essential cmake clang llvm libgmp-dev secure-delete
-=======
-apt install -y git vim build-essential cmake clang llvm libgmp-dev secure-delete
->>>>>>> b8c9921d0... Mnemonic fixes (#185) (#186)
 curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 source $HOME/.cargo/env
 
@@ -16,7 +12,7 @@ if test -d ~/node_data/; then
 else
     mkdir ~/node_data;
     cp ~/libra/validator_utils/* ~/node_data;
-fi 
+fi
 
 
 

@@ -10,7 +10,7 @@ use libra_types::waypoint::Waypoint;
 
 use libra_vm::LibraVM;
 use libradb::LibraDB;
-use std::convert::TryInto;
+use std::{path::PathBuf, convert::TryInto, fs::File, io::Write};
 use storage_interface::DbReaderWriter;
 use structopt::StructOpt;
 
@@ -20,6 +20,8 @@ use structopt::StructOpt;
 pub struct CreateWaypoint {
     #[structopt(flatten)]
     secure_backends: SecureBackends,
+    #[structopt(long)]
+    path: Option<PathBuf>,
 }
 
 impl CreateWaypoint {
@@ -67,6 +69,18 @@ impl CreateWaypoint {
                 .map_err(|e| {
                     Error::RemoteStorageWriteError(libra_global_constants::WAYPOINT, e.to_string())
                 })?;
+
+            let path: PathBuf;
+
+            if self.path.is_none() {
+                path = PathBuf::from("./");
+            } else {
+                path = self.path.unwrap();
+            }
+
+            let mut file = File::create(path.join("genesis_waypoint.txt")).unwrap();
+            file.write_all(&waypoint.to_string().as_bytes() );
+
             return Ok(waypoint);
         }
 
