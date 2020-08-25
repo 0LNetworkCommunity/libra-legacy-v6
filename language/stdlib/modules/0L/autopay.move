@@ -222,6 +222,16 @@ address 0x0{
       amount: u64,
       currency_code: vector<u8>,
       from_earmarked_transactions: bool) acquires Data {
+      // First confirm that the account holder has a balance in the desired currency.
+      // You can't set up an autopay payment for a currency you don't even hold.
+      // Below code aborts transaction if it doesn't find a balance for the desired currency.
+      if (Vector::compare<u8>(&Libra::currency_code<GAS::T>(), &currency_code)) {
+        LibraAccount::balance<GAS::T>(Transaction::sender());
+      // TODO: Copy the below commented code to add for every currency which needs to exist
+      
+      // } else if (Vector::compare<u8>(&Libra::currency_code<LBR::T>(), &currency_code)) {
+      //   LibraAccount::balance<LBR::T>(Transaction::sender());
+      };
       // Confirm that no payment exists with the same uid
       let index = find(Transaction::sender(), uid);
       if (Option::is_some<u64>(&index)) {
@@ -280,7 +290,7 @@ address 0x0{
     // any payments they have due in the current block from their list of payments.
     //
     // Note: payments from block n are processed at the end of block n
-    public fun autopay<Token>(
+    public fun autopay(
       signer: &signer,
       block: u64
     ) acquires AccountList, Data {
@@ -328,11 +338,27 @@ address 0x0{
           // Actually pay. If payment is not due, a 'continue' statement would have
           // moved on to the next iteration already and this statement is not reached
           
-          // First, do not process the payment if the account doesn't have enough money
-          if (LibraAccount::balance<Token>(*account_addr) < payment.amount) {
-            continue
+          // Make sure that the desired currency is actually one of the allowed ones
+          // Also, do not process the payment if the account doesn't have enough money
+          let currency = *&payment.currency_code;
+          // Check GAS
+          if (Vector::compare<u8>(&Libra::currency_code<GAS::T>(), &currency)) {
+            if (LibraAccount::balance<GAS::T>(*account_addr) < payment.amount) {
+              continue
+            };
+            LibraAccount::make_payment<GAS::T>(signer, *account_addr, payment.payee, payment.amount);
+          // TODO: To implement other currencies, use code similar to the below commented 
+          // code. This will check for other currencies enabled. Replace LBR with the currency
+          // module name.
+
+          // } else if (Vector::compare<u8>(&Libra::currency_code<LBR::T>(), &currency)) {
+          //   // Check LBR
+          //   if (LibraAccount::balance<LBR::T>(*account_addr) < payment.amount) {
+          //     continue
+          //   };
+          //   LibraAccount::make_payment<LBR::T>(signer, *account_addr, payment.payee, payment.amount);
           };
-          LibraAccount::make_payment<Token>(signer, *account_addr, payment.payee, payment.amount);
+          // Add similar code for any new currencies to add.
           payments_idx = payments_idx + 1;
         };
         account_idx = account_idx + 1;

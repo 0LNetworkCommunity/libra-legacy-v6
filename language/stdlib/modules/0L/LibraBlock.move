@@ -11,7 +11,6 @@ module LibraBlock {
     use 0x0::ReconfigureOL;
     use 0x0::Globals;
     use 0x0::AutoPay;
-    use 0x0::GAS;
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -66,7 +65,7 @@ module LibraBlock {
           let block_metadata_ref = borrow_global<BlockMetadata>(0x0);
           Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
         };
-        AutoPay::autopay<GAS::T>(vm, get_current_block_height());
+        AutoPay::autopay(vm, get_current_block_height());
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
