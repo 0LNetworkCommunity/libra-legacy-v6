@@ -24,16 +24,11 @@ pub struct Layout {
 
 impl Layout {
     pub fn from_disk<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
-        println!("from disk 0");
         let mut file = File::open(&path).map_err(|e| Error::UnexpectedError(e.to_string()))?;
-        println!("from disk 1");
         let mut contents = String::new();
         file.read_to_string(&mut contents)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
-        println!("from disk 2");
         let test = Self::parse(&contents);
-        println!("from disk 3");
-
         test
     }
 
@@ -62,21 +57,12 @@ pub struct SetLayout {
 
 impl SetLayout {
     pub fn execute(self) -> Result<Layout, Error> {
-        println!("execute 0");
         let layout = Layout::from_disk(&self.path)?;
-        println!("execute 1");
-
         let data = layout.to_toml()?;
-        println!("execute 2");
-
         let mut remote: Box<dyn Storage> = self.backend.backend.try_into()?;
-        println!("execute 3");
-
         remote
             .available()
             .map_err(|e| Error::RemoteStorageUnavailable(e.to_string()))?;
-
-        println!("execute 4");
 
         let value = Value::String(data);
         remote

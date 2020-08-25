@@ -13,6 +13,9 @@ fn test_genesis_preimage() {
         },
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_owned(),
+            account: None,
+            operator_private_key: None,
+            ip: None,
             statement: "Protests rage across the Nation".to_owned(),
         },
         chain_info: ChainInfo {

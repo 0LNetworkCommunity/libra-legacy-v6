@@ -1,5 +1,6 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
+// Modified 0L
 
 use crate::keys::KeyPair;
 use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
@@ -10,6 +11,15 @@ use libra_types::{
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+
+// 0L TODO: Use OlMinerConfig to generate miner Toml
+// use miner::config::OlMinerConfig;
+// use std::{
+//
+//     // path::PathBuf,
+//     // fs,
+//     // io::Write,
+// };
 
 type AccountKeyPair = KeyPair<Ed25519PrivateKey>;
 type ConsensusKeyPair = KeyPair<Ed25519PrivateKey>;
@@ -80,10 +90,22 @@ impl TestConfig {
     }
 
     pub fn random_account_key(&mut self, rng: &mut StdRng) {
+        // 0L NOTE: This is for testing only, including libra-swarm.
         let privkey = Ed25519PrivateKey::generate(rng);
         self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
+        println!("=========\n\
+        Swarm Auth_Key\n\
+        {:?}", &self.auth_key.unwrap().to_string());
+
+        println!("Swarm Private Key:\n\
+        {:?}\n\
+        =========", privkey.to_string() );
+
         self.operator_keypair = Some(AccountKeyPair::load(privkey));
+        dbg!(&self.operator_keypair);
     }
+
+
 
     pub fn random_consensus_key(&mut self, rng: &mut StdRng) {
         let privkey = Ed25519PrivateKey::generate(rng);

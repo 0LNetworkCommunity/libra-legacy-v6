@@ -519,11 +519,11 @@ pub struct MinerStateView {
 impl From<MinerStateResource> for MinerStateView {
     fn from(info: MinerStateResource) -> MinerStateView {
         MinerStateView {
-            reported_tower_height: info.reported_tower_height(),
-            verified_tower_height: info.verified_tower_height(), // user's latest verified_tower_height
-            latest_epoch_mining: info.latest_epoch_mining(),
-            epochs_validating_and_mining: info.epochs_validating_and_mining(),
-            contiguous_epochs_validating_and_mining: info.contiguous_epochs_validating_and_mining(),
+            reported_tower_height: info.reported_tower_height,
+            verified_tower_height: info.verified_tower_height, // user's latest verified_tower_height
+            latest_epoch_mining: info.latest_epoch_mining,
+            epochs_validating_and_mining: info.epochs_validating_and_mining,
+            contiguous_epochs_validating_and_mining: info.contiguous_epochs_validating_and_mining,
         }
     }
 }

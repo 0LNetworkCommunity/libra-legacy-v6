@@ -6,8 +6,10 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
-use abscissa_core::path::{PathBuf, Path};
+use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
+use crate::submit_tx_alt::TxParams;
+use libra_crypto::ValidCryptoMaterialStringExt;
 
 /// OlMiner Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -25,9 +27,17 @@ const AUTH_KEY_BYTES: usize = 32;
 const CHAIN_ID_BYTES: usize = 64;
 const STATEMENT_BYTES: usize = 1008;
 
-
-
 impl OlMinerConfig {
+    pub fn load_swarm_config(param: &TxParams) -> Self {
+        let mut conf = OlMinerConfig::default();
+        // Load profile config
+        conf.profile.auth_key = param.auth_key.to_string();
+        conf.profile.account = Some(param.address.to_string());
+        conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
+        // Load chain info
+        conf.chain_info.node = Some(param.url.to_string());
+        conf
+    }
     /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
     pub fn genesis_preimage(&self) -> Vec<u8> {
         let mut preimage: Vec<u8> = vec![];
@@ -154,7 +164,7 @@ pub struct ChainInfo {
     pub chain_id: String,
     /// Directory to store blocks in
     pub block_dir: String,
-    /// Node ip Address to submit transactions to
+    /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: String,
@@ -164,10 +174,11 @@ pub struct ChainInfo {
 impl Default for ChainInfo {
     fn default() -> Self {
         Self {
-            chain_id: "0L testnet".to_owned(),
-            block_dir: "blocks".to_owned(),
-            base_waypoint: "None".to_owned(),
-            node: None,
+            chain_id: "experimental".to_owned(),
+            block_dir: "./blocks".to_owned(),
+            // Mock Waypoint. Miner complains without.
+            base_waypoint: "0:0000".to_owned(),
+            node: Some("http://localhost:8080".to_owned()),
         }
     }
 }
@@ -175,18 +186,30 @@ impl Default for ChainInfo {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
-    ///Miner Authorization Key for 0L Blockchain. Note: note the same as public key pair.
+    ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
-    ///An opportunites for the Miner to argument for his value to the network
+
+    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
+    pub account: Option<String>,
+
+    ///The 0L private_key for signing transactions.
+    pub operator_private_key: Option<String>,
+
+    /// ip address of the miner. May be different from transaction URL.
+    pub ip: Option<String>,
+
+    ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
 }
 
 impl Default for Profile {
     fn default() -> Self {
         Self {
-            // TODO: change this public key.
-            auth_key: "5ffd9856978b5020be7f72339e41a4015ffd9856978b5020be7f72339e41a401".to_owned(),
-            statement: "Protests rage across the Nation".to_owned(),
+            auth_key: "".to_owned(),
+            account: None,
+            operator_private_key: None,
+            ip: Some("0.0.0.0".to_owned()),
+            statement: "Protests rage across the nation".to_owned(),
         }
     }
 }

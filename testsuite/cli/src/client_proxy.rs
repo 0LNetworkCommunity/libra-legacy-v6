@@ -6,6 +6,7 @@ use crate::{
     libra_client::LibraClient,
     AccountData, AccountStatus,
 };
+
 use anyhow::{bail, ensure, format_err, Error, Result};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
@@ -187,9 +188,14 @@ impl ClientProxy {
         let mut client = LibraClient::new(url.clone(), waypoint)?;
 
         let mut wallet = WalletLibrary::new_from_string(mnemonic_string);
-        let (main_addr, _ )= wallet.new_address().unwrap();
+        let (auth_key, _ )= wallet.new_address().unwrap();
+
+        println!("client_proxy.rs: auth_key: {:?}", auth_key.to_string());
 
         let vec_addresses = wallet.get_addresses().unwrap();
+
+        println!("client_proxy.rs: vec_addresses: {:?}", vec_addresses);
+
         // Expect this to be zero before we haven't populated the address map in the repo
         assert!(vec_addresses.len() ==1);
         // Empty hashmap should be fine
@@ -199,15 +205,15 @@ impl ClientProxy {
             vec_account_data.push(Self::get_account_data_from_address(
                 &mut client,
                 address,
-                false,
+                true,
                 None,
                 None,
             )?);
         }
 
         let mut address_to_ref_id: HashMap<AccountAddress, usize> = HashMap::new();
-        address_to_ref_id.insert(main_addr.derived_address(),0);
-        Ok(ClientProxy {
+        address_to_ref_id.insert(auth_key.derived_address(),0);
+        let proxy = ClientProxy {
             client,
             accounts: vec_account_data, //Vec<AccountData>
             address_to_ref_id, // TODO this is a different struct than addr_map
@@ -216,7 +222,9 @@ impl ClientProxy {
             wallet, //wallet: WalletLibrary::Mnemonic::from(mnemonic_string)?,
             sync_on_wallet_recovery: true, // sync_on_wallet_recovery,
             temp_files: vec![]
-        })
+        };
+        
+        Ok(proxy)
     }
 
     /// 0L: submits a redeem transaction with the VDF proof.
@@ -226,16 +234,18 @@ impl ClientProxy {
         challenge: Vec<u8>,
         difficulty: u64,
         proof: Vec<u8>,
-        is_blocking: bool
+        tower_height: u64,
+        is_blocking: bool,
         ) -> Result<()>{
+        
 
-        // let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-
-        // let sender_og = self.accounts.get(sender_ref_id).unwrap();
-
-
-        let mut sender = Self::get_account_data_from_address(&mut self.client,sender_address,true,None,None).unwrap();
-        // let sender = self.accounts.get(sender_ref_id).unwrap();
+        // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
+        let mut sender_account_data = Self::get_account_data_from_address(
+            &mut self.client,sender_address,
+            true,
+            None, // Pass a keypair from swarm tests here.
+            None
+        ).unwrap();
 
 
         // create the MinerState transaction script
@@ -246,21 +256,25 @@ impl ClientProxy {
                 TransactionArgument::U8Vector(challenge),
                 TransactionArgument::U64(difficulty),
                 TransactionArgument::U8Vector(proof),
+                TransactionArgument::U64(tower_height),
+                
             ],
         );
 
         // sign the transaction script
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(script),
-            &sender,
-            None, /* max_gas_amount */
-            None, /* gas_unit_price */
-            None, /* gas_currency_code */
+            &sender_account_data,
+            Some(700_000), /* max_gas_amount */
+            Some(0), /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
         )?;
 
         // Submit the transaction with the client proxy
         // let sender_account = self.accounts.get_mut(sender_ref_id);
-        &mut self.client.submit_transaction(Some(&mut sender), txn)?;
+        &mut self.client.submit_transaction(
+            Some(&mut sender_account_data), 
+            txn)?;
 
         // TODO: This was making the client fail.
         if is_blocking {
@@ -270,7 +284,6 @@ impl ClientProxy {
             self.wait_for_transaction(sender_address, sequence_number)?;
         }
         Ok(())
-
     }
 
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
@@ -292,13 +305,16 @@ impl ClientProxy {
         // TODO: determine how this will be serialized.
         // Note: Was producing error because hex was being submitted and not decoded.
         let proof =  hex::decode(space_delim_strings[4]).unwrap().to_vec();
+        
+        let tower_height = space_delim_strings[5].parse::<u64>().unwrap();
 
         self.execute_send_proof(
             sender_address,
             challenge,
             difficulty,
             proof,
-            false
+            tower_height,
+            false,
         )?;
         Ok(())
     }
@@ -306,15 +322,11 @@ impl ClientProxy {
     /// 0L: Get Miner State
     /// A wrap for libra cli to execute query miner state command.
     pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
-        // ensure!(
-        //     space_delim_strings.len() != 6 ,
-        //     "Invalid number of arguments for sending proof"
-        // );
-
-        println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings );
 
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
+        // let (sender_address, _) =
+        // self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
         self.client.get_miner_state(sender_address ).unwrap()
     }
@@ -819,11 +831,19 @@ impl ClientProxy {
     ) -> Result<()> {
         let mut max_iterations = 5000;
         println!(
-            "waiting for {} with sequence number {}",
+            "waiting for tx from acc: {} with sequence number: {}",
             account, sequence_number
         );
         loop {
             stdout().flush().unwrap();
+
+            // TODO: first transaction in sequence fails
+            // let prev_seq_num ;
+            // if sequence_number > 0 { 
+            //     prev_seq_num =0;
+            // } else {
+            //     prev_seq_num = sequence_number - 1;
+            // }
 
             match self
                 .client
@@ -1241,11 +1261,16 @@ impl ClientProxy {
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
+        if para.starts_with("0x") {
+            let addr_para = "00000000000000000000000000000000".to_owned();
+            println!("query for address:{}", addr_para);
+            return Ok((ClientProxy::address_from_strings(addr_para.as_str() )?, None))
+        }
         if is_authentication_key(para) {
             let auth_key = ClientProxy::authentication_key_from_string(para)?;
             Ok((auth_key.derived_address(), Some(auth_key)))
-        } else if is_address(para) {
-            Ok((ClientProxy::address_from_strings(para)?, None))
+        } else if is_address(para ) {
+            Ok((ClientProxy::address_from_strings(para )?, None))
         } else {
             let account_ref_id = para.parse::<usize>().map_err(|error| {
                 format_parse_data_error(
@@ -1436,7 +1461,7 @@ impl ClientProxy {
         key_pair: Option<KeyPair<Ed25519PrivateKey, Ed25519PublicKey>>,
         authentication_key_opt: Option<Vec<u8>>,
     ) -> Result<AccountData> {
-        let (sequence_number, authentication_key, status) = if sync_with_validator {
+        let (sequence_number,authentication_key, status) = if sync_with_validator {
             match client.get_account_state(address, true) {
                 Ok(resp) => match resp.0 {
                     Some(account_view) => (

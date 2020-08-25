@@ -71,6 +71,7 @@ pub enum StdlibScript {
     TxFeeTestDistr,
     ReconfigBulkUpdate,
     ReconfigSetup,
+    NoOp,
 }
 
 impl StdlibScript {
@@ -127,6 +128,7 @@ impl StdlibScript {
             TxFeeTestDistr,
             ReconfigBulkUpdate,
             ReconfigSetup,
+            NoOp,
         ]
     }
 
@@ -262,6 +264,7 @@ impl fmt::Display for StdlibScript {
                 TxFeeTestDistr => "ol_txn_fee_test_distr",
                 ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper",
                 ReconfigSetup => "ol_reconfig_bulk_update_setup",
+                NoOp => "ol_no_op.move",
             }
         )
     }
