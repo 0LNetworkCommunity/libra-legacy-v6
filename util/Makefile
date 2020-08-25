@@ -122,6 +122,7 @@ miner-genesis:
 
 reset: clear fixtures init keys genesis daemon
 
+
 #### FOR TESTING ####
 
 clear:

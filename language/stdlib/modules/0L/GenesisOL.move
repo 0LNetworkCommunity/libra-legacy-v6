@@ -7,8 +7,6 @@
 // however, that there are certain calls that remain in Rust code in
 // genesis (for now).
 // File Prefix for errors: 0701
-/////////////////////////////////////////////////////////////////////
-
 address 0x0 {
 module GenesisOL {
     // use 0x0::Association;
@@ -130,7 +128,7 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
-        
+
         let coin_scale = 1000000; // Libra::scaling_factor<GAS::T>();
 
         // Sanity check all the econ constants are what we expect.
