@@ -85,6 +85,23 @@ pub fn integration() {
     }
 }
 
+fn block_until_swarm_ready () -> bool {
+    let swarm_configs_path = Path::new("../saved_logs/");
+    let mut timeout = 100;
+    let one_second = time::Duration::from_secs(1);
+
+    loop {
+        if timeout == 0 { 
+            return false
+        }
+        if Path::new("../saved_logs/").exists() {
+            return true
+        }
+
+        thread::sleep(one_second);
+        timeout -= 1;
+    }
+}
 
 
 // #[test]
@@ -128,20 +145,3 @@ pub fn integration() {
 //     assert_eq!( block_until_swarm_ready(), true);
 // }
 
-// fn block_until_swarm_ready () -> bool {
-//     let swarm_configs_path = Path::new("../saved_logs/");
-//     let mut timeout = 100;
-//     let one_second = time::Duration::from_secs(1);
-
-//     loop {
-//         if timeout == 0 { 
-//             return false
-//         }
-//         if Path::new("../saved_logs/").exists() {
-//             return true
-//         }
-
-//         thread::sleep(one_second);
-//         timeout -= 1;
-//     }
-// }
