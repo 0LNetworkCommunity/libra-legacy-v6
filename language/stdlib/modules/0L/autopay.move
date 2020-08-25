@@ -555,6 +555,16 @@ address 0x0{
         // Case where payment doesn't exist for sender
         Transaction::assert(false, 19);
       };
+      // Confirm that the account holder has a balance (even if zero) in the desired currency.
+      // You can't set up an autopay payment for a currency you don't even hold.
+      // Below code aborts transaction if it doesn't find a balance for the desired currency.
+      if (Vector::compare<u8>(&Libra::currency_code<GAS::T>(), &currency_code)) {
+        LibraAccount::balance<GAS::T>(Transaction::sender());
+      // TODO: Copy the below commented code to add for every currency which needs to exist
+      
+      // } else if (Vector::compare<u8>(&Libra::currency_code<LBR::T>(), &currency_code)) {
+      //   LibraAccount::balance<LBR::T>(Transaction::sender());
+      };
       let payments = &mut borrow_global_mut<Data>(Transaction::sender()).payments;
       let payment = Vector::borrow_mut<Payment>(payments, Option::extract<u64>(&mut index));
       payment.currency_code = currency_code;
