@@ -33,6 +33,8 @@ pub struct Config {
     fullnode_address: NetworkAddress,
     #[structopt(long)]
     fullnode_listen_address: NetworkAddress,
+    #[structopt(long)]
+    path: Option<PathBuf>,
 }
 
 impl Config {
@@ -48,46 +50,28 @@ impl Config {
         let key = local
         .get_public_key(libra_global_constants::OPERATOR_KEY).unwrap();
 
-
-
         // NOTE: There's something strange with calling libra-node from a path different from where this storage is located.
-
-        //TODO:
-        // Check consensus safety_rules
-        // check storage Paths
-        // where to output config.toml file
-        // how to add seed peers file.
-        //path to genesis.blob
-        // waypoint.
-        // [base.waypoint]
-        // type = "from_config"
-        //
-        // [base.waypoint.waypoint]
-        // version = 0
-        // value = "c20d50e14ca7cd0ef8fc209033f3f9ef7c0d0a169267cea8ec4ccda942868e19"
 
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         // println!("network\n{:?}", network);
 
         network.discovery_method = DiscoveryMethod::Gossip;
         config.validator_network = Some(network);
-
-
-        config.consensus.round_initial_timeout_ms = 5000;
-
-        // let mut network = NetworkConfig::network_with_id(NetworkId::vfn_network());
-        // println!("network\n{:?}", &network);
-
-        // network.discovery_method = DiscoveryMethod::Gossip;
-        // config.full_node_networks = vec![network];
+        config.consensus.round_initial_timeout_ms = 1000;
 
         config.logger.level = Level::Debug;
-
-
         config.upstream = UpstreamConfig::default();
 
+        let path: PathBuf;
+
+        if self.path.is_none() {
+            path = PathBuf::from("./");
+        } else {
+            path = self.path.unwrap();
+        }
+
         let peers = Seeds {
-            genesis_path: PathBuf::from("./genesis.blob")
+            genesis_path: path.join("genesis.blob")
         };
 
         let upstream = AuthenticationKey::ed25519(&key.public_key).derived_address();
@@ -115,7 +99,7 @@ impl Config {
             );
             network.discovery_method = DiscoveryMethod::Gossip;
             //network.network_peers_file = PathBuf::from("./network_peers.toml") ;
-            network.seed_peers_file = PathBuf::from("./seed_peers.toml") ;
+            network.seed_peers_file = path.join("seed_peers.toml") ;
         }
 
 
@@ -137,7 +121,7 @@ impl Config {
         };
 
         // Adding genesis file location
-        config.execution.genesis_file_location = PathBuf::from("genesis.blob");
+        config.execution.genesis_file_location = path.join("genesis.blob");
 
         //TODO: The data is unecessary here, but may be good to include the actual data.
         config.configs_ol_miner.preimage = "".to_string();
@@ -147,7 +131,7 @@ impl Config {
 
         // TODO: place in path with other files.
         // Save file
-        let output_dir = PathBuf::from("./");
+        let output_dir = path;
 
         fs::create_dir_all(&output_dir).expect("Unable to create output directory");
         config

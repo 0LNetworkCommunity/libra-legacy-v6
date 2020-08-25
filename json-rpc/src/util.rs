@@ -14,7 +14,7 @@ macro_rules! register_rpc_method {
                 Box::pin(async move {
                     ensure!(
                         request.params.len() == $num_args,
-                        "Invalid number of arguments"
+                        "Invalid number ^_% of arguments"
                     );
                     Ok(serde_json::to_value($method(service, request).await?)?)
                 })

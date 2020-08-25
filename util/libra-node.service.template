@@ -10,8 +10,8 @@ Restart=always
 RestartSec=10s
 
 # Make sure you CREATE the directory and file for your output.log
-StandardOutput=file:/root/logs/output.log
-StandardError=file:/root/logs/output.log
+StandardOutput=file:/root/logs/node.log
+StandardError=file:/root/logs/node.log
 
 [Install]
 WantedBy=multi-user.target
