@@ -13,6 +13,7 @@ module Globals {
       // For validator set.
       epoch_length: u64,
       max_validator_per_epoch: u64,
+      epoch_boundary_buffer: u64,
       // For subsidy calcs.
       subsidy_ceiling_gas: u64,
       min_node_density: u64,
@@ -90,6 +91,10 @@ module Globals {
        get_constants().subsidy_ceiling_gas
     }
 
+    public fun get_epoch_boundary_buffer(): u64 {
+      get_constants().epoch_boundary_buffer
+    }
+
     // Get max validator per epoch
     public fun get_max_node_density(): u64 {
        get_constants().max_node_density
@@ -110,6 +115,7 @@ module Globals {
         return GlobalConstants {
           epoch_length: 15,
           max_validator_per_epoch: 10,
+          epoch_boundary_buffer: 2,
           subsidy_ceiling_gas: 296,
           min_node_density: 4,
           max_node_density: 300,
@@ -122,6 +128,7 @@ module Globals {
           epoch_length: 196992, // approx 24 hours at 2.28 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
           // from LibraVMConfig.
+          epoch_boundary_buffer: 100,
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs
           // target transaction per sec max gas: 20

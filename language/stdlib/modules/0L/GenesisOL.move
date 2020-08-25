@@ -2,6 +2,7 @@
 // are executed, and the order in which they are executed in genesis. Note
 // however, that there are certain calls that remain in Rust code in
 // genesis (for now).
+// File Prefix for errors: 0701
 address 0x0 {
 module GenesisOL {
     // use 0x0::Association;
@@ -25,7 +26,6 @@ module GenesisOL {
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
     use 0x0::Signer;
-    // use 0x0::FixedPoint32;
 
     fun initialize(
         vm: &signer,
@@ -130,15 +130,17 @@ module GenesisOL {
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch
         if (Testnet::is_testnet()) {
-          Transaction::assert(Globals::get_epoch_length() == 15, 9992001);
-          Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 9992002);
-          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 9992003);
-          Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
+          Transaction::assert(Globals::get_epoch_length() == 15, 0701011000);
+          Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 0701021000);
+          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 0701031000);
+          Transaction::assert(Globals::get_max_node_density() == 300, 0701041000);
+          Transaction::assert(Globals::get_epoch_boundary_buffer() == 2, 0701051000);
         } else {
-          Transaction::assert(Globals::get_epoch_length() == 196992, 9992001);
-          Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 9992002);
-          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 9992003);
-          Transaction::assert(Globals::get_max_node_density() == 300, 9992004);
+          Transaction::assert(Globals::get_epoch_length() == 196992, 0701061000);
+          Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701071000);
+          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701081000);
+          Transaction::assert(Globals::get_max_node_density() == 300, 0701091000);
+          Transaction::assert(Globals::get_epoch_boundary_buffer() == 100, 0701101000);
         };
 
 

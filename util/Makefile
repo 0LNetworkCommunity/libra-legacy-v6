@@ -1,18 +1,17 @@
+#### VARIABLES ####
 SHELL=/usr/bin/env bash
-
-DATA_PATH = ./
+ifndef DIR
+DIR = ~/node_data/
+endif
+DATA_PATH = $(shell readlink -f ${DIR})
 GITHUB_TOKEN = $(shell cat github_token.txt)
-
-
 ifndef TEST
-####################################
-## GENESIS: UPDATE YOUR DATA HERE ##
+# requires 'rq' and 'jq' command line utils, install with `cargo install record-query`
 # The permanent IP address of your validator.
-IP = fill this in
+IP = $(shell rq -t < ~/node_data/miner.toml | jq -r '.profile.ip')
 # The 0L account, which will be your namespace for all data
 # Also is last 16 digits of auth_key hex.
-ACC = fill this in
-######################################
+ACC = $(shell rq -t < ~/node_data/miner.toml | jq -r '.profile.account')
 
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
@@ -30,15 +29,19 @@ ifndef NODE_ENV
 NODE_ENV=prod
 endif
 
-confirm:
-	cd ~/libra/miner && ls
-	@echo namespace: ${NAMESPACE}
-	@echo github org: ${REPO_ORG}
-	@echo github repo: ${REPO_NAME}
-	@echo hostname: ${HOST}
+echo:
+	@echo NAMESPACE: ${NAMESPACE}
+	@echo test: ${TEST}
+	@echo env: ${NODE_ENV}
+	@echo path: ${DATA_PATH}
+	@echo ip: ${IP}
+	@echo account: ${ACC}
+	@echo github_token: ${GITHUB_TOKEN}
+	@echo github_org: ${REPO_ORG}
+	@echo github_repo: ${REPO_NAME}
 
 ######################################
-## THIS IS TEST DATA NOT FOR GENESIS##
+## THIS IS TEST DATA -- NOT FOR GENESIS##
 
 ifeq ($(NAMESPACE), alice)
 NAMESPACE = alice
@@ -71,22 +74,27 @@ endif
 
 ##########################
 
+REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NAMESPACE}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
+##### PIPELINES #####
 # set up the environment
 install: deps compile
 compile: stdlib bins
 # pipelines for genesis ceremony
-register: clear blocks init add-proofs keys register
+register: clear fixtures init add-proofs keys register
 # do genesis
 genesis: build-genesis waypoint toml peers
 
-
-
+#### ENVIRONMENT #####
 deps:
 	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete
-		## TODO: Cargo is not getting set to path. This next line doesn't run.
-	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y && source $$HOME/.cargo/env
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete jq
+# TODO: Cargo is not getting set to path. This next line doesn't run.
+#install rq, a tool for manipulateing TOML
+	curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git dflemstr/rq
+# install rust
+	sudo curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
 	
 stdlib:
 	cd ~/libra/language/stdlib && cargo run --release
@@ -106,29 +114,25 @@ keygen:
 	cd ~/libra/miner && miner keygen
 
 miner-genesis:
-	cd ~/libra/miner && NODE_ENV=${NODE_ENV} miner start
-	cp -f ~/libra/miner/blocks/block_0.json ${DATA_PATH}
+	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
 
-# CONFIGURE GITHUB FOR TEST
-#Authorization: token be83c3cc74a3a9517e0685b76fe27b08ccec7a0e"
-
-github: 
-	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
-
-#GENESIS CEREMONY
+#### FOR TESTING ####
 
 clear:
 ifdef TEST
-	rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+	cd ${DATA_PATH} && rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
 endif
 
-blocks:
-	@echo fixtures
+fixtures:
 ifdef TEST
 	echo ${NAMESPACE}
+
+	mkdir -p ${DATA_PATH}/blocks/
+
 	if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm block_0.json; \
+		rm ${DATA_PATH}/blocks/block_0.json; \
 	fi 
+
 	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
 
 ifeq (${NODE_ENV}, test)
@@ -138,81 +142,134 @@ else
 endif
 endif
 
-init:
-	libra-management initialize \
-	--path=${DATA_PATH} \
-	--namespace=${NAMESPACE}
+#### GENESIS BACKEND SETUP ####
+github: 
+	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
 	libra-management set-layout \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
-	--path=set_layout_prod.toml
+	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--path=set_layout_${NODE_ENV}.toml
+
+
+# REGISTRATION STEPS
+init:
+ifdef TEST
+	#for debug-net fill in mnemonic from fixtures
+	echo ${MNEM} | head -c -1 | libra-management initialize --path=${DATA_PATH} --namespace=${NAMESPACE}
+else
+	libra-management initialize \
+	--path=${DATA_PATH} \
+	--namespace=${NAMESPACE}
+endif
+
+
 
 add-proofs:
 	libra-management mining \
-	--path-to-genesis-pow ${DATA_PATH}blocks/block_0.json \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+	--backend ${REMOTE}
 
 keys:
 	libra-management operator-key \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
 register:
 	libra-management validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=${NAMESPACE}'
+	--local ${LOCAL} \
+	--remote ${REMOTE}
 
+
+# GENESIS STEPS
 build-genesis:
 	NODE_ENV='${NODE_ENV}' libra-management genesis \
-	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt' \
-	--path ${DATA_PATH}genesis.blob
+	--backend ${REMOTE} \
+	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
 	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
-	--remote 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}github_token.txt;namespace=common' \
-	--local 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}'
+	--remote ${REMOTE} \
+	--local ${LOCAL} \
+	--path ${DATA_PATH}
+
+	$(eval WAY = $(shell cat ${DATA_PATH}/genesis_waypoint.txt))
+
+# modify miner.toml to inlcude waypoint
+	rq -t < ${DATA_PATH}/miner.toml | \
+	jq '.["chain_info"]."base_waypoint" = "${WAY}"' | \
+	rq -jT > tmp
+	mv tmp ${DATA_PATH}/miner.toml
+	cat ${DATA_PATH}/miner.toml
 
 toml:
 	libra-management config \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
-	--backend 'backend=disk;path=${DATA_PATH}key_store.json;namespace=${NAMESPACE}' \
+	--backend ${LOCAL} \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
+	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179" \
+	--path ${DATA_PATH}/
 
 peers:
-	cp -f seed_peers.toml backup.seed_peers.toml
-	libra-management seeds --genesis-path genesis.blob
+# cp -f seed_peers.toml backup.seed_peers.toml
+	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
+# TODO: Seed peers gets places in working path, deep in libra code.
+	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
+	mv seed_peers.toml  ${DATA_PATH}/seed_peers.toml
 
+remove-keys:
+	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "alice/operator_previous", "alice/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
+	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
+
+#### NODE MANAGEMENT ####
 start:
-	# run in foreground. Only for testing, use a daemon for net.
-	libra-node --config ${DATA_PATH}node.configs.toml
+# run in foreground. Only for testing, use a daemon for net.
+	libra-node --config ${DATA_PATH}/node.configs.toml
+	
 
 daemon:
-	sudo cp -f ~/libra/validator_utils/libra-node.service /lib/systemd/system/
-	# cp -f miner.service /lib/systemd/system/
+# your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
+	sudo cp -f ~/node_data/libra-node.service /lib/systemd/system/
+# cp -f miner.service /lib/systemd/system/
 	if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
-		rm -rf ~/logs*; \
+		sudo rm -rf ~/logs*; \
 	fi 
 
 	sudo mkdir ~/logs
-	sudo touch ~/logs/output.log
-	sudo chmod 777 ~/logs
-	sudo chmod 777 ~/logs/output.log
-
+	sudo touch ~/logs/node.log
+	sudo chmod 660 ~/logs
+	sudo chmod 660 ~/logs/node.log
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service
 	sudo systemctl start libra-node.service
 	sudo sleep 2
 	sudo systemctl status libra-node.service &
-	sudo tail -f ~/logs/output.log
+	sudo tail -f ~/logs/node.log
 
+miner:
+ifdef TEST
+#for debug-net fill in mnemonic from fixtures
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
+else
+	if test -d ~/logs; then \
+		echo "WIPING MINER LOGS"; \
+		sudo rm -rf ~/logs*; \
+	fi 
+
+	sudo mkdir ~/logs
+	sudo touch ~/logs/miner.log
+	sudo chmod 660 ~/logs
+	sudo chmod 660 ~/logs/miner.log
+# pipe logs to screen and tee to miner logs
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start 2> >(tee ~/logs/miner.log)
+
+endif
 
 wipe: 
 	shred ~/.bash_history
@@ -220,7 +277,7 @@ wipe:
 	history -c
 	smem
 	sswap
-	# sfill <mountpoint>
+# sfill <mountpoint>
 
 
 # datadog:

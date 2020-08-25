@@ -7,9 +7,8 @@ use crate::prelude::*;
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use crate::swarm_test::test_runner;
+use crate::resubmit_tx::resubmit_backlog;
 use std::path::PathBuf;
-
 
 /// `start` subcommand
 ///
@@ -19,7 +18,7 @@ use std::path::PathBuf;
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct SwarmCmd {
+pub struct ResubmitCmd {
     #[options(help = "Provide a waypoint for the libra chain")]
     waypoint: String, //Option<Waypoint>,
 
@@ -27,23 +26,10 @@ pub struct SwarmCmd {
     home: PathBuf, 
 }
 
-impl Runnable for SwarmCmd {
+impl Runnable for ResubmitCmd {
     /// Start the application.
     fn run(&self) {
         let miner_configs = app_config();
-
-        println!("Testing Submit to Swarm. Using swarm private key");
-
-        let result = test_runner(self.home.to_owned(), &miner_configs, false);
-        println!("Executing Result: {:?}", result);
-    }
-}
-
-impl config::Override<OlMinerConfig> for SwarmCmd {
-    // Process the given command line options, overriding settings from
-    // a configuration file using explicit flags taken from command-line
-    // arguments.
-    fn override_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
-        Ok(config)
+        resubmit_backlog(self.home.to_owned(), &miner_configs);
     }
 }
