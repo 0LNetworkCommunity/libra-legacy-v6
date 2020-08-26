@@ -37,6 +37,8 @@ pub struct TxParams {
 
 pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<Option<TransactionView>, Error> {
 
+    thread::sleep(time::Duration::from_millis(24000));
+
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
@@ -93,13 +95,9 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
         Ok(_) => {
             // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
             println!("Transacation submitted to network, waiting for status.");
-            if sequence_number != 0 {
-                match wait_for_tx(tx_params.address, sequence_number, &mut client){
-                    Ok(tx_view) => Ok(Some(tx_view)),
-                    Err(err) => Err(err)
-                }
-            } else {
-                Ok(None)
+            match wait_for_tx(tx_params.address, sequence_number, &mut client){
+                Ok(tx_view) => Ok(Some(tx_view)),
+                Err(err) => Err(err)
             }
         }
         Err(err) => Err(err)
@@ -123,8 +121,14 @@ pub fn wait_for_tx (
 
             // TODO: the `sequence_number - 1` makes it not possible to query the first sequence number of an account. However all 0L accounts are initiated by submitted a mining proof. So we need to be able to produce user feedback on the submission of their first block.
 
+            let seq = if sequence_number > 0 {
+                sequence_number - 1
+            } else {
+                0
+            }; 
+            
             match &mut client
-                .get_txn_by_acc_seq(sender_address, sequence_number - 1, true){
+                .get_txn_by_acc_seq(sender_address, seq, true){
                 Ok(Some(txn_view)) => {
                 return Ok(txn_view.to_owned());
             },
