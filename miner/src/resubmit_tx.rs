@@ -53,7 +53,7 @@ pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig){
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
     println!("Current block number: {:?}", current_block_number);
-    for entry in glob(&format!("{}/block_0.json", blocks_dir.display()))
+    for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
             .expect("Failed to read glob pattern")
         {
             if let Ok(entry) = entry {
@@ -64,60 +64,6 @@ pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig){
                 println!("Result: {:?}", res);
             }
     }
-    // Open the file in read-only mode with buffer.
-    // let file = File::open(&blocks_dir + "").expect("local state file does not exists");
-    // let reader = BufReader::new(file);
-    // let local_state: LocalMinerState = serde_json::from_reader(reader).expect("Can deserilize local state file.");
-
-
-    // // 1. Find the most recent LOCAL tower height. We can store this in a json file.
-    // // Open the file in read-only mode with buffer.
-    // let file = File::open(path).expect("local state file does not exists");
-    // let reader = BufReader::new(file);
-    // let local_state: LocalMinerState = serde_json::from_reader(reader).expect("Can deserilize local state file.");
-
-    // println!("Reading local miner state");
-
-    // let local_tower_height = local_state.local_tower_height;
-    // let last_succesful_tx_height = local_state.last_succesful_tx_height;
-
-    // // 1a. Check if there is a resubmission in progress. Exit gracefully.
-    // if local_state.retrying_height > 0 { return }
-
-    // // 1b. quickly check if there is a problem, from local state.
-    // if quick_check && (last_succesful_tx_height < local_tower_height) {
-    //    println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run withouth quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
-    // }
-    // // 2. Query network for most recent reported_tower_height of the user.
-    // // let mut libra_client = ClientProxy::new_for_ol(
-    // //     /* url */ &node,
-    // //     /* mnemonic file */ &mnemonic_string,
-    // //     /* waypoint */ waypoint,
-    // // )
-
-    // let sender_account = client.accounts[0].address;
-    // let remote_state: MinerStateView  = match client.get_miner_state(sender_account) {
-    //     Ok( s ) => { match s {
-    //         Some( state) => state,
-    //         None=> {
-    //             println!("No remote state found");
-    //             return
-    //         }
-    //     } },
-    //     Err( e) => {
-    //         println!("error: {:?}", e);
-    //         return
-    //     },
-    // };
-    // let remote_height = remote_state.verified_tower_height;
-
-    // //3. Use Block::submit_block() to submit the oldest proof NOT registered onchain.
-    // if remote_height < local_tower_height {
-    //     // let mut file = fs::File::open(&entry).expect("Could not open block file");
-    //     // let reader = BufReader::new(file);
-    //     // let missing_block: Block = serde_json::from_reader(reader).unwrap();
-    //     // crate::block::submit_block( missing_block , etc. )
-    // }
 
 }
 
