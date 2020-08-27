@@ -10,7 +10,7 @@ use libra_json_rpc_types::views::MinerStateView;
 use std::path::PathBuf;
 //use crate::submit_tx::LocalMinerState;
 use crate::config::OlMinerConfig;
-use crate::submit_tx_alt::{TxParams, submit_tx, eval_tx_status};
+use crate::submit_tx_alt::{TxParams, submit_tx};
 use libra_config::config::NodeConfig;
 use libra_types::{
     transaction::authenticator::AuthenticationKey,

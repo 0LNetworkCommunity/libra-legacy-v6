@@ -72,7 +72,7 @@ pub mod build_block {
     use std::{
         fs,
         io::{BufReader, Write},
-        path::{PathBuf, Path},
+        path::{Path, PathBuf},
         time::Instant,
     };
 

@@ -1,14 +1,13 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
 use libra_types::{waypoint::Waypoint};
-use crate::config::OlMinerConfig;
-use crate::prelude::*;
+
+
 use abscissa_core::{Command, Options, Runnable};
 
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
     test_utils::KeyPair,
-    PrivateKey,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
 // use libra_crypto::test_utils::KeyPair;
@@ -16,12 +15,12 @@ use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
 use std::{thread, path::PathBuf, time, fs, io::{stdout, BufReader, Write}};
-use libra_config::config::NodeConfig;
+
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*, vm_error::StatusCode};
 use crate::delay::delay_difficulty;
 use stdlib::transaction_scripts;
-use crate::block::build_block::{parse_block_height, mine_genesis, mine_once};
+
 use libra_json_rpc_types::views::TransactionView;
 
 pub struct TxParams {

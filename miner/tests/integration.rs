@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-use wait_timeout::ChildExt;
+
 use std::{
     path::{PathBuf, Path},
     time::{self, Duration},
@@ -8,9 +8,9 @@ use std::{
     io::{BufRead, BufReader},
     process::{Command, Stdio},
 };
-use anyhow::{bail, Error};
+
 use regex::Regex;
-use std::borrow::Borrow;
+
 
 #[test]
 #[ignore]
@@ -53,7 +53,7 @@ pub fn integration_full() {
                 .spawn();
     match cmd {
         // Swarm has started
-        Ok(mut swarm_child) => {
+        Ok(swarm_child) => {
             // set the timeout for the process
             // let test_timeout = Duration::from_secs(600);
             // match swarm_child.wait_timeout(test_timeout) {
@@ -68,14 +68,14 @@ pub fn integration_full() {
 
             // need to wait for swarm to start-up before we have the configs needed to connect to it. Check stdout.
 
-            let pattern = Regex::new(r"(?x)
+            let _pattern = Regex::new(r"(?x)
             (Successfully launched Swarm)").unwrap();
             
             match swarm_child.stdout {
                 Some(stdout) => {
                     // let out = BufReader::new(stdout);
 
-                    let is_ready = BufReader::new(stdout)
+                    let _is_ready = BufReader::new(stdout)
                     .lines()
                     .filter_map(|line| line.ok())
                     .for_each(|line| println!("{}", line));

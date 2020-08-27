@@ -2,26 +2,25 @@
 #![forbid(unsafe_code)]
 
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
-use crate::block::Block;
+
 use crate::config::OlMinerConfig;
-use crate::delay::delay_difficulty;
+
 use crate::prelude::*;
 use crate::submit_tx_alt::{
-    submit_tx, TxParams, eval_tx_status, wait_for_tx};
+    submit_tx, TxParams, eval_tx_status};
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
-use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+
 use libra_config::config::NodeConfig;
 use libra_crypto::{
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
     PrivateKey,
 };
-use libra_json_rpc_types::views::TransactionView;
-use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
+
+
 use libra_types::waypoint::Waypoint;
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
-use libra_types::{transaction::helpers::*, vm_error::StatusCode};
+use libra_types::{transaction::authenticator::AuthenticationKey};
+
 use reqwest::Url;
 use std::{
     fs,
@@ -29,7 +28,7 @@ use std::{
     path::PathBuf,
     thread, time,
 };
-use stdlib::transaction_scripts;
+
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 // const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
