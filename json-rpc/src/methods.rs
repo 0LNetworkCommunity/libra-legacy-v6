@@ -313,14 +313,6 @@ async fn get_miner_state(
         let raw = response.get(0).expect("Miner states does not exists.").as_slice();
         let miner_state_resource = MinerStateResource::try_from_bytes(raw )?;
         return Ok( Some( MinerStateView::from( miner_state_resource) ) );
-
-        // return Ok(Some(MinerStateView {
-        //     reported_tower_height: 0,
-        //     verified_tower_height: 1, // user's latest verified_tower_height
-        //     latest_epoch_mining: 1,
-        //     epochs_validating_and_mining: 1,
-        //     contiguous_epochs_validating_and_mining: 1,
-        // }));
     }
     Ok(None)
 }
