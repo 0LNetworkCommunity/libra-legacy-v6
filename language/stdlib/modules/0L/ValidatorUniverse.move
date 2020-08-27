@@ -163,13 +163,16 @@ address 0x0 {
       // Calculate the window in which we are evaluating the performance of validators.
       // start and effective end block height for the current epoch
       // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
+      let start_block_height = 0;
+      if ((current_block_height - epoch_length) > 0) {
+        start_block_height = current_block_height - epoch_length;
+      };
 
-      let start_block_height = current_block_height - epoch_length + 1;
       let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
 
       let blocks_in_window = adjusted_end_block_height - start_block_height;
       // The current block_height needs to be at least the length of one (the first) epoch.
-      Transaction::assert(current_block_height >= blocks_in_window, 220107015120);
+      // Transaction::assert(current_block_height >= blocks_in_window, 220107015120);
 
       // Calculating liveness threshold which is signing 66% of the blocks in epoch.
       // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
