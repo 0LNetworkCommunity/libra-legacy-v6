@@ -125,10 +125,10 @@ module Globals {
 
       } else {
         return GlobalConstants {
-          epoch_length: 200,// 196992, // approx 24 hours at 2.28 blocks/sec
+          epoch_length: 128000, // approx 24 hours at 1.4 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
           // from LibraVMConfig.
-          epoch_boundary_buffer: 100,
+          epoch_boundary_buffer: 5000,
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs
           // target transaction per sec max gas: 20
