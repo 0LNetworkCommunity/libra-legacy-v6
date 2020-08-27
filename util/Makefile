@@ -102,10 +102,10 @@ stdlib:
 bins:
 	cd ~/libra && cargo build -p libra-node --release
 	cd ~/libra && cargo build -p libra-management --release
-	cd ~/libra && cargo build -p miner --release
-	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	# cd ~/libra && cargo build -p miner --release
 	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
-	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	# sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
 build-node:
 	cd ~/libra && cargo build -p libra-node --release
