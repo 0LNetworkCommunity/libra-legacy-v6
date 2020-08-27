@@ -13,6 +13,8 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::Option;
     use 0x0::Globals;
+    use 0x0::Debug;
+
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -163,14 +165,23 @@ address 0x0 {
       // Calculate the window in which we are evaluating the performance of validators.
       // start and effective end block height for the current epoch
       // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
-      let start_block_height = 0;
-      if ((current_block_height - epoch_length) > 0) {
+      let start_block_height = 1;
+      if (current_block_height > Globals::get_epoch_length()) {
         start_block_height = current_block_height - epoch_length;
       };
 
+      Debug::print(&0x2201070151200001);
+
+
       let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
 
+      Debug::print(&0x2201070151200002);
+
+
       let blocks_in_window = adjusted_end_block_height - start_block_height;
+
+      Debug::print(&0x2201070151200003);
+
       // The current block_height needs to be at least the length of one (the first) epoch.
       // Transaction::assert(current_block_height >= blocks_in_window, 220107015120);
 
@@ -178,8 +189,10 @@ address 0x0 {
       // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
 
       let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * blocks_in_window;
+      Debug::print(&0x2201070151200004);
 
       let block_signed_by_validator = Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
+      Debug::print(&0x2201070151200005);
 
       if (block_signed_by_validator < threshold_signing) {
           return false
