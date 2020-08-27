@@ -107,6 +107,10 @@ bins:
 	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
+build-node:
+	cd ~/libra && cargo build -p libra-node --release
+	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+
 all-bins:
 	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
