@@ -36,7 +36,7 @@ pub struct TxParams {
 }
 
 pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<Option<TransactionView>, Error> {
-
+    
     thread::sleep(time::Duration::from_millis(24000));
 
     // Create a client object

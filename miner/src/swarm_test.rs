@@ -45,7 +45,7 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
         let res = submit_tx(&tx_params, preimage, proof, tower_height);
         if eval_tx_status(res) == false {
             break;
-    };
+        };
     }
 }
 
