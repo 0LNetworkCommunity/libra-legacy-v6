@@ -1,8 +1,14 @@
+///////////////////////////////////////////////////////////////////
+// 0L Module
+// Genesis
+/////////////////////////////////////////////////////////////////////
 // The genesis module. This defines the majority of the Move functions that
 // are executed, and the order in which they are executed in genesis. Note
 // however, that there are certain calls that remain in Rust code in
 // genesis (for now).
 // File Prefix for errors: 0701
+/////////////////////////////////////////////////////////////////////
+
 address 0x0 {
 module GenesisOL {
     // use 0x0::Association;

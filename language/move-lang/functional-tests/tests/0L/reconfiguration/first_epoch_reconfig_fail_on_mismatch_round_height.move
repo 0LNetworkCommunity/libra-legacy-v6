@@ -17,10 +17,9 @@ script {
   use 0x0::Transaction;
   fun main(_account: &signer) {
     let block_height =  LibraBlock::get_current_block_height();
-    Debug::print(&0x000000000013370000001);
     Debug::print(&block_height);
     Transaction::assert(block_height == 0, 98);
 
     }
 }
-// check: ARITHMETIC_ERROR
+// check: ABORTED

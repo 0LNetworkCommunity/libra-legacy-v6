@@ -1,3 +1,7 @@
+///////////////////////////////////////////////////////////////////////////
+// 0L Module
+// Stats
+///////////////////////////////////////////////////////////////////////////
 // This module returns statistics about the network at any given block,
 // or window of blocks. A number of core OL modules depend on Statistics.
 // The relevant statistics in an MVP are "liveness accountability" statistics.
