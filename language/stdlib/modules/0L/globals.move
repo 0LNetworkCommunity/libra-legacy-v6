@@ -118,7 +118,7 @@ module Globals {
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()){
         return GlobalConstants {
-          epoch_length: 200,
+          epoch_length: 15,
           max_validator_per_epoch: 10,
           epoch_boundary_buffer: 5,
           subsidy_ceiling_gas: 296,

@@ -136,7 +136,7 @@ module GenesisOL {
         // Sanity check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch
         if (Testnet::is_testnet()) {
-          Transaction::assert(Globals::get_epoch_length() == 200, 0701011000);
+          Transaction::assert(Globals::get_epoch_length() == 15, 0701011000);
           Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 0701021000);
           Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 0701031000);
           Transaction::assert(Globals::get_max_node_density() == 300, 0701041000);
