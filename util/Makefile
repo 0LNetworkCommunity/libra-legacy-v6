@@ -120,6 +120,8 @@ keygen:
 miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
 
+reset: clear fixtures init keys genesis daemon
+
 #### FOR TESTING ####
 
 clear:
