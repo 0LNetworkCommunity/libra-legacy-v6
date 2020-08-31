@@ -52,19 +52,23 @@ pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig){
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
-    println!("Current block number: {:?}", current_block_number);
-    for entry in glob(&format!("{}/block_*.json", blocks_dir.display()))
-            .expect("Failed to read glob pattern")
-        {
-            if let Ok(entry) = entry {
-                let file = File::open(&entry).expect("Could not open block file");
-                let reader = BufReader::new(file);
-                let block: Block = serde_json::from_reader(reader).unwrap();
-                let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
-                println!("Result: {:?}", res);
-            }
-    }
-
+    println!("Current block number: {:?}", current_block_number.unwrap());
+    for i in remote_height+1..current_block_number.unwrap()+1{
+        println!("Resubmitting missing block: {}", i);
+        for entry in glob(&format!("{}/block_{}.json", blocks_dir.display(), i))
+                .expect("Failed to read glob pattern")
+            {
+                if let Ok(entry) = entry {
+                    let file = File::open(&entry).expect("Could not open block file");
+                    let reader = BufReader::new(file);
+                    let block: Block = serde_json::from_reader(reader).unwrap();
+                    let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
+                    if eval_tx_status(res) == false {
+                        break;
+                    };
+                }
+        };
+    };
 }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
