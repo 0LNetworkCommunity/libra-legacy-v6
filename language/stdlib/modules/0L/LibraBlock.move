@@ -1,3 +1,8 @@
+///////////////////////////////////////////////////////////////////
+// Modified by 0L
+// Librablock
+///////////////////////////////////////////////////////////////////
+
 address 0x0 {
 
 module LibraBlock {
@@ -69,9 +74,11 @@ module LibraBlock {
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
 
         // 0L implementation of reconfiguration.
-        if ( round == Globals::get_epoch_length() )
-          // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata.
+        if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
+          // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
           ReconfigureOL::reconfigure(vm, get_current_block_height());
+        }
+
     }
 
     // Update the BlockMetadata resource with the new blockmetada coming from the consensus.

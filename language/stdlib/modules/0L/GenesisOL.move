@@ -1,8 +1,14 @@
+///////////////////////////////////////////////////////////////////
+// 0L Module
+// Genesis
+/////////////////////////////////////////////////////////////////////
 // The genesis module. This defines the majority of the Move functions that
 // are executed, and the order in which they are executed in genesis. Note
 // however, that there are certain calls that remain in Rust code in
 // genesis (for now).
 // File Prefix for errors: 0701
+/////////////////////////////////////////////////////////////////////
+
 address 0x0 {
 module GenesisOL {
     // use 0x0::Association;
@@ -134,13 +140,13 @@ module GenesisOL {
           Transaction::assert(Globals::get_max_validator_per_epoch() == 10, 0701021000);
           Transaction::assert(Globals::get_subsidy_ceiling_gas() == 296, 0701031000);
           Transaction::assert(Globals::get_max_node_density() == 300, 0701041000);
-          Transaction::assert(Globals::get_epoch_boundary_buffer() == 2, 0701051000);
+          Transaction::assert(Globals::get_epoch_boundary_buffer() == 5, 0701051000);
         } else {
-          Transaction::assert(Globals::get_epoch_length() == 196992, 0701061000);
+          Transaction::assert(Globals::get_epoch_length() == 128000, 0701061000);
           Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701071000);
           Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701081000);
           Transaction::assert(Globals::get_max_node_density() == 300, 0701091000);
-          Transaction::assert(Globals::get_epoch_boundary_buffer() == 100, 0701101000);
+          Transaction::assert(Globals::get_epoch_boundary_buffer() == 5000, 0701101000);
         };
 
 

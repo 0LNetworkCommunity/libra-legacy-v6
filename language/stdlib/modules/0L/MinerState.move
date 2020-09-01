@@ -1,7 +1,9 @@
+///////////////////////////////////////////////////////////////////
+// 0L Module
+// MinerState
+///////////////////////////////////////////////////////////////////
+
 address 0x0 {
-
-
-  // Note: This module needs a key-value store.
   module MinerState {
     use 0x0::VDF;
     use 0x0::Vector;
@@ -13,7 +15,6 @@ address 0x0 {
     use 0x0::Hash;
     use 0x0::Debug;
     use 0x0::Testnet;
-
 
     // Struct to store information about a VDF proof submitted
     struct VdfProofBlob {
