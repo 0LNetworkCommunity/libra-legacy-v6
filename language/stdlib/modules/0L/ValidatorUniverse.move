@@ -1,10 +1,13 @@
+///////////////////////////////////////////////////////////////////////////
+// 0L Module
+// ValidatorUniverse
+///////////////////////////////////////////////////////////////////////////
+// Stores all the validators who submitted a vdf proof.
+// File Prefix for errors: 2201
+///////////////////////////////////////////////////////////////////////////
+
 address 0x0 {
   module ValidatorUniverse {
-    ///////////////////////////////////////////////////////////////////////////
-    // OpenLibra Module
-    // ValidatorUniverse - stores all the validators who submitted a vdf proof.
-    // File Prefix for errors: 2201
-    ///////////////////////////////////////////////////////////////////////////
 
     use 0x0::Vector;
     use 0x0::Transaction;
@@ -160,25 +163,39 @@ address 0x0 {
     // Check the liveness of the validator in the previous epoch
     // Function code: 07 Prefix: 220107
     public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
-      // Calculate start and end block height for the current epoch
-      // What about empty blocks that get created after every epoch?
+      // Calculate the window in which we are evaluating the performance of validators.
+      // start and effective end block height for the current epoch
+      // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
+      let start_block_height = 1;
+      if (current_block_height > Globals::get_epoch_length()) {
+        start_block_height = current_block_height - epoch_length;
+      };
 
-      let end_block_height = current_block_height;
-      let epoch_count = epoch_length - Globals::get_epoch_boundary_buffer();  // Not all blocks are committed at current block height.
+      // Debug::print(&0x2201070151200001);
+
+
+      let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
+
+      // Debug::print(&0x2201070151200002);
+
+
+      let blocks_in_window = adjusted_end_block_height - start_block_height;
+
+      // Debug::print(&0x2201070151200003);
 
       // The current block_height needs to be at least the length of one (the first) epoch.
-      Transaction::assert(end_block_height >= epoch_count, 220107015120);
-
-      let start_block_height = end_block_height - epoch_count;
+      // Transaction::assert(current_block_height >= blocks_in_window, 220107015120);
 
       // Calculating liveness threshold which is signing 66% of the blocks in epoch.
       // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
 
-      let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * epoch_count;
+      let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * blocks_in_window;
+      // Debug::print(&0x2201070151200004);
 
-      let active_validator = Stats::node_heuristics(addr, start_block_height, end_block_height);
+      let block_signed_by_validator = Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
+      // Debug::print(&0x2201070151200005);
 
-      if (active_validator < threshold_signing) {
+      if (block_signed_by_validator < threshold_signing) {
           return false
       };
 
