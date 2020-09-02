@@ -20,6 +20,7 @@ use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*, vm_error::StatusCode};
 use crate::delay::delay_difficulty;
 use stdlib::transaction_scripts;
+use libra_config::config::NodeConfig;
 
 use libra_json_rpc_types::views::TransactionView;
 
@@ -176,4 +177,44 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
         }
 
     }
+}
+
+pub fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
+    home.push("0/node.config.toml");
+    if !home.exists() {
+        home = PathBuf::from("../saved_logs/0/node.config.toml")
+    }
+    let config = NodeConfig::load(&home)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
+    match &config.test {
+        Some( conf) => {
+            println!("Swarm Keys : {:?}", conf);
+        },
+        None =>{
+            println!("test config does not set.");
+        }
+    }
+    
+    let mut private_key = config.test.unwrap().operator_keypair.unwrap();
+    let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
+    let address = auth_key.derived_address();
+
+    let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap();
+
+    let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
+    
+    let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
+    dbg!(&keypair);
+    let tx_params = TxParams {
+        auth_key,
+        address,
+        url,
+        waypoint: parsed_waypoint,
+        keypair,
+        max_gas_unit_for_tx: 1_000_000,
+        coin_price_per_unit: 0,
+        user_tx_timeout: 5_000,
+    };
+
+    Ok(tx_params)
 }

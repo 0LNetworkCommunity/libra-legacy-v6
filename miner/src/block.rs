@@ -65,16 +65,23 @@ pub mod build_block {
     use crate::delay::*;
     use crate::error::{Error, ErrorKind};
     use crate::prelude::*;
-    use crate::submit_tx::submit_vdf_proof_tx_to_network;
+    use crate::submit_tx_alt::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
-    use libra_crypto::hash::HashValue;
+    use libra_crypto::{ 
+        ed25519::{self, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
+        hash::HashValue, test_utils::KeyPair };
     use libra_types::waypoint::Waypoint;
+    use libra_wallet::{
+        WalletLibrary, 
+        key_factory::{ChildNumber, KeyFactory, Seed},
+        Mnemonic};
     use std::{
         fs,
         io::{BufReader, Write},
         path::{Path, PathBuf},
         time::Instant,
     };
+    use reqwest::Url;
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
@@ -164,24 +171,31 @@ pub mod build_block {
                 // TODO:
                 //  Version is an unsigned int. By definition, it must always be >= 0
                 //  This if statement is redundant, and this error check needs to be fixed.
+
                 if waypoint.version() >= 0 {
                     if let Some(ref node) = config.chain_info.node {
-                        // get preimage
-                        match submit_vdf_proof_tx_to_network(
-                            block.preimage,                       // challenge: Vec<u8>,
-                            delay_difficulty(), // difficulty: u64,
-                            block.data,                           // proof: Vec<u8>,
-                            waypoint,                             // waypoint: Waypoint,
-                            mnemonic.to_string(),
-                            block.height,
-                            node.to_string(),
-                        ) {
-                            Ok(_v) => println!("Submitted block: {:?}", block.height.to_string() ),
-                            Err(e) => println!("Error submitting mined block: {:?}", e),
-                        }
-                        // unwrap();
+                        let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+                        let kf = KeyFactory::new(&seed).unwrap();
+                        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+                        let private_key = child_0.export_priv_key();
+                        let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
 
-                        // status_ok!("Submitted {}",block.height.to_string());
+                        let tx_params = TxParams {
+                            auth_key: child_0.get_authentication_key(),
+                            address: child_0.get_authentication_key().derived_address(),
+                            url: Url::parse(node).unwrap(),
+                            waypoint,
+                            keypair,
+                            max_gas_unit_for_tx: 1_000_000,
+                            coin_price_per_unit: 0,
+                            user_tx_timeout: 5_000,
+                        };
+                        let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
+                        if eval_tx_status(res) == false {
+                            return Err(ErrorKind::Config
+                                .context("Error submitting mined block")
+                                .into());
+                        };
                     } else {
                         return Err(ErrorKind::Config
                             .context("No Node for submitting transactions")
