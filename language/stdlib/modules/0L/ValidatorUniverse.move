@@ -53,7 +53,7 @@ address 0x0 {
       });
     }
 
-    // OL A simple public function to query the EligibleValidators.
+    // 0L: A simple public function to query the EligibleValidators.
     // Only system addresses should be able to access this function
     // Eligible validators are all those nodes who have mined a VDF proof at any time.
     // TODO (nelaturuk): Wonder if this helper is necessary since it is just stripping the Validator Universe vector of other fields.

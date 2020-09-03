@@ -10,8 +10,8 @@ Restart=always
 RestartSec=10s
 
 # Make sure you CREATE the directory and file for your output.log
-StandardOutput=file:/home/lucas/logs/output.log
-StandardError=file:/home/lucas/logs/output.log
+StandardOutput=file:/home/[YOUR USERNAME]/logs/output.log
+StandardError=file:/home/[YOUR USERNAME]/logs/output.log
 
 [Install]
 WantedBy=multi-user.target
