@@ -276,15 +276,15 @@ module LibraSystem {
         Option::is_some(&get_validator_index_(validators_vec_ref, addr))
     }
    ///////////////////////////////////////////////////////////////////////////
-    // OpenLibra Methods
-    // Utils required for OpenLibra
+    // 0L Methods
+    // Utils required for 0L
     ///////////////////////////////////////////////////////////////////////////
 
     // This function takes in a set of top n validators and updates the validator set.
     // NewEpochEvent event will be fired.
     // The Association, the VM, the validator operator or the validator from the current validator set
     // are authorized to update the set of validator infos and add/remove validators
-    // Tests for this method are written in move-lang/functional-tests/OL/reconfiguration/bulk_update.move
+    // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>,

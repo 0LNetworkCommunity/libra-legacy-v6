@@ -57,35 +57,34 @@ cargo run -p libra-management set-layout --backend 'backend=github;owner=OLSF;re
 The set_layout.toml looks like this. Needs to include all the addresses as they appear in the storage of the github repo.
 
 ```
-operators = ["zaki", "lucas", "sha", "keerthi"]
-owners = ["zaki", "lucas", "sha", "keerthi"]
-association = ["vm"]
+operators = ["alice", "bob", "carol", "dave"]
+owners = ["alice", "bob", "carol", "dave"]
+association = ["null"]
 ```
 
 # Mining
 Your working directory is now:
-`libra/ol-miner/`
-TODO: How to call ol-miner from the my_configs path.
+`libra/miner/`
 
 ## Create and account and Mnemonic
-In the ol-miner project create account credentials, which will be needed for mining, and also validation.
+In the miner project create account credentials, which will be needed for mining, and also validation.
 ```
-libra/ol-miner $
+libra/miner $
 cargo run keygen
 ```
 the response will be a print of the mnemonic, account address, and auth key.
 
 DO NOT LOSE THE MNEMONIC. SAVE IT IN YOUR PASSWORD VAULT. WRITE IT ON PAPER NOW.
 
-## Include account data in ol-miner.toml
-There is a template for ol-miner.toml in /ol-miner/ update it with the auth key that you generated as part of the credentials in the previous step.
+## Include account data in miner.toml
+There is a template for miner.toml in /miner/ update it with the auth key that you generated as part of the credentials in the previous step.
 
 ## Mine one proof, your miner's genesis proof.
 This will take at least 10 minutes. The current version of the program will stop on its own when one block has been completed.
 
 ```
-libra/ol-miner $
-ol-miner/ cargo run start
+libra/miner $
+miner/ cargo run start
 ```
 
 You will be prompted to enter your mnemonic.
@@ -112,7 +111,7 @@ libra/my_configs $
 cargo run -p libra-management initialize --mnemonic '<mnemonic string, single quotes around>' --path=<path to my_configs> --namespace=<account address>
 ```
 
-cargo run -p libra-management initialize --mnemonic 'average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice' --path ./ --namespace=zaki
+cargo run -p libra-management initialize --mnemonic 'average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice' --path ./ --namespace=<account>
 
 
 
@@ -125,7 +124,7 @@ libra/my_configs $
 cargo run -p libra-management mining --path-to-genesis-pow <path to block_0.json, can be relative> --backend 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to token>github_token;namespace=<address>'
 ```
 
-cargo run -p libra-management mining --path-to-genesis-pow block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=zaki'
+cargo run -p libra-management mining --path-to-genesis-pow block_0.json --backend 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=<account>'
 
 AUTH KEY:
 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
@@ -139,7 +138,7 @@ libra/my_configs $
 cargo run -p libra-management operator-key --local 'backend=disk;path=<ABSOLUTE path to key_store.json>;namespace=<address>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=<ABSOLUTE path to token>;namespace=<address>'
 ```
 
-cargo run -p libra-management operator-key --local 'backend=disk;path=key_store.json;namespace=zaki' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=zaki'
+cargo run -p libra-management operator-key --local 'backend=disk;path=key_store.json;namespace=<account>' --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=<account>'
 
 
 ## Save the public key from response
@@ -167,8 +166,8 @@ cargo run -p libra-management validator-config \
 --owner-address 027c83aeb3b9c085f5a1506b418d08cf \
 --validator-address "/ip4/64.227.28.81/tcp/6180" \
 --fullnode-address "/ip4/64.227.28.81/tcp/6180" \
---local 'backend=disk;path=key_store.json;namespace=keerthi' \
---remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=keerthi'
+--local 'backend=disk;path=key_store.json;namespace=<<account>' \
+--remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=<<account>'
 
 
 
@@ -196,7 +195,7 @@ cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLS
 
 
 
-cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=common' --local 'backend=disk;path=key_store.json;namespace=zaki'
+cargo run -p libra-management create-waypoint --remote 'backend=github;owner=OLSF;repository=test-genesis;token=github_token;namespace=common' --local 'backend=disk;path=key_store.json;namespace=<account>'
 
 TODO: output waypoint to a file.
 
@@ -233,7 +232,7 @@ cargo run -p libra-management config \
 --validator-address \
 "/ip4/192.241.147.210/tcp/6180" \
 --validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
---backend 'backend=disk;path=key_store.json;namespace=zaki' \
+--backend 'backend=disk;path=key_store.json;namespace=<account>' \
 --fullnode-address "/ip4/192.241.147.210/tcp/6179" \
 --fullnode-listen-address "/ip4/0.0.0.0/tcp/6179"
 

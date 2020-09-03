@@ -420,9 +420,9 @@ fn create_fixtures() {
     //
     // let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
 
-    //2. Run the ol-miner app for creating a genesis proof. block_0.JSON
+    //2. Run the miner app for creating a genesis proof. block_0.JSON
     // if no file is found, the block height is 0
-    // use ol-miner::OlMinerConfig;
+    // use miner::OlMinerConfig;
 
     // let configs_fixture = OlMinerConfig {
     //     profile: Profile {
