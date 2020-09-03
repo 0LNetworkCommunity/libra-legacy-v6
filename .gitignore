@@ -53,3 +53,6 @@ saved_logs
 my_configs/
 miner.toml
 key_store.json
+
+#IDE ignores
+.vscode
