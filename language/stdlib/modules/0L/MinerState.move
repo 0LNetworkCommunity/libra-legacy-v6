@@ -326,7 +326,8 @@ address 0x0 {
           miner_redemption_state.latest_epoch_mining = this_epoch;
           miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
           miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
-      }
+      };
+
       // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
       proofs_in_epoch.proofs = Vector::empty();
