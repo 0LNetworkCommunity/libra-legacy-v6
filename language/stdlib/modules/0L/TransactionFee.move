@@ -69,7 +69,7 @@ address 0x0 {
           // TODO: Currently, this will give no gas if the sum of validator
           // weights is too high. This may be a problem since we cannot give
           // fractional gas amounts. For example:
-          // Lucas has 1000 voting power. Dev has 1 voting power.
+          // Alice has 1000 voting power. Bob has 1 voting power.
           // amount_collected is 500 GAS to distribute.
           // In the above scenario, no GAS will be distibuted.
 

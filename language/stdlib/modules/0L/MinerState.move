@@ -404,7 +404,7 @@ address 0x0 {
       // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
       // the address of a miner.
       // Note: The bytes of the miner challenge is as follows:
-      //         32 // OL Key
+      //         32 // 0L Key
       //         +64 // chain_id
       //         +8 // iterations/difficulty
       //         +1024; // statement

@@ -3,7 +3,7 @@
 // Stats
 ///////////////////////////////////////////////////////////////////////////
 // This module returns statistics about the network at any given block,
-// or window of blocks. A number of core OL modules depend on Statistics.
+// or window of blocks. A number of core 0L modules depend on Statistics.
 // The relevant statistics in an MVP are "liveness accountability" statistics.
 // From within the VM context the statistics available are those in the
 // BlockMetadata type.
@@ -43,7 +43,6 @@ address 0x0 {
 
     // Initialize the storage mechanism in a specific account
     public fun initialize(storage_acc: &signer): u64 {
-      // TODO: OL: (nelaturuk) This should happen only once in genesis
       if (Signer::address_of(storage_acc) == 0x0) {
         move_to_sender<History>(History{ val_list: Vector::empty() });
         1u64
