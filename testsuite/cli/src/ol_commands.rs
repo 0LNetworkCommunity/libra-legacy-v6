@@ -12,7 +12,7 @@ pub struct OLCommand {}
 
 impl Command for OLCommand {
     fn get_aliases(&self) -> Vec<&'static str> {
-        vec!["ol"]
+        vec!["0l"]
     }
     fn get_description(&self) -> &'static str {
         "0L commands"
