@@ -102,10 +102,14 @@ stdlib:
 bins:
 	cd ~/libra && cargo build -p libra-node --release
 	cd ~/libra && cargo build -p libra-management --release
-	cd ~/libra && cargo build -p miner --release
-	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	# cd ~/libra && cargo build -p miner --release
 	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
-	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	# sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+
+build-node:
+	cd ~/libra && cargo build -p libra-node --release
+	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 
 all-bins:
 	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
@@ -115,6 +119,8 @@ keygen:
 
 miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
+
+reset: clear fixtures init keys genesis daemon
 
 #### FOR TESTING ####
 
