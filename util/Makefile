@@ -228,7 +228,7 @@ peers:
 	mv seed_peers.toml  ${DATA_PATH}/seed_peers.toml
 
 remove-keys:
-	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "alice/operator_previous", "alice/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
+	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "${NAMESPACE}/operator_previous", "${NAMESPACE}/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
 	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
 
 #### NODE MANAGEMENT ####
