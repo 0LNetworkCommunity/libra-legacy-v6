@@ -23,7 +23,7 @@ jobs:
             target
             ./target_test
           key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
             toolchain: 1.44.0
@@ -76,10 +76,10 @@ jobs:
             target
             ./target_test
           key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly
+            toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
       - name: Build stdlib
