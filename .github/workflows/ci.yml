@@ -4,7 +4,7 @@ on:
   push:
     branches: [ OLv3, ci ]
   pull_request:
-    branches: [ OLv3 ]
+    branches: [ master, OLv3 ]
 
 jobs:
   functional:
@@ -22,7 +22,7 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-exp-func-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -49,7 +49,7 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-exp-miner-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -73,7 +73,7 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-exp-miner-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
