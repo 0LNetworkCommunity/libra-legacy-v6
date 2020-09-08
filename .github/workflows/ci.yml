@@ -22,7 +22,7 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cache-func-${{ hashFiles('**/Cargo.lock') }}
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -49,7 +49,7 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cache-miner-${{ hashFiles('**/Cargo.lock') }}
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -73,7 +73,7 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cache-miner-${{ hashFiles('**/Cargo.lock') }}
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:

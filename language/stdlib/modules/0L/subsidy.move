@@ -19,6 +19,8 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
+    use 0x0::LibraConfig;
+    use 0x0::MinerState;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -111,7 +113,7 @@ address 0x0 {
     // Function code: 03 Prefix: 190103
     public fun process_subsidy(account: &signer, outgoing_validators: &vector<address>,
                                outgoing_validator_weights: &vector<u64>, subsidy_units: u64,
-                               total_voting_power: u64) {
+                               total_voting_power: u64, current_block_height: u64) {
       // Need to check for association or vm account
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190103014010);
@@ -128,8 +130,13 @@ address 0x0 {
         let subsidy_allowed = FixedPoint32::divide_u64(subsidy_units * voting_power,
                           FixedPoint32::create_from_rational(total_voting_power, 1));
 
-        //Transfer gas from association to validator
-        LibraAccount::pay_from<GAS::T>(account, node_address, subsidy_allowed);
+        // Subsidy is only paid if both mining and validation are active in the epoch
+        let latest_epoch_mined = MinerState::get_miner_latest_epoch(node_address);
+        if(latest_epoch_mined == LibraConfig::get_current_epoch() && ValidatorUniverse::check_if_active_validator(node_address, Globals::get_epoch_length(), current_block_height)){
+          //Transfer gas from association to validator
+          LibraAccount::pay_from<GAS::T>(account, node_address, subsidy_allowed);
+        };
+
         // Transaction::assert(LibraAccount::balance<GAS::T>(sender) == old_association_balance - subsidy_allowed, 8004);
         // confirm the calculations, and that the ending balance is incremented accordingly.
         // Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_balance + subsidy_allowed, 8004);
