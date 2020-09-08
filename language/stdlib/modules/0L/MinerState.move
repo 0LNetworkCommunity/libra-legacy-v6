@@ -427,8 +427,13 @@ address 0x0 {
       // Transaction::assert(sender == 0x0, 130110014010);
       let test = borrow_global<MinerProofHistory>(miner_addr);
       *&test.verified_proof_history
+    }
 
-    
+
+    // Get latest epoch mined by node on given address
+    public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
+      let addr_state = borrow_global<MinerProofHistory>(addr);
+      *&addr_state.latest_epoch_mining
     }
   }
 }
