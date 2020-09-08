@@ -29,6 +29,8 @@ jobs:
             toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
+      - name: check version
+        run: rustc -V
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L functional tests
