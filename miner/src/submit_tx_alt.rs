@@ -19,7 +19,7 @@ use std::{thread, path::PathBuf, time, fs, io::{stdout, BufReader, Write}};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*, vm_error::StatusCode};
-use crate::{delay::delay_difficulty, config::OlMinerConfig};
+use crate::{delay::delay_difficulty, config::OlMinerConfig, config::Profile, config::Workspace, config::ChainInfo};
 use stdlib::transaction_scripts;
 use libra_config::config::NodeConfig;
 
@@ -243,4 +243,36 @@ pub fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     };
 
     Ok(tx_params)
+}
+
+
+#[test]
+fn test_make_params() {
+    let mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice";
+    let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
+    let configs_fixture = OlMinerConfig {
+        workspace: Workspace{
+            home: PathBuf::from("."),
+        },
+        profile: Profile {
+            auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+                .to_owned(),
+            account: None,
+            operator_private_key: None,
+            ip: None,
+            statement: "Protests rage across the Nation".to_owned(),
+        },
+        chain_info: ChainInfo {
+            chain_id: "0L testnet".to_owned(),
+            block_dir: "test_blocks_temp_2".to_owned(),
+            base_waypoint: "None".to_owned(),
+            node: Some("http://localhost:8080".to_string()),
+        },
+
+    };
+
+    let p = get_params(&mnemonic, waypoint, &configs_fixture);
+    assert_eq!("http://localhost:8080/".to_string(), p.url.to_string());
+    // debug!("{:?}", p.url);
+    //make_params
 }

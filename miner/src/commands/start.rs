@@ -1,9 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-// use crate::block::Block;
 use crate::{block::*, submit_tx_alt::get_params};
-// use crate::block::build_block::make_params;
-
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
