@@ -4,14 +4,18 @@
 use cli::{libra_client::LibraClient};
 use std::fs::File;
 use glob::glob;
-use crate::{block::Block};
+use crate::{
+    block::Block,
+    config::OlMinerConfig,
+    submit_tx_alt::{
+        TxParams, 
+        submit_tx,
+        get_params_from_swarm,
+        eval_tx_status},
+};
 use std::io::BufReader;
 use libra_json_rpc_types::views::MinerStateView;
 use std::path::PathBuf;
-//use crate::submit_tx::LocalMinerState;
-use crate::config::OlMinerConfig;
-use crate::submit_tx_alt::{TxParams, 
-    submit_tx, get_params_from_swarm, eval_tx_status};
 use libra_config::config::NodeConfig;
 use libra_types::{
     transaction::authenticator::AuthenticationKey,
@@ -24,11 +28,11 @@ use reqwest::Url;
 use anyhow::Error;
 use crate::block::build_block::parse_block_height;
 
-pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig){
+pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig, tx_params: TxParams){
     //! If there are any proofs which have not been verified on-chain, send them.
     
     // Getting remote miner state
-    let tx_params = get_params_from_swarm(home).unwrap();
+    // let tx_params = get_params_from_swarm(home).unwrap();
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     let remote_state: MinerStateView  = match client.get_miner_state(tx_params.address.clone()) {
         Ok( s ) => { match s {
