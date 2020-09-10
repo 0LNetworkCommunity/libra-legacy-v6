@@ -1,8 +1,8 @@
 //! `start` subcommand - example of how to write a subcommand
 
 // use crate::block::Block;
-use crate::block::*;
-use crate::block::build_block::make_params;
+use crate::{block::*, submit_tx_alt::get_params};
+// use crate::block::build_block::make_params;
 
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
@@ -63,18 +63,21 @@ impl Runnable for StartCmd {
             }
         }
 
-        if self.resubmit {
-            let tx_params = make_params(&mnemonic_string, waypoint, &miner_configs);
-            resubmit_backlog(self.home.to_owned(), &miner_configs, tx_params);
+        let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
 
-        } else {
-            let result = build_block::mine_and_submit(&miner_configs, mnemonic_string, waypoint);
+        if !self.resubmit {
+            // Do the resubmit before mining.
+            // resubmit_backlog(self.home.to_owned(), &miner_configs, tx_params);
+
+            let result = build_block::mine_and_submit(&miner_configs, tx_params);
             match result {
                 Ok(_val) => {}
                 Err(err) => {
                     println!("Failed to mine_and_submit: {}", err);
                 }
             }
+        } else {
+            resubmit_backlog(self.home.to_owned(), &miner_configs, tx_params);
         }
     }
 }

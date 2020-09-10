@@ -1,5 +1,6 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
+use libra_wallet::{Mnemonic, key_factory::Seed, key_factory::KeyFactory, ChildNumber};
 use libra_types::{waypoint::Waypoint};
 
 
@@ -18,7 +19,7 @@ use std::{thread, path::PathBuf, time, fs, io::{stdout, BufReader, Write}};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*, vm_error::StatusCode};
-use crate::delay::delay_difficulty;
+use crate::{delay::delay_difficulty, config::OlMinerConfig};
 use stdlib::transaction_scripts;
 use libra_config::config::NodeConfig;
 
@@ -176,6 +177,31 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
             return false
         }
 
+    }
+}
+
+/// Form tx parameters struct 
+pub fn get_params (
+    mnemonic: &str, 
+    waypoint: Waypoint,
+    config: &OlMinerConfig
+) -> TxParams {
+    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+    let kf = KeyFactory::new(&seed).unwrap();
+    let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+    let private_key = child_0.export_priv_key();
+    let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
+    let url_str = config.chain_info.node.as_ref().unwrap();
+
+    TxParams {
+        auth_key: child_0.get_authentication_key(),
+        address: child_0.get_authentication_key().derived_address(),
+        url: Url::parse(url_str).unwrap(),
+        waypoint,
+        keypair,
+        max_gas_unit_for_tx: 1_000_000,
+        coin_price_per_unit: 0,
+        user_tx_timeout: 5_000,
     }
 }
 

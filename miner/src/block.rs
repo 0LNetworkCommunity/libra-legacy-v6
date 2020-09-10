@@ -139,38 +139,37 @@ pub mod build_block {
         }
     }
 
-    /// Form tx parameters struct 
-    pub fn make_params (
-        // TODO: Move this to submit_tx.rs
+    // /// Form tx parameters struct 
+    // pub fn make_params (
+    //     // TODO: Move this to submit_tx.rs
 
-        mnemonic: &str, 
-        waypoint: Waypoint,
-        config: &OlMinerConfig
-    ) -> TxParams {
-        let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-        let kf = KeyFactory::new(&seed).unwrap();
-        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-        let private_key = child_0.export_priv_key();
-        let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
-        let url_str = config.chain_info.node.as_ref().unwrap();
+    //     mnemonic: &str, 
+    //     waypoint: Waypoint,
+    //     config: &OlMinerConfig
+    // ) -> TxParams {
+    //     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+    //     let kf = KeyFactory::new(&seed).unwrap();
+    //     let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+    //     let private_key = child_0.export_priv_key();
+    //     let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
+    //     let url_str = config.chain_info.node.as_ref().unwrap();
 
-        TxParams {
-            auth_key: child_0.get_authentication_key(),
-            address: child_0.get_authentication_key().derived_address(),
-            url: Url::parse(url_str).unwrap(),
-            waypoint,
-            keypair,
-            max_gas_unit_for_tx: 1_000_000,
-            coin_price_per_unit: 0,
-            user_tx_timeout: 5_000,
-        }
-    }
+    //     TxParams {
+    //         auth_key: child_0.get_authentication_key(),
+    //         address: child_0.get_authentication_key().derived_address(),
+    //         url: Url::parse(url_str).unwrap(),
+    //         waypoint,
+    //         keypair,
+    //         max_gas_unit_for_tx: 1_000_000,
+    //         coin_price_per_unit: 0,
+    //         user_tx_timeout: 5_000,
+    //     }
+    // }
     
     /// Write block to file
     pub fn mine_and_submit(
         config: &OlMinerConfig,
-        mnemonic: String,
-        waypoint: Waypoint,
+        tx_params: TxParams,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
         let mut blocks_dir = config.workspace.home.clone();
@@ -192,49 +191,18 @@ pub mod build_block {
                 let block = mine_once(&config)?;
                 status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
 
-                // mining_height = block.height + 1;
+                if let Some(ref node) = config.chain_info.node {
 
-                // if parameters for connecting to the network are passed
-                // try to submit transactions to network.
-                // TODO:
-                //  Version is an unsigned int. By definition, it must always be >= 0
-                //  This if statement is redundant, and this error check needs to be fixed.
+                    let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
 
-                if waypoint.version() >= 0 {
-                    if let Some(ref node) = config.chain_info.node {
-                        let tx_params = make_params(&mnemonic, waypoint, &config);
-
-                        // let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-                        // let kf = KeyFactory::new(&seed).unwrap();
-                        // let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-                        // let private_key = child_0.export_priv_key();
-                        // let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
-
-                        // let tx_params = TxParams {
-                        //     auth_key: child_0.get_authentication_key(),
-                        //     address: child_0.get_authentication_key().derived_address(),
-                        //     url: Url::parse(node).unwrap(),
-                        //     waypoint,
-                        //     keypair,
-                        //     max_gas_unit_for_tx: 1_000_000,
-                        //     coin_price_per_unit: 0,
-                        //     user_tx_timeout: 5_000,
-                        // };
-                        let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
-                        if eval_tx_status(res) == false {
-                            return Err(ErrorKind::Config
-                                .context("Error submitting mined block")
-                                .into());
-                        };
-                    } else {
+                    if eval_tx_status(res) == false {
                         return Err(ErrorKind::Config
-                            .context("No Node for submitting transactions")
+                            .context("Error submitting mined block")
                             .into());
-                    }
+                    };
                 } else {
-                    // TODO: This code can never run
                     return Err(ErrorKind::Config
-                        .context("No Waypoint for client provided")
+                        .context("No Node for submitting transactions")
                         .into());
                 }
             
@@ -242,61 +210,6 @@ pub mod build_block {
             }
         }
     }
-
-    // /// Submit a block stored in the file system
-    // pub fn submit_block(
-    //     config: &OlMinerConfig,
-    //     mnemonic: String,
-    //     waypoint: Waypoint,
-    //     height:usize,
-    // ) -> Result<(), Error> {
-
-    //     let file = fs::File::open(format!("{:?}/block_{}.json", &config.get_block_dir(),height)).expect("Could not open block file");
-    //     let reader = BufReader::new(file);
-    //     let block: Block = serde_json::from_reader(reader).unwrap();
-
-    //     if let Some(ref node) = config.chain_info.node {
-    //         // get preimage
-    //         submit_vdf_proof_tx_to_network(
-    //             block.preimage,                       // challenge: Vec<u8>,
-    //             delay_difficulty(), // difficulty: u64,
-    //             block.data,                           // proof: Vec<u8>,
-    //             waypoint,                             // waypoint: Waypoint,
-    //             mnemonic.to_string(),
-    //             block.height,
-    //             node.to_string(),
-    //         ).unwrap();
-    //         status_ok!("Submitted {}",block.height.to_string());
-    //     } else {
-    //         // // TODO (Ping): 1. Catch these errors instead of panic.
-    //         // // 2. Save the latest succesfull tower_height to a local file. LocalMinerState.json
-    //         // // PSEUDOCODE:
-    //         // Struct LocalMinerState {
-    //         //     pubkey: &str,
-    //         //     local_tower_height: u64,
-    //         //     last_succesful_tx_height: u64,
-    //         //     retrying_height: u64, // if there is a resubmission in process, we need to know.
-    //         // }
-    //         // let state: LocalMinerState
-    //         // let mut latest_block_path = blocks_dir;
-    //         // latest_block_path.push(format!("0_LocalMinerState.json"));
-    //         // let mut file = fs::File::create(&latest_block_path).unwrap();
-    //         // file.write_all(serde_json::to_string(&state).unwrap().as_bytes())
-    //         //     .expect("Could not write block");
-    //         // // 2. Resend transactions with a timer, e.g 30 seconds (use an exponential backoff). Stop retrying after 10 times or max_retries.
-    //         // // 2a. Add retrying_height to LocalMinerState. OR clear it if Stop retrying.
-    //         // for i in max_retries {
-    //         // submit_vdf_proof_tx_to_network(xxxxxx)
-    //         // }
-
-    //         return Err(ErrorKind::Config
-    //             .context("No Node for submitting transactions")
-    //             .into());
-    //     }
-
-    // Ok(())
-    // }
-
 
     fn write_json(block: &Block, blocks_dir: &PathBuf) {
         if !&blocks_dir.exists() {
@@ -341,9 +254,6 @@ pub mod build_block {
         }
         (max_block, max_block_path)
     }
-
-
-
 
 
     /* ////////////// */
