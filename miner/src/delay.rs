@@ -1,9 +1,7 @@
 //! OlMiner delay module
 #![forbid(unsafe_code)]
 
-
-//! Functions for running the VDF.
-
+/// Functions for running the VDF.
 use crate::application::SECURITY_PARAM;
 use vdf::{VDFParams, WesolowskiVDFParams, VDF};
 use std::env;

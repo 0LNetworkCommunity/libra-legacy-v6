@@ -8,7 +8,6 @@ use libra_crypto::{
     test_utils::KeyPair,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
-// use libra_crypto::test_utils::KeyPair;
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
