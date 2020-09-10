@@ -22,13 +22,15 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-cache-func-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+          key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly
+            toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
+      - name: check version
+        run: rustc -V
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L functional tests
@@ -49,11 +51,11 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-cache-miner-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly
+            toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
@@ -73,11 +75,11 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-cache-miner-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly
+            toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
       - name: Build stdlib
