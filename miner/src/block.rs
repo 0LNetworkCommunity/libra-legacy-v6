@@ -37,6 +37,8 @@ where
 }
 
 impl Block {
+
+    /// Extract the preimage and proof from a genesis proof block_0.json
     pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
 
 
@@ -46,6 +48,7 @@ impl Block {
         return Ok((encode(block.preimage),encode(block.data)));
     }
 
+    /// Extract the proof/solution from a block.
     pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
 
         let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
@@ -67,21 +70,13 @@ pub mod build_block {
     use crate::prelude::*;
     use crate::submit_tx_alt::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
-    use libra_crypto::{ 
-        ed25519::{self, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
-        hash::HashValue, test_utils::KeyPair };
-    use libra_types::waypoint::Waypoint;
-    use libra_wallet::{
-        WalletLibrary, 
-        key_factory::{ChildNumber, KeyFactory, Seed},
-        Mnemonic};
+    use libra_crypto::hash::HashValue;
     use std::{
         fs,
         io::{BufReader, Write},
-        path::{Path, PathBuf},
+        path::PathBuf,
         time::Instant,
     };
-    use reqwest::Url;
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
@@ -191,7 +186,7 @@ pub mod build_block {
                 let block = mine_once(&config)?;
                 status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
 
-                if let Some(ref node) = config.chain_info.node {
+                if let Some(ref _node) = config.chain_info.node {
 
                     let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
 
@@ -226,8 +221,7 @@ pub mod build_block {
             .expect("Could not write block");
     }
 
-    // parse the existing blocks in the miner's path. This function receives any path.
-    // Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
+    /// parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
     pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
         let mut max_block: Option<u64> = None;
         let mut max_block_path = None;
@@ -319,6 +313,7 @@ pub mod build_block {
 #[ignore]
 fn create_fixtures() {
     use libra_wallet::WalletLibrary;
+    use std::path::Path;
 
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
@@ -358,7 +353,7 @@ fn create_fixtures() {
         // fs::create_dir(blocks_dir).unwrap();
         let mut latest_block_path = blocks_dir.to_path_buf();
         latest_block_path.push(format!("miner_{}.mnemonic", ns));
-        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");;
+        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
     }

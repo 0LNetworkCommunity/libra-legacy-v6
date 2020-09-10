@@ -74,7 +74,7 @@ impl Runnable for StartCmd {
                 }
             }
         } else {
-            resubmit_backlog(self.home.to_owned(), &miner_configs, tx_params);
+            resubmit_backlog(&miner_configs, tx_params);
         }
     }
 }

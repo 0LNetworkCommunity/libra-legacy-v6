@@ -3,9 +3,6 @@
 use libra_wallet::{Mnemonic, key_factory::Seed, key_factory::KeyFactory, ChildNumber};
 use libra_types::{waypoint::Waypoint};
 
-
-use abscissa_core::{Command, Options, Runnable};
-
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
     test_utils::KeyPair,
@@ -15,27 +12,39 @@ use libra_crypto::{
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
-use std::{thread, path::PathBuf, time, fs, io::{stdout, BufReader, Write}};
+use std::{thread, path::PathBuf, time, io::{stdout, Write}};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*, vm_error::StatusCode};
-use crate::{delay::delay_difficulty, config::OlMinerConfig, config::Profile, config::Workspace, config::ChainInfo};
+use crate::{
+    delay::delay_difficulty,
+    config::OlMinerConfig
+};
 use stdlib::transaction_scripts;
 use libra_config::config::NodeConfig;
 
 use libra_json_rpc_types::views::TransactionView;
-
+/// All the parameters needed for a client transaction.
 pub struct TxParams {
+    /// User's 0L authkey used in mining.
     pub auth_key: AuthenticationKey,
+    /// User's 0L account used in mining
     pub address: AccountAddress,
+    /// Url
     pub url: Url,
+    /// waypoint
     pub waypoint: Waypoint,
-    pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,//KeyPair,
+    /// KeyPair
+    pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
+    /// User's Maximum gas_units willing to run. Different than coin. 
     pub max_gas_unit_for_tx: u64,
+    /// User's GAS Coin price to submit transaction.
     pub coin_price_per_unit: u64,
+    /// User's transaction timeout.
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
 
+/// Submit a miner transaction to the network.
 pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<Option<TransactionView>, Error> {
     
     thread::sleep(time::Duration::from_millis(24000));
@@ -105,22 +114,20 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     }
 }
 
-
+/// Wait for the response from the libra RPC.
 pub fn wait_for_tx (
     sender_address: AccountAddress,
     sequence_number: u64,
     client: &mut LibraClient) -> Result<TransactionView, Error>{
-        let mut max_iterations = 10;
         println!(
             "Waiting for tx from acc: {} with sequence number: {}",
             sender_address, sequence_number
         );
 
+        let mut max_iterations = 10;
         loop {
             // prevent all Executing Result:the logging the client does while it loops through the query.
             stdout().flush().unwrap();
-
-            // TODO: the `sequence_number - 1` makes it not possible to query the first sequence number of an account. However all 0L accounts are initiated by submitted a mining proof. So we need to be able to produce user feedback on the submission of their first block.
 
             let seq = if sequence_number > 0 {
                 sequence_number - 1
@@ -131,24 +138,27 @@ pub fn wait_for_tx (
             match &mut client
                 .get_txn_by_acc_seq(sender_address, seq, true){
                 Ok(Some(txn_view)) => {
-                return Ok(txn_view.to_owned());
-            },
+                    return Ok(txn_view.to_owned());
+                },
                 Err(e) => {
                     println!("Response with error: {:?}", e);
-                }
+
+                },
                 _ => {
                     print!(".");
+
                 }
             }
+
+            //TODO: This code is not reachable
             max_iterations -= 1;
-        //     if max_iterations == 0 {
-        //         panic!("wait_for_transaction timeout");
-        //     }
             thread::sleep(time::Duration::from_millis(100));
-    }
+        }
+
 }
 
 
+/// Evaluate the response of a submitted miner transaction.
 pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
     match result {
         Ok(tx_view) => {
@@ -205,6 +215,7 @@ pub fn get_params (
     }
 }
 
+/// Get transaction parameters from a running swarm configuration.
 pub fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     home.push("0/node.config.toml");
     if !home.exists() {
@@ -248,6 +259,12 @@ pub fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
 
 #[test]
 fn test_make_params() {
+    use crate::config::{
+        Workspace,
+        Profile,
+        ChainInfo
+    };
+
     let mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
     let configs_fixture = OlMinerConfig {

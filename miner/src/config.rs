@@ -28,6 +28,8 @@ const CHAIN_ID_BYTES: usize = 64;
 const STATEMENT_BYTES: usize = 1008;
 
 impl OlMinerConfig {
+
+    /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
         let mut conf = OlMinerConfig::default();
         // Load profile config
@@ -112,13 +114,14 @@ impl OlMinerConfig {
         ), "Preimage is the incorrect byte length");
         return preimage;
     }
-
+    /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self)-> PathBuf {
         let mut home = self.workspace.home.clone();
         home.push(&self.chain_info.block_dir);
         home
     }
 
+    /// Get where the backlog.json are stored.
     pub fn get_local_backlog_path(&self)-> PathBuf {
         let mut home = self.workspace.home.clone();
         home.push("backlog.json");

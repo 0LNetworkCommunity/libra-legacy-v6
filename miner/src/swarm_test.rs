@@ -8,13 +8,11 @@ use crate::config::OlMinerConfig;
 use crate::prelude::*;
 use crate::submit_tx_alt::{
     submit_tx, TxParams, eval_tx_status};
-use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 
 use libra_config::config::NodeConfig;
 use libra_crypto::{
     test_utils::KeyPair,
-    PrivateKey,
 };
 
 
@@ -22,18 +20,13 @@ use libra_types::waypoint::Waypoint;
 use libra_types::{transaction::authenticator::AuthenticationKey};
 
 use reqwest::Url;
-use std::{
-    fs,
-    io::{stdout, BufReader, Write},
-    path::PathBuf,
-    thread, time,
-};
+use std::path::PathBuf;
 
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
 // const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
                                 // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
-
+/// A test harness for the submit_tx
 pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
     // PathBuf.new("./blocks")
     let tx_params = get_params_from_swarm(home).unwrap();
