@@ -2,8 +2,6 @@
 
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-
-
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize)]
 pub struct Block {
@@ -68,7 +66,7 @@ pub mod build_block {
     use crate::delay::*;
     use crate::error::{Error, ErrorKind};
     use crate::prelude::*;
-    use crate::submit_tx_alt::{submit_tx, TxParams, eval_tx_status};
+    use crate::submit_tx::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
     use libra_crypto::hash::HashValue;
     use std::{
@@ -134,33 +132,6 @@ pub mod build_block {
         }
     }
 
-    // /// Form tx parameters struct 
-    // pub fn make_params (
-    //     // TODO: Move this to submit_tx.rs
-
-    //     mnemonic: &str, 
-    //     waypoint: Waypoint,
-    //     config: &OlMinerConfig
-    // ) -> TxParams {
-    //     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-    //     let kf = KeyFactory::new(&seed).unwrap();
-    //     let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-    //     let private_key = child_0.export_priv_key();
-    //     let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
-    //     let url_str = config.chain_info.node.as_ref().unwrap();
-
-    //     TxParams {
-    //         auth_key: child_0.get_authentication_key(),
-    //         address: child_0.get_authentication_key().derived_address(),
-    //         url: Url::parse(url_str).unwrap(),
-    //         waypoint,
-    //         keypair,
-    //         max_gas_unit_for_tx: 1_000_000,
-    //         coin_price_per_unit: 0,
-    //         user_tx_timeout: 5_000,
-    //     }
-    // }
-    
     /// Write block to file
     pub fn mine_and_submit(
         config: &OlMinerConfig,
@@ -191,7 +162,7 @@ pub mod build_block {
                     let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
 
                     if eval_tx_status(res) == false {
-                        return Err(ErrorKind::Config
+                        return Err(ErrorKind::Transaction
                             .context("Error submitting mined block")
                             .into());
                     };

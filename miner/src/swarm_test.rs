@@ -6,7 +6,7 @@ use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::OlMinerConfig;
 
 use crate::prelude::*;
-use crate::submit_tx_alt::{
+use crate::submit_tx::{
     submit_tx, TxParams, eval_tx_status};
 use anyhow::Error;
 

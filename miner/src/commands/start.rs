@@ -1,11 +1,11 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::*, submit_tx_alt::get_params};
+use crate::{block::*, submit_tx::get_params};
 use crate::config::OlMinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
 use libra_types::waypoint::Waypoint;
-use crate::resubmit_tx::resubmit_backlog;
+use crate::backlog::backlog;
 use std::path::PathBuf;
 
 // use rustyline::error::ReadlineError;
@@ -74,7 +74,7 @@ impl Runnable for StartCmd {
                 }
             }
         } else {
-            resubmit_backlog(&miner_configs, tx_params);
+            backlog(&miner_configs, tx_params);
         }
     }
 }
