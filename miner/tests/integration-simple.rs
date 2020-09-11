@@ -1,16 +1,14 @@
+
 #![forbid(unsafe_code)]
-use wait_timeout::ChildExt;
+
 use std::{
     path::{PathBuf, Path},
     time::{self, Duration},
     fs,
     thread,
-    io::{BufRead, BufReader},
     process::{Command, Stdio},
 };
-use anyhow::{bail, Error};
-use regex::Regex;
-use std::borrow::Borrow;
+
 
 #[test]
 #[ignore]
@@ -86,7 +84,7 @@ pub fn integration() {
 }
 
 fn block_until_swarm_ready () -> bool {
-    let swarm_configs_path = Path::new("../saved_logs/");
+    let _swarm_configs_path = Path::new("../saved_logs/");
     let mut timeout = 100;
     let one_second = time::Duration::from_secs(1);
 

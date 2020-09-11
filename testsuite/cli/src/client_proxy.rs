@@ -250,7 +250,7 @@ impl ClientProxy {
 
         // create the MinerState transaction script
         let script = Script::new(
-            StdlibScript::Redeem.compiled_bytes().into_vec(),
+            StdlibScript::MinerState.compiled_bytes().into_vec(),
             vec![],
             vec![
                 TransactionArgument::U8Vector(challenge),
@@ -286,6 +286,64 @@ impl ClientProxy {
         Ok(())
     }
 
+    /// send an onboarding transaction for a new miner
+    pub fn execute_send_onboarding(
+        &mut self,
+        sender_address: AccountAddress,
+        challenge: Vec<u8>,
+        difficulty: u64,
+        proof: Vec<u8>,
+        tower_height: u64,
+        is_blocking: bool,
+        ) -> Result<()>{
+        
+
+        // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
+        let mut sender_account_data = Self::get_account_data_from_address(
+            &mut self.client,sender_address,
+            true,
+            None, // Pass a keypair from swarm tests here.
+            None
+        ).unwrap();
+
+
+        // create the MinerState transaction script
+        let script = Script::new(
+            StdlibScript::MinerState.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(challenge),
+                TransactionArgument::U64(difficulty),
+                TransactionArgument::U8Vector(proof),
+                TransactionArgument::U64(tower_height),
+                
+            ],
+        );
+
+        // sign the transaction script
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(script),
+            &sender_account_data,
+            Some(700_000), /* max_gas_amount */
+            Some(0), /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        // Submit the transaction with the client proxy
+        // let sender_account = self.accounts.get_mut(sender_ref_id);
+        &mut self.client.submit_transaction(
+            Some(&mut sender_account_data), 
+            txn)?;
+
+        // TODO: This was making the client fail.
+        if is_blocking {
+            let sequence_number = self
+                .get_account_resource_and_update(sender_address)?
+                .sequence_number;
+            self.wait_for_transaction(sender_address, sequence_number)?;
+        }
+        Ok(())
+    }
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
     /// Wraps execute_send_proof
     pub fn send_proof(&mut self, space_delim_strings: &[&str], _is_blocking: bool) -> Result<()> {
