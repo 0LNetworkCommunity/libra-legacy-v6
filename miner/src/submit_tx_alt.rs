@@ -11,6 +11,7 @@ use libra_crypto::{
 use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
+use abscissa_core::{status_warn, status_ok};
 use std::{thread, path::PathBuf, time, io::{stdout, Write}};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
@@ -165,16 +166,17 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
             match tx_view {
                 Some(tx_view) => {
                     if tx_view.vm_status != StatusCode::EXECUTED {
-                        println!("Not executed");
+                        status_warn!("Transaction failed");
+                        println!("rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
-                        println!("Executed");
+                        status_ok!("Executed:", "miner proof committed on-chain");
                         return true
                     }
                 }
                 //did not receive tx_object but it wasn't in error. This is likely because it's the first sequence number and we are skipping.
                 None => { 
-                    println!("No tx_view returned");
+                    status_warn!("No tx_view returned");
                     return false
                 }
             }
@@ -182,7 +184,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
         },
         // A tx_view was not returned because of timeout or client connection not established, or other unrelated to vm execution.
         Err(e) => {
-            println!("Transaction err: {:?}", e);
+            status_warn!("Transaction err: {:?}", e);
             return false
         }
 
