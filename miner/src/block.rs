@@ -37,13 +37,13 @@ where
 impl Block {
 
     /// Extract the preimage and proof from a genesis proof block_0.json
-    pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
+    pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
 
 
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        return Ok((encode(block.preimage),encode(block.data)));
+        return Ok((block.preimage, block.data));
     }
 
     /// Extract the proof/solution from a block.
@@ -159,7 +159,7 @@ pub mod build_block {
 
                 if let Some(ref _node) = config.chain_info.node {
 
-                    let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
+                    let res = submit_tx(&tx_params, block.preimage, block.data, block.height, false);
 
                     if eval_tx_status(res) == false {
                         return Err(ErrorKind::Transaction

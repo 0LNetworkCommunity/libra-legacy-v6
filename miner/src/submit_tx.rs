@@ -45,7 +45,7 @@ pub struct TxParams {
 }
 
 /// Submit a miner transaction to the network.
-pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<Option<TransactionView>, Error> {
+pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64, is_onboading: bool) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -58,17 +58,31 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
+    let script: Script;
     // Create the unsigned MinerState transaction script
-    let script = Script::new(
-        transaction_scripts::StdlibScript::MinerState.compiled_bytes().into_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(preimage),
-            TransactionArgument::U64(delay_difficulty()),
-            TransactionArgument::U8Vector(proof),
-            TransactionArgument::U64(tower_height as u64),
-        ],
-    );
+    if !is_onboading {
+        script = Script::new(
+            transaction_scripts::StdlibScript::MinerState.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(preimage),
+                TransactionArgument::U64(delay_difficulty()),
+                TransactionArgument::U8Vector(proof),
+                TransactionArgument::U64(tower_height as u64),
+            ],
+        );
+    } else {
+        script = Script::new(
+            transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(preimage),
+                TransactionArgument::U64(delay_difficulty()),
+                TransactionArgument::U8Vector(proof),
+            ],
+        );
+    }
+
 
     // sign the transaction script
     let txn = create_user_txn(

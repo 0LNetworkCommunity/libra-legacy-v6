@@ -13,11 +13,11 @@
 mod keygen;
 mod start;
 mod version;
-mod genesis;
+mod onboard;
 mod swarm;
 
 use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
-           genesis::GenesisCmd, swarm::SwarmCmd};
+           onboard::OnboardCmd, swarm::SwarmCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -48,7 +48,7 @@ pub enum OlMinerCmd {
 
     /// The `genesis` subcommand
     #[options(help = "show the command for genesis tx in the 0L client ")]
-    Genesis(GenesisCmd),
+    Onboard(OnboardCmd),
 
     /// The `swarm` subcommand
     #[options(help = "test connection to a local swarm")]
