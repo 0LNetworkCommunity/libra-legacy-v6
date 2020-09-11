@@ -22,7 +22,8 @@ impl Runnable for GenesisCmd {
         let genesis_proof = block::Block::get_proof(&miner_config, 0);
 
         //command to run in the libra client to submit a genesis proof.
-        println!("0L s 0 {} {} {}",
+        println!("Onboarding transaction in libra client.");
+        println!("ol s 0 {} {} {}",
             hex::encode(preimage),
             delay_difficulty(),
             hex::encode(genesis_proof)

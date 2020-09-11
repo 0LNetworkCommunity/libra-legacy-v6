@@ -46,25 +46,21 @@ pub struct TxParams {
 
 /// Submit a miner transaction to the network.
 pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64) -> Result<Option<TransactionView>, Error> {
-    
-    thread::sleep(time::Duration::from_millis(24000));
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let account_state = client.get_account_state(tx_params.address.clone(), true).unwrap();
-    dbg!(&account_state);
+    // dbg!(&account_state);
 
 
     let mut sequence_number = 0u64;
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
-    println!("Onchain sequence number: {}", sequence_number);
-
     // Create the unsigned MinerState transaction script
     let script = Script::new(
-        transaction_scripts::StdlibScript::Redeem.compiled_bytes().into_vec(),
+        transaction_scripts::StdlibScript::MinerState.compiled_bytes().into_vec(),
         vec![],
         vec![
             TransactionArgument::U8Vector(preimage),
@@ -106,12 +102,16 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
             // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
             println!("Transacation submitted to network, waiting for status.");
             match wait_for_tx(tx_params.address, sequence_number, &mut client){
-                Ok(tx_view) => Ok(Some(tx_view)),
+                Ok(tx_view) => {
+                    // TODO: update miner.toml with new waypoint.
+                    Ok(Some(tx_view))
+                },
                 Err(err) => Err(err)
             }
         }
         Err(err) => Err(err)
     }
+
 }
 
 /// Wait for the response from the libra RPC.
@@ -124,16 +124,16 @@ pub fn wait_for_tx (
             sender_address, sequence_number
         );
 
-        let mut max_iterations = 10;
         loop {
-            // prevent all Executing Result:the logging the client does while it loops through the query.
+            thread::sleep(time::Duration::from_millis(1000));
+            // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
 
             let seq = if sequence_number > 0 {
                 sequence_number - 1
             } else {
                 0
-            }; 
+            };
             
             match &mut client
                 .get_txn_by_acc_seq(sender_address, seq, true){
@@ -146,15 +146,10 @@ pub fn wait_for_tx (
                 },
                 _ => {
                     print!(".");
-
                 }
             }
 
-            //TODO: This code is not reachable
-            max_iterations -= 1;
-            thread::sleep(time::Duration::from_millis(100));
         }
-
 }
 
 
@@ -170,7 +165,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                         println!("rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
-                        status_ok!("Executed:", "miner proof committed on-chain");
+                        status_ok!("Committed:", "miner proof committed to chain");
                         return true
                     }
                 }

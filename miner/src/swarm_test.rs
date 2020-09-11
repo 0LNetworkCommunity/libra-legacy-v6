@@ -20,7 +20,7 @@ use libra_types::waypoint::Waypoint;
 use libra_types::{transaction::authenticator::AuthenticationKey};
 
 use reqwest::Url;
-use std::path::PathBuf;
+use std::{path::PathBuf, thread, time};
 
 
 // use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
@@ -34,6 +34,9 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     let conf = OlMinerConfig::load_swarm_config(&tx_params);
     loop {
         let (preimage, proof, tower_height) = get_block_fixtures(&conf);
+
+        // need to sleep for swarm to be ready.
+        thread::sleep(time::Duration::from_millis(24000));
         let res = submit_tx(&tx_params, preimage, proof, tower_height);
         if eval_tx_status(res) == false {
             break;
@@ -50,17 +53,17 @@ fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
 
     // If there are NO files in path, mine the genesis proof.
     if current_block_number.is_none() {
-        status_ok!("Generating Genesis Proof", "0");
+        status_info!("[swarm] Generating Genesis Proof", "0");
         mine_genesis(&config);
-        status_ok!("Success", "Genesis block_0.json created, exiting.");
+        status_ok!("[swarm] Success", "Genesis block_0.json created, exiting.");
         std::process::exit(0);
     }
 
     // mine continuously from the last block in the file systems
     let mining_height = current_block_number.unwrap() + 1;
-    status_ok!("Generating Proof for block:", format!("{}", mining_height));
+    status_info!("[swarm] Generating Proof for block:", format!("{}", mining_height));
     let block = mine_once(&config).unwrap();
-    status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
+    status_ok!("[swarm] Success", format!("block_{}.json created.", block.height.to_string()));
     (block.preimage, block.data, block.height)
 }
 

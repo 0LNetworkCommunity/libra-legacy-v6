@@ -144,18 +144,18 @@ pub mod build_block {
 
         // If there are NO files in path, mine the genesis proof.
         if current_block_number.is_none() {
-            status_ok!("Generating Genesis Proof", "0");
+            status_info!("","Generating Genesis Proof");
             mine_genesis(config);
-            status_ok!("Success", "Genesis block_0.json created, exiting.");
+            status_ok!("Proof mined:", "Genesis block_0.json created, exiting.");
             std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems
             let mut mining_height = current_block_number.unwrap() + 1; 
             loop {
-                status_ok!("Generating Proof for block:", format!("{}", mining_height));
+                status_info!(format!("Block {}", mining_height),"Mining VDF Proof");
                 
                 let block = mine_once(&config)?;
-                status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
+                status_ok!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
                 if let Some(ref _node) = config.chain_info.node {
 

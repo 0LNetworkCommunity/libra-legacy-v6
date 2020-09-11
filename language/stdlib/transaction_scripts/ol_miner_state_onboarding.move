@@ -13,9 +13,6 @@ fun main(
   solution: vector<u8>,
   _expected_address: address // TODO: add this to doubly check the user knows his address.
 ) {
-    // GOAL: it would be ideal that these accounts could be created by any Alice, for any Bob, i.e.
-    // if it didn't need to be the association or system account.
-
     // Parse key and check
     let (parsed_address, auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
     // TODO: uncomment the following line to ensure that user knows his address
