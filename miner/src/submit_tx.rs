@@ -1,140 +1,305 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
-
-use crate::error::{Error, ErrorKind};
-use cli::client_proxy::ClientProxy;
+use libra_wallet::{Mnemonic, key_factory::Seed, key_factory::KeyFactory, ChildNumber};
 use libra_types::{waypoint::Waypoint};
-use std::fs::File;
-use std::io::BufReader;
-use libra_json_rpc_types::views::MinerStateView;
-use std::path::Path;
-use serde::{Serialize, Deserialize};
 
-// use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
-// const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
-                                // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
-// TODO: I don't think this is being used
-// const ASSOCIATION_KEY_FILE: &str = "../0_dev_config/mint.key"; // Empty String or invalid file get converted to a None type in the constructor.
+use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use libra_crypto::{
+    test_utils::KeyPair,
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
+};
+use anyhow::Error;
+use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use reqwest::Url;
+use abscissa_core::{status_warn, status_ok};
+use std::{thread, path::PathBuf, time, io::{stdout, Write}};
 
-pub fn submit_vdf_proof_tx_to_network(
-    challenge: Vec<u8>,
-    difficulty: u64,
-    proof: Vec<u8>,
-    waypoint: Waypoint,
-    mnemonic_string: String,
-    tower_height: u64,
-    node: String,
-    // max_retries: Some(u64), // TODO (Ping): used below on retries.
-) -> Result<(), Error> {
-    //! Functions for submitting proofs on chain
+use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
+use libra_types::{transaction::helpers::*, vm_error::StatusCode};
+use crate::{
+    delay::delay_difficulty,
+    config::OlMinerConfig
+};
+use stdlib::transaction_scripts;
+use libra_config::config::NodeConfig;
 
-    // create the ClientProxy, with credentials, and point to network with a waypoint.
-    let mut libra_client = ClientProxy::new_for_ol(
-        &node, // url 
-        &mnemonic_string, // mnemonic file 
-        waypoint, // waypoint 
-    )
-    .map_err(|err| ErrorKind::Wallet.context(err))?;
-
-
-    println!("Debug Libra Client Accounts: \n{:?}", libra_client.accounts);
-    let sender_account = libra_client.accounts[0].address;
-
-    Ok(match libra_client
-        .execute_send_proof(
-            sender_account,
-            challenge,
-            difficulty,
-            proof,
-            tower_height,
-            true,
-        ){
-            Ok(_) => {
-                println!("execute_send_proof - proof submitted");
-            }
-            Err(e) => {
-                // TODO: ErrorKind::Transaction.context(e) is providing unresolved backtrace, and we don't see details.
-                // Move VM doesn't provide much more detail than "transaction failed to execute; status: ABORTED!"
-                println!("execute_send_proof - proof error: {:?}", ErrorKind::Transaction.context(e));
-            }
-        })
+use libra_json_rpc_types::views::TransactionView;
+/// All the parameters needed for a client transaction.
+pub struct TxParams {
+    /// User's 0L authkey used in mining.
+    pub auth_key: AuthenticationKey,
+    /// User's 0L account used in mining
+    pub address: AccountAddress,
+    /// Url
+    pub url: Url,
+    /// waypoint
+    pub waypoint: Waypoint,
+    /// KeyPair
+    pub keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey>,
+    /// User's Maximum gas_units willing to run. Different than coin. 
+    pub max_gas_unit_for_tx: u64,
+    /// User's GAS Coin price to submit transaction.
+    pub coin_price_per_unit: u64,
+    /// User's transaction timeout.
+    pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
 
-pub fn resubmit_backlog(path: &Path, client: &mut ClientProxy, quick_check: bool){
-    //! If there are any proofs which have not been verified on-chain, send them.
+/// Submit a miner transaction to the network.
+pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64, is_onboading: bool) -> Result<Option<TransactionView>, Error> {
 
-    // 1. Find the most recent LOCAL tower height. We can store this in a json file.
-    // Open the file in read-only mode with buffer.
-    let file = File::open(path).expect("local state file does not exists");
-    let reader = BufReader::new(file);
-    let local_state: LocalMinerState = serde_json::from_reader(reader).expect("Can deserilize local state file.");
+    // Create a client object
+    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let local_tower_height = local_state.local_tower_height;
-    let last_succesful_tx_height = local_state.last_succesful_tx_height;
+    let account_state = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    // dbg!(&account_state);
 
-    // 1a. Check if there is a resubmission in progress. Exit gracefully.
-    if local_state.retrying_height > 0 { return }
 
-    // 1b. quickly check if there is a problem, from local state.
-    if quick_check && (last_succesful_tx_height < local_tower_height) {
-       println!("Your tower appears ahead ahead of chain by {}. Not attempting resubmission. Run withouth quick_check == true to resubmit.", local_tower_height - last_succesful_tx_height)
+    let mut sequence_number = 0u64;
+    if account_state.0.is_some() {
+        sequence_number = account_state.0.unwrap().sequence_number;
     }
-    // 2. Query network for most recent reported_tower_height of the user.
-    // let mut libra_client = ClientProxy::new_for_ol(
-    //     /* url */ &node,
-    //     /* mnemonic file */ &mnemonic_string,
-    //     /* waypoint */ waypoint,
-    // )
+    let script: Script;
+    // Create the unsigned MinerState transaction script
+    if !is_onboading {
+        script = Script::new(
+            transaction_scripts::StdlibScript::MinerState.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(preimage),
+                TransactionArgument::U64(delay_difficulty()),
+                TransactionArgument::U8Vector(proof),
+                TransactionArgument::U64(tower_height as u64),
+            ],
+        );
+    } else {
+        script = Script::new(
+            transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(preimage),
+                TransactionArgument::U64(delay_difficulty()),
+                TransactionArgument::U8Vector(proof),
+            ],
+        );
+    }
 
-    let sender_account = client.accounts[0].address;
-    let remote_state: MinerStateView  = match client.get_miner_state(sender_account) {
-        Ok(s) => { match s {
-            Some( state) => state,
-            None=> {
-                println!("No remote state found");
-                return
-            }
-        } },
-        Err(e) => {
-            println!("error: {:?}", e);
-            return
-        },
+
+    // sign the transaction script
+    let txn = create_user_txn(
+        &tx_params.keypair,
+        TransactionPayload::Script(script),
+        tx_params.address,
+        sequence_number,
+        tx_params.max_gas_unit_for_tx,
+        tx_params.coin_price_per_unit,
+        "GAS".parse()?,
+        tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+    )?;
+
+    // get account_data struct
+    let mut sender_account_data = AccountData {
+        address: tx_params.address,
+        authentication_key: Some(tx_params.auth_key.to_vec()),
+        key_pair: Some(tx_params.keypair.clone()),
+        sequence_number,
+        status: AccountStatus::Persisted,
     };
-    let remote_height = remote_state.verified_tower_height;
 
-    //3. Use Block::submit_block() to submit the oldest proof NOT registered onchain.
-    if remote_height < local_tower_height {
-        // let mut file = fs::File::open(&entry).expect("Could not open block file");
-        // let reader = BufReader::new(file);
-        // let missing_block: Block = serde_json::from_reader(reader).unwrap();
-        // crate::block::submit_block( missing_block , etc. )
+    // dbg!(&sender_account_data);
+    
+    // Submit the transaction with libra_client
+    match client.submit_transaction(
+        Some(&mut sender_account_data),
+        txn
+    ){
+        Ok(_) => {
+            // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
+            println!("Transacation submitted to network, waiting for status.");
+            match wait_for_tx(tx_params.address, sequence_number, &mut client){
+                Ok(tx_view) => {
+                    // TODO: update miner.toml with new waypoint.
+                    Ok(Some(tx_view))
+                },
+                Err(err) => Err(err)
+            }
+        }
+        Err(err) => Err(err)
     }
 
 }
 
-/// LocalMinerState
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct LocalMinerState {
-    pubkey: String,
-    local_tower_height: u64,
-    last_succesful_tx_height: u64,
-    retrying_height: u64, // if there is a resubmission in process, we need to know.
+/// Wait for the response from the libra RPC.
+pub fn wait_for_tx (
+    sender_address: AccountAddress,
+    sequence_number: u64,
+    client: &mut LibraClient) -> Result<TransactionView, Error>{
+        println!(
+            "Waiting for tx from acc: {} with sequence number: {}",
+            sender_address, sequence_number
+        );
+
+        loop {
+            thread::sleep(time::Duration::from_millis(1000));
+            // prevent all the logging the client does while it loops through the query.
+            stdout().flush().unwrap();
+
+            let seq = if sequence_number > 0 {
+                sequence_number - 1
+            } else {
+                0
+            };
+            
+            match &mut client
+                .get_txn_by_acc_seq(sender_address, seq, true){
+                Ok(Some(txn_view)) => {
+                    return Ok(txn_view.to_owned());
+                },
+                Err(e) => {
+                    println!("Response with error: {:?}", e);
+
+                },
+                _ => {
+                    print!(".");
+                }
+            }
+
+        }
 }
 
-/// VDF Proofs
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct VDFProof {
-    challenge: Vec<u8>,
-    difficulty: u64,
-    solution: Vec<u8>, // if there is a resubmission in process, we need to know.
+
+/// Evaluate the response of a submitted miner transaction.
+pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
+    match result {
+        Ok(tx_view) => {
+            // We receive a tx object.
+            match tx_view {
+                Some(tx_view) => {
+                    if tx_view.vm_status != StatusCode::EXECUTED {
+                        status_warn!("Transaction failed");
+                        println!("rejected with code:{:?}", tx_view.vm_status);
+                        return false
+                    } else {
+                        status_ok!("Committed:", "miner proof committed to chain");
+                        return true
+                    }
+                }
+                //did not receive tx_object but it wasn't in error. This is likely because it's the first sequence number and we are skipping.
+                None => { 
+                    status_warn!("No tx_view returned");
+                    return false
+                }
+            }
+
+        },
+        // A tx_view was not returned because of timeout or client connection not established, or other unrelated to vm execution.
+        Err(e) => {
+            status_warn!("Transaction err: {:?}", e);
+            return false
+        }
+
+    }
 }
 
-/// backlog of LocalMinerState
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct Backlog {
+/// Form tx parameters struct 
+pub fn get_params (
+    mnemonic: &str, 
+    waypoint: Waypoint,
+    config: &OlMinerConfig
+) -> TxParams {
+    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+    let kf = KeyFactory::new(&seed).unwrap();
+    let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+    let private_key = child_0.export_priv_key();
+    let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
+    let url_str = config.chain_info.node.as_ref().unwrap();
 
+    TxParams {
+        auth_key: child_0.get_authentication_key(),
+        address: child_0.get_authentication_key().derived_address(),
+        url: Url::parse(url_str).unwrap(),
+        waypoint,
+        keypair,
+        max_gas_unit_for_tx: 1_000_000,
+        coin_price_per_unit: 0,
+        user_tx_timeout: 5_000,
+    }
 }
 
+/// Get transaction parameters from a running swarm configuration.
+pub fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
+    home.push("0/node.config.toml");
+    if !home.exists() {
+        home = PathBuf::from("../saved_logs/0/node.config.toml")
+    }
+    let config = NodeConfig::load(&home)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
+    match &config.test {
+        Some( conf) => {
+            println!("Swarm Keys : {:?}", conf);
+        },
+        None =>{
+            println!("test config does not set.");
+        }
+    }
+    
+    let mut private_key = config.test.unwrap().operator_keypair.unwrap();
+    let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
+    let address = auth_key.derived_address();
+
+    let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap();
+
+    let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
+    
+    let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
+    dbg!(&keypair);
+    let tx_params = TxParams {
+        auth_key,
+        address,
+        url,
+        waypoint: parsed_waypoint,
+        keypair,
+        max_gas_unit_for_tx: 1_000_000,
+        coin_price_per_unit: 0,
+        user_tx_timeout: 5_000,
+    };
+
+    Ok(tx_params)
+}
+
+
+#[test]
+fn test_make_params() {
+    use crate::config::{
+        Workspace,
+        Profile,
+        ChainInfo
+    };
+
+    let mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice";
+    let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
+    let configs_fixture = OlMinerConfig {
+        workspace: Workspace{
+            home: PathBuf::from("."),
+        },
+        profile: Profile {
+            auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+                .to_owned(),
+            account: None,
+            operator_private_key: None,
+            ip: None,
+            statement: "Protests rage across the Nation".to_owned(),
+        },
+        chain_info: ChainInfo {
+            chain_id: "0L testnet".to_owned(),
+            block_dir: "test_blocks_temp_2".to_owned(),
+            base_waypoint: "None".to_owned(),
+            node: Some("http://localhost:8080".to_string()),
+        },
+
+    };
+
+    let p = get_params(&mnemonic, waypoint, &configs_fixture);
+    assert_eq!("http://localhost:8080/".to_string(), p.url.to_string());
+    // debug!("{:?}", p.url);
+    //make_params
+}
