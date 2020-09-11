@@ -71,9 +71,9 @@ fn smoke_test() {
 
         // Using fixtures to skip the offline steps a person would take to set up their miner.
         // 1. Generate a keypair, and save a mnemonic.
-        // 2. Run the ol-miner app for creating a genesis proof. block_0.json
+        // 2. Run the miner app for creating a genesis proof. block_0.json
 
-        //NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+        //NOTE: Files generated with miner/block.rs create_fixtures() which is a test-only function.
         // NOTE there are only fixtures for 5 validators in the /test_fixtures/ directory.
         let mnemonic =
             fs::read_to_string(format!("./test_fixtures/miner_{}/miner_{}.mnem", &ns, &ns))
@@ -205,7 +205,7 @@ fn smoke_test() {
 //         println!("Validator #{}", i);
 //         let ns = i.to_string();
 
-//         // NOTE: Files generated with ol-miner/block.rs create_fixtures() which is a test-only function.
+//         // NOTE: Files generated with miner/block.rs create_fixtures() which is a test-only function.
 //         // there are only fixtures for 5 validators in the /test_fixtures/ directory.
 //         let mnemonic =
 //             fs::read_to_string(format!("./test_fixtures/miner_{}/miner_{}.mnem", &ns, &ns))

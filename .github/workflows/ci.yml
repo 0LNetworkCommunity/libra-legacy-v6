@@ -4,7 +4,7 @@ on:
   push:
     branches: [ OLv3, ci ]
   pull_request:
-    branches: [ OLv3 ]
+    branches: [ master, OLv3 ]
 
 jobs:
   functional:
@@ -22,13 +22,15 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-exp-func-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+          key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly
+            toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
+      - name: check version
+        run: rustc -V
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L functional tests
@@ -49,11 +51,11 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-exp-miner-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly
+            toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
@@ -73,16 +75,16 @@ jobs:
             ~/.cargo/git
             target
             ./target_test
-          key: ${{ runner.os }}-exp-miner-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install latest nightly
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: nightly
+            toolchain: 1.44.0
             override: true
             components: rustfmt, clippy
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
-      - name: Run OL e2e tests
+      - name: Run 0L e2e tests
         run: cd language/e2e-tests && cargo xtest -p language-e2e-tests ol -- --nocapture
   
   # genesis_smoke:

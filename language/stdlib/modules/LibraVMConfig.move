@@ -1,6 +1,6 @@
 address 0x0 {
 
-module LibraVMConfig { // TODO: 0L: (nelaturuk) Why is this file mirroring gas_schedule.rs, will .move eventually be the source of gas costs?
+module LibraVMConfig { 
     use 0x0::LibraConfig;
 
     // The struct to hold all config data needed to operate the LibraVM.

@@ -1,7 +1,9 @@
+///////////////////////////////////////////////////////////////////
+// 0L Module
+// MinerState
+///////////////////////////////////////////////////////////////////
+
 address 0x0 {
-
-
-  // Note: This module needs a key-value store.
   module MinerState {
     use 0x0::VDF;
     use 0x0::Vector;
@@ -13,7 +15,6 @@ address 0x0 {
     use 0x0::Hash;
     use 0x0::Debug;
     use 0x0::Testnet;
-
 
     // Struct to store information about a VDF proof submitted
     struct VdfProofBlob {
@@ -312,11 +313,13 @@ address 0x0 {
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
 
       // 2. Update statistics.
-      let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
-      let this_epoch = LibraConfig::get_current_epoch();
-      miner_redemption_state.latest_epoch_mining = this_epoch;
-      miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
-      miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
+      if( Vector::length( &proofs_in_epoch.proofs ) > 0) {
+          let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
+          let this_epoch = LibraConfig::get_current_epoch();
+          miner_redemption_state.latest_epoch_mining = this_epoch;
+          miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
+          miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
+      };
 
       // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
@@ -395,7 +398,7 @@ address 0x0 {
       // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
       // the address of a miner.
       // Note: The bytes of the miner challenge is as follows:
-      //         32 // OL Key
+      //         32 // 0L Key
       //         +64 // chain_id
       //         +8 // iterations/difficulty
       //         +1024; // statement
@@ -416,8 +419,13 @@ address 0x0 {
       // Transaction::assert(sender == 0x0, 130110014010);
       let test = borrow_global<MinerProofHistory>(miner_addr);
       *&test.verified_proof_history
+    }
 
-    
+
+    // Get latest epoch mined by node on given address
+    public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
+      let addr_state = borrow_global<MinerProofHistory>(addr);
+      *&addr_state.latest_epoch_mining
     }
   }
 }

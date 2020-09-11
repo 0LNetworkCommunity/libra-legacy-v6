@@ -102,10 +102,10 @@ stdlib:
 bins:
 	cd ~/libra && cargo build -p libra-node --release
 	cd ~/libra && cargo build -p libra-management --release
-	# cd ~/libra && cargo build -p miner --release
+	cd ~/libra && cargo build -p miner --release
 	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
-	# sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
 build-node:
 	cd ~/libra && cargo build -p libra-node --release
@@ -265,13 +265,12 @@ ifdef TEST
 else
 	if test -d ~/logs; then \
 		echo "WIPING MINER LOGS"; \
-		sudo rm -rf ~/logs*; \
+		sudo rm -rf ~/logs/miner.log; \
+		sudo touch ~/logs/miner.log
+		sudo chmod 660 ~/logs/miner.log
 	fi 
 
-	sudo mkdir ~/logs
-	sudo touch ~/logs/miner.log
-	sudo chmod 660 ~/logs
-	sudo chmod 660 ~/logs/miner.log
+
 # pipe logs to screen and tee to miner logs
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start 2> >(tee ~/logs/miner.log)
 

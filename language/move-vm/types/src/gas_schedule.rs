@@ -153,7 +153,7 @@ pub fn new_from_instructions(
 // Only used for genesis and for tests where we need a cost table and
 // don't have a genesis storage state.
 //NOTE: 0L: This is not the cost table used in genesis. For that look at
-// ol/language/tools/vm-genesis/src/genesis_gas_schedule.rs
+// language/tools/vm-genesis/src/genesis_gas_schedule.rs
 pub fn zero_cost_schedule() -> CostTable {
     use Bytecode::*;
     // The actual costs for the instructions in this table _DO NOT MATTER_. This is only used
