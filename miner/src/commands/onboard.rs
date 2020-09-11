@@ -29,7 +29,7 @@ pub struct OnboardCmd {
     waypoint: String,
     // Path of the block_0.json to onboard.
     #[options(help = "Path of the block_0.json to onboard.")]
-    block_file: PathBuf, 
+    file: PathBuf, 
 }
 
 impl Runnable for OnboardCmd {
@@ -38,7 +38,7 @@ impl Runnable for OnboardCmd {
         let miner_configs = app_config();
 
         println!("Enter your 0L mnemonic:");
-        let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511}")).unwrap();
+        let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
 
         let waypoint: Waypoint;
         let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
@@ -58,7 +58,7 @@ impl Runnable for OnboardCmd {
         }
 
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
-        let genesis_data = Block::get_genesis_tx_data(&self.block_file).unwrap();
+        let genesis_data = Block::get_genesis_tx_data(&self.file).unwrap();
         match submit_tx(&tx_params, genesis_data.0.to_owned(), genesis_data.1.to_owned(), 0, true) {
             Ok(res) => {
 

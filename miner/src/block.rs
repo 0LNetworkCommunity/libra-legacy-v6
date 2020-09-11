@@ -46,17 +46,17 @@ impl Block {
         return Ok((block.preimage, block.data));
     }
 
-    /// Extract the proof/solution from a block.
-    pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
+    // /// Extract the proof/solution from a block.
+    // pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
 
-        let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
+    //     let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
 
-        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
-        let reader = std::io::BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).unwrap();
+    //     let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+    //     let reader = std::io::BufReader::new(file);
+    //     let block: Block = serde_json::from_reader(reader).unwrap();
 
-        return block.data.clone();
-    }
+    //     return block.data.clone();
+    // }
 }
 
 pub mod build_block {
