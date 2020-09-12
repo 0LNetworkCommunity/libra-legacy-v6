@@ -21,7 +21,7 @@ pub fn redeem_txn(
 
     ];
     sender.create_signed_txn_with_args(
-        StdlibScript::Redeem
+        StdlibScript::MinerState
             .compiled_bytes()
             .into_vec(),
         vec![],
@@ -41,7 +41,7 @@ pub fn redeem_txn_onboarding(sender: &Account, seq_num: u64, challenge: Vec<u8>,
         TransactionArgument::Address(expected_address),
     ];
     sender.create_signed_txn_with_args(
-        StdlibScript::RedeemOnboarding
+        StdlibScript::MinerStateOnboarding
             .compiled_bytes()
             .into_vec(),
         vec![],
