@@ -78,7 +78,7 @@ address 0x0 {
         // Function code: 03. Prefix: 180103
         fun prepare_upcoming_validator_set(account: &signer, current_block_height: u64) {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
-            let eligible_validators = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch());
+            let eligible_validators = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch(), current_block_height);
 
             // Step 2: Call bulkUpdate module
             LibraSystem::bulk_update_validators(account, eligible_validators, Globals::get_epoch_length(), current_block_height);

@@ -22,7 +22,7 @@ script {
         let vec =  ValidatorUniverse::get_eligible_validators(account);
         Transaction::assert(Vector::length<address>(&vec) == 1, 1);
 
-        let list_of_addresses = NodeWeight::top_n_accounts(account,5);
+        let list_of_addresses = NodeWeight::top_n_accounts(account,5, 1);
         Transaction::assert(Vector::length<address>(&list_of_addresses) == 1, 2);
     }
 }
@@ -50,7 +50,7 @@ script {
         Transaction::assert(Vector::length<address>(&vec) == 6, 3);
 
 
-        let equals_test = NodeWeight::top_n_accounts(account,6);
+        let equals_test = NodeWeight::top_n_accounts(account, 6, 1);
         Transaction::assert(Vector::length<address>(&equals_test) == 6, 4);
     }
 }
@@ -70,7 +70,7 @@ script {
         let vec =  ValidatorUniverse::get_eligible_validators(account);
         Transaction::assert(Vector::length<address>(&vec) == 6, 5);
 
-        let result = NodeWeight::top_n_accounts(account,1);
+        let result = NodeWeight::top_n_accounts(account,1, 12);
         Transaction::assert(Vector::length<address>(&result) == 1, 6);
         Transaction::assert(Vector::contains<address>(&result, &{{hola}}) == true, 7);
     }
@@ -91,7 +91,7 @@ script {
         let vec =  ValidatorUniverse::get_eligible_validators(account);
         Transaction::assert(Vector::length<address>(&vec) == 6, 8);
 
-        let result = NodeWeight::top_n_accounts(account,3);
+        let result = NodeWeight::top_n_accounts(account,3, 12);
         Transaction::assert(Vector::length<address>(&result) == 3, 1);
         Transaction::assert(Vector::contains<address>(&result, &{{hola}}) == true,9);
         Transaction::assert(Vector::contains<address>(&result, &{{sha}}) == true, 10);
