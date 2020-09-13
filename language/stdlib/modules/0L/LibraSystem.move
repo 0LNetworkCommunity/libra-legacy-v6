@@ -287,9 +287,7 @@ module LibraSystem {
     // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
     public fun bulk_update_validators(
         account: &signer,
-        new_validators: vector<address>,
-        epoch_length: u64,
-        current_block_height: u64) acquires CapabilityHolder {
+        new_validators: vector<address>) acquires CapabilityHolder {
 
         Transaction::assert(is_authorized_to_reconfigure_(account), 22);
 
@@ -311,21 +309,12 @@ module LibraSystem {
 
             let config = ValidatorConfig::get_config(account_address);
 
-            let liveness = true;
+            Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                addr: account_address,
+                config, // copy the config over to ValidatorSet
+                consensus_voting_power: ValidatorUniverse::proof_of_weight(account_address, is_validator(account_address)),
+            });
 
-            // Check liveness in previous epoch
-            if(is_validator(account_address) && !ValidatorUniverse::check_if_active_validator(account_address,epoch_length, current_block_height)){
-                liveness= false;
-            };
-
-            if(liveness){
-                Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
-                    addr: account_address,
-                    config, // copy the config over to ValidatorSet
-                    consensus_voting_power: ValidatorUniverse::proof_of_weight(account_address, is_validator(account_address)),
-                   });
-
-            };
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
             // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;

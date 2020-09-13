@@ -17,7 +17,6 @@ address 0x0 {
     use 0x0::Transaction;
     use 0x0::MinerState;
     use 0x0::Globals;
-    use 0x0::Debug;
 
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
@@ -79,7 +78,6 @@ address 0x0 {
       while(index < length && current_size < n){
 
           let cur_node_address = *Vector::borrow<address>(&eligible_validators, index);
-          Debug::print(&index);
 
           if(ValidatorUniverse::check_if_active_validator(cur_node_address, Globals::get_epoch_length(), current_block_height)){
 
