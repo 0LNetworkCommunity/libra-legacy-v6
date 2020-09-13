@@ -84,7 +84,7 @@ address 0x0 {
 
             // If the number of validators in the next epoch is less than 4, we dont run the LibraSystem::bulk_update 
             // Remains in the same epoch number because the configuration (validatorSet) is unchanged 
-            // However, subsidies are given. 
+            // However, subsidies are minted, distributed and burned at epoch lengths. 
             if(length >= 4){
                 // Step 2: Call bulkUpdate module
                 LibraSystem::bulk_update_validators(account, validator_set);    
