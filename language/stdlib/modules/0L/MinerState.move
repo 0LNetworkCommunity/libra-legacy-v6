@@ -62,14 +62,6 @@ address 0x0 {
        borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
     }
 
-
-    // // Tests to confirm that VM genesis (language/tools/vm-genesis/src/lib.rs)
-    // // can call MinerProofHistory
-    // public fun test_genesis(): bool {
-    //   true
-    // }
-
-
     // Helper function for genesis to begin redeem process.
     public fun genesis_helper (
       miner: &signer,

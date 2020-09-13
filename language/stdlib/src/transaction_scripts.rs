@@ -61,9 +61,8 @@ pub enum StdlibScript {
     //
     // Below are 0L Changes
     //
-    Redeem,
-    RedeemOnboarding,
-    // RedeemInitialize,
+    MinerState,
+    MinerStateOnboarding,
     LibraBlockTestHelper,
     TxFeeTestHelper,
     TxFeeTestMint,
@@ -118,9 +117,8 @@ impl StdlibScript {
             UpdateMintingAbility,
 
             // Below are 0L Changes
-            Redeem,
-            RedeemOnboarding,
-            // RedeemInitialize,
+            MinerState,
+            MinerStateOnboarding,
             LibraBlockTestHelper,
             TxFeeTestHelper,
             TxFeeTestMint,
@@ -254,8 +252,8 @@ impl fmt::Display for StdlibScript {
                 //
                 // Below are 0L Changes
                 //
-                Redeem => "ol_redeem",
-                RedeemOnboarding => "ol_redeem_onboarding",
+                MinerState => "ol_miner_state",
+                MinerStateOnboarding => "ol_miner_state_onboarding",
                 // RedeemInitialize => "redeem_init",
                 LibraBlockTestHelper => "ol_libra_block_test_helper",
                 TxFeeTestHelper => "ol_tx_fees_e2e_test_helper",

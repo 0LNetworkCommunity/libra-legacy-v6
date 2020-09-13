@@ -13,13 +13,11 @@
 mod keygen;
 mod start;
 mod version;
-mod genesis;
-// mod submit;
-mod swarm;
-mod resubmit;
+mod onboard;
+mod swarm_test;
 
 use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
-           genesis::GenesisCmd, swarm::SwarmCmd, resubmit::ResubmitCmd};
+           onboard::OnboardCmd, swarm_test::SwarmCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -49,19 +47,12 @@ pub enum OlMinerCmd {
     Keygen(KeygenCmd),
 
     /// The `genesis` subcommand
-    #[options(help = "show the command for genesis tx in the 0L client ")]
-    Genesis(GenesisCmd),
-
-    // /// The `submit` subcommand
-    // #[options(help = "submit an already mined block")]
-    // Submit(SubmitCmd),
+    #[options(help = "Onboard a new miner with a block_0.json proof")]
+    Onboard(OnboardCmd),
 
     /// The `swarm` subcommand
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
-
-    #[options(help = "Try resubmitting the blocks")]
-    Resubmit(ResubmitCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
