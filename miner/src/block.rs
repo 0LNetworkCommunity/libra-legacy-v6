@@ -2,7 +2,6 @@
 
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize)]
 pub struct Block {
@@ -36,25 +35,28 @@ where
 }
 
 impl Block {
-    pub fn get_genesis_tx_data(path:std::path::PathBuf) -> Result<(String,String),std::io::Error> {
+
+    /// Extract the preimage and proof from a genesis proof block_0.json
+    pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
 
 
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        return Ok((encode(block.preimage),encode(block.data)));
+        return Ok((block.preimage, block.data));
     }
 
-    pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
+    // /// Extract the proof/solution from a block.
+    // pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
 
-        let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
+    //     let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
 
-        let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
-        let reader = std::io::BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).unwrap();
+    //     let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
+    //     let reader = std::io::BufReader::new(file);
+    //     let block: Block = serde_json::from_reader(reader).unwrap();
 
-        return block.data.clone();
-    }
+    //     return block.data.clone();
+    // }
 }
 
 pub mod build_block {
@@ -64,14 +66,12 @@ pub mod build_block {
     use crate::delay::*;
     use crate::error::{Error, ErrorKind};
     use crate::prelude::*;
-    use crate::submit_tx::submit_vdf_proof_tx_to_network;
+    use crate::submit_tx::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
     use libra_crypto::hash::HashValue;
-    use libra_types::waypoint::Waypoint;
     use std::{
         fs,
         io::{BufReader, Write},
-        path::Path,
         path::PathBuf,
         time::Instant,
     };
@@ -131,11 +131,11 @@ pub mod build_block {
                 .into());
         }
     }
+
     /// Write block to file
     pub fn mine_and_submit(
         config: &OlMinerConfig,
-        mnemonic: String,
-        waypoint: Waypoint,
+        tx_params: TxParams,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
         let mut blocks_dir = config.workspace.home.clone();
@@ -144,53 +144,31 @@ pub mod build_block {
 
         // If there are NO files in path, mine the genesis proof.
         if current_block_number.is_none() {
-            status_ok!("Generating Genesis Proof", "0");
+            status_info!("","Generating Genesis Proof");
             mine_genesis(config);
-            status_ok!("Success", "Genesis block_0.json created, exiting.");
+            status_ok!("Proof mined:", "Genesis block_0.json created, exiting.");
             std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems
             let mut mining_height = current_block_number.unwrap() + 1; 
             loop {
-                status_ok!("Generating Proof for block:", format!("{}", mining_height));
+                status_info!(format!("Block {}", mining_height),"Mining VDF Proof");
                 
                 let block = mine_once(&config)?;
-                status_ok!("Success", format!("block_{}.json created.", block.height.to_string()));
+                status_ok!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
-                // mining_height = block.height + 1;
+                if let Some(ref _node) = config.chain_info.node {
 
-                // if parameters for connecting to the network are passed
-                // try to submit transactions to network.
-                // TODO:
-                //  Version is an unsigned int. By definition, it must always be >= 0
-                //  This if statement is redundant, and this error check needs to be fixed.
-                if waypoint.version() >= 0 {
-                    if let Some(ref node) = config.chain_info.node {
-                        // get preimage
-                        match submit_vdf_proof_tx_to_network(
-                            block.preimage,                       // challenge: Vec<u8>,
-                            delay_difficulty(), // difficulty: u64,
-                            block.data,                           // proof: Vec<u8>,
-                            waypoint,                             // waypoint: Waypoint,
-                            mnemonic.to_string(),
-                            block.height,
-                            node.to_string(),
-                        ) {
-                            Ok(_v) => println!("Submitted block: {:?}", block.height.to_string() ),
-                            Err(e) => println!("Error submitting mined block: {:?}", e),
-                        }
-                        // unwrap();
+                    let res = submit_tx(&tx_params, block.preimage, block.data, block.height, false);
 
-                        // status_ok!("Submitted {}",block.height.to_string());
-                    } else {
-                        return Err(ErrorKind::Config
-                            .context("No Node for submitting transactions")
+                    if eval_tx_status(res) == false {
+                        return Err(ErrorKind::Transaction
+                            .context("Error submitting mined block")
                             .into());
-                    }
+                    };
                 } else {
-                    // TODO: This code can never run
                     return Err(ErrorKind::Config
-                        .context("No Waypoint for client provided")
+                        .context("No Node for submitting transactions")
                         .into());
                 }
             
@@ -198,61 +176,6 @@ pub mod build_block {
             }
         }
     }
-
-    /// Submit a block stored in the file system
-    pub fn submit_block(
-        config: &OlMinerConfig,
-        mnemonic: String,
-        waypoint: Waypoint,
-        height:usize,
-    ) -> Result<(), Error> {
-
-        let file = fs::File::open(format!("{:?}/block_{}.json", &config.get_block_dir(),height)).expect("Could not open block file");
-        let reader = BufReader::new(file);
-        let block: Block = serde_json::from_reader(reader).unwrap();
-
-        if let Some(ref node) = config.chain_info.node {
-            // get preimage
-            submit_vdf_proof_tx_to_network(
-                block.preimage,                       // challenge: Vec<u8>,
-                delay_difficulty(), // difficulty: u64,
-                block.data,                           // proof: Vec<u8>,
-                waypoint,                             // waypoint: Waypoint,
-                mnemonic.to_string(),
-                block.height,
-                node.to_string(),
-            ).unwrap();
-            status_ok!("Submitted {}",block.height.to_string());
-        } else {
-            // // TODO (Ping): 1. Catch these errors instead of panic.
-            // // 2. Save the latest succesfull tower_height to a local file. LocalMinerState.json
-            // // PSEUDOCODE:
-            // Struct LocalMinerState {
-            //     pubkey: &str,
-            //     local_tower_height: u64,
-            //     last_succesful_tx_height: u64,
-            //     retrying_height: u64, // if there is a resubmission in process, we need to know.
-            // }
-            // let state: LocalMinerState
-            // let mut latest_block_path = blocks_dir;
-            // latest_block_path.push(format!("0_LocalMinerState.json"));
-            // let mut file = fs::File::create(&latest_block_path).unwrap();
-            // file.write_all(serde_json::to_string(&state).unwrap().as_bytes())
-            //     .expect("Could not write block");
-            // // 2. Resend transactions with a timer, e.g 30 seconds (use an exponential backoff). Stop retrying after 10 times or max_retries.
-            // // 2a. Add retrying_height to LocalMinerState. OR clear it if Stop retrying.
-            // for i in max_retries {
-            // submit_vdf_proof_tx_to_network(xxxxxx)
-            // }
-
-            return Err(ErrorKind::Config
-                .context("No Node for submitting transactions")
-                .into());
-        }
-
-    Ok(())
-    }
-
 
     fn write_json(block: &Block, blocks_dir: &PathBuf) {
         if !&blocks_dir.exists() {
@@ -269,9 +192,8 @@ pub mod build_block {
             .expect("Could not write block");
     }
 
-    // parse the existing blocks in the miner's path. This function receives any path.
-    // Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
-    fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
+    /// parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
+    pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
         let mut max_block: Option<u64> = None;
         let mut max_block_path = None;
 
@@ -299,9 +221,6 @@ pub mod build_block {
     }
 
 
-
-
-
     /* ////////////// */
     /* / Unit tests / */
     /* ////////////// */
@@ -326,8 +245,9 @@ pub mod build_block {
             },
             profile: Profile {
                 auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
-                account: "000000000000000000000000deadbeef".to_owned(),
-                operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
+                account: None,
+                operator_private_key: None,
+                ip: None,
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -364,6 +284,7 @@ pub mod build_block {
 #[ignore]
 fn create_fixtures() {
     use libra_wallet::WalletLibrary;
+    use std::path::Path;
 
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
@@ -381,8 +302,9 @@ fn create_fixtures() {
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
-                account: "000000000000000000000000deadbeef".to_owned(),
-                operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
+                account: None,
+                operator_private_key: None,
+                ip: None,
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {
@@ -402,41 +324,12 @@ fn create_fixtures() {
         // fs::create_dir(blocks_dir).unwrap();
         let mut latest_block_path = blocks_dir.to_path_buf();
         latest_block_path.push(format!("miner_{}.mnemonic", ns));
-        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");;
+        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
     }
-    // test_helper_clear_block_dir(blocks_dir);
 }
-    // simulate the offline steps a person would take to set up their miner.
-    // 1. Generate a keypair, and save a mnemonic.
 
-    // for each validator create a dynamic key pair, and mnemonic_string
-    // let mut wallet = WalletLibrary::new();
-    //
-    // let (auth_key, _) = wallet.new_address().expect("Could not generate address");
-    //
-    // let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
-
-    //2. Run the ol-miner app for creating a genesis proof. block_0.JSON
-    // if no file is found, the block height is 0
-    // use ol-miner::OlMinerConfig;
-
-    // let configs_fixture = OlMinerConfig {
-    //     profile: Profile {
-    //         auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
-    //         statement: "Protests rage across the Nation".to_owned(),
-    //     },
-    //     chain_info: ChainInfo {
-    //         chain_id: "0L testnet".to_owned(),
-    //         block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
-    //         base_waypoint: "None".to_owned(),
-    //         node: None,
-    //     },
-    // };
-    // this will output a file to test_blocks_temp_1/block_0.json
-    // mine
-    // mine_genesis(&configs_fixture);
 
     #[test]
     fn test_mine_once() {
@@ -450,8 +343,9 @@ fn create_fixtures() {
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                     .to_owned(),
-                account: "000000000000000000000000deadbeef".to_owned(),
-                operator_private_key: "da3599e23bd8dd79ce77578fc791a72323de545cf23bb1588e49d8a1e023f6f3".to_owned(),
+                account: None,
+                operator_private_key: None,
+                ip: None,
                 statement: "Protests rage across the Nation".to_owned(),
             },
             chain_info: ChainInfo {

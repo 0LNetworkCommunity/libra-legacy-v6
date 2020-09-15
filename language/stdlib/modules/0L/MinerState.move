@@ -1,7 +1,9 @@
+///////////////////////////////////////////////////////////////////
+// 0L Module
+// MinerState
+///////////////////////////////////////////////////////////////////
+
 address 0x0 {
-
-
-  // Note: This module needs a key-value store.
   module MinerState {
     use 0x0::VDF;
     use 0x0::Vector;
@@ -12,7 +14,7 @@ address 0x0 {
     use 0x0::Globals;
     use 0x0::Hash;
     use 0x0::Debug;
-
+    use 0x0::Testnet;
 
     // Struct to store information about a VDF proof submitted
     struct VdfProofBlob {
@@ -60,18 +62,13 @@ address 0x0 {
        borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
     }
 
-
-    // // Tests to confirm that VM genesis (language/tools/vm-genesis/src/lib.rs)
-    // // can call MinerProofHistory
-    // public fun test_genesis(): bool {
-    //   true
-    // }
-
-
     // Helper function for genesis to begin redeem process.
-    public fun genesis_helper (miner: &signer, challenge: vector<u8>, solution: vector<u8> )
-                                acquires MinerProofHistory, ProofsInEpoch {
+    public fun genesis_helper (
+      miner: &signer,
+      challenge: vector<u8>,
+      solution: vector<u8> ) acquires MinerProofHistory, ProofsInEpoch {
 
+      Debug::print(&0x999999999000000001);
       let difficulty = Globals::get_difficulty();
       let vdf_proof_blob = VdfProofBlob {
         challenge,
@@ -87,17 +84,32 @@ address 0x0 {
     // This function starts the redeem process.
     public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
 
-      Debug::print(&0x000000000013370000001);
+      Debug::print(&0x100000000013370000001);
+      Debug::print(&0x100000000013370000002);
 
       // Get address
+
       let miner_addr = Signer::address_of( miner );
+      Debug::print(&miner_addr);
+
+      Debug::print(&0x000000000013370000011);
+
 
       // Get difficulty constant. Will be different in tests than in production.
       // Globals initializes this accordingly
+
+      // skip this check on test-net, we need tests to send different difficulties.
       let difficulty_constant = Globals::get_difficulty();
 
-      Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
+      if (!Testnet::is_testnet()){
+
+        Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
+        Debug::print(&0x000000000013370000012);
+
+      };
+
       Debug::print(&0x000000000013370000002);
+
 
       // 1. The Onboarding path (miner not yet initialized):
       //    Check if the miner's state is initialized.
@@ -153,7 +165,6 @@ address 0x0 {
       initialized_miner: bool) acquires MinerProofHistory, ProofsInEpoch {
 
       Debug::print(&0x000000000013370010001);
-
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
 
@@ -250,15 +261,29 @@ address 0x0 {
 
       // TODO (LG): confirm hashes.
       let previous_verified_solution_hash = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
+      Debug::print(&0x000000000013370020002);
+
+
+
+      Debug::print(previous_verified_solution_hash);
+      Debug::print(&vdf_proof_blob.challenge);
+
+      // let new_hash = Hash::sha3_256(*previous_verified_solution_hash);
+      // Debug::print(&new_hash);
+      
       // Transaction::assert(last_verified_proof == &Hash::sha3_256(*&vdf_proof_blob.challenge), 130108031010);
+
+      // let equal = Vector::compare(previous_verified_solution_hash, &vdf_proof_blob.challenge);
+      // Debug::print(&equal);
+      // Transaction::assert(equal, 130108031010);
       Transaction::assert(&vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
 
-      Debug::print(&0x000000000013370020005);
+      Debug::print(&0x000000000013370020003);
 
       // Verify proof is valid
       let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
       Transaction::assert(valid, 130108041021);
-      Debug::print(&0x000000000013370020006);
+      Debug::print(&0x000000000013370020004);
 
       (miner_redemption_state, vdf_proof_blob)
     }
@@ -288,11 +313,13 @@ address 0x0 {
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
 
       // 2. Update statistics.
-      let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
-      let this_epoch = LibraConfig::get_current_epoch();
-      miner_redemption_state.latest_epoch_mining = this_epoch;
-      miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
-      miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
+      if( Vector::length( &proofs_in_epoch.proofs ) > 0) {
+          let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
+          let this_epoch = LibraConfig::get_current_epoch();
+          miner_redemption_state.latest_epoch_mining = this_epoch;
+          miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
+          miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
+      };
 
       // 3. Clear the state of these in_process proofs.
       // Either they were redeemed or they were not relevant for updating the user delay history.
@@ -316,7 +343,7 @@ address 0x0 {
       let this_epoch = LibraConfig::get_current_epoch();
       miner_redemption_state.latest_epoch_mining = this_epoch;
 
-      // Return it's weight
+      // Return its weight
       miner_redemption_state.epochs_validating_and_mining
     }
 
@@ -371,7 +398,7 @@ address 0x0 {
       // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
       // the address of a miner.
       // Note: The bytes of the miner challenge is as follows:
-      //         32 // OL Key
+      //         32 // 0L Key
       //         +64 // chain_id
       //         +8 // iterations/difficulty
       //         +1024; // statement
@@ -384,5 +411,23 @@ address 0x0 {
       Transaction::assert(new_account_address == parsed_address, 130113021010);
 
     }
+
+        // Get weight of validator identified by address
+    public fun get_miner_state(miner_addr: address): vector<vector<u8>> acquires MinerProofHistory {
+      // Permission check
+      // let sender = Transaction::sender();
+      // Transaction::assert(sender == 0x0, 130110014010);
+      let test = borrow_global<MinerProofHistory>(miner_addr);
+      *&test.verified_proof_history
+    }
+
+
+    // Get latest epoch mined by node on given address
+    public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
+      let addr_state = borrow_global<MinerProofHistory>(addr);
+      *&addr_state.latest_epoch_mining
+    }
   }
 }
+
+

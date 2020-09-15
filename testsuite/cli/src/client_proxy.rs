@@ -6,6 +6,7 @@ use crate::{
     libra_client::LibraClient,
     AccountData, AccountStatus,
 };
+
 use anyhow::{bail, ensure, format_err, Error, Result};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
@@ -234,9 +235,9 @@ impl ClientProxy {
         difficulty: u64,
         proof: Vec<u8>,
         tower_height: u64,
-        is_blocking: bool
+        is_blocking: bool,
         ) -> Result<()>{
-
+        
 
         // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
         let mut sender_account_data = Self::get_account_data_from_address(
@@ -249,7 +250,7 @@ impl ClientProxy {
 
         // create the MinerState transaction script
         let script = Script::new(
-            StdlibScript::Redeem.compiled_bytes().into_vec(),
+            StdlibScript::MinerState.compiled_bytes().into_vec(),
             vec![],
             vec![
                 TransactionArgument::U8Vector(challenge),
@@ -271,7 +272,9 @@ impl ClientProxy {
 
         // Submit the transaction with the client proxy
         // let sender_account = self.accounts.get_mut(sender_ref_id);
-        &mut self.client.submit_transaction(Some(&mut sender_account_data), txn)?;
+        &mut self.client.submit_transaction(
+            Some(&mut sender_account_data), 
+            txn)?;
 
         // TODO: This was making the client fail.
         if is_blocking {
@@ -283,6 +286,64 @@ impl ClientProxy {
         Ok(())
     }
 
+    /// send an onboarding transaction for a new miner
+    pub fn execute_send_onboarding(
+        &mut self,
+        sender_address: AccountAddress,
+        challenge: Vec<u8>,
+        difficulty: u64,
+        proof: Vec<u8>,
+        tower_height: u64,
+        is_blocking: bool,
+        ) -> Result<()>{
+        
+
+        // TODO: for swarm testing use Keypair, this will override the use of wallet for signing transaction.
+        let mut sender_account_data = Self::get_account_data_from_address(
+            &mut self.client,sender_address,
+            true,
+            None, // Pass a keypair from swarm tests here.
+            None
+        ).unwrap();
+
+
+        // create the MinerState transaction script
+        let script = Script::new(
+            StdlibScript::MinerState.compiled_bytes().into_vec(),
+            vec![],
+            vec![
+                TransactionArgument::U8Vector(challenge),
+                TransactionArgument::U64(difficulty),
+                TransactionArgument::U8Vector(proof),
+                TransactionArgument::U64(tower_height),
+                
+            ],
+        );
+
+        // sign the transaction script
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(script),
+            &sender_account_data,
+            Some(700_000), /* max_gas_amount */
+            Some(0), /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        // Submit the transaction with the client proxy
+        // let sender_account = self.accounts.get_mut(sender_ref_id);
+        &mut self.client.submit_transaction(
+            Some(&mut sender_account_data), 
+            txn)?;
+
+        // TODO: This was making the client fail.
+        if is_blocking {
+            let sequence_number = self
+                .get_account_resource_and_update(sender_address)?
+                .sequence_number;
+            self.wait_for_transaction(sender_address, sequence_number)?;
+        }
+        Ok(())
+    }
     /// 0L: Send a VDF proof from the Libra Shell with delimited strings
     /// Wraps execute_send_proof
     pub fn send_proof(&mut self, space_delim_strings: &[&str], _is_blocking: bool) -> Result<()> {
@@ -311,7 +372,7 @@ impl ClientProxy {
             difficulty,
             proof,
             tower_height,
-            false
+            false,
         )?;
         Ok(())
     }
@@ -319,17 +380,11 @@ impl ClientProxy {
     /// 0L: Get Miner State
     /// A wrap for libra cli to execute query miner state command.
     pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
-        // ensure!(
-        //     space_delim_strings.len() != 6 ,
-        //     "Invalid number of arguments for sending proof"
-        // );
 
-        println!("Debug: get miner state \n\nargs: {:?}", space_delim_strings );
-
-        // let (sender_address, _) =
-        //     self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
         let (sender_address, _) =
-        self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
+        // let (sender_address, _) =
+        // self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
         self.client.get_miner_state(sender_address ).unwrap()
     }
@@ -1264,10 +1319,8 @@ impl ClientProxy {
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
-        let mut addr_para = para.clone().to_owned();
         if para.starts_with("0x") {
-            //          "8d3fe9ec9b6dd1b339eb416e287de265"
-            addr_para = "00000000000000000000000000000000".to_owned();
+            let addr_para = "00000000000000000000000000000000".to_owned();
             println!("query for address:{}", addr_para);
             return Ok((ClientProxy::address_from_strings(addr_para.as_str() )?, None))
         }
@@ -1466,7 +1519,7 @@ impl ClientProxy {
         key_pair: Option<KeyPair<Ed25519PrivateKey, Ed25519PublicKey>>,
         authentication_key_opt: Option<Vec<u8>>,
     ) -> Result<AccountData> {
-        let (sequence_number, authentication_key, status) = if sync_with_validator {
+        let (sequence_number,authentication_key, status) = if sync_with_validator {
             match client.get_account_state(address, true) {
                 Ok(resp) => match resp.0 {
                     Some(account_view) => (

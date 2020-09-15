@@ -11,7 +11,6 @@ use libra_types::{
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use libra_wallet::Mnemonic;
 
 // 0L TODO: Use OlMinerConfig to generate miner Toml
 // use miner::config::OlMinerConfig;
