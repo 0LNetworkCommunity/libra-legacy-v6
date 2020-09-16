@@ -107,6 +107,9 @@ bins:
 	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
 	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
+compress: 
+	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+
 build-node:
 	cd ~/libra && cargo build -p libra-node --release
 	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
