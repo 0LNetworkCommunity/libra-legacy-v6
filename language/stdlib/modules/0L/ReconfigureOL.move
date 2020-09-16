@@ -82,9 +82,9 @@ address 0x0 {
             let validator_set = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch(), current_block_height);
             let length = Vector::length<address>(&validator_set);
 
-            // If the number of validators in the next epoch is less than 4, we dont run the LibraSystem::bulk_update 
-            // Remains in the same epoch number because the configuration (validatorSet) is unchanged 
-            // However, subsidies are minted, distributed and burned at epoch lengths. 
+            // If the cardinality of validator_set in the next epoch is less than 4, we skip the epoch tranisition. 
+            // Refer Theorem: If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness (@sm86)  
+            // This is very rare and theoritically impossible for network with at least 6 nodes and 6 rounds. 
             if(length >= 4){
                 // Step 2: Call bulkUpdate module
                 LibraSystem::bulk_update_validators(account, validator_set);    
