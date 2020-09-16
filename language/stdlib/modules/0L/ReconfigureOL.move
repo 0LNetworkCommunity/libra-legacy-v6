@@ -1,12 +1,13 @@
+///////////////////////////////////////////////////////////////////////////
+// 0L Module
+// Epoch Prologue
+///////////////////////////////////////////////////////////////////////////
+// The prologue for transitioning to next epoch after every n blocks.
+// File Prefix for errors: 1801
+///////////////////////////////////////////////////////////////////////////
+
 address 0x0 {
     module ReconfigureOL {
-
-    ///////////////////////////////////////////////////////////////////////////
-    // OpenLibra Module
-    // Epoch Prologue - the prologue for transitioning to next epoch after every n blocks.
-    // File Prefix for errors: 1801
-    ///////////////////////////////////////////////////////////////////////////
-
         use 0x0::Signer;
         use 0x0::Transaction;
         use 0x0::LibraConfig;
@@ -63,7 +64,7 @@ address 0x0 {
            let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, current_block_height);
 
             Subsidy::process_subsidy(account, &outgoing_validators, &outgoing_validator_weights,
-                                    subsidy_units, sum_of_all_validator_weights);
+                                    subsidy_units, sum_of_all_validator_weights, current_block_height);
             // Step 3: Distribute transaction fees here before updating validators
             TransactionFee::distribute_transaction_fees<GAS::T>();
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.

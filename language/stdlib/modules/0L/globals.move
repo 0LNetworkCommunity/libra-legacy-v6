@@ -1,6 +1,11 @@
+///////////////////////////////////////////////////////////////////
+// 0L Module
+// Globals
+///////////////////////////////////////////////////////////////////
+
 address 0x0 {
 
-// This module is not complete, as Metadata has not been implemented.
+// TODO: This module is not complete, as Metadata has not been implemented.
 
 module Globals {
     use 0x0::Vector;
@@ -115,7 +120,7 @@ module Globals {
         return GlobalConstants {
           epoch_length: 15,
           max_validator_per_epoch: 10,
-          epoch_boundary_buffer: 2,
+          epoch_boundary_buffer: 5,
           subsidy_ceiling_gas: 296,
           min_node_density: 4,
           max_node_density: 300,
@@ -125,10 +130,10 @@ module Globals {
 
       } else {
         return GlobalConstants {
-          epoch_length: 196992, // approx 24 hours at 2.28 blocks/sec
+          epoch_length: 128000, // approx 24 hours at 1.4 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
           // from LibraVMConfig.
-          epoch_boundary_buffer: 100,
+          epoch_boundary_buffer: 5000,
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs
           // target transaction per sec max gas: 20

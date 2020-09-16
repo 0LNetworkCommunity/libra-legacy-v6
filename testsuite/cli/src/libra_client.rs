@@ -279,6 +279,7 @@ impl LibraClient {
                 new_state,
                 latest_epoch_change_li,
             } => {
+                println!("\n");
                 info!(
                     "Verified epoch changed to {}",
                     latest_epoch_change_li
@@ -292,6 +293,7 @@ impl LibraClient {
             }
             TrustedStateChange::Version { new_state } => {
                 if self.trusted_state.latest_version() < new_state.latest_version() {
+                    println!("\n");
                     info!("Verified version change to: {}", new_state.latest_version());
                 }
                 self.trusted_state = new_state;
