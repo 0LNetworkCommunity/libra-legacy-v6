@@ -861,6 +861,7 @@ module Libra {
             Errors::already_published(EMINT_CAPABILITY)
         );
         move_to(tc_account, mint_cap);
+        // move_to(lr_account, mint_cap);
         publish_burn_capability<CoinType>(tc_account, burn_cap, tc_account);
     }
 

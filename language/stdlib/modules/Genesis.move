@@ -12,6 +12,7 @@ module Genesis {
     use 0x1::DualAttestation;
     use 0x1::Event;
     use 0x1::LBR;
+    use 0x1::GAS;
     use 0x1::Libra;
     use 0x1::LibraAccount;
     use 0x1::LibraBlock;
@@ -58,6 +59,11 @@ module Genesis {
         Coin2::initialize(lr_account, tc_account);
 
         LBR::initialize(
+            lr_account,
+            tc_account,
+        );
+
+        GAS::initialize(
             lr_account,
             tc_account,
         );

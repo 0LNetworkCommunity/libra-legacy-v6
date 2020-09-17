@@ -188,9 +188,9 @@ fn main() {
         });
     }
 
-    time_it("Generating error explanations", || {
-        build_stdlib_error_code_map()
-    });
+    // time_it("Generating error explanations", || {
+    //     build_stdlib_error_code_map()
+    // });
 
     time_it("Generating packed types map", build_packed_types_map);
 }

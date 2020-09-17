@@ -146,6 +146,8 @@ module LibraAccount {
     const EGAS: u64 = 20;
     /// The `AccountOperationsCapability` was not in the required state
     const EACCOUNT_OPERATIONS_CAPABILITY: u64 = 22;
+    /// Not vm account
+    const ENOT_VM_ACCOUNT: u64 = 8001;
 
     /// Prologue errors. These are separated out from the other errors in this
     /// module since they are mapped separately to major VM statuses, and are
@@ -357,6 +359,16 @@ module LibraAccount {
         pragma verify = false;
     }
 
+    // OL_UPDATE::Enabling deposit to account
+    // Deposits the `to_deposit` coin into `account`
+    public fun deposit_gas<Token>(payer: &signer, payee: address, to_deposit: Libra<Token>)
+    acquires LibraAccount, Balance, AccountOperationsCapability {
+        let sender = Signer::address_of(payer);
+        // TODO::Update assert to check vm address
+        assert(sender == CoreAddresses::TREASURY_COMPLIANCE_ADDRESS(), ENOT_VM_ACCOUNT);
+        deposit(sender, payee, to_deposit, x"", x"")
+    }
+
     /// Record a payment of `to_deposit` from `payer` to `payee` with the attached `metadata`
     fun deposit<Token>(
         payer: address,
@@ -393,9 +405,9 @@ module LibraAccount {
             )
         };
 
+        
         // Deposit the `to_deposit` coin
         Libra::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
-
         // Log a received event
         Event::emit_event<ReceivedPaymentEvent>(
             &mut borrow_global_mut<LibraAccount>(payee).received_events,
@@ -664,6 +676,7 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
+        assert(cap.account_address == CoreAddresses::VM_RESERVED_ADDRESS(), ENOT_VM_ACCOUNT);
         deposit<Token>(
             *&cap.account_address,
             payee,
