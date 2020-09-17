@@ -94,8 +94,8 @@ impl TestConfig {
         let privkey = Ed25519PrivateKey::generate(rng);
 
         // TODO remove this before mainnet launch
-        let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
-        println!("Mnemonic: {:?}", mnemonic.to_string() );
+        // let mnemonic = Mnemonic::mnemonic(&privkey.to_bytes()).expect("Unable to create Mnemonic for privkey");
+        // println!("Mnemonic: {:?}", mnemonic.to_string() );
 
         self.auth_key = Some(AuthenticationKey::ed25519(&privkey.public_key()));
         println!("=========\n\
