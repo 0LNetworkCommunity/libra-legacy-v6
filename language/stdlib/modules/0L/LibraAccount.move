@@ -364,7 +364,7 @@ module LibraAccount {
     public fun deposit_gas<Token>(payer: &signer, payee: address, to_deposit: Libra<Token>)
     acquires LibraAccount, Balance, AccountOperationsCapability {
         let sender = Signer::address_of(payer);
-        // TODO::Update assert to check vm address
+        // OL::TODO::Update assert to check vm address
         assert(sender == CoreAddresses::TREASURY_COMPLIANCE_ADDRESS(), ENOT_VM_ACCOUNT);
         deposit(sender, payee, to_deposit, x"", x"")
     }

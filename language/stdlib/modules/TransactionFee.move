@@ -5,6 +5,7 @@ module TransactionFee {
     use 0x1::Errors;
     use 0x1::Coin1::Coin1;
     use 0x1::Coin2::Coin2;
+    use 0x1::GAS::GAS;
     use 0x1::LBR::{Self, LBR};
     use 0x1::Libra::{Self, Libra, Preburn};
     use 0x1::Roles;
@@ -34,9 +35,7 @@ module TransactionFee {
         CoreAddresses::assert_libra_root(lr_account);
         Roles::assert_treasury_compliance(tc_account);
         // accept fees in all the currencies
-        add_txn_fee_currency<Coin1>(lr_account, tc_account);
-        add_txn_fee_currency<Coin2>(lr_account, tc_account);
-        add_txn_fee_currency<LBR>(lr_account, tc_account);
+        add_txn_fee_currency<GAS>(lr_account, tc_account);
     }
     spec fun initialize {
         include LibraTimestamp::AbortsIfNotGenesis;

@@ -274,7 +274,7 @@ module Roles {
         let addr = Signer::address_of(account);
         assert(exists<RoleId>(addr), Errors::not_published(EROLE_ID));
         assert(
-            borrow_global<RoleId>(addr).role_id == TREASURY_COMPLIANCE_ROLE_ID,
+            borrow_global<RoleId>(addr).role_id == LIBRA_ROOT_ROLE_ID,
             Errors::requires_role(ETREASURY_COMPLIANCE)
         )
     }

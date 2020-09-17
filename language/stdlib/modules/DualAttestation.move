@@ -13,6 +13,7 @@ module DualAttestation {
     use 0x1::VASP;
     use 0x1::Vector;
     use 0x1::Event::{Self, EventHandle};
+    use 0x1::GAS::GAS;
 
     /// This resource holds an entity's globally unique name and all of the metadata it needs to
     /// participate in off-chain protocols.
@@ -417,7 +418,7 @@ module DualAttestation {
         LibraTimestamp::assert_genesis();
         CoreAddresses::assert_libra_root(lr_account); // operational constraint.
         assert(!exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::already_published(ELIMIT));
-        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Libra::scaling_factor<LBR>() as u128);
+        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Libra::scaling_factor<GAS>() as u128);
         assert(initial_limit <= MAX_U64, Errors::limit_exceeded(ELIMIT));
         move_to(
             lr_account,

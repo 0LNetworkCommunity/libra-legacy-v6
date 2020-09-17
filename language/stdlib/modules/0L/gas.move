@@ -5,7 +5,7 @@ module GAS {
     use 0x1::Libra;
     use 0x1::LibraTimestamp;
     use 0x1::FixedPoint32;
-
+  
     struct GAS { }
 
     public fun initialize(

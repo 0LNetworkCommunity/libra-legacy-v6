@@ -13,7 +13,7 @@ module Libra {
     use 0x1::Signer;
     use 0x1::Roles;
     use 0x1::LibraTimestamp;
-
+    
     resource struct RegisterNewCurrency {}
 
     /// The `Libra` resource defines the Libra coin for each currency in
@@ -840,13 +840,13 @@ module Libra {
     /// accounts.
     public fun register_SCS_currency<CoinType>(
         lr_account: &signer,
-        tc_account: &signer,
+        _tc_account: &signer,
         to_lbr_exchange_rate: FixedPoint32,
         scaling_factor: u64,
         fractional_part: u64,
         currency_code: vector<u8>,
     ) {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_treasury_compliance(lr_account);
         let (mint_cap, burn_cap) =
             register_currency<CoinType>(
                 lr_account,
@@ -857,12 +857,12 @@ module Libra {
                 currency_code,
             );
         assert(
-            !exists<MintCapability<CoinType>>(Signer::address_of(tc_account)),
+            !exists<MintCapability<CoinType>>(Signer::address_of(lr_account)),
             Errors::already_published(EMINT_CAPABILITY)
         );
-        move_to(tc_account, mint_cap);
+        move_to(lr_account, mint_cap);
         // move_to(lr_account, mint_cap);
-        publish_burn_capability<CoinType>(tc_account, burn_cap, tc_account);
+        publish_burn_capability<CoinType>(lr_account, burn_cap, lr_account);
     }
 
     spec fun register_SCS_currency {
