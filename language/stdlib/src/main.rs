@@ -155,18 +155,18 @@ fn main() {
 
     // Generate documentation
     if !no_doc {
-        time_it("Generating stdlib documentation", || {
-            std::fs::remove_dir_all(&STD_LIB_DOC_DIR).unwrap_or(());
-            std::fs::create_dir_all(&STD_LIB_DOC_DIR).unwrap();
-            build_stdlib_doc();
-        });
-        time_it("Generating script documentation", || {
-            std::fs::remove_dir_all(&TRANSACTION_SCRIPTS_DOC_DIR).unwrap_or(());
-            std::fs::create_dir_all(&TRANSACTION_SCRIPTS_DOC_DIR).unwrap();
-            transaction_files
-                .par_iter()
-                .for_each(|txn_file| build_transaction_script_doc(txn_file.clone()));
-        });
+        // time_it("Generating stdlib documentation", || {
+        //     std::fs::remove_dir_all(&STD_LIB_DOC_DIR).unwrap_or(());
+        //     std::fs::create_dir_all(&STD_LIB_DOC_DIR).unwrap();
+        //     build_stdlib_doc();
+        // });
+        // time_it("Generating script documentation", || {
+        //     std::fs::remove_dir_all(&TRANSACTION_SCRIPTS_DOC_DIR).unwrap_or(());
+        //     std::fs::create_dir_all(&TRANSACTION_SCRIPTS_DOC_DIR).unwrap();
+        //     transaction_files
+        //         .par_iter()
+        //         .for_each(|txn_file| build_transaction_script_doc(txn_file.clone()));
+        // });
     }
 
     // Generate script ABIs

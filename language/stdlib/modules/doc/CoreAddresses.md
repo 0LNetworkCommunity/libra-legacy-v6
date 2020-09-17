@@ -93,7 +93,7 @@ accounts on-chain.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">LIBRA_ROOT_ADDRESS</a>(): address {
-    0xA550C18
+    0x0
 }
 </code></pre>
 
@@ -122,7 +122,7 @@ be this from an operational viewpoint, so this is why this is separated out.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CURRENCY_INFO_ADDRESS</a>(): address {
-    0xA550C18
+    0x0
 }
 </code></pre>
 
@@ -149,7 +149,7 @@ operations. The account at this address is created in genesis.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">TREASURY_COMPLIANCE_ADDRESS</a>(): address {
-    0xB1E55ED
+    0x0
 }
 </code></pre>
 
