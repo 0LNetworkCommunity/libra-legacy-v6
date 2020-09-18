@@ -273,7 +273,8 @@ else
 		sudo chmod 660 ~/logs/miner.log
 	fi 
 
-
+# submit any backlog transactions
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start --resubmit
 # pipe logs to screen and tee to miner logs
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start 2> >(tee ~/logs/miner.log)
 
