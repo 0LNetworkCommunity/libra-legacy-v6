@@ -118,15 +118,12 @@ all-bins:
 	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	cd ~/libra/miner && miner keygen
+	cd ${DATA_PATH} && miner keygen
 
 miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
 
-reset: clear fixtures init keys genesis daemon
-
 #### FOR TESTING ####
-
 clear:
 ifdef TEST
 	cd ${DATA_PATH} && rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
@@ -264,7 +261,8 @@ daemon:
 miner:
 ifdef TEST
 #for debug-net fill in mnemonic from fixtures
-	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
+	echo ${MNEM}
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} miner start
 else
 	if test -d ~/logs; then \
 		echo "WIPING MINER LOGS"; \
