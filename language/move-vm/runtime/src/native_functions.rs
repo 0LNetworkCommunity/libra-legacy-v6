@@ -7,7 +7,7 @@ use move_core_types::{
     account_address::AccountAddress, gas_schedule::CostTable, value::MoveTypeLayout,
     vm_status::StatusType,
 };
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector, vdf};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,
@@ -45,6 +45,7 @@ pub(crate) enum NativeFunction {
     SignerBorrowAddress,
     CreateSigner,
     DestroySigner,
+    VDFVerify,
 }
 
 impl NativeFunction {
@@ -57,6 +58,7 @@ impl NativeFunction {
 
         let case = (module_address, module_name, function_name);
         Some(match case {
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify, // OL Change
             (&CORE_CODE_ADDRESS, "Hash", "sha2_256") => HashSha2_256,
             (&CORE_CODE_ADDRESS, "Hash", "sha3_256") => HashSha3_256,
             (&CORE_CODE_ADDRESS, "LCS", "to_bytes") => LCSToBytes,
@@ -108,6 +110,7 @@ impl NativeFunction {
             Self::SignerBorrowAddress => signer::native_borrow_address(ctx, t, v),
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
+            Self::VDFVerify => vdf::verify(ctx, t, v), // 0L change
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,
