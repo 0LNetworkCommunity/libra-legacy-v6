@@ -123,10 +123,6 @@ impl Config {
         // Adding genesis file location
         config.execution.genesis_file_location = path.join("genesis.blob");
 
-        //TODO: The data is unecessary here, but may be good to include the actual data.
-        config.configs_ol_miner.preimage = "".to_string();
-        config.configs_ol_miner.proof = "".to_string();
-
         config.storage.prune_window=Some(200_000);
 
         // TODO: place in path with other files.
