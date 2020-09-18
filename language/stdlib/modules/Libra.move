@@ -240,7 +240,7 @@ module Libra {
     spec schema PublishBurnCapAbortsIfs<CoinType> {
         account: &signer;
         tc_account: &signer;
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotLibraRoot{account: tc_account};
         aborts_if exists<BurnCapability<CoinType>>(Signer::spec_address_of(account)) with Errors::ALREADY_PUBLISHED;
     }
     /// Returns true if a BurnCapability for CoinType exists at addr.
@@ -448,7 +448,7 @@ module Libra {
     spec fun publish_preburn_to_account {
         modifies global<Preburn<CoinType>>(Signer::spec_address_of(account));
         include Roles::AbortsIfNotDesignatedDealer;
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotLibraRoot{account: tc_account};
         include AbortsIfNoCurrency<CoinType>;
         aborts_if is_synthetic_currency<CoinType>() with Errors::INVALID_ARGUMENT;
         aborts_if exists<Preburn<CoinType>>(Signer::spec_address_of(account)) with Errors::ALREADY_PUBLISHED;
@@ -866,10 +866,10 @@ module Libra {
     }
 
     spec fun register_SCS_currency {
-        aborts_if exists<MintCapability<CoinType>>(Signer::spec_address_of(tc_account)) with Errors::ALREADY_PUBLISHED;
+        aborts_if exists<MintCapability<CoinType>>(Signer::spec_address_of(lr_account)) with Errors::ALREADY_PUBLISHED;
         include RegisterCurrencyAbortsIf<CoinType>;
-        include PublishBurnCapAbortsIfs<CoinType>{account: tc_account};
-        ensures spec_has_mint_capability<CoinType>(Signer::spec_address_of(tc_account));
+        include PublishBurnCapAbortsIfs<CoinType>{account: lr_account};
+        ensures spec_has_mint_capability<CoinType>(Signer::spec_address_of(lr_account));
     }
 
     /// Returns the total amount of currency minted of type `CoinType`.
@@ -985,7 +985,7 @@ module Libra {
         );
     }
     spec fun update_lbr_exchange_rate {
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotLibraRoot{account: tc_account};
         include AbortsIfNoCurrency<FromCoinType>;
         ensures spec_currency_info<FromCoinType>().to_lbr_exchange_rate == lbr_exchange_rate;
     }
@@ -1161,16 +1161,16 @@ module Libra {
 
     spec module {
         /// The permission "MintCurrency(type)" is granted to TreasuryCompliance [B11].
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to register_SCS_currency<CoinType>;
+        apply Roles::AbortsIfNotLibraRoot{account: lr_account} to register_SCS_currency<CoinType>;
 
         /// The permission "BurnCurrency(type)" is granted to TreasuryCompliance [B12].
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to register_SCS_currency<CoinType>;
+        apply Roles::AbortsIfNotLibraRoot{account: lr_account} to register_SCS_currency<CoinType>;
 
         /// The permission "PreburnCurrency(type)" is granted to DesignatedDealer [B13].
         apply Roles::AbortsIfNotDesignatedDealer to publish_preburn_to_account<CoinType>;
 
         /// The permission "UpdateExchangeRate(type)" is granted to TreasuryCompliance [B14].
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to update_lbr_exchange_rate<FromCoinType>;
+        apply Roles::AbortsIfNotLibraRoot{account: lr_account} to update_lbr_exchange_rate<FromCoinType>;
     }
 
     spec schema TotalValueNotIncrease<CoinType> {
