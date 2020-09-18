@@ -23,6 +23,7 @@ module Genesis {
     use 0x1::TransactionFee;
     use 0x1::Roles;
     use 0x1::LibraVMConfig;
+    use 0x1::Stats;
 
     fun initialize(
         lr_account: &signer,
@@ -78,6 +79,9 @@ module Genesis {
         LibraBlock::initialize_block_metadata(lr_account);
         LibraWriteSetManager::initialize(lr_account);
         LibraTimestamp::initialize(lr_account);
+
+        // Stats module
+        Stats::initialize(lr_account);
         
         let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
         LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
