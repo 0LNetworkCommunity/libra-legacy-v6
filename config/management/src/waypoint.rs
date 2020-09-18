@@ -79,7 +79,7 @@ impl CreateWaypoint {
             }
 
             let mut file = File::create(path.join("genesis_waypoint.txt")).unwrap();
-            file.write_all(&waypoint.to_string().as_bytes() );
+            file.write_all(&waypoint.to_string().as_bytes()).unwrap();
 
             return Ok(waypoint);
         }

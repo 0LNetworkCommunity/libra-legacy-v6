@@ -306,7 +306,7 @@ impl StorageHelper {
         command.verify()
     }
 
-    pub fn verify_genesis(&self, namespace: &str, genesis_path: &Path) -> Result<String, Error> {
+pub fn verify_genesis(&self, namespace: &str, genesis_path: &Path) -> Result<String, Error> {
         let args = format!(
             "
                 management
