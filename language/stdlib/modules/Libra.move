@@ -223,9 +223,9 @@ module Libra {
     public fun publish_burn_capability<CoinType>(
         account: &signer,
         cap: BurnCapability<CoinType>,
-        tc_account: &signer,
+        lr_account: &signer,
     ) {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_treasury_compliance(lr_account);
         assert_is_currency<CoinType>();
         assert(
             !exists<BurnCapability<CoinType>>(Signer::address_of(account)),
@@ -239,8 +239,8 @@ module Libra {
     }
     spec schema PublishBurnCapAbortsIfs<CoinType> {
         account: &signer;
-        tc_account: &signer;
-        include Roles::AbortsIfNotLibraRoot{account: tc_account};
+        lr_account: &signer;
+        include Roles::AbortsIfNotLibraRoot{account: lr_account};
         aborts_if exists<BurnCapability<CoinType>>(Signer::spec_address_of(account)) with Errors::ALREADY_PUBLISHED;
     }
     /// Returns true if a BurnCapability for CoinType exists at addr.
@@ -969,10 +969,10 @@ module Libra {
     /// Updates the `to_lbr_exchange_rate` held in the `CurrencyInfo` for
     /// `FromCoinType` to the new passed-in `lbr_exchange_rate`.
     public fun update_lbr_exchange_rate<FromCoinType>(
-        tc_account: &signer,
+        lr_account: &signer,
         lbr_exchange_rate: FixedPoint32
     ) acquires CurrencyInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_treasury_compliance(lr_account);
         assert_is_currency<FromCoinType>();
         let currency_info = borrow_global_mut<CurrencyInfo<FromCoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         currency_info.to_lbr_exchange_rate = lbr_exchange_rate;
@@ -985,7 +985,7 @@ module Libra {
         );
     }
     spec fun update_lbr_exchange_rate {
-        include Roles::AbortsIfNotLibraRoot{account: tc_account};
+        include Roles::AbortsIfNotLibraRoot{account: lr_account};
         include AbortsIfNoCurrency<FromCoinType>;
         ensures spec_currency_info<FromCoinType>().to_lbr_exchange_rate == lbr_exchange_rate;
     }
