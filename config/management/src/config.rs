@@ -117,8 +117,7 @@ impl Config {
 
         // Adding genesis file location
         config.execution.genesis_file_location = path.join("genesis.blob");
-
-        config.storage.prune_window=Some(200_000);
+        config.storage.prune_window=Some(20_000);
 
         // TODO: place in path with other files.
         // Save file
