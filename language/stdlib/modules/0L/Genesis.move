@@ -10,6 +10,7 @@ module Genesis {
     use 0x1::DualAttestation;
     use 0x1::Event;
     use 0x1::GAS;
+    use 0x1::Globals;
     use 0x1::Libra;
     use 0x1::LibraAccount;
     use 0x1::LibraBlock;
@@ -82,6 +83,7 @@ module Genesis {
 
         // Stats module
         Stats::initialize(lr_account);
+        Globals::initialize(lr_account, true);
         
         let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
         LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
