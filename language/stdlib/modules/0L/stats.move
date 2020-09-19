@@ -14,7 +14,7 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Signer;
     use 0x0::Transaction;
-    use 0x0::Testnet;
+    // use 0x0::Testnet;
 
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
