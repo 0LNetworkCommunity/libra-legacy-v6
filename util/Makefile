@@ -262,7 +262,7 @@ daemon:
 miner:
 ifdef TEST
 #for debug-net fill in mnemonic from fixtures
-	echo ${MNEM}
+	@echo ${MNEM}
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start
 else
 	if test -d ~/logs; then \
