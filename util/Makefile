@@ -107,6 +107,9 @@ bins:
 	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
 	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
+compress: 
+	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+  
 build-node:
 	cd ~/libra && cargo build -p libra-node --release
 	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
@@ -115,7 +118,7 @@ all-bins:
 	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	cd ~/libra/miner && miner keygen
+	cd ${DATA_PATH} && miner keygen
 
 miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
@@ -123,7 +126,6 @@ miner-genesis:
 reset: clear fixtures init keys genesis daemon
 
 #### FOR TESTING ####
-
 clear:
 ifdef TEST
 	cd ${DATA_PATH} && rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
@@ -235,7 +237,6 @@ remove-keys:
 start:
 # run in foreground. Only for testing, use a daemon for net.
 	libra-node --config ${DATA_PATH}/node.configs.toml
-	
 
 daemon:
 # your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
@@ -261,7 +262,8 @@ daemon:
 miner:
 ifdef TEST
 #for debug-net fill in mnemonic from fixtures
-	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
+	echo ${MNEM}
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} miner start
 else
 	if test -d ~/logs; then \
 		echo "WIPING MINER LOGS"; \
@@ -270,23 +272,14 @@ else
 		sudo chmod 660 ~/logs/miner.log
 	fi 
 
-
+# submit any backlog transactions
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start --resubmit
 # pipe logs to screen and tee to miner logs
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start 2> >(tee ~/logs/miner.log)
 
 endif
 
 wipe: 
+	history -c
 	shred ~/.bash_history
 	srm ~/.bash_history
-	history -c
-	smem
-	sswap
-# sfill <mountpoint>
-
-
-# datadog:
-# 	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=xxxxxxxxxx DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
-# 	# mkdir /etc/datadog-agent/conf.d/libra.d/
-# 	cp datadog_config.yaml /etc/datadog-agent/conf.d/libra.d/conf.yaml
-# 	service datadog-agent start

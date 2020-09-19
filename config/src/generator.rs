@@ -4,7 +4,7 @@
 //! Convenience structs and functions for generating a random set of Libra ndoes without the
 //! genesis.blob.
 
-use crate::config::{NetworkConfig, NodeConfig, SeedPeersConfig, TestConfig, HANDSHAKE_VERSION};
+use crate::config::{NetworkConfig, NodeConfig, SeedPeersConfig, TestConfig, HANDSHAKE_VERSION, GenesisMiningProof};
 use libra_network_address::NetworkAddress;
 use rand::{rngs::StdRng, SeedableRng};
 
@@ -51,7 +51,8 @@ pub fn validator_swarm(
 pub fn validator_swarm_for_testing(nodes: usize) -> ValidatorSwarm {
     let mut config = NodeConfig::default();
     config.test = Some(TestConfig::open_module());
-    validator_swarm(&NodeConfig::default(), nodes, [1u8; 32], true)
+    config.miner_swarm_fixture = Some(GenesisMiningProof::default());
+    validator_swarm(&config, nodes, [1u8; 32], true)
 }
 
 /// Convenience function that builds a `SeedPeersConfig` containing a single peer
