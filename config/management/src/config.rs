@@ -1,21 +1,17 @@
-use crate::{error::Error, storage_helper::StorageHelper, SingleBackend};
+use crate::{error::Error, SingleBackend};
 use libra_config::{
     config::{
-        DiscoveryMethod, Identity, NetworkConfig, NodeConfig, OnDiskStorageConfig, RoleType,
-        SecureBackend, WaypointConfig,UpstreamConfig, PeerNetworkId
+        DiscoveryMethod, Identity, NetworkConfig, NodeConfig, WaypointConfig,UpstreamConfig, PeerNetworkId
     },
     network_id::NetworkId,
 };
-use libra_secure_storage::{Storage, Value};
+use libra_secure_storage::Storage;
 
-use libra_network_address::{NetworkAddress, RawNetworkAddress};
+use libra_network_address::NetworkAddress;
 use structopt::StructOpt;
-// use std::convert::TryInto;
 use log::Level;
-use std::{convert::TryInto, fs, fs::File, io::Write, net::SocketAddr, path::PathBuf};
+use std::{convert::TryInto, fs, path::PathBuf};
 use libra_types::{
-    account_address::{self, AccountAddress},
-    // authenticator::AuthenticationKey
     transaction::authenticator::AuthenticationKey
 };
 
@@ -41,7 +37,7 @@ impl Config {
     pub fn execute(self) -> Result<String, Error> {
         let mut config = NodeConfig::default();
 
-        let mut local: Box<dyn Storage> = self.backend.backend.clone().try_into().unwrap();
+        let local: Box<dyn Storage> = self.backend.backend.clone().try_into().unwrap();
         local
             .available()
             .map_err(|e| Error::LocalStorageUnavailable(e.to_string())).unwrap();
@@ -78,7 +74,7 @@ impl Config {
         config.upstream.primary_networks.push(upstream);
 
 
-        for (acc, v) in peers.get_seed_info().unwrap().seed_peers.iter() {
+        for (acc, _network_addresses) in peers.get_seed_info().unwrap().seed_peers.iter() {
             if upstream != *acc{
             config.upstream.upstream_peers.insert(PeerNetworkId(upstream,acc.clone()));
             }
@@ -93,7 +89,6 @@ impl Config {
             network.advertised_address = self.validator_address;
             network.identity = Identity::from_storage(
                 libra_global_constants::VALIDATOR_NETWORK_KEY.into(),
-                ///Nod
                 libra_global_constants::OPERATOR_ACCOUNT.into(),
                 self.backend.backend.clone().try_into().unwrap(),
             );
@@ -122,12 +117,7 @@ impl Config {
 
         // Adding genesis file location
         config.execution.genesis_file_location = path.join("genesis.blob");
-
-        //TODO: The data is unecessary here, but may be good to include the actual data.
-        config.configs_ol_miner.preimage = "".to_string();
-        config.configs_ol_miner.proof = "".to_string();
-
-        config.storage.prune_window=Some(200_000);
+        config.storage.prune_window=Some(20_000);
 
         // TODO: place in path with other files.
         // Save file
