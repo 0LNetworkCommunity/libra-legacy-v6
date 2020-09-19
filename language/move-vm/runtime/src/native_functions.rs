@@ -46,6 +46,7 @@ pub(crate) enum NativeFunction {
     CreateSigner,
     DestroySigner,
     VDFVerify,
+    RedeemAuthKeyParse,     // 0L change
 }
 
 impl NativeFunction {
@@ -59,6 +60,7 @@ impl NativeFunction {
         let case = (module_address, module_name, function_name);
         Some(match case {
             (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify, // OL Change
+            (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,   // 0L change
             (&CORE_CODE_ADDRESS, "Hash", "sha2_256") => HashSha2_256,
             (&CORE_CODE_ADDRESS, "Hash", "sha3_256") => HashSha3_256,
             (&CORE_CODE_ADDRESS, "LCS", "to_bytes") => LCSToBytes,
@@ -111,6 +113,7 @@ impl NativeFunction {
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
             Self::VDFVerify => vdf::verify(ctx, t, v), // 0L change
+            Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),// 0L change
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,
