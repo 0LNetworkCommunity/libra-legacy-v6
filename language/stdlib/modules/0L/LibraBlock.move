@@ -65,11 +65,15 @@ module LibraBlock {
           let block_metadata_ref = borrow_global<BlockMetadata>(0x0);
           Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
         };
-        AutoPay::autopay(vm, get_current_block_height());
+        // AutoPay::autopay(vm, get_current_block_height());
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
         // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
 
+        // OL Autopay module
+        // if (round == (Globals::get_epoch_length()/2)){
+        //     AutoPay::process_autopay(vm, )
+        // };
         // 0L implementation of reconfiguration.
         if ( round == Globals::get_epoch_length() )
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata.
@@ -89,7 +93,6 @@ module LibraBlock {
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
 
         block_metadata_ref.height = block_metadata_ref.height + 1;
-        AutoPay::update_block(block_metadata_ref.height);
         block_metadata_ref.voters = *&previous_block_votes;
 
         Event::emit_event<NewBlockEvent>(
