@@ -263,7 +263,7 @@ miner:
 ifdef TEST
 #for debug-net fill in mnemonic from fixtures
 	echo ${MNEM}
-	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} miner start
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start
 else
 	if test -d ~/logs; then \
 		echo "WIPING MINER LOGS"; \
