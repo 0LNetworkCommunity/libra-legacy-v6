@@ -122,7 +122,7 @@ address 0x0 {
         // Debug::print(&0x000000000013370000003);
 
         // Verify the proof before anything else (i.e. user actually did the delay)
-        // TODO: A faster way to check for minor errors, since it's an expensive operation.
+        // TODO: A faster way to check for miner tx errors, since it's an expensive operation.
         let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
         Transaction::assert(valid, 130106021021);
         // Debug::print(&0x000000000013370000004);
@@ -183,9 +183,6 @@ address 0x0 {
         // Debug::print(&0x000000000013370010003);
 
       };
-
-
-
 
       // 5. Update the miner's state with pending statistics.
       // remove the proof that was placed provisionally in invalid_proofs, since it passed.
@@ -259,7 +256,6 @@ address 0x0 {
       // Debug::print(last_verified_proof);  
       // Debug::print(&vdf_proof_blob.solution);
 
-      // TODO (LG): confirm hashes.
       let previous_verified_solution_hash = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
       // Debug::print(&0x000000000013370020002);
 
@@ -313,7 +309,8 @@ address 0x0 {
       let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
 
       // 2. Update statistics.
-      if( Vector::length( &proofs_in_epoch.proofs ) > 0) {
+      let threshold = Globals::get_threshold();
+      if (Vector::length( &proofs_in_epoch.proofs ) > threshold) {
           let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
           let this_epoch = LibraConfig::get_current_epoch();
           miner_redemption_state.latest_epoch_mining = this_epoch;

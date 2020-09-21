@@ -24,6 +24,7 @@ module Globals {
       max_node_density: u64,
       burn_accounts: vector<address>,
       difficulty: u64,
+      epoch_mining_threshold: u64,
     }
 
     // // Some global state needs to be accesible to every module. Using Librablock causes
@@ -113,6 +114,10 @@ module Globals {
       get_constants().difficulty
     }
 
+    public fun get_threshold(): u64 {
+      get_constants().epoch_mining_threshold
+    }
+
     fun get_constants(): GlobalConstants  {
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()) {
@@ -125,6 +130,7 @@ module Globals {
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
           difficulty: 100,
+          epoch_mining_threshold: 0,
         }
 
       } else {
@@ -138,6 +144,7 @@ module Globals {
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
           difficulty: 2400000,
+          epoch_mining_threshold: 1,
         } 
       } else {
           return GlobalConstants {
@@ -153,7 +160,8 @@ module Globals {
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
-          difficulty: 2400000,
+          difficulty: 2400000, //10 mins on macbook pro 2.5 ghz quadcore
+          epoch_mining_threshold: 20,
           }
         }
       }
