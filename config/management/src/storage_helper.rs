@@ -67,7 +67,7 @@ impl StorageHelper {
         storage.set(WAYPOINT, Value::String("".into())).unwrap();
     }
 
-    pub fn initialize_with_menmonic(&self, namespace: String, mnemonic: String) {
+    pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
         let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
 
         let kf = KeyFactory::new(&seed).unwrap();
