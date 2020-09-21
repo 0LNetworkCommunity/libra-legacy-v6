@@ -45,31 +45,51 @@ echo:
 
 ifeq ($(NAMESPACE), alice)
 NAMESPACE = alice
-ACC = 402e9aaf54ca8c39bab641b0c9829070
-AUTH = 3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070
+ACC = 60a7f52bf6c4c7e2d7da613345dfa239
+#ACC = 402e9aaf54ca8c39bab641b0c9829070
+
+AUTH = 16b3140f06e6e42d92342ccbf632adcb60a7f52bf6c4c7e2d7da613345dfa239
+#AUTH = 3dfca19b9914d78ec0c3d04c486e7baa402e9aaf54ca8c39bab641b0c9829070
 IP = 142.93.191.147
-MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
+#MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
+MNEM = area split very toss jazz quarter south have shock enough bicycle era stamp pond limb only unusual parent usage combine live mandate bid together
 endif
 
 ifeq ($(NAMESPACE), bob)
-ACC = 5e7891b719c305941e62867ffe730f48
-AUTH = 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
+ACC = bba78730aebe02c2d0440ccaa000ffa0
+
+#ACC = 5e7891b719c305941e62867ffe730f48
+
+AUTH = 2d20a02220b0f03fbec8df47b8a15faebba78730aebe02c2d0440ccaa000ffa0
+#AUTH = 200eaeef43a4e938bc6ff34318d2559d5e7891b719c305941e62867ffe730f48
 IP = 167.71.84.248
-MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
+MNEM = fog museum credit wolf torch floor identify dentist interest mixed vessel harvest soap number scrub improve tribe betray crunch speak book normal wreck announce
+
+# MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
 endif
 
 ifeq ($(NAMESPACE), carol)
-ACC = b2f38139f75a271fd8f8fae4a87c2679
-AUTH = 4b964ff86508164652cce32107cd7107b2f38139f75a271fd8f8fae4a87c2679
+ACC = 1a65ebb700cc46ef18be8c89a30e925d
+# ACC = b2f38139f75a271fd8f8fae4a87c2679
+
+AUTH = f28aa46340c37f8148a732ca184bb9d81a65ebb700cc46ef18be8c89a30e925d
+# AUTH = 4b964ff86508164652cce32107cd7107b2f38139f75a271fd8f8fae4a87c2679
 IP = 104.131.56.224
-MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
+MNEM = liquid crater fiber velvet retire end flag opera grow diet bulb ten hurt novel oval absorb movie nephew issue bicycle drill skirt hedgehog ocean
+
+# MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
 endif
 
 ifeq ($(NAMESPACE), dave)
-ACC = 027c83aeb3b9c085f5a1506b418d08cf
-AUTH = 54cf55ab1aff7b757af9a6b07dba6011027c83aeb3b9c085f5a1506b418d08cf
+ACC = 1c00147d973915b197bcf8c3346b6ea7
+# ACC = 027c83aeb3b9c085f5a1506b418d08cf
+
+AUTH = c316b55c2a51fb082503c5484336e2cc1c00147d973915b197bcf8c3346b6ea7
+# AUTH = 54cf55ab1aff7b757af9a6b07dba6011027c83aeb3b9c085f5a1506b418d08cf
 IP = 104.131.32.62
-MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
+MNEM = payment puppy royal disorder bread ozone able remove amused obey bitter rice fatigue imitate juice club adjust speed jewel soul huge piece donkey unlock
+
+# MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
 ##########################

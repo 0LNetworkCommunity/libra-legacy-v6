@@ -10,8 +10,7 @@ address 0x0 {
 module Globals {
     use 0x0::Vector;
     use 0x0::Testnet;
-
-
+    use 0x0::StagingNet;
 
     // Some constants need to changed based on environment; dev, testing, prod.
     struct GlobalConstants {
@@ -116,7 +115,7 @@ module Globals {
 
     fun get_constants(): GlobalConstants  {
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
-      if (Testnet::is_testnet()){
+      if (Testnet::is_testnet()) {
         return GlobalConstants {
           epoch_length: 15,
           max_validator_per_epoch: 10,
@@ -129,26 +128,35 @@ module Globals {
         }
 
       } else {
+        if (StagingNet::is_staging_net()){
         return GlobalConstants {
-          epoch_length: 128000, // approx 24 hours at 1.4 blocks/sec
-          max_validator_per_epoch: 300, // max expected for BFT limits.
-          // from LibraVMConfig.
-          epoch_boundary_buffer: 5000,
-          // Target max gas units per transaction 100000000
-          // target max block time: 2 secs
-          // target transaction per sec max gas: 20
-          // uses "scaled representation", since there are no decimals.
-          subsidy_ceiling_gas: 8640000 * coin_scale, // coins assumes 24 hour epoch lengths.
-          // FixedPoint32::multiply_u64(8640000, coin_scale)
+          epoch_length: 1000,
+          max_validator_per_epoch: 10,
+          epoch_boundary_buffer: 100,
+          subsidy_ceiling_gas: 296,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
           difficulty: 2400000,
+        } 
+      } else {
+          return GlobalConstants {
+          epoch_length: 128000, // approx 24 hours at 1.4 blocks/sec
+          max_validator_per_epoch: 300, // max expected for BFT limits.
+          epoch_boundary_buffer: 5000,
+          // See LibraVMConfig for gas constants:
+          // Target max gas units per transaction 100000000
+          // target max block time: 2 secs
+          // target transaction per sec max gas: 20
+          // uses "scaled representation", since there are no decimals.
+          subsidy_ceiling_gas: 8640000 * coin_scale, // subsidy amount assumes 24 hour epoch lengths. Also needs to be adjusted for coin_scale the onchain representation of human readable value.
+          min_node_density: 4,
+          max_node_density: 300,
+          burn_accounts: Vector::singleton(0xDEADDEAD),
+          difficulty: 2400000,
+          }
         }
       }
     }
-
-
-}
-
+  }
 }

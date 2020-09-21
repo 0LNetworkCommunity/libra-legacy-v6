@@ -92,11 +92,18 @@ pub fn encode_genesis_change_set(
     };
 
     // Initializing testnet only when env is set to test
-    if node_env != "prod" {
-        initialize_testnet(&mut genesis_context);
+    if node_env == "prod" {
+        println!("INITIALIZING WITH PROD CONSTANTS");
+    } else if node_env == "stage" {
+        // for testing production settings except with shorter epochs and lower vdf difficulty.
+        println!("Initializing with staging constants");
+        initialize_staging_net(&mut genesis_context);
     } else {
-        println!("INITIALIZING WITH PROD CONSTANTS")
+        // defaults to test constants for devs and ci testing
+        println!("Initializing with test constants");
+        initialize_testnet(&mut genesis_context);
     }
+
     create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
     initialize_miners(&mut genesis_context, &validators);
@@ -241,6 +248,14 @@ fn distribute_genesis_subsidy(context: &mut GenesisContext) {
 fn initialize_testnet(context: &mut GenesisContext) {
     context.exec(
         "Testnet",
+        "initialize",
+        vec![],
+        vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
+}
+
+fn initialize_staging_net(context: &mut GenesisContext) {
+    context.exec(
+        "StagingNet",
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
