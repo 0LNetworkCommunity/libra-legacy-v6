@@ -589,7 +589,6 @@ impl LibraVM {
 
         // Emit the reconfiguration event
         self.run_writeset_epilogue(&mut data_store, change_set, &txn_data)?;
-        println!("libra_vm.rs - Emit the reconfiguration event");
         
         if let Err(e) = self.read_writeset(remote_cache, &change_set.write_set()) {
             return Ok(discard_error_output(e));

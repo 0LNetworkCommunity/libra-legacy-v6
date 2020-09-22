@@ -11,17 +11,9 @@ use bytecode_verifier::VerifiedModule;
 use libra_config::generator;
 use libra_crypto::HashValue;
 use libra_state_view::StateView;
-use libra_types::{
-    access_path::AccessPath,
-    account_config::{AccountResource, BalanceResource},
-    block_metadata::{BlockMetadata, NewBlockEvent},
-    on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet},
-    transaction::{
+use libra_types::{access_path::AccessPath, account_config::{AccountResource, BalanceResource}, block_metadata::{BlockMetadata, NewBlockEvent}, on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet}, transaction::{
         SignedTransaction, Transaction, TransactionOutput, TransactionStatus, VMValidatorResult,
-    },
-    vm_error::{StatusCode, VMStatus},
-    write_set::WriteSet,
-};
+    }, vm_error::{StatusCode, VMStatus}, write_set::WriteSet};
 use libra_vm::{LibraVM, VMExecutor, VMValidator};
 use move_core_types::{identifier::Identifier, language_storage::ModuleId};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
@@ -264,11 +256,10 @@ impl FakeExecutor {
         // check if we emit the expected event, there might be more events for transaction fees
         let event = output.events()[0].clone();
 
-
-        // TODO: 0L: (nelaturuk) This check seems to be failing for the executor.new_block() in librablock_test.rs
-        // println!("event.key() \n{:?}", event.key());
-        // println!("new_block_event_key() \n{:?}", new_block_event_key());
-        //assert!(event.key() == &new_block_event_key());
+        //TODO: 0L: This assert fails with on a couple e2e tests
+        // tests::ol_e2e_test_reconfig::reconfig_bulk_update_test
+        // tests::ol_txn_fee_test::txn_fees_test
+        // assert!(event.key() == &new_block_event_key());
 
         assert!(lcs::from_bytes::<NewBlockEvent>(event.event_data()).is_ok());
         self.apply_write_set(output.write_set());
