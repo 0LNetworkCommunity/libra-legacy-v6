@@ -1,6 +1,3 @@
-// Copyright (c) 0lsf
-// SPDX-License-Identifier: Apache-2.0
-
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
 use crate::redeem_setup::{redeem_txn};
