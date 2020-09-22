@@ -91,7 +91,8 @@ pub struct NodeConfig {
     #[serde(default)]
     pub validator_network: Option<NetworkConfig>,
     #[serde(default)]
-    pub configs_ol_miner: GenesisMiningProof
+    //TODO: These fixtures should be moved to /fixtures/miner_fixtures.rs
+    pub miner_swarm_fixture: Option<GenesisMiningProof>
 }
 
 // 0L Change: Necessary for genesis transaction.
@@ -136,29 +137,6 @@ impl Default for GenesisMiningProof {
 
     }
 }
-
-// 0LChange: these defaults exist only for validator_swarm_for_testing
-// TODO: Remove these defaults. And warn when they are empty.
-
-// THIS IS FOR PROD (HARD) DIFFICULTY
-
-// impl Default for GenesisMiningProof {
-//     fn default() -> GenesisMiningProof {
-//         let node_env = match env::var("NODE_ENV") {
-//             Ok(val) => val,
-//             _ => "test".to_string() // default to "test" if not set
-//         };
-
-//         if node_env == "prod" {
-//             return GenesisMiningProof {
-
-//                 }
-
-//             }
-//                 return GenesisMiningProof {
-
-//                 }   
-// }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(default, deny_unknown_fields)]
@@ -276,7 +254,7 @@ impl NodeConfig {
                 .validator_network
                 .as_ref()
                 .map(|n| n.clone_for_template()),
-            configs_ol_miner: self.configs_ol_miner.clone() // 0L change.
+            miner_swarm_fixture: self.miner_swarm_fixture.clone() // 0L change.
         }
     }
 

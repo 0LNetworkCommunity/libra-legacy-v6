@@ -103,21 +103,29 @@ bins:
 	cd ~/libra && cargo build -p libra-node --release
 	cd ~/libra && cargo build -p libra-management --release
 	cd ~/libra && cargo build -p miner --release
-	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
 	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
 	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+
+compress: 
+	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+  
+build-node:
+	cd ~/libra && cargo build -p libra-node --release
+	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 
 all-bins:
 	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
 keygen:
-	cd ~/libra/miner && miner keygen
+	cd ${DATA_PATH} && miner keygen
 
 miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
 
-#### FOR TESTING ####
+reset: clear fixtures init keys genesis daemon
 
+#### FOR TESTING ####
 clear:
 ifdef TEST
 	cd ${DATA_PATH} && rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
@@ -222,14 +230,13 @@ peers:
 	mv seed_peers.toml  ${DATA_PATH}/seed_peers.toml
 
 remove-keys:
-	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "alice/operator_previous", "alice/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
+	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "${NAMESPACE}/operator_previous", "${NAMESPACE}/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
 	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
 
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
 	libra-node --config ${DATA_PATH}/node.configs.toml
-	
 
 daemon:
 # your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
@@ -255,33 +262,24 @@ daemon:
 miner:
 ifdef TEST
 #for debug-net fill in mnemonic from fixtures
-	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && echo ${MNEM} | head -c -1 | miner start
+	echo ${MNEM}
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} miner start
 else
 	if test -d ~/logs; then \
 		echo "WIPING MINER LOGS"; \
-		sudo rm -rf ~/logs*; \
+		sudo rm -rf ~/logs/miner.log; \
+		sudo touch ~/logs/miner.log
+		sudo chmod 660 ~/logs/miner.log
 	fi 
 
-	sudo mkdir ~/logs
-	sudo touch ~/logs/miner.log
-	sudo chmod 660 ~/logs
-	sudo chmod 660 ~/logs/miner.log
+# submit any backlog transactions
+	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start --resubmit
 # pipe logs to screen and tee to miner logs
 	NODE_ENV='${NODE_ENV}' cd ${DATA_PATH} && miner start 2> >(tee ~/logs/miner.log)
 
 endif
 
 wipe: 
+	history -c
 	shred ~/.bash_history
 	srm ~/.bash_history
-	history -c
-	smem
-	sswap
-# sfill <mountpoint>
-
-
-# datadog:
-# 	DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=xxxxxxxxxx DD_SITE="datadoghq.com" bash -c \"$$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)\"
-# 	# mkdir /etc/datadog-agent/conf.d/libra.d/
-# 	cp datadog_config.yaml /etc/datadog-agent/conf.d/libra.d/conf.yaml
-# 	service datadog-agent start

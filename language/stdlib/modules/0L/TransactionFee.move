@@ -1,3 +1,21 @@
+
+///////////////////////////////////////////////////////////////////
+// 0L Module
+// Transaction Fee Distribution
+///////////////////////////////////////////////////////////////////
+// Implements a basic transaction fee distribution logic.
+//
+// We have made a couple design decisions here that are worth noting:
+//  * We pay out once per-block for now.
+//    TODO: Once we have a better on-chain representation of
+//          epochs this should be changed over to be once per-epoch.
+//  * Sometimes the number of validators does not evenly divide the transaction fees to be
+//    distributed. In such cases the remainder ("dust") is left in the transaction fees pot and
+//    these remaining fees will be included in the calculations for the transaction fee
+//    distribution in the next epoch. This distribution strategy is meant to in part minimize the
+//    benefit of being the first validator in the validator set.
+
+
 address 0x0 {
 
     module TransactionFee {
@@ -8,21 +26,6 @@ address 0x0 {
         use 0x0::Transaction;
         // use 0x0::Debug;
         use 0x0::Vector;
-
-        ///////////////////////////////////////////////////////////////////////////
-        // Transaction Fee Distribution
-        ///////////////////////////////////////////////////////////////////////////
-        // Implements a basic transaction fee distribution logic.
-        //
-        // We have made a couple design decisions here that are worth noting:
-        //  * We pay out once per-block for now.
-        //    TODO: Once we have a better on-chain representation of
-        //          epochs this should be changed over to be once per-epoch.
-        //  * Sometimes the number of validators does not evenly divide the transaction fees to be
-        //    distributed. In such cases the remainder ("dust") is left in the transaction fees pot and
-        //    these remaining fees will be included in the calculations for the transaction fee
-        //    distribution in the next epoch. This distribution strategy is meant to in part minimize the
-        //    benefit of being the first validator in the validator set.
 
         resource struct TransactionFees {
             fee_withdrawal_capability: LibraAccount::WithdrawCapability,
@@ -66,7 +69,7 @@ address 0x0 {
           // TODO: Currently, this will give no gas if the sum of validator
           // weights is too high. This may be a problem since we cannot give
           // fractional gas amounts. For example:
-          // Lucas has 1000 voting power. Dev has 1 voting power.
+          // Alice has 1000 voting power. Bob has 1 voting power.
           // amount_collected is 500 GAS to distribute.
           // In the above scenario, no GAS will be distibuted.
 
