@@ -72,6 +72,13 @@ IP = 104.131.32.62
 MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
+ifeq ($(NAMESPACE), eve)
+ACC = b260347406f1f2d22530c084390b34b7
+AUTH = 1f72911cb33d843c7702efe1d29af6a5b260347406f1f2d22530c084390b34b7
+IP = 104.131.32.62
+MNEM = achieve tomato carpet fitness muffin jelly fit pull park lobster cage ship oppose found paper predict perfect release super lunch domain away thumb pigeon
+endif
+
 ##########################
 
 REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NAMESPACE}'
