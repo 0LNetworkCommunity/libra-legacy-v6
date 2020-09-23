@@ -13,7 +13,6 @@ use libra_types::vm_error::{StatusCode, VMStatus};
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 use vm::errors::VMResult;
-use hex;
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
