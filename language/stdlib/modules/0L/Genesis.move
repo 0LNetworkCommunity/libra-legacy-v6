@@ -143,18 +143,18 @@ module GenesisOL {
           Transaction::assert(Globals::get_epoch_boundary_buffer() == 5, 0701051000);
         } else {
             if (StagingNet::is_staging_net()) {
-                Transaction::assert(Globals::get_epoch_length() == 1000, 0701011000);
-                Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701021000);
-                Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701031000);
-                Transaction::assert(Globals::get_max_node_density() == 300, 0701041000);
-                Transaction::assert(Globals::get_epoch_boundary_buffer() == 100, 0701051000);
+                Transaction::assert(Globals::get_epoch_length() == 1000, 0701011001);
+                Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701021001);
+                Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701031001);
+                Transaction::assert(Globals::get_max_node_density() == 300, 0701041001);
+                Transaction::assert(Globals::get_epoch_boundary_buffer() == 100, 0701051001);
             } else {
                 // PROD Settings
-                Transaction::assert(Globals::get_epoch_length() == 128000, 0701061000);
-                Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701071000);
-                Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701081000);
-                Transaction::assert(Globals::get_max_node_density() == 300, 0701091000);
-                Transaction::assert(Globals::get_epoch_boundary_buffer() == 5000, 0701101000);
+                Transaction::assert(Globals::get_epoch_length() == 128000, 0701011002);
+                Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 07010210002);
+                Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701031003);
+                Transaction::assert(Globals::get_max_node_density() == 300, 0701041000);
+                Transaction::assert(Globals::get_epoch_boundary_buffer() == 5000, 0701051000);
             }
         };
         // Mint subsidy for the initial validator set, not to be confused with the minting for the
