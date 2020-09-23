@@ -130,12 +130,16 @@ keygen:
 miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
 
-reset: clear fixtures init keys genesis daemon
+reset: stop clear fixtures init keys genesis daemon
 
 #### FOR TESTING ####
+stop:
+	sudo service libra-node stop
+
 clear:
 ifdef TEST
-	cd ${DATA_PATH} && rm -rf libradb *.seed_peers.toml node.configs.toml genesis.blob key_store.json
+	cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json
+	rm ${DATA_PATH}/blocks/*
 endif
 
 fixtures:
