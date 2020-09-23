@@ -25,7 +25,7 @@ REPO_NAME = debug-genesis
 endif
 
 ifndef NODE_ENV
-# Default to prod settings for genesis and mining. Pass with ENV=test for test values.
+# Default to prod settings for genesis and mining. Pass with NODE_ENV=stage for staging values.
 NODE_ENV=prod
 endif
 
@@ -143,11 +143,8 @@ ifdef TEST
 
 	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
 
-ifeq (${NODE_ENV}, test)
-	cp ~/libra/fixtures/block_0.json.test.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
-else
-	cp ~/libra/fixtures/block_0.json.prod.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
-endif
+	cp ~/libra/fixtures/block_0.json.${NODE_ENV}.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
+
 endif
 
 #### GENESIS BACKEND SETUP ####
