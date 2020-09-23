@@ -147,7 +147,7 @@ module GenesisOL {
                 Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701021001);
                 Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701031001);
                 Transaction::assert(Globals::get_max_node_density() == 300, 0701041001);
-                Transaction::assert(Globals::get_epoch_boundary_buffer() == 100, 0701051001);
+                Transaction::assert(Globals::get_epoch_boundary_buffer() == 1, 0701051001);
             } else {
                 // PROD Settings
                 Transaction::assert(Globals::get_epoch_length() == 128000, 0701011002);

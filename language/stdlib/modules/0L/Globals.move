@@ -137,9 +137,9 @@ module Globals {
         if (StagingNet::is_staging_net()){
         return GlobalConstants {
           epoch_length: 1000,
-          max_validator_per_epoch: 10,
+          max_validator_per_epoch: 300,
           epoch_boundary_buffer: 100,
-          subsidy_ceiling_gas: 296,
+          subsidy_ceiling_gas: 8640000 * coin_scale,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
