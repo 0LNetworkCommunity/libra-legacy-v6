@@ -143,7 +143,7 @@ module Globals {
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
-          difficulty: 2400000,
+          difficulty: 100,
           epoch_mining_threshold: 1,
         } 
       } else {
