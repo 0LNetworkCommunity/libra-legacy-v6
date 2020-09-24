@@ -25,6 +25,7 @@ module Genesis {
     use 0x1::Roles;
     use 0x1::LibraVMConfig;
     use 0x1::Stats;
+    use 0x1::ValidatorUniverse;
 
     fun initialize(
         lr_account: &signer,
@@ -83,6 +84,10 @@ module Genesis {
 
         // Stats module
         Stats::initialize(lr_account);
+
+        // Validator Universe module
+        ValidatorUniverse::initialize(lr_account);
+
         Globals::initialize(lr_account, true);
         
         let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
