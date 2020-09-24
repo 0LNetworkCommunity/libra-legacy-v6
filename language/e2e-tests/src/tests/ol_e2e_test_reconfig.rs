@@ -1,5 +1,3 @@
-// Copyright (c) 0lsf
-// SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier},

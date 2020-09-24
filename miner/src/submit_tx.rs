@@ -114,7 +114,7 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
     ){
         Ok(_) => {
             // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
-            println!("Transacation submitted to network, waiting for status.");
+            println!("Transaction submitted to network, waiting for status.");
             match wait_for_tx(tx_params.address, sequence_number, &mut client){
                 Ok(tx_view) => {
                     // TODO: update miner.toml with new waypoint.

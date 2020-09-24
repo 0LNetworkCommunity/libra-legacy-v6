@@ -26,6 +26,7 @@ module GenesisOL {
     use 0x0::LibraWriteSetManager;
     use 0x0::Stats;
     use 0x0::Testnet;
+    use 0x0::StagingNet;
     use 0x0::Transaction;
     use 0x0::TransactionFee;
     use 0x0::Unhosted;
@@ -130,10 +131,9 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
-        
         let coin_scale = 1000000; // Libra::scaling_factor<GAS::T>();
 
-        // Sanity check all the econ constants are what we expect.
+        // Pre-flight check all the econ constants are what we expect.
         // This will initialize epoch_length and validator count for each epoch
         if (Testnet::is_testnet()) {
           Transaction::assert(Globals::get_epoch_length() == 15, 0701011000);
@@ -142,14 +142,21 @@ module GenesisOL {
           Transaction::assert(Globals::get_max_node_density() == 300, 0701041000);
           Transaction::assert(Globals::get_epoch_boundary_buffer() == 5, 0701051000);
         } else {
-          Transaction::assert(Globals::get_epoch_length() == 128000, 0701061000);
-          Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701071000);
-          Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701081000);
-          Transaction::assert(Globals::get_max_node_density() == 300, 0701091000);
-          Transaction::assert(Globals::get_epoch_boundary_buffer() == 5000, 0701101000);
+            if (StagingNet::is_staging_net()) {
+                Transaction::assert(Globals::get_epoch_length() == 1000, 0701011001);
+                Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 0701021001);
+                Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701031001);
+                Transaction::assert(Globals::get_max_node_density() == 300, 0701041001);
+                Transaction::assert(Globals::get_epoch_boundary_buffer() == 100, 0701051001);
+            } else {
+                // PROD Settings
+                Transaction::assert(Globals::get_epoch_length() == 128000, 0701011002);
+                Transaction::assert(Globals::get_max_validator_per_epoch() == 300, 07010210002);
+                Transaction::assert(Globals::get_subsidy_ceiling_gas() == 8640000 * coin_scale, 0701031003);
+                Transaction::assert(Globals::get_max_node_density() == 300, 0701041000);
+                Transaction::assert(Globals::get_epoch_boundary_buffer() == 5000, 0701051000);
+            }
         };
-
-
         // Mint subsidy for the initial validator set, not to be confused with the minting for the
         // genesis block.
         Subsidy::mint_subsidy(vm);
