@@ -1,30 +1,26 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{error::Error, Command};
-use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_global_constants::{
     CONSENSUS_KEY, EPOCH, FULLNODE_NETWORK_KEY, LAST_VOTED_ROUND, OPERATOR_KEY, OWNER_KEY,
     PREFERRED_ROUND, VALIDATOR_NETWORK_KEY, WAYPOINT,
 };
-use libra_network_address::NetworkAddress;
 use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
-use libra_types::{account_address::AccountAddress, transaction::Transaction, waypoint::Waypoint};
 use libra_wallet::{
     key_factory::{ChildNumber, KeyFactory, Seed},
     Mnemonic,
 };
 use std::{
     fs::File,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
-use structopt::StructOpt;
 
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
 }
 
 impl StorageHelper {
+    #[cfg(test)]
     pub fn new() -> Self {
         let temppath = libra_temppath::TempPath::new();
         temppath.create_as_file().unwrap();
@@ -44,14 +40,17 @@ impl StorageHelper {
         Box::new(NamespacedStorage::new(storage, namespace))
     }
 
+    #[cfg(test)]
     pub fn path(&self) -> &Path {
         self.temppath.path()
     }
 
+    #[cfg(test)]
     pub fn path_string(&self) -> &str {
         self.temppath.path().to_str().unwrap()
     }
 
+    #[cfg(test)]
     pub fn initialize(&self, namespace: String) {
         let mut storage = self.storage(namespace);
 
@@ -105,6 +104,7 @@ impl StorageHelper {
         storage.set(WAYPOINT, Value::String("".into())).unwrap();
     }
 
+    #[cfg(test)]
     pub fn association_key(
         &self,
         local_ns: &str,
@@ -131,6 +131,7 @@ impl StorageHelper {
         command.association_key()
     }
 
+    #[cfg(test)]
     pub fn create_waypoint(&self, remote_ns: &str) -> Result<Waypoint, Error> {
         let args = format!(
             "
@@ -151,6 +152,7 @@ impl StorageHelper {
         command.create_waypoint()
     }
 
+    #[cfg(test)]
     pub fn genesis(&self, genesis_path: &Path) -> Result<Transaction, Error> {
         let args = format!(
             "
@@ -169,6 +171,7 @@ impl StorageHelper {
         command.genesis()
     }
 
+    #[cfg(test)]
     pub fn operator_key(&self, local_ns: &str, remote_ns: &str) -> Result<Ed25519PublicKey, Error> {
         let args = format!(
             "
@@ -191,6 +194,7 @@ impl StorageHelper {
         command.operator_key()
     }
 
+    #[cfg(test)]
     pub fn owner_key(&self, local_ns: &str, remote_ns: &str) -> Result<Ed25519PublicKey, Error> {
         let args = format!(
             "
@@ -213,6 +217,7 @@ impl StorageHelper {
         command.owner_key()
     }
 
+    #[cfg(test)]
     pub fn set_layout(&self, path: &str, namespace: &str) -> Result<crate::layout::Layout, Error> {
         let args = format!(
             "
@@ -233,6 +238,7 @@ impl StorageHelper {
         command.set_layout()
     }
 
+    #[cfg(test)]
     pub fn mining(&self, path: &str, namespace: &str) -> Result<String, Error> {
         let args = format!(
             "
@@ -252,7 +258,7 @@ impl StorageHelper {
         let command = Command::from_iter(args.split_whitespace());
         command.mining()
     }
-
+    #[cfg(test)]
     pub fn validator_config(
         &self,
         owner_address: AccountAddress,
@@ -287,7 +293,7 @@ impl StorageHelper {
         let command = Command::from_iter(args.split_whitespace());
         command.validator_config()
     }
-
+    #[cfg(test)]
     pub fn verify(&self, namespace: &str) -> Result<String, Error> {
         let args = format!(
             "
@@ -306,6 +312,7 @@ impl StorageHelper {
         command.verify()
     }
 
+    #[cfg(test)]
     pub fn verify_genesis(&self, namespace: &str, genesis_path: &Path) -> Result<String, Error> {
         let args = format!(
             "
