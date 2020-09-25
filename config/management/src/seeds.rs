@@ -1,28 +1,26 @@
-use crate::{error::Error, SingleBackend};
+use crate::error::Error;
 use executor::db_bootstrapper;
 use libra_config::config::PersistableConfig;
 use libra_temppath::TempPath;
 use libra_types::{
-    account_address::AccountAddress, account_config, account_state::AccountState,
-    on_chain_config::ValidatorSet, validator_config::ValidatorConfig, waypoint::Waypoint, PeerId,
+    account_config,
+    account_state::AccountState,
+    on_chain_config::ValidatorSet,
+    waypoint::Waypoint,
 };
 use structopt::StructOpt;
 
 use libra_network_address::NetworkAddress;
 use libra_vm::LibraVM;
 use libradb::LibraDB;
-use std::collections::HashMap;
 use std::{
-    convert::{TryFrom, TryInto},
-    fmt::Write,
+    convert::TryFrom,
     fs::File,
     io::Read,
     path::{Path, PathBuf},
-    str::FromStr,
-    sync::Arc,
 };
 
-use storage_interface::{DbReader, DbReaderWriter};
+use storage_interface::DbReaderWriter;
 
 use libra_config::config::{SeedPeersConfig, NetworkPeersConfig, NetworkPeerInfo};
 
@@ -53,7 +51,7 @@ impl Seeds {
     pub fn get_network_peers_info(&self)->Result<NetworkPeersConfig, Error> {
         let db_path = TempPath::new();
 
-        let (db_rw, expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
+        let (db_rw, _expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
 
         let blob = db_rw
             .reader
@@ -90,7 +88,7 @@ impl Seeds {
     pub fn get_seed_info(&self) -> Result<SeedPeersConfig, Error>  {
         let db_path = TempPath::new();
 
-        let (db_rw, expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
+        let (db_rw, _expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
 
         let blob = db_rw
             .reader

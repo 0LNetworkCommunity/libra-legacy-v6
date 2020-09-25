@@ -17,8 +17,8 @@ impl Mining {
     pub fn execute(self) -> Result<String, Error> {
         let (preimage, proof) = Block::get_genesis_tx_data(&self.path_to_genesis_pow)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
-        let preimage = Value::String(String::from_utf8(preimage).unwrap());
-        let proof = Value::String(String::from_utf8(proof).unwrap());
+        let preimage = Value::String(hex::encode(preimage));
+        let proof = Value::String(hex::encode(proof));
         let mut remote: Box<dyn Storage> = self.backend.backend.try_into()?;
         remote
             .available()
