@@ -33,18 +33,18 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
 
     let conf = OlMinerConfig::load_swarm_config(&tx_params);
     loop {
-        let (preimage, proof, tower_height) = get_block_fixtures(&conf);
+        let (preimage, proof) = get_block_fixtures(&conf);
 
         // need to sleep for swarm to be ready.
         thread::sleep(time::Duration::from_millis(24000));
-        let res = submit_tx(&tx_params, preimage, proof, tower_height, false);
+        let res = submit_tx(&tx_params, preimage, proof, false);
         if eval_tx_status(res) == false {
             break;
         };
     }
 }
 
-fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
+fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.home.clone();
@@ -64,7 +64,7 @@ fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>, u64){
     status_info!("[swarm] Generating Proof for block:", format!("{}", mining_height));
     let block = mine_once(&config).unwrap();
     status_ok!("[swarm] Success", format!("block_{}.json created.", block.height.to_string()));
-    (block.preimage, block.data, block.height)
+    (block.preimage, block.data)
 }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {

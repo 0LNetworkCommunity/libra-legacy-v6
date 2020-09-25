@@ -252,7 +252,7 @@ impl fmt::Display for StdlibScript {
                 //
                 // Below are 0L Changes
                 //
-                MinerState => "ol_miner_state",
+                MinerState => "ol_miner_state_commit",
                 MinerStateOnboarding => "ol_miner_state_onboarding",
                 // RedeemInitialize => "redeem_init",
                 LibraBlockTestHelper => "ol_libra_block_test_helper",
