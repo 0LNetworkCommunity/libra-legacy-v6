@@ -34,12 +34,11 @@ use 0x0::Transaction;
 fun main(sender: &signer) {
 
     // Check bob's state before updating his miner_redemption_statw
-    // let miner_redemption_state= borrow_global_mut<MinerState>(miner_addr);
-    let miner_epochs_before = MinerState::get_miner_epochs({{bob}});
+    let miner_epochs_before = MinerState::test_helper_get_miner_epochs({{bob}});
 
     MinerState::end_redeem_validator_universe(sender);
 
-    let miner_epochs_after = MinerState::get_miner_epochs({{bob}});
+    let miner_epochs_after = MinerState::test_helper_get_miner_epochs({{bob}});
     // Debug::print(&miner_epochs_after);
 
     Transaction::assert(miner_epochs_after > miner_epochs_before, 1000);

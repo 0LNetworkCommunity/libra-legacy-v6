@@ -13,6 +13,7 @@ address 0x0 {
     use 0x0::LibraConfig;
     use 0x0::Globals;
     use 0x0::Hash;
+    use 0x0::LibraTimestamp;
     // use 0x0::Debug;
     use 0x0::Testnet;
 
@@ -21,7 +22,6 @@ address 0x0 {
         challenge: vector<u8>,
         difficulty: u64,
         solution: vector<u8>,
-        // reported_tower_height: u64,
         epoch: u64,
     }
 
@@ -30,22 +30,15 @@ address 0x0 {
       // TODO: this doesn't need to be a vector, it gets cleared.
         verified_proof_history: vector<vector<u8>>,
         invalid_proof_history: vector<vector<u8>>,
-        // reported_tower_height: u64,
         verified_tower_height: u64, // user's latest verified_tower_height
         latest_epoch_mining: u64,
         count_proofs_in_epoch: u64,
         epochs_validating_and_mining: u64,
         contiguous_epochs_validating_and_mining: u64,
-        // proof_in_process: VdfProofBlob
     }
 
-    // Struct to store all proofs since the previous epoch
-    // resource struct ProofsInEpoch {
-    //     proofs: vector<VdfProofBlob>
-    // }
-
-
     // Creates proof blob object from input parameters
+    // Permissions: PUBLIC, ANYONE can call this function.
     public fun create_proof_blob(
       challenge: vector<u8>,
       difficulty: u64,
@@ -56,12 +49,12 @@ address 0x0 {
          challenge,
          difficulty,
          solution,
-        //  reported_tower_height,
          epoch
       }
     }
 
     // Helper function for genesis to process genesis proofs.
+    // Permissions: PUBLIC, ONLY VM, AT GENESIS.
     public fun genesis_helper (
       miner: &signer,
       challenge: vector<u8>,
@@ -69,6 +62,10 @@ address 0x0 {
     ) acquires MinerProofHistory {
 
       // TODO: check this is 0x0 and is genesis.
+      Transaction::assert(Transaction::sender()
+ == 0x0, 130102014010);
+
+      Transaction::assert(LibraTimestamp::is_genesis(), 130102024010);
 
       // Debug::print(&0x999999999000000001);
       let difficulty = Globals::get_difficulty();
@@ -84,6 +81,7 @@ address 0x0 {
 
 
     // This function verifies the proof and commits to chain.
+    // Permissions: anyone can call this function.
     public fun commit_state(sender: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory {
 
       // Debug::print(&0x100000000013370000001);
@@ -161,12 +159,12 @@ address 0x0 {
 
 
     // Function to verify a proof blob and update a MinerProofHistory
+    // Permissions: private function.
     fun verify_and_update_state(
       miner_addr: address,
       vdf_proof_blob: VdfProofBlob,
       initialized_miner: bool
     ) acquires MinerProofHistory {
-
       // Debug::print(&0x000000000013370010001);
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
@@ -238,8 +236,8 @@ address 0x0 {
     }
 
 
-    // Helper function which checks if proof has already been submitted and
-    // verifies that proof is valid.
+    // Helper function which checks if proof has already been submitted and verifies that proof is valid.
+    // Permissions: private function.
     fun check_hash_and_verify(
       miner_redemption_state: &mut MinerProofHistory,
       vdf_proof_blob: VdfProofBlob): (&mut MinerProofHistory, VdfProofBlob) {
@@ -294,9 +292,8 @@ address 0x0 {
     }
 
 
-    // MinerState::update_metrics() checks that the miner has been doing validation AND that
-    // there are mining proofs presented in the last/current epoch.
-    // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
+    // MinerState::update_metrics() checks that the miner has been doing validation AND that there are mining proofs presented in the current epoch.
+    // Permissions: private function
     fun update_metrics(miner_addr: address) acquires MinerProofHistory {
       // The goal of end_redeem is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
@@ -332,6 +329,7 @@ address 0x0 {
 
 
     // Get weight of validator identified by address
+    // Permissions: public, only VM can call this function.
     public fun get_validator_weight(miner_addr: address): u64 acquires MinerProofHistory {
       // Permission check
       let sender = Transaction::sender();
@@ -353,6 +351,7 @@ address 0x0 {
 
 
     // Bulk update the end_redeem state with the vector of validators from current epoch.
+    // Permissions: public, only VM can call this function.
     public fun end_redeem_validator_universe(account: &signer)
                   acquires MinerProofHistory {
       // Check permissions
@@ -379,6 +378,7 @@ address 0x0 {
 
 
     // Helper function to initialize miner state
+    // Permissions: private function.
     fun init_miner_state(miner: &signer){
       // Initialize vector of proofs in current epoch and give to miner account
       // move_to<ProofsInEpoch>( miner, ProofsInEpoch{proofs: Vector::empty()});
@@ -398,6 +398,7 @@ address 0x0 {
 
 
     // Process and check the first proof blob submitted for validity (includes correct address)
+    // Permissions: ANYONE can call this function in onboarding transaction.
     public fun first_challenge_includes_address(new_account_address: address, challenge: &vector<u8>) {
       // GOAL: To check that the preimage/challenge of the FIRST VDF proof blob contains a given address.
       // This is to ensure that the same proof is not sent repeatedly, since all the minerstate is on a
@@ -417,7 +418,9 @@ address 0x0 {
 
     }
 
-        // Get weight of validator identified by address
+    // Get weight of validator identified by address
+    // Permissions: anyone can call this function, usually from miner client for tx purposes.
+
     public fun get_miner_state(miner_addr: address): vector<vector<u8>> acquires MinerProofHistory {
       // Permission check
       // let sender = Transaction::sender();
@@ -428,23 +431,41 @@ address 0x0 {
 
 
     // Get latest epoch mined by node on given address
+    // Permissions: public ony VM can call this function.
     public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0, 130114014010);
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
     }
 
-        // Returns tower height from input miner's state
-    public fun get_miner_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
-       borrow_global<MinerProofHistory>(miner_addr).verified_tower_height
+    // Returns tower height from input miner's state
+    // Permissions: public, TESTING only. The miner can get own info.
+    public fun test_helper_get_miner_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
+      // let sender = Signer::address_of(Transaction::sender());
+      Transaction::assert(Transaction::sender() == miner_addr, 130115014012);
+      Transaction::assert(Testnet::is_testnet()
+ == true, 130115014011);
+
+      borrow_global<MinerProofHistory>(miner_addr).verified_tower_height
     }
 
-    public fun get_count_proofs_in_epoch(miner_addr: address): u64 acquires MinerProofHistory {
-       borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
-    }
+    // TODOL: Unused. Possibly useful for proof-of-weight calcs 
+    // Permissions: public, VM only.
+    // public fun get_count_proofs_in_epoch(miner_addr: address): u64 acquires MinerProofHistory {
+    //   let sender = Transaction::sender();
+    //   Transaction::assert(sender == 0x0, 130116014010);
+    //    borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+    // }
 
     // Returns number of epochs for input miner's state
-    public fun get_miner_epochs(miner_addr: address): u64 acquires MinerProofHistory {
-       borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
+    // Permissions: public, VM only, TESTING only
+    public fun test_helper_get_miner_epochs(miner_addr: address): u64 acquires MinerProofHistory {
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0, 130117014010);
+      Transaction::assert(Testnet::is_testnet()
+ == true, 130115014011);
+      borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
     }
   }
 }
