@@ -16,6 +16,7 @@ address 0x1 {
     use 0x1::Option::{Self, Option};
     use 0x1::Globals;
     use 0x1::CoreAddresses;
+    use 0x1::Debug;
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -70,12 +71,12 @@ address 0x1 {
       let i = 0;
       let validator_list = &collection.validators;
       let len = Vector::length<ValidatorEpochInfo>(validator_list);
-
+      Debug::print(&len);
       while (i < len) {
           Vector::push_back(&mut eligible_validators, Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address);
           i = i + 1;
       };
-
+      Debug::print(&len);
       eligible_validators
     }
 
