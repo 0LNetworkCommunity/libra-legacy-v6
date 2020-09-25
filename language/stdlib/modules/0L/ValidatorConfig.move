@@ -60,6 +60,22 @@ module ValidatorConfig {
         });
     }
 
+    //NOTE: 0L This is how validator accounts are initialized from mining.
+    public fun publish_from_mining_0L(account: &signer, human_name: vector<u8>,) {
+        // TODO: This is not safe. There needs to be a permission check here.
+        // anyone can call this even if they are not in the onboarding flow.
+        LibraTimestamp::assert_operating();
+        assert(
+            !exists<ValidatorConfig>(Signer::address_of(account)),
+            Errors::already_published(EVALIDATOR_CONFIG)
+        );
+        move_to(account, ValidatorConfig {
+            config: Option::none(),
+            operator_account: Option::none(),
+            human_name,
+        });        
+    }
+
     spec fun publish {
         include LibraTimestamp::AbortsIfNotOperating;
         include Roles::AbortsIfNotLibraRoot{account: lr_account};

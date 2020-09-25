@@ -8,6 +8,7 @@ module LibraAccount {
     use 0x1::AccountLimits::{Self, AccountLimitMutationCapability};
     use 0x1::Coin1::Coin1;
     use 0x1::Coin2::Coin2;
+    use 0x1::GAS::GAS;
     use 0x1::DualAttestation;
     use 0x1::Errors;
     use 0x1::Event::{Self, EventHandle};
@@ -27,7 +28,7 @@ module LibraAccount {
     use 0x1::Libra::{Self, Libra};
     use 0x1::Option::{Self, Option};
     use 0x1::Roles;
-
+    
     /// Every Libra account has a LibraAccount resource
     resource struct LibraAccount {
         /// The current authentication key.
@@ -756,14 +757,8 @@ module LibraAccount {
         let new_account_addr = Signer::address_of(new_account);
         add_currency<Token>(new_account);
         if (add_all_currencies) {
-            if (!exists<Balance<Coin1>>(new_account_addr)) {
-                add_currency<Coin1>(new_account);
-            };
-            if (!exists<Balance<Coin2>>(new_account_addr)) {
-                add_currency<Coin2>(new_account);
-            };
-            if (!exists<Balance<LBR>>(new_account_addr)) {
-                add_currency<LBR>(new_account);
+            if (!exists<Balance<GAS>>(new_account_addr)) {
+                add_currency<GAS>(new_account);
             };
         };
     }
@@ -929,11 +924,10 @@ module LibraAccount {
         // aborts if `Token` is not a currency type in the system
         Libra::assert_is_currency<Token>();
         // Check that an account with this role is allowed to hold funds
-        assert(Roles::can_hold_balance(account), Errors::invalid_argument(EROLE_CANT_STORE_BALANCE));
+        // assert(Roles::can_hold_balance(account), Errors::invalid_argument(EROLE_CANT_STORE_BALANCE));
         // aborts if this account already has a balance in `Token`
         let addr = Signer::address_of(account);
         assert(!exists<Balance<Token>>(addr), Errors::already_published(EADD_EXISTING_CURRENCY));
-
         move_to(account, Balance<Token>{ coin: Libra::zero<Token>() })
     }
     spec fun add_currency {
@@ -1203,11 +1197,25 @@ module LibraAccount {
         auth_key_prefix: vector<u8>,
         human_name: vector<u8>,
     ) {
+        assert(Signer::address_of(creator_account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 8001);
         let new_account = create_signer(new_account_address);
         // The creator account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role(creator_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, creator_account, human_name);
+        make_account(new_account, auth_key_prefix)
+    }
+
+    public fun create_validator_account_from_mining_0L<Token>(
+        _creator_account: &signer,
+        new_account_address: address,
+        auth_key_prefix: vector<u8>,
+        human_name: vector<u8>,
+    ) {
+        let new_account = create_signer(new_account_address);
+        Event::publish_generator(&new_account);
+        ValidatorConfig::publish_from_mining_0L(&new_account, human_name);
+        add_currencies_for_account<Token>(&new_account, true);
         make_account(new_account, auth_key_prefix)
     }
 

@@ -144,6 +144,7 @@ pub(crate) static INITIAL_GAS_SCHEDULE: Lazy<(Vec<u8>, Vec<u8>)> = Lazy::new(|| 
         (N::CREATE_SIGNER, GasCost::new(24, 1)),
         (N::DESTROY_SIGNER, GasCost::new(212, 1)),
         (N::EMIT_EVENT, GasCost::new(52, 1)),
+        (N::PARSE_AUTH_KEY, GasCost::new(10, 1)),
     ];
     native_table.sort_by_key(|cost| cost.0 as u64);
     let raw_native_table = native_table

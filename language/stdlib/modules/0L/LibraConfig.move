@@ -282,6 +282,11 @@ module LibraConfig {
         aborts_if !exists<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
     }
 
+    public fun get_current_epoch(): u64 acquires Configuration {
+        let config_ref = borrow_global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        config_ref.epoch
+    }
+
     // **************** Specifications ****************
 
     spec module {

@@ -125,6 +125,10 @@ module Globals {
       get_constants().difficulty
     }
 
+    public fun is_testnet(): bool acquires Testnet {
+      borrow_global<Testnet>(CoreAddresses::LIBRA_ROOT_ADDRESS()).is_testnet
+    }
+
     fun get_constants(): GlobalConstants acquires Testnet {
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       let testnet = borrow_global<Testnet>(CoreAddresses::LIBRA_ROOT_ADDRESS()).is_testnet;
