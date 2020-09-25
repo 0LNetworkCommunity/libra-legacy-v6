@@ -5,6 +5,9 @@
 
 //! account: alice, 1000000, 0, validator
 //! account: vivian, 1000000, 0, validator
+//! account: shasha, 1000000, 0, validator
+//! account: charles, 1000000, 0, validator
+//! account: bob, 1000000, 0, validator
 
 //! block-prologue
 //! proposer: vivian
@@ -77,7 +80,6 @@ script {
   use 0x0::Transaction;
   fun main(_account: &signer) {
     let block_height =  LibraBlock::get_current_block_height();
-    // Debug::print(&0x000000000013370000001);
     // Debug::print(&block_height);
     Transaction::assert(block_height == 15, 98);
 

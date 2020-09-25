@@ -14,6 +14,7 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Signer;
     use 0x0::Transaction;
+    // use 0x0::Testnet;
 
 
     // Each Chunk represents one set of contiguous blocks which the validator voted on
@@ -182,7 +183,7 @@ address 0x0 {
     public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
       // Check permission
       Transaction::assert(Transaction::sender() == 0x0, 190204014010);
-
+      // Transaction::assert(Testnet::is_testnet(), 190204024011);
       // Iterate through the input vector
       let i = 0;
       let len = Vector::length<address>(votes);

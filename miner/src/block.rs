@@ -144,7 +144,7 @@ pub mod build_block {
 
         // If there are NO files in path, mine the genesis proof.
         if current_block_number.is_none() {
-            status_info!("","Generating Genesis Proof");
+            status_info!("Block 0","Mining Genesis Proof");
             mine_genesis(config);
             status_ok!("Proof mined:", "Genesis block_0.json created, exiting.");
             std::process::exit(0);

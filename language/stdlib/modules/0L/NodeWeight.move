@@ -16,6 +16,7 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::MinerState;
+    use 0x0::Globals;
 
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
@@ -23,7 +24,7 @@ address 0x0 {
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101
-    public fun top_n_accounts(account: &signer, n: u64): vector<address> {
+    public fun top_n_accounts(account: &signer, n: u64, current_block_height: u64): vector<address> {
 
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 140101014010);
@@ -70,12 +71,23 @@ address 0x0 {
 
       // Reverse to have sorted order - high to low.
       Vector::reverse<address>(&mut eligible_validators);
-      let index = n;
-      while(index < length){
-        Vector::pop_back<address>(&mut eligible_validators);
-        index = index + 1;
-      };
-      return eligible_validators
+
+      let validator_set = Vector::empty<address>();
+      let index = 0;
+      let current_size = 0;
+      while(index < length && current_size < n){
+
+          let cur_node_address = *Vector::borrow<address>(&eligible_validators, index);
+
+          if(ValidatorUniverse::check_if_active_validator(cur_node_address, Globals::get_epoch_length(), current_block_height)){
+
+              Vector::push_back<address>(&mut validator_set, cur_node_address);
+              current_size = current_size + 1;    
+          };
+          index = index + 1; 
+      }; 
+
+      return validator_set
     }
   }
 }

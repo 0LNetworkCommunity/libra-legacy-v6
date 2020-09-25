@@ -18,6 +18,7 @@ address 0x0 {
         use 0x0::TransactionFee;
         use 0x0::MinerState;
         use 0x0::Globals;
+        use 0x0::Vector;
 
         // This function is called by block-prologue once after n blocks.
         // Function code: 01. Prefix: 180101
@@ -78,10 +79,16 @@ address 0x0 {
         // Function code: 03. Prefix: 180103
         fun prepare_upcoming_validator_set(account: &signer, current_block_height: u64) {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
-            let eligible_validators = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch());
+            let validator_set = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch(), current_block_height);
+            let length = Vector::length<address>(&validator_set);
 
-            // Step 2: Call bulkUpdate module
-            LibraSystem::bulk_update_validators(account, eligible_validators, Globals::get_epoch_length(), current_block_height);
+            // If the cardinality of validator_set in the next epoch is less than 4, we skip the epoch tranisition. 
+            // Refer Theorem: If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness (@sm86)  
+            // This is very rare and theoritically impossible for network with at least 6 nodes and 6 rounds. 
+            if(length >= 4){
+                // Step 2: Call bulkUpdate module
+                LibraSystem::bulk_update_validators(account, validator_set);    
+            };
 
             // Step 3: Mint subsidy units for upcoming epoch
             Subsidy::mint_subsidy(account);

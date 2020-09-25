@@ -25,7 +25,7 @@ impl Initialize {
             Ok(mnemonic_string) => {
 
                 let helper = StorageHelper::new_with_path(self.path.into());
-                helper.initialize_with_menmonic(self.namespace.clone(), mnemonic_string);
+                helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string);
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");

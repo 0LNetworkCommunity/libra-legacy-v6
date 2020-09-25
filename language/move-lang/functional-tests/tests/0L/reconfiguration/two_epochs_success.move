@@ -4,7 +4,9 @@
 
 //! account: alice, 1000000, 0, validator
 //! account: vivian, 1000000, 0, validator
-//! account: sha, 10000
+//! account: shasha, 1000000, 0, validator
+//! account: charles, 1000000, 0, validator
+//! account: bob, 1000000, 0, validator
 
 //! block-prologue
 //! proposer: vivian

@@ -3,8 +3,8 @@
 home = "."
 
 [profile]
-auth_key = "4a62540137e5f3b05c6ea608e37b3ab74a6dcca79b3828fc665fca5c6218d793"
-account = "4a6dcca79b3828fc665fca5c6218d793"
+auth_key = "1f72911cb33d843c7702efe1d29af6a5b260347406f1f2d22530c084390b34b7"
+account = "b260347406f1f2d22530c084390b34b7"
 operator_private_key = "none"
 statement = "test"
 
