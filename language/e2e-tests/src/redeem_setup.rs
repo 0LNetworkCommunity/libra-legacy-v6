@@ -12,13 +12,11 @@ pub fn redeem_txn(
     challenge: Vec<u8>,
     difficulty: u64,
     solution: Vec<u8>,
-    tower_height: u64 ) -> SignedTransaction {
+) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(challenge),
         TransactionArgument::U64(difficulty),
         TransactionArgument::U8Vector(solution),
-        TransactionArgument::U64(tower_height),
-
     ];
     sender.create_signed_txn_with_args(
         StdlibScript::MinerState
