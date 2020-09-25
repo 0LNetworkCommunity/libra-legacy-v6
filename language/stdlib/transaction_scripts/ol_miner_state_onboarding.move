@@ -22,7 +22,7 @@ fun main(
 
     // submit vdf proof blob.
     // the sender is not the miner in this case.
-    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, 0);
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
     MinerState::commit_state(sender, proof);
 
     LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, parsed_address, auth_key_prefix);
