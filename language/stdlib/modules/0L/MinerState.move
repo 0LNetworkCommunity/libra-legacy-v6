@@ -21,7 +21,7 @@ address 0x0 {
         challenge: vector<u8>,
         difficulty: u64,
         solution: vector<u8>,
-        reported_tower_height: u64,
+        // reported_tower_height: u64,
         epoch: u64,
     }
 
@@ -30,7 +30,7 @@ address 0x0 {
       // TODO: this doesn't need to be a vector, it gets cleared.
         verified_proof_history: vector<vector<u8>>,
         invalid_proof_history: vector<vector<u8>>,
-        reported_tower_height: u64,
+        // reported_tower_height: u64,
         verified_tower_height: u64, // user's latest verified_tower_height
         latest_epoch_mining: u64,
         count_proofs_in_epoch: u64,
@@ -46,11 +46,19 @@ address 0x0 {
 
 
     // Creates proof blob object from input parameters
-    public fun create_proof_blob(challenge: vector<u8>, difficulty: u64,
-                                  solution: vector<u8>,
-                                  reported_tower_height: u64) : VdfProofBlob {
+    public fun create_proof_blob(
+      challenge: vector<u8>,
+      difficulty: u64,
+      solution: vector<u8>,
+    ) : VdfProofBlob {
        let epoch = LibraConfig::get_current_epoch();
-       VdfProofBlob { challenge, difficulty, solution, reported_tower_height, epoch }
+       VdfProofBlob {
+         challenge,
+         difficulty,
+         solution,
+        //  reported_tower_height,
+         epoch
+      }
     }
 
     // Helper function for genesis to process genesis proofs.
@@ -68,7 +76,7 @@ address 0x0 {
         challenge,
         difficulty,  
         solution,
-        reported_tower_height: 0,
+        // reported_tower_height: 0,
         epoch: 0,
       };
       commit_state(miner, vdf_proof_blob)
@@ -156,7 +164,8 @@ address 0x0 {
     fun verify_and_update_state(
       miner_addr: address,
       vdf_proof_blob: VdfProofBlob,
-      initialized_miner: bool) acquires MinerProofHistory {
+      initialized_miner: bool
+    ) acquires MinerProofHistory {
 
       // Debug::print(&0x000000000013370010001);
       // Get a mutable ref to the current state
@@ -378,7 +387,7 @@ address 0x0 {
       move_to<MinerProofHistory>(miner, MinerProofHistory{
         verified_proof_history: Vector::empty(),
         invalid_proof_history: Vector::empty(),
-        reported_tower_height: 0u64,
+        // reported_tower_height: 0u64,
         verified_tower_height: 0u64, // user's latest verified_tower_height
         latest_epoch_mining: 0u64,
         count_proofs_in_epoch: 0u64,

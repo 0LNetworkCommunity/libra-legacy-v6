@@ -20,7 +20,7 @@ fun main(sender: &signer) {
     let reported_tower_height = 0;
 
     // return solution
-    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
     MinerState::commit_state(sender, proof);
 
     let verified_tower_height_after = MinerState::get_miner_tower_height({{alice}});
@@ -40,9 +40,9 @@ fun main(sender: &signer) {
 //! sender: alice
 script {
 use 0x0::MinerState;
-use 0x0::Debug;
+// use 0x0::Debug;
 // use 0x0::Globals;
-// use 0x0::Transaction;
+use 0x0::Transaction;
 
 // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
 fun main(sender: &signer) {
@@ -56,13 +56,13 @@ fun main(sender: &signer) {
     let reported_tower_height = 1;
 
     // return solution
-    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, reported_tower_height);
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
     MinerState::commit_state(sender, proof);
 
     let verified_tower_height_after = MinerState::get_miner_tower_height({{alice}});
-    Debug::print(&verified_tower_height_after);
+    // Debug::print(&verified_tower_height_after);
 
-    // Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
+    Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
 
 
 }
