@@ -15,7 +15,6 @@ mod start;
 mod version;
 mod onboard;
 mod swarm_test;
-mod export;
 
 use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
            onboard::OnboardCmd, swarm_test::SwarmCmd};
@@ -24,7 +23,6 @@ use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
 use std::path::PathBuf;
-use crate::commands::export::ExportCmd;
 
 /// OlMiner Configuration Filename
 pub const CONFIG_FILE: &str = "miner.toml";
@@ -56,9 +54,6 @@ pub enum OlMinerCmd {
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
 
-    /// The `export` subcommand
-    #[options(help = "export states to genesis.blob")]
-    Export(ExportCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
