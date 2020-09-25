@@ -6,7 +6,7 @@
 //! sender: alice
 script {
 use 0x0::MinerState;
-use 0x0::Debug;
+// use 0x0::Debug;
 use 0x0::Transaction;
 
 fun main(sender: &signer) {
@@ -23,9 +23,9 @@ fun main(sender: &signer) {
 
     let verified_tower_height_after = MinerState::get_miner_tower_height({{alice}});
     // Debug::print(&verified_tower_height_after);
-    Debug::print(&verified_tower_height_after);
+    // Debug::print(&verified_tower_height_after);
 
-    Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
+    Transaction::assert(verified_tower_height_after == 0, 10008001);
 
 
 
@@ -38,8 +38,8 @@ fun main(sender: &signer) {
 //! sender: alice
 script {
 use 0x0::MinerState;
-use 0x0::Debug;
-// use 0x0::Transaction;
+// use 0x0::Debug;
+use 0x0::Transaction;
 
 fun main(sender: &signer) {
     let difficulty = 100;
@@ -56,9 +56,9 @@ fun main(sender: &signer) {
     MinerState::commit_state(sender, proof);
 
     let verified_tower_height_after = MinerState::get_miner_tower_height({{alice}});
-    Debug::print(&verified_tower_height_after);
+    // Debug::print(&verified_tower_height_after);
 
-    // Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
+    Transaction::assert(verified_tower_height_after == reported_tower_height, 10008002);
 
 
 }

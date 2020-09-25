@@ -27,19 +27,22 @@ address 0x0 {
 
     // Struct to encapsulate information about the state of a miner
     resource struct MinerProofHistory {
+      // TODO: this doesn't need to be a vector, it gets cleared.
         verified_proof_history: vector<vector<u8>>,
         invalid_proof_history: vector<vector<u8>>,
         reported_tower_height: u64,
         verified_tower_height: u64, // user's latest verified_tower_height
         latest_epoch_mining: u64,
+        count_proofs_in_epoch: u64,
         epochs_validating_and_mining: u64,
         contiguous_epochs_validating_and_mining: u64,
+        // proof_in_process: VdfProofBlob
     }
 
     // Struct to store all proofs since the previous epoch
-    resource struct ProofsInEpoch {
-        proofs: vector<VdfProofBlob>
-    }
+    // resource struct ProofsInEpoch {
+    //     proofs: vector<VdfProofBlob>
+    // }
 
 
     // Creates proof blob object from input parameters
@@ -50,23 +53,14 @@ address 0x0 {
        VdfProofBlob { challenge, difficulty, solution, reported_tower_height, epoch }
     }
 
-
-    // Returns tower height from input miner's state
-    public fun get_miner_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
-       borrow_global<MinerProofHistory>(miner_addr).verified_tower_height
-    }
-
-
-    // Returns number of epochs for input miner's state
-    public fun get_miner_epochs(miner_addr: address): u64 acquires MinerProofHistory {
-       borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
-    }
-
-    // Helper function for genesis to begin redeem process.
+    // Helper function for genesis to process genesis proofs.
     public fun genesis_helper (
       miner: &signer,
       challenge: vector<u8>,
-      solution: vector<u8> ) acquires MinerProofHistory, ProofsInEpoch {
+      solution: vector<u8>
+    ) acquires MinerProofHistory {
+
+      // TODO: check this is 0x0 and is genesis.
 
       // Debug::print(&0x999999999000000001);
       let difficulty = Globals::get_difficulty();
@@ -81,15 +75,15 @@ address 0x0 {
     }
 
 
-    // This function starts the redeem process.
-    public fun commit_state(miner: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory, ProofsInEpoch {
+    // This function verifies the proof and commits to chain.
+    public fun commit_state(sender: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory {
 
       // Debug::print(&0x100000000013370000001);
       // Debug::print(&0x100000000013370000002);
 
       // Get address
 
-      let miner_addr = Signer::address_of( miner );
+      let miner_addr = Signer::address_of(sender);
       // Debug::print(&miner_addr);
 
       // Debug::print(&0x000000000013370000011);
@@ -118,7 +112,7 @@ address 0x0 {
       //      by someone else.
       //    This may be the first time the miner is redeeming. If so, both
       //      resources are uninitialized. Initialize them
-      if (!::exists<MinerProofHistory>(miner_addr)) {
+      if (! ::exists<MinerProofHistory>(miner_addr)) {
         // Debug::print(&0x000000000013370000003);
 
         // Verify the proof before anything else (i.e. user actually did the delay)
@@ -136,7 +130,7 @@ address 0x0 {
           //   miner_addr = Signer::address_of( miner );
           // }
         // Initialize the miner state for the new miner
-        init_miner_state(miner);
+        init_miner_state(sender);
         // Debug::print(&0x000000000013370000005);
 
         // Verify the blob and update the newly initialized state
@@ -162,7 +156,7 @@ address 0x0 {
     fun verify_and_update_state(
       miner_addr: address,
       vdf_proof_blob: VdfProofBlob,
-      initialized_miner: bool) acquires MinerProofHistory, ProofsInEpoch {
+      initialized_miner: bool) acquires MinerProofHistory {
 
       // Debug::print(&0x000000000013370010001);
       // Get a mutable ref to the current state
@@ -206,6 +200,7 @@ address 0x0 {
         miner_redemption_state.verified_tower_height = miner_redemption_state.verified_tower_height + 1;
       } else {
         miner_redemption_state.verified_tower_height = 0;
+        miner_redemption_state.count_proofs_in_epoch = 1
       };
       
 
@@ -214,9 +209,14 @@ address 0x0 {
       // Debug::print(&0x000000000013370010005);
 
       // Prepare list of proofs in epoch for end of epoch statistics
-      let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
-      in_process.proofs = Vector::empty();
-      Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
+      miner_redemption_state.count_proofs_in_epoch = miner_redemption_state.count_proofs_in_epoch + 1;
+
+
+      // let in_process = borrow_global_mut<ProofsInEpoch>(miner_addr);
+      // in_process.proofs = Vector::empty();
+
+      // miner_redemption_state.proof_in_process = vdf_proof_blob
+      // Vector::push_back(&mut in_process.proofs, copy vdf_proof_blob);
       // Adds the address to the Validator Universe state. TBD if this is forever.
       // This signifies that the miner has done legitimate work, and can now be included in validator set.
       // For every  VDF proof that is correct, add the address and the epoch to the struct.
@@ -288,7 +288,7 @@ address 0x0 {
     // MinerState::update_metrics() checks that the miner has been doing validation AND that
     // there are mining proofs presented in the last/current epoch.
     // TODO: check that there are mining proofs presented in the current/outgoing epoch (within which the end_redeem is being called)
-    public fun update_metrics(miner_addr: address) acquires ProofsInEpoch, MinerProofHistory {
+    fun update_metrics(miner_addr: address) acquires MinerProofHistory {
       // The goal of end_redeem is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
 
@@ -297,7 +297,7 @@ address 0x0 {
       Transaction::assert(sender == 0x0, 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
-      if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
+      if( ! ::exists<MinerProofHistory>( miner_addr ) ){
         return
       };
 
@@ -306,21 +306,19 @@ address 0x0 {
 
       // TODO: MinerProofHistory.move count the number of proofs in epoch, and don't count validation that is not credible.
       // BODY: need to make this check more sophisticated. Placeholder for now.
-      let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
-
+      // let proofs_in_epoch = borrow_global_mut<ProofsInEpoch>(miner_addr);
+      let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
       // 2. Update statistics.
-      let threshold = Globals::get_threshold();
-      if (Vector::length( &proofs_in_epoch.proofs ) > threshold) {
-          let miner_redemption_state= borrow_global_mut<MinerProofHistory>(miner_addr);
+      if (miner_redemption_state.count_proofs_in_epoch > Globals::get_threshold()) {
+
           let this_epoch = LibraConfig::get_current_epoch();
           miner_redemption_state.latest_epoch_mining = this_epoch;
-          miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1;
-          miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1;
+          miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1u64;
+          miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1u64;
       };
 
-      // 3. Clear the state of these in_process proofs.
-      // Either they were redeemed or they were not relevant for updating the user delay history.
-      proofs_in_epoch.proofs = Vector::empty();
+      // 3. This is the end of the epoch, reset the count of proofs
+      miner_redemption_state.count_proofs_in_epoch = 0u64;
     }
 
 
@@ -331,7 +329,7 @@ address 0x0 {
       Transaction::assert(sender == 0x0, 130110014010);
 
       // Miner may not have been initialized. (don't abort, just return 0)
-      if( ! ::exists<ProofsInEpoch>( miner_addr ) ){
+      if( ! ::exists<MinerProofHistory>( miner_addr ) ){
         return 0
       };
 
@@ -347,7 +345,7 @@ address 0x0 {
 
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_validator_universe(account: &signer)
-                  acquires ProofsInEpoch, MinerProofHistory {
+                  acquires MinerProofHistory {
       // Check permissions
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 130111014010);
@@ -363,7 +361,7 @@ address 0x0 {
           let redeemed_addr = *Vector::borrow(&eligible_validators, i);
 
           // For testing: don't call end_redeem unless there is account state for the address.
-          if ( ::exists<ProofsInEpoch>( redeemed_addr ) ){
+          if ( ::exists<MinerProofHistory>( redeemed_addr ) ){
               update_metrics(redeemed_addr);
           };
           i = i + 1;
@@ -374,7 +372,7 @@ address 0x0 {
     // Helper function to initialize miner state
     fun init_miner_state(miner: &signer){
       // Initialize vector of proofs in current epoch and give to miner account
-      move_to<ProofsInEpoch>( miner, ProofsInEpoch{proofs: Vector::empty()});
+      // move_to<ProofsInEpoch>( miner, ProofsInEpoch{proofs: Vector::empty()});
 
       // Initialize MinerProofHistory object and give to miner account
       move_to<MinerProofHistory>(miner, MinerProofHistory{
@@ -383,6 +381,7 @@ address 0x0 {
         reported_tower_height: 0u64,
         verified_tower_height: 0u64, // user's latest verified_tower_height
         latest_epoch_mining: 0u64,
+        count_proofs_in_epoch: 0u64,
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
       });
@@ -423,6 +422,20 @@ address 0x0 {
     public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
+    }
+
+        // Returns tower height from input miner's state
+    public fun get_miner_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
+       borrow_global<MinerProofHistory>(miner_addr).verified_tower_height
+    }
+
+    public fun get_count_proofs_in_epoch(miner_addr: address): u64 acquires MinerProofHistory {
+       borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+    }
+
+    // Returns number of epochs for input miner's state
+    public fun get_miner_epochs(miner_addr: address): u64 acquires MinerProofHistory {
+       borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
     }
   }
 }

@@ -6,7 +6,7 @@
 //! sender: alice
 script {
 use 0x0::MinerState;
-use 0x0::Debug;
+// use 0x0::Debug;
 use 0x0::Transaction;
 
 // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
@@ -25,7 +25,7 @@ fun main(sender: &signer) {
 
     let verified_tower_height_after = MinerState::get_miner_tower_height({{alice}});
     // Debug::print(&verified_tower_height_after);
-    Debug::print(&verified_tower_height_after);
+    // Debug::print(&verified_tower_height_after);
 
     Transaction::assert(verified_tower_height_after == reported_tower_height, 10008001);
 
