@@ -14,6 +14,9 @@ fun main(sender: &signer) {
   let challenge = x"232fb6ae7221c853232fb6ae7221c853000000000000000000000000DEADBEEF";
   // Parse key and check
   let (parsed_address, auth_key) = VDF::extract_address_from_challenge(&challenge);
+
+  Transaction::assert(parsed_address == 0x000000000000000000000000DEADBEEF, 401);
+
   // GOAL: it would be ideal that these accounts could be created by any Alice, for any Bob, i.e.
   // if it didn't need to be the association or system account.
   //  ^ I think this is working with `create_validator_account_from_mining_0L`

@@ -26,7 +26,7 @@ mod verify_txn;
 mod write_set;
 
 // 0L changes
-mod ol_txn_fee_test;
-mod ol_e2e_test_redeem;
-mod ol_e2e_test_redeem_onboarding;
-mod ol_e2e_test_reconfig;
+mod ol_txn_fee;
+mod ol_minerstate_commit;
+mod ol_minerstate_onboarding;
+mod ol_reconfig;
