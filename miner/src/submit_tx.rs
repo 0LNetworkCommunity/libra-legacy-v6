@@ -45,7 +45,7 @@ pub struct TxParams {
 }
 
 /// Submit a miner transaction to the network.
-pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64, is_onboading: bool) -> Result<Option<TransactionView>, Error> {
+pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>,is_onboading: bool) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -68,7 +68,6 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
                 TransactionArgument::U8Vector(preimage),
                 TransactionArgument::U64(delay_difficulty()),
                 TransactionArgument::U8Vector(proof),
-                TransactionArgument::U64(tower_height as u64),
             ],
         );
     } else {

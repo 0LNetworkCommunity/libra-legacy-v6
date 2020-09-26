@@ -159,7 +159,7 @@ pub mod build_block {
 
                 if let Some(ref _node) = config.chain_info.node {
 
-                    let res = submit_tx(&tx_params, block.preimage, block.data, block.height, false);
+                    let res = submit_tx(&tx_params, block.preimage, block.data, false);
 
                     if eval_tx_status(res) == false {
                         return Err(ErrorKind::Transaction
