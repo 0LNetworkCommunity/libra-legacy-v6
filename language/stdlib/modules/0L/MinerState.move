@@ -42,7 +42,7 @@ address 0x0 {
     public fun create_proof_blob(
       challenge: vector<u8>,
       difficulty: u64,
-      solution: vector<u8>,
+      solution: vector<u8>
     ) : VdfProofBlob {
        let epoch = LibraConfig::get_current_epoch();
        VdfProofBlob {
@@ -79,7 +79,10 @@ address 0x0 {
 
     // This function verifies the proof and commits to chain.
     // Permissions: PUBLIC, ANYONE
-    public fun commit_state(sender: &signer, vdf_proof_blob: VdfProofBlob) acquires MinerProofHistory {
+    public fun commit_state(
+      sender: &signer,
+      vdf_proof_blob: VdfProofBlob
+    ) acquires MinerProofHistory {
 
       //NOTE: Does not check that the sender is the miner. This is necessary for the Onboarding transaction.
 
@@ -106,14 +109,15 @@ address 0x0 {
         // Initialize the miner state for the new miner
         init_miner_state(sender);
         // Verify the blob and update the newly initialized state
-        verify_and_update_state(miner_addr,vdf_proof_blob , false );
+        // TODO: this runs the VDF twice, should skip in next function.
+        verify_and_update_state(miner_addr, vdf_proof_blob, false);
 
       } else {
         //  This is the steady-state path (miner has already been initialized)
         // Check to ensure the transaction sender is indeed the miner
         Transaction::assert(Transaction::sender() == miner_addr, 130106031010);
         // Verify the blob and update the state.
-        verify_and_update_state(miner_addr,vdf_proof_blob, true  );
+        verify_and_update_state(miner_addr,vdf_proof_blob, true);
       }
     }
 
@@ -127,13 +131,8 @@ address 0x0 {
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
 
-      // If miner has already been initialized (i.e. not block_0)
-      if (initialized_miner) {
-        // TODO: 3. Add redeem attempt to invalid_proof_history, which will later be removed with successful verification.
-        // TODO: Could also surface to client since ClientProxy for submit redeem tx is async.
-        (miner_redemption_state, vdf_proof_blob) = check_hash_and_verify(miner_redemption_state, vdf_proof_blob);
+      (miner_redemption_state, vdf_proof_blob) = check_hash_and_verify(miner_redemption_state, vdf_proof_blob);
 
-      };
       miner_redemption_state.verified_proof_history = Vector::empty();
       Vector::push_back(&mut miner_redemption_state.verified_proof_history, Hash::sha3_256(*&vdf_proof_blob.solution));
       Transaction::assert(Vector::length(&miner_redemption_state.verified_proof_history) > 0, 130107021010);
@@ -156,7 +155,7 @@ address 0x0 {
 
       // A single proof is sufficient to include an address as a candidate for validation, i.e. added to Validator Universe.
 
-      ValidatorUniverse::add_validator( miner_addr );
+      ValidatorUniverse::add_validator(miner_addr);
     }
 
 
@@ -164,7 +163,8 @@ address 0x0 {
     // Permissions: private function.
     fun check_hash_and_verify(
       miner_redemption_state: &mut MinerProofHistory,
-      vdf_proof_blob: VdfProofBlob): (&mut MinerProofHistory, VdfProofBlob) {
+      vdf_proof_blob: VdfProofBlob
+    ): (&mut MinerProofHistory, VdfProofBlob) {
 
       let previous_verified_solution_hash = Vector::borrow(&miner_redemption_state.verified_proof_history, 0);
 
@@ -201,7 +201,9 @@ address 0x0 {
       if (miner_redemption_state.count_proofs_in_epoch > Globals::get_threshold()) {
           let this_epoch = LibraConfig::get_current_epoch();
           miner_redemption_state.latest_epoch_mining = this_epoch;
+
           miner_redemption_state.epochs_validating_and_mining = miner_redemption_state.epochs_validating_and_mining + 1u64;
+
           miner_redemption_state.contiguous_epochs_validating_and_mining = miner_redemption_state.contiguous_epochs_validating_and_mining + 1u64;
       };
 
@@ -229,7 +231,7 @@ address 0x0 {
       miner_redemption_state.epochs_validating_and_mining
     }
 
-    // Bulk update the end_redeem state with the vector of validators from current epoch.
+    // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
     public fun end_redeem_validator_universe(account: &signer)
                   acquires MinerProofHistory {
@@ -248,7 +250,7 @@ address 0x0 {
           let redeemed_addr = *Vector::borrow(&eligible_validators, i);
 
           // For testing: don't call end_redeem unless there is account state for the address.
-          if ( ::exists<MinerProofHistory>( redeemed_addr ) ){
+          if ( ::exists<MinerProofHistory>(redeemed_addr)){
               update_metrics(redeemed_addr);
           };
           i = i + 1;
