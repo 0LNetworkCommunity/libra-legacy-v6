@@ -28,6 +28,7 @@ address 0x0 {
     // Struct to encapsulate information about the state of a miner
     resource struct MinerProofHistory {
       // TODO: this doesn't need to be a vector, it gets cleared.
+        // tower_head_hash:
         verified_proof_history: vector<vector<u8>>,
         invalid_proof_history: vector<vector<u8>>,
         verified_tower_height: u64, // user's latest verified_tower_height
@@ -126,19 +127,23 @@ address 0x0 {
     fun verify_and_update_state(
       miner_addr: address,
       vdf_proof_blob: VdfProofBlob,
-      initialized_miner: bool
+      steady_state: bool
     ) acquires MinerProofHistory {
       // Get a mutable ref to the current state
       let miner_redemption_state = borrow_global_mut<MinerProofHistory>(miner_addr);
 
-      (miner_redemption_state, vdf_proof_blob) = check_hash_and_verify(miner_redemption_state, vdf_proof_blob);
+      // For onboarding transaction the VDF has already been checked.
+      // only do this in steady state.
+      if (steady_state) {
+        (miner_redemption_state, vdf_proof_blob) = check_hash_and_verify(miner_redemption_state, vdf_proof_blob);
+      };
 
       miner_redemption_state.verified_proof_history = Vector::empty();
       Vector::push_back(&mut miner_redemption_state.verified_proof_history, Hash::sha3_256(*&vdf_proof_blob.solution));
       Transaction::assert(Vector::length(&miner_redemption_state.verified_proof_history) > 0, 130107021010);
 
       // Increment the verified_tower_height
-      if (initialized_miner) {
+      if (steady_state) {
         miner_redemption_state.verified_tower_height = miner_redemption_state.verified_tower_height + 1;
       } else {
         miner_redemption_state.verified_tower_height = 0;
