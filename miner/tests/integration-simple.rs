@@ -11,7 +11,7 @@ use std::{
 
 
 #[test]
-#[ignore]
+// #[ignore]
 pub fn integration() {
 
     // PREPARE FIXTURES
@@ -30,7 +30,7 @@ pub fn integration() {
     fs::create_dir(&blocks_dir).unwrap();
 
     // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
-    let _ = fs::copy("../fixtures/block_0.json.test.alice", "blocks/block_0.json");
+    let _ = fs::copy("../fixtures/block_0.json.stage.alice", "blocks/block_0.json");
 
     // clean config dir
     let config_dir = PathBuf::from("../saved_logs");
