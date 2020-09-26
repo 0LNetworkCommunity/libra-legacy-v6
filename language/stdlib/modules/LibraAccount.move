@@ -1094,7 +1094,7 @@ module LibraAccount {
     }
 
     // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
-    public fun create_validator_account_from_mining_0L<Token>(
+    public fun create_validator_account_from_mining<Token>(
         creator: &signer,
         new_account_address: address,
         auth_key_prefix: vector<u8>,
@@ -1105,7 +1105,7 @@ module LibraAccount {
         let new_account = create_signer(new_account_address);
         Event::publish_generator(&new_account);
         // TODO: This publish fails if the creator is not association.
-        ValidatorConfig::publish_from_mining_0L(creator, &new_account);
+        ValidatorConfig::publish_from_mining(creator, &new_account);
 
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);

@@ -25,7 +25,7 @@ fun main(
     let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
     MinerState::commit_state(sender, proof);
 
-    LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, parsed_address, auth_key_prefix);
+    LibraAccount::create_validator_account_from_mining<GAS::T>(sender, parsed_address, auth_key_prefix);
     // Check the account exists and the balance is 0
     Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 12);
 

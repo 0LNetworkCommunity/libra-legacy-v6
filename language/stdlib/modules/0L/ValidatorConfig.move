@@ -56,7 +56,7 @@ module ValidatorConfig {
     }
 
     //NOTE: 0L This is how validator accounts are initialized from mining.
-    public fun publish_from_mining_0L(_creator: &signer, account: &signer) {
+    public fun publish_from_mining(_creator: &signer, account: &signer) {
         // TODO: This is not safe. There needs to be a permission check here.
         // anyone can call this even if they are not in the onboarding flow.
 
