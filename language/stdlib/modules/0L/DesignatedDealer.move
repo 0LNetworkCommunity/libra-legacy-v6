@@ -91,7 +91,7 @@ module DesignatedDealer {
         dd: &signer,
         tc_account: &signer,
         add_all_currencies: bool,
-    ) acquires TierInfo {
+    ) {
         Roles::assert_treasury_compliance(tc_account);
         Roles::assert_designated_dealer(dd);
         assert(!exists<Dealer>(Signer::address_of(dd)), Errors::already_published(EDEALER));
@@ -129,23 +129,23 @@ module DesignatedDealer {
     /// Public so that a currency can be added to a DD later on. Will require
     /// multi-signer transactions in order to add a new currency to an existing DD.
     public fun add_currency<CoinType>(dd: &signer, tc_account: &signer)
-    acquires TierInfo {
+    {
         Roles::assert_treasury_compliance(tc_account);
         let dd_addr = Signer::address_of(dd);
         assert(exists_at(dd_addr), Errors::not_published(EDEALER));
         Libra::publish_preburn_to_account<CoinType>(dd, tc_account);
-        assert(!exists<TierInfo<CoinType>>(dd_addr), Errors::already_published(EDEALER));
-        move_to(dd, TierInfo<CoinType> {
-            window_start: LibraTimestamp::now_microseconds(),
-            window_inflow: 0,
-            tiers: Vector::empty(),
-        });
+        // assert(!exists<TierInfo<CoinType>>(dd_addr), Errors::already_published(EDEALER));
+        // move_to(dd, TierInfo<CoinType> {
+        //     window_start: LibraTimestamp::now_microseconds(),
+        //     window_inflow: 0,
+        //     tiers: Vector::empty(),
+        // });
         // Add tier amounts in base_units of CoinType
-        let coin_scaling_factor = Libra::scaling_factor<CoinType>();
-        add_tier<CoinType>(tc_account, dd_addr, TIER_0_DEFAULT * coin_scaling_factor);
-        add_tier<CoinType>(tc_account, dd_addr, TIER_1_DEFAULT * coin_scaling_factor);
-        add_tier<CoinType>(tc_account, dd_addr, TIER_2_DEFAULT * coin_scaling_factor);
-        add_tier<CoinType>(tc_account, dd_addr, TIER_3_DEFAULT * coin_scaling_factor);
+        // let coin_scaling_factor = Libra::scaling_factor<CoinType>();
+        // add_tier<CoinType>(tc_account, dd_addr, TIER_0_DEFAULT * coin_scaling_factor);
+        // add_tier<CoinType>(tc_account, dd_addr, TIER_1_DEFAULT * coin_scaling_factor);
+        // add_tier<CoinType>(tc_account, dd_addr, TIER_2_DEFAULT * coin_scaling_factor);
+        // add_tier<CoinType>(tc_account, dd_addr, TIER_3_DEFAULT * coin_scaling_factor);
     }
     spec fun add_currency {
         pragma opaque;

@@ -551,7 +551,8 @@ module LibraAccount {
 
     /// Withdraw `amount` `Libra<Token>`'s from the account balance under
     /// `cap.account_address`
-    fun withdraw_from<Token>(
+    /// OL_UPDATE:: Changing function to public in order to enable withdrawal
+    public fun withdraw_from<Token>(
         cap: &WithdrawCapability,
         payee: address,
         amount: u64,
@@ -817,6 +818,7 @@ module LibraAccount {
         let new_account = create_signer(new_account_address);
         CoreAddresses::assert_libra_root(&new_account);
         SlidingNonce::publish_nonce_resource(&new_account, &new_account);
+        add_currencies_for_account<GAS>(&new_account, true);
         make_account(new_account, auth_key_prefix)
     }
 

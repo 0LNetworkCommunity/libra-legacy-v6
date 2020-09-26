@@ -13,7 +13,7 @@ module Libra {
     use 0x1::Signer;
     use 0x1::Roles;
     use 0x1::LibraTimestamp;
-    
+
     resource struct RegisterNewCurrency {}
 
     /// The `Libra` resource defines the Libra coin for each currency in
@@ -435,15 +435,16 @@ module Libra {
     /// used for bootstrapping the designated dealer at account-creation
     /// time, and the association TC account `creator` (at `CoreAddresses::TREASURY_COMPLIANCE_ADDRESS()`) is creating
     /// this resource for the designated dealer.
+    /// OL_UPDATE::Modified to add desginated dealer role for non-synthetic currencies
     public fun publish_preburn_to_account<CoinType>(
         account: &signer,
         tc_account: &signer
-    ) acquires CurrencyInfo {
+    ) {
         Roles::assert_designated_dealer(account);
         Roles::assert_treasury_compliance(tc_account);
-        assert(!is_synthetic_currency<CoinType>(), Errors::invalid_argument(EIS_SYNTHETIC_CURRENCY));
+        // assert(!is_synthetic_currency<CoinType>(), Errors::invalid_argument(EIS_SYNTHETIC_CURRENCY));
         assert(!exists<Preburn<CoinType>>(Signer::address_of(account)), Errors::already_published(EPREBURN));
-        move_to(account, create_preburn<CoinType>(tc_account))
+        move_to(account, create_preburn<CoinType>(tc_account));
     }
     spec fun publish_preburn_to_account {
         modifies global<Preburn<CoinType>>(Signer::spec_address_of(account));
@@ -476,6 +477,15 @@ module Libra {
             with Errors::INVALID_STATE;
         include PreburnAbortsIf<CoinType>;
         include PreburnEnsures<CoinType>{preburn: global<Preburn<CoinType>>(Signer::spec_address_of(account))};
+    }
+
+    // OL::UPDATE::Adding method to do preburn with address
+    public fun preburn_to_address<CoinType>(
+        preburn_address: address,
+        coin: Libra<CoinType>
+    ) acquires CurrencyInfo, Preburn {
+        assert(exists<Preburn<CoinType>>(preburn_address), Errors::not_published(EPREBURN));
+        preburn_with_resource(coin, borrow_global_mut<Preburn<CoinType>>(preburn_address), preburn_address);
     }
 
     /// Permanently removes the coins held in the `Preburn` resource (in to_burn field)

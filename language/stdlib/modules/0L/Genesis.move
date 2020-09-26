@@ -9,7 +9,7 @@ module Genesis {
     use 0x1::ChainId;
     use 0x1::DualAttestation;
     use 0x1::Event;
-    use 0x1::GAS;
+    use 0x1::GAS::{Self, GAS};
     use 0x1::Globals;
     use 0x1::Libra;
     use 0x1::LibraAccount;
@@ -26,6 +26,7 @@ module Genesis {
     use 0x1::LibraVMConfig;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
+    use 0x1::Subsidy;
 
     fun initialize(
         lr_account: &signer,
@@ -62,6 +63,11 @@ module Genesis {
         LibraAccount::create_libra_root_account(
             Signer::address_of(lr_account),
             copy dummy_auth_key_prefix,
+        );
+
+        // Create a burn account and publish preburn
+        LibraAccount::create_designated_dealer<GAS>(
+            lr_account, 0xDEADDEAD, copy dummy_auth_key_prefix, x"", false
         );
         
         // Register transaction fee resource
@@ -105,6 +111,9 @@ module Genesis {
             instruction_schedule,
             native_schedule,
         );
+
+        //Subsidy module setup and burn account initialization
+        Subsidy::initialize(lr_account);
 
         // Mark that genesis has finished. This must appear as the last call.
         LibraTimestamp::set_time_has_started(lr_account);
