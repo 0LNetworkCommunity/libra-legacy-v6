@@ -16,6 +16,7 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::Option;
     use 0x0::Globals;
+    use 0x0::LibraTimestamp;
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -30,10 +31,13 @@ address 0x0 {
     // function to initialize ValidatorUniverse in genesis.
     // This is triggered in new epoch by Configuration in Genesis.move
     // Function code: 01 Prefix: 220101
+    // Permissions: PUBLIC, VM ONLY, GENESIS only
     public fun initialize(account: &signer){
       // Check for transactions sender is association
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 220101014010);
+      Transaction::assert(LibraTimestamp::is_genesis(), 220101024010);
+
 
       move_to<ValidatorUniverse>(account, ValidatorUniverse {
           validators: Vector::empty<ValidatorEpochInfo>()
@@ -42,6 +46,8 @@ address 0x0 {
 
     // This function is called to add validator to the validator universe.
     // Function code: 02 Prefix: 220102
+    
+    // TODO: #239 ValidatorUniverse add_validator should restrict who can add a validator.
     public fun add_validator(addr: address) acquires ValidatorUniverse {
       let collection = borrow_global_mut<ValidatorUniverse>(0x0);
       if(!validator_exists_in_universe(collection, addr))
@@ -56,8 +62,9 @@ address 0x0 {
     // 0L: A simple public function to query the EligibleValidators.
     // Only system addresses should be able to access this function
     // Eligible validators are all those nodes who have mined a VDF proof at any time.
-    // TODO (nelaturuk): Wonder if this helper is necessary since it is just stripping the Validator Universe vector of other fields.
+    // TODO: Is this helper necessary since it is just stripping the Validator Universe vector of other fields.
     // Function code: 03 Prefix: 220103
+    // Permissions: PUBLIC, VM ONLY.
     public fun get_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 220101014010);
@@ -79,8 +86,9 @@ address 0x0 {
       eligible_validators
     }
 
-    // Simple convenience function to lookup if a validator exists in ValidatorUniverse structure.
+    // Convenience function to lookup if a validator exists in ValidatorUniverse structure.
     // Function code: 04 Prefix: 220104
+    // Permissions: private
     fun validator_exists_in_universe(validatorUniverse: &ValidatorUniverse, addr: address): bool {
       let i = 0;
       let validator_list = &validatorUniverse.validators;
@@ -95,6 +103,7 @@ address 0x0 {
     // This function is the Proof of Weight. This is what calculates the values
     // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
     // Function code: 05 Prefix: 220105
+    // Permissions: PUBLIC, VM ONLY.
     public fun proof_of_weight(addr: address, is_validator_in_current_epoch: bool): u64 acquires ValidatorUniverse {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0, 22010105014010);
@@ -104,7 +113,7 @@ address 0x0 {
       let collection =  borrow_global_mut<ValidatorUniverse>(0x0);
 
       // Getting index of the validator
-      let index_vec = get_validator_index_(&collection.validators, addr);
+      let index_vec = get_validator_index(&collection.validators, addr);
       Transaction::assert(Option::is_some(&index_vec), 220105022040);
       let index = *Option::borrow(&index_vec);
 
@@ -124,7 +133,9 @@ address 0x0 {
     }
 
     // Get the index of the validator by address in the `validators` vector
-    fun get_validator_index_(validators: &vector<ValidatorEpochInfo>, addr: address): Option::T<u64>{
+    // Permissions: private.
+
+    fun get_validator_index(validators: &vector<ValidatorEpochInfo>, addr: address): Option::T<u64>{
       let size = Vector::length(validators);
 
       let i = 0;
@@ -140,6 +151,7 @@ address 0x0 {
     }
 
     // Get the validatorInfo by address in the `validators` vector
+    // Permissions: private.
     fun get_validator(addr: address): ValidatorEpochInfo acquires ValidatorUniverse{
 
       let validators = &borrow_global_mut<ValidatorUniverse>(0x0).validators;
@@ -162,7 +174,10 @@ address 0x0 {
 
     // Check the liveness of the validator in the previous epoch
     // Function code: 07 Prefix: 220107
+    // Permissions: PUBLIC, VM ONLY.
     public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0, 220107014010);
       // Calculate the window in which we are evaluating the performance of validators.
       // start and effective end block height for the current epoch
       // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
@@ -200,9 +215,10 @@ address 0x0 {
     }
 
     // Function code: 06 Prefix: 220106
+    // Permissions: PUBLIC, ANYONE.
     public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse{
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 220106014010);
+      // let sender = Transaction::sender();
+      // Transaction::assert(sender == 0x0, 220106014010);
 
       let validatorInfo = get_validator(addr);
 

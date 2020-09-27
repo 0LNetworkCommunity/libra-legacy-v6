@@ -136,6 +136,9 @@ address 0x0 {
       // only do this in steady state.
       if (steady_state) {
         (miner_redemption_state, vdf_proof_blob) = check_hash_and_verify(miner_redemption_state, vdf_proof_blob);
+      } else {
+        // A single proof is sufficient to include an address as a candidate for validation, i.e. added to Validator Universe.
+        ValidatorUniverse::add_validator(miner_addr);
       };
 
       miner_redemption_state.verified_proof_history = Vector::empty();
@@ -158,9 +161,7 @@ address 0x0 {
       // Prepare list of proofs in epoch for end of epoch statistics
       miner_redemption_state.count_proofs_in_epoch = miner_redemption_state.count_proofs_in_epoch + 1;
 
-      // A single proof is sufficient to include an address as a candidate for validation, i.e. added to Validator Universe.
 
-      ValidatorUniverse::add_validator(miner_addr);
     }
 
 

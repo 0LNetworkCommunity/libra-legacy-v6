@@ -9,6 +9,8 @@ use 0x0::VDF;
 use 0x0::LibraAccount;
 use 0x0::GAS;
 use 0x0::Transaction;
+// use 0x0::ValidatorUniverse;
+// use 0x0::Debug;
 
 fun main(sender: &signer) {
   let challenge = x"232fb6ae7221c853232fb6ae7221c853000000000000000000000000DEADBEEF";
@@ -22,8 +24,12 @@ fun main(sender: &signer) {
   //  ^ I think this is working with `create_validator_account_from_mining`
   LibraAccount::create_validator_account_from_mining<GAS::T>(sender, parsed_address, auth_key);
 
+  Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 402);
+
+  // NOTE: The validator is not in the validator set yet.
+  
   // Check the account exists and the balance is 0
-  Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 0);
+  Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 403);
 
 }
 }

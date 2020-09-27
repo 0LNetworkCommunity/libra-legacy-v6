@@ -16,6 +16,7 @@ use 0x0::LibraSystem;
         let set = LibraSystem::validator_set_size();
         // Debug::print(&set);
 
+        Transaction::assert(set == 1u64, 73570001);
 
         if (Testnet::is_testnet()){
             Transaction::assert(len == 15u64, 73570001);

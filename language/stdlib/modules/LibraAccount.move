@@ -1093,7 +1093,9 @@ module LibraAccount {
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
     }
 
+    // 0L Change
     // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
+    //Permissions: PUBLIC, ANYONE.
     public fun create_validator_account_from_mining<Token>(
         creator: &signer,
         new_account_address: address,

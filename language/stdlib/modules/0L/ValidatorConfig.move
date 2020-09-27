@@ -56,10 +56,10 @@ module ValidatorConfig {
     }
 
     //NOTE: 0L This is how validator accounts are initialized from mining.
+    //Permissions: should be private, and by VM only.
+    // TODO: This is not safe. There needs to be a permission check here.
+    // anyone can call this even if they are not in the onboarding flow.
     public fun publish_from_mining(_creator: &signer, account: &signer) {
-        // TODO: This is not safe. There needs to be a permission check here.
-        // anyone can call this even if they are not in the onboarding flow.
-
         move_to(account, T {
             config: Option::none(),
             operator_account: Option::none(),

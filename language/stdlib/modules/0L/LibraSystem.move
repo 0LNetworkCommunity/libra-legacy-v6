@@ -109,7 +109,7 @@ module LibraSystem {
 
         let validator_set = get_validator_set();
         // Ensure that this address is an active validator
-        let to_remove_index_vec = get_validator_index_(&validator_set.validators, account_address);
+        let to_remove_index_vec = get_validator_index(&validator_set.validators, account_address);
         Transaction::assert(Option::is_some(&to_remove_index_vec), 21);
         let to_remove_index = *Option::borrow(&to_remove_index_vec);
         // Remove corresponding ValidatorInfo from the validator set
@@ -177,7 +177,7 @@ module LibraSystem {
     // If the address is not a validator, abort
     public fun get_validator_config(addr: address): ValidatorConfig::Config {
         let validator_set = get_validator_set();
-        let validator_index_vec = get_validator_index_(&validator_set.validators, addr);
+        let validator_index_vec = get_validator_index(&validator_set.validators, addr);
         Transaction::assert(Option::is_some(&validator_index_vec), 33);
         *&(Vector::borrow(&validator_set.validators, *Option::borrow(&validator_index_vec))).config
     }
@@ -234,7 +234,7 @@ module LibraSystem {
     }
 
     // Get the index of the validator by address in the `validators` vector
-    fun get_validator_index_(validators: &vector<ValidatorInfo>, addr: address): Option::T<u64> {
+    fun get_validator_index(validators: &vector<ValidatorInfo>, addr: address): Option::T<u64> {
         let size = Vector::length(validators);
         if (size == 0) {
             return Option::none()
@@ -273,7 +273,7 @@ module LibraSystem {
     }
 
     fun is_validator_(addr: address, validators_vec_ref: &vector<ValidatorInfo>): bool {
-        Option::is_some(&get_validator_index_(validators_vec_ref, addr))
+        Option::is_some(&get_validator_index(validators_vec_ref, addr))
     }
    ///////////////////////////////////////////////////////////////////////////
     // 0L Methods
