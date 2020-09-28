@@ -17,6 +17,8 @@ address 0x0 {
     use 0x0::Option;
     use 0x0::Globals;
     use 0x0::LibraTimestamp;
+    use 0x0::Debug;
+
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -50,13 +52,22 @@ address 0x0 {
     // TODO: #239 ValidatorUniverse add_validator should restrict who can add a validator.
     public fun add_validator(addr: address) acquires ValidatorUniverse {
       let collection = borrow_global_mut<ValidatorUniverse>(0x0);
-      if(!validator_exists_in_universe(collection, addr))
-      Vector::push_back<ValidatorEpochInfo>(
-        &mut collection.validators,
-        ValidatorEpochInfo{
-        validator_address: addr,
-        weight: 1
-      });
+
+      let len = Vector::length<ValidatorEpochInfo>(&collection.validators);
+      Debug::print(&0x00001ee70002);
+      Debug::print(&len);
+      Debug::print(&addr);
+
+
+      if(!validator_exists_in_universe(collection, addr)) {
+        Vector::push_back<ValidatorEpochInfo>(
+          &mut collection.validators,
+          ValidatorEpochInfo {
+            validator_address: addr,
+            weight: 1
+          }
+        );
+      }
     }
 
     // 0L: A simple public function to query the EligibleValidators.
@@ -67,7 +78,7 @@ address 0x0 {
     // Permissions: PUBLIC, VM ONLY.
     public fun get_eligible_validators(account: &signer) : vector<address> acquires ValidatorUniverse {
       let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 220101014010);
+      Transaction::assert(sender == 0x0, 220103014010);
 
       let eligible_validators = Vector::empty<address>();
       // Create a vector with all eligible validator addresses
@@ -166,6 +177,7 @@ address 0x0 {
           i = i + 1;
       };
 
+      //TODO: wouldn't it be better to error, if there is no address found?
       return ValidatorEpochInfo{
         validator_address: {{0x0}},
         weight: 0
