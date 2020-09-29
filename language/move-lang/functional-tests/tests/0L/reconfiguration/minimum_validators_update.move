@@ -86,6 +86,39 @@ script {
         Transaction::assert(LibraSystem::validator_set_size() == 4, 979);
     }
 }
+
+
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Vector;
+    use 0x0::Stats;
+
+    fun main() {
+        let validators = Vector::empty<address>();
+        Vector::push_back<address>(&mut validators, {{vivian}});
+        Vector::push_back<address>(&mut validators, {{alice}});
+        Vector::push_back<address>(&mut validators, {{charles}});
+        Vector::push_back<address>(&mut validators, {{shasha}});
+
+        Stats::insert_voter_list(1, &validators);
+        Stats::insert_voter_list(2, &validators);
+        Stats::insert_voter_list(3, &validators);
+        Stats::insert_voter_list(4, &validators);
+        Stats::insert_voter_list(5, &validators);
+        Stats::insert_voter_list(6, &validators);
+        Stats::insert_voter_list(7, &validators);
+        Stats::insert_voter_list(8, &validators);
+        Stats::insert_voter_list(9, &validators);
+        Stats::insert_voter_list(10, &validators);
+        Stats::insert_voter_list(11, &validators);
+        Stats::insert_voter_list(12, &validators);
+        Stats::insert_voter_list(13, &validators);
+        Stats::insert_voter_list(14, &validators);
+        Stats::insert_voter_list(15, &validators);
+    }
+}
+
 //! block-prologue
 //! proposer: vivian
 //! block-time: 15

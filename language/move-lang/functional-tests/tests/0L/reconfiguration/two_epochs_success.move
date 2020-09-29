@@ -65,6 +65,38 @@
 //! proposer: vivian
 //! block-time: 14
 
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Vector;
+    use 0x0::Stats;
+
+    fun main() {
+        let validators = Vector::empty<address>();
+        Vector::push_back<address>(&mut validators, {{vivian}});
+        Vector::push_back<address>(&mut validators, {{alice}});
+        Vector::push_back<address>(&mut validators, {{charles}});
+        Vector::push_back<address>(&mut validators, {{bob}});
+        Vector::push_back<address>(&mut validators, {{shasha}});
+
+        Stats::insert_voter_list(1, &validators);
+        Stats::insert_voter_list(2, &validators);
+        Stats::insert_voter_list(3, &validators);
+        Stats::insert_voter_list(4, &validators);
+        Stats::insert_voter_list(5, &validators);
+        Stats::insert_voter_list(6, &validators);
+        Stats::insert_voter_list(7, &validators);
+        Stats::insert_voter_list(8, &validators);
+        Stats::insert_voter_list(9, &validators);
+        Stats::insert_voter_list(10, &validators);
+        Stats::insert_voter_list(11, &validators);
+        Stats::insert_voter_list(12, &validators);
+        Stats::insert_voter_list(13, &validators);
+        Stats::insert_voter_list(14, &validators);
+        Stats::insert_voter_list(15, &validators);
+    }
+}
+
 //! block-prologue
 //! proposer: vivian
 //! block-time: 15
@@ -128,6 +160,38 @@
 //! block-prologue
 //! proposer: vivian
 //! block-time: 29
+
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Vector;
+    use 0x0::Stats;
+
+    fun main() {
+        let validators = Vector::empty<address>();
+        Vector::push_back<address>(&mut validators, {{vivian}});
+        Vector::push_back<address>(&mut validators, {{alice}});
+        Vector::push_back<address>(&mut validators, {{charles}});
+        Vector::push_back<address>(&mut validators, {{bob}});
+        Vector::push_back<address>(&mut validators, {{shasha}});
+
+        Stats::insert_voter_list(16, &validators);
+        Stats::insert_voter_list(17, &validators);
+        Stats::insert_voter_list(18, &validators);
+        Stats::insert_voter_list(19, &validators);
+        Stats::insert_voter_list(20, &validators);
+        Stats::insert_voter_list(21, &validators);
+        Stats::insert_voter_list(22, &validators);
+        Stats::insert_voter_list(23, &validators);
+        Stats::insert_voter_list(24, &validators);
+        Stats::insert_voter_list(25, &validators);
+        Stats::insert_voter_list(26, &validators);
+        Stats::insert_voter_list(27, &validators);
+        Stats::insert_voter_list(28, &validators);
+        Stats::insert_voter_list(29, &validators);
+        Stats::insert_voter_list(30, &validators);
+    }
+}
 
 //! block-prologue
 //! proposer: vivian

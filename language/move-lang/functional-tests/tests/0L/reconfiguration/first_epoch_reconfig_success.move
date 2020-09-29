@@ -65,6 +65,37 @@
 //! proposer: vivian
 //! block-time: 14
 
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Vector;
+    use 0x0::Stats;
+
+    fun main() {
+        let validators = Vector::empty<address>();
+        Vector::push_back<address>(&mut validators, {{vivian}});
+        Vector::push_back<address>(&mut validators, {{alice}});
+        Vector::push_back<address>(&mut validators, {{charles}});
+        Vector::push_back<address>(&mut validators, {{bob}});
+        Vector::push_back<address>(&mut validators, {{shasha}});
+
+        Stats::insert_voter_list(1, &validators);
+        Stats::insert_voter_list(2, &validators);
+        Stats::insert_voter_list(3, &validators);
+        Stats::insert_voter_list(4, &validators);
+        Stats::insert_voter_list(5, &validators);
+        Stats::insert_voter_list(6, &validators);
+        Stats::insert_voter_list(7, &validators);
+        Stats::insert_voter_list(8, &validators);
+        Stats::insert_voter_list(9, &validators);
+        Stats::insert_voter_list(10, &validators);
+        Stats::insert_voter_list(11, &validators);
+        Stats::insert_voter_list(12, &validators);
+
+    }
+}
+// check: EXECUTED
+
 //! block-prologue
 //! proposer: vivian
 //! block-time: 15
@@ -76,11 +107,9 @@
 //! sender: alice
 script {
   use 0x0::LibraBlock;
-  // use 0x0::Debug;
   use 0x0::Transaction;
   fun main(_account: &signer) {
     let block_height =  LibraBlock::get_current_block_height();
-    // Debug::print(&block_height);
     Transaction::assert(block_height == 15, 98);
 
     }
