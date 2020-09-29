@@ -30,7 +30,7 @@ address 0x0 {
       // TODO: this doesn't need to be a vector, it gets cleared.
         // tower_head_hash:
         verified_proof_history: vector<vector<u8>>,
-        invalid_proof_history: vector<vector<u8>>,
+        // invalid_proof_history: vector<vector<u8>>,
         verified_tower_height: u64, // user's latest verified_tower_height
         latest_epoch_mining: u64,
         count_proofs_in_epoch: u64,
@@ -265,12 +265,15 @@ address 0x0 {
 
 
     // Function to initialize miner state
-    // Permissions: private function.
-    fun init_miner_state(miner: &signer){
+    // Permissions: PUBLIC, ANYONE, LIBRAACCOUNT
+    public fun init_miner_state(miner: &signer){
+      // LibraAccount calls this.
+      // NOTE Only Signer can update own state.
+      // Exception is LibraAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
       move_to<MinerProofHistory>(miner, MinerProofHistory{
         verified_proof_history: Vector::empty(),
-        invalid_proof_history: Vector::empty(),
+        // invalid_proof_history: Vector::empty(),
         verified_tower_height: 0u64,
         latest_epoch_mining: 0u64,
         count_proofs_in_epoch: 0u64,

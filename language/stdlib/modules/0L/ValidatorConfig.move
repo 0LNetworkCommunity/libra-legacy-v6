@@ -47,7 +47,6 @@ module ValidatorConfig {
 
     //NOTE: 0L This is only used for genesis.
     public fun publish(creator: &signer, account: &signer) {
-        // Debug::print(&Signer::address_of(creator));
         Transaction::assert(Signer::address_of(creator) == 0x0, 1101);
         move_to(account, T {
             config: Option::none(),
@@ -56,11 +55,11 @@ module ValidatorConfig {
     }
 
     //NOTE: 0L This is how validator accounts are initialized from mining.
-    //Permissions: should be private, and by VM only.
-    // TODO: This is not safe. There needs to be a permission check here.
-    // anyone can call this even if they are not in the onboarding flow.
-    public fun publish_from_mining(_creator: &signer, account: &signer) {
-        move_to(account, T {
+    // Permissions: PUBLIC, SIGNER.
+    // anyone can call this even if they are not in the onboarding flow. But they can only move the Validator Config Struct to the Signer's account. LibraAccount is the only module which can exceptionally move a resource into an arbitrary account (usually newly created).
+
+    public fun publish_from_vdf(account: &signer) {
+        move_to(account, T { // implicit check, that the account is the tx signer.
             config: Option::none(),
             operator_account: Option::none(),
         });

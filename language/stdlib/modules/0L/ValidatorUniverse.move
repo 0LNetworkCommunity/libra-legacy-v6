@@ -17,7 +17,7 @@ address 0x0 {
     use 0x0::Option;
     use 0x0::Globals;
     use 0x0::LibraTimestamp;
-    use 0x0::Debug;
+    // use 0x0::Debug;
 
 
     struct ValidatorEpochInfo {
@@ -53,10 +53,10 @@ address 0x0 {
     public fun add_validator(addr: address) acquires ValidatorUniverse {
       let collection = borrow_global_mut<ValidatorUniverse>(0x0);
 
-      let len = Vector::length<ValidatorEpochInfo>(&collection.validators);
-      Debug::print(&0x00001ee70002);
-      Debug::print(&len);
-      Debug::print(&addr);
+      // let len = Vector::length<ValidatorEpochInfo>(&collection.validators);
+      // Debug::print(&0x00001ee70002);
+      // Debug::print(&len);
+      // Debug::print(&addr);
 
 
       if(!validator_exists_in_universe(collection, addr)) {
