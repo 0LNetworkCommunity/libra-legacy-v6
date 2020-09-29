@@ -7,7 +7,7 @@ use 0x0::LibraAccount;
 use 0x0::GAS;
 use 0x0::Transaction;
 // use 0x0::MinerState;
-// use 0x0::ValidatorUniverse;
+use 0x0::ValidatorUniverse;
 // use 0x0::Debug;
 
 fun main(_sender: &signer) {
@@ -25,24 +25,23 @@ fun main(_sender: &signer) {
   // let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
   // MinerState::commit_state(sender, proof);
 
-  LibraAccount::create_account_with_vdf<GAS::T>(
+  LibraAccount::create_validator_account_with_vdf<GAS::T>(
     parsed_address,
     auth_key,
     challenge,
-    100u64,
     solution,
   );
   Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 402);
-  //   // get_validator_weight
-  // // ValidatorUniverse::add_validator(parsed_address);
-  // // let info = ValidatorUniverse::get_eligible_validators(sender);
-  // // Debug::print(&info);
 
-  // let weight =  ValidatorUniverse::get_validator_weight(parsed_address);
-  // Debug::print(&weight);
+  // TODO: add_validators lacks permissions.
+  // ValidatorUniverse::add_validator(parsed_address);
+
+  //Check the validator is in the validator universe.
+  let weight =  ValidatorUniverse::get_validator_weight(parsed_address);
+  Transaction::assert(weight == 1, 403);
 
   // // Check the account exists and the balance is 0
-  // Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 404);
+  Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 404);
 }
 }
 // check: EXECUTED

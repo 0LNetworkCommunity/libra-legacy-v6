@@ -227,10 +227,12 @@ address 0x0 {
     }
 
     // Function code: 06 Prefix: 220106
-    // Permissions: PUBLIC, ANYONE.
+    // Permissions: PUBLIC, SIGNER.
     public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse{
       // let sender = Transaction::sender();
-      // Transaction::assert(sender == 0x0, 220106014010);
+      // Transaction::assert(
+      //   sender == 0x0 || sender == addr
+      //   , 220106014010);
 
       let validatorInfo = get_validator(addr);
 

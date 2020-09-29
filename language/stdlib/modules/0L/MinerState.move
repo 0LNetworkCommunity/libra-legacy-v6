@@ -280,6 +280,10 @@ address 0x0 {
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
       });
+
+      //also add the miner to validator universe
+      ValidatorUniverse::add_validator(Signer::address_of(miner));
+
     }
 
 
