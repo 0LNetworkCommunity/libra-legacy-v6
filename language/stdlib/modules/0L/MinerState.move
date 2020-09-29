@@ -356,9 +356,17 @@ address 0x0 {
     // Bulk update the end_redeem state with the vector of validators from current epoch.
     public fun end_redeem_validator_universe(account: &signer)
                   acquires ProofsInEpoch, MinerProofHistory {
+
       // Check permissions
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 130111014010);
+
+    Debug::print<address>(&sender);
+    Debug::print<address>(&sender);
+    Debug::print<address>(&sender);
+    Debug::print<address>(&sender);
+
+    //Debug::print(b"=============================xxxxx");
 
       // Get list of validators from ValidatorUniverse
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);

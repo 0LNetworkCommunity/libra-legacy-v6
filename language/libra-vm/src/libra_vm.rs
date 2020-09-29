@@ -43,6 +43,12 @@ use rayon::prelude::*;
 use std::{collections::HashSet, convert::TryFrom, sync::Arc};
 use vm::errors::{convert_prologue_runtime_error, VMResult};
 
+// For debug use
+use stdlib::{transaction_scripts::StdlibScript, StdLibOptions};
+use move_vm_types::data_store::DataStore;
+use vm::access::ModuleAccess;
+use vm::CompiledModule;
+
 #[derive(Clone)]
 /// A wrapper to make VMRuntime standalone and thread safe.
 pub struct LibraVM {
@@ -509,7 +515,7 @@ impl LibraVM {
         cost_strategy.charge_intrinsic_gas(txn_data.transaction_size())?;
         let mut data_store = TransactionDataCache::new(remote_cache);
 
-        if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.into_inner() {
+        if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.clone().into_inner() {
             let args = vec![
                 Value::transaction_argument_signer_reference(txn_data.sender),
                 Value::u64(round),
@@ -529,6 +535,28 @@ impl LibraVM {
         } else {
             return Err(VMStatus::new(StatusCode::MALFORMED));
         };
+
+        if let Ok((round, timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
+
+            println!("====================================== start publish module {}", round);
+            if round!=1 {
+                // test upgrade
+                // let stdlib = lcs::from_bytes::<Vec<Vec<u8>>>(std::include_bytes!("../staged/stdlib.mv" )
+                //     .unwrap()
+                //     .into_iter()
+                //     .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
+                //     .collect();
+                let stdlib = stdlib::stdlib_modules(StdLibOptions::Fresh);
+                for module in stdlib {
+                    let mut bytes = vec![];
+                    module
+                        .serialize(&mut bytes)
+                        .expect("Failed to serialize module");
+                    data_store.publish_module(module.self_id(), bytes).expect("Failed to publish module");
+                }
+                println!("====================================== end publish module {}", timestamp);
+            }
+        }
 
         get_transaction_output(
             &mut data_store,

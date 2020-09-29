@@ -6,6 +6,7 @@ module LibraConfig {
     use 0x0::Signer;
     use 0x0::Association;
     use 0x0::Offer;
+    use 0x0::Debug;
 
     // A generic singleton resource that holds a value of a specific type.
     resource struct T<Config: copyable> { payload: Config }
@@ -150,6 +151,11 @@ module LibraConfig {
             1
         );
         reconfigure_();
+        Debug::print(account);
+        Debug::print(account);
+        Debug::print(account);
+        Debug::print(account);
+        Debug::print(account);
     }
 
     fun reconfigure_() acquires Configuration {
