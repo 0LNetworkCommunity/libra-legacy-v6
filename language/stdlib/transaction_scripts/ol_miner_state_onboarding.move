@@ -21,9 +21,9 @@ fun main(
     // Transaction::assert(_expected_address == parsed_address);
     LibraAccount::create_validator_account_with_vdf<GAS::T>(
       parsed_address,
-      auth_key,
-      challenge,
-      solution,
+      auth_key_prefix,
+      &challenge,
+      &solution,
     );
     Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 402);
 

@@ -6,7 +6,7 @@ use 0x0::VDF;
 use 0x0::LibraAccount;
 use 0x0::GAS;
 use 0x0::Transaction;
-// use 0x0::MinerState;
+use 0x0::MinerState;
 use 0x0::ValidatorUniverse;
 // use 0x0::Debug;
 
@@ -28,20 +28,25 @@ fun main(_sender: &signer) {
   LibraAccount::create_validator_account_with_vdf<GAS::T>(
     parsed_address,
     auth_key,
-    challenge,
-    solution,
+    &challenge,
+    &solution,
   );
   Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 402);
+
+  let tower_height = MinerState::test_helper_get_miner_state(parsed_address);
+  // Transaction::assert(state ==0, 403);
+  // Debug::print(&state);
+  Transaction::assert(tower_height ==0, 403);
 
   // TODO: add_validators lacks permissions.
   // ValidatorUniverse::add_validator(parsed_address);
 
   //Check the validator is in the validator universe.
   let weight =  ValidatorUniverse::get_validator_weight(parsed_address);
-  Transaction::assert(weight == 1, 403);
+  Transaction::assert(weight == 1, 404);
 
   // // Check the account exists and the balance is 0
-  Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 404);
+  Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 405);
 }
 }
 // check: EXECUTED
