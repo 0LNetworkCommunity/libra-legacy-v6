@@ -2,6 +2,7 @@
 
 // Prepare the state for the next test.
 // Bob Submits a CORRECT VDF Proof, and that updates the state.
+//! account: alice, 10000000GAS
 //! account: bob, 10000000GAS
 //! new-transaction
 //! sender: bob
@@ -13,7 +14,7 @@ use 0x0::TestFixtures;
 fun main(sender: &signer) {
 
     // Testing that state can be initialized, and a proof submitted as if it were genesis.
-    // building block for other tests.
+    // buildign block for other tests.
     MinerState::test_helper(
         sender,
         TestFixtures::easy_chal(),

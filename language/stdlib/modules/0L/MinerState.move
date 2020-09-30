@@ -77,6 +77,7 @@ address 0x0 {
     // Permissions: PUBLIC, SIGNER, TEST ONLY
     public fun test_helper (
       miner: &signer,
+      difficulty: u64,
       challenge: vector<u8>,
       solution: vector<u8>
     ) acquires MinerProofHistory {
@@ -85,7 +86,7 @@ address 0x0 {
       //doubly check this is in test env.
       Transaction::assert(Globals::get_epoch_length() == 15, 130102024010);
 
-      let difficulty = Globals::get_difficulty();
+      // let difficulty = Globals::get_difficulty();
       let proof = Proof {
         challenge,
         difficulty,  
@@ -317,32 +318,15 @@ address 0x0 {
       *&addr_state.latest_epoch_mining
     }
 
-    // Returns tower height from input miner's state
-    // Permissions: public, ANYONE, TESTING only. The miner can get own info.
-    public fun test_helper_get_miner_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
-      Transaction::assert(Transaction::sender() == miner_addr, 130115014012);
-      Transaction::assert(Testnet::is_testnet()
- == true, 130115014011);
-
-      borrow_global<MinerProofHistory>(miner_addr).verified_tower_height
-    }
 
     // Get weight of validator identified by address
     // Permissions: PUBLIC, ANYONE, TESTING 
-
-    public fun test_helper_get_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
+    public fun test_helper_get_height(miner_addr: address): u64 acquires MinerProofHistory {
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
     }
-    // TODO: Unused. Possibly useful for proof-of-weight calcs 
-    // Permissions: public, VM only.
-    // public fun get_count_proofs_in_epoch(miner_addr: address): u64 acquires MinerProofHistory {
-    //   let sender = Transaction::sender();
-    //   Transaction::assert(sender == 0x0, 130116014010);
-    //    borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
-    // }
 
     // Returns number of epochs for input miner's state
     // Permissions: public, VM only, TESTING only
