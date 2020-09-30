@@ -148,24 +148,20 @@ address 0x0 {
       // Increment the verified_tower_height
       if (steady_state) {
         miner_history.verified_tower_height = miner_history.verified_tower_height + 1;
+        miner_history.count_proofs_in_epoch = miner_history.count_proofs_in_epoch + 1;
       } else {
         miner_history.verified_tower_height = 0;
         miner_history.count_proofs_in_epoch = 1
       };
-      
-
-      // NOTE: this is used by end_redeem
+    
       miner_history.latest_epoch_mining = LibraConfig::get_current_epoch();
-
-      // Prepare list of proofs in epoch for end of epoch statistics
-      miner_history.count_proofs_in_epoch = miner_history.count_proofs_in_epoch + 1;
     }
 
     // Checks that the validator has been mining above the count threshold
     // Note: this is only called on a validator successfully meeting the validation thresholds (different than mining threshold). So the function presumes the validator is in good standing for that epoch.
     // Permissions: private function
     fun update_metrics(miner_addr: address) acquires MinerProofHistory {
-      // The goal of end_redeem is to confirm that a miner participated in consensus during
+      // The goal of update_metrics is to confirm that a miner participated in consensus during
       // an epoch, but also that there were mining proofs submitted in that epoch.
 
       let sender = Transaction::sender();
@@ -188,6 +184,9 @@ address 0x0 {
           miner_history.epochs_validating_and_mining = miner_history.epochs_validating_and_mining + 1u64;
 
           miner_history.contiguous_epochs_validating_and_mining = miner_history.contiguous_epochs_validating_and_mining + 1u64;
+      } else {
+        // didn't meet the threshold, reset this count
+        miner_history.contiguous_epochs_validating_and_mining = 0;
       };
 
       // This is the end of the epoch, reset the count of proofs
@@ -217,8 +216,7 @@ address 0x0 {
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
 
-    //TODO: Rename
-    public fun end_redeem_validator_universe(account: &signer) acquires MinerProofHistory {
+    public fun epoch_boundary(account: &signer) acquires MinerProofHistory {
       // Check permissions
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 130111014010);
@@ -226,16 +224,15 @@ address 0x0 {
       // Get list of validators from ValidatorUniverse
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
 
-      // Iterate through validators and call redeem for each validator
-      // that had proofs this epoch
+      // Iterate through validators and call update_metrics for each validator that had proofs this epoch
       let size = Vector::length<address>(&eligible_validators);
       let i = 0;
       while (i < size) {
-          let redeemed_addr = *Vector::borrow(&eligible_validators, i);
+          let val = *Vector::borrow(&eligible_validators, i);
 
-          // For testing: don't call end_redeem unless there is account state for the address.
-          if (::exists<MinerProofHistory>(redeemed_addr)){
-              update_metrics(redeemed_addr);
+          // For testing: don't call update_metrics unless there is account state for the address.
+          if (::exists<MinerProofHistory>(val)){
+              update_metrics(val);
           };
           i = i + 1;
       };
@@ -286,6 +283,7 @@ address 0x0 {
       Transaction::assert(new_account_address == parsed_address, 130113021010);
     }
 
+
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
     public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
@@ -293,6 +291,18 @@ address 0x0 {
       Transaction::assert(sender == 0x0, 130114014010);
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
+    }
+
+
+    ////////////////////
+    // TEST HELPERS ///
+    ////////////////////
+
+    // Permissions: PUBLIC, VM, TESTING 
+    public fun test_helper_update_metrics(miner_addr: address) acquires MinerProofHistory{
+      Transaction::assert(Testnet::is_testnet()
+ == true, 130115014011);
+      update_metrics(miner_addr);
     }
 
 
@@ -305,6 +315,8 @@ address 0x0 {
       *&state.verified_tower_height
     }
 
+
+
     // Returns number of epochs for input miner's state
     // Permissions: public, VM only, TESTING only
     public fun test_helper_get_miner_epochs(miner_addr: address): u64 acquires MinerProofHistory {
@@ -313,6 +325,24 @@ address 0x0 {
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);
       borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
+    }
+
+    public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0, 130117014010);
+      Transaction::assert(Testnet::is_testnet()
+ == true, 130115014011);
+      borrow_global<MinerProofHistory>(miner_addr).contiguous_epochs_validating_and_mining
+    }
+
+    
+
+    public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
+      let sender = Transaction::sender();
+      Transaction::assert(sender == 0x0, 130117014010);
+      Transaction::assert(Testnet::is_testnet()
+ == true, 130115014011);
+      borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
     }
   }
 }
