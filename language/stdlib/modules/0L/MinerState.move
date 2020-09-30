@@ -18,19 +18,15 @@ address 0x0 {
     use 0x0::Testnet;
 
     // Struct to store information about a VDF proof submitted
-    struct VdfProofBlob {
+    struct Proof {
         challenge: vector<u8>,
         difficulty: u64,
         solution: vector<u8>,
-        epoch: u64,
     }
 
     // Struct to encapsulate information about the state of a miner
     resource struct MinerProofHistory {
-      // TODO: this doesn't need to be a vector, it gets cleared.
-        // tower_head_hash:
-        verified_proof_history: vector<vector<u8>>,
-        // invalid_proof_history: vector<vector<u8>>,
+        previous_proof_hash: vector<u8>,
         verified_tower_height: u64, // user's latest verified_tower_height
         latest_epoch_mining: u64,
         count_proofs_in_epoch: u64,
@@ -44,13 +40,11 @@ address 0x0 {
       challenge: vector<u8>,
       difficulty: u64,
       solution: vector<u8>
-    ) : VdfProofBlob {
-       let epoch = LibraConfig::get_current_epoch();
-       VdfProofBlob {
+    ) : Proof {
+       Proof {
          challenge,
          difficulty,
          solution,
-         epoch
       }
     }
 
@@ -70,28 +64,27 @@ address 0x0 {
       Transaction::assert(LibraTimestamp::is_genesis(), 130102034010);
 
       let difficulty = Globals::get_difficulty();
-      let vdf_proof_blob = VdfProofBlob {
+      let proof = Proof {
         challenge,
         difficulty,  
         solution,
-        epoch: 0,
       };
       init_miner_state(miner);
-      verify_and_update_state(Signer::address_of(miner), vdf_proof_blob, false);
+      verify_and_update_state(Signer::address_of(miner), proof, false);
     }
 
 
     // This function verifies the proof and commits to chain.
     // Permissions: PUBLIC, ANYONE
     public fun commit_state(
-      sender: &signer,
-      vdf_proof_blob: VdfProofBlob
+      miner_sign: &signer,
+      proof: Proof
     ) acquires MinerProofHistory {
 
-      //NOTE: Does not check that the sender is the miner. This is necessary for the Onboarding transaction.
+      //NOTE: Does not check that the Sender is the Signer. Which we must skip for the onboarding transaction.
 
       // Get address, assumes the sender is the signer.
-      let miner_addr = Signer::address_of(sender);
+      let miner_addr = Signer::address_of(miner_sign);
 
       // Abort if not initialized.
       Transaction::assert(::exists<MinerProofHistory>(miner_addr), 130106021021);
@@ -101,17 +94,17 @@ address 0x0 {
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
-        Transaction::assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
+        Transaction::assert(&proof.difficulty == &difficulty_constant, 130106011010);
       };
       
-      verify_and_update_state(miner_addr,vdf_proof_blob, true);
+      verify_and_update_state(miner_addr,proof, true);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
     // Permissions: private function.
     fun verify_and_update_state(
       miner_addr: address,
-      vdf_proof_blob: VdfProofBlob,
+      proof: Proof,
       steady_state: bool
     ) acquires MinerProofHistory {
       // Get a mutable ref to the current state
@@ -120,16 +113,14 @@ address 0x0 {
       // For onboarding transaction the VDF has already been checked.
       // only do this in steady state.
       if (steady_state) {
-        (miner_history, vdf_proof_blob) = check_hash_and_verify(miner_history, vdf_proof_blob);
-      } else {
-        // A single proof is sufficient to include an address as a candidate for validation, i.e. added to Validator Universe.
-        let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-        Transaction::assert(valid, 130108041021);
+        //If not genesis proof, check hash 
+        Transaction::assert(&proof.challenge == &miner_history.previous_proof_hash, 130108031010);      
       };
 
-      miner_history.verified_proof_history = Vector::empty();
-      Vector::push_back(&mut miner_history.verified_proof_history, Hash::sha3_256(*&vdf_proof_blob.solution));
-      Transaction::assert(Vector::length(&miner_history.verified_proof_history) > 0, 130107021010);
+      let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
+      Transaction::assert(valid, 130108041021);
+
+      miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
 
       // Increment the verified_tower_height
       if (steady_state) {
@@ -150,21 +141,24 @@ address 0x0 {
 
     // Helper function which checks if proof has already been submitted and verifies that proof is valid.
     // Permissions: private function.
-    fun check_hash_and_verify(
-      miner_history: &mut MinerProofHistory,
-      vdf_proof_blob: VdfProofBlob
-    ): (&mut MinerProofHistory, VdfProofBlob) {
+    // fun check_hash_and_verify(
+    //   miner_history: &mut MinerProofHistory,
+    //   proof: Proof
+    // ): (&mut MinerProofHistory, Proof) {
 
-      let previous_verified_solution_hash = Vector::borrow(&miner_history.verified_proof_history, 0);
+    //   // let previous_verified_solution_hash = Vector::borrow(&miner_history.verified_proof_history, 0);
+    //   // let previous_hash = miner_history.previous_proof_hash;
 
-      Transaction::assert(&vdf_proof_blob.challenge == previous_verified_solution_hash, 130108031010);
+    //   Transaction::assert(&proof.challenge == &miner_history.previous_proof_hash, 130108031010);
 
-      // Verify proof is valid
-      let valid = VDF::verify(&vdf_proof_blob.challenge, &vdf_proof_blob.difficulty, &vdf_proof_blob.solution);
-      Transaction::assert(valid, 130108041021);
+    //   // Transaction::assert(&proof.challenge == previous_verified_solution_hash, 130108031010);
 
-      (miner_history, vdf_proof_blob)
-    }
+    //   // Verify proof is valid
+    //   let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
+    //   Transaction::assert(valid, 130108041021);
+
+    //   (miner_history, proof)
+    // }
 
 
     // Checks that the validator has been mining above the count threshold
@@ -222,8 +216,9 @@ address 0x0 {
 
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
-    public fun end_redeem_validator_universe(account: &signer)
-                  acquires MinerProofHistory {
+
+    //TODO: Rename
+    public fun end_redeem_validator_universe(account: &signer) acquires MinerProofHistory {
       // Check permissions
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 130111014010);
@@ -239,7 +234,7 @@ address 0x0 {
           let redeemed_addr = *Vector::borrow(&eligible_validators, i);
 
           // For testing: don't call end_redeem unless there is account state for the address.
-          if ( ::exists<MinerProofHistory>(redeemed_addr)){
+          if (::exists<MinerProofHistory>(redeemed_addr)){
               update_metrics(redeemed_addr);
           };
           i = i + 1;
@@ -255,7 +250,8 @@ address 0x0 {
       // Exception is LibraAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
       move_to<MinerProofHistory>(miner_signer, MinerProofHistory{
-        verified_proof_history: Vector::empty(),
+        // verified_proof_history: Vector::empty(),
+        previous_proof_hash: Vector::empty(),
         // invalid_proof_history: Vector::empty(),
         verified_tower_height: 0u64,
         latest_epoch_mining: 0u64,
@@ -288,10 +284,7 @@ address 0x0 {
       let (parsed_address, _auth_key) = VDF::extract_address_from_challenge(challenge);
       // Confirm the address is corect and included in challenge
       Transaction::assert(new_account_address == parsed_address, 130113021010);
-
     }
-
-
 
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
@@ -305,7 +298,6 @@ address 0x0 {
     // Returns tower height from input miner's state
     // Permissions: public, ANYONE, TESTING only. The miner can get own info.
     public fun test_helper_get_miner_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
-      // let sender = Signer::address_of(Transaction::sender());
       Transaction::assert(Transaction::sender() == miner_addr, 130115014012);
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);

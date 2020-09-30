@@ -23,26 +23,26 @@ fun main(sender: &signer) {
 }
 // check: EXECUTED
 
-// Bob Submit the Duplicated CORRECT VDF Proof, which he just sent.
-//! new-transaction
-//! sender: association
-script {
-use 0x0::MinerState;
-// use 0x0::Debug;
-use 0x0::Transaction;
+// // Bob Submit the Duplicated CORRECT VDF Proof, which he just sent.
+// //! new-transaction
+// //! sender: association
+// script {
+// use 0x0::MinerState;
+// // use 0x0::Debug;
+// use 0x0::Transaction;
 
-fun main(sender: &signer) {
+// fun main(sender: &signer) {
 
-    // Check bob's state before updating his miner_redemption_statw
-    let miner_epochs_before = MinerState::test_helper_get_miner_epochs({{bob}});
+//     // Check bob's state before updating his miner_redemption_statw
+//     let miner_epochs_before = MinerState::test_helper_get_miner_epochs({{bob}});
 
-    MinerState::end_redeem_validator_universe(sender);
+//     MinerState::end_redeem_validator_universe(sender);
 
-    let miner_epochs_after = MinerState::test_helper_get_miner_epochs({{bob}});
-    // Debug::print(&miner_epochs_after);
+//     let miner_epochs_after = MinerState::test_helper_get_miner_epochs({{bob}});
+//     // Debug::print(&miner_epochs_after);
 
-    Transaction::assert(miner_epochs_after > miner_epochs_before, 1000);
+//     Transaction::assert(miner_epochs_after > miner_epochs_before, 1000);
 
-}
-}
-// check: EXECUTED
+// }
+// }
+// // check: EXECUTED

@@ -34,7 +34,7 @@ fun main(_sender: &signer) {
   let tower_height = MinerState::test_helper_get_miner_state(parsed_address);
   // Transaction::assert(state ==0, 403);
   // Debug::print(&state);
-  Transaction::assert(tower_height ==0, 403);
+  Transaction::assert(tower_height == 0, 403);
 
   // TODO: add_validators lacks permissions.
   // ValidatorUniverse::add_validator(parsed_address);
