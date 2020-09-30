@@ -22,7 +22,7 @@ fun main(sender: &signer) {
         TestFixtures::easy_sol()
     );
 
-    let height = MinerState::test_helper_get_tower_height({{bob}});
+    let height = MinerState::test_helper_get_height({{bob}});
     Transaction::assert(height==0, 01);
 
 }

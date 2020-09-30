@@ -3,38 +3,7 @@
 // Alice Submit VDF Proof
 //! new-transaction
 //! sender: alice
-script {
-use 0x0::MinerState;
-// use 0x0::Debug;
-use 0x0::Transaction;
-use 0x0::TestFixtures;
 
-
-// In this test Alice is a validator from genesis.
-fun main(sender: &signer) {
-    let difficulty = 100;
-    let height_after = 0;
-
-    // return solution
-    MinerState::test_helper(
-        sender,
-        difficulty,
-        TestFixtures::alice_0_easy_chal(),
-        TestFixtures::alice_0_easy_sol()
-    );
-
-    // check for initialized MinerState
-    let verified_tower_height_after = MinerState::test_helper_get_height({{alice}});
-
-    Transaction::assert(verified_tower_height_after == height_after, 10008001);
-
-}
-}
-// check: EXECUTED
-
-
-//! new-transaction
-//! sender: alice
 script {
 use 0x0::MinerState;
 use 0x0::Transaction;
