@@ -60,8 +60,8 @@ address 0x0 {
       Transaction::assert(Transaction::sender()
  == 0x0, 130102014010);
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
-      Transaction::assert(Signer::address_of(miner) != Transaction::sender(), 130102024010);
-      Transaction::assert(LibraTimestamp::is_genesis(), 130102034010);
+      Transaction::assert(Signer::address_of(miner) != Transaction::sender(), 130101014010);
+      Transaction::assert(LibraTimestamp::is_genesis(), 130101024010);
 
       let difficulty = Globals::get_difficulty();
       let proof = Proof {
@@ -73,8 +73,30 @@ address 0x0 {
       verify_and_update_state(Signer::address_of(miner), proof, false);
     }
 
+    // Function index: 03
+    // Permissions: PUBLIC, SIGNER, TEST ONLY
+    public fun test_helper (
+      miner: &signer,
+      challenge: vector<u8>,
+      solution: vector<u8>
+    ) acquires MinerProofHistory {
+
+      Transaction::assert(Testnet::is_testnet(), 130102014010);
+      //doubly check this is in test env.
+      Transaction::assert(Globals::get_epoch_length() == 15, 130102024010);
+
+      let difficulty = Globals::get_difficulty();
+      let proof = Proof {
+        challenge,
+        difficulty,  
+        solution,
+      };
+      init_miner_state(miner);
+      verify_and_update_state(Signer::address_of(miner), proof, false);
+    }
 
     // This function verifies the proof and commits to chain.
+    // Function index: 03
     // Permissions: PUBLIC, ANYONE
     public fun commit_state(
       miner_sign: &signer,
@@ -87,14 +109,14 @@ address 0x0 {
       let miner_addr = Signer::address_of(miner_sign);
 
       // Abort if not initialized.
-      Transaction::assert(::exists<MinerProofHistory>(miner_addr), 130106021021);
+      Transaction::assert(::exists<MinerProofHistory>(miner_addr), 130103011021);
 
       // Get vdf difficulty constant. Will be different in tests than in production.
       let difficulty_constant = Globals::get_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
-        Transaction::assert(&proof.difficulty == &difficulty_constant, 130106011010);
+        Transaction::assert(&proof.difficulty == &difficulty_constant, 130103021010);
       };
       
       verify_and_update_state(miner_addr,proof, true);
@@ -308,7 +330,7 @@ address 0x0 {
     // Get weight of validator identified by address
     // Permissions: PUBLIC, ANYONE, TESTING 
 
-    public fun test_helper_get_miner_state(miner_addr: address): u64 acquires MinerProofHistory {
+    public fun test_helper_get_tower_height(miner_addr: address): u64 acquires MinerProofHistory {
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);
       let state = borrow_global<MinerProofHistory>(miner_addr);
