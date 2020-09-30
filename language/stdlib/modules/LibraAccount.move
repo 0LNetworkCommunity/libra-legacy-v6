@@ -1124,8 +1124,6 @@ module LibraAccount {
     // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
     public fun create_validator_account_with_vdf<Token>(
-        new_account_address: address,
-        auth_key_prefix: vector<u8>,
         challenge: &vector<u8>,
         solution: &vector<u8>
     ) {
@@ -1134,6 +1132,8 @@ module LibraAccount {
         
         // Since this is an open function, we rate limit the callign with a proof of work, vdf. 
         // Check that accounts are created with a VDF proof.
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -1150,7 +1150,7 @@ module LibraAccount {
 
         // initialize the miner's state 
         MinerState::init_miner_state(&new_signer);
-        
+
         // let blob = MinerState::create_proof_blob(*challenge, Globals::get_difficulty(), *solution);
         // MinerState::commit_state(&new_signer, blob);
 

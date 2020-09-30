@@ -7,17 +7,17 @@ script {
 use 0x0::Transaction;
 use 0x0::LibraSystem;
 use 0x0::MinerState;
-use 0x0::Vector;
+// use 0x0::Vector;
 
 
     fun main(_sender: &signer) {
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
 
-        let verified_proof_history = MinerState::get_miner_state({{alice}});
+        let verified_tower_height = MinerState::test_helper_get_miner_state({{alice}});
         // should be atleast 1 at genesis, and never more than 1.
-        let proof_len = Vector::length<vector<u8>>(&verified_proof_history);
+        // let proof_len = Vector::length<vector<u8>>(&verified_proof_history);
         // Debug::print(&proof_len);
-        Transaction::assert(proof_len == 1u64, 73570002);
+        Transaction::assert(verified_tower_height == 0u64, 73570002);
     }
 }
 // check: EXECUTED
