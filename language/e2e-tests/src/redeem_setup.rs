@@ -31,10 +31,9 @@ pub fn redeem_txn(
     )
 }
 
-pub fn redeem_txn_onboarding(sender: &Account, seq_num: u64, challenge: Vec<u8>, difficulty: u64, solution: Vec<u8>, expected_address: AccountAddress) -> SignedTransaction {
+pub fn e2e_onboarding_tx(sender: &Account, seq_num: u64, challenge: Vec<u8>, solution: Vec<u8>, expected_address: AccountAddress) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(challenge),
-        TransactionArgument::U64(difficulty),
         TransactionArgument::U8Vector(solution),
         TransactionArgument::Address(expected_address),
     ];
