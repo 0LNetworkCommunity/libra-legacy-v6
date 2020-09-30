@@ -344,6 +344,14 @@ address 0x0 {
  == true, 130115014011);
       borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
     }
+
+    public fun test_helper_hash(miner_addr: address): vector<u8> acquires MinerProofHistory {
+      // let sender = Transaction::sender();
+      // Transaction::assert(sender == 0x0, 130117014010);
+      Transaction::assert(Testnet::is_testnet()
+ == true, 130115014011);
+      *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash
+    }
   }
 }
 
