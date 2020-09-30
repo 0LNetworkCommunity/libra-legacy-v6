@@ -161,29 +161,6 @@ address 0x0 {
       miner_history.count_proofs_in_epoch = miner_history.count_proofs_in_epoch + 1;
     }
 
-
-    // Helper function which checks if proof has already been submitted and verifies that proof is valid.
-    // Permissions: private function.
-    // fun check_hash_and_verify(
-    //   miner_history: &mut MinerProofHistory,
-    //   proof: Proof
-    // ): (&mut MinerProofHistory, Proof) {
-
-    //   // let previous_verified_solution_hash = Vector::borrow(&miner_history.verified_proof_history, 0);
-    //   // let previous_hash = miner_history.previous_proof_hash;
-
-    //   Transaction::assert(&proof.challenge == &miner_history.previous_proof_hash, 130108031010);
-
-    //   // Transaction::assert(&proof.challenge == previous_verified_solution_hash, 130108031010);
-
-    //   // Verify proof is valid
-    //   let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
-    //   Transaction::assert(valid, 130108041021);
-
-    //   (miner_history, proof)
-    // }
-
-
     // Checks that the validator has been mining above the count threshold
     // Note: this is only called on a validator successfully meeting the validation thresholds (different than mining threshold). So the function presumes the validator is in good standing for that epoch.
     // Permissions: private function

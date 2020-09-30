@@ -17,6 +17,7 @@ fun main(sender: &signer) {
     // buildign block for other tests.
     MinerState::test_helper(
         sender,
+        100u64, // difficulty
         TestFixtures::easy_chal(),
         TestFixtures::easy_sol()
     );
