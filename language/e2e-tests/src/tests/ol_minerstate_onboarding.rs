@@ -11,7 +11,6 @@ fn submit_proofs_onboarding() {
     // TODO: This is using the Fake Executor, like all the other e2e tests. Is there a way to use a libra-swarm node?
     let mut executor = FakeExecutor::from_genesis_file();
 
-    //TODO: test this is not an association account.
     let old_miner = AccountAddress::from_hex_literal( &"0x00000000000000000000000000001337").unwrap();
 
     let account = Account::new_genesis_account(old_miner);

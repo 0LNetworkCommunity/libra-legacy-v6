@@ -14,7 +14,7 @@ address 0x0 {
     use 0x0::Globals;
     use 0x0::Hash;
     use 0x0::LibraTimestamp;
-    // use 0x0::Debug;
+    use 0x0::Debug;
     use 0x0::Testnet;
 
     // Struct to store information about a VDF proof submitted
@@ -242,6 +242,9 @@ address 0x0 {
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer
     public fun init_miner_state(miner_signer: &signer){
+      let acc = Signer::address_of(miner_signer);
+      Debug::print(&acc);
+
       // LibraAccount calls this.
       // NOTE Only Signer can update own state.
       // Exception is LibraAccount which can simulate a Signer.
