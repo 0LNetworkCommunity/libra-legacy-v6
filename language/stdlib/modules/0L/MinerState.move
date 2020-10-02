@@ -242,7 +242,6 @@ address 0x0 {
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer
     public fun init_miner_state(miner_signer: &signer){
-      let acc = Signer::address_of(miner_signer);
       // LibraAccount calls this.
       // NOTE Only Signer can update own state.
       // Exception is LibraAccount which can simulate a Signer.
