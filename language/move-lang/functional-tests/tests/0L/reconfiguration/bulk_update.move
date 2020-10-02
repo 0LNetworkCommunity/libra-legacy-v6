@@ -1,9 +1,10 @@
 // Module to test bulk validator updates function in LibraSystem.move
-//! account: alice, 100000 ,0, validator
-//! account: bob, 100000, 0, validator
-//! account: carol, 100000, 0, validator
-//! account: sha, 100000, 0, validator
-//! account: ram, 100000, 0, validator
+//! account: alice, 1000000, 0, validator
+//! account: bob, 1000000, 0, validator
+//! account: carol, 1000000, 0, validator
+//! account: dave, 1000000, 0, validator
+//! account: eve, 1000000, 0, validator
+
 
 
 // Test to check the current validator list . Then trigger update to the list of validators, then re-run it. 
@@ -19,8 +20,9 @@ script {
     fun main(account: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 1000);
-        Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 98);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
+        Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 98);
+
 
         //Create vector of validators and func call
         let vec = Vector::empty();
@@ -36,7 +38,7 @@ script {
 
         // Check if updates are done
         Transaction::assert(LibraSystem::validator_set_size() == 3, 1000);
-        Transaction::assert(LibraSystem::is_validator({{sha}}) == false, 98);
+        Transaction::assert(LibraSystem::is_validator({{eve}}) == false, 98);
         Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 98);
     }
 }
