@@ -4,13 +4,13 @@
 // NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
 
 //! account: alice, 1000000, 0, validator
-//! account: vivian, 1000000, 0, validator
-//! account: shasha, 1000000, 0, validator
-//! account: charles, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
+//! account: carol, 1000000, 0, validator
+//! account: dave, 1000000, 0, validator
+//! account: eve, 1000000, 0, validator
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 1
 //! NewBlockEvent
 
@@ -22,62 +22,62 @@ script {
     fun main(_account: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180101);
-        Transaction::assert(LibraSystem::is_validator({{shasha}}) == true, 7357000180102);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180103);
+        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
     }
 }
 // check: EXECUTED
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 2
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 3
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 4
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 5
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 6
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 7
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 8
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 9
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 10
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 11
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 12
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 13
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 14
 //! new-transaction
 //! sender: association
@@ -87,8 +87,8 @@ script {
     fun main(_account: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180104);
-        Transaction::assert(LibraSystem::is_validator({{shasha}}) == true, 7357000180105);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180106);
+        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180105);
+        Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 7357000180106);
     }
 }
 
@@ -100,23 +100,23 @@ script {
     // This is the the epoch boundary.
     fun main() {
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, {{vivian}});
         Vector::push_back<address>(&mut voters, {{alice}});
-        Vector::push_back<address>(&mut voters, {{charles}});
         Vector::push_back<address>(&mut voters, {{bob}});
-        Vector::push_back<address>(&mut voters, {{shasha}});
+        Vector::push_back<address>(&mut voters, {{carol}});
+        Vector::push_back<address>(&mut voters, {{dave}});
+        Vector::push_back<address>(&mut voters, {{eve}});
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
         while (i < 16) {
-            // Mock the validator doing work for 12 blocks, and stats being updated.
+            // Mock the validator doing work for 15 blocks, and stats being updated.
             Stats::insert_voter_list(i, &voters);
             i = i + 1;
         };
     }
 }
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 15
 //! round: 15
 
@@ -129,7 +129,7 @@ script {
 
 
 //! block-prologue
-//! proposer: vivian
+//! proposer: alice
 //! block-time: 16
 //! NewBlockEvent
 
