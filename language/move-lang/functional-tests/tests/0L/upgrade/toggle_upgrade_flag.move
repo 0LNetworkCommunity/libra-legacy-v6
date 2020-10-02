@@ -6,9 +6,6 @@ script {
 
     fun main(s: &signer) {
         Upgrade::initialize(s);
-        spec {
-            assert Upgrade::has_upgrade() == false;
-        };
         Transaction::assert(Upgrade::has_upgrade() == false, 1);
 
         Upgrade::setUpdate(s, true);
