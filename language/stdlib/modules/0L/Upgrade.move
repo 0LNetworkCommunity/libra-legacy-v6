@@ -3,27 +3,29 @@ address 0x1 {
 module Upgrade {
     use 0x1::Signer;
 
-    resource struct UpgradeInfo {
-        flag: bool
+    resource struct UpgradePayload {
+        flag: bool,         // may not be necessary
+        payload: vector<u8> // TODO: test setting this
     }
 
     public fun initialize(account: &signer) {
-        assert(Signer::address_of(account) == 0x0, 0);
-        move_to(account, UpgradeInfo{flag: false});
+
+        assert(Signer::address_of(account) == 0x1, 0);
+        move_to(account, UpgradePayload{flag: false, payload: x""});
     }
 
-    public fun has_upgrade(): bool acquires UpgradeInfo {
-        if (!exists<UpgradeInfo>(0x0)) return false;
-        borrow_global<UpgradeInfo>(0x0).flag == true
+    public fun has_upgrade(): bool acquires UpgradePayload {
+        if (!exists<UpgradePayload>(0x1)) return false;
+        borrow_global<UpgradePayload>(0x1).flag == true
     }
 
-    public fun setUpdate(account: &signer, flag : bool) acquires UpgradeInfo {
-        assert(Signer::address_of(account) == 0x0, 0);
-        if (!exists<UpgradeInfo>(0x0))
+    public fun setUpdate(account: &signer, flag : bool) acquires UpgradePayload {
+        assert(Signer::address_of(account) == 0x1, 0);
+        if (!exists<UpgradePayload>(0x1))
         {
             initialize(account);
         };
-        let temp = borrow_global_mut<UpgradeInfo>(0x0);
+        let temp = borrow_global_mut<UpgradePayload>(0x1);
         temp.flag = flag;
     }
 }
