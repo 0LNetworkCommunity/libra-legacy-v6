@@ -24,6 +24,7 @@ address 0x0 {
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101
+    // Permissions: Public, VM Only
     public fun top_n_accounts(account: &signer, n: u64, current_block_height: u64): vector<address> {
 
       let sender = Signer::address_of(account);
