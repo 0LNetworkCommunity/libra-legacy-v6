@@ -50,7 +50,7 @@ address 0x0 {
             let (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
                  = LibraSystem::get_outgoing_validators_with_weights(Globals::get_epoch_length(), current_block_height);
             // Step 1: End redeem for all validators
-            MinerState::end_redeem_validator_universe(account);
+            MinerState::epoch_boundary(account);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch

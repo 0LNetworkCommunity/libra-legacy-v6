@@ -25,6 +25,9 @@ module LibraAccount {
     use 0x0::Vector;
     use 0x0::DesignatedDealer;
     use 0x0::Libra;
+    use 0x0::MinerState;
+    use 0x0::VDF;
+    use 0x0::Globals;
 
     // Every Libra account has a LibraAccount::T resource
     resource struct T {
@@ -1093,24 +1096,98 @@ module LibraAccount {
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
     }
 
+    // 0L Change
+    // TODO Deprecated?
     // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
-    public fun create_validator_account_from_mining_0L<Token>(
+    //Permissions: PUBLIC, VM only.
+    public fun create_validator_account_genesis<Token>(
         creator: &signer,
         new_account_address: address,
         auth_key_prefix: vector<u8>,
     ) {
         // NOTE: 0L: This check is removed to allow any address to create a new validator account.
         // should check that this is done with a VDF proof, so that it's not abused.
-        // Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
+        Transaction::assert(Association::addr_is_association(Signer::address_of(creator)), 1002);
         let new_account = create_signer(new_account_address);
         Event::publish_generator(&new_account);
         // TODO: This publish fails if the creator is not association.
-        ValidatorConfig::publish_from_mining_0L(creator, &new_account);
+        ValidatorConfig::publish_from_vdf(&new_account);
 
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);
 
     }
+
+    // 0L Change
+    // Accounts can be created permissionlessly, but they need a VDF to be submitted with the request.
+    //Permissions: PUBLIC, ANYONE, OPEN!
+    // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
+    // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
+    public fun create_validator_account_with_vdf<Token>(
+        challenge: &vector<u8>,
+        solution: &vector<u8>
+    ) {
+        // Note: A majority of the onboarding logic is contained here because of limitations on resources and signers
+        // LibraAccount is the only module which can simulate a Signer type, and move a resource onto an account, without the sender account, being the recipient account. 
+        
+        // Since this is an open function, we rate limit the callign with a proof of work, vdf. 
+        // Check that accounts are created with a VDF proof.
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+
+        let valid = VDF::verify(
+            challenge,
+            &Globals::get_difficulty(),
+            solution
+        );
+        Transaction::assert(valid, 120101011021);
+
+        // publish an event for the account generation.
+        let new_signer = create_signer(new_account_address);
+        Event::publish_generator(&new_signer);
+
+        // set the role of the account, and move that resource to the account.
+        move_to(&new_signer, Role_temp<ValidatorRole> {role_type: ValidatorRole {}, is_certified: true});
+
+        // initialize the miner's state 
+        MinerState::init_miner_state(&new_signer);
+
+        // let blob = MinerState::create_proof_blob(*challenge, Globals::get_difficulty(), *solution);
+        // MinerState::commit_state(&new_signer, blob);
+
+        ValidatorConfig::publish_from_vdf(&new_signer);
+
+        // create the account, and also consume/destroy the new_signer.
+        make_account<Token, Empty::T>(new_signer, auth_key_prefix, Empty::create(), false);
+    }
+
+    public fun create_account_with_vdf<Token>(
+        new_account_address: address,
+        auth_key_prefix: vector<u8>,
+        challenge: &vector<u8>,
+        solution: &vector<u8>
+    ) {
+
+        //Check that accounts are created with a VDF proof.
+        let valid = VDF::verify(
+            challenge,
+            &Globals::get_difficulty(),
+            solution
+        );
+
+        Transaction::assert(valid, 120101011021);
+        let new_account = create_signer(new_account_address);
+        Event::publish_generator(&new_account);
+
+        
+        // move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
+        
+        // MinerState::init_miner_state(&new_account);
+
+        // ValidatorConfig::publish_from_vdf(&new_account);
+
+        make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false);
+    }
+
 
     ///////////////////////////////////////////////////////////////////////////
     // End of the proof of concept code

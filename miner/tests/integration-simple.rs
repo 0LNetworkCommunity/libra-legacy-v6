@@ -11,7 +11,7 @@ use std::{
 
 
 #[test]
-#[ignore]
+// #[ignore]
 pub fn integration() {
 
     // PREPARE FIXTURES
@@ -30,7 +30,7 @@ pub fn integration() {
     fs::create_dir(&blocks_dir).unwrap();
 
     // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
-    let _ = fs::copy("../fixtures/block_0.json.test.alice", "blocks/block_0.json");
+    let _ = fs::copy("../fixtures/block_0.json.stage.alice", "blocks/block_0.json");
 
     // clean config dir
     let config_dir = PathBuf::from("../saved_logs");
@@ -100,46 +100,3 @@ fn block_until_swarm_ready () -> bool {
         timeout -= 1;
     }
 }
-
-
-// #[test]
-// pub fn test_echo () {
-//    echo();
-// }
-
-
-// fn echo() -> Result<bool, Error> {
-//     let child = Command::new("git").arg("log").arg("--oneline")
-//     .stdout(Stdio::piped())
-//     .spawn()?;
-
-//     // if !output.status.success() {
-//     //     bail!("Command executed with failing error code");
-//     // }
-
-//     let pattern = Regex::new(r"(?x)
-//                                (competition) # commit hash
-//                                (.*)           # The commit message")?;
-
-    
-//     let output = child.wait_with_output().unwrap();
-
-//     let out = BufReader::new(&*output.stdout);
-
-//     let exists = out.lines()
-//     .any(|line| pattern.captures(&line.as_ref().unwrap()).is_some());
-//     // .for_each(|line| {
-//     //     println!("out: {:?}", line);
-//     // });
-//     println!("exists: {:?}", exists);
-
-//     Ok(true)
-
-// }
-
-
-// #[test]
-// pub fn dir () {
-//     assert_eq!( block_until_swarm_ready(), true);
-// }
-
