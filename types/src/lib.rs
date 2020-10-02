@@ -31,6 +31,7 @@ pub mod validator_config;
 pub mod validator_info;
 pub mod validator_signer;
 pub mod validator_verifier;
+pub mod upgrade_payload;
 pub mod vm_error;
 pub mod waypoint;
 pub mod write_set;

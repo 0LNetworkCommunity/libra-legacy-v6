@@ -537,9 +537,11 @@ impl LibraVM {
         };
 
         if let Ok((round, timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
+            // hardcoding upgrade on round 2 of a block
+            if round==2 {
 
-            println!("====================================== start publish module {}", round);
-            if round!=1 {
+                
+                println!("====================================== start publish module {}", round);
                 // test upgrade
                 // let stdlib = lcs::from_bytes::<Vec<Vec<u8>>>(std::include_bytes!("../staged/stdlib.mv" )
                 //     .unwrap()
@@ -554,7 +556,7 @@ impl LibraVM {
                         .expect("Failed to serialize module");
                     data_store.publish_module(module.self_id(), bytes).expect("Failed to publish module");
                 }
-                println!("====================================== end publish module {}", timestamp);
+                println!("====================================== end publish module at {}", timestamp);
             }
         }
 
