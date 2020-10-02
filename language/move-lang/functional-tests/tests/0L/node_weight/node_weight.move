@@ -71,7 +71,6 @@ script {
     use 0x0::Transaction;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
-    use 0x0::Stats;
 
     // Base Case: If n is greater than or equal to validator universe vector length, return vector itself
     // N greater than the vector length
