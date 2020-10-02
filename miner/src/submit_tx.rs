@@ -45,17 +45,21 @@ pub struct TxParams {
 }
 
 /// Submit a miner transaction to the network.
-pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_height: u64, is_onboading: bool) -> Result<Option<TransactionView>, Error> {
+pub fn submit_tx(
+    tx_params: &TxParams,
+    preimage: Vec<u8>,
+    proof: Vec<u8>,
+    is_onboading: bool
+) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let account_state = client.get_account_state(tx_params.address.clone(), true).unwrap();
-    // dbg!(&account_state);
-
 
     let mut sequence_number = 0u64;
     if account_state.0.is_some() {
+        // TODO: In staging network, transactions are sent too fast before the sequence number is updated. Should keep an internal state of what was the last sequence number used.
         sequence_number = account_state.0.unwrap().sequence_number;
     }
     let script: Script;
@@ -68,7 +72,6 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
                 TransactionArgument::U8Vector(preimage),
                 TransactionArgument::U64(delay_difficulty()),
                 TransactionArgument::U8Vector(proof),
-                TransactionArgument::U64(tower_height as u64),
             ],
         );
     } else {
@@ -104,8 +107,6 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
         sequence_number,
         status: AccountStatus::Persisted,
     };
-
-    // dbg!(&sender_account_data);
     
     // Submit the transaction with libra_client
     match client.submit_transaction(
@@ -113,7 +114,6 @@ pub fn submit_tx(tx_params: &TxParams, preimage: Vec<u8>, proof: Vec<u8>, tower_
         txn
     ){
         Ok(_) => {
-            // TODO: There's a bug with requesting transaction state on the first sequence number. Don't skip the transaction view for first block submitted, fix the bug.
             println!("Transaction submitted to network, waiting for status.");
             match wait_for_tx(tx_params.address, sequence_number, &mut client){
                 Ok(tx_view) => {

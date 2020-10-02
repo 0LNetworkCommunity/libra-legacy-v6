@@ -217,7 +217,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
-        context.set_sender( account );
+        context.set_sender( account_config::vm_address() );
         context.exec(
             "MinerState",
             "genesis_helper",
@@ -388,8 +388,8 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
                 identity_key.to_bytes(),
                 raw_advertised_address.into(),
             );
+            
             // 0L Change. Adding node configs
-
             let genesis_proof = n.miner_swarm_fixture.as_ref().expect("No miner fixtures given").to_owned();
 
             (account_key, script, genesis_proof) // 0L Change.
