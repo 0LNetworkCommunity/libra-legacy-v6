@@ -16,7 +16,7 @@ script {
         Transaction::assert(Vector::length<address>(&vec) == 3, 5);
 
         // Update the validator set
-        LibraSystem::bulk_update_validators(account, vec, 15, 20);
+        LibraSystem::bulk_update_validators(account, vec);
 
         // Assert that updates happened correctly
         Transaction::assert(LibraSystem::validator_set_size() == 3, 6);

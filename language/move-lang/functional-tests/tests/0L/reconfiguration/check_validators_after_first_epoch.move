@@ -4,7 +4,9 @@
 
 //! account: alice, 1000000, 0, validator
 //! account: vivian, 1000000, 0, validator
-//! account: sha, 10000
+//! account: shasha, 1000000, 0, validator
+//! account: charles, 1000000, 0, validator
+//! account: bob, 1000000, 0, validator
 
 //! block-prologue
 //! proposer: vivian
@@ -18,8 +20,8 @@ script {
     use 0x0::LibraSystem;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 2, 1000);
-        Transaction::assert(!LibraSystem::is_validator({{sha}}) == true, 98);
+        Transaction::assert(LibraSystem::validator_set_size() == 5, 1000);
+        Transaction::assert(LibraSystem::is_validator({{shasha}}) == true, 98);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
     }
 }
@@ -83,8 +85,7 @@ script {
     use 0x0::LibraSystem;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 2, 979);
-        Transaction::assert(!LibraSystem::is_validator({{sha}}) == true, 980);
+        Transaction::assert(LibraSystem::validator_set_size() == 5, 979);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 981);
     }
 }
@@ -108,8 +109,7 @@ script {
     use 0x0::LibraSystem;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 2, 979);
-        Transaction::assert(!LibraSystem::is_validator({{sha}}) == true, 980);
+        Transaction::assert(LibraSystem::validator_set_size() == 5, 979);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 981);        
     }
 }

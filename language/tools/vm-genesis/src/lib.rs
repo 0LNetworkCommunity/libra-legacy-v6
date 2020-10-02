@@ -92,11 +92,18 @@ pub fn encode_genesis_change_set(
     };
 
     // Initializing testnet only when env is set to test
-    if node_env != "prod" {
-        initialize_testnet(&mut genesis_context);
+    if node_env == "prod" {
+        println!("INITIALIZING WITH PROD CONSTANTS");
+    } else if node_env == "stage" {
+        // for testing production settings except with shorter epochs and lower vdf difficulty.
+        println!("Initializing with staging constants");
+        initialize_staging_net(&mut genesis_context);
     } else {
-        println!("INITIALIZING WITH PROD CONSTANTS")
+        // defaults to test constants for devs and ci testing
+        println!("Initializing with test constants");
+        initialize_testnet(&mut genesis_context);
     }
+
     create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
     initialize_miners(&mut genesis_context, &validators);
@@ -210,7 +217,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
-        context.set_sender( account );
+        context.set_sender( account_config::vm_address() );
         context.exec(
             "MinerState",
             "genesis_helper",
@@ -241,6 +248,14 @@ fn distribute_genesis_subsidy(context: &mut GenesisContext) {
 fn initialize_testnet(context: &mut GenesisContext) {
     context.exec(
         "Testnet",
+        "initialize",
+        vec![],
+        vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
+}
+
+fn initialize_staging_net(context: &mut GenesisContext) {
+    context.exec(
+        "StagingNet",
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
@@ -373,8 +388,8 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
                 identity_key.to_bytes(),
                 raw_advertised_address.into(),
             );
+            
             // 0L Change. Adding node configs
-
             let genesis_proof = n.miner_swarm_fixture.as_ref().expect("No miner fixtures given").to_owned();
 
             (account_key, script, genesis_proof) // 0L Change.

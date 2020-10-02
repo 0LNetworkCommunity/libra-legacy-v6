@@ -5,6 +5,8 @@
 
 //! account: sha, 1000000, 0, validator
 //! account: vivian, 1000000, 0, validator
+//! account: ram, 1000000, 0, validator
+//! account: shyam, 1000000, 0, validator
 
 //! block-prologue
 //! proposer: vivian
@@ -70,7 +72,7 @@ script {
     use 0x0::ValidatorUniverse;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 2, 97);
+        Transaction::assert(LibraSystem::validator_set_size() == 4, 97);
         Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 98);
         Transaction::assert(ValidatorUniverse::get_validator_weight({{sha}}) == 1, 99);
     }
@@ -92,7 +94,7 @@ script {
     use 0x0::ValidatorUniverse;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 2, 97);
+        Transaction::assert(LibraSystem::validator_set_size() == 4, 97);
         Transaction::assert(LibraSystem::is_validator({{sha}}) == true, 98);
         Transaction::assert(ValidatorUniverse::get_validator_weight({{sha}}) == 2, 99);
     }

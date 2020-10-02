@@ -93,8 +93,10 @@ impl TransactionStore {
     ) -> MempoolStatus {
         if self.handle_gas_price_update(&txn).is_err() {
             return MempoolStatus::new(MempoolStatusCode::InvalidUpdate).with_message(format!(
-                "Failed to update gas price to {}",
-                txn.get_gas_price()
+                "Failed to update existing transaction's gas price to {}, for sender {}, with sequence number {}",
+                txn.get_gas_price(),
+                txn.get_sender(),
+                txn.get_sequence_number(),
             ));
         }
 
