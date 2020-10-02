@@ -283,7 +283,6 @@ address 0x0 {
       Transaction::assert(new_account_address == parsed_address, 130113021010);
     }
 
-
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
     public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {

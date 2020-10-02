@@ -1,3 +1,4 @@
+
 // Transaction script which miners use to submit proofs.
 script {
 use 0x0::MinerState;
