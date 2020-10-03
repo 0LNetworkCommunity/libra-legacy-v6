@@ -427,6 +427,22 @@ module LibraAccount {
         Libra::withdraw(&mut balance.coin, amount)
     }
 
+    // Testing making payments through autopay
+    public fun make_payment<Token>(
+        signer: &signer,
+        payer: address,
+        payee: address,
+        amount: u64
+    ) acquires T, AccountOperationsCapability, Balance, Role {
+        Transaction::assert(Signer::address_of(signer) == 0x0, 8001);
+ 
+        // Ensure only the 0x0 address is allowed to send funds from account to account
+        let balance = borrow_global_mut<Balance<Token>>(payer);
+        let coin = Libra::withdraw(&mut balance.coin, amount);
+       
+        deposit<Token>(signer, payee, coin);
+    }
+
     // Withdraw `amount` Libra::T<Token> from the transaction sender's account balance
     public fun withdraw_from<Token>(account: &signer, amount: u64): Libra::T<Token>
     acquires T, Balance, AccountOperationsCapability {
