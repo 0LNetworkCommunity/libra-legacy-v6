@@ -195,9 +195,10 @@ address 0x0 {
 
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.
+    // TODO: change this name.
     public fun get_validator_weight(miner_addr: address): u64 acquires MinerProofHistory {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130110014010);
+      // let sender = Transaction::sender();
+      Transaction::assert(Transaction::sender() == 0x0, 130110014010);
 
       // Miner may not have been initialized. (don't abort, just return 0)
       if( ! ::exists<MinerProofHistory>( miner_addr ) ){

@@ -4,7 +4,7 @@
 /////////////////////////////////////////////////////////////////////////
 // Node Weight - used for reconfiguring the network, for selecting top N validators to new validator set.
 // This module is used to select the validators who would participate in LibraBFT protocol. Due to the restrictions on throughput with increasing validators above a threshold,
-// we rank nodes based on node weight (i.e., stake they own, previous participation trends) to select the validators for an epoch.
+// we rank nodes based on node weight (i.e. previous participation heuristics and mining) to select the validators for an epoch.
 // File Prefix for errors: 1401
 ///////////////////////////////////////////////////////////////////////////
 
@@ -27,8 +27,7 @@ address 0x0 {
     // Permissions: Public, VM Only
     public fun top_n_accounts(account: &signer, n: u64, current_block_height: u64): vector<address> {
 
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 140101014010);
+      Transaction::assert(Signer::address_of(account) == 0x0, 140101014010);
 
       let eligible_validators = Vector::empty<address>();
 

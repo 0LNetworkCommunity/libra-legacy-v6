@@ -289,7 +289,8 @@ module LibraSystem {
         account: &signer,
         new_validators: vector<address>) acquires CapabilityHolder {
 
-        Transaction::assert(is_authorized_to_reconfigure_(account), 22);
+        Transaction::assert(is_authorized_to_reconfigure_(account), 1202024010);
+        Transaction::assert(Transaction::sender() == 0x0, 1202014010);
 
         // Either check for each validator and add/remove them or clear the current list and append the list.
         // The first way might be computationally expensive, so I choose to go with second approach.
@@ -321,9 +322,9 @@ module LibraSystem {
         };
 
         let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
-        Transaction::assert(next_count > 0, 90000000001 );
+        Transaction::assert(next_count > 0, 1202011000 );
         // Transaction::assert(next_count > n, 90000000002 );
-        Transaction::assert(next_count == n, 90000000002 );
+        Transaction::assert(next_count == n, 1202021000 );
 
         // We have vector of validators - updated!
         // Next, let us get the current validator set for the current parameters

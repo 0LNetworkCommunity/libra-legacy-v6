@@ -17,6 +17,8 @@ address 0x0 {
     use 0x0::Option;
     use 0x0::Globals;
     use 0x0::LibraTimestamp;
+    // use 0x0::LibraConfig;
+    // use 0x0::MinerState;
     // use 0x0::Debug;
 
 
@@ -110,7 +112,7 @@ address 0x0 {
       };
       false
     }
-
+    
     // This function is the Proof of Weight. This is what calculates the values
     // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
     // Function code: 05 Prefix: 220105
@@ -135,12 +137,44 @@ address 0x0 {
       // Weight is metric based on: The number of epochs the miners have been mining for
       let weight = 1;
 
-      // If the validator mined in current epoch, increment it's weight.
-      if(is_validator_in_current_epoch)
+      // If the validator mined in current epoch, increment its weight.
+      if(is_validator_in_current_epoch) {
         weight = validatorInfo.weight + 1;
+      };
 
       validatorInfo.weight = weight;
       weight
+    }
+
+
+
+    fun update_proof_of_weight () {
+      // sets the weight in the  ValidatorEpochInfo resource
+    }
+
+    fun calc_proof_of_weight () {
+      // Calcultate the weight/voting power for the next round.
+      // Weight: What's the reputation (epochs mining) of the miner?
+
+      // Jailtime: did the validator pass the validation threshold this epoch?
+
+    }
+
+
+
+    // Function code: 06 Prefix: 220106
+    // Permissions: PUBLIC, SIGNER.
+    public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse {
+      // let sender = Transaction::sender();
+      // Transaction::assert(
+      //   sender == 0x0 || sender == addr
+      //   , 220106014010);
+
+      let validatorInfo = get_validator(addr);
+
+      // Validator not in universe error
+      Transaction::assert(validatorInfo.validator_address != 0x0, 220106022040);
+      return validatorInfo.weight
     }
 
     // Get the index of the validator by address in the `validators` vector
@@ -188,8 +222,7 @@ address 0x0 {
     // Function code: 07 Prefix: 220107
     // Permissions: PUBLIC, VM ONLY.
     public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 220107014010);
+      Transaction::assert(Transaction::sender() == 0x0, 220107014010);
       // Calculate the window in which we are evaluating the performance of validators.
       // start and effective end block height for the current epoch
       // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
@@ -198,20 +231,9 @@ address 0x0 {
         start_block_height = current_block_height - epoch_length;
       };
 
-      // Debug::print(&0x2201070151200001);
-
-
       let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
 
-      // Debug::print(&0x2201070151200002);
-
-
       let blocks_in_window = adjusted_end_block_height - start_block_height;
-
-      // Debug::print(&0x2201070151200003);
-
-      // The current block_height needs to be at least the length of one (the first) epoch.
-      // Transaction::assert(current_block_height >= blocks_in_window, 220107015120);
 
       // Calculating liveness threshold which is signing 66% of the blocks in epoch.
       // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
@@ -226,19 +248,5 @@ address 0x0 {
       true
     }
 
-    // Function code: 06 Prefix: 220106
-    // Permissions: PUBLIC, SIGNER.
-    public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse{
-      // let sender = Transaction::sender();
-      // Transaction::assert(
-      //   sender == 0x0 || sender == addr
-      //   , 220106014010);
-
-      let validatorInfo = get_validator(addr);
-
-      // Validator not in universe error
-      Transaction::assert(validatorInfo.validator_address != 0x0, 220106022040);
-      return validatorInfo.weight
-    }
   }
 }
