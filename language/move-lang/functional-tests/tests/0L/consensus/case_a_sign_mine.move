@@ -1,4 +1,4 @@
-// This tests consensus Case A.
+// This tests consensus Case 1.
 // ALICE is a validator.
 // DID validate successfully.
 // DID mine above the threshold for the epoch. 
@@ -21,8 +21,8 @@ script {
     use 0x0::LibraSystem;
     use 0x0::MinerState;
     use 0x0::TestFixtures;
-    use 0x0::ValidatorUniverse;
-    // use 0x0::Debug::print;
+    use 0x0::NodeWeight;
+    use 0x0::Debug::print;
 
     fun main(sender: &signer) {
         // Tests on initial size of validators 
@@ -41,7 +41,9 @@ script {
             TestFixtures::alice_1_easy_sol()
         );
         
-        Transaction::assert(ValidatorUniverse::get_validator_weight({{alice}}) == 1, 7357000180106);  
+        print(&NodeWeight::proof_of_weight({{alice}}));
+
+        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180106);  
 
         MinerState::commit_state(sender, proof);
         Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 1, 7357000180107);
@@ -147,13 +149,15 @@ script {
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
-    // use 0x0::Debug::print;
-    use 0x0::ValidatorUniverse;
+    use 0x0::Debug::print;
+    use 0x0::NodeWeight;
+    // use 0x0::ValidatorUniverse;
     fun main(_account: &signer) {
         // We are in a new epoch.
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180108);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180109);
-        Transaction::assert(ValidatorUniverse::get_validator_weight({{alice}}) == 2, 7357000180110);  
+        print(&NodeWeight::proof_of_weight({{alice}}));
+        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180110);  
     }
 }

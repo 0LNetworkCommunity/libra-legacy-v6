@@ -147,21 +147,7 @@ address 0x0 {
     }
 
 
-
-    fun update_proof_of_weight () {
-      // sets the weight in the  ValidatorEpochInfo resource
-    }
-
-    fun calc_proof_of_weight () {
-      // Calcultate the weight/voting power for the next round.
-      // Weight: What's the reputation (epochs mining) of the miner?
-
-      // Jailtime: did the validator pass the validation threshold this epoch?
-
-    }
-
-
-
+    //TODO: deprecated
     // Function code: 06 Prefix: 220106
     // Permissions: PUBLIC, SIGNER.
     public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse {

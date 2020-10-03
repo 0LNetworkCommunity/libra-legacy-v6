@@ -19,7 +19,6 @@ address 0x0 {
         use 0x0::MinerState;
         use 0x0::Globals;
         use 0x0::Vector;
-        use 0x0::ValidatorUniverse;
 
 
         // This function is called by block-prologue once after n blocks.
@@ -94,40 +93,12 @@ address 0x0 {
             // Refer Theorem: If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness (@sm86)  
             // This is very rare and theoritically impossible for network with at least 6 nodes and 6 rounds. 
             if(length >= 4){
-                // Step 2: Call bulkUpdate module
+            // Step 2: Call bulkUpdate module
                 LibraSystem::bulk_update_validators(account, validator_set);    
             };
 
             // Step 3: Mint subsidy units for upcoming epoch
             Subsidy::mint_subsidy(account);
         }
-
-            // Determine the consensus case for the validator.
-    // This happens at an epoch prologue, and labels the validator based on performance in the outgoing epoch.
-    // The consensus case determines if the validator receives transaction fees or subsidy for performance, inclusion in following epoch, and at what voting power. 
-    // Permissions: Public, VM Only
-    public fun consensus_case(node_addr: address, current_block_height: u64): u64 {
-        Transaction::assert(Transaction::sender() == 0x0, 220106014010);
-
-        // did the validator sign blocks above threshold?
-
-        let signs = ValidatorUniverse::check_if_active_validator(node_addr, Globals::get_epoch_length(), current_block_height);
-        let mines = (MinerState::get_miner_latest_epoch(node_addr) == LibraConfig::get_current_epoch());
-
-        if (signs) {
-            if (mines) {
-            return 1 // compliant: in next set, gets paid, weight increments
-            } else {
-            return 2 // half compliant: in next set, does not get paid, weight does not increment.
-            }
-        } else {
-            if (mines) {
-            return 3 // not compliant: jailed, not in next set, does not get paid, weight does not increment.
-            } 
-        };
-
-        return 4 // not compliant: jailed, not in next set, does not get paid, weight does not increment.
-
-    }
   }
 }

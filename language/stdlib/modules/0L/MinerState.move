@@ -318,13 +318,14 @@ address 0x0 {
 
 
     // Returns number of epochs for input miner's state
-    // Permissions: public, VM only, TESTING only
-    public fun test_helper_get_miner_epochs(miner_addr: address): u64 acquires MinerProofHistory {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130117014010);
-      Transaction::assert(Testnet::is_testnet()
- == true, 130115014011);
-      borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
+    // Permissions: PUBLIC, ANYONE
+    // TODO: Rename
+    public fun test_helper_get_miner_epochs(node_addr: address): u64 acquires MinerProofHistory {
+      // let sender = Transaction::sender();
+      // Transaction::assert(Transaction::sender() == 0x0, 130117014010);
+//       Transaction::assert(Testnet::is_testnet()
+//  == true, 130115014011);
+      borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
     }
 
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
