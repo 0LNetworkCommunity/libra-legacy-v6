@@ -24,7 +24,7 @@ script {
     use 0x0::ValidatorUniverse;
     // use 0x0::Debug::print;
 
-    fun main(sender: &signer) {
+    fun main(_sender: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180101);
         Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 7357000180102);

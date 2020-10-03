@@ -32,7 +32,8 @@ script {
 
         Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
         Transaction::assert(MinerState::test_helper_hash({{carol}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
-        
+        Transaction::assert(ValidatorUniverse::get_validator_weight({{carol}}) == 1, 7357000180106);
+
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         let proof = MinerState::create_proof_blob(
@@ -41,8 +42,6 @@ script {
             TestFixtures::alice_1_easy_sol()
         );
         
-        Transaction::assert(ValidatorUniverse::get_validator_weight({{carol}}) == 1, 7357000180106);  
-
         MinerState::commit_state(sender, proof);
         Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 1, 7357000180107);
     }
@@ -157,7 +156,7 @@ script {
         Transaction::assert(LibraSystem::validator_set_size() == 4, 7357000180108);
         Transaction::assert(LibraSystem::is_validator({{carol}}) == false, 7357000180109);
 
-        // TODO: this value should be == 1, since there was no mining.
+        // TODO: this value should be == 2, since there WAS mining.
         Transaction::assert(ValidatorUniverse::get_validator_weight({{carol}}) == 2, 7357000180110);  
     }
 }

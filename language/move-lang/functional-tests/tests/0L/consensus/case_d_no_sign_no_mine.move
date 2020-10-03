@@ -24,26 +24,23 @@ script {
     use 0x0::ValidatorUniverse;
     // use 0x0::Debug::print;
 
-    fun main(sender: &signer) {
+    fun main(_sender: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180101);
         Transaction::assert(LibraSystem::is_validator({{dave}}) == true, 7357000180102);
         Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
-
         Transaction::assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180104);
         Transaction::assert(MinerState::test_helper_hash({{dave}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
         
-        // Alice continues to mine after genesis.
-        // This test is adapted from chained_from_genesis.move
-        let proof = MinerState::create_proof_blob(
-            TestFixtures::alice_1_easy_chal(),
-            100u64, // difficulty
-            TestFixtures::alice_1_easy_sol()
-        );
-        
         Transaction::assert(ValidatorUniverse::get_validator_weight({{dave}}) == 1, 7357000180106);  
 
-        MinerState::commit_state(sender, proof);
+        // DAVE DOES NOT MINE
+        // let proof = MinerState::create_proof_blob(
+        //     TestFixtures::alice_1_easy_chal(),
+        //     100u64, // difficulty
+        //     TestFixtures::alice_1_easy_sol()
+        // );
+        // MinerState::commit_state(sender, proof);
         Transaction::assert(MinerState::test_helper_get_height({{dave}}) == 1, 7357000180107);
     }
 }
@@ -111,7 +108,6 @@ script {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
-
         Vector::push_back<address>(&mut voters, {{carol}});
         // exclude Dave
         // Vector::push_back<address>(&mut voters, {{dave}});
