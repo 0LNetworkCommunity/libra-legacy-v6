@@ -1,7 +1,7 @@
-// Base Case: Validators are compliant. 
-// This test is to check if validators are present after the first epoch.
-// Here EPOCH-LENGTH = 15 Blocks.
-// NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
+// This tests consensus Case A.
+// ALICE is a validator.
+// DID validate successfully.
+// DID mine above the threshold for the epoch. 
 
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
