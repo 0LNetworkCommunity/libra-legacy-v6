@@ -33,6 +33,7 @@ module GenesisOL {
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
     use 0x0::Signer;
+    use 0x0::AutoPay;
 
     fun initialize(
         vm: &signer,
@@ -131,6 +132,9 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
+        // Initialize the autopay module
+        AutoPay::initialize(vm);
+        
         let coin_scale = 1000000; // Libra::scaling_factor<GAS::T>();
 
         // Pre-flight check all the econ constants are what we expect.
