@@ -3,11 +3,11 @@
 // DID validate successfully.
 // DID mine above the threshold for the epoch. 
 
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
-//! account: eve, 1000000, 0, validator
+//! account: alice, 1, 0, validator
+//! account: bob, 1, 0, validator
+//! account: carol, 1, 0, validator
+//! account: dave, 1, 0, validator
+//! account: eve, 1, 0, validator
 
 //! block-prologue
 //! proposer: alice
@@ -22,7 +22,10 @@ script {
     use 0x0::MinerState;
     use 0x0::TestFixtures;
     use 0x0::NodeWeight;
-    use 0x0::Debug::print;
+    // use 0x0::Debug::print;
+    use 0x0::GAS;
+    use 0x0::LibraAccount;
+
 
     fun main(sender: &signer) {
         // Tests on initial size of validators 
@@ -41,12 +44,16 @@ script {
             TestFixtures::alice_1_easy_sol()
         );
         
-        print(&NodeWeight::proof_of_weight({{alice}}));
+        // print(&NodeWeight::proof_of_weight({{alice}}));
+        // print(&LibraAccount::balance<GAS::T>({{alice}}));
 
-        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180106);  
+        Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 1, 7357000180106);
+
+
+        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180107);  
 
         MinerState::commit_state(sender, proof);
-        Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 1, 7357000180107);
+        Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 1, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -126,6 +133,22 @@ script {
         };
     }
 }
+
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Cases;
+    use 0x0::Debug::print;
+    use 0x0::Transaction;
+    
+
+    fun main(_account: &signer) {
+        // We are in a new epoch.
+        // Check Alice is in the the correct case during reconfigure
+        Transaction::assert(Cases::get_case({{alice}}, 15) == 1, 7357000180109);
+    }
+}
+
 //! block-prologue
 //! proposer: alice
 //! block-time: 15
@@ -149,15 +172,22 @@ script {
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
-    use 0x0::Debug::print;
     use 0x0::NodeWeight;
+    use 0x0::GAS;
+    use 0x0::LibraAccount;
+
     // use 0x0::ValidatorUniverse;
     fun main(_account: &signer) {
         // We are in a new epoch.
-        // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180108);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180109);
-        print(&NodeWeight::proof_of_weight({{alice}}));
-        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180110);  
+        // Check Alice is in the the correct case
+
+        // Check the validator set is at expected size
+        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180110);
+
+        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
+
+        Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 60, 7357000180112);  
+
+        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180113);  
     }
 }
