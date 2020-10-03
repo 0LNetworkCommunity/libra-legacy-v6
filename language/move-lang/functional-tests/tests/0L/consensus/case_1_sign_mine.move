@@ -138,7 +138,7 @@ script {
 //! sender: association
 script {
     use 0x0::Cases;
-    use 0x0::Debug::print;
+    // use 0x0::Debug::print;
     use 0x0::Transaction;
     
 
