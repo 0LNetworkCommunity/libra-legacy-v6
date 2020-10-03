@@ -12,9 +12,9 @@ script {
     fun main(_account: &signer) {
         // Valida
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 2, 7357140101011000);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357140101021000);
-        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357140101031000);
+        Transaction::assert(LibraSystem::validator_set_size() == 2, 7357220101011000);
+        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357220101021000);
+        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357220101031000);
     }
 }
 // check: EXECUTED

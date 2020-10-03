@@ -55,12 +55,6 @@ address 0x0 {
     public fun add_validator(addr: address) acquires ValidatorUniverse {
       let collection = borrow_global_mut<ValidatorUniverse>(0x0);
 
-      // let len = Vector::length<ValidatorEpochInfo>(&collection.validators);
-      // Debug::print(&0x00001ee70002);
-      // Debug::print(&len);
-      // Debug::print(&addr);
-
-
       if(!validator_exists_in_universe(collection, addr)) {
         Vector::push_back<ValidatorEpochInfo>(
           &mut collection.validators,
@@ -72,9 +66,8 @@ address 0x0 {
       }
     }
 
-    // 0L: A simple public function to query the EligibleValidators.
-    // Only system addresses should be able to access this function
-    // Eligible validators are all those nodes who have mined a VDF proof at any time.
+
+    // 0L: Eligible validators are all those nodes who have mined a VDF proof at any time.
     // TODO: Is this helper necessary since it is just stripping the Validator Universe vector of other fields.
     // Function code: 03 Prefix: 220103
     // Permissions: PUBLIC, VM ONLY.
@@ -113,55 +106,55 @@ address 0x0 {
       false
     }
     
-    // This function is the Proof of Weight. This is what calculates the values
-    // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
-    // Function code: 05 Prefix: 220105
-    // Permissions: PUBLIC, VM ONLY.
-    public fun proof_of_weight(addr: address, is_validator_in_current_epoch: bool): u64 acquires ValidatorUniverse {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 22010105014010);
+    // // This function is the Proof of Weight. This is what calculates the values
+    // // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
+    // // Function code: 05 Prefix: 220105
+    // // Permissions: PUBLIC, VM ONLY.
+    // public fun proof_of_weight(addr: address, is_validator_in_current_epoch: bool): u64 acquires ValidatorUniverse {
+    //   let sender = Transaction::sender();
+    //   Transaction::assert(sender == 0x0, 22010105014010);
 
-      //1. borrow the Validator's ValidatorEpochInfo
-      // Get the validator
-      let collection =  borrow_global_mut<ValidatorUniverse>(0x0);
+    //   //1. borrow the Validator's ValidatorEpochInfo
+    //   // Get the validator
+    //   let collection =  borrow_global_mut<ValidatorUniverse>(0x0);
 
-      // Getting index of the validator
-      let index_vec = get_validator_index(&collection.validators, addr);
-      Transaction::assert(Option::is_some(&index_vec), 220105022040);
-      let index = *Option::borrow(&index_vec);
+    //   // Getting index of the validator
+    //   let index_vec = get_validator_index(&collection.validators, addr);
+    //   Transaction::assert(Option::is_some(&index_vec), 220105022040);
+    //   let index = *Option::borrow(&index_vec);
 
-      let validator_list = &mut collection.validators;
-      let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
-
-
-      // Weight is metric based on: The number of epochs the miners have been mining for
-      let weight = 1;
-
-      // If the validator mined in current epoch, increment its weight.
-      if(is_validator_in_current_epoch) {
-        weight = validatorInfo.weight + 1;
-      };
-
-      validatorInfo.weight = weight;
-      weight
-    }
+    //   let validator_list = &mut collection.validators;
+    //   let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
 
 
-    //TODO: deprecated
-    // Function code: 06 Prefix: 220106
-    // Permissions: PUBLIC, SIGNER.
-    public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse {
-      // let sender = Transaction::sender();
-      // Transaction::assert(
-      //   sender == 0x0 || sender == addr
-      //   , 220106014010);
+    //   // Weight is metric based on: The number of epochs the miners have been mining for
+    //   let weight = 1;
 
-      let validatorInfo = get_validator(addr);
+    //   // If the validator mined in current epoch, increment its weight.
+    //   if(is_validator_in_current_epoch) {
+    //     weight = validatorInfo.weight + 1;
+    //   };
 
-      // Validator not in universe error
-      Transaction::assert(validatorInfo.validator_address != 0x0, 220106022040);
-      return validatorInfo.weight
-    }
+    //   validatorInfo.weight = weight;
+    //   weight
+    // }
+
+
+    // //TODO: deprecated
+    // // Function code: 06 Prefix: 220106
+    // // Permissions: PUBLIC, SIGNER.
+    // public fun get_validator_weight(addr: address): u64 acquires ValidatorUniverse {
+    //   // let sender = Transaction::sender();
+    //   // Transaction::assert(
+    //   //   sender == 0x0 || sender == addr
+    //   //   , 220106014010);
+
+    //   let validatorInfo = get_validator(addr);
+
+    //   // Validator not in universe error
+    //   Transaction::assert(validatorInfo.validator_address != 0x0, 220106022040);
+    //   return validatorInfo.weight
+    // }
 
     // Get the index of the validator by address in the `validators` vector
     // Permissions: private.
