@@ -1,5 +1,5 @@
 //! account: alice, 1000000, 0, validator
-//! account: bob, 1000000
+//! account: bob, 1000000, 0, validator
 
 // The data will be initialized and operated all through alice's account
 
@@ -15,8 +15,8 @@ script {
 
       // AltStats::initialize();
 
-      AltStats::init_address({{alice}});
-      AltStats::init_address({{bob}});
+      // AltStats::init_address({{alice}});
+      // AltStats::init_address({{bob}});
       Transaction::assert(AltStats::node_current_props({{alice}}) == 0, 0);
       Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
       Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);

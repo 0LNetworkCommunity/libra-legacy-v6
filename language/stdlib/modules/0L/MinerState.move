@@ -239,7 +239,7 @@ address 0x0 {
       };
     }
 
-
+    use 0x0::AltStats;
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_signer: &signer){
@@ -263,7 +263,7 @@ address 0x0 {
       //also add the miner to validator universe
       //TODO: add_validators need to check permission.
       ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
-
+      AltStats::init_address(Signer::address_of(miner_signer));
     }
 
 
