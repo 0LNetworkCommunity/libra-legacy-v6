@@ -20,8 +20,8 @@ script {
     fun main(account: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 1000);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
-        Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 98);
+        Transaction::assert(LibraSystem::is_validator({{alice}}), 98);
+        Transaction::assert(LibraSystem::is_validator({{bob}}), 98);
 
 
         //Create vector of validators and func call
@@ -39,7 +39,7 @@ script {
         // Check if updates are done
         Transaction::assert(LibraSystem::validator_set_size() == 3, 1000);
         Transaction::assert(LibraSystem::is_validator({{eve}}) == false, 98);
-        Transaction::assert(LibraSystem::is_validator({{bob}}) == true, 98);
+        Transaction::assert(LibraSystem::is_validator({{bob}}), 98);
     }
 }
 // check: EXECUTED

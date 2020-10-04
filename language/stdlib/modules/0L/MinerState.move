@@ -241,8 +241,10 @@ address 0x0 {
 
 
     // Function to initialize miner state
-    // Permissions: PUBLIC, Signer
+    // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_signer: &signer){
+      // let addr = Signer::address_of(node_sig);
+      // Transaction::assert(LibraSystem::is_validator(addr), 99190201014010);
       // LibraAccount calls this.
       // NOTE Only Signer can update own state.
       // Exception is LibraAccount which can simulate a Signer.
@@ -259,6 +261,7 @@ address 0x0 {
       });
 
       //also add the miner to validator universe
+      //TODO: add_validators need to check permission.
       ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
 
     }
@@ -287,8 +290,7 @@ address 0x0 {
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
     public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130114014010);
+      Transaction::assert(Transaction::sender() == 0x0, 130114014010);
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
     }

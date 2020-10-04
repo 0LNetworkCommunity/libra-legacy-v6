@@ -34,6 +34,7 @@ module GenesisOL {
     use 0x0::Subsidy;
     use 0x0::Signer;
     use 0x0::AutoPay;
+    use 0x0::AltStats;
 
     fun initialize(
         vm: &signer,
@@ -118,6 +119,7 @@ module GenesisOL {
         LibraBlock::initialize_block_metadata(vm);
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
+        AltStats::initialize(vm);
 
         let no_owner_auth_key = x"0100000000000000000000000000000000000000000000000000000000001ee7";
 

@@ -1165,8 +1165,8 @@ module LibraAccount {
         move_to(&new_signer, Role_temp<ValidatorRole> {role_type: ValidatorRole {}, is_certified: true});
 
         // initialize the miner's state 
+        //TODO: rename
         MinerState::init_miner_state(&new_signer);
-
         // let blob = MinerState::create_proof_blob(*challenge, Globals::get_difficulty(), *solution);
         // MinerState::commit_state(&new_signer, blob);
 
