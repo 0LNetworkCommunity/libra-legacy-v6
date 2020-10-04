@@ -8,27 +8,35 @@
 script {
     use 0x0::AltStats;
     use 0x0::Transaction;
-    use 0x0::Debug::print;
+    // use 0x0::Debug::print;
 
     fun main(){
       // Checks that altstats was initialized in genesis for Alice.
 
       // AltStats::initialize();
 
-      AltStats::insert_prop({{alice}});
+      AltStats::init_address({{alice}});
+      AltStats::init_address({{bob}});
+      Transaction::assert(AltStats::node_current_props({{alice}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
+
+
       AltStats::inc_prop({{alice}});
       AltStats::inc_prop({{alice}});
 
-      AltStats::insert_prop({{bob}});
-      AltStats::inc_prop({{bob}});
       AltStats::inc_prop({{bob}});
       
       AltStats::inc_vote({{alice}});
       AltStats::inc_vote({{alice}});
 
-      print(&AltStats::node_current_votes({{alice}}));
+      Transaction::assert(AltStats::node_current_props({{alice}}) == 2, 0);
+      Transaction::assert(AltStats::node_current_props({{bob}}) == 1, 0);
 
       Transaction::assert(AltStats::node_current_votes({{alice}}) == 2, 0);
+      Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
+
     }
 }
 // check: EXECUTED
