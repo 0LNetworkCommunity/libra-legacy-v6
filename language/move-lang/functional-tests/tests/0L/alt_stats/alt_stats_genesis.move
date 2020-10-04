@@ -14,7 +14,7 @@ script {
       // Checks that altstats was initialized in genesis for Alice.
 
       // AltStats::initialize();
-
+      
       // AltStats::init_address({{alice}});
       // AltStats::init_address({{bob}});
       Transaction::assert(AltStats::node_current_props({{alice}}) == 0, 0);

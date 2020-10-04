@@ -8,6 +8,7 @@ address 0x0{
         use 0x0::Vector;
         use 0x0::Transaction;
         use 0x0::Signer;
+        use 0x0::Debug::print;
 
         struct ValidatorSet {
           addr: vector<address>,
@@ -38,12 +39,37 @@ address 0x0{
         }
 
         //Permissions: Public, VM only.
-        public fun init_address(node_addr: address) acquires T {
+      public fun init_address(node_addr: address) acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
           let stats = borrow_global_mut<T>(Transaction::sender());
           Vector::push_back(&mut stats.current.addr, node_addr);
           Vector::push_back(&mut stats.current.prop_count, 0);
           Vector::push_back(&mut stats.current.vote_count, 0);
+        }
+
+        public fun init_set(set: vector<address>) acquires T{
+          let length = Vector::length<address>(&set);
+          let k = 0;
+          while (k < length) {
+            let node_address = *(Vector::borrow<address>(&set, k));
+            print(&node_address);
+            init_address(node_address);
+            k = k + 1;
+          }
+
+        
+            // let i = 1;
+            // print(&set);
+            // // let node_addr = Vector::borrow(&set, i)
+            // // let (_, i) = Vector::pop<address>(&mut set, &node_addr);
+            // while (i <= Vector::length<address>(&set)) {
+            //   print(&i);
+            //   let node_addr = Vector::borrow<address>(&mut set, i);
+            //   print(node_addr);
+
+            //   // init_address(*node_addr);
+            //   i = i + 1;
+            // }
         }
 
         //Permissions: Public, VM only.
@@ -104,5 +130,11 @@ address 0x0{
             vote_count: Vector::empty()
           };
         }
+
+        // public fun get_history(): vector<ValidatorSet> acquires T {
+        //   Transaction::assert(Transaction::sender() == 0x0, 99190208014010);
+        //   *&borrow_global_mut<T>(Transaction::sender()).history
+
+        // }
     }
 }
