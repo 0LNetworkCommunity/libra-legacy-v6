@@ -7,8 +7,8 @@
 //! sender: association
 script {
     use 0x0::AltStats;
-    // use 0x0::Transaction;
-    // use 0x0::Debug::print;
+    use 0x0::Transaction;
+    use 0x0::Debug::print;
 
     fun main(){
       // Checks that altstats was initialized in genesis for Alice.
@@ -26,14 +26,9 @@ script {
       AltStats::inc_vote({{alice}});
       AltStats::inc_vote({{alice}});
 
-      AltStats::reconfig();
+      print(&AltStats::node_current_votes({{alice}}));
 
-
-      // AltStats::inc_vote({{bob}});
-
-
-      // Transaction::assert(AltStats::length() == 1, 0);      Transaction::assert(AltStats::get(0) == {{alice}}, 0);
-      // Transaction::assert(AltStats::contains({{alice}}), 1);
+      Transaction::assert(AltStats::node_current_votes({{alice}}) == 2, 0);
     }
 }
 // check: EXECUTED

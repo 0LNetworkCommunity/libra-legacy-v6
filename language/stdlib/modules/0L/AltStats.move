@@ -9,7 +9,7 @@ address 0x0{
         use 0x0::Transaction;
         use 0x0::Signer;
 
-        use 0x0::Debug::print;
+        // use 0x0::Debug::print;
 
         struct ValidatorSet {
           addr: vector<address>,
@@ -45,50 +45,53 @@ address 0x0{
           })
         }
 
+        public fun node_current_votes(node_addr: address): u64 acquires T {
+
+          // return (proposed blocks count, votes)
+
+          Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
+          let stats = borrow_global_mut<T>(Transaction::sender());
+          let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+          *Vector::borrow<u64>(&mut stats.current.vote_count, i)
+        }
+
+        // public fun node_history (epoch: u64): u64 acquires T {
+
+        // }
+
+        // public fun current_network_stats (): u64 acquires T {
+
+        // }
+
+        // public fun network_history (epoch: u64): u64 acquires T {
+
+        // }
+
         public fun insert_prop(node_addr: address) acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190203014010);
-
           let stats = borrow_global_mut<T>(Transaction::sender());
           Vector::push_back(&mut stats.current.addr, node_addr);
           Vector::push_back(&mut stats.current.prop_count, 0);
           Vector::push_back(&mut stats.current.vote_count, 0);
-
         }
 
         public fun inc_prop(node_addr: address) acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
-
           let stats = borrow_global_mut<T>(Transaction::sender());
           let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-          
-          // Vector::push_back(&mut st.prop_count, 1);
           let test = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
-          
           Vector::push_back(&mut stats.current.prop_count, test + 1);
-
           Vector::swap_remove(&mut stats.current.prop_count, i);
-
-          // test = test + &mut 1;
-          print(&stats.current.prop_count);
-          // Vector::swap_remove(&mut st.prop_count, i);
         }
-
+        
+        //TODO: Duplicate code.
         public fun inc_vote(node_addr: address) acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
-
           let stats = borrow_global_mut<T>(Transaction::sender());
           let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-          
-          // Vector::push_back(&mut st.prop_count, 1);
           let test = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
-          
           Vector::push_back(&mut stats.current.vote_count, test + 1);
-
           Vector::swap_remove(&mut stats.current.vote_count, i);
-
-          // test = test + &mut 1;
-          print(&stats.current.vote_count);
-          // Vector::swap_remove(&mut st.prop_count, i);
         }
 
         public fun reconfig() acquires T {
@@ -97,19 +100,11 @@ address 0x0{
           Vector::push_back(&mut stats.history, *&stats.current);
 
           //TODO: limit the size of the history and drop records.
-
-          print(&stats.history);
-          print(&stats.current);
-
           stats.current = ValidatorSet {
             addr: Vector::empty(),
             prop_count: Vector::empty(),
             vote_count: Vector::empty()
           };
-
-          print(&stats.current);
-
-
         }  
 
         // public fun insert_addr(node_addr: address) acquires State {
