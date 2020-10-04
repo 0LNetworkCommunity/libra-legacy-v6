@@ -44,13 +44,6 @@ module GenesisOL {
     ) {
         let dummy_auth_key_prefix = x"00000000000000000000000000000000";
 
-        // Association root setup
-        // Association::initialize(vm);
-
-        //TODO: Does the VM need the privilege to add a currency?
-        // Association::grant_privilege<Libra::AddCurrency>(vm, vm);
-
-        //TODO: Do these initializations need to be from a config account?
         // On-chain config setup
         Event::publish_generator(config_account);
         LibraConfig::initialize(config_account, vm);
@@ -59,6 +52,7 @@ module GenesisOL {
 
         // Stats module
         Stats::initialize(vm);
+        AltStats::initialize(vm);
 
         // Validator Universe setup
         ValidatorUniverse::initialize(vm);
@@ -119,7 +113,8 @@ module GenesisOL {
         LibraBlock::initialize_block_metadata(vm);
         LibraWriteSetManager::initialize(vm);
         LibraTimestamp::initialize(vm);
-        AltStats::initialize(vm);
+
+        AutoPay::initialize(vm);
 
         let no_owner_auth_key = x"0100000000000000000000000000000000000000000000000000000000001ee7";
 
@@ -134,9 +129,6 @@ module GenesisOL {
         LibraAccount::rotate_authentication_key(fee_account, copy no_owner_auth_key);
         LibraAccount::rotate_authentication_key(burn_account, copy no_owner_auth_key);
 
-        // Initialize the autopay module
-        AutoPay::initialize(vm);
-        
         let coin_scale = 1000000; // Libra::scaling_factor<GAS::T>();
 
         // Pre-flight check all the econ constants are what we expect.

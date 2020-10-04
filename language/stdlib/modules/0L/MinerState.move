@@ -14,7 +14,7 @@ address 0x0 {
     use 0x0::Globals;
     use 0x0::Hash;
     use 0x0::LibraTimestamp;
-    // use 0x0::Debug;
+    use 0x0::AltStats;
     use 0x0::Testnet;
 
     // Struct to store information about a VDF proof submitted
@@ -71,6 +71,10 @@ address 0x0 {
       };
       init_miner_state(miner);
       verify_and_update_state(Signer::address_of(miner), proof, false);
+
+      // TODO: Initialize stats for first validator set from rust genesis. 
+      AltStats::init_address(Signer::address_of(miner));
+
     }
 
     // Function index: 03
@@ -239,7 +243,6 @@ address 0x0 {
       };
     }
 
-    use 0x0::AltStats;
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_signer: &signer){
@@ -263,7 +266,6 @@ address 0x0 {
       //also add the miner to validator universe
       //TODO: add_validators need to check permission.
       ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
-      AltStats::init_address(Signer::address_of(miner_signer));
     }
 
 
