@@ -181,15 +181,21 @@ address 0x0 {
 
     // Performs a number of batch inserts input through a vector votes
     // TODO: #242 Refactor Stat.move insert_voter_list so we don't keep a full history and instead only increment.
+    use 0x0::Debug::print;
     public fun insert_voter_list(height: u64, votes: &vector<address>) acquires History {
       // Check permission
       // NOTE: This function overwrites the validators information if called twice.
+
       Transaction::assert(Transaction::sender() == 0x0, 190204014010);
       // Transaction::assert(Testnet::is_testnet(), 190204024011);
       // Iterate through the input vector
+      print(&0x04);
+
       let i = 0;
       let len = Vector::length<address>(votes);
       while (i < len) {
+        print(&0x05);
+
         // Insert each element using the private insert function
         insert(*Vector::borrow(votes, i), height, height);
         i = i + 1;

@@ -287,10 +287,11 @@ module LibraSystem {
     // The Association, the VM, the validator operator or the validator from the current validator set
     // are authorized to update the set of validator infos and add/remove validators
     // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
+    use 0x0::Debug::print;
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>) acquires CapabilityHolder {
-
+        print(&0x03);
         Transaction::assert(is_authorized_to_reconfigure_(account), 1202024010);
         Transaction::assert(Transaction::sender() == 0x0, 1202014010);
 
