@@ -287,11 +287,9 @@ module LibraSystem {
     // The Association, the VM, the validator operator or the validator from the current validator set
     // are authorized to update the set of validator infos and add/remove validators
     // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
-    use 0x0::Debug::print;
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>) acquires CapabilityHolder {
-        print(&0x03);
         Transaction::assert(is_authorized_to_reconfigure_(account), 1202024010);
         Transaction::assert(Transaction::sender() == 0x0, 1202014010);
 
@@ -354,6 +352,7 @@ module LibraSystem {
         while (i < size) {
             let validator_info_ref = Vector::borrow(validators, i);
 
+            // if (Cases::get_case(validator_info_ref.addr)==1)
             if(ValidatorUniverse::check_if_active_validator(validator_info_ref.addr, epoch_length, current_block_height)){
                 Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
                 Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);

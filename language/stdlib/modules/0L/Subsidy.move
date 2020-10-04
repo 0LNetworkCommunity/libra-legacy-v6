@@ -113,6 +113,7 @@ address 0x0 {
     }
 
     // Function code: 03 Prefix: 190103
+    use 0x0::Debug::print;
     public fun process_subsidy(
       vm_sig: &signer,
       outgoing_validators: &vector<address>,
@@ -131,8 +132,12 @@ address 0x0 {
 
         let node_address = *(Vector::borrow<address>(outgoing_validators, k));
         let voting_power = *(Vector::borrow<u64>(outgoing_validator_weights, k));
+        print(&0x00000050B51D10000);
+        print(&voting_power);
+        print(&total_voting_power);
 
-
+        
+        if (total_voting_power == 0) total_voting_power = 1;
         // Accounting.
         // Validators get paid for successfully proposing blocks.
         // Validators are skipped from proposing if they have low network connectivity.

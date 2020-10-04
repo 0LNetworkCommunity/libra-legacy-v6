@@ -11,7 +11,6 @@
 //! block-prologue
 //! proposer: alice
 //! block-time: 1
-//! NewBlockEvent
 
 //! block-prologue
 //! proposer: alice
@@ -87,11 +86,12 @@ script {
         };
     }
 }
+// check: EXECUTED
+
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 15
-//! round: 15
 
 //////////////////////////////////////////////
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
@@ -101,7 +101,6 @@ script {
 //! block-prologue
 //! proposer: alice
 //! block-time: 16
-//! NewBlockEvent
 
 //! block-prologue
 //! proposer: alice
@@ -160,55 +159,51 @@ script {
 script {
     use 0x0::Vector;
     use 0x0::Stats;
-    use 0x0::LibraSystem;
-    use 0x0::Debug::print;
-
 
     fun main() {
-        print(&0x0);
-        print(&LibraSystem::validator_set_size());
-
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
-        Vector::push_back<address>(&mut voters, {{eve}});
+        // Vector::push_back<address>(&mut voters, {{eve}});
 
 
         let i = 16;
         while (i < 31) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
             Stats::insert_voter_list(i, &voters);
-            print(&0x06);
             i = i + 1;
         };
-
-        print(&0x07);
-
     }
 }
+// check: EXECUTED
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 30
-//! round: 15
+
+//////////////////////////////////////////////
+///// CHECKS RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 31
-//! round: 1
 
 //! new-transaction
 //! sender: association
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
-    use 0x0::Debug::print;
+    use 0x0::LibraConfig;
+    // use 0x0::Debug::print;
     fun main(_account: &signer) {
-        // THERE WAS NO NEW EPOCH
-        // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size()==5, 1);
-        Transaction::assert(LibraSystem::is_validator({{alice}}), 2);
+
+        Transaction::assert(LibraSystem::validator_set_size()==4, 1);
+        Transaction::assert(LibraConfig::get_current_epoch()==3, 1);
+        Transaction::assert(!LibraSystem::is_validator({{eve}}), 2);
     }
 }
+// check: EXECUTED

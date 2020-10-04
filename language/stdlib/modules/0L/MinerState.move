@@ -168,7 +168,7 @@ address 0x0 {
       Transaction::assert(sender == 0x0, 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
-      if( ! ::exists<MinerProofHistory>( miner_addr ) ){
+      if( ! ::exists<MinerProofHistory>(miner_addr) ){
         return
       };
 
