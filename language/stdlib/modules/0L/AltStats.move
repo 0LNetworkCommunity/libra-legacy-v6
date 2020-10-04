@@ -89,7 +89,28 @@ address 0x0{
           // test = test + &mut 1;
           print(&stats.current.vote_count);
           // Vector::swap_remove(&mut st.prop_count, i);
-        }        
+        }
+
+        public fun reconfig() acquires T {
+          Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
+          let stats = borrow_global_mut<T>(Transaction::sender());
+          Vector::push_back(&mut stats.history, *&stats.current);
+
+          //TODO: limit the size of the history and drop records.
+
+          print(&stats.history);
+          print(&stats.current);
+
+          stats.current = ValidatorSet {
+            addr: Vector::empty(),
+            prop_count: Vector::empty(),
+            vote_count: Vector::empty()
+          };
+
+          print(&stats.current);
+
+
+        }  
 
         // public fun insert_addr(node_addr: address) acquires State {
         //   Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
