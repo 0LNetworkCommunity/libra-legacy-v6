@@ -19,7 +19,7 @@ script {
     fun main(_account: &signer) {
       Transaction::assert(AltStats::node_current_props({{alice}}) == 1, 0);
       Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
-      // Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
       Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
 
     }
@@ -31,5 +31,20 @@ script {
 //! block-time: 2
 
 //! block-prologue
-//! proposer: alice
+//! proposer: bob
 //! block-time: 3
+
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Transaction;
+    use 0x0::AltStats;
+    fun main(_account: &signer) {
+      Transaction::assert(AltStats::node_current_props({{alice}}) == 2, 0);
+      Transaction::assert(AltStats::node_current_props({{bob}}) == 1, 0);
+      Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
+
+    }
+}
+// check: EXECUTED
