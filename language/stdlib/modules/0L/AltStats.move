@@ -11,96 +11,115 @@ address 0x0{
 
         use 0x0::Debug::print;
 
-        struct Proposer {
-          proposer: vector<address>,
-          count: vector<u64>
+        struct ValidatorSet {
+          addr: vector<address>,
+          prop_count: vector<u64>,
+          vote_count: vector<u64>
         }
 
         // resource struct State {
-        //   proposer: vector<address>,
-        //   count: vector<u64>
+        //   addr: vector<address>,
+        //   prop_prop_count: vector<u64>
         // }
 
         resource struct T {
-          hist: vector<Proposer>,
-          epoch: Proposer
+          history: vector<ValidatorSet>,
+          current: ValidatorSet
         }
 
         //Permissions: Public, VM only.
         public fun initialize(vm: &signer){
           Transaction::assert(Signer::address_of(vm) == 0x0, 99190201014010);
           // move_to_sender<State>(State{
-          //   proposer: Vector::empty(),
-          //   count: Vector::empty() 
+          //   addr: Vector::empty(),
+          //   prop_prop_count: Vector::empty() 
           // });
 
           move_to_sender<T>( T {
-            hist: Vector::empty(),
-            epoch: Proposer {
-              proposer: Vector::empty(),
-              count: Vector::empty()
+            history: Vector::empty(),
+            current: ValidatorSet {
+              addr: Vector::empty(),
+              prop_count: Vector::empty(),
+              vote_count: Vector::empty()
             }
           })
         }
 
-
-
         public fun insert_prop(node_addr: address) acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190203014010);
 
-          let h = borrow_global_mut<T>(Transaction::sender());
-          Vector::push_back(&mut h.epoch.proposer, node_addr);
-          Vector::push_back(&mut h.epoch.count, 0);
+          let stats = borrow_global_mut<T>(Transaction::sender());
+          Vector::push_back(&mut stats.current.addr, node_addr);
+          Vector::push_back(&mut stats.current.prop_count, 0);
+          Vector::push_back(&mut stats.current.vote_count, 0);
+
         }
 
         public fun inc_prop(node_addr: address) acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
 
-          let t = borrow_global_mut<T>(Transaction::sender());
-          let (_, i) = Vector::index_of<address>(&mut t.epoch.proposer, &node_addr);
+          let stats = borrow_global_mut<T>(Transaction::sender());
+          let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
           
-          // Vector::push_back(&mut st.count, 1);
-          let test = *Vector::borrow<u64>(&mut t.epoch.count, i);
+          // Vector::push_back(&mut st.prop_count, 1);
+          let test = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
           
-          Vector::push_back(&mut t.epoch.count, test + 1);
+          Vector::push_back(&mut stats.current.prop_count, test + 1);
 
-          Vector::swap_remove(&mut t.epoch.count, i);
+          Vector::swap_remove(&mut stats.current.prop_count, i);
 
           // test = test + &mut 1;
-          print(&t.epoch.count);
-          // Vector::swap_remove(&mut st.count, i);
+          print(&stats.current.prop_count);
+          // Vector::swap_remove(&mut st.prop_count, i);
         }
-        
 
-        // public fun insert_proposer(node_addr: address) acquires State {
+        public fun inc_vote(node_addr: address) acquires T {
+          Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
+
+          let stats = borrow_global_mut<T>(Transaction::sender());
+          let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+          
+          // Vector::push_back(&mut st.prop_count, 1);
+          let test = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
+          
+          Vector::push_back(&mut stats.current.vote_count, test + 1);
+
+          Vector::swap_remove(&mut stats.current.vote_count, i);
+
+          // test = test + &mut 1;
+          print(&stats.current.vote_count);
+          // Vector::swap_remove(&mut st.prop_count, i);
+        }        
+
+        // public fun insert_addr(node_addr: address) acquires State {
         //   Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
 
         //   let st = borrow_global_mut<State>(Transaction::sender());
-        //   Vector::push_back(&mut st.proposer, node_addr);
-        //   Vector::push_back(&mut st.count, 0);
+        //   Vector::push_back(&mut st.addr, node_addr);
+        //   Vector::push_back(&mut st.prop_count, 0);
         // }
 
-        // public fun inc_proposer(node_addr: address) acquires State {
+        // public fun inc_addr(node_addr: address) acquires State {
         //   Transaction::assert(Transaction::sender() == 0x0, 99190205014010);
 
         //   let st = borrow_global_mut<State>(Transaction::sender());
-        //   let (_, i) = Vector::index_of<address>(&mut st.proposer, &node_addr);
+        //   let (_, i) = Vector::index_of<address>(&mut st.addr, &node_addr);
           
-        //   // Vector::push_back(&mut st.count, 1);
-        //   let test = *Vector::borrow<u64>(&mut st.count, i);
+        //   // Vector::push_back(&mut st.prop_count, 1);
+        //   let test = *Vector::borrow<u64>(&mut st.prop_count, i);
           
-        //   Vector::push_back(&mut st.count, test + 1);
+        //   Vector::push_back(&mut st.prop_count, test + 1);
 
-        //   Vector::swap_remove(&mut st.count, i);
+        //   Vector::swap_remove(&mut st.prop_count, i);
 
         //   // test = test + &mut 1;
-        //   print(&st.count);
-        //   // Vector::swap_remove(&mut st.count, i);
+        //   print(&st.prop_count);
+        //   // Vector::swap_remove(&mut st.prop_count, i);
         // }
 
         // public fun remove_stuff() acquires State{
         //   let st = borrow_global_mut<State>(Transaction::sender());
-        //   let s = &mut st.proposer;
+        //   let s = &mut st.addr;
 
         //   Vector::pop_back<u8>(s);
         //   Vector::pop_back<u8>(s);
@@ -108,22 +127,22 @@ address 0x0{
         // }
         // public fun get(i: u64): address acquires State {
         //   let st = borrow_global<State>(Transaction::sender());
-        //   *Vector::borrow<address>(&st.proposer, i)
+        //   *Vector::borrow<address>(&st.addr, i)
         // }
 
         // public fun isEmpty(): bool acquires State {
         //   let st = borrow_global<State>(Transaction::sender());
-        //   Vector::is_empty(&st.proposer)
+        //   Vector::is_empty(&st.addr)
         // }
 
         // public fun length(): u64 acquires State{
         //   let st = borrow_global<State>(Transaction::sender());
-        //   Vector::length(&st.proposer)
+        //   Vector::length(&st.addr)
         // }
 
         // public fun contains(addr: address): bool acquires State {
         //   let st = borrow_global<State>(Transaction::sender());
-        //   Vector::contains(&st.proposer, &addr)
+        //   Vector::contains(&st.addr, &addr)
         // }
     }
 }
