@@ -34,9 +34,17 @@ script {
       Transaction::assert(AltStats::node_current_votes({{alice}}) == 2, 0);
       Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
 
+
+      let set = Vector::empty<address>();
+      Vector::push_back<address>(&mut set, {{alice}});
+      Vector::push_back<address>(&mut set, {{bob}});
+
+
       AltStats::reconfig(&set);
 
       Transaction::assert(AltStats::node_current_props({{alice}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
+
 
     }
 }
