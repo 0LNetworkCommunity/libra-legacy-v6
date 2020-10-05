@@ -16,7 +16,7 @@ script {
   use 0x0::Transaction;
   use 0x0::Subsidy;
   use 0x0::Vector;
-  use 0x0::Stats;
+  use 0x0::AltStats;
 
   fun main(signer: &signer) {
     //example range of blocks with 4 validators

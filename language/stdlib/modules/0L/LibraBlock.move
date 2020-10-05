@@ -12,7 +12,6 @@ module LibraBlock {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Vector;
-    // use 0x0::Stats;
     use 0x0::ReconfigureOL;
     use 0x0::Globals;
     use 0x0::AutoPay;
@@ -69,19 +68,11 @@ module LibraBlock {
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
        
         AltStats::process_set_votes(&previous_block_votes);
-        // let i = 0;
-        // while (i <= Vector::length(previous_block_votes)) {
-        //   let node_addr = Vector::borrow(previous_block_votes, i);
-        //   AltStats::inc_prop(*&node_addr);
-        //   i = i + 1;
-        // }
         AltStats::inc_prop(*&proposer);
-        // AutoPay::autopay(vm, get_current_block_height());
+
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
-        // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
-
-        // OL Autopay module
+        // 0L Autopay module
         if ((get_current_block_height() % Globals::get_epoch_length()) == (Globals::get_epoch_length()/2)){
             AutoPay::process_autopay(vm, (get_current_block_height() / Globals::get_epoch_length()));
         };

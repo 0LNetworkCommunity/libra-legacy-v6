@@ -6,7 +6,7 @@
 //! new-transaction
 //! sender: association
 script {
-    use 0x0::Stats;
+    use 0x0::AltStats;
     use 0x0::Vector;
     fun main(){
         // Insert a bunch of data into the storage
@@ -31,7 +31,7 @@ script {
 //! new-transaction
 //! sender: association
 script{
-    use 0x0::Stats;
+    use 0x0::AltStats;
     use 0x0::Transaction;
     fun main(){
         // Verify that the insets actually happened by querying the data struct.

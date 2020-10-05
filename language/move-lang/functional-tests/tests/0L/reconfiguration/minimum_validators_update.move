@@ -92,7 +92,7 @@ script {
 //! sender: association
 script {
     use 0x0::Vector;
-    use 0x0::Stats;
+    use 0x0::AltStats;
 
     fun main() {
         let voters = Vector::empty<address>();

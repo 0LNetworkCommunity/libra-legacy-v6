@@ -15,7 +15,7 @@ script {
     use 0x0::Transaction;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
-    use 0x0::Stats;
+    use 0x0::AltStats;
 
     // n is less than vector length. We need top N.
     // Top 1 account test. N=1 vector has 5 addresses

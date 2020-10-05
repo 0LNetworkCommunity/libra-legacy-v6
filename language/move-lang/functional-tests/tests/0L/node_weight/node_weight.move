@@ -14,7 +14,7 @@ script {
     use 0x0::Transaction;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
-    use 0x0::Stats;
+    use 0x0::AltStats;
 
     fun main(account: &signer) {
 
