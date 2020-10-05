@@ -19,8 +19,9 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
-    use 0x0::LibraConfig;
-    use 0x0::MinerState;
+    // use 0x0::LibraConfig;
+    // use 0x0::MinerState;
+    use 0x0::Cases;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -149,7 +150,7 @@ address 0x0 {
         // Subsidy is only paid if both mining and validation are active in the epoch
 
         // TODO: replace for Cases
-        if(MinerState::get_miner_latest_epoch(node_address) == LibraConfig::get_current_epoch() && ValidatorUniverse::check_if_active_validator(node_address, Globals::get_epoch_length(), current_block_height)){
+        if(Cases::get_case(node_address, current_block_height) == 1){
           // Transfer gas from vm address to validator
           LibraAccount::pay_from<GAS::T>(vm_sig, node_address, subsidy_allowed);
         };

@@ -10,7 +10,8 @@ module Cases{
   use 0x0::Globals;
   use 0x0::LibraConfig;
   use 0x0::MinerState;
-  // use 0x0::Debug::print;
+  use 0x0::AltStats;
+  use 0x0::Debug::print;
 
 
   // TODO: prefer to use get_current_block_height, but it causes dependency cycle.
@@ -25,6 +26,9 @@ module Cases{
       Transaction::assert(Transaction::sender() == 0x0, 220106014010);
       // did the validator sign blocks above threshold?
       let signs = ValidatorUniverse::check_if_active_validator(node_addr, Globals::get_epoch_length(), current_block_height);
+      print(&0x0111111111);
+      print(&AltStats::node_above_thresh(node_addr));
+
       let mines = (MinerState::get_miner_latest_epoch(node_addr) == LibraConfig::get_current_epoch());
       
       // print(&0x000000002);

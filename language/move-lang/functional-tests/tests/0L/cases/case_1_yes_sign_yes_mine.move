@@ -115,6 +115,7 @@ script {
 script {
     use 0x0::Vector;
     use 0x0::Stats;
+    use 0x0::AltStats;
     // This is the the epoch boundary.
     fun main() {
         let voters = Vector::empty<address>();
@@ -128,11 +129,13 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
+            AltStats::process_set_votes(&voters);
             Stats::insert_voter_list(i, &voters);
             i = i + 1;
         };
     }
 }
+//check: EXECUTED
 
 //! new-transaction
 //! sender: association
@@ -148,6 +151,8 @@ script {
         Transaction::assert(Cases::get_case({{alice}}, 15) == 1, 7357000180109);
     }
 }
+//check: EXECUTED
+
 
 //! block-prologue
 //! proposer: alice
@@ -189,3 +194,4 @@ script {
         Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180113);  
     }
 }
+//check: EXECUTED
