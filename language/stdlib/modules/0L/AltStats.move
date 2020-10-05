@@ -10,7 +10,7 @@ address 0x0{
         use 0x0::Signer;
         use 0x0::Globals;
         use 0x0::FixedPoint32;
-        use 0x0::Debug::print;
+        // use 0x0::Debug::print;
 
         struct ValidatorSet {
           addr: vector<address>,
@@ -55,7 +55,6 @@ address 0x0{
           let k = 0;
           while (k < length) {
             let node_address = *(Vector::borrow<address>(set, k));
-            print(&node_address);
             init_address(node_address);
             k = k + 1;
           }
