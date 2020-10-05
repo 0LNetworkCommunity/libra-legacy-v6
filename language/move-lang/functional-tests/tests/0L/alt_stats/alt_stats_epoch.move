@@ -110,6 +110,7 @@ script {
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
             AltStats::process_set_votes(&voters);
+re            // TODO: replace
             Stats::insert_voter_list(i, &voters);
             i = i + 1;
         };
@@ -135,23 +136,24 @@ script {
 //////////////////////////////////////////////
 
 
-// //! block-prologue
-// //! proposer: alice
-// //! block-time: 16
+//! block-prologue
+//! proposer: alice
+//! block-time: 16
 
-// //! new-transaction
-// //! sender: association
-// script {
-//     use 0x0::Transaction;
-//     use 0x0::AltStats;
-//     use 0x0::Debug::print;
-//     fun main(_account: &signer) {
-//       Transaction::assert(AltStats::node_current_props({{alice}}) == 15, 0);
-//       print(&AltStats::node_above_thresh({{alice}}) );
-//       Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
-//       Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
-//       Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Transaction;
+    use 0x0::AltStats;
+    fun main(_account: &signer) {
+      // Testing that reconfigure reset the counter for current epoch.
+      Transaction::assert(!AltStats::node_above_thresh({{alice}}), 0);
 
-//     }
-// }
-// // check: EXECUTED
+      Transaction::assert(AltStats::node_current_props({{alice}}) == 1, 0);
+      Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
+      Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
+
+    }
+}
+// check: EXECUTED

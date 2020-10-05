@@ -150,10 +150,9 @@ address 0x0{
           init_set(set);
         }
 
-        // public fun get_history(): vector<ValidatorSet> acquires T {
-        //   Transaction::assert(Transaction::sender() == 0x0, 99190208014010);
-        //   *&borrow_global_mut<T>(Transaction::sender()).history
-
-        // }
+        public fun get_history(): vector<ValidatorSet> acquires T {
+          Transaction::assert(Transaction::sender() == 0x0, 99190208014010);
+          *&borrow_global_mut<T>(Transaction::sender()).history
+        }
     }
 }

@@ -12,14 +12,10 @@
 //! sender: association
 script {
     use 0x0::Vector;
-    // use 0x0::Stats;
     use 0x0::Transaction;
     use 0x0::AltStats;
-    use 0x0::Debug::print;
-    // This is the the epoch boundary.
+
     fun main() {
-      // Transaction::assert(AltStats::node_current_props({{alice}}) == 14, 0);
-        print(&0x01111111111111);
       Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
       Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
       Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
@@ -49,14 +45,11 @@ script {
       while (i < 10) {
           // Mock the validator doing work for 15 blocks, and stats being updated.
           AltStats::process_set_votes(&voters);
-          // Stats::insert_voter_list(i, &voters);
           i = i + 1;
       };
 
       Transaction::assert(AltStats::node_above_thresh({{alice}}), 0);
       Transaction::assert(AltStats::network_density() == 4, 0);
-
-
     }
 }
 // check: EXECUTED
