@@ -8,6 +8,8 @@ address 0x0{
         use 0x0::Vector;
         use 0x0::Transaction;
         use 0x0::Signer;
+        use 0x0::Globals;
+        use 0x0::FixedPoint32;
         use 0x0::Debug::print;
 
         struct ValidatorSet {
@@ -65,7 +67,6 @@ address 0x0{
           let k = 0;
           while (k < length) {
             let node_address = *(Vector::borrow<address>(&set, k));
-            print(&node_address);
             inc_vote(node_address);
             k = k + 1;
           }
@@ -79,13 +80,30 @@ address 0x0{
           *Vector::borrow<u64>(&mut stats.current.vote_count, i)
         }
 
-        // public fun node_history (epoch: u64): u64 acquires T {
+        public fun node_above_thresh(node_addr: address): bool acquires T{
+          Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
+          let range = Globals::get_epoch_length();
+          let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(66, 100));
+          if (node_current_votes(node_addr) >  threshold_signing) return true;
+          return false
+        }
 
-        // }
 
-        // public fun current_network_stats (): u64 acquires T {
-
-        // }
+        public fun network_current_density (): u64 acquires T {
+          Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
+          let density = 0u64;
+          let nodes = *(borrow_global_mut<T>(Transaction::sender()).current.addr);
+          let length = Vector::length(&nodes);
+          let k = 0;
+          while (k < length) {
+            let addr = *(Vector::borrow<address>(nodes, k));
+            if (node_above_thresh(addr)) {
+              density = density + 1;
+            };
+            k = k + 1;
+          };
+          return density
+        }
 
         //Permissions: Public, VM only.
         public fun node_current_props(node_addr: address): u64 acquires T {
