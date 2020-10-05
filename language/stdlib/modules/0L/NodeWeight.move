@@ -23,8 +23,7 @@ address 0x0 {
 
       // Calculate the weight/voting power for the next round.
       // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
-
-      MinerState::test_helper_get_miner_epochs(node_addr)
+      MinerState::get_epochs_mining(node_addr)
     }
 
 

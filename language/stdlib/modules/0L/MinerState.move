@@ -324,11 +324,7 @@ address 0x0 {
     // Returns number of epochs for input miner's state
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
-    public fun test_helper_get_miner_epochs(node_addr: address): u64 acquires MinerProofHistory {
-      // let sender = Transaction::sender();
-      // Transaction::assert(Transaction::sender() == 0x0, 130117014010);
-//       Transaction::assert(Testnet::is_testnet()
-//  == true, 130115014011);
+    public fun get_epochs_mining(node_addr: address): u64 acquires MinerProofHistory {
       borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
     }
 
