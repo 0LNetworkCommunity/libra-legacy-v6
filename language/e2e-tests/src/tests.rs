@@ -29,4 +29,3 @@ mod write_set;
 mod ol_txn_fee;
 mod ol_minerstate_commit;
 mod ol_minerstate_onboarding;
-mod ol_reconfig;
