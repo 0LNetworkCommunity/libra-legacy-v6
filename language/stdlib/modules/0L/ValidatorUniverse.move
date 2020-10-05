@@ -200,32 +200,32 @@ address 0x0 {
     // Check the liveness of the validator in the previous epoch
     // Function code: 07 Prefix: 220107
     // Permissions: PUBLIC, VM ONLY.
-    public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
-      Transaction::assert(Transaction::sender() == 0x0, 220107014010);
-      // Calculate the window in which we are evaluating the performance of validators.
-      // start and effective end block height for the current epoch
-      // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
-      let start_block_height = 1;
-      if (current_block_height > Globals::get_epoch_length()) {
-        start_block_height = current_block_height - epoch_length;
-      };
+    // public fun check_if_active_validator(addr: address, epoch_length: u64, current_block_height: u64): bool {
+    //   Transaction::assert(Transaction::sender() == 0x0, 220107014010);
+    //   // Calculate the window in which we are evaluating the performance of validators.
+    //   // start and effective end block height for the current epoch
+    //   // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
+    //   let start_block_height = 1;
+    //   if (current_block_height > Globals::get_epoch_length()) {
+    //     start_block_height = current_block_height - epoch_length;
+    //   };
 
-      let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
+    //   let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
 
-      let blocks_in_window = adjusted_end_block_height - start_block_height;
+    //   let blocks_in_window = adjusted_end_block_height - start_block_height;
 
-      // Calculating liveness threshold which is signing 66% of the blocks in epoch.
-      // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
-      let threshold_signing = FixedPoint32::multiply_u64(blocks_in_window , FixedPoint32::create_from_rational(66, 100));
+    //   // Calculating liveness threshold which is signing 66% of the blocks in epoch.
+    //   // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
+    //   let threshold_signing = FixedPoint32::multiply_u64(blocks_in_window , FixedPoint32::create_from_rational(66, 100));
 
-      let block_signed_by_validator = Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
+    //   let block_signed_by_validator = Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
 
-      if (block_signed_by_validator < threshold_signing) {
-          return false
-      };
+    //   if (block_signed_by_validator < threshold_signing) {
+    //       return false
+    //   };
 
-      true
-    }
+    //   true
+    // }
 
   }
 }

@@ -16,10 +16,10 @@ address 0x0 {
     use 0x0::LibraAccount;
     use 0x0::Vector;
     use 0x0::FixedPoint32;
-    use 0x0::Stats;
+    use 0x0::AltStats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
-    // use 0x0::LibraConfig;
+    use 0x0::LibraTimestamp;
     // use 0x0::MinerState;
     use 0x0::Cases;
 
@@ -79,18 +79,18 @@ address 0x0 {
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
-    public fun calculate_Subsidy(account: &signer, start_height: u64, end_height: u64)
+    public fun calculate_Subsidy(account: &signer, _start_height: u64, _end_height: u64)
     :u64 acquires SubsidyInfo {
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 190107014010);
       
       // skip genesis
       //TODO use genesis timestamp.
-      Transaction::assert(start_height >= 0, 190107025120);
+      // Transaction::assert(start_height >= 0, 190107025120);
+      Transaction::assert(!LibraTimestamp::is_genesis(), 190107025120);
 
-      // Gets the proxy for liveness from Stats
-      let node_density = Stats::network_heuristics(start_height, end_height);
-      
+      // Gets the proxy for liveliness from Stats
+      let node_density = AltStats::network_density();
       // Gets the transaction fees in the epoch
       // TODO: Check the balance here
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
