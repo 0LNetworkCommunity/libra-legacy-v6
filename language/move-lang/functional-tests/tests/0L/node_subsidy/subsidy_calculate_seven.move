@@ -30,6 +30,9 @@ script {
     Vector::push_back(&mut validators, {{bob}});
     Vector::push_back(&mut validators, {{carol}});
     Vector::push_back(&mut validators, {{dave}});
+    Vector::push_back(&mut validators, {{eve}});
+    Vector::push_back(&mut validators, {{frank}});
+    Vector::push_back(&mut validators, {{gene}});
 
     // create mock validator stats for full epoch
     let i = 0;
@@ -40,7 +43,7 @@ script {
 
     let subsidy_units = Subsidy::calculate_Subsidy(sender, 1, 3);
     Debug::print(&subsidy_units);
-    Transaction::assert(subsidy_units == 296, 7357190101021000);
+    Transaction::assert(subsidy_units == 293, 7357190101021000);
 
     // //example range of blocks with 7 validators
     // Vector::push_back(&mut validators, {{eve}});
