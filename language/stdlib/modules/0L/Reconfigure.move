@@ -19,6 +19,7 @@ address 0x0 {
         use 0x0::MinerState;
         use 0x0::Globals;
         use 0x0::Vector;
+        use 0x0::AltStats;
 
 
         // This function is called by block-prologue once after n blocks.
@@ -78,7 +79,7 @@ address 0x0 {
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
             if (LibraConfig::get_current_epoch() != 0) {
               Subsidy::burn_subsidy(vm_sig);
-            }
+            };
         }
 
         // Function code: 03. Prefix: 180103
@@ -93,7 +94,8 @@ address 0x0 {
             // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. 
             if(length >= 4){
             // Step 2: Call bulkUpdate module
-                LibraSystem::bulk_update_validators(account, validator_set);    
+                AltStats::reconfig(&validator_set);
+                LibraSystem::bulk_update_validators(account, validator_set);
             };
 
             // Step 3: Mint subsidy units for upcoming epoch

@@ -16,7 +16,7 @@ script {
       let set = Vector::singleton({{alice}});
       Vector::push_back(&mut set, {{bob}});
 
-      AltStats::process_set_votes(set);
+      AltStats::process_set_votes(&set);
 
       Transaction::assert(AltStats::node_current_props({{alice}}) == 0, 0);
       Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);

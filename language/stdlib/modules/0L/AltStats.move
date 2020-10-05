@@ -49,24 +49,24 @@ address 0x0{
           Vector::push_back(&mut stats.current.vote_count, 0);
         }
 
-        public fun init_set(set: vector<address>) acquires T{
+        public fun init_set(set: &vector<address>) acquires T{
           Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
-          let length = Vector::length<address>(&set);
+          let length = Vector::length<address>(set);
           let k = 0;
           while (k < length) {
-            let node_address = *(Vector::borrow<address>(&set, k));
+            let node_address = *(Vector::borrow<address>(set, k));
             print(&node_address);
             init_address(node_address);
             k = k + 1;
           }
         }
 
-        public fun process_set_votes(set: vector<address>) acquires T{
+        public fun process_set_votes(set: &vector<address>) acquires T{
           Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
-          let length = Vector::length<address>(&set);
+          let length = Vector::length<address>(set);
           let k = 0;
           while (k < length) {
-            let node_address = *(Vector::borrow<address>(&set, k));
+            let node_address = *(Vector::borrow<address>(set, k));
             inc_vote(node_address);
             k = k + 1;
           }
@@ -89,14 +89,14 @@ address 0x0{
         }
 
 
-        public fun network_current_density (): u64 acquires T {
+        public fun network_density (): u64 acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
           let density = 0u64;
-          let nodes = *(borrow_global_mut<T>(Transaction::sender()).current.addr);
+          let nodes = *&(borrow_global_mut<T>(Transaction::sender()).current.addr);
           let length = Vector::length(&nodes);
           let k = 0;
           while (k < length) {
-            let addr = *(Vector::borrow<address>(nodes, k));
+            let addr = *(Vector::borrow<address>(&nodes, k));
             if (node_above_thresh(addr)) {
               density = density + 1;
             };
@@ -135,7 +135,7 @@ address 0x0{
         }
 
         //Permissions: Public, VM only.
-        public fun reconfig() acquires T {
+        public fun reconfig(set: &vector<address>) acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190207014010);
           let stats = borrow_global_mut<T>(Transaction::sender());
           Vector::push_back(&mut stats.history, *&stats.current);
@@ -146,6 +146,8 @@ address 0x0{
             prop_count: Vector::empty(),
             vote_count: Vector::empty()
           };
+
+          init_set(set);
         }
 
         // public fun get_history(): vector<ValidatorSet> acquires T {

@@ -103,14 +103,23 @@ script {
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
 
+        // AltStats::process_set_votes(voters);
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
+            AltStats::process_set_votes(&voters);
             Stats::insert_voter_list(i, &voters);
             i = i + 1;
         };
+
+      Transaction::assert(AltStats::node_above_thresh({{alice}}), 0);
+      Transaction::assert(AltStats::node_above_thresh({{bob}}), 0);
+      Transaction::assert(AltStats::node_above_thresh({{carol}}), 0);
+      Transaction::assert(AltStats::node_above_thresh({{dave}}), 0);
+
+      Transaction::assert(AltStats::network_density() == 4, 0);
     }
 }
 // check: EXECUTED
@@ -130,19 +139,19 @@ script {
 // //! proposer: alice
 // //! block-time: 16
 
-//! new-transaction
-//! sender: association
-script {
-    use 0x0::Transaction;
-    use 0x0::AltStats;
-    use 0x0::Debug::print;
-    fun main(_account: &signer) {
-      Transaction::assert(AltStats::node_current_props({{alice}}) == 15, 0);
-      print(&AltStats::node_current_props({{alice}}) );
-      Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
-      Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
-      Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
+// //! new-transaction
+// //! sender: association
+// script {
+//     use 0x0::Transaction;
+//     use 0x0::AltStats;
+//     use 0x0::Debug::print;
+//     fun main(_account: &signer) {
+//       Transaction::assert(AltStats::node_current_props({{alice}}) == 15, 0);
+//       print(&AltStats::node_above_thresh({{alice}}) );
+//       Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
+//       Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
+//       Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
 
-    }
-}
-// check: EXECUTED
+//     }
+// }
+// // check: EXECUTED
