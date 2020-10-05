@@ -20,6 +20,7 @@ address 0x0 {
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
     use 0x0::LibraTimestamp;
+    use 0x0::LibraSystem;
     // use 0x0::MinerState;
     use 0x0::Cases;
 
@@ -115,13 +116,34 @@ address 0x0 {
 
     // Function code: 03 Prefix: 190103
     use 0x0::Debug::print;
+    public fun process_subsidy_alt(vm_sig: &signer, subsidy_units: u64) {
+      print(&0x0111111);
+
+      // // Need to check for association or vm account
+      // let sender = Signer::address_of(vm_sig);
+      Transaction::assert(Signer::address_of(vm_sig) == 0x0, 190103014010);
+      let (outgoing_val, outgoing_val_votes, total_votes) = LibraSystem::get_compliant_val_votes();
+      let length = Vector::length<address>(&outgoing_val);
+      let i = 0;
+      while (i < length) {
+
+        let node_address = *(Vector::borrow<address>(&outgoing_val, i));
+        let node_votes = *(Vector::borrow<u64>(&outgoing_val_votes, i));
+        let subsidy_granted = FixedPoint32::divide_u64(subsidy_units * node_votes, FixedPoint32::create_from_rational(total_votes, 1));
+        // Transfer gas from vm address to validator
+        LibraAccount::pay_from<GAS::T>(vm_sig, node_address, subsidy_granted);
+        i = i + 1;
+      };
+
+    }
+
     public fun process_subsidy(
       vm_sig: &signer,
       outgoing_validators: &vector<address>,
       outgoing_validator_weights: &vector<u64>,
       subsidy_units: u64,
       total_voting_power: u64,
-      current_block_height: u64) {
+      _current_block_height: u64) {
       // Need to check for association or vm account
       let sender = Signer::address_of(vm_sig);
       Transaction::assert(sender == 0x0, 190103014010);
@@ -150,7 +172,7 @@ address 0x0 {
         // Subsidy is only paid if both mining and validation are active in the epoch
 
         // TODO: replace for Cases
-        if(Cases::get_case(node_address, current_block_height) == 1){
+        if(Cases::get_case(node_address) == 1){
           // Transfer gas from vm address to validator
           LibraAccount::pay_from<GAS::T>(vm_sig, node_address, subsidy_allowed);
         };

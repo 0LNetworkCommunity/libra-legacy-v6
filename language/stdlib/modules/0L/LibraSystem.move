@@ -19,6 +19,7 @@ module LibraSystem {
     // use 0x0::ValidatorUniverse;
     use 0x0::NodeWeight;
     use 0x0::AltStats;
+    use 0x0::Cases;
 
 
     struct ValidatorInfo {
@@ -342,6 +343,29 @@ module LibraSystem {
         set_validator_set(updated_validator_set);
     }
 
+    public fun get_compliant_val_votes(): (vector<address>, vector<u64>, u64) {
+        let validators = &get_validator_set().validators;
+        let outgoing_val = Vector::empty<address>();
+        let outgoing_val_votes = Vector::empty<u64>();
+        let total_votes = 0;
+        let size = Vector::length(validators);
+        let i = 0;
+        while (i < size) {
+            // let validator_info_ref = Vector::borrow(validators, i);
+            let addr = Vector::borrow(validators, i).addr;
+            // if (Cases::get_case(validator_info_ref.addr)==1)
+            if(Cases::get_case(addr) == 1){
+                let node_votes = AltStats::node_current_votes(addr);
+                Vector::push_back(&mut outgoing_val, addr);
+                Vector::push_back(&mut outgoing_val_votes, AltStats::node_current_votes(addr));
+                total_votes = total_votes + node_votes;
+            };
+            i = i + 1;
+        };
+        (outgoing_val, outgoing_val_votes, total_votes)
+    }
+        
+ 
     // Get all validators addresses, weights and sum_of_all_validator_weights
     public fun get_outgoing_validators_with_weights(_epoch_length: u64, _current_block_height: u64): (vector<address>, vector<u64>, u64) {
         let validators = &get_validator_set().validators;

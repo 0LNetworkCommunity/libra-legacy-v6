@@ -141,7 +141,7 @@ script {
     fun main(_account: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        Transaction::assert(Cases::get_case({{carol}}, 15) == 4, 7357000180109);
+        Transaction::assert(Cases::get_case({{carol}}) == 4, 7357000180109);
     }
 }
 

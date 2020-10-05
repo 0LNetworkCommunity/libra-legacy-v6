@@ -15,14 +15,14 @@ address 0x0{
         struct ValidatorSet {
           addr: vector<address>,
           prop_count: vector<u64>,
-          vote_count: vector<u64>
+          vote_count: vector<u64>,
+          total_votes: u64,
+          total_props: u64,
         }
 
         resource struct T {
           history: vector<ValidatorSet>,
-          current: ValidatorSet,
-          total_votes: u64,
-          total_props: u64,
+          current: ValidatorSet
         }
 
         //Permissions: Public, VM only.
@@ -33,10 +33,10 @@ address 0x0{
             current: ValidatorSet {
               addr: Vector::empty(),
               prop_count: Vector::empty(),
-              vote_count: Vector::empty()
+              vote_count: Vector::empty(),
+              total_votes: 0,
+              total_props: 0,
             },
-            total_votes: 0,
-            total_props: 0,
           })
         }
 
@@ -87,6 +87,14 @@ address 0x0{
           return false
         }
 
+        // public fun get_nodes_(node_addr: address): bool acquires T{
+        //   Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
+        //   let range = Globals::get_epoch_length();
+        //   let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(66, 100));
+        //   if (node_current_votes(node_addr) >  threshold_signing) return true;
+        //   return false
+        // }
+
 
         public fun network_density (): u64 acquires T {
           Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
@@ -120,6 +128,8 @@ address 0x0{
           let test = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
           Vector::push_back(&mut stats.current.prop_count, test + 1);
           Vector::swap_remove(&mut stats.current.prop_count, i);
+          // stats.current.total_props = stats.current.total_props + 1;
+
         }
         
         //TODO: Duplicate code.
@@ -131,6 +141,7 @@ address 0x0{
           let test = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
           Vector::push_back(&mut stats.current.vote_count, test + 1);
           Vector::swap_remove(&mut stats.current.vote_count, i);
+          stats.current.total_votes = stats.current.total_votes + 1;
         }
 
         //Permissions: Public, VM only.
@@ -143,10 +154,17 @@ address 0x0{
           stats.current = ValidatorSet {
             addr: Vector::empty(),
             prop_count: Vector::empty(),
-            vote_count: Vector::empty()
+            vote_count: Vector::empty(),
+            total_votes: 0u64,
+            total_props: 0u64,
           };
 
           init_set(set);
+        }
+
+        public fun get_total_votes(): u64 acquires T {
+          Transaction::assert(Transaction::sender() == 0x0, 99190208014010);
+          *&borrow_global_mut<T>(Transaction::sender()).current.total_votes
         }
 
         public fun get_history(): vector<ValidatorSet> acquires T {

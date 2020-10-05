@@ -14,7 +14,7 @@ module Cases{
   // This happens at an epoch prologue, and labels the validator based on performance in the outgoing epoch.
   // The consensus case determines if the validator receives transaction fees or subsidy for performance, inclusion in following epoch, and at what voting power. 
   // Permissions: Public, VM Only
-  public fun get_case(node_addr: address, _current_block_height: u64): u64 {
+  public fun get_case(node_addr: address): u64 {
       Transaction::assert(Transaction::sender() == 0x0, 220106014010);
       // did the validator sign blocks above threshold?
       let signs = AltStats::node_above_thresh(node_addr);

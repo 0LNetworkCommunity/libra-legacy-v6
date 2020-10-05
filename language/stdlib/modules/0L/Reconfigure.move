@@ -47,7 +47,6 @@ address 0x0 {
 
         // Function code: 02. Prefix: 180102
         fun process_outgoing_validators(vm_sig: &signer, current_block_height: u64) {
-
             // Get outgoing validator and sum of all validator weights
             let (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
                  = LibraSystem::get_outgoing_validators_with_weights(Globals::get_epoch_length(), current_block_height);
@@ -75,6 +74,27 @@ address 0x0 {
             // Step 3: Distribute transaction fees here before updating validators
             TransactionFee::distribute_transaction_fees<GAS::T>();
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
+            if (LibraConfig::get_current_epoch() != 0) {
+              Subsidy::burn_subsidy(vm_sig);
+            };
+        }
+
+                // Function code: 02. Prefix: 180102
+        fun process_outgoing_validators_alt(vm_sig: &signer) {
+            // Get outgoing validator and sum of all validator weights
+
+            // Step 1: End redeem for all validators
+            MinerState::epoch_boundary(vm_sig);
+
+            //TODO: do we need skip first epoch?
+            let subsidy_units = Subsidy::calculate_Subsidy();
+
+            Subsidy::process_subsidy_alt(vm_sig, subsidy_units);
+            // Step 3: Distribute transaction fees here before updating validators
+            TransactionFee::distribute_transaction_fees<GAS::T>();
+            // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
+
+            //use: LibraTimestamp::is_genesis()
             if (LibraConfig::get_current_epoch() != 0) {
               Subsidy::burn_subsidy(vm_sig);
             };

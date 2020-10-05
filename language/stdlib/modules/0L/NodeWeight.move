@@ -33,7 +33,7 @@ address 0x0 {
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101
     // Permissions: Public, VM Only
-    public fun top_n_accounts(account: &signer, n: u64, current_block_height: u64): vector<address> {
+    public fun top_n_accounts(account: &signer, n: u64, _current_block_height: u64): vector<address> {
 
       Transaction::assert(Signer::address_of(account) == 0x0, 140101014010);
 
@@ -48,7 +48,7 @@ address 0x0 {
         let addr = *Vector::borrow<address>(&validators_universe, k);
 
         // consensus case 1 and 2, allow inclusion into the next validator set.
-        if (Cases::get_case(addr, current_block_height) == 1 || Cases::get_case(addr, current_block_height) == 2){
+        if (Cases::get_case(addr) == 1 || Cases::get_case(addr) == 2){
           Vector::push_back<address>(&mut eligible_validators, addr)
         };
         k = k + 1;
