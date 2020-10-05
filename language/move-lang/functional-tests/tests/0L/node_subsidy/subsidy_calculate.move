@@ -9,6 +9,10 @@
 //! account: frank, 1000000, 0, validator
 //! account: vivian, 1000000, 0, validator
 
+//! block-prologue
+//! proposer: alice
+//! block-time: 1
+
 //! new-transaction
 //! sender: association
 script {
@@ -18,7 +22,7 @@ script {
   use 0x0::Vector;
   use 0x0::AltStats;
 
-  fun main(signer: &signer) {
+  fun main(sender: &signer) {
     //example range of blocks with 4 validators
     //NOTE: no epoch reconfiguration methods are being called
 
@@ -37,7 +41,7 @@ script {
     AltStats::process_set_votes(&validators);
     AltStats::process_set_votes(&validators);
 
-    let subsidy_units = Subsidy::calculate_Subsidy(signer, 1, 3);
+    let subsidy_units = Subsidy::calculate_Subsidy(sender, 1, 3);
     // Debug::print(&subsidy_units);
     Transaction::assert(subsidy_units == 296, 1001);
 
@@ -53,7 +57,7 @@ script {
     AltStats::process_set_votes(&validators);
     AltStats::process_set_votes(&validators);
 
-    let subsidy_units = Subsidy::calculate_Subsidy(signer, 4, 6);
+    let subsidy_units = Subsidy::calculate_Subsidy(sender, 4, 6);
     // Debug::print(&subsidy_units);
     Transaction::assert(subsidy_units == 293, 1004);
     }

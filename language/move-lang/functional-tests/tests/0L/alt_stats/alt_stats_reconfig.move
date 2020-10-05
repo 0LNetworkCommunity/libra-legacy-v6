@@ -34,12 +34,8 @@ script {
       Transaction::assert(AltStats::node_current_votes({{alice}}) == 2, 0);
       Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
 
-      AltStats::reconfig();
+      AltStats::reconfig(&set);
 
-      let set = Vector::singleton({{alice}});
-      Vector::push_back(&mut set, {{bob}});
-      AltStats::init_set(&set);
- 
       Transaction::assert(AltStats::node_current_props({{alice}}) == 0, 0);
 
     }
