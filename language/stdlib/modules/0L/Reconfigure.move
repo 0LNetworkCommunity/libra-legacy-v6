@@ -57,14 +57,12 @@ address 0x0 {
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
             // Calculate start and end block height for the current epoch
-            let start_block_height = 0;
-            
-            if(current_block_height> Globals::get_epoch_length()){
-                start_block_height = current_block_height - Globals::get_epoch_length();
-            };
+
             // Get the subsidy units and burn units after deducting transaction fees
             // NOTE: current block height is the end of the epoch.
-           let subsidy_units = Subsidy::calculate_Subsidy(vm_sig, start_block_height, current_block_height);
+
+            //TODO: do we need skip first epoch?
+           let subsidy_units = Subsidy::calculate_Subsidy();
 
             Subsidy::process_subsidy(
                 vm_sig,

@@ -79,10 +79,10 @@ address 0x0 {
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
-    public fun calculate_Subsidy(account: &signer, _start_height: u64, _end_height: u64)
+    public fun calculate_Subsidy()
     :u64 acquires SubsidyInfo {
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 190107014010);
+      // let sender = Signer::address_of(account);
+      Transaction::assert(Transaction::sender() == 0x0, 190107014010);
       
       // skip genesis
       //TODO use genesis timestamp.

@@ -17,13 +17,12 @@
 //! new-transaction
 //! sender: association
 script {
-  use 0x0::Debug;
   use 0x0::Transaction;
   use 0x0::Subsidy;
   use 0x0::Vector;
   use 0x0::AltStats;
 
-  fun main(sender: &signer) {
+  fun main() {
     // check the case of a network density of 4 active validators.
 
     let validators = Vector::singleton<address>({{alice}});
@@ -41,25 +40,8 @@ script {
       i = i + 1;
     };
 
-    let subsidy_units = Subsidy::calculate_Subsidy(sender, 1, 3);
-    Debug::print(&subsidy_units);
-    Transaction::assert(subsidy_units == 293, 7357190101021000);
+    Transaction::assert(Subsidy::calculate_Subsidy() == 293, 7357190101021000);
 
-    // //example range of blocks with 7 validators
-    // Vector::push_back(&mut validators, {{eve}});
-    // Vector::push_back(&mut validators, {{frank}});
-    // Vector::push_back(&mut validators, {{gene}});
-
-    // let newlen = Vector::length<address>(&validators);
-    // Transaction::assert(newlen == 7, 7357190101031000);
-
-    // AltStats::process_set_votes(&validators);
-    // AltStats::process_set_votes(&validators);
-    // AltStats::process_set_votes(&validators);
-
-    // let subsidy_units = Subsidy::calculate_Subsidy(sender, 4, 6);
-    // Debug::print(&subsidy_units);
-    // // Transaction::assert(subsidy_units == 293, 7357190101041000);
     }
 }
 // check: EXECUTED
