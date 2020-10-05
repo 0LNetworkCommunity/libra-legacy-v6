@@ -130,7 +130,6 @@ script {
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
             AltStats::process_set_votes(&voters);
-            // Stats::insert_voter_list(i, &voters);
             i = i + 1;
         };
     }

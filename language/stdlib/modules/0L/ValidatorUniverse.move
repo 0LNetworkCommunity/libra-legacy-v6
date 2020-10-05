@@ -12,10 +12,10 @@ address 0x0 {
     use 0x0::Vector;
     use 0x0::Transaction;
     use 0x0::Signer;
-    use 0x0::FixedPoint32;
-    use 0x0::Stats;
+    // use 0x0::FixedPoint32;
+    // use 0x0::Stats;
     use 0x0::Option;
-    use 0x0::Globals;
+    // use 0x0::Globals;
     use 0x0::LibraTimestamp;
     // use 0x0::LibraConfig;
     // use 0x0::MinerState;

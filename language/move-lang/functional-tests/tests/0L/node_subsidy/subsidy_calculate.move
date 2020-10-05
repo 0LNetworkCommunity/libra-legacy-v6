@@ -33,9 +33,10 @@ script {
     // Debug::print(&validators);
 
     // create dummy validator network Statistics
-    Stats::insert_voter_list(1u64, &validators);
-    Stats::insert_voter_list(2u64, &validators);
-    Stats::insert_voter_list(3u64, &validators);
+    AltStats::process_set_votes(&validators);
+    AltStats::process_set_votes(&validators);
+    AltStats::process_set_votes(&validators);
+
     let subsidy_units = Subsidy::calculate_Subsidy(signer, 1, 3);
     // Debug::print(&subsidy_units);
     Transaction::assert(subsidy_units == 296, 1001);
@@ -48,9 +49,9 @@ script {
     let newlen = Vector::length<address>(&validators);
     Transaction::assert(newlen == 7, 1002);
 
-    Stats::insert_voter_list(4u64, &validators);
-    Stats::insert_voter_list(5u64, &validators);
-    Stats::insert_voter_list(6u64, &validators);
+    AltStats::process_set_votes(&validators);
+    AltStats::process_set_votes(&validators);
+    AltStats::process_set_votes(&validators);
 
     let subsidy_units = Subsidy::calculate_Subsidy(signer, 4, 6);
     // Debug::print(&subsidy_units);

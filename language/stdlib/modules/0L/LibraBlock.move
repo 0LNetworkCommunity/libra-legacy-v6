@@ -12,7 +12,7 @@ module LibraBlock {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Vector;
-    use 0x0::Stats;
+    // use 0x0::Stats;
     use 0x0::ReconfigureOL;
     use 0x0::Globals;
     use 0x0::AutoPay;
@@ -67,17 +67,15 @@ module LibraBlock {
     ) acquires BlockMetadata {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
-        {
-          let block_metadata_ref = borrow_global<BlockMetadata>(0x0);
-          Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
-          // let i = 0;
-          // while (i <= Vector::length(previous_block_votes)) {
-          //   let node_addr = Vector::borrow(previous_block_votes, i);
-          //   AltStats::inc_prop(*&node_addr);
-          //   i = i + 1;
-          // }
-          AltStats::inc_prop(*&proposer);
-        };
+       
+        AltStats::process_set_votes(&previous_block_votes);
+        // let i = 0;
+        // while (i <= Vector::length(previous_block_votes)) {
+        //   let node_addr = Vector::borrow(previous_block_votes, i);
+        //   AltStats::inc_prop(*&node_addr);
+        //   i = i + 1;
+        // }
+        AltStats::inc_prop(*&proposer);
         // AutoPay::autopay(vm, get_current_block_height());
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 

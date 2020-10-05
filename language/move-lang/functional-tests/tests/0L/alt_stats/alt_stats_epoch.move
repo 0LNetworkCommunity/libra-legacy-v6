@@ -83,7 +83,7 @@ script {
 //! sender: association
 script {
     use 0x0::Vector;
-    use 0x0::Stats;
+    // use 0x0::Stats;
     use 0x0::Transaction;
     use 0x0::AltStats;
     // This is the the epoch boundary.
@@ -107,8 +107,6 @@ script {
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
             AltStats::process_set_votes(&voters);
-            // TODO: replace
-            Stats::insert_voter_list(i, &voters);
             i = i + 1;
         };
 
@@ -142,7 +140,7 @@ script {
 script {
     use 0x0::Transaction;
     use 0x0::AltStats;
-    use 0x0::Vector;
+    // use 0x0::Vector;
     fun main(_account: &signer) {
       // Testing that reconfigure reset the counter for current epoch.
       Transaction::assert(!AltStats::node_above_thresh({{alice}}), 0);

@@ -12,17 +12,17 @@ script {
         // Insert a bunch of data into the storage
         let validators = Vector::empty<address>();
         Vector::push_back<address>(&mut validators, {{alice}});
-        Stats::insert_voter_list(1, &validators);
+        AltStats::process_set_votes(&validators);
         Vector::push_back<address>(&mut validators, {{bob}});
-        Stats::insert_voter_list(2, &validators);
+        AltStats::process_set_votes(&validators);
         Vector::push_back<address>(&mut validators, {{charlie}});
-        Stats::insert_voter_list(3, &validators);
-        Stats::insert_voter_list(4, &validators);
+        AltStats::process_set_votes(&validators);
+        AltStats::process_set_votes(&validators);
         Vector::pop_back<address>(&mut validators);
-        Stats::insert_voter_list(5, &validators);
+        AltStats::process_set_votes(&validators);
         Vector::remove(&mut validators, 0);
-        Stats::insert_voter_list(6, &validators);
-        Stats::insert_voter_list(7, &validators);
+        AltStats::process_set_votes(&validators);
+        AltStats::process_set_votes(&validators);
     }
 }
 // check: EXECUTED
