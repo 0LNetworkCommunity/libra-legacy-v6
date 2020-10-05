@@ -48,6 +48,7 @@ address 0x0{
         }
 
         public fun init_set(set: vector<address>) acquires T{
+          Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
           let length = Vector::length<address>(&set);
           let k = 0;
           while (k < length) {
@@ -56,20 +57,18 @@ address 0x0{
             init_address(node_address);
             k = k + 1;
           }
+        }
 
-        
-            // let i = 1;
-            // print(&set);
-            // // let node_addr = Vector::borrow(&set, i)
-            // // let (_, i) = Vector::pop<address>(&mut set, &node_addr);
-            // while (i <= Vector::length<address>(&set)) {
-            //   print(&i);
-            //   let node_addr = Vector::borrow<address>(&mut set, i);
-            //   print(node_addr);
-
-            //   // init_address(*node_addr);
-            //   i = i + 1;
-            // }
+        public fun process_set_votes(set: vector<address>) acquires T{
+          Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
+          let length = Vector::length<address>(&set);
+          let k = 0;
+          while (k < length) {
+            let node_address = *(Vector::borrow<address>(&set, k));
+            print(&node_address);
+            inc_vote(node_address);
+            k = k + 1;
+          }
         }
 
         //Permissions: Public, VM only.
