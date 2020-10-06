@@ -8,7 +8,6 @@
 
 address 0x0 {
   module Subsidy {
-
     use 0x0::Transaction;
     use 0x0::GAS;
     use 0x0::Libra;
@@ -21,32 +20,22 @@ address 0x0 {
     use 0x0::Globals;
     use 0x0::LibraTimestamp;
     use 0x0::LibraSystem;
-    // use 0x0::Cases;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
-    public fun calculate_Subsidy()
-    :u64 {
+    public fun calculate_Subsidy():u64 {
       // let sender = Signer::address_of(account);
-      Transaction::assert(Transaction::sender() == 0x0, 190107014010);
+      Transaction::assert(Transaction::sender() == 0x0, 190101014010);
       // skip genesis
-      Transaction::assert(!LibraTimestamp::is_genesis(), 190107025120);
+      Transaction::assert(!LibraTimestamp::is_genesis(), 190101021000);
 
-      // Gets the proxy for liveliness from Stats
-      let node_density = AltStats::network_density();
       // Gets the transaction fees in the epoch
       // TODO: Check the balance here
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
 
       // Calculate the split for subsidy and burn
-      let (subsidy_units, _) = subsidy_curve(
-        Globals::get_subsidy_ceiling_gas(),
-        4u64, // minimum number of nodes to be in consensus.
-        Globals::get_max_node_density(),
-        node_density
-      );
-
+      let subsidy_units = subsidy_curve();
 
       // //deduct transaction fees from minimum guarantee.
       subsidy_units = subsidy_units - txn_fee_amount;
@@ -54,9 +43,9 @@ address 0x0 {
     }
     // Function code: 03 Prefix: 190103
     public fun process_subsidy(vm_sig: &signer, subsidy_units: u64) {
-      // // Need to check for association or vm account
-      // let sender = Signer::address_of(vm_sig);
-      Transaction::assert(Signer::address_of(vm_sig) == 0x0, 190103014010);
+      Transaction::assert(Signer::address_of(vm_sig) == 0x0, 190101034010);
+      
+      // Get the split of payments from Stats.
       let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio();
       let length = Vector::length<address>(&outgoing_set);
 
@@ -77,37 +66,37 @@ address 0x0 {
         );
         i = i + 1;
       };
-
     }
 
     // Function code: 04 Prefix: 190104
-    fun subsidy_curve(subsidy_ceiling_gas: u64, min_node_density: u64, max_node_density: u64, node_density: u64): (u64, u64) {
-      //Slope calculation assuming (4, subsidy_ceiling_gas) and (300, 0)
-
+    fun subsidy_curve(): u64 {
+      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
+      let network_density = AltStats::network_density();
+      let max_node_count = Globals::get_max_node_density();
+      let min_node_count = 4u64;
       // Return early if we know the value is below 4.
       // This applies only to test environments where there is network of 1.
-      if (node_density <= 4u64) {
-        return (subsidy_ceiling_gas, 0u64)
+      if (network_density <= min_node_count) {
+        return subsidy_ceiling_gas
       };
 
       let slope = FixedPoint32::divide_u64(
-        (subsidy_ceiling_gas),
-        FixedPoint32::create_from_rational(max_node_density - min_node_density, 1)
+        subsidy_ceiling_gas,
+        FixedPoint32::create_from_rational(max_node_count - min_node_count, 1)
         );
       //y-intercept
-      let intercept = slope * max_node_density;
+      let intercept = slope * max_node_count;
       //calculating subsidy and burn units
       // NOTE: confirm order of operations here:
-      let subsidy_units = intercept - slope * node_density;
-      let burn_units = subsidy_ceiling_gas - subsidy_units;
-      (subsidy_units, burn_units)
+      let subsidy_units = intercept - slope * network_density;
+      subsidy_units
     }
 
     // Function code: 06 Prefix: 190106
     public fun genesis(vm_sig: &signer) {
       //Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
-      Transaction::assert(vm_addr == 0x0, 190106014010);
+      Transaction::assert(vm_addr == 0x0, 190101044010);
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
@@ -116,12 +105,7 @@ address 0x0 {
       // Calculate subsidy equally for all the validators based on subsidy curve
       // Calculate the split for subsidy and burn
       // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
-      let (subsidy_units, _) = subsidy_curve(
-        Globals::get_subsidy_ceiling_gas(),
-        4,
-        Globals::get_max_node_density(),
-        len
-      );
+      let subsidy_units = subsidy_curve();
 
       // Distribute gas coins to initial validators
       let subsidy_granted = subsidy_units / len;
@@ -139,12 +123,12 @@ address 0x0 {
           x"", x""
         );
 
-        // confirm the calculations, and that the ending balance is incremented accordingly.
-        Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_bal + subsidy_granted, 8009);
+        //Confirm the calculations, and that the ending balance is incremented accordingly.
+        Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
         i = i + 1;
       };
 
-      Transaction::assert(LibraAccount::balance<GAS::T>(vm_addr) == 0, 8008);
+      Transaction::assert(LibraAccount::balance<GAS::T>(vm_addr) == 0, 19010105100);
 
     }
   }

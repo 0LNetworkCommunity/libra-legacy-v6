@@ -10,7 +10,7 @@ address 0x0 {
     module ReconfigureOL {
         use 0x0::Signer;
         use 0x0::Transaction;
-        use 0x0::LibraConfig;
+        // use 0x0::LibraConfig;
         use 0x0::Subsidy;
         use 0x0::NodeWeight;
         use 0x0::LibraSystem;
