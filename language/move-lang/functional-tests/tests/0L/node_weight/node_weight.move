@@ -45,11 +45,11 @@ script {
         AltStats::process_set_votes(&voters);
 
         // This is the base case: check case of the validator set limit being less than universe size.
-        let top_n_is_under = NodeWeight::top_n_accounts(account, 3, 12);
+        let top_n_is_under = NodeWeight::top_n_accounts(account, 3);
         Transaction::assert(Vector::length<address>(&top_n_is_under) == 3, 7357000140102);
 
         // case of querying the full validator universe.
-        let top_n_is_equal = NodeWeight::top_n_accounts(account, 5, 12);
+        let top_n_is_equal = NodeWeight::top_n_accounts(account, 5);
         // One of the nodes did not vote, so they will be excluded from list.
         Transaction::assert(Vector::length<address>(&top_n_is_equal) == 4, 7357000140103);
         // Check Hola is not in that list.
@@ -57,7 +57,7 @@ script {
         
         // case of querying a larger n than the validator universe.
         // Check if we ask for a larger set we also get 
-        let top_n_is_over = NodeWeight::top_n_accounts(account, 9, 12);
+        let top_n_is_over = NodeWeight::top_n_accounts(account, 9);
         Transaction::assert(Vector::length<address>(&top_n_is_over) == 4, 7357000140105);
 
     }

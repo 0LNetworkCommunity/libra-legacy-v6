@@ -36,7 +36,7 @@ script {
         };
 
         // get the list of top n=1 accounts, for height 12.
-        let result = NodeWeight::top_n_accounts(account, 1, 12);
+        let result = NodeWeight::top_n_accounts(account, 1);
         // should only have one item in list
         Transaction::assert(Vector::length<address>(&result) == 1, 7357000140102);
         // the item should be Alice's account.
@@ -58,7 +58,7 @@ script {
     // Now lets check if the results are the smae even in a larger N, N=4.
     // Again we should only see Alice returned in the set. Since she is the only one doing work.
     fun main(account: &signer) {
-        let result = NodeWeight::top_n_accounts(account, 4, 12);
+        let result = NodeWeight::top_n_accounts(account, 4);
         Transaction::assert(Vector::length<address>(&result) == 1, 6);
         Transaction::assert(Vector::contains<address>(&result, &{{alice}}) == true, 7);
     }
