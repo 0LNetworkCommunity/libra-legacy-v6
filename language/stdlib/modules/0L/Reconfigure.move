@@ -10,7 +10,6 @@ address 0x0 {
     module ReconfigureOL {
         use 0x0::Signer;
         use 0x0::Transaction;
-        // use 0x0::LibraConfig;
         use 0x0::Subsidy;
         use 0x0::NodeWeight;
         use 0x0::LibraSystem;
@@ -27,20 +26,16 @@ address 0x0 {
             let sender = Signer::address_of(account);
             Transaction::assert(sender == 0x0, 180101014010);
 
-            // TODO: one more check in reconfigure.move to confirm it's executing in epoch boundary.
-
             // Process outgoing validators
-            // Step 1: End redeem for all validators
-            // Step 2: Subsidy payments
+            // Step 1: Update MinerState for all validators
+            // Step 2: Distribute Subsidy payments
             // Step 3: Distribute transaction fees to all outgoing validators
-            // Step 4: Burn subsidy units
             process_outgoing_validators(account);
 
             // Recommend upcoming validator set
-            // Step 1: Get all eligible validators
-            // Step 2: Sort Top N validators
-            // Step 3: Bulk update validator weights
-            // Step 4: Mint subsidy for upcoming epoch
+            // Step 1: Sort Top N Elegible validators
+            // Step 2: Bulk update validator set (reconfig)
+            // Step 3: Update Stats counter
             prepare_upcoming_validator_set(account);
         }
 
