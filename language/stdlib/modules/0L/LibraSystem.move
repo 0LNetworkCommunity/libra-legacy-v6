@@ -16,11 +16,10 @@ module LibraSystem {
     use 0x0::Signer;
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
-    // use 0x0::ValidatorUniverse;
     use 0x0::NodeWeight;
     use 0x0::AltStats;
     use 0x0::Cases;
-    // use 0x0::FixedPoint32;
+    use 0x0::FixedPoint32;
 
 
     struct ValidatorInfo {
@@ -345,10 +344,7 @@ module LibraSystem {
     }
 
     //get_compliant_val_votes
-    use 0x0::Debug::print;
-    use 0x0::FixedPoint32;
-    public fun get_fee_ratio(): (vector<address>, vector<FixedPoint32::T>, u64) {
-        print(&0x00111111111111);
+    public fun get_fee_ratio(): (vector<address>, vector<FixedPoint32::T>) {
         let validators = &get_validator_set().validators;
         let compliant_nodes = Vector::empty<address>();
         let total_votes = 0;
@@ -367,17 +363,12 @@ module LibraSystem {
         let k = 0;
         while (k < Vector::length(&compliant_nodes)) {
             let addr = *Vector::borrow(&compliant_nodes, k);
-            print(&k);
-            print(&addr);
-
             let node_votes = AltStats::node_current_votes(addr);
-            print(&node_votes);
             let ratio = FixedPoint32::create_from_rational(node_votes, total_votes);
-            print(&ratio);
             Vector::push_back(&mut fee_ratios, ratio);
              k = k + 1;
         };
-        (compliant_nodes, fee_ratios, total_votes)
+        (compliant_nodes, fee_ratios)
     }
         
  
