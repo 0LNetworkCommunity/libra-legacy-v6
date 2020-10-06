@@ -115,7 +115,7 @@ address 0x0 {
     }
     use 0x0::Debug::print;
     // Function code: 03 Prefix: 190103
-    public fun process_subsidy(vm_sig: &signer, _subsidy_units: u64) {
+    public fun process_subsidy(vm_sig: &signer, subsidy_units: u64) {
       print(&0x01111111);
       // // Need to check for association or vm account
       // let sender = Signer::address_of(vm_sig);
@@ -130,7 +130,8 @@ address 0x0 {
         let node_address = *(Vector::borrow<address>(&outgoing_set, i));
         let node_ratio = *(Vector::borrow<FixedPoint32::T>(&fee_ratio, i));
         print(&node_ratio);
-        let subsidy_granted = 10; //subsidy_units * node_ratio;
+        // let fixed_subsidy = FixedPoint32::create_from_raw_value(subsidy_units);
+        let subsidy_granted = FixedPoint32::multiply_u64(subsidy_units, node_ratio);
         // Transfer gas from vm address to validator
         LibraAccount::pay_from<GAS::T>(vm_sig, node_address, subsidy_granted);
         i = i + 1;

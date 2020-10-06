@@ -50,7 +50,7 @@ script {
   use 0x0::Transaction::assert;
   use 0x0::Debug::print;
   // use 0x0::GAS;
-  // use 0x0::LibraAccount;
+  use 0x0::FixedPoint32;
   use 0x0::LibraSystem;
 
 
@@ -69,9 +69,9 @@ script {
 
     let (validators, fee_ratios, total_votes) = LibraSystem::get_fee_ratio();
     assert(1==1, 1);
-    // assert(Vector::length(&paid_set) == 1, 1);
-    // assert(Vector::length(&fee_ratio) == 1, 1);
-    // assert(fee_ratio == 1, 1);
+    assert(Vector::length(&validators) == 2, 1);
+    assert(Vector::length(&fee_ratios) == 2, 1);
+    assert(*(Vector::borrow<FixedPoint32::T>(&fee_ratios, 1)) == FixedPoint32::create_from_raw_value(2147483648u64), 1);
 
     // assert(total_votes == 16, 1);
     print(&validators);
