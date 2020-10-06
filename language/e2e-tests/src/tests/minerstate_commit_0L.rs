@@ -1,6 +1,6 @@
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
-use crate::minerstate_setup::{e2e_submit_proof_txn, e2e_miner_state_fixtures};
+use crate::setup_0L::{e2e_submit_proof_txn, e2e_miner_state_fixtures};
 use miner::delay;
 use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};
@@ -61,6 +61,7 @@ fn submit_proofs_steady() {
         sequence_number + 1,
         challenge.to_vec(),
         proof.to_vec(),
+        0,
         )
     );
 

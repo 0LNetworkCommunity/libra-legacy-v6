@@ -22,8 +22,7 @@ pub mod gas_costs;
 pub mod keygen;
 mod proptest_types;
 //0L Changes
-pub mod txn_fee_setup;
-pub mod minerstate_setup;
+pub mod setup_0L;
 
 pub fn assert_status_eq(s1: &VMStatus, s2: &VMStatus) -> bool {
     assert_eq!(s1.major_status, s2.major_status);
