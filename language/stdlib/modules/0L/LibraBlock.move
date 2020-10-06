@@ -79,7 +79,7 @@ module LibraBlock {
         // 0L implementation of reconfiguration.
         if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
-          ReconfigureOL::reconfigure(vm, get_current_block_height());
+          ReconfigureOL::reconfigure(vm);
         }
 
     }

@@ -50,7 +50,7 @@ script {
       i = i + 1;
     };
 
-    Subsidy::process_subsidy_alt(sender, 100);
+    Subsidy::process_subsidy(sender, 100);
 
     // print(&LibraAccount::balance<GAS::T>({{alice}}));
     assert(LibraAccount::balance<GAS::T>({{alice}}) == 101, 7357000001);

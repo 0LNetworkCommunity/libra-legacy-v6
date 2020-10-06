@@ -115,9 +115,7 @@ address 0x0 {
     }
 
     // Function code: 03 Prefix: 190103
-    use 0x0::Debug::print;
-    public fun process_subsidy_alt(vm_sig: &signer, subsidy_units: u64) {
-      print(&0x0111111);
+    public fun process_subsidy(vm_sig: &signer, subsidy_units: u64) {
 
       // // Need to check for association or vm account
       // let sender = Signer::address_of(vm_sig);
@@ -137,7 +135,7 @@ address 0x0 {
 
     }
 
-    public fun process_subsidy(
+    public fun process_subsidy_old(
       vm_sig: &signer,
       outgoing_validators: &vector<address>,
       outgoing_validator_weights: &vector<u64>,
@@ -155,9 +153,6 @@ address 0x0 {
 
         let node_address = *(Vector::borrow<address>(outgoing_validators, k));
         let voting_power = *(Vector::borrow<u64>(outgoing_validator_weights, k));
-        print(&0x00000050B51D10000);
-        print(&voting_power);
-        print(&total_voting_power);
 
         
         if (total_voting_power == 0) total_voting_power = 1;
