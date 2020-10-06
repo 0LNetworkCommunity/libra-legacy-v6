@@ -9,13 +9,13 @@ use 0x0::VDF;
 fun main(
   challenge: vector<u8>,
   solution: vector<u8>,
-  expected_address: address // UX: seems redundant but it's for the user to doubly check they know the address.
+  // expected_address: address // UX: seems redundant but it's for the user to doubly check they know the address.
 ) {
     // Parse key and check
     let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
 
     // Sanity check the user knows the address that will be used.
-    Transaction::assert(expected_address == parsed_address, 01);
+    // Transaction::assert(expected_address == parsed_address, 01);
 
     LibraAccount::create_validator_account_with_vdf<GAS::T>(
       &challenge,
@@ -27,10 +27,6 @@ fun main(
 
     // Check the account exists and the balance is 0
     Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 03);
-
-    // LibraAccount::create_validator_account_from_mining_0L<GAS::T>(sender, parsed_address, auth_key_prefix);
-    // Check the account exists and the balance is 0
-    // Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 12);
 
 }
 }

@@ -391,7 +391,7 @@ impl ClientProxy {
 
     /// Get minter state for Ol_miner
     pub fn get_miner_state(&mut self, account: AccountAddress) -> Result<Option<MinerStateView>, Error>{
-        self.client.get_miner_state(account )
+        self.client.get_miner_state(account)
     }
 
 

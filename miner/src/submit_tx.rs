@@ -17,7 +17,6 @@ use std::{thread, path::PathBuf, time, io::{stdout, Write}};
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*, vm_error::StatusCode};
 use crate::{
-    delay::delay_difficulty,
     config::OlMinerConfig
 };
 use stdlib::transaction_scripts;
@@ -49,7 +48,7 @@ pub fn submit_tx(
     tx_params: &TxParams,
     preimage: Vec<u8>,
     proof: Vec<u8>,
-    is_onboading: bool
+    is_onboading: bool,
 ) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
@@ -70,7 +69,6 @@ pub fn submit_tx(
             vec![],
             vec![
                 TransactionArgument::U8Vector(preimage),
-                TransactionArgument::U64(delay_difficulty()),
                 TransactionArgument::U8Vector(proof),
             ],
         );
@@ -80,7 +78,6 @@ pub fn submit_tx(
             vec![],
             vec![
                 TransactionArgument::U8Vector(preimage),
-                TransactionArgument::U64(delay_difficulty()),
                 TransactionArgument::U8Vector(proof),
             ],
         );

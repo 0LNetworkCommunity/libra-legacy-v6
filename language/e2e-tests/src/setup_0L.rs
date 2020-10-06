@@ -4,7 +4,7 @@ use libra_types::{transaction::{SignedTransaction, TransactionArgument}};
 use stdlib::transaction_scripts::StdlibScript;
 use crate::gas_costs;
 use libra_types::account_config::LBR_NAME;
-use move_core_types::account_address::AccountAddress;
+// use move_core_types::account_address::AccountAddress;
 // use once_cell::sync::Lazy;
 
 /// This is test infrastructure. Helps build a signed transaction script of the MinerState module.
@@ -51,11 +51,10 @@ pub fn e2e_submit_proof_txn(
     )
 }
 
-pub fn e2e_onboarding_tx(sender: &Account, seq_num: u64, challenge: Vec<u8>, solution: Vec<u8>, expected_address: AccountAddress) -> SignedTransaction {
+pub fn e2e_onboarding_tx(sender: &Account, seq_num: u64, challenge: Vec<u8>, solution: Vec<u8>) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(challenge),
         TransactionArgument::U8Vector(solution),
-        TransactionArgument::Address(expected_address),
     ];
     sender.create_signed_txn_with_args(
         StdlibScript::MinerStateOnboarding
