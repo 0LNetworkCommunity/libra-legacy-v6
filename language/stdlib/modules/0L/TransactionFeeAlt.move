@@ -24,7 +24,6 @@ address 0x0 {
         use 0x0::LibraSystem;
         use 0x0::Signer;
         use 0x0::Transaction;
-        use 0x0::Debug::print;
         use 0x0::Vector;
         use 0x0::GAS;
         use 0x0::FixedPoint32;
@@ -44,11 +43,6 @@ address 0x0 {
             });
         }
 
-        // public fun distribute() {
-        //     let (compliant_nodes, fee_ratios) = LibraSystem::get_fee_ratio();
-        //     print(&compliant_nodes);
-        //     print(&fee_ratios);
-        // }
     public fun process_fees(vm_sig: &signer) acquires TransactionFees {
       // // Need to check for association or vm account
       // let sender = Signer::address_of(vm_sig);
@@ -56,8 +50,6 @@ address 0x0 {
       let bal = LibraAccount::balance<GAS::T>(0xFEE);
       let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio();
       let length = Vector::length<address>(&outgoing_set);
-        print(&outgoing_set);
-        print(&fee_ratio);
       //TODO: assert the lengths of vectors are the same.
       let i = 0;
       while (i < length) {

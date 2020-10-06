@@ -71,39 +71,15 @@ script {
       i = i + 1;
     };
 
-    assert(LibraAccount::balance<GAS::T>({{alice}}) == 1, 7357190102011000);
-    assert(LibraAccount::balance<GAS::T>({{bob}}) == 1, 7357190102021000);
-    assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357190102031000);
-    assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357190102041000);
+    assert(LibraAccount::balance<GAS::T>({{alice}}) == 1, 7357300102011000);
+    assert(LibraAccount::balance<GAS::T>({{bob}}) == 1, 7357300102021000);
+    assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357300102031000);
+    assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357300102041000);
 
-    assert(Cases::get_case({{alice}}) == 1, 7357190102051000);
-    assert(Cases::get_case({{bob}}) == 2, 7357190102061000);
-    assert(Cases::get_case({{carol}}) == 3, 7357190102071000);
-    assert(Cases::get_case({{dave}}) == 4, 7357190102081000);
+    assert(Cases::get_case({{alice}}) == 1, 7357300102051000);
+    assert(Cases::get_case({{bob}}) == 2, 7357300102061000);
+    assert(Cases::get_case({{carol}}) == 3, 7357300102071000);
+    assert(Cases::get_case({{dave}}) == 4, 7357300102081000);
   }
-}
-// check: EXECUTED
-
-
-//! new-transaction
-//! sender: association
-script {
-    use 0x0::LibraAccount;
-    use 0x0::GAS;
-    use 0x0::TransactionFeeAlt;
-    use 0x0::Transaction::assert;
-
-    fun main(vm: &signer) {
-        LibraAccount::mint_to_address<GAS::T>(vm, 0xFEE, 1000);
-        let bal = LibraAccount::balance<GAS::T>(0xFEE);
-        assert(bal == 1000, 7357190103011000);
-
-        TransactionFeeAlt::process_fees(vm);
-
-        assert(LibraAccount::balance<GAS::T>({{alice}}) == 1001, 7357190103021000);
-        assert(LibraAccount::balance<GAS::T>({{bob}}) == 1, 7357190103031000);
-        assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357190103031000);
-        assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357190103031000);
-    }
 }
 // check: EXECUTED
