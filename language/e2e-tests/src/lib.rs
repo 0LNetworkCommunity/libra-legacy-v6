@@ -1,6 +1,6 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-
+#![allow(non_snake_case)]
 #![forbid(unsafe_code)]
 
 //! Test infrastructure for the Libra VM.

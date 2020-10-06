@@ -26,8 +26,6 @@ fn submit_proofs_steady() {
 
     executor.add_account_data(&sender);
 
-    println!("address:{:?}", sender.address() );
-
     // test data for the VDF proof, using easy/test difficulty
     // This assumes that it is a FIRST Proof, (genesis proof)
     // and it doesn't neet to match a previously sent proof.

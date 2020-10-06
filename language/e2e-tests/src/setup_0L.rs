@@ -1,11 +1,11 @@
 use crate::account::Account;
-use compiler::Compiler;
-use libra_types::{account_config, transaction::{SignedTransaction, TransactionArgument}};
+// use compiler::Compiler;
+use libra_types::{transaction::{SignedTransaction, TransactionArgument}};
 use stdlib::transaction_scripts::StdlibScript;
 use crate::gas_costs;
 use libra_types::account_config::LBR_NAME;
 use move_core_types::account_address::AccountAddress;
-use once_cell::sync::Lazy;
+// use once_cell::sync::Lazy;
 
 /// This is test infrastructure. Helps build a signed transaction script of the MinerState module.
 
@@ -70,19 +70,17 @@ pub fn e2e_onboarding_tx(sender: &Account, seq_num: u64, challenge: Vec<u8>, sol
     )
 }
 
-pub fn fee_balance(sender: &Account, seq_num: u64)-> SignedTransaction {
-    sender.create_signed_txn_with_args(
-        StdlibScript::NoOp
-            .compiled_bytes()
-            .into_vec(),
-        vec![],
-        vec![],
-        seq_num,
-        gas_costs::TXN_RESERVED * 4,
-        0,
-        LBR_NAME.to_owned(),
-    )
-}
+// pub fn fee_balance(sender: &Account, seq_num: u64)-> SignedTransaction {
+//     sender.create_signed_txn_with_args(
+//         QUERY_FEE_ACCOUNT.to_vec(),
+//         vec![],
+//         vec![],
+//         seq_num,
+//         gas_costs::TXN_RESERVED * 4,
+//         0,
+//         LBR_NAME.to_owned(),
+//     )
+// }
 
 
 // pub static QUERY_FEE_ACCOUNT: Lazy<Vec<u8>> = Lazy::new(|| {
