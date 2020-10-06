@@ -1,6 +1,6 @@
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
-use crate::redeem_setup::{e2e_submit_proof_txn, e2e_miner_state_fixtures};
+use crate::minerstate_setup::{e2e_submit_proof_txn, e2e_miner_state_fixtures};
 use miner::delay;
 use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};
