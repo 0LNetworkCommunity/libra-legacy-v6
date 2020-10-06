@@ -28,7 +28,8 @@ module GenesisOL {
     use 0x0::Testnet;
     use 0x0::StagingNet;
     use 0x0::Transaction;
-    use 0x0::TransactionFee;
+    // use 0x0::TransactionFee;
+    use 0x0::TransactionFeeAlt;
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
     use 0x0::Subsidy;
@@ -89,7 +90,8 @@ module GenesisOL {
         );
 
         // TransactionFee::initialize(tc_account, fee_account);
-        TransactionFee::initialize(fee_account);
+        // TransactionFee::initialize(fee_account);
+        TransactionFeeAlt::initialize(fee_account);
 
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(

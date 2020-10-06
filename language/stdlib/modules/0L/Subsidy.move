@@ -127,7 +127,6 @@ address 0x0 {
 
         let node_address = *(Vector::borrow<address>(&outgoing_set, i));
         let node_ratio = *(Vector::borrow<FixedPoint32::T>(&fee_ratio, i));
-        // let fixed_subsidy = FixedPoint32::create_from_raw_value(subsidy_units);
         let subsidy_granted = FixedPoint32::multiply_u64(subsidy_units, node_ratio);
         // Transfer gas from vm address to validator
         LibraAccount::pay_from<GAS::T>(vm_sig, node_address, subsidy_granted);

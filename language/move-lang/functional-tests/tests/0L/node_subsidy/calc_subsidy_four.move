@@ -1,6 +1,3 @@
-// This test is to check if subsidy calculations are impacted by dummy node statistics.
-
-// NOTE: We are creating 7 validators.
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
