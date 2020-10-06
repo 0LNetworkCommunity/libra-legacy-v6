@@ -32,7 +32,7 @@ module GenesisOL {
     use 0x0::TransactionFeeAlt;
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
-    use 0x0::Subsidy;
+    // use 0x0::Subsidy;
     use 0x0::Signer;
     use 0x0::AutoPay;
     use 0x0::AltStats;
@@ -58,7 +58,7 @@ module GenesisOL {
         // Validator Universe setup
         ValidatorUniverse::initialize(vm);
         //Subsidy module setup and burn account initialization
-        Subsidy::initialize(vm);
+        // Subsidy::initialize(vm);
 
         // Event and currency setup
         Event::publish_generator(vm);
@@ -159,7 +159,7 @@ module GenesisOL {
         };
         // Mint subsidy for the initial validator set, not to be confused with the minting for the
         // genesis block.
-        Subsidy::mint_subsidy(vm);
+        // Subsidy::mint_subsidy(vm);
     }
 
 }
