@@ -18,7 +18,7 @@ module LibraSystem {
     use 0x0::Vector;
     // use 0x0::ValidatorUniverse;
     use 0x0::NodeWeight;
-    use 0x0::AltStats;
+    use 0x0::Stats;
 
 
     struct ValidatorInfo {
@@ -354,7 +354,7 @@ module LibraSystem {
             let validator_info_ref = Vector::borrow(validators, i);
 
             // if (Cases::get_case(validator_info_ref.addr)==1)
-            if(AltStats::node_above_thresh(validator_info_ref.addr)){
+            if(Stats::node_above_thresh(validator_info_ref.addr)){
                 Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
                 Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
                 sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;

@@ -16,7 +16,7 @@ address 0x0 {
     use 0x0::LibraAccount;
     use 0x0::Vector;
     use 0x0::FixedPoint32;
-    use 0x0::AltStats;
+    use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
     use 0x0::LibraTimestamp;
@@ -90,7 +90,7 @@ address 0x0 {
       Transaction::assert(!LibraTimestamp::is_genesis(), 190107025120);
 
       // Gets the proxy for liveliness from Stats
-      let node_density = AltStats::network_density();
+      let node_density = Stats::network_density();
       // Gets the transaction fees in the epoch
       // TODO: Check the balance here
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);

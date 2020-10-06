@@ -14,7 +14,7 @@ address 0x0 {
     use 0x0::Globals;
     use 0x0::Hash;
     use 0x0::LibraTimestamp;
-    use 0x0::AltStats;
+    use 0x0::Stats;
     use 0x0::Testnet;
 
     // Struct to store information about a VDF proof submitted
@@ -73,7 +73,7 @@ address 0x0 {
       verify_and_update_state(Signer::address_of(miner), proof, false);
 
       // TODO: Initialize stats for first validator set from rust genesis. 
-      AltStats::init_address(Signer::address_of(miner));
+      Stats::init_address(Signer::address_of(miner));
 
     }
 
