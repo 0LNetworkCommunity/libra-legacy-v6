@@ -10,6 +10,8 @@ module Stats{
     use 0x0::Signer;
     use 0x0::Globals;
     use 0x0::FixedPoint32;
+    use 0x0::Testnet;
+
     // use 0x0::Debug::print;
 
     struct ValidatorSet {
@@ -139,7 +141,7 @@ module Stats{
     
     //TODO: Duplicate code.
     //Permissions: Public, VM only.
-    public fun inc_vote(node_addr: address) acquires T {
+    fun inc_vote(node_addr: address) acquires T {
       Transaction::assert(Transaction::sender() == 0x0, 99190206014010);
       let stats = borrow_global_mut<T>(Transaction::sender());
       let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
@@ -162,14 +164,22 @@ module Stats{
       init_set(set);
     }
 
-    public fun get_total_votes(): u64 acquires T {
-      Transaction::assert(Transaction::sender() == 0x0, 99190208014010);
-      *&borrow_global_mut<T>(Transaction::sender()).current.total_votes
+    public fun get_total_votes(sender: &signer): u64 acquires T {
+      Transaction::assert(Signer::address_of(sender) == 0x0, 99190208014010);
+      *&borrow_global_mut<T>(0x0).current.total_votes
     }
 
     public fun get_history(): vector<ValidatorSet> acquires T {
-      Transaction::assert(Transaction::sender() == 0x0, 99190208014010);
-      *&borrow_global_mut<T>(Transaction::sender()).history
+      *&borrow_global_mut<T>(0x0).history
     }
+
+    /// TEST HELPERS
+
+    public fun test_helper_inc_vote_addr(sender: &signer, node_addr: address) acquires T {
+      Transaction::assert(Signer::address_of(sender) == 0x0, 99190209014010);
+      Transaction::assert(Testnet::is_testnet(), 99190210014010);
+      inc_vote(node_addr);
+    }
+
 }
 }
