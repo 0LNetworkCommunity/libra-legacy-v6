@@ -15,7 +15,7 @@ module LibraBlock {
     use 0x0::ReconfigureOL;
     use 0x0::Globals;
     use 0x0::AutoPay;
-    use 0x0::AltStats;
+    use 0x0::Stats;
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -67,8 +67,8 @@ module LibraBlock {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
        
-        AltStats::process_set_votes(&previous_block_votes);
-        AltStats::inc_prop(*&proposer);
+        Stats::process_set_votes(&previous_block_votes);
+        Stats::inc_prop(*&proposer);
 
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 

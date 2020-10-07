@@ -35,7 +35,6 @@ module GenesisOL {
     // use 0x0::Subsidy;
     use 0x0::Signer;
     use 0x0::AutoPay;
-    use 0x0::AltStats;
 
     fun initialize(
         vm: &signer,
@@ -53,7 +52,6 @@ module GenesisOL {
 
         // Stats module
         Stats::initialize(vm);
-        AltStats::initialize(vm);
 
         // Validator Universe setup
         ValidatorUniverse::initialize(vm);

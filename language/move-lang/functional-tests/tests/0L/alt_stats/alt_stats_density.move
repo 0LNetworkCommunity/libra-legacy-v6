@@ -13,12 +13,12 @@
 script {
     use 0x0::Vector;
     use 0x0::Transaction;
-    use 0x0::AltStats;
+    use 0x0::Stats;
 
     fun main() {
-      Transaction::assert(AltStats::node_current_props({{bob}}) == 0, 0);
-      Transaction::assert(AltStats::node_current_votes({{alice}}) == 0, 0);
-      Transaction::assert(AltStats::node_current_votes({{bob}}) == 0, 0);
+      Transaction::assert(Stats::node_current_props({{bob}}) == 0, 0);
+      Transaction::assert(Stats::node_current_votes({{alice}}) == 0, 0);
+      Transaction::assert(Stats::node_current_votes({{bob}}) == 0, 0);
 
 
         let voters = Vector::empty<address>();
@@ -27,28 +27,28 @@ script {
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
 
-        // AltStats::process_set_votes(voters);
+        // Stats::process_set_votes(voters);
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
         while (i < 5) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            AltStats::process_set_votes(&voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
 
-      Transaction::assert(!AltStats::node_above_thresh({{alice}}), 0);
-      Transaction::assert(AltStats::network_density() == 0, 0);
+      Transaction::assert(!Stats::node_above_thresh({{alice}}), 0);
+      Transaction::assert(Stats::network_density() == 0, 0);
 
       let i = 1;
       while (i < 10) {
           // Mock the validator doing work for 15 blocks, and stats being updated.
-          AltStats::process_set_votes(&voters);
+          Stats::process_set_votes(&voters);
           i = i + 1;
       };
 
-      Transaction::assert(AltStats::node_above_thresh({{alice}}), 0);
-      Transaction::assert(AltStats::network_density() == 4, 0);
+      Transaction::assert(Stats::node_above_thresh({{alice}}), 0);
+      Transaction::assert(Stats::network_density() == 4, 0);
     }
 }
 // check: EXECUTED

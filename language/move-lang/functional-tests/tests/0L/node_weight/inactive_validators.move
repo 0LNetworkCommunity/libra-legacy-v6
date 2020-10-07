@@ -15,7 +15,7 @@ script {
     use 0x0::Transaction;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
-    use 0x0::AltStats;
+    use 0x0::Stats;
 
     // n is less than vector length. We need top N.
     // Top 1 account test. N=1 vector has 5 addresses
@@ -31,7 +31,7 @@ script {
         let i = 1;
         while (i < 13) {
             // Mock the validator doing work for 12 blocks, and stats being updated.
-            AltStats::process_set_votes(&voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
 

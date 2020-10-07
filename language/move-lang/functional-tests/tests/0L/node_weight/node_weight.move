@@ -14,7 +14,7 @@ script {
     use 0x0::Transaction;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
-    use 0x0::AltStats;
+    use 0x0::Stats;
 
     fun main(account: &signer) {
 
@@ -35,14 +35,14 @@ script {
         let i = 1;
         while (i < 11) {
             // Mock the validator doing work for 10 blocks, and stats being updated.
-            AltStats::process_set_votes(&voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
 
         // Adding Hola to the voters for rounds 11 and 12
         Vector::push_back<address>(&mut voters, {{hola}});
-        AltStats::process_set_votes(&voters);
-        AltStats::process_set_votes(&voters);
+        Stats::process_set_votes(&voters);
+        Stats::process_set_votes(&voters);
 
         // This is the base case: check case of the validator set limit being less than universe size.
         let top_n_is_under = NodeWeight::top_n_accounts(account, 3);

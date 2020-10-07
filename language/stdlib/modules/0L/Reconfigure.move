@@ -18,7 +18,7 @@ address 0x0 {
         use 0x0::MinerState;
         use 0x0::Globals;
         use 0x0::Vector;
-        use 0x0::AltStats;
+        use 0x0::Stats;
 
         // This function is called by block-prologue once after n blocks.
         // Function code: 01. Prefix: 180101
@@ -68,7 +68,7 @@ address 0x0 {
             // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. 
             
             // Step 2: Call bulkUpdate module
-                AltStats::reconfig(&validator_set);
+                Stats::reconfig(&validator_set);
                 LibraSystem::bulk_update_validators(account, validator_set);
             };
 

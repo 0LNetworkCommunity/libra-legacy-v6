@@ -15,7 +15,7 @@ address 0x0 {
     use 0x0::LibraAccount;
     use 0x0::Vector;
     use 0x0::FixedPoint32;
-    use 0x0::AltStats;
+    use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
     use 0x0::LibraTimestamp;
@@ -71,7 +71,7 @@ address 0x0 {
     // Function code: 04 Prefix: 190104
     fun subsidy_curve(): u64 {
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-      let network_density = AltStats::network_density();
+      let network_density = Stats::network_density();
       let max_node_count = Globals::get_max_node_density();
       let min_node_count = 4u64;
       // Return early if we know the value is below 4.
