@@ -69,12 +69,13 @@
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
-    use 0x0::ValidatorUniverse;
+    use 0x0::NodeWeight;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 4, 97);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
-        Transaction::assert(ValidatorUniverse::get_validator_weight({{alice}}) == 1, 99);
+        Transaction::assert(LibraSystem::validator_set_size() == 4, 7357220101011000);
+        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357220101021000);
+        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357220101031000);
+
     }
 }
 // check: EXECUTED
@@ -96,7 +97,7 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::insert_voter_list(i, &voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
     }
@@ -114,12 +115,13 @@ script {
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
-    use 0x0::ValidatorUniverse;
+    use 0x0::NodeWeight;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 4, 97);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 98);
-        Transaction::assert(ValidatorUniverse::get_validator_weight({{alice}}) == 2, 99);
+        Transaction::assert(LibraSystem::validator_set_size() == 4, 7357220101041000);
+        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357220101051000);
+        //no mining was done by Alice.
+        Transaction::assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357220101061000);
     }
 }
 // check: EXECUTED

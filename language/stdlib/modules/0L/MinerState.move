@@ -14,7 +14,7 @@ address 0x0 {
     use 0x0::Globals;
     use 0x0::Hash;
     use 0x0::LibraTimestamp;
-    // use 0x0::Debug;
+    use 0x0::Stats;
     use 0x0::Testnet;
 
     // Struct to store information about a VDF proof submitted
@@ -71,6 +71,10 @@ address 0x0 {
       };
       init_miner_state(miner);
       verify_and_update_state(Signer::address_of(miner), proof, false);
+
+      // TODO: Initialize stats for first validator set from rust genesis. 
+      Stats::init_address(Signer::address_of(miner));
+
     }
 
     // Function index: 03
@@ -168,7 +172,7 @@ address 0x0 {
       Transaction::assert(sender == 0x0, 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
-      if( ! ::exists<MinerProofHistory>( miner_addr ) ){
+      if( ! ::exists<MinerProofHistory>(miner_addr) ){
         return
       };
 
@@ -195,9 +199,10 @@ address 0x0 {
 
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.
+    // TODO: change this name.
     public fun get_validator_weight(miner_addr: address): u64 acquires MinerProofHistory {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130110014010);
+      // let sender = Transaction::sender();
+      Transaction::assert(Transaction::sender() == 0x0, 130110014010);
 
       // Miner may not have been initialized. (don't abort, just return 0)
       if( ! ::exists<MinerProofHistory>( miner_addr ) ){
@@ -238,10 +243,11 @@ address 0x0 {
       };
     }
 
-
     // Function to initialize miner state
-    // Permissions: PUBLIC, Signer
+    // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_signer: &signer){
+      // let addr = Signer::address_of(node_sig);
+      // Transaction::assert(LibraSystem::is_validator(addr), 99190201014010);
       // LibraAccount calls this.
       // NOTE Only Signer can update own state.
       // Exception is LibraAccount which can simulate a Signer.
@@ -258,8 +264,8 @@ address 0x0 {
       });
 
       //also add the miner to validator universe
+      //TODO: add_validators need to check permission.
       ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
-
     }
 
 
@@ -286,8 +292,7 @@ address 0x0 {
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
     public fun get_miner_latest_epoch(addr: address): u64 acquires MinerProofHistory {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130114014010);
+      Transaction::assert(Transaction::sender() == 0x0, 130114014010);
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
     }
@@ -317,13 +322,10 @@ address 0x0 {
 
 
     // Returns number of epochs for input miner's state
-    // Permissions: public, VM only, TESTING only
-    public fun test_helper_get_miner_epochs(miner_addr: address): u64 acquires MinerProofHistory {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130117014010);
-      Transaction::assert(Testnet::is_testnet()
- == true, 130115014011);
-      borrow_global<MinerProofHistory>(miner_addr).epochs_validating_and_mining
+    // Permissions: PUBLIC, ANYONE
+    // TODO: Rename
+    public fun get_epochs_mining(node_addr: address): u64 acquires MinerProofHistory {
+      borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
     }
 
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {

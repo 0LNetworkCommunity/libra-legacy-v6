@@ -29,6 +29,9 @@ script {
     Vector::push_back(&mut validators, {{bob}});
     Vector::push_back(&mut validators, {{carol}});
     Vector::push_back(&mut validators, {{dave}});
+    Vector::push_back(&mut validators, {{eve}});
+    Vector::push_back(&mut validators, {{frank}});
+    Vector::push_back(&mut validators, {{gene}});
 
     // create mock validator stats for full epoch
     let i = 0;
@@ -37,7 +40,7 @@ script {
       i = i + 1;
     };
 
-    Transaction::assert(Subsidy::calculate_Subsidy() == 296, 7357190101021000);
+    Transaction::assert(Subsidy::calculate_Subsidy() == 293, 7357190101021000);
 
     }
 }

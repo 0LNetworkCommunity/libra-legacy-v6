@@ -16,18 +16,14 @@ fun main(sender: &signer) {
     let difficulty = 100u64;
     Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
     Transaction::assert(MinerState::test_helper_hash({{alice}}) == TestFixtures::alice_1_easy_chal(), 10008002);
-
-    let height_after = 1;
-    
+        
     let proof = MinerState::create_proof_blob(
         TestFixtures::alice_1_easy_chal(),
         difficulty,
         TestFixtures::alice_1_easy_sol()
     );
     MinerState::commit_state(sender, proof);
-
-    let verified_height = MinerState::test_helper_get_height({{alice}});
-    Transaction::assert(verified_height == height_after, 10008003);
+    Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 1, 10008003);
 }
 }
 // check: EXECUTED

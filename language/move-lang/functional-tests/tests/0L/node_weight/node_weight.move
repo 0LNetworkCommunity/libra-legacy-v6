@@ -35,14 +35,14 @@ script {
         let i = 1;
         while (i < 11) {
             // Mock the validator doing work for 10 blocks, and stats being updated.
-            Stats::insert_voter_list(i, &voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
 
         // Adding Hola to the voters for rounds 11 and 12
         Vector::push_back<address>(&mut voters, {{hola}});
-        Stats::insert_voter_list(11, &voters);
-        Stats::insert_voter_list(12, &voters);
+        Stats::process_set_votes(&voters);
+        Stats::process_set_votes(&voters);
 
         // This is the base case: check case of the validator set limit being less than universe size.
         let top_n_is_under = NodeWeight::top_n_accounts(account, 3, 12);

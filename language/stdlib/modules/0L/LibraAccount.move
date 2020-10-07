@@ -1093,7 +1093,7 @@ module LibraAccount {
         borrow_global_mut<Role_temp<RoleType>>(addr).is_certified = true;
     }
 
-    // NOTE: This is how the Validator accounts are set up in genesis. It requires a system address.
+    // NOTE: How genesis creates validator accounts. Called by vm.
     public fun create_validator_account<Token>(
         creator: &signer,
         new_account_address: address,
@@ -1108,6 +1108,7 @@ module LibraAccount {
         Event::publish_generator(&new_account);
         // TODO: This publish fails if the creator is not association.
         ValidatorConfig::publish(creator, &new_account);
+
         move_to(&new_account, Role_temp<ValidatorRole> { role_type: ValidatorRole { }, is_certified: true });
         make_account<Token, Empty::T>(new_account, auth_key_prefix, Empty::create(), false)
     }
@@ -1165,13 +1166,12 @@ module LibraAccount {
         move_to(&new_signer, Role_temp<ValidatorRole> {role_type: ValidatorRole {}, is_certified: true});
 
         // initialize the miner's state 
+        //TODO: rename
         MinerState::init_miner_state(&new_signer);
-
         // let blob = MinerState::create_proof_blob(*challenge, Globals::get_difficulty(), *solution);
         // MinerState::commit_state(&new_signer, blob);
 
         ValidatorConfig::publish_from_vdf(&new_signer);
-
         // create the account, and also consume/destroy the new_signer.
         make_account<Token, Empty::T>(new_signer, auth_key_prefix, Empty::create(), false);
     }

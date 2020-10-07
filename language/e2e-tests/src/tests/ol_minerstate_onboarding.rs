@@ -1,6 +1,6 @@
 use crate::executor::FakeExecutor;
 use crate::account::{Account, AccountData, lbr_currency_code, AccountTypeSpecifier};
-use crate::redeem_setup::e2e_onboarding_tx;
+use crate::minerstate_setup::e2e_onboarding_tx;
 use libra_types::transaction::TransactionStatus;
 use libra_types::vm_error::{VMStatus, StatusCode};
 use move_core_types::account_address::AccountAddress;

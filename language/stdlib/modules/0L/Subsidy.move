@@ -19,8 +19,9 @@ address 0x0 {
     use 0x0::Stats;
     use 0x0::ValidatorUniverse;
     use 0x0::Globals;
-    use 0x0::LibraConfig;
-    use 0x0::MinerState;
+    use 0x0::LibraTimestamp;
+    // use 0x0::MinerState;
+    use 0x0::Cases;
 
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
@@ -78,21 +79,23 @@ address 0x0 {
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
-    public fun calculate_Subsidy(account: &signer, start_height: u64, end_height: u64)
+    public fun calculate_Subsidy()
     :u64 acquires SubsidyInfo {
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 190107014010);
+      // let sender = Signer::address_of(account);
+      Transaction::assert(Transaction::sender() == 0x0, 190107014010);
       
-      Transaction::assert(start_height >= 0, 190107025120);
+      // skip genesis
+      //TODO use genesis timestamp.
+      // Transaction::assert(start_height >= 0, 190107025120);
+      Transaction::assert(!LibraTimestamp::is_genesis(), 190107025120);
 
-      // Gets the proxy for liveness from Stats
-      let node_density = Stats::network_heuristics(start_height, end_height);
-
+      // Gets the proxy for liveliness from Stats
+      let node_density = Stats::network_density();
       // Gets the transaction fees in the epoch
       // TODO: Check the balance here
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
 
-      // // Calculate the split for subsidy and burn
+      // Calculate the split for subsidy and burn
       let (subsidy_units, burn_units) = subsidy_curve(
         Globals::get_subsidy_ceiling_gas(),
         4u64, // minimum number of nodes to be in consensus.
@@ -111,11 +114,16 @@ address 0x0 {
     }
 
     // Function code: 03 Prefix: 190103
-    public fun process_subsidy(account: &signer, outgoing_validators: &vector<address>,
-                               outgoing_validator_weights: &vector<u64>, subsidy_units: u64,
-                               total_voting_power: u64, current_block_height: u64) {
+    use 0x0::Debug::print;
+    public fun process_subsidy(
+      vm_sig: &signer,
+      outgoing_validators: &vector<address>,
+      outgoing_validator_weights: &vector<u64>,
+      subsidy_units: u64,
+      total_voting_power: u64,
+      current_block_height: u64) {
       // Need to check for association or vm account
-      let sender = Signer::address_of(account);
+      let sender = Signer::address_of(vm_sig);
       Transaction::assert(sender == 0x0, 190103014010);
 
       let length = Vector::length<address>(outgoing_validators);
@@ -125,21 +133,28 @@ address 0x0 {
 
         let node_address = *(Vector::borrow<address>(outgoing_validators, k));
         let voting_power = *(Vector::borrow<u64>(outgoing_validator_weights, k));
+        print(&0x00000050B51D10000);
+        print(&voting_power);
+        print(&total_voting_power);
 
+        
+        if (total_voting_power == 0) total_voting_power = 1;
+        // Accounting.
+        // Validators get paid for successfully proposing blocks.
+        // Validators are skipped from proposing if they have low network connectivity.
+        // Proposer election is done in Rust with leader reputation.
+        // TODO: Update this division of rewards.
         // % weight for calculating the subsidy units
-        let subsidy_allowed = FixedPoint32::divide_u64(subsidy_units * voting_power,
-                          FixedPoint32::create_from_rational(total_voting_power, 1));
+        let subsidy_allowed = FixedPoint32::divide_u64(subsidy_units * voting_power, FixedPoint32::create_from_rational(total_voting_power, 1));
 
         // Subsidy is only paid if both mining and validation are active in the epoch
-        let latest_epoch_mined = MinerState::get_miner_latest_epoch(node_address);
-        if(latest_epoch_mined == LibraConfig::get_current_epoch() && ValidatorUniverse::check_if_active_validator(node_address, Globals::get_epoch_length(), current_block_height)){
-          //Transfer gas from association to validator
-          LibraAccount::pay_from<GAS::T>(account, node_address, subsidy_allowed);
+
+        // TODO: replace for Cases
+        if(Cases::get_case(node_address, current_block_height) == 1){
+          // Transfer gas from vm address to validator
+          LibraAccount::pay_from<GAS::T>(vm_sig, node_address, subsidy_allowed);
         };
 
-        // Transaction::assert(LibraAccount::balance<GAS::T>(sender) == old_association_balance - subsidy_allowed, 8004);
-        // confirm the calculations, and that the ending balance is incremented accordingly.
-        // Transaction::assert(LibraAccount::balance<GAS::T>(node_address) == old_validator_balance + subsidy_allowed, 8004);
         k = k + 1;
       };
 

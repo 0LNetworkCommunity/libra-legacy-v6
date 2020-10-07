@@ -19,6 +19,8 @@ address 0x0 {
         use 0x0::MinerState;
         use 0x0::Globals;
         use 0x0::Vector;
+        use 0x0::Stats;
+
 
         // This function is called by block-prologue once after n blocks.
         // Function code: 01. Prefix: 180101
@@ -44,50 +46,54 @@ address 0x0 {
         }
 
         // Function code: 02. Prefix: 180102
-        fun process_outgoing_validators(account: &signer, current_block_height: u64) {
+        fun process_outgoing_validators(vm_sig: &signer, current_block_height: u64) {
 
             // Get outgoing validator and sum of all validator weights
             let (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
                  = LibraSystem::get_outgoing_validators_with_weights(Globals::get_epoch_length(), current_block_height);
             // Step 1: End redeem for all validators
-            MinerState::epoch_boundary(account);
+            MinerState::epoch_boundary(vm_sig);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
             // Calculate start and end block height for the current epoch
-            let start_block_height = 0;
-            
-            if(current_block_height> Globals::get_epoch_length()){
-                start_block_height = current_block_height - Globals::get_epoch_length();
-            };
+
             // Get the subsidy units and burn units after deducting transaction fees
             // NOTE: current block height is the end of the epoch.
-           let subsidy_units = Subsidy::calculate_Subsidy(account, start_block_height, current_block_height);
 
-            Subsidy::process_subsidy(account, &outgoing_validators, &outgoing_validator_weights,
-                                    subsidy_units, sum_of_all_validator_weights, current_block_height);
+            //TODO: do we need skip first epoch?
+           let subsidy_units = Subsidy::calculate_Subsidy();
+
+            Subsidy::process_subsidy(
+                vm_sig,
+                &outgoing_validators,
+                &outgoing_validator_weights,
+                subsidy_units,
+                sum_of_all_validator_weights,
+                current_block_height
+            );
             // Step 3: Distribute transaction fees here before updating validators
             TransactionFee::distribute_transaction_fees<GAS::T>();
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
             if (LibraConfig::get_current_epoch() != 0) {
-              Subsidy::burn_subsidy(account);
-            }
-
-
+              Subsidy::burn_subsidy(vm_sig);
+            };
         }
 
         // Function code: 03. Prefix: 180103
         fun prepare_upcoming_validator_set(account: &signer, current_block_height: u64) {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
-            let validator_set = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch(), current_block_height);
+            let validator_set = NodeWeight::top_n_accounts(
+                account, Globals::get_max_validator_per_epoch(),
+                current_block_height);
             let length = Vector::length<address>(&validator_set);
-
             // If the cardinality of validator_set in the next epoch is less than 4, we skip the epoch tranisition. 
             // Refer Theorem: If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness (@sm86)  
-            // This is very rare and theoritically impossible for network with at least 6 nodes and 6 rounds. 
+            // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. 
             if(length >= 4){
-                // Step 2: Call bulkUpdate module
-                LibraSystem::bulk_update_validators(account, validator_set);    
+            // Step 2: Call bulkUpdate module
+                Stats::reconfig(&validator_set);
+                LibraSystem::bulk_update_validators(account, validator_set);
             };
 
             // Step 3: Mint subsidy units for upcoming epoch

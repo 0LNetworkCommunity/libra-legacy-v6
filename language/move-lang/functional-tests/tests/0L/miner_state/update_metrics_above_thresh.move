@@ -6,16 +6,12 @@
 //! sender: alice
 script {
 use 0x0::MinerState;
-// use 0x0::Debug;
 use 0x0::Transaction;
 use 0x0::TestFixtures;
-
 
 // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
 fun main(sender: &signer) {
     let difficulty = 100;
-    let height_after = 0;
-
     // return solution
     MinerState::test_helper(
         sender,
@@ -24,11 +20,7 @@ fun main(sender: &signer) {
         TestFixtures::alice_0_easy_sol()
     );
 
-    // check for initialized MinerState
-    let verified_tower_height_after = MinerState::test_helper_get_height({{alice}});
-
-    Transaction::assert(verified_tower_height_after == height_after, 10008001);
-
+    Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
 }
 }
 // check: EXECUTED
@@ -81,7 +73,7 @@ fun main(_sender: &signer) {
     Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 1, 10009001);
     Transaction::assert(MinerState::get_miner_latest_epoch({{alice}}) == 1, 10009002);
     Transaction::assert(MinerState::test_helper_get_count({{alice}}) == 2, 10009003);
-    Transaction::assert(MinerState::test_helper_get_miner_epochs({{alice}}) == 0, 10009004);
+    Transaction::assert(MinerState::get_epochs_mining({{alice}}) == 0, 10009004);
     Transaction::assert(MinerState::test_helper_get_contiguous({{alice}}) == 0, 10009005);
     
     MinerState::test_helper_update_metrics({{alice}});
@@ -89,7 +81,7 @@ fun main(_sender: &signer) {
     Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 1, 10009006);
     Transaction::assert(MinerState::get_miner_latest_epoch({{alice}}) == 1, 10009007);
     Transaction::assert(MinerState::test_helper_get_count({{alice}}) == 0, 10009008);
-    Transaction::assert(MinerState::test_helper_get_miner_epochs({{alice}}) == 1, 10009009);
+    Transaction::assert(MinerState::get_epochs_mining({{alice}}) == 1, 10009009);
     Transaction::assert(MinerState::test_helper_get_contiguous({{alice}}) == 1, 10009010);
 
 }

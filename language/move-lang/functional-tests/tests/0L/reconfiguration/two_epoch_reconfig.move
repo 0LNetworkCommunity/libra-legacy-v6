@@ -11,7 +11,6 @@
 //! block-prologue
 //! proposer: alice
 //! block-time: 1
-//! NewBlockEvent
 
 //! block-prologue
 //! proposer: alice
@@ -82,38 +81,26 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::insert_voter_list(i, &voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
-        // Stats::insert_voter_list(1, &voters);
-        // Stats::insert_voter_list(2, &voters);
-        // Stats::insert_voter_list(3, &voters);
-        // Stats::insert_voter_list(4, &voters);
-        // Stats::insert_voter_list(5, &voters);
-        // Stats::insert_voter_list(6, &voters);
-        // Stats::insert_voter_list(7, &voters);
-        // Stats::insert_voter_list(8, &voters);
-        // Stats::insert_voter_list(9, &voters);
-        // Stats::insert_voter_list(10, &voters);
-        // Stats::insert_voter_list(11, &voters);
-        // Stats::insert_voter_list(12, &voters);
-        // Stats::insert_voter_list(13, &voters);
-        // Stats::insert_voter_list(14, &voters);
-        // Stats::insert_voter_list(15, &voters);
     }
 }
+// check: EXECUTED
+
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 15
-//! round: 15
 
+//////////////////////////////////////////////
+///// CHECKS RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
+//////////////////////////////////////////////
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 16
-//! NewBlockEvent
 
 //! block-prologue
 //! proposer: alice
@@ -179,21 +166,44 @@ script {
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
-        Vector::push_back<address>(&mut voters, {{eve}});
+        // Vector::push_back<address>(&mut voters, {{eve}});
 
 
         let i = 16;
         while (i < 31) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::insert_voter_list(i, &voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
     }
 }
+// check: EXECUTED
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 30
-//! round: 15
 
+//////////////////////////////////////////////
+///// CHECKS RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
+//////////////////////////////////////////////
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 31
+
+//! new-transaction
+//! sender: association
+script {
+    use 0x0::Transaction;
+    use 0x0::LibraSystem;
+    use 0x0::LibraConfig;
+    // use 0x0::Debug::print;
+    fun main(_account: &signer) {
+
+        Transaction::assert(LibraSystem::validator_set_size()==4, 1);
+        Transaction::assert(LibraConfig::get_current_epoch()==3, 1);
+        Transaction::assert(!LibraSystem::is_validator({{eve}}), 2);
+    }
+}
+// check: EXECUTED

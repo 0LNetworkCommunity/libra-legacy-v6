@@ -31,7 +31,7 @@ script {
         let i = 1;
         while (i < 13) {
             // Mock the validator doing work for 12 blocks, and stats being updated.
-            Stats::insert_voter_list(i, &voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
 

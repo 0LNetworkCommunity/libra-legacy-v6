@@ -4,7 +4,7 @@
 /////////////////////////////////////////////////////////////////////////
 // Node Weight - used for reconfiguring the network, for selecting top N validators to new validator set.
 // This module is used to select the validators who would participate in LibraBFT protocol. Due to the restrictions on throughput with increasing validators above a threshold,
-// we rank nodes based on node weight (i.e., stake they own, previous participation trends) to select the validators for an epoch.
+// we rank nodes based on node weight (i.e. previous participation heuristics and mining) to select the validators for an epoch.
 // File Prefix for errors: 1401
 ///////////////////////////////////////////////////////////////////////////
 
@@ -16,7 +16,15 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::MinerState;
-    use 0x0::Globals;
+    use 0x0::Cases;
+
+    public fun proof_of_weight (node_addr: address): u64 {
+      // Transaction::assert(Transaction::sender() == 0x0, 140101014010);
+
+      // Calculate the weight/voting power for the next round.
+      // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
+      MinerState::get_epochs_mining(node_addr)
+    }
 
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
@@ -27,8 +35,7 @@ address 0x0 {
     // Permissions: Public, VM Only
     public fun top_n_accounts(account: &signer, n: u64, current_block_height: u64): vector<address> {
 
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 140101014010);
+      Transaction::assert(Signer::address_of(account) == 0x0, 140101014010);
 
       let eligible_validators = Vector::empty<address>();
 
@@ -39,18 +46,19 @@ address 0x0 {
       let k = 0;
       while(k < val_uni_length){
         let addr = *Vector::borrow<address>(&validators_universe, k);
-        if(ValidatorUniverse::check_if_active_validator(addr, Globals::get_epoch_length(), current_block_height)){
-          Vector::push_back<address>(&mut eligible_validators, addr);    
+
+        // consensus case 1 and 2, allow inclusion into the next validator set.
+        if (Cases::get_case(addr, current_block_height) == 1 || Cases::get_case(addr, current_block_height) == 2){
+          Vector::push_back<address>(&mut eligible_validators, addr)
         };
         k = k + 1;
       };
 
       let length = Vector::length<address>(&eligible_validators);
 
-      // Base Case: The universe of validators is under the limit of the BFT consensus.
+      // Scenario: The universe of validators is under the limit of the BFT consensus.
       // If n is greater than or equal to accounts vector length - return the vector.
-      if(length <= n)
-        return eligible_validators;
+      if(length <= n) return eligible_validators;
 
       // Vector to store each address's node_weight
       let weights = Vector::empty<u64>();
@@ -59,8 +67,7 @@ address 0x0 {
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
         // Ensure that this address is an active validator
-        let validator_weight= MinerState::get_validator_weight(cur_address);
-        Vector::push_back<u64>(&mut weights, validator_weight);
+        Vector::push_back<u64>(&mut weights, proof_of_weight(cur_address));
         k = k + 1;
       };
 
