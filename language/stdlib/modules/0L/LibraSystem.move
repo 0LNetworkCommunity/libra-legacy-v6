@@ -354,6 +354,22 @@ module LibraSystem {
         nodes 
     }
 
+    public fun get_jailed_set(): vector<address> {
+      let validator_set = get_val_set_addr();
+      let jailed_set = Vector::empty<address>();
+      let k = 0;
+      while(k < Vector::length(&validator_set)){
+        let addr = *Vector::borrow<address>(&validator_set, k);
+
+        // consensus case 1 and 2, allow inclusion into the next validator set.
+        if (Cases::get_case(addr) == 3 || Cases::get_case(addr) == 4){
+          Vector::push_back<address>(&mut jailed_set, addr)
+        };
+        k = k + 1;
+      };
+      jailed_set
+    }
+
     //get_compliant_val_votes
     public fun get_fee_ratio(): (vector<address>, vector<FixedPoint32::T>) {
         let validators = &get_validator_set().validators;

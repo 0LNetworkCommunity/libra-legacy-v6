@@ -221,13 +221,12 @@ address 0x0 {
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
 
-    public fun reconfig(account: &signer) acquires MinerProofHistory {
+    public fun reconfig(vm: &signer) acquires MinerProofHistory {
       // Check permissions
-      let sender = Signer::address_of(account);
-      Transaction::assert(sender == 0x0, 130111014010);
+      Transaction::assert(Signer::address_of(vm) == 0x0, 130111014010);
 
       // Get list of validators from ValidatorUniverse
-      let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
+      let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
 
       // Iterate through validators and call update_metrics for each validator that had proofs this epoch
       let size = Vector::length<address>(&eligible_validators);
