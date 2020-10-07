@@ -137,8 +137,8 @@ script {
             i = i + 1;
         };
 
-        // Even though Eve will be considered a case 2 again, it was because she was jailed. She will rejoin next epoch.
-        // assert(Cases::get_case({{eve}}) == 2, 7357180106011000);
+        // Even though Eve will be considered a case 2, it was because she was jailed. She will rejoin next epoch.
+        assert(Cases::get_case({{eve}}) == 2, 7357180106011000);
         Reconfigure::reconfigure(vm);
     }
 }
