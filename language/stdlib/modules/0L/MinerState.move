@@ -297,10 +297,29 @@ address 0x0 {
       *&addr_state.latest_epoch_mining
     }
 
+    ////////////////////
+    /// Public APIs ///
+    ///////////////////
+
+    // Returns number of epochs for input miner's state
+    // Permissions: PUBLIC, ANYONE
+    // TODO: Rename
+    public fun get_epochs_mining(node_addr: address): u64 acquires MinerProofHistory {
+      borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
+    }
+
 
     ////////////////////
     // TEST HELPERS ///
     ////////////////////
+
+    public fun test_helper_set_epochs(sender: &signer,  count: u64) acquires MinerProofHistory {
+      // let sender = Transaction::sender();
+      // Transaction::assert(sender == 0x0, 130117014010);
+      Transaction::assert(Testnet::is_testnet() == true, 130115014011);
+      let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
+      state.epochs_validating_and_mining = count;
+    }
 
     // Permissions: PUBLIC, VM, TESTING 
     public fun test_helper_update_metrics(miner_addr: address) acquires MinerProofHistory{
@@ -320,13 +339,6 @@ address 0x0 {
     }
 
 
-
-    // Returns number of epochs for input miner's state
-    // Permissions: PUBLIC, ANYONE
-    // TODO: Rename
-    public fun get_epochs_mining(node_addr: address): u64 acquires MinerProofHistory {
-      borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
-    }
 
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
       let sender = Transaction::sender();

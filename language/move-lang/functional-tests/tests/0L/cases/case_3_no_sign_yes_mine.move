@@ -17,12 +17,22 @@
 //! NewBlockEvent
 
 //! new-transaction
+//! sender: alice
+script {
+    use 0x0::Transaction;
+    fun main(sender: &signer) {
+        MinerState::test_helper_set_epochs(&sender, 5);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
 //! sender: carol
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
     use 0x0::MinerState;
-    use 0x0::TestFixtures;
+    // use 0x0::TestFixtures;
     use 0x0::NodeWeight;
     // use 0x0::Debug::print;
     use 0x0::GAS;
@@ -36,15 +46,18 @@ script {
         Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
 
         Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
-        Transaction::assert(MinerState::test_helper_hash({{carol}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
+        // Transaction::assert(MinerState::test_helper_hash({{carol}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
         
-        // CAROL continues to mine after genesis.
-        // This test is adapted from chained_from_genesis.move
-        let proof = MinerState::create_proof_blob(
-            TestFixtures::alice_1_easy_chal(),
-            100u64, // difficulty
-            TestFixtures::alice_1_easy_sol()
-        );
+        // // CAROL continues to mine after genesis.
+        // // This test is adapted from chained_from_genesis.move
+        // let proof = MinerState::create_proof_blob(
+        //     TestFixtures::alice_1_easy_chal(),
+        //     100u64, // difficulty
+        //     TestFixtures::alice_1_easy_sol()
+        // );
+
+        // Mock the miner submitting
+        MinerState::test_helper_set_epochs(&sender, 5);
 
         Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180106);
 
@@ -128,6 +141,7 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
+                
             AltStats::process_set_votes(&voters);
             i = i + 1;
         };
