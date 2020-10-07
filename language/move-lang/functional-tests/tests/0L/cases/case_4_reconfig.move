@@ -66,21 +66,6 @@ script {
 // SKIP DAVE ///
 ////////////////
 
-// //! new-transaction
-// //! sender: dave
-// script {
-//     use 0x0::Transaction::assert;
-//     use 0x0::MinerState;
-
-//     fun main(sender: &signer) {
-//         // Alice is the only one that can update her mining stats. Hence this first transaction.
-
-//         MinerState::test_helper_mock_mining(sender, 5);
-//         assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
-//     }
-// }
-// //check: EXECUTED
-
 //! new-transaction
 //! sender: eve
 script {
@@ -89,7 +74,6 @@ script {
 
     fun main(sender: &signer) {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
-
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
     }
@@ -117,9 +101,7 @@ script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
     use 0x0::MinerState;
-    // use 0x0::TestFixtures;
     use 0x0::NodeWeight;
-    // use 0x0::Debug::print;
     use 0x0::GAS;
     use 0x0::LibraAccount;
 
@@ -127,17 +109,11 @@ script {
     fun main(_sender: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 6, 7357000180101);
-        Transaction::assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
-
-        Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
-
-        Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180106);
-
-
-        Transaction::assert(NodeWeight::proof_of_weight({{carol}}) == 0, 7357000180107);  
-
-        // MinerState::commit_state(sender, proof);
-        Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180108);
+        Transaction::assert(LibraSystem::is_validator({{dave}}) == true, 7357000180102);
+        Transaction::assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180104);
+        Transaction::assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180106);
+        Transaction::assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180107);  
+        Transaction::assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
