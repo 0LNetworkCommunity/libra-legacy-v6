@@ -15,8 +15,8 @@ script {
 
       Transaction::assert(Stats::node_current_props({{alice}}) == 0, 0);
       Transaction::assert(Stats::node_current_props({{bob}}) == 0, 0);
-      Transaction::assert(Stats::node_current_votes({{alice}}) == 0, 0);
-      Transaction::assert(Stats::node_current_votes({{bob}}) == 0, 0);
+      Transaction::assert(Stats::test_helper_inc_vote_addr({{alice}}) == 0, 0);
+      Transaction::assert(Stats::test_helper_inc_vote_addr({{bob}}) == 0, 0);
 
 
       Stats::inc_prop({{alice}});
@@ -24,8 +24,8 @@ script {
 
       Stats::inc_prop({{bob}});
       
-      Stats::inc_vote({{alice}});
-      Stats::inc_vote({{alice}});
+      Stats::test_helper_inc_vote_addr({{alice}});
+      Stats::test_helper_inc_vote_addr({{alice}});
 
       Transaction::assert(Stats::node_current_props({{alice}}) == 2, 0);
       Transaction::assert(Stats::node_current_props({{bob}}) == 1, 0);
