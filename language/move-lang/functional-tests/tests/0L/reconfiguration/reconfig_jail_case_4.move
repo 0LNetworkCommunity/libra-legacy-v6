@@ -1,4 +1,4 @@
-// Testing if FRANK a validator that is not compliant gets dropped from set.
+// Testing if FRANK  a CASE 4 Validator gets dropped.
 
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
@@ -101,7 +101,6 @@ script {
     // use 0x0::MinerState;
     use 0x0::Stats;
     use 0x0::Vector;
-    // use 0x0::Cases;
     use 0x0::Transaction::assert;
     use 0x0::Reconfigure;
     use 0x0::LibraSystem;
@@ -128,7 +127,6 @@ script {
         Reconfigure::reconfigure(vm);
         // Mock end of epoch for minerstate
         // MinerState::test_helper_mock_reconfig({{alice}});
-        assert(Cases::get_case({{frank}}) == 3, 7357300103011000);
     }
 }
 //check: EXECUTED
@@ -147,12 +145,16 @@ script {
 script {
     use 0x0::Transaction::assert;
     use 0x0::LibraSystem;
+    use 0x0::LibraConfig;
+    use 0x0::Debug::print;
     fun main(_account: &signer) {
         // We are in a new epoch.
-        // assert(LibraConfig::get_current_epoch() == 2, 7357180107);
+        assert(LibraConfig::get_current_epoch() == 2, 7357180107);
+        print(&LibraConfig::get_current_epoch());
         // Tests on initial size of validators 
         assert(LibraSystem::validator_set_size() == 5, 7357180207);
-        // assert(LibraSystem::is_validator({{alice}}) == false, 7357000180108);
+        print(&LibraSystem::is_validator({{frank}}));
+        // assert(LibraSystem::is_validator({{frank}}) == false, 7357000180108);
         // Transaction::assert(LibraSystem::is_validator({{frank}}) == false, 7357000180109);        
     }
 }
