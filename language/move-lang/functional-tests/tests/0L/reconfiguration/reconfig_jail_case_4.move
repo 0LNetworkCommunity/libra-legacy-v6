@@ -1,10 +1,16 @@
-// Testing if FRANK  a CASE 4 Validator gets dropped.
+// Testing if FRANK a CASE 4 Validator gets dropped.
 
+// ALICE is CASE 1
 //! account: alice, 1000000, 0, validator
+// BOB is CASE 1
 //! account: bob, 1000000, 0, validator
+// CAROL is CASE 1
 //! account: carol, 1000000, 0, validator
+// DAVE is CASE 1
 //! account: dave, 1000000, 0, validator
+// EVE is CASE 1
 //! account: eve, 1000000, 0, validator
+// FRANK is CASE 4
 //! account: frank, 1000000, 0, validator
 
 
@@ -146,16 +152,12 @@ script {
     use 0x0::Transaction::assert;
     use 0x0::LibraSystem;
     use 0x0::LibraConfig;
-    use 0x0::Debug::print;
     fun main(_account: &signer) {
         // We are in a new epoch.
         assert(LibraConfig::get_current_epoch() == 2, 7357180107);
-        print(&LibraConfig::get_current_epoch());
         // Tests on initial size of validators 
         assert(LibraSystem::validator_set_size() == 5, 7357180207);
-        print(&LibraSystem::is_validator({{frank}}));
-        // assert(LibraSystem::is_validator({{frank}}) == false, 7357000180108);
-        // Transaction::assert(LibraSystem::is_validator({{frank}}) == false, 7357000180109);        
+        assert(LibraSystem::is_validator({{frank}}) == false, 7357180307);
     }
 }
 //check: EXECUTED

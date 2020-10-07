@@ -153,17 +153,12 @@ module Stats{
     public fun reconfig(set: &vector<address>) acquires T {
       Transaction::assert(Transaction::sender() == 0x0, 99190207014010);
       let stats = borrow_global_mut<T>(Transaction::sender());
+      // Archive outgoing epoch stats.
+      //TODO: limit the size of the history and drop ancient records.
       Vector::push_back(&mut stats.history, *&stats.current);
 
-      //TODO: limit the size of the history and drop records.
-      stats.current = ValidatorSet {
-        addr: Vector::empty(),
-        prop_count: Vector::empty(),
-        vote_count: Vector::empty(),
-        total_votes: 0u64,
-        total_props: 0u64,
-      };
-
+      stats.current = blank();
+      
       init_set(set);
     }
 
