@@ -173,6 +173,7 @@ script {
     use 0x0::NodeWeight;
     use 0x0::GAS;
     use 0x0::LibraAccount;
+    use 0x0::LibraConfig;
 
     fun main(_account: &signer) {
         // We are in a new epoch.

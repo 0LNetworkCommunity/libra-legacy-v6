@@ -78,7 +78,8 @@ address 0x0 {
 
 
             AltStats::reconfig(&proposed_set);
-            if(length <= 4) { proposed_set =  LibraSystem::get_val_set_addr()};
+            // use previous set if no one qualifies.
+            if(length <= 4) proposed_set = LibraSystem::get_val_set_addr();
             
             LibraSystem::bulk_update_validators(account, proposed_set);
             print(&0x09999999999999999999);

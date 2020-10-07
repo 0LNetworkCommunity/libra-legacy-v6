@@ -316,7 +316,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: NodeWeight::proof_of_weight(account_address),
+                consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
             });
 
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
