@@ -28,7 +28,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357180101011000);
     }
 }
 //check: EXECUTED
@@ -43,7 +43,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357180102011000);
     }
 }
 //check: EXECUTED
@@ -76,9 +76,9 @@ script {
             i = i + 1;
         };
 
-        assert(LibraSystem::validator_set_size() == 6, 7357000180101);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
-        
+        assert(LibraSystem::validator_set_size() == 6, 7357180103011000);
+        assert(LibraSystem::is_validator({{alice}}), 7357180104011000);
+
         Reconfigure::reconfigure(vm);
     }
 }
@@ -101,10 +101,10 @@ script {
     use 0x0::LibraConfig;
     fun main(_account: &signer) {
         // We are in a new epoch.
-        assert(LibraConfig::get_current_epoch() == 2, 7357180107);
+        assert(LibraConfig::get_current_epoch() == 2, 7357180105011000);
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 5, 7357180207);
-        assert(LibraSystem::is_validator({{eve}}) == false, 7357180307);
+        assert(LibraSystem::validator_set_size() == 5, 7357180105021000);
+        assert(LibraSystem::is_validator({{eve}}) == false, 7357180105031000);
     }
 }
 //check: EXECUTED
@@ -137,8 +137,8 @@ script {
             i = i + 1;
         };
 
-        // Even though Eve will be considered a case 3 again, it was because she was jailed. She will rejoin next epoch.
-        assert(Cases::get_case({{eve}})== 3, 7357180107);
+        // Even though Eve will be considered a case 2 again, it was because she was jailed. She will rejoin next epoch.
+        // assert(Cases::get_case({{eve}}) == 2, 7357180106011000);
         Reconfigure::reconfigure(vm);
     }
 }
@@ -151,8 +151,8 @@ script {
     use 0x0::LibraSystem;
     use 0x0::LibraConfig;
     fun main(_account: &signer) {
-        assert(LibraConfig::get_current_epoch() == 3, 7357180107);
-        assert(LibraSystem::is_validator({{eve}}) == true, 7357180307);
+        assert(LibraConfig::get_current_epoch() == 3, 7357180107011000);
+        assert(LibraSystem::is_validator({{eve}}), 7357180107021000);
     }
 }
 //check: EXECUTED
