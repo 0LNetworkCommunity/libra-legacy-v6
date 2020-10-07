@@ -375,12 +375,9 @@ script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
     use 0x0::LibraConfig;
-    use 0x0::Debug::print;
     fun main(_account: &signer) {
-        print(&LibraSystem::validator_set_size());
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357180103011000);
+        Transaction::assert(LibraSystem::validator_set_size() == 6, 7357180103011000);
         Transaction::assert(LibraConfig::get_current_epoch() == 3, 7357180103021000);
-        Transaction::assert(!LibraSystem::is_validator({{frank}}), 7357180103031000);
     }
 }
 // check: EXECUTED
