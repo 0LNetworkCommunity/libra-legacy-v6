@@ -19,9 +19,89 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x0::Transaction;
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+    use 0x0::Signer;
+    // use 0x0::Debug::print;
+
     fun main(sender: &signer) {
-        MinerState::test_helper_set_epochs(&sender, 5);
+        MinerState::test_helper_set_epochs(sender, 5);
+        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: bob
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+    use 0x0::Signer;
+    // use 0x0::Debug::print;
+
+    fun main(sender: &signer) {
+        MinerState::test_helper_set_epochs(sender, 5);
+        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: carol
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+    use 0x0::Signer;
+    // use 0x0::Debug::print;
+
+    fun main(sender: &signer) {
+        MinerState::test_helper_set_epochs(sender, 5);
+        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: dave
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+    use 0x0::Signer;
+    // use 0x0::Debug::print;
+
+    fun main(sender: &signer) {
+        MinerState::test_helper_set_epochs(sender, 5);
+        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: eve
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+    use 0x0::Signer;
+    // use 0x0::Debug::print;
+
+    fun main(sender: &signer) {
+        MinerState::test_helper_set_epochs(sender, 5);
+        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: frank
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+    use 0x0::Signer;
+    // use 0x0::Debug::print;
+
+    fun main(sender: &signer) {
+        MinerState::test_helper_set_epochs(sender, 5);
+        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -39,7 +119,7 @@ script {
     use 0x0::LibraAccount;
 
 
-    fun main(sender: &signer) {
+    fun main(_sender: &signer) {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         Transaction::assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
@@ -57,14 +137,14 @@ script {
         // );
 
         // Mock the miner submitting
-        MinerState::test_helper_set_epochs(&sender, 5);
+        // MinerState::test_helper_set_epochs(&sender, 5);
 
         Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180106);
 
 
         Transaction::assert(NodeWeight::proof_of_weight({{carol}}) == 0, 7357000180107);  
 
-        MinerState::commit_state(sender, proof);
+        // MinerState::commit_state(sender, proof);
         Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 1, 7357000180108);
     }
 }
