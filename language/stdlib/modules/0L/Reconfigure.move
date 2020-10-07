@@ -19,7 +19,7 @@ address 0x0 {
         use 0x0::Globals;
         use 0x0::Vector;
         use 0x0::Stats;
-        // use 0x0::Debug::print;
+        use 0x0::Debug::print;
 
 
         // This function is called by block-prologue once after n blocks.
@@ -65,7 +65,10 @@ address 0x0 {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
             let top_accounts = NodeWeight::top_n_accounts(
                 vm, Globals::get_max_validator_per_epoch());
+            print(&top_accounts);
             let jailed_set = LibraSystem::get_jailed_set();
+            print(&jailed_set);
+
             let proposed_set = Vector::empty();
             let i = 0;
             while (i < Vector::length(&top_accounts)) {

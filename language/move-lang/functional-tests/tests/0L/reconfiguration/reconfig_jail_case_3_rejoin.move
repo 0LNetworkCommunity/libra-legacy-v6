@@ -78,9 +78,8 @@ script {
 
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        
         Reconfigure::reconfigure(vm);
-        // Mock end of epoch for minerstate
-        // MinerState::test_helper_mock_reconfig({{alice}});
     }
 }
 //check: EXECUTED
@@ -115,9 +114,31 @@ script {
 //! sender: association
 script {
     use 0x0::Reconfigure;
+    use 0x0::Cases;
+    use 0x0::Vector;
+    use 0x0::Stats;
+    // use 0x0::Debug::print;
+    use 0x0::Transaction::assert;
+
     fun main(vm: &signer) {
         // start a new epoch.
+        // Everyone except EVE validates, because she was jailed, not in validator set.
+        let voters = Vector::singleton<address>({{alice}});
+        Vector::push_back<address>(&mut voters, {{bob}});
+        Vector::push_back<address>(&mut voters, {{carol}});
+        Vector::push_back<address>(&mut voters, {{dave}});
+        // Vector::push_back<address>(&mut voters, {{eve}});
+        Vector::push_back<address>(&mut voters, {{frank}});
 
+        let i = 1;
+        while (i < 15) {
+            // Mock the validator doing work for 15 blocks, and stats being updated.
+            Stats::process_set_votes(&voters);
+            i = i + 1;
+        };
+
+        // Even though Eve will be considered a case 3 again, it was because she was jailed. She will rejoin next epoch.
+        assert(Cases::get_case({{eve}})== 3, 7357180107);
         Reconfigure::reconfigure(vm);
     }
 }
@@ -126,17 +147,12 @@ script {
 //! new-transaction
 //! sender: association
 script {
-    // use 0x0::Transaction::assert;
+    use 0x0::Transaction::assert;
     use 0x0::LibraSystem;
-    // use 0x0::LibraConfig;
-    use 0x0::Debug::print;
+    use 0x0::LibraConfig;
     fun main(_account: &signer) {
-        // We are in a new epoch.
-        // assert(LibraConfig::get_current_epoch() == 3, 7357180107);
-        // Tests on initial size of validators 
-        // assert(LibraSystem::validator_set_size() == 5, 7357180207);
-        print(&LibraSystem::is_validator({{eve}}));
-        // assert(LibraSystem::is_validator({{eve}}) == true, 7357180307);
+        assert(LibraConfig::get_current_epoch() == 3, 7357180107);
+        assert(LibraSystem::is_validator({{eve}}) == true, 7357180307);
     }
 }
 //check: EXECUTED
