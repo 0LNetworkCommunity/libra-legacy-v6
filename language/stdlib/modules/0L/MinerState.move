@@ -178,10 +178,10 @@ address 0x0 {
 
       // Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
-
+      let passed = node_above_thresh(miner_addr);
       let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
       // Update statistics.
-      if (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold()) {
+      if (passed) {
           let this_epoch = LibraConfig::get_current_epoch();
           miner_history.latest_epoch_mining = this_epoch;
 
@@ -197,6 +197,11 @@ address 0x0 {
       miner_history.count_proofs_in_epoch = 0u64;
     }
 
+
+    public fun node_above_thresh(miner_addr: address): bool acquires MinerProofHistory {
+      let miner_history= borrow_global<MinerProofHistory>(miner_addr);
+      return (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold())
+    }
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.
     // TODO: change this name.

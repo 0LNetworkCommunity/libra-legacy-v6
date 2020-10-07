@@ -6,7 +6,6 @@
 address 0x0{
 module Cases{
   use 0x0::Transaction;
-  use 0x0::LibraConfig;
   use 0x0::MinerState;
   use 0x0::Stats;
 
@@ -18,11 +17,11 @@ module Cases{
       Transaction::assert(Transaction::sender() == 0x0, 220106014010);
       // did the validator sign blocks above threshold?
       let signs = Stats::node_above_thresh(node_addr);
-      let mines = (MinerState::get_miner_latest_epoch(node_addr) == LibraConfig::get_current_epoch());
+      let mines = MinerState::node_above_thresh(node_addr);
   
       if (signs && mines) return 1; // compliant: in next set, gets paid, weight increments
       if (signs && !mines) return 2; // half compliant: in next set, does not get paid, weight does not increment.
-      if (!signs && mines) return 3; // not compliant: jailed, not in next set, does not get paid, weight does not increment.
+      if (!signs && mines) return 3; // not compliant: jailed, not in next set, does not get paid, weight increments.
       //if !signs && !mines
       return 4 // not compliant: jailed, not in next set, does not get paid, weight does not increment.
   }

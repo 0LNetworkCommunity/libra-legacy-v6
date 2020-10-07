@@ -25,8 +25,8 @@ script {
     // use 0x0::Debug::print;
 
     fun main(sender: &signer) {
-        MinerState::test_helper_set_epochs(sender, 5);
-        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -40,8 +40,8 @@ script {
     // use 0x0::Debug::print;
 
     fun main(sender: &signer) {
-        MinerState::test_helper_set_epochs(sender, 5);
-        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -55,8 +55,8 @@ script {
     // use 0x0::Debug::print;
 
     fun main(sender: &signer) {
-        MinerState::test_helper_set_epochs(sender, 5);
-        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -70,8 +70,8 @@ script {
     // use 0x0::Debug::print;
 
     fun main(sender: &signer) {
-        MinerState::test_helper_set_epochs(sender, 5);
-        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -85,8 +85,8 @@ script {
     // use 0x0::Debug::print;
 
     fun main(sender: &signer) {
-        MinerState::test_helper_set_epochs(sender, 5);
-        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -100,21 +100,21 @@ script {
     // use 0x0::Debug::print;
 
     fun main(sender: &signer) {
-        MinerState::test_helper_set_epochs(sender, 5);
-        assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
 
 //! new-transaction
-//! sender: carol
+//! sender: association
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
     use 0x0::MinerState;
     // use 0x0::TestFixtures;
-    use 0x0::NodeWeight;
-    // use 0x0::Debug::print;
+    // use 0x0::NodeWeight;
+    use 0x0::Debug::print;
     use 0x0::GAS;
     use 0x0::LibraAccount;
 
@@ -123,26 +123,10 @@ script {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         Transaction::assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
-        Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
-
         Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
-        // Transaction::assert(MinerState::test_helper_hash({{carol}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
-        
-        // // CAROL continues to mine after genesis.
-        // // This test is adapted from chained_from_genesis.move
-        // let proof = MinerState::create_proof_blob(
-        //     TestFixtures::alice_1_easy_chal(),
-        //     100u64, // difficulty
-        //     TestFixtures::alice_1_easy_sol()
-        // );
-
-        // Mock the miner submitting
-        // MinerState::test_helper_set_epochs(&sender, 5);
-
         Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180106);
-
-        // MinerState::commit_state(sender, proof);
-        Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 1, 7357000180108);
+        print(&MinerState::test_helper_get_height({{carol}}));
+        Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -213,6 +197,8 @@ script {
         // Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
         Vector::push_back<address>(&mut voters, {{eve}});
+        Vector::push_back<address>(&mut voters, {{frank}});
+
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -234,6 +220,7 @@ script {
     fun main(_account: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
+        // print(&Cases::get_case({{carol}}));
         Transaction::assert(Cases::get_case({{carol}}) == 3, 7357000180109);
     }
 }
@@ -245,16 +232,8 @@ script {
 
 //////////////////////////////////////////////
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
-
 // check: NewEpochEvent
-
 //////////////////////////////////////////////
-
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
-//! NewBlockEvent
 
 //! new-transaction
 //! sender: association
@@ -278,3 +257,4 @@ script {
 
     }
 }
+//check: EXECUTED

@@ -1,5 +1,5 @@
 // This tests consensus Case 3.
-// EVE is a validator.
+// DAVE is a validator.
 // DID NOT validate successfully.
 // DID mine above the threshold for the epoch. 
 
@@ -12,12 +12,107 @@
 
 
 //! block-prologue
-//! proposer: carol
+//! proposer: alice
 //! block-time: 1
 //! NewBlockEvent
 
 //! new-transaction
+//! sender: alice
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: bob
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+
+//! new-transaction
 //! sender: carol
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+////////////////
+// SKIP DAVE ///
+////////////////
+
+// //! new-transaction
+// //! sender: dave
+// script {
+//     use 0x0::Transaction::assert;
+//     use 0x0::MinerState;
+
+//     fun main(sender: &signer) {
+//         // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+//         MinerState::test_helper_mock_mining(sender, 5);
+//         assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+//     }
+// }
+// //check: EXECUTED
+
+//! new-transaction
+//! sender: eve
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: frank
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{frank}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: association
 script {
     use 0x0::Transaction;
     use 0x0::LibraSystem;
@@ -33,18 +128,8 @@ script {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         Transaction::assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
-        Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
 
         Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
-        // Transaction::assert(MinerState::test_helper_hash({{carol}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
-        
-        // CAROL continues to mine after genesis.
-        // This test is adapted from chained_from_genesis.move
-        // let proof = MinerState::create_proof_blob(
-        //     TestFixtures::alice_1_easy_chal(),
-        //     100u64, // difficulty
-        //     TestFixtures::alice_1_easy_sol()
-        // );
 
         Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180106);
 
@@ -120,9 +205,12 @@ script {
         // Case 3 skip Carol, did not validate.
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
-        // Vector::push_back<address>(&mut voters, {{carol}});
-        Vector::push_back<address>(&mut voters, {{dave}});
+        Vector::push_back<address>(&mut voters, {{carol}});
+        // SKIP DAVE
+        // Vector::push_back<address>(&mut voters, {{dave}});
         Vector::push_back<address>(&mut voters, {{eve}});
+        Vector::push_back<address>(&mut voters, {{frank}});
+
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -143,7 +231,7 @@ script {
     fun main(_account: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        Transaction::assert(Cases::get_case({{carol}}) == 4, 7357000180109);
+        Transaction::assert(Cases::get_case({{dave}}) == 4, 7357000180109);
     }
 }
 
@@ -154,16 +242,9 @@ script {
 
 //////////////////////////////////////////////
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
-
 // check: NewEpochEvent
-
 //////////////////////////////////////////////
 
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
-//! NewBlockEvent
 
 //! new-transaction
 //! sender: association
@@ -173,6 +254,7 @@ script {
     use 0x0::NodeWeight;
     use 0x0::GAS;
     use 0x0::LibraAccount;
+    use 0x0::LibraConfig;
     // use 0x0::Debug::print;
 
     fun main(_account: &signer) {
@@ -181,10 +263,11 @@ script {
         // Check the validator set is at expected size
         // print(&LibraSystem::validator_set_size());
         Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180110);
-        Transaction::assert(LibraSystem::is_validator({{carol}}) == false, 7357000180111);            
-        Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180112);
-        Transaction::assert(NodeWeight::proof_of_weight({{carol}}) == 0, 7357000180113);  
+        Transaction::assert(LibraSystem::is_validator({{dave}}) == false, 7357000180111);            
+        Transaction::assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180112);
+        Transaction::assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180113);  
         Transaction::assert(LibraConfig::get_current_epoch()==2, 7357000180114);
 
     }
 }
+//check: EXECUTED

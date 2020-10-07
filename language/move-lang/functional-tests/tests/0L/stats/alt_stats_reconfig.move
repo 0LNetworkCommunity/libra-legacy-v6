@@ -42,8 +42,8 @@ script {
 
       Stats::reconfig(&set);
 
-      Transaction::assert(Stats::node_current_props({{alice}}) == 0, 0);
-      Transaction::assert(Stats::node_current_props({{bob}}) == 0, 0);
+      assert(Stats::node_current_props({{alice}}) == 0, 0);
+      assert(Stats::node_current_props({{bob}}) == 0, 0);
 
 
     }
