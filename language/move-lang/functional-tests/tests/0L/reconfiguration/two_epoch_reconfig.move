@@ -70,7 +70,7 @@
 //! sender: association
 script {
     use 0x0::Vector;
-    use 0x0::AltStats;
+    use 0x0::Stats;
     use 0x0::LibraSystem;
     use 0x0::Transaction;
 
@@ -88,7 +88,7 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            AltStats::process_set_votes(&voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
     }
@@ -165,7 +165,7 @@ script {
 //! sender: association
 script {
     use 0x0::Vector;
-    use 0x0::AltStats;
+    use 0x0::Stats;
 
     fun main() {
         let voters = Vector::empty<address>();
@@ -180,7 +180,7 @@ script {
         let i = 16;
         while (i < 31) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            AltStats::process_set_votes(&voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
     }

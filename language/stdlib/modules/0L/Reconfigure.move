@@ -18,7 +18,7 @@ address 0x0 {
         use 0x0::MinerState;
         use 0x0::Globals;
         use 0x0::Vector;
-        use 0x0::AltStats;
+        use 0x0::Stats;
         use 0x0::Debug::print;
 
 
@@ -65,7 +65,7 @@ address 0x0 {
             print(&0x0777777777777777777777);
 
             // Step 4: Getting current epoch value. Burning for all epochs except for the first one.
-            // AltStats::reconfig(&LibraSystem::get_val_set_addr());
+            // Stats::reconfig(&LibraSystem::get_val_set_addr());
 
         }
 
@@ -74,7 +74,7 @@ address 0x0 {
             // Step 1: Calls NodeWeights on validatorset to select top N accounts.
             let top_accounts = NodeWeight::top_n_accounts(
                 vm, Globals::get_max_validator_per_epoch());
-
+            print(&top_accounts);
             let jailed_set = LibraSystem::get_jailed_set();
             print(&jailed_set);
             let proposed_set = Vector::empty();
@@ -96,7 +96,8 @@ address 0x0 {
             // use previous set if no one qualifies.
             if(length <= 4) proposed_set = LibraSystem::get_val_set_addr();
 
-            AltStats::reconfig(&proposed_set);
+            print(&proposed_set);
+            Stats::reconfig(&proposed_set);
             
             LibraSystem::bulk_update_validators(vm, proposed_set);
             print(&0x09999999999999999999);

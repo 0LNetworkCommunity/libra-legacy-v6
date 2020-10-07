@@ -51,7 +51,7 @@ script {
   // use 0x0::Transaction;
   // use 0x0::Subsidy;
   use 0x0::Vector;
-  use 0x0::AltStats;
+  use 0x0::Stats;
   use 0x0::Transaction::assert;
   // use 0x0::Debug::print;
   use 0x0::GAS;
@@ -67,7 +67,7 @@ script {
     // create mock validator stats for full epoch
     let i = 0;
     while (i < 16) {
-      AltStats::process_set_votes(&validators);
+      Stats::process_set_votes(&validators);
       i = i + 1;
     };
 

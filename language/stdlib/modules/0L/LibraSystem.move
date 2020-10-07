@@ -17,7 +17,7 @@ module LibraSystem {
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
     use 0x0::NodeWeight;
-    use 0x0::AltStats;
+    use 0x0::Stats;
     use 0x0::Cases;
     use 0x0::FixedPoint32;
 
@@ -379,7 +379,7 @@ module LibraSystem {
         while (i < Vector::length(validators)) {
             let addr = Vector::borrow(validators, i).addr;
             if (Cases::get_case(addr) == 1) {
-                let node_votes = AltStats::node_current_votes(addr);
+                let node_votes = Stats::node_current_votes(addr);
                 Vector::push_back(&mut compliant_nodes, addr);
                 total_votes = total_votes + node_votes;
             };
@@ -390,7 +390,7 @@ module LibraSystem {
         let k = 0;
         while (k < Vector::length(&compliant_nodes)) {
             let addr = *Vector::borrow(&compliant_nodes, k);
-            let node_votes = AltStats::node_current_votes(addr);
+            let node_votes = Stats::node_current_votes(addr);
             let ratio = FixedPoint32::create_from_rational(node_votes, total_votes);
             Vector::push_back(&mut fee_ratios, ratio);
              k = k + 1;
@@ -411,7 +411,7 @@ module LibraSystem {
             let validator_info_ref = Vector::borrow(validators, i);
 
             // if (Cases::get_case(validator_info_ref.addr)==1)
-            if(AltStats::node_above_thresh(validator_info_ref.addr)){
+            if(Stats::node_above_thresh(validator_info_ref.addr)){
                 Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
                 Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
                 sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;

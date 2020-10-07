@@ -49,7 +49,7 @@ script {
 //! sender: association
 script {
     use 0x0::MinerState;
-    use 0x0::AltStats;
+    use 0x0::Stats;
     use 0x0::Vector;
     use 0x0::Cases;
     use 0x0::Transaction::assert;
@@ -64,7 +64,7 @@ script {
         let i = 1;
         while (i < 15) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            AltStats::process_set_votes(&voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
 
