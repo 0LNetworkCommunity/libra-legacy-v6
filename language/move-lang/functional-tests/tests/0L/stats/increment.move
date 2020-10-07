@@ -7,16 +7,16 @@
 //! sender: association
 script {
     use 0x0::Stats;
-    use 0x0::Transaction;
+    use 0x0::Transaction::assert;
     // use 0x0::Debug::print;
 
-    fun main(){
+    fun main(vm: &signer){
       // Assumes accounts were initialized in genesis.
 
-      Transaction::assert(Stats::node_current_props({{alice}}) == 0, 0);
-      Transaction::assert(Stats::node_current_props({{bob}}) == 0, 0);
-      Transaction::assert(Stats::test_helper_inc_vote_addr({{alice}}) == 0, 0);
-      Transaction::assert(Stats::test_helper_inc_vote_addr({{bob}}) == 0, 0);
+      assert(Stats::node_current_props({{alice}}) == 0, 7357190201011000);
+      assert(Stats::node_current_props({{bob}}) == 0, 7357190201021000);
+      assert(Stats::node_current_votes({{alice}}) == 0, 7357190201031000);
+      assert(Stats::node_current_votes({{bob}}) == 0, 7357190201041000);
 
 
       Stats::inc_prop({{alice}});
@@ -24,14 +24,14 @@ script {
 
       Stats::inc_prop({{bob}});
       
-      Stats::test_helper_inc_vote_addr({{alice}});
-      Stats::test_helper_inc_vote_addr({{alice}});
+      Stats::test_helper_inc_vote_addr(vm, {{alice}});
+      Stats::test_helper_inc_vote_addr(vm, {{alice}});
 
-      Transaction::assert(Stats::node_current_props({{alice}}) == 2, 0);
-      Transaction::assert(Stats::node_current_props({{bob}}) == 1, 0);
+      assert(Stats::node_current_props({{alice}}) == 2, 7357190201051000);
+      assert(Stats::node_current_props({{bob}}) == 1, 7357190201061000);
 
-      Transaction::assert(Stats::node_current_votes({{alice}}) == 2, 0);
-      Transaction::assert(Stats::node_current_votes({{bob}}) == 0, 0);
+      assert(Stats::node_current_votes({{alice}}) == 2, 7357190201071000);
+      assert(Stats::node_current_votes({{bob}}) == 0, 7357190201081000);
 
     }
 }

@@ -7,20 +7,16 @@
 //! sender: association
 script {
     use 0x0::Stats;
-    use 0x0::Transaction;
+    use 0x0::Transaction::assert;
     // use 0x0::Debug::print;
 
-    fun main(){
+    fun main(vm: &signer){
       // Checks that altstats was initialized in genesis for Alice.
 
-      // Stats::initialize();
-      
-      // Stats::init_address({{alice}});
-      // Stats::init_address({{bob}});
-      Transaction::assert(Stats::node_current_props({{alice}}) == 0, 0);
-      Transaction::assert(Stats::node_current_props({{bob}}) == 0, 0);
-      Transaction::assert(Stats::node_current_votes({{alice}}) == 0, 0);
-      Transaction::assert(Stats::node_current_votes({{bob}}) == 0, 0);
+      assert(Stats::node_current_props({{alice}}) == 0, 7357190201011000);
+      assert(Stats::node_current_props({{bob}}) == 0, 7357190201021000);
+      assert(Stats::node_current_votes({{alice}}) == 0, 7357190201031000);
+      assert(Stats::node_current_votes({{bob}}) == 0, 7357190201014000);
 
 
       Stats::inc_prop({{alice}});
@@ -28,14 +24,14 @@ script {
 
       Stats::inc_prop({{bob}});
       
-      Stats::test_helper_inc_vote_addr({{alice}});
-      Stats::test_helper_inc_vote_addr({{alice}});
+      Stats::test_helper_inc_vote_addr(vm, {{alice}});
+      Stats::test_helper_inc_vote_addr(vm, {{alice}});
 
-      Transaction::assert(Stats::node_current_props({{alice}}) == 2, 0);
-      Transaction::assert(Stats::node_current_props({{bob}}) == 1, 0);
+      assert(Stats::node_current_props({{alice}}) == 2, 7357190202011000);
+      assert(Stats::node_current_props({{bob}}) == 1, 7357190202021000);
 
-      Transaction::assert(Stats::node_current_votes({{alice}}) == 2, 0);
-      Transaction::assert(Stats::node_current_votes({{bob}}) == 0, 0);
+      assert(Stats::node_current_votes({{alice}}) == 2, 7357190202031000);
+      assert(Stats::node_current_votes({{bob}}) == 0, 7357190202041000);
 
     }
 }
