@@ -1,5 +1,5 @@
 // This tests consensus Case 3.
-// CAROL is a validator.
+// EVE is a validator.
 // DID NOT validate successfully.
 // DID mine above the threshold for the epoch. 
 
@@ -8,6 +8,8 @@
 //! account: carol, 1, 0, validator
 //! account: dave, 1, 0, validator
 //! account: eve, 1, 0, validator
+//! account: frank, 1, 0, validator
+
 
 //! block-prologue
 //! proposer: carol
@@ -29,7 +31,7 @@ script {
 
     fun main(_sender: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180101);
+        Transaction::assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         Transaction::assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
         Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
 
@@ -178,17 +180,11 @@ script {
 
         // Check the validator set is at expected size
         // print(&LibraSystem::validator_set_size());
-        Transaction::assert(LibraSystem::validator_set_size() == 4u64, 7357000180110);
-        // print(&LibraSystem::is_validator({{carol}}));
-
-        Transaction::assert(LibraSystem::is_validator({{carol}}) == false, 7357000180111);
-
-        // print(&LibraAccount::balance<GAS::T>({{carol}}));
-            
+        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180110);
+        Transaction::assert(LibraSystem::is_validator({{carol}}) == false, 7357000180111);            
         Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180112);
-
-        // print(&NodeWeight::proof_of_weight({{carol}}));
-
         Transaction::assert(NodeWeight::proof_of_weight({{carol}}) == 0, 7357000180113);  
+        Transaction::assert(LibraConfig::get_current_epoch()==2, 7357000180114);
+
     }
 }

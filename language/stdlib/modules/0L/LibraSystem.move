@@ -343,6 +343,17 @@ module LibraSystem {
         set_validator_set(updated_validator_set);
     }
 
+    public fun get_val_set_addr(): vector<address> {
+        let validators = &get_validator_set().validators;
+        let nodes = Vector::empty<address>();
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            Vector::push_back(&mut nodes, Vector::borrow(validators, i).addr);
+            i = i + 1;
+        };
+        nodes 
+    }
+
     //get_compliant_val_votes
     public fun get_fee_ratio(): (vector<address>, vector<FixedPoint32::T>) {
         let validators = &get_validator_set().validators;

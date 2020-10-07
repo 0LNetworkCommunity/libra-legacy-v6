@@ -1,13 +1,12 @@
-// Base Case: Validators are compliant. 
-// This test is to check if validators are present after the first epoch.
-// Here EPOCH-LENGTH = 15 Blocks.
-// NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
+// Testing if FRANK a validator that is not compliant gets dropped from set.
 
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 //! account: eve, 1000000, 0, validator
+//! account: frank, 1000000, 0, validator
+
 
 //! block-prologue
 //! proposer: alice
@@ -21,7 +20,7 @@ script {
     use 0x0::LibraSystem;
     fun main(_account: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180101);
+        Transaction::assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
     }
@@ -88,7 +87,7 @@ script {
         // Tests on initial size of validators 
         Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180104);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180105);
-        Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180106);
+        Transaction::assert(LibraSystem::is_validator({{frank}}) == true, 7357000180106);
     }
 }
 
@@ -104,6 +103,10 @@ script {
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
+        Vector::push_back<address>(&mut voters, {{eve}});
+
+        //NOTE: FRANK is not in the validator set.
+
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -138,8 +141,8 @@ script {
     fun main(_account: &signer) {
         // We are in a new epoch.
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 4, 7357000180107);
+        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180107);
         Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180108);
-        Transaction::assert(LibraSystem::is_validator({{eve}}) == false, 7357000180109);        
+        Transaction::assert(LibraSystem::is_validator({{frank}}) == false, 7357000180109);        
     }
 }

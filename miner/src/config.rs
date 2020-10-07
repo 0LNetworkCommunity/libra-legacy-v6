@@ -28,6 +28,15 @@ const CHAIN_ID_BYTES: usize = 64;
 const STATEMENT_BYTES: usize = 1008;
 
 impl OlMinerConfig {
+    // pub fn get_waypoint () {
+    //     let file = fs::File::open("text.json")
+    //     .expect("file should open read only");
+    // let json: serde_json::Value = serde_json::from_reader(file)
+    //     .expect("file should be proper JSON");
+    // let first_name = json.get("FirstName")
+    //     .expect("file should have FirstName key");
+    // }
+
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {

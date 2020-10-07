@@ -7,6 +7,8 @@
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 //! account: eve, 1000000, 0, validator
+//! account: frank, 1000000, 0, validator
+
 
 //! block-prologue
 //! proposer: alice
@@ -77,6 +79,7 @@ script {
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
         Vector::push_back<address>(&mut voters, {{eve}});
+        // Vector::push_back<address>(&mut voters, {{frank}});
 
         let i = 1;
         while (i < 16) {
@@ -167,6 +170,7 @@ script {
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
         // Vector::push_back<address>(&mut voters, {{eve}});
+        // Vector::push_back<address>(&mut voters, {{frank}});
 
 
         let i = 16;
@@ -201,9 +205,9 @@ script {
     // use 0x0::Debug::print;
     fun main(_account: &signer) {
 
-        Transaction::assert(LibraSystem::validator_set_size()==4, 1);
-        Transaction::assert(LibraConfig::get_current_epoch()==3, 1);
-        Transaction::assert(!LibraSystem::is_validator({{eve}}), 2);
+        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357180103011000);
+        Transaction::assert(LibraConfig::get_current_epoch() == 3, 7357180103021000);
+        Transaction::assert(!LibraSystem::is_validator({{eve}}), 7357180103031000);
     }
 }
 // check: EXECUTED

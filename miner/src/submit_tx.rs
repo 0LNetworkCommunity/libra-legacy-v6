@@ -44,7 +44,8 @@ pub struct TxParams {
 }
 
 /// Submit a miner transaction to the network.
-pub fn submit_tx(
+pub fn 
+submit_tx(
     tx_params: &TxParams,
     preimage: Vec<u8>,
     proof: Vec<u8>,
@@ -58,8 +59,9 @@ pub fn submit_tx(
 
     let mut sequence_number = 0u64;
     if account_state.0.is_some() {
-        // TODO: In staging network, transactions are sent too fast before the sequence number is updated. Should keep an internal state of what was the last sequence number used.
+        // TODO: In staging network, transactions are sent too fast before the sequence number is updated.
         sequence_number = account_state.0.unwrap().sequence_number;
+        dbg!(sequence_number);
     }
     let script: Script;
     // Create the unsigned MinerState transaction script
