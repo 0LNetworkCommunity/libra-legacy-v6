@@ -181,7 +181,7 @@ address 0x0 {
 
       let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
       // Update statistics.
-      if (miner_history.count_proofs_in_epoch > Globals::get_threshold()) {
+      if (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold()) {
           let this_epoch = LibraConfig::get_current_epoch();
           miner_history.latest_epoch_mining = this_epoch;
 
@@ -205,7 +205,7 @@ address 0x0 {
       Transaction::assert(Transaction::sender() == 0x0, 130110014010);
 
       // Miner may not have been initialized. (don't abort, just return 0)
-      if( ! ::exists<MinerProofHistory>( miner_addr ) ){
+      if( ! ::exists<MinerProofHistory>(miner_addr)){
         return 0
       };
 
@@ -221,7 +221,7 @@ address 0x0 {
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
 
-    public fun epoch_boundary(account: &signer) acquires MinerProofHistory {
+    public fun reconfig(account: &signer) acquires MinerProofHistory {
       // Check permissions
       let sender = Signer::address_of(account);
       Transaction::assert(sender == 0x0, 130111014010);
@@ -313,16 +313,14 @@ address 0x0 {
     // TEST HELPERS ///
     ////////////////////
 
-    public fun test_helper_set_epochs(sender: &signer,  count: u64) acquires MinerProofHistory {
-      // let sender = Transaction::sender();
-      // Transaction::assert(sender == 0x0, 130117014010);
+    public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires MinerProofHistory {
       Transaction::assert(Testnet::is_testnet() == true, 130115014011);
       let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
-      state.epochs_validating_and_mining = count;
+      state.count_proofs_in_epoch = count;
     }
 
     // Permissions: PUBLIC, VM, TESTING 
-    public fun test_helper_update_metrics(miner_addr: address) acquires MinerProofHistory{
+    public fun test_helper_mock_reconfig(miner_addr: address) acquires MinerProofHistory{
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);
       update_metrics(miner_addr);
@@ -342,7 +340,7 @@ address 0x0 {
 
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
       let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130117014010);
+      Transaction::assert(sender == 0x0, 130118014010);
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);
       borrow_global<MinerProofHistory>(miner_addr).contiguous_epochs_validating_and_mining
@@ -351,16 +349,12 @@ address 0x0 {
     
 
     public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
-      let sender = Transaction::sender();
-      Transaction::assert(sender == 0x0, 130117014010);
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);
       borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
     }
 
     public fun test_helper_hash(miner_addr: address): vector<u8> acquires MinerProofHistory {
-      // let sender = Transaction::sender();
-      // Transaction::assert(sender == 0x0, 130117014010);
       Transaction::assert(Testnet::is_testnet()
  == true, 130115014011);
       *&borrow_global<MinerProofHistory>(miner_addr).previous_proof_hash

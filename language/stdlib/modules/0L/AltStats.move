@@ -50,7 +50,7 @@ address 0x0{
         }
 
         public fun init_set(set: &vector<address>) acquires T{
-          Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
+          Transaction::assert(Transaction::sender() == 0x0, 99190205014010);
           let length = Vector::length<address>(set);
           let k = 0;
           while (k < length) {
@@ -61,7 +61,7 @@ address 0x0{
         }
 
         public fun process_set_votes(set: &vector<address>) acquires T{
-          Transaction::assert(Transaction::sender() == 0x0, 99190204014010);
+          Transaction::assert(Transaction::sender() == 0x0, 99190206014010);
           let length = Vector::length<address>(set);
           let k = 0;
           while (k < length) {

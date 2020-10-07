@@ -6,8 +6,7 @@ script {
     use 0x0::Transaction::assert;
     use 0x0::MinerState;
     use 0x0::Signer;
-    use 0x0::Debug::print;
-
+    
     fun main(sender: &signer) {
         MinerState::test_helper_set_epochs(sender, 5);
         assert(MinerState::get_epochs_mining(Signer::address_of(sender)) == 5, 73570001);

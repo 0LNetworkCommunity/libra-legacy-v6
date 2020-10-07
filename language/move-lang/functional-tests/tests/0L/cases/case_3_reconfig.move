@@ -142,7 +142,7 @@ script {
         Transaction::assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180106);
 
 
-        Transaction::assert(NodeWeight::proof_of_weight({{carol}}) == 0, 7357000180107);  
+        // Transaction::assert(NodeWeight::proof_of_weight({{carol}}) == 0, 7357000180107);  
 
         // MinerState::commit_state(sender, proof);
         Transaction::assert(MinerState::test_helper_get_height({{carol}}) == 1, 7357000180108);

@@ -50,7 +50,7 @@ address 0x0 {
             // Get outgoing validator and sum of all validator weights
 
             // Step 1: End redeem for all validators
-            MinerState::epoch_boundary(vm_sig);
+            MinerState::reconfig(vm_sig);
             print(&0x044444444444444444444);
 
             //TODO: do we need skip first epoch?

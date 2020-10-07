@@ -114,7 +114,7 @@ module Globals {
       get_constants().difficulty
     }
 
-    public fun get_threshold(): u64 {
+    public fun get_mining_threshold(): u64 {
       get_constants().epoch_mining_threshold
     }
 
