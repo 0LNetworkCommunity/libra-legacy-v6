@@ -24,7 +24,6 @@ module GenesisOL {
     use 0x0::LibraTransactionTimeout;
     use 0x0::LibraVersion;
     use 0x0::LibraWriteSetManager;
-    use 0x0::Stats;
     use 0x0::Testnet;
     use 0x0::StagingNet;
     use 0x0::Transaction;
@@ -52,7 +51,6 @@ module GenesisOL {
         Libra::initialize(config_account);
 
         // Stats module
-        Stats::initialize(vm);
         Stats::initialize(vm);
 
         // Validator Universe setup
