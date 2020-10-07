@@ -51,23 +51,23 @@ script {
 
         // Check eve is NOT in that list.
         Transaction::assert(Vector::contains<address>(&top_n_is_under, &{{eve}}) != true, 7357140102031000);
-        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{alice}}), 7357140102051000);
+        Transaction::assert(Vector::contains<address>(&top_n_is_under, &{{alice}}), 7357140102041000);
         // case of querying the full validator universe.
         let top_n_is_equal = NodeWeight::top_n_accounts(vm, len);
         // One of the nodes did not vote, so they will be excluded from list.
 
-        Transaction::assert(Vector::length<address>(&top_n_is_equal) == len, 7357140102041000);
+        Transaction::assert(Vector::length<address>(&top_n_is_equal) == len, 7357140102051000);
 
         // Check eve IS on that list.
-        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{eve}}), 7357140102051000);
+        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{eve}}), 7357140102061000);
         
         // case of querying a larger n than the validator universe.
         // Check if we ask for a larger set we also get 
         let top_n_is_over = NodeWeight::top_n_accounts(vm, 9);
-        Transaction::assert(Vector::length<address>(&top_n_is_over) == len, 7357140102061000);
+        Transaction::assert(Vector::length<address>(&top_n_is_over) == len, 7357140102071000);
 
         // Check eve IS on that list.
-        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{eve}}), 7357140102051000);
+        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{eve}}), 7357140102081000);
 
     }
 }
