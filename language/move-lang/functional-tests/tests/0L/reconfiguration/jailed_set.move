@@ -51,7 +51,7 @@ script {
     use 0x0::Transaction::assert;
     use 0x0::LibraSystem;
 
-    fun main(vm: &signer) {
+    fun main() {
         let voters = Vector::singleton<address>({{alice}});
         let i = 1;
         while (i < 15) {
