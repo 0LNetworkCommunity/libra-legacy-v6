@@ -19,11 +19,12 @@ script {
 //! new-transaction
 //! sender: association
 script {
-    use 0x0::MinerState;
+    // use 0x0::MinerState;
     use 0x0::Stats;
     use 0x0::Vector;
     use 0x0::Cases;
     use 0x0::Transaction::assert;
+    use 0x0::Debug::print;
 
     fun main(_sender: &signer) {
         // todo: change name to Mock epochs
@@ -37,7 +38,7 @@ script {
         };
 
         // Mock end of epoch for minerstate
-        MinerState::test_helper_mock_reconfig({{alice}});
+        print(&Cases::get_case({{alice}}));
         assert(Cases::get_case({{alice}}) == 3, 7357300103011000);
     }
 }
