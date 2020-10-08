@@ -48,7 +48,7 @@ pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig){
     println!("Remote height: {}", remote_height);
 
     // Getting local state height
-    let mut blocks_dir = config.workspace.home.clone();
+    let mut blocks_dir = config.workspace.miner_home.clone();
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 

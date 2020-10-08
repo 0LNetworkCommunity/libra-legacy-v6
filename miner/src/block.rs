@@ -138,7 +138,7 @@ pub mod build_block {
         tx_params: TxParams,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
-        let mut blocks_dir = config.workspace.home.clone();
+        let mut blocks_dir = config.workspace.miner_home.clone();
         blocks_dir.push(&config.chain_info.block_dir);
         let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 

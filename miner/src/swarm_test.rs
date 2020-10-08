@@ -28,7 +28,6 @@ use std::{path::PathBuf, thread, time};
                                 // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
 /// A test harness for the submit_tx
 pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
-    // PathBuf.new("./blocks")
     let tx_params = get_params_from_swarm(home).unwrap();
 
     let conf = OlMinerConfig::load_swarm_config(&tx_params);
@@ -47,7 +46,7 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
 fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
-    let mut blocks_dir = config.workspace.home.clone();
+    let mut blocks_dir = config.workspace.miner_home.clone();
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
