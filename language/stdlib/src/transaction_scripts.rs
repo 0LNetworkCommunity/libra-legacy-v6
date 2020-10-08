@@ -64,12 +64,6 @@ pub enum StdlibScript {
     MinerState,
     MinerStateOnboarding,
     MinerStateTestHelper,
-    LibraBlockTestHelper,
-    TxFeeTestHelper,
-    TxFeeTestMint,
-    TxFeeTestMove,
-    TxFeeTestDistr,
-    NoOp,
 }
 
 impl StdlibScript {
@@ -118,14 +112,7 @@ impl StdlibScript {
             // Below are 0L Changes
             MinerState,
             MinerStateOnboarding,
-            MinerStateTestHelper,
-            LibraBlockTestHelper,
-            TxFeeTestHelper,
-            TxFeeTestMint,
-            TxFeeTestMove,
-            TxFeeTestDistr,
-            NoOp,
-        ]
+            MinerStateTestHelper,        ]
     }
 
     /// Construct the whitelist of script hashes used to determine whether a transaction script can
@@ -250,15 +237,9 @@ impl fmt::Display for StdlibScript {
                 //
                 // Below are 0L Changes
                 //
-                MinerState => "ol_miner_state_commit",
-                MinerStateOnboarding => "ol_miner_state_onboarding",
-                MinerStateTestHelper => "ol_miner_state_helper",
-                LibraBlockTestHelper => "ol_libra_block_test_helper",
-                TxFeeTestHelper => "ol_tx_fees_e2e_test_helper",
-                TxFeeTestMint => "ol_txn_fee_test_mint",
-                TxFeeTestMove => "ol_txn_fee_test_move",
-                TxFeeTestDistr => "ol_txn_fee_test_distr",
-                NoOp => "ol_no_op.move",
+                MinerState => "miner_state_commit",
+                MinerStateOnboarding => "miner_state_onboarding",
+                MinerStateTestHelper => "miner_state_helper",
             }
         )
     }

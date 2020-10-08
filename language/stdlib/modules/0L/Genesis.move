@@ -24,16 +24,17 @@ module GenesisOL {
     use 0x0::LibraTransactionTimeout;
     use 0x0::LibraVersion;
     use 0x0::LibraWriteSetManager;
-    use 0x0::Stats;
     use 0x0::Testnet;
     use 0x0::StagingNet;
     use 0x0::Transaction;
-    use 0x0::TransactionFee;
+    // use 0x0::TransactionFee;
+    use 0x0::TransactionFeeAlt;
     use 0x0::Unhosted;
     use 0x0::ValidatorUniverse;
-    use 0x0::Subsidy;
+    // use 0x0::Subsidy;
     use 0x0::Signer;
     use 0x0::AutoPay;
+    use 0x0::Stats;
 
     fun initialize(
         vm: &signer,
@@ -55,7 +56,7 @@ module GenesisOL {
         // Validator Universe setup
         ValidatorUniverse::initialize(vm);
         //Subsidy module setup and burn account initialization
-        Subsidy::initialize(vm);
+        // Subsidy::initialize(vm);
 
         // Event and currency setup
         Event::publish_generator(vm);
@@ -87,7 +88,8 @@ module GenesisOL {
         );
 
         // TransactionFee::initialize(tc_account, fee_account);
-        TransactionFee::initialize(fee_account);
+        // TransactionFee::initialize(fee_account);
+        TransactionFeeAlt::initialize(fee_account);
 
         // Create a burn account and publish preburn
         LibraAccount::create_burn_account<GAS::T>(
@@ -155,7 +157,7 @@ module GenesisOL {
         };
         // Mint subsidy for the initial validator set, not to be confused with the minting for the
         // genesis block.
-        Subsidy::mint_subsidy(vm);
+        // Subsidy::mint_subsidy(vm);
     }
 
 }

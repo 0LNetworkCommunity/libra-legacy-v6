@@ -26,6 +26,5 @@ mod verify_txn;
 mod write_set;
 
 // 0L changes
-mod ol_txn_fee;
-mod ol_minerstate_commit;
-mod ol_minerstate_onboarding;
+mod minerstate_commit_0L;
+mod minerstate_onboarding_0L;

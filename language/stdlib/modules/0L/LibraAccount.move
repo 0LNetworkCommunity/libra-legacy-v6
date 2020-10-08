@@ -28,6 +28,7 @@ module LibraAccount {
     use 0x0::MinerState;
     use 0x0::VDF;
     use 0x0::Globals;
+    // use 0x0::Stats;
 
     // Every Libra account has a LibraAccount::T resource
     resource struct T {

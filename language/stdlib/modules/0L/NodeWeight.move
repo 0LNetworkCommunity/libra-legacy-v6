@@ -16,7 +16,8 @@ address 0x0 {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::MinerState;
-    use 0x0::Cases;
+    // use 0x0::Cases;
+    // use 0x0::LibraSystem;
 
     public fun proof_of_weight (node_addr: address): u64 {
       // Transaction::assert(Transaction::sender() == 0x0, 140101014010);
@@ -26,33 +27,32 @@ address 0x0 {
       MinerState::get_epochs_mining(node_addr)
     }
 
-
     // Recommend a new validator set. This uses a Proof of Weight calculation in
     // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101
     // Permissions: Public, VM Only
-    public fun top_n_accounts(account: &signer, n: u64, current_block_height: u64): vector<address> {
+    public fun top_n_accounts(account: &signer, n: u64): vector<address> {
 
       Transaction::assert(Signer::address_of(account) == 0x0, 140101014010);
 
-      let eligible_validators = Vector::empty<address>();
+      // let eligible_validators = Vector::empty<address>();
 
       //Get all validators from Validator Universe and then find the eligible validators 
-      let validators_universe = ValidatorUniverse::get_eligible_validators(account);
-      let val_uni_length = Vector::length<address>(&validators_universe);
+      let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
+      // let val_uni_length = Vector::length<address>(&validators_universe);
      
-      let k = 0;
-      while(k < val_uni_length){
-        let addr = *Vector::borrow<address>(&validators_universe, k);
+      // let k = 0;
+      // while(k < val_uni_length){
+      //   let addr = *Vector::borrow<address>(&validators_universe, k);
 
-        // consensus case 1 and 2, allow inclusion into the next validator set.
-        if (Cases::get_case(addr, current_block_height) == 1 || Cases::get_case(addr, current_block_height) == 2){
-          Vector::push_back<address>(&mut eligible_validators, addr)
-        };
-        k = k + 1;
-      };
+      //   // consensus case 1 and 2, allow inclusion into the next validator set.
+      //   if (Cases::get_case(addr) == 1 || Cases::get_case(addr) == 2){
+      //     Vector::push_back<address>(&mut eligible_validators, addr)
+      //   };
+      //   k = k + 1;
+      // };
 
       let length = Vector::length<address>(&eligible_validators);
 

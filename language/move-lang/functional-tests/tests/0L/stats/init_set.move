@@ -12,7 +12,7 @@ script {
     // use 0x0::Debug::print;
 
     fun main(){
-      // Checks that Stats was initialized in genesis for Alice.
+      // Checks that altstats was initialized in genesis for Alice.
 
       // Stats::initialize();
       let set = Vector::singleton({{alice}});

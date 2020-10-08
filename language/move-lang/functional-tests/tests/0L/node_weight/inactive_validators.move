@@ -1,12 +1,27 @@
-//! account: alice, 8, 0, validator
-//! account: bob, 7, 0, validator
-//! account: carol, 6, 0, validator
-//! account: sha, 9, 0, validator
-//! account: hola, 10, 0, validator
+// In this test only alice mines.
 
-// In this test there are 5 validators, they will be added to ValidatorUniverse
-// We will mock the Stats so that only one active validator {{alice}} is present
-// Irrespective of n, we get only one validator- alice
+//! account: alice, 1, 0, validator
+//! account: bob, 1, 0, validator
+//! account: carol, 1, 0, validator
+//! account: dave, 1, 0, validator
+//! account: eve, 1, 0, validator
+
+// All nodes except Eve mined above threshold. 
+
+//! new-transaction
+//! sender: alice
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
 
 //! new-transaction
 //! sender: association
@@ -15,52 +30,45 @@ script {
     use 0x0::Transaction;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
-    use 0x0::Stats;
+    // use 0x0::Stats;
+    use 0x0::MinerState;
 
-    // n is less than vector length. We need top N.
-    // Top 1 account test. N=1 vector has 5 addresses
-    fun main(account: &signer) {
-        // check the count of validators we have in the Universe.
-        let vec =  ValidatorUniverse::get_eligible_validators(account);
-        Transaction::assert(Vector::length<address>(&vec) == 5, 7357000140101);
+    fun main(vm: &signer) {
 
-        // We will mock a voter lists where only Alice is successfully signing blocks
-        let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, {{alice}});
+        // Base Case: If validator universe vector length is less than the validator set size limit (N), return vector itself.
+        // N equals to the vector length.
 
-        let i = 1;
-        while (i < 13) {
-            // Mock the validator doing work for 12 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
-            i = i + 1;
-        };
+        //Check the size of the validator universe.
+        let vec =  ValidatorUniverse::get_eligible_validators(vm);
+        let len = Vector::length<address>(&vec);
+        Transaction::assert(len == 5, 7357140102011000);
 
-        // get the list of top n=1 accounts, for height 12.
-        let result = NodeWeight::top_n_accounts(account, 1, 12);
-        // should only have one item in list
-        Transaction::assert(Vector::length<address>(&result) == 1, 7357000140102);
-        // the item should be Alice's account.
-        Transaction::assert(Vector::contains<address>(&result, &{{alice}}) == true, 7357000140103);
-    }
-}
-// check: EXECUTED
+        MinerState::reconfig(vm);
 
+        // This is the base case: check case of the validator set limit being less than universe size.
+        let top_n_is_under = NodeWeight::top_n_accounts(vm, 3);
+        Transaction::assert(Vector::length<address>(&top_n_is_under) == 3, 7357140102021000);
 
+        // Check eve is NOT in that list.
+        Transaction::assert(Vector::contains<address>(&top_n_is_under, &{{eve}}) != true, 7357140102031000);
+        Transaction::assert(Vector::contains<address>(&top_n_is_under, &{{alice}}), 7357140102041000);
+        // case of querying the full validator universe.
+        let top_n_is_equal = NodeWeight::top_n_accounts(vm, len);
+        // One of the nodes did not vote, so they will be excluded from list.
 
-//! new-transaction
-//! sender: association
-script {
-    use 0x0::Vector;
-    use 0x0::Transaction;
-    use 0x0::NodeWeight;
+        Transaction::assert(Vector::length<address>(&top_n_is_equal) == len, 7357140102051000);
 
+        // Check eve IS on that list.
+        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{eve}}), 7357140102061000);
+        
+        // case of querying a larger n than the validator universe.
+        // Check if we ask for a larger set we also get 
+        let top_n_is_over = NodeWeight::top_n_accounts(vm, 9);
+        Transaction::assert(Vector::length<address>(&top_n_is_over) == len, 7357140102071000);
 
-    // Now lets check if the results are the smae even in a larger N, N=4.
-    // Again we should only see Alice returned in the set. Since she is the only one doing work.
-    fun main(account: &signer) {
-        let result = NodeWeight::top_n_accounts(account, 4, 12);
-        Transaction::assert(Vector::length<address>(&result) == 1, 6);
-        Transaction::assert(Vector::contains<address>(&result, &{{alice}}) == true, 7);
+        // Check eve IS on that list.
+        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{eve}}), 7357140102081000);
+
     }
 }
 // check: EXECUTED

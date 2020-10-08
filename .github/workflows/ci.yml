@@ -85,7 +85,7 @@ jobs:
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L e2e tests
-        run: cd language/e2e-tests && cargo xtest -p language-e2e-tests ol -- --nocapture
+        run: cd language/e2e-tests && cargo xtest -p language-e2e-tests 0L -- --nocapture
   
   # genesis_smoke:
   #   name: Genesis Smoke Test

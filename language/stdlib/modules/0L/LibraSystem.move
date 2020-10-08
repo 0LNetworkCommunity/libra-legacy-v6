@@ -16,9 +16,10 @@ module LibraSystem {
     use 0x0::Signer;
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
-    // use 0x0::ValidatorUniverse;
     use 0x0::NodeWeight;
     use 0x0::Stats;
+    use 0x0::Cases;
+    use 0x0::FixedPoint32;
 
 
     struct ValidatorInfo {
@@ -315,7 +316,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: NodeWeight::proof_of_weight(account_address),
+                consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
             });
 
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
@@ -342,6 +343,62 @@ module LibraSystem {
         set_validator_set(updated_validator_set);
     }
 
+    public fun get_val_set_addr(): vector<address> {
+        let validators = &get_validator_set().validators;
+        let nodes = Vector::empty<address>();
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            Vector::push_back(&mut nodes, Vector::borrow(validators, i).addr);
+            i = i + 1;
+        };
+        nodes 
+    }
+
+    public fun get_jailed_set(): vector<address> {
+      let validator_set = get_val_set_addr();
+      let jailed_set = Vector::empty<address>();
+      let k = 0;
+      while(k < Vector::length(&validator_set)){
+        let addr = *Vector::borrow<address>(&validator_set, k);
+
+        // consensus case 1 and 2, allow inclusion into the next validator set.
+        if (Cases::get_case(addr) == 3 || Cases::get_case(addr) == 4){
+          Vector::push_back<address>(&mut jailed_set, addr)
+        };
+        k = k + 1;
+      };
+      jailed_set
+    }
+
+    //get_compliant_val_votes
+    public fun get_fee_ratio(): (vector<address>, vector<FixedPoint32::T>) {
+        let validators = &get_validator_set().validators;
+        let compliant_nodes = Vector::empty<address>();
+        let total_votes = 0;
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            let addr = Vector::borrow(validators, i).addr;
+            if (Cases::get_case(addr) == 1) {
+                let node_votes = Stats::node_current_votes(addr);
+                Vector::push_back(&mut compliant_nodes, addr);
+                total_votes = total_votes + node_votes;
+            };
+            i = i + 1;
+        };
+
+        let fee_ratios = Vector::empty<FixedPoint32::T>();
+        let k = 0;
+        while (k < Vector::length(&compliant_nodes)) {
+            let addr = *Vector::borrow(&compliant_nodes, k);
+            let node_votes = Stats::node_current_votes(addr);
+            let ratio = FixedPoint32::create_from_rational(node_votes, total_votes);
+            Vector::push_back(&mut fee_ratios, ratio);
+             k = k + 1;
+        };
+        (compliant_nodes, fee_ratios)
+    }
+        
+ 
     // Get all validators addresses, weights and sum_of_all_validator_weights
     public fun get_outgoing_validators_with_weights(_epoch_length: u64, _current_block_height: u64): (vector<address>, vector<u64>, u64) {
         let validators = &get_validator_set().validators;

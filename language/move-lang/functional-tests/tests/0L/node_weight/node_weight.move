@@ -1,11 +1,71 @@
-//! account: alice, 8, 0, validator
-//! account: bob, 7, 0, validator
-//! account: carol, 6, 0, validator
-//! account: sha, 9, 0, validator
-//! account: hola, 10, 0, validator
+//! account: alice, 1, 0, validator
+//! account: bob, 1, 0, validator
+//! account: carol, 1, 0, validator
+//! account: dave, 1, 0, validator
+//! account: eve, 1, 0, validator
 
-// All nodes except hola voted in all rounds. 
-// Hola votes in only two rounds 
+// All nodes except Eve mined above threshold. 
+
+//! new-transaction
+//! sender: alice
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+
+//! new-transaction
+//! sender: bob
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 4);
+        assert(MinerState::test_helper_get_count({{bob}}) == 4, 7357300102011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: carol
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 3);
+        assert(MinerState::test_helper_get_count({{carol}}) == 3, 7357300103011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: dave
+script {
+    use 0x0::Transaction::assert;
+    use 0x0::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 2);
+        assert(MinerState::test_helper_get_count({{dave}}) == 2, 7357300104011000);
+    }
+}
+//check: EXECUTED
 
 //! new-transaction
 //! sender: association
@@ -14,51 +74,41 @@ script {
     use 0x0::Transaction;
     use 0x0::NodeWeight;
     use 0x0::ValidatorUniverse;
-    use 0x0::Stats;
+    // use 0x0::Stats;
+    use 0x0::MinerState;
 
-    fun main(account: &signer) {
+    fun main(vm: &signer) {
 
         // Base Case: If validator universe vector length is less than the validator set size limit (N), return vector itself.
         // N equals to the vector length.
 
         //Check the size of the validator universe.
-        let vec =  ValidatorUniverse::get_eligible_validators(account);
-        Transaction::assert(Vector::length<address>(&vec) == 5, 7357000140101);
+        let vec =  ValidatorUniverse::get_eligible_validators(vm);
+        let len = Vector::length<address>(&vec);
+        Transaction::assert(len == 5, 7357140102011000);
 
-
-        // Everyone except Hola voted in rounds 1-10
-        let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, {{sha}});
-        Vector::push_back<address>(&mut voters, {{alice}});
-        Vector::push_back<address>(&mut voters, {{carol}});
-        Vector::push_back<address>(&mut voters, {{bob}});
-        let i = 1;
-        while (i < 11) {
-            // Mock the validator doing work for 10 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
-            i = i + 1;
-        };
-
-        // Adding Hola to the voters for rounds 11 and 12
-        Vector::push_back<address>(&mut voters, {{hola}});
-        Stats::process_set_votes(&voters);
-        Stats::process_set_votes(&voters);
+        MinerState::reconfig(vm);
 
         // This is the base case: check case of the validator set limit being less than universe size.
-        let top_n_is_under = NodeWeight::top_n_accounts(account, 3, 12);
-        Transaction::assert(Vector::length<address>(&top_n_is_under) == 3, 7357000140102);
+        let top_n_is_under = NodeWeight::top_n_accounts(vm, 3);
+        Transaction::assert(Vector::length<address>(&top_n_is_under) == 3, 7357140102021000);
+
+        // Check eve is NOT in that list.
+        Transaction::assert(Vector::contains<address>(&top_n_is_under, &{{eve}}) != true, 7357140102031000);
 
         // case of querying the full validator universe.
-        let top_n_is_equal = NodeWeight::top_n_accounts(account, 5, 12);
+        let top_n_is_equal = NodeWeight::top_n_accounts(vm, len);
         // One of the nodes did not vote, so they will be excluded from list.
-        Transaction::assert(Vector::length<address>(&top_n_is_equal) == 4, 7357000140103);
-        // Check Hola is not in that list.
-        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{hola}}) != true, 7357000140104);
+
+        Transaction::assert(Vector::length<address>(&top_n_is_equal) == len, 7357140102041000);
+
+        // Check eve IS on that list.
+        Transaction::assert(Vector::contains<address>(&top_n_is_equal, &{{eve}}), 7357140102051000);
         
         // case of querying a larger n than the validator universe.
         // Check if we ask for a larger set we also get 
-        let top_n_is_over = NodeWeight::top_n_accounts(account, 9, 12);
-        Transaction::assert(Vector::length<address>(&top_n_is_over) == 4, 7357000140105);
+        let top_n_is_over = NodeWeight::top_n_accounts(vm, 9);
+        Transaction::assert(Vector::length<address>(&top_n_is_over) == len, 7357140102061000);
 
     }
 }
