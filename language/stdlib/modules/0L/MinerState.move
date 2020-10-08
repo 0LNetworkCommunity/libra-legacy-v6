@@ -342,6 +342,16 @@ address 0x0 {
 
 
 
+<<<<<<< HEAD
+=======
+    // Returns number of epochs for input miner's state
+    // Permissions: PUBLIC, ANYONE
+    // TODO: Rename
+    public fun get_epochs_mining(node_addr: address): u64 acquires MinerProofHistory {
+      borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
+    }
+
+>>>>>>> OLv3
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
       let sender = Transaction::sender();
       Transaction::assert(sender == 0x0, 130118014010);
