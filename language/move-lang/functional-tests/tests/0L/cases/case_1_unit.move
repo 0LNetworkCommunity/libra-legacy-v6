@@ -19,7 +19,6 @@ script {
 //! new-transaction
 //! sender: association
 script {
-    // use 0x0::MinerState;
     use 0x0::Stats;
     use 0x0::Vector;
     use 0x0::Cases;

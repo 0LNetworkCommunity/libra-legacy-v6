@@ -30,10 +30,7 @@ address 0x0 {
       // skip genesis
       Transaction::assert(!LibraTimestamp::is_genesis(), 190101021000);
 
-      // Gets the proxy for liveliness from Stats
-      let node_density = Stats::network_density();
       // Gets the transaction fees in the epoch
-      // TODO: Check the balance here
       let txn_fee_amount = LibraAccount::balance<GAS::T>(0xFEE);
 
       // Calculate the split for subsidy and burn

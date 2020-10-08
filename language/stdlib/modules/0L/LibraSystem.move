@@ -16,16 +16,10 @@ module LibraSystem {
     use 0x0::Signer;
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
-<<<<<<< HEAD
     use 0x0::NodeWeight;
     use 0x0::Stats;
     use 0x0::Cases;
     use 0x0::FixedPoint32;
-=======
-    // use 0x0::ValidatorUniverse;
-    use 0x0::NodeWeight;
-    use 0x0::Stats;
->>>>>>> OLv3
 
 
     struct ValidatorInfo {
@@ -322,11 +316,7 @@ module LibraSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-<<<<<<< HEAD
                 consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
-=======
-                consensus_voting_power: NodeWeight::proof_of_weight(account_address),
->>>>>>> OLv3
             });
 
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
