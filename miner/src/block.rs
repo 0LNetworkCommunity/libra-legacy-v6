@@ -241,7 +241,8 @@ pub mod build_block {
         //let blocks_dir = Path::new("./test_blocks");
         let configs_fixture = OlMinerConfig {
             workspace: Workspace{
-                home: PathBuf::from("."),
+                miner_home: PathBuf::from("."),
+                node_home: PathBuf::from("."),
             },
             profile: Profile {
                 auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
@@ -253,7 +254,7 @@ pub mod build_block {
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
-                base_waypoint: "None".to_owned(),
+                base_waypoint: None,
                 node: None,
             },
         };
@@ -298,7 +299,8 @@ fn create_fixtures() {
 
         let configs_fixture = OlMinerConfig {
             workspace: Workspace{
-                home: PathBuf::from("."),
+                miner_home: PathBuf::from("."),
+                node_home: PathBuf::from("."),
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
@@ -310,7 +312,7 @@ fn create_fixtures() {
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: "test_fixtures_miner_".to_owned() + &ns, //  path should be unique for concurrent tests.
-                base_waypoint: "None".to_owned(),
+                base_waypoint: None,
                 node: None,
             },
         };
@@ -338,7 +340,8 @@ fn create_fixtures() {
 
         let configs_fixture = OlMinerConfig {
             workspace: Workspace{
-                home: PathBuf::from("."),
+                miner_home: PathBuf::from("."),
+                node_home: PathBuf::from("."),
             },
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
@@ -351,7 +354,7 @@ fn create_fixtures() {
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: "test_blocks_temp_2".to_owned(),
-                base_waypoint: "None".to_owned(),
+                base_waypoint: None,
                 node: None,
             },
         };

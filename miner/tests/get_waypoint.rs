@@ -17,6 +17,7 @@ fn test_waypoint() {
 
     file.write_all(json_data.as_bytes())
             .expect("Could not write json");
+    
     let data = s.get_waypoint();
     assert_eq!(data, "hello", "json value not equal");
     fs::remove_file(path).unwrap();
