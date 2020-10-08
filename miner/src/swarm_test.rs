@@ -31,11 +31,24 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     let tx_params = get_params_from_swarm(home).unwrap();
 
     let conf = OlMinerConfig::load_swarm_config(&tx_params);
+    // TODO: count three blocks and exit
+    // let i = 0;
+    // while i < 4 {
+    //     let (preimage, proof) = get_block_fixtures(&conf);
+
+    //     // need to sleep for swarm to be ready.
+    //     thread::sleep(time::Duration::from_millis(50000));
+    //     let res = submit_tx(&tx_params, preimage, proof, false);
+    //     if eval_tx_status(res) == false {
+    //         panic!();
+    //     };
+    //     i+1;
+    // }
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
 
         // need to sleep for swarm to be ready.
-        thread::sleep(time::Duration::from_millis(24000));
+        thread::sleep(time::Duration::from_millis(50000));
         let res = submit_tx(&tx_params, preimage, proof, false);
         if eval_tx_status(res) == false {
             break;

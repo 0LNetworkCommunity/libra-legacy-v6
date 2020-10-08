@@ -40,7 +40,7 @@ impl OlMinerConfig {
     // let wp = json.get("Waypoint")
         // .expect("file should have Waypoint key");
 
-    let name = ajson::get(&json.to_string(), "*waypoint").expect("could not find key: waypoint");
+    let name = ajson::get(&json.to_string(), "*waypoint.value.value").expect("could not find key: waypoint");
     name.to_string()
 }
 
