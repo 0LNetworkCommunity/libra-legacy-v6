@@ -55,7 +55,7 @@ impl Runnable for StartCmd {
                 Using waypoint in miner.toml\n {:?}",
                 self.waypoint,
                 miner_configs.chain_info.base_waypoint);
-                waypoint = miner_configs.chain_info.base_waypoint.parse().unwrap();
+                waypoint = miner_configs.get_waypoint().parse().unwrap();
 
             }
         }

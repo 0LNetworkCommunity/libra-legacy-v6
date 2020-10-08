@@ -196,7 +196,7 @@ pub struct ChainInfo {
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
-    pub base_waypoint: String,
+    pub base_waypoint: Option<String>,
 }
 
 // TODO: These defaults serving as test fixtures.
@@ -206,7 +206,7 @@ impl Default for ChainInfo {
             chain_id: "experimental".to_owned(),
             block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
-            base_waypoint: "0:0000".to_owned(),
+            base_waypoint: None,
             node: Some("http://localhost:8080".to_owned()),
         }
     }
