@@ -10,6 +10,10 @@ module LibraSystem {
     use 0x1::Vector;
     use 0x1::Roles;
     use 0x1::LibraTimestamp;
+    use 0x1::Libra;
+    use 0x1::LibraAccount;
+    use 0x1::TransactionFee;
+    use 0x1::GAS::GAS;
 
     struct ValidatorInfo {
         addr: address,
@@ -358,6 +362,11 @@ module LibraSystem {
         ensures result == spec_get_validator_set()[i].addr;
     }
 
+    // OL::UPDATE::This function is used in transaction_fee.move to distribute transaction fees among validators
+    public fun get_ith_validator_weight(i: u64): u64 {
+        Vector::borrow(&get_validator_set().validators, i).consensus_voting_power
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Private functions
     ///////////////////////////////////////////////////////////////////////////
@@ -499,6 +508,105 @@ module LibraSystem {
         apply ValidatorSetConfigRemainsSame to *, *<T>
            except add_validator, remove_validator, update_config_and_reconfigure,
                initialize_validator_set, set_validator_set;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 0L Methods
+    // Utils required for 0L
+    ///////////////////////////////////////////////////////////////////////////
+
+    public fun distribute_transaction_fees(lr_account: &signer) {
+        // Can only be invoked by LibraVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_libra_root(lr_account);
+        
+        // Getting integer value of transaction fees collected
+        let amount_collected = TransactionFee::get_amount_to_distribute(lr_account);
+        
+        // If amount_collected == 0, this will also return early
+        if (amount_collected == 0) { return };
+
+        let i = 0;
+        let total_weight = 0;
+        let num_validators = validator_set_size();
+
+        while (i < num_validators) {
+        total_weight = total_weight + get_ith_validator_weight(i);
+        i = i + 1;
+        };
+
+        // let amount_collected = LibraAccount::balance<Token>(0xFEE);
+        // If amount_collected == 0, this will also return early
+        if (amount_collected < total_weight) { return };
+
+        // TODO: Currently, this will give no gas if the sum of validator
+        // weights is too high. This may be a problem since we cannot give
+        // fractional gas amounts. For example:
+        // Alice has 1000 voting power. Bob has 1 voting power.
+        // amount_collected is 500 GAS to distribute.
+        // In the above scenario, no GAS will be distibuted.
+
+        // Calculate the amount of money to be dispursed, along with the remainder.
+        let amount_to_distribute_per_weight = per_weight_distribution_amount(
+            amount_collected,
+            total_weight
+        );
+
+        
+
+        // Iterate through the validators distributing fees according to weight
+        distribute_transaction_fees_internal(
+            lr_account,
+            amount_to_distribute_per_weight
+        );
+    }
+
+    // After the book keeping has been performed, this then distributes the
+    // transaction fees equally to all validators with the exception that
+    // any remainder (in the case that the number of validators does not
+    // evenly divide the transaction fee pot) is distributed to the first
+    // validator.
+    fun distribute_transaction_fees_internal(
+        lr_account: &signer,
+        amount_to_distribute_per_weight: u64
+    ) {
+        let index = 0;
+        let num_validators = validator_set_size();
+
+        while (index < num_validators) {
+            let addr = get_ith_validator_address(index);
+            let weight = get_ith_validator_weight(index);
+
+            // Increment the index into the validator set.
+            index = index + 1;
+
+            // Withdraw all transaction fees balance
+            let collected_coins = TransactionFee::get_transaction_fees_coins<GAS>(lr_account);
+
+            // Split fees balance into distribution value 
+            let (remaining_coins, deposit_amount) = Libra::split(collected_coins, amount_to_distribute_per_weight * weight);
+
+            LibraAccount::deposit_gas<GAS>(
+                lr_account,
+                addr,
+                deposit_amount    
+            );
+
+            // Adding back remaining coins to transaction fee account
+            TransactionFee::pay_fee(remaining_coins);
+        };
+    }
+
+    // This calculates the amount to be distributed to each validator equally. We do this by calculating
+    // the integer division of the transaction fees collected by the number of validators. In
+    // particular, this means that if the number of validators does not evenly divide the
+    // transaction fees collected, then there will be a remainder that is left in the transaction
+    // fees pot to be distributed later.
+    fun per_weight_distribution_amount(amount_collected: u64, total_weight: u64): u64 {
+        assert(total_weight != 0, 0);
+        let validator_payout = amount_collected / total_weight;
+        assert(validator_payout * total_weight <= amount_collected, 1);
+        validator_payout
     }
 
 }
