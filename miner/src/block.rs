@@ -78,6 +78,8 @@ pub mod build_block {
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &OlMinerConfig) {
+        status_info!("Block 0","Mining Genesis Proof");
+
         let preimage = config.genesis_preimage();
         let now = Instant::now();
         let data = do_delay(&preimage);
@@ -91,6 +93,8 @@ pub mod build_block {
         };
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
+        status_ok!("Proof mined:", "Genesis block_0.json created, exiting.");
+
     }
     /// Mine one block
     pub fn mine_once(config: &OlMinerConfig) -> Result<Block, Error> {
@@ -144,9 +148,7 @@ pub mod build_block {
 
         // If there are NO files in path, mine the genesis proof.
         if current_block_number.is_none() {
-            status_info!("Block 0","Mining Genesis Proof");
             mine_genesis(config);
-            status_ok!("Proof mined:", "Genesis block_0.json created, exiting.");
             std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems

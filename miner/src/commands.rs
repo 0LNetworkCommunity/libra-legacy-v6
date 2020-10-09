@@ -15,9 +15,10 @@ mod start;
 mod version;
 mod onboard;
 mod swarm_test;
+mod genesis;
 
 use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
-           onboard::OnboardCmd, swarm_test::SwarmCmd};
+           onboard::OnboardCmd, swarm_test::SwarmCmd, genesis::GenesisCmd};
 use crate::config::OlMinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -34,6 +35,10 @@ pub enum OlMinerCmd {
     #[options(help = "get usage information")]
     Help(Help<Self>),
 
+    /// The `genesis` subcommand
+    #[options(help = "Mine the 0th block of the tower")]
+    Genesis(GenesisCmd),
+
     /// The `start` subcommand
     #[options(help = "start mining blocks")]
     Start(StartCmd),
@@ -46,10 +51,10 @@ pub enum OlMinerCmd {
     #[options(help = "generate a keypair ")]
     Keygen(KeygenCmd),
 
-    /// The `genesis` subcommand
+    /// The `onboard` subcommand
     #[options(help = "Onboard a new miner with a block_0.json proof")]
     Onboard(OnboardCmd),
-
+    
     /// The `swarm` subcommand
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),

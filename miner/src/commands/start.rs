@@ -8,9 +8,6 @@ use libra_types::waypoint::Waypoint;
 use crate::backlog::backlog;
 use std::path::PathBuf;
 
-// use rustyline::error::ReadlineError;
-// use rustyline::Editor;
-
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
@@ -30,7 +27,7 @@ pub struct StartCmd {
     // Option for --resubmit, only sends backlogged transactions.
     #[options(help = "Start but don't mine, and only resubmit backlog of proofs")]
     resubmit: bool,
-    // Oprtion for setting path for the blocks/proofs that are mined.
+    // Option for setting path for the blocks/proofs that are mined.
     #[options(help = "The home directory where the blocks will be stored")]
     home: PathBuf, 
 }
