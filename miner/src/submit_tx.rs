@@ -113,7 +113,7 @@ submit_tx(
         txn
     ){
         Ok(_) => {
-            println!("Transaction submitted to network, waiting for status.");
+            println!("Transaction submitted to network");
             match wait_for_tx(tx_params.address, sequence_number, &mut client){
                 Ok(tx_view) => {
                     // TODO: update miner.toml with new waypoint.
@@ -133,7 +133,7 @@ pub fn wait_for_tx (
     sequence_number: u64,
     client: &mut LibraClient) -> Result<TransactionView, Error>{
         println!(
-            "Waiting for tx from acc: {} with sequence number: {}",
+            "Awaiting tx status \nSubmitted from account: {} with sequence number: {}",
             sender_address, sequence_number
         );
 

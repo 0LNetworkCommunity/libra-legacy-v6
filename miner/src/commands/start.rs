@@ -21,7 +21,7 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct StartCmd {
-    // Option for --waypoint, to set a specific waypoint besides genesis_waypoint which is found in miner.toml
+    // Option for --waypoint, to set a specific waypoint besides genesis_waypoint which is found in key_store.json
     #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in miner.toml")]
     waypoint: String,
     // Option for --resubmit, only sends backlogged transactions.
