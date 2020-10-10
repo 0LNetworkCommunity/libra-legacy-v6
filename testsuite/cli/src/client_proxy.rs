@@ -58,6 +58,7 @@ use std::{
 use stdlib::{transaction_scripts::StdlibScript, StdLibOptions};
 use transaction_builder::encode_register_validator_script;
 use hex;
+use crate::client_proxy::AccountEntry::Address;
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -381,12 +382,19 @@ impl ClientProxy {
     /// A wrap for libra cli to execute query miner state command.
     pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
 
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
+        let sender_address = match self.get_account_address_from_parameter(space_delim_strings[1]){
+            Ok((a, _)) => a,
+            Err(_)=> return None,
+        };
+
+        println!("Query Miner States for: {:?}", sender_address);
         // let (sender_address, _) =
         // self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
-        self.client.get_miner_state(sender_address ).unwrap()
+        match self.client.get_miner_state(sender_address ){
+            Ok(m)=> m,
+            Err(_)=> None,
+        }
     }
 
     /// Get minter state for Ol_miner
@@ -1320,9 +1328,10 @@ impl ClientProxy {
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
         if para.starts_with("0x") {
-            let addr_para = "00000000000000000000000000000000".to_owned();
-            println!("query for address:{}", addr_para);
-            return Ok((ClientProxy::address_from_strings(addr_para.as_str() )?, None))
+            let mut temp = String::from("00000000000000000000000000000000");
+            temp.push_str(para);
+            let (_, fixed_addr_str) = temp.split_at(temp.len()-AccountAddress::LENGTH);
+            return Ok((ClientProxy::address_from_strings(fixed_addr_str )?, None))
         }
         if is_authentication_key(para) {
             let auth_key = ClientProxy::authentication_key_from_string(para)?;
