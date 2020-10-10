@@ -90,7 +90,7 @@ script {
 script {
     use 0x0::LibraAccount;
     use 0x0::GAS;
-    use 0x0::TransactionFeeAlt;
+    use 0x0::TransactionFee;
     use 0x0::Transaction::assert;
 
     fun main(vm: &signer) {
@@ -98,7 +98,7 @@ script {
         let bal = LibraAccount::balance<GAS::T>(0xFEE);
         assert(bal == 1000, 7357190103011000);
 
-        TransactionFeeAlt::process_fees(vm);
+        TransactionFee::process_fees(vm);
 
         assert(LibraAccount::balance<GAS::T>({{alice}}) == 1001, 7357190103021000);
         assert(LibraAccount::balance<GAS::T>({{bob}}) == 1, 7357190103031000);
