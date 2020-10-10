@@ -6,10 +6,16 @@ module LibraBlock {
     use 0x1::Event;
     use 0x1::LibraSystem;
     use 0x1::LibraTimestamp;
+    use 0x1::Stats;
+    use 0x1::ReconfigureOL;
+    use 0x1::Globals;
+    use 0x1::Vector;
 
     resource struct BlockMetadata {
         /// Height of the current block
         height: u64,
+        // TODO 0L: prefer not modifying this struct. Need to find a way to read from new_block_events.
+        voters: vector<address>,
         /// Handle where events with the time of new blocks are emitted
         new_block_events: Event::EventHandle<Self::NewBlockEvent>,
     }
@@ -44,6 +50,7 @@ module LibraBlock {
             account,
             BlockMetadata {
                 height: 0,
+                voters: Vector::singleton(0x0), // 0L Change TODO: 0L: (Nelaturuk) Remove this. It's a placeholder.
                 new_block_events: Event::new_event_handle<Self::NewBlockEvent>(account),
             }
         );
@@ -80,9 +87,15 @@ module LibraBlock {
             Errors::requires_address(EVM_OR_VALIDATOR)
         );
 
+        {
+          let block_metadata_ref = borrow_global<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+          Stats::insert_voter_list(vm, block_metadata_ref.height, &previous_block_votes);
+        };
+
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
         block_metadata_ref.height = block_metadata_ref.height + 1;
+        block_metadata_ref.voters = *&previous_block_votes;
         Event::emit_event<NewBlockEvent>(
             &mut block_metadata_ref.new_block_events,
             NewBlockEvent {
@@ -92,6 +105,12 @@ module LibraBlock {
                 time_microseconds: timestamp,
             }
         );
+
+        // 0L implementation of reconfiguration.
+        if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
+          // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
+          ReconfigureOL::reconfigure(vm, get_current_block_height());
+        }
     }
     spec fun block_prologue {
         include LibraTimestamp::AbortsIfNotOperating;
@@ -108,6 +127,12 @@ module LibraBlock {
     /// Get the current block height
     public fun get_current_block_height(): u64 acquires BlockMetadata {
         borrow_global<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS()).height
+    }
+
+    // Get the previous block voters
+    public fun get_previous_voters(): vector<address> acquires BlockMetadata {
+       let voters = *&borrow_global<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS()).voters;
+       return voters
     }
 
     // **************** FUNCTION SPECIFICATIONS ****************

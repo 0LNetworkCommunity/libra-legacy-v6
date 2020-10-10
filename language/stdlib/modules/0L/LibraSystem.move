@@ -10,6 +10,11 @@ module LibraSystem {
     use 0x1::Vector;
     use 0x1::Roles;
     use 0x1::LibraTimestamp;
+    use 0x1::Libra;
+    use 0x1::LibraAccount;
+    use 0x1::TransactionFee;
+    use 0x1::GAS::GAS;
+    use 0x1::ValidatorUniverse;
 
     struct ValidatorInfo {
         addr: address,
@@ -358,6 +363,11 @@ module LibraSystem {
         ensures result == spec_get_validator_set()[i].addr;
     }
 
+    // OL::UPDATE::This function is used in transaction_fee.move to distribute transaction fees among validators
+    public fun get_ith_validator_weight(i: u64): u64 {
+        Vector::borrow(&get_validator_set().validators, i).consensus_voting_power
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Private functions
     ///////////////////////////////////////////////////////////////////////////
@@ -499,6 +509,193 @@ module LibraSystem {
         apply ValidatorSetConfigRemainsSame to *, *<T>
            except add_validator, remove_validator, update_config_and_reconfigure,
                initialize_validator_set, set_validator_set;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // 0L Methods
+    // Utils required for 0L
+    ///////////////////////////////////////////////////////////////////////////
+
+    public fun distribute_transaction_fees(lr_account: &signer) {
+        // Can only be invoked by LibraVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_libra_root(lr_account);
+        
+        // Getting integer value of transaction fees collected
+        let amount_collected = TransactionFee::get_amount_to_distribute(lr_account);
+        
+        // If amount_collected == 0, this will also return early
+        if (amount_collected == 0) { return };
+
+        let i = 0;
+        let total_weight = 0;
+        let num_validators = validator_set_size();
+
+        while (i < num_validators) {
+        total_weight = total_weight + get_ith_validator_weight(i);
+        i = i + 1;
+        };
+
+        // let amount_collected = LibraAccount::balance<Token>(0xFEE);
+        // If amount_collected == 0, this will also return early
+        if (amount_collected < total_weight) { return };
+
+        // TODO: Currently, this will give no gas if the sum of validator
+        // weights is too high. This may be a problem since we cannot give
+        // fractional gas amounts. For example:
+        // Alice has 1000 voting power. Bob has 1 voting power.
+        // amount_collected is 500 GAS to distribute.
+        // In the above scenario, no GAS will be distibuted.
+
+        // Calculate the amount of money to be dispursed, along with the remainder.
+        let amount_to_distribute_per_weight = per_weight_distribution_amount(
+            amount_collected,
+            total_weight
+        );
+
+        
+
+        // Iterate through the validators distributing fees according to weight
+        distribute_transaction_fees_internal(
+            lr_account,
+            amount_to_distribute_per_weight
+        );
+    }
+
+    // After the book keeping has been performed, this then distributes the
+    // transaction fees equally to all validators with the exception that
+    // any remainder (in the case that the number of validators does not
+    // evenly divide the transaction fee pot) is distributed to the first
+    // validator.
+    fun distribute_transaction_fees_internal(
+        lr_account: &signer,
+        amount_to_distribute_per_weight: u64
+    ) {
+        let index = 0;
+        let num_validators = validator_set_size();
+
+        while (index < num_validators) {
+            let addr = get_ith_validator_address(index);
+            let weight = get_ith_validator_weight(index);
+
+            // Increment the index into the validator set.
+            index = index + 1;
+
+            // Withdraw all transaction fees balance
+            let collected_coins = TransactionFee::get_transaction_fees_coins<GAS>(lr_account);
+
+            // Split fees balance into distribution value 
+            let (remaining_coins, deposit_amount) = Libra::split(collected_coins, amount_to_distribute_per_weight * weight);
+
+            LibraAccount::deposit_gas<GAS>(
+                lr_account,
+                addr,
+                deposit_amount    
+            );
+
+            // Adding back remaining coins to transaction fee account
+            TransactionFee::pay_fee(remaining_coins);
+        };
+    }
+
+    // This calculates the amount to be distributed to each validator equally. We do this by calculating
+    // the integer division of the transaction fees collected by the number of validators. In
+    // particular, this means that if the number of validators does not evenly divide the
+    // transaction fees collected, then there will be a remainder that is left in the transaction
+    // fees pot to be distributed later.
+    fun per_weight_distribution_amount(amount_collected: u64, total_weight: u64): u64 {
+        assert(total_weight != 0, 0);
+        let validator_payout = amount_collected / total_weight;
+        assert(validator_payout * total_weight <= amount_collected, 1);
+        validator_payout
+    }
+
+    // Get all validators addresses, weights and sum_of_all_validator_weights
+    public fun get_outgoing_validators_with_weights(epoch_length: u64, current_block_height: u64): (vector<address>, vector<u64>, u64) {
+        let validators = &get_validator_set().validators;
+        let outgoing_validators = Vector::empty<address>();
+        let outgoing_validator_weights = Vector::empty<u64>();
+        let sum_of_all_validator_weights = 0;
+        let size = Vector::length(validators);
+        let i = 0;
+        while (i < size) {
+            let validator_info_ref = Vector::borrow(validators, i);
+
+            if(ValidatorUniverse::check_if_active_validator(validator_info_ref.addr, epoch_length, current_block_height)){
+                Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
+                Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
+                sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;
+            };
+            i = i + 1;
+        };
+        (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
+    }
+
+    // This function takes in a set of top n validators and updates the validator set.
+    // NewEpochEvent event will be fired.
+    // The Association, the VM, the validator operator or the validator from the current validator set
+    // are authorized to update the set of validator infos and add/remove validators
+    // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
+    public fun bulk_update_validators(
+        account: &signer,
+        new_validators: vector<address>,
+        epoch_length: u64,
+        current_block_height: u64) acquires CapabilityHolder {
+
+        Roles::assert_validator_operator(account);
+
+        // Either check for each validator and add/remove them or clear the current list and append the list.
+        // The first way might be computationally expensive, so I choose to go with second approach.
+
+        // Clear all the current validators  ==> Intialize new validators
+        let next_epoch_validators = Vector::empty();
+
+        let n = Vector::length<address>(&new_validators);
+
+        // Get the current validator and append it to list
+        let index = 0;
+        while (index < n) {
+            let account_address = *(Vector::borrow<address>(&new_validators, index));
+
+            let config = ValidatorConfig::get_config(account_address);
+
+            let liveness = true;
+
+            // Check liveness in previous epoch
+            if(is_validator(account_address) && !ValidatorUniverse::check_if_active_validator(account_address,epoch_length, current_block_height)){
+                liveness= false;
+            };
+
+            if(liveness){
+                Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                    addr: account_address,
+                    config, // copy the config over to ValidatorSet
+                    consensus_voting_power: ValidatorUniverse::proof_of_weight(account, account_address, is_validator(account_address)),
+                   });
+
+            };
+            // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+            // ValidatorUniverse::update_validator_epoch_count(account_address);
+            index = index + 1;
+        };
+
+        let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
+        assert(next_count > 0, 90000000001 );
+        // Transaction::assert(next_count > n, 90000000002 );
+        assert(next_count == n, 90000000002 );
+
+        // We have vector of validators - updated!
+        // Next, let us get the current validator set for the current parameters
+        let outgoing_validator_set = get_validator_set();
+
+        // We create a new Validator set using scheme from outgoingValidatorset and update the validator set.
+        let updated_validator_set = LibraSystem {
+            scheme: outgoing_validator_set.scheme,
+            validators: next_epoch_validators,
+        };
+
+        // Updated the configuration using updated validator set. Now, start new epoch
+        set_validator_set(updated_validator_set);
     }
 
 }

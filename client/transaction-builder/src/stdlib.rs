@@ -69,10 +69,6 @@ pub enum ScriptCall {
         preburn_address: AccountAddress,
     },
 
-    /// Burn transaction fees that have been collected in the given `currency`
-    /// and relinquish to the association. The currency must be non-synthetic.
-    BurnTxnFees { coin_type: TypeTag },
-
     /// Cancel the oldest burn request from `preburn_address` and return the funds.
     /// Fails if the sender does not have a published `BurnCapability<Token>`.
     CancelBurn {
@@ -433,7 +429,6 @@ impl ScriptCall {
                 sliding_nonce,
                 preburn_address,
             } => encode_burn_script(token, sliding_nonce, preburn_address),
-            BurnTxnFees { coin_type } => encode_burn_txn_fees_script(coin_type),
             CancelBurn {
                 token,
                 preburn_address,
@@ -723,12 +718,6 @@ pub fn encode_burn_script(
             TransactionArgument::Address(preburn_address),
         ],
     )
-}
-
-/// Burn transaction fees that have been collected in the given `currency`
-/// and relinquish to the association. The currency must be non-synthetic.
-pub fn encode_burn_txn_fees_script(coin_type: TypeTag) -> Script {
-    Script::new(BURN_TXN_FEES_CODE.to_vec(), vec![coin_type], vec![])
 }
 
 /// Cancel the oldest burn request from `preburn_address` and return the funds.
@@ -1361,12 +1350,6 @@ fn decode_burn_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_burn_txn_fees_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::BurnTxnFees {
-        coin_type: script.ty_args().get(0)?.clone(),
-    })
-}
-
 fn decode_cancel_burn_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CancelBurn {
         token: script.ty_args().get(0)?.clone(),
@@ -1626,10 +1609,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     );
     map.insert(BURN_CODE.to_vec(), Box::new(decode_burn_script));
     map.insert(
-        BURN_TXN_FEES_CODE.to_vec(),
-        Box::new(decode_burn_txn_fees_script),
-    );
-    map.insert(
         CANCEL_BURN_CODE.to_vec(),
         Box::new(decode_cancel_burn_script),
     );
@@ -1821,13 +1800,6 @@ const BURN_CODE: &[u8] = &[
     21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98, 111,
     114, 116, 4, 98, 117, 114, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 7,
     10, 0, 10, 1, 17, 0, 11, 0, 10, 2, 56, 0, 2,
-];
-
-const BURN_TXN_FEES_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 25, 8, 42, 16, 0,
-    0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 12, 0, 1, 9, 0, 14, 84, 114, 97, 110, 115, 97, 99, 116, 105,
-    111, 110, 70, 101, 101, 9, 98, 117, 114, 110, 95, 102, 101, 101, 115, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 3, 11, 0, 56, 0, 2,
 ];
 
 const CANCEL_BURN_CODE: &[u8] = &[

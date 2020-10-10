@@ -72,8 +72,7 @@ module Genesis {
         
         // Register transaction fee resource
         TransactionFee::initialize(
-            lr_account,
-            lr_account,
+            lr_account
         );
         LibraSystem::initialize_validator_set(
             lr_account,

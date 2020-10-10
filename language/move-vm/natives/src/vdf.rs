@@ -3,7 +3,7 @@
 use vdf::{VDFParams, VDF};
 use libra_types::{
     transaction::authenticator::AuthenticationKey, 
-    vm_status::{StatusCode, VMStatus}
+    vm_status::{StatusCode}
 };
 use move_vm_types::{
     gas_schedule::NativeCostIndex,
