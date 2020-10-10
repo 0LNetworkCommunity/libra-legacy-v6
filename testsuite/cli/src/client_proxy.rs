@@ -381,12 +381,22 @@ impl ClientProxy {
     /// A wrap for libra cli to execute query miner state command.
     pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
 
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("No address given.");
+        let sender_address = match self.get_account_address_from_parameter(space_delim_strings[1]){
+            Ok((a, _)) => a,
+            Err(e)=> {println!("Unable to parser address from input: {:?}", e); return None},
+        };
+
+        println!("Query Miner States for: {:?}", sender_address);
         // let (sender_address, _) =
         // self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
-        self.client.get_miner_state(sender_address ).unwrap()
+        match self.client.get_miner_state(sender_address ){
+            Ok(m)=> m,
+            Err(e)=> {
+                println!("{:?}", e);
+                None
+            },
+        }
     }
 
     /// Get minter state for Ol_miner
@@ -1315,14 +1325,18 @@ impl ClientProxy {
     /// Get account address and (if applicable) authentication key from parameter. If the parameter
     /// is string of address, try to convert it to address, otherwise, try to convert to u64 and
     /// looking at TestClient::accounts.
+
     pub fn get_account_address_from_parameter(
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
         if para.starts_with("0x") {
-            let addr_para = "00000000000000000000000000000000".to_owned();
-            println!("query for address:{}", addr_para);
-            return Ok((ClientProxy::address_from_strings(addr_para.as_str() )?, None))
+            let (_, addr_hex) = para.split_at(2);
+            let mut padding_prefix = String::from("00000000000000000000000000000000");
+            padding_prefix.push_str(addr_hex);
+            let (_, fixed_addr_str) = padding_prefix.split_at(padding_prefix.len()-AccountAddress::LENGTH*2);
+
+            return Ok((ClientProxy::address_from_strings(fixed_addr_str )?, None))
         }
         if is_authentication_key(para) {
             let auth_key = ClientProxy::authentication_key_from_string(para)?;
