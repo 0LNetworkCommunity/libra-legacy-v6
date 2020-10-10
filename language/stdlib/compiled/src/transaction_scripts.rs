@@ -26,7 +26,7 @@ pub enum StdlibScript {
     AddScriptAllowList,
     AddValidatorAndReconfigure,
     Burn,
-    BurnTxnFees,
+    // BurnTxnFees,
     CancelBurn,
     CreateChildVaspAccount,
     CreateDesignatedDealer,
