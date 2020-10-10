@@ -58,6 +58,7 @@ pub enum OlMinerCmd {
     /// The `swarm` subcommand
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
+
 }
 
 /// This trait allows you to define how application configuration is loaded.

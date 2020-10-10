@@ -33,6 +33,8 @@ use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
 use std::env;
+use libra_types::account_state_blob::AccountStateBlob;
+use libra_types::account_state::AccountState;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -65,6 +67,15 @@ pub fn encode_genesis_change_set(
     validators: &[ValidatorRegistration],
     stdlib_modules: &[VerifiedModule],
     vm_publishing_option: VMPublishingOption,
+) -> (ChangeSet, BTreeMap<Vec<u8>, FatStructType>) {
+    encode_genesis_change_set_and_states(validators, stdlib_modules, vm_publishing_option, Vec::new())
+}
+
+pub fn encode_genesis_change_set_and_states(
+    validators: &[ValidatorRegistration],
+    stdlib_modules: &[VerifiedModule],
+    vm_publishing_option: VMPublishingOption,
+    exported_states: Vec<AccountState>,
 ) -> (ChangeSet, BTreeMap<Vec<u8>, FatStructType>) {
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -113,7 +124,16 @@ pub fn encode_genesis_change_set(
     reconfigure(&mut genesis_context);
     let mut interpreter_context = genesis_context.into_data_store();
     publish_stdlib(&mut interpreter_context, stdlib_modules);
+
+    // exported_states.iter().map(|s| {
+    //     s.iter
+    //     let ap =
+    //     let g =
+    //     interpreter_context.publish_resource(ap, g);
+    // });
+
     verify_genesis_write_set(interpreter_context.events());
+
     (
         ChangeSet::new(
             interpreter_context

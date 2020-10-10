@@ -1,7 +1,7 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
+use crate::{backlog, block::build_block::{mine_genesis, mine_once, parse_block_height}};
 
 use crate::config::OlMinerConfig;
 
@@ -26,7 +26,6 @@ use std::{path::PathBuf, thread, time};
 /// A test harness for the submit_tx with a local swarm 
 pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
     let tx_params = get_params_from_swarm(home).unwrap();
-
     let conf = OlMinerConfig::load_swarm_config(&tx_params);
     // TODO: count three blocks and exit
     // let i = 0;
@@ -42,6 +41,7 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     //     i+1;
     // }
     let mut sequence_number= 0u64;
+    backlog::backlog(&conf, &tx_params);
 
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
