@@ -299,10 +299,12 @@ async fn get_miner_state(
     service: JsonRpcService,
     request: JsonRpcRequest,
 ) -> Result<Option<MinerStateView>> {
-
+    println!("debug 1");
     ensure!(request.params.len() == 1, "invalid size of parameters");
+    dbg!(request.params);
     let address: String = serde_json::from_value(request.get_param(0))?;
     let account_address = AccountAddress::from_str(&address).expect("Invalid address format");
+    dbg!(account_address);
 
     let response = service
         .db
