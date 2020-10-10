@@ -60,8 +60,8 @@ pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig){
             let file = File::open(&entry).expect("Could not open block file");
             let reader = BufReader::new(file);
             let block: Block = serde_json::from_reader(reader).unwrap();
-            let res = submit_tx(&tx_params, block.preimage, block.data, block.height);
-            printl  n!("Result: {:?}", res);
+            let res = submit_tx(&tx_params, block.preimage, block.data, false);
+            printn!("Result: {:?}", res);
         }
     }
 }

@@ -386,7 +386,7 @@ impl ClientProxy {
         // let (sender_address, _) =
         // self.get_account_address_from_parameter(space_delim_strings[1]).unwrap();
 
-        self.client.get_miner_state(sender_address ).unwrap()
+        self.client.get_miner_state(sender_address ).expect("Couldn't retrieve miner_state")
     }
 
     /// Get minter state for Ol_miner

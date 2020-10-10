@@ -34,11 +34,11 @@ impl OlMinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
     pub fn get_waypoint (&self) -> String {
     let file = fs::File::open(self.get_key_store_path())
-        .expect("file should open read only");
+        .expect("key_store.json not found.");
     let json: serde_json::Value = serde_json::from_reader(file)
-        .expect("file should be proper JSON");
+        .expect("could not parse JSON in key_store.json");
     // let wp = json.get("Waypoint")
-        // .expect("file should have Waypoint key");
+    // .expect("file should have Waypoint key");
 
     let name = ajson::get(&json.to_string(), "*waypoint.value.value").expect("could not find key: waypoint");
     name.to_string()

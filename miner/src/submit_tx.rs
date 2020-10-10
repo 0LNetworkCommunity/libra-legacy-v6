@@ -44,8 +44,7 @@ pub struct TxParams {
 }
 
 /// Submit a miner transaction to the network.
-pub fn 
-submit_tx(
+pub fn submit_tx(
     tx_params: &TxParams,
     preimage: Vec<u8>,
     proof: Vec<u8>,

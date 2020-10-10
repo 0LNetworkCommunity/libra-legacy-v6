@@ -36,11 +36,7 @@ impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
         let miner_configs = app_config();
-
-        println!("Enter your 0L mnemonic:");
-        let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
-
-        let waypoint: Waypoint;
+                let waypoint: Waypoint;
         let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
         match parsed_waypoint {
             Ok(v) => {
@@ -48,21 +44,19 @@ impl Runnable for StartCmd {
                 waypoint = parsed_waypoint.unwrap();
             }
             Err(_e) => {
-                println!("Info: No waypoint parsed from command line args. Received: {:?}\n\
-                Using waypoint in miner.toml\n {:?}",
-                self.waypoint,
-                miner_configs.chain_info.base_waypoint);
                 waypoint = miner_configs.get_waypoint().parse().unwrap();
 
+                status_info!("Waypoint:",format!("No waypoint parsed from command line args. Using waypoint in key_store.json {:?}", waypoint));
             }
         }
+
+        println!("Enter your 0L mnemonic:");
+        let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
 
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
 
         if !self.resubmit {
-            // Do the resubmit before mining.
-            // resubmit_backlog(self.home.to_owned(), &miner_configs, tx_params);
-
+            // Steady state.
             let result = build_block::mine_and_submit(&miner_configs, tx_params);
             match result {
                 Ok(_val) => {}
@@ -71,6 +65,7 @@ impl Runnable for StartCmd {
                 }
             }
         } else {
+            // Chain needs to catch up to backlog of proofs.
             backlog(&miner_configs, tx_params);
         }
     }

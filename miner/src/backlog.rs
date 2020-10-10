@@ -24,7 +24,7 @@ pub fn backlog(config: &OlMinerConfig, tx_params: TxParams){
     let remote_state: MinerStateView  = match client.get_miner_state(tx_params.address.clone()) {
         Ok( s ) => { match s {
             Some( state) => state,
-            None=> {
+            None => {
                 println!("No remote state found");
                 return
             }
