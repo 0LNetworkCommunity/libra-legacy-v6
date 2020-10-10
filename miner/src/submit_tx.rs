@@ -23,6 +23,7 @@ use stdlib::transaction_scripts;
 use libra_config::config::NodeConfig;
 
 use libra_json_rpc_types::views::TransactionView;
+use std::cmp::max;
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
     /// User's 0L authkey used in mining.
@@ -49,19 +50,20 @@ pub fn submit_tx(
     preimage: Vec<u8>,
     proof: Vec<u8>,
     is_onboading: bool,
+    sn: Option<u64>,
 ) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let account_state = client.get_account_state(tx_params.address.clone(), true).unwrap();
-
-    let mut sequence_number = 0u64;
+    let mut sequence_number = 0;
     if account_state.0.is_some() {
-        // TODO: In staging network, transactions are sent too fast before the sequence number is updated.
-        sequence_number = account_state.0.unwrap().sequence_number;
+        // TODO: Store sequence number state.
+        sequence_number = max(sn.unwrap_or(0), account_state.0.unwrap().sequence_number);
         dbg!(sequence_number);
     }
+
     let script: Script;
     // Create the unsigned MinerState transaction script
     if !is_onboading {

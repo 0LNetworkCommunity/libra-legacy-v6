@@ -23,10 +23,7 @@ use reqwest::Url;
 use std::{path::PathBuf, thread, time};
 
 
-// use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
-// const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
-                                // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
-/// A test harness for the submit_tx
+/// A test harness for the submit_tx with a local swarm 
 pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
     let tx_params = get_params_from_swarm(home).unwrap();
 
@@ -44,15 +41,19 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     //     };
     //     i+1;
     // }
+    let mut sequence_number= 0u64;
+
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
-
         // need to sleep for swarm to be ready.
         thread::sleep(time::Duration::from_millis(50000));
-        let res = submit_tx(&tx_params, preimage, proof, false);
+        let res = submit_tx(&tx_params, preimage, proof, false, Some(sequence_number));
         if eval_tx_status(res) == false {
             break;
-        };
+        } else {
+            // update sequence number from Res
+            sequence_number = sequence_number + 1;
+        }
     }
 }
 
