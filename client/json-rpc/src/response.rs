@@ -101,7 +101,7 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                     Value::Null => None,
                     _ => {
                         let ms: MinerStateView = serde_json::from_value(value)?;
-                        dbg!(ms);
+                        dbg!(&ms);
 
                         Some(ms)
                     }
