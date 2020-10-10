@@ -115,8 +115,7 @@ impl LibraClient {
         // form request
         let mut batch = JsonRpcBatch::new();
         batch.add_get_miner_state_request(account);
-        //batch.add_get_state_proof_request(self.trusted_state.latest_version() );
-
+        dbg!(batch);
         let responses = self.client.execute(batch)?;
         match get_response_from_batch(0, &responses)? {
             Ok(response) => {
@@ -126,7 +125,7 @@ impl LibraClient {
                 }
             }
             Err(e) => {
-                bail!("Fetching Miner State failed with error: {:?}", e)
+                bail!("RPC get_miner_state failed with error: {:?}", e)
             }
         }
     }
