@@ -395,6 +395,9 @@ module LibraSystem {
             Vector::push_back(&mut fee_ratios, ratio);
              k = k + 1;
         };
+
+        Transaction::assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),120201014010 );
+
         (compliant_nodes, fee_ratios)
     }
         
