@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use config_builder::{FullNodeConfig, SwarmConfig, ValidatorConfig};
 use debug_interface::NodeDebugClient;
-use libra_config::config::{NodeConfig, RoleType};
+use libra_config::config::{GenesisMiningProof, NodeConfig, RoleType};
 use libra_logger::prelude::*;
 use libra_secure_storage::config;
 use libra_temppath::TempPath;
@@ -312,6 +312,9 @@ impl LibraSwarm {
             NodeConfig::default()
         };
         node_config.base.role = role;
+
+        //0L change
+        node_config.miner_swarm_fixture = Some(GenesisMiningProof::default());
 
         let config_path = &swarm_config_dir.as_ref().to_path_buf();
         let config = if role.is_validator() {

@@ -16,7 +16,11 @@ module LibraSystem {
     use 0x0::Signer;
     use 0x0::ValidatorConfig;
     use 0x0::Vector;
-    use 0x0::ValidatorUniverse;
+    use 0x0::NodeWeight;
+    use 0x0::Stats;
+    use 0x0::Cases;
+    use 0x0::FixedPoint32;
+
 
     struct ValidatorInfo {
         addr: address,
@@ -109,7 +113,7 @@ module LibraSystem {
 
         let validator_set = get_validator_set();
         // Ensure that this address is an active validator
-        let to_remove_index_vec = get_validator_index_(&validator_set.validators, account_address);
+        let to_remove_index_vec = get_validator_index(&validator_set.validators, account_address);
         Transaction::assert(Option::is_some(&to_remove_index_vec), 21);
         let to_remove_index = *Option::borrow(&to_remove_index_vec);
         // Remove corresponding ValidatorInfo from the validator set
@@ -177,7 +181,7 @@ module LibraSystem {
     // If the address is not a validator, abort
     public fun get_validator_config(addr: address): ValidatorConfig::Config {
         let validator_set = get_validator_set();
-        let validator_index_vec = get_validator_index_(&validator_set.validators, addr);
+        let validator_index_vec = get_validator_index(&validator_set.validators, addr);
         Transaction::assert(Option::is_some(&validator_index_vec), 33);
         *&(Vector::borrow(&validator_set.validators, *Option::borrow(&validator_index_vec))).config
     }
@@ -234,7 +238,7 @@ module LibraSystem {
     }
 
     // Get the index of the validator by address in the `validators` vector
-    fun get_validator_index_(validators: &vector<ValidatorInfo>, addr: address): Option::T<u64> {
+    fun get_validator_index(validators: &vector<ValidatorInfo>, addr: address): Option::T<u64> {
         let size = Vector::length(validators);
         if (size == 0) {
             return Option::none()
@@ -273,7 +277,7 @@ module LibraSystem {
     }
 
     fun is_validator_(addr: address, validators_vec_ref: &vector<ValidatorInfo>): bool {
-        Option::is_some(&get_validator_index_(validators_vec_ref, addr))
+        Option::is_some(&get_validator_index(validators_vec_ref, addr))
     }
    ///////////////////////////////////////////////////////////////////////////
     // 0L Methods
@@ -287,11 +291,9 @@ module LibraSystem {
     // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
     public fun bulk_update_validators(
         account: &signer,
-        new_validators: vector<address>,
-        epoch_length: u64,
-        current_block_height: u64) acquires CapabilityHolder {
-
-        Transaction::assert(is_authorized_to_reconfigure_(account), 22);
+        new_validators: vector<address>) acquires CapabilityHolder {
+        Transaction::assert(is_authorized_to_reconfigure_(account), 1202024010);
+        Transaction::assert(Transaction::sender() == 0x0, 1202014010);
 
         // Either check for each validator and add/remove them or clear the current list and append the list.
         // The first way might be computationally expensive, so I choose to go with second approach.
@@ -311,30 +313,21 @@ module LibraSystem {
 
             let config = ValidatorConfig::get_config(account_address);
 
-            let liveness = true;
+            Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                addr: account_address,
+                config, // copy the config over to ValidatorSet
+                consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
+            });
 
-            // Check liveness in previous epoch
-            if(is_validator(account_address) && !ValidatorUniverse::check_if_active_validator(account_address,epoch_length, current_block_height)){
-                liveness= false;
-            };
-
-            if(liveness){
-                Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
-                    addr: account_address,
-                    config, // copy the config over to ValidatorSet
-                    consensus_voting_power: ValidatorUniverse::proof_of_weight(account_address, is_validator(account_address)),
-                   });
-
-            };
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
             // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
         };
 
         let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
-        Transaction::assert(next_count > 0, 90000000001 );
+        Transaction::assert(next_count > 0, 1202011000 );
         // Transaction::assert(next_count > n, 90000000002 );
-        Transaction::assert(next_count == n, 90000000002 );
+        Transaction::assert(next_count == n, 1202021000 );
 
         // We have vector of validators - updated!
         // Next, let us get the current validator set for the current parameters
@@ -350,8 +343,64 @@ module LibraSystem {
         set_validator_set(updated_validator_set);
     }
 
+    public fun get_val_set_addr(): vector<address> {
+        let validators = &get_validator_set().validators;
+        let nodes = Vector::empty<address>();
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            Vector::push_back(&mut nodes, Vector::borrow(validators, i).addr);
+            i = i + 1;
+        };
+        nodes 
+    }
+
+    public fun get_jailed_set(): vector<address> {
+      let validator_set = get_val_set_addr();
+      let jailed_set = Vector::empty<address>();
+      let k = 0;
+      while(k < Vector::length(&validator_set)){
+        let addr = *Vector::borrow<address>(&validator_set, k);
+
+        // consensus case 1 and 2, allow inclusion into the next validator set.
+        if (Cases::get_case(addr) == 3 || Cases::get_case(addr) == 4){
+          Vector::push_back<address>(&mut jailed_set, addr)
+        };
+        k = k + 1;
+      };
+      jailed_set
+    }
+
+    //get_compliant_val_votes
+    public fun get_fee_ratio(): (vector<address>, vector<FixedPoint32::T>) {
+        let validators = &get_validator_set().validators;
+        let compliant_nodes = Vector::empty<address>();
+        let total_votes = 0;
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            let addr = Vector::borrow(validators, i).addr;
+            if (Cases::get_case(addr) == 1) {
+                let node_votes = Stats::node_current_votes(addr);
+                Vector::push_back(&mut compliant_nodes, addr);
+                total_votes = total_votes + node_votes;
+            };
+            i = i + 1;
+        };
+
+        let fee_ratios = Vector::empty<FixedPoint32::T>();
+        let k = 0;
+        while (k < Vector::length(&compliant_nodes)) {
+            let addr = *Vector::borrow(&compliant_nodes, k);
+            let node_votes = Stats::node_current_votes(addr);
+            let ratio = FixedPoint32::create_from_rational(node_votes, total_votes);
+            Vector::push_back(&mut fee_ratios, ratio);
+             k = k + 1;
+        };
+        (compliant_nodes, fee_ratios)
+    }
+        
+ 
     // Get all validators addresses, weights and sum_of_all_validator_weights
-    public fun get_outgoing_validators_with_weights(epoch_length: u64, current_block_height: u64): (vector<address>, vector<u64>, u64) {
+    public fun get_outgoing_validators_with_weights(_epoch_length: u64, _current_block_height: u64): (vector<address>, vector<u64>, u64) {
         let validators = &get_validator_set().validators;
         let outgoing_validators = Vector::empty<address>();
         let outgoing_validator_weights = Vector::empty<u64>();
@@ -361,7 +410,8 @@ module LibraSystem {
         while (i < size) {
             let validator_info_ref = Vector::borrow(validators, i);
 
-            if(ValidatorUniverse::check_if_active_validator(validator_info_ref.addr, epoch_length, current_block_height)){
+            // if (Cases::get_case(validator_info_ref.addr)==1)
+            if(Stats::node_above_thresh(validator_info_ref.addr)){
                 Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
                 Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
                 sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;

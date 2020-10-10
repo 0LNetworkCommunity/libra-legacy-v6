@@ -1,0 +1,201 @@
+// This is a test which involves multiple currencies (specifically GAS and LBR).
+// It works very similarly to autopay_test.move except that transfers involve two
+// currencies. It is currently disabled as GAS is the only enabled currency.
+
+//! account: alice, 1000000, 0, validator
+//! account: bob, 1000000LBR, 0, validator
+
+// Alice initializes autopay to pay Bob some amount of GAS periodically
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 0
+  use 0x0::AutoPay;
+  use 0x0::Vector;
+  use 0x0::Transaction;
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::Libra;
+  use 0x0::LBR;
+  fun main(account: &signer) {
+    // Initializes currency Libra for account alice
+    LibraAccount::add_currency<LBR::T>(account);
+    AutoPay::init_status(true);
+    AutoPay::init_data(Vector::empty());
+    AutoPay::create(true, 0, 0, {{bob}}, 2, 2, 5, 1, Libra::currency_code<GAS::T>(), true);
+    Transaction::assert(AutoPay::exists({{alice}}, 0), 0);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 1000000, 1);
+    // After the genesis and network setup stuffs, validator bob has 148 GAS.
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 148, 2);
+  }
+}
+// check: EXECUTED
+
+// Bob initializes autopay to send the same amount of LBR to alice at the same time
+//! new-transaction
+//! sender: bob
+script {
+  // This is in block 0
+  use 0x0::AutoPay;
+  use 0x0::Vector;
+  use 0x0::Transaction;
+  use 0x0::LibraAccount;
+  use 0x0::Libra;
+  use 0x0::LBR;
+  fun main() {
+    AutoPay::init_status(true);
+    AutoPay::init_data(Vector::empty());
+    AutoPay::create(true, 0, 0, {{alice}}, 2, 2, 5, 1, Libra::currency_code<LBR::T>(), true);
+    Transaction::assert(AutoPay::exists({{bob}}, 0), 101);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 1000000, 101);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 0, 102);
+  }
+}
+// check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 2
+
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 1
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::LBR;
+  use 0x0::Transaction;
+  fun main() {
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 1000000, 3);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 148, 4);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 1000000, 103);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 0, 104);
+  }
+}
+// check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 3
+
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 2
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::LBR;
+  use 0x0::Transaction;
+  fun main() {
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 1000000, 5);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 148, 6);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 1000000, 105);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 0, 106);
+  }
+}
+// check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 4
+
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 3
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::LBR;
+  use 0x0::Transaction;
+  fun main() {
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 999999, 7);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 149, 8);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 999999, 107);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 1, 108);
+  }
+}
+// check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 5
+
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 4
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::LBR;
+  use 0x0::Transaction;
+  fun main() {
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 999999, 9);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 149, 10);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 999999, 109);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 1, 110);
+  }
+}
+// check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 6
+
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 5
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::LBR;
+  use 0x0::Transaction;
+  fun main() {
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 999998, 11);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 150, 12);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 999998, 111);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 2, 112);
+  }
+}
+// check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 7
+
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 6
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::LBR;
+  use 0x0::Transaction;
+  fun main() {
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 999998, 13);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 150, 14);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 999998, 113);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 2, 114);
+  }
+}
+// check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 8
+
+//! new-transaction
+//! sender: alice
+script {
+  // This is in block 7
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::LBR;
+  use 0x0::Transaction;
+  fun main() {
+    Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 999998, 15);
+    Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 150, 16);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{bob}}) == 999998, 115);
+    Transaction::assert(LibraAccount::balance<LBR::T>({{alice}}) == 2, 116);
+  }
+}
+// check: EXECUTED

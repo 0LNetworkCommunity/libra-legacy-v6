@@ -63,14 +63,7 @@ pub enum StdlibScript {
     //
     MinerState,
     MinerStateOnboarding,
-    LibraBlockTestHelper,
-    TxFeeTestHelper,
-    TxFeeTestMint,
-    TxFeeTestMove,
-    TxFeeTestDistr,
-    ReconfigBulkUpdate,
-    ReconfigSetup,
-    NoOp,
+    MinerStateTestHelper,
 }
 
 impl StdlibScript {
@@ -119,15 +112,7 @@ impl StdlibScript {
             // Below are 0L Changes
             MinerState,
             MinerStateOnboarding,
-            LibraBlockTestHelper,
-            TxFeeTestHelper,
-            TxFeeTestMint,
-            TxFeeTestMove,
-            TxFeeTestDistr,
-            ReconfigBulkUpdate,
-            ReconfigSetup,
-            NoOp,
-        ]
+            MinerStateTestHelper,        ]
     }
 
     /// Construct the whitelist of script hashes used to determine whether a transaction script can
@@ -252,17 +237,9 @@ impl fmt::Display for StdlibScript {
                 //
                 // Below are 0L Changes
                 //
-                MinerState => "ol_miner_state",
-                MinerStateOnboarding => "ol_miner_state_onboarding",
-                // RedeemInitialize => "redeem_init",
-                LibraBlockTestHelper => "ol_libra_block_test_helper",
-                TxFeeTestHelper => "ol_tx_fees_e2e_test_helper",
-                TxFeeTestMint => "ol_txn_fee_test_mint",
-                TxFeeTestMove => "ol_txn_fee_test_move",
-                TxFeeTestDistr => "ol_txn_fee_test_distr",
-                ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper",
-                ReconfigSetup => "ol_reconfig_bulk_update_setup",
-                NoOp => "ol_no_op.move",
+                MinerState => "miner_state_commit",
+                MinerStateOnboarding => "miner_state_onboarding",
+                MinerStateTestHelper => "miner_state_helper",
             }
         )
     }

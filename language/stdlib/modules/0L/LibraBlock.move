@@ -12,9 +12,10 @@ module LibraBlock {
     use 0x0::Signer;
     use 0x0::Transaction;
     use 0x0::Vector;
-    use 0x0::Stats;
-    use 0x0::ReconfigureOL;
+    use 0x0::Reconfigure;
     use 0x0::Globals;
+    use 0x0::AutoPay;
+    use 0x0::Stats;
 
     resource struct BlockMetadata {
       // Height of the current block
@@ -65,18 +66,20 @@ module LibraBlock {
     ) acquires BlockMetadata {
         // Can only be invoked by LibraVM privilege.
         Transaction::assert(Signer::address_of(vm) == 0x0, 33);
-        {
-          let block_metadata_ref = borrow_global<BlockMetadata>(0x0);
-          Stats::insert_voter_list(block_metadata_ref.height, &previous_block_votes);
-        };
+       
+        Stats::process_set_votes(&previous_block_votes);
+        Stats::inc_prop(*&proposer);
+
         process_block_prologue(vm,  round, timestamp, previous_block_votes, proposer);
 
-        // TODO(valerini): call regular reconfiguration here LibraSystem2::update_all_validator_info()
-
+        // 0L Autopay module
+        if ((get_current_block_height() % Globals::get_epoch_length()) == (Globals::get_epoch_length()/2)){
+            AutoPay::process_autopay(vm, (get_current_block_height() / Globals::get_epoch_length()));
+        };
         // 0L implementation of reconfiguration.
         if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
-          // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
-          ReconfigureOL::reconfigure(vm, get_current_block_height());
+          // TODO: We don't need to pass block height to Reconfigure. It should use the BlockMetadata. But there's a circular reference there when we try.
+          Reconfigure::reconfigure(vm);
         }
 
     }

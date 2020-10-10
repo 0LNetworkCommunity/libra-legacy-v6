@@ -509,9 +509,10 @@ impl From<CurrencyInfoResource> for CurrencyInfoView {
 /// MinerStat View implementation by 0L
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MinerStateView {
-    pub reported_tower_height: u64,
+    // pub reported_tower_height: u64,
     pub verified_tower_height: u64, // user's latest verified_tower_height
     pub latest_epoch_mining: u64,
+    pub count_proofs_in_epoch: u64,
     pub epochs_validating_and_mining: u64,
     pub contiguous_epochs_validating_and_mining: u64,
 }
@@ -519,9 +520,10 @@ pub struct MinerStateView {
 impl From<MinerStateResource> for MinerStateView {
     fn from(info: MinerStateResource) -> MinerStateView {
         MinerStateView {
-            reported_tower_height: info.reported_tower_height,
+            // reported_tower_height: info.reported_tower_height,
             verified_tower_height: info.verified_tower_height, // user's latest verified_tower_height
             latest_epoch_mining: info.latest_epoch_mining,
+            count_proofs_in_epoch: info.count_proofs_in_epoch,
             epochs_validating_and_mining: info.epochs_validating_and_mining,
             contiguous_epochs_validating_and_mining: info.contiguous_epochs_validating_and_mining,
         }
