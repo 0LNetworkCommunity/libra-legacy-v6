@@ -384,7 +384,7 @@ impl ClientProxy {
 
         let sender_address = match self.get_account_address_from_parameter(space_delim_strings[1]){
             Ok((a, _)) => a,
-            Err(_)=> return None,
+            Err(e)=> {println!("Unable to parser address from input: {:?}", e); return None},
         };
 
         println!("Query Miner States for: {:?}", sender_address);
@@ -1323,14 +1323,17 @@ impl ClientProxy {
     /// Get account address and (if applicable) authentication key from parameter. If the parameter
     /// is string of address, try to convert it to address, otherwise, try to convert to u64 and
     /// looking at TestClient::accounts.
+
     pub fn get_account_address_from_parameter(
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
         if para.starts_with("0x") {
-            let mut temp = String::from("00000000000000000000000000000000");
-            temp.push_str(para);
-            let (_, fixed_addr_str) = temp.split_at(temp.len()-AccountAddress::LENGTH);
+            let (_, addr_hex) = para.split_at(2);
+            let mut padding_prefix = String::from("00000000000000000000000000000000");
+            padding_prefix.push_str(addr_hex);
+            let (_, fixed_addr_str) = padding_prefix.split_at(padding_prefix.len()-AccountAddress::LENGTH*2);
+
             return Ok((ClientProxy::address_from_strings(fixed_addr_str )?, None))
         }
         if is_authentication_key(para) {
