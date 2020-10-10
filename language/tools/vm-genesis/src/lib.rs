@@ -33,7 +33,7 @@ use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
 use std::env;
-use libra_types::account_state_blob::AccountStateBlob;
+// use libra_types::account_state_blob::AccountStateBlob;
 use libra_types::account_state::AccountState;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
@@ -75,7 +75,7 @@ pub fn encode_genesis_change_set_and_states(
     validators: &[ValidatorRegistration],
     stdlib_modules: &[VerifiedModule],
     vm_publishing_option: VMPublishingOption,
-    exported_states: Vec<AccountState>,
+    _exported_states: Vec<AccountState>,
 ) -> (ChangeSet, BTreeMap<Vec<u8>, FatStructType>) {
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
