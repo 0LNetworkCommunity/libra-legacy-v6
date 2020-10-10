@@ -45,11 +45,15 @@ module TransactionFee {
 
     public fun process_fees(vm_sig: &signer) acquires TransactionFees {
       // // Need to check for association or vm account
-      // let sender = Signer::address_of(vm_sig);
+
       Transaction::assert(Signer::address_of(vm_sig) == 0x0, 190103014010);
       let bal = LibraAccount::balance<GAS::T>(0xFEE);
+      if (bal == 0) return;
+
       let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio();
       let length = Vector::length<address>(&outgoing_set);
+
+      Transaction::assert(length == Vector::length(&fee_ratio),190103024010 );
       //TODO: assert the lengths of vectors are the same.
       let i = 0;
       while (i < length) {
