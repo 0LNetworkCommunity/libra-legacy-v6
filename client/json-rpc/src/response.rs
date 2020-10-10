@@ -96,10 +96,13 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                 ))
             }
             "get_miner_state" => {
+                println!("response.rs get_miner_state");
                 let state = match value {
                     Value::Null => None,
                     _ => {
                         let ms: MinerStateView = serde_json::from_value(value)?;
+                        dbg!(ms);
+
                         Some(ms)
                     }
                 };
