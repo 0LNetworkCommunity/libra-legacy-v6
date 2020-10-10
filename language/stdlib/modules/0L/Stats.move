@@ -179,9 +179,9 @@ address 0x1 {
 
 
     // Performs a number of batch inserts input through a vector votes
-    public fun insert_voter_list(lr_account:&signer, height: u64, votes: &vector<address>) acquires History {
+    public fun insert_voter_list(lr_account: &signer, height: u64, votes: &vector<address>) acquires History {
       // Check permission
-      CoreAddresses::assert_libra_root(lr_account); 
+      CoreAddresses::assert_vm(lr_account); 
 
       // Iterate through the input vector
       let i = 0;

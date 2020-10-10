@@ -21,7 +21,7 @@ address 0x1 {
         // Function code: 01. Prefix: 180101
         public fun reconfigure(account: &signer, current_block_height: u64) {
             let sender = Signer::address_of(account);
-            assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
+            assert(sender == CoreAddresses::VM_RESERVED_ADDRESS(), 180101014010);
 
             // TODO: one more check in reconfigure.move to confirm it's executing in epoch boundary.
 
