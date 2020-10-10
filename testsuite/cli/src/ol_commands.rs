@@ -69,7 +69,7 @@ impl Command for OLCommandQueryMinerState {
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
         match client.query_miner_state_in_client(&params) {
             Some( msv) => println!(" Account: {:?}\n {:?}", &params[1], msv ),
-            None => println!("No miner state found at this address."),
+            None => {},
         }
     }
 }

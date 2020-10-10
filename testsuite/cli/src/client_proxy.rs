@@ -58,7 +58,6 @@ use std::{
 use stdlib::{transaction_scripts::StdlibScript, StdLibOptions};
 use transaction_builder::encode_register_validator_script;
 use hex;
-use crate::client_proxy::AccountEntry::Address;
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -393,7 +392,10 @@ impl ClientProxy {
 
         match self.client.get_miner_state(sender_address ){
             Ok(m)=> m,
-            Err(_)=> None,
+            Err(e)=> {
+                println!("{:?}", e);
+                None
+            },
         }
     }
 
