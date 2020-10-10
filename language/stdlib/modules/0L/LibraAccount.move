@@ -775,11 +775,11 @@ module LibraAccount {
         auth_key_prefix: vector<u8>,
     ) {
         let new_account_addr = Signer::address_of(&new_account);
-        // cannot create an account at the reserved address 0x0
-        assert(
-            new_account_addr != CoreAddresses::VM_RESERVED_ADDRESS(),
-            Errors::invalid_argument(ECANNOT_CREATE_AT_VM_RESERVED)
-        );
+        // // cannot create an account at the reserved address 0x0
+        // assert(
+        //     new_account_addr != CoreAddresses::VM_RESERVED_ADDRESS(),
+        //     Errors::invalid_argument(ECANNOT_CREATE_AT_VM_RESERVED)
+        // );
 
         // (1) publish LibraAccount
         let authentication_key = auth_key_prefix;
