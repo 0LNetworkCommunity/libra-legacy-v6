@@ -21,16 +21,17 @@ pub fn backlog(config: &OlMinerConfig, tx_params: TxParams){
     // Getting remote miner state
     // let tx_params = get_params_from_swarm(home).unwrap();
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    println!("Fetching remote tower height");
     let remote_state: MinerStateView  = match client.get_miner_state(tx_params.address.clone()) {
         Ok( s ) => { match s {
             Some( state) => state,
             None => {
-                println!("No remote state found");
+                println!("Info: Received response but no remote state found,exiting.");
                 return
             }
         } },
         Err( e) => {
-            println!("error: {:?}", e);
+            println!("Error fetching remote state: {:?}", e);
             return
         },
     };
