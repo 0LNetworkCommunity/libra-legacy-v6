@@ -310,7 +310,7 @@ async fn get_miner_state(
         .batch_fetch_resources_by_version(vec![MinerStateResource::resource_path( account_address )], request.version())?;
 
     if response.len() > 0 {
-        let raw = response.get(0).expect("Miner state does not exists.").as_slice();
+        let raw = response.get(0).expect("Miner state does not exist.").as_slice();
         let miner_state_resource = MinerStateResource::try_from_bytes(raw )?;
         return Ok( Some( MinerStateView::from( miner_state_resource) ) );
 

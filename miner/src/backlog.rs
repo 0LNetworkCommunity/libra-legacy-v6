@@ -26,7 +26,7 @@ pub fn backlog(config: &OlMinerConfig, tx_params: TxParams){
         Ok( s ) => { match s {
             Some( state) => state,
             None => {
-                println!("Info: Received response but no remote state found,exiting.");
+                println!("Info: Received response but no remote state found, exiting.");
                 return
             }
         } },
