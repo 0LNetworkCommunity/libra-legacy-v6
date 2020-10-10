@@ -74,7 +74,7 @@ impl Runnable for StartCmd {
                 }
             }
         } else {
-            backlog(&miner_configs, tx_params);
+            backlog(&miner_configs, &tx_params);
         }
     }
 }
