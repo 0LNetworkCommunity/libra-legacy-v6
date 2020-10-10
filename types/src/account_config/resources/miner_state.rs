@@ -16,14 +16,22 @@ use move_core_types::account_address::AccountAddress;
 /// Struct that represents a CurrencyInfo resource
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MinerStateResource {
-    pub verified_proof_history: Vec<Vec<u8>>,
-    pub invalid_proof_history: Vec<Vec<u8>>,
-    // pub reported_tower_height: u64,
-    pub verified_tower_height: u64, // user's latest verified_tower_height
-    pub latest_epoch_mining: u64,
-    pub count_proofs_in_epoch: u64,
-    pub epochs_validating_and_mining: u64,
-    pub contiguous_epochs_validating_and_mining: u64,
+    // pub verified_proof_history: Vec<Vec<u8>>,
+    // pub invalid_proof_history: Vec<Vec<u8>>,
+    // // pub reported_tower_height: u64,
+    // pub verified_tower_height: u64, // user's latest verified_tower_height
+    // pub latest_epoch_mining: u64,
+    // pub count_proofs_in_epoch: u64,
+    // pub epochs_validating_and_mining: u64,
+    // pub contiguous_epochs_validating_and_mining: u64,
+
+    previous_proof_hash: Vec<u8>,
+    verified_tower_height: u64, // user's latest verified_tower_height
+    latest_epoch_mining: u64,
+    count_proofs_in_epoch: u64,
+    epochs_validating_and_mining: u64,
+    contiguous_epochs_validating_and_mining: u64,
+
 }
 
 impl MoveResource for MinerStateResource {
