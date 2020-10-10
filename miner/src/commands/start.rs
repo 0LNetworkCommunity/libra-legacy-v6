@@ -66,7 +66,7 @@ impl Runnable for StartCmd {
             }
         } else {
             // Chain needs to catch up to backlog of proofs.
-            backlog(&miner_configs, tx_params);
+            backlog(&miner_configs, &tx_params);
         }
     }
 }
