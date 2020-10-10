@@ -93,7 +93,7 @@ pub mod build_block {
         };
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        status_ok!("Proof mined:", "Genesis block_0.json created, exiting.");
+        status_info!("Proof mined:", "Genesis block_0.json created, exiting.");
 
     }
     /// Mine one block
@@ -157,7 +157,7 @@ pub mod build_block {
                 status_info!(format!("Block {}", mining_height),"Mining VDF Proof");
                 
                 let block = mine_once(&config)?;
-                status_ok!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
+                status_info!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
                 if let Some(ref _node) = config.chain_info.node {
 
