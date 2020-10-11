@@ -53,7 +53,7 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
 
         match submit_tx(&tx_params, preimage, proof, false, Some(seq_num)) {
             Ok(reps)=>{
-                match &reps {
+                match reps {
                     Some(tv) => {
                         match tv.transaction {
                             UserTransaction { sequence_number, .. } => {
