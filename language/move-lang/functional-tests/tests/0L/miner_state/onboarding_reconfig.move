@@ -12,7 +12,7 @@ script {
   use 0x0::Transaction::assert;
   use 0x0::LibraAccount;
   use 0x0::GAS;
-  // use 0x0::ValidatorUniverse;
+  use 0x0::ValidatorConfig;
   use 0x0::TestFixtures;
   use 0x0::VDF;
   use 0x0::Debug::print;
@@ -22,6 +22,7 @@ script {
     let solution = TestFixtures::alice_1_easy_sol();
     let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
     print(&0x0);
+    
     print(&parsed_address);
 
     LibraAccount::create_validator_account_with_vdf<GAS::T>(
@@ -32,8 +33,9 @@ script {
     // Check the account has the Validator role
     assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 02);
 
+    assert(ValidatorConfig::is_valid(parsed_address), 03);
     // Check the account exists and the balance is 0
-    assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 03);
+    assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 04);
   }
 }
 //check: EXECUTED

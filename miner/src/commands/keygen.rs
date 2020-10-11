@@ -18,8 +18,16 @@ impl Runnable for KeygenCmd {
     /// Print version message
     fn run(&self) {
         let mut wallet = WalletLibrary::new();
+        let kf = wallet.key_factory;
+        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
+        let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
+        let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
+        let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
+      
 
-        let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
+        let (auth_key, child_number) = wallet.new_address().expect("Could not generate address");
+
+        dbg!(&child_number);
 
         let mnemonic_string = wallet.mnemonic();
 
