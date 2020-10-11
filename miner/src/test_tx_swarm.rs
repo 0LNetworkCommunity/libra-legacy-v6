@@ -1,27 +1,23 @@
 //! OlMiner submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{backlog, block::build_block::{mine_genesis, mine_once, parse_block_height}};
-
+use crate::backlog;
+use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::OlMinerConfig;
-
 use crate::prelude::*;
-use crate::submit_tx::{ submit_tx, TxParams};
+use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
 use anyhow::Error;
-
 use libra_config::config::NodeConfig;
-use libra_crypto::{
-    test_utils::KeyPair,
-};
-
+use libra_crypto::test_utils::KeyPair;
 use libra_types::waypoint::Waypoint;
-use libra_types::{transaction::authenticator::AuthenticationKey};
-
+use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
-use std::{path::PathBuf, thread, time};
+use std::path::PathBuf;
 
 /// A test harness for the submit_tx with a local swarm 
 pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
+    // thread::sleep(time::Duration::from_millis(50000));
+
     let tx_params = get_params_from_swarm(home).unwrap();
     let conf = OlMinerConfig::load_swarm_config(&tx_params);
     // TODO: count three blocks and exit
@@ -33,7 +29,7 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     //     thread::sleep(time::Duration::from_millis(50000));
     //     let res = submit_tx(&tx_params, preimage, proof, false);
     //     if eval_tx_status(res) == false {
-    //         panic!();
+    //         std::process::exit(0);
     //     };
     //     i+1;
     // }
@@ -42,11 +38,15 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
         // need to sleep for swarm to be ready.
-        thread::sleep(time::Duration::from_millis(50000));
 
         match submit_tx(&tx_params, preimage, proof, false) {
             Err(err)=>{ println!("{:?}", err) }
-            _=>{}
+            res =>{
+                if eval_tx_status(res) == false {
+                    break;
+                };
+
+            }
         }
     }
 }

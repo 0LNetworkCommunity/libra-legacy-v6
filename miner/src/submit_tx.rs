@@ -127,7 +127,7 @@ pub fn wait_for_tx (
         );
 
         loop {
-            thread::sleep(time::Duration::from_millis(1000));
+            
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
             
@@ -141,6 +141,7 @@ pub fn wait_for_tx (
                 },
                 _ => {
                     print!(".");
+                    thread::sleep(time::Duration::from_millis(1000));
                 }
             }
 
