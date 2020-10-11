@@ -44,24 +44,24 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     let mut seq_num= 0u64;
     backlog::backlog(&conf, &tx_params);
 
-    // loop {
-    //     let (preimage, proof) = get_block_fixtures(&conf);
-    //     // need to sleep for swarm to be ready.
-    //     thread::sleep(time::Duration::from_millis(50000));
-    //     let res = submit_tx(&tx_params, preimage, proof, false, Some(seq_num));
-    //     match res.as_ref().unwrap().as_ref().unwrap().transaction {
-    //         UserTransaction { sequence_number, ..} => {
-    //             seq_num = sequence_number.to_owned();
-    //         }
-    //         _ => {}
-    //     }
-    //     if eval_tx_status(res) == false {
-    //         break;
-    //     } else {
-    //         // update sequence number from Res
-    //         seq_num = seq_num + 1;
-    //     }
-    // }
+    loop {
+        let (preimage, proof) = get_block_fixtures(&conf);
+        // need to sleep for swarm to be ready.
+        thread::sleep(time::Duration::from_millis(50000));
+        let res = submit_tx(&tx_params, preimage, proof, false, Some(seq_num));
+        match res.as_ref().unwrap().as_ref().unwrap().transaction {
+            UserTransaction { sequence_number, ..} => {
+                seq_num = sequence_number.to_owned();
+            }
+            _ => {}
+        }
+        if eval_tx_status(res) == false {
+            break;
+        } else {
+            // update sequence number from Res
+            seq_num = seq_num + 1;
+        }
+    }
 }
 
 fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>){
