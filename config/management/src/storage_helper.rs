@@ -1,13 +1,12 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
+// use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use libra_global_constants::{
     CONSENSUS_KEY, EPOCH, FULLNODE_NETWORK_KEY, LAST_VOTED_ROUND, OPERATOR_KEY, OWNER_KEY,
     PREFERRED_ROUND, VALIDATOR_NETWORK_KEY, WAYPOINT,
 };
 use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
-use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
 use std::{
     fs::File,
     path::PathBuf,
@@ -109,7 +108,7 @@ impl StorageHelper {
             child_3
         ) = key_scheme(mnemonic);
 
-        let authentication_key = child_0.get_authentication_key();
+        // let authentication_key = child_0.get_authentication_key();
 
         let mut storage = self.storage(namespace);
         storage

@@ -1,14 +1,5 @@
 use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
-use libra_global_constants::{
-    CONSENSUS_KEY, EPOCH, FULLNODE_NETWORK_KEY, LAST_VOTED_ROUND, OPERATOR_KEY, OWNER_KEY,
-    PREFERRED_ROUND, VALIDATOR_NETWORK_KEY, WAYPOINT,
-};
-use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
 use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
-use std::{
-    fs::File,
-    path::PathBuf,
-};
 
 pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
