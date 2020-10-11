@@ -6,10 +6,10 @@ fn submit_noop(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
     match &config.test {
         Some( conf) => {
-            println!("Swarm Keys : {:?}", conf);
+            // println!("Swarm Keys : {:?}", conf);
         },
         None =>{
-            println!("test config does not set.");
+            // println!("test config does not set.");
         }
     }
 
