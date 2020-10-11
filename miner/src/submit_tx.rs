@@ -15,15 +15,14 @@ use abscissa_core::{status_warn, status_ok};
 use std::{thread, time, io::{stdout, Write}};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
-use libra_types::{transaction::helpers::*, vm_error::StatusCode};
+use libra_types::{transaction::helpers::*};
 use crate::{
     config::OlMinerConfig
 };
 use stdlib::transaction_scripts;
-// use libra_config::config::NodeConfig;
-
 use libra_json_rpc_types::views::TransactionView;
-use std::cmp::max;
+use libra_types::vm_error::StatusCode;
+
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
     /// User's 0L authkey used in mining.
@@ -45,25 +44,21 @@ pub struct TxParams {
 }
 
 /// Submit a miner transaction to the network.
-pub fn 
-submit_tx(
+pub fn submit_tx(
     tx_params: &TxParams,
     preimage: Vec<u8>,
     proof: Vec<u8>,
     is_onboading: bool,
-    sn: Option<u64>,
 ) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let account_state = client.get_account_state(tx_params.address.clone(), true).unwrap();
-    let mut sequence_number = 0;
-    if account_state.0.is_some() {
-        // TODO: Store sequence number state.
-        sequence_number = max(sn.unwrap_or(0), account_state.0.unwrap().sequence_number);
-        dbg!(sequence_number);
-    }
+    let (account_state,_) = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let sequence_number = match account_state {
+        Some(av) => av.sequence_number,
+        None => 0,
+    };
 
     let script: Script;
     // Create the unsigned MinerState transaction script
@@ -86,7 +81,6 @@ submit_tx(
             ],
         );
     }
-
 
     // sign the transaction script
     let txn = create_user_txn(
@@ -115,15 +109,9 @@ submit_tx(
         txn
     ){
         Ok(_) => {
-            println!("Transaction submitted to network");
-            match wait_for_tx(tx_params.address, sequence_number, &mut client){
-                Ok(tx_view) => {
-                    Ok(Some(tx_view))
-                },
-                Err(err) => { println!("{:?}", err); Err(err)}
-            }
+            Ok( wait_for_tx(tx_params.address, sequence_number, &mut client) )
         }
-        Err(err) =>{ println!("{:?}", err); Err(err)}
+        Err(err) => Err(err)
     }
 
 }
@@ -132,7 +120,7 @@ submit_tx(
 pub fn wait_for_tx (
     sender_address: AccountAddress,
     sequence_number: u64,
-    client: &mut LibraClient) -> Result<TransactionView, Error>{
+    client: &mut LibraClient) -> Option<TransactionView>{
         println!(
             "Awaiting tx status \nSubmitted from account: {} with sequence number: {}",
             sender_address, sequence_number
@@ -142,17 +130,10 @@ pub fn wait_for_tx (
             thread::sleep(time::Duration::from_millis(1000));
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
-
-            let seq = if sequence_number > 0 {
-                sequence_number - 1
-            } else {
-                0
-            };
             
-            match &mut client
-                .get_txn_by_acc_seq(sender_address, seq, true){
-                Ok(Some(txn_view)) => {
-                    return Ok(txn_view.to_owned());
+            match &mut client.get_txn_by_acc_seq(sender_address, sequence_number, false){
+                Ok( Some(txn_view)) => {
+                    return Some(txn_view.to_owned());
                 },
                 Err(e) => {
                     println!("Response with error: {:?}", e);
@@ -166,7 +147,6 @@ pub fn wait_for_tx (
         }
 }
 
-
 /// Evaluate the response of a submitted miner transaction.
 pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
     match result {
@@ -176,7 +156,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                 Some(tx_view) => {
                     if tx_view.vm_status != StatusCode::EXECUTED {
                         status_warn!("Transaction failed");
-                        println!("rejected with code:{:?},{:?}", tx_view.vm_status, tx_view);
+                        println!("rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
                         status_ok!("Success:", "proof committed to chain");
@@ -184,7 +164,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                     }
                 }
                 //did not receive tx_object but it wasn't in error. This is likely because it's the first sequence number and we are skipping.
-                None => { 
+                None => {
                     status_warn!("No tx_view returned");
                     return false
                 }

@@ -59,7 +59,7 @@ impl Runnable for OnboardCmd {
 
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         let genesis_data = Block::get_genesis_tx_data(&self.file).unwrap();
-        match submit_tx(&tx_params, genesis_data.0.to_owned(), genesis_data.1.to_owned(), true, None) {
+        match submit_tx(&tx_params, genesis_data.0.to_owned(), genesis_data.1.to_owned(), true) {
             Ok(_res) => {
                 status_ok!("Success", "Miner onboarding committed, exiting.");
             }

@@ -52,7 +52,7 @@ pub fn backlog(config: &OlMinerConfig, tx_params: &TxParams){
         let file = File::open(&path).expect("Could not open block file");
         let reader = BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).unwrap();
-        let res = submit_tx(&tx_params, block.preimage, block.data, false, None);
+        let res = submit_tx(&tx_params, block.preimage, block.data, false);
         
         if eval_tx_status(res) == false {
             break;

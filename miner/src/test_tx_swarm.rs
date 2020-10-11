@@ -6,8 +6,7 @@ use crate::{backlog, block::build_block::{mine_genesis, mine_once, parse_block_h
 use crate::config::OlMinerConfig;
 
 use crate::prelude::*;
-use crate::submit_tx::{
-    submit_tx, TxParams, eval_tx_status};
+use crate::submit_tx::{ submit_tx, TxParams};
 use anyhow::Error;
 
 use libra_config::config::NodeConfig;
@@ -15,16 +14,11 @@ use libra_crypto::{
     test_utils::KeyPair,
 };
 
-
-use libra_json_rpc_types::views::TransactionDataView::UserTransaction;
 use libra_types::waypoint::Waypoint;
 use libra_types::{transaction::authenticator::AuthenticationKey};
 
 use reqwest::Url;
 use std::{path::PathBuf, thread, time};
-use libra_json_rpc_types::views::TransactionDataView;
-use libra_types::vm_error::StatusCode;
-
 
 /// A test harness for the submit_tx with a local swarm 
 pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
@@ -43,7 +37,6 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     //     };
     //     i+1;
     // }
-    let mut seq_num= 0u64;
     backlog::backlog(&conf, &tx_params);
 
     loop {
@@ -51,22 +44,9 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
         // need to sleep for swarm to be ready.
         thread::sleep(time::Duration::from_millis(50000));
 
-        match submit_tx(&tx_params, preimage, proof, false, Some(seq_num)) {
-            Ok(reps)=>{
-                match reps {
-                    Some(tv) => {
-                        match tv.transaction {
-                            UserTransaction { sequence_number, .. } => {
-                                seq_num = sequence_number.to_owned();
-                            }
-                            _ => {} // ignore other fields
-                        }
-                        seq_num = seq_num + 1;
-                    }
-                    None => {}
-                }
-            }
+        match submit_tx(&tx_params, preimage, proof, false) {
             Err(err)=>{ println!("{:?}", err) }
+            _=>{}
         }
     }
 }
