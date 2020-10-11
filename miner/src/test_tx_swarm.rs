@@ -22,6 +22,8 @@ use libra_types::{transaction::authenticator::AuthenticationKey};
 
 use reqwest::Url;
 use std::{path::PathBuf, thread, time};
+use libra_json_rpc_types::views::TransactionDataView;
+use libra_types::vm_error::StatusCode;
 
 
 /// A test harness for the submit_tx with a local swarm 
@@ -48,18 +50,23 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
         let (preimage, proof) = get_block_fixtures(&conf);
         // need to sleep for swarm to be ready.
         thread::sleep(time::Duration::from_millis(50000));
-        let res = submit_tx(&tx_params, preimage, proof, false, Some(seq_num));
-        match res.as_ref().unwrap().as_ref().unwrap().transaction {
-            UserTransaction { sequence_number, ..} => {
-                seq_num = sequence_number.to_owned();
+
+        match submit_tx(&tx_params, preimage, proof, false, Some(seq_num)) {
+            Ok(reps)=>{
+                match &reps {
+                    Some(tv) => {
+                        match tv.transaction {
+                            UserTransaction { sequence_number, .. } => {
+                                seq_num = sequence_number.to_owned();
+                            }
+                            _ => {} // ignore other fields
+                        }
+                        seq_num = seq_num + 1;
+                    }
+                    None => {}
+                }
             }
-            _ => {}
-        }
-        if eval_tx_status(res) == false {
-            break;
-        } else {
-            // update sequence number from Res
-            seq_num = seq_num + 1;
+            Err(err)=>{ println!("{:?}", err) }
         }
     }
 }
