@@ -95,7 +95,7 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let config = NodeConfig::load(&home)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
     match &config.test {
-        Some( conf) => {
+        Some(_conf) => {
             // println!("Swarm Keys : {:?}", conf);
         },
         None =>{
