@@ -2,8 +2,8 @@
 #![forbid(unsafe_code)]
 
 use cli::{libra_client::LibraClient};
-use std::fs::File;
-use glob::glob;
+use std::{fs::File, path::PathBuf};
+// use glob::glob;
 use crate::{
     block::Block,
     config::OlMinerConfig,
@@ -46,19 +46,28 @@ pub fn backlog(config: &OlMinerConfig, tx_params: &TxParams){
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
     println!("Current block number: {:?}", current_block_number.unwrap());
-    for i in remote_height+1..current_block_number.unwrap()+1{
-        println!("Resubmitting missing block: {}", i);
-        for entry in glob(&format!("{}/block_{}.json", blocks_dir.display(), i))
-                .expect("Failed to read glob pattern") {
-                if let Ok(entry) = entry {
-                    let file = File::open(&entry).expect("Could not open block file");
-                    let reader = BufReader::new(file);
-                    let block: Block = serde_json::from_reader(reader).unwrap();
-                    let res = submit_tx(&tx_params, block.preimage, block.data, false, None);
-                    if eval_tx_status(res) == false {
-                        break;
-                    };
-                }
+    let mut i = remote_height + 1;
+    while i <= current_block_number.unwrap() {
+        let path = PathBuf::from(format!("{}/block_{}.json", blocks_dir.display(), i));
+        let file = File::open(&path).expect("Could not open block file");
+        let reader = BufReader::new(file);
+        let block: Block = serde_json::from_reader(reader).unwrap();
+        let res = submit_tx(&tx_params, block.preimage, block.data, false, None);
+        
+        if eval_tx_status(res) == false {
+            break;
         };
-    };
+
+        i = i + 1;
+
+    }
+    // for i in remote_height+1..current_block_number.unwrap()+1{
+    //     println!("Resubmitting missing block: {}", i);
+    //     for entry in glob(&format!("{}/block_{}.json", blocks_dir.display(), i))
+    //             .expect("Failed to read glob pattern") {
+    //             if let Ok(entry) = entry {
+
+    //             }
+    //     };
+    // };
 }

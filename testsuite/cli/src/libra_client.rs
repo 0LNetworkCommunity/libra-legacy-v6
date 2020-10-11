@@ -115,9 +115,7 @@ impl LibraClient {
         // form request
         let mut batch = JsonRpcBatch::new();
         batch.add_get_miner_state_request(account);
-        println!("batch");
         let responses = self.client.execute(batch)?;
-        dbg!(&responses);
         match get_response_from_batch(0, &responses)? {
             Ok(response) => {
                 match response {
