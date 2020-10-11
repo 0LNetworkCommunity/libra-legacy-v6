@@ -34,7 +34,7 @@ pub struct ValidatorConfig {
 }
 
 impl ValidatorConfig {
-    pub fn generate_raw_tx (self) -> Result<Script, Error> {
+    pub fn execute(self) -> Result<Transaction, Error> {
         let mut local: Box<dyn Storage> = self.backends.local.try_into()?;
         local
             .available()
@@ -64,6 +64,8 @@ impl ValidatorConfig {
 
         // Step 2) Generate transaction
 
+        // TODO(philiphayes): remove network identity pubkey field from struct when
+        // transition complete
         let script = transaction_builder::encode_register_validator_script(
             consensus_key.to_bytes().to_vec(),
             validator_network_key.to_bytes(),
@@ -71,11 +73,7 @@ impl ValidatorConfig {
             fullnode_network_key.to_bytes(),
             raw_fullnode_address.into(),
         );
-        Ok(script)
 
-    }
-    pub fn execute(self) -> Result<Transaction, Error> {
-        let script = self.generate_raw_tx().unwrap();
         // TODO(davidiw): This is currently not supported
         // let sender = self.owner_address;
         let sender = account_address::from_public_key(&operator_key);
