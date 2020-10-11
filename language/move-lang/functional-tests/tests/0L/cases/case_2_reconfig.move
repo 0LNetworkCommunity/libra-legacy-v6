@@ -34,18 +34,6 @@ script {
         Transaction::assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
 
         Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 0, 7357000180104);
-        // Transaction::assert(MinerState::test_helper_hash({{alice}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
-        
-        // Alice continues to mine after genesis.
-        // This test is adapted from chained_from_genesis.move
-        // let proof = MinerState::create_proof_blob(
-        //     TestFixtures::alice_1_easy_chal(),
-        //     100u64, // difficulty
-        //     TestFixtures::alice_1_easy_sol()
-        // );
-        
-        // print(&NodeWeight::proof_of_weight({{alice}}));
-        // print(&LibraAccount::balance<GAS::T>({{alice}}));
 
         Transaction::assert(LibraAccount::balance<GAS::T>({{alice}}) == 1, 7357000180106);
 
