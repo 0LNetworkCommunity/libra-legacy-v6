@@ -7,7 +7,6 @@ script {
     use 0x0::Transaction::assert;
     use 0x0::LibraAccount;
     use 0x0::GAS;
-    // use 0x0::ValidatorUniverse;
     use 0x0::TestFixtures;
     use 0x0::VDF;
 
