@@ -28,7 +28,8 @@ impl Layout {
         let mut contents = String::new();
         file.read_to_string(&mut contents)
             .map_err(|e| Error::UnexpectedError(e.to_string()))?;
-        Self::parse(&contents)
+        let test = Self::parse(&contents);
+        test
     }
 
     pub fn parse(contents: &str) -> Result<Self, Error> {
@@ -58,7 +59,6 @@ impl SetLayout {
     pub fn execute(self) -> Result<Layout, Error> {
         let layout = Layout::from_disk(&self.path)?;
         let data = layout.to_toml()?;
-
         let mut remote: Box<dyn Storage> = self.backend.backend.try_into()?;
         remote
             .available()

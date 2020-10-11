@@ -299,19 +299,23 @@ async fn get_miner_state(
     service: JsonRpcService,
     request: JsonRpcRequest,
 ) -> Result<Option<MinerStateView>> {
-
+    println!("debug 1");
     ensure!(request.params.len() == 1, "invalid size of parameters");
+    dbg!(&request.params);
     let address: String = serde_json::from_value(request.get_param(0))?;
     let account_address = AccountAddress::from_str(&address).expect("Invalid address format");
+    dbg!(account_address);
+
     let response = service
         .db
         .deref()
         .batch_fetch_resources_by_version(vec![MinerStateResource::resource_path( account_address )], request.version())?;
 
     if response.len() > 0 {
-        let raw = response.get(0).expect("Miner states does not exists.").as_slice();
+        let raw = response.get(0).expect("Miner state does not exist.").as_slice();
         let miner_state_resource = MinerStateResource::try_from_bytes(raw )?;
         return Ok( Some( MinerStateView::from( miner_state_resource) ) );
+
     }
     Ok(None)
 }
@@ -387,8 +391,8 @@ pub(crate) fn build_registry() -> RpcRegistry {
     );
     register_rpc_method!(registry, "get_network_status", get_network_status, 0);
 
-    // added by OL
-    register_rpc_method!(registry, "get_miner_state", get_miner_state, 0);
+    // added by 0L
+    register_rpc_method!(registry, "get_miner_state", get_miner_state, 1);
 
     registry
 }

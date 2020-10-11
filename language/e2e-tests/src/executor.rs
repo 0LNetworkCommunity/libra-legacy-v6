@@ -11,22 +11,14 @@ use bytecode_verifier::VerifiedModule;
 use libra_config::generator;
 use libra_crypto::HashValue;
 use libra_state_view::StateView;
-use libra_types::{
-    access_path::AccessPath,
-    account_config::{AccountResource, BalanceResource},
-    block_metadata::{new_block_event_key, BlockMetadata, NewBlockEvent},
-    on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet},
-    transaction::{
+use libra_types::{access_path::AccessPath, account_config::{AccountResource, BalanceResource}, block_metadata::{BlockMetadata, NewBlockEvent}, on_chain_config::{OnChainConfig, VMPublishingOption, ValidatorSet}, transaction::{
         SignedTransaction, Transaction, TransactionOutput, TransactionStatus, VMValidatorResult,
-    },
-    vm_error::{StatusCode, VMStatus},
-    write_set::WriteSet,
-};
+    }, vm_error::{StatusCode, VMStatus}, write_set::WriteSet};
 use libra_vm::{LibraVM, VMExecutor, VMValidator};
 use move_core_types::{identifier::Identifier, language_storage::ModuleId};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::CompiledModule;
-use vm_genesis::GENESIS_KEYPAIR;
+
 
 /// Provides an environment to run a VM instance.
 ///
@@ -183,7 +175,7 @@ impl FakeExecutor {
     /// data store. Panics if execution fails
     pub fn execute_and_apply(&mut self, transaction: SignedTransaction) -> TransactionOutput {
 
-        let mut tx_vec = vec![transaction];
+        let tx_vec = vec![transaction];
 
         let mut outputs = self.execute_block(tx_vec).unwrap();
         assert!(outputs.len() == 1, "transaction outputs size mismatch");
@@ -241,7 +233,7 @@ impl FakeExecutor {
             .expect("Unable to retrieve the validator set from storage");
         self.block_time += 1;
 
-        // OL: Mocking the validator signatures in previous block.
+        // 0L: Mocking the validator signatures in previous block.
         let mut vec_validator_adresses = vec![];
         for i in validator_set.payload().iter() {
             //println!("\nvalidator: \n{:?}",i );
@@ -250,9 +242,9 @@ impl FakeExecutor {
 
         let new_block = BlockMetadata::new(
             HashValue::zero(),
-            111, // OL: block height/round TODO: This does not appear in tests.
+            111, // 0L: block height/round TODO: This does not appear in tests.
             self.block_time,
-            vec_validator_adresses, // OL: Mocking the validator signatures in previous block.
+            vec_validator_adresses, // 0L: Mocking the validator signatures in previous block.
             *validator_set.payload()[0].account_address(),
         );
 
@@ -264,11 +256,10 @@ impl FakeExecutor {
         // check if we emit the expected event, there might be more events for transaction fees
         let event = output.events()[0].clone();
 
-
-        // TODO: OL: (nelaturuk) This check seems to be failing for the executor.new_block() in librablock_test.rs
-        // println!("event.key() \n{:?}", event.key());
-        // println!("new_block_event_key() \n{:?}", new_block_event_key());
-        //assert!(event.key() == &new_block_event_key());
+        //TODO: 0L: This assert fails with on a couple e2e tests
+        // tests::ol_e2e_test_reconfig::reconfig_bulk_update_test
+        // tests::ol_txn_fee_test::txn_fees_test
+        // assert!(event.key() == &new_block_event_key());
 
         assert!(lcs::from_bytes::<NewBlockEvent>(event.event_data()).is_ok());
         self.apply_write_set(output.write_set());

@@ -7,7 +7,7 @@ use config_builder::{FullNodeConfig, KeyManagerConfig, ValidatorConfig};
 use libra_config::config::{KeyManagerConfig as KMConfig, NodeConfig};
 use libra_network_address::NetworkAddress;
 use libra_types::account_address::AccountAddress;
-use std::{convert::TryInto, fs, fs::File, io::Write, net::SocketAddr, path::PathBuf};
+use std::{convert::TryInto, fs, net::SocketAddr, path::PathBuf};
 use structopt::StructOpt;
 
 const KEY_MANAGER_CONFIG: &str = "key_manager.config.toml";

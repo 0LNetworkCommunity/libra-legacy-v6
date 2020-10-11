@@ -175,6 +175,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ajson"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "regex 1.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "ansi_term"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2455,11 +2463,11 @@ dependencies = [
  "libra-types 0.1.0",
  "libra-vm 0.1.0",
  "libra-workspace-hack 0.1.0",
+ "miner 0.1.0",
  "move-core-types 0.1.0",
  "move-vm-natives 0.1.0",
  "move-vm-runtime 0.1.0",
  "move-vm-types 0.1.0",
- "ol_miner 0.1.0",
  "once_cell 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proptest 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proptest-derive 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2539,6 +2547,7 @@ dependencies = [
  "libra-network-address 0.1.0",
  "libra-temppath 0.1.0",
  "libra-types 0.1.0",
+ "libra-wallet 0.1.0",
  "libra-workspace-hack 0.1.0",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "mirai-annotations 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2789,6 +2798,7 @@ dependencies = [
  "anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)",
  "config-builder 0.1.0",
  "executor 0.1.0",
+ "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libra-canonical-serialization 0.1.0",
  "libra-config 0.1.0",
  "libra-crypto 0.1.0",
@@ -2803,7 +2813,9 @@ dependencies = [
  "libra-wallet 0.1.0",
  "libra-workspace-hack 0.1.0",
  "libradb 0.1.0",
- "ol_miner 0.1.0",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "miner 0.1.0",
+ "rustyline 6.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
  "storage-interface 0.1.0",
  "structopt 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3363,6 +3375,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "miner"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ajson 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 1.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "classgroup 0.1.0",
+ "cli 0.1.0",
+ "criterion 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gumdrop 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libra-canonical-serialization 0.1.0",
+ "libra-config 0.1.0",
+ "libra-crypto 0.1.0",
+ "libra-json-rpc-types 0.1.0",
+ "libra-logger 0.1.0",
+ "libra-types 0.1.0",
+ "libra-wallet 0.1.0",
+ "libradb 0.1.0",
+ "move-core-types 0.1.0",
+ "once_cell 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 1.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "reqwest 0.10.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rpassword 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustyline 6.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.53 (registry+https://github.com/rust-lang/crates.io-index)",
+ "stdlib 0.1.0",
+ "storage-interface 0.1.0",
+ "thiserror 1.0.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vdf 0.1.0",
+ "vm-genesis 0.1.0",
+ "wait-timeout 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "miniz_oxide"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3864,32 +3915,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "object"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "ol_miner"
-version = "0.1.0"
-dependencies = [
- "abscissa_core 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)",
- "byteorder 1.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "classgroup 0.1.0",
- "cli 0.1.0",
- "criterion 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "glob 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gumdrop 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "libra-config 0.1.0",
- "libra-crypto 0.1.0",
- "libra-json-rpc-types 0.1.0",
- "libra-types 0.1.0",
- "libra-wallet 0.1.0",
- "once_cell 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustyline 6.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.53 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror 1.0.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "vdf 0.1.0",
-]
 
 [[package]]
 name = "once_cell"
@@ -4756,6 +4781,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.71 (registry+https://github.com/rust-lang/crates.io-index)",
  "librocksdb-sys 6.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "rpassword"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.71 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -6930,6 +6964,7 @@ dependencies = [
 "checksum aes-soft 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cfd7e7ae3f9a1fb5c03b389fc6bb9a51400d0c13053f0dca698c832bfd893a0d"
 "checksum aesni 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2f70a6b5f971e473091ab7cfb5ffac6cde81666c4556751d8d5620ead8abf100"
 "checksum aho-corasick 0.7.10 (registry+https://github.com/rust-lang/crates.io-index)" = "8716408b8bc624ed7f65d223ddb9ac2d044c0547b6fa4b0d554f3a9540496ada"
+"checksum ajson 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3e8fb4a0fcb100ca1b6edc37224471e0a55c67bdf6f421f8eca154d635e50606"
 "checksum ansi_term 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
 "checksum ansi_term 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "23ac7c30002a5accbf7e8987d0632fa6de155b7c3d39d0067317a391e00a2ef6"
 "checksum anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)" = "85bb70cc08ec97ca5450e6eba421deeea5f172c0fc61f78b5357b2a8e8be195f"
@@ -7233,6 +7268,7 @@ dependencies = [
 "checksum ring 0.16.14 (registry+https://github.com/rust-lang/crates.io-index)" = "06b3fefa4f12272808f809a0af618501fdaba41a58963c5fb72238ab0be09603"
 "checksum ripemd160 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ad5112e0dbbb87577bfbc56c42450235e3012ce336e29c5befd7807bd626da4a"
 "checksum rocksdb 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)" = "61aa17a99a2413cd71c1106691bf59dad7de0cd5099127f90e9d99c429c40d4a"
+"checksum rpassword 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d755237fc0f99d98641540e66abac8bc46a0652f19148ac9e21de2da06b326c9"
 "checksum rusoto_autoscaling 0.44.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0ab4877563f4464e469bca0c287ee419bdbb9bc536b09f610403209c5cfe8e13"
 "checksum rusoto_core 0.44.0 (registry+https://github.com/rust-lang/crates.io-index)" = "841ca8f73e7498ba39146ab43acea906bbbb807d92ec0b7ea4b6293d2621f80d"
 "checksum rusoto_credential 0.44.0 (registry+https://github.com/rust-lang/crates.io-index)" = "60669ddc1bdbb83ce225593649d36b4c5f6bf9db47cc1ab3e81281abffc853f4"

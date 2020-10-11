@@ -107,15 +107,14 @@ impl LibraClient {
     }
 
     /// Retrieves miner state
-    /// added by OL
+    /// added by 0L
     pub fn get_miner_state(
         &mut self,
         account: AccountAddress,
     ) -> Result<Option<MinerStateView>> {
         // form request
         let mut batch = JsonRpcBatch::new();
-        batch.add_get_miner_state_request( account);
-
+        batch.add_get_miner_state_request(account);
         let responses = self.client.execute(batch)?;
         match get_response_from_batch(0, &responses)? {
             Ok(response) => {
@@ -125,7 +124,7 @@ impl LibraClient {
                 }
             }
             Err(e) => {
-                bail!("Fetching Miner State failed with error: {:?}", e)
+                bail!("RPC get_miner_state failed with error: {:?}", e)
             }
         }
     }
@@ -163,6 +162,7 @@ impl LibraClient {
         }
     }
 
+    /// get account state
     pub fn get_account_state_blob(
         &mut self,
         account: AccountAddress,
@@ -190,7 +190,7 @@ impl LibraClient {
             ),
         }
     }
-
+/// get events
     pub fn get_events(
         &mut self,
         event_key: String,
@@ -277,6 +277,7 @@ impl LibraClient {
                 new_state,
                 latest_epoch_change_li,
             } => {
+                println!("\n");
                 info!(
                     "Verified epoch changed to {}",
                     latest_epoch_change_li
@@ -290,6 +291,7 @@ impl LibraClient {
             }
             TrustedStateChange::Version { new_state } => {
                 if self.trusted_state.latest_version() < new_state.latest_version() {
+                    println!("\n");
                     info!("Verified version change to: {}", new_state.latest_version());
                 }
                 self.trusted_state = new_state;
@@ -352,7 +354,7 @@ impl LibraClient {
             Some(account_view) => Ok(account_view.sequence_number),
         }
     }
-
+/// get events access path
     pub fn get_events_by_access_path(
         &mut self,
         access_path: AccessPath,

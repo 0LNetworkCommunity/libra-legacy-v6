@@ -61,16 +61,9 @@ pub enum StdlibScript {
     //
     // Below are 0L Changes
     //
-    Redeem,
-    RedeemOnboarding,
-    // RedeemInitialize,
-    LibraBlockTestHelper,
-    TxFeeTestHelper,
-    TxFeeTestMint,
-    TxFeeTestMove,
-    TxFeeTestDistr,
-    ReconfigBulkUpdate,
-    ReconfigSetup,
+    MinerState,
+    MinerStateOnboarding,
+    MinerStateTestHelper,
 }
 
 impl StdlibScript {
@@ -115,20 +108,11 @@ impl StdlibScript {
             UpdateLibraVersion,
             UpdateExchangeRate,
             UpdateMintingAbility,
-            //
+
             // Below are 0L Changes
-            //
-            Redeem,
-            RedeemOnboarding,
-            // RedeemInitialize,
-            LibraBlockTestHelper,
-            TxFeeTestHelper,
-            TxFeeTestMint,
-            TxFeeTestMove,
-            TxFeeTestDistr,
-            ReconfigBulkUpdate,
-            ReconfigSetup,
-        ]
+            MinerState,
+            MinerStateOnboarding,
+            MinerStateTestHelper,        ]
     }
 
     /// Construct the whitelist of script hashes used to determine whether a transaction script can
@@ -253,16 +237,9 @@ impl fmt::Display for StdlibScript {
                 //
                 // Below are 0L Changes
                 //
-                Redeem => "ol_redeem",
-                RedeemOnboarding => "ol_redeem_onboarding",
-                // RedeemInitialize => "redeem_init",
-                LibraBlockTestHelper => "ol_libra_block_test_helper",
-                TxFeeTestHelper => "ol_tx_fees_e2e_test_helper",
-                TxFeeTestMint => "ol_txn_fee_test_mint",
-                TxFeeTestMove => "ol_txn_fee_test_move",
-                TxFeeTestDistr => "ol_txn_fee_test_distr",
-                ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper",
-                ReconfigSetup => "ol_reconfig_bulk_update_setup",
+                MinerState => "miner_state_commit",
+                MinerStateOnboarding => "miner_state_onboarding",
+                MinerStateTestHelper => "miner_state_helper",
             }
         )
     }

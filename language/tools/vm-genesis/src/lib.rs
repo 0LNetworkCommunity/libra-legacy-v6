@@ -6,6 +6,7 @@
 mod genesis_context;
 mod genesis_gas_schedule;
 
+
 use crate::{
     genesis_context::{GenesisContext, GenesisStateView},
     genesis_gas_schedule::INITIAL_GAS_SCHEDULE,
@@ -31,6 +32,9 @@ use rand::prelude::*;
 use std::{collections::btree_map::BTreeMap, convert::TryFrom};
 use stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use vm::access::ModuleAccess;
+use std::env;
+// use libra_types::account_state_blob::AccountStateBlob;
+use libra_types::account_state::AccountState;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -64,6 +68,15 @@ pub fn encode_genesis_change_set(
     stdlib_modules: &[VerifiedModule],
     vm_publishing_option: VMPublishingOption,
 ) -> (ChangeSet, BTreeMap<Vec<u8>, FatStructType>) {
+    encode_genesis_change_set_and_states(validators, stdlib_modules, vm_publishing_option, Vec::new())
+}
+
+pub fn encode_genesis_change_set_and_states(
+    validators: &[ValidatorRegistration],
+    stdlib_modules: &[VerifiedModule],
+    vm_publishing_option: VMPublishingOption,
+    _exported_states: Vec<AccountState>,
+) -> (ChangeSet, BTreeMap<Vec<u8>, FatStructType>) {
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
     for module in stdlib_modules {
@@ -84,6 +97,24 @@ pub fn encode_genesis_change_set(
     });
 
     // generate the genesis WriteSet
+    let node_env = match env::var("NODE_ENV") {
+        Ok(val) => val,
+        _ => "test".to_string()
+    };
+
+    // Initializing testnet only when env is set to test
+    if node_env == "prod" {
+        println!("INITIALIZING WITH PROD CONSTANTS");
+    } else if node_env == "stage" {
+        // for testing production settings except with shorter epochs and lower vdf difficulty.
+        println!("Initializing with staging constants");
+        initialize_staging_net(&mut genesis_context);
+    } else {
+        // defaults to test constants for devs and ci testing
+        println!("Initializing with test constants");
+        initialize_testnet(&mut genesis_context);
+    }
+
     create_and_initialize_main_accounts(&mut genesis_context, &lbr_ty);
     initialize_validators(&mut genesis_context, &validators, &lbr_ty);
     initialize_miners(&mut genesis_context, &validators);
@@ -93,7 +124,16 @@ pub fn encode_genesis_change_set(
     reconfigure(&mut genesis_context);
     let mut interpreter_context = genesis_context.into_data_store();
     publish_stdlib(&mut interpreter_context, stdlib_modules);
+
+    // exported_states.iter().map(|s| {
+    //     s.iter
+    //     let ap =
+    //     let g =
+    //     interpreter_context.publish_resource(ap, g);
+    // });
+
     verify_genesis_write_set(interpreter_context.events());
+
     (
         ChangeSet::new(
             interpreter_context
@@ -191,52 +231,20 @@ fn initialize_validators(
 /// Initialize each validator.
 fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegistration]) {
     // Genesis will abort if mining can't be confirmed.
-
-    println!("initialize_miners");
-    // IDEA:
-    // 1. The miner who participates in genesis ceremony, will add the first vdf proof block to the node.config.toml file.
-    // TODO: This file will be parsed as usual, but the NodeConfig object needs to be modified and the data be vailable here.
-    // 2. The Challenge of the first VDF proof needs to be parsed, and the first 32 bytes sliced (is the account public key). A new account needs to be generated with                 Value::address(account),
-    // PSEUDOCODE...
-    // let first_32 = _node_configs.challenge[..32]
-    // AuthenticationKey::ed25519(&account_key);
-    // let account = auth_key.derived_address();
-    // let address = Value::address(account);
-
-    // 3. this function initialize_miners() will directly call the Redeem::begin_redeem() with context.exec here. Note the miners get initialized as usual in the above initialize_validators() (Done)
-
-    // context.set_sender(account_config::association_address());
-    // context.exec(
-    //     "Redeem",
-    //     "begin_redeem",
-    //     vec![],
-    //     vec![miner, vdf_proof_blob],
-    // );
-
-    // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
-    // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
-
-    // #[cfg(test)]
-    //TODO: Make this difficulty switch between genesis/production and testing (default should be testing)
-    const DIFFICULTY: u64 = 100;
-    // #[cfg(not(test))]
-    // const DIFFICULTY: u64 = 1000000;
-
-
+    
     for (account_key, _ , mining_proof) in validators {
         let auth_key = AuthenticationKey::ed25519(&account_key);
         let account = auth_key.derived_address(); // check if we need derive a new address or use validator's account instead
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
-        context.set_sender( account );
+        context.set_sender( account_config::vm_address() );
         context.exec(
-            "Redeem",
+            "MinerState",
             "genesis_helper",
             vec![],
             vec![
                 Value::transaction_argument_signer_reference(account),
                 Value::vector_u8(preimage), // serialize for move.
-                Value::u64(DIFFICULTY), // TODO: This constant needs to be set
                 Value::vector_u8(proof),
             ],
         );
@@ -246,7 +254,7 @@ fn initialize_miners(context: &mut GenesisContext, validators: &[ValidatorRegist
 
 /// Distribute genesis subsidy to initialized validators
 fn distribute_genesis_subsidy(context: &mut GenesisContext) {
-    println!("distributing genesis subsidy to validators");
+    // println!("distributing genesis subsidy to validators");
 
     // let root_association_address = account_config::vm_address();
     context.set_sender(account_config::vm_address());
@@ -256,6 +264,22 @@ fn distribute_genesis_subsidy(context: &mut GenesisContext) {
         vec![],
         vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
     }
+
+fn initialize_testnet(context: &mut GenesisContext) {
+    context.exec(
+        "Testnet",
+        "initialize",
+        vec![],
+        vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
+}
+
+fn initialize_staging_net(context: &mut GenesisContext) {
+    context.exec(
+        "StagingNet",
+        "initialize",
+        vec![],
+        vec![Value::transaction_argument_signer_reference(account_config::vm_address())]);
+}
 
 fn setup_vm_config(context: &mut GenesisContext, publishing_option: VMPublishingOption) {
     context.set_sender(config_address());
@@ -356,7 +380,7 @@ pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, FatStructType> {
     )
     .1
 }
-
+// For testing purposes.
 pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorRegistration>, &[NodeConfig])  {
     let registrations = node_configs
         .iter()
@@ -384,17 +408,11 @@ pub fn validator_registrations(node_configs: &[NodeConfig]) -> (Vec<ValidatorReg
                 identity_key.to_bytes(),
                 raw_advertised_address.into(),
             );
+            
             // 0L Change. Adding node configs
+            let genesis_proof = n.miner_swarm_fixture.as_ref().expect("No miner fixtures given").to_owned();
 
-
-            let preimage = n.configs_ol_miner.preimage.to_owned();
-            let proof = n.configs_ol_miner.proof.to_owned();
-            let vdf_proof = GenesisMiningProof{
-                preimage,
-                proof,
-            };
-
-            (account_key, script, vdf_proof) // 0L Change.
+            (account_key, script, genesis_proof) // 0L Change.
         })
         .collect::<Vec<_>>();
         (registrations, node_configs)

@@ -4,6 +4,7 @@
 use crate::{error::Error, SecureBackends};
 use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_secure_storage::{Storage, Value};
+use libra_types::account_address;
 use std::convert::TryInto;
 use structopt::StructOpt;
 
@@ -88,6 +89,9 @@ fn submit_key(
             .set(key_name, key)
             .map_err(|e| Error::RemoteStorageWriteError(key_name, e.to_string()))?;
     }
+
+    let account_key = account_address::from_public_key(&key);
+    println!("Operator Account Key:\n{}", account_key);
 
     Ok(key)
 }

@@ -1,0 +1,3 @@
+operators = ["alice", "bob", "carol", "dave", "eve"]
+owners = ["alice", "bob", "carol", "dave", "eve"]
+association = ["null"]

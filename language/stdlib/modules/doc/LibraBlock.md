@@ -129,7 +129,7 @@
       account,
       <a href="#0x0_LibraBlock_BlockMetadata">BlockMetadata</a> {
           height: 0,
-          voters: <a href="Vector.md#0x0_Vector_singleton">Vector::singleton</a>(0xA550C18), // OL Change TODO: Remove this. It's a placeholder.
+          voters: <a href="Vector.md#0x0_Vector_singleton">Vector::singleton</a>(0xA550C18), // 0L Change TODO: Remove this. It's a placeholder.
           new_block_events: <a href="Event.md#0x0_Event_new_event_handle">Event::new_event_handle</a>&lt;<a href="#0x0_LibraBlock_NewBlockEvent">Self::NewBlockEvent</a>&gt;(account),
       }
   );
@@ -202,7 +202,7 @@
     // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&previous_block_votes);
     // <a href="Debug.md#0x0_Debug_print">Debug::print</a>(&round);
 
-    // TODO OL (Dev): Call the Stats <b>module</b> from here with previous_block_votes.
+    // TODO 0L (Dev): Call the Stats <b>module</b> from here with previous_block_votes.
 
     // TODO: Figure out a story for errors in the system transactions.
     <b>if</b>(proposer != 0x0) Transaction::assert(<a href="LibraSystem.md#0x0_LibraSystem_is_validator">LibraSystem::is_validator</a>(proposer), 5002);

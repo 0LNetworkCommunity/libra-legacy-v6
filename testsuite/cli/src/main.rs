@@ -91,6 +91,7 @@ fn main() {
             })
             .unwrap()
     });
+
     let mut client_proxy = ClientProxy::new(
         &args.url,
         &faucet_account_file,
