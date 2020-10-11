@@ -35,10 +35,10 @@ pub struct PubKeys{
 impl PubKeys {
     pub fn new_from_mnemonic(&self, mnemonic: String) {
         let (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network) = key_scheme(new_from_mnemonic);
-        self.operator_key = child_0_owner_operator,
-        self.consensus_key = child_1_consensus,
-        self.validator_network_key = child_2_val_network,
-        self.fullnode_network_key = child_3_fullnode_network,
+        self.operator_key = child_0_owner_operator;
+        self.consensus_key = child_1_consensus;
+        self.validator_network_key = child_2_val_network;
+        self.fullnode_network_key = child_3_fullnode_network;
     }
 }
 
