@@ -1,6 +1,7 @@
 //! `submit` subcommand
 
 #![allow(clippy::never_loop)]
+use crate::node_keys::NodePubKeys;
 use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::{WalletLibrary};
 use crate::config;
@@ -41,7 +42,7 @@ impl Runnable for KeygenCmd {
         dbg!(&child_number);
 
         let mnemonic_string = wallet.mnemonic();
-
+        
         let mut miner_configs = config::OlMinerConfig::default();
         miner_configs.profile.auth_key = auth_key.to_string();
         miner_configs.profile.account = Some(auth_key.derived_address().to_string());
@@ -76,6 +77,10 @@ impl Runnable for KeygenCmd {
         WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\
         ---------\n\
         {}\n", &mnemonic_string.as_str());
+
+
+        let keys = NodePubKeys::new_from_mnemonic(mnemonic_string);
+        dbg!(&keys);
     }
 }
 

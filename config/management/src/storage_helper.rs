@@ -12,7 +12,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::node_keys::key_scheme;
+use miner::node_keys::key_scheme;
 
 // pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
 //     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");

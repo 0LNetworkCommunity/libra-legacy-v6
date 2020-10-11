@@ -1,4 +1,4 @@
-//! OlMiner resubmit_tx module
+//! Miner resubmit backlog transactions module
 #![forbid(unsafe_code)]
 
 use cli::{libra_client::LibraClient};
