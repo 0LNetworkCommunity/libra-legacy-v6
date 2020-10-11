@@ -49,8 +49,7 @@ pub fn backlog(config: &OlMinerConfig, tx_params: &TxParams){
     for i in remote_height+1..current_block_number.unwrap()+1{
         println!("Resubmitting missing block: {}", i);
         for entry in glob(&format!("{}/block_{}.json", blocks_dir.display(), i))
-                .expect("Failed to read glob pattern")
-            {
+                .expect("Failed to read glob pattern") {
                 if let Ok(entry) = entry {
                     let file = File::open(&entry).expect("Could not open block file");
                     let reader = BufReader::new(file);

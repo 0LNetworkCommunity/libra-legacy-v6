@@ -16,6 +16,7 @@ use libra_crypto::{
 };
 
 
+use libra_json_rpc_types::views::TransactionDataView::UserTransaction;
 use libra_types::waypoint::Waypoint;
 use libra_types::{transaction::authenticator::AuthenticationKey};
 
@@ -40,19 +41,25 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     //     };
     //     i+1;
     // }
-    let mut sequence_number= 0u64;
+    let mut seq_num= 0u64;
     backlog::backlog(&conf, &tx_params);
 
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
         // need to sleep for swarm to be ready.
         thread::sleep(time::Duration::from_millis(50000));
-        let res = submit_tx(&tx_params, preimage, proof, false, Some(sequence_number));
+        let res = submit_tx(&tx_params, preimage, proof, false, Some(seq_num));
+        match res.as_ref().unwrap().as_ref().unwrap().transaction {
+            UserTransaction { sequence_number, ..} => {
+                seq_num = sequence_number.to_owned();
+            }
+            _ => {}
+        }
         if eval_tx_status(res) == false {
             break;
         } else {
             // update sequence number from Res
-            sequence_number = sequence_number + 1;
+            seq_num = seq_num + 1;
         }
     }
 }

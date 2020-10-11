@@ -118,7 +118,6 @@ submit_tx(
             println!("Transaction submitted to network");
             match wait_for_tx(tx_params.address, sequence_number, &mut client){
                 Ok(tx_view) => {
-                    // TODO: update miner.toml with new waypoint.
                     Ok(Some(tx_view))
                 },
                 Err(err) => Err(err)
