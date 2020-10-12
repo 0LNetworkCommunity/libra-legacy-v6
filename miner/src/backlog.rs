@@ -17,7 +17,7 @@ use libra_json_rpc_types::views::MinerStateView;
 use crate::block::build_block::parse_block_height;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 
-pub fn backlog(config: &OlMinerConfig, tx_params: &TxParams){
+pub fn backlog(config: &OlMinerConfig, tx_params: &TxParams) {
     // Getting remote miner state
     // let tx_params = get_params_from_swarm(home).unwrap();
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -46,6 +46,7 @@ pub fn backlog(config: &OlMinerConfig, tx_params: &TxParams){
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
     println!("Current block number: {:?}", current_block_number.unwrap());
+    if current_block_number.unwrap() <= remote_height { return };
     let mut i = remote_height + 1;
     while i <= current_block_number.unwrap() {
         let path = PathBuf::from(format!("{}/block_{}.json", blocks_dir.display(), i));

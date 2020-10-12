@@ -99,7 +99,6 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     
     let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
-    dbg!(&keypair);
     let tx_params = TxParams {
         auth_key,
         address,

@@ -157,7 +157,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                 Some(tx_view) => {
                     if tx_view.vm_status != StatusCode::EXECUTED {
                         status_warn!("Transaction failed");
-                        println!("rejected with code:{:?}", tx_view.vm_status);
+                        println!("Rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
                         status_ok!("Success:", "proof committed to chain");
