@@ -99,16 +99,16 @@ impl Config {
             network.seed_peers_file = path.join("seed_peers.toml") ;
         }
 
-        let mut fullnode_network = NetworkConfig::network_with_id(NetworkId::Public);
-            fullnode_network.listen_address = self.fullnode_listen_address;
-            fullnode_network.advertised_address = self.fullnode_address;
-            fullnode_network.identity = Identity::from_storage(
-                libra_global_constants::FULLNODE_NETWORK_KEY.into(),
-                libra_global_constants::OPERATOR_ACCOUNT.into(),
-                self.backend.backend.clone().try_into().unwrap(),
-            );
+        // let mut fullnode_network = NetworkConfig::network_with_id(NetworkId::Public);
+        //     fullnode_network.listen_address = self.fullnode_listen_address;
+        //     fullnode_network.advertised_address = self.fullnode_address;
+        //     fullnode_network.identity = Identity::from_storage(
+        //         libra_global_constants::FULLNODE_NETWORK_KEY.into(),
+        //         libra_global_constants::OPERATOR_ACCOUNT.into(),
+        //         self.backend.backend.clone().try_into().unwrap(),
+        //     );
         
-        config.full_node_networks = vec!(fullnode_network);
+        // config.full_node_networks = vec!(fullnode_network);
 
 
 
