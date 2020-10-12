@@ -100,7 +100,7 @@ pub mod build_block {
         };
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        println!("block_0.json created, exiting.");
+        println!("Proof mined. Genesis block_0.json created, exiting.");
 
     }
     /// Mine one block
