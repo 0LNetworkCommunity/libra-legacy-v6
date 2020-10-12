@@ -1,6 +1,6 @@
 [workspace]
-miner_home = "."
-node_home = "."
+miner_home = "~/node_data/"
+node_home = "~/node_data/"
 
 [profile]
 auth_key = "1f72911cb33d843c7702efe1d29af6a5b260347406f1f2d22530c084390b34b7"
