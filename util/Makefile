@@ -73,10 +73,10 @@ MNEM = advice organ wage sick travel brief leave renew utility host roast barely
 endif
 
 ifeq ($(NAMESPACE), eve)
-ACC = b260347406f1f2d22530c084390b34b7
-AUTH = 1f72911cb33d843c7702efe1d29af6a5b260347406f1f2d22530c084390b34b7
+ACC = e9fbaf07795acc2e675961eb7649acdf
+AUTH = a34b9c1580fe7f7c518dac7ed9ddba0be9fbaf07795acc2e675961eb7649acdf
 IP = 104.131.32.62
-MNEM = achieve tomato carpet fitness muffin jelly fit pull park lobster cage ship oppose found paper predict perfect release super lunch domain away thumb pigeon
+MNEM = veteran category typical plastic service mimic photo sort face taste puppy slogan nature youth member lake symptom edit pepper stairs actual hub miss train
 endif
 
 ##########################
