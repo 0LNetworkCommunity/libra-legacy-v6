@@ -108,10 +108,8 @@ stdlib:
 
 bins:
 	cd ~/libra && cargo build -p libra-node --release & sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
-	cd ~/libra && cargo build -p libra-management --release && sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	# cd ~/libra && cargo build -p libra-management --release && sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
 	cd ~/libra && cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
-	
-	
 
 compress: 
 	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
@@ -162,7 +160,7 @@ github:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	libra-management set-layout \
+	cargo run -p libra-management -- set-layout \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path=set_layout_${NODE_ENV}.toml
 
@@ -171,9 +169,9 @@ layout:
 init:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
-	echo ${MNEM} | head -c -1 | libra-management initialize --path=${DATA_PATH} --namespace=${NAMESPACE}
+	echo ${MNEM} | head -c -1 | cargo run -p libra-management -- initialize --path=${DATA_PATH} --namespace=${NAMESPACE}
 else
-	libra-management initialize \
+	cargo run -p libra-management -- initialize \
 	--path=${DATA_PATH} \
 	--namespace=${NAMESPACE}
 endif
@@ -181,17 +179,17 @@ endif
 
 
 add-proofs:
-	libra-management mining \
+	cargo run -p libra-management -- mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 	--backend ${REMOTE}
 
 keys:
-	libra-management operator-key \
+	cargo run -p libra-management -- operator-key \
 	--local ${LOCAL} \
 	--remote ${REMOTE}
 
 register:
-	libra-management validator-config \
+	cargo run -p libra-management -- validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
@@ -201,12 +199,12 @@ register:
 
 # GENESIS STEPS
 build-genesis:
-	NODE_ENV='${NODE_ENV}' libra-management genesis \
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- genesis \
 	--backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- create-waypoint \
 	--remote ${REMOTE} \
 	--local ${LOCAL} \
 	--path ${DATA_PATH}
@@ -221,7 +219,7 @@ waypoint:
 	cat ${DATA_PATH}/miner.toml
 
 toml:
-	libra-management config \
+	cargo run -p libra-management -- config \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
 	--backend ${LOCAL} \
@@ -231,7 +229,7 @@ toml:
 
 peers:
 # cp -f seed_peers.toml backup.seed_peers.toml
-	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
+	cargo run -p libra-management -- seeds --genesis-path ${DATA_PATH}/genesis.blob
 # TODO: Seed peers gets places in working path, deep in libra code.
 	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
 	mv seed_peers.toml  ${DATA_PATH}/seed_peers.toml
