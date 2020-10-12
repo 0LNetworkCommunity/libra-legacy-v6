@@ -16,7 +16,6 @@ use std::path::PathBuf;
 
 /// A test harness for the submit_tx with a local swarm 
 pub fn test_runner(home: PathBuf, _parent_config: &MinerConfig, _no_submit: bool) {
-    // thread::sleep(time::Duration::from_millis(50000));
 
     let tx_params = get_params_from_swarm(home).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
@@ -33,7 +32,7 @@ pub fn test_runner(home: PathBuf, _parent_config: &MinerConfig, _no_submit: bool
     //     };
     //     i+1;
     // }
-    backlog::backlog(&conf, &tx_params);
+    backlog::process_backlog(&conf, &tx_params);
 
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);

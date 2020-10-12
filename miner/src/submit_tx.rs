@@ -160,7 +160,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                         println!("Rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
-                        status_ok!("Success:", "proof committed to chain");
+                        status_ok!("Success:", "proof committed to chain\n");
                         return true
                     }
                 }
