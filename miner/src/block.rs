@@ -64,7 +64,7 @@ pub mod build_block {
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &MinerConfig) {
-        status_info!("Mining:","Genesis Proof");
+        println!("Mining Genesis Proof");
 
         let preimage = config.genesis_preimage();
         let now = Instant::now();
@@ -79,7 +79,7 @@ pub mod build_block {
         };
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        status_info!("Proof mined:", "Genesis block_0.json created, exiting.");
+        println!("Proof mined. Genesis block_0.json created, exiting.");
 
     }
     /// Mine one block
