@@ -9,12 +9,12 @@ pub struct Block {
     pub height: u64,
     /// Elapsed Time in seconds
     pub elapsed_secs: u64,
-    /// VDF input preimage. AKA challenge
+    /// VDF input preimage; "challenge" arg in verifiable_delay
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub preimage: Vec<u8>,
     /// Data for Block
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    /// VDF proof. AKA solution
+    /// VDF proof data, "solution" arg in verifiable_delay
     pub proof: Vec<u8>,
 }
 
