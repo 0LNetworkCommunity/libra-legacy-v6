@@ -25,10 +25,10 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 #[derive(Command, Debug, Options)]
 pub struct OnboardCmd {
     // Option for --waypoint, to set a specific waypoint besides genesis_waypoint which is found in key_store.json
-    #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in miner.toml")]
+    #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in key_store.json")]
     waypoint: String,
-    // Path of the block_0.json to onboard.
-    #[options(help = "Path of the block_0.json to onboard.")]
+    // Path of the block_0.json to submit.
+    #[options(help = "Path of the block_0.json to submit.")]
     file: PathBuf, 
 }
 

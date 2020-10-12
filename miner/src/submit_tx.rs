@@ -78,6 +78,10 @@ pub fn submit_tx(
             vec![
                 TransactionArgument::U8Vector(preimage),
                 TransactionArgument::U8Vector(proof),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),TransactionArgument::U8Vector("z".as_bytes().to_vec()),                
             ],
         );
     }
