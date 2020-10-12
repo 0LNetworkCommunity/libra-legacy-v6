@@ -99,7 +99,7 @@ impl Config {
             network.seed_peers_file = path.join("seed_peers.toml") ;
         }
 
-        let mut fullnode_network = NetworkConfig::network_with_id(NetworkId::Validator);
+        let mut fullnode_network = NetworkConfig::network_with_id(NetworkId::Public);
             fullnode_network.listen_address = self.fullnode_listen_address;
             fullnode_network.advertised_address = self.fullnode_address;
             fullnode_network.identity = Identity::from_storage(
