@@ -2,8 +2,7 @@
 
 // use crate::block::Block;
 
-use crate::config::MinerConfig;
-use crate::prelude::*;
+use crate::{config::MinerConfig, test_tx_swarm::onboarding_test};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
