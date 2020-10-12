@@ -67,9 +67,8 @@ impl Block {
 }
 
 impl ValConfigs {
-
     /// Extract the preimage and proof from a genesis proof block_0.json
-    pub fn get_intit_data(path: &std::path::PathBuf) -> Result<ValConfigs,std::io::Error> {
+    pub fn get_init_data(path: &std::path::PathBuf) -> Result<ValConfigs,std::io::Error> {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let configs: ValConfigs = serde_json::from_reader(reader).expect("init_configs.json should deserialize");
@@ -79,7 +78,7 @@ impl ValConfigs {
 
 pub mod build_block {
     //! Functions for generating the 0L delay proof and writing data to file system.
-    use super::Block;
+    use super::{Block};
     use crate::config::*;
     use crate::delay::*;
     use crate::error::{Error, ErrorKind};
@@ -459,5 +458,19 @@ fn create_fixtures() {
         assert_eq!(parse_block_height(&blocks_dir).0, Some(33));
 
         test_helper_clear_block_dir(&blocks_dir)
+    }
+
+    #[test]
+    fn test_parse_init_file() {
+        use super::ValConfigs;
+        let fixtures = PathBuf::from("../fixtures/onboarding.json");
+        let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
+        assert_eq!(init_configs.full_node_network_address, "104.131.32.62", "Could not parse network address");
+
+        let consensus_key_vec = hex::decode("2734465e8191b85abae0f713ababc8f6d4dcf6d58844779ea51c531489bd261c").unwrap();
+        
+        assert_eq!(init_configs.consensus_pubkey, consensus_key_vec, "Could not parse network address");
+        // dbg!(consensus_key_vec);
+        // dbg!(ValConfigs::get_init_data(&fixtures));
     }
 }
