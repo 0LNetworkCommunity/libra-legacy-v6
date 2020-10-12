@@ -52,17 +52,17 @@ pub fn test_runner(home: PathBuf) {
 
 /// A test harness for the submit_tx with a local swarm 
 pub fn onboarding_test(home: PathBuf) {
-    fs::copy("../fixtures/onboarding.json", "./blocks/onboarding.json").unwrap();
-    
-    let block_file = fs::read_to_string("./blocks/onboarding.json")
-        .expect("Could not read latest block file in path");
+    let file = "./blocks/onboarding.json";
+    fs::copy("../fixtures/onboarding.json", file).unwrap();
+    let block_file = fs::read_to_string(file)
+        .expect("Could not read onboarding file");
 
     let onboarding_file: ValConfigs =
         serde_json::from_str(&block_file).expect("could not deserialize latest block");
     dbg!(&onboarding_file);
 
     let tx_params = get_params_from_swarm(home).unwrap();
-    let conf = MinerConfig::load_swarm_config(&tx_params);
+    // let conf = MinerConfig::load_swarm_config(&tx_params);
     // // TODO: count three blocks and exit
     // // let i = 0;
     // // while i < 4 {
