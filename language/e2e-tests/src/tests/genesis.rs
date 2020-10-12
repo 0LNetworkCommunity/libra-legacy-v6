@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{data_store::GENESIS_CHANGE_SET, executor::FakeExecutor};
-use libra_types::transaction::{Transaction, TransactionPayload};
+use libra_types::transaction::{Transaction};
 
-use stdlib::{transaction_scripts::StdlibScript, StdLibOptions};
+use stdlib::StdLibOptions;
 
 #[test]
 fn execute_genesis_write_set() {

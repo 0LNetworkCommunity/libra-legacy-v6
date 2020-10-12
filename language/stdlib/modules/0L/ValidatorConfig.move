@@ -88,7 +88,7 @@ module ValidatorConfig {
     ///////////////////////////////////////////////////////////////////////////
 
     // Rotate the config in the validator_account
-    // NB! Once the config is set, it can not go to Option::none - this is crucial for validity
+    // WARNING! Once the config is set, it can not go to Option::none - this is crucial for validity
     //     of the LibraSystem's code
     public fun set_config(
         signer: &signer,
@@ -115,10 +115,12 @@ module ValidatorConfig {
         });
     }
 
-    // WARNING: A thirdparty can set up the validator configs with onboarding transaction. The function checks if the ValidatorConfig struct is None. So that it cannot be overwritten by a thirdparty.
+    // WARNING:  This is called by an unrestricted function LibraAccount::create_validator_account_with_vdf. 
+    // A third party can set up the validator configs with onboarding transaction. The function checks if the ValidatorConfig struct is None. So that it cannot be overwritten by a third party.
+    
     //Permissions: PUBLIC, ANYONE.
     public fun set_init_config(
-        signer: &signer,
+        sender: &signer,
         validator_account: address,
         consensus_pubkey: vector<u8>,
         validator_network_identity_pubkey: vector<u8>,
@@ -127,16 +129,16 @@ module ValidatorConfig {
         full_node_network_address: vector<u8>,
     ) acquires T {
         Transaction::assert(
-            Signer::address_of(signer) == get_operator(validator_account),
-            1101
+            Signer::address_of(sender) == get_operator(validator_account),
+            220001014010
         );
+
 
         // TODO(valerini): verify the validity of new_config.consensus_pubkey and
         // the proof of posession
         let t_ref = borrow_global_mut<T>(validator_account);
-        
         // Only sets config on onboarding transaction.
-        Transaction::assert(Option::is_none(&t_ref.config), 1102);
+        Transaction::assert(Option::is_none(&t_ref.config), 220001011000);
 
         t_ref.config = Option::some(Config {
             consensus_pubkey,

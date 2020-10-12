@@ -9,6 +9,11 @@ use 0x0::VDF;
 fun main(
   challenge: vector<u8>,
   solution: vector<u8>,
+  consensus_pubkey: vector<u8>,
+  validator_network_identity_pubkey: vector<u8>,
+  validator_network_address: vector<u8>,
+  full_node_network_identity_pubkey: vector<u8>,
+  full_node_network_address: vector<u8>,
   // expected_address: address // UX: seems redundant but it's for the user to doubly check they know the address.
 ) {
     // Parse key and check
@@ -20,6 +25,11 @@ fun main(
     LibraAccount::create_validator_account_with_vdf<GAS::T>(
       &challenge,
       &solution,
+      consensus_pubkey,
+      validator_network_identity_pubkey,
+      validator_network_address,
+      full_node_network_identity_pubkey,
+      full_node_network_address,
     );
 
     // Check the account has the Validator role

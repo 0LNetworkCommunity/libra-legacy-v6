@@ -12,7 +12,7 @@ script {
   use 0x0::Transaction::assert;
   use 0x0::LibraAccount;
   use 0x0::GAS;
-  // use 0x0::ValidatorConfig;
+  use 0x0::ValidatorConfig;
   use 0x0::TestFixtures;
   use 0x0::VDF;
   use 0x0::Debug::print;
@@ -28,13 +28,18 @@ script {
     LibraAccount::create_validator_account_with_vdf<GAS::T>(
       &challenge,
       &solution,
+      x"deadbeef", // consensus_pubkey: vector<u8>,
+      x"20d1ac", //validator_network_identity_pubkey: vector<u8>,
+      b"192.168.0.1", //validator_network_address: vector<u8>,
+      x"1ee7", //full_node_network_identity_pubkey: vector<u8>,
+      b"192.168.0.1", //full_node_network_address: vector<u8>,
     );
 
     // Check the account has the Validator role
     assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 02);
 
     assert(ValidatorConfig::is_valid(parsed_address), 03);
-    
+
     // Check the account exists and the balance is 0
     assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 04);
   }

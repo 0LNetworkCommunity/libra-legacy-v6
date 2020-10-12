@@ -21,7 +21,13 @@ fun main(_sender: &signer) {
   LibraAccount::create_validator_account_with_vdf<GAS::T>(
     &challenge,
     &solution,
+    x"deadbeef", // consensus_pubkey: vector<u8>,
+    x"20d1ac", //validator_network_identity_pubkey: vector<u8>,
+    b"192.168.0.1", //validator_network_address: vector<u8>,
+    x"1ee7", //full_node_network_identity_pubkey: vector<u8>,
+    b"192.168.0.1", //full_node_network_address: vector<u8>,
   );
+
   Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(eve_addr), 7357130101011000);
 
   Transaction::assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101021000);

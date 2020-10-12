@@ -1143,7 +1143,12 @@ module LibraAccount {
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
     public fun create_validator_account_with_vdf<Token>(
         challenge: &vector<u8>,
-        solution: &vector<u8>
+        solution: &vector<u8>,
+        consensus_pubkey: vector<u8>,
+        validator_network_identity_pubkey: vector<u8>,
+        validator_network_address: vector<u8>,
+        full_node_network_identity_pubkey: vector<u8>,
+        full_node_network_address: vector<u8>,
     ) {
         // Note: A majority of the onboarding logic is contained here because of limitations on resources and signers
         // LibraAccount is the only module which can simulate a Signer type, and move a resource onto an account, without the sender account, being the recipient account. 
@@ -1173,6 +1178,17 @@ module LibraAccount {
         // MinerState::commit_state(&new_signer, blob);
 
         ValidatorConfig::publish_from_vdf(&new_signer);
+        ValidatorConfig::set_init_config(
+            &new_signer,
+            new_account_address,
+            consensus_pubkey,
+            validator_network_identity_pubkey,
+            validator_network_address,
+            full_node_network_identity_pubkey,
+            full_node_network_address,
+        );
+
+
         // create the account, and also consume/destroy the new_signer.
         make_account<Token, Empty::T>(new_signer, auth_key_prefix, Empty::create(), false);
     }
