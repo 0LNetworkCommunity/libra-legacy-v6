@@ -1,4 +1,4 @@
-//! OlMiner delay module
+//! MinerApp delay module
 #![forbid(unsafe_code)]
 
 /// Functions for running the VDF.

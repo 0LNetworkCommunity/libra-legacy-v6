@@ -1,8 +1,10 @@
-//! OlMiner Config
+//! MinerApp Config
 //!
 //! See instructions in `commands.rs` to specify the path to your
 //! application's configuration file and/or command-line options
 //! for specifying it.
+
+use std::fs;
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde::{Deserialize, Serialize};
@@ -10,11 +12,12 @@ use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
 use libra_crypto::ValidCryptoMaterialStringExt;
+use ajson;
 
-/// OlMiner Configuration
+/// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct OlMinerConfig {
+pub struct MinerConfig {
     /// Workspace config
     pub workspace: Workspace,
     /// User Profile
@@ -27,20 +30,24 @@ const AUTH_KEY_BYTES: usize = 32;
 const CHAIN_ID_BYTES: usize = 64;
 const STATEMENT_BYTES: usize = 1008;
 
-impl OlMinerConfig {
-    // pub fn get_waypoint () {
-    //     let file = fs::File::open("text.json")
-    //     .expect("file should open read only");
-    // let json: serde_json::Value = serde_json::from_reader(file)
-    //     .expect("file should be proper JSON");
-    // let first_name = json.get("FirstName")
-    //     .expect("file should have FirstName key");
-    // }
+impl MinerConfig {
+    /// Gets the dynamic waypoint from libra node's key_store.json
+    pub fn get_waypoint (&self) -> String {
+    let file = fs::File::open(self.get_key_store_path())
+        .expect("key_store.json not found.");
+    let json: serde_json::Value = serde_json::from_reader(file)
+        .expect("could not parse JSON in key_store.json");
+    // let wp = json.get("Waypoint")
+    // .expect("file should have Waypoint key");
+
+    let name = ajson::get(&json.to_string(), "*waypoint.value.value").expect("could not find key: waypoint");
+    name.to_string()
+}
 
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
-        let mut conf = OlMinerConfig::default();
+        let mut conf = MinerConfig::default();
         // Load profile config
         conf.profile.auth_key = param.auth_key.to_string();
         conf.profile.account = Some(param.address.to_string());
@@ -125,24 +132,31 @@ impl OlMinerConfig {
     }
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self)-> PathBuf {
-        let mut home = self.workspace.home.clone();
+        let mut home = self.workspace.miner_home.clone();
         home.push(&self.chain_info.block_dir);
         home
     }
 
-    /// Get where the backlog.json are stored.
-    pub fn get_local_backlog_path(&self)-> PathBuf {
-        let mut home = self.workspace.home.clone();
-        home.push("backlog.json");
+    /// Get where node key_store.json stored.
+    pub fn get_key_store_path(&self)-> PathBuf {
+        let mut home = self.workspace.miner_home.clone();
+        home.push("key_store.json");
         home
     }
+
+    // /// Get where the backlog.json are stored.
+    // pub fn get_local_backlog_path(&self)-> PathBuf {
+    //     let mut home = self.workspace.home.clone();
+    //     home.push("backlog.json");
+    //     home
+    // }
 }
 
 /// Default configuration settings.
 ///
 /// Note: if your needs are as simple as below, you can
-/// use `#[derive(Default)]` on OlMinerConfig instead.
-impl Default for OlMinerConfig {
+/// use `#[derive(Default)]` on MinerConfig instead.
+impl Default for MinerConfig {
     fn default() -> Self {
         Self {
             workspace: Workspace::default(),
@@ -157,13 +171,16 @@ impl Default for OlMinerConfig {
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
     /// home directory of miner
-    pub home: PathBuf,
+    pub miner_home: PathBuf,
+    /// home directory of the libra node, may be the same as miner.
+    pub node_home: PathBuf,
 }
 
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            home: PathBuf::from(".")
+            miner_home: PathBuf::from("."),
+            node_home: PathBuf::from(".")
         }
     }
 }
@@ -179,7 +196,7 @@ pub struct ChainInfo {
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
-    pub base_waypoint: String,
+    pub base_waypoint: Option<String>,
 }
 
 // TODO: These defaults serving as test fixtures.
@@ -187,9 +204,9 @@ impl Default for ChainInfo {
     fn default() -> Self {
         Self {
             chain_id: "experimental".to_owned(),
-            block_dir: "./blocks".to_owned(),
+            block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
-            base_waypoint: "0:0000".to_owned(),
+            base_waypoint: None,
             node: Some("http://localhost:8080".to_owned()),
         }
     }

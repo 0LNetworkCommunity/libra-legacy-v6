@@ -1,7 +1,7 @@
 //! `start` subcommand - example of how to write a subcommand
 
 use crate::{block::Block, submit_tx::get_params};
-use crate::config::OlMinerConfig;
+use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
 use libra_types::waypoint::Waypoint;
@@ -24,7 +24,7 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct OnboardCmd {
-    // Option for --waypoint, to set a specific waypoint besides genesis_waypoint which is found in miner.toml
+    // Option for --waypoint, to set a specific waypoint besides genesis_waypoint which is found in key_store.json
     #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in miner.toml")]
     waypoint: String,
     // Path of the block_0.json to onboard.
@@ -52,7 +52,7 @@ impl Runnable for OnboardCmd {
                 Using waypoint in miner.toml\n {:?}",
                 self.waypoint,
                 miner_configs.chain_info.base_waypoint);
-                waypoint = miner_configs.chain_info.base_waypoint.parse().unwrap();
+                waypoint = miner_configs.get_waypoint().parse().unwrap();
 
             }
         }
@@ -60,23 +60,22 @@ impl Runnable for OnboardCmd {
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         let genesis_data = Block::get_genesis_tx_data(&self.file).unwrap();
         match submit_tx(&tx_params, genesis_data.0.to_owned(), genesis_data.1.to_owned(), true) {
-            Ok(res) => {
-
-                println!("Miner onboarding tx success: {:?}", res.unwrap());
+            Ok(_res) => {
+                status_ok!("Success", "Miner onboarding committed, exiting.");
             }
             Err(e) => {
-                println!("Miner onboarding tx error: {:?}", e);
+                status_warn!(format!("Miner onboarding tx error: {:?}", e));
 
             }
         }
     }
 }
 
-impl config::Override<OlMinerConfig> for OnboardCmd {
+impl config::Override<MinerConfig> for OnboardCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.
-    fn override_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
+    fn override_config(&self, config: MinerConfig) -> Result<MinerConfig, FrameworkError> {
         Ok(config)
     }
 }

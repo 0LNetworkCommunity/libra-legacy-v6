@@ -1,4 +1,4 @@
-//! OlMiner
+//! MinerApp
 //!
 //! Application based on the [Abscissa] framework.
 //!
@@ -23,7 +23,7 @@ pub mod delay;
 pub mod error;
 pub mod prelude;
 pub mod submit_tx;
-pub mod swarm_test;
+pub mod test_tx_swarm;
 pub mod backlog;
 
 

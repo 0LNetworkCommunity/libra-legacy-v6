@@ -1,4 +1,4 @@
-//! OlMiner submit_tx module
+//! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 use libra_wallet::{Mnemonic, key_factory::Seed, key_factory::KeyFactory, ChildNumber};
 use libra_types::{waypoint::Waypoint};
@@ -12,17 +12,17 @@ use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
-use std::{thread, path::PathBuf, time, io::{stdout, Write}};
+use std::{thread, time, io::{stdout, Write}};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
-use libra_types::{transaction::helpers::*, vm_error::StatusCode};
+use libra_types::{transaction::helpers::*};
 use crate::{
-    config::OlMinerConfig
+    config::MinerConfig
 };
 use stdlib::transaction_scripts;
-use libra_config::config::NodeConfig;
-
 use libra_json_rpc_types::views::TransactionView;
+use libra_types::vm_error::StatusCode;
+
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
     /// User's 0L authkey used in mining.
@@ -44,8 +44,7 @@ pub struct TxParams {
 }
 
 /// Submit a miner transaction to the network.
-pub fn 
-submit_tx(
+pub fn submit_tx(
     tx_params: &TxParams,
     preimage: Vec<u8>,
     proof: Vec<u8>,
@@ -55,14 +54,12 @@ submit_tx(
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let account_state = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let (account_state,_) = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let sequence_number = match account_state {
+        Some(av) => av.sequence_number,
+        None => 0,
+    };
 
-    let mut sequence_number = 0u64;
-    if account_state.0.is_some() {
-        // TODO: In staging network, transactions are sent too fast before the sequence number is updated.
-        sequence_number = account_state.0.unwrap().sequence_number;
-        dbg!(sequence_number);
-    }
     let script: Script;
     // Create the unsigned MinerState transaction script
     if !is_onboading {
@@ -84,7 +81,6 @@ submit_tx(
             ],
         );
     }
-
 
     // sign the transaction script
     let txn = create_user_txn(
@@ -113,14 +109,7 @@ submit_tx(
         txn
     ){
         Ok(_) => {
-            println!("Transaction submitted to network, waiting for status.");
-            match wait_for_tx(tx_params.address, sequence_number, &mut client){
-                Ok(tx_view) => {
-                    // TODO: update miner.toml with new waypoint.
-                    Ok(Some(tx_view))
-                },
-                Err(err) => Err(err)
-            }
+            Ok( wait_for_tx(tx_params.address, sequence_number, &mut client) )
         }
         Err(err) => Err(err)
     }
@@ -131,27 +120,20 @@ submit_tx(
 pub fn wait_for_tx (
     sender_address: AccountAddress,
     sequence_number: u64,
-    client: &mut LibraClient) -> Result<TransactionView, Error>{
+    client: &mut LibraClient) -> Option<TransactionView>{
         println!(
-            "Waiting for tx from acc: {} with sequence number: {}",
+            "Awaiting tx status \nSubmitted from account: {} with sequence number: {}",
             sender_address, sequence_number
         );
 
         loop {
-            thread::sleep(time::Duration::from_millis(1000));
+            
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
-
-            let seq = if sequence_number > 0 {
-                sequence_number - 1
-            } else {
-                0
-            };
             
-            match &mut client
-                .get_txn_by_acc_seq(sender_address, seq, true){
-                Ok(Some(txn_view)) => {
-                    return Ok(txn_view.to_owned());
+            match &mut client.get_txn_by_acc_seq(sender_address, sequence_number, false){
+                Ok( Some(txn_view)) => {
+                    return Some(txn_view.to_owned());
                 },
                 Err(e) => {
                     println!("Response with error: {:?}", e);
@@ -159,12 +141,12 @@ pub fn wait_for_tx (
                 },
                 _ => {
                     print!(".");
+                    thread::sleep(time::Duration::from_millis(1000));
                 }
             }
 
         }
 }
-
 
 /// Evaluate the response of a submitted miner transaction.
 pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
@@ -175,15 +157,15 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                 Some(tx_view) => {
                     if tx_view.vm_status != StatusCode::EXECUTED {
                         status_warn!("Transaction failed");
-                        println!("rejected with code:{:?}", tx_view.vm_status);
+                        println!("Rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
-                        status_ok!("Committed:", "miner proof committed to chain");
+                        status_ok!("Success:", "proof committed to chain\n");
                         return true
                     }
                 }
                 //did not receive tx_object but it wasn't in error. This is likely because it's the first sequence number and we are skipping.
-                None => { 
+                None => {
                     status_warn!("No tx_view returned");
                     return false
                 }
@@ -203,7 +185,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
 pub fn get_params (
     mnemonic: &str, 
     waypoint: Waypoint,
-    config: &OlMinerConfig
+    config: &MinerConfig
 ) -> TxParams {
     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
     let kf = KeyFactory::new(&seed).unwrap();
@@ -224,48 +206,6 @@ pub fn get_params (
     }
 }
 
-/// Get transaction parameters from a running swarm configuration.
-pub fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
-    home.push("0/node.config.toml");
-    if !home.exists() {
-        home = PathBuf::from("../saved_logs/0/node.config.toml")
-    }
-    let config = NodeConfig::load(&home)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
-    match &config.test {
-        Some( conf) => {
-            println!("Swarm Keys : {:?}", conf);
-        },
-        None =>{
-            println!("test config does not set.");
-        }
-    }
-    
-    let mut private_key = config.test.unwrap().operator_keypair.unwrap();
-    let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
-    let address = auth_key.derived_address();
-
-    let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap();
-
-    let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
-    
-    let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
-    dbg!(&keypair);
-    let tx_params = TxParams {
-        auth_key,
-        address,
-        url,
-        waypoint: parsed_waypoint,
-        keypair,
-        max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 0,
-        user_tx_timeout: 5_000,
-    };
-
-    Ok(tx_params)
-}
-
-
 #[test]
 fn test_make_params() {
     use crate::config::{
@@ -273,12 +213,14 @@ fn test_make_params() {
         Profile,
         ChainInfo
     };
+    use std::path::PathBuf;
 
     let mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-    let configs_fixture = OlMinerConfig {
+    let configs_fixture = MinerConfig {
         workspace: Workspace{
-            home: PathBuf::from("."),
+            miner_home: PathBuf::from("."),
+            node_home: PathBuf::from("."),
         },
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
@@ -291,7 +233,7 @@ fn test_make_params() {
         chain_info: ChainInfo {
             chain_id: "0L testnet".to_owned(),
             block_dir: "test_blocks_temp_2".to_owned(),
-            base_waypoint: "None".to_owned(),
+            base_waypoint: None,
             node: Some("http://localhost:8080".to_string()),
         },
 

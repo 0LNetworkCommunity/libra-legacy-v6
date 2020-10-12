@@ -13,7 +13,7 @@ use move_core_types::{
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
 
-/// Struct that represents a CurrencyInfo resource
+/// Struct that represents a MinerStateHistory resource
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MinerStateResource {
     pub previous_proof_hash: Vec<u8>,
@@ -23,6 +23,7 @@ pub struct MinerStateResource {
     pub count_proofs_in_epoch: u64,
     pub epochs_validating_and_mining: u64,
     pub contiguous_epochs_validating_and_mining: u64,
+
 }
 
 impl MoveResource for MinerStateResource {
@@ -42,10 +43,12 @@ impl MinerStateResource {
     }
 
     pub fn resource_path(account: AccountAddress) -> AccessPath {
+        println!("debug 2");
         let resource_key = ResourceKey::new(
             account,
             MinerStateResource::struct_tag(),
         );
+        dbg!(&resource_key);
         AccessPath::resource_access_path(&resource_key)
     }
 

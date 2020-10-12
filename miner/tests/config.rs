@@ -7,9 +7,10 @@ use abscissa_core::path::PathBuf;
 #[test]
 fn test_genesis_preimage() {
     // Create fixtures.
-    let configs = OlMinerConfig {
+    let configs = MinerConfig {
         workspace: Workspace {
-            home: PathBuf::from("."),
+            miner_home: PathBuf::from("."),
+            node_home: PathBuf::from("."),
         },
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_owned(),
@@ -21,12 +22,12 @@ fn test_genesis_preimage() {
         chain_info: ChainInfo {
             chain_id: "0L testnet".to_owned(),
             block_dir: "blocks".to_owned(),
-            base_waypoint: "None".to_owned(),
+            base_waypoint: None,
             node: None,
         },
     };
 
-    let first_preimage = OlMinerConfig::genesis_preimage(&configs);
+    let first_preimage = MinerConfig::genesis_preimage(&configs);
 
     println!("proof:\n{:?}", hex::encode(&first_preimage));
 

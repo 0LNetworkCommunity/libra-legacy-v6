@@ -1,6 +1,6 @@
-# OlMiner
+# Miner
 
-OlMiner is an application.
+Miner is an application.
 
 ## Getting Started
 

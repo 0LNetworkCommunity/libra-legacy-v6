@@ -1,15 +1,13 @@
-
 [workspace]
-home = "."
+miner_home = "."
+node_home = "."
 
 [profile]
 auth_key = "4a62540137e5f3b05c6ea608e37b3ab74a6dcca79b3828fc665fca5c6218d793"
 account = "4a6dcca79b3828fc665fca5c6218d793"
-operator_private_key = "none"
 statement = "test"
 
 [chain_info]
 chain_id = "experimental"
 block_dir= "./blocks/"
-node ="http://localhost:8080" #should be the same as 0_dev_config/node.config.toml for $
-base_waypoint="0:aa6102aeb9213c5b55b1537b4684327124ac13901b1987824a2ff7f295934d0e"
+node ="http://localhost:8080"

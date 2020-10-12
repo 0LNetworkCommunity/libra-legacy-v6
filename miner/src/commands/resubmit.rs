@@ -2,7 +2,7 @@
 
 // use crate::block::Block;
 
-use crate::config::OlMinerConfig;
+use crate::config::MinerConfig;
 use crate::prelude::*;
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.

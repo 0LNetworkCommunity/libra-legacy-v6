@@ -1,54 +1,59 @@
-//! OlMiner submit_tx module
+//! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{backlog, block::build_block::{mine_genesis, mine_once, parse_block_height}};
-
-use crate::config::OlMinerConfig;
-
+use crate::backlog;
+use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
+use crate::config::MinerConfig;
 use crate::prelude::*;
-use crate::submit_tx::{
-    submit_tx, TxParams, eval_tx_status};
+use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
 use anyhow::Error;
-
 use libra_config::config::NodeConfig;
-use libra_crypto::{
-    test_utils::KeyPair,
-};
-
-
+use libra_crypto::test_utils::KeyPair;
 use libra_types::waypoint::Waypoint;
-use libra_types::{transaction::authenticator::AuthenticationKey};
-
+use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
-use std::{path::PathBuf, thread, time};
+use std::path::PathBuf;
 
+/// A test harness for the submit_tx with a local swarm 
+pub fn test_runner(home: PathBuf, _parent_config: &MinerConfig, _no_submit: bool) {
 
-// use crate::application::{MINER_MNEMONIC, DEFAULT_PORT};
-// const DEFAULT_PORT: u64 = 2344; // TODO: this will likely deprecated in favor of urls and discovery.
-                                // const DEFAULT_NODE: &str = "src/config/test_data/single.node.config.toml";
-/// A test harness for the submit_tx
-pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
-    // PathBuf.new("./blocks")
     let tx_params = get_params_from_swarm(home).unwrap();
-    let conf = OlMinerConfig::load_swarm_config(&tx_params);
-    backlog::backlog(&conf, &tx_params);
+    let conf = MinerConfig::load_swarm_config(&tx_params);
+    // TODO: count three blocks and exit
+    // let i = 0;
+    // while i < 4 {
+    //     let (preimage, proof) = get_block_fixtures(&conf);
+
+    //     // need to sleep for swarm to be ready.
+    //     thread::sleep(time::Duration::from_millis(50000));
+    //     let res = submit_tx(&tx_params, preimage, proof, false);
+    //     if eval_tx_status(res) == false {
+    //         std::process::exit(0);
+    //     };
+    //     i+1;
+    // }
+    backlog::process_backlog(&conf, &tx_params);
 
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
-
         // need to sleep for swarm to be ready.
-        thread::sleep(time::Duration::from_millis(24000));
-        let res = submit_tx(&tx_params, preimage, proof, false);
-        if eval_tx_status(res) == false {
-            break;
-        };
+
+        match submit_tx(&tx_params, preimage, proof, false) {
+            Err(err)=>{ println!("{:?}", err) }
+            res =>{
+                if eval_tx_status(res) == false {
+                    break;
+                };
+
+            }
+        }
     }
 }
 
-fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>){
+fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
-    let mut blocks_dir = config.workspace.home.clone();
+    let mut blocks_dir = config.workspace.miner_home.clone();
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
@@ -76,8 +81,8 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let config = NodeConfig::load(&home)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
     match &config.test {
-        Some( conf) => {
-            println!("Swarm Keys : {:?}", conf);
+        Some(_conf) => {
+            // println!("Swarm Keys : {:?}", conf);
         },
         None =>{
             println!("test config does not set.");
@@ -93,7 +98,6 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     
     let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
-    dbg!(&keypair);
     let tx_params = TxParams {
         auth_key,
         address,

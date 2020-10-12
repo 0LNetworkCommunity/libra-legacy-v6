@@ -2,12 +2,12 @@
 
 // use crate::block::Block;
 
-use crate::config::OlMinerConfig;
+use crate::config::MinerConfig;
 use crate::prelude::*;
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use crate::swarm_test::test_runner;
+use crate::test_tx_swarm::test_runner;
 use std::path::PathBuf;
 
 
@@ -39,11 +39,11 @@ impl Runnable for SwarmCmd {
     }
 }
 
-impl config::Override<OlMinerConfig> for SwarmCmd {
+impl config::Override<MinerConfig> for SwarmCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.
-    fn override_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
+    fn override_config(&self, config: MinerConfig) -> Result<MinerConfig, FrameworkError> {
         Ok(config)
     }
 }

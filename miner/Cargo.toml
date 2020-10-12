@@ -30,6 +30,7 @@ lcs = { path = "../common/lcs", version = "0.1.0", package = "libra-canonical-se
 move-core-types={path="../language/move-core/types", version="0.1.0"}
 regex = "1"
 rpassword = "5.0"
+ajson = "0.2.3"
 # language-e2e-tests = { path = "../language/e2e-tests", version = "0.1.0" }
 
 rustyline = "6.2.0"

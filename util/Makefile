@@ -107,12 +107,11 @@ stdlib:
 	cd ~/libra/language/stdlib && cargo run --release
 
 bins:
-	cd ~/libra && cargo build -p libra-node --release
-	cd ~/libra && cargo build -p libra-management --release
-	cd ~/libra && cargo build -p miner --release
-	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
-	sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
-	sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+	cd ~/libra && cargo build -p libra-node --release & sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	cd ~/libra && cargo build -p libra-management --release && sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	cd ~/libra && cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+	
+	
 
 compress: 
 	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner

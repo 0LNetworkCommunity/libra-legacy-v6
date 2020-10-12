@@ -38,25 +38,11 @@ impl Block {
 
     /// Extract the preimage and proof from a genesis proof block_0.json
     pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
-
-
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
         return Ok((block.preimage, block.data));
     }
-
-    // /// Extract the proof/solution from a block.
-    // pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
-
-    //     let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
-
-    //     let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
-    //     let reader = std::io::BufReader::new(file);
-    //     let block: Block = serde_json::from_reader(reader).unwrap();
-
-    //     return block.data.clone();
-    // }
 }
 
 pub mod build_block {
@@ -77,7 +63,9 @@ pub mod build_block {
     };
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn mine_genesis(config: &OlMinerConfig) {
+    pub fn mine_genesis(config: &MinerConfig) {
+        println!("Mining Genesis Proof");
+
         let preimage = config.genesis_preimage();
         let now = Instant::now();
         let data = do_delay(&preimage);
@@ -91,9 +79,11 @@ pub mod build_block {
         };
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
+        println!("Proof mined. Genesis block_0.json created, exiting.");
+
     }
     /// Mine one block
-    pub fn mine_once(config: &OlMinerConfig) -> Result<Block, Error> {
+    pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
 
         let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir() );
         // If there are files in path, continue mining.
@@ -134,19 +124,17 @@ pub mod build_block {
 
     /// Write block to file
     pub fn mine_and_submit(
-        config: &OlMinerConfig,
+        config: &MinerConfig,
         tx_params: TxParams,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
-        let mut blocks_dir = config.workspace.home.clone();
+        let mut blocks_dir = config.workspace.miner_home.clone();
         blocks_dir.push(&config.chain_info.block_dir);
         let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
         // If there are NO files in path, mine the genesis proof.
         if current_block_number.is_none() {
-            status_info!("Block 0","Mining Genesis Proof");
-            mine_genesis(config);
-            status_ok!("Proof mined:", "Genesis block_0.json created, exiting.");
+            status_err!("Genesis block_0.json not found, exiting.");
             std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems
@@ -155,7 +143,7 @@ pub mod build_block {
                 status_info!(format!("Block {}", mining_height),"Mining VDF Proof");
                 
                 let block = mine_once(&config)?;
-                status_ok!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
+                status_info!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
                 if let Some(ref _node) = config.chain_info.node {
 
@@ -225,7 +213,7 @@ pub mod build_block {
     /* / Unit tests / */
     /* ////////////// */
 
-    // TODO: Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
+    // Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
     #[allow(dead_code)]
     fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
         // delete the temporary test file and directory.
@@ -239,9 +227,10 @@ pub mod build_block {
     fn test_mine_genesis() {
         // if no file is found, the block height is 0
         //let blocks_dir = Path::new("./test_blocks");
-        let configs_fixture = OlMinerConfig {
+        let configs_fixture = MinerConfig {
             workspace: Workspace{
-                home: PathBuf::from("."),
+                miner_home: PathBuf::from("."),
+                node_home: PathBuf::from("."),
             },
             profile: Profile {
                 auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
@@ -253,7 +242,7 @@ pub mod build_block {
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
-                base_waypoint: "None".to_owned(),
+                base_waypoint: None,
                 node: None,
             },
         };
@@ -296,9 +285,10 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
 
-        let configs_fixture = OlMinerConfig {
+        let configs_fixture = MinerConfig {
             workspace: Workspace{
-                home: PathBuf::from("."),
+                miner_home: PathBuf::from("."),
+                node_home: PathBuf::from("."),
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
@@ -310,7 +300,7 @@ fn create_fixtures() {
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: "test_fixtures_miner_".to_owned() + &ns, //  path should be unique for concurrent tests.
-                base_waypoint: "None".to_owned(),
+                base_waypoint: None,
                 node: None,
             },
         };
@@ -336,9 +326,10 @@ fn create_fixtures() {
         // if no file is found, the block height is 0
         //let blocks_dir = Path::new("./test_blocks");
 
-        let configs_fixture = OlMinerConfig {
+        let configs_fixture = MinerConfig {
             workspace: Workspace{
-                home: PathBuf::from("."),
+                miner_home: PathBuf::from("."),
+                node_home: PathBuf::from("."),
             },
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
@@ -351,7 +342,7 @@ fn create_fixtures() {
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: "test_blocks_temp_2".to_owned(),
-                base_waypoint: "None".to_owned(),
+                base_waypoint: None,
                 node: None,
             },
         };
