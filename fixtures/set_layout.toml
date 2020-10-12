@@ -1,3 +1,3 @@
-operators = ["alice", "bob", "carol", "dave", "eve"]
-owners = ["alice", "bob", "carol", "dave", "eve"]
+operators = ["alice", "bob", "carol", "dave"]
+owners = ["alice", "bob", "carol", "dave"]
 association = ["null"]
