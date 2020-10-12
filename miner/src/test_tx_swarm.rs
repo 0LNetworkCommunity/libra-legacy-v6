@@ -1,7 +1,7 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::backlog;
+use crate::{backlog, block::ValConfigs};
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
@@ -51,11 +51,18 @@ pub fn test_runner(home: PathBuf) {
 }
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn onboarding_test(_home: PathBuf) {
-    fs::copy("../fixtures/block_0.json.stage.eve", "./blocks/onboarding.json");
+pub fn onboarding_test(home: PathBuf) {
+    fs::copy("../fixtures/onboarding.json", "./blocks/onboarding.json").unwrap();
     
-    // let tx_params = get_params_from_swarm(home).unwrap();
-    // let conf = MinerConfig::load_swarm_config(&tx_params);
+    let block_file = fs::read_to_string("./blocks/onboarding.json")
+        .expect("Could not read latest block file in path");
+
+    let onboarding_file: ValConfigs =
+        serde_json::from_str(&block_file).expect("could not deserialize latest block");
+    dbg!(&onboarding_file);
+
+    let tx_params = get_params_from_swarm(home).unwrap();
+    let conf = MinerConfig::load_swarm_config(&tx_params);
     // // TODO: count three blocks and exit
     // // let i = 0;
     // // while i < 4 {
@@ -72,18 +79,13 @@ pub fn onboarding_test(_home: PathBuf) {
     // backlog::process_backlog(&conf, &tx_params);
 
     // loop {
-    //     let (preimage, proof) = get_block_fixtures(&conf);
-    //     // need to sleep for swarm to be ready.
+        // let (preimage, proof) = get_block_fixtures(&conf);
+        // need to sleep for swarm to be ready.
 
-    //     match submit_tx(&tx_params, preimage, proof, false) {
-    //         Err(err)=>{ println!("{:?}", err) }
-    //         res =>{
-    //             if eval_tx_status(res) == false {
-    //                 break;
-    //             };
-
-    //         }
-    //     }
+        match submit_tx(&tx_params, onboarding_file.block_zero.preimage, onboarding_file.block_zero.proof, true) {
+            Err(err)=>{ println!("{:?}", err) }
+            Ok(res) => {dbg!(Some(res));}
+        }
     // }
 }
 

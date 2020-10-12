@@ -3,7 +3,7 @@
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 /// Data structure and serialization of 0L delay proof.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
     /// Block Height
     pub height: u64,
@@ -16,6 +16,27 @@ pub struct Block {
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     /// VDF proof. AKA solution
     pub proof: Vec<u8>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+/// Configuration files necessary to initialize a validator.
+pub struct ValConfigs {
+    /// Block zero of the onboarded miner
+    pub block_zero: Block,
+    /// Key validator will use in consensus
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub consensus_pubkey: Vec<u8>,
+    /// Key validator will use for network connections
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub validator_network_identity_pubkey: Vec<u8>,
+    /// IP address of validator
+    pub validator_network_address: String,
+    /// Key full node will use for network connections
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub full_node_network_identity_pubkey: Vec<u8>,
+    /// IP address of full node
+    pub full_node_network_address: String,
 }
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
