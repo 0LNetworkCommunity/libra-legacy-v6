@@ -1,6 +1,6 @@
-//! OlMiner Abscissa Application
+//! MinerApp Abscissa Application
 
-use crate::{commands::OlMinerCmd, config::OlMinerConfig};
+use crate::{commands::MinerCmd, config::MinerConfig};
 use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, EntryPoint, FrameworkError, StandardPaths,
@@ -14,32 +14,32 @@ pub(crate) const SECURITY_PARAM: u16 = 4096;
 // pub(crate) const DELAY_ITERATIONS: u64 = 100;
 
 /// Application state
-pub static APPLICATION: AppCell<OlMinerApp> = AppCell::new();
+pub static APPLICATION: AppCell<MinerApp> = AppCell::new();
 
 /// Obtain a read-only (multi-reader) lock on the application state.
 ///
 /// Panics if the application state has not been initialized.
-pub fn app_reader() -> application::lock::Reader<OlMinerApp> {
+pub fn app_reader() -> application::lock::Reader<MinerApp> {
     APPLICATION.read()
 }
 
 /// Obtain an exclusive mutable lock on the application state.
-pub fn app_writer() -> application::lock::Writer<OlMinerApp> {
+pub fn app_writer() -> application::lock::Writer<MinerApp> {
     APPLICATION.write()
 }
 
 /// Obtain a read-only (multi-reader) lock on the application configuration.
 ///
 /// Panics if the application configuration has not been loaded.
-pub fn app_config() -> config::Reader<OlMinerApp> {
+pub fn app_config() -> config::Reader<MinerApp> {
     config::Reader::new(&APPLICATION)
 }
 
-/// OlMiner Application
+/// MinerApp Application
 #[derive(Debug)]
-pub struct OlMinerApp {
+pub struct MinerApp {
     /// Application configuration.
-    config: Option<OlMinerConfig>,
+    config: Option<MinerConfig>,
 
     /// Application state.
     state: application::State<Self>,
@@ -49,7 +49,7 @@ pub struct OlMinerApp {
 ///
 /// By default no configuration is loaded, and the framework state is
 /// initialized to a default, empty state (no components, threads, etc).
-impl Default for OlMinerApp {
+impl Default for MinerApp {
     fn default() -> Self {
         Self {
             config: None,
@@ -58,18 +58,18 @@ impl Default for OlMinerApp {
     }
 }
 
-impl Application for OlMinerApp {
+impl Application for MinerApp {
     /// Entrypoint command for this application.
-    type Cmd = EntryPoint<OlMinerCmd>;
+    type Cmd = EntryPoint<MinerCmd>;
 
     /// Application configuration.
-    type Cfg = OlMinerConfig;
+    type Cfg = MinerConfig;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &OlMinerConfig {
+    fn config(&self) -> &MinerConfig {
         self.config.as_ref().expect("config not loaded")
     }
 
@@ -106,7 +106,7 @@ impl Application for OlMinerApp {
     }
 
     /// Get tracing configuration from command-line options
-    fn tracing_config(&self, command: &EntryPoint<OlMinerCmd>) -> trace::Config {
+    fn tracing_config(&self, command: &EntryPoint<MinerCmd>) -> trace::Config {
         if command.verbose {
             trace::Config::verbose()
         } else {

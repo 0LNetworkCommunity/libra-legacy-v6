@@ -1,33 +1,24 @@
-//! OlMiner submit_tx module
+//! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{backlog, block::build_block::{mine_genesis, mine_once, parse_block_height}};
-
-use crate::config::OlMinerConfig;
-
+use crate::backlog;
+use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
+use crate::config::MinerConfig;
 use crate::prelude::*;
-use crate::submit_tx::{
-    submit_tx, TxParams, eval_tx_status};
+use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
 use anyhow::Error;
-
 use libra_config::config::NodeConfig;
-use libra_crypto::{
-    test_utils::KeyPair,
-};
-
-
-use libra_json_rpc_types::views::TransactionDataView::UserTransaction;
+use libra_crypto::test_utils::KeyPair;
 use libra_types::waypoint::Waypoint;
-use libra_types::{transaction::authenticator::AuthenticationKey};
-
+use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
-use std::{path::PathBuf, thread, time};
-
+use std::path::PathBuf;
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
+pub fn test_runner(home: PathBuf, _parent_config: &MinerConfig, _no_submit: bool) {
+
     let tx_params = get_params_from_swarm(home).unwrap();
-    let conf = OlMinerConfig::load_swarm_config(&tx_params);
+    let conf = MinerConfig::load_swarm_config(&tx_params);
     // TODO: count three blocks and exit
     // let i = 0;
     // while i < 4 {
@@ -37,34 +28,29 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     //     thread::sleep(time::Duration::from_millis(50000));
     //     let res = submit_tx(&tx_params, preimage, proof, false);
     //     if eval_tx_status(res) == false {
-    //         panic!();
+    //         std::process::exit(0);
     //     };
     //     i+1;
     // }
-    let mut seq_num= 0u64;
-    backlog::backlog(&conf, &tx_params);
+    backlog::process_backlog(&conf, &tx_params);
 
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
         // need to sleep for swarm to be ready.
-        thread::sleep(time::Duration::from_millis(50000));
-        let res = submit_tx(&tx_params, preimage, proof, false, Some(seq_num));
-        match res.as_ref().unwrap().as_ref().unwrap().transaction {
-            UserTransaction { sequence_number, ..} => {
-                seq_num = sequence_number.to_owned();
+
+        match submit_tx(&tx_params, preimage, proof, false) {
+            Err(err)=>{ println!("{:?}", err) }
+            res =>{
+                if eval_tx_status(res) == false {
+                    break;
+                };
+
             }
-            _ => {}
-        }
-        if eval_tx_status(res) == false {
-            break;
-        } else {
-            // update sequence number from Res
-            seq_num = seq_num + 1;
         }
     }
 }
 
-fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>){
+fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.miner_home.clone();
@@ -112,7 +98,6 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     
     let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
-    dbg!(&keypair);
     let tx_params = TxParams {
         auth_key,
         address,

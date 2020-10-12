@@ -6,7 +6,7 @@ use std::{fs, io::Write};
 use miner::config;
 #[test]
 fn test_waypoint() {
-    let s = config::OlMinerConfig::default();
+    let s = config::MinerConfig::default();
 
     let mut path =  s.workspace.miner_home.clone();
     path.push("key_store.json");

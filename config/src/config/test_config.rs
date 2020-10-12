@@ -12,15 +12,6 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-// 0L TODO: Use OlMinerConfig to generate miner Toml
-// use miner::config::OlMinerConfig;
-// use std::{
-//
-//     // path::PathBuf,
-//     // fs,
-//     // io::Write,
-// };
-
 type AccountKeyPair = KeyPair<Ed25519PrivateKey>;
 type ConsensusKeyPair = KeyPair<Ed25519PrivateKey>;
 
