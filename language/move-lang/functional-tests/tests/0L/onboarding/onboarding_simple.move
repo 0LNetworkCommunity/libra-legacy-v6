@@ -23,13 +23,13 @@ script {
     );
 
     // Check the account has the Validator role
-    assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 02);
+    assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 7357130101011000);
 
-    assert(ValidatorConfig::is_valid(parsed_address), 03);
+    assert(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
 
 
     // Check the account exists and the balance is 0
-    assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 03);
+    assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 7357130101031000);
     }
 }
 //check: EXECUTED

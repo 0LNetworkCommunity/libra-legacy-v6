@@ -115,6 +115,38 @@ module ValidatorConfig {
         });
     }
 
+    // WARNING: A thirdparty can set up the validator configs with onboarding transaction. The function checks if the ValidatorConfig struct is None. So that it cannot be overwritten by a thirdparty.
+    //Permissions: PUBLIC, ANYONE.
+    public fun set_init_config(
+        signer: &signer,
+        validator_account: address,
+        consensus_pubkey: vector<u8>,
+        validator_network_identity_pubkey: vector<u8>,
+        validator_network_address: vector<u8>,
+        full_node_network_identity_pubkey: vector<u8>,
+        full_node_network_address: vector<u8>,
+    ) acquires T {
+        Transaction::assert(
+            Signer::address_of(signer) == get_operator(validator_account),
+            1101
+        );
+
+        // TODO(valerini): verify the validity of new_config.consensus_pubkey and
+        // the proof of posession
+        let t_ref = borrow_global_mut<T>(validator_account);
+        
+        // Only sets config on onboarding transaction.
+        Transaction::assert(Option::is_none(&t_ref.config), 1102);
+
+        t_ref.config = Option::some(Config {
+            consensus_pubkey,
+            validator_network_identity_pubkey,
+            validator_network_address,
+            full_node_network_identity_pubkey,
+            full_node_network_address,
+        });
+    }
+
     // TODO(valerini): to remove and call into set_config instead
     public fun set_consensus_pubkey(
         account: &signer,
