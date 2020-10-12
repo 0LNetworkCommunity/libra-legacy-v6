@@ -66,6 +66,17 @@ impl Block {
     }
 }
 
+impl ValConfigs {
+
+    /// Extract the preimage and proof from a genesis proof block_0.json
+    pub fn get_intit_data(path: &std::path::PathBuf) -> Result<ValConfigs,std::io::Error> {
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let configs: ValConfigs = serde_json::from_reader(reader).expect("init_configs.json should deserialize");
+        return Ok(configs);
+    }
+}
+
 pub mod build_block {
     //! Functions for generating the 0L delay proof and writing data to file system.
     use super::Block;
