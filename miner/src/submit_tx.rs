@@ -1,4 +1,4 @@
-//! OlMiner submit_tx module
+//! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 use libra_wallet::{Mnemonic, key_factory::Seed, key_factory::KeyFactory, ChildNumber};
 use libra_types::{waypoint::Waypoint};
@@ -17,7 +17,7 @@ use std::{thread, time, io::{stdout, Write}};
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
 use crate::{
-    config::OlMinerConfig
+    config::MinerConfig
 };
 use stdlib::transaction_scripts;
 use libra_json_rpc_types::views::TransactionView;
@@ -185,7 +185,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
 pub fn get_params (
     mnemonic: &str, 
     waypoint: Waypoint,
-    config: &OlMinerConfig
+    config: &MinerConfig
 ) -> TxParams {
     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
     let kf = KeyFactory::new(&seed).unwrap();
@@ -216,7 +216,7 @@ fn test_make_params() {
 
     let mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-    let configs_fixture = OlMinerConfig {
+    let configs_fixture = MinerConfig {
         workspace: Workspace{
             miner_home: PathBuf::from("."),
             node_home: PathBuf::from("."),

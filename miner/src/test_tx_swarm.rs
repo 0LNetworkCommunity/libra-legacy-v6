@@ -1,9 +1,9 @@
-//! OlMiner submit_tx module
+//! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
 use crate::backlog;
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
-use crate::config::OlMinerConfig;
+use crate::config::MinerConfig;
 use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
 use anyhow::Error;
@@ -15,11 +15,11 @@ use reqwest::Url;
 use std::path::PathBuf;
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bool) {
+pub fn test_runner(home: PathBuf, _parent_config: &MinerConfig, _no_submit: bool) {
     // thread::sleep(time::Duration::from_millis(50000));
 
     let tx_params = get_params_from_swarm(home).unwrap();
-    let conf = OlMinerConfig::load_swarm_config(&tx_params);
+    let conf = MinerConfig::load_swarm_config(&tx_params);
     // TODO: count three blocks and exit
     // let i = 0;
     // while i < 4 {
@@ -51,7 +51,7 @@ pub fn test_runner(home: PathBuf, _parent_config: &OlMinerConfig, _no_submit: bo
     }
 }
 
-fn get_block_fixtures (config: &OlMinerConfig) -> (Vec<u8>, Vec<u8>){
+fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.miner_home.clone();

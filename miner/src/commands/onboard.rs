@@ -1,7 +1,7 @@
 //! `start` subcommand - example of how to write a subcommand
 
 use crate::{block::Block, submit_tx::get_params};
-use crate::config::OlMinerConfig;
+use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
 use libra_types::waypoint::Waypoint;
@@ -71,11 +71,11 @@ impl Runnable for OnboardCmd {
     }
 }
 
-impl config::Override<OlMinerConfig> for OnboardCmd {
+impl config::Override<MinerConfig> for OnboardCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.
-    fn override_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
+    fn override_config(&self, config: MinerConfig) -> Result<MinerConfig, FrameworkError> {
         Ok(config)
     }
 }

@@ -23,7 +23,7 @@ impl Runnable for KeygenCmd {
 
         let mnemonic_string = wallet.mnemonic();
 
-        let mut miner_configs = config::OlMinerConfig::default();
+        let mut miner_configs = config::MinerConfig::default();
         miner_configs.profile.auth_key = auth_key.to_string();
         miner_configs.profile.account = Some(auth_key.derived_address().to_string());
 

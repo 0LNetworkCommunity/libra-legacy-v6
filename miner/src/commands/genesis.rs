@@ -1,7 +1,7 @@
 //! `start` subcommand - example of how to write a subcommand
 
 use crate::block::build_block;
-use crate::config::OlMinerConfig;
+use crate::config::MinerConfig;
 use crate::prelude::*;
 use std::path::PathBuf;
 
@@ -24,11 +24,11 @@ impl Runnable for GenesisCmd {
     }
 }
 
-impl config::Override<OlMinerConfig> for GenesisCmd {
+impl config::Override<MinerConfig> for GenesisCmd {
     // Process the given command line options, overriding settings from
     // a configuration file using explicit flags taken from command-line
     // arguments.
-    fn override_config(&self, config: OlMinerConfig) -> Result<OlMinerConfig, FrameworkError> {
+    fn override_config(&self, config: MinerConfig) -> Result<MinerConfig, FrameworkError> {
         Ok(config)
     }
 }

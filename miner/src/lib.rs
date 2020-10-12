@@ -1,4 +1,4 @@
-//! OlMiner
+//! MinerApp
 //!
 //! Application based on the [Abscissa] framework.
 //!

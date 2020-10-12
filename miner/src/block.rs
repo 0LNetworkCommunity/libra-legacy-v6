@@ -38,25 +38,11 @@ impl Block {
 
     /// Extract the preimage and proof from a genesis proof block_0.json
     pub fn get_genesis_tx_data(path: &std::path::PathBuf) -> Result<(Vec<u8>,Vec<u8>),std::io::Error> {
-
-
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
         return Ok((block.preimage, block.data));
     }
-
-    // /// Extract the proof/solution from a block.
-    // pub fn get_proof(config: &crate::config::OlMinerConfig , height: u64) -> Vec<u8> {
-
-    //     let blocks_dir = std::path::Path::new(&config.chain_info.block_dir);
-
-    //     let file = std::fs::File::open(format!("{}/block_{}.json",blocks_dir.display(),height)).expect("Could not open block file");
-    //     let reader = std::io::BufReader::new(file);
-    //     let block: Block = serde_json::from_reader(reader).unwrap();
-
-    //     return block.data.clone();
-    // }
 }
 
 pub mod build_block {
@@ -77,7 +63,7 @@ pub mod build_block {
     };
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn mine_genesis(config: &OlMinerConfig) {
+    pub fn mine_genesis(config: &MinerConfig) {
         status_info!("Mining:","Genesis Proof");
 
         let preimage = config.genesis_preimage();
@@ -97,7 +83,7 @@ pub mod build_block {
 
     }
     /// Mine one block
-    pub fn mine_once(config: &OlMinerConfig) -> Result<Block, Error> {
+    pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
 
         let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir() );
         // If there are files in path, continue mining.
@@ -138,7 +124,7 @@ pub mod build_block {
 
     /// Write block to file
     pub fn mine_and_submit(
-        config: &OlMinerConfig,
+        config: &MinerConfig,
         tx_params: TxParams,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
@@ -227,7 +213,7 @@ pub mod build_block {
     /* / Unit tests / */
     /* ////////////// */
 
-    // TODO: Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
+    // Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
     #[allow(dead_code)]
     fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
         // delete the temporary test file and directory.
@@ -241,7 +227,7 @@ pub mod build_block {
     fn test_mine_genesis() {
         // if no file is found, the block height is 0
         //let blocks_dir = Path::new("./test_blocks");
-        let configs_fixture = OlMinerConfig {
+        let configs_fixture = MinerConfig {
             workspace: Workspace{
                 miner_home: PathBuf::from("."),
                 node_home: PathBuf::from("."),
@@ -299,7 +285,7 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
 
-        let configs_fixture = OlMinerConfig {
+        let configs_fixture = MinerConfig {
             workspace: Workspace{
                 miner_home: PathBuf::from("."),
                 node_home: PathBuf::from("."),
@@ -340,7 +326,7 @@ fn create_fixtures() {
         // if no file is found, the block height is 0
         //let blocks_dir = Path::new("./test_blocks");
 
-        let configs_fixture = OlMinerConfig {
+        let configs_fixture = MinerConfig {
             workspace: Workspace{
                 miner_home: PathBuf::from("."),
                 node_home: PathBuf::from("."),

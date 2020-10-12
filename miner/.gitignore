@@ -38,7 +38,7 @@ rls*.log
 # Rust output files
 target/
 
-#OlMiner
+#Miner
 /blocks/
 /test_blocks/
 

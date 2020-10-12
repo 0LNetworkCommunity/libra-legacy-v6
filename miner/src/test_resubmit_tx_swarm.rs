@@ -1,4 +1,4 @@
-//! OlMiner resubmit_tx module
+//! MinerApp resubmit_tx module
 #![forbid(unsafe_code)]
 
 use cli::{libra_client::LibraClient};
@@ -9,7 +9,7 @@ use std::io::BufReader;
 use libra_json_rpc_types::views::MinerStateView;
 use std::path::PathBuf;
 //use crate::submit_tx::LocalMinerState;
-use crate::config::OlMinerConfig;
+use crate::config::MinerConfig;
 use crate::submit_tx_alt::{TxParams, submit_tx, eval_tx_status};
 use libra_config::config::NodeConfig;
 use libra_types::{
@@ -23,7 +23,7 @@ use reqwest::Url;
 use anyhow::Error;
 use crate::block::build_block::parse_block_height;
 
-pub fn resubmit_backlog(home: PathBuf, config: &OlMinerConfig){
+pub fn resubmit_backlog(home: PathBuf, config: &MinerConfig){
     //! If there are any proofs which have not been verified on-chain, send them.
     
     // Getting remote miner state

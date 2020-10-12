@@ -19,8 +19,6 @@
 )]
 
 use abscissa_core::testing::prelude::*;
-// use miner::config::OlMinerConfig;
-
 use libra_types::waypoint::Waypoint;
 use once_cell::sync::Lazy;
 use std::time::Duration;
@@ -33,7 +31,7 @@ use std::time::Duration;
 /// invocations as `cargo test` executes tests in parallel by default.
 pub static RUNNER: Lazy<CmdRunner> = Lazy::new(|| CmdRunner::default());
 
-/// Use `OlMinerConfig::default()` value if no config or args
+/// Use `MinerConfig::default()` value if no config or args
 #[test]
 #[ignore]
 fn start_no_args() {

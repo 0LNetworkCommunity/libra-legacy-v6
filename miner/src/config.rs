@@ -1,4 +1,4 @@
-//! OlMiner Config
+//! MinerApp Config
 //!
 //! See instructions in `commands.rs` to specify the path to your
 //! application's configuration file and/or command-line options
@@ -14,10 +14,10 @@ use crate::submit_tx::TxParams;
 use libra_crypto::ValidCryptoMaterialStringExt;
 use ajson;
 
-/// OlMiner Configuration
+/// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct OlMinerConfig {
+pub struct MinerConfig {
     /// Workspace config
     pub workspace: Workspace,
     /// User Profile
@@ -30,7 +30,7 @@ const AUTH_KEY_BYTES: usize = 32;
 const CHAIN_ID_BYTES: usize = 64;
 const STATEMENT_BYTES: usize = 1008;
 
-impl OlMinerConfig {
+impl MinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
     pub fn get_waypoint (&self) -> String {
     let file = fs::File::open(self.get_key_store_path())
@@ -47,7 +47,7 @@ impl OlMinerConfig {
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
-        let mut conf = OlMinerConfig::default();
+        let mut conf = MinerConfig::default();
         // Load profile config
         conf.profile.auth_key = param.auth_key.to_string();
         conf.profile.account = Some(param.address.to_string());
@@ -155,8 +155,8 @@ impl OlMinerConfig {
 /// Default configuration settings.
 ///
 /// Note: if your needs are as simple as below, you can
-/// use `#[derive(Default)]` on OlMinerConfig instead.
-impl Default for OlMinerConfig {
+/// use `#[derive(Default)]` on MinerConfig instead.
+impl Default for MinerConfig {
     fn default() -> Self {
         Self {
             workspace: Workspace::default(),
