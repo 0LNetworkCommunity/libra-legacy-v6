@@ -12,7 +12,7 @@ use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
-use std::{thread, time, io::{stdout, Write}};
+use std::{io::{stdout, Write}, thread, time};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
@@ -217,6 +217,7 @@ fn test_make_params() {
         Profile,
         ChainInfo
     };
+    use std::path::PathBuf;
 
     let mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();

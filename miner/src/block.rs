@@ -85,7 +85,7 @@ pub mod build_block {
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &MinerConfig) {
-        status_info!("Mining:","Genesis Proof");
+        println!("Mining Genesis Proof");
 
         let preimage = config.genesis_preimage();
         let now = Instant::now();
@@ -100,7 +100,7 @@ pub mod build_block {
         };
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        status_info!("Proof mined:", "Genesis block_0.json created, exiting.");
+        println!("block_0.json created, exiting.");
 
     }
     /// Mine one block
@@ -378,7 +378,7 @@ fn create_fixtures() {
             height: 0u64,
             elapsed_secs: 0u64,
             preimage: Vec::new(),
-            data: fixture_previous_proof,
+            proof: fixture_previous_proof,
         };
 
         write_json(&fixture_block, &configs_fixture.get_block_dir() );
@@ -429,7 +429,7 @@ fn create_fixtures() {
             height: current_block_number,
             elapsed_secs: 0u64,
             preimage: Vec::new(),
-            data: Vec::new(),
+            proof: Vec::new(),
         };
 
         // write the file temporarilty
