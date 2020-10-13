@@ -7,6 +7,7 @@ use crate::config;
 use toml;
 use std::{
     fs,
+    path::PathBuf,
     io::Write,
 };
 
@@ -35,9 +36,9 @@ impl Runnable for KeygenCmd {
         // config_path.push(format!("test_miner.toml");
         //println!("{:?}", &latest_block_path);
         // let miner_config_file = "./miner.toml";
-        let miner_toml_path = miner_configs.workspace.miner_home.clone();
+        let mut miner_toml_path = PathBuf::from(&miner_configs.workspace.miner_home);
         miner_toml_path.push("miner.toml");
-        let mut file = fs::File::create(&miner_toml_path);
+        let file = fs::File::create(&miner_toml_path);
         file.unwrap().write(&toml.as_bytes())
             .expect("Could not write block");
 

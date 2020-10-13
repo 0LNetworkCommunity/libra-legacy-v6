@@ -32,8 +32,7 @@ impl Runnable for GenesisCmd {
         let keys = NodePubKeys::new_from_mnemonic(mnemonic_string);
         dbg!(&keys);
 
-        let val_init_file = "./val_init.json";
-        let json_path = miner_configs.workspace.miner_home;
+        let mut json_path = PathBuf::from(&miner_configs.workspace.miner_home);
         json_path.push("val_init.json");
 
         let val_configs = ValConfigs {
@@ -51,8 +50,9 @@ impl Runnable for GenesisCmd {
             full_node_network_address: "1.1.1.1".to_string(),
         };
 
-        let mut file = File::create(&json_path.into()).unwrap();
-        file.write(&val_configs.into())
+        let mut file = File::create(json_path.as_path()).unwrap();
+        let buf = serde_json::to_string(&val_configs ).expect("Config should be export to json");
+        file.write(&buf.as_bytes() )
             .expect("Could not write val_init.json");
 
     }
