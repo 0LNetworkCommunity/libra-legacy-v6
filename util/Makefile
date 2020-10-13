@@ -85,16 +85,14 @@ REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
 ##### PIPELINES #####
-# set up the environment
-install: deps compile
-compile: stdlib bins
+compile: stop stdlib bins
 # pipelines for genesis ceremony
-register: clear fixtures init add-proofs keys register
+register: stop clear fixtures init add-proofs keys register
 # do genesis
-genesis: build-genesis waypoint toml peers
+genesis: stop build-genesis waypoint toml peers
 
 #### ENVIRONMENT #####
-deps:
+install:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete jq
 # TODO: Cargo is not getting set to path. This next line doesn't run.
@@ -268,9 +266,10 @@ wipe:
 	shred ~/.bash_history
 	srm ~/.bash_history
 
-#### TEST SETUP ####
 stop:
 	sudo service libra-node stop
+
+#### TEST SETUP ####
 
 clear:
 ifdef TEST
