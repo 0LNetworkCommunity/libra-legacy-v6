@@ -35,14 +35,16 @@ impl Runnable for GenesisCmd {
         let mut json_path = PathBuf::from(&miner_configs.workspace.miner_home);
         json_path.push("val_init.json");
 
+        let mut block_json = PathBuf::from(&miner_configs.workspace.miner_home);
+        block_json.push("blocks/block_0.json");
+        println!("load block_0 from {:?}", &block_json);
+
+        let f = File::open(block_json).expect("Could not open block_0 files");
+        let block: Block = serde_json::from_reader(f).expect("Can not read block_0.json");
+
         let val_configs = ValConfigs {
             /// Block zero of the onboarded miner
-            block_zero: Block {
-                height: 0,
-                elapsed_secs: 0,
-                preimage: hex::decode("0").unwrap(),
-                proof: hex::decode("0").unwrap(),
-            },
+            block_zero: block,
             consensus_pubkey: vec!(),
             validator_network_identity_pubkey: vec!(),
             validator_network_address: "1.1.1.1".to_string(),
