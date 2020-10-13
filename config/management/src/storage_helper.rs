@@ -94,14 +94,6 @@ impl StorageHelper {
     }
 
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        // let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-
-        // let kf = KeyFactory::new(&seed).unwrap();
-        // let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-        // let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
-        // let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
-        // let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
-        // let child_4 = kf.private_child(ChildNumber::new(4)).unwrap();
         let (child_0, 
             child_1, 
             child_2,
