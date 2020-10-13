@@ -111,61 +111,20 @@ bins:
 	# cd ~/libra && cargo build -p libra-management --release && sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
 	cd ~/libra && cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
-compress: 
-	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
-  
-build-node:
-	cd ~/libra && cargo build -p libra-node --release
-	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
-
 all-bins:
 	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
-keygen:
-	cd ${DATA_PATH} && miner keygen
-
-miner-genesis:
-	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
-
-reset: stop clear fixtures init keys genesis daemon
-
-#### FOR TESTING ####
-stop:
-	sudo service libra-node stop
-
-clear:
-ifdef TEST
-	cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json
-	rm ${DATA_PATH}/blocks/*
-endif
-
-fixtures:
-ifdef TEST
-	echo ${NAMESPACE}
-
-	mkdir -p ${DATA_PATH}/blocks/
-
-	if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm ${DATA_PATH}/blocks/block_0.json; \
-	fi 
-
-	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
-
-	cp ~/libra/fixtures/block_0.json.${NODE_ENV}.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
-
-endif
-
 #### GENESIS BACKEND SETUP ####
-github: 
+init_backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
-layout:
+init_layout:
 	cargo run -p libra-management -- set-layout \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path=set_layout_${NODE_ENV}.toml
 
 
-# REGISTRATION STEPS
+#### GENESIS REGISTRATION ####
 init:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
@@ -175,8 +134,6 @@ else
 	--path=${DATA_PATH} \
 	--namespace=${NAMESPACE}
 endif
-
-
 
 add-proofs:
 	cargo run -p libra-management -- mining \
@@ -197,7 +154,7 @@ register:
 	--remote ${REMOTE}
 
 
-# GENESIS STEPS
+#### GENESIS  ####
 build-genesis:
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- genesis \
 	--backend ${REMOTE} \
@@ -284,7 +241,55 @@ else
 
 endif
 
+
+
+#### HELPERS ####
+get_waypoint:
+	$(eval export WAY = $(shell jq '. | with_entries(select(.key|match("waypoint";"i")))[].value.value' ~/node_data/key_store.json))
+	
+
+client: get_waypoint
+	cargo run --bin cli -- -u http://localhost:8080 --waypoint $$WAY
+
+compress: 
+	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+  
+
+keygen:
+	cd ${DATA_PATH} && miner keygen
+
+miner-genesis:
+	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
+
+reset: stop clear fixtures init keys genesis daemon
+
 wipe: 
 	history -c
 	shred ~/.bash_history
 	srm ~/.bash_history
+
+#### TEST SETUP ####
+stop:
+	sudo service libra-node stop
+
+clear:
+ifdef TEST
+	cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json
+	rm ${DATA_PATH}/blocks/*
+endif
+
+fixtures:
+ifdef TEST
+	echo ${NAMESPACE}
+
+	mkdir -p ${DATA_PATH}/blocks/
+
+	if test -f ${DATA_PATH}/blocks/block_0.json; then \
+		rm ${DATA_PATH}/blocks/block_0.json; \
+	fi 
+
+	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
+
+	cp ~/libra/fixtures/block_0.json.${NODE_ENV}.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
+
+endif
