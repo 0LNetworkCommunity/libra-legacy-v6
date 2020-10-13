@@ -1,7 +1,6 @@
 //! `submit` subcommand
 
 #![allow(clippy::never_loop)]
-use crate::node_keys::NodePubKeys;
 use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::{WalletLibrary};
 use crate::config;
@@ -35,13 +34,18 @@ impl Runnable for KeygenCmd {
         // let mut config_path = PathBuf::from("./test_miner.toml");
         // config_path.push(format!("test_miner.toml");
         //println!("{:?}", &latest_block_path);
-        let miner_config_file = "./miner.toml";
-        let mut file = fs::File::create(&miner_config_file).unwrap();
-        file.write(&toml.as_bytes())
+        // let miner_config_file = "./miner.toml";
+        let miner_toml_path = miner_configs.workspace.miner_home.clone();
+        miner_toml_path.push("miner.toml");
+        let mut file = fs::File::create(&miner_toml_path);
+        file.unwrap().write(&toml.as_bytes())
             .expect("Could not write block");
+
+
+        //////////////// Info ////////////////
         
         println!("Saved to: {}\n\
-        ==========================\n\n", miner_config_file);
+        ==========================\n\n", miner_toml_path.display());
 
 
         println!("0L Auth Key:\n\
@@ -60,8 +64,7 @@ impl Runnable for KeygenCmd {
         {}\n", &mnemonic_string.as_str());
 
 
-        let keys = NodePubKeys::new_from_mnemonic(mnemonic_string);
-        dbg!(&keys);
+
     }
 }
 

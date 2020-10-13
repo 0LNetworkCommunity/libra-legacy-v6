@@ -71,10 +71,10 @@ impl Runnable for OnboardCmd {
             init_data.full_node_network_address,
         ) {
             Ok(_res) => {
-                status_ok!("Success", "Miner onboarding committed, exiting.");
+                status_ok!("Success", "Validator initialization committed, exiting.");
             }
             Err(e) => {
-                status_warn!(format!("Miner onboarding tx error: {:?}", e));
+                status_warn!(format!("Validator initialization error: {:?}", e));
 
             }
         }

@@ -51,15 +51,15 @@ pub fn test_runner(home: PathBuf) {
 }
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn onboarding_test(home: PathBuf) {
-    let file = "./blocks/onboarding.json";
-    fs::copy("../fixtures/onboarding.json", file).unwrap();
+pub fn val_init_test(home: PathBuf) {
+    let file = "./blocks/val_init.json";
+    fs::copy("../fixtures/val_init.json", file).unwrap();
     let block_file = fs::read_to_string(file)
-        .expect("Could not read onboarding file");
+        .expect("Could not read init file");
 
-    let onboarding_file: ValConfigs =
+    let init_file: ValConfigs =
         serde_json::from_str(&block_file).expect("could not deserialize latest block");
-    dbg!(&onboarding_file);
+    dbg!(&init_file);
 
     let tx_params = get_params_from_swarm(home).unwrap();
     // let conf = MinerConfig::load_swarm_config(&tx_params);
@@ -82,7 +82,7 @@ pub fn onboarding_test(home: PathBuf) {
         // let (preimage, proof) = get_block_fixtures(&conf);
         // need to sleep for swarm to be ready.
 
-        match submit_tx(&tx_params, onboarding_file.block_zero.preimage, onboarding_file.block_zero.proof, true) {
+        match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
             Err(err)=>{ println!("{:?}", err) }
             Ok(res) => {dbg!(Some(res));}
         }
