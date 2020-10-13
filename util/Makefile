@@ -244,7 +244,6 @@ endif
 #### HELPERS ####
 get_waypoint:
 	$(eval export WAY = $(shell jq '. | with_entries(select(.key|match("waypoint";"i")))[].value.value' ~/node_data/key_store.json))
-	
 
 client: get_waypoint
 	cargo run --bin cli -- -u http://localhost:8080 --waypoint $$WAY
@@ -252,7 +251,6 @@ client: get_waypoint
 compress: 
 	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
   
-
 keygen:
 	cd ${DATA_PATH} && miner keygen
 
