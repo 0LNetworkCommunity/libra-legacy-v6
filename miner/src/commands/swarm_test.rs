@@ -2,7 +2,7 @@
 
 // use crate::block::Block;
 
-use crate::{config::MinerConfig, test_tx_swarm::onboarding_test};
+use crate::{config::MinerConfig, test_tx_swarm::val_init_test};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
@@ -20,7 +20,7 @@ use std::path::PathBuf;
 #[derive(Command, Debug, Options)]
 pub struct SwarmCmd {
     #[options(help = "Test the onboading transaction.")]
-    onboarding: bool,
+    init: bool,
     #[options(help = "The home directory where the blocks will be stored")]
     home: PathBuf, 
 }
@@ -30,8 +30,8 @@ impl Runnable for SwarmCmd {
     fn run(&self) {
         println!("Testing Submit tx to Swarm. Using swarm private key");
 
-        if self.onboarding {
-            onboarding_test(self.home.to_owned());
+        if self.init {
+            val_init_test(self.home.to_owned());
         } else {
             test_runner(self.home.to_owned());
         }
