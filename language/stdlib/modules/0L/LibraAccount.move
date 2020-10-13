@@ -1155,7 +1155,6 @@ module LibraAccount {
         
         // Since this is an open function, we rate limit the callign with a proof of work, vdf. 
         // Check that accounts are created with a VDF proof.
-        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
 
         let valid = VDF::verify(
             challenge,
@@ -1163,6 +1162,8 @@ module LibraAccount {
             solution
         );
         Transaction::assert(valid, 120101011021);
+
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
 
         // publish an event for the account generation.
         let new_signer = create_signer(new_account_address);
@@ -1172,11 +1173,8 @@ module LibraAccount {
         move_to(&new_signer, Role_temp<ValidatorRole> {role_type: ValidatorRole {}, is_certified: true});
 
         // initialize the miner's state 
-        //TODO: rename
-        MinerState::init_miner_state(&new_signer);
-        // let blob = MinerState::create_proof_blob(*challenge, Globals::get_difficulty(), *solution);
-        // MinerState::commit_state(&new_signer, blob);
-
+        // NOTE: VDF verification is being called twice!
+        MinerState::init_miner_state(&new_signer, challenge, solution);
         ValidatorConfig::publish_from_vdf(&new_signer);
         ValidatorConfig::set_init_config(
             &new_signer,

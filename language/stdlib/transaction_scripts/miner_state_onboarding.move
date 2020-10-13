@@ -35,6 +35,9 @@ fun main(
     // Check the account has the Validator role
     Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 02);
 
+    // Transaction::assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
+
+
     // Check the account exists and the balance is 0
     Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 03);
 

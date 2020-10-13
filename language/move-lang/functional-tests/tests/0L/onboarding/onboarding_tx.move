@@ -9,6 +9,7 @@ use 0x0::Transaction;
 use 0x0::MinerState;
 use 0x0::NodeWeight;
 use 0x0::TestFixtures;
+use 0x0::ValidatorConfig;
 
 // Test Prefix: 1301
 fun main(_sender: &signer) {
@@ -30,13 +31,15 @@ fun main(_sender: &signer) {
 
   Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(eve_addr), 7357130101011000);
 
-  Transaction::assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101021000);
+  Transaction::assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
+
+  Transaction::assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101031000);
 
   //Check the validator is in the validator universe.
-  Transaction::assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101031000);
+  Transaction::assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101041000);
 
   // Check the account exists and the balance is 0
-  Transaction::assert(LibraAccount::balance<GAS::T>(eve_addr) == 0, 7357130101041000);
+  Transaction::assert(LibraAccount::balance<GAS::T>(eve_addr) == 0, 7357130101051000);
 }
 }
 // check: EXECUTED
