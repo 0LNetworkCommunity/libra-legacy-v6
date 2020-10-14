@@ -253,7 +253,7 @@ address 0x0 {
     public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
       // NOTE Only Signer can update own state.
       // Should only happen once.
-      Transaction::assert(!::exists<MinerProofHistory>(miner_addr), 130112011021);
+      Transaction::assert(!::exists<MinerProofHistory>(Signer::address_of(miner_sig)), 130112011021);
       // LibraAccount calls this.
       // Exception is LibraAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
