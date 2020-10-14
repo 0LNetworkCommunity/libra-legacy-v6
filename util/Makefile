@@ -273,10 +273,9 @@ stop:
 clear:
 ifdef TEST
 	service libra-node stop
-
 	if test -d ~/node_data/libradb; then \
-		cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json \
-		rm ${DATA_PATH}/blocks/*
+		cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json; \
+		rm ${DATA_PATH}/blocks/*; \
 	fi 
 
 endif
