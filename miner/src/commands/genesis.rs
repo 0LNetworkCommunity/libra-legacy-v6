@@ -37,10 +37,10 @@ impl Runnable for GenesisCmd {
         let mut json_path = PathBuf::from(&miner_configs.workspace.miner_home);
         json_path.push("val_init.json");
 
+        // Read from block_0.json to confirm it's properly formed.
         let mut block_json = PathBuf::from(&miner_configs.workspace.miner_home);
         block_json.push("blocks/block_0.json");
         println!("load block_0 from {:?}", &block_json);
-
         let f = File::open(block_json).expect("Could not open block_0 files");
         let block: Block = serde_json::from_reader(f).expect("Can not read block_0.json");
 

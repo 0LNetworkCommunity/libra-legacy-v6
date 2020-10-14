@@ -60,7 +60,7 @@ impl Runnable for OnboardCmd {
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         let init_data = ValConfigs::get_init_data(&self.file).unwrap();
         
-        match submit_init_tx(
+        match submit_onboard_tx(
             &tx_params,
             init_data.block_zero.preimage.to_owned(),
             init_data.block_zero.proof.to_owned(),
