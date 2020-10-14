@@ -20,8 +20,6 @@ module LibraSystem {
     use 0x0::Stats;
     use 0x0::Cases;
     use 0x0::FixedPoint32;
-    use 0x0::Debug::print;
-
 
     struct ValidatorInfo {
         addr: address,
@@ -308,6 +306,7 @@ module LibraSystem {
         let index = 0;
         while (index < n) {
             let account_address = *(Vector::borrow<address>(&new_validators, index));
+
             // A prospective validator must have a validator config resource
 
             if (is_valid_and_certified(account_address)) {

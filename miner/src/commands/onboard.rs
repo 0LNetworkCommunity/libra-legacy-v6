@@ -5,7 +5,7 @@ use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
 use libra_types::waypoint::Waypoint;
-use crate::submit_tx::submit_init_tx;
+use crate::submit_tx::submit_onboard_tx;
 use std::path::PathBuf;
 
 // use rustyline::error::ReadlineError;

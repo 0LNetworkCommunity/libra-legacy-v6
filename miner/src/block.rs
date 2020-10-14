@@ -465,7 +465,7 @@ fn create_fixtures() {
         use super::ValConfigs;
         let fixtures = PathBuf::from("../fixtures/val_init.json");
         let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
-        assert_eq!(init_configs.full_node_network_address, "104.131.32.62", "Could not parse network address");
+        assert_eq!(init_configs.full_node_network_address, "134.122.115.12", "Could not parse network address");
 
         let consensus_key_vec = hex::decode("2734465e8191b85abae0f713ababc8f6d4dcf6d58844779ea51c531489bd261c").unwrap();
         
