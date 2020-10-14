@@ -15,7 +15,7 @@ script {
   use 0x0::ValidatorConfig;
   use 0x0::TestFixtures;
   use 0x0::VDF;
-  use 0x0::Debug::print;
+  // use 0x0::Debug::print;
 
   fun main(_account: &signer) {
     let challenge = TestFixtures::alice_1_easy_chal();
