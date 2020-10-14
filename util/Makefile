@@ -243,7 +243,8 @@ endif
 
 #### HELPERS ####
 get_waypoint:
-	$(eval export WAY = $(shell jq '. | with_entries(select(.key|match("waypoint";"i")))[].value.value' ~/node_data/key_store.json))
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("waypoint";"i")))[].value.value' ~/node_data/key_store.json))
+	echo $$WAY
 
 client: get_waypoint
 	cargo run --bin cli -- -u http://localhost:8080 --waypoint $$WAY
