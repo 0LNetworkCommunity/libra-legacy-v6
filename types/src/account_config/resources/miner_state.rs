@@ -63,7 +63,7 @@ impl MinerStateResource {
 /// Struct that represents a MinerStateHistory resource
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ValConfigResource {
-    pub config: Vec<u8>,
+    pub config: ValKeys,
     pub operator_account: Vec<u8>,
 }
 
@@ -73,7 +73,6 @@ impl MoveResource for ValConfigResource {
 }
 
 impl ValConfigResource {
-
     pub fn struct_tag() -> StructTag {
         StructTag {
             address: CORE_CODE_ADDRESS,
@@ -101,13 +100,14 @@ impl ValConfigResource {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 
-struct ValKeys {
-        consensus_pubkey: Vec<u8>,
-        validator_network_identity_pubkey: Vec<u8>,
-        validator_network_address: Vec<u8>,
-        full_node_network_identity_pubkey: Vec<u8>,
-        full_node_network_address: Vec<u8>,
+pub struct ValKeys {
+    pub consensus_pubkey: Vec<u8>,
+    pub validator_network_identity_pubkey: Vec<u8>,
+    pub validator_network_address: Vec<u8>,
+    pub full_node_network_identity_pubkey: Vec<u8>,
+    pub full_node_network_address: Vec<u8>,
 }
 impl MoveResource for ValKeys {
     const MODULE_NAME: &'static str = "Config";

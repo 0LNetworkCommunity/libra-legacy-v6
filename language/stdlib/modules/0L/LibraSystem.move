@@ -293,9 +293,6 @@ module LibraSystem {
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>) acquires CapabilityHolder {
-
-        print(&0x01);
-        print(&new_validators);
         Transaction::assert(is_authorized_to_reconfigure_(account), 120201014010);
         Transaction::assert(Transaction::sender() == 0x0, 120201024010);
 
@@ -311,10 +308,6 @@ module LibraSystem {
         let index = 0;
         while (index < n) {
             let account_address = *(Vector::borrow<address>(&new_validators, index));
-
-            print(&0x02);
-            print(&account_address);
-
             // A prospective validator must have a validator config resource
 
             if (is_valid_and_certified(account_address)) {

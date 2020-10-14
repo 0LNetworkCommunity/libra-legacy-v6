@@ -336,6 +336,7 @@ async fn get_val_settings_req(
         .deref()
         .batch_fetch_resources_by_version(vec![ValConfigResource::resource_path( account_address )], request.version())?;
 
+    dbg!(&response);
     if response.len() > 0 {
         let raw = response.get(0).expect("Validator settings do not exist for account.").as_slice();
         let miner_state_resource = ValConfigResource::try_from_bytes(raw )?;

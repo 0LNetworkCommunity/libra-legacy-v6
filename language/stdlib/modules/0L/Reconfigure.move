@@ -16,7 +16,7 @@ module Reconfigure {
     use 0x0::TransactionFee;
     use 0x0::MinerState;
     use 0x0::Globals;
-    // use 0x0::Vector;
+    use 0x0::Vector;
     use 0x0::Stats;
 
     // This function is called by block-prologue once after n blocks.
@@ -40,29 +40,29 @@ module Reconfigure {
         // prepare_upcoming_validator_set(vm);
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validator_per_epoch());
-        // let jailed_set = LibraSystem::get_jailed_set();
+        let jailed_set = LibraSystem::get_jailed_set();
 
-        // let proposed_set = Vector::empty();
-        // let i = 0;
-        // while (i < Vector::length(&top_accounts)) {
-        //     let addr = *Vector::borrow(&top_accounts, i);
-        //     if (!Vector::contains(&jailed_set, &addr)){
-        //         Vector::push_back(&mut proposed_set, addr);
-        //     };
-        //     i = i+ 1;
-        // };
+        let proposed_set = Vector::empty();
+        let i = 0;
+        while (i < Vector::length(&top_accounts)) {
+            let addr = *Vector::borrow(&top_accounts, i);
+            if (!Vector::contains(&jailed_set, &addr)){
+                Vector::push_back(&mut proposed_set, addr);
+            };
+            i = i+ 1;
+        };
 
-        // // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
-        // if(Vector::length<address>(&proposed_set)<= 4) proposed_set = LibraSystem::get_val_set_addr();
-        // Usually an issue in staging network for QA only.
+        // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
+        if(Vector::length<address>(&proposed_set)<= 4) proposed_set = LibraSystem::get_val_set_addr();
+        // Usually this is only an issue in staging network for QA.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
         //Reset Counters
-        Stats::reconfig(&top_accounts);
+        Stats::reconfig(&proposed_set);
         MinerState::reconfig(vm);
         
         // Reconfigure the network
-        LibraSystem::bulk_update_validators(vm, top_accounts);
+        LibraSystem::bulk_update_validators(vm, proposed_set);
     }
 }
 }

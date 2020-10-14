@@ -20,10 +20,7 @@ script {
   fun main(_account: &signer) {
     let challenge = TestFixtures::alice_1_easy_chal();
     let solution = TestFixtures::alice_1_easy_sol();
-    let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
-    print(&0x0);
-    
-    print(&parsed_address);
+    let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);    
 
     LibraAccount::create_validator_account_with_vdf<GAS::T>(
       &challenge,

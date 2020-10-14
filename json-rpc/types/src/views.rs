@@ -522,15 +522,21 @@ impl From<MinerStateResource> for MinerStateView {
 /// MinerStat View implementation by 0L
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ValConfigsView {
-    pub config: Vec<u8>,
-    pub operator_account: Vec<u8>,
+    pub consensus_pubkey: Vec<u8>,
+    pub validator_network_identity_pubkey: Vec<u8>,
+    pub validator_network_address: Vec<u8>,
+    pub full_node_network_identity_pubkey: Vec<u8>,
+    pub full_node_network_address: Vec<u8>,
 }
 
 impl From<ValConfigResource> for ValConfigsView {
     fn from(info: ValConfigResource) -> ValConfigsView {
         ValConfigsView {
-            config: info.config,
-            operator_account: info.operator_account,
+            consensus_pubkey: info.config.consensus_pubkey,
+            validator_network_identity_pubkey: info.config.validator_network_identity_pubkey,
+            validator_network_address: info.config.validator_network_address,
+            full_node_network_identity_pubkey: info.config.full_node_network_identity_pubkey,
+            full_node_network_address: info.config.full_node_network_address,
         }
     }
 }
