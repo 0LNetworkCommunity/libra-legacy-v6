@@ -21,6 +21,7 @@ impl Command for OLCommand {
         let commands: Vec<Box<dyn Command>> = vec![
             Box::new(OLCommandSentProof {}),
             Box::new(OLCommandQueryMinerState {}),
+            Box::new(OLCommandQueryValConfigs {}),
             Box::new(OLCommandGenWaypoint {}),
         ];
 
@@ -119,6 +120,28 @@ impl Command for OLCommandGenWaypoint {
                 li_time_str,
                 waypoint
             ),
+        }
+    }
+}
+
+
+/// Sub commands to query validator configs of account.
+pub struct OLCommandQueryValConfigs {}
+
+impl Command for OLCommandQueryValConfigs {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["val_settings", "vs"]
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<account_address>"
+    }
+    fn get_description(&self) -> &'static str {
+        "Get validator settings for an address"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.query_val_settings_in_client(&params) {
+            Some( msv) => println!(" Account: {:?}\n {:?}", &params[1], msv ),
+            None => {},
         }
     }
 }

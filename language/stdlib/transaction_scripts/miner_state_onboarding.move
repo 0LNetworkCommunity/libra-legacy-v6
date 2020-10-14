@@ -5,6 +5,7 @@ use 0x0::LibraAccount;
 use 0x0::GAS;
 use 0x0::Transaction;
 use 0x0::VDF;
+use 0x0::ValidatorConfig;
 
 fun main(
   challenge: vector<u8>,
@@ -35,11 +36,11 @@ fun main(
     // Check the account has the Validator role
     Transaction::assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 02);
 
-    // Transaction::assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
+    Transaction::assert(ValidatorConfig::is_valid(parsed_address), 03);
 
 
     // Check the account exists and the balance is 0
-    Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 03);
+    Transaction::assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 04);
 
 }
 }
