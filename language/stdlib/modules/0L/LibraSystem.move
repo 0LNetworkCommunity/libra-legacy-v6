@@ -20,6 +20,8 @@ module LibraSystem {
     use 0x0::Stats;
     use 0x0::Cases;
     use 0x0::FixedPoint32;
+    use 0x0::Debug::print;
+
 
     struct ValidatorInfo {
         addr: address,
@@ -359,7 +361,10 @@ module LibraSystem {
       let k = 0;
       while(k < Vector::length(&validator_set)){
         let addr = *Vector::borrow<address>(&validator_set, k);
-
+        print(&0x0);
+        print(&addr);
+        print(&0x1);
+        print(&Cases::get_case(addr));
         // consensus case 1 and 2, allow inclusion into the next validator set.
         if (Cases::get_case(addr) == 3 || Cases::get_case(addr) == 4){
           Vector::push_back<address>(&mut jailed_set, addr)
@@ -377,6 +382,7 @@ module LibraSystem {
         let i = 0;
         while (i < Vector::length(validators)) {
             let addr = Vector::borrow(validators, i).addr;
+
             if (Cases::get_case(addr) == 1) {
                 let node_votes = Stats::node_current_votes(addr);
                 Vector::push_back(&mut compliant_nodes, addr);
