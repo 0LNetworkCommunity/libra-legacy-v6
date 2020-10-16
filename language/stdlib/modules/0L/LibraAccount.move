@@ -1206,11 +1206,12 @@ module LibraAccount {
         Roles::new_validator_role(creator_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, creator_account, human_name);
-        make_account(new_account, auth_key_prefix);
-
+        
 
         //// TODO: TEMP FOR MERGE /////
-        Stats::init_address(creator_account, new_account_address)
+        Stats::init_address(creator_account, new_account_address);
+        add_currencies_for_account<GAS>(&new_account, true);
+        make_account(new_account, auth_key_prefix)
     }
 
     public fun create_validator_account_from_mining_0L<Token>(
@@ -1237,6 +1238,7 @@ module LibraAccount {
         Roles::new_validator_operator_role(creator_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorOperatorConfig::publish(&new_account, creator_account, human_name);
+        add_currencies_for_account<GAS>(&new_account, true);
         make_account(new_account, auth_key_prefix)
     }
 
