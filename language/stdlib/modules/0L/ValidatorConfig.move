@@ -115,6 +115,7 @@ module ValidatorConfig {
         });
     }
 
+    // 0L
     // WARNING:  This is called by an unrestricted function LibraAccount::create_validator_account_with_vdf. 
     // A third party can set up the validator configs with onboarding transaction. The function checks if the ValidatorConfig struct is None. So that it cannot be overwritten by a third party.
     
