@@ -2,7 +2,7 @@ script {
     use 0x1::LibraSystem;
     use 0x1::Vector;
     use 0x1::ValidatorUniverse;
-    fun main(account: &signer, alice: address, bob: address, carol: address,
+    fun ol_reconfig_bulk_update_setup(account: &signer, alice: address, bob: address, carol: address,
         sha: address, ram: address) {
         // Create vector of desired validators
         let vec = Vector::empty();

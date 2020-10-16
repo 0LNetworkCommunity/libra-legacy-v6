@@ -2,7 +2,7 @@
 script {
 use 0x1::MinerState;
 // use 0x0::Debug;
-fun main(sender: &signer, challenge: vector<u8>,
+fun ol_miner_state(sender: &signer, challenge: vector<u8>,
   difficulty: u64, solution: vector<u8>, tower_height: u64) {
     //
     // Debug::print(&b"Parameters for MinerState Transaction:");

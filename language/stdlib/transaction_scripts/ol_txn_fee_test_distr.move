@@ -5,7 +5,7 @@ script {
     use 0x1::LibraSystem;
     use 0x1::Vector;
 
-    fun main(account: &signer) {
+    fun ol_txn_fee_test_distr(account: &signer) {
         let i = 0;
         let num_vals = LibraSystem::validator_set_size();
         let old_balances = Vector::empty<u64>();

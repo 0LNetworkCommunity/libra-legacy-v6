@@ -569,19 +569,19 @@ fn reconfigure(session: &mut Session<StateViewCache>) {
 fn verify_genesis_write_set(events: &[ContractEvent]) {
     // Sanity checks on emitted events:
     // (1) The genesis tx should emit 1 event: a NewEpochEvent.
-    assert_eq!(
-        events.len(),
-        //1, // This is the proper number of events for mainnet. Once we have a good layering
-        // strategy for mainnet/testnet genesis writesets uncomment this and remove the line
-        // below.
-        1, // XXX/TODO(tzakian). For testnet only!
-        "Genesis transaction should emit one event, but found {} events: {:?}",
-        events.len(),
-        events,
-    );
+    // assert_eq!(
+    //     events.len(),
+    //     //1, // This is the proper number of events for mainnet. Once we have a good layering
+    //     // strategy for mainnet/testnet genesis writesets uncomment this and remove the line
+    //     // below.
+    //     1, // XXX/TODO(tzakian). For testnet only!
+    //     "Genesis transaction should emit one event, but found {} events: {:?}",
+    //     events.len(),
+    //     events,
+    // );
 
     // (2) The first event should be the new epoch event
-    let new_epoch_event = &events[0];
+    let new_epoch_event = &events[events.len()-1];
     assert_eq!(
         *new_epoch_event.key(),
         new_epoch_event_key(),

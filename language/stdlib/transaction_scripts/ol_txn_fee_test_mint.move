@@ -3,7 +3,7 @@ script {
     use 0x1::Libra;
     use 0x1::LibraAccount;
     
-    fun main(sender: &signer, payee: address) {
+    fun ol_txn_fee_test_mint(sender: &signer, payee: address) {
         // mint a coin the association (tx sender)
         let coin = Libra::mint<GAS>(sender, 100000);
 

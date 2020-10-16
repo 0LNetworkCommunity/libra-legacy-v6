@@ -5,7 +5,7 @@ use 0x1::MinerState;
 use 0x1::LibraAccount;
 use 0x1::GAS::GAS;
 use 0x1::VDF;
-fun main(
+fun ol_miner_state_onboarding(
   sender: &signer,
   challenge: vector<u8>,
   difficulty: u64,
