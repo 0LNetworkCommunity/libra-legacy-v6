@@ -7,7 +7,7 @@
 //! sender: libraroot
 script {
     use 0x1::Stats;
-    // use 0x0::Transaction::assert;
+    // use 0x0::assert;
     // use 0x0::Debug::print;
 
     fun main(vm: &signer){

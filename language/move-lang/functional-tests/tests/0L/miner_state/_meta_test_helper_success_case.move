@@ -8,7 +8,7 @@
 //! sender: bob
 script {
 use 0x1::MinerState;
-// use 0x1::Transaction;
+// ;
 use 0x1::TestFixtures;
 
 fun main(sender: &signer) {

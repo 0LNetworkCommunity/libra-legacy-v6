@@ -6,16 +6,12 @@
 
 script {
 use 0x1::MinerState;
-use 0x1::Transaction;
-use 0x1::TestFixtures;
-// use 0x1::Debug;
-
 
 // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
-fun main(sender: &signer) {
+fun main(_sender: &signer) {
     let difficulty = 100u64;
-    Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
-    Transaction::assert(MinerState::test_helper_hash({{alice}}) == TestFixtures::alice_1_easy_chal(), 10008002);
+    assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
+    assert(MinerState::test_helper_hash({{alice}}) == TestFixtures::alice_1_easy_chal(), 10008002);
         
     let proof = MinerState::create_proof_blob(
         TestFixtures::alice_1_easy_chal(),
@@ -23,7 +19,7 @@ fun main(sender: &signer) {
         TestFixtures::alice_1_easy_sol()
     );
     MinerState::commit_state(sender, proof);
-    Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 1, 10008003);
+    assert(MinerState::test_helper_get_height({{alice}}) == 1, 10008003);
 }
 }
 // check: EXECUTED

@@ -9,7 +9,6 @@
 script {
     use 0x1::MinerState;
     use 0x1::TestFixtures;
-    use 0x1::Transaction;
 
     fun main(sender: &signer) {
         MinerState::test_helper(
@@ -20,7 +19,7 @@ script {
         );
 
         let height = MinerState::test_helper_get_height({{bob}});
-        Transaction::assert(height==0, 01);
+        assert(height==0, 01);
 
     }
 }

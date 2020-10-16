@@ -67,12 +67,12 @@ fun main(account: &signer) {
 // //  Adding new burn account
 // //! sender: libraroot
 // script {
-// use 0x1::Transaction;
+// ;
 // use 0x1::Subsidy;
 // fun main(account: &signer) {
 //     Subsidy::add_burn_account(account, 0xDEADDEAD);
 //     let size = Subsidy::get_burn_accounts_size(account);
-//     Transaction::assert(size == 2, 8004);
+//     assert(size == 2, 8004);
 // }
 // }
 

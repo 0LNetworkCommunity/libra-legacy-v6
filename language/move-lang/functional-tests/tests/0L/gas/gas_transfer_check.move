@@ -26,11 +26,11 @@ fun main(account: &signer) {
 // use 0x0::Libra;
 // use 0x0::LibraAccount;
 // use 0x0::GAS;
-// use 0x0::Transaction;
+// ;
 // fun main(account: &signer) {
 //     let coin = Libra::mint<GAS::T>(account, 10);
 //     LibraAccount::deposit(account, {{bob}}, coin);
-//     Transaction::assert(LibraAccount::balance<GAS::T>({{bob}}) == 10, 4);
+//     assert(LibraAccount::balance<GAS::T>({{bob}}) == 10, 4);
 // }
 // }
 // // check: EXECUTED

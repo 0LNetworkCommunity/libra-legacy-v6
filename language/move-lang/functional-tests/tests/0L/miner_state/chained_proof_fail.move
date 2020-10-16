@@ -6,8 +6,6 @@
 //! sender: alice
 script {
 use 0x1::MinerState;
-// use 0x1::Debug;
-use 0x1::Transaction;
 use 0x1::TestFixtures;
 
 
@@ -28,7 +26,7 @@ fun main(sender: &signer) {
     // check for initialized MinerState
     let verified_tower_height_after = MinerState::test_helper_get_height({{alice}});
 
-    Transaction::assert(verified_tower_height_after == height_after, 10008001);
+    assert(verified_tower_height_after == height_after, 10008001);
 
 }
 }
@@ -39,13 +37,12 @@ fun main(sender: &signer) {
 //! sender: alice
 script {
 use 0x1::MinerState;
-use 0x1::Transaction;
 use 0x1::TestFixtures;
 
 // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
 fun main(sender: &signer) {
     let difficulty = 100u64;
-    Transaction::assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
+    assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
     let height_after = 1;
     
     let proof = MinerState::create_proof_blob(
@@ -57,7 +54,7 @@ fun main(sender: &signer) {
     MinerState::commit_state(sender, proof);
 
     let verified_height = MinerState::test_helper_get_height({{alice}});
-    Transaction::assert(verified_height == height_after, 10008002);
+    assert(verified_height == height_after, 10008002);
 }
 }
 // check: ABORTED
