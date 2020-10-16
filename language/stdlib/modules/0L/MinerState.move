@@ -16,6 +16,7 @@ address 0x0 {
     use 0x0::LibraTimestamp;
     use 0x0::Stats;
     use 0x0::Testnet;
+    use 0x0::Debug::print;
 
     // Struct to store information about a VDF proof submitted
     struct Proof {
@@ -125,7 +126,7 @@ address 0x0 {
         Transaction::assert(&proof.difficulty == &difficulty_constant, 130103021010);
       };
       
-      verify_and_update_state(miner_addr,proof, true);
+      verify_and_update_state(miner_addr, proof, true);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -144,7 +145,7 @@ address 0x0 {
         //If not genesis proof, check hash 
         Transaction::assert(&proof.challenge == &miner_history.previous_proof_hash, 130108031010);      
       };
-
+      print(&proof.difficulty);
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
       Transaction::assert(valid, 130108041021);
 
