@@ -115,7 +115,7 @@ module Genesis {
         );
 
         //Subsidy module setup and burn account initialization
-        Subsidy::initialize(lr_account);
+        Subsidy::genesis(lr_account);
 
         // Mark that genesis has finished. This must appear as the last call.
         LibraTimestamp::set_time_has_started(lr_account);
