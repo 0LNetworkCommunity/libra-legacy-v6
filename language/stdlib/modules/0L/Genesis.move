@@ -26,7 +26,7 @@ module Genesis {
     use 0x1::LibraVMConfig;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
-    use 0x1::Subsidy;
+    // use 0x1::Subsidy;
     use 0x1::Testnet;
 
     fun initialize(
@@ -115,7 +115,7 @@ module Genesis {
         );
 
         //Subsidy module setup and burn account initialization
-        Subsidy::genesis(lr_account);
+        // Subsidy::genesis(lr_account);
 
         // Mark that genesis has finished. This must appear as the last call.
         LibraTimestamp::set_time_has_started(lr_account);
