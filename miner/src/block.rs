@@ -463,7 +463,7 @@ fn create_fixtures() {
     #[test]
     fn test_parse_init_file() {
         use super::ValConfigs;
-        let fixtures = PathBuf::from("../fixtures/val_init.json");
+        let fixtures = PathBuf::from("../fixtures/val_init_stage.json");
         let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
         assert_eq!(init_configs.full_node_network_address, "134.122.115.12", "Could not parse network address");
 
