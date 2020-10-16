@@ -261,7 +261,7 @@ address 0x0 {
         previous_proof_hash: Vector::empty(),
         verified_tower_height: 0u64,
         latest_epoch_mining: 0u64,
-        count_proofs_in_epoch: 0u64,
+        count_proofs_in_epoch: 1u64,
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
       });
