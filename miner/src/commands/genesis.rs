@@ -32,7 +32,6 @@ impl Runnable for GenesisCmd {
 
         // Create val_init.json file.
         let keys = NodePubKeys::new_from_mnemonic(mnemonic_string);
-        dbg!(&keys);
 
         let mut json_path = PathBuf::from(&miner_configs.workspace.miner_home);
         json_path.push("val_init.json");
