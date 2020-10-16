@@ -409,6 +409,7 @@ address 0x1 {
       let (parsed_address, _auth_key) = VDF::extract_address_from_challenge(challenge);
       // Confirm the address is corect and included in challenge
       assert(new_account_address == parsed_address, 130113021010);
+      
 
     }
 
