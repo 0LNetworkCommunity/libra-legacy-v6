@@ -6,7 +6,7 @@ module LibraBlock {
     use 0x1::Event;
     use 0x1::LibraSystem;
     use 0x1::LibraTimestamp;
-    // use 0x1::Stats;
+    use 0x1::Stats;
     use 0x1::ReconfigureOL;
     use 0x1::Globals;
     use 0x1::Vector;
@@ -88,13 +88,9 @@ module LibraBlock {
         );
 
 
-/////////////// TODO: COMMENTED OUT FOR MERGE PROCESSS //////// 
-        // {
-        //   let block_metadata_ref = borrow_global<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-
-
-        //   Stats::insert_voter_list(vm, block_metadata_ref.height, &previous_block_votes);
-        // };
+/////////////// TODO: WIP OUT FOR MERGE PROCESSS //////// 
+        Stats::process_set_votes(vm, &previous_block_votes);
+        Stats::inc_prop(vm, *&proposer);
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
