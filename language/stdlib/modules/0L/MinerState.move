@@ -14,6 +14,7 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Debug;
     use 0x1::CoreAddresses;
+    use 0x1::Testnet;
 
     // Struct to store information about a VDF proof submitted
     struct VdfProofBlob {
@@ -100,7 +101,7 @@ address 0x1 {
       // skip this check on test-net, we need tests to send different difficulties.
       let difficulty_constant = Globals::get_difficulty();
 
-      if (!Globals::is_testnet()){
+      if (!Testnet::is_testnet()){
 
         assert(&vdf_proof_blob.difficulty == &difficulty_constant, 130106011010);
         Debug::print(&0x000000000013370000012);
