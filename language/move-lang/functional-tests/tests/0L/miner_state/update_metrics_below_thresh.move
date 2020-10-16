@@ -5,10 +5,10 @@
 //! new-transaction
 //! sender: alice
 script {
-use 0x0::MinerState;
-// use 0x0::Debug;
-use 0x0::Transaction;
-use 0x0::TestFixtures;
+use 0x1::MinerState;
+// use 0x1::Debug;
+use 0x1::Transaction;
+use 0x1::TestFixtures;
 
 
 // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
@@ -36,8 +36,8 @@ fun main(sender: &signer) {
 //! new-transaction
 //! sender: association
 script {
-use 0x0::MinerState;
-use 0x0::Transaction;
+use 0x1::MinerState;
+use 0x1::Transaction;
 
 // Simulating the VM calling epoch boundary update_metrics.
 fun main(_sender: &signer) {

@@ -7,9 +7,9 @@
 //! new-transaction
 //! sender: bob
 script {
-use 0x0::MinerState;
-use 0x0::Transaction;
-use 0x0::TestFixtures;
+use 0x1::MinerState;
+use 0x1::Transaction;
+use 0x1::TestFixtures;
 
 fun main(sender: &signer) {
 

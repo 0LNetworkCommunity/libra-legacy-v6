@@ -128,7 +128,7 @@ address 0x1 {
                           FixedPoint32::create_from_rational(total_voting_power, 1));
 
         // Subsidy is only paid if both mining and validation are active in the epoch
-        let latest_epoch_mined = MinerState::get_miner_latest_epoch(node_address);
+        let latest_epoch_mined = MinerState::get_miner_latest_epoch(account, node_address);
         if(latest_epoch_mined == LibraConfig::get_current_epoch() && ValidatorUniverse::check_if_active_validator(node_address, Globals::get_epoch_length(), current_block_height)){
           //Transfer gas from association to validator
           let with_cap = LibraAccount::extract_withdraw_capability(account);

@@ -8,6 +8,7 @@ module Stats{
     use 0x1::Vector;
     use 0x1::CoreAddresses;
     use 0x1::Signer;
+    use 0x1::Testnet;
     use 0x1::Globals;
     use 0x1::FixedPoint32;
     // use 0x1::Testnet;
@@ -194,7 +195,7 @@ module Stats{
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190209014010);
 
-      assert(Globals::is_testnet(), 99190210014010);
+      assert(Testnet::is_testnet(), 99190210014010);
       inc_vote(vm, node_addr);
     }
 

@@ -198,7 +198,7 @@ address 0x1 {
     }
 
 
-    public fun node_above_thresh(account: &signer, miner_addr: address): bool acquires MinerProofHistory {
+    public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
       let miner_history= borrow_global<MinerProofHistory>(miner_addr);
       return (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold())
     }

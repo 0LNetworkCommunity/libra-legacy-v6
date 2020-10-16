@@ -7,9 +7,9 @@
 //! account: alice, 10000000GAS
 //! sender: alice
 script {
-use 0x0::MinerState;
-// use 0x0::Debug;
-use 0x0::Transaction;
+use 0x1::MinerState;
+// use 0x1::Debug;
+use 0x1::Transaction;
 
 fun main(sender: &signer) {
     let difficulty = 100;
