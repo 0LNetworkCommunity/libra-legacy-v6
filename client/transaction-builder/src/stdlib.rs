@@ -214,6 +214,55 @@ pub enum ScriptCall {
     /// * The total values of Coin1 and Coin2 stay the same.
     MintLbr { amount_lbr: u64 },
 
+    OlLibraBlockTestHelper {
+        currency: TypeTag,
+    },
+
+    OlMinerState {
+        challenge: Bytes,
+        difficulty: u64,
+        solution: Bytes,
+        tower_height: u64,
+    },
+
+    OlMinerStateOnboarding {
+        challenge: Bytes,
+        difficulty: u64,
+        solution: Bytes,
+        human_name: Bytes,
+        _expected_address: AccountAddress,
+    },
+
+    OlNoOp {},
+
+    OlReconfigBulkUpdateE2eTestHelper {
+        alice: AccountAddress,
+        bob: AccountAddress,
+        carol: AccountAddress,
+        sha: AccountAddress,
+        _ram: AccountAddress,
+    },
+
+    OlReconfigBulkUpdateSetup {
+        alice: AccountAddress,
+        bob: AccountAddress,
+        carol: AccountAddress,
+        sha: AccountAddress,
+        ram: AccountAddress,
+    },
+
+    OlTxFeesE2eTestHelper {
+        currency: TypeTag,
+    },
+
+    OlTxnFeeTestDistr {},
+
+    OlTxnFeeTestMint {
+        payee: AccountAddress,
+    },
+
+    OlTxnFeeTestMove {},
+
     /// Transfer `amount` coins of type `Currency` from `payer` to `payee` with (optional) associated
     /// `metadata` and an (optional) `metadata_signature` on the message
     /// `metadata` | `Signer::address_of(payer)` | `amount` | `DualAttestation::DOMAIN_SEPARATOR`.
@@ -504,6 +553,54 @@ impl ScriptCall {
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
             MintLbr { amount_lbr } => encode_mint_lbr_script(amount_lbr),
+<<<<<<< HEAD
+=======
+            OlLibraBlockTestHelper { currency } => {
+                encode_ol_libra_block_test_helper_script(currency)
+            }
+            OlMinerState {
+                challenge,
+                difficulty,
+                solution,
+                tower_height,
+            } => encode_ol_miner_state_script(challenge, difficulty, solution, tower_height),
+            OlMinerStateOnboarding {
+                challenge,
+                difficulty,
+                solution,
+                human_name,
+                _expected_address,
+            } => encode_ol_miner_state_onboarding_script(
+                challenge,
+                difficulty,
+                solution,
+                human_name,
+                _expected_address,
+            ),
+            OlNoOp {} => encode_ol_no_op_script(),
+            OlReconfigBulkUpdateE2eTestHelper {
+                alice,
+                bob,
+                carol,
+                sha,
+                _ram,
+            } => {
+                encode_ol_reconfig_bulk_update_e2e_test_helper_script(alice, bob, carol, sha, _ram)
+            }
+            OlReconfigBulkUpdateSetup {
+                alice,
+                bob,
+                carol,
+                sha,
+                ram,
+            } => encode_ol_reconfig_bulk_update_setup_script(alice, bob, carol, sha, ram),
+            OlTxFeesE2eTestHelper { currency } => {
+                encode_ol_tx_fees_e2e_test_helper_script(currency)
+            }
+            OlTxnFeeTestDistr {} => encode_ol_txn_fee_test_distr_script(),
+            OlTxnFeeTestMint { payee } => encode_ol_txn_fee_test_mint_script(payee),
+            OlTxnFeeTestMove {} => encode_ol_txn_fee_test_move_script(),
+>>>>>>> v3-to-v4-vmgenesis
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -940,6 +1037,120 @@ pub fn encode_mint_lbr_script(amount_lbr: u64) -> Script {
         vec![],
         vec![TransactionArgument::U64(amount_lbr)],
     )
+}
+
+pub fn encode_ol_libra_block_test_helper_script(currency: TypeTag) -> Script {
+    Script::new(
+        OL_LIBRA_BLOCK_TEST_HELPER_CODE.to_vec(),
+        vec![currency],
+        vec![],
+    )
+}
+
+pub fn encode_ol_miner_state_script(
+    challenge: Vec<u8>,
+    difficulty: u64,
+    solution: Vec<u8>,
+    tower_height: u64,
+) -> Script {
+    Script::new(
+        OL_MINER_STATE_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U64(difficulty),
+            TransactionArgument::U8Vector(solution),
+            TransactionArgument::U64(tower_height),
+        ],
+    )
+}
+
+pub fn encode_ol_miner_state_onboarding_script(
+    challenge: Vec<u8>,
+    difficulty: u64,
+    solution: Vec<u8>,
+    human_name: Vec<u8>,
+    _expected_address: AccountAddress,
+) -> Script {
+    Script::new(
+        OL_MINER_STATE_ONBOARDING_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U64(difficulty),
+            TransactionArgument::U8Vector(solution),
+            TransactionArgument::U8Vector(human_name),
+            TransactionArgument::Address(_expected_address),
+        ],
+    )
+}
+
+pub fn encode_ol_no_op_script() -> Script {
+    Script::new(OL_NO_OP_CODE.to_vec(), vec![], vec![])
+}
+
+pub fn encode_ol_reconfig_bulk_update_e2e_test_helper_script(
+    alice: AccountAddress,
+    bob: AccountAddress,
+    carol: AccountAddress,
+    sha: AccountAddress,
+    _ram: AccountAddress,
+) -> Script {
+    Script::new(
+        OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(alice),
+            TransactionArgument::Address(bob),
+            TransactionArgument::Address(carol),
+            TransactionArgument::Address(sha),
+            TransactionArgument::Address(_ram),
+        ],
+    )
+}
+
+pub fn encode_ol_reconfig_bulk_update_setup_script(
+    alice: AccountAddress,
+    bob: AccountAddress,
+    carol: AccountAddress,
+    sha: AccountAddress,
+    ram: AccountAddress,
+) -> Script {
+    Script::new(
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(alice),
+            TransactionArgument::Address(bob),
+            TransactionArgument::Address(carol),
+            TransactionArgument::Address(sha),
+            TransactionArgument::Address(ram),
+        ],
+    )
+}
+
+pub fn encode_ol_tx_fees_e2e_test_helper_script(currency: TypeTag) -> Script {
+    Script::new(
+        OL_TX_FEES_E2E_TEST_HELPER_CODE.to_vec(),
+        vec![currency],
+        vec![],
+    )
+}
+
+pub fn encode_ol_txn_fee_test_distr_script() -> Script {
+    Script::new(OL_TXN_FEE_TEST_DISTR_CODE.to_vec(), vec![], vec![])
+}
+
+pub fn encode_ol_txn_fee_test_mint_script(payee: AccountAddress) -> Script {
+    Script::new(
+        OL_TXN_FEE_TEST_MINT_CODE.to_vec(),
+        vec![],
+        vec![TransactionArgument::Address(payee)],
+    )
+}
+
+pub fn encode_ol_txn_fee_test_move_script() -> Script {
+    Script::new(OL_TXN_FEE_TEST_MOVE_CODE.to_vec(), vec![], vec![])
 }
 
 /// Transfer `amount` coins of type `Currency` from `payer` to `payee` with (optional) associated
@@ -1422,6 +1633,78 @@ fn decode_mint_lbr_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MintLbr {
         amount_lbr: decode_u64_argument(script.args().get(0)?.clone())?,
     })
+<<<<<<< HEAD
+=======
+}
+
+fn decode_ol_libra_block_test_helper_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlLibraBlockTestHelper {
+        currency: script.ty_args().get(0)?.clone(),
+    })
+}
+
+fn decode_ol_miner_state_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlMinerState {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        difficulty: decode_u64_argument(script.args().get(1)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        tower_height: decode_u64_argument(script.args().get(3)?.clone())?,
+    })
+}
+
+fn decode_ol_miner_state_onboarding_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlMinerStateOnboarding {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        difficulty: decode_u64_argument(script.args().get(1)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        human_name: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        _expected_address: decode_address_argument(script.args().get(4)?.clone())?,
+    })
+}
+
+fn decode_ol_no_op_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlNoOp {})
+}
+
+fn decode_ol_reconfig_bulk_update_e2e_test_helper_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlReconfigBulkUpdateE2eTestHelper {
+        alice: decode_address_argument(script.args().get(0)?.clone())?,
+        bob: decode_address_argument(script.args().get(1)?.clone())?,
+        carol: decode_address_argument(script.args().get(2)?.clone())?,
+        sha: decode_address_argument(script.args().get(3)?.clone())?,
+        _ram: decode_address_argument(script.args().get(4)?.clone())?,
+    })
+}
+
+fn decode_ol_reconfig_bulk_update_setup_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlReconfigBulkUpdateSetup {
+        alice: decode_address_argument(script.args().get(0)?.clone())?,
+        bob: decode_address_argument(script.args().get(1)?.clone())?,
+        carol: decode_address_argument(script.args().get(2)?.clone())?,
+        sha: decode_address_argument(script.args().get(3)?.clone())?,
+        ram: decode_address_argument(script.args().get(4)?.clone())?,
+    })
+}
+
+fn decode_ol_tx_fees_e2e_test_helper_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlTxFeesE2eTestHelper {
+        currency: script.ty_args().get(0)?.clone(),
+    })
+}
+
+fn decode_ol_txn_fee_test_distr_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlTxnFeeTestDistr {})
+}
+
+fn decode_ol_txn_fee_test_mint_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlTxnFeeTestMint {
+        payee: decode_address_argument(script.args().get(0)?.clone())?,
+    })
+}
+
+fn decode_ol_txn_fee_test_move_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlTxnFeeTestMove {})
+>>>>>>> v3-to-v4-vmgenesis
 }
 
 fn decode_peer_to_peer_with_metadata_script(script: &Script) -> Option<ScriptCall> {
@@ -1641,6 +1924,43 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_freeze_account_script),
     );
     map.insert(MINT_LBR_CODE.to_vec(), Box::new(decode_mint_lbr_script));
+    map.insert(
+        OL_LIBRA_BLOCK_TEST_HELPER_CODE.to_vec(),
+        Box::new(decode_ol_libra_block_test_helper_script),
+    );
+    map.insert(
+        OL_MINER_STATE_CODE.to_vec(),
+        Box::new(decode_ol_miner_state_script),
+    );
+    map.insert(
+        OL_MINER_STATE_ONBOARDING_CODE.to_vec(),
+        Box::new(decode_ol_miner_state_onboarding_script),
+    );
+    map.insert(OL_NO_OP_CODE.to_vec(), Box::new(decode_ol_no_op_script));
+    map.insert(
+        OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
+        Box::new(decode_ol_reconfig_bulk_update_e2e_test_helper_script),
+    );
+    map.insert(
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
+        Box::new(decode_ol_reconfig_bulk_update_setup_script),
+    );
+    map.insert(
+        OL_TX_FEES_E2E_TEST_HELPER_CODE.to_vec(),
+        Box::new(decode_ol_tx_fees_e2e_test_helper_script),
+    );
+    map.insert(
+        OL_TXN_FEE_TEST_DISTR_CODE.to_vec(),
+        Box::new(decode_ol_txn_fee_test_distr_script),
+    );
+    map.insert(
+        OL_TXN_FEE_TEST_MINT_CODE.to_vec(),
+        Box::new(decode_ol_txn_fee_test_mint_script),
+    );
+    map.insert(
+        OL_TXN_FEE_TEST_MOVE_CODE.to_vec(),
+        Box::new(decode_ol_txn_fee_test_move_script),
+    );
     map.insert(
         PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
         Box::new(decode_peer_to_peer_with_metadata_script),
@@ -1899,6 +2219,145 @@ const MINT_LBR_CODE: &[u8] = &[
     119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 10, 115, 116, 97, 112, 108, 101, 95,
     108, 98, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 1, 9, 11, 0, 17, 0, 12, 2,
     14, 2, 10, 1, 17, 2, 11, 2, 17, 1, 2,
+<<<<<<< HEAD
+=======
+];
+
+const OL_LIBRA_BLOCK_TEST_HELPER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 10, 5, 12, 6, 7, 18, 56, 8, 74, 16, 0, 0, 0, 1,
+    0, 1, 0, 0, 2, 0, 2, 0, 0, 1, 3, 1, 10, 5, 10, 76, 105, 98, 114, 97, 66, 108, 111, 99, 107, 24,
+    103, 101, 116, 95, 99, 117, 114, 114, 101, 110, 116, 95, 98, 108, 111, 99, 107, 95, 104, 101,
+    105, 103, 104, 116, 19, 103, 101, 116, 95, 112, 114, 101, 118, 105, 111, 117, 115, 95, 118,
+    111, 116, 101, 114, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 5, 17, 0,
+    1, 17, 1, 1, 2,
+];
+
+const OL_MINER_STATE_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 2, 2, 4, 3, 6, 10, 5, 16, 25, 7, 41, 55, 8, 96, 16,
+    0, 0, 0, 1, 2, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 0, 2, 6, 12, 8, 0, 0, 4, 10, 2, 3, 10, 2, 3, 1, 8,
+    0, 5, 6, 12, 10, 2, 3, 10, 2, 3, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 12, 86,
+    100, 102, 80, 114, 111, 111, 102, 66, 108, 111, 98, 12, 99, 111, 109, 109, 105, 116, 95, 115,
+    116, 97, 116, 101, 17, 99, 114, 101, 97, 116, 101, 95, 112, 114, 111, 111, 102, 95, 98, 108,
+    111, 98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 3, 10, 11, 1, 10, 2, 11, 3, 10,
+    4, 17, 1, 12, 5, 11, 0, 11, 5, 17, 0, 2,
+];
+
+const OL_MINER_STATE_ONBOARDING_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 8, 2, 8, 8, 3, 16, 27, 4, 43, 4, 5, 47, 58, 7, 105, 155,
+    1, 8, 132, 2, 16, 0, 0, 0, 1, 0, 2, 0, 3, 0, 0, 2, 0, 2, 4, 2, 0, 2, 5, 0, 1, 0, 2, 6, 2, 3, 0,
+    3, 7, 4, 5, 0, 1, 8, 6, 7, 1, 1, 1, 9, 8, 1, 1, 1, 4, 11, 3, 11, 2, 6, 12, 8, 1, 0, 4, 10, 2,
+    3, 10, 2, 3, 1, 8, 1, 1, 6, 10, 2, 2, 5, 10, 2, 1, 5, 1, 3, 4, 6, 12, 5, 10, 2, 10, 2, 6, 6,
+    12, 10, 2, 3, 10, 2, 10, 2, 5, 5, 10, 2, 5, 8, 1, 1, 3, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105,
+    98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101,
+    3, 86, 68, 70, 12, 86, 100, 102, 80, 114, 111, 111, 102, 66, 108, 111, 98, 12, 99, 111, 109,
+    109, 105, 116, 95, 115, 116, 97, 116, 101, 17, 99, 114, 101, 97, 116, 101, 95, 112, 114, 111,
+    111, 102, 95, 98, 108, 111, 98, 30, 101, 120, 116, 114, 97, 99, 116, 95, 97, 100, 100, 114,
+    101, 115, 115, 95, 102, 114, 111, 109, 95, 99, 104, 97, 108, 108, 101, 110, 103, 101, 7, 98,
+    97, 108, 97, 110, 99, 101, 39, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116,
+    111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 102, 114, 111, 109, 95, 109, 105, 110, 105,
+    110, 103, 95, 48, 76, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 9, 10, 30, 14, 1, 17,
+    2, 12, 6, 12, 7, 10, 0, 10, 7, 11, 6, 11, 4, 56, 0, 10, 7, 56, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0,
+    33, 12, 9, 11, 9, 3, 20, 11, 0, 1, 6, 12, 0, 0, 0, 0, 0, 0, 0, 39, 11, 1, 10, 2, 11, 3, 6, 0,
+    0, 0, 0, 0, 0, 0, 0, 17, 1, 12, 8, 11, 0, 11, 8, 17, 0, 2,
+];
+
+const OL_NO_OP_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 12, 8, 29, 16, 6,
+    45, 18, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 9, 0, 0, 1, 5, 5, 68, 101, 98, 117, 103, 5, 112,
+    114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 1, 2, 5, 7, 0, 12, 0, 14, 0, 56, 0, 2,
+];
+
+const OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 38, 4, 44, 6, 5, 50, 49, 7, 99, 129, 1, 8, 228,
+    1, 16, 0, 0, 0, 1, 0, 2, 2, 3, 0, 1, 1, 1, 2, 4, 2, 3, 1, 1, 2, 5, 4, 0, 1, 1, 0, 6, 5, 0, 0,
+    0, 7, 6, 7, 0, 0, 8, 0, 3, 0, 1, 9, 6, 0, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0,
+    1, 3, 2, 7, 10, 9, 0, 9, 0, 4, 6, 12, 10, 5, 3, 3, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1,
+    3, 1, 3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 17, 86, 97,
+    108, 105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116,
+    111, 114, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104,
+    95, 98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108,
+    105, 100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114,
+    18, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 13,
+    97, 100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 8, 9, 60, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 10, 1, 17, 6, 13, 14, 10, 2,
+    56, 1, 10, 2, 17, 6, 13, 14, 10, 3, 56, 1, 10, 3, 17, 6, 14, 14, 56, 2, 6, 3, 0, 0, 0, 0, 0, 0,
+    0, 33, 12, 6, 11, 6, 3, 28, 11, 0, 1, 6, 5, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14, 6, 15, 0,
+    0, 0, 0, 0, 0, 0, 6, 20, 0, 0, 0, 0, 0, 0, 0, 17, 3, 17, 5, 6, 3, 0, 0, 0, 0, 0, 0, 0, 33, 12,
+    8, 11, 8, 3, 41, 6, 6, 0, 0, 0, 0, 0, 0, 0, 39, 10, 4, 17, 4, 9, 33, 12, 10, 11, 10, 3, 50, 6,
+    7, 0, 0, 0, 0, 0, 0, 0, 39, 10, 2, 17, 4, 8, 33, 12, 12, 11, 12, 3, 59, 6, 8, 0, 0, 0, 0, 0, 0,
+    0, 39, 2,
+];
+
+const OL_RECONFIG_BULK_UPDATE_SETUP_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 38, 4, 44, 6, 5, 50, 49, 7, 99, 129, 1, 8, 228,
+    1, 16, 0, 0, 0, 1, 0, 2, 2, 3, 0, 1, 1, 1, 2, 4, 2, 3, 1, 1, 2, 5, 4, 0, 1, 1, 0, 6, 5, 0, 0,
+    0, 7, 6, 7, 0, 0, 8, 0, 3, 0, 1, 9, 6, 0, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0,
+    1, 3, 2, 7, 10, 9, 0, 9, 0, 4, 6, 12, 10, 5, 3, 3, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1,
+    3, 1, 3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 17, 86, 97,
+    108, 105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116,
+    111, 114, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104,
+    95, 98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108,
+    105, 100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114,
+    18, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 13,
+    97, 100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 8, 9, 70, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 10, 1, 17, 6, 13, 14, 10, 2,
+    56, 1, 10, 2, 17, 6, 13, 14, 10, 3, 56, 1, 10, 3, 17, 6, 13, 14, 10, 4, 56, 1, 10, 4, 17, 6,
+    13, 14, 10, 5, 56, 1, 10, 5, 17, 6, 14, 14, 56, 2, 6, 5, 0, 0, 0, 0, 0, 0, 0, 33, 12, 6, 11, 6,
+    3, 38, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14, 6, 15, 0, 0, 0, 0, 0, 0, 0, 6,
+    19, 0, 0, 0, 0, 0, 0, 0, 17, 3, 17, 5, 6, 5, 0, 0, 0, 0, 0, 0, 0, 33, 12, 8, 11, 8, 3, 51, 6,
+    2, 0, 0, 0, 0, 0, 0, 0, 39, 10, 4, 17, 4, 8, 33, 12, 10, 11, 10, 3, 60, 6, 3, 0, 0, 0, 0, 0, 0,
+    0, 39, 10, 1, 17, 4, 8, 33, 12, 12, 11, 12, 3, 69, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+];
+
+const OL_TX_FEES_E2E_TEST_HELPER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 10, 5, 12, 6, 7, 18, 56, 8, 74, 16, 0, 0, 0, 1,
+    0, 1, 0, 0, 2, 0, 2, 0, 0, 1, 3, 1, 10, 5, 10, 76, 105, 98, 114, 97, 66, 108, 111, 99, 107, 24,
+    103, 101, 116, 95, 99, 117, 114, 114, 101, 110, 116, 95, 98, 108, 111, 99, 107, 95, 104, 101,
+    105, 103, 104, 116, 19, 103, 101, 116, 95, 112, 114, 101, 118, 105, 111, 117, 115, 95, 118,
+    111, 116, 101, 114, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 5, 17, 0,
+    1, 17, 1, 1, 2,
+];
+
+const OL_TXN_FEE_TEST_DISTR_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 8, 2, 8, 4, 3, 12, 39, 4, 51, 8, 5, 59, 42, 7, 101, 142,
+    1, 8, 243, 1, 16, 0, 0, 0, 1, 0, 2, 0, 3, 0, 0, 2, 0, 3, 4, 0, 1, 1, 1, 3, 5, 2, 3, 1, 1, 3, 6,
+    4, 0, 1, 1, 1, 7, 5, 6, 1, 1, 2, 8, 7, 0, 0, 2, 9, 6, 5, 0, 2, 10, 0, 6, 0, 0, 6, 3, 9, 2, 6,
+    1, 6, 0, 1, 10, 9, 0, 1, 7, 10, 9, 0, 1, 9, 0, 2, 7, 10, 9, 0, 9, 0, 1, 5, 1, 3, 1, 6, 12, 10,
+    5, 5, 3, 3, 3, 10, 3, 3, 3, 1, 3, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99,
+    111, 117, 110, 116, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 6, 86, 101, 99, 116,
+    111, 114, 5, 101, 109, 112, 116, 121, 8, 112, 111, 112, 95, 98, 97, 99, 107, 9, 112, 117, 115,
+    104, 95, 98, 97, 99, 107, 7, 98, 97, 108, 97, 110, 99, 101, 27, 100, 105, 115, 116, 114, 105,
+    98, 117, 116, 101, 95, 116, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 95, 102, 101, 101,
+    115, 25, 103, 101, 116, 95, 105, 116, 104, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95,
+    97, 100, 100, 114, 101, 115, 115, 18, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101,
+    116, 95, 115, 105, 122, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 7, 8, 55, 6, 0,
+    0, 0, 0, 0, 0, 0, 0, 12, 3, 17, 6, 12, 5, 56, 0, 12, 6, 10, 3, 10, 5, 35, 3, 11, 5, 25, 10, 3,
+    17, 5, 12, 1, 10, 1, 56, 1, 12, 7, 13, 6, 10, 7, 56, 2, 10, 3, 6, 1, 0, 0, 0, 0, 0, 0, 0, 22,
+    12, 3, 5, 6, 11, 0, 17, 4, 10, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 36, 3, 32, 5, 54, 10, 3, 6, 1, 0,
+    0, 0, 0, 0, 0, 0, 23, 12, 3, 13, 6, 56, 3, 12, 8, 10, 3, 17, 5, 12, 2, 10, 2, 56, 1, 12, 4, 10,
+    4, 10, 8, 36, 12, 9, 11, 9, 3, 53, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 5, 27, 2,
+];
+
+const OL_TXN_FEE_TEST_MINT_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 8, 1, 0, 6, 2, 6, 9, 3, 15, 12, 4, 27, 4, 5, 31, 38, 7, 69, 40,
+    8, 109, 16, 6, 125, 18, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 1, 1, 1, 1, 1, 3, 0, 1, 1, 1, 2, 4, 2,
+    3, 1, 1, 0, 6, 1, 6, 2, 6, 12, 3, 1, 11, 1, 1, 9, 0, 3, 6, 12, 5, 11, 1, 1, 9, 0, 0, 2, 6, 12,
+    5, 2, 11, 1, 1, 8, 0, 11, 1, 1, 8, 0, 1, 8, 0, 3, 71, 65, 83, 5, 76, 105, 98, 114, 97, 12, 76,
+    105, 98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 4, 109, 105, 110, 116, 11, 100, 101, 112,
+    111, 115, 105, 116, 95, 103, 97, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 238, 0, 4, 5, 17, 10, 0, 6, 160, 134, 1, 0, 0, 0, 0,
+    0, 56, 0, 12, 2, 10, 0, 6, 128, 132, 30, 0, 0, 0, 0, 0, 56, 0, 12, 3, 10, 0, 10, 1, 11, 3, 56,
+    1, 11, 0, 7, 0, 11, 2, 56, 1, 2,
+];
+
+const OL_TXN_FEE_TEST_MOVE_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 4, 7, 11, 40, 8, 51, 16, 0, 0, 0, 1,
+    0, 1, 0, 1, 6, 12, 0, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 27, 100, 105, 115,
+    116, 114, 105, 98, 117, 116, 101, 95, 116, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 95,
+    102, 101, 101, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 3, 11, 0, 17, 0,
+    2,
+>>>>>>> v3-to-v4-vmgenesis
 ];
 
 const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[

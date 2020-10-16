@@ -30,6 +30,7 @@ module LibraAccount {
     use 0x1::Roles;
     use 0x1::Testnet;
     use 0x1::Signature;
+    use 0x1::Stats;
     
     /// Every Libra account has a LibraAccount resource
     resource struct LibraAccount {
@@ -1207,6 +1208,11 @@ module LibraAccount {
         Roles::new_validator_role(creator_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, creator_account, human_name);
+        
+
+        //// TODO: TEMP FOR MERGE /////
+        Stats::init_address(creator_account, new_account_address);
+        add_currencies_for_account<GAS>(&new_account, true);
         make_account(new_account, auth_key_prefix)
     }
 
@@ -1234,6 +1240,7 @@ module LibraAccount {
         Roles::new_validator_operator_role(creator_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorOperatorConfig::publish(&new_account, creator_account, human_name);
+        add_currencies_for_account<GAS>(&new_account, true);
         make_account(new_account, auth_key_prefix)
     }
 
