@@ -57,6 +57,19 @@ pub enum StdlibScript {
     UpdateLibraVersion,
     UpdateMintingAbility,
     UpdateDualAttestationLimit,
+    //
+    // Below are 0L Changes
+    //
+    MinerState,
+    MinerStateOnboarding,
+    LibraBlockTestHelper,
+    TxFeeTestHelper,
+    TxFeeTestMint,
+    TxFeeTestMove,
+    TxFeeTestDistr,
+    ReconfigBulkUpdate,
+    ReconfigSetup,
+    NoOp,
     // ...add new scripts here
 }
 
@@ -102,6 +115,17 @@ impl StdlibScript {
             UpdateLibraVersion,
             UpdateMintingAbility,
             UpdateDualAttestationLimit,
+            // Below are 0L Changes
+            MinerState,
+            MinerStateOnboarding,
+            LibraBlockTestHelper,
+            TxFeeTestHelper,
+            TxFeeTestMint,
+            TxFeeTestMove,
+            TxFeeTestDistr,
+            ReconfigBulkUpdate,
+            ReconfigSetup,
+            NoOp,
             // ...add new scripts here
         ]
     }
@@ -229,6 +253,20 @@ impl fmt::Display for StdlibScript {
                 UpdateLibraVersion => "update_libra_version",
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
+                //
+                // Below are 0L Changes
+                //
+                MinerState => "ol_miner_state",
+                MinerStateOnboarding => "ol_miner_state_onboarding",
+                // RedeemInitialize => "redeem_init",
+                LibraBlockTestHelper => "ol_libra_block_test_helper",
+                TxFeeTestHelper => "ol_tx_fees_e2e_test_helper",
+                TxFeeTestMint => "ol_txn_fee_test_mint",
+                TxFeeTestMove => "ol_txn_fee_test_move",
+                TxFeeTestDistr => "ol_txn_fee_test_distr",
+                ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper",
+                ReconfigSetup => "ol_reconfig_bulk_update_setup",
+                NoOp => "ol_no_op.move",
             }
         )
     }

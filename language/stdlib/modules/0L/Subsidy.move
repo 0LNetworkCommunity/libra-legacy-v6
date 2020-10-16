@@ -21,6 +21,7 @@ address 0x1 {
     use 0x1::LibraConfig;
     use 0x1::MinerState;
     use 0x1::CoreAddresses;
+    use 0x1::Debug;
     // Subsidy ceiling yet to be updated from gas schedule.
     // Subsidy Ceiling = Max Trans Per Block (20) *
     // Max gas units per transaction (10_000_000) * blocks epoch (1_000_000)
@@ -194,11 +195,9 @@ address 0x1 {
       let sender = Signer::address_of(account);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190106014010);
       mint_subsidy(account);
-
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(account);
       let len = Vector::length(&genesis_validators);
-
       // Calculate subsidy equally for all the validators based on subsidy curve
       // Calculate the split for subsidy and burn
       // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
@@ -208,15 +207,23 @@ address 0x1 {
         Globals::get_max_node_density(),
         len
       );
-
+      let x = 4; 
+      Debug::print(&x);
       // Distribute gas coins to initial validators
       let distribution_units = subsidy_units / len;
       let i = 0;
       while (i < len) {
+        let x = 5; 
+      Debug::print(&x);
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+        let x = 6; 
+      Debug::print(&x);
         let old_association_balance = LibraAccount::balance<GAS>(sender);
+        let x = 7; 
+      Debug::print(&x);
         let old_validator_balance = LibraAccount::balance<GAS>(node_address);
-
+        let x = 8; 
+      Debug::print(&x);
         //Transfer gas from association to validator
         let with_cap = LibraAccount::extract_withdraw_capability(account);
         LibraAccount::pay_from<GAS>(&with_cap, node_address, distribution_units, x"", x"");

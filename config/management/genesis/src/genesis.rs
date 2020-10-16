@@ -54,7 +54,6 @@ impl Genesis {
 
         let genesis = vm_genesis::encode_genesis_transaction(
             libra_root_key,
-            treasury_compliance_key,
             &operator_assignments,
             &operator_registrations,
             script_policy,

@@ -10,7 +10,6 @@ module Genesis {
     use 0x1::DualAttestation;
     use 0x1::Event;
     use 0x1::GAS::{Self, GAS};
-    use 0x1::Globals;
     use 0x1::Libra;
     use 0x1::LibraAccount;
     use 0x1::LibraBlock;
@@ -30,10 +29,7 @@ module Genesis {
 
     fun initialize(
         lr_account: &signer,
-        _tc_account: &signer,
         lr_auth_key: vector<u8>,
-        _tc_addr: address,
-        _tc_auth_key: vector<u8>,
         initial_script_allow_list: vector<vector<u8>>,
         is_open_module: bool,
         instruction_schedule: vector<u8>,
@@ -92,8 +88,6 @@ module Genesis {
 
         // Validator Universe module
         ValidatorUniverse::initialize(lr_account);
-
-        Globals::initialize(lr_account, true);
         
         let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
         LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
