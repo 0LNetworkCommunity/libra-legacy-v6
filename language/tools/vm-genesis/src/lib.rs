@@ -8,7 +8,7 @@ mod genesis_gas_schedule;
 
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
-use libra_config::config::{NodeConfig, GenesisMiningProof, HANDSHAKE_VERSION};
+use libra_config::config::{NodeConfig, HANDSHAKE_VERSION};
 use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform,
@@ -43,7 +43,6 @@ use rand::prelude::*;
 use std::collections::btree_map::BTreeMap;
 use transaction_builder::encode_create_designated_dealer_script;
 use vm::{file_format::SignatureToken, CompiledModule};
-use std::env;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -60,12 +59,12 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
 pub static ZERO_COST_SCHEDULE: Lazy<CostTable> = Lazy::new(zero_cost_schedule);
 
 pub type Name = Vec<u8>;
- // 0L Change.
 pub type OperatorAssignment = (Ed25519PublicKey, Name, Script); // Assigns an operator to each owner
-pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, GenesisMiningProof); // Registers a validator config
+pub type OperatorRegistration = (Ed25519PublicKey, Name, Script); // Registers a validator config
 
 pub fn encode_genesis_transaction(
     libra_root_key: Ed25519PublicKey,
+    treasury_compliance_key: Ed25519PublicKey,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
@@ -74,6 +73,7 @@ pub fn encode_genesis_transaction(
     Transaction::GenesisTransaction(WriteSetPayload::Direct(
         encode_genesis_change_set(
             &libra_root_key,
+            &treasury_compliance_key,
             operator_assignments,
             operator_registrations,
             stdlib_modules(StdLibOptions::Compiled), // Must use compiled stdlib,
@@ -97,6 +97,7 @@ fn merge_txn_effects(
 
 pub fn encode_genesis_change_set(
     libra_root_key: &Ed25519PublicKey,
+    treasury_compliance_key: &Ed25519PublicKey,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     stdlib_modules: &[CompiledModule],
@@ -121,23 +122,10 @@ pub fn encode_genesis_change_set(
         type_params: vec![],
     });
 
-    // generate the genesis WriteSet
-    let node_env = match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "test".to_string()
-    };
-
-    // Initializing testnet only when env is set to test
-    if node_env != "prod" {
-        initialize_testnet(&mut session, true);
-    } else {
-        println!("INITIALIZING WITH PROD CONSTANTS");
-        initialize_testnet(&mut session, false);
-    }
-
     create_and_initialize_main_accounts(
         &mut session,
         &libra_root_key,
+        &treasury_compliance_key,
         vm_publishing_option,
         &lbr_ty,
         chain_id,
@@ -148,9 +136,6 @@ pub fn encode_genesis_change_set(
         &operator_assignments,
         &operator_registrations,
     );
-    initialize_miners(&mut session,
-        &operator_registrations,);
-    distribute_genesis_subsidy(&mut session);
     reconfigure(&mut session);
 
     // XXX/TODO: for testnet only
@@ -238,14 +223,17 @@ fn exec_script(session: &mut Session<StateViewCache>, sender: AccountAddress, sc
 fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
     libra_root_key: &Ed25519PublicKey,
+    treasury_compliance_key: &Ed25519PublicKey,
     publishing_option: VMPublishingOption,
     lbr_ty: &TypeTag,
     chain_id: ChainId,
 ) {
     let libra_root_auth_key = AuthenticationKey::ed25519(libra_root_key);
-    
+    let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
+
     let root_libra_root_address = account_config::libra_root_address();
-    
+    let tc_account_address = account_config::treasury_compliance_account_address();
+
     let initial_allow_list = Value::constant_vector_generic(
         publishing_option
             .script_allow_list
@@ -263,7 +251,10 @@ fn create_and_initialize_main_accounts(
         vec![],
         vec![
             Value::transaction_argument_signer_reference(root_libra_root_address),
+            Value::transaction_argument_signer_reference(tc_account_address),
             Value::vector_u8(libra_root_auth_key.to_vec()),
+            Value::address(tc_account_address),
+            Value::vector_u8(treasury_compliance_auth_key.to_vec()),
             initial_allow_list,
             Value::bool(publishing_option.is_open_module),
             Value::vector_u8(INITIAL_GAS_SCHEDULE.0.clone()),
@@ -394,20 +385,6 @@ fn create_and_initialize_testnet_minting(
     );
 }
 
-// OL::Update::initializing testnet
-fn initialize_testnet(session: &mut Session<StateViewCache>, is_testnet: bool) {
-    let root_libra_root_address = account_config::libra_root_address();
-
-    exec_function(
-        session,
-        root_libra_root_address,
-        "Globals",
-        "initialize",
-        vec![],
-        vec![Value::transaction_argument_signer_reference(root_libra_root_address), 
-        Value::bool(is_testnet)]);
-}
-
 /// Creates and initializes each validator owner and validator operator. This method creates all
 /// the required accounts, sets the validator operators for each validator owner, and sets the
 /// validator config on-chain.
@@ -432,7 +409,7 @@ fn create_and_initialize_owners_operators(
     }
 
     // Create accounts for each validator operator
-    for (operator_key, operator_name, _, _) in operator_registrations {
+    for (operator_key, operator_name, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
         let operator_account = account_address::from_public_key(operator_key);
         let create_operator_script =
@@ -452,13 +429,13 @@ fn create_and_initialize_owners_operators(
     }
 
     // Set the validator config for each validator
-    for (operator_key, _, registration, _) in operator_registrations {
+    for (operator_key, _, registration) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, operator_account, registration);
     }
 
     // Add each validator to the validator set
-    for (owner_key, _, _,) in operator_assignments {
+    for (owner_key, _, _) in operator_assignments {
         let owner_account = account_address::from_public_key(owner_key);
         exec_function(
             session,
@@ -472,61 +449,6 @@ fn create_and_initialize_owners_operators(
             ],
         );
     }
-}
-
-/// Initialize each validator.
-fn initialize_miners(session: &mut Session<StateViewCache>,
-    operator_registrations: &[OperatorRegistration]) {
-    // Genesis will abort if mining can't be confirmed.
-
-    // println!("initialize_miners");
-    // IDEA:
-    // 1. The miner who participates in genesis ceremony, will add the first vdf proof block to the node.config.toml file.
-    // TODO: This file will be parsed as usual, but the NodeConfig object needs to be modified and the data be vailable here.
-    // 2. The Challenge of the first VDF proof needs to be parsed, and the first 32 bytes sliced (is the account public key). A new account needs to be generated with                 Value::address(account),
-    // PSEUDOCODE...
-    // let first_32 = _node_configs.challenge[..32]
-    // AuthenticationKey::ed25519(&account_key);
-    // let account = auth_key.derived_address();
-    // let address = Value::address(account);
-
-    // 3. this function initialize_miners() will directly call the MinerState::begin_redeem() with context.exec here. Note the miners get initialized as usual in the above initialize_validators() (Done)
-
-    // 4. begin_redeem will check the proof, but also add the miner to ValidatorUniverse, which Libra's flow above doesn't ordinarily do. (DONE)
-    // 5. begin_redeem now also creates a new validator account on submission of the first proof. (TODO) However in the case of Genesis, this will be a no-op. Should fail gracefully on attempting to create the same accounts
-    let libra_root_address = account_config::libra_root_address();
-    for (operator_key, _, _, mining_proof) in operator_registrations {
-        let operator_account = account_address::from_public_key(operator_key);
-        let preimage = hex::decode(&mining_proof.preimage).unwrap();
-        let proof = hex::decode(&mining_proof.proof).unwrap();
-
-        exec_function(
-            session,
-            libra_root_address,
-            "MinerState",
-            "genesis_helper",
-            vec![],
-            vec![
-                Value::transaction_argument_signer_reference(operator_account),
-                Value::vector_u8(preimage), // serialize for move.
-                Value::vector_u8(proof)]);
-    }
-
-}
-
-/// Distribute genesis subsidy to initialized validators
-fn distribute_genesis_subsidy(session: &mut Session<StateViewCache>) {
-    // println!("distributing genesis subsidy to validators");
-
-    let root_libra_root_address = account_config::libra_root_address();
-
-    exec_function(
-        session,
-        root_libra_root_address,
-        "Subsidy",
-        "genesis",
-        vec![],
-        vec![Value::transaction_argument_signer_reference(root_libra_root_address)]);
 }
 
 fn remove_genesis(stdlib_modules: &[CompiledModule]) -> impl Iterator<Item = &CompiledModule> {
@@ -601,9 +523,10 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
 /// Generate an artificial genesis `ChangeSet` for testing
 pub fn generate_genesis_change_set_for_testing(stdlib_options: StdLibOptions) -> ChangeSet {
     let stdlib_modules = stdlib_modules(stdlib_options);
-    let swarm = libra_config::generator::validator_swarm_for_testing(4);
+    let swarm = libra_config::generator::validator_swarm_for_testing(10);
 
     encode_genesis_change_set(
+        &GENESIS_KEYPAIR.1,
         &GENESIS_KEYPAIR.1,
         &operator_assignments(&swarm.nodes),
         &operator_registrations(&swarm.nodes),
@@ -621,6 +544,7 @@ pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, StructTag> {
 
     encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
+        &GENESIS_KEYPAIR.1,
         &operator_assignments(&swarm.nodes),
         &operator_registrations(&swarm.nodes),
         stdlib_modules,
@@ -632,7 +556,7 @@ pub fn generate_genesis_type_mapping() -> BTreeMap<Vec<u8>, StructTag> {
 
 /// Generates an artificial set of OperatorAssignments using the given node configurations for
 /// testing.
-pub fn operator_assignments(node_configs: &[NodeConfig]) -> Vec<OperatorAssignment> {
+pub fn operator_assignments(node_configs: &[NodeConfig]) -> Vec<OperatorRegistration> {
     node_configs
         .iter()
         .map(|n| {
@@ -642,7 +566,7 @@ pub fn operator_assignments(node_configs: &[NodeConfig]) -> Vec<OperatorAssignme
             let operator_account = account_address::from_public_key(&operator_key);
             let set_operator_script =
                 transaction_builder::encode_set_validator_operator_script(vec![], operator_account);
-           
+
             (owner_key, vec![], set_operator_script)
         })
         .collect::<Vec<_>>()
@@ -689,16 +613,7 @@ pub fn operator_registrations(node_configs: &[NodeConfig]) -> Vec<OperatorRegist
                 lcs::to_bytes(&vec![enc_addr.unwrap()]).unwrap(),
                 lcs::to_bytes(&vec![addr]).unwrap(),
             );
-
-            // 0L Change. Adding node configs
-            let preimage = n.configs_ol_miner.preimage.to_owned();
-            let proof = n.configs_ol_miner.proof.to_owned();
-            let vdf_proof = GenesisMiningProof{
-                preimage,
-                proof,
-            };
-
-            (operator_key, vec![], script, vdf_proof)
+            (operator_key, vec![], script)
         })
         .collect::<Vec<_>>()
 }
