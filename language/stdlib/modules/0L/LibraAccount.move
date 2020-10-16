@@ -28,6 +28,7 @@ module LibraAccount {
     use 0x1::Libra::{Self, Libra};
     use 0x1::Option::{Self, Option};
     use 0x1::Roles;
+    use 0x1::Stats;
     
     /// Every Libra account has a LibraAccount resource
     resource struct LibraAccount {
@@ -1205,7 +1206,11 @@ module LibraAccount {
         Roles::new_validator_role(creator_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, creator_account, human_name);
-        make_account(new_account, auth_key_prefix)
+        make_account(new_account, auth_key_prefix);
+
+
+        //// TODO: TEMP FOR MERGE /////
+        Stats::init_address(creator_account, new_account_address)
     }
 
     public fun create_validator_account_from_mining_0L<Token>(

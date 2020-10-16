@@ -16,6 +16,8 @@ address 0x1 {
         use 0x1::LibraSystem;
         use 0x1::MinerState;
         use 0x1::Globals;
+        use 0x1::Stats;
+
 
         // This function is called by block-prologue once after n blocks.
         // Function code: 01. Prefix: 180101
@@ -38,6 +40,7 @@ address 0x1 {
             // Step 3: Bulk update validator weights
             // Step 4: Mint subsidy for upcoming epoch
             prepare_upcoming_validator_set(account, current_block_height);
+            
         }
 
         // Function code: 02. Prefix: 180102
@@ -47,7 +50,7 @@ address 0x1 {
             let (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
                  = LibraSystem::get_outgoing_validators_with_weights(Globals::get_epoch_length(), current_block_height);
             // Step 1: End redeem for all validators
-            MinerState::end_redeem_validator_universe(account);
+            MinerState::reconfig(account);
 
             // Step 2: Subsidy payments to the validators
             // Calculate and pay subsidy for the current epoch
@@ -69,8 +72,6 @@ address 0x1 {
             if (LibraConfig::get_current_epoch() != 0) {
               Subsidy::burn_subsidy(account);
             }
-
-
         }
 
         // Function code: 03. Prefix: 180103
@@ -79,10 +80,14 @@ address 0x1 {
             let eligible_validators = NodeWeight::top_n_accounts(account, Globals::get_max_validator_per_epoch());
 
             // Step 2: Call bulkUpdate module
+            // TODO WIP FOR MERGE
+            Stats::reconfig(account, &eligible_validators);
+
             LibraSystem::bulk_update_validators(account, eligible_validators, Globals::get_epoch_length(), current_block_height);
 
             // Step 3: Mint subsidy units for upcoming epoch
             Subsidy::mint_subsidy(account);
+
         }
   }
 }

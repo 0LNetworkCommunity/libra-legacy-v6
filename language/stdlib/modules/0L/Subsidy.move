@@ -15,7 +15,7 @@ address 0x1 {
     use 0x1::LibraAccount;
     use 0x1::Vector;
     use 0x1::FixedPoint32;
-    use 0x1::Stats;
+    // use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::Globals;
     use 0x1::LibraConfig;
@@ -77,13 +77,16 @@ address 0x1 {
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
-    public fun calculate_Subsidy(account: &signer, start_height: u64, end_height: u64)
+    public fun calculate_Subsidy(account: &signer, start_height: u64, 
+    _end_height: u64)
     :u64 acquires SubsidyInfo {
       let sender = Signer::address_of(account);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190107014010);
       assert(start_height >= 0, 190107025120);
       // Gets the proxy for liveness from Stats
-      let node_density = Stats::network_heuristics(start_height, end_height);
+
+      /////// TODO SET TO ZERO FOR MERGE PROCESSS //// 
+      let node_density = 0; // Stats::network_heuristics(start_height, end_height);
       // Gets the transaction fees in the epoch
       // TODO: Check the balance here
       // OL::TODO::0xFEE doesnt exist anymore. Need to re-evaluate this. 
@@ -125,7 +128,7 @@ address 0x1 {
                           FixedPoint32::create_from_rational(total_voting_power, 1));
 
         // Subsidy is only paid if both mining and validation are active in the epoch
-        let latest_epoch_mined = MinerState::get_miner_latest_epoch(node_address);
+        let latest_epoch_mined = MinerState::get_miner_latest_epoch(account, node_address);
         if(latest_epoch_mined == LibraConfig::get_current_epoch() && ValidatorUniverse::check_if_active_validator(node_address, Globals::get_epoch_length(), current_block_height)){
           //Transfer gas from association to validator
           let with_cap = LibraAccount::extract_withdraw_capability(account);

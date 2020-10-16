@@ -87,10 +87,10 @@ module LibraBlock {
             Errors::requires_address(EVM_OR_VALIDATOR)
         );
 
-        {
-          let block_metadata_ref = borrow_global<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-          Stats::insert_voter_list(vm, block_metadata_ref.height, &previous_block_votes);
-        };
+
+/////////////// TODO: WIP OUT FOR MERGE PROCESSS //////// 
+        Stats::process_set_votes(vm, &previous_block_votes);
+        Stats::inc_prop(vm, *&proposer);
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         LibraTimestamp::update_global_time(vm, proposer, timestamp);

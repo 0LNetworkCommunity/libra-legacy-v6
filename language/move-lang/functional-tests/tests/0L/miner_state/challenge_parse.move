@@ -18,7 +18,7 @@ script {
 
         // Parse key and check
         MinerState::first_challenge_includes_address(new_account_address, &challenge);
-        // Note: There is a Transaction::assert statement in this function already
+        // Note: There is a assert statement in this function already
         // which checks to confim that the parsed address and new_account_address
         // the same. Execution of this guarantees that the test of the native
         // function passed.
