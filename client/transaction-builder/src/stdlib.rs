@@ -553,8 +553,6 @@ impl ScriptCall {
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
             MintLbr { amount_lbr } => encode_mint_lbr_script(amount_lbr),
-<<<<<<< HEAD
-=======
             OlLibraBlockTestHelper { currency } => {
                 encode_ol_libra_block_test_helper_script(currency)
             }
@@ -600,7 +598,6 @@ impl ScriptCall {
             OlTxnFeeTestDistr {} => encode_ol_txn_fee_test_distr_script(),
             OlTxnFeeTestMint { payee } => encode_ol_txn_fee_test_mint_script(payee),
             OlTxnFeeTestMove {} => encode_ol_txn_fee_test_move_script(),
->>>>>>> v3-to-v4-vmgenesis
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -1633,8 +1630,6 @@ fn decode_mint_lbr_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MintLbr {
         amount_lbr: decode_u64_argument(script.args().get(0)?.clone())?,
     })
-<<<<<<< HEAD
-=======
 }
 
 fn decode_ol_libra_block_test_helper_script(script: &Script) -> Option<ScriptCall> {
@@ -1704,7 +1699,6 @@ fn decode_ol_txn_fee_test_mint_script(script: &Script) -> Option<ScriptCall> {
 
 fn decode_ol_txn_fee_test_move_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::OlTxnFeeTestMove {})
->>>>>>> v3-to-v4-vmgenesis
 }
 
 fn decode_peer_to_peer_with_metadata_script(script: &Script) -> Option<ScriptCall> {
@@ -2219,8 +2213,6 @@ const MINT_LBR_CODE: &[u8] = &[
     119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 10, 115, 116, 97, 112, 108, 101, 95,
     108, 98, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 1, 9, 11, 0, 17, 0, 12, 2,
     14, 2, 10, 1, 17, 2, 11, 2, 17, 1, 2,
-<<<<<<< HEAD
-=======
 ];
 
 const OL_LIBRA_BLOCK_TEST_HELPER_CODE: &[u8] = &[
@@ -2357,7 +2349,6 @@ const OL_TXN_FEE_TEST_MOVE_CODE: &[u8] = &[
     116, 114, 105, 98, 117, 116, 101, 95, 116, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 95,
     102, 101, 101, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 3, 11, 0, 17, 0,
     2,
->>>>>>> v3-to-v4-vmgenesis
 ];
 
 const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[
