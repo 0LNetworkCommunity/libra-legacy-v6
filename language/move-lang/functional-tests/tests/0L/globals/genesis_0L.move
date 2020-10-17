@@ -1,13 +1,17 @@
 //! account: alice, 100000,0, validator
+
 //! new-transaction
-//! sender: libraroot
+//! sender: alice
 script {
 use 0x1::LibraSystem;
 use 0x1::MinerState;
+use 0x1::Signer;
 use 0x1::Debug::print;
 
 
-    fun main(_sender: &signer) {
+    fun main(sender: &signer) {
+        print(&Signer::address_of(sender));
+        print(&{{alice}});
         assert(LibraSystem::is_validator({{alice}}) == true, 98);
         print(&MinerState::test_helper_get_height({{alice}}));
 

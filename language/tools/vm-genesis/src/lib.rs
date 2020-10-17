@@ -61,7 +61,7 @@ pub static ZERO_COST_SCHEDULE: Lazy<CostTable> = Lazy::new(zero_cost_schedule);
 
 pub type Name = Vec<u8>;
  // 0L Change.
-pub type OperatorAssignment = (Ed25519PublicKey, Name, Script); // Assigns an operator to each owner
+pub type OperatorAssignment = (Ed25519PublicKey, Name, Script, GenesisMiningProof); // Assigns an operator to each owner
 pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, GenesisMiningProof); // Registers a validator config
 
 pub fn encode_genesis_transaction(
@@ -148,7 +148,7 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
     initialize_miners(&mut session,
-        &operator_registrations,);
+        &operator_assignments,);
     distribute_genesis_subsidy(&mut session);
     reconfigure(&mut session);
 
@@ -417,7 +417,7 @@ fn create_and_initialize_owners_operators(
     let libra_root_address = account_config::libra_root_address();
 
     // Create accounts for each validator owner
-    for (owner_key, owner_name, _) in operator_assignments {
+    for (owner_key, owner_name, _, _) in operator_assignments {
         let owner_auth_key = AuthenticationKey::ed25519(&owner_key);
         let owner_account = account_address::from_public_key(owner_key);
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
@@ -444,7 +444,7 @@ fn create_and_initialize_owners_operators(
     }
 
     // Set the validator operator for each validator owner
-    for (owner_key, _, assignment) in operator_assignments {
+    for (owner_key, _, assignment, _) in operator_assignments {
         let owner_account = account_address::from_public_key(owner_key);
         exec_script(session, owner_account, assignment);
     }
@@ -456,7 +456,7 @@ fn create_and_initialize_owners_operators(
     }
 
     // Add each validator to the validator set
-    for (owner_key, _, _,) in operator_assignments {
+    for (owner_key, _, _, _,) in operator_assignments {
         let owner_account = account_address::from_public_key(owner_key);
         exec_function(
             session,
@@ -474,11 +474,11 @@ fn create_and_initialize_owners_operators(
 
 /// Initialize each validator.
 fn initialize_miners(session: &mut Session<StateViewCache>,
-    operator_registrations: &[OperatorRegistration]) {
+    operator_assignments: &[OperatorAssignment]) {
     // Genesis will abort if mining can't be confirmed.
     let libra_root_address = account_config::libra_root_address();
-    for (operator_key, _, _, mining_proof) in operator_registrations {
-        let operator_account = account_address::from_public_key(operator_key);
+    for (owner_key, _, _, mining_proof) in operator_assignments {
+        let owner_account = account_address::from_public_key(owner_key);
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
 
@@ -490,9 +490,21 @@ fn initialize_miners(session: &mut Session<StateViewCache>,
             vec![],
             vec![
                 Value::transaction_argument_signer_reference(libra_root_address),
-                Value::transaction_argument_signer_reference(operator_account),
+                Value::transaction_argument_signer_reference(owner_account),
                 Value::vector_u8(preimage),
                 Value::vector_u8(proof)]);
+        // exec_function(
+        //     session,
+        //     operator_account,
+        //     "MinerState",
+        //     "init_miner_state",
+        //     vec![],
+        //     vec![
+        //         // Value::transaction_argument_signer_reference(libra_root_address),
+        //         Value::transaction_argument_signer_reference(operator_account),
+        //         // Value::vector_u8(preimage),
+        //         // Value::vector_u8(proof)
+        //         ]);
     }
 
 }
@@ -625,8 +637,15 @@ pub fn operator_assignments(node_configs: &[NodeConfig]) -> Vec<OperatorAssignme
             let operator_account = account_address::from_public_key(&operator_key);
             let set_operator_script =
                 transaction_builder::encode_set_validator_operator_script(vec![], operator_account);
-           
-            (owner_key, vec![], set_operator_script)
+            
+            // 0L Change. Adding node configs
+            let preimage = n.configs_ol_miner.preimage.to_owned();
+            let proof = n.configs_ol_miner.proof.to_owned();
+            let vdf_proof = GenesisMiningProof{
+                preimage,
+                proof,
+            };
+            (owner_key, vec![], set_operator_script, vdf_proof)
         })
         .collect::<Vec<_>>()
 }

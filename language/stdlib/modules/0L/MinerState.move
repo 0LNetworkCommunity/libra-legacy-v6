@@ -251,7 +251,9 @@ address 0x1 {
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_signer: &signer) {
+      // TODO: If a miner can init the state then it can put the account in a bad state.
       print(&0x0111111111);
+      print(&Signer::address_of(miner_signer));
       // LibraAccount calls this from a public API.
       // NOTE Only Signer can update own state.
       // Exception is LibraAccount which can emulate a Signer.
@@ -269,7 +271,7 @@ address 0x1 {
       
       //also add the miner to validator universe
       //TODO: add_validators need to check permission.
-      // ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
+      ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
     }
 
 
@@ -336,7 +338,7 @@ address 0x1 {
     public fun test_helper_get_height(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);
 
-      if(!exists<MinerProofHistory>(miner_addr)) return 0;
+      assert(exists<MinerProofHistory>(miner_addr), 130115021000);
 
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
