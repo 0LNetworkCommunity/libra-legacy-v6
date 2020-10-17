@@ -136,7 +136,7 @@ script {
 //! sender: libraroot
 script {
     use 0x1::Stats;
-    // use 0x0::Vector;
+    // use 0x1::Vector;
     fun main(vm: &signer) {
       // Testing that reconfigure reset the counter for current epoch.
       assert(!Stats::node_above_thresh(vm, {{alice}}), 0);

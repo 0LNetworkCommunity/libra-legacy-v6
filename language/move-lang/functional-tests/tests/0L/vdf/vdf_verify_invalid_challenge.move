@@ -4,7 +4,7 @@
 //! new-transaction
 script{
 use 0x1::VDF;
-// use 0x0::Debug;
+// use 0x1::Debug;
 fun main() {
 
   // This checks that the VDF verifier catches an invalide "challenge" parameter, and fails gracefully with error.

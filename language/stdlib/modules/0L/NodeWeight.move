@@ -4,7 +4,7 @@
 /////////////////////////////////////////////////////////////////////////
 // Node Weight - used for reconfiguring the network, for selecting top N validators to new validator set.
 // This module is used to select the validators who would participate in LibraBFT protocol. Due to the restrictions on throughput with increasing validators above a threshold,
-// we rank nodes based on node weight (i.e., stake they own, previous participation trends) to select the validators for an epoch.
+// we rank nodes based on node weight (i.e. previous participation heuristics and mining) to select the validators for an epoch.
 // File Prefix for errors: 1401
 ///////////////////////////////////////////////////////////////////////////
 
@@ -15,28 +15,49 @@ address 0x1 {
     use 0x1::ValidatorUniverse;
     use 0x1::Signer;
     use 0x1::MinerState;
-    use 0x1::CoreAddresses;
+    // use 0x0::Cases;
+    // use 0x0::LibraSystem;
 
+    public fun proof_of_weight (node_addr: address): u64 {
+      // Transaction::assert(Transaction::sender() == 0x0, 140101014010);
+
+      // Calculate the weight/voting power for the next round.
+      // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
+      MinerState::get_epochs_mining(node_addr)
+    }
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
     // ValidatorUniverse::get_validator_weight. Every miner that has performed a VDF proof-of-work offline
     // is now eligible for the second step of the proof of work of running a validator.
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101
+    // Permissions: Public, VM Only
     public fun top_n_accounts(account: &signer, n: u64): vector<address> {
 
-      let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 140101014010);
+      assert(Signer::address_of(account) == 0x0, 140101014010);
 
-      //Get eligible validators from Validator Universe
+      // let eligible_validators = Vector::empty<address>();
+
+      //Get all validators from Validator Universe and then find the eligible validators 
       let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
+      // let val_uni_length = Vector::length<address>(&validators_universe);
+     
+      // let k = 0;
+      // while(k < val_uni_length){
+      //   let addr = *Vector::borrow<address>(&validators_universe, k);
+
+      //   // consensus case 1 and 2, allow inclusion into the next validator set.
+      //   if (Cases::get_case(addr) == 1 || Cases::get_case(addr) == 2){
+      //     Vector::push_back<address>(&mut eligible_validators, addr)
+      //   };
+      //   k = k + 1;
+      // };
 
       let length = Vector::length<address>(&eligible_validators);
 
-      // Base Case: The universe of validators is under the limit of the BFT consensus.
+      // Scenario: The universe of validators is under the limit of the BFT consensus.
       // If n is greater than or equal to accounts vector length - return the vector.
-      if(length <= n)
-        return eligible_validators;
+      if(length <= n) return eligible_validators;
 
       // Vector to store each address's node_weight
       let weights = Vector::empty<u64>();
@@ -45,8 +66,7 @@ address 0x1 {
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
         // Ensure that this address is an active validator
-        let validator_weight= MinerState::get_validator_weight(account, cur_address);
-        Vector::push_back<u64>(&mut weights, validator_weight);
+        Vector::push_back<u64>(&mut weights, proof_of_weight(cur_address));
         k = k + 1;
       };
 
@@ -70,11 +90,13 @@ address 0x1 {
 
       // Reverse to have sorted order - high to low.
       Vector::reverse<address>(&mut eligible_validators);
-      let index = n;
-      while(index < length){
-        Vector::pop_back<address>(&mut eligible_validators);
-        index = index + 1;
+
+      let diff = length - n; 
+      while(diff>0){
+        Vector::pop_back(&mut eligible_validators);
+        diff =  diff - 1;
       };
+
       return eligible_validators
     }
   }

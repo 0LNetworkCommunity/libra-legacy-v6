@@ -15,6 +15,8 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Stats;
     use 0x1::Testnet;
+    use 0x1::Debug::print;
+
 
     // Struct to store information about a VDF proof submitted
     struct Proof {
@@ -248,12 +250,13 @@ address 0x1 {
 
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
-    public fun init_miner_state(miner_signer: &signer){
-      // let addr = Signer::address_of(node_sig);
-      // Transaction::assert(LibraSystem::is_validator(addr), 99190201014010);
-      // LibraAccount calls this.
+    public fun init_miner_state(miner_signer: &signer) {
+      // TODO: If a miner can init the state then it can put the account in a bad state.
+      print(&0x0111111111);
+      print(&Signer::address_of(miner_signer));
+      // LibraAccount calls this from a public API.
       // NOTE Only Signer can update own state.
-      // Exception is LibraAccount which can simulate a Signer.
+      // Exception is LibraAccount which can emulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
       move_to<MinerProofHistory>(miner_signer, MinerProofHistory{
         // verified_proof_history: Vector::empty(),
@@ -265,7 +268,7 @@ address 0x1 {
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
       });
-
+      
       //also add the miner to validator universe
       //TODO: add_validators need to check permission.
       ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
@@ -334,6 +337,9 @@ address 0x1 {
     // Permissions: PUBLIC, ANYONE, TESTING 
     public fun test_helper_get_height(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);
+
+      assert(exists<MinerProofHistory>(miner_addr), 130115021000);
+
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
     }

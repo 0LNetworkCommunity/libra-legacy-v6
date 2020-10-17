@@ -3,7 +3,7 @@
 //! new-transaction
 script{
 use 0x1::VDF;
-// use 0x0::Debug;
+// use 0x1::Debug;
 fun main() {
 
   // this tests the happy case, that a proof is submitted with all three correct parameters.
