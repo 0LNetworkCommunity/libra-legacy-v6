@@ -23,7 +23,7 @@ fun ol_miner_state_onboarding(
 
     // submit vdf proof blob.
     // the sender is not the miner in this case.
-    let proof = MinerState::create_proof_blob(challenge, difficulty, solution, 0);
+    let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
     MinerState::commit_state(sender, proof);
 
 }
