@@ -335,6 +335,9 @@ address 0x1 {
     // Permissions: PUBLIC, ANYONE, TESTING 
     public fun test_helper_get_height(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);
+
+      if(!exists<MinerProofHistory>(miner_addr)) return 0;
+
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
     }
