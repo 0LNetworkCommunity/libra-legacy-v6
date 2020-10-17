@@ -19,27 +19,22 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    // use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::Vector;
     use 0x1::Cases;
-    
-    use 0x1::Debug::print;
 
-    fun main(_sender: &signer) {
+    fun main(sender: &signer) {
         // todo: change name to Mock epochs
         // MinerState::test_helper_set_epochs(sender, 5);
         let voters = Vector::singleton<address>({{alice}});
         let i = 1;
         while (i < 10) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(sender, &voters);
             i = i + 1;
         };
 
-        // Mock end of epoch for minerstate
-        print(&Cases::get_case({{alice}}));
-        assert(Cases::get_case({{alice}}) == 3, 7357300103011000);
+        assert(Cases::get_case(sender, {{alice}}) == 3, 7357300103011000);
     }
 }
 //check: EXECUTED
