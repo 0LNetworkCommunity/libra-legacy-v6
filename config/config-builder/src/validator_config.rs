@@ -157,7 +157,7 @@ impl ValidatorConfig {
                 .test
                 .as_ref()
                 .and_then(|config| config.publishing_option.clone()),
-            self.chain_id,
+            // self.chain_id,
         );
 
         let (waypoint, maybe_waypoint) = if self.build_waypoint {

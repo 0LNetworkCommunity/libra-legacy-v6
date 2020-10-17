@@ -104,34 +104,36 @@ address 0x1 {
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
       print(&0x0);
+      print(&vm_addr);
+      print(&len);
       print(&genesis_validators);
-      // Calculate subsidy equally for all the validators based on subsidy curve
-      // Calculate the split for subsidy and burn
-      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
-      let subsidy_units = subsidy_curve(vm_sig);
+      // // Calculate subsidy equally for all the validators based on subsidy curve
+      // // Calculate the split for subsidy and burn
+      // // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+      // let subsidy_units = subsidy_curve(vm_sig);
 
-      // Distribute gas coins to initial validators
-      let subsidy_granted = subsidy_units / len;
-      let i = 0;
-      while (i < len) {
-        let node_address = *(Vector::borrow<address>(&genesis_validators, i));
-        let old_validator_bal = LibraAccount::balance<GAS>(vm_addr);
+      // // Distribute gas coins to initial validators
+      // let subsidy_granted = subsidy_units / len;
+      // let i = 0;
+      // while (i < len) {
+      //   let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+      //   let old_validator_bal = LibraAccount::balance<GAS>(vm_addr);
 
-        //Transfer gas from association to validator
-        let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
-        LibraAccount::vm_deposit_with_metadata<GAS>(
-          vm_sig,
-          node_address,
-          minted_coins,
-          x"", x""
-        );
+      //   //Transfer gas from association to validator
+      //   let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
+      //   LibraAccount::vm_deposit_with_metadata<GAS>(
+      //     vm_sig,
+      //     node_address,
+      //     minted_coins,
+      //     x"", x""
+      //   );
 
-        //Confirm the calculations, and that the ending balance is incremented accordingly.
-        assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
-        i = i + 1;
-      };
+      //   //Confirm the calculations, and that the ending balance is incremented accordingly.
+      //   assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+      //   i = i + 1;
+      // };
 
-      assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
+      // assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
 
     }
   }
