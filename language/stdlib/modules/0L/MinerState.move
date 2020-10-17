@@ -13,7 +13,6 @@ address 0x1 {
     use 0x1::LibraConfig;
     use 0x1::Globals;
     use 0x1::Hash;
-    use 0x1::LibraTimestamp;
     use 0x1::Stats;
     use 0x1::Testnet;
 
@@ -62,7 +61,7 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130102014010);
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
       assert(Signer::address_of(miner) != sender, 130101014010);
-      assert(LibraTimestamp::is_genesis(), 130101024010);
+      // assert(LibraTimestamp::is_genesis(), 130101024010);
 
       let difficulty = Globals::get_difficulty();
       let proof = Proof {

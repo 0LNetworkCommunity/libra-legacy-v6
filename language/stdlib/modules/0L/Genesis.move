@@ -27,14 +27,10 @@ module Genesis {
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::Subsidy;
-    use 0x1::Testnet;
 
     fun initialize(
         lr_account: &signer,
-        _tc_account: &signer,
         lr_auth_key: vector<u8>,
-        _tc_addr: address,
-        _tc_auth_key: vector<u8>,
         initial_script_allow_list: vector<vector<u8>>,
         is_open_module: bool,
         instruction_schedule: vector<u8>,
@@ -96,7 +92,7 @@ module Genesis {
 
 
         // TODO: TEMP FOR MERGE. This is done in VM_Genesis.
-        Testnet::initialize(lr_account);
+        // Testnet::initialize(lr_account);
         
         let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
         LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
