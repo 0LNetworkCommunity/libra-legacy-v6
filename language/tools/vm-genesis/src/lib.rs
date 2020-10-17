@@ -132,7 +132,7 @@ pub fn encode_genesis_change_set(
         initialize_testnet(&mut session, true);
     } else {
         println!("INITIALIZING WITH PROD CONSTANTS");
-        initialize_testnet(&mut session, false);
+        initialize_testnet(&mut session, false); 
     }
 
     create_and_initialize_main_accounts(
