@@ -36,7 +36,9 @@ pub enum ScriptCall {
     /// Aborts with NOT_A_CURRENCY if `Currency` is not an accepted currency type in the Libra system
     /// Aborts with `LibraAccount::ADD_EXISTING_CURRENCY` if the account already holds a balance in
     /// `Currency`.
-    AddCurrencyToAccount { currency: TypeTag },
+    AddCurrencyToAccount {
+        currency: TypeTag,
+    },
 
     /// Add the `KeyRotationCapability` for `to_recover_account` to the `RecoveryAddress` resource under `recovery_address`.
     ///
@@ -44,10 +46,15 @@ pub enum ScriptCall {
     /// * Aborts with `LibraAccount::EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED` if `account` has already delegated its `KeyRotationCapability`.
     /// * Aborts with `RecoveryAddress:ENOT_A_RECOVERY_ADDRESS` if `recovery_address` does not have a `RecoveryAddress` resource.
     /// * Aborts with `RecoveryAddress::EINVALID_KEY_ROTATION_DELEGATION` if `to_recover_account` and `recovery_address` do not belong to the same VASP.
-    AddRecoveryRotationCapability { recovery_address: AccountAddress },
+    AddRecoveryRotationCapability {
+        recovery_address: AccountAddress,
+    },
 
     /// Append the `hash` to script hashes list allowed to be executed by the network.
-    AddToScriptAllowList { hash: Bytes, sliding_nonce: u64 },
+    AddToScriptAllowList {
+        hash: Bytes,
+        sliding_nonce: u64,
+    },
 
     /// Add `new_validator` to the validator set.
     /// Fails if the `new_validator` address is already in the validator set
@@ -212,7 +219,9 @@ pub enum ScriptCall {
     ///
     /// ## Unchanged States
     /// * The total values of Coin1 and Coin2 stay the same.
-    MintLbr { amount_lbr: u64 },
+    MintLbr {
+        amount_lbr: u64,
+    },
 
     OlLibraBlockTestHelper {
         currency: TypeTag,
@@ -222,7 +231,7 @@ pub enum ScriptCall {
         challenge: Bytes,
         difficulty: u64,
         solution: Bytes,
-        tower_height: u64,
+        _tower_height: u64,
     },
 
     OlMinerStateOnboarding {
@@ -307,14 +316,19 @@ pub enum ScriptCall {
 
     /// Preburn `amount` `Token`s from `account`.
     /// This will only succeed if `account` already has a published `Preburn<Token>` resource.
-    Preburn { token: TypeTag, amount: u64 },
+    Preburn {
+        token: TypeTag,
+        amount: u64,
+    },
 
     /// (1) Rotate the authentication key of the sender to `public_key`
     /// (2) Publish a resource containing a 32-byte ed25519 public key and the rotation capability
     ///     of the sender under the sender's address.
     /// Aborts if the sender already has a `SharedEd25519PublicKey` resource.
     /// Aborts if the length of `new_public_key` is not 32.
-    PublishSharedEd25519PublicKey { public_key: Bytes },
+    PublishSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// Set validator's config locally.
     /// Does not emit NewEpochEvent, the config is NOT changed in the validator set.
@@ -339,17 +353,25 @@ pub enum ScriptCall {
     /// * Aborts with `LibraAccount::EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED` if the `KeyRotationCapability` for `account` has already been extracted.
     /// * Aborts with `0` if the key rotation capability held by the account doesn't match the sender's address.
     /// * Aborts with `LibraAccount::EMALFORMED_AUTHENTICATION_KEY` if the length of `new_key` != 32.
-    RotateAuthenticationKey { new_key: Bytes },
+    RotateAuthenticationKey {
+        new_key: Bytes,
+    },
 
     /// Rotate `account`'s authentication key to `new_key`.
     /// `new_key` should be a 256 bit sha3 hash of an ed25519 public key. This script also takes
     /// `sliding_nonce`, as a unique nonce for this operation. See sliding_nonce.move for details.
-    RotateAuthenticationKeyWithNonce { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonce {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// Rotate `account`'s authentication key to `new_key`.
     /// `new_key` should be a 256 bit sha3 hash of an ed25519 public key. This script also takes
     /// `sliding_nonce`, as a unique nonce for this operation. See sliding_nonce.move for details.
-    RotateAuthenticationKeyWithNonceAdmin { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonceAdmin {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// Rotate the authentication key of `account` to `new_key` using the `KeyRotationCapability`
     /// stored under `recovery_address`.
@@ -368,7 +390,10 @@ pub enum ScriptCall {
     /// Rotate `account`'s base URL to `new_url` and its compliance public key to `new_key`.
     /// Aborts if `account` is not a ParentVASP or DesignatedDealer
     /// Aborts if `new_key` is not a well-formed public key
-    RotateDualAttestationInfo { new_url: Bytes, new_key: Bytes },
+    RotateDualAttestationInfo {
+        new_url: Bytes,
+        new_key: Bytes,
+    },
 
     /// (1) Rotate the public key stored in `account`'s `SharedEd25519PublicKey` resource to
     /// `new_public_key`
@@ -376,7 +401,9 @@ pub enum ScriptCall {
     /// `SharedEd25519PublicKey` to a new value derived from `new_public_key`
     /// Aborts if `account` does not have a `SharedEd25519PublicKey` resource.
     /// Aborts if the length of `new_public_key` is not 32.
-    RotateSharedEd25519PublicKey { public_key: Bytes },
+    RotateSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// Set validator's config and updates the config in the validator set.
     /// NewEpochEvent is emitted.
@@ -423,7 +450,9 @@ pub enum ScriptCall {
 
     /// Unmints `amount_lbr` LBR from the sending account into the constituent coins and deposits
     /// the resulting coins into the sending account.
-    UnmintLbr { amount_lbr: u64 },
+    UnmintLbr {
+        amount_lbr: u64,
+    },
 
     /// Update the dual attesation limit to `new_micro_lbr_limit`.
     UpdateDualAttestationLimit {
@@ -442,7 +471,10 @@ pub enum ScriptCall {
 
     /// Update Libra version.
     /// `sliding_nonce` is a unique nonce for operation, see sliding_nonce.move for details.
-    UpdateLibraVersion { sliding_nonce: u64, major: u64 },
+    UpdateLibraVersion {
+        sliding_nonce: u64,
+        major: u64,
+    },
 
     /// Allows--true--or disallows--false--minting of `currency` based upon `allow_minting`.
     UpdateMintingAbility {
@@ -560,8 +592,8 @@ impl ScriptCall {
                 challenge,
                 difficulty,
                 solution,
-                tower_height,
-            } => encode_ol_miner_state_script(challenge, difficulty, solution, tower_height),
+                _tower_height,
+            } => encode_ol_miner_state_script(challenge, difficulty, solution, _tower_height),
             OlMinerStateOnboarding {
                 challenge,
                 difficulty,
@@ -1048,7 +1080,7 @@ pub fn encode_ol_miner_state_script(
     challenge: Vec<u8>,
     difficulty: u64,
     solution: Vec<u8>,
-    tower_height: u64,
+    _tower_height: u64,
 ) -> Script {
     Script::new(
         OL_MINER_STATE_CODE.to_vec(),
@@ -1057,7 +1089,7 @@ pub fn encode_ol_miner_state_script(
             TransactionArgument::U8Vector(challenge),
             TransactionArgument::U64(difficulty),
             TransactionArgument::U8Vector(solution),
-            TransactionArgument::U64(tower_height),
+            TransactionArgument::U64(_tower_height),
         ],
     )
 }
@@ -1643,7 +1675,7 @@ fn decode_ol_miner_state_script(script: &Script) -> Option<ScriptCall> {
         challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
         difficulty: decode_u64_argument(script.args().get(1)?.clone())?,
         solution: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        tower_height: decode_u64_argument(script.args().get(3)?.clone())?,
+        _tower_height: decode_u64_argument(script.args().get(3)?.clone())?,
     })
 }
 
@@ -2225,32 +2257,30 @@ const OL_LIBRA_BLOCK_TEST_HELPER_CODE: &[u8] = &[
 ];
 
 const OL_MINER_STATE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 2, 2, 4, 3, 6, 10, 5, 16, 25, 7, 41, 55, 8, 96, 16,
-    0, 0, 0, 1, 2, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 0, 2, 6, 12, 8, 0, 0, 4, 10, 2, 3, 10, 2, 3, 1, 8,
-    0, 5, 6, 12, 10, 2, 3, 10, 2, 3, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 12, 86,
-    100, 102, 80, 114, 111, 111, 102, 66, 108, 111, 98, 12, 99, 111, 109, 109, 105, 116, 95, 115,
-    116, 97, 116, 101, 17, 99, 114, 101, 97, 116, 101, 95, 112, 114, 111, 111, 102, 95, 98, 108,
-    111, 98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 3, 10, 11, 1, 10, 2, 11, 3, 10,
-    4, 17, 1, 12, 5, 11, 0, 11, 5, 17, 0, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 2, 2, 4, 3, 6, 10, 5, 16, 24, 7, 40, 48, 8, 88, 16,
+    0, 0, 0, 1, 2, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 0, 2, 6, 12, 8, 0, 0, 3, 10, 2, 3, 10, 2, 1, 8, 0,
+    5, 6, 12, 10, 2, 3, 10, 2, 3, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 5, 80, 114,
+    111, 111, 102, 12, 99, 111, 109, 109, 105, 116, 95, 115, 116, 97, 116, 101, 17, 99, 114, 101,
+    97, 116, 101, 95, 112, 114, 111, 111, 102, 95, 98, 108, 111, 98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 1, 0, 4, 3, 9, 11, 1, 10, 2, 11, 3, 17, 1, 12, 5, 11, 0, 11, 5, 17, 0, 2,
 ];
 
 const OL_MINER_STATE_ONBOARDING_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 8, 2, 8, 8, 3, 16, 27, 4, 43, 4, 5, 47, 58, 7, 105, 155,
-    1, 8, 132, 2, 16, 0, 0, 0, 1, 0, 2, 0, 3, 0, 0, 2, 0, 2, 4, 2, 0, 2, 5, 0, 1, 0, 2, 6, 2, 3, 0,
-    3, 7, 4, 5, 0, 1, 8, 6, 7, 1, 1, 1, 9, 8, 1, 1, 1, 4, 11, 3, 11, 2, 6, 12, 8, 1, 0, 4, 10, 2,
-    3, 10, 2, 3, 1, 8, 1, 1, 6, 10, 2, 2, 5, 10, 2, 1, 5, 1, 3, 4, 6, 12, 5, 10, 2, 10, 2, 6, 6,
-    12, 10, 2, 3, 10, 2, 10, 2, 5, 5, 10, 2, 5, 8, 1, 1, 3, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105,
-    98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101,
-    3, 86, 68, 70, 12, 86, 100, 102, 80, 114, 111, 111, 102, 66, 108, 111, 98, 12, 99, 111, 109,
-    109, 105, 116, 95, 115, 116, 97, 116, 101, 17, 99, 114, 101, 97, 116, 101, 95, 112, 114, 111,
-    111, 102, 95, 98, 108, 111, 98, 30, 101, 120, 116, 114, 97, 99, 116, 95, 97, 100, 100, 114,
-    101, 115, 115, 95, 102, 114, 111, 109, 95, 99, 104, 97, 108, 108, 101, 110, 103, 101, 7, 98,
-    97, 108, 97, 110, 99, 101, 39, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116,
-    111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 102, 114, 111, 109, 95, 109, 105, 110, 105,
-    110, 103, 95, 48, 76, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 9, 10, 30, 14, 1, 17,
-    2, 12, 6, 12, 7, 10, 0, 10, 7, 11, 6, 11, 4, 56, 0, 10, 7, 56, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0,
-    33, 12, 9, 11, 9, 3, 20, 11, 0, 1, 6, 12, 0, 0, 0, 0, 0, 0, 0, 39, 11, 1, 10, 2, 11, 3, 6, 0,
-    0, 0, 0, 0, 0, 0, 0, 17, 1, 12, 8, 11, 0, 11, 8, 17, 0, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 8, 2, 8, 8, 3, 16, 27, 4, 43, 4, 5, 47, 57, 7, 104, 148,
+    1, 8, 252, 1, 16, 0, 0, 0, 1, 0, 2, 0, 3, 0, 0, 2, 0, 2, 4, 2, 0, 2, 5, 0, 1, 0, 2, 6, 2, 3, 0,
+    3, 7, 4, 5, 0, 1, 8, 6, 7, 1, 1, 1, 9, 8, 1, 1, 1, 4, 11, 3, 11, 2, 6, 12, 8, 1, 0, 3, 10, 2,
+    3, 10, 2, 1, 8, 1, 1, 6, 10, 2, 2, 5, 10, 2, 1, 5, 1, 3, 4, 6, 12, 5, 10, 2, 10, 2, 6, 6, 12,
+    10, 2, 3, 10, 2, 10, 2, 5, 5, 10, 2, 5, 8, 1, 1, 3, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98,
+    114, 97, 65, 99, 99, 111, 117, 110, 116, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 3,
+    86, 68, 70, 5, 80, 114, 111, 111, 102, 12, 99, 111, 109, 109, 105, 116, 95, 115, 116, 97, 116,
+    101, 17, 99, 114, 101, 97, 116, 101, 95, 112, 114, 111, 111, 102, 95, 98, 108, 111, 98, 30,
+    101, 120, 116, 114, 97, 99, 116, 95, 97, 100, 100, 114, 101, 115, 115, 95, 102, 114, 111, 109,
+    95, 99, 104, 97, 108, 108, 101, 110, 103, 101, 7, 98, 97, 108, 97, 110, 99, 101, 39, 99, 114,
+    101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117,
+    110, 116, 95, 102, 114, 111, 109, 95, 109, 105, 110, 105, 110, 103, 95, 48, 76, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 9, 10, 29, 14, 1, 17, 2, 12, 6, 12, 7, 10, 0, 10, 7, 11, 6,
+    11, 4, 56, 0, 10, 7, 56, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 9, 11, 9, 3, 20, 11, 0, 1, 6,
+    12, 0, 0, 0, 0, 0, 0, 0, 39, 11, 1, 10, 2, 11, 3, 17, 1, 12, 8, 11, 0, 11, 8, 17, 0, 2,
 ];
 
 const OL_NO_OP_CODE: &[u8] = &[
