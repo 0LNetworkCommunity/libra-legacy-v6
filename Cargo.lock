@@ -6992,6 +6992,7 @@ dependencies = [
  "anyhow",
  "bytecode-verifier",
  "compiled-stdlib",
+ "hex 0.4.2",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",

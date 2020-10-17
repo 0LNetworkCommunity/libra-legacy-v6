@@ -132,7 +132,6 @@ pub fn encode_genesis_change_set(
         initialize_testnet(&mut session, true);
     } else {
         println!("INITIALIZING WITH PROD CONSTANTS");
-        initialize_testnet(&mut session, false); 
     }
 
     create_and_initialize_main_accounts(
@@ -401,11 +400,10 @@ fn initialize_testnet(session: &mut Session<StateViewCache>, is_testnet: bool) {
     exec_function(
         session,
         root_libra_root_address,
-        "Globals",
+        "Testnet",
         "initialize",
         vec![],
-        vec![Value::transaction_argument_signer_reference(root_libra_root_address), 
-        Value::bool(is_testnet)]);
+        vec![Value::transaction_argument_signer_reference(root_libra_root_address)]);
 }
 
 /// Creates and initializes each validator owner and validator operator. This method creates all
@@ -507,6 +505,7 @@ fn initialize_miners(session: &mut Session<StateViewCache>,
             "genesis_helper",
             vec![],
             vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
                 Value::transaction_argument_signer_reference(operator_account),
                 Value::vector_u8(preimage), // serialize for move.
                 Value::vector_u8(proof)]);
