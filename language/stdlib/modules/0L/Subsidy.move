@@ -20,6 +20,7 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::LibraTimestamp;
     use 0x1::LibraSystem;
+    use 0x1::Debug::print;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -102,7 +103,8 @@ address 0x1 {
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
-
+      print(&0x0);
+      print(&genesis_validators);
       // Calculate subsidy equally for all the validators based on subsidy curve
       // Calculate the split for subsidy and burn
       // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
