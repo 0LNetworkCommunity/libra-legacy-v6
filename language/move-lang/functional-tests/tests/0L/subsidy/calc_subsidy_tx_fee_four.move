@@ -12,14 +12,14 @@
 //! block-time: 1
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
   
   use 0x1::Subsidy;
   use 0x1::Vector;
   use 0x1::Stats;
   use 0x1::LibraAccount;
-  use 0x1::GAS;
+  use 0x1::GAS::GAS;
 
   fun main(vm: &signer) {
     // check the case of a network density of 4 active validators.
@@ -32,13 +32,13 @@ script {
     // create mock validator stats for full epoch
     let i = 0;
     while (i < 16) {
-      Stats::process_set_votes(&validators);
+      Stats::process_set_votes(vm, &validators);
       i = i + 1;
     };
 
-    LibraAccount::mint_to_address<GAS::T>(vm, 0xFEE, 100);
+    LibraAccount::mint_to_address<GAS>(vm, 0xFEE, 100);
 
-    assert(Subsidy::calculate_Subsidy() == 196, 7357190101021000);
+    assert(Subsidy::calculate_Subsidy(vm) == 196, 7357190101021000);
 
     }
 }

@@ -1,7 +1,7 @@
 // Adding new validator epoch info
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script{
 use 0x1::ValidatorUniverse;
 use 0x1::Vector;

@@ -46,7 +46,7 @@ script {
 //check: EXECUTED
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
   // 
   // use 0x1::Subsidy;
@@ -86,7 +86,7 @@ script {
 
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     use 0x1::LibraAccount;
     use 0x1::GAS;

@@ -13,7 +13,7 @@
 //! NewBlockEvent
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     
     use 0x1::LibraSystem;
@@ -77,7 +77,7 @@ script {
 //! proposer: alice
 //! block-time: 14
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     
     use 0x1::LibraSystem;
@@ -89,7 +89,7 @@ script {
 
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     use 0x1::Vector;
     use 0x1::Stats;
@@ -124,7 +124,7 @@ script {
 
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     
     use 0x1::LibraSystem;

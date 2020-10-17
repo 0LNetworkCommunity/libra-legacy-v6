@@ -151,7 +151,7 @@ script {
 //! block-time: 14
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     use 0x1::Vector;
     use 0x1::Stats;
@@ -331,7 +331,7 @@ script {
 //! block-time: 29
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     use 0x1::Vector;
     use 0x1::Stats;
@@ -370,7 +370,7 @@ script {
 //! block-time: 31
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     
     use 0x1::LibraSystem;

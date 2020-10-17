@@ -11,7 +11,7 @@
 // This test is run with the function passing in the wrong current block on purpose.
 // This avoids an error when a reconfig function happens before the first epoch is completed
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     
     use 0x1::LibraSystem;

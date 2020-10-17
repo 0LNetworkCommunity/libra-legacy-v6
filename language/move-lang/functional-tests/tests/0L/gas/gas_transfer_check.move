@@ -19,8 +19,8 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 8001,"
 
 // //! new-transaction
-// // Transfers from association to other accounts is enabled
-// //! sender: association
+// // Transfers from libraroot to other accounts is enabled
+// //! sender: libraroot
 // //! gas-currency: GAS
 // script {
 // use 0x1::Libra;

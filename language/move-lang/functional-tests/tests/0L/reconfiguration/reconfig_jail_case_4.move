@@ -102,7 +102,7 @@ script {
 
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     // use 0x1::MinerState;
     use 0x1::Stats;
@@ -147,7 +147,7 @@ script {
 //! block-time: 16
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     ;
     use 0x1::LibraSystem;

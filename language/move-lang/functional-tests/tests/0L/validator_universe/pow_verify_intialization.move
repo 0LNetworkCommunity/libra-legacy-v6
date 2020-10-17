@@ -4,7 +4,7 @@
 //! account: bob, 1000000, 0, validator
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
     
     use 0x1::LibraSystem;

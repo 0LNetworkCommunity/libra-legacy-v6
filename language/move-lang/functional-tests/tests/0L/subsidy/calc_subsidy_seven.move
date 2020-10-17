@@ -15,14 +15,13 @@
 //! block-time: 1
 
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
-  
   use 0x1::Subsidy;
   use 0x1::Vector;
   use 0x1::Stats;
 
-  fun main() {
+  fun main(vm: &signer) {
     // check the case of a network density of 4 active validators.
 
     let validators = Vector::singleton<address>({{alice}});
@@ -36,11 +35,11 @@ script {
     // create mock validator stats for full epoch
     let i = 0;
     while (i < 16) {
-      Stats::process_set_votes(&validators);
+      Stats::process_set_votes(vm, &validators);
       i = i + 1;
     };
 
-    assert(Subsidy::calculate_Subsidy() == 293, 7357190101021000);
+    assert(Subsidy::calculate_Subsidy(vm) == 293, 7357190101021000);
 
     }
 }
