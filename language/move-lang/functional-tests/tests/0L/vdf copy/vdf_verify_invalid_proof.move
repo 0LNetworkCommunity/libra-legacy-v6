@@ -4,6 +4,7 @@
 script{
 use 0x1::VDF;
 // use 0x1::Debug;
+
 fun main() {
   // Test for the script handling an invalid "solution".
   // This tests that the verifier catches a wrong proof and gives feedback.

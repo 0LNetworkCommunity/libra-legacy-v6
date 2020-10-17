@@ -23,9 +23,9 @@ fun main(account: &signer) {
 // //! sender: association
 // //! gas-currency: GAS
 // script {
-// use 0x0::Libra;
-// use 0x0::LibraAccount;
-// use 0x0::GAS;
+// use 0x1::Libra;
+// use 0x1::LibraAccount;
+// use 0x1::GAS;
 // ;
 // fun main(account: &signer) {
 //     let coin = Libra::mint<GAS::T>(account, 10);

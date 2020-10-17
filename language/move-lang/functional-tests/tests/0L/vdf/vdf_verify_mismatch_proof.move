@@ -3,7 +3,7 @@
 //! new-transaction
 script{
 use 0x1::VDF;
-// use 0x0::Debug;
+// use 0x1::Debug;
 fun main() {
   let challenge: vector<u8>;
   let difficulty: u64;

@@ -98,7 +98,7 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    use 0x1::Transaction;
+    
     use 0x1::LibraSystem;
     use 0x1::MinerState;
     use 0x1::NodeWeight;
@@ -108,12 +108,12 @@ script {
 
     fun main(_sender: &signer) {
         // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 6, 7357000180101);
-        Transaction::assert(LibraSystem::is_validator({{dave}}) == true, 7357000180102);
-        Transaction::assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180104);
-        Transaction::assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180106);
-        Transaction::assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180107);  
-        Transaction::assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180108);
+        assert(LibraSystem::validator_set_size() == 6, 7357000180101);
+        assert(LibraSystem::is_validator({{dave}}) == true, 7357000180102);
+        assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180104);
+        assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180106);
+        assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180107);  
+        assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -203,11 +203,11 @@ script {
 script {
     use 0x1::Cases;
     // use 0x1::Debug::print;
-    use 0x1::Transaction;
+    
     fun main(_account: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        Transaction::assert(Cases::get_case({{dave}}) == 4, 7357000180109);
+        assert(Cases::get_case({{dave}}) == 4, 7357000180109);
     }
 }
 
@@ -225,7 +225,7 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    use 0x1::Transaction;
+    
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
     use 0x1::GAS;
@@ -238,11 +238,11 @@ script {
 
         // Check the validator set is at expected size
         // print(&LibraSystem::validator_set_size());
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180110);
-        Transaction::assert(LibraSystem::is_validator({{dave}}) == false, 7357000180111);            
-        Transaction::assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180112);
-        Transaction::assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180113);  
-        Transaction::assert(LibraConfig::get_current_epoch()==2, 7357000180114);
+        assert(LibraSystem::validator_set_size() == 5, 7357000180110);
+        assert(LibraSystem::is_validator({{dave}}) == false, 7357000180111);            
+        assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180112);
+        assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180113);  
+        assert(LibraConfig::get_current_epoch()==2, 7357000180114);
 
     }
 }

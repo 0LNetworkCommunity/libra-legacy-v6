@@ -9,7 +9,7 @@
 //! sender: libraroot
 script {
     use 0x1::Stats;
-    // use 0x0::Debug::print;
+    // use 0x1::Debug::print;
 
     fun main(vm: &signer){
       // Checks that altstats was initialized in genesis for Alice.

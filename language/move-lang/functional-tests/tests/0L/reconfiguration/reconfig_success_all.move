@@ -7,21 +7,23 @@
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
+//! account: eve, 1000000, 0, validator
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 1
+//! NewBlockEvent
 
 //! new-transaction
-//! sender: libraroot
+//! sender: association
 script {
-    use 0x1::Stats;
-    fun main(vm: &signer) {
-      assert(Stats::node_current_props(vm, {{alice}}) == 1, 0);
-      assert(Stats::node_current_props(vm, {{bob}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{alice}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{bob}}) == 0, 0);
-
+    
+    use 0x1::LibraSystem;
+    fun main(_account: &signer) {
+        // Tests on initial size of validators 
+        assert(LibraSystem::validator_set_size() == 5, 7357000180101);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
     }
 }
 // check: EXECUTED
@@ -77,46 +79,42 @@ script {
 //! block-prologue
 //! proposer: alice
 //! block-time: 14
+//! new-transaction
+//! sender: association
+script {
+    
+    use 0x1::LibraSystem;
+    fun main(_account: &signer) {
+        // Tests on initial size of validators 
+        assert(LibraSystem::validator_set_size() == 5, 7357000180104);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180105);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180106);
+    }
+}
 
 //! new-transaction
-//! sender: libraroot
+//! sender: association
 script {
     use 0x1::Vector;
     use 0x1::Stats;
     // This is the the epoch boundary.
-    fun main(vm: &signer) {
-      assert(Stats::node_current_props(vm, {{alice}}) == 14, 0);
-      assert(Stats::node_current_props(vm, {{bob}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{alice}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{bob}}) == 0, 0);
-
-
+    fun main() {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
-
-        // Stats::process_set_votes(voters);
+        Vector::push_back<address>(&mut voters, {{eve}});
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(vm, &voters);
+            Stats::process_set_votes(&voters);
             i = i + 1;
         };
-
-      assert(Stats::node_above_thresh(vm, {{alice}}), 0);
-      assert(Stats::node_above_thresh(vm, {{bob}}), 0);
-      assert(Stats::node_above_thresh(vm, {{carol}}), 0);
-      assert(Stats::node_above_thresh(vm, {{dave}}), 0);
-
-      assert(Stats::network_density(vm) == 4, 0);
     }
 }
-// check: EXECUTED
-
 //! block-prologue
 //! proposer: alice
 //! block-time: 15
@@ -124,27 +122,26 @@ script {
 
 //////////////////////////////////////////////
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
+
 // check: NewEpochEvent
+
 //////////////////////////////////////////////
 
 
 //! block-prologue
 //! proposer: alice
 //! block-time: 16
+//! NewBlockEvent
 
 //! new-transaction
-//! sender: libraroot
+//! sender: association
 script {
-    use 0x1::Stats;
-    // use 0x1::Vector;
-    fun main(vm: &signer) {
-      // Testing that reconfigure reset the counter for current epoch.
-      assert(!Stats::node_above_thresh(vm, {{alice}}), 0);
-
-      assert(Stats::node_current_props(vm, {{alice}}) == 1, 0);
-      assert(Stats::node_current_props(vm, {{bob}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{alice}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{bob}}) == 0, 0);
+    
+    use 0x1::LibraSystem;
+    fun main(_account: &signer) {
+        // We are in a new epoch.
+        // Tests on initial size of validators 
+        assert(LibraSystem::validator_set_size() == 5, 7357000180107);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180108);        
     }
 }
-// check: EXECUTED
