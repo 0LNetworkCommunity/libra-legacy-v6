@@ -127,6 +127,7 @@ pub fn encode_genesis_change_set(
         _ => "test".to_string()
     };
 
+
     // Initializing testnet only when env is set to test
     if node_env != "prod" {
         initialize_testnet(&mut session, true);
@@ -147,8 +148,17 @@ pub fn encode_genesis_change_set(
         &operator_assignments,
         &operator_registrations,
     );
+
+    // TODO: Get dev mode from Env
+    // if !dev_mode {
+    //     // Very tedious to develop with verifying proofs at genesis.
+    //     // NOTE: Some functional tests depend on this being enabled
+       
+    // }
+
     initialize_miners(&mut session,
-        &operator_assignments,);
+            &operator_assignments,);
+
     distribute_genesis_subsidy(&mut session);
     reconfigure(&mut session);
 

@@ -21,6 +21,7 @@ address 0x1 {
     use 0x1::LibraTimestamp;
     use 0x1::LibraSystem;
     use 0x1::Debug::print;
+    use 0x1::TransactionFee;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -33,7 +34,7 @@ address 0x1 {
       assert(!LibraTimestamp::is_genesis(), 190101021000);
 
       // Gets the transaction fees in the epoch
-      let txn_fee_amount = LibraAccount::balance<GAS>(0xFEE);
+      let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
 
       // Calculate the split for subsidy and burn
       let subsidy_units = subsidy_curve(vm);
