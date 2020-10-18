@@ -10,14 +10,6 @@ script {
     fun main(vm: &signer) {
         assert(TransactionFee::get_amount_to_distribute(vm)==0, 735701);
         let coin = Libra::mint<GAS>(vm, 1);
-        // TransactionFee::pay_fee(
-        //     withdraw_from_balance(
-        //         vm,
-        //         CoreAddresses::LIBRA_ROOT_ADDRESS(),
-        //         sender_balance,
-        //         transaction_fee_amount
-        //     )
-        // )
         TransactionFee::pay_fee(coin);
         assert(TransactionFee::get_amount_to_distribute(vm)==1, 735701);
 

@@ -5,17 +5,8 @@
 //! sender: alice
 script {
     use 0x1::MinerState;
-    // use 0x1::TestFixtures;
-
     fun main(sender: &signer) {
-        // let proof = MinerState::create_proof_blob(
-        //     TestFixtures::alice_1_easy_chal(),
-        //     100u64, // difficulty
-        //     TestFixtures::alice_1_easy_sol()
-        // );
-        // MinerState::commit_state(sender, proof);
         MinerState::test_helper_mock_mining(sender, 5);
-
     }
 }
 //check: EXECUTED
@@ -24,11 +15,8 @@ script {
 //! sender: bob
 script {
     use 0x1::MinerState;
-    // use 0x1::TestFixtures;
-
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-
     }
 }
 //check: EXECUTED

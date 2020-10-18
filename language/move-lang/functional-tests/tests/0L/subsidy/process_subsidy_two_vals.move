@@ -17,12 +17,8 @@ script {
     use 0x1::TestFixtures;
     fun main(sender: &signer) {
       //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
-        let proof = MinerState::create_proof_blob(
-            TestFixtures::alice_1_easy_chal(),
-            100u64, // difficulty
-            TestFixtures::alice_1_easy_sol()
-        );
-        MinerState::commit_state(sender, proof);
+        MinerState::test_helper_mock_mining(sender, 5);
+
     }
 }
 //check: EXECUTED
@@ -35,12 +31,8 @@ script {
     use 0x1::TestFixtures;
     fun main(sender: &signer) {
       //NOTE: Carol is Case 3, she mines but does not validate. Setting up mining.
-        let proof = MinerState::create_proof_blob(
-            TestFixtures::alice_1_easy_chal(),
-            100u64, // difficulty
-            TestFixtures::alice_1_easy_sol()
-        );
-        MinerState::commit_state(sender, proof);
+        MinerState::test_helper_mock_mining(sender, 5);
+
     }
 }
 //check: EXECUTED
@@ -48,11 +40,8 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-  // 
-  // use 0x1::Subsidy;
   use 0x1::Vector;
   use 0x1::Stats;
-  // use 0x1::Debug::print;
   use 0x1::GAS::GAS;
   use 0x1::LibraAccount;
   use 0x1::Cases;
@@ -95,7 +84,6 @@ script {
 
     Subsidy::process_subsidy(vm, 100);
 
-    // print(&LibraAccount::balance<GAS::T>({{alice}}));
     assert(LibraAccount::balance<GAS>({{alice}}) == 51, 7357190102091000);
     assert(LibraAccount::balance<GAS>({{bob}}) == 1, 7357190102101000);
     assert(LibraAccount::balance<GAS>({{carol}}) == 51, 7357190102111000);

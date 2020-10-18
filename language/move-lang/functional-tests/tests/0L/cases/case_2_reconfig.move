@@ -47,7 +47,7 @@ script {
         // print(&NodeWeight::proof_of_weight({{alice}}));
         // print(&LibraAccount::balance<GAS::T>({{alice}}));
 
-        assert(LibraAccount::balance<GAS::T>({{alice}}) == 1, 7357000180106);
+        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357000180106);
 
 
         assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180107);  
@@ -187,7 +187,7 @@ script {
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
         
         //case 2 does not get rewards.
-        assert(LibraAccount::balance<GAS::T>({{alice}}) == 1, 7357000180112);  
+        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357000180112);  
 
         //case 2 does not increment weight.
         assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180113);  

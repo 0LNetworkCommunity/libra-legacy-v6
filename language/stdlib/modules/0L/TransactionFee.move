@@ -9,6 +9,7 @@ module TransactionFee {
     use 0x1::LibraTimestamp;
     // use 0x1::Debug::print;
     // use 0x1::LibraAccount;
+    // use 0x1::FixedPoint32;
 
     /// The `TransactionFee` resource holds a preburn resource for each
     /// fiat `CoinType` that can be collected as a transaction fee.
@@ -87,33 +88,20 @@ module TransactionFee {
         Libra::withdraw_all(&mut fees.balance)
     }
 
-    // public fun process_fees(lr_account: &signer) acquires TransactionFees {
-    //     Transaction::assert(Signer::address_of(vm_sig) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
-    //     let bal = get_amount_to_distribute(lr_account);
+    public fun get_transaction_fees_coins_amount<Token>(lr_account: &signer, amount: u64): Libra<Token>  acquires TransactionFee {
+        // Can only be invoked by LibraVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_libra_root(lr_account);
+        // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+        // LibraAccount::balance<Token>(0xFEE);
+        let fees = borrow_global_mut<TransactionFee<Token>>(
+            CoreAddresses::LIBRA_ROOT_ADDRESS()
+        );
 
-    //     let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio();
-    //     let length = Vector::length<address>(&outgoing_set);
+        Libra::withdraw(&mut fees.balance, amount)
+    }
 
-    //     // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
-    //     if (bal <= length) return;
 
-    //     let i = 0;
-    //     while (i < length) {
-    //         let node_address = *(Vector::borrow<address>(&outgoing_set, i));
-    //         let node_ratio = *(Vector::borrow<FixedPoint32::T>(&fee_ratio, i));
-    //         let fees = FixedPoint32::multiply_u64(bal, node_ratio);
-
-    //         let distribution_resource = borrow_global<TransactionFees>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-    //         LibraAccount::pay_from<GAS::T>(
-    //             node_address,
-    //             &distribution_resource.fee_withdrawal_capability,
-    //             fees,
-    //             Vector::empty<u8>(),
-    //             Vector::empty<u8>(),
-    //         );
-    //         i = i + 1;
-    //     };
-    // }
     // public fun distribute(lr_account: &signer) acquires TransactionFee {
     //     // Can only be invoked by LibraVM privilege.
     //     // Allowed association to invoke for testing purposes.

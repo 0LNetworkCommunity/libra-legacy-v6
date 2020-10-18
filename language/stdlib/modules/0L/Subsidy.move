@@ -20,8 +20,9 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::LibraTimestamp;
     use 0x1::LibraSystem;
-    use 0x1::Debug::print;
     use 0x1::TransactionFee;
+
+    use 0x1::Debug::print;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -42,7 +43,7 @@ address 0x1 {
       let network_density = Stats::network_density(vm);
       print(&0x03333);
       print(&network_density);
-      
+
       let max_node_count = Globals::get_max_node_density();
       let subsidy_units = subsidy_curve(
         subsidy_ceiling_gas,
@@ -157,5 +158,49 @@ address 0x1 {
       assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
 
     }
-  }
+    
+    public fun process_fees(vm: &signer) {
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
+      let capability_token = LibraAccount::extract_withdraw_capability(vm);
+
+      let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm);
+      let len = Vector::length<address>(&outgoing_set);
+      print(&outgoing_set);
+      print(&fee_ratio);
+      print(&len);
+
+
+      let bal = TransactionFee::get_amount_to_distribute(vm);
+      print(&bal);
+
+    //   // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
+      if (bal < len) {
+        LibraAccount::restore_withdraw_capability(capability_token);
+        return
+      };
+
+      let i = 0;
+      while (i < len) {
+        let node_address = *(Vector::borrow<address>(&outgoing_set, i));
+        let node_ratio = *(Vector::borrow<FixedPoint32::FixedPoint32>(&fee_ratio, i));
+        print(&node_address);
+        print(&node_ratio);
+
+        let fees = FixedPoint32::multiply_u64(bal, node_ratio);
+        print(&fees);
+
+        
+        LibraAccount::vm_deposit_with_metadata<GAS>(
+            vm,
+            node_address,
+            TransactionFee::get_transaction_fees_coins_amount<GAS>(vm, fees),
+            x"",
+            x""
+        );
+        i = i + 1;
+      };
+      LibraAccount::restore_withdraw_capability(capability_token);
+    }
+
+}
 }

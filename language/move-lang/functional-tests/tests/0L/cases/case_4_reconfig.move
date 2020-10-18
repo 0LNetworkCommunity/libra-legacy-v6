@@ -111,7 +111,7 @@ script {
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{dave}}) == true, 7357000180102);
         assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180104);
-        assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180106);
+        assert(LibraAccount::balance<GAS>({{dave}}) == 1, 7357000180106);
         assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180107);  
         assert(MinerState::test_helper_get_height({{dave}}) == 0, 7357000180108);
     }
@@ -240,7 +240,7 @@ script {
         // print(&LibraSystem::validator_set_size());
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{dave}}) == false, 7357000180111);            
-        assert(LibraAccount::balance<GAS::T>({{dave}}) == 1, 7357000180112);
+        assert(LibraAccount::balance<GAS>({{dave}}) == 1, 7357000180112);
         assert(NodeWeight::proof_of_weight({{dave}}) == 0, 7357000180113);  
         assert(LibraConfig::get_current_epoch()==2, 7357000180114);
 

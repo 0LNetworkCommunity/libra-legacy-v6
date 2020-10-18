@@ -41,7 +41,7 @@ fun main(_sender: &signer) {
   assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101031000);
 
   // Check the account exists and the balance is 0
-  assert(LibraAccount::balance<GAS::T>(eve_addr) == 0, 7357130101041000);
+  assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101041000);
 }
 }
 // check: EXECUTED

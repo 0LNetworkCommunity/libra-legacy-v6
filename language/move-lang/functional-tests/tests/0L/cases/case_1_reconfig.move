@@ -34,7 +34,7 @@ script {
         assert(LibraSystem::is_validator({{eve}}) == true, 7357300101031000);
 
         assert(MinerState::test_helper_get_height({{alice}}) == 0, 7357300101041000);
-        assert(LibraAccount::balance<GAS::T>({{alice}}) == 1, 7357300101051000);
+        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357300101051000);
         assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357300101051000);  
 
         assert(MinerState::test_helper_hash({{alice}}) == TestFixtures::alice_1_easy_chal(), 7357300101061000);
@@ -185,7 +185,7 @@ script {
         assert(LibraSystem::is_validator({{alice}}) == true, 7357300101111000);
 
         // Alice gets all the subsidy.
-        assert(LibraAccount::balance<GAS::T>({{alice}}) == 296, 7357300101121000);
+        assert(LibraAccount::balance<GAS>({{alice}}) == 296, 7357300101121000);
 
         assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357300101131000);  
     }

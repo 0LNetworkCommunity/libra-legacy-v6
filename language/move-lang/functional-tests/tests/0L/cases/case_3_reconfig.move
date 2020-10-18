@@ -124,7 +124,7 @@ script {
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
-        assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180106);
+        assert(LibraAccount::balance<GAS>({{carol}}) == 1, 7357000180106);
         print(&MinerState::test_helper_get_height({{carol}}));
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180108);
     }
@@ -251,7 +251,7 @@ script {
         // Check the validator set is at expected size
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{carol}}) == false, 7357000180111);
-        assert(LibraAccount::balance<GAS::T>({{carol}}) == 1, 7357000180112);
+        assert(LibraAccount::balance<GAS>({{carol}}) == 1, 7357000180112);
         assert(NodeWeight::proof_of_weight({{carol}}) == 1, 7357000180113);  
         assert(LibraConfig::get_current_epoch()==2, 7357000180114);
 

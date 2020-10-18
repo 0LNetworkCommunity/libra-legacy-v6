@@ -30,7 +30,7 @@ fun main(account: &signer) {
 // fun main(account: &signer) {
 //     let coin = Libra::mint<GAS::T>(account, 10);
 //     LibraAccount::deposit(account, {{bob}}, coin);
-//     assert(LibraAccount::balance<GAS::T>({{bob}}) == 10, 4);
+//     assert(LibraAccount::balance<GAS>({{bob}}) == 10, 4);
 // }
 // }
 // // check: EXECUTED

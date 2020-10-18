@@ -691,25 +691,25 @@ module LibraAccount {
         );
     }
 
-    use 0x1::Debug::print;
-    public fun distribute_tx_fees (lr_account: &signer) acquires LibraAccount, Balance, AccountOperationsCapability {
-        let cap = extract_withdraw_capability(lr_account);
-        CoreAddresses::assert_libra_root(lr_account);
-        // let coins = get_transaction_fees_coins<GAS>(lr_account);
-        // let fees = borrow_global_mut<TransactionFee<GAS>>(
-        //     CoreAddresses::LIBRA_ROOT_ADDRESS()
-        // );
-        let value = TransactionFee::get_amount_to_distribute(lr_account);
-        // let coins = Libra::withdraw_all(&mut fees.balance);
-        print(&value);
+    // use 0x1::Debug::print;
+    // public fun distribute_tx_fees (lr_account: &signer) acquires LibraAccount, Balance, AccountOperationsCapability {
+    //     let cap = extract_withdraw_capability(lr_account);
+    //     CoreAddresses::assert_libra_root(lr_account);
+    //     // let coins = get_transaction_fees_coins<GAS>(lr_account);
+    //     // let fees = borrow_global_mut<TransactionFee<GAS>>(
+    //     //     CoreAddresses::LIBRA_ROOT_ADDRESS()
+    //     // );
+    //     let value = TransactionFee::get_amount_to_distribute(lr_account);
+    //     // let coins = Libra::withdraw_all(&mut fees.balance);
+    //     print(&value);
         
 
-        // let value = Libra::value<GAS>(&coins);
-        // print(&value);
+    //     // let value = Libra::value<GAS>(&coins);
+    //     // print(&value);
 
-        pay_from<GAS>(&cap, 0x1, value, x"", x"",);
-        restore_withdraw_capability(cap);
-    }
+    //     pay_from<GAS>(&cap, 0x1, value, x"", x"",);
+    //     restore_withdraw_capability(cap);
+    // }
     /// Rotate the authentication key for the account under cap.account_address
     public fun rotate_authentication_key(
         cap: &KeyRotationCapability,
