@@ -15,7 +15,7 @@
 //! new-transaction
 //! sender: alice
 script {
-    ;
+
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -31,9 +31,7 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    ;
     use 0x1::MinerState;
-
     fun main(sender: &signer) {
         // Eve mines (case 3)
         MinerState::test_helper_mock_mining(sender, 5);
@@ -48,23 +46,22 @@ script {
     use 0x1::Stats;
     use 0x1::Vector;
     use 0x1::Cases;
-    ;
     use 0x1::LibraSystem;
 
-    fun main() {
+    fun main(vm: &signer) {
         let voters = Vector::singleton<address>({{alice}});
         let i = 1;
         while (i < 15) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
 
-        assert(Cases::get_case({{alice}}) == 1, 7357120203011000);
-        assert(Cases::get_case({{eve}}) == 3, 7357120203021000);
-        assert(Cases::get_case({{frank}}) == 4, 7357120203031000);
+        assert(Cases::get_case(vm, {{alice}}) == 1, 7357120203011000);
+        assert(Cases::get_case(vm, {{eve}}) == 3, 7357120203021000);
+        assert(Cases::get_case(vm, {{frank}}) == 4, 7357120203031000);
 
-        let jailed = LibraSystem::get_jailed_set();
+        let jailed = LibraSystem::get_jailed_set(vm);
         assert(Vector::length<address>(&jailed) == 5, 7357120203041000);
     }
 }
