@@ -1,7 +1,7 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::backlog;
+use crate::{backlog, block::ValConfigs};
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
@@ -12,10 +12,10 @@ use libra_crypto::test_utils::KeyPair;
 use libra_types::waypoint::Waypoint;
 use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn test_runner(home: PathBuf, _parent_config: &MinerConfig, _no_submit: bool) {
+pub fn test_runner(home: PathBuf) {
 
     let tx_params = get_params_from_swarm(home).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
@@ -50,6 +50,46 @@ pub fn test_runner(home: PathBuf, _parent_config: &MinerConfig, _no_submit: bool
     }
 }
 
+/// A test harness for the submit_tx with a local swarm 
+pub fn val_init_test(home: PathBuf) {
+    let file = "./blocks/val_init.json";
+    fs::copy("../fixtures/val_init.json", file).unwrap();
+    let block_file = fs::read_to_string(file)
+        .expect("Could not read init file");
+
+    let init_file: ValConfigs =
+        serde_json::from_str(&block_file).expect("could not deserialize latest block");
+    dbg!(&init_file);
+
+    let tx_params = get_params_from_swarm(home).unwrap();
+    // let conf = MinerConfig::load_swarm_config(&tx_params);
+    // // TODO: count three blocks and exit
+    // // let i = 0;
+    // // while i < 4 {
+    // //     let (preimage, proof) = get_block_fixtures(&conf);
+
+    // //     // need to sleep for swarm to be ready.
+    // //     thread::sleep(time::Duration::from_millis(50000));
+    // //     let res = submit_tx(&tx_params, preimage, proof, false);
+    // //     if eval_tx_status(res) == false {
+    // //         std::process::exit(0);
+    // //     };
+    // //     i+1;
+    // // }
+    // backlog::process_backlog(&conf, &tx_params);
+
+    // loop {
+        // let (preimage, proof) = get_block_fixtures(&conf);
+        // need to sleep for swarm to be ready.
+
+        match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
+            Err(err)=>{ println!("{:?}", err) }
+            Ok(res) => {dbg!(Some(res));}
+        }
+    // }
+}
+
+
 fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
@@ -70,7 +110,7 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     status_info!("[swarm] Generating Proof for block:", format!("{}", mining_height));
     let block = mine_once(&config).unwrap();
     status_ok!("[swarm] Success", format!("block_{}.json created.", block.height.to_string()));
-    (block.preimage, block.data)
+    (block.preimage, block.proof)
 }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {

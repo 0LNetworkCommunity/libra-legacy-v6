@@ -42,7 +42,13 @@ fn submit_proofs_onboarding() {
             &sender.account(),
             sequence_number,
             challenge.unwrap().to_vec(),
-            proof.unwrap().to_vec())
+            proof.unwrap().to_vec(),
+            "z".as_bytes().to_vec(),
+            "z".as_bytes().to_vec(),
+            "z".as_bytes().to_vec(),
+            "z".as_bytes().to_vec(),
+            "z".as_bytes().to_vec(),
+        )
     );
 
     assert_eq!(

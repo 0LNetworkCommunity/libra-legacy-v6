@@ -20,6 +20,7 @@ module LibraSystem {
     use 0x0::Stats;
     use 0x0::Cases;
     use 0x0::FixedPoint32;
+    use 0x0::Debug::print;
 
 
     struct ValidatorInfo {
@@ -292,8 +293,8 @@ module LibraSystem {
     public fun bulk_update_validators(
         account: &signer,
         new_validators: vector<address>) acquires CapabilityHolder {
-        Transaction::assert(is_authorized_to_reconfigure_(account), 1202024010);
-        Transaction::assert(Transaction::sender() == 0x0, 1202014010);
+        Transaction::assert(is_authorized_to_reconfigure_(account), 120201014010);
+        Transaction::assert(Transaction::sender() == 0x0, 120201024010);
 
         // Either check for each validator and add/remove them or clear the current list and append the list.
         // The first way might be computationally expensive, so I choose to go with second approach.
@@ -309,25 +310,25 @@ module LibraSystem {
             let account_address = *(Vector::borrow<address>(&new_validators, index));
 
             // A prospective validator must have a validator config resource
-            Transaction::assert(is_valid_and_certified(account_address), 33);
 
-            let config = ValidatorConfig::get_config(account_address);
+            if (is_valid_and_certified(account_address)) {
+                let config = ValidatorConfig::get_config(account_address);
 
-            Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
-                addr: account_address,
-                config, // copy the config over to ValidatorSet
-                consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
-            });
+                Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                    addr: account_address,
+                    config, // copy the config over to ValidatorSet
+                    consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
+                });
+            };
 
-            // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
-            // ValidatorUniverse::update_validator_epoch_count(account_address);
             index = index + 1;
         };
 
         let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
-        Transaction::assert(next_count > 0, 1202011000 );
+
+        Transaction::assert(next_count > 0, 120201041000 );
         // Transaction::assert(next_count > n, 90000000002 );
-        Transaction::assert(next_count == n, 1202021000 );
+        // Transaction::assert(next_count == n, 120201041000 );
 
         // We have vector of validators - updated!
         // Next, let us get the current validator set for the current parameters
@@ -360,7 +361,10 @@ module LibraSystem {
       let k = 0;
       while(k < Vector::length(&validator_set)){
         let addr = *Vector::borrow<address>(&validator_set, k);
-
+        print(&0x0);
+        print(&addr);
+        print(&0x1);
+        print(&Cases::get_case(addr));
         // consensus case 1 and 2, allow inclusion into the next validator set.
         if (Cases::get_case(addr) == 3 || Cases::get_case(addr) == 4){
           Vector::push_back<address>(&mut jailed_set, addr)
@@ -378,6 +382,7 @@ module LibraSystem {
         let i = 0;
         while (i < Vector::length(validators)) {
             let addr = Vector::borrow(validators, i).addr;
+
             if (Cases::get_case(addr) == 1) {
                 let node_votes = Stats::node_current_votes(addr);
                 Vector::push_back(&mut compliant_nodes, addr);
@@ -412,8 +417,6 @@ module LibraSystem {
         let i = 0;
         while (i < size) {
             let validator_info_ref = Vector::borrow(validators, i);
-
-            // if (Cases::get_case(validator_info_ref.addr)==1)
             if(Stats::node_above_thresh(validator_info_ref.addr)){
                 Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
                 Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);

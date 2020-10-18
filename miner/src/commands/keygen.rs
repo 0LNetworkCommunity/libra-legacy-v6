@@ -7,6 +7,7 @@ use crate::config;
 use toml;
 use std::{
     fs,
+    path::PathBuf,
     io::Write,
 };
 
@@ -18,10 +19,10 @@ impl Runnable for KeygenCmd {
     /// Print version message
     fn run(&self) {
         let mut wallet = WalletLibrary::new();
-
-        let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
-
         let mnemonic_string = wallet.mnemonic();
+        let (auth_key, child_number) = wallet.new_address().expect("Could not generate address");
+
+        dbg!(&child_number);
 
         let mut miner_configs = config::MinerConfig::default();
         miner_configs.profile.auth_key = auth_key.to_string();
@@ -34,13 +35,18 @@ impl Runnable for KeygenCmd {
         // let mut config_path = PathBuf::from("./test_miner.toml");
         // config_path.push(format!("test_miner.toml");
         //println!("{:?}", &latest_block_path);
-        let miner_config_file = "./miner.toml";
-        let mut file = fs::File::create(&miner_config_file).unwrap();
-        file.write(&toml.as_bytes())
+        // let miner_config_file = "./miner.toml";
+        let mut miner_toml_path = PathBuf::from(&miner_configs.workspace.miner_home);
+        miner_toml_path.push("miner.toml");
+        let file = fs::File::create(&miner_toml_path);
+        file.unwrap().write(&toml.as_bytes())
             .expect("Could not write block");
+
+
+        //////////////// Info ////////////////
         
         println!("Saved to: {}\n\
-        ==========================\n\n", miner_config_file);
+        ==========================\n\n", miner_toml_path.display());
 
 
         println!("0L Auth Key:\n\
@@ -57,6 +63,9 @@ impl Runnable for KeygenCmd {
         WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\
         ---------\n\
         {}\n", &mnemonic_string.as_str());
+
+
+
     }
 }
 

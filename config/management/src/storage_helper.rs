@@ -1,19 +1,45 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+// use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use libra_global_constants::{
     CONSENSUS_KEY, EPOCH, FULLNODE_NETWORK_KEY, LAST_VOTED_ROUND, OPERATOR_KEY, OWNER_KEY,
     PREFERRED_ROUND, VALIDATOR_NETWORK_KEY, WAYPOINT,
 };
 use libra_secure_storage::{NamespacedStorage, OnDiskStorage, Storage, Value};
-use libra_wallet::{
-    key_factory::{ChildNumber, KeyFactory, Seed},
-    Mnemonic,
-};
 use std::{
     fs::File,
     path::PathBuf,
 };
+
+use miner::node_keys::key_scheme;
+
+// pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
+//     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+//     let kf = KeyFactory::new(&seed).unwrap();
+//     let child_0_owner_operator = kf.private_child(ChildNumber::new(0)).unwrap();
+//     let child_1_consensus = kf.private_child(ChildNumber::new(1)).unwrap();
+//     let child_2_val_network = kf.private_child(ChildNumber::new(2)).unwrap();
+//     let child_3_fullnode_network = kf.private_child(ChildNumber::new(3)).unwrap();
+//     (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network)
+// }
+
+// pub struct NodePubKeys{
+//     pub operator_key: Ed25519PublicKey,
+//     pub validator_network_key: PublicKey,
+//     pub consensus_key: Ed25519PublicKey,
+//     pub fullnode_network_key: PublicKey,
+// }
+
+// impl NodePubKeys {
+//     pub fn new_from_mnemonic(mut self, mnemonic: String) {
+//         let (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network) = key_scheme(mnemonic);
+//         self.operator_key = child_0_owner_operator.get_public();
+//         self.consensus_key = child_1_consensus.get_public();
+//         self.validator_network_key = PublicKey::from_ed25519_public_bytes(&child_2_val_network.get_public().to_bytes()).unwrap();
+//         self.fullnode_network_key = PublicKey::from_ed25519_public_bytes(&child_3_fullnode_network.get_public().to_bytes()).unwrap();
+//     }
+// }
 
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
@@ -68,20 +94,15 @@ impl StorageHelper {
     }
 
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+        let (child_0, 
+            child_1, 
+            child_2,
+            child_3
+        ) = key_scheme(mnemonic);
 
-        let kf = KeyFactory::new(&seed).unwrap();
-        let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-        let child_1 = kf.private_child(ChildNumber::new(1)).unwrap();
-        let child_2 = kf.private_child(ChildNumber::new(2)).unwrap();
-        let child_3 = kf.private_child(ChildNumber::new(3)).unwrap();
-        // let child_4 = kf.private_child(ChildNumber::new(4)).unwrap();
-        
-        let authentication_key = child_0.get_authentication_key();
-        println!("===== \nAuthentication Key:\n{:?}", authentication_key.to_string());
+        // let authentication_key = child_0.get_authentication_key();
 
         let mut storage = self.storage(namespace);
-
         storage
             .import_private_key(OWNER_KEY, child_0.export_priv_key())
             .unwrap();

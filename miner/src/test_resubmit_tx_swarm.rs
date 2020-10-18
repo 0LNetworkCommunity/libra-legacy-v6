@@ -45,14 +45,14 @@ pub fn resubmit_backlog(home: PathBuf, config: &MinerConfig){
 
     let remote_height = remote_state.verified_tower_height;
 
-    println!("Remote height: {}", remote_height);
+    println!("Remote tower height: {}", remote_height);
 
     // Getting local state height
     let mut blocks_dir = config.workspace.miner_home.clone();
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
-    println!("Current block number: {:?}", current_block_number);
+    println!("Current tower height: {:?}", current_block_number);
     for entry in glob(&format!("{}/block_0.json", blocks_dir.display()))
             .expect("Failed to read glob pattern")
     {

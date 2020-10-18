@@ -31,8 +31,9 @@ use network::counters;
 use serde_json::Value;
 use std::{collections::HashMap, convert::TryFrom, ops::Deref, pin::Pin, str::FromStr, sync::Arc};
 use storage_interface::DbReader;
-use libra_json_rpc_types::views::MinerStateView;
-use libra_types::account_config::resources::miner_state::MinerStateResource;
+use libra_json_rpc_types::views::{MinerStateView, ValConfigsView};
+use libra_types::account_config::resources::miner_state::{MinerStateResource, ValConfigResource};
+
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -299,7 +300,6 @@ async fn get_miner_state(
     service: JsonRpcService,
     request: JsonRpcRequest,
 ) -> Result<Option<MinerStateView>> {
-    println!("debug 1");
     ensure!(request.params.len() == 1, "invalid size of parameters");
     dbg!(&request.params);
     let address: String = serde_json::from_value(request.get_param(0))?;
@@ -315,6 +315,32 @@ async fn get_miner_state(
         let raw = response.get(0).expect("Miner state does not exist.").as_slice();
         let miner_state_resource = MinerStateResource::try_from_bytes(raw )?;
         return Ok( Some( MinerStateView::from( miner_state_resource) ) );
+
+    }
+    Ok(None)
+}
+
+/// Returns Miner states for a miner
+async fn get_val_settings_req(
+    service: JsonRpcService,
+    request: JsonRpcRequest,
+) -> Result<Option<ValConfigsView>> {
+    ensure!(request.params.len() == 1, "invalid size of parameters");
+    dbg!(&request.params);
+    let address: String = serde_json::from_value(request.get_param(0))?;
+    let account_address = AccountAddress::from_str(&address).expect("Invalid address format");
+    dbg!(account_address);
+
+    let response = service
+        .db
+        .deref()
+        .batch_fetch_resources_by_version(vec![ValConfigResource::resource_path( account_address )], request.version())?;
+
+    dbg!(&response);
+    if response.len() > 0 {
+        let raw = response.get(0).expect("Validator settings do not exist for account.").as_slice();
+        let miner_state_resource = ValConfigResource::try_from_bytes(raw )?;
+        return Ok( Some( ValConfigsView::from( miner_state_resource) ) );
 
     }
     Ok(None)
@@ -393,6 +419,7 @@ pub(crate) fn build_registry() -> RpcRegistry {
 
     // added by 0L
     register_rpc_method!(registry, "get_miner_state", get_miner_state, 1);
+    register_rpc_method!(registry, "get_val_settings", get_val_settings_req, 1);
 
     registry
 }

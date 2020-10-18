@@ -3,15 +3,7 @@
 
 use crate::AccountData;
 use anyhow::{bail, ensure, Result};
-use libra_json_rpc_client::{
-    errors::JsonRpcError,
-    get_response_from_batch,
-    views::{
-        AccountStateWithProofView, AccountView, BlockMetadata, BytesView, CurrencyInfoView,
-        EventView, StateProofView, TransactionView,
-    },
-    JsonRpcBatch, JsonRpcClient, JsonRpcResponse, ResponseAsView,
-};
+use libra_json_rpc_client::{JsonRpcBatch, JsonRpcClient, JsonRpcResponse, ResponseAsView, errors::JsonRpcError, get_response_from_batch, views::{AccountStateWithProofView, AccountView, BlockMetadata, BytesView, CurrencyInfoView, EventView, StateProofView, TransactionView, ValConfigsView}};
 use libra_logger::prelude::*;
 use libra_types::{
     access_path::AccessPath,
@@ -120,6 +112,29 @@ impl LibraClient {
             Ok(response) => {
                 match response {
                     JsonRpcResponse::MinerStateResponse(msv) => Ok( msv.to_owned() ),
+                    _ => bail!("Received miner state response payload: {:?}: {:?}", account, response) ,
+                }
+            }
+            Err(e) => {
+                bail!("RPC get_miner_state failed with error: {:?}", e)
+            }
+        }
+    }
+
+    /// Retrieves Validator Settings
+    /// added by 0L
+    pub fn get_val_settings(
+        &mut self,
+        account: AccountAddress,
+    ) -> Result<Option<ValConfigsView>> {
+        // form request
+        let mut batch = JsonRpcBatch::new();
+        batch.add_get_val_settings_request(account);
+        let responses = self.client.execute(batch)?;
+        match get_response_from_batch(0, &responses)? {
+            Ok(response) => {
+                match response {
+                    JsonRpcResponse::ValConfigsResponse(view) => Ok( view.to_owned() ),
                     _ => bail!("Received miner state response payload: {:?}: {:?}", account, response) ,
                 }
             }

@@ -1,11 +1,11 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::Block, submit_tx::get_params};
+use crate::{block::ValConfigs, submit_tx::get_params};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
 use libra_types::waypoint::Waypoint;
-use crate::submit_tx::submit_tx;
+use crate::submit_tx::submit_onboard_tx;
 use std::path::PathBuf;
 
 // use rustyline::error::ReadlineError;
@@ -25,10 +25,10 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 #[derive(Command, Debug, Options)]
 pub struct OnboardCmd {
     // Option for --waypoint, to set a specific waypoint besides genesis_waypoint which is found in key_store.json
-    #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in miner.toml")]
+    #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in key_store.json")]
     waypoint: String,
-    // Path of the block_0.json to onboard.
-    #[options(help = "Path of the block_0.json to onboard.")]
+    // Path of the block_0.json to submit.
+    #[options(help = "Path of the block_0.json to submit.")]
     file: PathBuf, 
 }
 
@@ -58,13 +58,23 @@ impl Runnable for OnboardCmd {
         }
 
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
-        let genesis_data = Block::get_genesis_tx_data(&self.file).unwrap();
-        match submit_tx(&tx_params, genesis_data.0.to_owned(), genesis_data.1.to_owned(), true) {
+        let init_data = ValConfigs::get_init_data(&self.file).unwrap();
+        
+        match submit_onboard_tx(
+            &tx_params,
+            init_data.block_zero.preimage.to_owned(),
+            init_data.block_zero.proof.to_owned(),
+            init_data.consensus_pubkey,
+            init_data.validator_network_identity_pubkey,
+            init_data.validator_network_address,
+            init_data.full_node_network_identity_pubkey,
+            init_data.full_node_network_address,
+        ) {
             Ok(_res) => {
-                status_ok!("Success", "Miner onboarding committed, exiting.");
+                status_ok!("Success", "Validator initialization committed, exiting.");
             }
             Err(e) => {
-                status_warn!(format!("Miner onboarding tx error: {:?}", e));
+                status_warn!(format!("Validator initialization error: {:?}", e));
 
             }
         }

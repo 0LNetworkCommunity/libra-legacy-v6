@@ -14,7 +14,7 @@ use libra_crypto::{
     traits::ValidCryptoMaterial,
     x25519, ValidCryptoMaterialStringExt,
 };
-use libra_json_rpc_client::views::{AccountView, BlockMetadata, EventView, TransactionView, MinerStateView};
+use libra_json_rpc_client::views::{AccountView, BlockMetadata, EventView, MinerStateView, TransactionView, ValConfigsView};
 use libra_logger::prelude::*;
 use libra_network_address::{NetworkAddress, RawNetworkAddress};
 use libra_temppath::TempPath;
@@ -377,7 +377,27 @@ impl ClientProxy {
         Ok(())
     }
 
-    /// 0L: Get Miner State
+    /// 0L: Get Val Settings for cli
+    /// A wrap for libra cli to execute query miner state command.
+    pub fn query_val_settings_in_client(&mut self, space_delim_strings: &[&str]) -> Option<ValConfigsView> {
+
+        let sender_address = match self.get_account_address_from_parameter(space_delim_strings[1]){
+            Ok((a, _)) => a,
+            Err(e)=> {println!("Unable to parser address from input: {:?}", e); return None},
+        };
+
+        println!("Query Miner States for: {:?}", sender_address);
+
+        match self.client.get_val_settings(sender_address ){
+            Ok(m)=> m,
+            Err(e)=> {
+                println!("{:?}", e);
+                None
+            },
+        }
+    }
+
+    /// 0L: Get Miner State for cli
     /// A wrap for libra cli to execute query miner state command.
     pub fn query_miner_state_in_client(&mut self, space_delim_strings: &[&str]) -> Option<MinerStateView> {
 
@@ -399,7 +419,7 @@ impl ClientProxy {
         }
     }
 
-    /// Get minter state for Ol_miner
+    /// Get miner state for miner app
     pub fn get_miner_state(&mut self, account: AccountAddress) -> Result<Option<MinerStateView>, Error>{
         self.client.get_miner_state(account)
     }

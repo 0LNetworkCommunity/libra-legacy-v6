@@ -9,7 +9,7 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
-use libra_json_rpc_types::views::MinerStateView;
+use libra_json_rpc_types::views::{MinerStateView, ValConfigsView};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]
@@ -28,6 +28,8 @@ pub enum JsonRpcResponse {
 
     // added by 0L
     MinerStateResponse(Option<MinerStateView>),
+    ValConfigsResponse(Option<ValConfigsView>),
+
 }
 
 impl TryFrom<(String, Value)> for JsonRpcResponse {
@@ -104,6 +106,16 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                     }
                 };
                 Ok(JsonRpcResponse::MinerStateResponse(state))
+            }
+            "get_val_settings" => {
+                let state = match value {
+                    Value::Null => None,
+                    _ => {
+                        let ms: ValConfigsView = serde_json::from_value(value)?;
+                        Some(ms)
+                    }
+                };
+                Ok(JsonRpcResponse::ValConfigsResponse(state))
             }
             _ => Ok(JsonRpcResponse::UnknownResponse(value)),
         }

@@ -73,10 +73,10 @@ MNEM = advice organ wage sick travel brief leave renew utility host roast barely
 endif
 
 ifeq ($(NAMESPACE), eve)
-ACC = b260347406f1f2d22530c084390b34b7
-AUTH = 1f72911cb33d843c7702efe1d29af6a5b260347406f1f2d22530c084390b34b7
-IP = 104.131.32.62
-MNEM = achieve tomato carpet fitness muffin jelly fit pull park lobster cage ship oppose found paper predict perfect release super lunch domain away thumb pigeon
+ACC = e9fbaf07795acc2e675961eb7649acdf
+AUTH = a34b9c1580fe7f7c518dac7ed9ddba0be9fbaf07795acc2e675961eb7649acdf
+IP = 134.122.115.12
+MNEM = veteran category typical plastic service mimic photo sort face taste puppy slogan nature youth member lake symptom edit pepper stairs actual hub miss train
 endif
 
 ##########################
@@ -85,16 +85,14 @@ REMOTE = 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
 ##### PIPELINES #####
-# set up the environment
-install: deps compile
-compile: stdlib bins
+compile: stop stdlib bins
 # pipelines for genesis ceremony
-register: clear fixtures init add-proofs keys register
+register: stop clear fixtures init add-proofs keys register
 # do genesis
-genesis: build-genesis waypoint toml peers
+genesis: stop build-genesis waypoint toml peers
 
 #### ENVIRONMENT #####
-deps:
+install:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev zip secure-delete jq
 # TODO: Cargo is not getting set to path. This next line doesn't run.
@@ -108,90 +106,45 @@ stdlib:
 
 bins:
 	cd ~/libra && cargo build -p libra-node --release & sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
-	cd ~/libra && cargo build -p libra-management --release && sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
+	# cd ~/libra && cargo build -p libra-management --release && sudo cp -f ~/libra/target/release/libra-management /usr/local/bin/libra-management
 	cd ~/libra && cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
-	
-	
-
-compress: 
-	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
-  
-build-node:
-	cd ~/libra && cargo build -p libra-node --release
-	sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 
 all-bins:
 	cd ~/libra && cargo build --all --bins --release --exclude cluster-test
 
-keygen:
-	cd ${DATA_PATH} && miner keygen
-
-miner-genesis:
-	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner start
-
-reset: stop clear fixtures init keys genesis daemon
-
-#### FOR TESTING ####
-stop:
-	sudo service libra-node stop
-
-clear:
-ifdef TEST
-	cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json
-	rm ${DATA_PATH}/blocks/*
-endif
-
-fixtures:
-ifdef TEST
-	echo ${NAMESPACE}
-
-	mkdir -p ${DATA_PATH}/blocks/
-
-	if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm ${DATA_PATH}/blocks/block_0.json; \
-	fi 
-
-	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
-
-	cp ~/libra/fixtures/block_0.json.${NODE_ENV}.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
-
-endif
-
 #### GENESIS BACKEND SETUP ####
-github: 
+init_backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
-layout:
-	libra-management set-layout \
+init_layout:
+	cargo run -p libra-management -- set-layout \
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path=set_layout_${NODE_ENV}.toml
 
 
-# REGISTRATION STEPS
+#### GENESIS REGISTRATION ####
 init:
 ifdef TEST
 	#for debug-net fill in mnemonic from fixtures
-	echo ${MNEM} | head -c -1 | libra-management initialize --path=${DATA_PATH} --namespace=${NAMESPACE}
+	echo ${MNEM} | head -c -1 | cargo run -p libra-management -- initialize --path=${DATA_PATH} --namespace=${NAMESPACE}
 else
-	libra-management initialize \
+	cargo run -p libra-management -- initialize \
 	--path=${DATA_PATH} \
 	--namespace=${NAMESPACE}
 endif
 
-
-
 add-proofs:
-	libra-management mining \
+	cargo run -p libra-management -- mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 	--backend ${REMOTE}
 
 keys:
-	libra-management operator-key \
+	cargo run -p libra-management -- operator-key \
 	--local ${LOCAL} \
 	--remote ${REMOTE}
 
 register:
-	libra-management validator-config \
+	cargo run -p libra-management -- validator-config \
 	--owner-address ${ACC} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
@@ -199,14 +152,14 @@ register:
 	--remote ${REMOTE}
 
 
-# GENESIS STEPS
+#### GENESIS  ####
 build-genesis:
-	NODE_ENV='${NODE_ENV}' libra-management genesis \
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- genesis \
 	--backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
 
 waypoint:
-	NODE_ENV='${NODE_ENV}' libra-management create-waypoint \
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- create-waypoint \
 	--remote ${REMOTE} \
 	--local ${LOCAL} \
 	--path ${DATA_PATH}
@@ -221,7 +174,7 @@ waypoint:
 	cat ${DATA_PATH}/miner.toml
 
 toml:
-	libra-management config \
+	cargo run -p libra-management -- config \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
 	--backend ${LOCAL} \
@@ -231,7 +184,7 @@ toml:
 
 peers:
 # cp -f seed_peers.toml backup.seed_peers.toml
-	libra-management seeds --genesis-path ${DATA_PATH}/genesis.blob
+	cargo run -p libra-management -- seeds --genesis-path ${DATA_PATH}/genesis.blob
 # TODO: Seed peers gets places in working path, deep in libra code.
 	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
 	mv seed_peers.toml  ${DATA_PATH}/seed_peers.toml
@@ -286,7 +239,59 @@ else
 
 endif
 
+
+
+#### HELPERS ####
+get_waypoint:
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("waypoint";"i")))[].value.value' ~/node_data/key_store.json))
+	echo $$WAY
+
+client: get_waypoint
+	cargo run --bin cli -- -u http://localhost:8080 --waypoint $$WAY
+
+compress: 
+	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+  
+keygen:
+	cd ${DATA_PATH} && miner keygen
+
+miner-genesis:
+	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
+
+reset: stop clear fixtures init keys genesis daemon
+
 wipe: 
 	history -c
 	shred ~/.bash_history
 	srm ~/.bash_history
+
+stop:
+	sudo service libra-node stop
+
+#### TEST SETUP ####
+
+clear:
+ifdef TEST
+	service libra-node stop
+	if test -f ~/node_data/key_store.json; then \
+		cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json; \
+		rm ${DATA_PATH}/blocks/*; \
+	fi 
+
+endif
+
+fixtures:
+ifdef TEST
+	echo ${NAMESPACE}
+
+	mkdir -p ${DATA_PATH}/blocks/
+
+	if test -f ${DATA_PATH}/blocks/block_0.json; then \
+		rm ${DATA_PATH}/blocks/block_0.json; \
+	fi 
+
+	cp ~/libra/fixtures/miner.toml.${NAMESPACE} ${DATA_PATH}/miner.toml
+
+	cp ~/libra/fixtures/block_0.json.${NODE_ENV}.${NAMESPACE} ${DATA_PATH}/blocks/block_0.json
+
+endif

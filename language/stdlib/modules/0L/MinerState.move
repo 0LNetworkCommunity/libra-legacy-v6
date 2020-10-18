@@ -16,6 +16,7 @@ address 0x0 {
     use 0x0::LibraTimestamp;
     use 0x0::Stats;
     use 0x0::Testnet;
+    use 0x0::Debug::print;
 
     // Struct to store information about a VDF proof submitted
     struct Proof {
@@ -51,36 +52,29 @@ address 0x0 {
     // Helper function for genesis to process genesis proofs.
     // Permissions: PUBLIC, ONLY VM, AT GENESIS.
     public fun genesis_helper (
-      miner: &signer,
+      miner_sig: &signer,
       challenge: vector<u8>,
       solution: vector<u8>
     ) acquires MinerProofHistory {
 
       //Check this originated from VM.
-      Transaction::assert(Transaction::sender()
- == 0x0, 130102014010);
+//       Transaction::assert(Transaction::sender()
+//  == 0x0, 130102014010);
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
-      Transaction::assert(Signer::address_of(miner) != Transaction::sender(), 130101014010);
+      // Transaction::assert(Signer::address_of(miner_sig) != Transaction::sender(), 130101014010);
       Transaction::assert(LibraTimestamp::is_genesis(), 130101024010);
 
-      let difficulty = Globals::get_difficulty();
-      let proof = Proof {
-        challenge,
-        difficulty,  
-        solution,
-      };
-      init_miner_state(miner);
-      verify_and_update_state(Signer::address_of(miner), proof, false);
+      init_miner_state(miner_sig, &challenge, &solution);
 
-      // TODO: Initialize stats for first validator set from rust genesis. 
-      Stats::init_address(Signer::address_of(miner));
-
+      // TODO: Move this elsewhere? 
+      // Initialize stats for first validator set from rust genesis. 
+      Stats::init_address(Signer::address_of(miner_sig));
     }
 
     // Function index: 03
     // Permissions: PUBLIC, SIGNER, TEST ONLY
     public fun test_helper (
-      miner: &signer,
+      miner_sig: &signer,
       difficulty: u64,
       challenge: vector<u8>,
       solution: vector<u8>
@@ -90,14 +84,22 @@ address 0x0 {
       //doubly check this is in test env.
       Transaction::assert(Globals::get_epoch_length() == 15, 130102024010);
 
-      // let difficulty = Globals::get_difficulty();
+      move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
+        previous_proof_hash: Vector::empty(),
+        verified_tower_height: 0u64,
+        latest_epoch_mining: 0u64,
+        count_proofs_in_epoch: 0u64,
+        epochs_validating_and_mining: 0u64,
+        contiguous_epochs_validating_and_mining: 0u64,
+      });
+
       let proof = Proof {
         challenge,
         difficulty,  
         solution,
       };
-      init_miner_state(miner);
-      verify_and_update_state(Signer::address_of(miner), proof, false);
+
+      verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
 
     // This function verifies the proof and commits to chain.
@@ -124,7 +126,7 @@ address 0x0 {
         Transaction::assert(&proof.difficulty == &difficulty_constant, 130103021010);
       };
       
-      verify_and_update_state(miner_addr,proof, true);
+      verify_and_update_state(miner_addr, proof, true);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -143,7 +145,7 @@ address 0x0 {
         //If not genesis proof, check hash 
         Transaction::assert(&proof.challenge == &miner_history.previous_proof_hash, 130108031010);      
       };
-
+      print(&proof.difficulty);
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
       Transaction::assert(valid, 130108041021);
 
@@ -249,27 +251,35 @@ address 0x0 {
 
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
-    public fun init_miner_state(miner_signer: &signer){
-      // let addr = Signer::address_of(node_sig);
-      // Transaction::assert(LibraSystem::is_validator(addr), 99190201014010);
-      // LibraAccount calls this.
+    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
       // NOTE Only Signer can update own state.
+      // Should only happen once.
+      Transaction::assert(!::exists<MinerProofHistory>(Signer::address_of(miner_sig)), 130112011021);
+      // LibraAccount calls this.
       // Exception is LibraAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
-      move_to<MinerProofHistory>(miner_signer, MinerProofHistory{
-        // verified_proof_history: Vector::empty(),
+      move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
         previous_proof_hash: Vector::empty(),
-        // invalid_proof_history: Vector::empty(),
         verified_tower_height: 0u64,
         latest_epoch_mining: 0u64,
-        count_proofs_in_epoch: 0u64,
+        count_proofs_in_epoch: 1u64,
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
       });
 
+      let difficulty = Globals::get_difficulty();
+      let proof = Proof {
+        challenge: *challenge,
+        difficulty,  
+        solution: *solution,
+      };
+      
+      verify_and_update_state(Signer::address_of(miner_sig), proof, false);
+
       //also add the miner to validator universe
-      //TODO: add_validators need to check permission.
-      ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
+      //TODO: #254 ValidatorUniverse::add_validators need to check permission.
+      // Note: this should be in LibraAccount but causes cyclic dependency.
+      ValidatorUniverse::add_validator(Signer::address_of(miner_sig));
     }
 
 

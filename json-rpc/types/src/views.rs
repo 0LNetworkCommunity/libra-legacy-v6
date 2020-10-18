@@ -3,20 +3,7 @@
 
 use anyhow::{format_err, Error, Result};
 use libra_crypto::HashValue;
-use libra_types::{
-    account_config::{
-        AccountResource, AccountRole, BalanceResource, BurnEvent, CancelBurnEvent,
-        CurrencyInfoResource, MintEvent, NewBlockEvent, NewEpochEvent, PreburnEvent,
-        ReceivedPaymentEvent, SentPaymentEvent, UpgradeEvent, LBR_NAME,
-    },
-    account_state_blob::AccountStateWithProof,
-    contract_event::ContractEvent,
-    epoch_change::EpochChangeProof,
-    ledger_info::LedgerInfoWithSignatures,
-    proof::{AccountStateProof, AccumulatorConsistencyProof},
-    transaction::{Transaction, TransactionArgument, TransactionPayload},
-    vm_error::StatusCode,
-};
+use libra_types::{account_config::{AccountResource, AccountRole, BalanceResource, BurnEvent, CancelBurnEvent, CurrencyInfoResource, LBR_NAME, MintEvent, NewBlockEvent, NewEpochEvent, PreburnEvent, ReceivedPaymentEvent, SentPaymentEvent, UpgradeEvent, miner_state::ValConfigResource}, account_state_blob::AccountStateWithProof, contract_event::ContractEvent, epoch_change::EpochChangeProof, ledger_info::LedgerInfoWithSignatures, proof::{AccountStateProof, AccumulatorConsistencyProof}, transaction::{Transaction, TransactionArgument, TransactionPayload}, vm_error::StatusCode};
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
@@ -506,7 +493,7 @@ impl From<CurrencyInfoResource> for CurrencyInfoView {
     }
 }
 
-/// MinerStat View implementation by 0L
+/// MinerState View implementation by 0L
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MinerStateView {
     pub previous_proof_hash: Vec<u8>,
@@ -528,6 +515,28 @@ impl From<MinerStateResource> for MinerStateView {
             count_proofs_in_epoch: info.count_proofs_in_epoch,
             epochs_validating_and_mining: info.epochs_validating_and_mining,
             contiguous_epochs_validating_and_mining: info.contiguous_epochs_validating_and_mining,
+        }
+    }
+}
+
+/// MinerStat View implementation by 0L
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ValConfigsView {
+    pub consensus_pubkey: Vec<u8>,
+    pub validator_network_identity_pubkey: Vec<u8>,
+    pub validator_network_address: Vec<u8>,
+    pub full_node_network_identity_pubkey: Vec<u8>,
+    pub full_node_network_address: Vec<u8>,
+}
+
+impl From<ValConfigResource> for ValConfigsView {
+    fn from(info: ValConfigResource) -> ValConfigsView {
+        ValConfigsView {
+            consensus_pubkey: info.config.consensus_pubkey,
+            validator_network_identity_pubkey: info.config.validator_network_identity_pubkey,
+            validator_network_address: info.config.validator_network_address,
+            full_node_network_identity_pubkey: info.config.full_node_network_identity_pubkey,
+            full_node_network_address: info.config.full_node_network_address,
         }
     }
 }

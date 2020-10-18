@@ -51,10 +51,25 @@ pub fn e2e_submit_proof_txn(
     )
 }
 
-pub fn e2e_onboarding_tx(sender: &Account, seq_num: u64, challenge: Vec<u8>, solution: Vec<u8>) -> SignedTransaction {
+pub fn e2e_onboarding_tx(
+    sender: &Account,
+    seq_num: u64,
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    consensus_pubkey: Vec<u8>,
+    validator_network_identity_pubkey: Vec<u8>,
+    validator_network_address: Vec<u8>,
+    full_node_network_identity_pubkey: Vec<u8>,
+    full_node_network_address: Vec<u8>,
+) -> SignedTransaction {
     let args = vec![
         TransactionArgument::U8Vector(challenge),
         TransactionArgument::U8Vector(solution),
+        TransactionArgument::U8Vector(consensus_pubkey),
+        TransactionArgument::U8Vector(validator_network_identity_pubkey),
+        TransactionArgument::U8Vector(validator_network_address),
+        TransactionArgument::U8Vector(full_node_network_identity_pubkey),
+        TransactionArgument::U8Vector(full_node_network_address),
     ];
     sender.create_signed_txn_with_args(
         StdlibScript::MinerStateOnboarding

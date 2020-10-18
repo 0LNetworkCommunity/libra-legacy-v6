@@ -3,7 +3,7 @@
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 /// Data structure and serialization of 0L delay proof.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
     /// Block Height
     pub height: u64,
@@ -15,7 +15,28 @@ pub struct Block {
     /// Data for Block
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     /// VDF proof. AKA solution
-    pub data: Vec<u8>,
+    pub proof: Vec<u8>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+/// Configuration files necessary to initialize a validator.
+pub struct ValConfigs {
+    /// Block zero of the onboarded miner
+    pub block_zero: Block,
+    /// Key validator will use in consensus
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub consensus_pubkey: Vec<u8>,
+    /// Key validator will use for network connections
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub validator_network_identity_pubkey: Vec<u8>,
+    /// IP address of validator
+    pub validator_network_address: String,
+    /// Key full node will use for network connections
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub full_node_network_identity_pubkey: Vec<u8>,
+    /// IP address of full node
+    pub full_node_network_address: String,
 }
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
@@ -41,13 +62,23 @@ impl Block {
         let file = std::fs::File::open(path)?;
         let reader = std::io::BufReader::new(file);
         let block: Block = serde_json::from_reader(reader).expect("Genesis block should deserialize");
-        return Ok((block.preimage, block.data));
+        return Ok((block.preimage, block.proof));
+    }
+}
+
+impl ValConfigs {
+    /// Extract the preimage and proof from a genesis proof block_0.json
+    pub fn get_init_data(path: &std::path::PathBuf) -> Result<ValConfigs,std::io::Error> {
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let configs: ValConfigs = serde_json::from_reader(reader).expect("init_configs.json should deserialize");
+        return Ok(configs);
     }
 }
 
 pub mod build_block {
     //! Functions for generating the 0L delay proof and writing data to file system.
-    use super::Block;
+    use super::{Block};
     use crate::config::*;
     use crate::delay::*;
     use crate::error::{Error, ErrorKind};
@@ -68,14 +99,14 @@ pub mod build_block {
 
         let preimage = config.genesis_preimage();
         let now = Instant::now();
-        let data = do_delay(&preimage);
+        let proof = do_delay(&preimage);
         let elapsed_secs = now.elapsed().as_secs();
         println!("Delay: {:?} seconds", elapsed_secs);
         let block = Block {
             height: 0u64,
             elapsed_secs,
             preimage,
-            data,
+            proof,
         };
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
@@ -95,7 +126,7 @@ pub mod build_block {
             let latest_block: Block =
                 serde_json::from_str(&block_file).expect("could not deserialize latest block");
 
-            let preimage = HashValue::sha3_256_of(&latest_block.data).to_vec();
+            let preimage = HashValue::sha3_256_of(&latest_block.proof).to_vec();
             // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
             let height = latest_block.height + 1;
             // TODO: cleanup this duplication with mine_genesis_once?
@@ -109,7 +140,7 @@ pub mod build_block {
                 height,
                 elapsed_secs,
                 preimage,
-                data: data.clone(),
+                proof: data.clone(),
             };
 
             write_json(&block, &config.get_block_dir() );
@@ -147,7 +178,7 @@ pub mod build_block {
 
                 if let Some(ref _node) = config.chain_info.node {
 
-                    let res = submit_tx(&tx_params, block.preimage, block.data, false);
+                    let res = submit_tx(&tx_params, block.preimage, block.proof, false);
 
                     if eval_tx_status(res) == false {
                         return Err(ErrorKind::Transaction
@@ -265,7 +296,7 @@ pub mod build_block {
 
         // Test the expected proof is writtent to file correctly.
         let correct_proof = "0072c747e2b03d52a7c48497386dbac0ab8916d1a555d840f4a7d8357200c3266d6e026bfc981ab7abc1872bbc06832e6ebf0b493106f0074d56d066d73554d65c3cf209eb1eee739df5ffaacb4b88a7e487915b2255e7193e98b2db282fd9327ca21bd57af06330c4121153b132bf8b440fda42de67847b9ea80423f35c4f117cfde1560db693fbeff434900ed98c96264d4389773652d53569a1ae9e0855c4400afa4d86d094a262d7df403419952eecfc9ef4636569c25f892eb36158a6b99fbe2bb053f8deacd0b67346824a8b324412d2458f8e961998daa8efc79d8cd2a399fb40d9bb6fdb6014b464872322d96b97f6795d78ad9c749bc680fb7685792effbf344beed33a994bd20ab9da3c5ac17e70790b1d026a168751bdb1bc17e4339041e1869634a36be9e7c328a5cea9262f393714cd2470201a3db008d88f5d444cad63f874adfbfbf2a94ddd5b64be9e2a51539f844f1dadc0773ce37ad8b13b7a3e851e9faeafd1ebca9e1fdea2627116b28c2ec6d681838b803ff86c072e60bf4ab5f8a731df9463208bb33eb5faa8806bb0420d598d91a5f6ebe6917d2f90d9798d4e79b5e3bad254d17bf7412c9ae9c221139e4586b2cb73206b9a20930aa1b2d9a58b1335eff2a844344c1fe9cc70def78078f8d9a3dae999d7fde7ce8da8dff5a6430e6a9cbfa72e5162df258a2bf980428847ba273bcf935a2e60ce7bff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
-        assert_eq!(hex::encode(&latest_block.data), correct_proof, "test");
+        assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
 
         test_helper_clear_block_dir(&configs_fixture.get_block_dir());
     }
@@ -357,7 +388,7 @@ fn create_fixtures() {
             height: 0u64,
             elapsed_secs: 0u64,
             preimage: Vec::new(),
-            data: fixture_previous_proof,
+            proof: fixture_previous_proof,
         };
 
         write_json(&fixture_block, &configs_fixture.get_block_dir() );
@@ -385,7 +416,7 @@ fn create_fixtures() {
         // Test the expected proof is writtent to file correctly.
         let correct_proof = "0054a77c688865bd02300dce80911cf281df2ade94ba116a789f217dacfb4f44548a973630c3922a2fa339707b2af8ba461459c776d4f8c57da0f6f22a2104e9b6173b03f6382b6a1141a540a7c29b5d87fc988056f4e6d5124359ac8972f77e7f47a60cef1a2bde3c30f3c1ae87da6cd026f81388a411530005e935b3f7f56120d558b7191da800bceacd04069be03730c064c6d645d59ba4cd58d78462ac5e5da40bbba3110b0debc05495fd26da9aed13e60cf2680faadf9bcd6a0cc4a7178115a485584a2f5fed592a707626d164bd73dbfa8ee33de14cbf8f5bf5e812fc0586911c430715b34aafede3195256ba9bf9463a8bbc755c145dda4f315c9fa5bf0028bda8c949ad43ee742023b8d1cae3beb40b3d12faf33082d600462b2cc7df300a8aca87f847668c487c337ddedf3355635def7387e40edf70cbe811af2ca9d2a96ce6b27335203314619e88dcaa5f934ed6b7b6a6530c2cf36330390937901041362522f97a38c8265c67e7d808377c7623213c6aa4cf60926793298a2dead8ebeaa98c0a5bb30735682f9cf6df4ea468fba4243488b0f4e849149b059689adef603b5564be2a891fdadef82667017e4c8a7560e2d72971049b6e5640fffb86895f096b10611f585d1302339808bf6965195afe9cf77e8c0597a6e252216d63533d739b007ec19847cbf77d99a7fc5d8e66e2d000a16498cdd2cd9f437415d900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
         assert_eq!(
-            hex::encode(&latest_block.data),
+            hex::encode(&latest_block.proof),
             correct_proof,
             "Not the proof of the new block created"
         );
@@ -408,7 +439,7 @@ fn create_fixtures() {
             height: current_block_number,
             elapsed_secs: 0u64,
             preimage: Vec::new(),
-            data: Vec::new(),
+            proof: Vec::new(),
         };
 
         // write the file temporarilty
@@ -427,5 +458,19 @@ fn create_fixtures() {
         assert_eq!(parse_block_height(&blocks_dir).0, Some(33));
 
         test_helper_clear_block_dir(&blocks_dir)
+    }
+
+    #[test]
+    fn test_parse_init_file() {
+        use super::ValConfigs;
+        let fixtures = PathBuf::from("../fixtures/val_init_stage.json");
+        let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
+        assert_eq!(init_configs.full_node_network_address, "134.122.115.12", "Could not parse network address");
+
+        let consensus_key_vec = hex::decode("2734465e8191b85abae0f713ababc8f6d4dcf6d58844779ea51c531489bd261c").unwrap();
+        
+        assert_eq!(init_configs.consensus_pubkey, consensus_key_vec, "Could not parse network address");
+        // dbg!(consensus_key_vec);
+        // dbg!(ValConfigs::get_init_data(&fixtures));
     }
 }

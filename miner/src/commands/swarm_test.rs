@@ -2,8 +2,7 @@
 
 // use crate::block::Block;
 
-use crate::config::MinerConfig;
-use crate::prelude::*;
+use crate::{config::MinerConfig, test_tx_swarm::val_init_test};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
@@ -20,22 +19,22 @@ use std::path::PathBuf;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct SwarmCmd {
-    #[options(help = "Provide a waypoint for the libra chain")]
-    waypoint: String, //Option<Waypoint>,
-
-    #[options(help = "Provide a waypoint for the libra chain")]
+    #[options(help = "Test the onboading transaction.")]
+    init: bool,
+    #[options(help = "The home directory where the blocks will be stored")]
     home: PathBuf, 
 }
 
 impl Runnable for SwarmCmd {
     /// Start the application.
     fn run(&self) {
-        let miner_configs = app_config();
+        println!("Testing Submit tx to Swarm. Using swarm private key");
 
-        println!("Testing Submit to Swarm. Using swarm private key");
-
-        let result = test_runner(self.home.to_owned(), &miner_configs, false);
-        println!("Executing Result: {:?}", result);
+        if self.init {
+            val_init_test(self.home.to_owned());
+        } else {
+            test_runner(self.home.to_owned());
+        }
     }
 }
 

@@ -17,8 +17,7 @@ use move_core_types::account_address::AccountAddress;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MinerStateResource {
     pub previous_proof_hash: Vec<u8>,
-    // pub reported_tower_height: u64,
-    pub verified_tower_height: u64, // user's latest verified_tower_height
+    pub verified_tower_height: u64,
     pub latest_epoch_mining: u64,
     pub count_proofs_in_epoch: u64,
     pub epochs_validating_and_mining: u64,
@@ -43,7 +42,6 @@ impl MinerStateResource {
     }
 
     pub fn resource_path(account: AccountAddress) -> AccessPath {
-        println!("debug 2");
         let resource_key = ResourceKey::new(
             account,
             MinerStateResource::struct_tag(),
@@ -59,4 +57,59 @@ impl MinerStateResource {
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         lcs::from_bytes(bytes).map_err(Into::into)
     }
+}
+
+
+/// Struct that represents a MinerStateHistory resource
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ValConfigResource {
+    pub config: ValKeys,
+    pub operator_account: Vec<u8>,
+}
+
+impl MoveResource for ValConfigResource {
+    const MODULE_NAME: &'static str = "ValidatorConfig";
+    const STRUCT_NAME: &'static str = "T";
+}
+
+impl ValConfigResource {
+    pub fn struct_tag() -> StructTag {
+        StructTag {
+            address: CORE_CODE_ADDRESS,
+            module: ValConfigResource::module_identifier(),
+            name: ValConfigResource::struct_identifier(),
+            type_params: vec![],
+        }
+    }
+
+    pub fn resource_path(account: AccountAddress) -> AccessPath {
+        let resource_key = ResourceKey::new(
+            account,
+            ValConfigResource::struct_tag(),
+        );
+        dbg!(&resource_key);
+        AccessPath::resource_access_path(&resource_key)
+    }
+
+    pub fn access_path() -> Vec<u8> {
+        AccessPath::resource_access_vec(&ValConfigResource::struct_tag())
+    }
+
+    pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
+        lcs::from_bytes(bytes).map_err(Into::into)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+
+pub struct ValKeys {
+    pub consensus_pubkey: Vec<u8>,
+    pub validator_network_identity_pubkey: Vec<u8>,
+    pub validator_network_address: Vec<u8>,
+    pub full_node_network_identity_pubkey: Vec<u8>,
+    pub full_node_network_address: Vec<u8>,
+}
+impl MoveResource for ValKeys {
+    const MODULE_NAME: &'static str = "Config";
+    const STRUCT_NAME: &'static str = "T";
 }

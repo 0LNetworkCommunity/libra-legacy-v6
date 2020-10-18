@@ -1143,14 +1143,18 @@ module LibraAccount {
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
     public fun create_validator_account_with_vdf<Token>(
         challenge: &vector<u8>,
-        solution: &vector<u8>
+        solution: &vector<u8>,
+        consensus_pubkey: vector<u8>,
+        validator_network_identity_pubkey: vector<u8>,
+        validator_network_address: vector<u8>,
+        full_node_network_identity_pubkey: vector<u8>,
+        full_node_network_address: vector<u8>,
     ) {
         // Note: A majority of the onboarding logic is contained here because of limitations on resources and signers
         // LibraAccount is the only module which can simulate a Signer type, and move a resource onto an account, without the sender account, being the recipient account. 
         
         // Since this is an open function, we rate limit the callign with a proof of work, vdf. 
         // Check that accounts are created with a VDF proof.
-        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
 
         let valid = VDF::verify(
             challenge,
@@ -1158,6 +1162,8 @@ module LibraAccount {
             solution
         );
         Transaction::assert(valid, 120101011021);
+
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
 
         // publish an event for the account generation.
         let new_signer = create_signer(new_account_address);
@@ -1167,12 +1173,20 @@ module LibraAccount {
         move_to(&new_signer, Role_temp<ValidatorRole> {role_type: ValidatorRole {}, is_certified: true});
 
         // initialize the miner's state 
-        //TODO: rename
-        MinerState::init_miner_state(&new_signer);
-        // let blob = MinerState::create_proof_blob(*challenge, Globals::get_difficulty(), *solution);
-        // MinerState::commit_state(&new_signer, blob);
-
+        // NOTE: VDF verification is being called twice!
+        MinerState::init_miner_state(&new_signer, challenge, solution);
         ValidatorConfig::publish_from_vdf(&new_signer);
+        ValidatorConfig::set_init_config(
+            &new_signer,
+            new_account_address,
+            consensus_pubkey,
+            validator_network_identity_pubkey,
+            validator_network_address,
+            full_node_network_identity_pubkey,
+            full_node_network_address,
+        );
+
+
         // create the account, and also consume/destroy the new_signer.
         make_account<Token, Empty::T>(new_signer, auth_key_prefix, Empty::create(), false);
     }

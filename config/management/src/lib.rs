@@ -13,7 +13,6 @@ mod mining;
 mod secure_backend;
 mod seeds;
 mod storage_helper;
-// mod storage_helper_github;
 mod validator_config;
 mod verify;
 mod waypoint;

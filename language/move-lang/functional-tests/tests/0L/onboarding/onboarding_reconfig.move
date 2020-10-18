@@ -1,13 +1,47 @@
-// Case 1: Validators are compliant. 
-// This test is to check if validators are present after the first epoch.
-// Here EPOCH-LENGTH = 15 Blocks.
-// NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
-
+// Module to test bulk validator updates function in LibraSystem.move
 //! account: alice, 1000000, 0, validator
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 //! account: eve, 1000000, 0, validator
+
+
+//! new-transaction
+//! sender: association
+script {
+  use 0x0::Transaction::assert;
+  use 0x0::LibraAccount;
+  use 0x0::GAS;
+  use 0x0::ValidatorConfig;
+  use 0x0::TestFixtures;
+  use 0x0::VDF;
+  // use 0x0::Debug::print;
+
+  fun main(_account: &signer) {
+    let challenge = TestFixtures::alice_1_easy_chal();
+    let solution = TestFixtures::alice_1_easy_sol();
+    let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);    
+
+    LibraAccount::create_validator_account_with_vdf<GAS::T>(
+      &challenge,
+      &solution,
+      x"deadbeef", // consensus_pubkey: vector<u8>,
+      x"20d1ac", //validator_network_identity_pubkey: vector<u8>,
+      b"192.168.0.1", //validator_network_address: vector<u8>,
+      x"1ee7", //full_node_network_identity_pubkey: vector<u8>,
+      b"192.168.0.1", //full_node_network_address: vector<u8>,
+    );
+
+    // Check the account has the Validator role
+    assert(LibraAccount::is_certified<LibraAccount::ValidatorRole>(parsed_address), 02);
+
+    assert(ValidatorConfig::is_valid(parsed_address), 03);
+
+    // Check the account exists and the balance is 0
+    assert(LibraAccount::balance<GAS::T>(parsed_address) == 0, 04);
+  }
+}
+//check: EXECUTED
 
 //! block-prologue
 //! proposer: alice
@@ -106,29 +140,3 @@ script {
 //! proposer: alice
 //! block-time: 15
 //! round: 15
-
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
-
-// check: NewEpochEvent
-
-//////////////////////////////////////////////
-
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
-//! NewBlockEvent
-
-//! new-transaction
-//! sender: association
-script {
-    use 0x0::Transaction;
-    use 0x0::LibraSystem;
-    fun main(_account: &signer) {
-        // We are in a new epoch.
-        // Tests on initial size of validators 
-        Transaction::assert(LibraSystem::validator_set_size() == 5, 7357000180107);
-        Transaction::assert(LibraSystem::is_validator({{alice}}) == true, 7357000180108);        
-    }
-}

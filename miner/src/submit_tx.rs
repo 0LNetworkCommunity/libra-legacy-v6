@@ -12,7 +12,7 @@ use anyhow::Error;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
-use std::{thread, time, io::{stdout, Write}};
+use std::{io::{stdout, Write}, thread, time};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
@@ -78,6 +78,10 @@ pub fn submit_tx(
             vec![
                 TransactionArgument::U8Vector(preimage),
                 TransactionArgument::U8Vector(proof),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
+                TransactionArgument::U8Vector("z".as_bytes().to_vec()),TransactionArgument::U8Vector("z".as_bytes().to_vec()),                
             ],
         );
     }
@@ -115,6 +119,77 @@ pub fn submit_tx(
     }
 
 }
+
+
+/// Submit a miner transaction to the network.
+pub fn submit_onboard_tx(
+    tx_params: &TxParams,
+    preimage: Vec<u8>,
+    proof: Vec<u8>,
+    consensus_pubkey: Vec<u8>,
+    validator_network_identity_pubkey: Vec<u8>,
+    validator_network_address: String,
+    full_node_network_identity_pubkey: Vec<u8>,
+    full_node_network_address: String,
+) -> Result<Option<TransactionView>, Error> {
+
+    // Create a client object
+    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+
+    let (account_state,_) = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let sequence_number = match account_state {
+        Some(av) => av.sequence_number,
+        None => 0,
+    };
+
+    // Create the unsigned MinerState transaction script
+    let script = Script::new(
+        transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(preimage),
+            TransactionArgument::U8Vector(proof),
+            TransactionArgument::U8Vector(consensus_pubkey),
+            TransactionArgument::U8Vector(validator_network_identity_pubkey),
+            TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
+            TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
+        ],
+    );
+
+    // sign the transaction script
+    let txn = create_user_txn(
+        &tx_params.keypair,
+        TransactionPayload::Script(script),
+        tx_params.address,
+        sequence_number,
+        tx_params.max_gas_unit_for_tx,
+        tx_params.coin_price_per_unit,
+        "GAS".parse()?,
+        tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+    )?;
+
+    // get account_data struct
+    let mut sender_account_data = AccountData {
+        address: tx_params.address,
+        authentication_key: Some(tx_params.auth_key.to_vec()),
+        key_pair: Some(tx_params.keypair.clone()),
+        sequence_number,
+        status: AccountStatus::Persisted,
+    };
+    
+    // Submit the transaction with libra_client
+    match client.submit_transaction(
+        Some(&mut sender_account_data),
+        txn
+    ){
+        Ok(_) => {
+            Ok( wait_for_tx(tx_params.address, sequence_number, &mut client) )
+        }
+        Err(err) => Err(err)
+    }
+
+}
+
 
 /// Wait for the response from the libra RPC.
 pub fn wait_for_tx (
