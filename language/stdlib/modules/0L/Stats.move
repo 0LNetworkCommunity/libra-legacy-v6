@@ -11,7 +11,7 @@ module Stats{
     use 0x1::Testnet;
     use 0x1::Globals;
     use 0x1::FixedPoint32;
-    // use 0x1::Testnet;
+    use 0x1::Debug::print;
 
     struct ValidatorSet {
       addr: vector<address>,
@@ -27,15 +27,16 @@ module Stats{
     }
 
     //Permissions: Public, VM only.
-    public fun initialize(vm: &signer){
+    public fun initialize(vm: &signer) {
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
        move_to<T>(
         vm, 
         T {
-        history: Vector::empty(),
-        current: blank()
-      });
+            history: Vector::empty(),
+            current: blank()
+          }
+        );
     }
     
   fun blank():ValidatorSet {
@@ -54,9 +55,12 @@ module Stats{
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190204014010);
 
       let stats = borrow_global_mut<T>(sender);
-      Vector::push_back(&mut stats.current.addr, node_addr);
-      Vector::push_back(&mut stats.current.prop_count, 0);
-      Vector::push_back(&mut stats.current.vote_count, 0);
+      let (is_init, _) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+      if (!is_init) {
+        Vector::push_back(&mut stats.current.addr, node_addr);
+        Vector::push_back(&mut stats.current.prop_count, 0);
+        Vector::push_back(&mut stats.current.vote_count, 0);
+      }
     }
 
 
@@ -99,6 +103,9 @@ module Stats{
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190206014010);
       let range = Globals::get_epoch_length();
       let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(66, 100));
+      let node_votes = node_current_votes(vm, node_addr);
+      print(&node_addr);
+      print(&node_votes);
       if (node_current_votes(vm, node_addr) >  threshold_signing) return true;
       return false
     }
@@ -117,9 +124,11 @@ module Stats{
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190206014010);
       let density = 0u64;
       let nodes = *&(borrow_global_mut<T>(sender).current.addr);
-      let length = Vector::length(&nodes);
+      let len = Vector::length(&nodes);
+      print(&0x0444444);
+      print(&len);
       let k = 0;
-      while (k < length) {
+      while (k < len) {
         let addr = *(Vector::borrow<address>(&nodes, k));
         if (node_above_thresh(vm, addr)) {
           density = density + 1;

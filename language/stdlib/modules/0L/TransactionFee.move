@@ -87,6 +87,33 @@ module TransactionFee {
         Libra::withdraw_all(&mut fees.balance)
     }
 
+    // public fun process_fees(lr_account: &signer) acquires TransactionFees {
+    //     Transaction::assert(Signer::address_of(vm_sig) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
+    //     let bal = get_amount_to_distribute(lr_account);
+
+    //     let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio();
+    //     let length = Vector::length<address>(&outgoing_set);
+
+    //     // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
+    //     if (bal <= length) return;
+
+    //     let i = 0;
+    //     while (i < length) {
+    //         let node_address = *(Vector::borrow<address>(&outgoing_set, i));
+    //         let node_ratio = *(Vector::borrow<FixedPoint32::T>(&fee_ratio, i));
+    //         let fees = FixedPoint32::multiply_u64(bal, node_ratio);
+
+    //         let distribution_resource = borrow_global<TransactionFees>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+    //         LibraAccount::pay_from<GAS::T>(
+    //             node_address,
+    //             &distribution_resource.fee_withdrawal_capability,
+    //             fees,
+    //             Vector::empty<u8>(),
+    //             Vector::empty<u8>(),
+    //         );
+    //         i = i + 1;
+    //     };
+    // }
     // public fun distribute(lr_account: &signer) acquires TransactionFee {
     //     // Can only be invoked by LibraVM privilege.
     //     // Allowed association to invoke for testing purposes.

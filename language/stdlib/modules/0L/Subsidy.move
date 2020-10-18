@@ -35,11 +35,24 @@ address 0x1 {
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
-
+      print(&txn_fee_amount);
       // Calculate the split for subsidy and burn
-      let subsidy_units = subsidy_curve(vm);
 
-      // //deduct transaction fees from minimum guarantee.
+      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
+      let network_density = Stats::network_density(vm);
+      print(&0x03333);
+      print(&network_density);
+      
+      let max_node_count = Globals::get_max_node_density();
+      let subsidy_units = subsidy_curve(
+        subsidy_ceiling_gas,
+        network_density,
+        max_node_count,
+        );
+
+      print(&subsidy_units);
+
+      // deduct transaction fees from minimum guarantee.
       subsidy_units = subsidy_units - txn_fee_amount;
       subsidy_units
     }
@@ -72,11 +85,14 @@ address 0x1 {
     }
 
     // Function code: 04 Prefix: 190104
-    fun subsidy_curve(vm: &signer): u64 {
-      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-      let network_density = Stats::network_density(vm);
-      let max_node_count = Globals::get_max_node_density();
+    public fun subsidy_curve(
+      subsidy_ceiling_gas: u64,
+      network_density: u64,
+      max_node_count: u64
+      ): u64 {
+      
       let min_node_count = 4u64;
+
       // Return early if we know the value is below 4.
       // This applies only to test environments where there is network of 1.
       if (network_density <= min_node_count) {
@@ -104,37 +120,41 @@ address 0x1 {
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
-      print(&0x0);
-      print(&vm_addr);
-      print(&len);
-      print(&genesis_validators);
-      // // Calculate subsidy equally for all the validators based on subsidy curve
-      // // Calculate the split for subsidy and burn
-      // // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
-      // let subsidy_units = subsidy_curve(vm_sig);
 
-      // // Distribute gas coins to initial validators
-      // let subsidy_granted = subsidy_units / len;
-      // let i = 0;
-      // while (i < len) {
-      //   let node_address = *(Vector::borrow<address>(&genesis_validators, i));
-      //   let old_validator_bal = LibraAccount::balance<GAS>(vm_addr);
+      // Calculate subsidy equally for all the validators based on subsidy curve
+      // Calculate the split for subsidy and burn
+      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
+      let network_density = Stats::network_density(vm_sig);
+      let max_node_count = Globals::get_max_node_density();
+      let subsidy_units = subsidy_curve(
+        subsidy_ceiling_gas,
+        network_density,
+        max_node_count,
+        );
 
-      //   //Transfer gas from association to validator
-      //   let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
-      //   LibraAccount::vm_deposit_with_metadata<GAS>(
-      //     vm_sig,
-      //     node_address,
-      //     minted_coins,
-      //     x"", x""
-      //   );
+      // Distribute gas coins to initial validators
+      let subsidy_granted = subsidy_units / len;
+      let i = 0;
+      while (i < len) {
+        let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+        let old_validator_bal = LibraAccount::balance<GAS>(vm_addr);
 
-      //   //Confirm the calculations, and that the ending balance is incremented accordingly.
-      //   assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
-      //   i = i + 1;
-      // };
+        //Transfer gas from association to validator
+        let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
+        LibraAccount::vm_deposit_with_metadata<GAS>(
+          vm_sig,
+          node_address,
+          minted_coins,
+          x"", x""
+        );
 
-      // assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
+        //Confirm the calculations, and that the ending balance is incremented accordingly.
+        assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+        i = i + 1;
+      };
+
+      assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
 
     }
   }
