@@ -16,7 +16,6 @@
 //! new-transaction
 //! sender: alice
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -31,7 +30,6 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -47,7 +45,6 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -63,7 +60,6 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -76,7 +72,6 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    ;
     use 0x1::MinerState;
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -88,7 +83,6 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -158,7 +152,7 @@ script {
     use 0x1::LibraSystem;
     
 
-    fun main() {
+    fun main(vm: &signer) {
         assert(LibraSystem::validator_set_size() == 6, 7357180101011000);
 
         let voters = Vector::empty<address>();
@@ -172,7 +166,7 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
     }
@@ -192,7 +186,6 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -207,7 +200,6 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -223,7 +215,6 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -239,7 +230,6 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -252,7 +242,6 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    ;
     use 0x1::MinerState;
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -264,7 +253,6 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -336,7 +324,7 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
 
-    fun main() {
+    fun main(vm: &signer) {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
@@ -349,7 +337,7 @@ script {
         let i = 16;
         while (i < 31) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
     }

@@ -21,7 +21,6 @@
 //! new-transaction
 //! sender: alice
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -36,7 +35,6 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    ;
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
@@ -54,7 +52,6 @@ script {
     // use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::Vector;
-    ;
     use 0x1::Reconfigure;
     use 0x1::LibraSystem;
 
@@ -72,7 +69,7 @@ script {
         let i = 1;
         while (i < 15) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
 
@@ -96,7 +93,6 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    ;
     use 0x1::LibraSystem;
     use 0x1::LibraConfig;
     fun main(_account: &signer) {
@@ -118,7 +114,6 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
     // use 0x1::Debug::print;
-    ;
 
     fun main(vm: &signer) {
         // start a new epoch.
@@ -133,12 +128,12 @@ script {
         let i = 1;
         while (i < 15) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
 
         // Even though Eve will be considered a case 2, it was because she was jailed. She will rejoin next epoch.
-        assert(Cases::get_case({{eve}}) == 2, 7357180106011000);
+        assert(Cases::get_case(vm, {{eve}}) == 2, 7357180106011000);
         Reconfigure::reconfigure(vm);
     }
 }
@@ -147,7 +142,6 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    ;
     use 0x1::LibraSystem;
     use 0x1::LibraConfig;
     fun main(_account: &signer) {
