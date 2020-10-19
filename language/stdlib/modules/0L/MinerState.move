@@ -15,7 +15,7 @@ address 0x1 {
     use 0x1::Hash;
     // use 0x1::Stats;
     use 0x1::Testnet;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
 
     // Struct to store information about a VDF proof submitted
@@ -248,8 +248,7 @@ address 0x1 {
     // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_signer: &signer) {
       // TODO: If a miner can init the state then it can put the account in a bad state.
-      print(&0x0111111111);
-      print(&Signer::address_of(miner_signer));
+
       // LibraAccount calls this from a public API.
       // NOTE Only Signer can update own state.
       // Exception is LibraAccount which can emulate a Signer.

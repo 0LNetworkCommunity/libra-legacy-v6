@@ -102,33 +102,6 @@ module TransactionFee {
     }
 
 
-    // public fun distribute(lr_account: &signer) acquires TransactionFee {
-    //     // Can only be invoked by LibraVM privilege.
-    //     // Allowed association to invoke for testing purposes.
-    //     let cap = LibraAccount::extract_withdraw_capability(lr_account);
-    //     CoreAddresses::assert_libra_root(lr_account);
-    //     let coins = get_transaction_fees_coins<GAS>(lr_account);
-    //     let fees = borrow_global_mut<TransactionFee<GAS>>(
-    //         CoreAddresses::LIBRA_ROOT_ADDRESS()
-    //     );
-    //     // let coins = Libra::withdraw_all(&mut fees.balance);
-    //     print(fees);
-        
-
-    //     let value = Libra::value<GAS>(&coins);
-    //     print(&value);
-
-    //     LibraAccount::pay_from<GAS>(&cap, 0x1, 1, x"", x"",);
-    //     // coins
-    //     // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
-    //     // LibraAccount::balance<Token>(0xFEE);
-    //     // let fees = borrow_global_mut<TransactionFee<Token>>(
-    //     //     CoreAddresses::LIBRA_ROOT_ADDRESS()
-    //     // );
-
-    //     // Libra::withdraw_all(&mut fees.balance)
-    // }
-
     /// Deposit `coin` into the transaction fees bucket
     public fun pay_fee<CoinType>(coin: Libra<CoinType>) acquires TransactionFee {
         assert(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));

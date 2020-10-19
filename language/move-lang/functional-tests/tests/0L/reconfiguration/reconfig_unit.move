@@ -28,7 +28,6 @@ script {
 
       assert(Stats::node_current_props(vm, {{alice}}) == 2, 7357190201051000);
       assert(Stats::node_current_props(vm, {{bob}}) == 1, 7357190201061000);
-
       assert(Stats::node_current_votes(vm, {{alice}}) == 2, 7357190201071000);
       assert(Stats::node_current_votes(vm, {{bob}}) == 0, 7357190201081000);
 
@@ -40,9 +39,8 @@ script {
 
       Reconfigure::reconfigure(vm);
 
-      // assert(Stats::node_current_props(vm, {{alice}}) == 0, 7357190201091000);
-      // assert(Stats::node_current_props(vm, {{bob}}) == 0, 7357190201101000);
-
+      assert(Stats::node_current_props(vm, {{alice}}) == 0, 7357190201091000);
+      assert(Stats::node_current_props(vm, {{bob}}) == 0, 7357190201101000);
     }
 }
 // check: EXECUTED

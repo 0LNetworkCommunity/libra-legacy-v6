@@ -71,12 +71,10 @@ address 0x1 {
       let i = 0;
       let validator_list = &collection.validators;
       let len = Vector::length<ValidatorEpochInfo>(validator_list);
-      // Debug::print(&len);
       while (i < len) {
           Vector::push_back(&mut eligible_validators, Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address);
           i = i + 1;
       };
-      // Debug::print(&len);
       eligible_validators
     }
 
@@ -172,17 +170,9 @@ address 0x1 {
         start_block_height = current_block_height - epoch_length;
       };
 
-      // Debug::print(&0x2201070151200001);
-
-
       let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
 
-      // Debug::print(&0x2201070151200002);
-
-
       let blocks_in_window = adjusted_end_block_height - start_block_height;
-
-      // Debug::print(&0x2201070151200003);
 
       // The current block_height needs to be at least the length of one (the first) epoch.
       // assert(current_block_height >= blocks_in_window, 220107015120);
@@ -191,7 +181,6 @@ address 0x1 {
       // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
 
       let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * blocks_in_window;
-      // Debug::print(&0x2201070151200004);
 
       ////////  TODO: REMOVED IN MERGE PROCESS ///////
       let block_signed_by_validator = 0; // Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);

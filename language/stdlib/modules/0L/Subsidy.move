@@ -21,8 +21,7 @@ address 0x1 {
     use 0x1::LibraTimestamp;
     use 0x1::LibraSystem;
     use 0x1::TransactionFee;
-
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -36,22 +35,16 @@ address 0x1 {
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
-      print(&txn_fee_amount);
       // Calculate the split for subsidy and burn
 
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
       let network_density = Stats::network_density(vm);
-      print(&0x03333);
-      print(&network_density);
-
       let max_node_count = Globals::get_max_node_density();
       let subsidy_units = subsidy_curve(
         subsidy_ceiling_gas,
         network_density,
         max_node_count,
         );
-
-      print(&subsidy_units);
 
       // deduct transaction fees from minimum guarantee.
       subsidy_units = subsidy_units - txn_fee_amount;
@@ -165,15 +158,9 @@ address 0x1 {
 
       let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm);
       let len = Vector::length<address>(&outgoing_set);
-      print(&outgoing_set);
-      print(&fee_ratio);
-      print(&len);
-
 
       let bal = TransactionFee::get_amount_to_distribute(vm);
-      print(&bal);
-
-    //   // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
+    // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
       if (bal < len) {
         LibraAccount::restore_withdraw_capability(capability_token);
         return
@@ -183,12 +170,7 @@ address 0x1 {
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&outgoing_set, i));
         let node_ratio = *(Vector::borrow<FixedPoint32::FixedPoint32>(&fee_ratio, i));
-        print(&node_address);
-        print(&node_ratio);
-
         let fees = FixedPoint32::multiply_u64(bal, node_ratio);
-        print(&fees);
-
         
         LibraAccount::vm_deposit_with_metadata<GAS>(
             vm,

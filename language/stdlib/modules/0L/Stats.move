@@ -11,7 +11,7 @@ module Stats{
     use 0x1::Testnet;
     use 0x1::Globals;
     use 0x1::FixedPoint32;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     struct ValidatorSet {
       addr: vector<address>,
@@ -103,10 +103,7 @@ module Stats{
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190206014010);
       let range = Globals::get_epoch_length();
       let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(66, 100));
-      let node_votes = node_current_votes(vm, node_addr);
-      print(&node_addr);
-      print(&node_votes);
-      if (node_current_votes(vm, node_addr) >  threshold_signing) return true;
+      if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
       return false
     }
 
@@ -125,8 +122,6 @@ module Stats{
       let density = 0u64;
       let nodes = *&(borrow_global_mut<T>(sender).current.addr);
       let len = Vector::length(&nodes);
-      print(&0x0444444);
-      print(&len);
       let k = 0;
       while (k < len) {
         let addr = *(Vector::borrow<address>(&nodes, k));

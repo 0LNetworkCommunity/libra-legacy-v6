@@ -18,7 +18,7 @@ module Reconfigure {
     use 0x1::Globals;
     use 0x1::Vector;
     use 0x1::Stats;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer) {
@@ -28,10 +28,9 @@ module Reconfigure {
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         
         let subsidy_units = Subsidy::calculate_Subsidy(vm);
-        print(&subsidy_units);
         Subsidy::process_subsidy(vm, subsidy_units);
         
-        // TransactionFee::process_fees(vm);
+        Subsidy::process_fees(vm);
         
         // Propose upcoming validator set:
         // Step 1: Sort Top N Elegible validators
