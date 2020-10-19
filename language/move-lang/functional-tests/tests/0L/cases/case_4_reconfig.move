@@ -102,7 +102,7 @@ script {
     use 0x1::LibraSystem;
     use 0x1::MinerState;
     use 0x1::NodeWeight;
-    use 0x1::GAS;
+    use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
 
 
@@ -176,7 +176,7 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
     // This is the the epoch boundary.
-    fun main() {
+    fun main(vm: &signer) {
         let voters = Vector::empty<address>();
         // Case 3 skip Carol, did not validate.
         Vector::push_back<address>(&mut voters, {{alice}});
@@ -192,7 +192,7 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
     }
@@ -204,10 +204,10 @@ script {
     use 0x1::Cases;
     // use 0x1::Debug::print;
     
-    fun main(_account: &signer) {
+    fun main(vm: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        assert(Cases::get_case({{dave}}) == 4, 7357000180109);
+        assert(Cases::get_case(vm, {{dave}}) == 4, 7357000180109);
     }
 }
 
@@ -228,7 +228,7 @@ script {
     
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
-    use 0x1::GAS;
+    use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::LibraConfig;
     // use 0x1::Debug::print;

@@ -20,10 +20,8 @@ script {
     
     use 0x1::LibraSystem;
     use 0x1::MinerState;
-    // use 0x1::TestFixtures;
     use 0x1::NodeWeight;
-    // use 0x1::Debug::print;
-    use 0x1::GAS;
+    use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
 
 
@@ -32,27 +30,12 @@ script {
         assert(LibraSystem::validator_set_size() == 5, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
-
         assert(MinerState::test_helper_get_height({{alice}}) == 0, 7357000180104);
-        // assert(MinerState::test_helper_hash({{alice}}) == TestFixtures::alice_1_easy_chal(), 7357000180105);
-        
-        // Alice continues to mine after genesis.
-        // This test is adapted from chained_from_genesis.move
-        // let proof = MinerState::create_proof_blob(
-        //     TestFixtures::alice_1_easy_chal(),
-        //     100u64, // difficulty
-        //     TestFixtures::alice_1_easy_sol()
-        // );
-        
-        // print(&NodeWeight::proof_of_weight({{alice}}));
-        // print(&LibraAccount::balance<GAS::T>({{alice}}));
+
+        //// NO MINING ////
 
         assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357000180106);
-
-
         assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180107);  
-
-        // MinerState::commit_state(sender, proof);
         assert(MinerState::test_helper_get_height({{alice}}) == 0, 7357000180108);
     }
 }
@@ -116,7 +99,7 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
     // This is the the epoch boundary.
-    fun main() {
+    fun main(vm: &signer) {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
@@ -128,7 +111,7 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
     }
@@ -138,14 +121,10 @@ script {
 //! sender: libraroot
 script {
     use 0x1::Cases;
-    // use 0x1::Debug::print;
-    
-    
-
-    fun main(_account: &signer) {
+    fun main(vm: &signer) {
         // We are in a new epoch.
         // Check Alice is in the the correct case during reconfigure
-        assert(Cases::get_case({{alice}}) == 2, 7357000180109);
+        assert(Cases::get_case(vm, {{alice}}) == 2, 7357000180109);
     }
 }
 
@@ -156,9 +135,7 @@ script {
 
 // //////////////////////////////////////////////
 // ///// CHECKS RECONFIGURATION IS HAPPENING ////
-
 // // check: NewEpochEvent
-
 // //////////////////////////////////////////////
 
 
@@ -173,7 +150,7 @@ script {
     
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
-    use 0x1::GAS;
+    use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
 
     // use 0x1::ValidatorUniverse;

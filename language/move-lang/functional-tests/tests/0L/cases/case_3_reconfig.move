@@ -22,7 +22,6 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -37,7 +36,6 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -52,7 +50,6 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -82,7 +79,6 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -112,10 +108,8 @@ script {
     
     use 0x1::LibraSystem;
     use 0x1::MinerState;
-    // use 0x1::TestFixtures;
-    // use 0x1::NodeWeight;
     use 0x1::Debug::print;
-    use 0x1::GAS;
+    use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
 
 
@@ -189,7 +183,7 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
     // This is the the epoch boundary.
-    fun main() {
+    fun main(vm: &signer) {
         let voters = Vector::empty<address>();
         // Case 3 skip Carol, did not validate.
         Vector::push_back<address>(&mut voters, {{alice}});
@@ -205,7 +199,7 @@ script {
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
                 
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
     }
@@ -215,13 +209,12 @@ script {
 //! sender: libraroot
 script {
     use 0x1::Cases;
-    // use 0x1::Debug::print;
     
-    fun main(_account: &signer) {
+    fun main(vm: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
         // print(&Cases::get_case({{carol}}));
-        assert(Cases::get_case({{carol}}) == 3, 7357000180109);
+        assert(Cases::get_case(vm, {{carol}}) == 3, 7357000180109);
     }
 }
 
@@ -241,7 +234,7 @@ script {
     
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
-    use 0x1::GAS;
+    use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::LibraConfig;
 

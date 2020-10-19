@@ -87,7 +87,7 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
 
-    fun main() {
+    fun main(vm: &signer) {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
@@ -97,7 +97,7 @@ script {
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&voters);
+            Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
     }
