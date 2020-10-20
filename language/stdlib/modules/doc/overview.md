@@ -116,6 +116,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 -  [`0x1::LibraVersion`](LibraVersion.md#0x1_LibraVersion)
 -  [`0x1::Offer`](Offer.md#0x1_Offer)
 -  [`0x1::Option`](Option.md#0x1_Option)
+-  [`0x1::PersistenceDemo`](Demos.md#0x1_PersistenceDemo)
 -  [`0x1::RecoveryAddress`](RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](RegisteredCurrencies.md#0x1_RegisteredCurrencies)
 -  [`0x1::Roles`](Roles.md#0x1_Roles)

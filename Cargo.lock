@@ -7098,6 +7098,7 @@ dependencies = [
  "anyhow",
  "bytecode-verifier",
  "compiled-stdlib",
+ "hex",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -7114,6 +7115,7 @@ dependencies = [
  "proptest",
  "proptest-derive",
  "rand 0.7.3",
+ "serde",
  "transaction-builder",
  "vm",
 ]

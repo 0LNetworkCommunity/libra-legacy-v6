@@ -14,7 +14,7 @@ use libra_types::{
 };
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
-use vm_genesis::{OperatorAssignment, OperatorRegistration};
+use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -113,7 +113,7 @@ impl Genesis {
             );
 
             let owner_name_vec = owner.as_bytes().to_vec();
-            operator_assignments.push((owner_key, owner_name_vec, set_operator_script));
+            operator_assignments.push((owner_key, owner_name_vec, set_operator_script, GenesisMiningProof::default()));
         }
 
         Ok(operator_assignments)
@@ -143,6 +143,7 @@ impl Genesis {
                 operator_key,
                 operator.as_bytes().to_vec(),
                 validator_config_tx,
+                GenesisMiningProof::default()
             ));
         }
 
