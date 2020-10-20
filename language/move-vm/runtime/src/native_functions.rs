@@ -7,7 +7,7 @@ use move_core_types::{
     account_address::AccountAddress, gas_schedule::CostTable, value::MoveTypeLayout,
     vm_status::StatusType,
 };
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector, vdf};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,
@@ -45,6 +45,9 @@ pub(crate) enum NativeFunction {
     SignerBorrowAddress,
     CreateSigner,
     DestroySigner,
+    //////// 0L ////////
+    VDFVerify,
+    RedeemAuthKeyParse,
 }
 
 impl NativeFunction {
@@ -76,7 +79,11 @@ impl NativeFunction {
             (&CORE_CODE_ADDRESS, "Debug", "print") => DebugPrint,
             (&CORE_CODE_ADDRESS, "Debug", "print_stack_trace") => DebugPrintStackTrace,
             (&CORE_CODE_ADDRESS, "Signer", "borrow_address") => SignerBorrowAddress,
+            //////// 0L ////////
+            (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify, // OL Change
+            (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,   // 0L change
             _ => return None,
+
         })
     }
 
@@ -108,6 +115,9 @@ impl NativeFunction {
             Self::SignerBorrowAddress => signer::native_borrow_address(ctx, t, v),
             Self::CreateSigner => account::native_create_signer(ctx, t, v),
             Self::DestroySigner => account::native_destroy_signer(ctx, t, v),
+            //////// 0L ////////
+            Self::VDFVerify => vdf::verify(ctx, t, v), // 0L change
+            Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,

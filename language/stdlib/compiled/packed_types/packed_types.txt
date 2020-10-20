@@ -1,23 +1,5 @@
 [
   [
-    "01020cedee4ec99c20a4db3488d5ffc714bdffc0afc8d40f98f752882f4f36acea",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "Preburn",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "0102d613cb0da978524f76091d31b4e8fcc39dfeeced892018cc6c676eaa602bd1",
     {
       "address": "00000000000000000000000000000001",
@@ -155,12 +137,48 @@
     }
   ],
   [
+    "011e6178cd71d33aa7f4b42dfdab915d3e9d97e1dae0cc9e02e9f085653ba41250",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "LibraAccount",
+      "name": "Balance",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
+    }
+  ],
+  [
     "011e6638ce73bd5b7ef5abe3ffefec658212ec0acb5fb0cf58e11054c7429cb92c",
     {
       "address": "00000000000000000000000000000001",
       "module": "LibraSystem",
       "name": "LibraSystem",
       "type_params": []
+    }
+  ],
+  [
+    "011e9645d803e6e959f6facb467613fd33e3f2f7a64682b5f1e2a317d4840a08f9",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "DesignatedDealer",
+      "name": "TierInfo",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
     }
   ],
   [
@@ -196,15 +214,6 @@
       "address": "00000000000000000000000000000001",
       "module": "Libra",
       "name": "MintEvent",
-      "type_params": []
-    }
-  ],
-  [
-    "01300b60ad038217de8098fc6b15d664981142462d23ac740932e656e21d36417b",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "LBR",
-      "name": "Reserve",
       "type_params": []
     }
   ],
@@ -308,17 +317,17 @@
     }
   ],
   [
-    "0151e7c9d282e4b36f91f3d752caba7708ff0129d8d84fd839553d905b9e975b61",
+    "01550376aaa7952c43d9bb922aa9d7c4cffb11e9c21bf6f1baab89b7343ce34db1",
     {
       "address": "00000000000000000000000000000001",
       "module": "Libra",
-      "name": "BurnCapability",
+      "name": "Preburn",
       "type_params": [
         {
           "Struct": {
             "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
+            "module": "GAS",
+            "name": "GAS",
             "type_params": []
           }
         }
@@ -341,6 +350,24 @@
       "module": "LibraSystem",
       "name": "ValidatorInfo",
       "type_params": []
+    }
+  ],
+  [
+    "015db657b3c4ae4db41166218f53b2d60334673c0f01d346ba838ca4053a346dd1",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Libra",
+      "name": "Libra",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
     }
   ],
   [
@@ -434,24 +461,6 @@
     }
   ],
   [
-    "0171fbda992516e5fe261089fbfbe3699518ad6a81f087b042e8eecd36a5c50e76",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "AccountLimits",
-      "name": "LimitsDefinition",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "0172cc3d56b1931722e278d74fdb32a2fe245f288ac9910ebe42833e7868675fb3",
     {
       "address": "00000000000000000000000000000001",
@@ -511,6 +520,15 @@
       "address": "00000000000000000000000000000001",
       "module": "LibraVMConfig",
       "name": "LibraVMConfig",
+      "type_params": []
+    }
+  ],
+  [
+    "017a4a58251f04101a37353bf3b1d02d2ad07f62df8f35c057f8454554400bf430",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "ValidatorUniverse",
+      "name": "ValidatorUniverse",
       "type_params": []
     }
   ],
@@ -614,6 +632,24 @@
     }
   ],
   [
+    "019de3cab809730245c180e847d5cad98e2117ae02f7741439b3f77184f911dec0",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Libra",
+      "name": "MintCapability",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
+    }
+  ],
+  [
     "019ee9121a481430c723f6f34ebe7a47a3407e55037e177411480853d3c50b2f50",
     {
       "address": "00000000000000000000000000000001",
@@ -686,17 +722,17 @@
     }
   ],
   [
-    "01b40c7f1f369e8653c1df137967c45c0c368668fa8dad040a8d8ceec212e155d7",
+    "01abec7f17a824ee0d25a17d32372f92c0da3250d58235b23a7cb4626015f95929",
     {
       "address": "00000000000000000000000000000001",
-      "module": "DesignatedDealer",
-      "name": "TierInfo",
+      "module": "AccountLimits",
+      "name": "LimitsDefinition",
       "type_params": [
         {
           "Struct": {
             "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
+            "module": "GAS",
+            "name": "GAS",
             "type_params": []
           }
         }
@@ -709,6 +745,15 @@
       "address": "00000000000000000000000000000001",
       "module": "SharedEd25519PublicKey",
       "name": "SharedEd25519PublicKey",
+      "type_params": []
+    }
+  ],
+  [
+    "01baa9bbba87d73a53c6757fa088c5c5ac357e76da7d3ac9222f93515a6436094e",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Stats",
+      "name": "ValidatorSet",
       "type_params": []
     }
   ],
@@ -744,24 +789,6 @@
             "address": "00000000000000000000000000000001",
             "module": "LibraTransactionPublishingOption",
             "name": "LibraTransactionPublishingOption",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
-    "01c5a88aa4ec51fc5df0119af0f6faf3c82fe99ac6bc38e82fd6385cdaa45190c7",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "LibraAccount",
-      "name": "Balance",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
             "type_params": []
           }
         }
@@ -823,6 +850,33 @@
     }
   ],
   [
+    "01d3eafb5278af3630a1f5580236ea7fef6090bcf190e21e62d5ac220bf4e67628",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Libra",
+      "name": "BurnCapability",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
+            "type_params": []
+          }
+        }
+      ]
+    }
+  ],
+  [
+    "01d6c0f3c856cd977f5a840eca7998935aed9a6de6230390b8e15e52b79df18bc0",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Stats",
+      "name": "T",
+      "type_params": []
+    }
+  ],
+  [
     "01d6e6cfb8152b64de92443d0187c2f2ba78c18d20243d1bde105270b6992ca952",
     {
       "address": "00000000000000000000000000000001",
@@ -834,24 +888,6 @@
             "address": "00000000000000000000000000000001",
             "module": "LibraVersion",
             "name": "LibraVersion",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
-    "01d974fad033f08bd036183fe96e6e80ef392ba3c94662f64e19a445540b381ff9",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "MintCapability",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
             "type_params": []
           }
         }
@@ -886,17 +922,17 @@
     }
   ],
   [
-    "01e1148a58a0a3d06f43d4114f9ac4711cf8431987a3845d09a63f3b9593bcc279",
+    "01da35b1abe34aa941e510c47d03a9f7e9bd69fbc2f9b8d784fddddb4f3e62582a",
     {
       "address": "00000000000000000000000000000001",
       "module": "Libra",
-      "name": "Libra",
+      "name": "CurrencyInfo",
       "type_params": [
         {
           "Struct": {
             "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
+            "module": "GAS",
+            "name": "GAS",
             "type_params": []
           }
         }
@@ -964,24 +1000,6 @@
       "module": "ValidatorOperatorConfig",
       "name": "ValidatorOperatorConfig",
       "type_params": []
-    }
-  ],
-  [
-    "01f6da005e1e1e308bec9ccb8d97140f5567924290f0bb24024ca345cf14f82ceb",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "CurrencyInfo",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "LBR",
-            "name": "LBR",
-            "type_params": []
-          }
-        }
-      ]
     }
   ],
   [
