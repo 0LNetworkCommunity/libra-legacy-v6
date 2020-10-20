@@ -21,6 +21,7 @@ module Genesis {
     use 0x1::LibraVersion;
     use 0x1::TransactionFee;
     use 0x1::LibraVMConfig;
+    use 0x1::Stats;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -87,6 +88,9 @@ module Genesis {
         let tc_rotate_key_cap = LibraAccount::extract_key_rotation_capability(tc_account);
         LibraAccount::rotate_authentication_key(&tc_rotate_key_cap, tc_auth_key);
         LibraAccount::restore_key_rotation_capability(tc_rotate_key_cap);
+
+        //0L
+        Stats::initialize(lr_account);
 
         // After we have called this function, all invariants which are guarded by
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
