@@ -10,7 +10,7 @@ module Genesis {
     use 0x1::ChainId;
     use 0x1::Coin1;
     use 0x1::DualAttestation;
-    use 0x1::LBR;
+    // use 0x1::GAS;
     use 0x1::Libra;
     use 0x1::LibraAccount;
     use 0x1::LibraBlock;
@@ -23,6 +23,7 @@ module Genesis {
     use 0x1::LibraVMConfig;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
+    use 0x1::GAS;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -50,10 +51,16 @@ module Genesis {
         // Currency setup
         Coin1::initialize(lr_account, tc_account);
 
-        LBR::initialize(
+        GAS::initialize(
             lr_account,
             tc_account,
         );
+
+        // GAS::initialize(
+        //     lr_account,
+        //     tc_account,
+        // );
+
 
         AccountFreezing::initialize(lr_account);
 
@@ -94,6 +101,10 @@ module Genesis {
         Stats::initialize(lr_account);
         ValidatorUniverse::initialize(lr_account);
         // Subsidy::initialize(lr_account);
+        // GAS::initialize(
+        //     lr_account,
+        //     lr_account,
+        // );
 
         // After we have called this function, all invariants which are guarded by
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.

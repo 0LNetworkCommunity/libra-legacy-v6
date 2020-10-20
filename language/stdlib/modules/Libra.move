@@ -28,12 +28,12 @@ module Libra {
     /// The `MintCapability` resource defines a capability to allow minting
     /// of coins of `CoinType` currency by the holder of this capability.
     /// This capability is held only either by the `CoreAddresses::TREASURY_COMPLIANCE_ADDRESS()`
-    /// account or the `0x1::LBR` module (and `CoreAddresses::LIBRA_ROOT_ADDRESS()` in testnet).
+    /// account or the `0x1::GAS` module (and `CoreAddresses::LIBRA_ROOT_ADDRESS()` in testnet).
     resource struct MintCapability<CoinType> { }
 
     /// The `BurnCapability` resource defines a capability to allow coins
     /// of `CoinType` currency to be burned by the holder of the
-    /// and the `0x1::LBR` module (and `CoreAddresses::LIBRA_ROOT_ADDRESS()` in testnet).
+    /// and the `0x1::GAS` module (and `CoreAddresses::LIBRA_ROOT_ADDRESS()` in testnet).
     resource struct BurnCapability<CoinType> { }
 
     /// A `MintEvent` is emitted every time a Libra coin is minted. This
@@ -44,7 +44,7 @@ module Libra {
     struct MintEvent {
         /// Funds added to the system
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "LBR")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
     }
 
@@ -58,7 +58,7 @@ module Libra {
     struct BurnEvent {
         /// Funds removed from the system
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "LBR")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
         /// Address with the `Preburn` resource that stored the now-burned funds
         preburn_address: address,
@@ -70,7 +70,7 @@ module Libra {
     struct PreburnEvent {
         /// The amount of funds waiting to be removed (burned) from the system
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "LBR")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
         /// Address with the `Preburn` resource that now holds the funds
         preburn_address: address,
@@ -83,19 +83,19 @@ module Libra {
     struct CancelBurnEvent {
         /// The amount of funds returned
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "LBR")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
         /// Address of the `Preburn` resource that held the now-returned funds.
         preburn_address: address,
     }
 
-    /// An `ToLBRExchangeRateUpdateEvent` is emitted every time the to-LBR exchange
+    /// An `ToLBRExchangeRateUpdateEvent` is emitted every time the to-GAS exchange
     /// rate for the currency given by `currency_code` is updated.
     struct ToLBRExchangeRateUpdateEvent {
         /// The currency code of the currency whose exchange rate was updated.
         currency_code: vector<u8>,
-        /// The new on-chain to-LBR exchange rate between the
-        /// `currency_code` currency and LBR. Represented in conversion
+        /// The new on-chain to-GAS exchange rate between the
+        /// `currency_code` currency and GAS. Represented in conversion
         /// between the (on-chain) base-units for the currency and microlibra.
         new_to_lbr_exchange_rate: u64,
     }
@@ -113,11 +113,11 @@ module Libra {
         total_value: u128,
         /// Value of funds that are in the process of being burned.  Mutable.
         preburn_value: u64,
-        /// The (rough) exchange rate from `CoinType` to `LBR`. Mutable.
+        /// The (rough) exchange rate from `CoinType` to `GAS`. Mutable.
         to_lbr_exchange_rate: FixedPoint32,
         /// Holds whether or not this currency is synthetic (contributes to the
         /// off-chain reserve) or not. An example of such a synthetic
-        ///currency would be the LBR.
+        ///currency would be the GAS.
         is_synthetic: bool,
         /// The scaling factor for the coin (i.e. the amount to divide by
         /// to get to the human-readable representation for this currency).
@@ -128,7 +128,7 @@ module Libra {
         /// 10^2 for `Coin1` cents)
         fractional_part: u64,
         /// The code symbol for this `CoinType`. ASCII encoded.
-        /// e.g. for "LBR" this is x"4C4252". No character limit.
+        /// e.g. for "GAS" this is x"4C4252". No character limit.
         currency_code: vector<u8>,
         /// Minting of new currency of CoinType is allowed only if this field is true.
         /// We may want to disable the ability to mint further coins of a
@@ -335,7 +335,7 @@ module Libra {
 
     /// Mint a new `Libra` coin of `CoinType` currency worth `value`. The
     /// caller must have a reference to a `MintCapability<CoinType>`. Only
-    /// the treasury compliance account or the `0x1::LBR` module can acquire such a
+    /// the treasury compliance account or the `0x1::GAS` module can acquire such a
     /// reference.
     public fun mint_with_capability<CoinType>(
         value: u64,
@@ -659,7 +659,7 @@ module Libra {
     }
 
     /// A shortcut for immediately burning a coin. This calls preburn followed by a subsequent burn, and is
-    /// used for administrative burns, like unpacking an LBR coin or charging fees.
+    /// used for administrative burns, like unpacking an GAS coin or charging fees.
     public fun burn_now<CoinType>(
         coin: Libra<CoinType>,
         preburn: &mut Preburn<CoinType>,
@@ -965,7 +965,7 @@ module Libra {
         global<CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS()).total_value
     }
 
-    /// Returns the value of the coin in the `FromCoinType` currency in LBR.
+    /// Returns the value of the coin in the `FromCoinType` currency in GAS.
     /// This should only be used where a _rough_ approximation of the exchange
     /// rate is needed.
     public fun approx_lbr_for_value<FromCoinType>(from_value: u64): u64
@@ -985,7 +985,7 @@ module Libra {
         include FixedPoint32::MultiplyAbortsIf{val: from_value, multiplier: lbr_exchange_rate};
     }
 
-    /// Returns the value of the coin in the `FromCoinType` currency in LBR.
+    /// Returns the value of the coin in the `FromCoinType` currency in GAS.
     /// This should only be used where a rough approximation of the exchange
     /// rate is needed.
     public fun approx_lbr_for_coin<FromCoinType>(coin: &Libra<FromCoinType>): u64
@@ -1082,7 +1082,7 @@ module Libra {
         ensures spec_currency_info<FromCoinType>().to_lbr_exchange_rate == lbr_exchange_rate;
     }
 
-    /// Returns the (rough) exchange rate between `CoinType` and `LBR`
+    /// Returns the (rough) exchange rate between `CoinType` and `GAS`
     public fun lbr_exchange_rate<CoinType>(): FixedPoint32
     acquires CurrencyInfo {
         assert_is_currency<CoinType>();
@@ -1317,7 +1317,7 @@ module Libra {
 
     /// ## Update Exchange Rates
     spec schema ExchangeRateRemainsSame<CoinType> {
-        /// The exchange rate to LBR stays constant.
+        /// The exchange rate to GAS stays constant.
         ensures old(spec_is_currency<CoinType>())
             ==> spec_currency_info<CoinType>().to_lbr_exchange_rate
                 == old(spec_currency_info<CoinType>().to_lbr_exchange_rate);

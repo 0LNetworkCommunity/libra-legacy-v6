@@ -14,7 +14,7 @@ module LibraAccount {
     use 0x1::Errors;
     use 0x1::Event::{Self, EventHandle};
     use 0x1::Hash;
-    use 0x1::LBR::LBR;
+    use 0x1::GAS::GAS;
     use 0x1::LCS;
     use 0x1::LibraConfig;
     use 0x1::LibraTimestamp;
@@ -169,7 +169,7 @@ module LibraAccount {
     /// Attempted to send funds to an account that does not exist
     const EPAYEE_DOES_NOT_EXIST: u64 = 17;
     /// Attempted to send funds in a currency that the receiving account does not hold.
-    /// e.g., `Libra<LBR>` to an account that exists, but does not have a `Balance<LBR>` resource
+    /// e.g., `Libra<GAS>` to an account that exists, but does not have a `Balance<GAS>` resource
     const EPAYEE_CANT_ACCEPT_CURRENCY_TYPE: u64 = 18;
     /// Tried to withdraw funds in a currency that the account does hold
     const EPAYER_DOESNT_HOLD_CURRENCY: u64 = 19;
@@ -855,8 +855,8 @@ module LibraAccount {
             if (!exists<Balance<Coin1>>(new_account_addr)) {
                 add_currency<Coin1>(new_account);
             };
-            if (!exists<Balance<LBR>>(new_account_addr)) {
-                add_currency<LBR>(new_account);
+            if (!exists<Balance<GAS>>(new_account_addr)) {
+                add_currency<GAS>(new_account);
             };
         };
     }
@@ -875,8 +875,8 @@ module LibraAccount {
         aborts_if exists<Balance<Token>>(addr) with Errors::ALREADY_PUBLISHED;
         include add_all_currencies && !exists<Balance<Coin1>>(addr)
             ==> Libra::AbortsIfNoCurrency<Coin1>;
-        include add_all_currencies && !exists<Balance<LBR>>(addr)
-            ==> Libra::AbortsIfNoCurrency<LBR>;
+        include add_all_currencies && !exists<Balance<GAS>>(addr)
+            ==> Libra::AbortsIfNoCurrency<GAS>;
     }
 
     spec schema AddCurrencyForAccountEnsures<Token> {
@@ -885,8 +885,8 @@ module LibraAccount {
         include AddCurrencyEnsures<Token>;
         include add_all_currencies && !exists<Balance<Coin1>>(addr)
             ==> AddCurrencyEnsures<Coin1>;
-        include add_all_currencies && !exists<Balance<LBR>>(addr)
-            ==> AddCurrencyEnsures<LBR>;
+        include add_all_currencies && !exists<Balance<GAS>>(addr)
+            ==> AddCurrencyEnsures<GAS>;
     }
 
 

@@ -18,7 +18,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 * `DualAttestation`
 
 * `Coin1` (Note: name will be updated once final name has been determined)
-* `LBR` (Note: will be updated once the LBR makeup has been determined)
+* `GAS` (Note: will be updated once the GAS makeup has been determined)
 * `Libra`
 * `RegisteredCurrencies`
 

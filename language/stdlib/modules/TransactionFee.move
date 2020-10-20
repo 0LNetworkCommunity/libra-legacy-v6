@@ -11,6 +11,9 @@ module TransactionFee {
     use 0x1::Roles;
     use 0x1::LibraTimestamp;
     use 0x1::Signer;
+    // 0L
+    use 0x1::GAS;
+
 
     /// The `TransactionFee` resource holds a preburn resource for each
     /// fiat `CoinType` that can be collected as a transaction fee.
@@ -90,7 +93,7 @@ module TransactionFee {
     }
 
     /// Preburns the transaction fees collected in the `CoinType` currency.
-    /// If the `CoinType` is LBR, it unpacks the coin and preburns the
+    /// If the `CoinType` is GAS, it unpacks the coin and preburns the
     /// underlying fiat.
     public fun burn_fees<CoinType>(
         tc_account: &signer,
@@ -100,8 +103,8 @@ module TransactionFee {
         assert(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
         let tc_address = CoreAddresses::TREASURY_COMPLIANCE_ADDRESS();
         if (LBR::is_lbr<CoinType>()) {
-            // TODO: Once the composition of LBR is determined fill this in to
-            // unpack and burn the backing coins of the LBR coin.
+            // TODO: Once the composition of GAS is determined fill this in to
+            // unpack and burn the backing coins of the GAS coin.
             abort Errors::invalid_state(ETRANSACTION_FEE)
         } else {
             // extract fees
@@ -125,7 +128,7 @@ module TransactionFee {
 
         include LibraTimestamp::AbortsIfNotOperating;
         aborts_if !is_coin_initialized<CoinType>() with Errors::NOT_PUBLISHED;
-        include if (LBR::spec_is_lbr<CoinType>()) BurnFeesLBR else BurnFeesNotLBR<CoinType>;
+        include if (GAS::spec_is_lbr<CoinType>()) BurnFeesLBR else BurnFeesNotLBR<CoinType>;
 
         /// The correct amount of fees is burnt and subtracted from market cap.
         ensures Libra::spec_market_cap<CoinType>()
@@ -133,14 +136,14 @@ module TransactionFee {
         /// All the fees is burnt so the balance becomes 0.
         ensures spec_transaction_fee<CoinType>().balance.value == 0;
     }
-    /// STUB: To be filled in at a later date once the makeup of the LBR has been determined.
+    /// STUB: To be filled in at a later date once the makeup of the GAS has been determined.
     ///
-    /// # Specification of the case where burn type is LBR.
+    /// # Specification of the case where burn type is GAS.
     spec schema BurnFeesLBR {
         tc_account: signer;
         aborts_if true with Errors::INVALID_STATE;
     }
-    /// # Specification of the case where burn type is not LBR.
+    /// # Specification of the case where burn type is not GAS.
     spec schema BurnFeesNotLBR<CoinType> {
         tc_account: signer;
         /// Must abort if the account does not have BurnCapability [[H3]][PERMISSION].

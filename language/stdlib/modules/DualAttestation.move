@@ -4,7 +4,7 @@ address 0x1 {
 module DualAttestation {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    use 0x1::LBR::LBR;
+    use 0x1::GAS::GAS;
     use 0x1::LCS;
     use 0x1::Libra;
     use 0x1::LibraTimestamp;
@@ -448,7 +448,7 @@ module DualAttestation {
         LibraTimestamp::assert_genesis();
         CoreAddresses::assert_libra_root(lr_account); // operational constraint.
         assert(!exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::already_published(ELIMIT));
-        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Libra::scaling_factor<LBR>() as u128);
+        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Libra::scaling_factor<GAS>() as u128);
         assert(initial_limit <= MAX_U64, Errors::limit_exceeded(ELIMIT));
         move_to(
             lr_account,
@@ -461,9 +461,9 @@ module DualAttestation {
         include LibraTimestamp::AbortsIfNotGenesis;
         include CoreAddresses::AbortsIfNotLibraRoot{account: lr_account};
         aborts_if exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()) with Errors::ALREADY_PUBLISHED;
-        let initial_limit = INITIAL_DUAL_ATTESTATION_LIMIT * Libra::spec_scaling_factor<LBR>();
+        let initial_limit = INITIAL_DUAL_ATTESTATION_LIMIT * Libra::spec_scaling_factor<GAS>();
         aborts_if initial_limit > MAX_U64 with Errors::LIMIT_EXCEEDED;
-        include Libra::AbortsIfNoCurrency<LBR>; // for scaling_factor.
+        include Libra::AbortsIfNoCurrency<GAS>; // for scaling_factor.
     }
 
     /// Return the current dual attestation limit in microlibra
