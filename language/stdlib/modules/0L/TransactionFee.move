@@ -11,9 +11,8 @@ module TransactionFee {
     use 0x1::Roles;
     use 0x1::LibraTimestamp;
     use 0x1::Signer;
-    // 0L
-    use 0x1::GAS;
-
+    //0L
+    use 0x1::GAS::GAS;
 
     /// The `TransactionFee` resource holds a preburn resource for each
     /// fiat `CoinType` that can be collected as a transaction fee.
@@ -93,7 +92,7 @@ module TransactionFee {
     }
 
     /// Preburns the transaction fees collected in the `CoinType` currency.
-    /// If the `CoinType` is GAS, it unpacks the coin and preburns the
+    /// If the `CoinType` is LBR, it unpacks the coin and preburns the
     /// underlying fiat.
     public fun burn_fees<CoinType>(
         tc_account: &signer,
@@ -103,8 +102,8 @@ module TransactionFee {
         assert(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
         let tc_address = CoreAddresses::TREASURY_COMPLIANCE_ADDRESS();
         if (LBR::is_lbr<CoinType>()) {
-            // TODO: Once the composition of GAS is determined fill this in to
-            // unpack and burn the backing coins of the GAS coin.
+            // TODO: Once the composition of LBR is determined fill this in to
+            // unpack and burn the backing coins of the LBR coin.
             abort Errors::invalid_state(ETRANSACTION_FEE)
         } else {
             // extract fees
@@ -128,7 +127,7 @@ module TransactionFee {
 
         include LibraTimestamp::AbortsIfNotOperating;
         aborts_if !is_coin_initialized<CoinType>() with Errors::NOT_PUBLISHED;
-        include if (GAS::spec_is_lbr<CoinType>()) BurnFeesLBR else BurnFeesNotLBR<CoinType>;
+        include if (LBR::spec_is_lbr<CoinType>()) BurnFeesLBR else BurnFeesNotLBR<CoinType>;
 
         /// The correct amount of fees is burnt and subtracted from market cap.
         ensures Libra::spec_market_cap<CoinType>()
@@ -136,14 +135,14 @@ module TransactionFee {
         /// All the fees is burnt so the balance becomes 0.
         ensures spec_transaction_fee<CoinType>().balance.value == 0;
     }
-    /// STUB: To be filled in at a later date once the makeup of the GAS has been determined.
+    /// STUB: To be filled in at a later date once the makeup of the LBR has been determined.
     ///
-    /// # Specification of the case where burn type is GAS.
+    /// # Specification of the case where burn type is LBR.
     spec schema BurnFeesLBR {
         tc_account: signer;
         aborts_if true with Errors::INVALID_STATE;
     }
-    /// # Specification of the case where burn type is not GAS.
+    /// # Specification of the case where burn type is not LBR.
     spec schema BurnFeesNotLBR<CoinType> {
         tc_account: signer;
         /// Must abort if the account does not have BurnCapability [[H3]][PERMISSION].
@@ -170,6 +169,47 @@ module TransactionFee {
 
     spec define spec_transaction_fee<CoinType>(): TransactionFee<CoinType> {
         borrow_global<TransactionFee<CoinType>>(CoreAddresses::TREASURY_COMPLIANCE_ADDRESS())
+    }
+        public fun get_amount_to_distribute(lr_account: &signer): u64 acquires TransactionFee {
+        // Can only be invoked by LibraVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_libra_root(lr_account);
+        // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+        // LibraAccount::balance<Token>(0xFEE);
+        let fees = borrow_global<TransactionFee<GAS>>(
+            CoreAddresses::LIBRA_ROOT_ADDRESS()
+        );
+
+        let amount_collected = Libra::value<GAS>(&fees.balance);
+        amount_collected
+    }
+
+    ///////// 0L //////////
+    
+    public fun get_transaction_fees_coins<Token>(lr_account: &signer): Libra<Token>  acquires TransactionFee {
+        // Can only be invoked by LibraVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_libra_root(lr_account);
+        // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+        // LibraAccount::balance<Token>(0xFEE);
+        let fees = borrow_global_mut<TransactionFee<Token>>(
+            CoreAddresses::LIBRA_ROOT_ADDRESS()
+        );
+
+        Libra::withdraw_all(&mut fees.balance)
+    }
+
+    public fun get_transaction_fees_coins_amount<Token>(lr_account: &signer, amount: u64): Libra<Token>  acquires TransactionFee {
+        // Can only be invoked by LibraVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_libra_root(lr_account);
+        // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+        // LibraAccount::balance<Token>(0xFEE);
+        let fees = borrow_global_mut<TransactionFee<Token>>(
+            CoreAddresses::LIBRA_ROOT_ADDRESS()
+        );
+
+        Libra::withdraw(&mut fees.balance, amount)
     }
 }
 }

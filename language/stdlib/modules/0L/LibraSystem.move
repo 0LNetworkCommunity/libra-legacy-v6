@@ -16,6 +16,10 @@ module LibraSystem {
     use 0x1::Vector;
     use 0x1::Roles;
     use 0x1::LibraTimestamp;
+    //////// 0L ////////
+    use 0x1::FixedPoint32;
+    use 0x1::Stats;
+    // use 0x1::Cases;
 
     /// Information about a Validator Owner.
     struct ValidatorInfo {
@@ -602,6 +606,54 @@ module LibraSystem {
        invariant [global] forall i1 in 0..len(spec_get_validators()):
            spec_get_validators()[i1].consensus_voting_power == 1;
 
+    }
+
+    
+    ///////// 0L //////////
+    // public fun get_jailed_set(vm: &signer): vector<address> {
+    //   let validator_set = get_val_set_addr();
+    //   let jailed_set = Vector::empty<address>();
+    //   let k = 0;
+    //   while(k < Vector::length(&validator_set)){
+    //     let addr = *Vector::borrow<address>(&validator_set, k);
+
+    //     // consensus case 1 and 2, allow inclusion into the next validator set.
+    //     if (Cases::get_case(vm, addr) == 3 || Cases::get_case(vm, addr) == 4){
+    //       Vector::push_back<address>(&mut jailed_set, addr)
+    //     };
+    //     k = k + 1;
+    //   };
+    //   jailed_set
+    // }
+
+    //get_compliant_val_votes
+    public fun get_fee_ratio(vm: &signer): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
+        let validators = &get_libra_system_config().validators;
+        let compliant_nodes = Vector::empty<address>();
+        let total_votes = 0;
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            // let addr = Vector::borrow(validators, i).addr;
+            // if (Cases::get_case(vm, addr) == 1) {
+            //     let node_votes = Stats::node_current_votes(vm, addr);
+            //     Vector::push_back(&mut compliant_nodes, addr);
+            //     total_votes = total_votes + node_votes;
+            // };
+            i = i + 1;
+        };
+     let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
+        let k = 0;
+        while (k < Vector::length(&compliant_nodes)) {
+            let addr = *Vector::borrow(&compliant_nodes, k);
+            let node_votes = Stats::node_current_votes(vm, addr);
+            let ratio = FixedPoint32::create_from_rational(node_votes, total_votes);
+            Vector::push_back(&mut fee_ratios, ratio);
+             k = k + 1;
+        };
+
+        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),120201014010 );
+
+        (compliant_nodes, fee_ratios)
     }
 }
 }
