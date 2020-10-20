@@ -151,6 +151,13 @@ pub fn encode_genesis_change_set(
         &operator_assignments,
         &operator_registrations,
     );
+
+
+    //////// 0L ////////
+    initialize_miners(&mut session, &log_context, &operator_assignments);
+    // distribute_genesis_subsidy(&mut session, &log_context);
+
+
     reconfigure(&mut session, &log_context);
 
     if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
@@ -649,6 +656,32 @@ pub fn generate_test_genesis(
     (genesis, validators)
 }
 
+/// Initialize each validator.
+fn initialize_miners(session: &mut Session<StateViewCache>,
+                     log_context: &impl LogContext,
+    operator_assignments: &[OperatorAssignment]) {
+    // Genesis will abort if mining can't be confirmed.
+    let libra_root_address = account_config::libra_root_address();
+    for (owner_key, _, _, mining_proof) in operator_assignments {
+        let owner_account = account_address::from_public_key(owner_key.as_ref().unwrap());
+        let preimage = hex::decode(&mining_proof.preimage).unwrap();
+        let proof = hex::decode(&mining_proof.proof).unwrap();
+
+        exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "MinerState",
+            "genesis_helper",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(owner_account),
+                Value::vector_u8(preimage),
+                Value::vector_u8(proof)]);
+    }
+
+}
 
 // 0L Change: Necessary for genesis transaction.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

@@ -14,6 +14,7 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::Hash;
     use 0x1::Testnet;
+    // use 0x1::LibraTimestamp;
     // use 0x1::Debug::print;
 
 
@@ -55,8 +56,7 @@ address 0x1 {
       miner: &signer,
       challenge: vector<u8>,
       solution: vector<u8>
-    ) acquires MinerProofHistory {
-
+    ) acquires MinerProofHistory{
       //Check this originated from VM.
       let sender = Signer::address_of(account);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130102014010);
