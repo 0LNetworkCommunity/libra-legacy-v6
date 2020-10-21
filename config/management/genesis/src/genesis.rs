@@ -113,7 +113,12 @@ impl Genesis {
             );
 
             let owner_name_vec = owner.as_bytes().to_vec();
-            operator_assignments.push((owner_key, owner_name_vec, set_operator_script, GenesisMiningProof::default()));
+            operator_assignments.push((
+            owner_key,
+            owner_name_vec,
+            set_operator_script, 
+            operator_account,
+            GenesisMiningProof::default()));
         }
 
         Ok(operator_assignments)
@@ -138,11 +143,13 @@ impl Genesis {
                 } else {
                     return Err(Error::UnexpectedError("Found invalid registration".into()));
                 };
-
+            
+            let owner_account = account_address::from_public_key(&operator_key);
             registrations.push((
                 operator_key,
                 operator.as_bytes().to_vec(),
                 validator_config_tx,
+                owner_account,
                 GenesisMiningProof::default()
             ));
         }
