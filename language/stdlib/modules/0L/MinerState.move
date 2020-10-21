@@ -14,6 +14,8 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::Hash;
     use 0x1::Testnet;
+    use 0x1::Stats;
+
     use 0x1::Debug::print;
 
     // Struct to store information about a VDF proof submitted
@@ -72,6 +74,8 @@ address 0x1 {
       };
       init_miner_state(miner);
       verify_and_update_state(Signer::address_of(miner), proof, false);
+      Stats::init_address(account, Signer::address_of(miner));
+
     }
 
     // Function index: 03

@@ -19,7 +19,8 @@ module LibraSystem {
     //////// 0L ////////
     use 0x1::FixedPoint32;
     use 0x1::Stats;
-    // use 0x1::Cases;
+    use 0x1::Cases;
+    use 0x1::NodeWeight;
 
     /// Information about a Validator Owner.
     struct ValidatorInfo {
@@ -610,21 +611,66 @@ module LibraSystem {
 
     
     ///////// 0L //////////
-    // public fun get_jailed_set(vm: &signer): vector<address> {
-    //   let validator_set = get_val_set_addr();
-    //   let jailed_set = Vector::empty<address>();
-    //   let k = 0;
-    //   while(k < Vector::length(&validator_set)){
-    //     let addr = *Vector::borrow<address>(&validator_set, k);
+    // This function takes in a set of top n validators and updates the validator set.
+    // NewEpochEvent event will be fired.
+    // The Association, the VM, the validator operator or the validator from the current validator set
+    // are authorized to update the set of validator infos and add/remove validators
+    // Tests for this method are written in move-lang/functional-tests/0L/reconfiguration/bulk_update.move
 
-    //     // consensus case 1 and 2, allow inclusion into the next validator set.
-    //     if (Cases::get_case(vm, addr) == 3 || Cases::get_case(vm, addr) == 4){
-    //       Vector::push_back<address>(&mut jailed_set, addr)
-    //     };
-    //     k = k + 1;
-    //   };
-    //   jailed_set
-    // }
+    // TODO: Has this been superceded by update_config_and_reconfigure ?
+    public fun bulk_update_validators(
+        account: &signer,
+        new_validators: vector<address>) acquires CapabilityHolder {
+        LibraTimestamp::assert_operating();
+        assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 1202014010);
+
+        // Either check for each validator and add/remove them or clear the current list and append the list.
+        // The first way might be computationally expensive, so I choose to go with second approach.
+
+        // Clear all the current validators  ==> Intialize new validators
+        let next_epoch_validators = Vector::empty();
+
+        let n = Vector::length<address>(&new_validators);
+
+        // Get the current validator and append it to list
+        let index = 0;
+        while (index < n) {
+            let account_address = *(Vector::borrow<address>(&new_validators, index));
+
+            // A prospective validator must have a validator config resource
+            assert(ValidatorConfig::is_valid(account_address), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
+            
+            let config = ValidatorConfig::get_config(account_address);
+            Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
+                addr: account_address,
+                config, // copy the config over to ValidatorSet
+                consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
+                last_config_update_time: LibraTimestamp::now_microseconds(),
+            });
+
+            // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
+            // ValidatorUniverse::update_validator_epoch_count(account_address);
+            index = index + 1;
+        };
+
+        let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
+        assert(next_count > 0, 1202011000 );
+        // Transaction::assert(next_count > n, 90000000002 );
+        assert(next_count == n, 1202021000 );
+
+        // We have vector of validators - updated!
+        // Next, let us get the current validator set for the current parameters
+        let outgoing_validator_set = get_libra_system_config();
+
+        // We create a new Validator set using scheme from outgoingValidatorset and update the validator set.
+        let updated_validator_set = LibraSystem {
+            scheme: outgoing_validator_set.scheme,
+            validators: next_epoch_validators,
+        };
+
+        // Updated the configuration using updated validator set. Now, start new epoch
+        set_libra_system_config(updated_validator_set);
+    }
 
     //get_compliant_val_votes
     public fun get_fee_ratio(vm: &signer): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
@@ -633,15 +679,15 @@ module LibraSystem {
         let total_votes = 0;
         let i = 0;
         while (i < Vector::length(validators)) {
-            // let addr = Vector::borrow(validators, i).addr;
-            // if (Cases::get_case(vm, addr) == 1) {
-            //     let node_votes = Stats::node_current_votes(vm, addr);
-            //     Vector::push_back(&mut compliant_nodes, addr);
-            //     total_votes = total_votes + node_votes;
-            // };
+            let addr = Vector::borrow(validators, i).addr;
+            if (Cases::get_case(vm, addr) == 1) {
+                let node_votes = Stats::node_current_votes(vm, addr);
+                Vector::push_back(&mut compliant_nodes, addr);
+                total_votes = total_votes + node_votes;
+            };
             i = i + 1;
         };
-     let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
+        let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
         let k = 0;
         while (k < Vector::length(&compliant_nodes)) {
             let addr = *Vector::borrow(&compliant_nodes, k);
@@ -654,6 +700,33 @@ module LibraSystem {
         assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),120201014010 );
 
         (compliant_nodes, fee_ratios)
+    }
+
+    public fun get_jailed_set(vm: &signer): vector<address> {
+      let validator_set = get_val_set_addr();
+      let jailed_set = Vector::empty<address>();
+      let k = 0;
+      while(k < Vector::length(&validator_set)){
+        let addr = *Vector::borrow<address>(&validator_set, k);
+
+        // consensus case 1 and 2, allow inclusion into the next validator set.
+        if (Cases::get_case(vm, addr) == 3 || Cases::get_case(vm, addr) == 4){
+          Vector::push_back<address>(&mut jailed_set, addr)
+        };
+        k = k + 1;
+      };
+      jailed_set
+    }
+
+         public fun get_val_set_addr(): vector<address> {
+        let validators = &get_libra_system_config().validators;
+        let nodes = Vector::empty<address>();
+        let i = 0;
+        while (i < Vector::length(validators)) {
+            Vector::push_back(&mut nodes, Vector::borrow(validators, i).addr);
+            i = i + 1;
+        };
+        nodes 
     }
 }
 }

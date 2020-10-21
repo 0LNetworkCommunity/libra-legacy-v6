@@ -1,13 +1,13 @@
-// This tests consensus Case 1.
-// ALICE is a validator.
-// DID validate successfully.
-// DID mine above the threshold for the epoch.
+// Case 1: Validators are compliant. 
+// This test is to check if validators are present after the first epoch.
+// Here EPOCH-LENGTH = 15 Blocks.
+// NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
 
-//! account: alice, 1, 0, validator
-//! account: bob, 1, 0, validator
-//! account: carol, 1, 0, validator
-//! account: dave, 1, 0, validator
-//! account: eve, 1, 0, validator
+//! account: alice, 1000000, 0, validator
+//! account: bob, 1000000, 0, validator
+//! account: carol, 1000000, 0, validator
+//! account: dave, 1000000, 0, validator
+//! account: eve, 1000000, 0, validator
 
 //! block-prologue
 //! proposer: alice
@@ -15,32 +15,15 @@
 //! NewBlockEvent
 
 //! new-transaction
-//! sender: alice
+//! sender: libraroot
 script {
-
+    
     use 0x1::LibraSystem;
-    use 0x1::MinerState;
-    // use 0x1::TestFixtures;
-    use 0x1::NodeWeight;
-    // use 0x1::Debug::print;
-    use 0x1::GAS::GAS;
-    use 0x1::LibraAccount;
-
-
-    fun main(sender: &signer) {
-        // Tests on initial size of validators
-        assert(LibraSystem::validator_set_size() == 5, 7357300101011000);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357300101021000);
-        assert(LibraSystem::is_validator({{eve}}) == true, 7357300101031000);
-
-        assert(MinerState::test_helper_get_count({{alice}}) == 1, 7357300101041000);
-        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357300101051000);
-        assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357300101051000);
-
-        // Alice continues to mine after genesis.
-        // This test is adapted from chained_from_genesis.move
-        MinerState::test_helper_mock_mining(sender, 2);
-        assert(MinerState::test_helper_get_count({{alice}}) == 2, 7357300101071000);
+    fun main(_account: &signer) {
+        // Tests on initial size of validators 
+        assert(LibraSystem::validator_set_size() == 5, 7357000180101);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
     }
 }
 // check: EXECUTED
@@ -100,6 +83,20 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
+    
+    use 0x1::LibraSystem;
+    fun main(_account: &signer) {
+        // Tests on initial size of validators 
+        assert(LibraSystem::validator_set_size() == 5, 7357000180104);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180105);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180106);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: libraroot
+script {
     use 0x1::Vector;
     use 0x1::Stats;
     // This is the the epoch boundary.
@@ -121,3 +118,13 @@ script {
     }
 }
 //check: EXECUTED
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 15
+//! round: 15
+
+//////////////////////////////////////////////
+///// CHECKS RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////

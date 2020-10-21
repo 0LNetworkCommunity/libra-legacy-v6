@@ -8,18 +8,19 @@
 script {
     use 0x1::Stats;
     use 0x1::Vector;
+    // use 0x1::Debug::print;
 
     fun main(vm: &signer){
-      // Checks that stats was initialized in genesis for Alice.
+      // Checks that altstats was initialized in genesis for Alice.
       let set = Vector::singleton({{alice}});
       Vector::push_back(&mut set, {{bob}});
 
-      Stats::init_set(vm, &set);
+      Stats::process_set_votes(vm, &set);
 
       assert(Stats::node_current_props(vm, {{alice}}) == 0, 0);
       assert(Stats::node_current_props(vm, {{bob}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{alice}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, {{bob}}) == 0, 0);
+      assert(Stats::node_current_votes(vm, {{alice}}) == 1, 0);
+      assert(Stats::node_current_votes(vm, {{bob}}) == 1, 0);
     }
 }
 // check: EXECUTED

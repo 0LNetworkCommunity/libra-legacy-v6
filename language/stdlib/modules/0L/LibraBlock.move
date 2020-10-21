@@ -8,6 +8,11 @@ module LibraBlock {
     use 0x1::LibraSystem;
     use 0x1::LibraTimestamp;
 
+    //////// 0L ////////
+    // use 0x1::Globals;
+    // use 0x1::Reconfigure;
+    use 0x1::Stats;
+
     resource struct BlockMetadata {
         /// Height of the current block
         height: u64,
@@ -76,6 +81,11 @@ module LibraBlock {
             proposer == CoreAddresses::VM_RESERVED_ADDRESS() || LibraSystem::is_validator(proposer),
             Errors::requires_address(EVM_OR_VALIDATOR)
         );
+        //////// 0L ////////
+        // increment stats
+        Stats::process_set_votes(vm, &previous_block_votes);
+        Stats::inc_prop(vm, *&proposer);
+        ///////////////////
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         LibraTimestamp::update_global_time(vm, proposer, timestamp);
@@ -89,6 +99,13 @@ module LibraBlock {
                 time_microseconds: timestamp,
             }
         );
+
+         //////// 0L ////////
+        // reconfigure
+        // if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
+        //   // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
+        //   Reconfigure::reconfigure(vm);
+        // }
     }
     spec fun block_prologue {
         include LibraTimestamp::AbortsIfNotOperating;

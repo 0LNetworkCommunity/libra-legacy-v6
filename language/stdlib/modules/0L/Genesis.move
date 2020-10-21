@@ -56,12 +56,6 @@ module Genesis {
             tc_account,
         );
 
-        // GAS::initialize(
-        //     lr_account,
-        //     tc_account,
-        // );
-
-
         AccountFreezing::initialize(lr_account);
 
         TransactionFee::initialize(tc_account);

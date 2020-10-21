@@ -15,12 +15,10 @@ address 0x1 {
     use 0x1::ValidatorUniverse;
     use 0x1::Signer;
     use 0x1::MinerState;
-    // use 0x0::Cases;
+    use 0x1::CoreAddresses;
     // use 0x0::LibraSystem;
 
     public fun proof_of_weight (node_addr: address): u64 {
-      // Transaction::assert(Transaction::sender() == 0x0, 140101014010);
-
       // Calculate the weight/voting power for the next round.
       // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
       MinerState::get_epochs_mining(node_addr)
@@ -34,7 +32,7 @@ address 0x1 {
     // Permissions: Public, VM Only
     public fun top_n_accounts(account: &signer, n: u64): vector<address> {
 
-      assert(Signer::address_of(account) == 0x0, 140101014010);
+      assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 140101014010);
 
       // let eligible_validators = Vector::empty<address>();
 
