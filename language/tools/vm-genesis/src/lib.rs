@@ -133,7 +133,6 @@ pub fn encode_genesis_change_set(
         type_params: vec![],
     });
 
-    initialize_testnet(&mut session, &log_context, true);
 
     create_and_initialize_main_accounts(
         &mut session,
@@ -154,6 +153,8 @@ pub fn encode_genesis_change_set(
 
 
     //////// 0L ////////
+    initialize_testnet(&mut session, &log_context, true);
+
     initialize_miners(&mut session, &log_context, &operator_assignments);
     // distribute_genesis_subsidy(&mut session, &log_context);
 
@@ -596,7 +597,8 @@ impl Validator {
         let key = Ed25519PrivateKey::generate(rng);
         let operator_address = account_address::from_public_key(&key.public_key());
         let owner_address = libra_config::utils::validator_owner_account_from_name(&name);
-
+        dbg!(operator_address);
+        dbg!(owner_address);
         Self {
             index,
             key,

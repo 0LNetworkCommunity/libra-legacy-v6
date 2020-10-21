@@ -14,9 +14,7 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::Hash;
     use 0x1::Testnet;
-    // use 0x1::LibraTimestamp;
-    // use 0x1::Debug::print;
-
+    use 0x1::Debug::print;
 
     // Struct to store information about a VDF proof submitted
     struct Proof {
@@ -57,6 +55,8 @@ address 0x1 {
       challenge: vector<u8>,
       solution: vector<u8>
     ) acquires MinerProofHistory{
+      print(&Signer::address_of(miner));
+
       //Check this originated from VM.
       let sender = Signer::address_of(account);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130102014010);
@@ -314,7 +314,7 @@ address 0x1 {
     ////////////////////
 
     public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires MinerProofHistory {
-      assert(Testnet::is_testnet() == true, 130115014011);
+      assert(Testnet::is_testnet(), 130115014011);
       let state = borrow_global_mut<MinerProofHistory>(Signer::address_of(sender));
       state.count_proofs_in_epoch = count;
     }
