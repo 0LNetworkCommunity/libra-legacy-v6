@@ -599,8 +599,8 @@ impl Validator {
         let key = Ed25519PrivateKey::generate(rng);
         let operator_address = account_address::from_public_key(&key.public_key());
         let owner_address = libra_config::utils::validator_owner_account_from_name(&name);
-        dbg!(operator_address);
-        dbg!(owner_address);
+        // dbg!(operator_address);
+        // dbg!(owner_address);
         Self {
             index,
             key,
@@ -705,7 +705,7 @@ fn initialize_miners_alt(session: &mut Session<StateViewCache>,
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
 
-        dbg!(operator_address);
+        // dbg!(operator_address);
         exec_function(
             session,
             log_context,

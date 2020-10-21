@@ -6,8 +6,9 @@ script {
     // 
     use 0x1::MinerState;
     // use 0x1::Signer;
-    
+
     fun main(sender: &signer) {
+        // MinerState::init_miner_state(sender);
         MinerState::test_helper_mock_mining(sender, 5);
     }
 }
