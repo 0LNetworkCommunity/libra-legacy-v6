@@ -14,7 +14,7 @@ module CoreAddresses {
     /// ultimate authority over the permissions granted (or removed) from
     /// accounts on-chain.
     public fun LIBRA_ROOT_ADDRESS(): address {
-        0xA550C18
+        0x0
     }
 
     /// The (singleton) address under which the `0x1::Libra::CurrencyInfo` resource for
@@ -22,7 +22,7 @@ module CoreAddresses {
     /// `LIBRA_ROOT_ADDRESS` but there is no requirement that it must
     /// be this from an operational viewpoint, so this is why this is separated out.
     public fun CURRENCY_INFO_ADDRESS(): address {
-        0xA550C18
+        0x0
     }
 
     /// The account address of the treasury and compliance account in
