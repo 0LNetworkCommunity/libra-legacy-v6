@@ -53,7 +53,7 @@ impl Config {
 
         network.discovery_method = DiscoveryMethod::Gossip;
         config.validator_network = Some(network);
-        config.consensus.round_initial_timeout_ms = 250;
+        config.consensus.round_initial_timeout_ms = 1000;
 
         config.logger.level = Level::Debug;
         config.upstream = UpstreamConfig::default();
