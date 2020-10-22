@@ -40,17 +40,18 @@ module Reconfigure {
         // prepare_upcoming_validator_set(vm);
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validator_per_epoch());
-        let jailed_set = LibraSystem::get_jailed_set();
+        let proposed_set = top_accounts;
+        // let jailed_set = LibraSystem::get_jailed_set();
 
-        let proposed_set = Vector::empty();
-        let i = 0;
-        while (i < Vector::length(&top_accounts)) {
-            let addr = *Vector::borrow(&top_accounts, i);
-            if (!Vector::contains(&jailed_set, &addr)){
-                Vector::push_back(&mut proposed_set, addr);
-            };
-            i = i+ 1;
-        };
+        // let proposed_set = Vector::empty();
+        // let i = 0;
+        // while (i < Vector::length(&top_accounts)) {
+        //     let addr = *Vector::borrow(&top_accounts, i);
+        //     if (!Vector::contains(&jailed_set, &addr)){
+        //         Vector::push_back(&mut proposed_set, addr);
+        //     };
+        //     i = i+ 1;
+        // };
 
         // If the cardinality of validator_set in the next epoch is less than 4, something has gone really wrong, let's get the widest set possible.
         // if(Vector::length<address>(&proposed_set) < 4) proposed_set = top_accounts;
