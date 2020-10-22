@@ -136,7 +136,7 @@ module Globals {
       } else {
         if (StagingNet::is_staging_net()){
         return GlobalConstants {
-          epoch_length: 1000,
+          epoch_length: 5000,
           max_validator_per_epoch: 300,
           epoch_boundary_buffer: 100,
           subsidy_ceiling_gas: 8640000 * coin_scale,
