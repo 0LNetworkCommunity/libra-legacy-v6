@@ -16,7 +16,7 @@ module Reconfigure {
     use 0x0::TransactionFee;
     use 0x0::MinerState;
     use 0x0::Globals;
-    use 0x0::Vector;
+    // use 0x0::Vector;
     use 0x0::Stats;
 
     // This function is called by block-prologue once after n blocks.
