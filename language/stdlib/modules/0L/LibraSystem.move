@@ -408,23 +408,23 @@ module LibraSystem {
         
  
     // Get all validators addresses, weights and sum_of_all_validator_weights
-    public fun get_outgoing_validators_with_weights(_epoch_length: u64, _current_block_height: u64): (vector<address>, vector<u64>, u64) {
-        let validators = &get_validator_set().validators;
-        let outgoing_validators = Vector::empty<address>();
-        let outgoing_validator_weights = Vector::empty<u64>();
-        let sum_of_all_validator_weights = 0;
-        let size = Vector::length(validators);
-        let i = 0;
-        while (i < size) {
-            let validator_info_ref = Vector::borrow(validators, i);
-            if(Stats::node_above_thresh(validator_info_ref.addr)){
-                Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
-                Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
-                sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;
-            };
-            i = i + 1;
-        };
-        (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
-    }
+    // public fun get_outgoing_validators_with_weights(_epoch_length: u64, _current_block_height: u64): (vector<address>, vector<u64>, u64) {
+    //     let validators = &get_validator_set().validators;
+    //     let outgoing_validators = Vector::empty<address>();
+    //     let outgoing_validator_weights = Vector::empty<u64>();
+    //     let sum_of_all_validator_weights = 0;
+    //     let size = Vector::length(validators);
+    //     let i = 0;
+    //     while (i < size) {
+    //         let validator_info_ref = Vector::borrow(validators, i);
+    //         if(Stats::node_above_thresh(validator_info_ref.addr)){
+    //             Vector::push_back(&mut outgoing_validators, validator_info_ref.addr);
+    //             Vector::push_back(&mut outgoing_validator_weights, validator_info_ref.consensus_voting_power);
+    //             sum_of_all_validator_weights = sum_of_all_validator_weights + validator_info_ref.consensus_voting_power;
+    //         };
+    //         i = i + 1;
+    //     };
+    //     (outgoing_validators, outgoing_validator_weights, sum_of_all_validator_weights)
+    // }
 }
 }
