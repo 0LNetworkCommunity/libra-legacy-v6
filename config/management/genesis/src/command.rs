@@ -51,7 +51,8 @@ pub enum CommandName {
     ValidatorConfig,
     Verify,
     //////// 0L ////////
-    Init
+    Init,
+    Files
 }
 
 impl From<&Command> for CommandName {
@@ -118,6 +119,7 @@ impl Command {
             Command::Verify(_) => self.verify(),
             //////// 0L ////////
             Command::Init(_) => self.init(),
+            Command::Files(_) => self.files(),
         }
     }
 
@@ -168,9 +170,13 @@ impl Command {
     pub fn verify(self) -> Result<String, Error> {
         execute_command!(self, Command::Verify, CommandName::Verify)
     }
-
+    
+    //////// 0L ////////
     pub fn init(self) -> Result<String, Error> {
         execute_command!(self, Command::Init, CommandName::Init)
+    }
+    pub fn files(self) -> Result<String, Error> {
+        execute_command!(self, Command::Files, CommandName::Files)
     }
 }
 
