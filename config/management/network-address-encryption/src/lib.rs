@@ -83,6 +83,7 @@ impl Encryptor {
         seq_num: u64,
     ) -> Result<Vec<u8>, Error> {
         let keys = self.read()?;
+        dbg!(&keys);
         let key = keys
             .keys
             .get(&keys.current)
@@ -131,6 +132,7 @@ impl Encryptor {
     }
 
     fn read(&self) -> Result<ValidatorKeys, Error> {
+        println!("read =====================");
         let result = self
             .storage
             .get::<ValidatorKeys>(VALIDATOR_NETWORK_ADDRESS_KEYS)

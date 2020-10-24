@@ -81,6 +81,18 @@ impl StorageHelper {
             .import_private_key(FULLNODE_NETWORK_KEY, child_3.get_private_key())
             .unwrap();
 
+        storage
+            .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
+            .unwrap();
+        storage.set(WAYPOINT, Waypoint::default()).unwrap();
+        let mut encryptor = libra_network_address_encryption::Encryptor::new(storage);
+        encryptor.initialize().unwrap();
+        encryptor
+            .add_key(
+            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+            )
+            .unwrap();
         // storage.set(EPOCH, Value::U64(0)).unwrap();
         // storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
         // storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
