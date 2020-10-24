@@ -1992,6 +1992,68 @@ module LibraAccount {
             metadata_signature
         );
     }
+    
+    
+    // 0L function for AutoPay module
+    public fun make_payement<Token>(
+        sender_addr: address,
+        payee: address,
+        amount: u64,
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>,
+        vm: &signer
+    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 4010);        
+        
+        // extract_withdraw_capability
+        // Abort if we already extracted the unique withdraw capability for this account.
+        assert(
+            !delegated_withdraw_capability(sender_addr),
+            Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
+        );
+        assert(exists_at(sender_addr), Errors::not_published(EACCOUNT));
+        let account = borrow_global_mut<LibraAccount>(sender_addr);
+        let cap = Option::extract(&mut account.withdraw_capability);
+
+        deposit<Token>(
+            *&((&cap).account_address),
+            payee,
+            withdraw_from(&cap, payee, amount, copy metadata),
+            metadata,
+            metadata_signature
+        );
+
+        //restore_withdraw_capability
+        restore_withdraw_capability(cap);
+    }
+
+   // 0L function 
+    spec fun make_payement {
+        pragma opaque;
+        let sender_addr = Signer::spec_address_of(sender);
+        modifies global<LibraAccount>(sender_addr);
+        include ExtractWithdrawCapAbortsIf{sender_addr};
+        ensures exists<LibraAccount>(sender_addr);
+        ensures result == old(spec_get_withdraw_cap(sender_addr));
+        ensures global<LibraAccount>(sender_addr) == update_field(old(global<LibraAccount>(sender_addr)),
+            withdraw_capability, Option::spec_none());
+        ensures result.account_address == sender_addr;
+
+        let payer = cap.account_address;
+        modifies global<LibraAccount>(payer);
+        modifies global<LibraAccount>(payee);
+        modifies global<Balance<Token>>(payer);
+        modifies global<Balance<Token>>(payee);
+        ensures exists_at(payer);
+        ensures exists_at(payee);
+        ensures exists<Balance<Token>>(payer);
+        ensures exists<Balance<Token>>(payee);
+        ensures global<LibraAccount>(payer).withdraw_capability ==
+            old(global<LibraAccount>(payer).withdraw_capability);
+        include PayFromAbortsIf<Token>;
+        include PayFromEnsures<Token>{payer};
+
+    }
 
     // // Deposits the `to_deposit` coin into the `payee`'s account balance with the attached `metadata` and
     // // sender address
