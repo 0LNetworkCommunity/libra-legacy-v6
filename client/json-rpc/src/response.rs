@@ -9,6 +9,7 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
+use libra_json_rpc_types::views::MinerStateResourceView;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]
@@ -23,6 +24,7 @@ pub enum JsonRpcResponse {
     CurrenciesResponse(Vec<CurrencyInfoView>),
     AccountStateWithProofResponse(AccountStateWithProofView),
     NetworkStatusResponse(Number),
+    MinerStateView(MinerStateResourceView),
     UnknownResponse(Value),
 }
 
@@ -191,6 +193,18 @@ impl ResponseAsView for StateProofView {
 impl ResponseAsView for AccountStateWithProofView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
         if let JsonRpcResponse::AccountStateWithProofResponse(resp) = response {
+            Ok(resp)
+        } else {
+            Self::unexpected_response_error::<Self>(response)
+        }
+    }
+}
+
+/// OL Implementation
+//add by Ping
+impl ResponseAsView for MinerStateResourceView {
+    fn from_response(response: JsonRpcResponse) -> Result<Self> {
+        if let JsonRpcResponse::MinerStateView(resp) = response {
             Ok(resp)
         } else {
             Self::unexpected_response_error::<Self>(response)

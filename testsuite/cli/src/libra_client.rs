@@ -26,6 +26,7 @@ use libra_types::{
     waypoint::Waypoint,
 };
 use reqwest::Url;
+use libra_json_rpc_client::views::MinerStateResourceView;
 
 /// A client connection to an AdmissionControl (AC) service. `LibraClient` also
 /// handles verifying the server's responses, retrying on non-fatal failures, and
@@ -137,6 +138,29 @@ impl LibraClient {
             ),
         }
     }
+
+    // add by Ping
+    pub fn get_miner_state(
+        &mut self,
+        account: AccountAddress,
+    ) -> Result<Option<MinerStateResourceView>> {
+        let mut batch = JsonRpcBatch::new();
+        batch.add_miner_state_with_proof_request(account, Some(self.trusted_state.latest_version()));
+        let responses = self.client.execute(batch)?;
+        match get_response_from_batch(0, &responses)? {
+            Ok(result) => {
+                let miner_state =
+                    MinerStateResourceView::from_response(result.clone())?;
+                Ok(Some(miner_state))
+            }
+            Err(e) => bail!(
+                "Failed to get miner state for account address {} with error: {:?}",
+                account,
+                e
+            ),
+        }
+    }
+
 
     pub fn get_account_state_blob(
         &mut self,
