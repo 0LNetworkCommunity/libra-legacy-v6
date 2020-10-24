@@ -1,21 +1,20 @@
 //! new-transaction
-//! sender: association
+//! sender: libraroot
 script {
-    use 0x0::Upgrade;
-    use 0x0::Transaction;
+    use 0x1::Upgrade;
 
     fun main(s: &signer) {
         Upgrade::initialize(s);
         spec {
             assert Upgrade::has_upgrade() == false;
         };
-        Transaction::assert(Upgrade::has_upgrade() == false, 1);
+        assert(Upgrade::has_upgrade() == false, 1);
 
         Upgrade::setUpdate(s, true);
-        Transaction::assert(Upgrade::has_upgrade() == true, 1);
+        assert(Upgrade::has_upgrade() == true, 1);
 
         Upgrade::setUpdate(s, false);
-        Transaction::assert(Upgrade::has_upgrade() == false, 1);
+        assert(Upgrade::has_upgrade() == false, 1);
     }
 }
 // check: EXECUTED
