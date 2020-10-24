@@ -40,6 +40,7 @@ module Reconfigure {
         // prepare_upcoming_validator_set(vm);
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validator_per_epoch());
+        // let proposed_set = top_accounts;
         let jailed_set = LibraSystem::get_jailed_set();
 
         let proposed_set = Vector::empty();
@@ -53,7 +54,7 @@ module Reconfigure {
         };
 
         // If the cardinality of validator_set in the next epoch is less than 4, something has gone really wrong, let's get the widest set possible.
-        // if(Vector::length<address>(&proposed_set) < 4) proposed_set = top_accounts;
+        if(Vector::length<address>(&proposed_set) < 4) proposed_set = top_accounts;
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. Usually this is only an issue in staging network for QA.
 
 

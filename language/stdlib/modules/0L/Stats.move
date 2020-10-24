@@ -89,7 +89,7 @@ module Stats{
     public fun node_above_thresh(node_addr: address): bool acquires T{
       Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
       let range = Globals::get_epoch_length();
-      let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(66, 100));
+      let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(33, 100));
       if (node_current_votes(node_addr) >  threshold_signing) return true;
       return false
     }
