@@ -1,15 +1,14 @@
-address 0x0 {
+address 0x1 {
 
 module Upgrade {
-    use 0x0::Signer;
-    use 0x0::Transaction;
+    use 0x1::Signer;
 
     resource struct UpgradeInfo {
         flag: bool
     }
 
     public fun initialize(account: &signer) {
-        Transaction::assert(Signer::address_of(account) == 0x0, 0);
+        assert(Signer::address_of(account) == 0x0, 0);
         move_to(account, UpgradeInfo{flag: false});
     }
 
@@ -19,7 +18,7 @@ module Upgrade {
     }
 
     public fun setUpdate(account: &signer, flag : bool) acquires UpgradeInfo {
-        Transaction::assert(Signer::address_of(account) == 0x0, 0);
+        assert(Signer::address_of(account) == 0x0, 0);
         if (!exists<UpgradeInfo>(0x0))
         {
             initialize(account);
