@@ -15,6 +15,7 @@ ACC = alice
 NAMESPACE = $(ACC)
 REPO_ORG = OLSF
 REPO_NAME = dev-genesis
+CHAIN_ID = "1"
 # Don't put the MNEM here for production, add that by command line only.
 
 
@@ -115,6 +116,20 @@ init-layout:
 	--backend 'backend=github;owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path=set_layout_${NODE_ENV}.toml
 
+layout:
+	cargo run -p libra-genesis-tool -- set-layout \
+	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--path set_layout.toml
+
+root:
+		cargo run -p libra-genesis-tool -- libra-root-key \
+		--validator-backend ${LOCAL} \
+		--shared-backend ${REMOTE}
+
+tres:
+		cargo run -p libra-genesis-tool -- treasury-compliance-key \
+		--validator-backend ${LOCAL} \
+		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
 init-old:
@@ -148,7 +163,7 @@ keys:
 reg:
 	cargo run -p libra-genesis-tool -- validator-config \
 	--owner-name ${ACC} \
-	--chain-id "1" \
+	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
@@ -173,6 +188,13 @@ build-genesis:
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- genesis \
 	--backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
+
+gen:
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
+	--shared-backend ${REMOTE} \
+	--path ${DATA_PATH}/genesis.blob \
+	--chain-id ${CHAIN_ID}
+
 
 waypoint:
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- create-waypoint \

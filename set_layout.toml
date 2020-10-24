@@ -1,0 +1,4 @@
+operators = ["alice"]
+owners = []
+libra_root = "alice"
+treasury_compliance = "alice"
