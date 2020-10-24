@@ -143,6 +143,8 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
+
+    println!("OK create_and_initialize_main_accounts =============== ");
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -151,12 +153,15 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
 
+    println!("OK create_and_initialize_owners_operators =============== ");
 
     //////// 0L ////////
     initialize_testnet(&mut session, &log_context, true);
+    println!("OK initialize_testnet =============== ");
 
     // initialize_miners(&mut session, &log_context, &operator_assignments);
     initialize_miners_alt(&mut session, &log_context, &operator_registrations);
+    println!("OK initialize_miners_alt =============== ");
 
     // distribute_genesis_subsidy(&mut session, &log_context);
 
@@ -435,6 +440,8 @@ fn create_and_initialize_owners_operators(
         );
     }
 
+    println!("OK operator_assignments =============== ");
+    // dbg!(operator_registrations);
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _, _genesis_proof) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
@@ -446,6 +453,7 @@ fn create_and_initialize_owners_operators(
                 operator_auth_key.prefix().to_vec(),
                 operator_name.clone(),
             );
+        // dbg!(&create_operator_script);
         exec_script(
             session,
             log_context,
@@ -454,17 +462,24 @@ fn create_and_initialize_owners_operators(
         );
     }
 
+    println!("1 ============= ");
+
+
     // Set the validator operator for each validator owner
     for (_owner_key, owner_name, op_assignment, _account , _genesis_proof) in operator_assignments {
         let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         exec_script(session, log_context, owner_address, op_assignment);
     }
 
+    println!("2 ============= ");
+    // dbg!(operator_registrations);
     // Set the validator config for each validator
-    for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
-        let operator_account = account_address::from_public_key(operator_key);
-        exec_script(session, log_context, operator_account, registration);
-    }
+    // for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
+    //     let operator_account = account_address::from_public_key(operator_key);
+    //     exec_script(session, log_context, operator_account, registration);
+    // }
+
+    println!("3 ============= ");
 
     // Add each validator to the validator set
     for (_owner_key, owner_name, _op_assignment, _account , _genesis_proof) in operator_assignments {

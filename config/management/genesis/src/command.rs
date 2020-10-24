@@ -30,9 +30,11 @@ pub enum Command {
     ValidatorConfig(crate::validator_config::ValidatorConfig),
     #[structopt(about = "Verifies and prints the current configuration state")]
     Verify(crate::verify::Verify),
-
-    #[structopt(about = "Verifies and prints the current configuration state")]
+    //////// 0L ////////
+    #[structopt(about = "Initializes local ValidatorBackend key_store.json")]
     Init(crate::init::Init),
+    #[structopt(about = "Generates the config files for a validator node")]
+    Files(crate::node_files::Files),
 }
 
 #[derive(Debug, PartialEq)]
@@ -48,6 +50,7 @@ pub enum CommandName {
     TreasuryComplianceKey,
     ValidatorConfig,
     Verify,
+    //////// 0L ////////
     Init
 }
 
@@ -65,8 +68,10 @@ impl From<&Command> for CommandName {
             Command::TreasuryComplianceKey(_) => CommandName::TreasuryComplianceKey,
             Command::ValidatorConfig(_) => CommandName::ValidatorConfig,
             Command::Verify(_) => CommandName::Verify,
-
+            //////// 0L ////////
             Command::Init(_) => CommandName::Init,
+            Command::Files(_) => CommandName::Files,
+
         }
     }
 }
@@ -85,7 +90,9 @@ impl std::fmt::Display for CommandName {
             CommandName::TreasuryComplianceKey => "treasury-compliance-key",
             CommandName::ValidatorConfig => "validator-config",
             CommandName::Verify => "verify",
+            //////// 0L ////////
             CommandName::Init => "init",
+            CommandName::Files => "files",
         };
         write!(f, "{}", name)
     }
@@ -109,7 +116,7 @@ impl Command {
                 .map(|_| "Success!".to_string()),
             Command::ValidatorConfig(_) => self.validator_config().map(|_| "Success!".to_string()),
             Command::Verify(_) => self.verify(),
-
+            //////// 0L ////////
             Command::Init(_) => self.init(),
         }
     }

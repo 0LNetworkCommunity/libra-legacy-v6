@@ -75,6 +75,9 @@ impl StorageHelper {
             .import_private_key(CONSENSUS_KEY, child_1.get_private_key())
             .unwrap();
         storage
+            .import_private_key(EXECUTION_KEY, child_1.get_private_key())
+            .unwrap();
+        storage
             .import_private_key(VALIDATOR_NETWORK_KEY, child_2.get_private_key())
             .unwrap();
         storage
@@ -87,6 +90,8 @@ impl StorageHelper {
         storage
             .import_private_key(TREASURY_COMPLIANCE_KEY, child_0.get_private_key())
             .unwrap();
+
+        
 
         storage
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))

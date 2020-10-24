@@ -954,7 +954,8 @@ Only Parent VASP accounts can create Child VASP accounts [[A7]][ROLE].
 
 
 
-<pre><code><b>use</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
+<pre><code><b>use</b> <a href="../../modules/doc/Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce">0x1::SlidingNonce</a>;
 </code></pre>
 
@@ -1036,6 +1037,7 @@ This script does not assign the validator operator to any validator accounts but
     human_name: vector&lt;u8&gt;
 ) {
     <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(lr_account, sliding_nonce);
+    print(&0x00000001);
     <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_operator_account">LibraAccount::create_validator_operator_account</a>(
         lr_account,
         new_account_address,
@@ -3100,36 +3102,6 @@ only "locally" under the <code>validator_account</code> account address.
         fullnode_network_addresses
     );
  }
-</code></pre>
-
-
-
-</details>
-
-<details>
-<summary>Specification</summary>
-
-Access control rule is that only the validator operator for a validator may set
-call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
-
-
-<pre><code><b>include</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_TransactionChecks">LibraAccount::TransactionChecks</a>{sender: validator_operator_account};
-<b>include</b> <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_SetConfigAbortsIf">ValidatorConfig::SetConfigAbortsIf</a> {validator_addr: validator_account};
-<b>ensures</b> <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_account);
-<b>aborts_with</b> [check]
-    <a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>,
-    <a href="../../modules/doc/Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
-</code></pre>
-
-
-**Access Control:**
-Only the Validator Operator account which has been registered with the validator can
-update the validator's configuration [[H14]][PERMISSION].
-
-
-<pre><code><b>aborts_if</b> <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account) !=
-            <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(validator_account)
-                <b>with</b> <a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
 </code></pre>
 
 

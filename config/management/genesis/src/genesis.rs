@@ -46,6 +46,8 @@ impl Genesis {
         let operator_registrations = self.operator_registrations(&layout)?;
 
         let chain_id = self.config()?.chain_id;
+        
+        // TODO: allow open publishing
         let script_policy = if chain_id == ChainId::test() {
             Some(libra_types::on_chain_config::VMPublishingOption::open())
         } else {
@@ -144,12 +146,12 @@ impl Genesis {
                     return Err(Error::UnexpectedError("Found invalid registration".into()));
                 };
             
-            let owner_account = account_address::from_public_key(&operator_key);
+            let operator_account = account_address::from_public_key(&operator_key);
             registrations.push((
                 operator_key,
                 operator.as_bytes().to_vec(),
                 validator_config_tx,
-                owner_account,
+                operator_account,
                 GenesisMiningProof::default()
             ));
         }

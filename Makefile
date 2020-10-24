@@ -159,6 +159,17 @@ keys:
 	cargo run -p libra-genesis-tool -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
+	
+owner:
+	cargo run -p libra-genesis-tool -- owner-key \
+	--validator-backend ${LOCAL} \
+	--shared-backend ${REMOTE}
+
+
+oper:
+	cargo run -p libra-genesis-tool -- set-operator \
+	--operator-name alice \
+	--shared-backend ${REMOTE}
 
 reg:
 	cargo run -p libra-genesis-tool -- validator-config \
@@ -168,6 +179,10 @@ reg:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
+
+verify:
+	cargo run -p libra-genesis-tool -- verify \
+	--validator-backend ${LOCAL}
 
 # libra-genesis-tool
 # validator-config
