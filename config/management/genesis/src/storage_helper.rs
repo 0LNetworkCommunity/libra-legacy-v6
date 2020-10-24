@@ -17,8 +17,21 @@ use libra_management::{error::Error, secure_backend::DISK};
 use libra_network_address::NetworkAddress;
 use libra_secure_storage::{CryptoStorage, KVStorage, NamespacedStorage, OnDiskStorage, Storage};
 use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
-use std::{fs::File, path::Path};
+use std::{fs::File, path::{Path, PathBuf}};
 use structopt::StructOpt;
+
+// use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
+use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
+
+pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
+    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+    let kf = KeyFactory::new(&seed).unwrap();
+    let child_0_owner_operator = kf.private_child(ChildNumber::new(0)).unwrap();
+    let child_1_consensus = kf.private_child(ChildNumber::new(1)).unwrap();
+    let child_2_val_network = kf.private_child(ChildNumber::new(2)).unwrap();
+    let child_3_fullnode_network = kf.private_child(ChildNumber::new(3)).unwrap();
+    (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network)
+}
 
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
@@ -32,6 +45,49 @@ impl StorageHelper {
         Self { temppath }
     }
 
+    //////// 0L ////////
+    pub fn new_with_path(path: PathBuf) -> Self {
+        let path = libra_temppath::TempPath::new_with_dir(path);
+        dbg!(&path);
+        path.create_as_file().expect("Failed on create_as_file");
+        File::create(path.path()).expect("Could not create file");
+        Self { temppath: path }
+    }
+
+    ///////// 0L  /////////
+    pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
+        let (child_0, 
+            child_1, 
+            child_2,
+            child_3
+        ) = key_scheme(mnemonic);
+
+        // let authentication_key = child_0.get_authentication_key();
+
+        let mut storage = self.storage(namespace);
+        storage
+            .import_private_key(OWNER_KEY, child_0.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(OPERATOR_KEY, child_0.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(CONSENSUS_KEY, child_1.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(VALIDATOR_NETWORK_KEY, child_2.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(FULLNODE_NETWORK_KEY, child_3.get_private_key())
+            .unwrap();
+
+        // storage.set(EPOCH, Value::U64(0)).unwrap();
+        // storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
+        // storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
+        // storage.set(WAYPOINT, Value::String("".into())).unwrap();
+    }
+
+    
     pub fn storage(&self, namespace: String) -> Storage {
         let storage = OnDiskStorage::new(self.temppath.path().to_path_buf());
         Storage::from(NamespacedStorage::new(Storage::from(storage), namespace))

@@ -30,6 +30,9 @@ pub enum Command {
     ValidatorConfig(crate::validator_config::ValidatorConfig),
     #[structopt(about = "Verifies and prints the current configuration state")]
     Verify(crate::verify::Verify),
+
+    #[structopt(about = "Verifies and prints the current configuration state")]
+    Init(crate::init::Init),
 }
 
 #[derive(Debug, PartialEq)]
@@ -45,6 +48,7 @@ pub enum CommandName {
     TreasuryComplianceKey,
     ValidatorConfig,
     Verify,
+    Init
 }
 
 impl From<&Command> for CommandName {
@@ -61,6 +65,8 @@ impl From<&Command> for CommandName {
             Command::TreasuryComplianceKey(_) => CommandName::TreasuryComplianceKey,
             Command::ValidatorConfig(_) => CommandName::ValidatorConfig,
             Command::Verify(_) => CommandName::Verify,
+
+            Command::Init(_) => CommandName::Init,
         }
     }
 }
@@ -79,6 +85,7 @@ impl std::fmt::Display for CommandName {
             CommandName::TreasuryComplianceKey => "treasury-compliance-key",
             CommandName::ValidatorConfig => "validator-config",
             CommandName::Verify => "verify",
+            CommandName::Init => "init",
         };
         write!(f, "{}", name)
     }
@@ -102,6 +109,8 @@ impl Command {
                 .map(|_| "Success!".to_string()),
             Command::ValidatorConfig(_) => self.validator_config().map(|_| "Success!".to_string()),
             Command::Verify(_) => self.verify(),
+
+            Command::Init(_) => self.init(),
         }
     }
 
@@ -151,6 +160,10 @@ impl Command {
 
     pub fn verify(self) -> Result<String, Error> {
         execute_command!(self, Command::Verify, CommandName::Verify)
+    }
+
+    pub fn init(self) -> Result<String, Error> {
+        execute_command!(self, Command::Init, CommandName::Init)
     }
 }
 

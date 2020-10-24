@@ -20,7 +20,7 @@ use libra_types::{
     account_address,
     account_config::{
         self,
-        events::{CreateAccountEvent, NewEpochEvent},
+        events::{CreateAccountEvent},
     },
     chain_id::{ChainId, NamedChain},
     contract_event::ContractEvent,
@@ -668,7 +668,7 @@ pub fn generate_test_genesis(
 }
 
 /// Initialize each validator.
-fn initialize_miners(session: &mut Session<StateViewCache>,
+fn _initialize_miners(session: &mut Session<StateViewCache>,
                      log_context: &impl LogContext,
     operator_assignments: &[OperatorAssignment]) {
     // Genesis will abort if mining can't be confirmed.
@@ -701,7 +701,7 @@ fn initialize_miners_alt(session: &mut Session<StateViewCache>,
     // Genesis will abort if mining can't be confirmed.
     let libra_root_address = account_config::libra_root_address();
     for (owner_key, _, _, account, mining_proof) in operator_regs {
-        let operator_address = account_address::from_public_key(owner_key);
+        let _operator_address = account_address::from_public_key(owner_key);
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
 
