@@ -159,7 +159,7 @@ keys:
 	cargo run -p libra-genesis-tool -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
-	
+
 owner:
 	cargo run -p libra-genesis-tool -- owner-key \
 	--validator-backend ${LOCAL} \
@@ -234,6 +234,11 @@ toml:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179" \
 	--path ${DATA_PATH}/
+
+files:
+	cargo run -p libra-genesis-tool -- files \
+	--validator-backend ${LOCAL}
+
 
 peers:
 # cp -f seed_peers.toml backup.seed_peers.toml
