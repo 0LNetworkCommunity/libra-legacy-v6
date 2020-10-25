@@ -23,19 +23,14 @@ pub struct Files {
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
     #[structopt(long,)]
-    data_path: Option<PathBuf>,
+    data_path: PathBuf,
     #[structopt(long, verbatim_doc_comment)]
     genesis_path: Option<PathBuf>,
 }
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        let output_dir: PathBuf;
-        if self.data_path.is_none() {
-            output_dir = PathBuf::from("/root/node_data/");
-        } else {
-            output_dir = self.data_path.unwrap();
-        }
+        let output_dir = self.data_path;
 
         // Get the Owner and Operator Keys
         let tbd_cfg = self
@@ -89,6 +84,7 @@ impl Files {
         // Set Consensus settings
         // config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
         // config.consensus.round_initial_timeout_ms = 1000;
+        
         // let disk_storage = OnDiskStorageConfig {
         //     path: output_dir,
         //     namespace: Some("alice".to_string()),
