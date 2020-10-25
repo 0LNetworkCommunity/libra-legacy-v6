@@ -12,8 +12,8 @@ ifndef NODE_ENV
 NODE_ENV = stage
 endif
 
-REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;NS=${NS}'
-LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;NS=${NS}'
+REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NS}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NS}'
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
@@ -29,7 +29,7 @@ init-backend:
 
 layout:
 	cargo run -p libra-genesis-tool -- set-layout \
-	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;NS=common' \
+	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path set_layout.toml
 
 root:
@@ -44,7 +44,7 @@ tresury:
 
 #### GENESIS REGISTRATION ####
 init:
-	cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --NS=${NS}
+	cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
 
 # add-proofs:
 # 	cargo run -p libra-management -- mining \
