@@ -12,7 +12,6 @@ REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};to
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 
 ##### PIPELINES #####
-compile: stop stdlib bins
 # pipelines for genesis ceremony
 register: clear init keys owner oper reg verify
 # do genesis
