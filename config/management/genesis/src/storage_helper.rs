@@ -99,6 +99,8 @@ impl StorageHelper {
         storage.set(WAYPOINT, Waypoint::default()).unwrap();
         let mut encryptor = libra_network_address_encryption::Encryptor::new(storage);
         encryptor.initialize().unwrap();
+
+        // TODO: Use EncNetworkAddress instead of TEST_SHARED
         encryptor
             .add_key(
             libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
