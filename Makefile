@@ -102,8 +102,8 @@ insert-way:
 
 files:
 	cargo run -p libra-genesis-tool -- files \
-	--validator-backend ${LOCAL}
-
+	--validator-backend ${LOCAL} \
+	--data-path ${DATA_PATH}
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
