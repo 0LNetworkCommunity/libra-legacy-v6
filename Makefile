@@ -1,8 +1,6 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = /root/node_data
-IP = 1.1.1.1
-GITHUB_TOKEN = a6376bbd4965667882582461e81287e37d6e7150
 # # ACC = alice
 # NS = $(ACC)
 REPO_ORG = OLSF
@@ -30,7 +28,7 @@ init-backend:
 layout:
 	cargo run -p libra-genesis-tool -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path set_layout.toml
+	--path ${DATA_PATH}/set_layout.toml
 
 root:
 		cargo run -p libra-genesis-tool -- libra-root-key \
@@ -44,6 +42,7 @@ tresury:
 
 #### GENESIS REGISTRATION ####
 init:
+	# echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
 	cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
 
 # add-proofs:
