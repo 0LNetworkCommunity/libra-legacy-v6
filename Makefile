@@ -1,6 +1,6 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
-DATA_PATH = ./node_data/
+DATA_PATH = ./node_data
 GITHUB_TOKEN = a6376bbd4965667882582461e81287e37d6e7150
 ACC = alice
 NAMESPACE = $(ACC)
@@ -113,4 +113,5 @@ start:
 clear:
 	if test -f ~/node_data/key_store.json; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json; \
+		echo "${GITHUB_TOKEN}" > github_token.txt; \
 	fi
