@@ -112,7 +112,7 @@ start:
 #### TEST SETUP ####
 
 clear:
-	if test -f ~/node_data/key_store.json; then \
+	if test ${DATA_PATH}/key_store.json; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json; \
 		echo "${GITHUB_TOKEN}" > github_token.txt; \
 	fi

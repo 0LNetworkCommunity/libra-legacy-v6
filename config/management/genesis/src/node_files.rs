@@ -84,13 +84,12 @@ impl Files {
         // Set Consensus settings
         // config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
         // config.consensus.round_initial_timeout_ms = 1000;
-        
-        // let disk_storage = OnDiskStorageConfig {
-        //     path: output_dir,
-        //     namespace: Some("alice".to_string()),
-        //     data_dir: output_dir,
-        // };
-        // config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage));
+
+        let mut disk_storage = OnDiskStorageConfig::default();
+        disk_storage.set_data_dir(output_dir.clone());
+        disk_storage.path = output_dir.clone();
+        disk_storage.namespace = Some("alice".to_string());
+        config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage));
 
         config.execution.genesis_file_location = output_dir.join("genesis.blob");
 
