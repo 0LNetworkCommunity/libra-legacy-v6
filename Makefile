@@ -37,7 +37,7 @@ root:
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
-tresury:
+treasury:
 		cargo run -p libra-genesis-tool -- treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
