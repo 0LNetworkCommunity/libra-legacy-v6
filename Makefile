@@ -82,9 +82,11 @@ LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NAMESPACE}'
 ##### PIPELINES #####
 compile: stop stdlib bins
 # pipelines for genesis ceremony
-register: stop clear fixtures init add-proofs keys register
+register: clear init keys owner oper reg verify
 # do genesis
-genesis: stop build-genesis waypoint toml peers
+genesis: gen way insert-way verify-gen
+# for testing
+smoke: register genesis start
 
 #### ENVIRONMENT #####
 install:
@@ -145,15 +147,15 @@ endif
 init:
 	cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NAMESPACE}
 
-add-proofs:
-	cargo run -p libra-management -- mining \
-	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
-	--backend ${REMOTE}
+# add-proofs:
+# 	cargo run -p libra-management -- mining \
+# 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+# 	--backend ${REMOTE}
 
-keys-old:
-	cargo run -p libra-management -- operator-key \
-	--local ${LOCAL} \
-	--remote ${REMOTE}
+# keys-old:
+# 	cargo run -p libra-management -- operator-key \
+# 	--local ${LOCAL} \
+# 	--remote ${REMOTE}
 
 keys:
 	cargo run -p libra-genesis-tool -- operator-key \
@@ -183,6 +185,12 @@ reg:
 verify:
 	cargo run -p libra-genesis-tool -- verify \
 	--validator-backend ${LOCAL}
+	# --genesis-path ${DATA_PATH}/genesis.blob
+
+verify-gen:
+	cargo run -p libra-genesis-tool -- verify \
+	--validator-backend ${LOCAL} \
+	--genesis-path ${DATA_PATH}/genesis.blob
 
 # libra-genesis-tool
 # validator-config
@@ -199,11 +207,6 @@ verify:
 
 
 #### GENESIS  ####
-build-genesis:
-	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- genesis \
-	--backend ${REMOTE} \
-	--path ${DATA_PATH}/genesis.blob
-
 gen:
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
 	--shared-backend ${REMOTE} \
@@ -220,41 +223,9 @@ insert-way:
 	--validator-backend ${LOCAL} \
 	--waypoint 0:d1a56e91421b9ff9c0431ce5b363845f77231bc8e96e24e67425b0e777769286
 
-waypoint-old:
-	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- create-waypoint \
-	--remote ${REMOTE} \
-	--local ${LOCAL} \
-	--path ${DATA_PATH}
-
-	$(eval WAY = $(shell cat ${DATA_PATH}/genesis_waypoint.txt))
-
-# modify miner.toml to inlcude waypoint
-	rq -t < ${DATA_PATH}/miner.toml | \
-	jq '.["chain_info"]."base_waypoint" = "${WAY}"' | \
-	rq -jT > tmp
-	mv tmp ${DATA_PATH}/miner.toml
-	cat ${DATA_PATH}/miner.toml
-
-toml:
-	cargo run -p libra-management -- config \
-	--validator-address "/ip4/${IP}/tcp/6180" \
-	--validator-listen-address "/ip4/0.0.0.0/tcp/6180" \
-	--backend ${LOCAL} \
-	--fullnode-address "/ip4/${IP}/tcp/6179" \
-	--fullnode-listen-address "/ip4/0.0.0.0/tcp/6179" \
-	--path ${DATA_PATH}/
-
 files:
 	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL}
-
-
-peers:
-# cp -f seed_peers.toml backup.seed_peers.toml
-	cargo run -p libra-management -- seeds --genesis-path ${DATA_PATH}/genesis.blob
-# TODO: Seed peers gets places in working path, deep in libra code.
-	mv network_peers.toml  ${DATA_PATH}/network_peers.toml
-	mv seed_peers.toml  ${DATA_PATH}/seed_peers.toml
 
 remove-keys:
 	jq 'del(.["${NAMESPACE}/owner", "${NAMESPACE}/operator", "${NAMESPACE}/operator_previous", "${NAMESPACE}/owner_previous"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
@@ -338,14 +309,9 @@ stop:
 #### TEST SETUP ####
 
 clear:
-ifdef TEST
-	service libra-node stop
 	if test -f ~/node_data/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.toml *.blob *.json; \
-		rm ${DATA_PATH}/blocks/*; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json; \
 	fi 
-
-endif
 
 fixtures:
 ifdef TEST
