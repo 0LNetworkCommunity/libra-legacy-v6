@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use executor::db_bootstrapper;
+use libra_config::{config::NetworkConfig, network_id::NetworkId, config::NodeConfig};
 use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_global_constants::{
     CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY,
@@ -19,15 +20,7 @@ use libra_types::{
 };
 use libra_vm::LibraVM;
 use libradb::LibraDB;
-use std::{
-    convert::TryFrom,
-    fmt::Write,
-    fs::File,
-    io::Read,
-    path::{Path, PathBuf},
-    str::FromStr,
-    sync::Arc,
-};
+use std::{convert::TryFrom, fmt::Write, fs::File, io::Read, path::{Path, PathBuf}, str::FromStr, sync::Arc, fs};
 use storage_interface::{DbReader, DbReaderWriter};
 use structopt::StructOpt;
 
@@ -41,24 +34,53 @@ pub struct Files {
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
+    #[structopt(long,)]
+    data_path: Option<PathBuf>,
     #[structopt(long, verbatim_doc_comment)]
     genesis_path: Option<PathBuf>,
 }
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        let config = self
+        // Get the Owner and Operator Keys
+        let tbd_cfg = self
             .config
             .load()?
             .override_validator_backend(&self.backend.validator_backend)?;
-        let validator_storage = config.validator_backend();
-        let mut buffer = String::new();
+        let validator_storage = tbd_cfg.validator_backend();
+        // let mut buffer = String::new();
         let test = get_ed25519_key(&validator_storage,OWNER_KEY).expect("Could not extract OWNER public key");
-        dbg!(test);
+        dbg!(&test);
 
+        // Get node configs template
+        let mut config = NodeConfig::default();
+        dbg!(&config);
+        // Set network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+        dbg!(&network);
 
-        Ok("ok".to_owned())
+        // Get Upstream and Seed Peers info.
+
+        // Set Genesis and Waypoint
+
+        // Write file
+        let output_dir: PathBuf;
+
+        if self.data_path.is_none() {
+            output_dir = PathBuf::from("/root/node_data/");
+        } else {
+            output_dir = self.data_path.unwrap();
+        }
+
+        // let toml = toml::to_string_pretty(&config).unwrap();
+
+        fs::create_dir_all(&output_dir).expect("Unable to create output directory");
+        config
+            .save(&output_dir.join("node.configs.yaml"))
+            .expect("Unable to save node configs");
+
+        Ok("test".to_string())
+        // Ok(toml::to_string_pretty(&config).unwrap())
     }
 }
 
