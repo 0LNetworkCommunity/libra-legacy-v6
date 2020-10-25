@@ -24,6 +24,7 @@ module Genesis {
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
+    use 0x1::Oracle;
     use 0x1::Upgrade;
 
     /// Initializes the Libra framework.
@@ -106,7 +107,10 @@ module Genesis {
         // See also discussion at function specification.
         LibraTimestamp::set_time_has_started(lr_account);
 
-        //Upgrade Oracle initialize
+        // Oracle initialize
+        Oracle::initialize(lr_account);
+
+        // Upgrade Oracle initialize
         Upgrade::initialize(lr_account);
     }
 
