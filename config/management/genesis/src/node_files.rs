@@ -3,7 +3,7 @@
 
 use std::{path::PathBuf, fs};
 
-use libra_config::{config::NetworkConfig, config::{DiscoveryMethod, NodeConfig}, network_id::NetworkId};
+use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::WaypointConfig, network_id::NetworkId, config::OnDiskStorageConfig};
 use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_global_constants::OWNER_KEY;
 use libra_management::{
@@ -30,6 +30,13 @@ pub struct Files {
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
+        let output_dir: PathBuf;
+        if self.data_path.is_none() {
+            output_dir = PathBuf::from("/root/node_data/");
+        } else {
+            output_dir = self.data_path.unwrap();
+        }
+
         // Get the Owner and Operator Keys
         let tbd_cfg = self
             .config
@@ -66,7 +73,6 @@ impl Files {
         network.discovery_method = DiscoveryMethod::Onchain;
         config.validator_network = Some(network);
 
-
         // let upstream = AuthenticationKey::ed25519(&key.public_key).derived_address();
         // config.upstream = UpstreamConfig::default();
         // config.upstream.primary_networks.push(upstream);
@@ -83,37 +89,26 @@ impl Files {
         // Set Consensus settings
         // config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
         // config.consensus.round_initial_timeout_ms = 1000;
-
-        // config.base.waypoint = WaypointConfig::FromStorage {
-        //     backend: &self.backend.validator_backend.try_into().unwrap(),
+        // let disk_storage = OnDiskStorageConfig {
+        //     path: output_dir,
+        //     namespace: Some("alice".to_string()),
+        //     data_dir: output_dir,
         // };
+        // config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage));
 
-        // config.execution.genesis_file_location = path.join("genesis.blob");
+        config.execution.genesis_file_location = output_dir.join("genesis.blob");
 
         // Misc
-
-        // config.storage.prune_window=Some(20_000);
-
-
+        config.storage.prune_window=Some(20_000);
 
         // Write file
-        let output_dir: PathBuf;
-
-        if self.data_path.is_none() {
-            output_dir = PathBuf::from("/root/node_data/");
-        } else {
-            output_dir = self.data_path.unwrap();
-        }
-
-        // let toml = toml::to_string_pretty(&config).unwrap();
 
         fs::create_dir_all(&output_dir).expect("Unable to create output directory");
         config
             .save(&output_dir.join("node.configs.yaml"))
             .expect("Unable to save node configs");
 
-        Ok("test".to_string())
-        // Ok(toml::to_string_pretty(&config).unwrap())
+        Ok("node.configs.yaml created".to_string())
     }
 }
 

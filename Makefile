@@ -1,6 +1,6 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
-DIR = ~/node_data/
+DATA_PATH = ./node_data/
 GITHUB_TOKEN = a6376bbd4965667882582461e81287e37d6e7150
 ACC = alice
 NAMESPACE = $(ACC)

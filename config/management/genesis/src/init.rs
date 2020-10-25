@@ -30,10 +30,10 @@ impl Init {
 
                 let mnemonic_string_test = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
 
-                let dir_str = "/root/node_data/";
+                // let dir_str = "./node_data/";
                 // let path = PathBuf::from(dir_str);
 
-                let helper = StorageHelper::new_with_path(dir_str.into());
+                let helper = StorageHelper::new_with_path(self.path.into());
                 helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string_test);
 
                 // let dir_str = "./";
