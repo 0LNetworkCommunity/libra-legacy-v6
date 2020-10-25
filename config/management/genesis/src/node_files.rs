@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use executor::db_bootstrapper;
-use libra_config::{config::NetworkConfig, network_id::NetworkId, config::NodeConfig};
+use libra_config::{config::NetworkConfig, config::{DiscoveryMethod, NodeConfig}, network_id::NetworkId};
 use libra_crypto::ed25519::Ed25519PublicKey;
 use libra_global_constants::{
     CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY,
@@ -54,14 +54,59 @@ impl Files {
 
         // Get node configs template
         let mut config = NodeConfig::default();
+        // config.logger.level = Level::Debug;
+
         dbg!(&config);
         // Set network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         dbg!(&network);
+        
+        // if let Some(network) = config.validator_network.as_mut() {
+        //     network.listen_address = self.validator_listen_address;
+        //     network.advertised_address = self.validator_address;
+        //     network.identity = Identity::from_storage(
+        //         libra_global_constants::VALIDATOR_NETWORK_KEY.into(),
+        //         libra_global_constants::OPERATOR_ACCOUNT.into(),
+        //         self.backend.backend.clone().try_into().unwrap(),
+        //     );
+        //     network.discovery_method = DiscoveryMethod::Gossip;
+
+        //     // network.seed_peers_file = path.join("seed_peers.toml") ;
+        // }
 
         // Get Upstream and Seed Peers info.
+        network.discovery_method = DiscoveryMethod::Onchain;
+        config.validator_network = Some(network);
 
-        // Set Genesis and Waypoint
+
+        // let upstream = AuthenticationKey::ed25519(&key.public_key).derived_address();
+        // config.upstream = UpstreamConfig::default();
+        // config.upstream.primary_networks.push(upstream);
+
+        // let peers = Seeds {
+        //     genesis_path: path.join("genesis.blob")
+        // };
+        // for (acc, _network_addresses) in peers.get_seed_info().unwrap().seed_peers.iter() {
+        //     if upstream != *acc{
+        //     config.upstream.upstream_peers.insert(PeerNetworkId(upstream,acc.clone()));
+        //     }
+        // }
+
+        // Set Consensus settings
+        // config.consensus.safety_rules.backend = self.backend.backend.clone().try_into().unwrap();
+        // config.consensus.round_initial_timeout_ms = 1000;
+
+        // config.base.waypoint = WaypointConfig::FromStorage {
+        //     backend: self.backend.backend.clone().try_into().unwrap(),
+        // };
+
+        // config.execution.genesis_file_location = path.join("genesis.blob");
+
+        // Misc
+
+        // config.storage.prune_window=Some(20_000);
+
+
 
         // Write file
         let output_dir: PathBuf;

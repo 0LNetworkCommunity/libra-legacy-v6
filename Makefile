@@ -21,7 +21,7 @@ CHAIN_ID = "1"
 
 ifndef NODE_ENV
 # Default to prod settings for genesis and mining. Pass with NODE_ENV=stage for staging values.
-NODE_ENV=prod
+NODE_ENV=stage
 endif
 
 echo:
@@ -210,8 +210,17 @@ gen:
 	--path ${DATA_PATH}/genesis.blob \
 	--chain-id ${CHAIN_ID}
 
+way: 
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- create-waypoint \
+	--shared-backend ${REMOTE} \
+	--chain-id ${CHAIN_ID}
 
-waypoint:
+insert-way: 
+	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- insert-waypoint \
+	--validator-backend ${LOCAL} \
+	--waypoint 0:d1a56e91421b9ff9c0431ce5b363845f77231bc8e96e24e67425b0e777769286
+
+waypoint-old:
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-management -- create-waypoint \
 	--remote ${REMOTE} \
 	--local ${LOCAL} \
@@ -254,7 +263,7 @@ remove-keys:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	libra-node --config ${DATA_PATH}/node.configs.toml
+	cargo run -p libra-node -- --config ${DATA_PATH}/node.configs.yaml
 
 daemon:
 # your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
