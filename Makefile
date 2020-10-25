@@ -84,9 +84,9 @@ compile: stop stdlib bins
 # pipelines for genesis ceremony
 register: clear init keys owner oper reg verify
 # do genesis
-genesis: gen way insert-way verify-gen
+genesis: gen way insert-way files
 # for testing
-smoke: register genesis start
+smoke: register genesis verify-gen start
 
 #### ENVIRONMENT #####
 install:
