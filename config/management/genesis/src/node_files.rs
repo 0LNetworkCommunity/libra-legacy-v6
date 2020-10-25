@@ -87,9 +87,15 @@ impl Files {
 
         let mut disk_storage = OnDiskStorageConfig::default();
         disk_storage.set_data_dir(output_dir.clone());
-        disk_storage.path = output_dir.clone();
+        disk_storage.path = output_dir.clone().join("key_store.json");
         disk_storage.namespace = Some("alice".to_string());
-        config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage));
+
+        config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+        
+        config.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+        config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+
+        // safety_rules
 
         config.execution.genesis_file_location = output_dir.join("genesis.blob");
 
