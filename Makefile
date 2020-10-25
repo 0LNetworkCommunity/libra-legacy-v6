@@ -64,7 +64,7 @@ owner:
 
 oper:
 	cargo run -p libra-genesis-tool -- set-operator \
-	--operator-name alice \
+	--operator-name ${NS} \
 	--shared-backend ${REMOTE}
 
 reg:
