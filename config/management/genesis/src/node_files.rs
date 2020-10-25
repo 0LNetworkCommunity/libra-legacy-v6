@@ -19,10 +19,12 @@ pub struct Files {
     config: ConfigPath,
     #[structopt(flatten)]
     backend: ValidatorBackend,
+    #[structopt(long)]
+    namespace: String,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
-    #[structopt(long,)]
+    #[structopt(long)]
     data_path: PathBuf,
     #[structopt(long, verbatim_doc_comment)]
     genesis_path: Option<PathBuf>,
@@ -88,7 +90,7 @@ impl Files {
         let mut disk_storage = OnDiskStorageConfig::default();
         disk_storage.set_data_dir(output_dir.clone());
         disk_storage.path = output_dir.clone().join("key_store.json");
-        disk_storage.namespace = Some("alice".to_string());
+        disk_storage.namespace = Some(self.namespace);
 
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
         

@@ -1,6 +1,8 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = /root/node_data
+IP = 1.1.1.1
+GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt)
 # # ACC = alice
 # NS = $(ACC)
 REPO_ORG = OLSF
@@ -100,12 +102,13 @@ way:
 insert-way: 
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- insert-waypoint \
 	--validator-backend ${LOCAL} \
-	--waypoint 0:d1a56e91421b9ff9c0431ce5b363845f77231bc8e96e24e67425b0e777769286
+	--waypoint 0:e2737fe31d59c66b35561f54c823748063b0d3c42a42eba14df3fccc43271d98
 
 files:
 	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL} \
-	--data-path ${DATA_PATH}
+	--data-path ${DATA_PATH} \
+	--namespace ${NS}
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
