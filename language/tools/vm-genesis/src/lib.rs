@@ -705,6 +705,8 @@ fn initialize_miners_alt(session: &mut Session<StateViewCache>,
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
 
+        println!("Miner:{:?},{:?}", owner_key, operator_address);
+
         // dbg!(operator_address);
         exec_function(
             session,

@@ -24,7 +24,7 @@ pub enum JsonRpcResponse {
     CurrenciesResponse(Vec<CurrencyInfoView>),
     AccountStateWithProofResponse(AccountStateWithProofView),
     NetworkStatusResponse(Number),
-    MinerStateView(MinerStateResourceView),
+    MinerStateViewResponse(MinerStateResourceView),
     UnknownResponse(Value),
 }
 
@@ -95,6 +95,12 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                 let connected_peers_count: Number = serde_json::from_value(value)?;
                 Ok(JsonRpcResponse::NetworkStatusResponse(
                     connected_peers_count,
+                ))
+            }
+            "get_miner_state" => {
+                let state: MinerStateResourceView = serde_json::from_value(value)?;
+                Ok(JsonRpcResponse::MinerStateViewResponse(
+                    state,
                 ))
             }
             _ => Ok(JsonRpcResponse::UnknownResponse(value)),
@@ -204,7 +210,7 @@ impl ResponseAsView for AccountStateWithProofView {
 //add by Ping
 impl ResponseAsView for MinerStateResourceView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
-        if let JsonRpcResponse::MinerStateView(resp) = response {
+        if let JsonRpcResponse::MinerStateViewResponse(resp) = response {
             Ok(resp)
         } else {
             Self::unexpected_response_error::<Self>(response)
