@@ -474,10 +474,10 @@ fn create_and_initialize_owners_operators(
     println!("2 ============= ");
     // dbg!(operator_registrations);
     // Set the validator config for each validator
-    // for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
-    //     let operator_account = account_address::from_public_key(operator_key);
-    //     exec_script(session, log_context, operator_account, registration);
-    // }
+    for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
+        let operator_account = account_address::from_public_key(operator_key);
+        exec_script(session, log_context, operator_account, registration);
+    }
 
     println!("3 ============= ");
 

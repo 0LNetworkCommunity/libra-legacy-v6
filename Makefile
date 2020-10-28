@@ -17,9 +17,9 @@ LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NS}'
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
-register: clear init keys owner oper reg verify
+register: clear init owner oper assign reg verify
 # do genesis
-genesis: gen way insert-way files
+genesis: gen way files
 # for testing
 smoke: register genesis verify-gen start
 
@@ -44,15 +44,15 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 init:
-	# echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
-	cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
+	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
 
 # add-proofs:
 # 	cargo run -p libra-management -- mining \
 # 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 # 	--backend ${REMOTE}
 
-keys:
+# Submits operator key to shared storage
+oper:
 	cargo run -p libra-genesis-tool -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
@@ -62,7 +62,7 @@ owner:
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
-oper:
+assign:
 	cargo run -p libra-genesis-tool -- set-operator \
 	--operator-name ${NS} \
 	--shared-backend ${REMOTE}
@@ -75,6 +75,7 @@ reg:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
+	
 
 verify:
 	cargo run -p libra-genesis-tool -- verify \
@@ -96,13 +97,14 @@ gen:
 
 way: 
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- create-waypoint \
+	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE} \
 	--chain-id ${CHAIN_ID}
 
 insert-way: 
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- insert-waypoint \
 	--validator-backend ${LOCAL} \
-	--waypoint 0:e2737fe31d59c66b35561f54c823748063b0d3c42a42eba14df3fccc43271d98
+	--waypoint 0:4f97c11072ffbd320f90a42e6c0c743bb40a9c031f249a405f93773ef9c8e402
 
 files:
 	cargo run -p libra-genesis-tool -- files \
