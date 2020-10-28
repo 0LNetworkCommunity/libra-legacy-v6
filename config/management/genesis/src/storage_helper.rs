@@ -69,26 +69,26 @@ impl StorageHelper {
             .import_private_key(OWNER_KEY, child_0.get_private_key())
             .unwrap();
         storage
-            .import_private_key(OPERATOR_KEY, child_0.get_private_key())
+            .import_private_key(OPERATOR_KEY, child_1.get_private_key())
             .unwrap();
         storage
-            .import_private_key(CONSENSUS_KEY, child_1.get_private_key())
+            .import_private_key(CONSENSUS_KEY, child_2.get_private_key())
             .unwrap();
         storage
-            .import_private_key(EXECUTION_KEY, child_1.get_private_key())
+            .import_private_key(EXECUTION_KEY, child_2.get_private_key())
             .unwrap();
         storage
-            .import_private_key(VALIDATOR_NETWORK_KEY, child_2.get_private_key())
+            .import_private_key(VALIDATOR_NETWORK_KEY, child_3.get_private_key())
             .unwrap();
         storage
             .import_private_key(FULLNODE_NETWORK_KEY, child_3.get_private_key())
             .unwrap();
         
         storage
-            .import_private_key(LIBRA_ROOT_KEY, child_0.get_private_key())
+            .import_private_key(LIBRA_ROOT_KEY, child_3.get_private_key())
             .unwrap();
         storage
-            .import_private_key(TREASURY_COMPLIANCE_KEY, child_0.get_private_key())
+            .import_private_key(TREASURY_COMPLIANCE_KEY, child_3.get_private_key())
             .unwrap();
 
         
@@ -127,12 +127,28 @@ impl StorageHelper {
         self.temppath.path().to_str().unwrap()
     }
 
+    // pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
+    //     let partial_seed = lcs::to_bytes(&idx).unwrap();
+    //     let mut seed = [0u8; 32];
+    //     let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
+    //     seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
+    //     self.initialize(namespace, seed);
+    // }
+
+
+    // 0L: change, initialize with same mnemonic used for miner testing.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
+        let mnem_alice = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
         let partial_seed = lcs::to_bytes(&idx).unwrap();
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
-        self.initialize(namespace, seed);
+        if idx == 0 {
+            self.initialize_with_mnemonic(namespace, mnem_alice);
+
+        } else {
+            self.initialize(namespace, seed);
+        }
     }
 
     pub fn initialize(&self, namespace: String, seed: [u8; 32]) {

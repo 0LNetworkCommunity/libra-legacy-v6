@@ -408,6 +408,7 @@ fn create_and_initialize_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
+    println!("0 ======== Create Owner Accounts");
     for (owner_key, owner_name, _op_assignment, _ , _genesis_proof) in operator_assignments {
         let staged_owner_auth_key =
             libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
@@ -440,7 +441,7 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("OK operator_assignments =============== ");
+    println!("1 ======== Create OP Accounts");
     // dbg!(operator_registrations);
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _, _genesis_proof) in operator_registrations {
@@ -462,24 +463,24 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    println!("1 ============= ");
+    println!("2 ======== Link owner to OP");
 
 
-    // Set the validator operator for each validator owner
+    // Authorize an operator for a validator/owner
     for (_owner_key, owner_name, op_assignment, _account , _genesis_proof) in operator_assignments {
         let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         exec_script(session, log_context, owner_address, op_assignment);
     }
 
-    println!("2 ============= ");
+    println!("3 ======== OP sets network info to Owner");
     // dbg!(operator_registrations);
-    // Set the validator config for each validator
+    // Set the validator operator configs for each owner
     for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, log_context, operator_account, registration);
     }
 
-    println!("3 ============= ");
+    println!("4 ============= Add owner to validator set");
 
     // Add each validator to the validator set
     for (_owner_key, owner_name, _op_assignment, _account , _genesis_proof) in operator_assignments {

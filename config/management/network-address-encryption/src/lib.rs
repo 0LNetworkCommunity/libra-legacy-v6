@@ -132,7 +132,6 @@ impl Encryptor {
     }
 
     fn read(&self) -> Result<ValidatorKeys, Error> {
-        println!("read =====================");
         let result = self
             .storage
             .get::<ValidatorKeys>(VALIDATOR_NETWORK_ADDRESS_KEYS)

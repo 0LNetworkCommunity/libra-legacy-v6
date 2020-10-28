@@ -14,7 +14,6 @@ module ValidatorConfig {
     use 0x1::Signer;
     use 0x1::Roles;
     use 0x1::ValidatorOperatorConfig;
-    use 0x1::Debug::print;
     struct Config {
         consensus_pubkey: vector<u8>,
         validator_network_addresses: vector<u8>,
@@ -178,7 +177,6 @@ module ValidatorConfig {
         validator_network_addresses: vector<u8>,
         fullnode_network_addresses: vector<u8>,
     ) acquires ValidatorConfig {
-        print(&0x00003);
         assert(
             Signer::address_of(validator_operator_account) == get_operator(validator_addr),
             Errors::invalid_argument(EINVALID_TRANSACTION_SENDER)
