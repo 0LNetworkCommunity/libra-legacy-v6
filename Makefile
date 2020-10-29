@@ -28,14 +28,21 @@ endif
 oper: init oper-init
 # configs the operator
 owner: init owner-init assign
-# do genesis
-genesis: files
+
 # for testing
 smoke:
 	make clear
-	NS=bob make oper
-	NS=alice make owner
-	NS=bob make reg files start
+	NS=carol make init oper-init assign
+	NS=dave make init oper-init assign
+
+	NS=alice OPER=carol make init owner-init assign
+	NS=bob OPER=dave make init owner-init assign
+
+	NS=carol OWNER=alice make reg 
+	NS=dave OWNER=bob make reg 
+
+	NS=carol make genesis start
+
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
@@ -105,27 +112,29 @@ verify-gen:
 
 
 #### GENESIS  ####
-gen:
-	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
-	--shared-backend ${REMOTE} \
-	--path ${DATA_PATH}/genesis.blob \
-	--chain-id ${CHAIN_ID}
-
-way: 
-	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- create-waypoint \
-	--shared-backend ${REMOTE} \
-	--chain-id ${CHAIN_ID}
-
-insert-way: 
-	NODE_ENV='${NODE_ENV}' cargo run  -p libra-genesis-tool -- insert-waypoint \
-	--validator-backend ${LOCAL} \
-	--waypoint ${WAY}
-
-files:
+genesis:
 	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${NS}
+
+# gen:
+# 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
+# 	--shared-backend ${REMOTE} \
+# 	--path ${DATA_PATH}/genesis.blob \
+# 	--chain-id ${CHAIN_ID}
+
+# way: 
+# 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- create-waypoint \
+# 	--shared-backend ${REMOTE} \
+# 	--chain-id ${CHAIN_ID}
+
+# insert-way: 
+# 	NODE_ENV='${NODE_ENV}' cargo run  -p libra-genesis-tool -- insert-waypoint \
+# 	--validator-backend ${LOCAL} \
+# 	--waypoint ${WAY}
+
+
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
