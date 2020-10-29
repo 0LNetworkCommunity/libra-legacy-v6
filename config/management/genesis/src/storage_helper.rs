@@ -15,6 +15,7 @@ use libra_global_constants::{
 };
 use libra_management::{error::Error, secure_backend::DISK};
 use libra_network_address::NetworkAddress;
+use libra_network_address_encryption::ValidatorKeys;
 use libra_secure_storage::{CryptoStorage, KVStorage, NamespacedStorage, OnDiskStorage, Storage};
 use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
 use std::{fs::File, path::{Path, PathBuf}};
@@ -118,6 +119,7 @@ impl StorageHelper {
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
             .unwrap();
         storage.set(WAYPOINT, Waypoint::default()).unwrap();
+        
         let mut encryptor = libra_network_address_encryption::Encryptor::new(storage);
         encryptor.initialize().unwrap();
 
@@ -134,7 +136,15 @@ impl StorageHelper {
         // storage.set(WAYPOINT, Value::String("".into())).unwrap();
     }
 
-    
+    // pub fn add_network_key(&self, namespace: String, validator_keys: &ValidatorKeys) {
+    //     let mut storage = self.storage(namespace);
+    //     let mut encryptor = libra_network_address_encryption::Encryptor::new(storage);
+    //     encryptor.add_key(
+    //         n,
+    //         k,
+    //     );
+    // }
+
     pub fn storage(&self, namespace: String) -> Storage {
         let storage = OnDiskStorage::new(self.temppath.path().to_path_buf());
         Storage::from(NamespacedStorage::new(Storage::from(storage), namespace))

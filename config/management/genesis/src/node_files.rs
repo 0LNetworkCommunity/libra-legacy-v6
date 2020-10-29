@@ -1,6 +1,3 @@
-// Copyright (c) The Libra Core Contributors
-// SPDX-License-Identifier: Apache-2.0
-
 use std::{path::PathBuf, fs};
 
 use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::WaypointConfig, network_id::NetworkId, config::SafetyRulesService};
@@ -13,7 +10,7 @@ use libra_management::{
 use libra_temppath::TempPath;
 use libra_types::chain_id::ChainId;
 use structopt::StructOpt;
-
+// use crate::seeds::Seeds;
 use crate::storage_helper::StorageHelper;
 
 /// Prints the public information within a store
@@ -41,8 +38,8 @@ impl Files {
         let storage_helper = StorageHelper::get_with_path(output_dir.clone(), &self.namespace);
         let remote = StorageHelper::remote_string(&self.namespace, output_dir.to_str().unwrap());
 
-
-
+        // let test = Seeds::new(output_dir.clone().join("genesis.blob").into()).get_network_peers_info();
+        // dbg!(test);
         // Get node configs template
         let mut config = NodeConfig::default();
         config.set_data_dir(output_dir.clone());
@@ -61,16 +58,19 @@ impl Files {
         storage_helper
             .insert_waypoint(&self.namespace, waypoint)
             .unwrap();
-
-        // Set network configs
-        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-        network.discovery_method = DiscoveryMethod::Onchain;
-        config.validator_network = Some(network);
-
         let mut disk_storage = OnDiskStorageConfig::default();
         disk_storage.set_data_dir(output_dir.clone());
         disk_storage.path = output_dir.clone().join(format!("key_store.{}.json", &self.namespace));
         disk_storage.namespace = Some(self.namespace);
+
+        // Set network configs
+        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+        network.discovery_method = DiscoveryMethod::Onchain;
+        network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+        config.validator_network = Some(network);
+
+
+
         
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
         
@@ -78,6 +78,7 @@ impl Files {
 
         config.consensus.safety_rules.service = SafetyRulesService::Thread;
         config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+
 
 
         // Misc
