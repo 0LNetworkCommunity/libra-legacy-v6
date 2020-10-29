@@ -2574,6 +2574,7 @@ dependencies = [
  "compiled-stdlib",
  "compiler",
  "hex 0.4.2",
+ "include_dir",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
