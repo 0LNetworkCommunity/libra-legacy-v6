@@ -2,7 +2,7 @@ use std::{path::PathBuf, fs};
 
 use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId};
 use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use libra_global_constants::{OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY, VALIDATOR_NETWORK_KEY};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
     storage::StorageWrapper as Storage,
@@ -68,8 +68,8 @@ impl Files {
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         
         network.identity = Identity::from_storage(
-            OPERATOR_KEY.to_string(),
-            OPERATOR_ACCOUNT.to_string(),
+            OWNER_KEY.to_string(),
+            OWNER_ACCOUNT.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
 
