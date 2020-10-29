@@ -32,16 +32,16 @@ owner: init owner-init assign
 # for testing
 smoke:
 	make clear
-	NS=carol make init oper-init assign
-	NS=dave make init oper-init assign
+	NS=alice make init oper-init assign
+	NS=bob make init oper-init assign
 
-	NS=alice OPER=carol make init owner-init assign
-	NS=bob OPER=dave make init owner-init assign
+	NS=carol OPER=alice make init owner-init assign
+	NS=dave OPER=bob make init owner-init assign
 
-	NS=carol OWNER=alice make reg 
-	NS=dave OWNER=bob make reg 
+	NS=alice OWNER=carol make reg
+	NS=bob OWNER=dave make reg
 
-	NS=carol make genesis start
+	NS=alice make genesis start
 
 
 #### GENESIS BACKEND SETUP ####
