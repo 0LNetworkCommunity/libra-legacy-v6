@@ -15,13 +15,23 @@ endif
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NS}'
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NS}'
 
+ifndef OWNER
+OWNER = alice
+endif
+
+ifndef OPER
+OPER = bob
+endif
+
 ##### PIPELINES #####
 # pipelines for genesis ceremony
-register: clear init owner oper assign reg verify
+oper: clear init oper-init
+# configs the operator
+owner: clear init owner-init assign
 # do genesis
 genesis: gen way files
 # for testing
-smoke: register genesis verify-gen start
+smoke: operator genesis verify-gen start
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
@@ -52,24 +62,26 @@ init:
 # 	--backend ${REMOTE}
 
 # Submits operator key to shared storage
-oper:
+oper-init:
 	cargo run -p libra-genesis-tool -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
-owner:
+owner-init:
 	cargo run -p libra-genesis-tool -- owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
+## the owner does this step
 assign:
 	cargo run -p libra-genesis-tool -- set-operator \
-	--operator-name ${NS} \
+	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
+## the operator does this step
 reg:
 	cargo run -p libra-genesis-tool -- validator-config \
-	--owner-name ${ACC} \
+	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
@@ -97,14 +109,13 @@ gen:
 
 way: 
 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- create-waypoint \
-	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE} \
 	--chain-id ${CHAIN_ID}
 
 insert-way: 
-	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- insert-waypoint \
+	NODE_ENV='${NODE_ENV}' cargo run  -p libra-genesis-tool -- insert-waypoint \
 	--validator-backend ${LOCAL} \
-	--waypoint 0:4f97c11072ffbd320f90a42e6c0c743bb40a9c031f249a405f93773ef9c8e402
+	--waypoint ${WAY}
 
 files:
 	cargo run -p libra-genesis-tool -- files \

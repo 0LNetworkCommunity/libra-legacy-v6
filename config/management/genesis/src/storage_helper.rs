@@ -23,14 +23,25 @@ use structopt::StructOpt;
 // use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
 
-pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
+pub struct KeyScheme {
+        child_0_owner: ExtendedPrivKey,
+        child_1_operator: ExtendedPrivKey,
+        child_2_val_network: ExtendedPrivKey,
+        child_3_fullnode_network: ExtendedPrivKey,
+        child_4_consensus: ExtendedPrivKey,
+        child_5_executor: ExtendedPrivKey,
+}
+pub fn key_scheme(mnemonic: String) -> KeyScheme {
     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
     let kf = KeyFactory::new(&seed).unwrap();
-    let child_0_owner_operator = kf.private_child(ChildNumber::new(0)).unwrap();
-    let child_1_consensus = kf.private_child(ChildNumber::new(1)).unwrap();
-    let child_2_val_network = kf.private_child(ChildNumber::new(2)).unwrap();
-    let child_3_fullnode_network = kf.private_child(ChildNumber::new(3)).unwrap();
-    (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network)
+    KeyScheme {
+        child_0_owner: kf.private_child(ChildNumber::new(0)).unwrap(),
+        child_1_operator: kf.private_child(ChildNumber::new(1)).unwrap(),
+        child_2_val_network: kf.private_child(ChildNumber::new(2)).unwrap(),
+        child_3_fullnode_network: kf.private_child(ChildNumber::new(3)).unwrap(),
+        child_4_consensus: kf.private_child(ChildNumber::new(4)).unwrap(),
+        child_5_executor: kf.private_child(ChildNumber::new(5)).unwrap(),
+    }
 }
 
 pub struct StorageHelper {
@@ -54,45 +65,54 @@ impl StorageHelper {
         Self { temppath: path }
     }
 
+    pub fn get_with_path(path: PathBuf) -> Self {
+        let path = libra_temppath::TempPath::new_with_dir(path);
+        // dbg!(&path);
+        // path.create_as_file().expect("Failed on create_as_file");
+        // File::create(path.path()).expect("Could not create file");
+        Self { temppath: path }
+    }
+
     ///////// 0L  /////////
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let (child_0, 
-            child_1, 
-            child_2,
-            child_3
-        ) = key_scheme(mnemonic);
-
-        // let authentication_key = child_0.get_authentication_key();
-
+        let keys = key_scheme(mnemonic);
         let mut storage = self.storage(namespace);
+
+        // TODO: remove these keys
+            //     storage
+            // .import_private_key(LIBRA_ROOT_KEY, child_3.get_private_key())
+            // .unwrap();
+        let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
         storage
-            .import_private_key(OWNER_KEY, child_0.get_private_key())
+            .import_private_key(LIBRA_ROOT_KEY, Ed25519PrivateKey::generate(&mut rng))
+            .unwrap();
+        let libra_root_key = storage.export_private_key(LIBRA_ROOT_KEY).unwrap();
+        storage
+            .import_private_key(TREASURY_COMPLIANCE_KEY, libra_root_key)
+            .unwrap();
+        // storage
+        //     .import_private_key(TREASURY_COMPLIANCE_KEY, child_3.get_private_key())
+        //     .unwrap();
+
+        storage
+            .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
             .unwrap();
         storage
-            .import_private_key(OPERATOR_KEY, child_1.get_private_key())
+            .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
             .unwrap();
         storage
-            .import_private_key(CONSENSUS_KEY, child_2.get_private_key())
+            .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
             .unwrap();
         storage
-            .import_private_key(EXECUTION_KEY, child_2.get_private_key())
+            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
             .unwrap();
         storage
-            .import_private_key(VALIDATOR_NETWORK_KEY, child_3.get_private_key())
+            .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
             .unwrap();
         storage
-            .import_private_key(FULLNODE_NETWORK_KEY, child_3.get_private_key())
+            .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
             .unwrap();
         
-        storage
-            .import_private_key(LIBRA_ROOT_KEY, child_3.get_private_key())
-            .unwrap();
-        storage
-            .import_private_key(TREASURY_COMPLIANCE_KEY, child_3.get_private_key())
-            .unwrap();
-
-        
-
         storage
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
             .unwrap();
@@ -210,6 +230,27 @@ impl StorageHelper {
             chain_id = chain_id,
             backend = DISK,
             path = self.path_string(),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.create_waypoint()
+    }
+
+    pub fn create_waypoint_alt(&self, chain_id: ChainId, ns: &str, path: &str ) -> Result<Waypoint, Error> {
+        let args = format!(
+            "
+                libra-genesis-tool
+                create-waypoint
+                --chain-id {chain_id}
+                --shared-backend backend=github; \
+                repository_owner=OLSF; \
+                repository=dev-genesis; \
+                token=${path}/github_token.txt; \
+                namespace=${ns}
+            ",
+            chain_id = chain_id,
+            ns = ns,
+            path = path,
         );
 
         let command = Command::from_iter(args.split_whitespace());

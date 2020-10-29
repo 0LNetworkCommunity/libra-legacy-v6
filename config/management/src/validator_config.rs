@@ -43,12 +43,12 @@ impl ValidatorConfig {
         validator_address: NetworkAddress,
         reconfigure: bool,
     ) -> Result<Transaction, Error> {
-        dbg!(&fullnode_address);
-        dbg!(&validator_address);
+        // dbg!(&fullnode_address);
+        // dbg!(&validator_address);
 
         // Verify addresses
-        validate_address("validator address", &validator_address)?;
-        validate_address("fullnode address", &fullnode_address)?;
+        // validate_address("validator address", &validator_address)?;
+        // validate_address("fullnode address", &fullnode_address)?;
 
         let config = self.config()?;
         let mut storage = config.validator_backend();
