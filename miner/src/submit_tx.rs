@@ -1,6 +1,8 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use libra_wallet::{Mnemonic, key_factory::Seed, key_factory::KeyFactory, ChildNumber};
+use libra_wallet::{Mnemonic, key_factory::{
+    Seed, KeyFactory, ChildNumber
+}};
 use libra_types::{waypoint::Waypoint};
 
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
@@ -19,9 +21,9 @@ use libra_types::{transaction::helpers::*};
 use crate::{
     config::MinerConfig
 };
-use stdlib::transaction_scripts;
+use compiled_stdlib::transaction_scripts;
 use libra_json_rpc_types::views::TransactionView;
-use libra_types::vm_error::StatusCode;
+use libra_types::vm_status::StatusCode;
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -54,7 +56,7 @@ pub fn submit_tx(
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let (account_state,_) = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,

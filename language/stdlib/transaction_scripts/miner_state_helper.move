@@ -2,12 +2,11 @@
 script {
 use 0x1::MinerState;
 use 0x1::Testnet;
-use 0x1::Transaction;
 use 0x1::Globals;
 use 0x1::TestFixtures;
 
 fun main(sender: &signer) {
-    Transaction::assert(Testnet::is_testnet(), 01);
+    assert(Testnet::is_testnet(), 01);
     
     MinerState::test_helper(
       sender,

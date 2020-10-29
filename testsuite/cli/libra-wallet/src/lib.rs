@@ -14,10 +14,10 @@ mod internal_macros;
 pub mod io_utils;
 
 /// Utils for key derivation
-mod key_factory;
+pub mod key_factory;
 
 /// Utils for mnemonic seed
-mod mnemonic;
+pub mod mnemonic;
 
 /// Utils for wallet library
 mod wallet_library;

@@ -140,6 +140,7 @@ impl LibraClient {
     }
 
     // add by Ping
+    ///Get miner states for an address.
     pub fn get_miner_state(
         &mut self,
         account: AccountAddress,
@@ -161,7 +162,7 @@ impl LibraClient {
         }
     }
 
-
+    /// Get account state blob
     pub fn get_account_state_blob(
         &mut self,
         account: AccountAddress,
@@ -190,6 +191,7 @@ impl LibraClient {
         }
     }
 
+    /// Get events
     pub fn get_events(
         &mut self,
         event_key: String,
@@ -357,6 +359,7 @@ impl LibraClient {
         }
     }
 
+    /// Get events by access path
     pub fn get_events_by_access_path(
         &mut self,
         access_path: AccessPath,

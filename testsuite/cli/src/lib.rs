@@ -26,7 +26,7 @@ mod counters;
 mod dev_commands;
 mod info_commands;
 /// Client wrapper to connect to validator.
-mod libra_client;
+pub mod libra_client;
 mod query_commands;
 mod transfer_commands;
 mod ol_commands;
