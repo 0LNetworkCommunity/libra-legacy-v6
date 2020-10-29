@@ -29,9 +29,12 @@ oper: clear init oper-init
 # configs the operator
 owner: clear init owner-init assign
 # do genesis
-genesis: gen way files
+genesis: gen files
 # for testing
-smoke: operator genesis verify-gen start
+smoke:
+	NS=bob make oper
+	NS=alice make owner
+	NS=bob make oper reg gen files start
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 

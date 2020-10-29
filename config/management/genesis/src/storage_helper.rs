@@ -242,11 +242,7 @@ impl StorageHelper {
                 libra-genesis-tool
                 create-waypoint
                 --chain-id {chain_id}
-                --shared-backend backend=github; \
-                repository_owner=OLSF; \
-                repository=dev-genesis; \
-                token=${path}/github_token.txt; \
-                namespace=${ns}
+                --shared-backend backend=github;repository_owner=OLSF;repository=dev-genesis;token={path}/github_token.txt;namespace={ns}
             ",
             chain_id = chain_id,
             ns = ns,
