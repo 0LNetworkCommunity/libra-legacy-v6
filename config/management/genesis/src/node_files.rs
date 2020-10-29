@@ -73,7 +73,8 @@ impl Files {
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
 
-        network.listen_address = self.validator_address;
+        // network.listen_address = "/ip4/0.0.0.0/tcp/6180"; //self.validator_address;
+        
         network.discovery_method = DiscoveryMethod::Onchain;
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
         config.validator_network = Some(network);
