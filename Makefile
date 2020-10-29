@@ -13,7 +13,7 @@ NODE_ENV = stage
 endif
 
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NS}'
-LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NS}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.${NS}.json;namespace=${NS}'
 
 ifndef OWNER
 OWNER = alice
@@ -25,16 +25,17 @@ endif
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
-oper: clear init oper-init
+oper: init oper-init
 # configs the operator
-owner: clear init owner-init assign
+owner: init owner-init assign
 # do genesis
-genesis: gen files
+genesis: files
 # for testing
 smoke:
+	make clear
 	NS=bob make oper
 	NS=alice make owner
-	NS=bob make oper reg gen files start
+	NS=bob make reg files start
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
@@ -128,14 +129,13 @@ files:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p libra-node -- --config ${DATA_PATH}/node.configs.yaml
+	cargo run -p libra-node -- --config ${DATA_PATH}/node.yaml
 
 #### TEST SETUP ####
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json; \
-		echo "${GITHUB_TOKEN}" > github_token.txt; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db; \
 	fi
 
 

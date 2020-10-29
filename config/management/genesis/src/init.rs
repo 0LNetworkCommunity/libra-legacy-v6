@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use structopt::StructOpt;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -10,7 +12,7 @@ pub struct Init {
     #[structopt(long, short)]
     pub namespace: String,
     #[structopt(long, short)]
-    pub path: String,
+    pub path: PathBuf,
 }
 
 
@@ -29,7 +31,8 @@ impl Init {
                 dbg!(&self.path);
 
                 // let mnemonic_string_test = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
-                let helper = StorageHelper::new_with_path(self.path.into());
+                // let user = self.path.join(format!("key_store.{}.json", &self.namespace));
+                let helper = StorageHelper::new_with_path(self.path.into(), &self.namespace);
                 helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string);
             }
             Err(ReadlineError::Interrupted) => {

@@ -38,43 +38,38 @@ impl Files {
     pub fn execute(self) -> Result<String, Error> {
         let output_dir = self.data_path;
         let chain_id = ChainId::new(1);
-        // Get the Owner and Operator Keys
-        let tbd_cfg = self
-            .config
-            .load()?
-            .override_validator_backend(&self.backend.validator_backend)?;
-        // let validator_storage = tbd_cfg.validator_backend();
-        let storage_helper = StorageHelper::get_with_path(output_dir.clone());
+        let storage_helper = StorageHelper::get_with_path(output_dir.clone(), &self.namespace);
         let remote = StorageHelper::remote_string(&self.namespace, output_dir.to_str().unwrap());
 
-
-
-
-        let waypoint = storage_helper
-            .create_waypoint_gh(chain_id, &remote)
-            .unwrap();
-        
-        storage_helper
-            .insert_waypoint(&self.namespace, waypoint)
-            .unwrap();
 
 
         // Get node configs template
         let mut config = NodeConfig::default();
         config.set_data_dir(output_dir.clone());
 
-        // dbg!(&config);
-        // Set network configs
-        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-        // dbg!(&network);
+        // Create Genesis File
+        let genesis_path = output_dir.join("genesis.blob");
+        let genesis = storage_helper
+            .genesis_gh(chain_id, &remote, &genesis_path)
+            .unwrap();
+        config.execution.genesis_file_location = genesis_path;
+
+        // Create and save waypoint
+        let waypoint = storage_helper
+            .create_waypoint_gh(chain_id, &remote)
+            .unwrap();
+        storage_helper
+            .insert_waypoint(&self.namespace, waypoint)
+            .unwrap();
 
         // Set network configs
+        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         network.discovery_method = DiscoveryMethod::Onchain;
         config.validator_network = Some(network);
 
         let mut disk_storage = OnDiskStorageConfig::default();
         disk_storage.set_data_dir(output_dir.clone());
-        disk_storage.path = output_dir.clone().join("key_store.json");
+        disk_storage.path = output_dir.clone().join(format!("key_store.{}.json", &self.namespace));
         disk_storage.namespace = Some(self.namespace);
         
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
@@ -83,27 +78,19 @@ impl Files {
 
         config.consensus.safety_rules.service = SafetyRulesService::Thread;
         config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-        // config.execution.genesis_file_location = output_dir.join("genesis.blob");
 
-        // let genesis_path = TempPath::new();
-        // genesis_path.create_as_file().unwrap();
-        let genesis_path = output_dir.join("genesis.blob");
-        let genesis = storage_helper
-            .genesis_gh(chain_id, &remote, &genesis_path)
-            .unwrap();
-        // config.execution.genesis = Some(genesis);
-        config.execution.genesis_file_location = genesis_path;
+
         // Misc
         // config.storage.prune_window=Some(20_000);
 
-        // Write file
+        // Write yaml
 
         fs::create_dir_all(&output_dir).expect("Unable to create output directory");
         config
-            .save(&output_dir.join("node.configs.yaml"))
+            .save(&output_dir.join("node.yaml"))
             .expect("Unable to save node configs");
 
-        Ok("node.configs.yaml created".to_string())
+        Ok("node.yaml created".to_string())
     }
 }
 
