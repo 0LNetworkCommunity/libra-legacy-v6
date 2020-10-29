@@ -43,13 +43,15 @@ impl Files {
             .config
             .load()?
             .override_validator_backend(&self.backend.validator_backend)?;
-        let validator_storage = tbd_cfg.validator_backend();
-        // let mut buffer = String::new();
-        // let test = get_ed25519_key(&validator_storage,OWNER_KEY).expect("Could not extract OWNER public key");
+        // let validator_storage = tbd_cfg.validator_backend();
         let storage_helper = StorageHelper::get_with_path(output_dir.clone());
+        let remote = StorageHelper::remote_string(&self.namespace, output_dir.to_str().unwrap());
+
+
+
 
         let waypoint = storage_helper
-            .create_waypoint_alt(chain_id, &self.namespace, output_dir.to_str().unwrap())
+            .create_waypoint_gh(chain_id, &remote)
             .unwrap();
         
         storage_helper
@@ -59,6 +61,8 @@ impl Files {
 
         // Get node configs template
         let mut config = NodeConfig::default();
+        config.set_data_dir(output_dir.clone());
+
         // dbg!(&config);
         // Set network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
@@ -72,15 +76,23 @@ impl Files {
         disk_storage.set_data_dir(output_dir.clone());
         disk_storage.path = output_dir.clone().join("key_store.json");
         disk_storage.namespace = Some(self.namespace);
-
+        
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
         
         config.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
 
         config.consensus.safety_rules.service = SafetyRulesService::Thread;
         config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-        config.execution.genesis_file_location = output_dir.join("genesis.blob");
+        // config.execution.genesis_file_location = output_dir.join("genesis.blob");
 
+        // let genesis_path = TempPath::new();
+        // genesis_path.create_as_file().unwrap();
+        let genesis_path = output_dir.join("genesis.blob");
+        let genesis = storage_helper
+            .genesis_gh(chain_id, &remote, &genesis_path)
+            .unwrap();
+        // config.execution.genesis = Some(genesis);
+        config.execution.genesis_file_location = genesis_path;
         // Misc
         // config.storage.prune_window=Some(20_000);
 

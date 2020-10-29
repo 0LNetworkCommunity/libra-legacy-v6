@@ -65,6 +65,7 @@ impl StorageHelper {
         Self { temppath: path }
     }
 
+    ///////// 0L  /////////
     pub fn get_with_path(path: PathBuf) -> Self {
         let path = libra_temppath::TempPath::new_with_dir(path);
         // dbg!(&path);
@@ -154,7 +155,8 @@ impl StorageHelper {
     //     seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
     //     self.initialize(namespace, seed);
     // }
-
+    
+    
 
     // 0L: change, initialize with same mnemonic used for miner testing.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
@@ -218,6 +220,16 @@ impl StorageHelper {
             .unwrap();
     }
 
+
+    ///////// 0L  /////////
+    pub fn remote_string(ns: &str, path: &str) -> String {
+        format!(
+            "backend=github;repository_owner=OLSF;repository=dev-genesis;token={path}/github_token.txt;namespace={ns}",
+            ns = ns,
+            path = path,
+        )
+    }
+
     pub fn create_waypoint(&self, chain_id: ChainId) -> Result<Waypoint, Error> {
         let args = format!(
             "
@@ -236,17 +248,17 @@ impl StorageHelper {
         command.create_waypoint()
     }
 
-    pub fn create_waypoint_alt(&self, chain_id: ChainId, ns: &str, path: &str ) -> Result<Waypoint, Error> {
+    ///////// 0L  /////////
+    pub fn create_waypoint_gh(&self, chain_id: ChainId, remote: &str ) -> Result<Waypoint, Error> {
         let args = format!(
             "
                 libra-genesis-tool
                 create-waypoint
                 --chain-id {chain_id}
-                --shared-backend backend=github;repository_owner=OLSF;repository=dev-genesis;token={path}/github_token.txt;namespace={ns}
+                --shared-backend {remote}
             ",
             chain_id = chain_id,
-            ns = ns,
-            path = path,
+            remote = remote,
         );
 
         let command = Command::from_iter(args.split_whitespace());
@@ -286,6 +298,24 @@ impl StorageHelper {
             chain_id = chain_id,
             backend = DISK,
             path = self.path_string(),
+            genesis_path = genesis_path.to_str().expect("Unable to parse genesis_path"),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.genesis()
+    }
+
+    pub fn genesis_gh(&self, chain_id: ChainId, remote: &str, genesis_path: &PathBuf) -> Result<Transaction, Error> {
+        let args = format!(
+            "
+                libra-genesis-tool
+                genesis
+                --chain-id {chain_id}
+                --shared-backend {remote} 
+                --path {genesis_path}
+            ",
+            chain_id = chain_id,
+            remote = remote,
             genesis_path = genesis_path.to_str().expect("Unable to parse genesis_path"),
         );
 
