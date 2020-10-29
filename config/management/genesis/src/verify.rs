@@ -103,7 +103,6 @@ fn write_ed25519_key(storage: &Storage, buffer: &mut String, key: &'static str) 
         .unwrap_or_else(|e| e.to_string());
     writeln!(buffer, "{} - {}", key, value).unwrap();
 }
-
 fn write_x25519_key(storage: &Storage, buffer: &mut String, key: &'static str) {
     let value = storage
         .x25519_public_from_private(key)

@@ -83,6 +83,7 @@ impl Encryptor {
         seq_num: u64,
     ) -> Result<Vec<u8>, Error> {
         let keys = self.read()?;
+        dbg!(&keys);
         let key = keys
             .keys
             .get(&keys.current)

@@ -14,7 +14,6 @@ module ValidatorConfig {
     use 0x1::Signer;
     use 0x1::Roles;
     use 0x1::ValidatorOperatorConfig;
-
     struct Config {
         consensus_pubkey: vector<u8>,
         validator_network_addresses: vector<u8>,

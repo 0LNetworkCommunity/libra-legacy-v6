@@ -23,14 +23,25 @@ use structopt::StructOpt;
 // use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
 
-pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
+pub struct KeyScheme {
+        child_0_owner: ExtendedPrivKey,
+        child_1_operator: ExtendedPrivKey,
+        child_2_val_network: ExtendedPrivKey,
+        child_3_fullnode_network: ExtendedPrivKey,
+        child_4_consensus: ExtendedPrivKey,
+        child_5_executor: ExtendedPrivKey,
+}
+pub fn key_scheme(mnemonic: String) -> KeyScheme {
     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
     let kf = KeyFactory::new(&seed).unwrap();
-    let child_0_owner_operator = kf.private_child(ChildNumber::new(0)).unwrap();
-    let child_1_consensus = kf.private_child(ChildNumber::new(1)).unwrap();
-    let child_2_val_network = kf.private_child(ChildNumber::new(2)).unwrap();
-    let child_3_fullnode_network = kf.private_child(ChildNumber::new(3)).unwrap();
-    (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network)
+    KeyScheme {
+        child_0_owner: kf.private_child(ChildNumber::new(0)).unwrap(),
+        child_1_operator: kf.private_child(ChildNumber::new(1)).unwrap(),
+        child_2_val_network: kf.private_child(ChildNumber::new(2)).unwrap(),
+        child_3_fullnode_network: kf.private_child(ChildNumber::new(3)).unwrap(),
+        child_4_consensus: kf.private_child(ChildNumber::new(4)).unwrap(),
+        child_5_executor: kf.private_child(ChildNumber::new(5)).unwrap(),
+    }
 }
 
 pub struct StorageHelper {
@@ -46,8 +57,8 @@ impl StorageHelper {
     }
 
     //////// 0L ////////
-    pub fn new_with_path(path: PathBuf) -> Self {
-        let path = libra_temppath::TempPath::new_with_dir(path);
+    pub fn new_with_path(path: PathBuf, namespace: &str) -> Self {
+        let path = libra_temppath::TempPath::new_with_dir(path, namespace);
         dbg!(&path);
         path.create_as_file().expect("Failed on create_as_file");
         File::create(path.path()).expect("Could not create file");
@@ -55,32 +66,68 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
+    pub fn get_with_path(path: PathBuf, namespace: &str) -> Self {
+        let path = libra_temppath::TempPath::new_with_dir(path, namespace);
+        // dbg!(&path);
+        // path.create_as_file().expect("Failed on create_as_file");
+        // File::create(path.path()).expect("Could not create file");
+        Self { temppath: path }
+    }
+
+    ///////// 0L  /////////
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let (child_0, 
-            child_1, 
-            child_2,
-            child_3
-        ) = key_scheme(mnemonic);
-
-        // let authentication_key = child_0.get_authentication_key();
-
+        let keys = key_scheme(mnemonic);
         let mut storage = self.storage(namespace);
-        storage
-            .import_private_key(OWNER_KEY, child_0.get_private_key())
-            .unwrap();
-        storage
-            .import_private_key(OPERATOR_KEY, child_0.get_private_key())
-            .unwrap();
-        storage
-            .import_private_key(CONSENSUS_KEY, child_1.get_private_key())
-            .unwrap();
-        storage
-            .import_private_key(VALIDATOR_NETWORK_KEY, child_2.get_private_key())
-            .unwrap();
-        storage
-            .import_private_key(FULLNODE_NETWORK_KEY, child_3.get_private_key())
-            .unwrap();
 
+        // TODO: remove these keys
+            //     storage
+            // .import_private_key(LIBRA_ROOT_KEY, child_3.get_private_key())
+            // .unwrap();
+        let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
+        storage
+            .import_private_key(LIBRA_ROOT_KEY, Ed25519PrivateKey::generate(&mut rng))
+            .unwrap();
+        let libra_root_key = storage.export_private_key(LIBRA_ROOT_KEY).unwrap();
+        storage
+            .import_private_key(TREASURY_COMPLIANCE_KEY, libra_root_key)
+            .unwrap();
+        // storage
+        //     .import_private_key(TREASURY_COMPLIANCE_KEY, child_3.get_private_key())
+        //     .unwrap();
+
+        storage
+            .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
+            .unwrap();
+        
+        storage
+            .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
+            .unwrap();
+        storage.set(WAYPOINT, Waypoint::default()).unwrap();
+        let mut encryptor = libra_network_address_encryption::Encryptor::new(storage);
+        encryptor.initialize().unwrap();
+
+        // TODO: Use EncNetworkAddress instead of TEST_SHARED
+        encryptor
+            .add_key(
+            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+            )
+            .unwrap();
         // storage.set(EPOCH, Value::U64(0)).unwrap();
         // storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
         // storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
@@ -101,12 +148,29 @@ impl StorageHelper {
         self.temppath.path().to_str().unwrap()
     }
 
+    // pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
+    //     let partial_seed = lcs::to_bytes(&idx).unwrap();
+    //     let mut seed = [0u8; 32];
+    //     let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
+    //     seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
+    //     self.initialize(namespace, seed);
+    // }
+    
+    
+
+    // 0L: change, initialize with same mnemonic used for miner testing.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
+        let mnem_alice = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
         let partial_seed = lcs::to_bytes(&idx).unwrap();
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
-        self.initialize(namespace, seed);
+        if idx == 0 {
+            self.initialize_with_mnemonic(namespace, mnem_alice);
+
+        } else {
+            self.initialize(namespace, seed);
+        }
     }
 
     pub fn initialize(&self, namespace: String, seed: [u8; 32]) {
@@ -156,6 +220,16 @@ impl StorageHelper {
             .unwrap();
     }
 
+
+    ///////// 0L  /////////
+    pub fn remote_string(ns: &str, path: &str) -> String {
+        format!(
+            "backend=github;repository_owner=OLSF;repository=dev-genesis;token={path}/github_token.txt;namespace={ns}",
+            ns = ns,
+            path = path,
+        )
+    }
+
     pub fn create_waypoint(&self, chain_id: ChainId) -> Result<Waypoint, Error> {
         let args = format!(
             "
@@ -168,6 +242,23 @@ impl StorageHelper {
             chain_id = chain_id,
             backend = DISK,
             path = self.path_string(),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.create_waypoint()
+    }
+
+    ///////// 0L  /////////
+    pub fn create_waypoint_gh(&self, chain_id: ChainId, remote: &str ) -> Result<Waypoint, Error> {
+        let args = format!(
+            "
+                libra-genesis-tool
+                create-waypoint
+                --chain-id {chain_id}
+                --shared-backend {remote}
+            ",
+            chain_id = chain_id,
+            remote = remote,
         );
 
         let command = Command::from_iter(args.split_whitespace());
@@ -207,6 +298,24 @@ impl StorageHelper {
             chain_id = chain_id,
             backend = DISK,
             path = self.path_string(),
+            genesis_path = genesis_path.to_str().expect("Unable to parse genesis_path"),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.genesis()
+    }
+
+    pub fn genesis_gh(&self, chain_id: ChainId, remote: &str, genesis_path: &PathBuf) -> Result<Transaction, Error> {
+        let args = format!(
+            "
+                libra-genesis-tool
+                genesis
+                --chain-id {chain_id}
+                --shared-backend {remote} 
+                --path {genesis_path}
+            ",
+            chain_id = chain_id,
+            remote = remote,
             genesis_path = genesis_path.to_str().expect("Unable to parse genesis_path"),
         );
 

@@ -1,7 +1,7 @@
 script {
 use 0x1::LibraAccount;
 use 0x1::SlidingNonce;
-
+use 0x1::Debug::print;
 /// # Summary
 /// Creates a Validator Operator account. This transaction can only be sent by the Libra
 /// Root account.
@@ -49,6 +49,7 @@ fun create_validator_operator_account(
     human_name: vector<u8>
 ) {
     SlidingNonce::record_nonce_or_abort(lr_account, sliding_nonce);
+    print(&0x00000001);
     LibraAccount::create_validator_operator_account(
         lr_account,
         new_account_address,

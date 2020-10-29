@@ -143,6 +143,8 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
+
+    println!("OK create_and_initialize_main_accounts =============== ");
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -151,12 +153,15 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
 
+    println!("OK create_and_initialize_owners_operators =============== ");
 
     //////// 0L ////////
     initialize_testnet(&mut session, &log_context, true);
+    println!("OK initialize_testnet =============== ");
 
     // initialize_miners(&mut session, &log_context, &operator_assignments);
     initialize_miners_alt(&mut session, &log_context, &operator_registrations);
+    println!("OK initialize_miners_alt =============== ");
 
     // distribute_genesis_subsidy(&mut session, &log_context);
 
@@ -403,10 +408,12 @@ fn create_and_initialize_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
+    println!("0 ======== Create Owner Accounts");
     for (owner_key, owner_name, _op_assignment, _ , _genesis_proof) in operator_assignments {
         let staged_owner_auth_key =
             libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -435,6 +442,8 @@ fn create_and_initialize_owners_operators(
         );
     }
 
+    println!("1 ======== Create OP Accounts");
+    // dbg!(operator_registrations);
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _, _genesis_proof) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
@@ -446,6 +455,7 @@ fn create_and_initialize_owners_operators(
                 operator_auth_key.prefix().to_vec(),
                 operator_name.clone(),
             );
+        // dbg!(&create_operator_script);
         exec_script(
             session,
             log_context,
@@ -454,17 +464,26 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    // Set the validator operator for each validator owner
+    println!("2 ======== Link owner to OP");
+
+
+    // Authorize an operator for a validator/owner
     for (_owner_key, owner_name, op_assignment, _account , _genesis_proof) in operator_assignments {
         let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+        dbg!(owner_address);
         exec_script(session, log_context, owner_address, op_assignment);
     }
 
-    // Set the validator config for each validator
+    println!("3 ======== OP sends network info to Owner config");
+    // dbg!(operator_registrations);
+    // Set the validator operator configs for each owner
     for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
+        dbg!(registration);
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, log_context, operator_account, registration);
     }
+
+    println!("4 ============= Add owner to validator set");
 
     // Add each validator to the validator set
     for (_owner_key, owner_name, _op_assignment, _account , _genesis_proof) in operator_assignments {

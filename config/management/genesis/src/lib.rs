@@ -11,8 +11,10 @@ mod validator_config;
 mod validator_operator;
 mod verify;
 mod waypoint;
+//////// 0L ////////
 mod init;
-
+mod node_files;
+///////////////////
 #[cfg(any(test, feature = "testing"))]
 pub mod config_builder;
 // #[cfg(any(test, feature = "testing"))]

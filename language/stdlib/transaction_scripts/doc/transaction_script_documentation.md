@@ -954,7 +954,8 @@ Only Parent VASP accounts can create Child VASP accounts [[A7]][ROLE].
 
 
 
-<pre><code><b>use</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
+<pre><code><b>use</b> <a href="../../modules/doc/Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
 <b>use</b> <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce">0x1::SlidingNonce</a>;
 </code></pre>
 
@@ -1036,6 +1037,7 @@ This script does not assign the validator operator to any validator accounts but
     human_name: vector&lt;u8&gt;
 ) {
     <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(lr_account, sliding_nonce);
+    print(&0x00000001);
     <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_operator_account">LibraAccount::create_validator_operator_account</a>(
         lr_account,
         new_account_address,
@@ -3106,36 +3108,6 @@ only "locally" under the <code>validator_account</code> account address.
 
 </details>
 
-<details>
-<summary>Specification</summary>
-
-Access control rule is that only the validator operator for a validator may set
-call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
-
-
-<pre><code><b>include</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_TransactionChecks">LibraAccount::TransactionChecks</a>{sender: validator_operator_account};
-<b>include</b> <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_SetConfigAbortsIf">ValidatorConfig::SetConfigAbortsIf</a> {validator_addr: validator_account};
-<b>ensures</b> <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_account);
-<b>aborts_with</b> [check]
-    <a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>,
-    <a href="../../modules/doc/Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
-</code></pre>
-
-
-**Access Control:**
-Only the Validator Operator account which has been registered with the validator can
-update the validator's configuration [[H14]][PERMISSION].
-
-
-<pre><code><b>aborts_if</b> <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account) !=
-            <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(validator_account)
-                <b>with</b> <a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-</code></pre>
-
-
-
-</details>
-
 ---
 
 
@@ -5085,14 +5057,18 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::AccountFreezing`](../../modules/doc/AccountFreezing.md#0x1_AccountFreezing)
 -  [`0x1::AccountLimits`](../../modules/doc/AccountLimits.md#0x1_AccountLimits)
 -  [`0x1::Authenticator`](../../modules/doc/Authenticator.md#0x1_Authenticator)
+-  [`0x1::Cases`](../../modules/doc/Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](../../modules/doc/ChainId.md#0x1_ChainId)
 -  [`0x1::Coin1`](../../modules/doc/Coin1.md#0x1_Coin1)
 -  [`0x1::CoreAddresses`](../../modules/doc/CoreAddresses.md#0x1_CoreAddresses)
+-  [`0x1::Debug`](../../modules/doc/Debug.md#0x1_Debug)
 -  [`0x1::DesignatedDealer`](../../modules/doc/DesignatedDealer.md#0x1_DesignatedDealer)
 -  [`0x1::DualAttestation`](../../modules/doc/DualAttestation.md#0x1_DualAttestation)
 -  [`0x1::Errors`](../../modules/doc/Errors.md#0x1_Errors)
 -  [`0x1::Event`](../../modules/doc/Event.md#0x1_Event)
 -  [`0x1::FixedPoint32`](../../modules/doc/FixedPoint32.md#0x1_FixedPoint32)
+-  [`0x1::GAS`](../../modules/doc/GAS.md#0x1_GAS)
+-  [`0x1::Globals`](../../modules/doc/Globals.md#0x1_Globals)
 -  [`0x1::Hash`](../../modules/doc/Hash.md#0x1_Hash)
 -  [`0x1::LBR`](../../modules/doc/LBR.md#0x1_LBR)
 -  [`0x1::LCS`](../../modules/doc/LCS.md#0x1_LCS)
@@ -5103,6 +5079,8 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::LibraTimestamp`](../../modules/doc/LibraTimestamp.md#0x1_LibraTimestamp)
 -  [`0x1::LibraTransactionPublishingOption`](../../modules/doc/LibraTransactionPublishingOption.md#0x1_LibraTransactionPublishingOption)
 -  [`0x1::LibraVersion`](../../modules/doc/LibraVersion.md#0x1_LibraVersion)
+-  [`0x1::MinerState`](../../modules/doc/MinerState.md#0x1_MinerState)
+-  [`0x1::NodeWeight`](../../modules/doc/NodeWeight.md#0x1_NodeWeight)
 -  [`0x1::Option`](../../modules/doc/Option.md#0x1_Option)
 -  [`0x1::RecoveryAddress`](../../modules/doc/RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](../../modules/doc/RegisteredCurrencies.md#0x1_RegisteredCurrencies)
@@ -5111,10 +5089,15 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::Signature`](../../modules/doc/Signature.md#0x1_Signature)
 -  [`0x1::Signer`](../../modules/doc/Signer.md#0x1_Signer)
 -  [`0x1::SlidingNonce`](../../modules/doc/SlidingNonce.md#0x1_SlidingNonce)
+-  [`0x1::StagingNet`](../../modules/doc/Testnet.md#0x1_StagingNet)
+-  [`0x1::Stats`](../../modules/doc/Stats.md#0x1_Stats)
+-  [`0x1::Testnet`](../../modules/doc/Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](../../modules/doc/TransactionFee.md#0x1_TransactionFee)
 -  [`0x1::VASP`](../../modules/doc/VASP.md#0x1_VASP)
+-  [`0x1::VDF`](../../modules/doc/VDF.md#0x1_VDF)
 -  [`0x1::ValidatorConfig`](../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig)
 -  [`0x1::ValidatorOperatorConfig`](../../modules/doc/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig)
+-  [`0x1::ValidatorUniverse`](../../modules/doc/ValidatorUniverse.md#0x1_ValidatorUniverse)
 -  [`0x1::Vector`](../../modules/doc/Vector.md#0x1_Vector)
 -  [`add_currency_to_account`](transaction_script_documentation.md#add_currency_to_account)
 -  [`add_recovery_rotation_capability`](transaction_script_documentation.md#add_recovery_rotation_capability)
