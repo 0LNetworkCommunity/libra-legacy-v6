@@ -60,7 +60,9 @@ pub enum ScriptCall {
     /// * `Script::create_child_vasp_account`
     /// * `Script::create_parent_vasp_account`
     /// * `Script::peer_to_peer_with_metadata`
-    AddCurrencyToAccount { currency: TypeTag },
+    AddCurrencyToAccount {
+        currency: TypeTag,
+    },
 
     /// # Summary
     /// Stores the sending accounts ability to rotate its authentication key with a designated recovery
@@ -101,7 +103,9 @@ pub enum ScriptCall {
     /// # Related Scripts
     /// * `Script::create_recovery_address`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    AddRecoveryRotationCapability { recovery_address: AccountAddress },
+    AddRecoveryRotationCapability {
+        recovery_address: AccountAddress,
+    },
 
     /// # Summary
     /// Adds a script hash to the transaction allowlist. This transaction
@@ -136,7 +140,10 @@ pub enum ScriptCall {
     /// | `Errors::REQUIRES_ROLE`    | `Roles::ELIBRA_ROOT`                                                   | The sending account is not the Libra Root account.                                         |
     /// | `Errors::INVALID_ARGUMENT` | `LibraTransactionPublishingOption::EINVALID_SCRIPT_HASH`               | The script `hash` is an invalid length.                                                    |
     /// | `Errors::INVALID_ARGUMENT` | `LibraTransactionPublishingOption::EALLOWLIST_ALREADY_CONTAINS_SCRIPT` | The on-chain allowlist already contains the script `hash`.                                 |
-    AddToScriptAllowList { hash: Bytes, sliding_nonce: u64 },
+    AddToScriptAllowList {
+        hash: Bytes,
+        sliding_nonce: u64,
+    },
 
     /// # Summary
     /// Adds a validator account to the validator set, and triggers a
@@ -280,7 +287,9 @@ pub enum ScriptCall {
     /// # Related Scripts
     /// * `Script::burn`
     /// * `Script::cancel_burn`
-    BurnTxnFees { coin_type: TypeTag },
+    BurnTxnFees {
+        coin_type: TypeTag,
+    },
 
     /// # Summary
     /// Cancels and returns all coins held in the preburn area under
@@ -667,6 +676,27 @@ pub enum ScriptCall {
         to_freeze_account: AccountAddress,
     },
 
+    OlOracleTx {
+        id: u64,
+        data: Bytes,
+    },
+
+    OlReconfigBulkUpdateE2eTestHelper {
+        alice: AccountAddress,
+        bob: AccountAddress,
+        carol: AccountAddress,
+        sha: AccountAddress,
+        _ram: AccountAddress,
+    },
+
+    OlReconfigBulkUpdateSetup {
+        alice: AccountAddress,
+        bob: AccountAddress,
+        carol: AccountAddress,
+        sha: AccountAddress,
+        ram: AccountAddress,
+    },
+
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
     /// Transfers over a specified amount defined on-chain that are between two different VASPs, or
@@ -767,7 +797,10 @@ pub enum ScriptCall {
     /// * `Script::cancel_burn`
     /// * `Script::burn`
     /// * `Script::burn_txn_fees`
-    Preburn { token: TypeTag, amount: u64 },
+    Preburn {
+        token: TypeTag,
+        amount: u64,
+    },
 
     /// # Summary
     /// Rotates the authentication key of the sending account to the
@@ -795,7 +828,9 @@ pub enum ScriptCall {
     ///
     /// # Related Scripts
     /// * `Script::rotate_shared_ed25519_public_key`
-    PublishSharedEd25519PublicKey { public_key: Bytes },
+    PublishSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration. This does not reconfigure the system and will not update
@@ -913,7 +948,9 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key_with_nonce`
     /// * `Script::rotate_authentication_key_with_nonce_admin`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKey { new_key: Bytes },
+    RotateAuthenticationKey {
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the sender's authentication key to the supplied new authentication key. May be sent by
@@ -946,7 +983,10 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key`
     /// * `Script::rotate_authentication_key_with_nonce_admin`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonce { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonce {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the specified account's authentication key to the supplied new authentication key. May
@@ -979,7 +1019,10 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key`
     /// * `Script::rotate_authentication_key_with_nonce`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonceAdmin { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonceAdmin {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key of a specified account that is part of a recovery address to a
@@ -1055,7 +1098,10 @@ pub enum ScriptCall {
     /// * `Script::create_parent_vasp_account`
     /// * `Script::create_designated_dealer`
     /// * `Script::rotate_dual_attestation_info`
-    RotateDualAttestationInfo { new_url: Bytes, new_key: Bytes },
+    RotateDualAttestationInfo {
+        new_url: Bytes,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key in a `SharedEd25519PublicKey`. This transaction can be sent by
@@ -1082,7 +1128,9 @@ pub enum ScriptCall {
     ///
     /// # Related Scripts
     /// * `Script::publish_shared_ed25519_public_key`
-    RotateSharedEd25519PublicKey { public_key: Bytes },
+    RotateSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration, and triggers a reconfiguration of the system to update the
@@ -1423,7 +1471,10 @@ pub enum ScriptCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ELIBRA_ROOT`                  | `account` is not the Libra Root account.                                                   |
     /// | `Errors::INVALID_ARGUMENT` | `LibraVersion::EINVALID_MAJOR_VERSION_NUMBER` | `major` is less-than or equal to the current major version stored on-chain.                |
-    UpdateLibraVersion { sliding_nonce: u64, major: u64 },
+    UpdateLibraVersion {
+        sliding_nonce: u64,
+        major: u64,
+    },
 
     /// # Summary
     /// Script to allow or disallow minting of new coins in a specified currency.  This transaction can
@@ -1560,6 +1611,23 @@ impl ScriptCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
+            OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
+            OlReconfigBulkUpdateE2eTestHelper {
+                alice,
+                bob,
+                carol,
+                sha,
+                _ram,
+            } => {
+                encode_ol_reconfig_bulk_update_e2e_test_helper_script(alice, bob, carol, sha, _ram)
+            }
+            OlReconfigBulkUpdateSetup {
+                alice,
+                bob,
+                carol,
+                sha,
+                ram,
+            } => encode_ol_reconfig_bulk_update_setup_script(alice, bob, carol, sha, ram),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -2442,6 +2510,57 @@ pub fn encode_freeze_account_script(
         vec![
             TransactionArgument::U64(sliding_nonce),
             TransactionArgument::Address(to_freeze_account),
+        ],
+    )
+}
+
+pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
+    Script::new(
+        OL_ORACLE_TX_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U64(id),
+            TransactionArgument::U8Vector(data),
+        ],
+    )
+}
+
+pub fn encode_ol_reconfig_bulk_update_e2e_test_helper_script(
+    alice: AccountAddress,
+    bob: AccountAddress,
+    carol: AccountAddress,
+    sha: AccountAddress,
+    _ram: AccountAddress,
+) -> Script {
+    Script::new(
+        OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(alice),
+            TransactionArgument::Address(bob),
+            TransactionArgument::Address(carol),
+            TransactionArgument::Address(sha),
+            TransactionArgument::Address(_ram),
+        ],
+    )
+}
+
+pub fn encode_ol_reconfig_bulk_update_setup_script(
+    alice: AccountAddress,
+    bob: AccountAddress,
+    carol: AccountAddress,
+    sha: AccountAddress,
+    ram: AccountAddress,
+) -> Script {
+    Script::new(
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(alice),
+            TransactionArgument::Address(bob),
+            TransactionArgument::Address(carol),
+            TransactionArgument::Address(sha),
+            TransactionArgument::Address(ram),
         ],
     )
 }
@@ -3525,6 +3644,33 @@ fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlOracleTx {
+        id: decode_u64_argument(script.args().get(0)?.clone())?,
+        data: decode_u8vector_argument(script.args().get(1)?.clone())?,
+    })
+}
+
+fn decode_ol_reconfig_bulk_update_e2e_test_helper_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlReconfigBulkUpdateE2eTestHelper {
+        alice: decode_address_argument(script.args().get(0)?.clone())?,
+        bob: decode_address_argument(script.args().get(1)?.clone())?,
+        carol: decode_address_argument(script.args().get(2)?.clone())?,
+        sha: decode_address_argument(script.args().get(3)?.clone())?,
+        _ram: decode_address_argument(script.args().get(4)?.clone())?,
+    })
+}
+
+fn decode_ol_reconfig_bulk_update_setup_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlReconfigBulkUpdateSetup {
+        alice: decode_address_argument(script.args().get(0)?.clone())?,
+        bob: decode_address_argument(script.args().get(1)?.clone())?,
+        carol: decode_address_argument(script.args().get(2)?.clone())?,
+        sha: decode_address_argument(script.args().get(3)?.clone())?,
+        ram: decode_address_argument(script.args().get(4)?.clone())?,
+    })
+}
+
 fn decode_peer_to_peer_with_metadata_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::PeerToPeerWithMetadata {
         currency: script.ty_args().get(0)?.clone(),
@@ -3738,6 +3884,18 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         FREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_freeze_account_script),
+    );
+    map.insert(
+        OL_ORACLE_TX_CODE.to_vec(),
+        Box::new(decode_ol_oracle_tx_script),
+    );
+    map.insert(
+        OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
+        Box::new(decode_ol_reconfig_bulk_update_e2e_test_helper_script),
+    );
+    map.insert(
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
+        Box::new(decode_ol_reconfig_bulk_update_setup_script),
     );
     map.insert(
         PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
@@ -3991,6 +4149,56 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
     116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98,
     111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10, 1, 17, 1,
     11, 0, 10, 2, 17, 0, 2,
+];
+
+const OL_ORACLE_TX_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 13, 7, 30, 27, 8, 57, 16,
+    6, 73, 18, 0, 0, 0, 1, 0, 2, 0, 1, 1, 1, 1, 3, 2, 1, 0, 0, 3, 1, 6, 9, 0, 0, 3, 6, 12, 3, 10,
+    2, 1, 5, 5, 68, 101, 98, 117, 103, 6, 79, 114, 97, 99, 108, 101, 5, 112, 114, 105, 110, 116, 7,
+    104, 97, 110, 100, 108, 101, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 9, 7, 0, 12, 3, 14, 3, 56, 0, 11, 0, 10,
+    1, 11, 2, 17, 1, 2,
+];
+
+const OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 38, 4, 44, 6, 5, 50, 47, 7, 97, 129, 1, 8, 226,
+    1, 16, 0, 0, 0, 1, 0, 2, 2, 3, 0, 1, 1, 1, 2, 4, 2, 3, 1, 1, 2, 5, 4, 0, 1, 1, 0, 6, 5, 0, 0,
+    0, 7, 6, 7, 0, 0, 8, 0, 3, 0, 1, 9, 6, 0, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0,
+    1, 3, 2, 7, 10, 9, 0, 9, 0, 2, 6, 12, 10, 5, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1, 3, 1,
+    3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 17, 86, 97, 108,
+    105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116, 111,
+    114, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104, 95,
+    98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108, 105,
+    100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 18,
+    118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 13, 97,
+    100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 1, 0, 8, 9, 58, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 10, 1, 17, 6, 13, 14, 10, 2, 56, 1,
+    10, 2, 17, 6, 13, 14, 10, 3, 56, 1, 10, 3, 17, 6, 14, 14, 56, 2, 6, 3, 0, 0, 0, 0, 0, 0, 0, 33,
+    12, 6, 11, 6, 3, 28, 11, 0, 1, 6, 5, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14, 17, 3, 17, 5, 6,
+    3, 0, 0, 0, 0, 0, 0, 0, 33, 12, 8, 11, 8, 3, 39, 6, 6, 0, 0, 0, 0, 0, 0, 0, 39, 10, 4, 17, 4,
+    9, 33, 12, 10, 11, 10, 3, 48, 6, 7, 0, 0, 0, 0, 0, 0, 0, 39, 10, 2, 17, 4, 8, 33, 12, 12, 11,
+    12, 3, 57, 6, 8, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+];
+
+const OL_RECONFIG_BULK_UPDATE_SETUP_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 38, 4, 44, 6, 5, 50, 47, 7, 97, 129, 1, 8, 226,
+    1, 16, 0, 0, 0, 1, 0, 2, 2, 3, 0, 1, 1, 1, 2, 4, 2, 3, 1, 1, 2, 5, 4, 0, 1, 1, 0, 6, 5, 0, 0,
+    0, 7, 6, 7, 0, 0, 8, 0, 3, 0, 1, 9, 6, 0, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0,
+    1, 3, 2, 7, 10, 9, 0, 9, 0, 2, 6, 12, 10, 5, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1, 3, 1,
+    3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 17, 86, 97, 108,
+    105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116, 111,
+    114, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104, 95,
+    98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108, 105,
+    100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 18,
+    118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 13, 97,
+    100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 1, 0, 8, 9, 68, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 10, 1, 17, 6, 13, 14, 10, 2, 56, 1,
+    10, 2, 17, 6, 13, 14, 10, 3, 56, 1, 10, 3, 17, 6, 13, 14, 10, 4, 56, 1, 10, 4, 17, 6, 13, 14,
+    10, 5, 56, 1, 10, 5, 17, 6, 14, 14, 56, 2, 6, 5, 0, 0, 0, 0, 0, 0, 0, 33, 12, 6, 11, 6, 3, 38,
+    11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14, 17, 3, 17, 5, 6, 5, 0, 0, 0, 0, 0, 0,
+    0, 33, 12, 8, 11, 8, 3, 49, 6, 2, 0, 0, 0, 0, 0, 0, 0, 39, 10, 4, 17, 4, 8, 33, 12, 10, 11, 10,
+    3, 58, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 1, 17, 4, 8, 33, 12, 12, 11, 12, 3, 67, 6, 4, 0, 0,
+    0, 0, 0, 0, 0, 39, 2,
 ];
 
 const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[

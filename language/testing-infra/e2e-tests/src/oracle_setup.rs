@@ -1,6 +1,4 @@
-use crate::{account::Account, gas_costs};
-
-
+use crate::account::Account;
 use libra_types::{
     transaction::{SignedTransaction, TransactionArgument, Script},
 };
