@@ -1,16 +1,15 @@
 use std::{path::PathBuf, fs};
 
-use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::WaypointConfig, network_id::NetworkId, config::SafetyRulesService};
+use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId};
 use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::OWNER_KEY;
+use libra_global_constants::{OPERATOR_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
     storage::StorageWrapper as Storage,
 };
-use libra_temppath::TempPath;
+use libra_network_address::NetworkAddress;
 use libra_types::chain_id::ChainId;
 use structopt::StructOpt;
-// use crate::seeds::Seeds;
 use crate::storage_helper::StorageHelper;
 
 /// Prints the public information within a store
@@ -22,6 +21,8 @@ pub struct Files {
     backend: ValidatorBackend,
     #[structopt(long)]
     namespace: String,
+    #[structopt(long)]
+    validator_address: NetworkAddress,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
@@ -65,13 +66,19 @@ impl Files {
 
         // Set network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+        
+        network.identity = Identity::from_storage(
+            VALIDATOR_NETWORK_KEY.to_string(),
+            OPERATOR_ACCOUNT.to_string(),
+            SecureBackend::OnDiskStorage(disk_storage.clone()),
+        );
+
+        network.listen_address = self.validator_address;
         network.discovery_method = DiscoveryMethod::Onchain;
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
         config.validator_network = Some(network);
 
-
-
-        
+        // Consensus
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
         
         config.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
@@ -79,13 +86,10 @@ impl Files {
         config.consensus.safety_rules.service = SafetyRulesService::Thread;
         config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
 
-
-
         // Misc
         // config.storage.prune_window=Some(20_000);
 
         // Write yaml
-
         fs::create_dir_all(&output_dir).expect("Unable to create output directory");
         config
             .save(&output_dir.join("node.yaml"))

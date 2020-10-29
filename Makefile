@@ -84,7 +84,7 @@ owner-init:
 	--shared-backend ${REMOTE}
 
 ## the owner does this step
-assign:
+assign: 
 	cargo run -p libra-genesis-tool -- set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
@@ -116,7 +116,8 @@ genesis:
 	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
-	--namespace ${NS}
+	--namespace ${NS} \
+	--validator-address "/ip4/${IP}/tcp/6180"
 
 # gen:
 # 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
