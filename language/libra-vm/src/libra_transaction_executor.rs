@@ -441,6 +441,7 @@ impl LibraVM {
         log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
+            println!("====================================== checking consensus, curr round is {}", round);
             // hardcoding consensus checking on round 2
             if round==2 {
                 println!("====================================== checking consensus");
@@ -476,6 +477,7 @@ impl LibraVM {
                 StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR,
             ))
         });
+        println!("====================================== in block prologue!!!");
 
         let mut txn_data = TransactionMetadata::default();
         txn_data.sender = account_config::reserved_vm_address();

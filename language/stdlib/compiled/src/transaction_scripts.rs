@@ -55,6 +55,7 @@ pub enum StdlibScript {
     UpdateLibraVersion,
     UpdateMintingAbility,
     UpdateDualAttestationLimit,
+    OracleTx,
     // ...add new scripts here
 }
 
@@ -98,6 +99,7 @@ impl StdlibScript {
             UpdateLibraVersion,
             UpdateMintingAbility,
             UpdateDualAttestationLimit,
+            OracleTx,
             // ...add new scripts here
         ]
     }
@@ -149,6 +151,10 @@ impl StdlibScript {
 pub struct CompiledBytes(Vec<u8>);
 
 impl CompiledBytes {
+    /// constructor
+    pub fn new(bytes : Vec<u8>) -> Self {
+        CompiledBytes(bytes)
+    }
     /// Return the sha3-256 hash of the script bytes
     pub fn hash(&self) -> HashValue {
         Self::hash_bytes(&self.0)
@@ -223,6 +229,7 @@ impl fmt::Display for StdlibScript {
                 UpdateLibraVersion => "update_libra_version",
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
+                OracleTx => "ol_oracle_tx",
             }
         )
     }
