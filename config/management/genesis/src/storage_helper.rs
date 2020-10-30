@@ -15,7 +15,6 @@ use libra_global_constants::{
 };
 use libra_management::{error::Error, secure_backend::DISK};
 use libra_network_address::NetworkAddress;
-use libra_network_address_encryption::ValidatorKeys;
 use libra_secure_storage::{CryptoStorage, KVStorage, NamespacedStorage, OnDiskStorage, Storage};
 use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
 use std::{fs::File, path::{Path, PathBuf}};
@@ -105,8 +104,6 @@ impl StorageHelper {
         storage
             .import_private_key(EXECUTION_KEY, keys.child_0_owner.get_private_key())
             .unwrap();
-
-        
         storage
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
             .unwrap();

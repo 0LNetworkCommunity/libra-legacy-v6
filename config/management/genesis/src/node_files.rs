@@ -1,11 +1,9 @@
 use std::{path::PathBuf, fs};
 
 use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId};
-use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{CONSENSUS_KEY, EXECUTION_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY, VALIDATOR_NETWORK_KEY};
+use libra_global_constants::{FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
-    storage::StorageWrapper as Storage,
 };
 use libra_network_address::NetworkAddress;
 use libra_types::chain_id::ChainId;
@@ -38,7 +36,7 @@ impl Files {
         let chain_id = ChainId::new(1);
         let storage_helper = StorageHelper::get_with_path(output_dir.clone(), &self.namespace);
         let remote = StorageHelper::remote_string(&self.namespace, output_dir.to_str().unwrap());
-
+        
         // let test = Seeds::new(output_dir.clone().join("genesis.blob").into()).get_network_peers_info();
         // dbg!(test);
         // Get node configs template
@@ -47,7 +45,7 @@ impl Files {
 
         // Create Genesis File
         let genesis_path = output_dir.join("genesis.blob");
-        let genesis = storage_helper
+        let _genesis = storage_helper
             .genesis_gh(chain_id, &remote, &genesis_path)
             .unwrap();
         config.execution.genesis_file_location = genesis_path;
@@ -69,7 +67,7 @@ impl Files {
         
         network.identity = Identity::from_storage(
             FULLNODE_NETWORK_KEY.to_string(),
-            OPERATOR_ACCOUNT.to_string(),
+            FULLNODE_PEER_ID.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
 
@@ -97,45 +95,3 @@ impl Files {
         Ok("node.yaml created".to_string())
     }
 }
-
-fn get_ed25519_key(storage: &Storage, key: &'static str) -> Result<Ed25519PublicKey, Error> {
-    storage.ed25519_public_from_private(key)
-}
-
-
-        // OK config.consensus.safety_rules.service = SafetyRulesService::Thread;
-        // OK config.consensus.safety_rules.backend = self.secure_backend(&local_ns, "safety-rules");
-        // config.execution.backend = self.secure_backend(&local_ns, "execution");
-
-        // let backend = self.secure_backend(&local_ns, "safety-rules");
-        // config.base.waypoint = WaypointConfig::FromStorage(backend);
-        // config.execution.genesis = Some(genesis);
-        // config.execution.genesis_file_location = PathBuf::from("");
-
-
-// fn production(local_ns: &str, path: &Path, storage_helper: &StorageHelper, chain_id ) {
-//     // let validator_ns = index.to_string() + OPERATOR_NS;
-//     let chain_id = ChainId::new(1);
-//     let genesis = storage_helper
-//         .genesis(chain_id, path)
-//         .unwrap();
-
-//     storage_helper
-//         .insert_waypoint(&local_ns, waypoint)
-//         .unwrap();
-
-//     let output = storage_helper
-//         .verify_genesis(&local_ns, genesis_path.path())
-//         .unwrap();
-//     assert_eq!(output.split("match").count(), 5, "Failed to verify genesis");
-
-//     let config = NodeConfig::default();
-//     config.consensus.safety_rules.service = SafetyRulesService::Thread;
-//     config.consensus.safety_rules.backend = self.secure_backend(&local_ns, "safety-rules");
-//     config.execution.backend = self.secure_backend(&local_ns, "execution");
-
-//     let backend = self.secure_backend(&local_ns, "safety-rules");
-//     config.base.waypoint = WaypointConfig::FromStorage(backend);
-//     config.execution.genesis = Some(genesis);
-//     config.execution.genesis_file_location = PathBuf::from("");
-// }

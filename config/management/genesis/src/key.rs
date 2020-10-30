@@ -84,10 +84,17 @@ pub struct OperatorKey {
 impl OperatorKey {
     pub fn execute(self) -> Result<Ed25519PublicKey, Error> {
         self.key.submit_key(
+            libra_global_constants::FULLNODE_NETWORK_KEY,
+            Some(libra_global_constants::FULLNODE_PEER_ID),
+        );
+        self.key.submit_key(
             libra_global_constants::OPERATOR_KEY,
             Some(libra_global_constants::OPERATOR_ACCOUNT),
         )
     }
+    // pub fn fullnode_key(self) -> Result<Ed25519PublicKey, Error> {
+
+    // }
 }
 
 #[derive(Debug, StructOpt)]
