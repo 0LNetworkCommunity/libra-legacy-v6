@@ -73,7 +73,7 @@ impl Files {
         network.mutual_authentication = true;
         network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
         
-        network.discovery_method = DiscoveryMethod::Onchain;
+        network.discovery_method = DiscoveryMethod::None;
         
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
         
