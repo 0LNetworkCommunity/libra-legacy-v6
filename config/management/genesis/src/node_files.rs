@@ -1,6 +1,6 @@
 use std::{path::PathBuf, fs};
 
-use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId};
+use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId, config::UpstreamConfig};
 use libra_global_constants::{FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
@@ -42,7 +42,6 @@ impl Files {
         // Get node configs template
         let mut config = NodeConfig::default();
         config.set_data_dir(output_dir.clone());
-
         // Create Genesis File
         let genesis_path = output_dir.join("genesis.blob");
         let _genesis = storage_helper
@@ -71,9 +70,14 @@ impl Files {
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
 
+        // network.mutual_authentication = true;
         network.discovery_method = DiscoveryMethod::Onchain;
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
         config.validator_network = Some(network);
+        
+        config.upstream = UpstreamConfig {
+            networks: vec!(NetworkId::Validator)
+        };
 
         // Consensus
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
