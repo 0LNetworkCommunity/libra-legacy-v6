@@ -7,6 +7,7 @@ use libra_management::{
     error::Error,
     secure_backend::{SecureBackend, SharedBackend},
 };
+use libra_types::PeerId;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -34,6 +35,7 @@ impl Key {
         &self,
         key_name: &'static str,
         account_name: Option<&'static str>,
+        x25519: bool,
     ) -> Result<Ed25519PublicKey, Error> {
         let config = self
             .config
@@ -49,8 +51,15 @@ impl Key {
             let key = validator_storage.ed25519_public_from_private(key_name)?;
 
             if let Some(account_name) = account_name {
-                let peer_id = libra_types::account_address::from_public_key(&key);
+                let peer_id;
+                if x25519 {
+                    let x25519_key = validator_storage.x25519_public_from_private(key_name)?;
+                    peer_id = PeerId::from_identity_public_key(x25519_key);
+                } else {
+                    peer_id = libra_types::account_address::from_public_key(&key);
+                }
                 validator_storage.set(account_name, peer_id)?;
+
             }
             key
         };
@@ -71,7 +80,7 @@ pub struct LibraRootKey {
 impl LibraRootKey {
     pub fn execute(self) -> Result<Ed25519PublicKey, Error> {
         self.key
-            .submit_key(libra_global_constants::LIBRA_ROOT_KEY, None)
+            .submit_key(libra_global_constants::LIBRA_ROOT_KEY, None, false)
     }
 }
 
@@ -83,13 +92,16 @@ pub struct OperatorKey {
 
 impl OperatorKey {
     pub fn execute(self) -> Result<Ed25519PublicKey, Error> {
+        // TODO: use: AccountAddress::from_identity_public_key for fullnode key.
         self.key.submit_key(
             libra_global_constants::FULLNODE_NETWORK_KEY,
             Some(libra_global_constants::FULLNODE_PEER_ID),
+            true
         );
         self.key.submit_key(
             libra_global_constants::OPERATOR_KEY,
             Some(libra_global_constants::OPERATOR_ACCOUNT),
+            false
         )
     }
     // pub fn fullnode_key(self) -> Result<Ed25519PublicKey, Error> {
@@ -105,7 +117,7 @@ pub struct OwnerKey {
 
 impl OwnerKey {
     pub fn execute(self) -> Result<Ed25519PublicKey, Error> {
-        self.key.submit_key(libra_global_constants::OWNER_KEY, None)
+        self.key.submit_key(libra_global_constants::OWNER_KEY, None, false)
     }
 }
 
@@ -118,7 +130,7 @@ pub struct TreasuryComplianceKey {
 impl TreasuryComplianceKey {
     pub fn execute(self) -> Result<Ed25519PublicKey, Error> {
         self.key
-            .submit_key(libra_global_constants::TREASURY_COMPLIANCE_KEY, None)
+            .submit_key(libra_global_constants::TREASURY_COMPLIANCE_KEY, None, false)
     }
 }
 
