@@ -96,7 +96,7 @@ module DualAttestation {
         human_name: vector<u8>,
     ) {
         Roles::assert_parent_vasp_or_designated_dealer(created);
-        Roles::assert_treasury_compliance(creator);
+        Roles::assert_libra_root(creator);
         assert(
             !exists<Credential>(Signer::address_of(created)),
             Errors::already_published(ECREDENTIAL)
@@ -480,7 +480,7 @@ module DualAttestation {
     /// Set the dual attestation limit to `micro_libra_limit`.
     /// Aborts if `tc_account` does not have the TreasuryCompliance role
     public fun set_microlibra_limit(tc_account: &signer, micro_lbr_limit: u64) acquires Limit {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert(exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::not_published(ELIMIT));
         borrow_global_mut<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()).micro_lbr_limit = micro_lbr_limit;
     }

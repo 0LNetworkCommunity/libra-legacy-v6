@@ -222,16 +222,16 @@ module Libra {
     /// Publishes the `BurnCapability` `cap` for the `CoinType` currency under `account`. `CoinType`
     /// must be a registered currency type. The caller must pass a treasury compliance account.
     public fun publish_burn_capability<CoinType>(
-        tc_account: &signer,
+        lr_account: &signer,
         cap: BurnCapability<CoinType>,
     ) {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(lr_account);
         assert_is_currency<CoinType>();
         assert(
-            !exists<BurnCapability<CoinType>>(Signer::address_of(tc_account)),
+            !exists<BurnCapability<CoinType>>(Signer::address_of(lr_account)),
             Errors::already_published(EBURN_CAPABILITY)
         );
-        move_to(tc_account, cap)
+        move_to(lr_account, cap)
     }
     spec fun publish_burn_capability {
         aborts_if !spec_is_currency<CoinType>();
@@ -446,7 +446,7 @@ module Libra {
     public fun create_preburn<CoinType>(
         tc_account: &signer
     ): Preburn<CoinType> {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert_is_currency<CoinType>();
         Preburn<CoinType> { to_burn: zero<CoinType>() }
     }
@@ -468,7 +468,7 @@ module Libra {
         tc_account: &signer
     ) acquires CurrencyInfo {
         Roles::assert_designated_dealer(account);
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert(!is_synthetic_currency<CoinType>(), Errors::invalid_argument(EIS_SYNTHETIC_CURRENCY));
         assert(!exists<Preburn<CoinType>>(Signer::address_of(account)), Errors::already_published(EPREBURN));
         move_to(account, create_preburn<CoinType>(tc_account))
@@ -906,13 +906,12 @@ module Libra {
     /// accounts.
     public fun register_SCS_currency<CoinType>(
         lr_account: &signer,
-        tc_account: &signer,
         to_lbr_exchange_rate: FixedPoint32,
         scaling_factor: u64,
         fractional_part: u64,
         currency_code: vector<u8>,
     ) {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(lr_account);
         let (mint_cap, burn_cap) =
             register_currency<CoinType>(
                 lr_account,
@@ -922,12 +921,12 @@ module Libra {
                 fractional_part,
                 currency_code,
             );
-        assert(
-            !exists<MintCapability<CoinType>>(Signer::address_of(tc_account)),
-            Errors::already_published(EMINT_CAPABILITY)
-        );
-        move_to(tc_account, mint_cap);
-        publish_burn_capability<CoinType>(tc_account, burn_cap);
+        // assert(
+        //     !exists<MintCapability<CoinType>>(Signer::address_of(tc_account)),
+        //     Errors::already_published(EMINT_CAPABILITY)
+        // );
+        move_to(lr_account, mint_cap);
+        publish_burn_capability<CoinType>(lr_account, burn_cap);
     }
 
     spec fun register_SCS_currency {
@@ -1054,7 +1053,7 @@ module Libra {
         tc_account: &signer,
         lbr_exchange_rate: FixedPoint32
     ) acquires CurrencyInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert_is_currency<FromCoinType>();
         let currency_info = borrow_global_mut<CurrencyInfo<FromCoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         currency_info.to_lbr_exchange_rate = lbr_exchange_rate;
@@ -1101,7 +1100,7 @@ module Libra {
         can_mint: bool,
         )
     acquires CurrencyInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert_is_currency<CoinType>();
         let currency_info = borrow_global_mut<CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         currency_info.can_mint = can_mint;

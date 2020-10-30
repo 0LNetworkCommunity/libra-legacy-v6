@@ -13,12 +13,12 @@ module Coin1 {
     /// Registers the `Coin1` cointype. This can only be called from genesis.
     public fun initialize(
         lr_account: &signer,
-        tc_account: &signer,
+        // tc_account: &signer,
     ) {
         LibraTimestamp::assert_genesis();
         Libra::register_SCS_currency<Coin1>(
             lr_account,
-            tc_account,
+            // tc_account,
             FixedPoint32::create_from_rational(1, 1), // exchange rate to GAS
             1000000, // scaling_factor = 10^6
             100,     // fractional_part = 10^2

@@ -167,16 +167,14 @@ pub fn encode_genesis_change_set(
 
 
     reconfigure(&mut session, &log_context);
-
-    if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-        .iter()
-        .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    {
-        create_and_initialize_testnet_minting(&mut session, &log_context, &treasury_compliance_key);
-    }
-
+    
+    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
+    //     .iter()
+    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
+    // {
+    //     create_and_initialize_testnet_minting(&mut session, &log_context, &treasury_compliance_key);
+    // }
     let effects_1 = session.finish().unwrap();
-
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
@@ -296,9 +294,7 @@ fn create_and_initialize_main_accounts(
         vec![],
         vec![
             Value::transaction_argument_signer_reference(root_libra_root_address),
-            Value::transaction_argument_signer_reference(tc_account_address),
             Value::vector_u8(libra_root_auth_key.to_vec()),
-            Value::vector_u8(treasury_compliance_auth_key.to_vec()),
             initial_allow_list,
             Value::bool(publishing_option.is_open_module),
             Value::vector_u8(instr_gas_costs),
@@ -335,7 +331,7 @@ fn create_and_initialize_testnet_minting(
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);
     let create_dd_script = encode_create_designated_dealer_script(
-        account_config::coin1_tmp_tag(),
+        account_config::lbr_type_tag(),
         0,
         account_config::testnet_dd_account_address(),
         genesis_auth_key.prefix().to_vec(),
@@ -344,13 +340,12 @@ fn create_and_initialize_testnet_minting(
     );
 
     let mint_max_coin1_tmp = transaction_builder::encode_tiered_mint_script(
-        account_config::coin1_tmp_tag(),
+        account_config::lbr_type_tag(),
         0,
         account_config::testnet_dd_account_address(),
         std::u64::MAX / 2,
         3,
     );
-
     // Create the DD account
     exec_script(
         session,
@@ -364,7 +359,7 @@ fn create_and_initialize_testnet_minting(
         account_config::treasury_compliance_account_address(),
         "DesignatedDealer",
         "update_tier",
-        vec![account_config::coin1_tmp_tag()],
+        vec![account_config::lbr_type_tag()],
         vec![
             Value::transaction_argument_signer_reference(
                 account_config::treasury_compliance_account_address(),
@@ -374,7 +369,6 @@ fn create_and_initialize_testnet_minting(
             Value::u64(std::u64::MAX),
         ],
     );
-
     // mint Coin1.
     let treasury_compliance_account_address = account_config::treasury_compliance_account_address();
     exec_script(
