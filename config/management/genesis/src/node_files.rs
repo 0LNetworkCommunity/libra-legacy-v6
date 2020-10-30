@@ -47,7 +47,7 @@ impl Files {
         let _genesis = storage_helper
             .genesis_gh(chain_id, &remote, &genesis_path)
             .unwrap();
-        config.execution.genesis_file_location = genesis_path;
+        config.execution.genesis_file_location = genesis_path.clone();
 
         // Create and save waypoint
         let waypoint = storage_helper
@@ -71,9 +71,12 @@ impl Files {
         );
 
         network.mutual_authentication = true;
-        network.seed_addrs = Seeds::new(genesis_path).get_network_peers_info().expect("Could not get seed peers");
+        network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
+        
         network.discovery_method = DiscoveryMethod::Onchain;
+        
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+        
         config.validator_network = Some(network);
         
         config.upstream = UpstreamConfig {

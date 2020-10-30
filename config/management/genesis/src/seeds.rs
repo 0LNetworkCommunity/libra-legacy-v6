@@ -61,26 +61,15 @@ impl Seeds {
           //TODO: skip own address?
             // vec_peers.push
             dbg!(info);
-            let seed_pubkey = info.config().consensus_public_key;
+            let seed_pubkey = info.config().consensus_public_key.clone();
             //NOTE: This usually expects a x25519 key
             let x25519 = PublicKey::from_ed25519_public_bytes(&seed_pubkey.to_bytes()).expect("Seed peers could not generate x25519 identitykey from ed25519 key provided");
             let peer_id = PeerId::from_identity_public_key(x25519);
 
-            let addr: NetworkAddress = info.config().validator_network_addresses.into();
-            
-            // .append_prod_protos(seed_pubkey, HANDSHAKE_VERSION);
-            // vec_peers.push(seed_addr);
-            seed_addr.insert(peer_id, vec!(addr));
+            let addr_vec = info.config().fullnode_network_addresses().expect("Get the Fullnode network address");
+            seed_addr.insert(peer_id, addr_vec);
         }
 
         Ok(seed_addr)
     }
   }
-
-
-    //   let seed_pubkey = libra_crypto::PrivateKey::public_key(&seed_config.identity_key());
-    // let seed_addr = seed_base_addr.append_prod_protos(seed_pubkey, HANDSHAKE_VERSION);
-
-    // let mut seed_addrs = SeedAddresses::default();
-    // seed_addrs.insert(seed_config.peer_id(), vec![seed_addr]);
-    // seed_addrs
