@@ -71,7 +71,7 @@ impl Files {
         );
 
         network.mutual_authentication = true;
-        network.seed_addrs = Seeds::new(genesis_path, namespace).get_network_peers_info().expect("Could not get seed peers");
+        network.seed_addrs = Seeds::new(genesis_path).get_network_peers_info().expect("Could not get seed peers");
         network.discovery_method = DiscoveryMethod::Onchain;
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
         config.validator_network = Some(network);
