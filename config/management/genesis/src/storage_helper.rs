@@ -79,11 +79,6 @@ impl StorageHelper {
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
         let keys = key_scheme(mnemonic);
         let mut storage = self.storage(namespace);
-
-        // TODO: remove these keys
-            //     storage
-            // .import_private_key(LIBRA_ROOT_KEY, child_3.get_private_key())
-            // .unwrap();
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
         storage
             .import_private_key(LIBRA_ROOT_KEY, Ed25519PrivateKey::generate(&mut rng))
@@ -92,10 +87,6 @@ impl StorageHelper {
         storage
             .import_private_key(TREASURY_COMPLIANCE_KEY, libra_root_key)
             .unwrap();
-        // storage
-        //     .import_private_key(TREASURY_COMPLIANCE_KEY, child_3.get_private_key())
-        //     .unwrap();
-
         storage
             .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
             .unwrap();
@@ -125,12 +116,12 @@ impl StorageHelper {
         encryptor.initialize().unwrap();
 
         // TODO: Use EncNetworkAddress instead of TEST_SHARED
-        encryptor
-            .add_key(
-            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
-            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
-            )
-            .unwrap();
+        // encryptor
+        //     .add_key(
+        //     libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+        //     libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+        //     )
+        //     .unwrap();
         // storage.set(EPOCH, Value::U64(0)).unwrap();
         // storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
         // storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();

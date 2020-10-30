@@ -69,7 +69,7 @@ impl Files {
         
         network.identity = Identity::from_storage(
             FULLNODE_NETWORK_KEY.to_string(),
-            OWNER_ACCOUNT.to_string(),
+            OPERATOR_ACCOUNT.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
 
