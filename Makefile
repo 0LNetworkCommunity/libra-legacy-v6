@@ -32,16 +32,22 @@ owner: init owner-init assign
 # for testing
 smoke:
 	make clear
+# eve is the "association"	
+	NS=eve make init root treasury layout
+# The OPERs initialize local accounts and submit pubkeys to github
 	NS=alice make init oper-init 
 	NS=bob make init oper-init
 
+# The OWNERS initialize local accounts and submit pubkeys to github, and *assign* an operator.
 	NS=carol OPER=alice make init owner-init assign
 	NS=dave OPER=bob make init owner-init assign
 
+# OPERs send signed transaction with configurations for *OWNER* account
 	NS=alice OWNER=carol make reg
 	NS=bob OWNER=dave make reg
 
-#use the namespace in the env variable to start.
+#Start
+# note: this uses the NS in local env to create files i.e. alice or bob
 	make genesis start
 
 #### GENESIS BACKEND SETUP ####
@@ -72,24 +78,29 @@ init:
 # 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 # 	--backend ${REMOTE}
 
-# Submits operator key to shared storage
+# OPER does this
+# Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-init:
 	cargo run -p libra-genesis-tool -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
+# OWNER does this
+# Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-init:
 	cargo run -p libra-genesis-tool -- owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
-## the owner does this step
+# OWNER does this
+# Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
 	cargo run -p libra-genesis-tool -- set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
-## the operator does this step
+# OPER does this
+# Submits signed validator registration transaction to github.
 reg:
 	cargo run -p libra-genesis-tool -- validator-config \
 	--owner-name ${OWNER} \
@@ -100,6 +111,7 @@ reg:
 	--shared-backend ${REMOTE}
 	
 
+## Helpers to verify the local state.
 verify:
 	cargo run -p libra-genesis-tool -- verify \
 	--validator-backend ${LOCAL}
