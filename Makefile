@@ -41,7 +41,8 @@ smoke:
 	NS=alice OWNER=carol make reg
 	NS=bob OWNER=dave make reg
 
-	NS=${NS} make genesis start
+#use the namespace in the env variable to start.
+	make genesis start
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
