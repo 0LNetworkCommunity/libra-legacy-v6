@@ -1,3 +1,4 @@
+use libra_crypto::x25519::PublicKey;
 use libra_management::error::Error;
 use executor::db_bootstrapper;
 use libra_config::config::{PersistableConfig, SeedAddresses};
@@ -26,33 +27,14 @@ pub struct Seeds {
     /// Path to genesis file to extract seed nodes
     #[structopt(long, verbatim_doc_comment)]
     pub genesis_path: PathBuf,
-    /// PeerId/AccountAddress of the namespace
-    #[structopt(long, verbatim_doc_comment)]
-    pub peer_id: PeerId
 }
 
 impl Seeds {
     pub fn new(genesis_path: PathBuf, peer_id: PeerId) -> Self {
       Self {
         genesis_path,
-        peer_id
       }
     }
-
-    // pub fn execute(self) -> Result<String, Error> {
-
-    //     // let seeds = self.get_seed_info();
-    //     let peers = self.get_network_peers_info();
-    //     seeds.unwrap()
-    //         .save_config("seed_peers.toml")
-    //         .expect("Unable to save seed peers config");
-
-    //     peers.unwrap()
-    //     .save_config("network_peers.toml")
-    //     .expect("Unable to save network peers config");
-
-    //     Ok("Wrote seed_peers.toml".to_string())
-    // }
 
     pub fn get_network_peers_info(&self)->Result<SeedAddresses, Error> {
         let db_path = TempPath::new();
@@ -84,10 +66,26 @@ impl Seeds {
 
         for info in info.iter() {
           //TODO: skip own address?
-          vec_peers.push(info.config().validator_network_addresses().unwrap());
+            // vec_peers.push
+            dbg!(info);
+            let seed_pubkey = info.config().consensus_public_key;
+            //NOTE: This usually expects a x25519 key
+            let x25519 = PublicKey::from_ed25519_public_bytes(seed_pubkey.to_bytes()).expect("Seed peers could not generate x25519 identitykey from ed25519 key provided");
+            let peer_id = PeerId::from_identity_public_key(x25519);
+
+            let seed_addr = seed_base_addr.append_prod_protos(seed_pubkey, HANDSHAKE_VERSION);
+            vec_peers.push(seed_addr);
+            seed_addr.insert(peer_id, vec_peers);
         }
-        seed_addr.insert(self.peer_id, vec_peers);
 
         Ok(seed_addr)
     }
   }
+
+
+    //   let seed_pubkey = libra_crypto::PrivateKey::public_key(&seed_config.identity_key());
+    // let seed_addr = seed_base_addr.append_prod_protos(seed_pubkey, HANDSHAKE_VERSION);
+
+    // let mut seed_addrs = SeedAddresses::default();
+    // seed_addrs.insert(seed_config.peer_id(), vec![seed_addr]);
+    // seed_addrs

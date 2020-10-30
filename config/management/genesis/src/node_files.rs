@@ -1,6 +1,6 @@
 use std::{path::PathBuf, fs};
 
-use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId, config::UpstreamConfig};
+use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, generator::build_seed_addrs, config::{Identity, WaypointConfig}, config::UpstreamConfig, network_id::NetworkId};
 use libra_global_constants::{FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
@@ -8,7 +8,7 @@ use libra_management::{
 use libra_network_address::NetworkAddress;
 use libra_types::chain_id::ChainId;
 use structopt::StructOpt;
-use crate::storage_helper::StorageHelper;
+use crate::{seeds::Seeds, storage_helper::StorageHelper};
 
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
@@ -70,7 +70,8 @@ impl Files {
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
 
-        // network.mutual_authentication = true;
+        network.mutual_authentication = true;
+        network.seed_addrs = Seeds::new(genesis_path, namespace).get_network_peers_info().expect("Could not get seed peers");
         network.discovery_method = DiscoveryMethod::Onchain;
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
         config.validator_network = Some(network);
