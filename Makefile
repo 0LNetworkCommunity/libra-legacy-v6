@@ -32,7 +32,7 @@ owner: init owner-init assign
 # for testing
 smoke:
 	make clear
-# eve is the "association"	
+# eve is the "association", set up the keys
 	NS=eve make init root treasury layout
 # The OPERs initialize local accounts and submit pubkeys to github
 	NS=alice make init oper-init 
@@ -46,7 +46,7 @@ smoke:
 	NS=alice OWNER=carol make reg
 	NS=bob OWNER=dave make reg
 
-#Start
+# Create configs and start
 # note: this uses the NS in local env to create files i.e. alice or bob
 	make genesis start
 
