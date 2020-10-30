@@ -68,7 +68,7 @@ impl Files {
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         
         network.identity = Identity::from_storage(
-            OPERATOR_KEY.to_string(),
+            OWNER_KEY.to_string(),
             OWNER_ACCOUNT.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
