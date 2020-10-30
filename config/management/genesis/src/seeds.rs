@@ -1,22 +1,15 @@
 use libra_crypto::x25519::PublicKey;
 use libra_management::error::Error;
-use executor::db_bootstrapper;
-use libra_config::config::{PersistableConfig, SeedAddresses};
+use libra_config::config::{SeedAddresses};
 use libra_temppath::TempPath;
-use libra_types::{account_config, account_state::AccountState, PeerId, on_chain_config::ValidatorSet, waypoint::Waypoint};
+use libra_types::{account_config, account_state::AccountState, PeerId, on_chain_config::ValidatorSet};
 use structopt::StructOpt;
 
 use libra_network_address::NetworkAddress;
-use libra_vm::LibraVM;
-use libradb::LibraDB;
 use std::{
     convert::TryFrom,
-    fs::File,
-    io::Read,
-    path::{Path, PathBuf},
+    path::{PathBuf},
 };
-
-use storage_interface::DbReaderWriter;
 
 use crate::verify::compute_genesis;
 
