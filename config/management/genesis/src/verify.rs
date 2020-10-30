@@ -107,7 +107,7 @@ fn write_x25519_key(storage: &Storage, buffer: &mut String, key: &'static str) {
         .x25519_public_from_private(key)
         .map(|v| v.to_string())
         .unwrap_or_else(|e| e.to_string());
-    writeln!(buffer, "{} - {}", key, value).unwrap();
+    writeln!(buffer, "{} x25519 - {}", key, value).unwrap();
 }
 
 fn write_string(storage: &Storage, buffer: &mut String, key: &'static str) {
