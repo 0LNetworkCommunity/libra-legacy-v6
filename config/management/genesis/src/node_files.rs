@@ -69,19 +69,16 @@ impl Files {
             FULLNODE_PEER_ID.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
+        network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
+        
+        network.discovery_method = DiscoveryMethod::None;
         network.mutual_authentication = true;
         network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
         
-        network.discovery_method = DiscoveryMethod::None;
-        
-        network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
-        
-        config.validator_network = Some(network);
-        
-        config.upstream = UpstreamConfig {
-            networks: vec!(NetworkId::Validator)
-        };
+        config.validator_network = Some(network.clone());
+        config.full_node_networks = vec!(network);
+        config.upstream = UpstreamConfig { networks: vec!(NetworkId::Validator)};
 
         // Consensus
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
