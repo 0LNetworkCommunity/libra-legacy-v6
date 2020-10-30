@@ -72,13 +72,35 @@ impl Files {
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
         
-        network.discovery_method = DiscoveryMethod::None;
-        network.mutual_authentication = true;
-        network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
+        network.discovery_method = DiscoveryMethod::Onchain;
+        network.mutual_authentication = false;
+        // network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
         
         config.validator_network = Some(network.clone());
-        config.full_node_networks = vec!(network);
-        config.upstream = UpstreamConfig { networks: vec!(NetworkId::Validator)};
+        // config.full_node_networks = vec!(network);
+        // config.upstream = UpstreamConfig { networks: vec!(NetworkId::Validator)};
+
+        // Brute force matrix
+        //
+        //        // VN // OC // FN // Mut // Seed // Upstream
+        // ======================================================
+        //DEFAULT // Y  //  Y  //  N //  N  //  N //   N 
+        // -> Connects but drops with on "stale" connection  
+        //  ALL   // Y  //  Y  //  Y //  Y  //  Y //   Y  
+        // -> "Set NetworkId::Validator network for a non-validator network"
+        //        // Y  //  N  //  Y //  Y  //  Y //   Y 
+        // -> Connects but drops with on "stale" connection 
+        //        // Y  //  N  //  N //  Y  //  Y //   Y 
+        // -> Connects but drops with on "stale" connection 
+        //        // Y  //  N  //  N //  N  //  Y //   Y 
+        // -> Connects but drops with on "stale" connection 
+        //        // Y  //  N  //  N //  N  //  Y //   Y 
+        // -> Connects but drops with on "stale" connection 
+        //        // Y  //  N  //  N //  N  //  N //   Y 
+        // -> Connects but drops with on "stale" connection 
+        //        // Y  //  N  //  N //  N  //  N //   N 
+ 
+
 
         // Consensus
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
