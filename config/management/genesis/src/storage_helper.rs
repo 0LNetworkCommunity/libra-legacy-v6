@@ -103,17 +103,18 @@ impl StorageHelper {
             .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
             .unwrap();
         storage
-            .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
-            .unwrap();
-        storage
-            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
-            .unwrap();
-        storage
             .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
             .unwrap();
         storage
             .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
             .unwrap();
+        storage
+            .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
+            .unwrap();
+
         
         storage
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
