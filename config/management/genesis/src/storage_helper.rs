@@ -54,7 +54,7 @@ impl StorageHelper {
     }
 
     //////// 0L ////////
-    pub fn new_with_path(path: PathBuf, namespace: &str) -> Self {
+    pub fn new_with_path(path: PathBuf) -> Self {
         let path = libra_temppath::TempPath::new_with_dir(path);
         // dbg!(&path);
         path.create_as_file().expect("Failed on create_as_file");
@@ -63,7 +63,7 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
-    pub fn get_with_path(path: PathBuf, namespace: &str) -> Self {
+    pub fn get_with_path(path: PathBuf) -> Self {
         let path = libra_temppath::TempPath::new_with_dir(path);
         // dbg!(&path);
         // path.create_as_file().expect("Failed on create_as_file");

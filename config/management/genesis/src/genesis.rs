@@ -7,11 +7,7 @@ use libra_global_constants::{LIBRA_ROOT_KEY, OPERATOR_KEY, OWNER_KEY};
 use libra_management::{
     config::ConfigPath, constants, error::Error, secure_backend::SharedBackend,
 };
-use libra_types::{
-    account_address,
-    chain_id::ChainId,
-    transaction::{Transaction, TransactionPayload},
-};
+use libra_types::{account_address, chain_id::ChainId, transaction::{Transaction, TransactionArgument, TransactionPayload}};
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
@@ -113,6 +109,9 @@ impl Genesis {
             let operator_account = account_address::from_public_key(&operator_key);
             dbg!(&operator_account);
             dbg!(&operator_name);
+            // dbg!(&operator_name);
+            dbg!(TransactionArgument::U8Vector(operator_name.as_bytes().to_vec()));
+
 
             let set_operator_script = transaction_builder::encode_set_validator_operator_script(
                 operator_name.as_bytes().to_vec(),
@@ -139,8 +138,8 @@ impl Genesis {
         let config = self.config()?;
         let mut registrations = Vec::new();
 
-        for operator in layout.operators.iter() {
-            let operator_storage = config.shared_backend_with_namespace(operator.into());
+        for operator_name in layout.operators.iter() {
+            let operator_storage = config.shared_backend_with_namespace(operator_name.into());
             let operator_key = operator_storage.ed25519_key(OPERATOR_KEY)?;
             let validator_config_tx = operator_storage.transaction(constants::VALIDATOR_CONFIG)?;
             let validator_config_tx = validator_config_tx.as_signed_user_txn().unwrap().payload();
@@ -154,7 +153,7 @@ impl Genesis {
             let operator_account = account_address::from_public_key(&operator_key);
             registrations.push((
                 operator_key,
-                operator.as_bytes().to_vec(),
+                operator_name.as_bytes().to_vec(),
                 validator_config_tx,
                 operator_account,
                 GenesisMiningProof::default()

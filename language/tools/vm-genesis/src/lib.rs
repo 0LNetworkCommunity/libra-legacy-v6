@@ -456,6 +456,9 @@ fn create_and_initialize_owners_operators(
                 operator_name.clone(),
             );
         dbg!(&operator_account);
+        dbg!(&operator_name);
+        dbg!(TransactionArgument::U8Vector(operator_name.to_vec()));
+
         exec_script(
             session,
             log_context,
@@ -468,10 +471,13 @@ fn create_and_initialize_owners_operators(
 
 
     // Authorize an operator for a validator/owner
-    for (_owner_key, owner_name, op_assignment, _account , _genesis_proof) in operator_assignments {
+    for (_owner_key, owner_name, op_assignment_script, _op_account , _genesis_proof) in operator_assignments {
         let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         dbg!(owner_address);
-        exec_script(session, log_context, owner_address, op_assignment);
+        // dbg!(account);
+        dbg!(op_assignment_script);
+
+        exec_script(session, log_context, owner_address, op_assignment_script);
     }
 
     println!("3 ======== OP sends network info to Owner config");

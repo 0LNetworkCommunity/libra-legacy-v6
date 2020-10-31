@@ -34,7 +34,7 @@ impl Files {
     pub fn execute(self) -> Result<String, Error> {
         let output_dir = self.data_path;
         let chain_id = ChainId::new(1);
-        let storage_helper = StorageHelper::get_with_path(output_dir.clone(), &self.namespace);
+        let storage_helper = StorageHelper::get_with_path(output_dir.clone());
         let remote = StorageHelper::remote_string(&self.namespace, output_dir.to_str().unwrap());
         
         // let test = Seeds::new(output_dir.clone().join("genesis.blob").into()).get_network_peers_info();

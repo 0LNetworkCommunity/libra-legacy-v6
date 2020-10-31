@@ -88,9 +88,6 @@ impl OperatorKey {
             Some(libra_global_constants::OPERATOR_ACCOUNT),
         )
     }
-    // pub fn fullnode_key(self) -> Result<Ed25519PublicKey, Error> {
-
-    // }
 }
 
 #[derive(Debug, StructOpt)]
