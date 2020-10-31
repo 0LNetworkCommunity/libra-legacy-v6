@@ -1,4 +1,4 @@
-owners = ["alice"]
-operators = ["alice-oper"]
+owners = ["alice", "bob"]
+operators = ["alice-oper", "bob-oper"]
 libra_root = "root"
 treasury_compliance = "root"

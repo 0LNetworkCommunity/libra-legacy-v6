@@ -34,27 +34,24 @@ smoke:
 	make clear
 
 #initialize the OWNER account
-	NS=alice make init
-
+	NS=${NS} make init
 # root is the "association", set up the keys
 	NS=root make root treasury layout
 # The OPERs initialize local accounts and submit pubkeys to github
-	NS=alice-oper make oper-init
+	NS=${NS}-oper make oper-init
 
 # The OWNERS initialize local accounts and submit pubkeys to github, a
-	NS=alice make owner-init 
+	NS=${NS} make owner-init 
 
 # OWNER *assign* an operator.
-	NS=alice OPER=alice-oper make assign
-# NS=dave OPER=bob make init owner-init assign
+	NS=${NS} OPER=${NS}-oper make assign
 
 # OPERs send signed transaction with configurations for *OWNER* account
-	NS=alice-oper OWNER=alice make reg
-# NS=bob OWNER=dave make reg
+	NS=${NS}-oper OWNER=${NS} make reg
 
 # Create configs and start
 # note: this uses the NS in local env to create files i.e. alice or bob
-	NS=alice-oper make genesis start
+	NS=${NS}-oper make genesis start
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
