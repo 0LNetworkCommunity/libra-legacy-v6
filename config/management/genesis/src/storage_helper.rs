@@ -102,7 +102,7 @@ impl StorageHelper {
             .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
             .unwrap();
         storage
-            .import_private_key(EXECUTION_KEY, keys.child_4_consensus.get_private_key())
+            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
             .unwrap();
         storage
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
