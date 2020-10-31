@@ -1,7 +1,7 @@
 use std::{path::PathBuf, fs};
 
 use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, config::UpstreamConfig, network_id::NetworkId};
-use libra_global_constants::{FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID};
+use libra_global_constants::{FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID, OWNER_KEY};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
 };
@@ -64,16 +64,15 @@ impl Files {
         // Set network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         
+        network.discovery_method = DiscoveryMethod::Onchain;
+        network.mutual_authentication = true;
         network.identity = Identity::from_storage(
             FULLNODE_NETWORK_KEY.to_string(),
-            FULLNODE_PEER_ID.to_string(),
+            OWNER_KEY.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
-        
-        network.discovery_method = DiscoveryMethod::Onchain;
-        network.mutual_authentication = false;
         // network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
         
         config.validator_network = Some(network.clone());
