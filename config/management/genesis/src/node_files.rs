@@ -64,6 +64,7 @@ impl Files {
         // Set network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
         
+        // NOTE: Using configs as described in cluster tests: testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
         network.discovery_method = DiscoveryMethod::Onchain;
         network.mutual_authentication = true;
         network.identity = Identity::from_storage(
@@ -73,34 +74,18 @@ impl Files {
         );
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
+
+        config.validator_network = Some(network.clone());
+        
+        // TODO: Set a fullnode network key for the fullnodes which can connect to this validator.
+        // config.full_node_networks = vec!(network);
+
+        // NOTE: for future reference, "upstream" is not necessary for validator settings.
+        // config.upstream = UpstreamConfig { networks: vec!(NetworkId::Validator)};
+        
+        // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
         // network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
         
-        config.validator_network = Some(network.clone());
-        // config.full_node_networks = vec!(network);
-        // config.upstream = UpstreamConfig { networks: vec!(NetworkId::Validator)};
-
-        // Brute force matrix
-        //
-        //        // VN // OC // FN // Mut // Seed // Upstream
-        // ======================================================
-        //DEFAULT // Y  //  Y  //  N //  N  //  N //   N 
-        // -> Connects but drops with on "stale" connection  
-        //  ALL   // Y  //  Y  //  Y //  Y  //  Y //   Y  
-        // -> "Set NetworkId::Validator network for a non-validator network"
-        //        // Y  //  N  //  Y //  Y  //  Y //   Y 
-        // -> Connects but drops with on "stale" connection 
-        //        // Y  //  N  //  N //  Y  //  Y //   Y 
-        // -> Connects but drops with on "stale" connection 
-        //        // Y  //  N  //  N //  N  //  Y //   Y 
-        // -> Connects but drops with on "stale" connection 
-        //        // Y  //  N  //  N //  N  //  Y //   Y 
-        // -> Connects but drops with on "stale" connection 
-        //        // Y  //  N  //  N //  N  //  N //   Y 
-        // -> Connects but drops with on "stale" connection 
-        //        // Y  //  N  //  N //  N  //  N //   N 
- 
-
-
         // Consensus
         config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
         
