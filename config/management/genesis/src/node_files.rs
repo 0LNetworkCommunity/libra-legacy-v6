@@ -68,7 +68,7 @@ impl Files {
         network.discovery_method = DiscoveryMethod::Onchain;
         network.mutual_authentication = true;
         network.identity = Identity::from_storage(
-            FULLNODE_NETWORK_KEY.to_string(),
+            VALIDATOR_NETWORK_KEY.to_string(),
             OWNER_ACCOUNT.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
