@@ -68,7 +68,7 @@ impl Files {
         network.mutual_authentication = true;
         network.identity = Identity::from_storage(
             FULLNODE_NETWORK_KEY.to_string(),
-            OWNER_KEY.to_string(),
+            OWNER_ACCOUNT.to_string(),
             SecureBackend::OnDiskStorage(disk_storage.clone()),
         );
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
