@@ -87,7 +87,7 @@ impl StorageHelper {
             .import_private_key(TREASURY_COMPLIANCE_KEY, libra_root_key)
             .unwrap();
         storage
-            .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
+            .import_private_key(OWNER_KEY, keys.child_2_val_network.get_private_key())
             .unwrap();
         storage
             .import_private_key(OPERATOR_KEY, keys.child_0_owner.get_private_key())
