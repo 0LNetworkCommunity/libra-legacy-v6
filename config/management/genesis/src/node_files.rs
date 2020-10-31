@@ -1,7 +1,7 @@
 use std::{path::PathBuf, fs};
 
 use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, config::UpstreamConfig, network_id::NetworkId};
-use libra_global_constants::{FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID, OWNER_KEY};
+use libra_global_constants::{FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID, OWNER_ACCOUNT, OWNER_KEY};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
 };
