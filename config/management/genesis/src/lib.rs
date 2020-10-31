@@ -14,7 +14,7 @@ mod waypoint;
 //////// 0L ////////
 mod init;
 mod node_files;
-mod seeds;
+// mod seeds;
 ///////////////////
 #[cfg(any(test, feature = "testing"))]
 pub mod config_builder;

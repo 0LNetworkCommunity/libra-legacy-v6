@@ -4,8 +4,6 @@ use libra_config::config::{SeedAddresses};
 use libra_temppath::TempPath;
 use libra_types::{account_config, account_state::AccountState, PeerId, on_chain_config::ValidatorSet};
 use structopt::StructOpt;
-
-use libra_network_address::NetworkAddress;
 use std::{
     convert::TryFrom,
     path::{PathBuf},
@@ -13,6 +11,8 @@ use std::{
 
 use crate::verify::compute_genesis;
 
+
+// NOTE: Deprecated for use on validator config. Kept here for reference.
 
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
