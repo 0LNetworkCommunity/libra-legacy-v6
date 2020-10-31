@@ -96,7 +96,7 @@ impl StorageHelper {
             .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
             .unwrap();
         storage
-            .import_private_key(FULLNODE_NETWORK_KEY, keys.child_2_val_network.get_private_key())
+            .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
             .unwrap();
         storage
             .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
