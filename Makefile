@@ -13,7 +13,7 @@ NODE_ENV = stage
 endif
 
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NS}'
-LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.${NS}.json;namespace=${NS}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NS}'
 
 ifndef OWNER
 OWNER = alice
@@ -32,19 +32,22 @@ owner: init owner-init assign
 # for testing
 smoke:
 	make clear
+	NS=alice make init
+
 # eve is the "association", set up the keys
-	NS=eve make init root treasury layout
+	NS=root make root treasury layout
 # The OPERs initialize local accounts and submit pubkeys to github
-	NS=alice make init oper-init 
-	NS=bob make init oper-init
+	NS=alice-oper make oper-init
+
+# NS=bob make init oper-init
 
 # The OWNERS initialize local accounts and submit pubkeys to github, and *assign* an operator.
-	NS=carol OPER=alice make init owner-init assign
-	NS=dave OPER=bob make init owner-init assign
+	NS=alice OPER=alice-test make owner-init assign
+	# NS=dave OPER=bob make init owner-init assign
 
 # OPERs send signed transaction with configurations for *OWNER* account
 	NS=alice OWNER=carol make reg
-	NS=bob OWNER=dave make reg
+	# NS=bob OWNER=dave make reg
 
 # Create configs and start
 # note: this uses the NS in local env to create files i.e. alice or bob

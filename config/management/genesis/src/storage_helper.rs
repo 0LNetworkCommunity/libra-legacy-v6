@@ -5,10 +5,7 @@
 
 use crate::command::Command;
 use consensus_types::safety_data::SafetyData;
-use libra_crypto::{
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
-    Uniform,
-};
+use libra_crypto::{Uniform, ValidCryptoMaterialStringExt, ed25519::{Ed25519PrivateKey, Ed25519PublicKey}};
 use libra_global_constants::{
     CONSENSUS_KEY, EXECUTION_KEY, FULLNODE_NETWORK_KEY, LIBRA_ROOT_KEY, OPERATOR_KEY, OWNER_KEY,
     SAFETY_DATA, TREASURY_COMPLIANCE_KEY, VALIDATOR_NETWORK_KEY, WAYPOINT,
@@ -58,7 +55,7 @@ impl StorageHelper {
 
     //////// 0L ////////
     pub fn new_with_path(path: PathBuf, namespace: &str) -> Self {
-        let path = libra_temppath::TempPath::new_with_dir(path, namespace);
+        let path = libra_temppath::TempPath::new_with_dir(path);
         // dbg!(&path);
         path.create_as_file().expect("Failed on create_as_file");
         File::create(path.path()).expect("Could not create file");
@@ -67,7 +64,7 @@ impl StorageHelper {
 
     ///////// 0L  /////////
     pub fn get_with_path(path: PathBuf, namespace: &str) -> Self {
-        let path = libra_temppath::TempPath::new_with_dir(path, namespace);
+        let path = libra_temppath::TempPath::new_with_dir(path);
         // dbg!(&path);
         // path.create_as_file().expect("Failed on create_as_file");
         // File::create(path.path()).expect("Could not create file");
@@ -77,39 +74,46 @@ impl StorageHelper {
     ///////// 0L  /////////
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
         let keys = key_scheme(mnemonic);
-        let mut storage = self.storage(namespace);
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
-        storage
-            .import_private_key(LIBRA_ROOT_KEY, Ed25519PrivateKey::generate(&mut rng))
+        let mut storage_root = self.storage("root".to_owned());
+        let mut storage_owner = self.storage(namespace.clone());
+        let mut storage_oper = self.storage(namespace.clone() + "-oper");
+
+        // let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
+        let dummy_root = Ed25519PrivateKey::from_encoded_string("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
+
+        storage_root
+            .import_private_key(LIBRA_ROOT_KEY, dummy_root.clone())
             .unwrap();
-        let libra_root_key = storage.export_private_key(LIBRA_ROOT_KEY).unwrap();
-        storage
-            .import_private_key(TREASURY_COMPLIANCE_KEY, libra_root_key)
+        // let libra_root_key = storage_owner.export_private_key(LIBRA_ROOT_KEY).unwrap();
+        storage_root
+            .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
             .unwrap();
-        storage
+
+        
+        storage_owner
             .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
             .unwrap();
-        storage
+        storage_oper
             .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
             .unwrap();
-        storage
+        storage_oper
             .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
             .unwrap();
-        storage
+        storage_oper
             .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
             .unwrap();
-        storage
+        storage_oper
             .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
             .unwrap();
-        storage
+        storage_oper
             .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
             .unwrap();
-        storage
+        storage_oper
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
             .unwrap();
-        storage.set(WAYPOINT, Waypoint::default()).unwrap();
+        storage_oper.set(WAYPOINT, Waypoint::default()).unwrap();
         
-        let mut encryptor = libra_network_address_encryption::Encryptor::new(storage);
+        let mut encryptor = libra_network_address_encryption::Encryptor::new(storage_oper);
         encryptor.initialize().unwrap();
 
         // TODO: Use EncNetworkAddress instead of TEST_SHARED

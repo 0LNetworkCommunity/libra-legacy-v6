@@ -58,7 +58,7 @@ impl Files {
             .unwrap();
         let mut disk_storage = OnDiskStorageConfig::default();
         disk_storage.set_data_dir(output_dir.clone());
-        disk_storage.path = output_dir.clone().join(format!("key_store.{}.json", &self.namespace));
+        disk_storage.path = output_dir.clone().join("key_store.json");
         disk_storage.namespace = Some(self.namespace);
 
         // Set network configs

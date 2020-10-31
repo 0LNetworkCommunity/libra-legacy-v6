@@ -1,4 +1,4 @@
 owners = ["alice"]
 operators = ["alice"]
-libra_root = "eve"
-treasury_compliance = "eve"
+libra_root = "root"
+treasury_compliance = "root"
