@@ -80,6 +80,42 @@ module ValidatorConfig {
             with Errors::ALREADY_PUBLISHED;
     }
 
+    //////// 0L ////////
+    /// Publishes a mostly empty ValidatorConfig struct. Eventually, it
+    /// will have critical info such as keys, network addresses for validators,
+    /// and the address of the validator operator.
+    /// Permissions: PUBLIC, ANYONE, SIGNER
+    /// Needs to be a signer, is called from LibraAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
+    public fun publish_with_proof(
+        validator_account: &signer,
+        human_name: vector<u8>,
+    ) {
+        LibraTimestamp::assert_operating();
+        Roles::assert_validator(validator_account);
+        assert(
+            !exists<ValidatorConfig>(Signer::address_of(validator_account)),
+            Errors::already_published(EVALIDATOR_CONFIG)
+        );
+        move_to(validator_account, ValidatorConfig {
+            config: Option::none(),
+            operator_account: Option::none(),
+            human_name,
+        });
+    }
+
+    spec fun publish {
+        include PublishWProofAbortsIf {validator_addr: Signer::spec_address_of(validator_account)};
+        ensures exists_config(Signer::spec_address_of(validator_account));
+    }
+
+    spec schema PublishWProofAbortsIf {
+        validator_addr: address;
+        include LibraTimestamp::AbortsIfNotOperating;
+        include Roles::AbortsIfNotValidator{validator_addr: validator_addr};
+        aborts_if exists_config(validator_addr)
+            with Errors::ALREADY_PUBLISHED;
+    }
+
     /// Returns true if a ValidatorConfig resource exists under addr.
     fun exists_config(addr: address): bool {
         exists<ValidatorConfig>(addr)
@@ -219,6 +255,8 @@ module ValidatorConfig {
         include AbortsIfNoValidatorConfig{addr: validator_addr};
         aborts_if !Signature::ed25519_validate_pubkey(consensus_pubkey) with Errors::INVALID_ARGUMENT;
     }
+
+
 
     ///////////////////////////////////////////////////////////////////////////
     // Publicly callable APIs: getters
