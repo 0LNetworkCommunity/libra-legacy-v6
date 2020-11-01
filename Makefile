@@ -30,29 +30,30 @@ oper: init oper-init
 owner: init owner-init assign
 
 # for testing
-smoke:
-	make clear
-
-#initialize the OWNER account
-	NS=${NS} make init
+smoke-init:
 # root is the "association", set up the keys
 	NS=root make root treasury layout
+smoke-reg:
+# note: this uses the NS in local env to create files i.e. alice or bob
+
+# as a operator/owner pair.
+	make clear
+#initialize the OWNER account
+	NS=${NS} make init
 # The OPERs initialize local accounts and submit pubkeys to github
 	NS=${NS}-oper make oper-init
-
 # The OWNERS initialize local accounts and submit pubkeys to github, a
 	NS=${NS} make owner-init 
-
 # OWNER *assign* an operator.
 	NS=${NS} OPER=${NS}-oper make assign
-
-	echo ${IP}
 # OPERs send signed transaction with configurations for *OWNER* account
 	NS=${NS}-oper OWNER=${NS} IP=${IP} make reg
-
-# Create configs and start
-# note: this uses the NS in local env to create files i.e. alice or bob
+smoke-gen:
 	NS=${NS}-oper make genesis start
+smoke:
+	make smoke-reg
+# Create configs and start
+	make smoke-gen
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
