@@ -132,9 +132,7 @@ genesis:
 	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
-	--namespace ${NS} \
-	--validator-address "/ip4/${IP}/tcp/6180"
-# TODO: Remvoe validator-address above
+	--namespace ${NS}
 
 
 # gen:

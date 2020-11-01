@@ -5,7 +5,6 @@ use libra_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
 };
-use libra_network_address::NetworkAddress;
 use libra_types::chain_id::ChainId;
 use structopt::StructOpt;
 use crate::{storage_helper::StorageHelper};
@@ -19,8 +18,6 @@ pub struct Files {
     backend: ValidatorBackend,
     #[structopt(long)]
     namespace: String,
-    #[structopt(long)]
-    _validator_address: NetworkAddress,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
