@@ -36,7 +36,7 @@ module TransactionFee {
      }
     spec fun initialize {
         include LibraTimestamp::AbortsIfNotGenesis;
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
         include AddTxnFeeCurrencyAbortsIf<GAS>;
         ensures is_initialized();
         ensures spec_transaction_fee<GAS>().balance.value == 0;
@@ -56,19 +56,19 @@ module TransactionFee {
     }
 
     /// Sets ups the needed transaction fee state for a given `CoinType` currency by
-    /// (1) configuring `tc_account` to accept `CoinType`
-    /// (2) publishing a wrapper of the `Preburn<CoinType>` resource under `tc_account`
-    public fun add_txn_fee_currency<CoinType>(tc_account: &signer) {
+    /// (1) configuring `lr_account` to accept `CoinType`
+    /// (2) publishing a wrapper of the `Preburn<CoinType>` resource under `lr_account`
+    public fun add_txn_fee_currency<CoinType>(lr_account: &signer) {
         Libra::assert_is_currency<CoinType>();
         assert(
             !exists<TransactionFee<CoinType>>(CoreAddresses::TREASURY_COMPLIANCE_ADDRESS()),
             Errors::already_published(ETRANSACTION_FEE)
         );
         move_to(
-            tc_account,
+            lr_account,
             TransactionFee<CoinType> {
                 balance: Libra::zero(),
-                preburn: Libra::create_preburn(tc_account)
+                preburn: Libra::create_preburn(lr_account)
             }
         )
     }
@@ -95,10 +95,10 @@ module TransactionFee {
     /// If the `CoinType` is LBR, it unpacks the coin and preburns the
     /// underlying fiat.
     public fun burn_fees<CoinType>(
-        tc_account: &signer,
+        lr_account: &signer,
     ) acquires TransactionFee {
         LibraTimestamp::assert_operating();
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_libra_root(lr_account);
         assert(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
         let tc_address = CoreAddresses::TREASURY_COMPLIANCE_ADDRESS();
         if (LBR::is_lbr<CoinType>()) {
@@ -109,7 +109,7 @@ module TransactionFee {
             // extract fees
             let fees = borrow_global_mut<TransactionFee<CoinType>>(tc_address);
             let coin = Libra::withdraw_all(&mut fees.balance);
-            let burn_cap = Libra::remove_burn_capability<CoinType>(tc_account);
+            let burn_cap = Libra::remove_burn_capability<CoinType>(lr_account);
             // burn
             Libra::burn_now(
                 coin,
@@ -117,13 +117,13 @@ module TransactionFee {
                 tc_address,
                 &burn_cap
             );
-            Libra::publish_burn_capability(tc_account, burn_cap);
+            Libra::publish_burn_capability(lr_account, burn_cap);
         }
     }
 
     spec fun burn_fees {
         /// Must abort if the account does not have the TreasuryCompliance role [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
 
         include LibraTimestamp::AbortsIfNotOperating;
         aborts_if !is_coin_initialized<CoinType>() with Errors::NOT_PUBLISHED;
@@ -139,21 +139,21 @@ module TransactionFee {
     ///
     /// # Specification of the case where burn type is LBR.
     spec schema BurnFeesLBR {
-        tc_account: signer;
+        lr_account: signer;
         aborts_if true with Errors::INVALID_STATE;
     }
     /// # Specification of the case where burn type is not LBR.
     spec schema BurnFeesNotLBR<CoinType> {
-        tc_account: signer;
+        lr_account: signer;
         /// Must abort if the account does not have BurnCapability [[H3]][PERMISSION].
-        include Libra::AbortsIfNoBurnCapability<CoinType>{account: tc_account};
+        include Libra::AbortsIfNoBurnCapability<CoinType>{account: lr_account};
 
         let fees = spec_transaction_fee<CoinType>();
         include Libra::BurnNowAbortsIf<CoinType>{coin: fees.balance, preburn: fees.preburn};
 
-        /// tc_account retrieves BurnCapability [[H3]][PERMISSION].
+        /// lr_account retrieves BurnCapability [[H3]][PERMISSION].
         /// BurnCapability is not transferrable [[J3]][PERMISSION].
-        ensures exists<Libra::BurnCapability<CoinType>>(Signer::spec_address_of(tc_account));
+        ensures exists<Libra::BurnCapability<CoinType>>(Signer::spec_address_of(lr_account));
     }
 
     spec module {} // Switch documentation context to module level.

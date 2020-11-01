@@ -238,15 +238,15 @@ module Libra {
         include PublishBurnCapAbortsIfs<CoinType>;
     }
     spec schema PublishBurnCapAbortsIfs<CoinType> {
-        tc_account: &signer;
-        /// Must abort if tc_account does not have the TreasuryCompliance role.
+        lr_account: &signer;
+        /// Must abort if lr_account does not have the TreasuryCompliance role.
         /// Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
-        aborts_if exists<BurnCapability<CoinType>>(Signer::spec_address_of(tc_account)) with Errors::ALREADY_PUBLISHED;
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
+        aborts_if exists<BurnCapability<CoinType>>(Signer::spec_address_of(lr_account)) with Errors::ALREADY_PUBLISHED;
     }
     spec schema PublishBurnCapEnsures<CoinType> {
-        tc_account: &signer;
-        ensures exists<BurnCapability<CoinType>>(Signer::spec_address_of(tc_account));
+        lr_account: &signer;
+        ensures exists<BurnCapability<CoinType>>(Signer::spec_address_of(lr_account));
     }
 
     /// Mints `amount` of currency. The `account` must hold a
@@ -444,9 +444,9 @@ module Libra {
 
     /// Create a `Preburn<CoinType>` resource
     public fun create_preburn<CoinType>(
-        tc_account: &signer
+        lr_account: &signer
     ): Preburn<CoinType> {
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_libra_root(lr_account);
         assert_is_currency<CoinType>();
         Preburn<CoinType> { to_burn: zero<CoinType>() }
     }
@@ -454,8 +454,8 @@ module Libra {
         include CreatePreburnAbortsIf<CoinType>;
     }
     spec schema CreatePreburnAbortsIf<CoinType> {
-        tc_account: signer;
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        lr_account: signer;
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
         include AbortsIfNoCurrency<CoinType>;
     }
 
@@ -465,13 +465,13 @@ module Libra {
     /// this resource for the designated dealer.
     public fun publish_preburn_to_account<CoinType>(
         account: &signer,
-        tc_account: &signer
+        lr_account: &signer
     ) acquires CurrencyInfo {
         Roles::assert_designated_dealer(account);
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_libra_root(lr_account);
         assert(!is_synthetic_currency<CoinType>(), Errors::invalid_argument(EIS_SYNTHETIC_CURRENCY));
         assert(!exists<Preburn<CoinType>>(Signer::address_of(account)), Errors::already_published(EPREBURN));
-        move_to(account, create_preburn<CoinType>(tc_account))
+        move_to(account, create_preburn<CoinType>(lr_account))
     }
     spec fun publish_preburn_to_account {
         modifies global<Preburn<CoinType>>(Signer::spec_address_of(account));
@@ -481,7 +481,7 @@ module Libra {
         /// Preburn is published under the DesignatedDealer account.
         ensures exists<Preburn<CoinType>>(Signer::spec_address_of(account));
 
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
         include AbortsIfNoCurrency<CoinType>;
         aborts_if is_synthetic_currency<CoinType>() with Errors::INVALID_ARGUMENT;
         aborts_if exists<Preburn<CoinType>>(Signer::spec_address_of(account)) with Errors::ALREADY_PUBLISHED;
@@ -922,7 +922,7 @@ module Libra {
                 currency_code,
             );
         // assert(
-        //     !exists<MintCapability<CoinType>>(Signer::address_of(tc_account)),
+        //     !exists<MintCapability<CoinType>>(Signer::address_of(lr_account)),
         //     Errors::already_published(EMINT_CAPABILITY)
         // );
         move_to(lr_account, mint_cap);
@@ -934,23 +934,23 @@ module Libra {
         include RegisterSCSCurrencyEnsures<CoinType>;
     }
     spec schema RegisterSCSCurrencyAbortsIf<CoinType> {
-        tc_account: signer;
+        lr_account: signer;
         lr_account: signer;
         currency_code: vector<u8>;
         scaling_factor: u64;
 
-        /// Must abort if tc_account does not have the TreasuryCompliance role.
+        /// Must abort if lr_account does not have the TreasuryCompliance role.
         /// Only a TreasuryCompliance account can have the MintCapability [[H1]][PERMISSION].
         /// Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
 
-        aborts_if exists<MintCapability<CoinType>>(Signer::spec_address_of(tc_account)) with Errors::ALREADY_PUBLISHED;
+        aborts_if exists<MintCapability<CoinType>>(Signer::spec_address_of(lr_account)) with Errors::ALREADY_PUBLISHED;
         include RegisterCurrencyAbortsIf<CoinType>;
         include PublishBurnCapAbortsIfs<CoinType>;
     }
     spec schema RegisterSCSCurrencyEnsures<CoinType> {
-        tc_account: signer;
-        ensures spec_has_mint_capability<CoinType>(Signer::spec_address_of(tc_account));
+        lr_account: signer;
+        ensures spec_has_mint_capability<CoinType>(Signer::spec_address_of(lr_account));
     }
 
     /// Returns the total amount of currency minted of type `CoinType`.
@@ -1050,10 +1050,10 @@ module Libra {
     /// Updates the `to_lbr_exchange_rate` held in the `CurrencyInfo` for
     /// `FromCoinType` to the new passed-in `lbr_exchange_rate`.
     public fun update_lbr_exchange_rate<FromCoinType>(
-        tc_account: &signer,
+        lr_account: &signer,
         lbr_exchange_rate: FixedPoint32
     ) acquires CurrencyInfo {
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_libra_root(lr_account);
         assert_is_currency<FromCoinType>();
         let currency_info = borrow_global_mut<CurrencyInfo<FromCoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         currency_info.to_lbr_exchange_rate = lbr_exchange_rate;
@@ -1070,9 +1070,9 @@ module Libra {
         include UpdateLBRExchangeRateEnsures<FromCoinType>;
     }
     spec schema UpdateLBRExchangeRateAbortsIf<FromCoinType> {
-        tc_account: signer;
+        lr_account: signer;
         /// Must abort if the account does not have the TreasuryCompliance Role [[H5]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
 
         include AbortsIfNoCurrency<FromCoinType>;
     }
@@ -1096,11 +1096,11 @@ module Libra {
     /// disallowed until it is turned back on via this function. All coins
     /// start out in the default state of `can_mint = true`.
     public fun update_minting_ability<CoinType>(
-        tc_account: &signer,
+        lr_account: &signer,
         can_mint: bool,
         )
     acquires CurrencyInfo {
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_libra_root(lr_account);
         assert_is_currency<CoinType>();
         let currency_info = borrow_global_mut<CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         currency_info.can_mint = can_mint;
@@ -1110,13 +1110,13 @@ module Libra {
         include UpdateMintingAbilityEnsures<CoinType>;
     }
     spec schema UpdateMintingAbilityAbortsIf<CoinType> {
-        tc_account: signer;
+        lr_account: signer;
         include AbortsIfNoCurrency<CoinType>;
         /// Only the TreasuryCompliance role can enable/disable minting [[H2]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: lr_account};
     }
     spec schema UpdateMintingAbilityEnsures<CoinType> {
-        tc_account: signer;
+        lr_account: signer;
         can_mint: bool;
         ensures spec_currency_info<CoinType>().can_mint == can_mint;
     }
@@ -1163,7 +1163,7 @@ module Libra {
         /// Only `register_SCS_currency` creates MintCapability, which must abort if the account
         /// does not have the TreasuryCompliance role [[H1]][PERMISSION].
         apply PreserveMintCapAbsence<CoinType> to *<CoinType> except register_SCS_currency<CoinType>;
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to register_SCS_currency<CoinType>;
+        apply Roles::AbortsIfNotTreasuryCompliance{account: lr_account} to register_SCS_currency<CoinType>;
 
         /// Only TreasuryCompliance can have MintCapability [[H1]][PERMISSION].
         /// If an account has MintCapability, it is a TreasuryCompliance account.
@@ -1239,7 +1239,7 @@ module Libra {
         /// which must abort if the account does not have the TreasuryCompliance role [[H8]][PERMISSION].
         apply PreserveBurnCapAbsence<CoinType> to *<CoinType>
             except register_SCS_currency<CoinType>, publish_burn_capability<CoinType>;
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to register_SCS_currency<CoinType>;
+        apply Roles::AbortsIfNotTreasuryCompliance{account: lr_account} to register_SCS_currency<CoinType>;
 
         /// Only TreasuryCompliance can have BurnCapability [[H3]][PERMISSION].
         /// If an account has BurnCapability, it is a TreasuryCompliance account.
@@ -1323,7 +1323,7 @@ module Libra {
     }
     spec module {
         /// The permission "UpdateExchangeRate(type)" is granted to TreasuryCompliance [[H5]][PERMISSION].
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to update_lbr_exchange_rate<FromCoinType>;
+        apply Roles::AbortsIfNotTreasuryCompliance{account: lr_account} to update_lbr_exchange_rate<FromCoinType>;
 
         /// Only update_lbr_exchange_rate can change the exchange rate [[H5]][PERMISSION].
         apply ExchangeRateRemainsSame<CoinType> to *<CoinType>

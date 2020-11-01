@@ -9,7 +9,7 @@ module DesignatedDealer {
     use 0x1::Event;
     use 0x1::Roles;
     use 0x1::Signer;
-    use 0x1::GAS::GAS;
+    // use 0x1::GAS::GAS;
    
     /// A `DesignatedDealer` always holds this `Dealer` resource regardless of the
     /// currencies it can hold. All `ReceivedMintEvent` events for all
@@ -103,19 +103,18 @@ module DesignatedDealer {
     }
     spec fun publish_designated_dealer_credential {
         pragma opaque;
-
         let dd_addr = Signer::spec_address_of(dd);
 
         include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
         include Roles::AbortsIfNotDesignatedDealer{account: dd};
         aborts_if exists<Dealer>(dd_addr) with Errors::ALREADY_PUBLISHED;
-        include if (add_all_currencies) AddCurrencyAbortsIf<GAS>{dd_addr: dd_addr}
-                else AddCurrencyAbortsIf<CoinType>{dd_addr: dd_addr};
+        // include if (add_all_currencies) AddCurrencyAbortsIf<GAS>{dd_addr: dd_addr}
+        //         else AddCurrencyAbortsIf<CoinType>{dd_addr: dd_addr};
 
         modifies global<Dealer>(dd_addr);
         ensures exists<Dealer>(dd_addr);
-        modifies global<TierInfo<CoinType>>(dd_addr), global<TierInfo<GAS>>(dd_addr);
-        ensures if (add_all_currencies) exists<TierInfo<GAS>>(dd_addr) else exists<TierInfo<CoinType>>(dd_addr);
+        // modifies global<TierInfo<CoinType>>(dd_addr), global<TierInfo<GAS>>(dd_addr);
+        // ensures if (add_all_currencies) exists<TierInfo<GAS>>(dd_addr) else exists<TierInfo<CoinType>>(dd_addr);
     }
 
     ///////////////////////////////////////////////////////////////////////////
