@@ -49,7 +49,7 @@ impl TempPath {
 
     ///////// 0L  /////////
     /// Create persistant data path.
-    pub fn new_with_dir(dir: PathBuf, namespace: &str) -> Self {
+    pub fn new_with_dir(dir: PathBuf) -> Self {
         let mut temppath = dir;
         temppath.push(format!("key_store.json"));
 
