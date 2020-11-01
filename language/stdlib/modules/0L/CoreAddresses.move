@@ -29,7 +29,7 @@ module CoreAddresses {
     /// charge of minting/burning and other day-to-day but privileged
     /// operations. The account at this address is created in genesis.
     public fun TREASURY_COMPLIANCE_ADDRESS(): address {
-        0xB1E55ED
+        0x0
     }
 
     /// The reserved address for transactions inserted by the VM into blocks (e.g.

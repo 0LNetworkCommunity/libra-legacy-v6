@@ -5,7 +5,7 @@ address 0x1 {
 module TransactionFee {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    use 0x1::Coin1::Coin1;
+    // use 0x1::Coin1::Coin1;
     use 0x1::LBR;
     use 0x1::Libra::{Self, Libra, Preburn};
     use 0x1::Roles;
@@ -27,19 +27,19 @@ module TransactionFee {
     /// Called in genesis. Sets up the needed resources to collect transaction fees from the
     /// `TransactionFee` resource with the TreasuryCompliance account.
     public fun initialize(
-        tc_account: &signer,
+        lr_account: &signer,
     ) {
         LibraTimestamp::assert_genesis();
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(lr_account);
         // accept fees in all the currencies
-        add_txn_fee_currency<Coin1>(tc_account);
-    }
+        add_txn_fee_currency<GAS>(lr_account);
+     }
     spec fun initialize {
         include LibraTimestamp::AbortsIfNotGenesis;
         include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
-        include AddTxnFeeCurrencyAbortsIf<Coin1>;
+        include AddTxnFeeCurrencyAbortsIf<GAS>;
         ensures is_initialized();
-        ensures spec_transaction_fee<Coin1>().balance.value == 0;
+        ensures spec_transaction_fee<GAS>().balance.value == 0;
     }
     spec schema AddTxnFeeCurrencyAbortsIf<CoinType> {
         include Libra::AbortsIfNoCurrency<CoinType>;
@@ -52,7 +52,7 @@ module TransactionFee {
     }
 
     fun is_initialized(): bool {
-        is_coin_initialized<Coin1>()
+        is_coin_initialized<GAS>()
     }
 
     /// Sets ups the needed transaction fee state for a given `CoinType` currency by
@@ -98,7 +98,7 @@ module TransactionFee {
         tc_account: &signer,
     ) acquires TransactionFee {
         LibraTimestamp::assert_operating();
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
         let tc_address = CoreAddresses::TREASURY_COMPLIANCE_ADDRESS();
         if (LBR::is_lbr<CoinType>()) {

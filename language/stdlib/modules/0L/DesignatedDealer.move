@@ -9,8 +9,8 @@ module DesignatedDealer {
     use 0x1::Event;
     use 0x1::Roles;
     use 0x1::Signer;
-    use 0x1::Coin1::Coin1;
-
+    use 0x1::GAS::GAS;
+   
     /// A `DesignatedDealer` always holds this `Dealer` resource regardless of the
     /// currencies it can hold. All `ReceivedMintEvent` events for all
     /// currencies will be emitted on `mint_event_handle`.
@@ -89,17 +89,17 @@ module DesignatedDealer {
     public fun publish_designated_dealer_credential<CoinType>(
         dd: &signer,
         tc_account: &signer,
-        add_all_currencies: bool,
-    ) acquires TierInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        _add_all_currencies: bool,
+    )  {
+        Roles::assert_libra_root(tc_account);
         Roles::assert_designated_dealer(dd);
         assert(!exists<Dealer>(Signer::address_of(dd)), Errors::already_published(EDEALER));
         move_to(dd, Dealer { mint_event_handle: Event::new_event_handle<ReceivedMintEvent>(dd) });
-        if (add_all_currencies) {
-            add_currency<Coin1>(dd, tc_account);
-        } else {
-            add_currency<CoinType>(dd, tc_account);
-        };
+        // if (add_all_currencies) {
+        //     add_currency<GAS>(dd, tc_account);
+        // } else {
+        //     add_currency<CoinType>(dd, tc_account);
+        // };
     }
     spec fun publish_designated_dealer_credential {
         pragma opaque;
@@ -109,13 +109,13 @@ module DesignatedDealer {
         include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
         include Roles::AbortsIfNotDesignatedDealer{account: dd};
         aborts_if exists<Dealer>(dd_addr) with Errors::ALREADY_PUBLISHED;
-        include if (add_all_currencies) AddCurrencyAbortsIf<Coin1>{dd_addr: dd_addr}
+        include if (add_all_currencies) AddCurrencyAbortsIf<GAS>{dd_addr: dd_addr}
                 else AddCurrencyAbortsIf<CoinType>{dd_addr: dd_addr};
 
         modifies global<Dealer>(dd_addr);
         ensures exists<Dealer>(dd_addr);
-        modifies global<TierInfo<CoinType>>(dd_addr), global<TierInfo<Coin1>>(dd_addr);
-        ensures if (add_all_currencies) exists<TierInfo<Coin1>>(dd_addr) else exists<TierInfo<CoinType>>(dd_addr);
+        modifies global<TierInfo<CoinType>>(dd_addr), global<TierInfo<GAS>>(dd_addr);
+        ensures if (add_all_currencies) exists<TierInfo<GAS>>(dd_addr) else exists<TierInfo<CoinType>>(dd_addr);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -127,7 +127,7 @@ module DesignatedDealer {
     /// multi-signer transactions in order to add a new currency to an existing DD.
     public fun add_currency<CoinType>(dd: &signer, tc_account: &signer)
     acquires TierInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         let dd_addr = Signer::address_of(dd);
         assert(exists_at(dd_addr), Errors::not_published(EDEALER));
         Libra::publish_preburn_to_account<CoinType>(dd, tc_account);
@@ -179,7 +179,7 @@ module DesignatedDealer {
         dd_addr: address,
         tier_upperbound: u64
     ) acquires TierInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert(exists<TierInfo<CoinType>>(dd_addr), Errors::not_published(EDEALER));
         let tiers = &mut borrow_global_mut<TierInfo<CoinType>>(dd_addr).tiers;
         let number_of_tiers = Vector::length(tiers);
@@ -221,7 +221,7 @@ module DesignatedDealer {
         tier_index: u64,
         new_upperbound: u64
     ) acquires TierInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert(exists<TierInfo<CoinType>>(dd_addr), Errors::not_published(EDEALER));
         let tiers = &mut borrow_global_mut<TierInfo<CoinType>>(dd_addr).tiers;
         let number_of_tiers = Vector::length(tiers);
@@ -273,7 +273,7 @@ module DesignatedDealer {
         dd_addr: address,
         tier_index: u64,
     ): Libra::Libra<CoinType> acquires Dealer, TierInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         assert(amount > 0, Errors::invalid_argument(EINVALID_MINT_AMOUNT));
         assert(exists_at(dd_addr), Errors::not_published(EDEALER));
         assert(exists<TierInfo<CoinType>>(dd_addr), Errors::not_published(EDEALER));
