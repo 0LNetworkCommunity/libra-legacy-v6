@@ -5,10 +5,7 @@
 
 use crate::command::Command;
 use consensus_types::safety_data::SafetyData;
-use libra_crypto::{
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
-    Uniform,
-};
+use libra_crypto::{Uniform, ValidCryptoMaterialStringExt, ed25519::{Ed25519PrivateKey, Ed25519PublicKey}};
 use libra_global_constants::{
     CONSENSUS_KEY, EXECUTION_KEY, FULLNODE_NETWORK_KEY, LIBRA_ROOT_KEY, OPERATOR_KEY, OWNER_KEY,
     SAFETY_DATA, TREASURY_COMPLIANCE_KEY, VALIDATOR_NETWORK_KEY, WAYPOINT,
@@ -57,17 +54,17 @@ impl StorageHelper {
     }
 
     //////// 0L ////////
-    pub fn new_with_path(path: PathBuf, namespace: &str) -> Self {
-        let path = libra_temppath::TempPath::new_with_dir(path, namespace);
-        dbg!(&path);
+    pub fn new_with_path(path: PathBuf) -> Self {
+        let path = libra_temppath::TempPath::new_with_dir(path);
+        // dbg!(&path);
         path.create_as_file().expect("Failed on create_as_file");
         File::create(path.path()).expect("Could not create file");
         Self { temppath: path }
     }
 
     ///////// 0L  /////////
-    pub fn get_with_path(path: PathBuf, namespace: &str) -> Self {
-        let path = libra_temppath::TempPath::new_with_dir(path, namespace);
+    pub fn get_with_path(path: PathBuf) -> Self {
+        let path = libra_temppath::TempPath::new_with_dir(path);
         // dbg!(&path);
         // path.create_as_file().expect("Failed on create_as_file");
         // File::create(path.path()).expect("Could not create file");
@@ -75,31 +72,30 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
-    pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
+    pub fn initialize_with_mnemonic_swarm(&self, namespace: String, mnemonic: String) {
         let keys = key_scheme(mnemonic);
-        let mut storage = self.storage(namespace);
+        let mut storage = self.storage(namespace.clone());
+        // let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
+        let dummy_root = Ed25519PrivateKey::from_encoded_string("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
 
-        // TODO: remove these keys
-            //     storage
-            // .import_private_key(LIBRA_ROOT_KEY, child_3.get_private_key())
-            // .unwrap();
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
         storage
-            .import_private_key(LIBRA_ROOT_KEY, Ed25519PrivateKey::generate(&mut rng))
+            .import_private_key(LIBRA_ROOT_KEY, dummy_root.clone())
             .unwrap();
-        let libra_root_key = storage.export_private_key(LIBRA_ROOT_KEY).unwrap();
+        // let libra_root_key = storage_owner.export_private_key(LIBRA_ROOT_KEY).unwrap();
         storage
-            .import_private_key(TREASURY_COMPLIANCE_KEY, libra_root_key)
+            .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
             .unwrap();
-        // storage
-        //     .import_private_key(TREASURY_COMPLIANCE_KEY, child_3.get_private_key())
-        //     .unwrap();
-
         storage
             .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
             .unwrap();
         storage
             .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
+            .unwrap();
+        storage
+            .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
             .unwrap();
         storage
             .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
@@ -108,16 +104,10 @@ impl StorageHelper {
             .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
             .unwrap();
         storage
-            .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
-            .unwrap();
-        storage
-            .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
-            .unwrap();
-        
-        storage
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
             .unwrap();
         storage.set(WAYPOINT, Waypoint::default()).unwrap();
+        
         let mut encryptor = libra_network_address_encryption::Encryptor::new(storage);
         encryptor.initialize().unwrap();
 
@@ -128,13 +118,60 @@ impl StorageHelper {
             libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
             )
             .unwrap();
-        // storage.set(EPOCH, Value::U64(0)).unwrap();
-        // storage.set(LAST_VOTED_ROUND, Value::U64(0)).unwrap();
-        // storage.set(PREFERRED_ROUND, Value::U64(0)).unwrap();
-        // storage.set(WAYPOINT, Value::String("".into())).unwrap();
     }
 
-    
+    ///////// 0L  /////////
+    pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
+        let keys = key_scheme(mnemonic);
+        let mut storage_root = self.storage("root".to_owned());
+        let mut storage_owner = self.storage(namespace.clone());
+        let mut storage_oper = self.storage(namespace.clone() + "-oper");
+
+        // let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
+        let dummy_root = Ed25519PrivateKey::from_encoded_string("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
+
+        storage_root
+            .import_private_key(LIBRA_ROOT_KEY, dummy_root.clone())
+            .unwrap();
+        // let libra_root_key = storage_owner.export_private_key(LIBRA_ROOT_KEY).unwrap();
+        storage_root
+            .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
+            .unwrap();
+        storage_owner
+            .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
+            .unwrap();
+        storage_oper
+            .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
+            .unwrap();
+        storage_oper
+            .import_private_key(VALIDATOR_NETWORK_KEY, keys.child_2_val_network.get_private_key())
+            .unwrap();
+        storage_oper
+            .import_private_key(FULLNODE_NETWORK_KEY, keys.child_3_fullnode_network.get_private_key())
+            .unwrap();
+        storage_oper
+            .import_private_key(CONSENSUS_KEY, keys.child_4_consensus.get_private_key())
+            .unwrap();
+        storage_oper
+            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
+            .unwrap();
+        storage_oper
+            .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
+            .unwrap();
+        storage_oper.set(WAYPOINT, Waypoint::default()).unwrap();
+        
+        let mut encryptor = libra_network_address_encryption::Encryptor::new(storage_oper);
+        encryptor.initialize().unwrap();
+
+        // TODO: Use EncNetworkAddress instead of TEST_SHARED
+        encryptor
+            .add_key(
+            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+            libra_network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+            )
+            .unwrap();
+    }
+
     pub fn storage(&self, namespace: String) -> Storage {
         let storage = OnDiskStorage::new(self.temppath.path().to_path_buf());
         Storage::from(NamespacedStorage::new(Storage::from(storage), namespace))
@@ -158,16 +195,16 @@ impl StorageHelper {
     
     
 
-    // 0L: change, initialize with same mnemonic used for miner testing.
+    // 0L: change, initialize the 0th account with a fixture mnemonic "Alice". So we can test miner and other APIs.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
         let mnem_alice = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
         let partial_seed = lcs::to_bytes(&idx).unwrap();
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
+        // idx 0 is for libra account in swarm tests.
         if idx == 0 {
-            self.initialize_with_mnemonic(namespace, mnem_alice);
-
+            self.initialize_with_mnemonic_swarm(namespace, mnem_alice);
         } else {
             self.initialize(namespace, seed);
         }
