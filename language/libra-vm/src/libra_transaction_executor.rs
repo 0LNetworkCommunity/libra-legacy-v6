@@ -160,6 +160,7 @@ impl LibraVM {
         account_currency_symbol: &IdentStr,
         log_context: &impl LogContext,
     ) -> Result<(VMStatus, TransactionOutput), VMStatus> {
+        println!("Executing script {:?}", script);
         fail_point!("move_adapter::execute_script", |_| {
             Err(VMStatus::Error(
                 StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR,
@@ -759,6 +760,7 @@ impl LibraVM {
             // `result` is initially empty, a single element is pushed per loop iteration and
             // the number of iterations is bound to the max size of `signature_verified_block`
             assume!(result.len() < usize::max_value());
+            println!("esecution result with {:?}, output {:?}", vm_status, output);
             result.push((vm_status, output))
         }
 
