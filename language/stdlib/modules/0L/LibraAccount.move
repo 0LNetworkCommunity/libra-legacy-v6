@@ -211,10 +211,10 @@ module LibraAccount {
         create_libra_root_account(
             copy dummy_auth_key_prefix,
         );
-        create_treasury_compliance_account(
-            lr_account,
-            copy dummy_auth_key_prefix,
-        );
+        // create_treasury_compliance_account(
+        //     lr_account,
+        //     copy dummy_auth_key_prefix,
+        // );
     }
 
     /// Return `true` if `addr` has already published account limits for `Token`
@@ -277,18 +277,17 @@ module LibraAccount {
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
         LibraTimestamp::assert_operating();
         AccountFreezing::assert_not_frozen(payee);
-
         // Check that the `to_deposit` coin is non-zero
         let deposit_value = Libra::value(&to_deposit);
         assert(deposit_value > 0, Errors::invalid_argument(ECOIN_DEPOSIT_IS_ZERO));
         // Check that an account exists at `payee`
         assert(exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
         // Check that `payee` can accept payments in `Token`
-        assert(
-            exists<Balance<Token>>(payee),
-            Errors::invalid_argument(EPAYEE_CANT_ACCEPT_CURRENCY_TYPE)
-        );
-
+        // assert(
+        //     exists<Balance<Token>>(payee),
+        //     Errors::invalid_argument(EPAYEE_CANT_ACCEPT_CURRENCY_TYPE)
+        // );
+        
         // Check that the payment complies with dual attestation rules
         DualAttestation::assert_payment_ok<Token>(
             payer, payee, deposit_value, copy metadata, metadata_signature
@@ -303,12 +302,10 @@ module LibraAccount {
                     &borrow_global<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()).limits_cap
                 ),
                 Errors::limit_exceeded(EDEPOSIT_EXCEEDS_LIMITS)
-            )
+            );
         };
-
         // Deposit the `to_deposit` coin
         Libra::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
-
         // Log a received event
         Event::emit_event<ReceivedPaymentEvent>(
             &mut borrow_global_mut<LibraAccount>(payee).received_events,
@@ -852,9 +849,9 @@ module LibraAccount {
         let new_account_addr = Signer::address_of(new_account);
         add_currency<Token>(new_account);
         if (add_all_currencies) {
-            if (!exists<Balance<Coin1>>(new_account_addr)) {
-                add_currency<Coin1>(new_account);
-            };
+            // if (!exists<Balance<Coin1>>(new_account_addr)) {
+            //     add_currency<Coin1>(new_account);
+            // };
             if (!exists<Balance<GAS>>(new_account_addr)) {
                 add_currency<GAS>(new_account);
             };
@@ -1234,10 +1231,10 @@ module LibraAccount {
         // aborts if `Token` is not a currency type in the system
         Libra::assert_is_currency<Token>();
         // Check that an account with this role is allowed to hold funds
-        assert(
-            Roles::can_hold_balance(account),
-            Errors::invalid_argument(EROLE_CANT_STORE_BALANCE)
-        );
+        // assert(
+        //     Roles::can_hold_balance(account),
+        //     Errors::invalid_argument(EROLE_CANT_STORE_BALANCE)
+        // );
         // aborts if this account already has a balance in `Token`
         let addr = Signer::address_of(account);
         assert(!exists<Balance<Token>>(addr), Errors::already_published(EADD_EXISTING_CURRENCY));
@@ -1704,6 +1701,7 @@ module LibraAccount {
         Roles::new_validator_role(lr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, lr_account, human_name);
+        add_currencies_for_account<GAS>(&new_account, false);
         make_account(new_account, auth_key_prefix)
     }
 
@@ -1742,6 +1740,7 @@ module LibraAccount {
         Roles::new_validator_operator_role(lr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorOperatorConfig::publish(&new_account, lr_account, human_name);
+        add_currencies_for_account<GAS>(&new_account, false);
         make_account(new_account, auth_key_prefix)
     }
 
@@ -1983,10 +1982,9 @@ module LibraAccount {
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
         let sender = Signer::address_of(payer);
         assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 4010);
-
         deposit(
-            payee,
             CoreAddresses::LIBRA_ROOT_ADDRESS(),
+            payee,
             to_deposit,
             metadata,
             metadata_signature

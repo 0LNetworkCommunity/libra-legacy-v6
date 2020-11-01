@@ -135,7 +135,6 @@ genesis:
 	--data-path ${DATA_PATH} \
 	--namespace ${NS}
 
-
 # gen:
 # 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
 # 	--shared-backend ${REMOTE} \

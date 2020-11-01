@@ -223,7 +223,7 @@ module AccountLimits {
         new_max_holding_balance: u64,
         new_time_period: u64,
     ) acquires LimitsDefinition {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         // As we don't have Optionals for txn scripts, in update_account_limit_definition.move
         // we use 0 value to represent a None (ie no update to that variable)
         assert(exists<LimitsDefinition<CoinType>>(limit_address), Errors::not_published(ELIMITS_DEFINITION));
@@ -251,7 +251,7 @@ module AccountLimits {
         aggregate_balance: u64,
         new_limit_address: address,
     ) acquires Window {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_libra_root(tc_account);
         let window = borrow_global_mut<Window<CoinType>>(window_address);
         if (aggregate_balance != 0)  { window.tracked_balance = aggregate_balance };
         assert(exists<LimitsDefinition<CoinType>>(new_limit_address), Errors::not_published(ELIMITS_DEFINITION));

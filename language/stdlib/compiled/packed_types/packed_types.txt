@@ -47,24 +47,6 @@
     }
   ],
   [
-    "010f2a1f8fdfd70d8aa505f5c2fd3024baba4ca14635c0a4d4398acb0f5b6a3967",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "Libra",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "01123f3746147847a98608e80d193d84d01fe6dd9a41d3dec1ac45ae5d62b8f074",
     {
       "address": "00000000000000000000000000000001",
@@ -164,24 +146,6 @@
     }
   ],
   [
-    "011e9645d803e6e959f6facb467613fd33e3f2f7a64682b5f1e2a317d4840a08f9",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "DesignatedDealer",
-      "name": "TierInfo",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "GAS",
-            "name": "GAS",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "011f910479a51505195cae0f5f9394605679daad2b284aa61c990c7ce8b0fc1f6a",
     {
       "address": "00000000000000000000000000000001",
@@ -245,24 +209,6 @@
     }
   ],
   [
-    "013cef395cd7d2b797acaec9fc848ecd2e13cf2e46fff19ec0855c0583f438d8e2",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "MintCapability",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "013e931be30d1bbe123a84793a5b502b30386db08f7720ea02e3ff0bd5a76cb4ca",
     {
       "address": "00000000000000000000000000000001",
@@ -292,6 +238,24 @@
             "address": "00000000000000000000000000000001",
             "module": "LibraVMConfig",
             "name": "LibraVMConfig",
+            "type_params": []
+          }
+        }
+      ]
+    }
+  ],
+  [
+    "0149966568087543734743d6583df5a148b25cccb9edd98ff3b4ae74c2c1028a64",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "TransactionFee",
+      "name": "TransactionFee",
+      "type_params": [
+        {
+          "Struct": {
+            "address": "00000000000000000000000000000001",
+            "module": "GAS",
+            "name": "GAS",
             "type_params": []
           }
         }
@@ -440,60 +404,6 @@
       "module": "LibraAccount",
       "name": "CreateAccountEvent",
       "type_params": []
-    }
-  ],
-  [
-    "0171dbab2f46fa3f82943b2c4cfd58073dc82b19a7612082843de3781cc69c2442",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "Preburn",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
-    "0172cc3d56b1931722e278d74fdb32a2fe245f288ac9910ebe42833e7868675fb3",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "DesignatedDealer",
-      "name": "TierInfo",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
-    "017449a5c97108bea03b973f2513ecaa2da09ecb840257a6ac5152dc922f614a95",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "TransactionFee",
-      "name": "TransactionFee",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
     }
   ],
   [
@@ -659,24 +569,6 @@
     }
   ],
   [
-    "01a13858f5493a029359d2126b3aef98e9dace1d86a71be3a514a98b3bd253c847",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "BurnCapability",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "01a63e88f1013330b49bdcaff1e276af4735aad9e76c5950bcb07d6c22019640f2",
     {
       "address": "00000000000000000000000000000001",
@@ -796,24 +688,6 @@
     }
   ],
   [
-    "01c6ea1327bfe3956aea6f64fdba62c720ef9c1e63d498391ac0b1cfacc0e48125",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Libra",
-      "name": "CurrencyInfo",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "01c9ccc5aba203c7a5a0fa74f1e5d94d97b414b86f5086a0a8f6c0ea0e52e7f138",
     {
       "address": "00000000000000000000000000000001",
@@ -895,24 +769,6 @@
     }
   ],
   [
-    "01d9b4de2efb7834d7af8f8857f631908ef3c546f479dabfc1da6e0f7585585f2a",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "AccountLimits",
-      "name": "LimitsDefinition",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
-    }
-  ],
-  [
     "01d9f23b02755c18b16ed8347f25b543f75378a7f06fc097cfda338cf1c24c8934",
     {
       "address": "00000000000000000000000000000001",
@@ -946,24 +802,6 @@
       "module": "AccountFreezing",
       "name": "FreezeAccountEvent",
       "type_params": []
-    }
-  ],
-  [
-    "01e4097626eacd0ae644bde4b512aebdb30c4a43869a6eb10a04867ac76a8750a4",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "LibraAccount",
-      "name": "Balance",
-      "type_params": [
-        {
-          "Struct": {
-            "address": "00000000000000000000000000000001",
-            "module": "Coin1",
-            "name": "Coin1",
-            "type_params": []
-          }
-        }
-      ]
     }
   ],
   [

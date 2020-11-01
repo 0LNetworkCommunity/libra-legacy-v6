@@ -94,7 +94,7 @@ module Roles {
         creating_account: &signer,
         new_account: &signer,
     ) acquires RoleId {
-        assert_treasury_compliance(creating_account);
+        assert_libra_root(creating_account);
         grant_role(new_account, DESIGNATED_DEALER_ROLE_ID);
     }
     spec fun new_designated_dealer_role {
@@ -136,7 +136,7 @@ module Roles {
         creating_account: &signer,
         new_account: &signer,
     ) acquires RoleId {
-        assert_treasury_compliance(creating_account);
+        assert_libra_root(creating_account);
         grant_role(new_account, PARENT_VASP_ROLE_ID);
     }
     spec fun new_parent_vasp_role {

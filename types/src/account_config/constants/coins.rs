@@ -9,7 +9,7 @@ use move_core_types::{
 use once_cell::sync::Lazy;
 
 pub const LBR_NAME: &str = "GAS";
-pub const COIN1_NAME: &str = "Coin1";
+pub const COIN1_NAME: &str = "GAS";
 
 pub fn coin1_tmp_tag() -> TypeTag {
     TypeTag::Struct(StructTag {
