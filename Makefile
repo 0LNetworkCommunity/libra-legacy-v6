@@ -1,7 +1,7 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = /root/node_data
-IP = 1.1.1.1
+IP = 1.2.3.4
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt)
 # # ACC = alice
 # NS = $(ACC)
@@ -46,8 +46,9 @@ smoke:
 # OWNER *assign* an operator.
 	NS=${NS} OPER=${NS}-oper make assign
 
+	echo ${IP}
 # OPERs send signed transaction with configurations for *OWNER* account
-	NS=${NS}-oper OWNER=${NS} make reg
+	NS=${NS}-oper OWNER=${NS} IP=${IP} make reg
 
 # Create configs and start
 # note: this uses the NS in local env to create files i.e. alice or bob
@@ -133,6 +134,8 @@ genesis:
 	--data-path ${DATA_PATH} \
 	--namespace ${NS} \
 	--validator-address "/ip4/${IP}/tcp/6180"
+# TODO: Remvoe validator-address above
+
 
 # gen:
 # 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
@@ -186,11 +189,19 @@ IP = 142.93.191.147
 MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
 endif
 
+ifeq ($(NS), alice-oper)
+IP = 142.93.191.147
+endif
+
 ifeq ($(NS), bob)
 ACC = 5831d5f6cb6c0c5c576c186f9c4efb63
 AUTH = b28f75b8cdd27913ac785d38161501665831d5f6cb6c0c5c576c186f9c4efb63
 IP = 167.71.84.248
 MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
+endif
+
+ifeq ($(NS), bob-oper)
+IP = 167.71.84.248
 endif
 
 ifeq ($(NS), carol)

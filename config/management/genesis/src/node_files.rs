@@ -20,7 +20,7 @@ pub struct Files {
     #[structopt(long)]
     namespace: String,
     #[structopt(long)]
-    validator_address: NetworkAddress,
+    _validator_address: NetworkAddress,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
