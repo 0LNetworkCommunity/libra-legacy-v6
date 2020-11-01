@@ -22,7 +22,7 @@ use libra_types::{
         self,
         events::{CreateAccountEvent},
     },
-    chain_id::{ChainId, NamedChain},
+    chain_id::{ChainId},
     contract_event::ContractEvent,
     on_chain_config::VMPublishingOption,
     transaction::{
@@ -157,6 +157,7 @@ pub fn encode_genesis_change_set(
 
     //////// 0L ////////
     initialize_testnet(&mut session, &log_context, true);
+    
     println!("OK initialize_testnet =============== ");
 
     // initialize_miners(&mut session, &log_context, &operator_assignments);
@@ -259,16 +260,16 @@ fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
     libra_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    _treasury_compliance_key: &Ed25519PublicKey,
     publishing_option: VMPublishingOption,
     lbr_ty: &TypeTag,
     chain_id: ChainId,
 ) {
     let libra_root_auth_key = AuthenticationKey::ed25519(libra_root_key);
-    let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
+    // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_libra_root_address = account_config::libra_root_address();
-    let tc_account_address = account_config::treasury_compliance_account_address();
+    // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = Value::constant_vector_generic(
         publishing_option
@@ -324,7 +325,7 @@ fn create_and_initialize_main_accounts(
     );
 }
 
-fn create_and_initialize_testnet_minting(
+fn _create_and_initialize_testnet_minting(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
     public_key: &Ed25519PublicKey,
