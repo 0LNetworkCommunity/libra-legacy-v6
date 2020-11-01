@@ -221,11 +221,19 @@ IP = 104.131.32.62
 MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
+ifeq ($(NS), dave-oper)
+IP = 104.131.32.62
+endif
+
 ifeq ($(NS), eve)
 ACC = e9fbaf07795acc2e675961eb7649acdf
 AUTH = a34b9c1580fe7f7c518dac7ed9ddba0be9fbaf07795acc2e675961eb7649acdf
 IP = 134.122.115.12
 MNEM = veteran category typical plastic service mimic photo sort face taste puppy slogan nature youth member lake symptom edit pepper stairs actual hub miss train
+endif
+
+ifeq ($(NS), eve-oper)
+IP = 134.122.115.12
 endif
 
 ##########################
