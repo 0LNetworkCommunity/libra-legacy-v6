@@ -209,6 +209,10 @@ IP = 104.131.56.224
 MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
 endif
 
+ifeq ($(NS), carol-oper)
+IP = 104.131.56.224
+endif
+
 ifeq ($(NS), dave)
 ACC = 4a6dcca79b3828fc665fca5c6218d793
 AUTH = 4a62540137e5f3b05c6ea608e37b3ab74a6dcca79b3828fc665fca5c6218d793
