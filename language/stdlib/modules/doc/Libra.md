@@ -751,7 +751,7 @@ Publishes the <code><a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</
 must be a registered currency type. The caller must pass a treasury compliance account.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;(tc_account: &signer, cap: <a href="Libra.md#0x1_Libra_BurnCapability">Libra::BurnCapability</a>&lt;CoinType&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;(lr_account: &signer, cap: <a href="Libra.md#0x1_Libra_BurnCapability">Libra::BurnCapability</a>&lt;CoinType&gt;)
 </code></pre>
 
 
@@ -761,16 +761,16 @@ must be a registered currency type. The caller must pass a treasury compliance a
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;(
-    tc_account: &signer,
+    lr_account: &signer,
     cap: <a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;,
 ) {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
     <a href="Libra.md#0x1_Libra_assert_is_currency">assert_is_currency</a>&lt;CoinType&gt;();
     <b>assert</b>(
-        !<b>exists</b>&lt;<a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(tc_account)),
+        !<b>exists</b>&lt;<a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(lr_account)),
         <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="Libra.md#0x1_Libra_EBURN_CAPABILITY">EBURN_CAPABILITY</a>)
     );
-    move_to(tc_account, cap)
+    move_to(lr_account, cap)
 }
 </code></pre>
 
@@ -794,18 +794,18 @@ must be a registered currency type. The caller must pass a treasury compliance a
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_PublishBurnCapAbortsIfs">PublishBurnCapAbortsIfs</a>&lt;CoinType&gt; {
-    tc_account: &signer;
+    lr_account: &signer;
 }
 </code></pre>
 
 
-Must abort if tc_account does not have the TreasuryCompliance role.
+Must abort if lr_account does not have the TreasuryCompliance role.
 Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_PublishBurnCapAbortsIfs">PublishBurnCapAbortsIfs</a>&lt;CoinType&gt; {
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
-    <b>aborts_if</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(tc_account)) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
+    <b>aborts_if</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(lr_account)) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
 }
 </code></pre>
 
@@ -816,8 +816,8 @@ Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION]
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_PublishBurnCapEnsures">PublishBurnCapEnsures</a>&lt;CoinType&gt; {
-    tc_account: &signer;
-    <b>ensures</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(tc_account));
+    lr_account: &signer;
+    <b>ensures</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_BurnCapability">BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(lr_account));
 }
 </code></pre>
 
@@ -1241,7 +1241,7 @@ the <code>preburn_events</code> event stream in the <code><a href="Libra.md#0x1_
 Create a <code><a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt;</code> resource
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_create_preburn">create_preburn</a>&lt;CoinType&gt;(tc_account: &signer): <a href="Libra.md#0x1_Libra_Preburn">Libra::Preburn</a>&lt;CoinType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_create_preburn">create_preburn</a>&lt;CoinType&gt;(lr_account: &signer): <a href="Libra.md#0x1_Libra_Preburn">Libra::Preburn</a>&lt;CoinType&gt;
 </code></pre>
 
 
@@ -1251,9 +1251,9 @@ Create a <code><a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt;<
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_create_preburn">create_preburn</a>&lt;CoinType&gt;(
-    tc_account: &signer
+    lr_account: &signer
 ): <a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt; {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
     <a href="Libra.md#0x1_Libra_assert_is_currency">assert_is_currency</a>&lt;CoinType&gt;();
     <a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt; { to_burn: <a href="Libra.md#0x1_Libra_zero">zero</a>&lt;CoinType&gt;() }
 }
@@ -1278,8 +1278,8 @@ Create a <code><a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt;<
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_CreatePreburnAbortsIf">CreatePreburnAbortsIf</a>&lt;CoinType&gt; {
-    tc_account: signer;
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+    lr_account: signer;
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
     <b>include</b> <a href="Libra.md#0x1_Libra_AbortsIfNoCurrency">AbortsIfNoCurrency</a>&lt;CoinType&gt;;
 }
 </code></pre>
@@ -1298,7 +1298,7 @@ time, and the association TC account <code>creator</code> (at <code><a href="Cor
 this resource for the designated dealer.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_publish_preburn_to_account">publish_preburn_to_account</a>&lt;CoinType&gt;(account: &signer, tc_account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_publish_preburn_to_account">publish_preburn_to_account</a>&lt;CoinType&gt;(account: &signer, lr_account: &signer)
 </code></pre>
 
 
@@ -1309,13 +1309,13 @@ this resource for the designated dealer.
 
 <pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_publish_preburn_to_account">publish_preburn_to_account</a>&lt;CoinType&gt;(
     account: &signer,
-    tc_account: &signer
+    lr_account: &signer
 ) <b>acquires</b> <a href="Libra.md#0x1_Libra_CurrencyInfo">CurrencyInfo</a> {
     <a href="Roles.md#0x1_Roles_assert_designated_dealer">Roles::assert_designated_dealer</a>(account);
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
     <b>assert</b>(!<a href="Libra.md#0x1_Libra_is_synthetic_currency">is_synthetic_currency</a>&lt;CoinType&gt;(), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="Libra.md#0x1_Libra_EIS_SYNTHETIC_CURRENCY">EIS_SYNTHETIC_CURRENCY</a>));
     <b>assert</b>(!<b>exists</b>&lt;<a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account)), <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="Libra.md#0x1_Libra_EPREBURN">EPREBURN</a>));
-    move_to(account, <a href="Libra.md#0x1_Libra_create_preburn">create_preburn</a>&lt;CoinType&gt;(tc_account))
+    move_to(account, <a href="Libra.md#0x1_Libra_create_preburn">create_preburn</a>&lt;CoinType&gt;(lr_account))
 }
 </code></pre>
 
@@ -1344,7 +1344,7 @@ Preburn is published under the DesignatedDealer account.
 
 
 <pre><code><b>ensures</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account));
-<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
 <b>include</b> <a href="Libra.md#0x1_Libra_AbortsIfNoCurrency">AbortsIfNoCurrency</a>&lt;CoinType&gt;;
 <b>aborts_if</b> <a href="Libra.md#0x1_Libra_is_synthetic_currency">is_synthetic_currency</a>&lt;CoinType&gt;() <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
 <b>aborts_if</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_Preburn">Preburn</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account)) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
@@ -2309,7 +2309,7 @@ This code allows different currencies to have different treasury compliance
 accounts.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;(lr_account: &signer, tc_account: &signer, to_lbr_exchange_rate: <a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>, scaling_factor: u64, fractional_part: u64, currency_code: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;(lr_account: &signer, to_lbr_exchange_rate: <a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>, scaling_factor: u64, fractional_part: u64, currency_code: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -2320,13 +2320,12 @@ accounts.
 
 <pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;(
     lr_account: &signer,
-    tc_account: &signer,
     to_lbr_exchange_rate: <a href="FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>,
     scaling_factor: u64,
     fractional_part: u64,
     currency_code: vector&lt;u8&gt;,
 ) {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
     <b>let</b> (mint_cap, burn_cap) =
         <a href="Libra.md#0x1_Libra_register_currency">register_currency</a>&lt;CoinType&gt;(
             lr_account,
@@ -2336,12 +2335,12 @@ accounts.
             fractional_part,
             currency_code,
         );
-    <b>assert</b>(
-        !<b>exists</b>&lt;<a href="Libra.md#0x1_Libra_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(tc_account)),
-        <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="Libra.md#0x1_Libra_EMINT_CAPABILITY">EMINT_CAPABILITY</a>)
-    );
-    move_to(tc_account, mint_cap);
-    <a href="Libra.md#0x1_Libra_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;(tc_account, burn_cap);
+    // <b>assert</b>(
+    //     !<b>exists</b>&lt;<a href="Libra.md#0x1_Libra_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(lr_account)),
+    //     <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="Libra.md#0x1_Libra_EMINT_CAPABILITY">EMINT_CAPABILITY</a>)
+    // );
+    move_to(lr_account, mint_cap);
+    <a href="Libra.md#0x1_Libra_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;(lr_account, burn_cap);
 }
 </code></pre>
 
@@ -2365,7 +2364,7 @@ accounts.
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_RegisterSCSCurrencyAbortsIf">RegisterSCSCurrencyAbortsIf</a>&lt;CoinType&gt; {
-    tc_account: signer;
+    lr_account: signer;
     lr_account: signer;
     currency_code: vector&lt;u8&gt;;
     scaling_factor: u64;
@@ -2373,14 +2372,14 @@ accounts.
 </code></pre>
 
 
-Must abort if tc_account does not have the TreasuryCompliance role.
+Must abort if lr_account does not have the TreasuryCompliance role.
 Only a TreasuryCompliance account can have the MintCapability [[H1]][PERMISSION].
 Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_RegisterSCSCurrencyAbortsIf">RegisterSCSCurrencyAbortsIf</a>&lt;CoinType&gt; {
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
-    <b>aborts_if</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(tc_account)) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
+    <b>aborts_if</b> <b>exists</b>&lt;<a href="Libra.md#0x1_Libra_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(lr_account)) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
     <b>include</b> <a href="Libra.md#0x1_Libra_RegisterCurrencyAbortsIf">RegisterCurrencyAbortsIf</a>&lt;CoinType&gt;;
     <b>include</b> <a href="Libra.md#0x1_Libra_PublishBurnCapAbortsIfs">PublishBurnCapAbortsIfs</a>&lt;CoinType&gt;;
 }
@@ -2393,8 +2392,8 @@ Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION]
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_RegisterSCSCurrencyEnsures">RegisterSCSCurrencyEnsures</a>&lt;CoinType&gt; {
-    tc_account: signer;
-    <b>ensures</b> <a href="Libra.md#0x1_Libra_spec_has_mint_capability">spec_has_mint_capability</a>&lt;CoinType&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(tc_account));
+    lr_account: signer;
+    <b>ensures</b> <a href="Libra.md#0x1_Libra_spec_has_mint_capability">spec_has_mint_capability</a>&lt;CoinType&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(lr_account));
 }
 </code></pre>
 
@@ -2703,7 +2702,7 @@ Updates the <code>to_lbr_exchange_rate</code> held in the <code><a href="Libra.m
 <code>FromCoinType</code> to the new passed-in <code>lbr_exchange_rate</code>.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_update_lbr_exchange_rate">update_lbr_exchange_rate</a>&lt;FromCoinType&gt;(tc_account: &signer, lbr_exchange_rate: <a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_update_lbr_exchange_rate">update_lbr_exchange_rate</a>&lt;FromCoinType&gt;(lr_account: &signer, lbr_exchange_rate: <a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>)
 </code></pre>
 
 
@@ -2713,10 +2712,10 @@ Updates the <code>to_lbr_exchange_rate</code> held in the <code><a href="Libra.m
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_update_lbr_exchange_rate">update_lbr_exchange_rate</a>&lt;FromCoinType&gt;(
-    tc_account: &signer,
+    lr_account: &signer,
     lbr_exchange_rate: <a href="FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>
 ) <b>acquires</b> <a href="Libra.md#0x1_Libra_CurrencyInfo">CurrencyInfo</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
     <a href="Libra.md#0x1_Libra_assert_is_currency">assert_is_currency</a>&lt;FromCoinType&gt;();
     <b>let</b> currency_info = borrow_global_mut&lt;<a href="Libra.md#0x1_Libra_CurrencyInfo">CurrencyInfo</a>&lt;FromCoinType&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>());
     currency_info.to_lbr_exchange_rate = lbr_exchange_rate;
@@ -2750,7 +2749,7 @@ Updates the <code>to_lbr_exchange_rate</code> held in the <code><a href="Libra.m
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_UpdateLBRExchangeRateAbortsIf">UpdateLBRExchangeRateAbortsIf</a>&lt;FromCoinType&gt; {
-    tc_account: signer;
+    lr_account: signer;
 }
 </code></pre>
 
@@ -2759,7 +2758,7 @@ Must abort if the account does not have the TreasuryCompliance Role [[H5]][PERMI
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_UpdateLBRExchangeRateAbortsIf">UpdateLBRExchangeRateAbortsIf</a>&lt;FromCoinType&gt; {
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
     <b>include</b> <a href="Libra.md#0x1_Libra_AbortsIfNoCurrency">AbortsIfNoCurrency</a>&lt;FromCoinType&gt;;
 }
 </code></pre>
@@ -2820,7 +2819,7 @@ disallowed until it is turned back on via this function. All coins
 start out in the default state of <code>can_mint = <b>true</b></code>.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_update_minting_ability">update_minting_ability</a>&lt;CoinType&gt;(tc_account: &signer, can_mint: bool)
+<pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_update_minting_ability">update_minting_ability</a>&lt;CoinType&gt;(lr_account: &signer, can_mint: bool)
 </code></pre>
 
 
@@ -2830,11 +2829,11 @@ start out in the default state of <code>can_mint = <b>true</b></code>.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Libra.md#0x1_Libra_update_minting_ability">update_minting_ability</a>&lt;CoinType&gt;(
-    tc_account: &signer,
+    lr_account: &signer,
     can_mint: bool,
     )
 <b>acquires</b> <a href="Libra.md#0x1_Libra_CurrencyInfo">CurrencyInfo</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
     <a href="Libra.md#0x1_Libra_assert_is_currency">assert_is_currency</a>&lt;CoinType&gt;();
     <b>let</b> currency_info = borrow_global_mut&lt;<a href="Libra.md#0x1_Libra_CurrencyInfo">CurrencyInfo</a>&lt;CoinType&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>());
     currency_info.can_mint = can_mint;
@@ -2861,7 +2860,7 @@ start out in the default state of <code>can_mint = <b>true</b></code>.
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_UpdateMintingAbilityAbortsIf">UpdateMintingAbilityAbortsIf</a>&lt;CoinType&gt; {
-    tc_account: signer;
+    lr_account: signer;
     <b>include</b> <a href="Libra.md#0x1_Libra_AbortsIfNoCurrency">AbortsIfNoCurrency</a>&lt;CoinType&gt;;
 }
 </code></pre>
@@ -2871,7 +2870,7 @@ Only the TreasuryCompliance role can enable/disable minting [[H2]][PERMISSION].
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_UpdateMintingAbilityAbortsIf">UpdateMintingAbilityAbortsIf</a>&lt;CoinType&gt; {
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
 }
 </code></pre>
 
@@ -2882,7 +2881,7 @@ Only the TreasuryCompliance role can enable/disable minting [[H2]][PERMISSION].
 
 
 <pre><code><b>schema</b> <a href="Libra.md#0x1_Libra_UpdateMintingAbilityEnsures">UpdateMintingAbilityEnsures</a>&lt;CoinType&gt; {
-    tc_account: signer;
+    lr_account: signer;
     can_mint: bool;
     <b>ensures</b> <a href="Libra.md#0x1_Libra_spec_currency_info">spec_currency_info</a>&lt;CoinType&gt;().can_mint == can_mint;
 }
@@ -3015,7 +3014,7 @@ does not have the TreasuryCompliance role [[H1]][PERMISSION].
 
 
 <pre><code><b>apply</b> <a href="Libra.md#0x1_Libra_PreserveMintCapAbsence">PreserveMintCapAbsence</a>&lt;CoinType&gt; <b>to</b> *&lt;CoinType&gt; <b>except</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;;
-<b>apply</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account} <b>to</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;;
+<b>apply</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account} <b>to</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;;
 </code></pre>
 
 
@@ -3174,7 +3173,7 @@ which must abort if the account does not have the TreasuryCompliance role [[H8]]
 
 <pre><code><b>apply</b> <a href="Libra.md#0x1_Libra_PreserveBurnCapAbsence">PreserveBurnCapAbsence</a>&lt;CoinType&gt; <b>to</b> *&lt;CoinType&gt;
     <b>except</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;, <a href="Libra.md#0x1_Libra_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;;
-<b>apply</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account} <b>to</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;;
+<b>apply</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account} <b>to</b> <a href="Libra.md#0x1_Libra_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;;
 </code></pre>
 
 
@@ -3332,7 +3331,7 @@ The exchange rate to GAS stays constant.
 The permission "UpdateExchangeRate(type)" is granted to TreasuryCompliance [[H5]][PERMISSION].
 
 
-<pre><code><b>apply</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account} <b>to</b> <a href="Libra.md#0x1_Libra_update_lbr_exchange_rate">update_lbr_exchange_rate</a>&lt;FromCoinType&gt;;
+<pre><code><b>apply</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account} <b>to</b> <a href="Libra.md#0x1_Libra_update_lbr_exchange_rate">update_lbr_exchange_rate</a>&lt;FromCoinType&gt;;
 </code></pre>
 
 

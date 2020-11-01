@@ -355,7 +355,7 @@ The <code>creating_account</code> must be treasury compliance.
     creating_account: &signer,
     new_account: &signer,
 ) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">assert_treasury_compliance</a>(creating_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">assert_libra_root</a>(creating_account);
     <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_DESIGNATED_DEALER_ROLE_ID">DESIGNATED_DEALER_ROLE_ID</a>);
 }
 </code></pre>
@@ -484,7 +484,7 @@ The <code>creating_account</code> must be TreasuryCompliance
     creating_account: &signer,
     new_account: &signer,
 ) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">assert_treasury_compliance</a>(creating_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">assert_libra_root</a>(creating_account);
     <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_PARENT_VASP_ROLE_ID">PARENT_VASP_ROLE_ID</a>);
 }
 </code></pre>
