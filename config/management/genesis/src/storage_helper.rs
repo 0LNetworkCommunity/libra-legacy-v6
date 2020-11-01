@@ -168,12 +168,12 @@ impl StorageHelper {
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
-        if idx == 0 {
-            self.initialize_with_mnemonic(namespace, mnem_alice);
-
-        } else {
+        //idx 0 is for libra account in swarm tests.
+        // if idx == 0 {
+        //     self.initialize_with_mnemonic(namespace, mnem_alice);
+        // } else {
             self.initialize(namespace, seed);
-        }
+        // }
     }
 
     pub fn initialize(&self, namespace: String, seed: [u8; 32]) {
