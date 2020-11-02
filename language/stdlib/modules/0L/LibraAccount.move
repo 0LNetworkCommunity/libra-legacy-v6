@@ -33,6 +33,7 @@ module LibraAccount {
     //////// 0L ////////
     use 0x1::VDF;
     use 0x1::Globals;
+    use 0x1::MinerState;
 
     /// An `address` is a Libra Account iff it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -256,7 +257,7 @@ module LibraAccount {
         print(&0x002);
 
         // NOTE: VDF verification is being called twice!
-        // MinerState::init_miner_state(&new_signer, challenge, solution);
+        MinerState::init_miner_state(&new_signer, challenge, solution);
 
         ValidatorConfig::init_val_config_with_proof(
             &new_signer, // validator_operator_account: &signer,

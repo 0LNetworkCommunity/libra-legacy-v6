@@ -25,7 +25,7 @@ fun main(_sender: &signer) {
   LibraAccount::create_validator_account_with_proof(
       &challenge,
       &solution,
-      x"deadbeef", // consensus_pubkey: vector<u8>,
+      x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // consensus_pubkey: vector<u8>,
       b"192.168.0.1", // validator_network_addresses: vector<u8>,
       b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
       x"1ee7", // human_name: vector<u8>,
