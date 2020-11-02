@@ -7,7 +7,6 @@ script {
 use 0x1::VDF;
 use 0x1::LibraAccount;
 use 0x1::GAS::GAS;
-use 0x1::Transaction;
 use 0x1::MinerState;
 use 0x1::NodeWeight;
 use 0x1::TestFixtures;
@@ -16,16 +15,16 @@ use 0x1::Roles;
 
 // Test Prefix: 1301
 fun main(_sender: &signer) {
-  // Scenario: Bob, aåån existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
+  // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
   let challenge = TestFixtures::eve_0_easy_chal();
   let solution = TestFixtures::eve_0_easy_sol();
   // Parse key and check
   let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
   assert(eve_addr == 0x298cfd27ba6301c76ae5527fc64610b6, 401);
  
-  LibraAccount::create_validator_account_with_proof<GAS>(
-      challenge: &vector<u8>,
-      solution: &vector<u8>,
+  LibraAccount::create_validator_account_with_proof(
+      &challenge,
+      &solution,
       x"deadbeef", // consensus_pubkey: vector<u8>,
       b"192.168.0.1", // validator_network_addresses: vector<u8>,
       b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
