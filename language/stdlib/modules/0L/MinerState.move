@@ -289,7 +289,7 @@ address 0x1 {
       //also add the miner to validator universe
       //TODO: #254 ValidatorUniverse::add_validators need to check permission.
       // Note: this should be in LibraAccount but causes cyclic dependency.
-      ValidatorUniverse::add_validator(Signer::address_of(miner_sig));
+      ValidatorUniverse::add_validator(miner_sig);
     }
 
 
