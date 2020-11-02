@@ -408,7 +408,6 @@ fn create_and_initialize_owners_operators(
         let staged_owner_auth_key =
             libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -465,9 +464,6 @@ fn create_and_initialize_owners_operators(
     // Authorize an operator for a validator/owner
     for (_owner_key, owner_name, op_assignment_script, _op_account , _genesis_proof) in operator_assignments {
         let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
-        dbg!(owner_address);
-        // dbg!(account);
-        dbg!(op_assignment_script);
 
         exec_script(session, log_context, owner_address, op_assignment_script);
     }

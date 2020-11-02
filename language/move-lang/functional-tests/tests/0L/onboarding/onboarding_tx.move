@@ -32,8 +32,6 @@ fun main(_sender: &signer) {
   );
 
   assert(Roles::assert_validator_addr(eve_addr), 7357130101011000);
-
-
   assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
 
   assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101031000);
