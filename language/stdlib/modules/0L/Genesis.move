@@ -24,6 +24,7 @@ module Genesis {
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
+    use 0x1::AutoPay;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -94,6 +95,8 @@ module Genesis {
         /////// 0L /////////
         Stats::initialize(lr_account);
         ValidatorUniverse::initialize(lr_account);
+
+        AutoPay::initialize(lr_account);
         // Subsidy::initialize(lr_account);
         // GAS::initialize(
         //     lr_account,

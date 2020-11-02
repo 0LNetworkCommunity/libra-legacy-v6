@@ -89,8 +89,8 @@ address 0x1{
           if (payment.end_epoch >= epoch) {
             // A payment will happen now
             // Obtain the amount to pay from percentage and balance
-            let _amount = FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.percentage, 100));
-            // LibraAccount::make_payment<GAS>(signer, *account_addr, payment.payee, amount);
+            let amount = FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.percentage, 100));
+            LibraAccount::make_payment<GAS>(*account_addr, payment.payee, amount, x"deadbeef", x"", signer);
           };
           // ToDo: might want to delete inactive pledges to save memory
           payments_idx = payments_idx + 1;
@@ -145,7 +145,6 @@ address 0x1{
         percentage: u64) acquires Data {
       
       let addr = Signer::address_of(account);
-
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
       if (Option::is_some<u64>(&index)) {
@@ -219,6 +218,7 @@ address 0x1{
         if (payment.uid == uid) {
           return Option::some<u64>(i)
         };
+        i = i + 1;
       };
       Option::none<u64>()
     }
