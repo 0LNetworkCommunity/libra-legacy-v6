@@ -227,7 +227,6 @@ module LibraAccount {
     // // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
     // // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
-    use 0x1::Debug::print;
     public fun create_validator_account_with_proof(
         challenge: &vector<u8>,
         solution: &vector<u8>,
@@ -248,13 +247,9 @@ module LibraAccount {
         let new_signer = create_signer(new_account_address);
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role_with_proof(&new_signer);
-        print(&0x01111111111);
         Event::publish_generator(&new_signer);
-        print(&0x001);
-
         ValidatorConfig::publish_with_proof(&new_signer, human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
-        print(&0x002);
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
