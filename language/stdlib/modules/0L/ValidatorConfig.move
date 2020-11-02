@@ -221,7 +221,7 @@ module ValidatorConfig {
             Signature::ed25519_validate_pubkey(copy consensus_pubkey),
             Errors::invalid_argument(EINVALID_CONSENSUS_KEY)
         );
-        // TODO(valerini): verify the proof of posession for consensus_pubkey
+        // // TODO(valerini): verify the proof of posession for consensus_pubkey
         assert(exists_config(validator_addr), Errors::not_published(EVALIDATOR_CONFIG));
         let t_ref = borrow_global_mut<ValidatorConfig>(validator_addr);
         t_ref.config = Option::some(Config {
@@ -256,7 +256,52 @@ module ValidatorConfig {
         aborts_if !Signature::ed25519_validate_pubkey(consensus_pubkey) with Errors::INVALID_ARGUMENT;
     }
 
+    //////// 0L ////////
+    /// Sets a validator config from proof
+    /// Permissions: PUBLIC, ANYONE, SIGNER
+    public fun init_val_config_with_proof(
+        validator_account: &signer,
+        consensus_pubkey: vector<u8>,
+        validator_network_addresses: vector<u8>,
+        fullnode_network_addresses: vector<u8>,
+    ) acquires ValidatorConfig {
+        let validator_addr = Signer::address_of(validator_account);
+        assert(
+            Signature::ed25519_validate_pubkey(copy consensus_pubkey),
+            Errors::invalid_argument(EINVALID_CONSENSUS_KEY)
+        );
+        // // TODO(valerini): verify the proof of posession for consensus_pubkey
+        assert(exists_config(validator_addr), Errors::not_published(EVALIDATOR_CONFIG));
+        let t_ref = borrow_global_mut<ValidatorConfig>(validator_addr);
+        t_ref.config = Option::some(Config {
+            consensus_pubkey,
+            validator_network_addresses,
+            fullnode_network_addresses,
+        });
+    }
 
+    spec fun init_val_config_with_proof {
+        pragma opaque;
+        modifies global<ValidatorConfig>(validator_addr);
+        include InitValConfigWithProofAbortsIf;
+        ensures is_valid(validator_addr);
+        ensures global<ValidatorConfig>(validator_addr)
+                == update_field(old(global<ValidatorConfig>(validator_addr)),
+                                config,
+                                Option::spec_some(Config {
+                                                 consensus_pubkey,
+                                                 validator_network_addresses,
+                                                 fullnode_network_addresses,
+                                             }));
+    }
+
+    spec schema InitValConfigWithProofAbortsIf {
+        validator_account: signer;
+        consensus_pubkey: vector<u8>;
+        include AbortsIfNoValidatorConfig{addr: validator_addr};
+        aborts_if !Signature::ed25519_validate_pubkey(consensus_pubkey) with Errors::INVALID_ARGUMENT;
+    }
+    
 
     ///////////////////////////////////////////////////////////////////////////
     // Publicly callable APIs: getters

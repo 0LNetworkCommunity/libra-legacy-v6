@@ -228,9 +228,6 @@ module LibraAccount {
 
     use 0x1::Debug::print;
     public fun create_validator_account_with_proof(
-        // lr_account: &signer,
-        // new_account_address: address,
-        // auth_key_prefix: vector<u8>,
         challenge: &vector<u8>,
         solution: &vector<u8>,
         consensus_pubkey: vector<u8>,
@@ -260,10 +257,9 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         // MinerState::init_miner_state(&new_signer, challenge, solution);
-        // ValidatorConfig::publish_from_vdf(&new_signer);
-        ValidatorConfig::set_config(
+
+        ValidatorConfig::init_val_config_with_proof(
             &new_signer, // validator_operator_account: &signer,
-            new_account_address, // validator_addr: address,
             consensus_pubkey,
             validator_network_addresses,
             fullnode_network_addresses,
