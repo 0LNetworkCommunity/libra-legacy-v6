@@ -9,8 +9,8 @@ module LibraBlock {
     use 0x1::LibraTimestamp;
 
     //////// 0L ////////
-    // use 0x1::Globals;
-    // use 0x1::Reconfigure;
+    use 0x1::Globals;
+    use 0x1::Reconfigure;
     use 0x1::Stats;
 
     resource struct BlockMetadata {
@@ -102,10 +102,10 @@ module LibraBlock {
 
          //////// 0L ////////
         // reconfigure
-        // if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
-        //   // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
-        //   Reconfigure::reconfigure(vm);
-        // }
+        if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
+          // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
+          Reconfigure::reconfigure(vm);
+        }
     }
     spec fun block_prologue {
         include LibraTimestamp::AbortsIfNotOperating;
