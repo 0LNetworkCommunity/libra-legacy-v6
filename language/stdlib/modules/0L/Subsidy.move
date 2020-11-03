@@ -21,7 +21,6 @@ address 0x1 {
     use 0x1::LibraTimestamp;
     use 0x1::LibraSystem;
     use 0x1::TransactionFee;
-    // use 0x1::Debug::print;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -114,7 +113,6 @@ address 0x1 {
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
-
       // Calculate subsidy equally for all the validators based on subsidy curve
       // Calculate the split for subsidy and burn
       // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
@@ -125,15 +123,13 @@ address 0x1 {
         subsidy_ceiling_gas,
         network_density,
         max_node_count,
-        );
-
+      );
       // Distribute gas coins to initial validators
       let subsidy_granted = subsidy_units / len;
       let i = 0;
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
-        let old_validator_bal = LibraAccount::balance<GAS>(vm_addr);
-
+        let old_validator_bal = LibraAccount::balance<GAS>(node_address);
         //Transfer gas from association to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
         LibraAccount::vm_deposit_with_metadata<GAS>(
@@ -148,7 +144,7 @@ address 0x1 {
         i = i + 1;
       };
 
-      assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
+      // assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
 
     }
     

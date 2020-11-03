@@ -164,7 +164,7 @@ pub fn encode_genesis_change_set(
     initialize_miners_alt(&mut session, &log_context, &operator_registrations);
     println!("OK initialize_miners_alt =============== ");
 
-    distribute_genesis_subsidy(&mut session, &log_context);
+    // distribute_genesis_subsidy(&mut session, &log_context);
 
 
     reconfigure(&mut session, &log_context);
@@ -738,7 +738,7 @@ fn initialize_miners_alt(
 
 }
 
-/// Bootstrap GAS with genesis subsidy to first miners
+/// Genesis subsidy to miners
 fn distribute_genesis_subsidy(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
