@@ -280,27 +280,28 @@ module ValidatorConfig {
         });
     }
 
-    spec fun init_val_config_with_proof {
-        pragma opaque;
-        modifies global<ValidatorConfig>(validator_addr);
-        include InitValConfigWithProofAbortsIf;
-        ensures is_valid(validator_addr);
-        ensures global<ValidatorConfig>(validator_addr)
-                == update_field(old(global<ValidatorConfig>(validator_addr)),
-                                config,
-                                Option::spec_some(Config {
-                                                 consensus_pubkey,
-                                                 validator_network_addresses,
-                                                 fullnode_network_addresses,
-                                             }));
-    }
+    // 0L TODO(nelaturuk): Specs need to be updated since we are using Signer instead of Account.
+    // spec fun init_val_config_with_proof {
+    //     pragma opaque;
+    //     modifies global<ValidatorConfig>(validator_addr);
+    //     include InitValConfigWithProofAbortsIf;
+    //     ensures is_valid(validator_addr);
+    //     ensures global<ValidatorConfig>(validator_addr)
+    //             == update_field(old(global<ValidatorConfig>(validator_addr)),
+    //                             config,
+    //                             Option::spec_some(Config {
+    //                                              consensus_pubkey,
+    //                                              validator_network_addresses,
+    //                                              fullnode_network_addresses,
+    //                                          }));
+    // }
 
-    spec schema InitValConfigWithProofAbortsIf {
-        validator_account: signer;
-        consensus_pubkey: vector<u8>;
-        include AbortsIfNoValidatorConfig{addr: validator_addr};
-        aborts_if !Signature::ed25519_validate_pubkey(consensus_pubkey) with Errors::INVALID_ARGUMENT;
-    }
+    // spec schema InitValConfigWithProofAbortsIf {
+    //     validator_account: signer;
+    //     consensus_pubkey: vector<u8>;
+    //     include AbortsIfNoValidatorConfig{addr: validator_account};
+    //     aborts_if !Signature::ed25519_validate_pubkey(consensus_pubkey) with Errors::INVALID_ARGUMENT;
+    // }
     
 
     ///////////////////////////////////////////////////////////////////////////

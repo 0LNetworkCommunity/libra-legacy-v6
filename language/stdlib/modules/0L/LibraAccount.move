@@ -264,26 +264,27 @@ module LibraAccount {
         make_account(new_signer, auth_key_prefix)
     }
 
-    spec fun create_validator_account_with_proof {
-        include CreateValidatorAccountWithProofAbortsIf;
-        include CreateValidatorAccountWithProofEnsures;
-    }
+    //0L TODO(nelaturuk): Specs need to be rewritten since we're using a different api.
+    // spec fun create_validator_account_with_proof {
+    //     include CreateValidatorAccountWithProofAbortsIf;
+    //     include CreateValidatorAccountWithProofEnsures;
+    // }
 
-    spec schema CreateValidatorAccountWithProofAbortsIf {
-        new_account_address: address;
-        include MakeAccountAbortsIf{addr: new_account_address};
-        // from `ValidatorConfig::publish`
-        include LibraTimestamp::AbortsIfNotOperating;
-        aborts_if ValidatorConfig::exists_config(new_account_address) with Errors::ALREADY_PUBLISHED;
-    }
+    // spec schema CreateValidatorAccountWithProofAbortsIf {
+    //     new_account_address: address;
+    //     include MakeAccountAbortsIf{addr: new_account_address};
+    //     // from `ValidatorConfig::publish`
+    //     include LibraTimestamp::AbortsIfNotOperating;
+    //     aborts_if ValidatorConfig::exists_config(new_account_address) with Errors::ALREADY_PUBLISHED;
+    // }
 
-    spec schema CreateValidatorAccountWithProofEnsures {
-        new_account_address: address;
-        // Note: `Roles::GrantRole` has both ensure's and aborts_if's.
-        include Roles::GrantRole{addr: new_account_address, role_id: Roles::VALIDATOR_ROLE_ID};
-        ensures exists_at(new_account_address);
-        ensures ValidatorConfig::exists_config(new_account_address);
-    }
+    // spec schema CreateValidatorAccountWithProofEnsures {
+    //     new_account_address: address;
+    //     // Note: `Roles::GrantRole` has both ensure's and aborts_if's.
+    //     include Roles::GrantRole{addr: new_account_address, role_id: Roles::VALIDATOR_ROLE_ID};
+    //     ensures exists_at(new_account_address);
+    //     ensures ValidatorConfig::exists_config(new_account_address);
+    // }
 
     // public fun create_validator_account_with_vdf<Token>(
     //     challenge: &vector<u8>,
