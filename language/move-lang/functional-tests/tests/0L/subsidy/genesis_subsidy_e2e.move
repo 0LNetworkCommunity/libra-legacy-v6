@@ -1,20 +1,29 @@
+//! account: alice, 0GAS, 0, validator
+//! account: bob, 0GAS, 0, validator
+//! account: carol, 0GAS, 0, validator
+//! account: dave, 0GAS, 0, validator
+
+//! block-prologue
+//! proposer: alice
+//! block-time: 1
+//! NewBlockEvent
+
+
 //! new-transaction
 // Check if genesis subsidies have been distributed
 //! sender: libraroot
 script {
 use 0x1::LibraAccount;
-use 0x1::ValidatorUniverse;
-use 0x1::Vector;
 use 0x1::GAS::GAS;
-fun main(vm: &signer) {
-    let genesis_validators = ValidatorUniverse::get_eligible_validators(vm);
-    let i = 0;
-    let len = Vector::length(&genesis_validators);
-    while (i < len) {
-        let node_address = *(Vector::borrow<address>(&genesis_validators, i));
-        //TODO::Below assert will fail once subsidy ceiling is changed.
-        assert(LibraAccount::balance<GAS>(node_address) == 74, 8006);
-        i = i + 1;
-    };
+use 0x1::Debug::print;
+fun main(_vm: &signer) {
+    print(&{{alice}});
+    print(&LibraAccount::balance<GAS>({{alice}}));
+    
+    assert(LibraAccount::balance<GAS>({{alice}}) == 74, 7357001);
+    //assert(LibraAccount::balance<GAS>({{bob}}) == 74, 7357002);
+    //assert(LibraAccount::balance<GAS>({{carol}}) == 74, 7357003);
+    //assert(LibraAccount::balance<GAS>({{dave}}) == 74, 7357004);
+
 }
 }
