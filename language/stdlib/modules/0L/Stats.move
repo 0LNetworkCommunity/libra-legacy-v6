@@ -52,6 +52,7 @@ module Stats{
     //Permissions: Public, VM only.
     public fun init_address(vm: &signer, node_addr: address) acquires T {
       let sender = Signer::address_of(vm);
+
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190204014010);
 
       let stats = borrow_global_mut<T>(sender);
@@ -62,7 +63,6 @@ module Stats{
         Vector::push_back(&mut stats.current.vote_count, 0);
       }
     }
-
 
     public fun init_set(vm: &signer, set: &vector<address>) acquires T{
       let sender = Signer::address_of(vm);

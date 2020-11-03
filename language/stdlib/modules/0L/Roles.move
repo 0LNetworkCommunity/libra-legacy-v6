@@ -116,6 +116,22 @@ module Roles {
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
     }
 
+    //////// 0L ////////
+    /// Publish a Validator `RoleId` under `new_account`.
+    /// The `creating_account` must be libra root.
+    /// Permissions: PUBLIC, ANYONE, SIGNER
+    /// Needs to be a signer, is called from LibraAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
+    public fun new_validator_role_with_proof(
+        new_account: &signer
+    ) {
+        // assert_libra_root(creating_account);
+        grant_role(new_account, VALIDATOR_ROLE_ID);
+    }
+
+    spec fun new_validator_role {
+        include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
+    }
+
     /// Publish a ValidatorOperator `RoleId` under `new_account`.
     /// The `creating_account` must be LibraRoot
     public fun new_validator_operator_role(
@@ -303,6 +319,23 @@ module Roles {
     spec fun assert_validator {
         pragma opaque;
         include AbortsIfNotValidator{validator_addr: Signer::address_of(validator_account)};
+    }
+
+    //////// 0L ////////
+    /// Need api with `account` and not `signer`
+    /// Assert that the account has the validator role.
+    public fun assert_validator_addr(validator_addr: address): bool acquires RoleId {
+        // let validator_addr = Signer::address_of(validator_account);
+        assert(exists<RoleId>(validator_addr), Errors::not_published(EROLE_ID));
+        assert(
+            borrow_global<RoleId>(validator_addr).role_id == VALIDATOR_ROLE_ID,
+            Errors::requires_role(EVALIDATOR)
+        );
+        true
+    }
+    spec fun assert_validator_addr {
+        pragma opaque;
+        include AbortsIfNotValidator{validator_addr: validator_addr};
     }
 
     /// Assert that the account has the validator operator role.

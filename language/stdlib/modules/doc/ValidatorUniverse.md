@@ -124,7 +124,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">add_validator</a>(addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">add_validator</a>(sender: &signer)
 </code></pre>
 
 
@@ -133,9 +133,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">add_validator</a>(addr: address) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">add_validator</a>(sender: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
+  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>let</b> collection = borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-  <b>if</b>(!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_validator_exists_in_universe">validator_exists_in_universe</a>(collection, addr))
+  <b>assert</b>(!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_validator_exists_in_universe">validator_exists_in_universe</a>(collection, addr), 220101015010);
   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_ValidatorEpochInfo">ValidatorEpochInfo</a>&gt;(
     &<b>mut</b> collection.validators,
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_ValidatorEpochInfo">ValidatorEpochInfo</a>{

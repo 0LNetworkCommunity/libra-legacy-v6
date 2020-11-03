@@ -164,7 +164,7 @@ pub fn encode_genesis_change_set(
     initialize_miners_alt(&mut session, &log_context, &operator_registrations);
     println!("OK initialize_miners_alt =============== ");
 
-    // distribute_genesis_subsidy(&mut session, &log_context);
+    distribute_genesis_subsidy(&mut session, &log_context);
 
 
     reconfigure(&mut session, &log_context);
@@ -408,7 +408,6 @@ fn create_and_initialize_owners_operators(
         let staged_owner_auth_key =
             libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -465,9 +464,6 @@ fn create_and_initialize_owners_operators(
     // Authorize an operator for a validator/owner
     for (_owner_key, owner_name, op_assignment_script, _op_account , _genesis_proof) in operator_assignments {
         let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
-        dbg!(owner_address);
-        // dbg!(account);
-        dbg!(op_assignment_script);
 
         exec_script(session, log_context, owner_address, op_assignment_script);
     }
@@ -712,9 +708,12 @@ fn _initialize_miners(session: &mut Session<StateViewCache>,
 
 }
 
-fn initialize_miners_alt(session: &mut Session<StateViewCache>,
-                     log_context: &impl LogContext,
-    operator_regs: &[OperatorRegistration]) {
+
+fn initialize_miners_alt(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext,
+    operator_regs: &[OperatorRegistration]
+) {
     // Genesis will abort if mining can't be confirmed.
     let libra_root_address = account_config::libra_root_address();
     for (owner_key, _, _, account, mining_proof) in operator_regs {
@@ -737,6 +736,26 @@ fn initialize_miners_alt(session: &mut Session<StateViewCache>,
                 Value::vector_u8(proof)]);
     }
 
+}
+
+/// Genesis subsidy to miners
+fn distribute_genesis_subsidy(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext,
+) { 
+    let libra_root_address = account_config::libra_root_address();
+
+    exec_function(
+        session,
+        log_context,
+        libra_root_address,
+        "Subsidy",
+        "genesis",
+        vec![],
+        vec![
+            Value::transaction_argument_signer_reference(libra_root_address)
+        ]
+    )
 }
 
 // 0L Change: Necessary for genesis transaction.

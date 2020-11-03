@@ -29,7 +29,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
@@ -177,7 +176,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_genesis_helper">genesis_helper</a>(account: &signer, miner: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_genesis_helper">genesis_helper</a>(vm_sig: &signer, miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -187,29 +186,37 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_genesis_helper">genesis_helper</a> (
-  account: &signer,
-  miner: &signer,
+  vm_sig: &signer,
+  miner_sig: &signer,
   challenge: vector&lt;u8&gt;,
   solution: vector&lt;u8&gt;
 ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
-  print(&<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner));
-
-  //Check this originated from VM.
-  <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-  <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130102014010);
   // In rustland the vm_genesis creates a <a href="Signer.md#0x1_Signer">Signer</a> for the miner. So the SENDER is not the same and the <a href="Signer.md#0x1_Signer">Signer</a>.
-  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner) != sender, 130101014010);
-  // <b>assert</b>(<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_genesis">LibraTimestamp::is_genesis</a>(), 130101024010);
 
-  <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
-  <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
-    challenge,
-    difficulty,
-    solution,
-  };
-  <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner);
-  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner), proof, <b>false</b>);
-  <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(account, <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner));
+  //TODO: Previously in OLv3 is_genesis() returned <b>true</b>. How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
+  // <b>assert</b>(<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_genesis">LibraTimestamp::is_genesis</a>(), 130101024010);
+  <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution);
+
+  // TODO: Move this elsewhere?
+  // Initialize stats for first validator set from rust genesis.
+  <b>let</b> node_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
+  <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(vm_sig, node_addr);
+  //Check this originated from VM.
+  // <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+  // <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130102014010);
+  // // In rustland the vm_genesis creates a <a href="Signer.md#0x1_Signer">Signer</a> for the miner. So the SENDER is not the same and the <a href="Signer.md#0x1_Signer">Signer</a>.
+  // <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner) != sender, 130101014010);
+  // // <b>assert</b>(<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_genesis">LibraTimestamp::is_genesis</a>(), 130101024010);
+
+  // <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
+  // <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
+  //   challenge,
+  //   difficulty,
+  //   solution,
+  // };
+  // <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner);
+  // <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner), proof, <b>false</b>);
+  // <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(account, <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner));
 
 }
 </code></pre>
@@ -224,7 +231,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(miner: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(miner_sig: &signer, difficulty: u64, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -234,25 +241,33 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a> (
-  miner: &signer,
-  difficulty: u64,
-  challenge: vector&lt;u8&gt;,
-  solution: vector&lt;u8&gt;
-) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+   miner_sig: &signer,
+   difficulty: u64,
+   challenge: vector&lt;u8&gt;,
+   solution: vector&lt;u8&gt;
+ ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
 
-  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
-  //doubly check this is in test env.
-  <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 15, 130102024010);
+   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
+   //doubly check this is in test env.
+   <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 15, 130102024010);
 
-  // <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
-  <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
-    challenge,
-    difficulty,
-    solution,
-  };
-  <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner);
-  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner), proof, <b>false</b>);
-}
+   move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
+     previous_proof_hash: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+     verified_tower_height: 0u64,
+     latest_epoch_mining: 0u64,
+     count_proofs_in_epoch: 0u64,
+     epochs_validating_and_mining: 0u64,
+     contiguous_epochs_validating_and_mining: 0u64,
+   });
+
+   <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
+     challenge,
+     difficulty,
+     solution,
+   };
+
+   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
+ }
 </code></pre>
 
 
@@ -377,9 +392,7 @@
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130109014010);
 
   // Miner may not have been initialized. Simply <b>return</b> in this case (don't <b>abort</b>)
-  <b>if</b>( ! <b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr) ){
-    <b>return</b>
-  };
+  <b>if</b>( !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr) ) { <b>return</b> };
 
   // Check that there was mining and validating in period.
   // Account may not have any proofs submitted in epoch, since the <b>resource</b> was last emptied.
@@ -452,7 +465,7 @@
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130110014010);
 
   // Miner may not have been initialized. (don't <b>abort</b>, just <b>return</b> 0)
-  <b>if</b>( ! <b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr)){
+  <b>if</b>( !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr)){
     <b>return</b> 0
   };
 
@@ -518,7 +531,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_signer: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -527,27 +540,35 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_signer: &signer) {
-  // TODO: If a miner can init the state then it can put the account in a bad state.
-
-  // <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> calls this from a <b>public</b> API.
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   // NOTE Only <a href="Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
-  // Exception is <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> which can emulate a <a href="Signer.md#0x1_Signer">Signer</a>.
+  // Should only happen once.
+  <b>assert</b>(!<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig)), 130112011021);
+  // <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> calls this.
+  // Exception is <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> which can simulate a <a href="Signer.md#0x1_Signer">Signer</a>.
   // Initialize <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> object and give <b>to</b> miner account
-  move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_signer, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
-    // verified_proof_history: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+  move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
     previous_proof_hash: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-    // invalid_proof_history: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
     verified_tower_height: 0u64,
     latest_epoch_mining: 0u64,
-    count_proofs_in_epoch: 0u64,
+    count_proofs_in_epoch: 1u64,
     epochs_validating_and_mining: 0u64,
     contiguous_epochs_validating_and_mining: 0u64,
   });
 
+  <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
+  <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
+    challenge: *challenge,
+    difficulty,
+    solution: *solution,
+  };
+
+  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
+
   //also add the miner <b>to</b> validator universe
-  //TODO: add_validators need <b>to</b> check permission.
-  <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">ValidatorUniverse::add_validator</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_signer));
+  //TODO: #254 ValidatorUniverse::add_validators need <b>to</b> check permission.
+  // Note: this should be in <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> but causes cyclic dependency.
+  <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">ValidatorUniverse::add_validator</a>(miner_sig);
 }
 </code></pre>
 

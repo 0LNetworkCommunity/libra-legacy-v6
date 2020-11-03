@@ -1,5 +1,5 @@
-//! account: bob, 0GAS
-//! account: alice, 10GAS
+//! account: alice, 100, 0, validator
+//! account: bob, 100, 0
 
 //! new-transaction
 // Transfers between accounts is disabled
@@ -16,7 +16,9 @@ fun main(account: &signer) {
     LibraAccount::restore_withdraw_capability(with_cap);
 }
 }
-// check: "Keep(ABORTED { code: 8001,"
+////////// Transfers should fail ////////
+// check: "Keep(ABORTED { code: 1544,"
+/////////////////////////////////////////
 
 // //! new-transaction
 // // Transfers from libraroot to other accounts is enabled

@@ -197,6 +197,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_init_address">init_address</a>(vm: &signer, node_addr: address) <b>acquires</b> <a href="Stats.md#0x1_Stats_T">T</a> {
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
+
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190204014010);
 
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_T">T</a>&gt;(sender);
