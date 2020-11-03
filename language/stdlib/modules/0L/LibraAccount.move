@@ -743,7 +743,10 @@ module LibraAccount {
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires LibraAccount {
+        //////// 0L //////// Transfers disabled
         let sender_addr = Signer::address_of(sender);
+        assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
             !delegated_withdraw_capability(sender_addr),
