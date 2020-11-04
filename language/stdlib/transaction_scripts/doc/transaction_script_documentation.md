@@ -5072,6 +5072,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::LCS`](../../modules/doc/LCS.md#0x1_LCS)
 -  [`0x1::Libra`](../../modules/doc/Libra.md#0x1_Libra)
 -  [`0x1::LibraAccount`](../../modules/doc/LibraAccount.md#0x1_LibraAccount)
+-  [`0x1::LibraBlock`](../../modules/doc/LibraBlock.md#0x1_LibraBlock)
 -  [`0x1::LibraConfig`](../../modules/doc/LibraConfig.md#0x1_LibraConfig)
 -  [`0x1::LibraSystem`](../../modules/doc/LibraSystem.md#0x1_LibraSystem)
 -  [`0x1::LibraTimestamp`](../../modules/doc/LibraTimestamp.md#0x1_LibraTimestamp)
@@ -5080,6 +5081,8 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::MinerState`](../../modules/doc/MinerState.md#0x1_MinerState)
 -  [`0x1::NodeWeight`](../../modules/doc/NodeWeight.md#0x1_NodeWeight)
 -  [`0x1::Option`](../../modules/doc/Option.md#0x1_Option)
+-  [`0x1::Oracle`](../../modules/doc/Oracle.md#0x1_Oracle)
+-  [`0x1::Reconfigure`](../../modules/doc/Reconfigure.md#0x1_Reconfigure)
 -  [`0x1::RecoveryAddress`](../../modules/doc/RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](../../modules/doc/RegisteredCurrencies.md#0x1_RegisteredCurrencies)
 -  [`0x1::Roles`](../../modules/doc/Roles.md#0x1_Roles)
@@ -5091,6 +5094,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::Stats`](../../modules/doc/Stats.md#0x1_Stats)
 -  [`0x1::Testnet`](../../modules/doc/Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](../../modules/doc/TransactionFee.md#0x1_TransactionFee)
+-  [`0x1::Upgrade`](../../modules/doc/Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](../../modules/doc/VASP.md#0x1_VASP)
 -  [`0x1::VDF`](../../modules/doc/VDF.md#0x1_VDF)
 -  [`0x1::ValidatorConfig`](../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig)
@@ -5111,7 +5115,13 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_validator_account`](transaction_script_documentation.md#create_validator_account)
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
+<<<<<<< HEAD
 -  [`main`](miner_state_onboarding.md#main)
+=======
+-  [`ol_oracle_tx`](ol_oracle_tx.md#ol_oracle_tx)
+-  [`ol_reconfig_bulk_update_e2e_test_helper`](ol_reconfig_bulk_update_e2e_test_helper.md#ol_reconfig_bulk_update_e2e_test_helper)
+-  [`ol_reconfig_bulk_update_setup`](ol_reconfig_bulk_update_setup.md#ol_reconfig_bulk_update_setup)
+>>>>>>> OLv4_upgrade_in_prologue
 -  [`peer_to_peer_with_metadata`](transaction_script_documentation.md#peer_to_peer_with_metadata)
 -  [`preburn`](transaction_script_documentation.md#preburn)
 -  [`publish_shared_ed25519_public_key`](transaction_script_documentation.md#publish_shared_ed25519_public_key)
