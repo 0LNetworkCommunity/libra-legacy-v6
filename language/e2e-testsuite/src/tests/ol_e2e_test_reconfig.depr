@@ -44,7 +44,7 @@ fn reconfig_bulk_update_test () {
         from_currency_code_string(LBR_NAME).unwrap(), sequence_number, AccountRoleSpecifier::LibraRoot);
     executor.add_account_data(&libra_root_data);
 
-    let names = vec!["alice", "bob", "carol", "sha", "ram"];
+    let names = vec!["alice", "bob", "carol", "dave"];
     // Create a transaction allowing the accounts to serve as validators
     for i in 0..5 {
         //let txn = create_validator_account_txn(&libra_root, accounts.get(i).unwrap(), (i+1).try_into().unwrap(), (**names.get(i).unwrap()).to_string().into_bytes());
