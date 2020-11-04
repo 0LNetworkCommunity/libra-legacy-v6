@@ -371,11 +371,29 @@
     }
   ],
   [
+    "01668b3d6590ee344fbe999c0043e30cee0f1af0ddc46d649fd79186b08a8f4684",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "MinerState",
+      "name": "MinerProofHistory",
+      "type_params": []
+    }
+  ],
+  [
     "0166cef2a6c8f9101a1bb6bb9586d6ba6bf2b940f8d94c845aa420ee3b24de9121",
     {
       "address": "00000000000000000000000000000001",
       "module": "ValidatorConfig",
       "name": "Config",
+      "type_params": []
+    }
+  ],
+  [
+    "0167556596571d0cc0641b17733cba22cffb51d9fea94e27ad9259b06826371f5d",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Globals",
+      "name": "GlobalConstants",
       "type_params": []
     }
   ],
@@ -503,6 +521,15 @@
           }
         }
       ]
+    }
+  ],
+  [
+    "0194f1f85b50e1ee53383fdf371040dc255911d3642b2fa87e15ef143c88123254",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "MinerState",
+      "name": "Proof",
+      "type_params": []
     }
   ],
   [
@@ -766,6 +793,15 @@
           }
         }
       ]
+    }
+  ],
+  [
+    "01d8d0d983c718cb50c7cda1bd6a9c708a4906517bbba56178e02443cc04053ded",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "ValidatorUniverse",
+      "name": "ValidatorEpochInfo",
+      "type_params": []
     }
   ],
   [

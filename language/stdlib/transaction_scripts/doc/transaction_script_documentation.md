@@ -5111,6 +5111,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_validator_account`](transaction_script_documentation.md#create_validator_account)
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
+-  [`main`](miner_state_onboarding.md#main)
 -  [`peer_to_peer_with_metadata`](transaction_script_documentation.md#peer_to_peer_with_metadata)
 -  [`preburn`](transaction_script_documentation.md#preburn)
 -  [`publish_shared_ed25519_public_key`](transaction_script_documentation.md#publish_shared_ed25519_public_key)

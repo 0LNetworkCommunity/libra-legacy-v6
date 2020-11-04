@@ -667,6 +667,15 @@ pub enum ScriptCall {
         to_freeze_account: AccountAddress,
     },
 
+    Main {
+        challenge: Bytes,
+        solution: Bytes,
+        consensus_pubkey: Bytes,
+        validator_network_address: Bytes,
+        full_node_network_address: Bytes,
+        human_name: Bytes,
+    },
+
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
     /// Transfers over a specified amount defined on-chain that are between two different VASPs, or
@@ -1560,6 +1569,21 @@ impl ScriptCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
+            Main {
+                challenge,
+                solution,
+                consensus_pubkey,
+                validator_network_address,
+                full_node_network_address,
+                human_name,
+            } => encode_main_script(
+                challenge,
+                solution,
+                consensus_pubkey,
+                validator_network_address,
+                full_node_network_address,
+                human_name,
+            ),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -2442,6 +2466,28 @@ pub fn encode_freeze_account_script(
         vec![
             TransactionArgument::U64(sliding_nonce),
             TransactionArgument::Address(to_freeze_account),
+        ],
+    )
+}
+
+pub fn encode_main_script(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    consensus_pubkey: Vec<u8>,
+    validator_network_address: Vec<u8>,
+    full_node_network_address: Vec<u8>,
+    human_name: Vec<u8>,
+) -> Script {
+    Script::new(
+        MAIN_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+            TransactionArgument::U8Vector(consensus_pubkey),
+            TransactionArgument::U8Vector(validator_network_address),
+            TransactionArgument::U8Vector(full_node_network_address),
+            TransactionArgument::U8Vector(human_name),
         ],
     )
 }
@@ -3525,6 +3571,17 @@ fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_main_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::Main {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        consensus_pubkey: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        validator_network_address: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        full_node_network_address: decode_u8vector_argument(script.args().get(4)?.clone())?,
+        human_name: decode_u8vector_argument(script.args().get(5)?.clone())?,
+    })
+}
+
 fn decode_peer_to_peer_with_metadata_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::PeerToPeerWithMetadata {
         currency: script.ty_args().get(0)?.clone(),
@@ -3739,6 +3796,7 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         FREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_freeze_account_script),
     );
+    map.insert(MAIN_CODE.to_vec(), Box::new(decode_main_script));
     map.insert(
         PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
         Box::new(decode_peer_to_peer_with_metadata_script),
@@ -3991,6 +4049,20 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
     116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98,
     111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10, 1, 17, 1,
     11, 0, 10, 2, 17, 0, 2,
+];
+
+const MAIN_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 44, 7, 72, 86,
+    8, 158, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
+    7, 1, 5, 1, 3, 6, 6, 10, 2, 6, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1, 1, 6, 10, 2, 10, 2, 10, 2,
+    10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65,
+    99, 99, 111, 117, 110, 116, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102,
+    105, 103, 7, 98, 97, 108, 97, 110, 99, 101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108,
+    105, 100, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95,
+    112, 114, 111, 111, 102, 8, 105, 115, 95, 118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 1, 0, 4, 5, 25, 14, 0, 14, 1, 11, 2, 11, 3, 11, 4, 11, 5, 17, 1, 12, 6, 10, 6,
+    17, 2, 12, 7, 11, 7, 3, 15, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 6, 56, 0, 6, 0, 0, 0, 0, 0, 0,
+    0, 0, 33, 12, 9, 11, 9, 3, 24, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[
