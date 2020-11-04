@@ -31,6 +31,8 @@ impl ValidatorConfig {
         // Retrieve and set owner account
         let owner_account =
             libra_config::utils::validator_owner_account_from_name(self.owner_name.as_bytes());
+
+        // This means Operators can only have 1 owner, at least at genesis.
         let mut validator_storage = config.validator_backend();
         validator_storage.set(OWNER_ACCOUNT, owner_account)?;
 

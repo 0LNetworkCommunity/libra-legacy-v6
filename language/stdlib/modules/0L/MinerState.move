@@ -15,9 +15,7 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
-
-    use 0x1::Debug::print;
-
+    // use 0x1::LibraTimestamp;
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -52,36 +50,44 @@ address 0x1 {
     // Helper function for genesis to process genesis proofs.
     // Permissions: PUBLIC, ONLY VM, AT GENESIS.
     public fun genesis_helper (
-      account: &signer, 
-      miner: &signer,
+      vm_sig: &signer,
+      miner_sig: &signer,
       challenge: vector<u8>,
       solution: vector<u8>
     ) acquires MinerProofHistory{
-      print(&Signer::address_of(miner));
-
-      //Check this originated from VM.
-      let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130102014010);
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
-      assert(Signer::address_of(miner) != sender, 130101014010);
-      // assert(LibraTimestamp::is_genesis(), 130101024010);
 
-      let difficulty = Globals::get_difficulty();
-      let proof = Proof {
-        challenge,
-        difficulty,  
-        solution,
-      };
-      init_miner_state(miner);
-      verify_and_update_state(Signer::address_of(miner), proof, false);
-      Stats::init_address(account, Signer::address_of(miner));
+      //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
+      // assert(LibraTimestamp::is_genesis(), 130101024010);
+      init_miner_state(miner_sig, &challenge, &solution);
+
+      // TODO: Move this elsewhere? 
+      // Initialize stats for first validator set from rust genesis. 
+      let node_addr = Signer::address_of(miner_sig);
+      Stats::init_address(vm_sig, node_addr);
+      //Check this originated from VM.
+      // let sender = Signer::address_of(account);
+      // assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130102014010);
+      // // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
+      // assert(Signer::address_of(miner) != sender, 130101014010);
+      // // assert(LibraTimestamp::is_genesis(), 130101024010);
+
+      // let difficulty = Globals::get_difficulty();
+      // let proof = Proof {
+      //   challenge,
+      //   difficulty,  
+      //   solution,
+      // };
+      // init_miner_state(miner);
+      // verify_and_update_state(Signer::address_of(miner), proof, false);
+      // Stats::init_address(account, Signer::address_of(miner));
 
     }
 
     // Function index: 03
     // Permissions: PUBLIC, SIGNER, TEST ONLY
-    public fun test_helper (
-      miner: &signer,
+   public fun test_helper (
+      miner_sig: &signer,
       difficulty: u64,
       challenge: vector<u8>,
       solution: vector<u8>
@@ -91,14 +97,22 @@ address 0x1 {
       //doubly check this is in test env.
       assert(Globals::get_epoch_length() == 15, 130102024010);
 
-      // let difficulty = Globals::get_difficulty();
+      move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
+        previous_proof_hash: Vector::empty(),
+        verified_tower_height: 0u64,
+        latest_epoch_mining: 0u64,
+        count_proofs_in_epoch: 0u64,
+        epochs_validating_and_mining: 0u64,
+        contiguous_epochs_validating_and_mining: 0u64,
+      });
+
       let proof = Proof {
         challenge,
         difficulty,  
         solution,
       };
-      init_miner_state(miner);
-      verify_and_update_state(Signer::address_of(miner), proof, false);
+
+      verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
 
     // This function verifies the proof and commits to chain.
@@ -172,9 +186,7 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
-      if( ! exists<MinerProofHistory>(miner_addr) ){
-        return
-      };
+      if( !exists<MinerProofHistory>(miner_addr) ) { return };
 
       // Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
@@ -210,7 +222,7 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130110014010);
 
       // Miner may not have been initialized. (don't abort, just return 0)
-      if( ! exists<MinerProofHistory>(miner_addr)){
+      if( !exists<MinerProofHistory>(miner_addr)){
         return 0
       };
 
@@ -249,27 +261,35 @@ address 0x1 {
 
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
-    public fun init_miner_state(miner_signer: &signer) {
-      // TODO: If a miner can init the state then it can put the account in a bad state.
-
-      // LibraAccount calls this from a public API.
+    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
       // NOTE Only Signer can update own state.
-      // Exception is LibraAccount which can emulate a Signer.
+      // Should only happen once.
+      assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), 130112011021);
+      // LibraAccount calls this.
+      // Exception is LibraAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
-      move_to<MinerProofHistory>(miner_signer, MinerProofHistory{
-        // verified_proof_history: Vector::empty(),
+      move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
         previous_proof_hash: Vector::empty(),
-        // invalid_proof_history: Vector::empty(),
         verified_tower_height: 0u64,
         latest_epoch_mining: 0u64,
-        count_proofs_in_epoch: 0u64,
+        count_proofs_in_epoch: 1u64,
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
       });
+
+      let difficulty = Globals::get_difficulty();
+      let proof = Proof {
+        challenge: *challenge,
+        difficulty,  
+        solution: *solution,
+      };
       
+      verify_and_update_state(Signer::address_of(miner_sig), proof, false);
+
       //also add the miner to validator universe
-      //TODO: add_validators need to check permission.
-      ValidatorUniverse::add_validator(Signer::address_of(miner_signer));
+      //TODO: #254 ValidatorUniverse::add_validators need to check permission.
+      // Note: this should be in LibraAccount but causes cyclic dependency.
+      ValidatorUniverse::add_validator(miner_sig);
     }
 
 

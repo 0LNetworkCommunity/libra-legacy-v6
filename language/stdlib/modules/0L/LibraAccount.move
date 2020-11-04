@@ -30,6 +30,10 @@ module LibraAccount {
     use 0x1::Libra::{Self, Libra};
     use 0x1::Option::{Self, Option};
     use 0x1::Roles;
+    //////// 0L ////////
+    use 0x1::VDF;
+    use 0x1::Globals;
+    use 0x1::MinerState;
 
     /// An `address` is a Libra Account iff it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -211,11 +215,126 @@ module LibraAccount {
         create_libra_root_account(
             copy dummy_auth_key_prefix,
         );
-        create_treasury_compliance_account(
-            lr_account,
-            copy dummy_auth_key_prefix,
-        );
+        // create_treasury_compliance_account(
+        //     lr_account,
+        //     copy dummy_auth_key_prefix,
+        // );
     }
+
+    // //////// 0L ////////
+    // // Accounts can be created permissionlessly, but they need a VDF to be submitted with the request.
+    // //Permissions: PUBLIC, ANYONE, OPEN!
+    // // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
+    // // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
+
+    public fun create_validator_account_with_proof(
+        challenge: &vector<u8>,
+        solution: &vector<u8>,
+        consensus_pubkey: vector<u8>,
+        validator_network_addresses: vector<u8>,
+        fullnode_network_addresses: vector<u8>,
+        human_name: vector<u8>,
+    ) acquires AccountOperationsCapability {
+        
+        let valid = VDF::verify(
+            challenge,
+            &Globals::get_difficulty(),
+            solution
+        );
+        assert(valid, 120101011021);
+
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+        let new_signer = create_signer(new_account_address);
+        // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
+        Roles::new_validator_role_with_proof(&new_signer);
+        Event::publish_generator(&new_signer);
+        ValidatorConfig::publish_with_proof(&new_signer, human_name);
+        add_currencies_for_account<GAS>(&new_signer, false);
+
+        // NOTE: VDF verification is being called twice!
+        MinerState::init_miner_state(&new_signer, challenge, solution);
+
+        ValidatorConfig::init_val_config_with_proof(
+            &new_signer, // validator_operator_account: &signer,
+            consensus_pubkey,
+            validator_network_addresses,
+            fullnode_network_addresses,
+        );
+
+        make_account(new_signer, auth_key_prefix)
+    }
+
+    //0L TODO(nelaturuk): Specs need to be rewritten since we're using a different api.
+    // spec fun create_validator_account_with_proof {
+    //     include CreateValidatorAccountWithProofAbortsIf;
+    //     include CreateValidatorAccountWithProofEnsures;
+    // }
+
+    // spec schema CreateValidatorAccountWithProofAbortsIf {
+    //     new_account_address: address;
+    //     include MakeAccountAbortsIf{addr: new_account_address};
+    //     // from `ValidatorConfig::publish`
+    //     include LibraTimestamp::AbortsIfNotOperating;
+    //     aborts_if ValidatorConfig::exists_config(new_account_address) with Errors::ALREADY_PUBLISHED;
+    // }
+
+    // spec schema CreateValidatorAccountWithProofEnsures {
+    //     new_account_address: address;
+    //     // Note: `Roles::GrantRole` has both ensure's and aborts_if's.
+    //     include Roles::GrantRole{addr: new_account_address, role_id: Roles::VALIDATOR_ROLE_ID};
+    //     ensures exists_at(new_account_address);
+    //     ensures ValidatorConfig::exists_config(new_account_address);
+    // }
+
+    // public fun create_validator_account_with_vdf<Token>(
+    //     challenge: &vector<u8>,
+    //     solution: &vector<u8>,
+    //     consensus_pubkey: vector<u8>,
+    //     validator_network_identity_pubkey: vector<u8>,
+    //     validator_network_address: vector<u8>,
+    //     full_node_network_identity_pubkey: vector<u8>,
+    //     full_node_network_address: vector<u8>,
+    // ) {
+    //     // Note: A majority of the onboarding logic is contained here because of limitations on resources and signers
+    //     // LibraAccount is the only module which can simulate a Signer type, and move a resource onto an account, without the sender account, being the recipient account. 
+        
+    //     // Since this is an open function, we rate limit the callign with a proof of work, vdf. 
+    //     // Check that accounts are created with a VDF proof.
+
+    //     let valid = VDF::verify(
+    //         challenge,
+    //         &Globals::get_difficulty(),
+    //         solution
+    //     );
+    //     assert(valid, 120101011021);
+
+    //     let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+
+    //     // publish an event for the account generation.
+    //     let new_signer = create_signer(new_account_address);
+    //     Event::publish_generator(&new_signer);
+
+    //     // set the role of the account, and move that resource to the account.
+    //     move_to(&new_signer, Role_temp<ValidatorRole> {role_type: ValidatorRole {}, is_certified: true});
+
+    //     // initialize the miner's state 
+    //     // NOTE: VDF verification is being called twice!
+    //     MinerState::init_miner_state(&new_signer, challenge, solution);
+    //     ValidatorConfig::publish_from_vdf(&new_signer);
+    //     ValidatorConfig::set_init_config(
+    //         &new_signer,
+    //         new_account_address,
+    //         consensus_pubkey,
+    //         validator_network_identity_pubkey,
+    //         validator_network_address,
+    //         full_node_network_identity_pubkey,
+    //         full_node_network_address,
+    //     );
+
+
+    //     // create the account, and also consume/destroy the new_signer.
+    //     make_account<Token, Empty::T>(new_signer, auth_key_prefix, Empty::create(), false);
+    // }
 
     /// Return `true` if `addr` has already published account limits for `Token`
     fun has_published_account_limits<Token>(addr: address): bool {
@@ -277,18 +396,17 @@ module LibraAccount {
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
         LibraTimestamp::assert_operating();
         AccountFreezing::assert_not_frozen(payee);
-
         // Check that the `to_deposit` coin is non-zero
         let deposit_value = Libra::value(&to_deposit);
         assert(deposit_value > 0, Errors::invalid_argument(ECOIN_DEPOSIT_IS_ZERO));
         // Check that an account exists at `payee`
         assert(exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
         // Check that `payee` can accept payments in `Token`
-        assert(
-            exists<Balance<Token>>(payee),
-            Errors::invalid_argument(EPAYEE_CANT_ACCEPT_CURRENCY_TYPE)
-        );
-
+        // assert(
+        //     exists<Balance<Token>>(payee),
+        //     Errors::invalid_argument(EPAYEE_CANT_ACCEPT_CURRENCY_TYPE)
+        // );
+        
         // Check that the payment complies with dual attestation rules
         DualAttestation::assert_payment_ok<Token>(
             payer, payee, deposit_value, copy metadata, metadata_signature
@@ -303,12 +421,10 @@ module LibraAccount {
                     &borrow_global<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()).limits_cap
                 ),
                 Errors::limit_exceeded(EDEPOSIT_EXCEEDS_LIMITS)
-            )
+            );
         };
-
         // Deposit the `to_deposit` coin
         Libra::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
-
         // Log a received event
         Event::emit_event<ReceivedPaymentEvent>(
             &mut borrow_global_mut<LibraAccount>(payee).received_events,
@@ -627,7 +743,10 @@ module LibraAccount {
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires LibraAccount {
+        //////// 0L //////// Transfers disabled
         let sender_addr = Signer::address_of(sender);
+        assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
             !delegated_withdraw_capability(sender_addr),
@@ -881,9 +1000,9 @@ module LibraAccount {
         let new_account_addr = Signer::address_of(new_account);
         add_currency<Token>(new_account);
         if (add_all_currencies) {
-            if (!exists<Balance<Coin1>>(new_account_addr)) {
-                add_currency<Coin1>(new_account);
-            };
+            // if (!exists<Balance<Coin1>>(new_account_addr)) {
+            //     add_currency<Coin1>(new_account);
+            // };
             if (!exists<Balance<GAS>>(new_account_addr)) {
                 add_currency<GAS>(new_account);
             };
@@ -1263,10 +1382,10 @@ module LibraAccount {
         // aborts if `Token` is not a currency type in the system
         Libra::assert_is_currency<Token>();
         // Check that an account with this role is allowed to hold funds
-        assert(
-            Roles::can_hold_balance(account),
-            Errors::invalid_argument(EROLE_CANT_STORE_BALANCE)
-        );
+        // assert(
+        //     Roles::can_hold_balance(account),
+        //     Errors::invalid_argument(EROLE_CANT_STORE_BALANCE)
+        // );
         // aborts if this account already has a balance in `Token`
         let addr = Signer::address_of(account);
         assert(!exists<Balance<Token>>(addr), Errors::already_published(EADD_EXISTING_CURRENCY));
@@ -1733,6 +1852,7 @@ module LibraAccount {
         Roles::new_validator_role(lr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, lr_account, human_name);
+        add_currencies_for_account<GAS>(&new_account, false);
         make_account(new_account, auth_key_prefix)
     }
 
@@ -1771,6 +1891,7 @@ module LibraAccount {
         Roles::new_validator_operator_role(lr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorOperatorConfig::publish(&new_account, lr_account, human_name);
+        add_currencies_for_account<GAS>(&new_account, false);
         make_account(new_account, auth_key_prefix)
     }
 
@@ -2012,10 +2133,9 @@ module LibraAccount {
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
         let sender = Signer::address_of(payer);
         assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 4010);
-
         deposit(
-            payee,
             CoreAddresses::LIBRA_ROOT_ADDRESS(),
+            payee,
             to_deposit,
             metadata,
             metadata_signature
