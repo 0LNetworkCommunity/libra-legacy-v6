@@ -676,26 +676,21 @@ pub enum ScriptCall {
         to_freeze_account: AccountAddress,
     },
 
+    Main {
+        challenge: Bytes,
+        solution: Bytes,
+        consensus_pubkey: Bytes,
+        validator_network_address: Bytes,
+        full_node_network_address: Bytes,
+        human_name: Bytes,
+    },
+
     OlOracleTx {
         id: u64,
         data: Bytes,
     },
 
-    OlReconfigBulkUpdateE2eTestHelper {
-        alice: AccountAddress,
-        bob: AccountAddress,
-        carol: AccountAddress,
-        sha: AccountAddress,
-        _ram: AccountAddress,
-    },
-
-    OlReconfigBulkUpdateSetup {
-        alice: AccountAddress,
-        bob: AccountAddress,
-        carol: AccountAddress,
-        sha: AccountAddress,
-        ram: AccountAddress,
-    },
+    OlReconfigBulkUpdateE2eTestHelper {},
 
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
@@ -1611,23 +1606,25 @@ impl ScriptCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
+            Main {
+                challenge,
+                solution,
+                consensus_pubkey,
+                validator_network_address,
+                full_node_network_address,
+                human_name,
+            } => encode_main_script(
+                challenge,
+                solution,
+                consensus_pubkey,
+                validator_network_address,
+                full_node_network_address,
+                human_name,
+            ),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
-            OlReconfigBulkUpdateE2eTestHelper {
-                alice,
-                bob,
-                carol,
-                sha,
-                _ram,
-            } => {
-                encode_ol_reconfig_bulk_update_e2e_test_helper_script(alice, bob, carol, sha, _ram)
+            OlReconfigBulkUpdateE2eTestHelper {} => {
+                encode_ol_reconfig_bulk_update_e2e_test_helper_script()
             }
-            OlReconfigBulkUpdateSetup {
-                alice,
-                bob,
-                carol,
-                sha,
-                ram,
-            } => encode_ol_reconfig_bulk_update_setup_script(alice, bob, carol, sha, ram),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -2514,6 +2511,28 @@ pub fn encode_freeze_account_script(
     )
 }
 
+pub fn encode_main_script(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    consensus_pubkey: Vec<u8>,
+    validator_network_address: Vec<u8>,
+    full_node_network_address: Vec<u8>,
+    human_name: Vec<u8>,
+) -> Script {
+    Script::new(
+        MAIN_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+            TransactionArgument::U8Vector(consensus_pubkey),
+            TransactionArgument::U8Vector(validator_network_address),
+            TransactionArgument::U8Vector(full_node_network_address),
+            TransactionArgument::U8Vector(human_name),
+        ],
+    )
+}
+
 pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
     Script::new(
         OL_ORACLE_TX_CODE.to_vec(),
@@ -2525,43 +2544,11 @@ pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
     )
 }
 
-pub fn encode_ol_reconfig_bulk_update_e2e_test_helper_script(
-    alice: AccountAddress,
-    bob: AccountAddress,
-    carol: AccountAddress,
-    sha: AccountAddress,
-    _ram: AccountAddress,
-) -> Script {
+pub fn encode_ol_reconfig_bulk_update_e2e_test_helper_script() -> Script {
     Script::new(
         OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::Address(alice),
-            TransactionArgument::Address(bob),
-            TransactionArgument::Address(carol),
-            TransactionArgument::Address(sha),
-            TransactionArgument::Address(_ram),
-        ],
-    )
-}
-
-pub fn encode_ol_reconfig_bulk_update_setup_script(
-    alice: AccountAddress,
-    bob: AccountAddress,
-    carol: AccountAddress,
-    sha: AccountAddress,
-    ram: AccountAddress,
-) -> Script {
-    Script::new(
-        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
         vec![],
-        vec![
-            TransactionArgument::Address(alice),
-            TransactionArgument::Address(bob),
-            TransactionArgument::Address(carol),
-            TransactionArgument::Address(sha),
-            TransactionArgument::Address(ram),
-        ],
     )
 }
 
@@ -3644,6 +3631,17 @@ fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_main_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::Main {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        consensus_pubkey: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        validator_network_address: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        full_node_network_address: decode_u8vector_argument(script.args().get(4)?.clone())?,
+        human_name: decode_u8vector_argument(script.args().get(5)?.clone())?,
+    })
+}
+
 fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::OlOracleTx {
         id: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -3651,24 +3649,8 @@ fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_ol_reconfig_bulk_update_e2e_test_helper_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::OlReconfigBulkUpdateE2eTestHelper {
-        alice: decode_address_argument(script.args().get(0)?.clone())?,
-        bob: decode_address_argument(script.args().get(1)?.clone())?,
-        carol: decode_address_argument(script.args().get(2)?.clone())?,
-        sha: decode_address_argument(script.args().get(3)?.clone())?,
-        _ram: decode_address_argument(script.args().get(4)?.clone())?,
-    })
-}
-
-fn decode_ol_reconfig_bulk_update_setup_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::OlReconfigBulkUpdateSetup {
-        alice: decode_address_argument(script.args().get(0)?.clone())?,
-        bob: decode_address_argument(script.args().get(1)?.clone())?,
-        carol: decode_address_argument(script.args().get(2)?.clone())?,
-        sha: decode_address_argument(script.args().get(3)?.clone())?,
-        ram: decode_address_argument(script.args().get(4)?.clone())?,
-    })
+fn decode_ol_reconfig_bulk_update_e2e_test_helper_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlReconfigBulkUpdateE2eTestHelper {})
 }
 
 fn decode_peer_to_peer_with_metadata_script(script: &Script) -> Option<ScriptCall> {
@@ -3893,10 +3875,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
         Box::new(decode_ol_reconfig_bulk_update_e2e_test_helper_script),
-    );
-    map.insert(
-        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
-        Box::new(decode_ol_reconfig_bulk_update_setup_script),
     );
     map.insert(
         PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
@@ -4152,6 +4130,20 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
     11, 0, 10, 2, 17, 0, 2,
 ];
 
+const MAIN_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 44, 7, 72, 86,
+    8, 158, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
+    7, 1, 5, 1, 3, 6, 6, 10, 2, 6, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1, 1, 6, 10, 2, 10, 2, 10, 2,
+    10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65,
+    99, 99, 111, 117, 110, 116, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102,
+    105, 103, 7, 98, 97, 108, 97, 110, 99, 101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108,
+    105, 100, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95,
+    112, 114, 111, 111, 102, 8, 105, 115, 95, 118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 1, 0, 4, 5, 25, 14, 0, 14, 1, 11, 2, 11, 3, 11, 4, 11, 5, 17, 1, 12, 6, 10, 6,
+    17, 2, 12, 7, 11, 7, 3, 15, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 6, 56, 0, 6, 0, 0, 0, 0, 0, 0,
+    0, 0, 33, 12, 9, 11, 9, 3, 24, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+];
+
 const OL_ORACLE_TX_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 13, 7, 30, 27, 8, 57, 16,
     6, 73, 18, 0, 0, 0, 1, 0, 2, 0, 1, 1, 1, 1, 3, 2, 1, 0, 0, 3, 1, 6, 9, 0, 0, 3, 6, 12, 3, 10,
@@ -4162,59 +4154,38 @@ const OL_ORACLE_TX_CODE: &[u8] = &[
 ];
 
 const OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 38, 4, 44, 6, 5, 50, 47, 7, 97, 129, 1, 8, 226,
-    1, 16, 0, 0, 0, 1, 0, 2, 2, 3, 0, 1, 1, 1, 2, 4, 2, 3, 1, 1, 2, 5, 4, 0, 1, 1, 0, 6, 5, 0, 0,
-    0, 7, 6, 7, 0, 0, 8, 0, 3, 0, 1, 9, 6, 0, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0,
-    1, 3, 2, 7, 10, 9, 0, 9, 0, 2, 6, 12, 10, 5, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1, 3, 1,
-    3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 17, 86, 97, 108,
-    105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116, 111,
-    114, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104, 95,
-    98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108, 105,
-    100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 18,
-    118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 13, 97,
-    100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 1, 0, 8, 9, 58, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 10, 1, 17, 6, 13, 14, 10, 2, 56, 1,
-    10, 2, 17, 6, 13, 14, 10, 3, 56, 1, 10, 3, 17, 6, 14, 14, 56, 2, 6, 3, 0, 0, 0, 0, 0, 0, 0, 33,
-    12, 6, 11, 6, 3, 28, 11, 0, 1, 6, 5, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14, 17, 3, 17, 5, 6,
-    3, 0, 0, 0, 0, 0, 0, 0, 33, 12, 8, 11, 8, 3, 39, 6, 6, 0, 0, 0, 0, 0, 0, 0, 39, 10, 4, 17, 4,
-    9, 33, 12, 10, 11, 10, 3, 48, 6, 7, 0, 0, 0, 0, 0, 0, 0, 39, 10, 2, 17, 4, 8, 33, 12, 12, 11,
-    12, 3, 57, 6, 8, 0, 0, 0, 0, 0, 0, 0, 39, 2,
-];
-
-const OL_RECONFIG_BULK_UPDATE_SETUP_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 6, 3, 6, 38, 4, 44, 6, 5, 50, 47, 7, 97, 129, 1, 8, 226,
-    1, 16, 0, 0, 0, 1, 0, 2, 2, 3, 0, 1, 1, 1, 2, 4, 2, 3, 1, 1, 2, 5, 4, 0, 1, 1, 0, 6, 5, 0, 0,
-    0, 7, 6, 7, 0, 0, 8, 0, 3, 0, 1, 9, 6, 0, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0,
-    1, 3, 2, 7, 10, 9, 0, 9, 0, 2, 6, 12, 10, 5, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1, 3, 1,
-    3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 17, 86, 97, 108,
-    105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116, 111,
-    114, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104, 95,
-    98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108, 105,
-    100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 18,
-    118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 13, 97,
-    100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 1, 0, 8, 9, 68, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 10, 1, 17, 6, 13, 14, 10, 2, 56, 1,
-    10, 2, 17, 6, 13, 14, 10, 3, 56, 1, 10, 3, 17, 6, 13, 14, 10, 4, 56, 1, 10, 4, 17, 6, 13, 14,
-    10, 5, 56, 1, 10, 5, 17, 6, 14, 14, 56, 2, 6, 5, 0, 0, 0, 0, 0, 0, 0, 33, 12, 6, 11, 6, 3, 38,
-    11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14, 17, 3, 17, 5, 6, 5, 0, 0, 0, 0, 0, 0,
-    0, 33, 12, 8, 11, 8, 3, 49, 6, 2, 0, 0, 0, 0, 0, 0, 0, 39, 10, 4, 17, 4, 8, 33, 12, 10, 11, 10,
-    3, 58, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 1, 17, 4, 8, 33, 12, 12, 11, 12, 3, 67, 6, 4, 0, 0,
-    0, 0, 0, 0, 0, 39, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 8, 3, 8, 43, 4, 51, 6, 5, 57, 53, 7, 110, 147, 1, 8,
+    129, 2, 16, 0, 0, 0, 1, 0, 2, 0, 3, 1, 4, 0, 1, 0, 3, 5, 2, 3, 1, 1, 3, 6, 4, 5, 1, 1, 3, 7, 6,
+    2, 1, 1, 0, 8, 7, 2, 0, 0, 9, 1, 8, 0, 0, 10, 2, 5, 0, 2, 11, 0, 2, 0, 1, 1, 3, 1, 2, 1, 1, 6,
+    12, 1, 5, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0, 1, 3, 2, 7, 10, 9, 0, 9, 0, 2, 6, 12, 10, 5, 1, 1, 5,
+    6, 12, 6, 12, 6, 12, 6, 12, 6, 12, 9, 1, 3, 1, 3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97,
+    83, 121, 115, 116, 101, 109, 6, 83, 105, 103, 110, 101, 114, 17, 86, 97, 108, 105, 100, 97,
+    116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116, 111, 114, 10, 97,
+    100, 100, 114, 101, 115, 115, 95, 111, 102, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103,
+    116, 104, 9, 112, 117, 115, 104, 95, 98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100,
+    97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97,
+    108, 105, 100, 97, 116, 111, 114, 18, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101,
+    116, 95, 115, 105, 122, 101, 13, 97, 100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 9, 10, 73, 56, 0, 12, 13, 10, 1, 17, 7, 10,
+    2, 17, 7, 10, 3, 17, 7, 13, 13, 11, 1, 17, 0, 56, 1, 13, 13, 10, 2, 17, 0, 56, 1, 13, 13, 11,
+    3, 17, 0, 56, 1, 14, 13, 56, 2, 6, 3, 0, 0, 0, 0, 0, 0, 0, 33, 12, 5, 11, 5, 3, 35, 11, 4, 1,
+    11, 2, 1, 11, 0, 1, 6, 5, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 13, 17, 4, 17, 6, 6, 3, 0, 0, 0,
+    0, 0, 0, 0, 33, 12, 7, 11, 7, 3, 50, 11, 4, 1, 11, 2, 1, 6, 6, 0, 0, 0, 0, 0, 0, 0, 39, 11, 4,
+    17, 0, 17, 5, 9, 33, 12, 9, 11, 9, 3, 62, 11, 2, 1, 6, 7, 0, 0, 0, 0, 0, 0, 0, 39, 11, 2, 17,
+    0, 17, 5, 8, 33, 12, 11, 11, 11, 3, 72, 6, 8, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 2, 4, 4, 3, 8, 22, 4, 30, 4, 5, 34, 39, 7, 73, 109,
-    8, 182, 1, 16, 0, 0, 0, 1, 1, 3, 1, 0, 0, 2, 0, 1, 1, 1, 1, 4, 2, 3, 0, 1, 5, 4, 1, 1, 1, 1, 6,
-    3, 1, 0, 2, 7, 0, 8, 1, 6, 9, 0, 0, 1, 6, 12, 1, 8, 0, 5, 6, 8, 0, 5, 3, 10, 2, 10, 2, 5, 6,
-    12, 5, 3, 10, 2, 10, 2, 2, 8, 0, 3, 1, 9, 0, 1, 3, 5, 68, 101, 98, 117, 103, 12, 76, 105, 98,
-    114, 97, 65, 99, 99, 111, 117, 110, 116, 5, 112, 114, 105, 110, 116, 18, 87, 105, 116, 104,
-    100, 114, 97, 119, 67, 97, 112, 97, 98, 105, 108, 105, 116, 121, 27, 101, 120, 116, 114, 97,
-    99, 116, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105,
-    116, 121, 8, 112, 97, 121, 95, 102, 114, 111, 109, 27, 114, 101, 115, 116, 111, 114, 101, 95,
-    119, 105, 116, 104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 5, 6, 18, 11, 0, 17, 1, 12, 5, 14, 5, 10, 1,
-    10, 2, 11, 3, 11, 4, 56, 0, 6, 1, 0, 0, 0, 0, 0, 0, 0, 12, 6, 14, 6, 56, 1, 11, 5, 17, 3, 14,
-    6, 56, 1, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 2, 2, 4, 3, 6, 16, 4, 22, 2, 5, 24, 29, 7, 53, 97, 8,
+    150, 1, 16, 0, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 0, 3, 2, 3, 1, 1, 0, 4, 1, 3, 0, 1, 5, 1, 6, 12,
+    1, 8, 0, 5, 6, 8, 0, 5, 3, 10, 2, 10, 2, 0, 5, 6, 12, 5, 3, 10, 2, 10, 2, 1, 9, 0, 12, 76, 105,
+    98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 18, 87, 105, 116, 104, 100, 114, 97, 119, 67, 97,
+    112, 97, 98, 105, 108, 105, 116, 121, 27, 101, 120, 116, 114, 97, 99, 116, 95, 119, 105, 116,
+    104, 100, 114, 97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 8, 112, 97, 121, 95,
+    102, 114, 111, 109, 27, 114, 101, 115, 116, 111, 114, 101, 95, 119, 105, 116, 104, 100, 114,
+    97, 119, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116, 121, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 1, 1, 1, 4, 1, 12, 11, 0, 17, 0, 12, 5, 14, 5, 10, 1, 10, 2, 11, 3, 11, 4, 56, 0, 11,
+    5, 17, 2, 2,
 ];
 
 const PREBURN_CODE: &[u8] = &[

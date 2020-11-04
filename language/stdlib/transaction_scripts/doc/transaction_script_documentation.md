@@ -5092,6 +5092,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::SlidingNonce`](../../modules/doc/SlidingNonce.md#0x1_SlidingNonce)
 -  [`0x1::StagingNet`](../../modules/doc/Testnet.md#0x1_StagingNet)
 -  [`0x1::Stats`](../../modules/doc/Stats.md#0x1_Stats)
+-  [`0x1::Subsidy`](../../modules/doc/Subsidy.md#0x1_Subsidy)
 -  [`0x1::Testnet`](../../modules/doc/Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](../../modules/doc/TransactionFee.md#0x1_TransactionFee)
 -  [`0x1::Upgrade`](../../modules/doc/Upgrade.md#0x1_Upgrade)
@@ -5115,13 +5116,9 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_validator_account`](transaction_script_documentation.md#create_validator_account)
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
-<<<<<<< HEAD
 -  [`main`](miner_state_onboarding.md#main)
-=======
 -  [`ol_oracle_tx`](ol_oracle_tx.md#ol_oracle_tx)
 -  [`ol_reconfig_bulk_update_e2e_test_helper`](ol_reconfig_bulk_update_e2e_test_helper.md#ol_reconfig_bulk_update_e2e_test_helper)
--  [`ol_reconfig_bulk_update_setup`](ol_reconfig_bulk_update_setup.md#ol_reconfig_bulk_update_setup)
->>>>>>> OLv4_upgrade_in_prologue
 -  [`peer_to_peer_with_metadata`](transaction_script_documentation.md#peer_to_peer_with_metadata)
 -  [`preburn`](transaction_script_documentation.md#preburn)
 -  [`publish_shared_ed25519_public_key`](transaction_script_documentation.md#publish_shared_ed25519_public_key)

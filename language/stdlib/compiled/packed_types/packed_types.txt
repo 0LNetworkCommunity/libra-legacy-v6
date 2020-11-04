@@ -29,6 +29,15 @@
     }
   ],
   [
+    "0107d4191bf505b734d820929e98e86ac7b8b31681f0321f2681477c694bbccb31",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "VoteCount",
+      "type_params": []
+    }
+  ],
+  [
     "010d2f17f3620b93ea63907fdfe33d9d1aea2d5324a8e3ddbe27241f02282f11c1",
     {
       "address": "00000000000000000000000000000001",
@@ -362,6 +371,15 @@
     }
   ],
   [
+    "0163580b42fbf1647a79ec3f6001c212d392bdd0e4484ac5a32890db644ccafa32",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Upgrade",
+      "name": "UpgradePayload",
+      "type_params": []
+    }
+  ],
+  [
     "0164fb33270e34819179c0740359e0e188dd65b86c451d01306e0165b07d84ffe3",
     {
       "address": "00000000000000000000000000000001",
@@ -421,6 +439,15 @@
       "address": "00000000000000000000000000000001",
       "module": "LibraAccount",
       "name": "CreateAccountEvent",
+      "type_params": []
+    }
+  ],
+  [
+    "0172baf759acd90783f9a085d4e0db91830e8c42ae38bf4645d6325eca2075a626",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "Vote",
       "type_params": []
     }
   ],
@@ -596,6 +623,15 @@
     }
   ],
   [
+    "01a159632afcd9e48a1b145511201e4427bfeabf5659e098580e043ab945bba129",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "Oracles",
+      "type_params": []
+    }
+  ],
+  [
     "01a63e88f1013330b49bdcaff1e276af4735aad9e76c5950bcb07d6c22019640f2",
     {
       "address": "00000000000000000000000000000001",
@@ -715,6 +751,15 @@
     }
   ],
   [
+    "01c98376d68a63e184162b6a088c99555340521bc61c3c6cd842b03935f96827e4",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Upgrade",
+      "name": "UpgradeHistory",
+      "type_params": []
+    }
+  ],
+  [
     "01c9ccc5aba203c7a5a0fa74f1e5d94d97b414b86f5086a0a8f6c0ea0e52e7f138",
     {
       "address": "00000000000000000000000000000001",
@@ -766,6 +811,15 @@
           }
         }
       ]
+    }
+  ],
+  [
+    "01d64e7f07962957b7e12e3d2a27f4a6eaa20cb2024a10d27486901de635f7f043",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "UpgradeOracle",
+      "type_params": []
     }
   ],
   [
