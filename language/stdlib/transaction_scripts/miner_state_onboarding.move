@@ -7,7 +7,7 @@ use 0x1::GAS::GAS;
 // use 0x1::VDF;
 use 0x1::ValidatorConfig;
 
-fun main(
+fun minerstate_onboarding(
   challenge: vector<u8>,
   solution: vector<u8>,
   consensus_pubkey: vector<u8>,

@@ -628,6 +628,10 @@ pub enum ScriptCall {
         human_name: Bytes,
     },
 
+    DemoE2e {
+        world: u64,
+    },
+
     /// # Summary
     /// Freezes the account at `address`. The sending account of this transaction
     /// must be the Treasury Compliance account. The account being frozen cannot be
@@ -676,7 +680,14 @@ pub enum ScriptCall {
         to_freeze_account: AccountAddress,
     },
 
-    Main {
+    MinerstateCommit {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    MinerstateHelper {},
+
+    MinerstateOnboarding {
         challenge: Bytes,
         solution: Bytes,
         consensus_pubkey: Bytes,
@@ -1602,18 +1613,24 @@ impl ScriptCall {
                 auth_key_prefix,
                 human_name,
             ),
+            DemoE2e { world } => encode_demo_e2e_script(world),
             FreezeAccount {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
-            Main {
+            MinerstateCommit {
+                challenge,
+                solution,
+            } => encode_minerstate_commit_script(challenge, solution),
+            MinerstateHelper {} => encode_minerstate_helper_script(),
+            MinerstateOnboarding {
                 challenge,
                 solution,
                 consensus_pubkey,
                 validator_network_address,
                 full_node_network_address,
                 human_name,
-            } => encode_main_script(
+            } => encode_minerstate_onboarding_script(
                 challenge,
                 solution,
                 consensus_pubkey,
@@ -2454,6 +2471,14 @@ pub fn encode_create_validator_operator_account_script(
     )
 }
 
+pub fn encode_demo_e2e_script(world: u64) -> Script {
+    Script::new(
+        DEMO_E2E_CODE.to_vec(),
+        vec![],
+        vec![TransactionArgument::U64(world)],
+    )
+}
+
 /// # Summary
 /// Freezes the account at `address`. The sending account of this transaction
 /// must be the Treasury Compliance account. The account being frozen cannot be
@@ -2511,7 +2536,22 @@ pub fn encode_freeze_account_script(
     )
 }
 
-pub fn encode_main_script(
+pub fn encode_minerstate_commit_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
+    Script::new(
+        MINERSTATE_COMMIT_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+        ],
+    )
+}
+
+pub fn encode_minerstate_helper_script() -> Script {
+    Script::new(MINERSTATE_HELPER_CODE.to_vec(), vec![], vec![])
+}
+
+pub fn encode_minerstate_onboarding_script(
     challenge: Vec<u8>,
     solution: Vec<u8>,
     consensus_pubkey: Vec<u8>,
@@ -2520,7 +2560,7 @@ pub fn encode_main_script(
     human_name: Vec<u8>,
 ) -> Script {
     Script::new(
-        MAIN_CODE.to_vec(),
+        MINERSTATE_ONBOARDING_CODE.to_vec(),
         vec![],
         vec![
             TransactionArgument::U8Vector(challenge),
@@ -3624,6 +3664,12 @@ fn decode_create_validator_operator_account_script(script: &Script) -> Option<Sc
     })
 }
 
+fn decode_demo_e2e_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::DemoE2e {
+        world: decode_u64_argument(script.args().get(0)?.clone())?,
+    })
+}
+
 fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::FreezeAccount {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -3631,8 +3677,19 @@ fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_main_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::Main {
+fn decode_minerstate_commit_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::MinerstateCommit {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+    })
+}
+
+fn decode_minerstate_helper_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::MinerstateHelper {})
+}
+
+fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::MinerstateOnboarding {
         challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
         solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
         consensus_pubkey: decode_u8vector_argument(script.args().get(2)?.clone())?,
@@ -3863,11 +3920,23 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE.to_vec(),
         Box::new(decode_create_validator_operator_account_script),
     );
+    map.insert(DEMO_E2E_CODE.to_vec(), Box::new(decode_demo_e2e_script));
     map.insert(
         FREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_freeze_account_script),
     );
-    map.insert(MAIN_CODE.to_vec(), Box::new(decode_main_script));
+    map.insert(
+        MINERSTATE_COMMIT_CODE.to_vec(),
+        Box::new(decode_minerstate_commit_script),
+    );
+    map.insert(
+        MINERSTATE_HELPER_CODE.to_vec(),
+        Box::new(decode_minerstate_helper_script),
+    );
+    map.insert(
+        MINERSTATE_ONBOARDING_CODE.to_vec(),
+        Box::new(decode_minerstate_onboarding_script),
+    );
     map.insert(
         OL_ORACLE_TX_CODE.to_vec(),
         Box::new(decode_ol_oracle_tx_script),
@@ -4120,6 +4189,14 @@ const CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE: &[u8] = &[
     0, 10, 2, 11, 3, 11, 4, 17, 1, 2,
 ];
 
+const DEMO_E2E_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 3, 2, 6, 4, 8, 4, 5, 12, 9, 7, 21, 12, 8, 33, 16, 6,
+    49, 18, 0, 0, 0, 1, 0, 1, 1, 1, 0, 3, 0, 2, 1, 6, 9, 0, 0, 1, 3, 1, 5, 5, 68, 101, 98, 117,
+    103, 5, 112, 114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 7, 7, 0, 12, 1, 14, 1, 56, 0, 14, 0, 56,
+    1, 2,
+];
+
 const FREEZE_ACCOUNT_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 14, 7, 28, 66, 8, 94, 16, 0, 0, 0,
     1, 0, 2, 0, 1, 0, 1, 3, 2, 1, 0, 2, 6, 12, 5, 0, 2, 6, 12, 3, 3, 6, 12, 3, 5, 15, 65, 99, 99,
@@ -4130,7 +4207,32 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
     11, 0, 10, 2, 17, 0, 2,
 ];
 
-const MAIN_CODE: &[u8] = &[
+const MINERSTATE_COMMIT_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 15, 5, 23, 24, 7, 47, 71, 8, 118, 16,
+    0, 0, 0, 1, 1, 3, 2, 0, 0, 2, 0, 1, 0, 1, 4, 2, 0, 0, 1, 5, 3, 4, 0, 0, 1, 3, 2, 6, 12, 8, 0,
+    3, 10, 2, 3, 10, 2, 1, 8, 0, 3, 6, 12, 10, 2, 10, 2, 7, 71, 108, 111, 98, 97, 108, 115, 10, 77,
+    105, 110, 101, 114, 83, 116, 97, 116, 101, 14, 103, 101, 116, 95, 100, 105, 102, 102, 105, 99,
+    117, 108, 116, 121, 5, 80, 114, 111, 111, 102, 12, 99, 111, 109, 109, 105, 116, 95, 115, 116,
+    97, 116, 101, 17, 99, 114, 101, 97, 116, 101, 95, 112, 114, 111, 111, 102, 95, 98, 108, 111,
+    98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 4, 9, 11, 1, 17, 0, 11, 2, 17, 2, 12,
+    3, 11, 0, 11, 3, 17, 1, 2,
+];
+
+const MINERSTATE_HELPER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 8, 3, 8, 25, 5, 33, 22, 7, 55, 113, 8, 168, 1, 16, 0, 0,
+    0, 1, 0, 2, 0, 3, 0, 4, 0, 1, 0, 1, 5, 2, 0, 0, 2, 6, 0, 3, 0, 2, 7, 0, 3, 0, 3, 8, 0, 4, 0, 0,
+    1, 3, 4, 6, 12, 3, 10, 2, 10, 2, 1, 10, 2, 1, 1, 1, 6, 12, 2, 1, 3, 7, 71, 108, 111, 98, 97,
+    108, 115, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 12, 84, 101, 115, 116, 70, 105,
+    120, 116, 117, 114, 101, 115, 7, 84, 101, 115, 116, 110, 101, 116, 14, 103, 101, 116, 95, 100,
+    105, 102, 102, 105, 99, 117, 108, 116, 121, 11, 116, 101, 115, 116, 95, 104, 101, 108, 112,
+    101, 114, 17, 97, 108, 105, 99, 101, 95, 48, 95, 101, 97, 115, 121, 95, 99, 104, 97, 108, 16,
+    97, 108, 105, 99, 101, 95, 48, 95, 101, 97, 115, 121, 95, 115, 111, 108, 10, 105, 115, 95, 116,
+    101, 115, 116, 110, 101, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 14, 17,
+    4, 12, 1, 11, 1, 3, 8, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 17, 0, 17, 2, 17, 3, 17,
+    1, 2,
+];
+
+const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 44, 7, 72, 86,
     8, 158, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
     7, 1, 5, 1, 3, 6, 6, 10, 2, 6, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1, 1, 6, 10, 2, 10, 2, 10, 2,
