@@ -10,7 +10,7 @@ use crate::node_keys;
 use anyhow::Error;
 use libra_config::config::{self, NodeConfig, OnDiskStorageConfig};
 use libra_crypto::test_utils::KeyPair;
-use libra_types::waypoint::Waypoint;
+use libra_types::{waypoint::Waypoint, account_address};
 use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
 use std::{fs, path::PathBuf};
@@ -51,7 +51,7 @@ pub fn val_init_test(home: PathBuf) {
     let tx_params = get_params_from_swarm(home).unwrap();
         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
             Err(err)=>{ println!("{:?}", err) }
-            Ok(res) => {println!(Some(res));}
+            Ok(res) => {println!("{:?}",Some(res));}
         }
 }
 
@@ -98,10 +98,11 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
     let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
     let private_key = node_keys::key_scheme_new(alice_mnemonic);
-    let keypair = KeyPair::from(private_key.child_0_owner.get_private_key());
-
-    let auth_key = AuthenticationKey::ed25519(&private_key.child_0_owner.get_public());
-    let address = auth_key.derived_address();
+    let keypair = KeyPair::from(private_key.child_1_operator.get_private_key());
+    let pubkey =  private_key.child_1_operator.get_public();
+    let auth_key = AuthenticationKey::ed25519(&pubkey);
+    // let address = auth_key.derived_address();
+    let address = account_address::from_public_key(&pubkey);
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
     let parsed_waypoint = config.base.waypoint.genesis_waypoint();

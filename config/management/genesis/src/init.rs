@@ -27,8 +27,6 @@ impl Init {
 
         match readline {
             Ok(mnemonic_string) => {
-                // let mnemonic_string_test = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
-                // let user = self.path.join(format!("key_store.{}.json", &self.namespace));
                 let helper = StorageHelper::new_with_path(self.path.into());
                 helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string);
             }

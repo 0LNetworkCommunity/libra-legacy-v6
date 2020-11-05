@@ -3,8 +3,8 @@ miner_home = "."
 node_home = "."
 
 [profile]
-auth_key = "4bd4429615675e5c0fd4ee2c6544c51e086993289d1f8f1d5995796d946f87c1"
-account = "086993289D1F8F1D5995796D946F87C1"
+auth_key = "cb4d398c224396785c1fc219fbae0c16f5c41fddb0aff1bb28e5845634fd6e5d"
+account = "F5C41FDDB0AFF1BB28E5845634FD6E5D"
 ip = "0.0.0.0"
 statement = "Protests rage across the nation"
 

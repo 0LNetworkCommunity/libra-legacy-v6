@@ -714,8 +714,10 @@ fn initialize_miners_alt(
         let operator_address = account_address::from_public_key(owner_key);
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
-
-        println!("Miner:{:?},{:?}", owner_key, operator_address);
+        dbg!(&account);
+        dbg!(&owner_key);
+        dbg!(&operator_address);
+              
         exec_function(
             session,
             log_context,
