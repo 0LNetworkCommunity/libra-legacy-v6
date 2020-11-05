@@ -20,19 +20,6 @@ pub fn test_runner(home: PathBuf) {
 
     let tx_params = get_params_from_swarm(home).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
-    // TODO: count three blocks and exit
-    // let i = 0;
-    // while i < 4 {
-    //     let (preimage, proof) = get_block_fixtures(&conf);
-
-    //     // need to sleep for swarm to be ready.
-    //     thread::sleep(time::Duration::from_millis(50000));
-    //     let res = submit_tx(&tx_params, preimage, proof, false);
-    //     if eval_tx_status(res) == false {
-    //         std::process::exit(0);
-    //     };
-    //     i+1;
-    // }
     backlog::process_backlog(&conf, &tx_params);
 
     loop {
@@ -63,31 +50,10 @@ pub fn val_init_test(home: PathBuf) {
     dbg!(&init_file);
 
     let tx_params = get_params_from_swarm(home).unwrap();
-    // let conf = MinerConfig::load_swarm_config(&tx_params);
-    // // TODO: count three blocks and exit
-    // // let i = 0;
-    // // while i < 4 {
-    // //     let (preimage, proof) = get_block_fixtures(&conf);
-
-    // //     // need to sleep for swarm to be ready.
-    // //     thread::sleep(time::Duration::from_millis(50000));
-    // //     let res = submit_tx(&tx_params, preimage, proof, false);
-    // //     if eval_tx_status(res) == false {
-    // //         std::process::exit(0);
-    // //     };
-    // //     i+1;
-    // // }
-    // backlog::process_backlog(&conf, &tx_params);
-
-    // loop {
-        // let (preimage, proof) = get_block_fixtures(&conf);
-        // need to sleep for swarm to be ready.
-
         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
             Err(err)=>{ println!("{:?}", err) }
             Ok(res) => {dbg!(Some(res));}
         }
-    // }
 }
 
 
@@ -129,9 +95,6 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
             println!("test config does not set.");
         }
     }
-    
-    // let test_config = config.test.unwrap();
-    // let private_key = test_config.operator_key.unwrap();
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
     let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
@@ -142,27 +105,8 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let address = auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
-
-    dbg!(&config.base);
-    // let mut storage_cfg = OnDiskStorageConfig::default();
-    // storage_cfg.set_data_dir(PathBuf::from("/root/saved_logs/".to_string()));
-    // storage_cfg.path = PathBuf::from("/root/saved_logs/full_node_0_operator".to_string());
-    // storage_cfg.namespace = Some("0_owner".to_string());
-    // {
-    //     namespace: Some("0_owner".to_string()),
-    //     path: PathBuf::from("/root/saved_logs/full_node_0_operator"),
-    //     // data_dir: PathBuf::from("/root/saved_logs/"),
-    // };
-    // let validator_storage = config::Storage::OnDiskStorage(storage_cfg);
-    // let wrapper = config::Storage::StorageWrapper {
-    //     storage_name: "validator",
-    //     storage: validator_storage,
-    // };
-    // dbg!(&wrapper.value("waypoint"));
-    // let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     let parsed_waypoint = config.base.waypoint.genesis_waypoint();
 
-    
     let tx_params = TxParams {
         auth_key,
         address,
