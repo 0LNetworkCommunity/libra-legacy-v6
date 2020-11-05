@@ -602,7 +602,7 @@ pub struct Validator {
 impl Validator {
     pub fn new_set(count: Option<usize>) -> Vec<Validator> {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
-        (0..count.unwrap_or(10))
+        (0..count.unwrap_or(4))
             .map(|idx| Validator::gen(idx, &mut rng))
             .collect()
     }
