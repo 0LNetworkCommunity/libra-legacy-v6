@@ -2728,6 +2728,7 @@ dependencies = [
  "proptest",
  "proptest-derive",
  "rand 0.7.3",
+ "transaction-builder",
  "vm",
  "vm-genesis",
 ]
