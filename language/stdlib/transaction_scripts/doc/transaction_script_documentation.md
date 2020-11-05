@@ -3106,36 +3106,6 @@ only "locally" under the <code>validator_account</code> account address.
 
 </details>
 
-<details>
-<summary>Specification</summary>
-
-Access control rule is that only the validator operator for a validator may set
-call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
-
-
-<pre><code><b>include</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_TransactionChecks">LibraAccount::TransactionChecks</a>{sender: validator_operator_account};
-<b>include</b> <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_SetConfigAbortsIf">ValidatorConfig::SetConfigAbortsIf</a> {validator_addr: validator_account};
-<b>ensures</b> <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_account);
-<b>aborts_with</b> [check]
-    <a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>,
-    <a href="../../modules/doc/Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
-</code></pre>
-
-
-**Access Control:**
-Only the Validator Operator account which has been registered with the validator can
-update the validator's configuration [[H14]][PERMISSION].
-
-
-<pre><code><b>aborts_if</b> <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account) !=
-            <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(validator_account)
-                <b>with</b> <a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-</code></pre>
-
-
-
-</details>
-
 ---
 
 
@@ -3531,7 +3501,7 @@ resource published under it. The sending <code>account</code> must be a Validato
     operator_name: vector&lt;u8&gt;,
     operator_account: address
 ) {
-    <b>assert</b>(<a href="../../modules/doc/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 0);
+    <b>assert</b>(<a href="../../modules/doc/ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_get_human_name">ValidatorOperatorConfig::get_human_name</a>(operator_account) == operator_name, 111);
     <a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(account, operator_account);
 }
 </code></pre>
@@ -4729,7 +4699,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 | Name                            | Type      | Description                                                                                                                        |
 | ------                          | ------    | -------------                                                                                                                      |
 | <code>Currency</code>                      | Type      | The Move type for the <code>Currency</code> whose exchange rate is being updated. <code>Currency</code> must be an already-registered currency on-chain. |
-| <code>tc_account</code>                    | <code>&signer</code> | The signer reference of the sending account of this transaction. Must be the Treasury Compliance account.                          |
+| <code>lr_account</code>                    | <code>&signer</code> | The signer reference of the sending account of this transaction. Must be the Treasury Compliance account.                          |
 | <code>sliding_nonce</code>                 | <code>u64</code>     | The <code>sliding_nonce</code> (see: <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code>) to be used for the transaction.                                                          |
 | <code>new_exchange_rate_numerator</code>   | <code>u64</code>     | The numerator for the new to micro-LBR exchange rate for <code>Currency</code>.                                                               |
 | <code>new_exchange_rate_denominator</code> | <code>u64</code>     | The denominator for the new to micro-LBR exchange rate for <code>Currency</code>.                                                             |
@@ -4741,12 +4711,12 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 
 | Error Category             | Error Reason                            | Description                                                                                |
 | ----------------           | --------------                          | -------------                                                                              |
-| <code><a href="../../modules/doc/Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_ESLIDING_NONCE">SlidingNonce::ESLIDING_NONCE</a></code>          | A <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code> resource is not published under <code>tc_account</code>.                             |
+| <code><a href="../../modules/doc/Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a></code>    | <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_ESLIDING_NONCE">SlidingNonce::ESLIDING_NONCE</a></code>          | A <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a></code> resource is not published under <code>lr_account</code>.                             |
 | <code><a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_ENONCE_TOO_OLD">SlidingNonce::ENONCE_TOO_OLD</a></code>          | The <code>sliding_nonce</code> is too old and it's impossible to determine if it's duplicated or not. |
 | <code><a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_ENONCE_TOO_NEW">SlidingNonce::ENONCE_TOO_NEW</a></code>          | The <code>sliding_nonce</code> is too far in the future.                                              |
 | <code><a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_ENONCE_ALREADY_RECORDED">SlidingNonce::ENONCE_ALREADY_RECORDED</a></code> | The <code>sliding_nonce</code> has been previously recorded.                                          |
-| <code><a href="../../modules/doc/Errors.md#0x1_Errors_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../modules/doc/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | <code>tc_account</code> is not the Treasury Compliance account.                                       |
-| <code><a href="../../modules/doc/Errors.md#0x1_Errors_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../modules/doc/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>           | <code>tc_account</code> is not the Treasury Compliance account.                                       |
+| <code><a href="../../modules/doc/Errors.md#0x1_Errors_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a></code> | <code><a href="../../modules/doc/CoreAddresses.md#0x1_CoreAddresses_ETREASURY_COMPLIANCE">CoreAddresses::ETREASURY_COMPLIANCE</a></code>   | <code>lr_account</code> is not the Treasury Compliance account.                                       |
+| <code><a href="../../modules/doc/Errors.md#0x1_Errors_REQUIRES_ROLE">Errors::REQUIRES_ROLE</a></code>    | <code><a href="../../modules/doc/Roles.md#0x1_Roles_ETREASURY_COMPLIANCE">Roles::ETREASURY_COMPLIANCE</a></code>           | <code>lr_account</code> is not the Treasury Compliance account.                                       |
 | <code><a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../modules/doc/FixedPoint32.md#0x1_FixedPoint32_EDENOMINATOR">FixedPoint32::EDENOMINATOR</a></code>            | <code>new_exchange_rate_denominator</code> is zero.                                                   |
 | <code><a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../modules/doc/FixedPoint32.md#0x1_FixedPoint32_ERATIO_OUT_OF_RANGE">FixedPoint32::ERATIO_OUT_OF_RANGE</a></code>     | The quotient is unrepresentable as a <code><a href="../../modules/doc/FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a></code>.                                       |
 | <code><a href="../../modules/doc/Errors.md#0x1_Errors_LIMIT_EXCEEDED">Errors::LIMIT_EXCEEDED</a></code>   | <code><a href="../../modules/doc/FixedPoint32.md#0x1_FixedPoint32_ERATIO_OUT_OF_RANGE">FixedPoint32::ERATIO_OUT_OF_RANGE</a></code>     | The quotient is unrepresentable as a <code><a href="../../modules/doc/FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a></code>.                                       |
@@ -4760,7 +4730,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 * <code>Scripts::update_minting_ability</code>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="transaction_script_documentation.md#update_exchange_rate">update_exchange_rate</a>&lt;Currency&gt;(tc_account: &signer, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="transaction_script_documentation.md#update_exchange_rate">update_exchange_rate</a>&lt;Currency&gt;(lr_account: &signer, sliding_nonce: u64, new_exchange_rate_numerator: u64, new_exchange_rate_denominator: u64)
 </code></pre>
 
 
@@ -4770,17 +4740,17 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 
 
 <pre><code><b>fun</b> <a href="transaction_script_documentation.md#update_exchange_rate">update_exchange_rate</a>&lt;Currency&gt;(
-    tc_account: &signer,
+    lr_account: &signer,
     sliding_nonce: u64,
     new_exchange_rate_numerator: u64,
     new_exchange_rate_denominator: u64,
 ) {
-    <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(tc_account, sliding_nonce);
+    <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(lr_account, sliding_nonce);
     <b>let</b> rate = <a href="../../modules/doc/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(
         new_exchange_rate_numerator,
         new_exchange_rate_denominator,
     );
-    <a href="../../modules/doc/Libra.md#0x1_Libra_update_lbr_exchange_rate">Libra::update_lbr_exchange_rate</a>&lt;Currency&gt;(tc_account, rate);
+    <a href="../../modules/doc/Libra.md#0x1_Libra_update_lbr_exchange_rate">Libra::update_lbr_exchange_rate</a>&lt;Currency&gt;(lr_account, rate);
 }
 </code></pre>
 
@@ -4793,8 +4763,8 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 
 
 
-<pre><code><b>include</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_TransactionChecks">LibraAccount::TransactionChecks</a>{sender: tc_account};
-<b>include</b> <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_RecordNonceAbortsIf">SlidingNonce::RecordNonceAbortsIf</a>{ account: tc_account, seq_nonce: sliding_nonce };
+<pre><code><b>include</b> <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_TransactionChecks">LibraAccount::TransactionChecks</a>{sender: lr_account};
+<b>include</b> <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_RecordNonceAbortsIf">SlidingNonce::RecordNonceAbortsIf</a>{ account: lr_account, seq_nonce: sliding_nonce };
 <b>include</b> <a href="../../modules/doc/FixedPoint32.md#0x1_FixedPoint32_CreateFromRationalAbortsIf">FixedPoint32::CreateFromRationalAbortsIf</a>{
     numerator: new_exchange_rate_numerator,
     denominator: new_exchange_rate_denominator
@@ -4818,7 +4788,7 @@ is given by <code>new_exchange_rate_numerator/new_exchange_rate_denominator</cod
 Only the Treasury Compliance account can update the exchange rate [[H5]][PERMISSION].
 
 
-<pre><code><b>include</b> <a href="../../modules/doc/Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+<pre><code><b>include</b> <a href="../../modules/doc/Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
 </code></pre>
 
 
@@ -5102,6 +5072,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::LCS`](../../modules/doc/LCS.md#0x1_LCS)
 -  [`0x1::Libra`](../../modules/doc/Libra.md#0x1_Libra)
 -  [`0x1::LibraAccount`](../../modules/doc/LibraAccount.md#0x1_LibraAccount)
+-  [`0x1::LibraBlock`](../../modules/doc/LibraBlock.md#0x1_LibraBlock)
 -  [`0x1::LibraConfig`](../../modules/doc/LibraConfig.md#0x1_LibraConfig)
 -  [`0x1::LibraSystem`](../../modules/doc/LibraSystem.md#0x1_LibraSystem)
 -  [`0x1::LibraTimestamp`](../../modules/doc/LibraTimestamp.md#0x1_LibraTimestamp)
@@ -5110,6 +5081,8 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::MinerState`](../../modules/doc/MinerState.md#0x1_MinerState)
 -  [`0x1::NodeWeight`](../../modules/doc/NodeWeight.md#0x1_NodeWeight)
 -  [`0x1::Option`](../../modules/doc/Option.md#0x1_Option)
+-  [`0x1::Oracle`](../../modules/doc/Oracle.md#0x1_Oracle)
+-  [`0x1::Reconfigure`](../../modules/doc/Reconfigure.md#0x1_Reconfigure)
 -  [`0x1::RecoveryAddress`](../../modules/doc/RecoveryAddress.md#0x1_RecoveryAddress)
 -  [`0x1::RegisteredCurrencies`](../../modules/doc/RegisteredCurrencies.md#0x1_RegisteredCurrencies)
 -  [`0x1::Roles`](../../modules/doc/Roles.md#0x1_Roles)
@@ -5119,8 +5092,11 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::SlidingNonce`](../../modules/doc/SlidingNonce.md#0x1_SlidingNonce)
 -  [`0x1::StagingNet`](../../modules/doc/Testnet.md#0x1_StagingNet)
 -  [`0x1::Stats`](../../modules/doc/Stats.md#0x1_Stats)
+-  [`0x1::Subsidy`](../../modules/doc/Subsidy.md#0x1_Subsidy)
+-  [`0x1::TestFixtures`](../../modules/doc/TestFixtures.md#0x1_TestFixtures)
 -  [`0x1::Testnet`](../../modules/doc/Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](../../modules/doc/TransactionFee.md#0x1_TransactionFee)
+-  [`0x1::Upgrade`](../../modules/doc/Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](../../modules/doc/VASP.md#0x1_VASP)
 -  [`0x1::VDF`](../../modules/doc/VDF.md#0x1_VDF)
 -  [`0x1::ValidatorConfig`](../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig)
@@ -5140,7 +5116,13 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_recovery_address`](transaction_script_documentation.md#create_recovery_address)
 -  [`create_validator_account`](transaction_script_documentation.md#create_validator_account)
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
+-  [`demo_e2e`](demo_e2e_0L.md#demo_e2e)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
+-  [`minerstate_commit`](miner_state_commit.md#minerstate_commit)
+-  [`minerstate_helper`](miner_state_helper.md#minerstate_helper)
+-  [`minerstate_onboarding`](miner_state_onboarding.md#minerstate_onboarding)
+-  [`ol_oracle_tx`](ol_oracle_tx.md#ol_oracle_tx)
+-  [`ol_reconfig_bulk_update_e2e_test_helper`](ol_reconfig_bulk_update_e2e_test_helper.md#ol_reconfig_bulk_update_e2e_test_helper)
 -  [`peer_to_peer_with_metadata`](transaction_script_documentation.md#peer_to_peer_with_metadata)
 -  [`preburn`](transaction_script_documentation.md#preburn)
 -  [`publish_shared_ed25519_public_key`](transaction_script_documentation.md#publish_shared_ed25519_public_key)

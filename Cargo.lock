@@ -3974,6 +3974,7 @@ dependencies = [
  "byteorder",
  "classgroup",
  "cli",
+ "compiled-stdlib",
  "criterion",
  "glob",
  "gumdrop",

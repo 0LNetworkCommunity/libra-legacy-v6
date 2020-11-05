@@ -129,15 +129,16 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
         }
     }
     
-    let mut private_key = config.test.unwrap().operator_keypair.unwrap();
+    let test_config = config.test.unwrap();
+    let private_key = test_config.operator_key.unwrap();
     let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
     let address = auth_key.derived_address();
 
-    let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap();
+    let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
 
     let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     
-    let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
+    let keypair = KeyPair::from(private_key.private_key());
     let tx_params = TxParams {
         auth_key,
         address,

@@ -60,6 +60,8 @@ pub enum StdlibScript {
     ReconfigBulkUpdate,
     ReconfigSetup,
     OracleTx,
+    MinerState,
+    MinerStateOnboarding,
     // ...add new scripts here
 }
 
@@ -108,6 +110,8 @@ impl StdlibScript {
             ReconfigBulkUpdate,
             ReconfigSetup,
             OracleTx,
+            MinerState,
+            MinerStateOnboarding,
             // ...add new scripts here
         ]
     }
@@ -241,6 +245,8 @@ impl fmt::Display for StdlibScript {
                 ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper",
                 ReconfigSetup => "ol_reconfig_bulk_update_setup",
                 OracleTx => "ol_oracle_tx",
+                MinerState => "miner_state_commit",
+                MinerStateOnboarding => "miner_state_onboarding"
             }
         )
     }
