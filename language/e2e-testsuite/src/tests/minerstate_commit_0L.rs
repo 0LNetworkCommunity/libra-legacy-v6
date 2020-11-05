@@ -29,6 +29,8 @@ fn miner_commit () {
     // assert_eq!(proof_computed, proof.to_vec());
     
     let sender = Account::new();
+
+    //TODO:need to create account
     let script = transaction_builder::encode_minerstate_commit_script(
         preimage,
         proof,
