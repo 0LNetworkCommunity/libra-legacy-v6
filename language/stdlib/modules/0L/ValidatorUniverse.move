@@ -43,9 +43,10 @@ address 0x1 {
 
     // This function is called to add validator to the validator universe.
     // Function code: 02 Prefix: 220102
-    public fun add_validator(addr: address) acquires ValidatorUniverse {
+    public fun add_validator(sender: &signer) acquires ValidatorUniverse {
+      let addr = Signer::address_of(sender);
       let collection = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-      if(!validator_exists_in_universe(collection, addr))
+      assert(!validator_exists_in_universe(collection, addr), 220101015010);
       Vector::push_back<ValidatorEpochInfo>(
         &mut collection.validators,
         ValidatorEpochInfo{

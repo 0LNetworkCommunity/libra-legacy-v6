@@ -207,6 +207,7 @@ impl<T: AsRef<Path>> BuildSwarm for ValidatorBuilder<T> {
     fn build_swarm(&self) -> anyhow::Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
         self.create_layout();
         self.create_root();
+        // let libra_root_key = Ed25519PrivateKey::generate(&mut rng);
         let libra_root_key = self
             .storage_helper
             .storage(LIBRA_ROOT_NS.into())

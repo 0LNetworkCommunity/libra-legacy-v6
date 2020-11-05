@@ -10,12 +10,11 @@ module GAS {
 
     public fun initialize(
         lr_account: &signer,
-        tc_account: &signer,
+        // tc_account: &signer,
     ) {
         LibraTimestamp::assert_genesis();
         Libra::register_SCS_currency<GAS>(
             lr_account,
-            tc_account,
             FixedPoint32::create_from_rational(1, 1), // exchange rate to GAS
             1000000, // scaling_factor = 10^6
             1000,     // fractional_part = 10^2

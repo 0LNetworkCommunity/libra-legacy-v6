@@ -8,7 +8,7 @@ address 0x1 {
 module Genesis {
     use 0x1::AccountFreezing;
     use 0x1::ChainId;
-    use 0x1::Coin1;
+    // use 0x1::Coin1;
     use 0x1::DualAttestation;
     // use 0x1::GAS;
     use 0x1::Libra;
@@ -28,16 +28,13 @@ module Genesis {
     /// Initializes the Libra framework.
     fun initialize(
         lr_account: &signer,
-        tc_account: &signer,
         lr_auth_key: vector<u8>,
-        tc_auth_key: vector<u8>,
         initial_script_allow_list: vector<vector<u8>>,
         is_open_module: bool,
         instruction_schedule: vector<u8>,
         native_schedule: vector<u8>,
         chain_id: u8,
     ) {
-
         LibraAccount::initialize(lr_account, x"00000000000000000000000000000000");
 
         ChainId::initialize(lr_account, chain_id);
@@ -49,16 +46,15 @@ module Genesis {
         Libra::initialize(lr_account);
 
         // Currency setup
-        Coin1::initialize(lr_account, tc_account);
+        // Coin1::initialize(lr_account, tc_account);
 
         GAS::initialize(
             lr_account,
-            tc_account,
+            // lr_account,
         );
-
         AccountFreezing::initialize(lr_account);
 
-        TransactionFee::initialize(tc_account);
+        TransactionFee::initialize(lr_account);
 
         LibraSystem::initialize_validator_set(
             lr_account,
@@ -86,10 +82,6 @@ module Genesis {
             instruction_schedule,
             native_schedule,
         );
-
-        let tc_rotate_key_cap = LibraAccount::extract_key_rotation_capability(tc_account);
-        LibraAccount::rotate_authentication_key(&tc_rotate_key_cap, tc_auth_key);
-        LibraAccount::restore_key_rotation_capability(tc_rotate_key_cap);
 
         /////// 0L /////////
         Stats::initialize(lr_account);

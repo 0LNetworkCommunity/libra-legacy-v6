@@ -20,9 +20,9 @@ use libra_types::{
     account_address,
     account_config::{
         self,
-        events::{CreateAccountEvent, NewEpochEvent},
+        events::{CreateAccountEvent},
     },
-    chain_id::{ChainId, NamedChain},
+    chain_id::{ChainId},
     contract_event::ContractEvent,
     on_chain_config::VMPublishingOption,
     transaction::{
@@ -143,6 +143,8 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
+
+    println!("OK create_and_initialize_main_accounts =============== ");
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -151,27 +153,29 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
 
+    println!("OK create_and_initialize_owners_operators =============== ");
 
     //////// 0L ////////
     initialize_testnet(&mut session, &log_context, true);
+    
+    println!("OK initialize_testnet =============== ");
 
     // initialize_miners(&mut session, &log_context, &operator_assignments);
     initialize_miners_alt(&mut session, &log_context, &operator_registrations);
+    println!("OK initialize_miners_alt =============== ");
 
-    // distribute_genesis_subsidy(&mut session, &log_context);
+    distribute_genesis_subsidy(&mut session, &log_context);
 
 
     reconfigure(&mut session, &log_context);
-
-    if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-        .iter()
-        .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    {
-        create_and_initialize_testnet_minting(&mut session, &log_context, &treasury_compliance_key);
-    }
-
+    
+    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
+    //     .iter()
+    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
+    // {
+    //     create_and_initialize_testnet_minting(&mut session, &log_context, &treasury_compliance_key);
+    // }
     let effects_1 = session.finish().unwrap();
-
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
@@ -256,16 +260,16 @@ fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
     libra_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    _treasury_compliance_key: &Ed25519PublicKey,
     publishing_option: VMPublishingOption,
     lbr_ty: &TypeTag,
     chain_id: ChainId,
 ) {
     let libra_root_auth_key = AuthenticationKey::ed25519(libra_root_key);
-    let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
+    // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_libra_root_address = account_config::libra_root_address();
-    let tc_account_address = account_config::treasury_compliance_account_address();
+    // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = Value::constant_vector_generic(
         publishing_option
@@ -291,9 +295,7 @@ fn create_and_initialize_main_accounts(
         vec![],
         vec![
             Value::transaction_argument_signer_reference(root_libra_root_address),
-            Value::transaction_argument_signer_reference(tc_account_address),
             Value::vector_u8(libra_root_auth_key.to_vec()),
-            Value::vector_u8(treasury_compliance_auth_key.to_vec()),
             initial_allow_list,
             Value::bool(publishing_option.is_open_module),
             Value::vector_u8(instr_gas_costs),
@@ -323,14 +325,14 @@ fn create_and_initialize_main_accounts(
     );
 }
 
-fn create_and_initialize_testnet_minting(
+fn _create_and_initialize_testnet_minting(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
     public_key: &Ed25519PublicKey,
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);
     let create_dd_script = encode_create_designated_dealer_script(
-        account_config::coin1_tmp_tag(),
+        account_config::lbr_type_tag(),
         0,
         account_config::testnet_dd_account_address(),
         genesis_auth_key.prefix().to_vec(),
@@ -339,13 +341,12 @@ fn create_and_initialize_testnet_minting(
     );
 
     let mint_max_coin1_tmp = transaction_builder::encode_tiered_mint_script(
-        account_config::coin1_tmp_tag(),
+        account_config::lbr_type_tag(),
         0,
         account_config::testnet_dd_account_address(),
         std::u64::MAX / 2,
         3,
     );
-
     // Create the DD account
     exec_script(
         session,
@@ -359,7 +360,7 @@ fn create_and_initialize_testnet_minting(
         account_config::treasury_compliance_account_address(),
         "DesignatedDealer",
         "update_tier",
-        vec![account_config::coin1_tmp_tag()],
+        vec![account_config::lbr_type_tag()],
         vec![
             Value::transaction_argument_signer_reference(
                 account_config::treasury_compliance_account_address(),
@@ -369,7 +370,6 @@ fn create_and_initialize_testnet_minting(
             Value::u64(std::u64::MAX),
         ],
     );
-
     // mint Coin1.
     let treasury_compliance_account_address = account_config::treasury_compliance_account_address();
     exec_script(
@@ -403,6 +403,7 @@ fn create_and_initialize_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
+    println!("0 ======== Create Owner Accounts");
     for (owner_key, owner_name, _op_assignment, _ , _genesis_proof) in operator_assignments {
         let staged_owner_auth_key =
             libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
@@ -435,6 +436,8 @@ fn create_and_initialize_owners_operators(
         );
     }
 
+    println!("1 ======== Create OP Accounts");
+    // dbg!(operator_registrations);
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _, _genesis_proof) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
@@ -446,6 +449,7 @@ fn create_and_initialize_owners_operators(
                 operator_auth_key.prefix().to_vec(),
                 operator_name.clone(),
             );
+        // dbg!(&create_operator_script);
         exec_script(
             session,
             log_context,
@@ -454,17 +458,26 @@ fn create_and_initialize_owners_operators(
         );
     }
 
-    // Set the validator operator for each validator owner
-    for (_owner_key, owner_name, op_assignment, _account , _genesis_proof) in operator_assignments {
+    println!("2 ======== Link owner to OP");
+
+
+    // Authorize an operator for a validator/owner
+    for (_owner_key, owner_name, op_assignment_script, _op_account , _genesis_proof) in operator_assignments {
         let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
-        exec_script(session, log_context, owner_address, op_assignment);
+
+        exec_script(session, log_context, owner_address, op_assignment_script);
     }
 
-    // Set the validator config for each validator
+    println!("3 ======== OP sends network info to Owner config");
+    // dbg!(operator_registrations);
+    // Set the validator operator configs for each owner
     for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
+        // dbg!(registration);
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, log_context, operator_account, registration);
     }
+
+    println!("4 ======== Add owner to validator set");
 
     // Add each validator to the validator set
     for (_owner_key, owner_name, _op_assignment, _account , _genesis_proof) in operator_assignments {
@@ -668,7 +681,7 @@ pub fn generate_test_genesis(
 }
 
 /// Initialize each validator.
-fn initialize_miners(session: &mut Session<StateViewCache>,
+fn _initialize_miners(session: &mut Session<StateViewCache>,
                      log_context: &impl LogContext,
     operator_assignments: &[OperatorAssignment]) {
     // Genesis will abort if mining can't be confirmed.
@@ -695,13 +708,16 @@ fn initialize_miners(session: &mut Session<StateViewCache>,
 
 }
 
-fn initialize_miners_alt(session: &mut Session<StateViewCache>,
-                     log_context: &impl LogContext,
-    operator_regs: &[OperatorRegistration]) {
+
+fn initialize_miners_alt(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext,
+    operator_regs: &[OperatorRegistration]
+) {
     // Genesis will abort if mining can't be confirmed.
     let libra_root_address = account_config::libra_root_address();
     for (owner_key, _, _, account, mining_proof) in operator_regs {
-        let operator_address = account_address::from_public_key(owner_key);
+        let _operator_address = account_address::from_public_key(owner_key);
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
 
@@ -722,6 +738,26 @@ fn initialize_miners_alt(session: &mut Session<StateViewCache>,
                 Value::vector_u8(proof)]);
     }
 
+}
+
+/// Genesis subsidy to miners
+fn distribute_genesis_subsidy(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext,
+) { 
+    let libra_root_address = account_config::libra_root_address();
+
+    exec_function(
+        session,
+        log_context,
+        libra_root_address,
+        "Subsidy",
+        "genesis",
+        vec![],
+        vec![
+            Value::transaction_argument_signer_reference(libra_root_address)
+        ]
+    )
 }
 
 // 0L Change: Necessary for genesis transaction.

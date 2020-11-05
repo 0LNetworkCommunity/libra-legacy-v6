@@ -17,8 +17,10 @@
 script {
     use 0x1::Stats;
     fun main(vm: &signer) {
+      //proposals
       assert(Stats::node_current_props(vm, {{alice}}) == 1, 0);
       assert(Stats::node_current_props(vm, {{bob}}) == 0, 0);
+      //votes
       assert(Stats::node_current_votes(vm, {{alice}}) == 0, 0);
       assert(Stats::node_current_votes(vm, {{bob}}) == 0, 0);
 

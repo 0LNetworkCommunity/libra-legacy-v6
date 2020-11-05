@@ -15,7 +15,7 @@ pub fn validator_set_address() -> AccountAddress {
 }
 
 pub fn treasury_compliance_account_address() -> AccountAddress {
-    AccountAddress::from_hex_literal("0xB1E55ED")
+    AccountAddress::from_hex_literal("0x0")
         .expect("Parsing valid hex literal should always succeed")
 }
 

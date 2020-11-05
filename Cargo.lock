@@ -3034,9 +3034,11 @@ dependencies = [
  "libra-temppath",
  "libra-types",
  "libra-vm",
+ "libra-wallet",
  "libra-workspace-hack",
  "libradb",
  "rand 0.7.3",
+ "rustyline",
  "serde",
  "storage-interface",
  "structopt 0.3.18",
@@ -7401,6 +7403,16 @@ dependencies = [
  "num-traits",
  "sha2 0.8.2",
  "sha3 0.8.2",
+]
+
+[[package]]
+name = "vdf-cli"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "classgroup",
+ "hex 0.3.2",
+ "vdf",
 ]
 
 [[package]]
