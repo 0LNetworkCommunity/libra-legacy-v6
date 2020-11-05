@@ -21,8 +21,6 @@ fn miner_commit () {
     // effectively only a genesis ceremony will use this transaction.
     // Other miner onboarding will be done with the onboarding transaction.
 
-
-
     // This test uses Alice's block_1 proof (../fixtures/block_1.json.stage.alice), assuming she has participated in a genesis ceremony.
     let preimage = hex::decode("a3964fe3be43749e77b87f30d38cb8b18b689c7e4008ddcf3543af06f2ef2cd0").unwrap();
     // let proof_computed = delay::do_delay(&challenge);
@@ -38,7 +36,20 @@ fn miner_commit () {
     executor.add_account_data(&sender);
     executor.add_account_data(&receiver);
 
-    //TODO:need to create account
+    let script_help = transaction_builder::encode_minerstate_helper_script();
+    let txn_help = sender.account()
+        .transaction()
+        .script(script_help)
+        .sequence_number(sequence)
+        .sign();
+
+    let output = executor.execute_and_apply(txn_help);
+    assert_eq!(
+        output.status(),
+        &TransactionStatus::Keep(KeptVMStatus::Executed)
+    );
+    println!("Help executed successfully");
+
     let script = transaction_builder::encode_minerstate_commit_script(
         preimage,
         proof,
@@ -47,7 +58,7 @@ fn miner_commit () {
     let txn = sender.account()
     .transaction()
     .script(script)
-    .sequence_number(sequence)
+    .sequence_number(sequence+1)
     .sign();
     
     let output = executor.execute_transaction(txn);
