@@ -6,6 +6,7 @@ use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
+use crate::node_keys;
 use anyhow::Error;
 use libra_config::config::NodeConfig;
 use libra_crypto::test_utils::KeyPair;
@@ -114,9 +115,9 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
-    home.push("0/node.config.toml");
+    home.push("0/node.yaml");
     if !home.exists() {
-        home = PathBuf::from("../saved_logs/0/node.config.toml")
+        home = PathBuf::from("/root/saved_logs/0/node.yaml")
     }
     let config = NodeConfig::load(&home)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
@@ -129,16 +130,22 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
         }
     }
     
-    let test_config = config.test.unwrap();
-    let private_key = test_config.operator_key.unwrap();
-    let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
+    // let test_config = config.test.unwrap();
+    // let private_key = test_config.operator_key.unwrap();
+
+    // This mnemonic is hard coded into the swarm configs. see configs/config_builder
+    let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
+    let private_key = node_keys::key_scheme_new(alice_mnemonic);
+    let keypair = KeyPair::from(private_key.child_0_owner.get_private_key());
+
+    let auth_key = AuthenticationKey::ed25519(&private_key.child_0_owner.get_public());
     let address = auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
 
     let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
     
-    let keypair = KeyPair::from(private_key.private_key());
+    
     let tx_params = TxParams {
         auth_key,
         address,
