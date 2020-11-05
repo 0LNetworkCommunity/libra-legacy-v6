@@ -1,6 +1,8 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use libra_wallet::{Mnemonic, key_factory::Seed, key_factory::KeyFactory, ChildNumber};
+use libra_wallet::{Mnemonic, key_factory::{
+    Seed, KeyFactory, ChildNumber
+}};
 use libra_types::{waypoint::Waypoint};
 
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
@@ -19,9 +21,9 @@ use libra_types::{transaction::helpers::*};
 use crate::{
     config::MinerConfig
 };
-use stdlib::transaction_scripts;
-use libra_json_rpc_types::views::TransactionView;
-use libra_types::vm_error::StatusCode;
+use compiled_stdlib::transaction_scripts;
+use libra_json_rpc_types::views::{TransactionView, VMStatusView};
+use libra_types::chain_id::ChainId;
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -54,7 +56,9 @@ pub fn submit_tx(
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let (account_state,_) = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+
+    let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,
@@ -64,7 +68,7 @@ pub fn submit_tx(
     // Create the unsigned MinerState transaction script
     if !is_onboading {
         script = Script::new(
-            transaction_scripts::StdlibScript::MinerState.compiled_bytes().into_vec(),
+            transaction_scripts::StdlibScript::MinerStateCommit.compiled_bytes().into_vec(),
             vec![],
             vec![
                 TransactionArgument::U8Vector(preimage),
@@ -96,6 +100,7 @@ pub fn submit_tx(
         tx_params.coin_price_per_unit,
         "GAS".parse()?,
         tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+        chain_id,
     )?;
 
     // get account_data struct
@@ -136,7 +141,9 @@ pub fn submit_onboard_tx(
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let (account_state,_) = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+
+    let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,
@@ -166,6 +173,7 @@ pub fn submit_onboard_tx(
         tx_params.coin_price_per_unit,
         "GAS".parse()?,
         tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+        chain_id,
     )?;
 
     // get account_data struct
@@ -230,7 +238,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
             // We receive a tx object.
             match tx_view {
                 Some(tx_view) => {
-                    if tx_view.vm_status != StatusCode::EXECUTED {
+                    if tx_view.vm_status != VMStatusView::Executed {
                         status_warn!("Transaction failed");
                         println!("Rejected with code:{:?}", tx_view.vm_status);
                         return false
@@ -265,7 +273,7 @@ pub fn get_params (
     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
     let kf = KeyFactory::new(&seed).unwrap();
     let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-    let private_key = child_0.export_priv_key();
+    let private_key = child_0.get_private_key();
     let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
     let url_str = config.chain_info.node.as_ref().unwrap();
 

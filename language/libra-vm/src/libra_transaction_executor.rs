@@ -27,13 +27,14 @@ use libra_types::{
     },
     vm_status::{KeptVMStatus, StatusCode, VMStatus},
     write_set::{WriteSet, WriteSetMut},
+    upgrade_payload::UpgradePayloadResource,
 };
 use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::{CostTable, GasAlgebra, GasCarrier, GasUnits},
     identifier::IdentStr,
 };
-use move_vm_runtime::{data_cache::RemoteCache, logging::LogContext, session::Session};
+use move_vm_runtime::{logging::LogContext, session::Session, data_cache::RemoteCache,};
 use move_vm_types::{
     gas_schedule::{zero_cost_schedule, CostStrategy},
     values::Value,
@@ -159,6 +160,7 @@ impl LibraVM {
         account_currency_symbol: &IdentStr,
         log_context: &impl LogContext,
     ) -> Result<(VMStatus, TransactionOutput), VMStatus> {
+        println!("Executing script {:?}", script);
         fail_point!("move_adapter::execute_script", |_| {
             Err(VMStatus::Error(
                 StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR,
@@ -428,6 +430,43 @@ impl LibraVM {
         ))
     }
 
+        // Note: currently the upgrade needs two blocks to happen: 
+    // In the first block, consensus is reached and recorded; 
+    // in the second block, the payload is applied and history is recorded
+    fn tick_oracle_consensus<R: RemoteCache> (
+        &self,
+        session: &mut Session<R>,
+        block_metadata: BlockMetadata,
+        txn_data: &TransactionMetadata,
+        cost_strategy: &mut CostStrategy,
+        log_context: &impl LogContext,
+    ) -> Result<(), VMStatus> {
+        if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
+            println!("====================================== checking consensus, curr round is {}", round);
+            // hardcoding consensus checking on round 2
+            if round==2 {
+                println!("====================================== checking consensus");
+                // tick Oracle::check_upgrade
+                let args = vec![
+                    Value::transaction_argument_signer_reference(txn_data.sender),
+                ];
+                session.execute_function(
+                    &ORACLE_MODULE,
+                    &CHECK_UPGRADE,
+                    vec![],
+                    args,
+                    txn_data.sender(),
+                    cost_strategy,
+                    log_context,
+                ).expect("Couldn't check upgrade");
+            }
+        }
+
+        Ok(())
+    }
+
+    
+
     fn process_block_prologue(
         &mut self,
         remote_cache: &mut StateViewCache<'_>,
@@ -439,6 +478,7 @@ impl LibraVM {
                 StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR,
             ))
         });
+        println!("====================================== in block prologue!!!");
 
         let mut txn_data = TransactionMetadata::default();
         txn_data.sender = account_config::reserved_vm_address();
@@ -447,7 +487,7 @@ impl LibraVM {
         let mut cost_strategy = CostStrategy::system(&gas_schedule, GasUnits::new(0));
         let mut session = self.0.new_session(remote_cache);
 
-        if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.into_inner() {
+        if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.clone().into_inner() {
             let args = vec![
                 Value::transaction_argument_signer_reference(txn_data.sender),
                 Value::u64(round),
@@ -471,6 +511,13 @@ impl LibraVM {
         } else {
             return Err(VMStatus::Error(StatusCode::MALFORMED));
         };
+
+        // Consensus checking for oracle outcome
+        self.tick_oracle_consensus(&mut session, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
+        
+        // Apply upgrade for Upgrade oracle
+        self.0.apply_stdlib_upgrade(&mut session, &remote_cache, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
+
         SYSTEM_TRANSACTIONS_EXECUTED.inc();
 
         let output = get_transaction_output(
@@ -713,6 +760,7 @@ impl LibraVM {
             // `result` is initially empty, a single element is pushed per loop iteration and
             // the number of iterations is bound to the max size of `signature_verified_block`
             assume!(result.len() < usize::max_value());
+            println!("esecution result with {:?}, output {:?}", vm_status, output);
             result.push((vm_status, output))
         }
 

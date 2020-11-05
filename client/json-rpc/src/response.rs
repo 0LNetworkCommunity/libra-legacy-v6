@@ -9,6 +9,7 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
+use libra_json_rpc_types::views::MinerStateResourceView;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]
@@ -23,6 +24,7 @@ pub enum JsonRpcResponse {
     CurrenciesResponse(Vec<CurrencyInfoView>),
     AccountStateWithProofResponse(AccountStateWithProofView),
     NetworkStatusResponse(Number),
+    MinerStateViewResponse(MinerStateResourceView),
     UnknownResponse(Value),
 }
 
@@ -93,6 +95,12 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                 let connected_peers_count: Number = serde_json::from_value(value)?;
                 Ok(JsonRpcResponse::NetworkStatusResponse(
                     connected_peers_count,
+                ))
+            }
+            "get_miner_state" => {
+                let state: MinerStateResourceView = serde_json::from_value(value)?;
+                Ok(JsonRpcResponse::MinerStateViewResponse(
+                    state,
                 ))
             }
             _ => Ok(JsonRpcResponse::UnknownResponse(value)),
@@ -191,6 +199,18 @@ impl ResponseAsView for StateProofView {
 impl ResponseAsView for AccountStateWithProofView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
         if let JsonRpcResponse::AccountStateWithProofResponse(resp) = response {
+            Ok(resp)
+        } else {
+            Self::unexpected_response_error::<Self>(response)
+        }
+    }
+}
+
+/// OL Implementation
+//add by Ping
+impl ResponseAsView for MinerStateResourceView {
+    fn from_response(response: JsonRpcResponse) -> Result<Self> {
+        if let JsonRpcResponse::MinerStateViewResponse(resp) = response {
             Ok(resp)
         } else {
             Self::unexpected_response_error::<Self>(response)

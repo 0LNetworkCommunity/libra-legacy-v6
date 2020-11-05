@@ -26,8 +26,10 @@ when executing from a fresh state.
 <b>use</b> <a href="LibraTransactionPublishingOption.md#0x1_LibraTransactionPublishingOption">0x1::LibraTransactionPublishingOption</a>;
 <b>use</b> <a href="LibraVMConfig.md#0x1_LibraVMConfig">0x1::LibraVMConfig</a>;
 <b>use</b> <a href="LibraVersion.md#0x1_LibraVersion">0x1::LibraVersion</a>;
+<b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
+<b>use</b> <a href="Upgrade.md#0x1_Upgrade">0x1::Upgrade</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 </code></pre>
 
@@ -119,6 +121,12 @@ Initializes the Libra framework.
     // `<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_operating">LibraTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.
     // See also discussion at function specification.
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_set_time_has_started">LibraTimestamp::set_time_has_started</a>(lr_account);
+
+    // <a href="Oracle.md#0x1_Oracle">Oracle</a> initialize
+    <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(lr_account);
+
+    // <a href="Upgrade.md#0x1_Upgrade">Upgrade</a> <a href="Oracle.md#0x1_Oracle">Oracle</a> initialize
+    <a href="Upgrade.md#0x1_Upgrade_initialize">Upgrade::initialize</a>(lr_account);
 }
 </code></pre>
 

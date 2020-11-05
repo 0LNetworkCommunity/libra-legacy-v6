@@ -21,6 +21,7 @@ module LibraSystem {
     use 0x1::Stats;
     use 0x1::Cases;
     use 0x1::NodeWeight;
+    use 0x1::Debug;
 
     /// Information about a Validator Owner.
     struct ValidatorInfo {
@@ -636,11 +637,13 @@ module LibraSystem {
         let index = 0;
         while (index < n) {
             let account_address = *(Vector::borrow<address>(&new_validators, index));
+            Debug::print(&account_address);
 
             // A prospective validator must have a validator config resource
             assert(ValidatorConfig::is_valid(account_address), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
             
             let config = ValidatorConfig::get_config(account_address);
+            Debug::print(&config);
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet

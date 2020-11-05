@@ -106,6 +106,7 @@ members = [
     "language/vm/serializer-tests",
     "libra-node",
     "mempool",
+    "miner",
     "network",
     "network/builder",
     "network/memsocket",

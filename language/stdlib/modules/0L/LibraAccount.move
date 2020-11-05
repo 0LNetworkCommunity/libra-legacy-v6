@@ -234,7 +234,7 @@ module LibraAccount {
         validator_network_addresses: vector<u8>,
         fullnode_network_addresses: vector<u8>,
         human_name: vector<u8>,
-    ) acquires AccountOperationsCapability {
+    ):address acquires AccountOperationsCapability {
         
         let valid = VDF::verify(
             challenge,
@@ -261,7 +261,8 @@ module LibraAccount {
             fullnode_network_addresses,
         );
 
-        make_account(new_signer, auth_key_prefix)
+        make_account(new_signer, auth_key_prefix);
+        new_account_address
     }
 
     //0L TODO(nelaturuk): Specs need to be rewritten since we're using a different api.

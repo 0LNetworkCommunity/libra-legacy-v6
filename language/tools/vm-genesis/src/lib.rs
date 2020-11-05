@@ -717,9 +717,11 @@ fn initialize_miners_alt(
     // Genesis will abort if mining can't be confirmed.
     let libra_root_address = account_config::libra_root_address();
     for (owner_key, _, _, account, mining_proof) in operator_regs {
-        let _operator_address = account_address::from_public_key(owner_key);
+        let operator_address = account_address::from_public_key(owner_key);
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
+
+        println!("Miner:{:?},{:?}", owner_key, operator_address);
 
         // dbg!(operator_address);
         exec_function(

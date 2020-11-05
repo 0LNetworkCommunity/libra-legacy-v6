@@ -29,6 +29,15 @@
     }
   ],
   [
+    "0107d4191bf505b734d820929e98e86ac7b8b31681f0321f2681477c694bbccb31",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "VoteCount",
+      "type_params": []
+    }
+  ],
+  [
     "010d2f17f3620b93ea63907fdfe33d9d1aea2d5324a8e3ddbe27241f02282f11c1",
     {
       "address": "00000000000000000000000000000001",
@@ -362,6 +371,15 @@
     }
   ],
   [
+    "0163580b42fbf1647a79ec3f6001c212d392bdd0e4484ac5a32890db644ccafa32",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Upgrade",
+      "name": "UpgradePayload",
+      "type_params": []
+    }
+  ],
+  [
     "0164fb33270e34819179c0740359e0e188dd65b86c451d01306e0165b07d84ffe3",
     {
       "address": "00000000000000000000000000000001",
@@ -371,11 +389,29 @@
     }
   ],
   [
+    "01668b3d6590ee344fbe999c0043e30cee0f1af0ddc46d649fd79186b08a8f4684",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "MinerState",
+      "name": "MinerProofHistory",
+      "type_params": []
+    }
+  ],
+  [
     "0166cef2a6c8f9101a1bb6bb9586d6ba6bf2b940f8d94c845aa420ee3b24de9121",
     {
       "address": "00000000000000000000000000000001",
       "module": "ValidatorConfig",
       "name": "Config",
+      "type_params": []
+    }
+  ],
+  [
+    "0167556596571d0cc0641b17733cba22cffb51d9fea94e27ad9259b06826371f5d",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Globals",
+      "name": "GlobalConstants",
       "type_params": []
     }
   ],
@@ -403,6 +439,15 @@
       "address": "00000000000000000000000000000001",
       "module": "LibraAccount",
       "name": "CreateAccountEvent",
+      "type_params": []
+    }
+  ],
+  [
+    "0172baf759acd90783f9a085d4e0db91830e8c42ae38bf4645d6325eca2075a626",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "Vote",
       "type_params": []
     }
   ],
@@ -506,6 +551,15 @@
     }
   ],
   [
+    "0194f1f85b50e1ee53383fdf371040dc255911d3642b2fa87e15ef143c88123254",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "MinerState",
+      "name": "Proof",
+      "type_params": []
+    }
+  ],
+  [
     "019796b03ec6a44e423209eb9e81fed035d0a0806068bf22e73e2d913334d054aa",
     {
       "address": "00000000000000000000000000000001",
@@ -565,6 +619,15 @@
       "address": "00000000000000000000000000000001",
       "module": "AccountFreezing",
       "name": "FreezingBit",
+      "type_params": []
+    }
+  ],
+  [
+    "01a159632afcd9e48a1b145511201e4427bfeabf5659e098580e043ab945bba129",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "Oracles",
       "type_params": []
     }
   ],
@@ -688,6 +751,15 @@
     }
   ],
   [
+    "01c98376d68a63e184162b6a088c99555340521bc61c3c6cd842b03935f96827e4",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Upgrade",
+      "name": "UpgradeHistory",
+      "type_params": []
+    }
+  ],
+  [
     "01c9ccc5aba203c7a5a0fa74f1e5d94d97b414b86f5086a0a8f6c0ea0e52e7f138",
     {
       "address": "00000000000000000000000000000001",
@@ -742,6 +814,15 @@
     }
   ],
   [
+    "01d64e7f07962957b7e12e3d2a27f4a6eaa20cb2024a10d27486901de635f7f043",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Oracle",
+      "name": "UpgradeOracle",
+      "type_params": []
+    }
+  ],
+  [
     "01d6c0f3c856cd977f5a840eca7998935aed9a6de6230390b8e15e52b79df18bc0",
     {
       "address": "00000000000000000000000000000001",
@@ -766,6 +847,15 @@
           }
         }
       ]
+    }
+  ],
+  [
+    "01d8d0d983c718cb50c7cda1bd6a9c708a4906517bbba56178e02443cc04053ded",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "ValidatorUniverse",
+      "name": "ValidatorEpochInfo",
+      "type_params": []
     }
   ],
   [

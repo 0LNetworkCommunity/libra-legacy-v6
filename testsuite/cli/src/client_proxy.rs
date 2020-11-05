@@ -13,9 +13,7 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
 };
-use libra_json_rpc_client::views::{
-    AccountView, EventView, MetadataView, TransactionView, VMStatusView,
-};
+use libra_json_rpc_client::views::{AccountView, EventView, MetadataView, TransactionView, VMStatusView, MinerStateResourceView};
 use libra_logger::prelude::*;
 use libra_temppath::TempPath;
 use libra_types::{
@@ -338,6 +336,17 @@ impl ClientProxy {
                     })
                     .collect()
             })
+    }
+
+    // add by Ping
+    /// Get balance from validator for the account specified.
+    pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Result<Option<MinerStateResourceView>> {
+        ensure!(
+            space_delim_strings.len() == 2,
+            "Invalid number of arguments for getting miner status."
+        );
+        let (address, _) = self.get_account_address_from_parameter(space_delim_strings[1])?;
+        self.client.get_miner_state(address)
     }
 
     /// Get the latest sequence number from validator for the account specified.
@@ -1112,7 +1121,14 @@ impl ClientProxy {
         &self,
         para: &str,
     ) -> Result<(AccountAddress, Option<AuthenticationKey>)> {
-        if is_authentication_key(para) {
+        if para.starts_with("0x") {
+            let (_, addr_hex) = para.split_at(2);
+            let mut padding_prefix = String::from("00000000000000000000000000000000");
+            padding_prefix.push_str(addr_hex);
+            let (_, fixed_addr_str) = padding_prefix.split_at(padding_prefix.len()-AccountAddress::LENGTH*2);
+
+            return Ok((ClientProxy::address_from_strings(fixed_addr_str )?, None))
+        } else if is_authentication_key(para) {
             let auth_key = ClientProxy::authentication_key_from_string(para)?;
             Ok((auth_key.derived_address(), Some(auth_key)))
         } else if is_address(para) {
