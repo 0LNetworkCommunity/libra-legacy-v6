@@ -37,5 +37,5 @@ mod write_set;
 // mod setup_0L;
 // mod ol_e2e_test_reconfig;
 //mod ol_e2e_test_oracle_tx;
-mod minerstate_commit_0L;
-mod ol_demo;
+mod minerstate_commit_0l;
+mod demo_0l;
