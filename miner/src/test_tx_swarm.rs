@@ -8,7 +8,7 @@ use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
 use crate::node_keys;
 use anyhow::Error;
-use libra_config::config::NodeConfig;
+use libra_config::config::{self, NodeConfig, OnDiskStorageConfig};
 use libra_crypto::test_utils::KeyPair;
 use libra_types::waypoint::Waypoint;
 use libra_types::transaction::authenticator::AuthenticationKey;
@@ -143,8 +143,25 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
 
-    let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
-    
+    dbg!(&config.base);
+    // let mut storage_cfg = OnDiskStorageConfig::default();
+    // storage_cfg.set_data_dir(PathBuf::from("/root/saved_logs/".to_string()));
+    // storage_cfg.path = PathBuf::from("/root/saved_logs/full_node_0_operator".to_string());
+    // storage_cfg.namespace = Some("0_owner".to_string());
+    // {
+    //     namespace: Some("0_owner".to_string()),
+    //     path: PathBuf::from("/root/saved_logs/full_node_0_operator"),
+    //     // data_dir: PathBuf::from("/root/saved_logs/"),
+    // };
+    // let validator_storage = config::Storage::OnDiskStorage(storage_cfg);
+    // let wrapper = config::Storage::StorageWrapper {
+    //     storage_name: "validator",
+    //     storage: validator_storage,
+    // };
+    // dbg!(&wrapper.value("waypoint"));
+    // let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
+    let parsed_waypoint = config.base.waypoint.genesis_waypoint();
+
     
     let tx_params = TxParams {
         auth_key,
