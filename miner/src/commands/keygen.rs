@@ -22,8 +22,6 @@ impl Runnable for KeygenCmd {
         let mnemonic_string = wallet.mnemonic();
         let (auth_key, child_number) = wallet.new_address().expect("Could not generate address");
 
-        dbg!(&child_number);
-
         let mut miner_configs = config::MinerConfig::default();
         miner_configs.profile.auth_key = auth_key.to_string();
         miner_configs.profile.account = Some(auth_key.derived_address().to_string());

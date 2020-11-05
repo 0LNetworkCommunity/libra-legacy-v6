@@ -47,12 +47,11 @@ pub fn val_init_test(home: PathBuf) {
 
     let init_file: ValConfigs =
         serde_json::from_str(&block_file).expect("could not deserialize latest block");
-    dbg!(&init_file);
 
     let tx_params = get_params_from_swarm(home).unwrap();
         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
             Err(err)=>{ println!("{:?}", err) }
-            Ok(res) => {dbg!(Some(res));}
+            Ok(res) => {println!(Some(res));}
         }
 }
 

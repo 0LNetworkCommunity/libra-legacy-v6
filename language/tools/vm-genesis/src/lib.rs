@@ -437,7 +437,6 @@ fn create_and_initialize_owners_operators(
     }
 
     println!("1 ======== Create OP Accounts");
-    // dbg!(operator_registrations);
     // Create accounts for each validator operator
     for (operator_key, operator_name, _, _, _genesis_proof) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
@@ -449,7 +448,6 @@ fn create_and_initialize_owners_operators(
                 operator_auth_key.prefix().to_vec(),
                 operator_name.clone(),
             );
-        // dbg!(&create_operator_script);
         exec_script(
             session,
             log_context,
@@ -469,10 +467,8 @@ fn create_and_initialize_owners_operators(
     }
 
     println!("3 ======== OP sends network info to Owner config");
-    // dbg!(operator_registrations);
     // Set the validator operator configs for each owner
     for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
-        // dbg!(registration);
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, log_context, operator_account, registration);
     }
@@ -612,8 +608,7 @@ impl Validator {
         let key = Ed25519PrivateKey::generate(rng);
         let operator_address = account_address::from_public_key(&key.public_key());
         let owner_address = libra_config::utils::validator_owner_account_from_name(&name);
-        // dbg!(operator_address);
-        // dbg!(owner_address);
+
         Self {
             index,
             key,
@@ -691,7 +686,6 @@ fn _initialize_miners(session: &mut Session<StateViewCache>,
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
 
-        dbg!(operator_address);
         exec_function(
             session,
             log_context,
@@ -722,8 +716,6 @@ fn initialize_miners_alt(
         let proof = hex::decode(&mining_proof.proof).unwrap();
 
         println!("Miner:{:?},{:?}", owner_key, operator_address);
-
-        // dbg!(operator_address);
         exec_function(
             session,
             log_context,

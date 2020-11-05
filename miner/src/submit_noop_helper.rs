@@ -25,14 +25,12 @@ fn submit_noop(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
 
     let address = auth_key.derived_address();
     let account_state = client.get_account_state(address.clone(), true).unwrap();
-    dbg!(&account_state);
 
 
     let mut sequence_number = 0u64;
     if account_state.0.is_some() {
         sequence_number = account_state.0.unwrap().sequence_number;
     }
-    dbg!(&sequence_number);
 
     // Doing a no-op transaction here which will print
     // [debug] 000000000000000011e110  in the logs if successful.
@@ -50,9 +48,7 @@ fn submit_noop(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
     );
 
     let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
-    dbg!(&keypair);
-    // Plz Halp (ZM):
-    // sign the transaction script
+
     let txn = create_user_txn(
         &keypair,
         TransactionPayload::Script(script),
@@ -74,9 +70,7 @@ fn submit_noop(mut config_path: PathBuf, height_to_submit: usize ) -> Result<Str
         status: AccountStatus::Persisted,
     };
 
-    dbg!(&sender_account_data);
-    // Plz Halp (ZM):
-    // // Submit the transaction with libra_client
+    // Submit the transaction with libra_client
     match client.submit_transaction(
         Some(&mut sender_account_data),
         txn
