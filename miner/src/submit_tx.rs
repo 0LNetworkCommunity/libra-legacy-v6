@@ -68,7 +68,7 @@ pub fn submit_tx(
     // Create the unsigned MinerState transaction script
     if !is_onboading {
         script = Script::new(
-            transaction_scripts::StdlibScript::MinerState.compiled_bytes().into_vec(),
+            transaction_scripts::StdlibScript::MinerStateCommit.compiled_bytes().into_vec(),
             vec![],
             vec![
                 TransactionArgument::U8Vector(preimage),
