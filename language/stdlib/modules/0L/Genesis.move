@@ -25,6 +25,8 @@ module Genesis {
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
     use 0x1::AutoPay;
+    use 0x1::Oracle;
+    use 0x1::Upgrade;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -99,6 +101,12 @@ module Genesis {
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.
         LibraTimestamp::set_time_has_started(lr_account);
+
+        // Oracle initialize
+        Oracle::initialize(lr_account);
+
+        // Upgrade Oracle initialize
+        Upgrade::initialize(lr_account);
     }
 
     /// For verification of genesis, the goal is to prove that all the invariants which

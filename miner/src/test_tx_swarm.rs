@@ -6,8 +6,9 @@ use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
+use crate::node_keys;
 use anyhow::Error;
-use libra_config::config::NodeConfig;
+use libra_config::config::{self, NodeConfig, OnDiskStorageConfig};
 use libra_crypto::test_utils::KeyPair;
 use libra_types::waypoint::Waypoint;
 use libra_types::transaction::authenticator::AuthenticationKey;
@@ -19,19 +20,6 @@ pub fn test_runner(home: PathBuf) {
 
     let tx_params = get_params_from_swarm(home).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
-    // TODO: count three blocks and exit
-    // let i = 0;
-    // while i < 4 {
-    //     let (preimage, proof) = get_block_fixtures(&conf);
-
-    //     // need to sleep for swarm to be ready.
-    //     thread::sleep(time::Duration::from_millis(50000));
-    //     let res = submit_tx(&tx_params, preimage, proof, false);
-    //     if eval_tx_status(res) == false {
-    //         std::process::exit(0);
-    //     };
-    //     i+1;
-    // }
     backlog::process_backlog(&conf, &tx_params);
 
     loop {
@@ -62,31 +50,10 @@ pub fn val_init_test(home: PathBuf) {
     dbg!(&init_file);
 
     let tx_params = get_params_from_swarm(home).unwrap();
-    // let conf = MinerConfig::load_swarm_config(&tx_params);
-    // // TODO: count three blocks and exit
-    // // let i = 0;
-    // // while i < 4 {
-    // //     let (preimage, proof) = get_block_fixtures(&conf);
-
-    // //     // need to sleep for swarm to be ready.
-    // //     thread::sleep(time::Duration::from_millis(50000));
-    // //     let res = submit_tx(&tx_params, preimage, proof, false);
-    // //     if eval_tx_status(res) == false {
-    // //         std::process::exit(0);
-    // //     };
-    // //     i+1;
-    // // }
-    // backlog::process_backlog(&conf, &tx_params);
-
-    // loop {
-        // let (preimage, proof) = get_block_fixtures(&conf);
-        // need to sleep for swarm to be ready.
-
         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
             Err(err)=>{ println!("{:?}", err) }
             Ok(res) => {dbg!(Some(res));}
         }
-    // }
 }
 
 
@@ -114,9 +81,9 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 }
 
 fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
-    home.push("0/node.config.toml");
+    home.push("0/node.yaml");
     if !home.exists() {
-        home = PathBuf::from("../saved_logs/0/node.config.toml")
+        home = PathBuf::from("/root/saved_logs/0/node.yaml")
     }
     let config = NodeConfig::load(&home)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
@@ -128,16 +95,18 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
             println!("test config does not set.");
         }
     }
-    
-    let mut private_key = config.test.unwrap().operator_keypair.unwrap();
-    let auth_key = AuthenticationKey::ed25519(&private_key.public_key());
+
+    // This mnemonic is hard coded into the swarm configs. see configs/config_builder
+    let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
+    let private_key = node_keys::key_scheme_new(alice_mnemonic);
+    let keypair = KeyPair::from(private_key.child_0_owner.get_private_key());
+
+    let auth_key = AuthenticationKey::ed25519(&private_key.child_0_owner.get_public());
     let address = auth_key.derived_address();
 
-    let url =  Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap();
+    let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
+    let parsed_waypoint = config.base.waypoint.genesis_waypoint();
 
-    let parsed_waypoint: Waypoint = config.base.waypoint.waypoint_from_config().unwrap().clone();
-    
-    let keypair = KeyPair::from(private_key.take_private().clone().unwrap());
     let tx_params = TxParams {
         auth_key,
         address,

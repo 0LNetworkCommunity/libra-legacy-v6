@@ -2712,6 +2712,7 @@ dependencies = [
  "compiled-stdlib",
  "compiler",
  "hex 0.4.2",
+ "include_dir",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -2727,6 +2728,7 @@ dependencies = [
  "proptest",
  "proptest-derive",
  "rand 0.7.3",
+ "transaction-builder",
  "vm",
  "vm-genesis",
 ]
@@ -2738,6 +2740,7 @@ dependencies = [
  "bytecode-verifier",
  "compiled-stdlib",
  "compiler",
+ "hex 0.4.2",
  "language-e2e-tests",
  "libra-canonical-serialization",
  "libra-crypto",
@@ -3732,6 +3735,8 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
+ "stdlib",
+ "transaction-builder",
  "vm",
 ]
 
@@ -3969,6 +3974,7 @@ dependencies = [
  "byteorder",
  "classgroup",
  "cli",
+ "compiled-stdlib",
  "criterion",
  "glob",
  "gumdrop",

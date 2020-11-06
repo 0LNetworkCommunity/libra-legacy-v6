@@ -32,3 +32,10 @@ mod validator_set_management;
 mod vasps;
 mod verify_txn;
 mod write_set;
+
+// OL Changes
+// mod setup_0L;
+// mod ol_e2e_test_reconfig;
+//mod ol_e2e_test_oracle_tx;
+mod minerstate_commit_0l;
+mod demo_0l;
