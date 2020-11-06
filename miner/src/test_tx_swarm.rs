@@ -1,7 +1,7 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{backlog, block::ValConfigs};
+use crate::{node_keys::KeyScheme, backlog, block::ValConfigs};
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
@@ -97,7 +97,7 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
     let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
-    let private_key = node_keys::key_scheme_new(alice_mnemonic);
+    let private_key = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(private_key.child_1_operator.get_private_key());
     let pubkey =  private_key.child_1_operator.get_public();
     let auth_key = AuthenticationKey::ed25519(&pubkey);

@@ -21,7 +21,7 @@ use structopt::StructOpt;
 use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
 
 //////// 0L ////////
-use miner::node_keys;
+use miner::node_keys::KeyScheme;
 
 // pub struct KeyScheme {
 //         child_0_owner: ExtendedPrivKey,
@@ -74,7 +74,7 @@ impl StorageHelper {
 
     ///////// 0L  /////////
     pub fn initialize_with_mnemonic_swarm(&self, namespace: String, mnemonic: String) {
-        let keys = node_keys::key_scheme(mnemonic);
+        let keys = KeyScheme::new_from_mnemonic(mnemonic);
         let mut storage = self.storage(namespace.clone());
         // let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
         let dummy_root = Ed25519PrivateKey::from_encoded_string("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
@@ -123,7 +123,7 @@ impl StorageHelper {
 
     ///////// 0L  /////////
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let keys = key_scheme(mnemonic);
+        let keys = KeyScheme::new_from_mnemonic(mnemonic);
         let mut storage_root = self.storage("root".to_owned());
         let mut storage_owner = self.storage(namespace.clone());
         let mut storage_oper = self.storage(namespace.clone() + "-oper");
