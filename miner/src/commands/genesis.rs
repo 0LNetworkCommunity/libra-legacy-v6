@@ -10,7 +10,6 @@ use std::io::Write;
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use fs::File;
-use libra_crypto::ValidCryptoMaterial;
 
 #[derive(Command, Debug, Options)]
 pub struct GenesisCmd {

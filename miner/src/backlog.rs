@@ -14,7 +14,6 @@ use crate::{
         eval_tx_status},
 };
 use std::io::BufReader;
-use libra_json_rpc_types::views::MinerStateResourceView;
 use crate::block::build_block::parse_block_height;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 

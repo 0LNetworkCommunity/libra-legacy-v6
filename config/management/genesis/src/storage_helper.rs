@@ -17,9 +17,6 @@ use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoin
 use std::{fs::File, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
-// use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
-use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
-
 //////// 0L ////////
 use miner::node_keys::KeyScheme;
 
