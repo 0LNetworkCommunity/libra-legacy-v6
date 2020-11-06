@@ -6,11 +6,17 @@ use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFact
 /// The key derivation used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
 // #[derive(Debug)]
 pub struct KeyScheme {
+        /// Owner key, the main key where funds are kept
         pub child_0_owner: ExtendedPrivKey,
+        /// Operator of node
         pub child_1_operator: ExtendedPrivKey,
+        /// Validator network identity
         pub child_2_val_network: ExtendedPrivKey,
+        /// Fullnode network identity
         pub child_3_fullnode_network: ExtendedPrivKey,
+        /// Consensus key
         pub child_4_consensus: ExtendedPrivKey,
+        /// Execution key
         pub child_5_executor: ExtendedPrivKey,
 }
 

@@ -23,27 +23,6 @@ use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFact
 //////// 0L ////////
 use miner::node_keys::KeyScheme;
 
-// pub struct KeyScheme {
-//         child_0_owner: ExtendedPrivKey,
-//         child_1_operator: ExtendedPrivKey,
-//         child_2_val_network: ExtendedPrivKey,
-//         child_3_fullnode_network: ExtendedPrivKey,
-//         child_4_consensus: ExtendedPrivKey,
-//         child_5_executor: ExtendedPrivKey,
-// }
-// pub fn key_scheme(mnemonic: String) -> KeyScheme {
-//     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-//     let kf = KeyFactory::new(&seed).unwrap();
-//     KeyScheme {
-//         child_0_owner: kf.private_child(ChildNumber::new(0)).unwrap(),
-//         child_1_operator: kf.private_child(ChildNumber::new(1)).unwrap(),
-//         child_2_val_network: kf.private_child(ChildNumber::new(2)).unwrap(),
-//         child_3_fullnode_network: kf.private_child(ChildNumber::new(3)).unwrap(),
-//         child_4_consensus: kf.private_child(ChildNumber::new(4)).unwrap(),
-//         child_5_executor: kf.private_child(ChildNumber::new(5)).unwrap(),
-//     }
-// }
-
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
 }
