@@ -3,17 +3,18 @@
 use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
 use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
 
-/// The set of keys which are used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
-pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
-    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-    let kf = KeyFactory::new(&seed).unwrap();
-    let child_0_owner_operator = kf.private_child(ChildNumber::new(0)).unwrap();
-    let child_1_consensus = kf.private_child(ChildNumber::new(1)).unwrap();
-    let child_2_val_network = kf.private_child(ChildNumber::new(2)).unwrap();
-    let child_3_fullnode_network = kf.private_child(ChildNumber::new(3)).unwrap();
-    (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network)
-}
 
+// pub fn key_scheme(mnemonic: String) -> (ExtendedPrivKey, ExtendedPrivKey,ExtendedPrivKey, ExtendedPrivKey) {
+//     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
+//     let kf = KeyFactory::new(&seed).unwrap();
+//     let child_0_owner_operator = kf.private_child(ChildNumber::new(0)).unwrap();
+//     let child_1_consensus = kf.private_child(ChildNumber::new(1)).unwrap();
+//     let child_2_val_network = kf.private_child(ChildNumber::new(2)).unwrap();
+//     let child_3_fullnode_network = kf.private_child(ChildNumber::new(3)).unwrap();
+//     (child_0_owner_operator, child_1_consensus, child_2_val_network, child_3_fullnode_network)
+// }
+
+/// The key derivation used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
 pub struct KeyScheme {
         pub child_0_owner: ExtendedPrivKey,
         pub child_1_operator: ExtendedPrivKey,
@@ -22,7 +23,7 @@ pub struct KeyScheme {
         pub child_4_consensus: ExtendedPrivKey,
         pub child_5_executor: ExtendedPrivKey,
 }
-pub fn key_scheme_new(mnemonic: String) -> KeyScheme {
+pub fn key_scheme(mnemonic: String) -> KeyScheme {
     let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
     let kf = KeyFactory::new(&seed).unwrap();
     KeyScheme {

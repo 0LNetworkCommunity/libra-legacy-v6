@@ -3040,6 +3040,7 @@ dependencies = [
  "libra-wallet",
  "libra-workspace-hack",
  "libradb",
+ "miner",
  "rand 0.7.3",
  "rustyline",
  "serde",
