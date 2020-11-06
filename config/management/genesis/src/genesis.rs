@@ -7,7 +7,7 @@ use libra_global_constants::{LIBRA_ROOT_KEY, OPERATOR_KEY, OWNER_KEY};
 use libra_management::{
     config::ConfigPath, constants, error::Error, secure_backend::SharedBackend,
 };
-use libra_types::{account_address, chain_id::ChainId, transaction::{Transaction, TransactionArgument, TransactionPayload}};
+use libra_types::{account_address, chain_id::ChainId, transaction::{Transaction, TransactionPayload}};
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
@@ -99,7 +99,7 @@ impl Genesis {
         for owner in layout.owners.iter() {
             let owner_storage = config.shared_backend_with_namespace(owner.into());
             let owner_key = owner_storage.ed25519_key(OWNER_KEY).ok();
-            let owner_address = libra_config::utils::validator_owner_account_from_name(owner.as_bytes());
+            // let owner_address = libra_config::utils::validator_owner_account_from_name(owner.as_bytes());
             let operator_name = owner_storage.string(constants::VALIDATOR_OPERATOR)?;
             let operator_storage = config.shared_backend_with_namespace(operator_name.clone());
             let operator_key = operator_storage.ed25519_key(OPERATOR_KEY)?;

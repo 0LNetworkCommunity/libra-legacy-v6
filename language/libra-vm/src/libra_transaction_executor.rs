@@ -27,7 +27,6 @@ use libra_types::{
     },
     vm_status::{KeptVMStatus, StatusCode, VMStatus},
     write_set::{WriteSet, WriteSetMut},
-    upgrade_payload::UpgradePayloadResource,
 };
 use move_core_types::{
     account_address::AccountAddress,
@@ -760,7 +759,6 @@ impl LibraVM {
             // `result` is initially empty, a single element is pushed per loop iteration and
             // the number of iterations is bound to the max size of `signature_verified_block`
             assume!(result.len() < usize::max_value());
-            println!("esecution result with {:?}, output {:?}", vm_status, output);
             result.push((vm_status, output))
         }
 
