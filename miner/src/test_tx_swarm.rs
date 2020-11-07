@@ -106,7 +106,6 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let address = staged_owner_auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
-    dbg!(&url);
     let waypoint = config.base.waypoint.genesis_waypoint();
 
     let tx_params = TxParams {

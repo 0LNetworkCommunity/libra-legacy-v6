@@ -153,9 +153,7 @@ impl LibraClient {
         match get_response_from_batch(0, &responses)? {
             Ok(result) => {
                 let miner_state =
-                    MinerStateResourceView::from_response(result.clone())?;
-                
-                dbg!(&miner_state);
+                    MinerStateResourceView::from_response(result.clone())?;                
                 Ok(Some(miner_state))
             }
             Err(e) => bail!(

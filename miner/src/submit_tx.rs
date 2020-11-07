@@ -219,7 +219,6 @@ pub fn wait_for_tx (
             
             match &mut client.get_txn_by_acc_seq(sender_address, sequence_number, false){
                 Ok(Some(txn_view)) => {
-                    // dbg!(&txn_view);
                     return Some(txn_view.to_owned());
                 },
                 Err(e) => {
