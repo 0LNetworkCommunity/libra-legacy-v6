@@ -40,7 +40,7 @@ pub fn test_runner(home: PathBuf) {
 /// A test harness for the submit_tx with a local swarm 
 pub fn val_init_test(home: PathBuf) {
     let file = "./blocks/val_init.json";
-    fs::copy("../fixtures/val_init.json", file).unwrap();
+    fs::copy("../fixtures/val_init_stage.json", file).unwrap();
     let block_file = fs::read_to_string(file)
         .expect("Could not read init file");
 

@@ -74,16 +74,21 @@ pub fn submit_tx(
             ],
         );
     } else {
+
+        let consensus_pubkey = hex::decode("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
+        let validator_network_address = "test".as_bytes().to_vec();
+        let full_node_network_address = "test".as_bytes().to_vec();
+        let human_name = "test".as_bytes().to_vec();
         script = Script::new(
             transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
             vec![],
             vec![
-                TransactionArgument::U8Vector(preimage),
-                TransactionArgument::U8Vector(proof),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),TransactionArgument::U8Vector("z".as_bytes().to_vec()),                
+                TransactionArgument::U8Vector(preimage), // challenge: vector<u8>,
+                TransactionArgument::U8Vector(proof), // solution: vector<u8>,
+                TransactionArgument::U8Vector(consensus_pubkey), // consensus_pubkey: vector<u8>,
+                TransactionArgument::U8Vector(validator_network_address),// validator_network_address: vector<u8>,
+                TransactionArgument::U8Vector(full_node_network_address),// full_node_network_address: vector<u8>,
+                TransactionArgument::U8Vector(human_name),// human_name: vector<u8>,
             ],
         );
     }
