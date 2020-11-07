@@ -18,9 +18,7 @@ use std::{io::{stdout, Write}, thread, time};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
-use crate::{
-    config::MinerConfig
-};
+use crate::{node_keys::KeyScheme, config::MinerConfig};
 use compiled_stdlib::transaction_scripts;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_types::chain_id::ChainId;
@@ -191,7 +189,7 @@ pub fn submit_onboard_tx(
         txn
     ){
         Ok(_) => {
-            Ok( wait_for_tx(tx_params.address, sequence_number, &mut client) )
+            Ok(wait_for_tx(tx_params.address, sequence_number, &mut client))
         }
         Err(err) => Err(err)
     }
@@ -210,7 +208,7 @@ pub fn wait_for_tx (
         );
 
         loop {
-            thread::sleep(time::Duration::from_millis(1000));
+            thread::sleep(time::Duration::from_millis(10000));
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
             
@@ -258,7 +256,6 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
             status_warn!("Transaction err: {:?}", e);
             return false
         }
-
     }
 }
 
@@ -268,16 +265,20 @@ pub fn get_params (
     waypoint: Waypoint,
     config: &MinerConfig
 ) -> TxParams {
-    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-    let kf = KeyFactory::new(&seed).unwrap();
-    let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-    let private_key = child_0.get_private_key();
-    let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
+    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let pubkey =  keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(&pubkey);
+    // let address = auth_key.derived_address();
+    let owner_name = "0_owner_shared".as_bytes().to_vec();
+    let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(&owner_name);
+    let address = staged_owner_auth_key.derived_address();
+
     let url_str = config.chain_info.node.as_ref().unwrap();
 
     TxParams {
-        auth_key: child_0.get_authentication_key(),
-        address: child_0.get_authentication_key().derived_address(),
+        auth_key,
+        address,
         url: Url::parse(url_str).unwrap(),
         waypoint,
         keypair,
