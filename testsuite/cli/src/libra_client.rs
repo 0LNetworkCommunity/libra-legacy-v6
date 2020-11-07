@@ -139,7 +139,7 @@ impl LibraClient {
         }
     }
 
-    // add by Ping
+    ///////// 0L ////////
     ///Get miner states for an address.
     pub fn get_miner_state(
         &mut self,

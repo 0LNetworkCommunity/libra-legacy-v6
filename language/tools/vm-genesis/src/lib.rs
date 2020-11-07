@@ -649,7 +649,7 @@ impl Validator {
             self.name.clone(),
             set_operator_script,
             self.operator_address,
-            GenesisMiningProof::default()
+            GenesisMiningProof::default() //NOTE: For testing only
         )
     }
 
@@ -665,7 +665,7 @@ impl Validator {
             self.name.clone(),
             script,
             self.owner_address, 
-            GenesisMiningProof::default()
+            GenesisMiningProof::default() //NOTE: For testing only
         )
     }
 }

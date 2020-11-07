@@ -26,8 +26,8 @@ impl Mining {
         let proof = hex::encode(proof);
 
         let mut shared_storage = config.shared_backend();
-        shared_storage.set(libra_global_constants::OPERATOR_PROOF_OF_WORK_PREIMAGE, preimage)?;
-        shared_storage.set(libra_global_constants::OPERATOR_PROOF_OF_WORK_PROOF, proof)?;
+        shared_storage.set(libra_global_constants::PROOF_OF_WORK_PREIMAGE, preimage)?;
+        shared_storage.set(libra_global_constants::PROOF_OF_WORK_PROOF, proof)?;
 
 
         // let mut remote: Box<dyn Storage> = self.backend.backend.try_into()?;

@@ -24,8 +24,8 @@ pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 // 0L
 // TODO remove fullnode
 pub const FULLNODE_PEER_ID: &str = "fullnode_peer_id";
-pub const OPERATOR_PROOF_OF_WORK_PREIMAGE: &str = "operator_pow_preimage";
-pub const OPERATOR_PROOF_OF_WORK_PROOF: &str = "operator_pow_proof";
+pub const PROOF_OF_WORK_PREIMAGE: &str = "operator_pow_preimage";
+pub const PROOF_OF_WORK_PROOF: &str = "operator_pow_proof";
 
 /// Definitions of global data items (e.g., as held in secure storage)
 pub const SAFETY_DATA: &str = "safety_data";
