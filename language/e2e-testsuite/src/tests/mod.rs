@@ -38,4 +38,5 @@ mod write_set;
 // mod ol_e2e_test_reconfig;
 //mod ol_e2e_test_oracle_tx;
 mod minerstate_commit_0l;
+mod minerstate_onboarding_0l;
 mod demo_0l;

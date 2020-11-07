@@ -33,7 +33,6 @@ use std::{
     default::Default,
 };
 use libra_types::account_config::resources::miner_state::MinerStateResource;
-use libra_types::account_state::AccountState;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {

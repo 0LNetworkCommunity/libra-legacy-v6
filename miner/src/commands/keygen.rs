@@ -20,13 +20,12 @@ impl Runnable for KeygenCmd {
     fn run(&self) {
         let mut wallet = WalletLibrary::new();
         let mnemonic_string = wallet.mnemonic();
-        let (auth_key, child_number) = wallet.new_address().expect("Could not generate address");
-
-        dbg!(&child_number);
+        // NOTE: Authkey uses the child number 0 by default
+        let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
 
         let mut miner_configs = config::MinerConfig::default();
         miner_configs.profile.auth_key = auth_key.to_string();
-        miner_configs.profile.account = Some(auth_key.derived_address().to_string());
+        miner_configs.profile.account = Some(auth_key.derived_address());
 
         let toml = toml::to_string(&miner_configs).unwrap();
         println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
@@ -52,12 +51,12 @@ impl Runnable for KeygenCmd {
         println!("0L Auth Key:\n\
         You will need this in your miner.toml configs.\n\
         ---------\n\
-        {:x}\n", auth_key);
+        {:?}\n", &miner_configs.profile.auth_key);
 
         println!("0L Address:\n\
         This address is derived from your Auth Key, it has not yet been created on chain. You'll need to submit a genesis miner proof for that.\n\
         ---------\n\
-        {:x}\n", auth_key.derived_address());
+        {:?}\n", &miner_configs.profile.account);
 
         println!("0L mnemonic:\n\
         WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\

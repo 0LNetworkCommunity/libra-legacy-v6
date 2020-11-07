@@ -43,31 +43,20 @@ impl ValidatorConfig {
         validator_address: NetworkAddress,
         reconfigure: bool,
     ) -> Result<Transaction, Error> {
-        // dbg!(&fullnode_address);
-        // dbg!(&validator_address);
-
-        // Verify addresses
-        // validate_address("validator address", &validator_address)?;
-        // validate_address("fullnode address", &fullnode_address)?;
-
         let config = self.config()?;
         let mut storage = config.validator_backend();
 
         let owner_account = storage.account_address(OWNER_ACCOUNT)?;
-        dbg!(&owner_account);
 
         let consensus_key = storage.ed25519_public_from_private(CONSENSUS_KEY)?;
         let fullnode_network_key = storage.x25519_public_from_private(FULLNODE_NETWORK_KEY)?;
         let validator_network_key = storage.x25519_public_from_private(VALIDATOR_NETWORK_KEY)?;
-        dbg!(&validator_network_key);
 
         // Build Validator address including protocols and encryption
         // Append ln-noise-ik and ln-handshake protocols to base network addresses
         // and encrypt the validator address.
         let validator_address =
             validator_address.append_prod_protos(validator_network_key, HANDSHAKE_VERSION);
-
-        dbg!(&validator_address);
 
         let encryptor = config.validator_backend().encryptor();
         let validator_addresses = encryptor

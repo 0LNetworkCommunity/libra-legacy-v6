@@ -7,6 +7,7 @@
 use std::fs;
 
 use byteorder::{LittleEndian, WriteBytesExt};
+use libra_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
@@ -50,7 +51,7 @@ impl MinerConfig {
         let mut conf = MinerConfig::default();
         // Load profile config
         conf.profile.auth_key = param.auth_key.to_string();
-        conf.profile.account = Some(param.address.to_string());
+        conf.profile.account = Some(param.address);
         conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
         // Load chain info
         conf.chain_info.node = Some(param.url.to_string());
@@ -219,7 +220,7 @@ pub struct Profile {
     pub auth_key: String,
 
     ///The 0L account for the Miner and prospective validator. This is derived from auth_key
-    pub account: Option<String>,
+    pub account: Option<AccountAddress>,
 
     ///The 0L private_key for signing transactions.
     pub operator_private_key: Option<String>,
