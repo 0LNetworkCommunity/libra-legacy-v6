@@ -4,11 +4,11 @@ node_home = "."
 
 [profile]
 auth_key = "cb4d398c224396785c1fc219fbae0c16f5c41fddb0aff1bb28e5845634fd6e5d"
-account = "F5C41FDDB0AFF1BB28E5845634FD6E5D"
+account = "B5B333AABBF92E78524E2129B722EACA"
 ip = "0.0.0.0"
 statement = "Protests rage across the nation"
 
 [chain_info]
 chain_id = "experimental"
 block_dir = "blocks"
-node = "http://localhost:41443"
+node = "http://localhost:45625"

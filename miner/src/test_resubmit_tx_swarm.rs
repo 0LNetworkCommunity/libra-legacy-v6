@@ -31,7 +31,7 @@ pub fn resubmit_backlog(home: PathBuf, config: &MinerConfig){
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     let remote_state: MinerStateView  = match client.get_miner_state(tx_params.address.clone()) {
         Ok( s ) => { match s {
-            Some( state) => state,
+            Some(state) => state,
             None=> {
                 println!("No remote state found");
                 return

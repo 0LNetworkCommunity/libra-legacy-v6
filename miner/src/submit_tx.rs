@@ -208,7 +208,7 @@ pub fn wait_for_tx (
         );
 
         loop {
-            thread::sleep(time::Duration::from_millis(10000));
+            thread::sleep(time::Duration::from_millis(1000));
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
             
@@ -239,7 +239,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                         println!("Rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
-                        status_ok!("Success:", "proof committed to chain\n");
+                        status_ok!("\nSuccess:", "proof committed to chain");
                         return true
                     }
                 }
@@ -267,19 +267,14 @@ pub fn get_params (
 ) -> TxParams {
     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-    let pubkey =  keys.child_0_owner.get_public();
-    let auth_key = AuthenticationKey::ed25519(&pubkey);
-    // let address = auth_key.derived_address();
-    let owner_name = "0_owner_shared".as_bytes().to_vec();
-    let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(&owner_name);
-    let address = staged_owner_auth_key.derived_address();
-
+    let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(pubkey);
     let url_str = config.chain_info.node.as_ref().unwrap();
 
     TxParams {
         auth_key,
-        address,
-        url: Url::parse(url_str).unwrap(),
+        address: config.profile.account.expect("No address provided in miner.toml").into(),
+        url: Url::parse(url_str).expect("No url provided in miner.toml"),
         waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
