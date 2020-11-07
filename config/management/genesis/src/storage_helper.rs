@@ -180,7 +180,8 @@ impl StorageHelper {
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
         // idx 0 is for libra account in swarm tests.
-        if idx == 0 {
+        // idx 1  is for the first node OWNER, set a fixed mnemonic to derive keys for this one so we can simulate miner workflow.
+        if idx == 1 {
             self.initialize_with_mnemonic_swarm(namespace, mnem_alice);
         } else {
             self.initialize(namespace, seed);

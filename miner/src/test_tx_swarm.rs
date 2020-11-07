@@ -96,21 +96,23 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
     let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
-    let private_key = KeyScheme::new_from_mnemonic(alice_mnemonic);
-    let keypair = KeyPair::from(private_key.child_1_operator.get_private_key());
-    let pubkey =  private_key.child_1_operator.get_public();
+    let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let pubkey =  keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(&pubkey);
     // let address = auth_key.derived_address();
-    let address = account_address::from_public_key(&pubkey);
+    let owner_name = "0_owner_shared".as_bytes().to_vec();
+    let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(&owner_name);
+    let address = staged_owner_auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
-    let parsed_waypoint = config.base.waypoint.genesis_waypoint();
+    let waypoint = config.base.waypoint.genesis_waypoint();
 
     let tx_params = TxParams {
         auth_key,
         address,
         url,
-        waypoint: parsed_waypoint,
+        waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
         coin_price_per_unit: 0,

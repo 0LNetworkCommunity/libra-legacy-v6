@@ -160,8 +160,8 @@ pub fn encode_genesis_change_set(
     
     println!("OK initialize_testnet =============== ");
 
-    // initialize_miners(&mut session, &log_context, &operator_assignments);
-    initialize_miners_alt(&mut session, &log_context, &operator_registrations);
+    initialize_miners(&mut session, &log_context, &operator_registrations);
+    
     println!("OK initialize_miners_alt =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
@@ -405,9 +405,12 @@ fn create_and_initialize_owners_operators(
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
     for (owner_key, owner_name, _op_assignment, _ , _genesis_proof) in operator_assignments {
-        let staged_owner_auth_key =
-            libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+        let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(String::from_utf8(owner_name.to_owned()).unwrap());
+        dbg!(&owner_address);
+        dbg!(&owner_key);
+        
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -598,7 +601,7 @@ pub struct Validator {
 impl Validator {
     pub fn new_set(count: Option<usize>) -> Vec<Validator> {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
-        (0..count.unwrap_or(10))
+        (0..count.unwrap_or(3))
             .map(|idx| Validator::gen(idx, &mut rng))
             .collect()
     }
@@ -656,7 +659,6 @@ pub fn generate_test_genesis(
     count: Option<usize>,
 ) -> (ChangeSet, Vec<Validator>) {
     let validators = Validator::new_set(count);
-
     let genesis = encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
         &GENESIS_KEYPAIR.1,
@@ -675,35 +677,8 @@ pub fn generate_test_genesis(
     (genesis, validators)
 }
 
-/// Initialize each validator.
-fn _initialize_miners(session: &mut Session<StateViewCache>,
-                     log_context: &impl LogContext,
-    operator_assignments: &[OperatorAssignment]) {
-    // Genesis will abort if mining can't be confirmed.
-    let libra_root_address = account_config::libra_root_address();
-    for (owner_key, _, _, _account , mining_proof) in operator_assignments {
-        let operator_address = account_address::from_public_key(owner_key.as_ref().unwrap());
-        let preimage = hex::decode(&mining_proof.preimage).unwrap();
-        let proof = hex::decode(&mining_proof.proof).unwrap();
 
-        exec_function(
-            session,
-            log_context,
-            libra_root_address,
-            "MinerState",
-            "genesis_helper",
-            vec![],
-            vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
-                Value::transaction_argument_signer_reference(operator_address),
-                Value::vector_u8(preimage),
-                Value::vector_u8(proof)]);
-    }
-
-}
-
-
-fn initialize_miners_alt(
+fn initialize_miners(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
     operator_regs: &[OperatorRegistration]
@@ -714,10 +689,7 @@ fn initialize_miners_alt(
         let operator_address = account_address::from_public_key(owner_key);
         let preimage = hex::decode(&mining_proof.preimage).unwrap();
         let proof = hex::decode(&mining_proof.proof).unwrap();
-        dbg!(&account);
-        dbg!(&owner_key);
-        dbg!(&operator_address);
-              
+
         exec_function(
             session,
             log_context,
