@@ -35,6 +35,7 @@ pub enum Command {
     Init(crate::init::Init),
     #[structopt(about = "Generates the config files for a validator node")]
     Files(crate::node_files::Files),
+    Mining(crate::mining::Mining),
 }
 
 #[derive(Debug, PartialEq)]
@@ -52,7 +53,8 @@ pub enum CommandName {
     Verify,
     //////// 0L ////////
     Init,
-    Files
+    Files,
+    Mining,
 }
 
 impl From<&Command> for CommandName {
@@ -72,6 +74,7 @@ impl From<&Command> for CommandName {
             //////// 0L ////////
             Command::Init(_) => CommandName::Init,
             Command::Files(_) => CommandName::Files,
+            Command::Mining(_) => CommandName::Mining,
 
         }
     }
@@ -94,6 +97,7 @@ impl std::fmt::Display for CommandName {
             //////// 0L ////////
             CommandName::Init => "init",
             CommandName::Files => "files",
+            CommandName::Mining => "mining",
         };
         write!(f, "{}", name)
     }
@@ -120,6 +124,7 @@ impl Command {
             //////// 0L ////////
             Command::Init(_) => self.init(),
             Command::Files(_) => self.files(),
+            Command::Mining(_) => self.mining(),
         }
     }
 
@@ -177,6 +182,9 @@ impl Command {
     }
     pub fn files(self) -> Result<String, Error> {
         execute_command!(self, Command::Files, CommandName::Files)
+    }
+    pub fn mining(self) -> Result<String, Error> {
+        execute_command!(self, Command::Mining, CommandName::Mining)
     }
 }
 

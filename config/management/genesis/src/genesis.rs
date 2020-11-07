@@ -109,13 +109,19 @@ impl Genesis {
                 operator_account,
             );
 
+            let pow = GenesisMiningProof {
+                preimage: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
+                proof: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
+            };
+
             let owner_name_vec = owner.as_bytes().to_vec();
-            operator_assignments.push((
-            owner_key,
-            owner_name_vec,
-            set_operator_script, 
-            operator_account,
-            GenesisMiningProof::default()));
+            operator_assignments.push(
+                (owner_key,
+                owner_name_vec,
+                set_operator_script, 
+                operator_account,
+                pow)
+            );
         }
 
         Ok(operator_assignments)
@@ -147,7 +153,6 @@ impl Genesis {
                 operator_name.as_bytes().to_vec(),
                 validator_config_tx,
                 operator_account,
-                GenesisMiningProof::default()
             ));
         }
 

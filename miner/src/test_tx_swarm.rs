@@ -9,7 +9,6 @@ use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
 use anyhow::Error;
 use libra_config::config::NodeConfig;
 use libra_crypto::test_utils::KeyPair;
-use libra_types::{account_address};
 use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
 use std::{fs, path::PathBuf};
