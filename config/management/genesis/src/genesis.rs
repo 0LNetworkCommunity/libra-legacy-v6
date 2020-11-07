@@ -153,7 +153,6 @@ impl Genesis {
                 operator_name.as_bytes().to_vec(),
                 validator_config_tx,
                 operator_account,
-                GenesisMiningProof::default()
             ));
         }
 

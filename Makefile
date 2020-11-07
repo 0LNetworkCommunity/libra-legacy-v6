@@ -37,7 +37,7 @@ smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
 
 # as a operator/owner pair.
-	make clear
+	make clear fix
 #initialize the OWNER account
 	NS=${NS} make init
 # The OPERs initialize local accounts and submit pubkeys to github
@@ -166,7 +166,7 @@ clear:
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db; \
 	fi
 
-
+#### HELPERS ####
 echo:
 	@echo NS: ${NS}
 	@echo test: ${TEST}
@@ -178,6 +178,25 @@ echo:
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 
+fix:
+ifdef TEST
+	echo ${NS}
+
+	mkdir -p ${DATA_PATH}/blocks/
+
+	if test -f ${DATA_PATH}/blocks/block_0.json; then \
+		rm ${DATA_PATH}/blocks/block_0.json; \
+	fi 
+
+	if test -f ${DATA_PATH}/miner.toml; then \
+		rm ${DATA_PATH}/miner.toml; \
+	fi 
+
+	cp ./fixtures/miner.toml.${NS} ${DATA_PATH}/miner.toml
+
+	cp ./fixtures/block_0.json.${NODE_ENV}.${NS} ${DATA_PATH}/blocks/block_0.json
+
+endif
 ######################################
 ## THIS IS TEST DATA -- NOT FOR GENESIS##
 

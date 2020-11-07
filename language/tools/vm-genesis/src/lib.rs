@@ -73,7 +73,7 @@ pub type Name = Vec<u8>;
 pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, AccountAddress, GenesisMiningProof);
 
 // Defines a validator operator and maps that to a validator (config)
-pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress, GenesisMiningProof);
+pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress);
 
 pub fn encode_genesis_transaction(
     libra_root_key: Ed25519PublicKey,
@@ -458,7 +458,7 @@ fn create_and_initialize_owners_operators(
 
     println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
-    for (operator_key, operator_name, _, _, _genesis_proof) in operator_registrations {
+    for (operator_key, operator_name, _, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
         let operator_account = account_address::from_public_key(operator_key);
         let create_operator_script =
@@ -488,7 +488,7 @@ fn create_and_initialize_owners_operators(
 
     println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
-    for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
+    for (operator_key, _, registration, _account) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, log_context, operator_account, registration);
     }
@@ -665,7 +665,6 @@ impl Validator {
             self.name.clone(),
             script,
             self.owner_address, 
-            GenesisMiningProof::default() //NOTE: For testing only
         )
     }
 }
