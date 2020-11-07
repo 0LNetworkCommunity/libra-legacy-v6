@@ -14,6 +14,7 @@ use libra_management::{error::Error, secure_backend::DISK};
 use libra_network_address::NetworkAddress;
 use libra_secure_storage::{CryptoStorage, KVStorage, NamespacedStorage, OnDiskStorage, Storage};
 use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
+use vm_genesis::GenesisMiningProof;
 use std::{fs::File, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
@@ -235,8 +236,15 @@ impl StorageHelper {
             .unwrap();
     }
 
+    ///////// 0L /////////
+    pub fn swarm_pow_helper(&self, namespace: String){
+        let mut storage = self.storage(namespace);
+        let default_proof = GenesisMiningProof::default();
+        storage.set(libra_global_constants::PROOF_OF_WORK_PREIMAGE, default_proof.preimage).unwrap();
+        storage.set(libra_global_constants::PROOF_OF_WORK_PROOF, default_proof.proof).unwrap();
+    }
 
-    ///////// 0L  /////////
+    ///////// 0L /////////
     pub fn remote_string(ns: &str, path: &str) -> String {
         format!(
             "backend=github;repository_owner=OLSF;repository=dev-genesis;token={path}/github_token.txt;namespace={ns}",

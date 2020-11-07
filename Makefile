@@ -197,8 +197,37 @@ ifdef TEST
 	cp ./fixtures/block_0.json.${NODE_ENV}.${NS} ${DATA_PATH}/blocks/block_0.json
 
 endif
+
+#### HELPERS ####
+get_waypoint:
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ~/node_data/key_store.json))
+  echo $$WAY
+
+client: get_waypoint
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 1
+
+compress: 
+	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+  
+keygen:
+	cd ${DATA_PATH} && miner keygen
+
+miner-genesis:
+	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
+
+reset: stop clear fixtures init keys genesis daemon
+
+wipe: 
+	history -c
+	shred ~/.bash_history
+	srm ~/.bash_history
+
+stop:
+	sudo service libra-node stop
+
+
 ######################################
-## THIS IS TEST DATA -- NOT FOR GENESIS##
+## TEST FIXTURES -- NOT FOR GENESIS ##
 
 ifeq ($(NS), alice)
 NS = alice
