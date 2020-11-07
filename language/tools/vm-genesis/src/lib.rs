@@ -143,8 +143,12 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
-
     println!("OK create_and_initialize_main_accounts =============== ");
+
+    //////// 0L ////////
+    initialize_testnet(&mut session, &log_context, true);
+    println!("OK initialize_testnet =============== ");
+
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -155,14 +159,13 @@ pub fn encode_genesis_change_set(
 
     println!("OK create_and_initialize_owners_operators =============== ");
 
-    //////// 0L ////////
-    initialize_testnet(&mut session, &log_context, true);
-    
-    println!("OK initialize_testnet =============== ");
 
-    initialize_miners(&mut session, &log_context, &operator_registrations);
     
-    println!("OK initialize_miners_alt =============== ");
+
+
+    // initialize_miners(&mut session, &log_context, &operator_registrations);
+    
+    // println!("OK initialize_miners_alt =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
 
@@ -404,13 +407,9 @@ fn create_and_initialize_owners_operators(
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
-    for (owner_key, owner_name, _op_assignment, _ , _genesis_proof) in operator_assignments {
+    for (owner_key, owner_name, _op_assignment, _ , genesis_proof) in operator_assignments {
         let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(String::from_utf8(owner_name.to_owned()).unwrap());
-        dbg!(&owner_address);
-        dbg!(&owner_key);
-        
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -434,8 +433,26 @@ fn create_and_initialize_owners_operators(
         exec_script(
             session,
             log_context,
-            owner_address,
+            owner_address.clone(),
             &transaction_builder::encode_rotate_authentication_key_script(real_owner_auth_key),
+        );
+
+        // Submit mining proof
+        let preimage = hex::decode(&genesis_proof.preimage).unwrap();
+        let proof = hex::decode(&genesis_proof.proof).unwrap();
+        exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "MinerState",
+            "genesis_helper",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(owner_address),
+                Value::vector_u8(preimage),
+                Value::vector_u8(proof)
+            ]
         );
     }
 
@@ -678,33 +695,33 @@ pub fn generate_test_genesis(
 }
 
 
-fn initialize_miners(
-    session: &mut Session<StateViewCache>,
-    log_context: &impl LogContext,
-    operator_regs: &[OperatorRegistration]
-) {
-    // Genesis will abort if mining can't be confirmed.
-    let libra_root_address = account_config::libra_root_address();
-    for (owner_key, _, _, account, mining_proof) in operator_regs {
-        let operator_address = account_address::from_public_key(owner_key);
-        let preimage = hex::decode(&mining_proof.preimage).unwrap();
-        let proof = hex::decode(&mining_proof.proof).unwrap();
+// fn initialize_miners(
+//     session: &mut Session<StateViewCache>,
+//     log_context: &impl LogContext,
+//     operator_regs: &[OperatorRegistration]
+// ) {
+//     // Genesis will abort if mining can't be confirmed.
+//     let libra_root_address = account_config::libra_root_address();
+//     for (_oper_key, _, _, _oper_account, mining_proof) in operator_regs {
+//         // let operator_address = account_address::from_public_key(owner_key);
+//         let preimage = hex::decode(&mining_proof.preimage).unwrap();
+//         let proof = hex::decode(&mining_proof.proof).unwrap();
 
-        exec_function(
-            session,
-            log_context,
-            libra_root_address,
-            "MinerState",
-            "genesis_helper",
-            vec![],
-            vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
-                Value::transaction_argument_signer_reference(*account),
-                Value::vector_u8(preimage),
-                Value::vector_u8(proof)]);
-    }
+//         exec_function(
+//             session,
+//             log_context,
+//             libra_root_address,
+//             "MinerState",
+//             "genesis_helper",
+//             vec![],
+//             vec![
+//                 Value::transaction_argument_signer_reference(libra_root_address),
+//                 Value::transaction_argument_signer_reference(*account),
+//                 Value::vector_u8(preimage),
+//                 Value::vector_u8(proof)]);
+//     }
 
-}
+// }
 
 /// Genesis subsidy to miners
 fn distribute_genesis_subsidy(
