@@ -1,15 +1,12 @@
-use libra_management::{
-    error::Error,
-    secure_backend::{SecureBackend, SharedBackend},
-};
-use libra_secure_storage::{Storage};
+use libra_management::{config::ConfigPath, error::Error, secure_backend::{ SharedBackend}};
 use miner::block::Block;
-use std::convert::TryInto;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct Mining {
+    #[structopt(flatten)]
+    config: ConfigPath,
     #[structopt(long, short)]
     pub path_to_genesis_pow: PathBuf,
     #[structopt(flatten)]

@@ -1,8 +1,5 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use libra_wallet::{Mnemonic, key_factory::{
-    Seed, KeyFactory, ChildNumber
-}};
 use libra_types::{waypoint::Waypoint};
 
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
