@@ -3024,6 +3024,7 @@ dependencies = [
  "consensus-types",
  "executor",
  "generate-key",
+ "hex 0.4.2",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
