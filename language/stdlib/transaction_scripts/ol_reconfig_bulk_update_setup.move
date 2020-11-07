@@ -1,21 +1,16 @@
 script {
     use 0x1::LibraSystem;
     use 0x1::Vector;
-    use 0x1::ValidatorUniverse;
+    //use 0x1::ValidatorUniverse;
     fun ol_reconfig_bulk_update_setup(account: &signer, alice: address, bob: address, carol: address,
         sha: address, ram: address) {
         // Create vector of desired validators
         let vec = Vector::empty();
         Vector::push_back<address>(&mut vec, alice);
-        ValidatorUniverse::add_validator(alice);
         Vector::push_back<address>(&mut vec, bob);
-        ValidatorUniverse::add_validator(bob);
         Vector::push_back<address>(&mut vec, carol);
-        ValidatorUniverse::add_validator(carol);
         Vector::push_back<address>(&mut vec, sha);
-        ValidatorUniverse::add_validator(sha);
         Vector::push_back<address>(&mut vec, ram);
-        ValidatorUniverse::add_validator(ram);
         assert(Vector::length<address>(&vec) == 5, 1);
 
         // Set this to be the validator set

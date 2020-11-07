@@ -29,7 +29,6 @@ when executing from a fresh state.
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
-<b>use</b> <a href="Upgrade.md#0x1_Upgrade">0x1::Upgrade</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 </code></pre>
 
@@ -124,9 +123,6 @@ Initializes the Libra framework.
 
     // <a href="Oracle.md#0x1_Oracle">Oracle</a> initialize
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(lr_account);
-
-    // <a href="Upgrade.md#0x1_Upgrade">Upgrade</a> <a href="Oracle.md#0x1_Oracle">Oracle</a> initialize
-    <a href="Upgrade.md#0x1_Upgrade_initialize">Upgrade::initialize</a>(lr_account);
 }
 </code></pre>
 

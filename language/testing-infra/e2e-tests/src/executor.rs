@@ -215,7 +215,6 @@ impl FakeExecutor {
         let mut outputs = self.execute_block(vec![transaction]).unwrap();
         assert!(outputs.len() == 1, "transaction outputs size mismatch");
         let output = outputs.pop().unwrap();
-        //print!("output is {:?}", output);
         match output.status() {
             TransactionStatus::Keep(status) => {
                 self.apply_write_set(output.write_set());
@@ -271,7 +270,6 @@ impl FakeExecutor {
         let validator_set = ValidatorSet::fetch_config(&self.data_store)
             .expect("Unable to retrieve the validator set from storage");
         self.block_time = time_stamp;
-        print!("Total validator: {}",validator_set.payload().len());
         let new_block = BlockMetadata::new(
             HashValue::zero(),
             0,

@@ -85,10 +85,10 @@ module LibraVMConfig {
             min_transaction_gas_units: 600,
             large_transaction_cutoff: 600,
             intrinsic_gas_per_byte: 8,
-            maximum_number_of_gas_units: 4000000,
+            maximum_number_of_gas_units: 100000000000, // 0L: changed temporarily for oversized upgrade payload
             min_price_per_gas_unit: 0,
             max_price_per_gas_unit: 10000,
-            max_transaction_size_in_bytes: 4096,
+            max_transaction_size_in_bytes: 409600,     // 0L: changed temporarily for oversized upgrade payload
             gas_unit_scaling_factor: 1000,
             default_account_size: 800,
         };

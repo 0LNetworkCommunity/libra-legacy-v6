@@ -432,6 +432,41 @@ impl LibraVMImpl {
         self.move_vm.new_session(r)
     }
 
+    // Note: currently the upgrade needs two blocks to happen: 
+    // In the first block, consensus is reached and recorded; 
+    // in the second block, the payload is applied and history is recorded
+    pub(crate) fn tick_oracle_consensus<R: RemoteCache> (
+        &self,
+        session: &mut Session<R>,
+        block_metadata: BlockMetadata,
+        txn_data: &TransactionMetadata,
+        cost_strategy: &mut CostStrategy,
+        log_context: &impl LogContext,
+    ) -> Result<(), VMStatus> {
+        if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
+            println!("====================================== checking consensus, curr round is {}", round);
+            // hardcoding consensus checking on round 2
+            if round==2 {
+                println!("====================================== checking consensus");
+                // tick Oracle::check_upgrade
+                let args = vec![
+                    Value::transaction_argument_signer_reference(txn_data.sender),
+                ];
+                session.execute_function(
+                    &ORACLE_MODULE,
+                    &CHECK_UPGRADE,
+                    vec![],
+                    args,
+                    txn_data.sender(),
+                    cost_strategy,
+                    log_context,
+                ).expect("Couldn't check upgrade");
+            }
+        }
+
+        Ok(())
+    }
+
     pub(crate) fn apply_stdlib_upgrade<R: RemoteCache> (
         &self,
         session: &mut Session<R>,
