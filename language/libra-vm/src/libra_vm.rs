@@ -471,7 +471,7 @@ impl LibraVMImpl {
                         module
                             .serialize(&mut bytes)
                             .expect("Failed to serialize module");
-                        session.publish_module(
+                        session.revise_module(
                             bytes, 
                             account_config::CORE_CODE_ADDRESS, 
                             cost_strategy, 

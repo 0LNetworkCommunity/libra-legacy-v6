@@ -22,7 +22,6 @@ pub mod keygen;
 mod proptest_types;
 
 // 0L Changes
-pub mod reconfig_setup;
 pub mod oracle_setup;
 
 pub fn assert_status_eq(s1: &KeptVMStatus, s2: &KeptVMStatus) -> bool {

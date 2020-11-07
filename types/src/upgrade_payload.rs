@@ -1,6 +1,7 @@
 use crate::{
     access_path::AccessPath,
     account_config::constants:: CORE_CODE_ADDRESS,
+    account_address::AccountAddress,
 };
 use anyhow::Result;
 use move_core_types::{
@@ -41,7 +42,8 @@ impl UpgradePayloadResource {
     }
 
     pub fn access_path() -> AccessPath {
-        AccessPath::new(CORE_CODE_ADDRESS, UpgradePayloadResource::struct_tag().access_vector())
+        AccessPath::new(AccountAddress::new([0u8; AccountAddress::LENGTH]),
+                        UpgradePayloadResource::struct_tag().access_vector())
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
