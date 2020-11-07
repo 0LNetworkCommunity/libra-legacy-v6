@@ -1,0 +1,13 @@
+[workspace]
+miner_home = "."
+node_home = "."
+
+[profile]
+auth_key = "f0dc83910c2263e5301431114c5c6d12f094dfc3d134331d5410a23f795117b8"
+account = "f094dfc3d134331d5410a23f795117b8"
+statement = "test"
+
+[chain_info]
+chain_id = "experimental"
+block_dir= "./blocks/"
+node ="http://localhost:8080"

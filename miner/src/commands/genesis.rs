@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::Block, block::ValConfigs, block::build_block, node_keys::NodePubKeys};
+use crate::{block::Block, block::ValConfigs, block::build_block, node_keys::KeyScheme};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use std::{fs, path::PathBuf};
@@ -10,7 +10,6 @@ use std::io::Write;
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use fs::File;
-use libra_crypto::ValidCryptoMaterial;
 
 #[derive(Command, Debug, Options)]
 pub struct GenesisCmd {
@@ -31,7 +30,7 @@ impl Runnable for GenesisCmd {
         
 
         // Create val_init.json file.
-        let keys = NodePubKeys::new_from_mnemonic(mnemonic_string);
+        let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
 
         let mut json_path = PathBuf::from(&miner_configs.workspace.miner_home);
         json_path.push("val_init.json");
@@ -46,10 +45,10 @@ impl Runnable for GenesisCmd {
         let val_configs = ValConfigs {
             /// Block zero of the onboarded miner
             block_zero: block,
-            consensus_pubkey: keys.consensus_key.to_bytes().to_vec(),
-            validator_network_identity_pubkey: keys.validator_network_key.to_bytes().to_vec(),
+            consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
+            validator_network_identity_pubkey: keys.child_2_val_network.get_public().to_bytes().into(),
             validator_network_address: String::from(miner_configs.profile.ip.as_ref().unwrap()),
-            full_node_network_identity_pubkey: keys.fullnode_network_key.to_bytes().to_vec(),
+            full_node_network_identity_pubkey: keys.child_3_fullnode_network.get_public().to_bytes().into(),
             full_node_network_address: String::from(miner_configs.profile.ip.as_ref().unwrap()),
         };
 

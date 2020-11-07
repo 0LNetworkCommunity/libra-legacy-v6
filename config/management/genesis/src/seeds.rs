@@ -53,14 +53,10 @@ impl Seeds {
             .ok_or_else(|| Error::UnexpectedError("ValidatorSet does not exist".into()))?;
 
         let info = validator_set.payload();
-        dbg!(info);
         let mut seed_addr = SeedAddresses::default();
         // let vec_peers: Vec<NetworkAddress> = Vec::new();
 
         for info in info.iter() {
-          //TODO: skip own address?
-            // vec_peers.push
-            dbg!(info);
             let seed_pubkey = info.config().consensus_public_key.clone();
             //NOTE: This usually expects a x25519 key
             let x25519 = PublicKey::from_ed25519_public_bytes(&seed_pubkey.to_bytes()).expect("Seed peers could not generate x25519 identitykey from ed25519 key provided");

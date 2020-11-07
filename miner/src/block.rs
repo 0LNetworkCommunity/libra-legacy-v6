@@ -470,7 +470,6 @@ fn create_fixtures() {
         let consensus_key_vec = hex::decode("2734465e8191b85abae0f713ababc8f6d4dcf6d58844779ea51c531489bd261c").unwrap();
         
         assert_eq!(init_configs.consensus_pubkey, consensus_key_vec, "Could not parse network address");
-        // dbg!(consensus_key_vec);
-        // dbg!(ValConfigs::get_init_data(&fixtures));
+
     }
 }
