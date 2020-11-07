@@ -429,6 +429,8 @@ fn create_and_initialize_owners_operators(
         } else {
             ZERO_AUTH_KEY.to_vec()
         };
+        dbg!(&owner_address);
+        dbg!(&real_owner_auth_key);
 
         exec_script(
             session,

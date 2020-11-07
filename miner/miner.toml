@@ -11,4 +11,4 @@ statement = "Protests rage across the nation"
 [chain_info]
 chain_id = "experimental"
 block_dir = "blocks"
-node = "http://localhost:45625"
+node = "http://localhost:37873"

@@ -146,12 +146,16 @@ impl LibraClient {
         account: AccountAddress,
     ) -> Result<Option<MinerStateResourceView>> {
         let mut batch = JsonRpcBatch::new();
-        batch.add_miner_state_with_proof_request(account, Some(self.trusted_state.latest_version()));
+        // batch.add_miner_state_with_proof_request(account, Some(self.trusted_state.latest_version()));
+        batch.add_miner_state_with_proof_request(account, None);
+
         let responses = self.client.execute(batch)?;
         match get_response_from_batch(0, &responses)? {
             Ok(result) => {
                 let miner_state =
                     MinerStateResourceView::from_response(result.clone())?;
+                
+                dbg!(&miner_state);
                 Ok(Some(miner_state))
             }
             Err(e) => bail!(

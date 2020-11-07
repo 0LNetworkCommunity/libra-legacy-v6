@@ -819,6 +819,7 @@ impl TryFrom<MinerStateResource> for MinerStateResourceView {
     type Error = Error;
 
     fn try_from(state: MinerStateResource) -> Result<MinerStateResourceView, Error> {
+        dbg!(&state);
         Ok(MinerStateResourceView {
             previous_proof_hash: BytesView::from( state.previous_proof_hash),
             verified_tower_height: state.verified_tower_height, // user's latest verified_tower_height
