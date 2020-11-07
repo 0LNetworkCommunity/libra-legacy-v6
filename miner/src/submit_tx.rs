@@ -210,21 +210,19 @@ pub fn wait_for_tx (
         );
 
         loop {
-            
+            thread::sleep(time::Duration::from_millis(1000));
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
             
             match &mut client.get_txn_by_acc_seq(sender_address, sequence_number, false){
-                Ok( Some(txn_view)) => {
+                Ok(Some(txn_view)) => {
                     return Some(txn_view.to_owned());
                 },
                 Err(e) => {
                     println!("Response with error: {:?}", e);
-
                 },
                 _ => {
                     print!(".");
-                    thread::sleep(time::Duration::from_millis(1000));
                 }
             }
 
