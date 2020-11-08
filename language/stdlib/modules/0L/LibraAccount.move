@@ -1126,6 +1126,7 @@ module LibraAccount {
     /// Creates the libra root account (during genesis). Publishes the Libra root role,
     /// Publishes a SlidingNonce resource, sets up event generator, publishes
     /// AccountOperationsCapability, WriteSetManager, and finally makes the account.
+    
     fun create_libra_root_account(
         auth_key_prefix: vector<u8>,
     ) acquires AccountOperationsCapability {

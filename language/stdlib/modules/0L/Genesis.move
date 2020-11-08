@@ -28,15 +28,16 @@ module Genesis {
 
     /// Initializes the Libra framework.
     fun initialize(
-        lr_account: &signer,
-        lr_auth_key: vector<u8>,
+        _lr_account: &signer,
+        _lr_auth_key: vector<u8>,
         initial_script_allow_list: vector<vector<u8>>,
         is_open_module: bool,
         instruction_schedule: vector<u8>,
         native_schedule: vector<u8>,
         chain_id: u8,
     ) {
-        LibraAccount::initialize(lr_account, x"00000000000000000000000000000000");
+        let lr_account = 0x0;
+        LibraAccount::initialize(lr_account, x"50d1ac00000000000000000000001337");
 
         ChainId::initialize(lr_account, chain_id);
 
@@ -68,9 +69,10 @@ module Genesis {
         );
         LibraBlock::initialize_block_metadata(lr_account);
 
-        let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
-        LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
-        LibraAccount::restore_key_rotation_capability(lr_rotate_key_cap);
+        // TODO: Does the LR key need rotate key.
+        // let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
+        // LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
+        // LibraAccount::restore_key_rotation_capability(lr_rotate_key_cap);
 
         LibraTransactionPublishingOption::initialize(
             lr_account,

@@ -271,7 +271,7 @@ fn create_and_initialize_main_accounts(
     let libra_root_auth_key = AuthenticationKey::ed25519(libra_root_key);
     // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
-    let root_libra_root_address = account_config::libra_root_address();
+    let root_libra_root_address = account_config::reserved_vm_address();
     // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = Value::constant_vector_generic(
@@ -400,7 +400,7 @@ fn create_and_initialize_owners_operators(
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
 ) {
-    let libra_root_address = account_config::libra_root_address();
+    let vm_address = account_config::reserved_vm_address();
 
     // Create accounts for each validator owner. The inputs for creating an account are the auth
     // key prefix and account address. Internally move then computes the auth key as auth key
@@ -423,7 +423,7 @@ fn create_and_initialize_owners_operators(
         exec_script(
             session,
             log_context,
-            libra_root_address,
+            vm_address,
             &create_owner_script,
         );
 
@@ -449,12 +449,12 @@ fn create_and_initialize_owners_operators(
         exec_function(
             session,
             log_context,
-            libra_root_address,
+            vm_address,
             "MinerState",
             "genesis_helper",
             vec![],
             vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(vm_address),
                 Value::transaction_argument_signer_reference(owner_address),
                 Value::vector_u8(preimage),
                 Value::vector_u8(proof)
@@ -477,7 +477,7 @@ fn create_and_initialize_owners_operators(
         exec_script(
             session,
             log_context,
-            libra_root_address,
+            vm_address,
             &create_operator_script,
         );
     }
@@ -513,12 +513,12 @@ fn create_and_initialize_owners_operators(
         exec_function(
             session,
             log_context,
-            libra_root_address,
+            vm_address,
             "LibraSystem",
             "add_validator",
             vec![],
             vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(vm_address),
                 Value::address(owner_address),
             ],
         );
@@ -559,7 +559,7 @@ fn reconfigure(session: &mut Session<StateViewCache>, log_context: &impl LogCont
     exec_function(
         session,
         log_context,
-        account_config::libra_root_address(),
+        account_config::reserved_vm_address(),
         "LibraConfig",
         "emit_genesis_reconfiguration_event",
         vec![],
@@ -704,51 +704,22 @@ pub fn generate_test_genesis(
     (genesis, validators)
 }
 
-
-// fn initialize_miners(
-//     session: &mut Session<StateViewCache>,
-//     log_context: &impl LogContext,
-//     operator_regs: &[OperatorRegistration]
-// ) {
-//     // Genesis will abort if mining can't be confirmed.
-//     let libra_root_address = account_config::libra_root_address();
-//     for (_oper_key, _, _, _oper_account, mining_proof) in operator_regs {
-//         // let operator_address = account_address::from_public_key(owner_key);
-//         let preimage = hex::decode(&mining_proof.preimage).unwrap();
-//         let proof = hex::decode(&mining_proof.proof).unwrap();
-
-//         exec_function(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             "MinerState",
-//             "genesis_helper",
-//             vec![],
-//             vec![
-//                 Value::transaction_argument_signer_reference(libra_root_address),
-//                 Value::transaction_argument_signer_reference(*account),
-//                 Value::vector_u8(preimage),
-//                 Value::vector_u8(proof)]);
-//     }
-
-// }
-
 /// Genesis subsidy to miners
 fn distribute_genesis_subsidy(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
 ) { 
-    let libra_root_address = account_config::libra_root_address();
+    let vm_address = account_config::reserved_vm_address();
 
     exec_function(
         session,
         log_context,
-        libra_root_address,
+        vm_address,
         "Subsidy",
         "genesis",
         vec![],
         vec![
-            Value::transaction_argument_signer_reference(libra_root_address)
+            Value::transaction_argument_signer_reference(vm_address)
         ]
     )
 }
@@ -800,14 +771,14 @@ impl Default for GenesisMiningProof {
 // 0L Changes
 
 fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext, _is_testnet: bool) {
-    let root_libra_root_address = account_config::libra_root_address();
+    let vm_address = account_config::reserved_vm_address();
 
     exec_function(
         session,
         log_context,
-        root_libra_root_address,
+        vm_address,
         "Testnet",
         "initialize",
         vec![],
-        vec![Value::transaction_argument_signer_reference(root_libra_root_address)]);
+        vec![Value::transaction_argument_signer_reference(vm_address)]);
 }
