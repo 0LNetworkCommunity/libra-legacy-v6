@@ -201,7 +201,8 @@ endif
 #### HELPERS ####
 get_waypoint:
 	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ~/node_data/key_store.json))
-  echo $$WAY
+  
+	echo $$WAY
 
 client: get_waypoint
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 1
