@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 // use hex;
 use std::env;
 
+
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use libra_crypto::{
@@ -76,16 +77,16 @@ pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, GenesisMi
 pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress);
 
 pub fn encode_genesis_transaction(
-    libra_root_key: Ed25519PublicKey,
-    treasury_compliance_key: Ed25519PublicKey,
+    // libra_root_key: Ed25519PublicKey,
+    // treasury_compliance_key: Ed25519PublicKey,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
     chain_id: ChainId,
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
-        &libra_root_key,
-        &treasury_compliance_key,
+        // &libra_root_key,
+        // &treasury_compliance_key,
         operator_assignments,
         operator_registrations,
         stdlib_modules(StdLibOptions::Compiled), // Must use compiled stdlib,
@@ -106,8 +107,8 @@ fn merge_txn_effects(
 }
 
 pub fn encode_genesis_change_set(
-    libra_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    // libra_root_key: &Ed25519PublicKey,
+    // treasury_compliance_key: &Ed25519PublicKey,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     stdlib_modules: &[CompiledModule],
@@ -137,8 +138,6 @@ pub fn encode_genesis_change_set(
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
-        &libra_root_key,
-        &treasury_compliance_key,
         vm_publishing_option,
         &lbr_ty,
         chain_id,
@@ -262,17 +261,17 @@ fn exec_script(
 fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
-    libra_root_key: &Ed25519PublicKey,
-    _treasury_compliance_key: &Ed25519PublicKey,
+    // libra_root_key: &Ed25519PublicKey,
+    // _treasury_compliance_key: &Ed25519PublicKey,
     publishing_option: VMPublishingOption,
     lbr_ty: &TypeTag,
     chain_id: ChainId,
 ) {
-    let libra_root_auth_key = AuthenticationKey::ed25519(libra_root_key);
+    let libra_root_auth_key: AuthenticationKey = "50d1ac0000000000133700000000000050d1ac00000000001337000000000000".parse().unwrap(); // 0L Change
+    // let libra_root_auth_key = AuthenticationKey::ed25519(libra_root_key);
     // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_libra_root_address = account_config::reserved_vm_address();
-    // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = Value::constant_vector_generic(
         publishing_option
@@ -510,7 +509,6 @@ fn create_and_initialize_owners_operators(
     for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
         // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
@@ -670,8 +668,6 @@ impl Validator {
     }
 
     fn operator_registration(&self) -> OperatorRegistration {
-        dbg!(&self.operator_address);
-        dbg!(&self.owner_address);
         let script = transaction_builder::encode_register_validator_config_script(
             self.owner_address,
             self.key.public_key().to_bytes().to_vec(),
@@ -694,8 +690,6 @@ pub fn generate_test_genesis(
 ) -> (ChangeSet, Vec<Validator>) {
     let validators = Validator::new_set(count);
     let genesis = encode_genesis_change_set(
-        &GENESIS_KEYPAIR.1,
-        &GENESIS_KEYPAIR.1,
         &validators
             .iter()
             .map(|v| v.operator_assignment())

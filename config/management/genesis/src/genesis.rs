@@ -36,8 +36,8 @@ impl Genesis {
 
     pub fn execute(self) -> Result<Transaction, Error> {
         let layout = self.layout()?;
-        let libra_root_key = self.libra_root_key(&layout)?;
-        let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
+        // let libra_root_key = self.libra_root_key(&layout)?;
+        // let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
         let operator_assignments = self.operator_assignments(&layout)?;
         let operator_registrations = self.operator_registrations(&layout)?;
 
@@ -51,8 +51,8 @@ impl Genesis {
         };
 
         let genesis = vm_genesis::encode_genesis_transaction(
-            libra_root_key,
-            treasury_compliance_key,
+            // libra_root_key,
+            // treasury_compliance_key,
             &operator_assignments,
             &operator_registrations,
             script_policy,
@@ -76,11 +76,11 @@ impl Genesis {
 
     /// Retrieves the libra root key from the remote storage. Note, at this point in time, genesis
     /// only supports a single libra root key.
-    pub fn libra_root_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
-        let config = self.config()?;
-        let storage = config.shared_backend_with_namespace(layout.libra_root.clone());
-        storage.ed25519_key(LIBRA_ROOT_KEY)
-    }
+    // pub fn libra_root_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
+    //     let config = self.config()?;
+    //     let storage = config.shared_backend_with_namespace(layout.libra_root.clone());
+    //     storage.ed25519_key(LIBRA_ROOT_KEY)
+    // }
 
     /// Retrieves a layout from the remote storage.
     pub fn layout(&self) -> Result<Layout, Error> {
@@ -159,10 +159,10 @@ impl Genesis {
         Ok(registrations)
     }
 
-    /// Retrieves the treasury root key from the remote storage.
-    pub fn treasury_compliance_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
-        let config = self.config()?;
-        let storage = config.shared_backend_with_namespace(layout.libra_root.clone());
-        storage.ed25519_key(libra_global_constants::TREASURY_COMPLIANCE_KEY)
-    }
+    // /// Retrieves the treasury root key from the remote storage.
+    // pub fn treasury_compliance_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
+    //     let config = self.config()?;
+    //     let storage = config.shared_backend_with_namespace(layout.libra_root.clone());
+    //     storage.ed25519_key(libra_global_constants::TREASURY_COMPLIANCE_KEY)
+    // }
 }

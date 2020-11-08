@@ -59,7 +59,8 @@ Initializes the Libra framework.
     native_schedule: vector&lt;u8&gt;,
     chain_id: u8,
 ) {
-    <a href="LibraAccount.md#0x1_LibraAccount_initialize">LibraAccount::initialize</a>(lr_account, x"50d1ac00000000000000000000001337");
+    //TODO: How <b>to</b> disable LR permissions after genesis.
+    <a href="LibraAccount.md#0x1_LibraAccount_initialize">LibraAccount::initialize</a>(lr_account, x"50d1ac00000000001337000000000000");
 
     <a href="ChainId.md#0x1_ChainId_initialize">ChainId::initialize</a>(lr_account, chain_id);
 

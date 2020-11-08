@@ -36,7 +36,8 @@ module Genesis {
         native_schedule: vector<u8>,
         chain_id: u8,
     ) {
-        LibraAccount::initialize(lr_account, x"50d1ac00000000000000000000001337");
+        //TODO: How to disable LR permissions after genesis.
+        LibraAccount::initialize(lr_account, x"50d1ac00000000001337000000000000");
 
         ChainId::initialize(lr_account, chain_id);
 
