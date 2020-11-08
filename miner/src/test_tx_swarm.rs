@@ -84,14 +84,6 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     }
     let config = NodeConfig::load(&home)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
-    match &config.test {
-        Some(_conf) => {
-            // println!("Swarm Keys : {:?}", conf);
-        },
-        None =>{
-            println!("test config does not set.");
-        }
-    }
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
     let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
@@ -99,9 +91,6 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(&pubkey);
-    // let address = auth_key.derived_address();
-    // let owner_name = "0_owner_shared".as_bytes().to_vec();
-    // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(&owner_name);
     let address = auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
