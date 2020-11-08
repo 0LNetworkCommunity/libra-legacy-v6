@@ -100,9 +100,9 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
     let pubkey =  keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(&pubkey);
     // let address = auth_key.derived_address();
-    let owner_name = "0_owner_shared".as_bytes().to_vec();
-    let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(&owner_name);
-    let address = staged_owner_auth_key.derived_address();
+    // let owner_name = "0_owner_shared".as_bytes().to_vec();
+    // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(&owner_name);
+    let address = auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
     let waypoint = config.base.waypoint.genesis_waypoint();

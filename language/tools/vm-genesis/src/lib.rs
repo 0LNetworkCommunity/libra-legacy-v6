@@ -70,7 +70,7 @@ const ZERO_AUTH_KEY: [u8; 32] = [0; 32];
 
 pub type Name = Vec<u8>;
 // Defines a validator owner and maps that to an operator
-pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, AccountAddress, GenesisMiningProof);
+pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, GenesisMiningProof);
 
 // Defines a validator operator and maps that to a validator (config)
 pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress);
@@ -407,9 +407,13 @@ fn create_and_initialize_owners_operators(
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
-    for (owner_key, owner_name, _op_assignment, _ , genesis_proof) in operator_assignments {
-        let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+    for (owner_key, owner_name, _op_assignment, genesis_proof) in operator_assignments {
+        // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names. 
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
+        // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+        //TODO: why does this need to be derived from human name?
+        // let owner_address = staged_owner_auth_key.derived_address();
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -427,9 +431,11 @@ fn create_and_initialize_owners_operators(
         let real_owner_auth_key = if let Some(owner_key) = owner_key {
             AuthenticationKey::ed25519(owner_key).to_vec()
         } else {
+            // TODO: is this used for tests?
             ZERO_AUTH_KEY.to_vec()
         };
 
+        // Rotate auth key.
         exec_script(
             session,
             log_context,
@@ -480,8 +486,11 @@ fn create_and_initialize_owners_operators(
 
 
     // Authorize an operator for a validator/owner
-    for (_owner_key, owner_name, op_assignment_script, _op_account , _genesis_proof) in operator_assignments {
-        let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+    for (owner_key, _owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
+        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
 
         exec_script(session, log_context, owner_address, op_assignment_script);
     }
@@ -496,8 +505,11 @@ fn create_and_initialize_owners_operators(
     println!("4 ======== Add owner to validator set");
 
     // Add each validator to the validator set
-    for (_owner_key, owner_name, _op_assignment, _account , _genesis_proof) in operator_assignments {
-        let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+    for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
+        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
             log_context,
@@ -648,7 +660,6 @@ impl Validator {
             Some(self.key.public_key()),
             self.name.clone(),
             set_operator_script,
-            self.operator_address,
             GenesisMiningProof::default() //NOTE: For testing only
         )
     }
