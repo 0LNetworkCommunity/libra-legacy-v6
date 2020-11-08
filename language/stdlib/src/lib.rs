@@ -164,7 +164,7 @@ pub fn build_stdlib() -> BTreeMap<String, CompiledModule> {
 // Update stdlib with a byte string, used as part of the upgrade oracle
 pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
     let modules : Vec<CompiledModule> = lcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
-        .unwrap()
+        .unwrap_or(vec![]) // set as empty array if err occurred
         .into_iter()
         .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
         .collect();

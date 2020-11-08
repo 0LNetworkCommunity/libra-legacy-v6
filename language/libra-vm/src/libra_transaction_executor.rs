@@ -159,7 +159,6 @@ impl LibraVM {
         account_currency_symbol: &IdentStr,
         log_context: &impl LogContext,
     ) -> Result<(VMStatus, TransactionOutput), VMStatus> {
-        println!("Executing script {:?}", script);
         fail_point!("move_adapter::execute_script", |_| {
             Err(VMStatus::Error(
                 StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR,
@@ -429,43 +428,6 @@ impl LibraVM {
         ))
     }
 
-        // Note: currently the upgrade needs two blocks to happen: 
-    // In the first block, consensus is reached and recorded; 
-    // in the second block, the payload is applied and history is recorded
-    fn tick_oracle_consensus<R: RemoteCache> (
-        &self,
-        session: &mut Session<R>,
-        block_metadata: BlockMetadata,
-        txn_data: &TransactionMetadata,
-        cost_strategy: &mut CostStrategy,
-        log_context: &impl LogContext,
-    ) -> Result<(), VMStatus> {
-        if let Ok((round, _timestamp, _previous_vote, _proposer)) = block_metadata.into_inner() {
-            println!("====================================== checking consensus, curr round is {}", round);
-            // hardcoding consensus checking on round 2
-            if round==2 {
-                println!("====================================== checking consensus");
-                // tick Oracle::check_upgrade
-                let args = vec![
-                    Value::transaction_argument_signer_reference(txn_data.sender),
-                ];
-                session.execute_function(
-                    &ORACLE_MODULE,
-                    &CHECK_UPGRADE,
-                    vec![],
-                    args,
-                    txn_data.sender(),
-                    cost_strategy,
-                    log_context,
-                ).expect("Couldn't check upgrade");
-            }
-        }
-
-        Ok(())
-    }
-
-    
-
     fn process_block_prologue(
         &mut self,
         remote_cache: &mut StateViewCache<'_>,
@@ -477,7 +439,6 @@ impl LibraVM {
                 StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR,
             ))
         });
-        println!("====================================== in block prologue!!!");
 
         let mut txn_data = TransactionMetadata::default();
         txn_data.sender = account_config::reserved_vm_address();
@@ -512,7 +473,7 @@ impl LibraVM {
         };
 
         // Consensus checking for oracle outcome
-        self.tick_oracle_consensus(&mut session, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
+        self.0.tick_oracle_consensus(&mut session, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
         
         // Apply upgrade for Upgrade oracle
         self.0.apply_stdlib_upgrade(&mut session, &remote_cache, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;

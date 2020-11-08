@@ -59,6 +59,9 @@ address 0x1 {
           },
           // other oracles
         );
+
+        // call initialization of upgrade
+        Upgrade::initialize(vm);
         } 
       }
   

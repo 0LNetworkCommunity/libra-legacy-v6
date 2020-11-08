@@ -701,7 +701,13 @@ pub enum ScriptCall {
         data: Bytes,
     },
 
-    OlReconfigBulkUpdateE2eTestHelper {},
+    OlReconfigBulkUpdateSetup {
+        alice: AccountAddress,
+        bob: AccountAddress,
+        carol: AccountAddress,
+        sha: AccountAddress,
+        ram: AccountAddress,
+    },
 
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
@@ -1639,9 +1645,13 @@ impl ScriptCall {
                 human_name,
             ),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
-            OlReconfigBulkUpdateE2eTestHelper {} => {
-                encode_ol_reconfig_bulk_update_e2e_test_helper_script()
-            }
+            OlReconfigBulkUpdateSetup {
+                alice,
+                bob,
+                carol,
+                sha,
+                ram,
+            } => encode_ol_reconfig_bulk_update_setup_script(alice, bob, carol, sha, ram),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -2584,11 +2594,23 @@ pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
     )
 }
 
-pub fn encode_ol_reconfig_bulk_update_e2e_test_helper_script() -> Script {
+pub fn encode_ol_reconfig_bulk_update_setup_script(
+    alice: AccountAddress,
+    bob: AccountAddress,
+    carol: AccountAddress,
+    sha: AccountAddress,
+    ram: AccountAddress,
+) -> Script {
     Script::new(
-        OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
         vec![],
-        vec![],
+        vec![
+            TransactionArgument::Address(alice),
+            TransactionArgument::Address(bob),
+            TransactionArgument::Address(carol),
+            TransactionArgument::Address(sha),
+            TransactionArgument::Address(ram),
+        ],
     )
 }
 
@@ -3706,8 +3728,14 @@ fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_ol_reconfig_bulk_update_e2e_test_helper_script(_script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::OlReconfigBulkUpdateE2eTestHelper {})
+fn decode_ol_reconfig_bulk_update_setup_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlReconfigBulkUpdateSetup {
+        alice: decode_address_argument(script.args().get(0)?.clone())?,
+        bob: decode_address_argument(script.args().get(1)?.clone())?,
+        carol: decode_address_argument(script.args().get(2)?.clone())?,
+        sha: decode_address_argument(script.args().get(3)?.clone())?,
+        ram: decode_address_argument(script.args().get(4)?.clone())?,
+    })
 }
 
 fn decode_peer_to_peer_with_metadata_script(script: &Script) -> Option<ScriptCall> {
@@ -3942,8 +3970,8 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_ol_oracle_tx_script),
     );
     map.insert(
-        OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE.to_vec(),
-        Box::new(decode_ol_reconfig_bulk_update_e2e_test_helper_script),
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
+        Box::new(decode_ol_reconfig_bulk_update_setup_script),
     );
     map.insert(
         PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
@@ -4255,26 +4283,22 @@ const OL_ORACLE_TX_CODE: &[u8] = &[
     1, 11, 2, 17, 1, 2,
 ];
 
-const OL_RECONFIG_BULK_UPDATE_E2E_TEST_HELPER_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 8, 3, 8, 43, 4, 51, 6, 5, 57, 53, 7, 110, 147, 1, 8,
-    129, 2, 16, 0, 0, 0, 1, 0, 2, 0, 3, 1, 4, 0, 1, 0, 3, 5, 2, 3, 1, 1, 3, 6, 4, 5, 1, 1, 3, 7, 6,
-    2, 1, 1, 0, 8, 7, 2, 0, 0, 9, 1, 8, 0, 0, 10, 2, 5, 0, 2, 11, 0, 2, 0, 1, 1, 3, 1, 2, 1, 1, 6,
-    12, 1, 5, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0, 1, 3, 2, 7, 10, 9, 0, 9, 0, 2, 6, 12, 10, 5, 1, 1, 5,
-    6, 12, 6, 12, 6, 12, 6, 12, 6, 12, 9, 1, 3, 1, 3, 1, 3, 1, 3, 10, 5, 11, 76, 105, 98, 114, 97,
-    83, 121, 115, 116, 101, 109, 6, 83, 105, 103, 110, 101, 114, 17, 86, 97, 108, 105, 100, 97,
-    116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101, 6, 86, 101, 99, 116, 111, 114, 10, 97,
-    100, 100, 114, 101, 115, 115, 95, 111, 102, 5, 101, 109, 112, 116, 121, 6, 108, 101, 110, 103,
-    116, 104, 9, 112, 117, 115, 104, 95, 98, 97, 99, 107, 22, 98, 117, 108, 107, 95, 117, 112, 100,
-    97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 115, 12, 105, 115, 95, 118, 97,
-    108, 105, 100, 97, 116, 111, 114, 18, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 115, 101,
-    116, 95, 115, 105, 122, 101, 13, 97, 100, 100, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 9, 10, 73, 56, 0, 12, 13, 10, 1, 17, 7, 10,
-    2, 17, 7, 10, 3, 17, 7, 13, 13, 11, 1, 17, 0, 56, 1, 13, 13, 10, 2, 17, 0, 56, 1, 13, 13, 11,
-    3, 17, 0, 56, 1, 14, 13, 56, 2, 6, 3, 0, 0, 0, 0, 0, 0, 0, 33, 12, 5, 11, 5, 3, 35, 11, 4, 1,
-    11, 2, 1, 11, 0, 1, 6, 5, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 13, 17, 4, 17, 6, 6, 3, 0, 0, 0,
-    0, 0, 0, 0, 33, 12, 7, 11, 7, 3, 50, 11, 4, 1, 11, 2, 1, 6, 6, 0, 0, 0, 0, 0, 0, 0, 39, 11, 4,
-    17, 0, 17, 5, 9, 33, 12, 9, 11, 9, 3, 62, 11, 2, 1, 6, 7, 0, 0, 0, 0, 0, 0, 0, 39, 11, 2, 17,
-    0, 17, 5, 8, 33, 12, 11, 11, 11, 3, 72, 6, 8, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+const OL_RECONFIG_BULK_UPDATE_SETUP_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 33, 4, 37, 6, 5, 43, 47, 7, 90, 97, 8, 187, 1,
+    16, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 1, 3, 2, 3, 1, 1, 1, 4, 4, 0, 1, 1, 0, 5, 5, 0, 0, 0, 6, 6,
+    7, 0, 0, 7, 0, 3, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0, 1, 3, 2, 7, 10, 9, 0, 9,
+    0, 2, 6, 12, 10, 5, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1, 3, 1, 3, 1, 3, 1, 3, 10, 5, 11,
+    76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 6, 86, 101, 99, 116, 111, 114, 5, 101, 109,
+    112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104, 95, 98, 97, 99, 107, 22,
+    98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111,
+    114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 18, 118, 97, 108, 105,
+    100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 1, 0, 8, 9, 58, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 13, 14, 10, 2, 56, 1,
+    13, 14, 10, 3, 56, 1, 13, 14, 10, 4, 56, 1, 13, 14, 10, 5, 56, 1, 14, 14, 56, 2, 6, 5, 0, 0, 0,
+    0, 0, 0, 0, 33, 12, 6, 11, 6, 3, 28, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14,
+    17, 3, 17, 5, 6, 5, 0, 0, 0, 0, 0, 0, 0, 33, 12, 8, 11, 8, 3, 39, 6, 2, 0, 0, 0, 0, 0, 0, 0,
+    39, 10, 4, 17, 4, 8, 33, 12, 10, 11, 10, 3, 48, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 1, 17, 4, 8,
+    33, 12, 12, 11, 12, 3, 57, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[
