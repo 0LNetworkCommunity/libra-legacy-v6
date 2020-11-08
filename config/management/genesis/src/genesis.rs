@@ -99,11 +99,12 @@ impl Genesis {
         for owner in layout.owners.iter() {
             let owner_storage = config.shared_backend_with_namespace(owner.into());
             let owner_key = owner_storage.ed25519_key(OWNER_KEY).ok();
-            // let owner_address = libra_config::utils::validator_owner_account_from_name(owner.as_bytes());
             let operator_name = owner_storage.string(constants::VALIDATOR_OPERATOR)?;
             let operator_storage = config.shared_backend_with_namespace(operator_name.clone());
             let operator_key = operator_storage.ed25519_key(OPERATOR_KEY)?;
             let operator_account = account_address::from_public_key(&operator_key);
+            
+            //In genesis the owner will sign this script, which assigns an operator to thier profile.
             let set_operator_script = transaction_builder::encode_set_validator_operator_script(
                 operator_name.as_bytes().to_vec(),
                 operator_account,
@@ -119,7 +120,6 @@ impl Genesis {
                 (owner_key,
                 owner_name_vec,
                 set_operator_script, 
-                operator_account,
                 pow)
             );
         }
