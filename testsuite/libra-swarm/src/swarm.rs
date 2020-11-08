@@ -61,6 +61,7 @@ impl LibraNode {
     ) -> Result<Self> {
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", config_path));
+        println!("============");
         let log_file = File::create(&log_path)?;
         let validator_peer_id = match role {
             RoleType::Validator => Some(config.validator_network.as_ref().unwrap().peer_id()),

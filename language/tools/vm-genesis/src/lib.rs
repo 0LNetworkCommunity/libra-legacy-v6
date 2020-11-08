@@ -411,6 +411,7 @@ fn create_and_initialize_owners_operators(
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names. 
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
         // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         //TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();
@@ -467,6 +468,7 @@ fn create_and_initialize_owners_operators(
     for (operator_key, operator_name, _, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
         let operator_account = account_address::from_public_key(operator_key);
+        dbg!(operator_account);
         let create_operator_script =
             transaction_builder::encode_create_validator_operator_account_script(
                 0,
@@ -622,6 +624,7 @@ pub fn test_genesis_change_set_and_validators(count: Option<usize>) -> (ChangeSe
 pub struct Validator {
     pub index: usize,
     pub key: Ed25519PrivateKey,
+    pub oper_key: Ed25519PrivateKey, // 0L Change
     pub name: Vec<u8>,
     pub operator_address: AccountAddress,
     pub owner_address: AccountAddress,
@@ -638,12 +641,14 @@ impl Validator {
     fn gen(index: usize, rng: &mut rand::rngs::StdRng) -> Self {
         let name = index.to_string().as_bytes().to_vec();
         let key = Ed25519PrivateKey::generate(rng);
-        let operator_address = account_address::from_public_key(&key.public_key());
-        let owner_address = libra_config::utils::validator_owner_account_from_name(&name);
+        let oper_key = Ed25519PrivateKey::generate(rng);
+        let operator_address = account_address::from_public_key(&oper_key.public_key());
+        let owner_address = account_address::from_public_key(&key.public_key());
 
         Self {
             index,
             key,
+            oper_key,
             name,
             operator_address,
             owner_address,
@@ -665,6 +670,8 @@ impl Validator {
     }
 
     fn operator_registration(&self) -> OperatorRegistration {
+        dbg!(&self.operator_address);
+        dbg!(&self.owner_address);
         let script = transaction_builder::encode_register_validator_config_script(
             self.owner_address,
             self.key.public_key().to_bytes().to_vec(),
@@ -672,10 +679,10 @@ impl Validator {
             lcs::to_bytes(&[0u8; 0]).unwrap(),
         );
         (
-            self.key.public_key(),
+            self.oper_key.public_key(), // 0L Change
             self.name.clone(),
             script,
-            self.owner_address, 
+            self.operator_address, 
         )
     }
 }

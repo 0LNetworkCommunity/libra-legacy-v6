@@ -63,6 +63,7 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
 
     /// Association uploads the validator layout to shared storage.
     fn create_layout(&self) {
+        //////// 0L ////////
         let mut layout = Layout::default();
         layout.libra_root = LIBRA_ROOT_SHARED_NS.into();
         // layout.treasury_compliance = LIBRA_ROOT_SHARED_NS.into();
@@ -112,7 +113,6 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
     fn initialize_validator_operator(&self, index: usize) {
         let local_ns = index.to_string() + OPERATOR_NS;
         let remote_ns = index.to_string() + OPERATOR_SHARED_NS;
-
         self.storage_helper
             .initialize_by_idx(local_ns.clone(), self.num_validators + 1 + index);
         let _ = self

@@ -28,7 +28,7 @@ module Genesis {
 
     /// Initializes the Libra framework.
     fun initialize(
-        _lr_account: &signer,
+        lr_account: &signer,
         _lr_auth_key: vector<u8>,
         initial_script_allow_list: vector<vector<u8>>,
         is_open_module: bool,
@@ -36,7 +36,6 @@ module Genesis {
         native_schedule: vector<u8>,
         chain_id: u8,
     ) {
-        let lr_account = 0x0;
         LibraAccount::initialize(lr_account, x"50d1ac00000000000000000000001337");
 
         ChainId::initialize(lr_account, chain_id);
