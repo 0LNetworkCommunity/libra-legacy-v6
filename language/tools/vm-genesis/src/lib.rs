@@ -486,8 +486,11 @@ fn create_and_initialize_owners_operators(
 
 
     // Authorize an operator for a validator/owner
-    for (_owner_key, owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
-        let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+    for (owner_key, _owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
+        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
 
         exec_script(session, log_context, owner_address, op_assignment_script);
     }
@@ -502,8 +505,11 @@ fn create_and_initialize_owners_operators(
     println!("4 ======== Add owner to validator set");
 
     // Add each validator to the validator set
-    for (_owner_key, owner_name, _op_assignment, _genesis_proof) in operator_assignments {
-        let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+    for (owner_key, owner_name, _op_assignment, _genesis_proof) in operator_assignments {
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
+
+        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
             log_context,
