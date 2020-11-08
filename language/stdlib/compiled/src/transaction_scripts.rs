@@ -57,7 +57,6 @@ pub enum StdlibScript {
     UpdateDualAttestationLimit,
 
     // 0L
-    // ReconfigBulkUpdate,
     ReconfigSetup,
     OracleTx,
     MinerStateCommit,
@@ -107,7 +106,6 @@ impl StdlibScript {
             UpdateDualAttestationLimit,
 
             // 0L
-            // ReconfigBulkUpdate,
             ReconfigSetup,
             OracleTx,
             MinerStateCommit,
@@ -242,7 +240,6 @@ impl fmt::Display for StdlibScript {
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
                 // 0L
-                // ReconfigBulkUpdate => "ol_reconfig_bulk_update_e2e_test_helper",
                 ReconfigSetup => "ol_reconfig_bulk_update_setup",
                 OracleTx => "ol_oracle_tx",
                 MinerStateCommit => "miner_state_commit",

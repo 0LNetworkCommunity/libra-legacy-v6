@@ -37,13 +37,13 @@ smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
 
 # as a operator/owner pair.
-	make clear
+	make clear fix
 #initialize the OWNER account
 	NS=${NS} make init
 # The OPERs initialize local accounts and submit pubkeys to github
 	NS=${NS}-oper make oper-init
-# The OWNERS initialize local accounts and submit pubkeys to github, a
-	NS=${NS} make owner-init 
+# The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
+	NS=${NS} make owner-init add-proofs
 # OWNER *assign* an operator.
 	NS=${NS} OPER=${NS}-oper make assign
 # OPERs send signed transaction with configurations for *OWNER* account
@@ -78,10 +78,12 @@ treasury:
 init:
 	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
 
-# add-proofs:
-# 	cargo run -p libra-management -- mining \
-# 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
-# 	--backend ${REMOTE}
+# OWNER does this
+# Submits proofs to shared storage
+add-proofs:
+	cargo run -p libra-genesis-tool -- mining \
+	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
+	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
@@ -164,7 +166,7 @@ clear:
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db; \
 	fi
 
-
+#### HELPERS ####
 echo:
 	@echo NS: ${NS}
 	@echo test: ${TEST}
@@ -176,8 +178,56 @@ echo:
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 
+fix:
+ifdef TEST
+	echo ${NS}
+
+	mkdir -p ${DATA_PATH}/blocks/
+
+	if test -f ${DATA_PATH}/blocks/block_0.json; then \
+		rm ${DATA_PATH}/blocks/block_0.json; \
+	fi 
+
+	if test -f ${DATA_PATH}/miner.toml; then \
+		rm ${DATA_PATH}/miner.toml; \
+	fi 
+
+	cp ./fixtures/miner.toml.${NS} ${DATA_PATH}/miner.toml
+
+	cp ./fixtures/block_0.json.${NODE_ENV}.${NS} ${DATA_PATH}/blocks/block_0.json
+
+endif
+
+#### HELPERS ####
+get_waypoint:
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ~/node_data/key_store.json))
+  echo $$WAY
+
+client: get_waypoint
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 1
+
+compress: 
+	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+  
+keygen:
+	cd ${DATA_PATH} && miner keygen
+
+miner-genesis:
+	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
+
+reset: stop clear fixtures init keys genesis daemon
+
+wipe: 
+	history -c
+	shred ~/.bash_history
+	srm ~/.bash_history
+
+stop:
+	sudo service libra-node stop
+
+
 ######################################
-## THIS IS TEST DATA -- NOT FOR GENESIS##
+## TEST FIXTURES -- NOT FOR GENESIS ##
 
 ifeq ($(NS), alice)
 NS = alice

@@ -1,16 +1,14 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{backlog, block::ValConfigs};
+use crate::{node_keys::KeyScheme, backlog, block::ValConfigs};
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
-use crate::node_keys;
 use anyhow::Error;
-use libra_config::config::{self, NodeConfig, OnDiskStorageConfig};
+use libra_config::config::NodeConfig;
 use libra_crypto::test_utils::KeyPair;
-use libra_types::waypoint::Waypoint;
 use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
 use std::{fs, path::PathBuf};
@@ -41,18 +39,17 @@ pub fn test_runner(home: PathBuf) {
 /// A test harness for the submit_tx with a local swarm 
 pub fn val_init_test(home: PathBuf) {
     let file = "./blocks/val_init.json";
-    fs::copy("../fixtures/val_init.json", file).unwrap();
+    fs::copy("../fixtures/val_init_stage.json", file).unwrap();
     let block_file = fs::read_to_string(file)
         .expect("Could not read init file");
 
     let init_file: ValConfigs =
         serde_json::from_str(&block_file).expect("could not deserialize latest block");
-    dbg!(&init_file);
 
     let tx_params = get_params_from_swarm(home).unwrap();
         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
             Err(err)=>{ println!("{:?}", err) }
-            Ok(res) => {dbg!(Some(res));}
+            Ok(res) => {println!("{:?}",Some(res));}
         }
 }
 
@@ -98,20 +95,23 @@ fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
     let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
-    let private_key = node_keys::key_scheme_new(alice_mnemonic);
-    let keypair = KeyPair::from(private_key.child_0_owner.get_private_key());
-
-    let auth_key = AuthenticationKey::ed25519(&private_key.child_0_owner.get_public());
-    let address = auth_key.derived_address();
+    let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let pubkey =  keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(&pubkey);
+    // let address = auth_key.derived_address();
+    let owner_name = "0_owner_shared".as_bytes().to_vec();
+    let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(&owner_name);
+    let address = staged_owner_auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
-    let parsed_waypoint = config.base.waypoint.genesis_waypoint();
+    let waypoint = config.base.waypoint.genesis_waypoint();
 
     let tx_params = TxParams {
         auth_key,
         address,
         url,
-        waypoint: parsed_waypoint,
+        waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
         coin_price_per_unit: 0,

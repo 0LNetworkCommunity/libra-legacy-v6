@@ -1,8 +1,5 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use libra_wallet::{Mnemonic, key_factory::{
-    Seed, KeyFactory, ChildNumber
-}};
 use libra_types::{waypoint::Waypoint};
 
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
@@ -18,9 +15,7 @@ use std::{io::{stdout, Write}, thread, time};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
-use crate::{
-    config::MinerConfig
-};
+use crate::{node_keys::KeyScheme, config::MinerConfig};
 use compiled_stdlib::transaction_scripts;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_types::chain_id::ChainId;
@@ -76,16 +71,21 @@ pub fn submit_tx(
             ],
         );
     } else {
+
+        let consensus_pubkey = hex::decode("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
+        let validator_network_address = "test".as_bytes().to_vec();
+        let full_node_network_address = "test".as_bytes().to_vec();
+        let human_name = "test".as_bytes().to_vec();
         script = Script::new(
             transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
             vec![],
             vec![
-                TransactionArgument::U8Vector(preimage),
-                TransactionArgument::U8Vector(proof),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),TransactionArgument::U8Vector("z".as_bytes().to_vec()),                
+                TransactionArgument::U8Vector(preimage), // challenge: vector<u8>,
+                TransactionArgument::U8Vector(proof), // solution: vector<u8>,
+                TransactionArgument::U8Vector(consensus_pubkey), // consensus_pubkey: vector<u8>,
+                TransactionArgument::U8Vector(validator_network_address),// validator_network_address: vector<u8>,
+                TransactionArgument::U8Vector(full_node_network_address),// full_node_network_address: vector<u8>,
+                TransactionArgument::U8Vector(human_name),// human_name: vector<u8>,
             ],
         );
     }
@@ -191,7 +191,7 @@ pub fn submit_onboard_tx(
         txn
     ){
         Ok(_) => {
-            Ok( wait_for_tx(tx_params.address, sequence_number, &mut client) )
+            Ok(wait_for_tx(tx_params.address, sequence_number, &mut client))
         }
         Err(err) => Err(err)
     }
@@ -210,21 +210,19 @@ pub fn wait_for_tx (
         );
 
         loop {
-            
+            thread::sleep(time::Duration::from_millis(1000));
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
             
             match &mut client.get_txn_by_acc_seq(sender_address, sequence_number, false){
-                Ok( Some(txn_view)) => {
+                Ok(Some(txn_view)) => {
                     return Some(txn_view.to_owned());
                 },
                 Err(e) => {
                     println!("Response with error: {:?}", e);
-
                 },
                 _ => {
                     print!(".");
-                    thread::sleep(time::Duration::from_millis(1000));
                 }
             }
 
@@ -243,7 +241,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
                         println!("Rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
-                        status_ok!("Success:", "proof committed to chain\n");
+                        status_ok!("\nSuccess:", "proof committed to chain");
                         return true
                     }
                 }
@@ -260,7 +258,6 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
             status_warn!("Transaction err: {:?}", e);
             return false
         }
-
     }
 }
 
@@ -270,17 +267,16 @@ pub fn get_params (
     waypoint: Waypoint,
     config: &MinerConfig
 ) -> TxParams {
-    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-    let kf = KeyFactory::new(&seed).unwrap();
-    let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-    let private_key = child_0.get_private_key();
-    let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
+    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(pubkey);
     let url_str = config.chain_info.node.as_ref().unwrap();
 
     TxParams {
-        auth_key: child_0.get_authentication_key(),
-        address: child_0.get_authentication_key().derived_address(),
-        url: Url::parse(url_str).unwrap(),
+        auth_key,
+        address: config.profile.account.expect("No address provided in miner.toml").into(),
+        url: Url::parse(url_str).expect("No url provided in miner.toml"),
         waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,

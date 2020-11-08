@@ -7,7 +7,7 @@ use libra_global_constants::{LIBRA_ROOT_KEY, OPERATOR_KEY, OWNER_KEY};
 use libra_management::{
     config::ConfigPath, constants, error::Error, secure_backend::SharedBackend,
 };
-use libra_types::{account_address, chain_id::ChainId, transaction::{Transaction, TransactionArgument, TransactionPayload}};
+use libra_types::{account_address, chain_id::ChainId, transaction::{Transaction, TransactionPayload}};
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
@@ -97,34 +97,31 @@ impl Genesis {
         let mut operator_assignments = Vec::new();
 
         for owner in layout.owners.iter() {
-            dbg!(&owner);
             let owner_storage = config.shared_backend_with_namespace(owner.into());
             let owner_key = owner_storage.ed25519_key(OWNER_KEY).ok();
-            let owner_address = libra_config::utils::validator_owner_account_from_name(owner.as_bytes());
-            dbg!(&owner_address);
-
+            // let owner_address = libra_config::utils::validator_owner_account_from_name(owner.as_bytes());
             let operator_name = owner_storage.string(constants::VALIDATOR_OPERATOR)?;
             let operator_storage = config.shared_backend_with_namespace(operator_name.clone());
             let operator_key = operator_storage.ed25519_key(OPERATOR_KEY)?;
             let operator_account = account_address::from_public_key(&operator_key);
-            dbg!(&operator_account);
-            dbg!(&operator_name);
-            // dbg!(&operator_name);
-            dbg!(TransactionArgument::U8Vector(operator_name.as_bytes().to_vec()));
-
-
             let set_operator_script = transaction_builder::encode_set_validator_operator_script(
                 operator_name.as_bytes().to_vec(),
                 operator_account,
             );
 
+            let pow = GenesisMiningProof {
+                preimage: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
+                proof: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
+            };
+
             let owner_name_vec = owner.as_bytes().to_vec();
-            operator_assignments.push((
-            owner_key,
-            owner_name_vec,
-            set_operator_script, 
-            operator_account,
-            GenesisMiningProof::default()));
+            operator_assignments.push(
+                (owner_key,
+                owner_name_vec,
+                set_operator_script, 
+                operator_account,
+                pow)
+            );
         }
 
         Ok(operator_assignments)
@@ -156,7 +153,6 @@ impl Genesis {
                 operator_name.as_bytes().to_vec(),
                 validator_config_tx,
                 operator_account,
-                GenesisMiningProof::default()
             ));
         }
 

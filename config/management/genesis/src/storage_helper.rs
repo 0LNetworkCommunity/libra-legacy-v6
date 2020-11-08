@@ -14,32 +14,12 @@ use libra_management::{error::Error, secure_backend::DISK};
 use libra_network_address::NetworkAddress;
 use libra_secure_storage::{CryptoStorage, KVStorage, NamespacedStorage, OnDiskStorage, Storage};
 use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
+use vm_genesis::GenesisMiningProof;
 use std::{fs::File, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
-// use libra_crypto::{ed25519::Ed25519PublicKey, x25519::PublicKey};
-use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
-
-pub struct KeyScheme {
-        child_0_owner: ExtendedPrivKey,
-        child_1_operator: ExtendedPrivKey,
-        child_2_val_network: ExtendedPrivKey,
-        child_3_fullnode_network: ExtendedPrivKey,
-        child_4_consensus: ExtendedPrivKey,
-        child_5_executor: ExtendedPrivKey,
-}
-pub fn key_scheme(mnemonic: String) -> KeyScheme {
-    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-    let kf = KeyFactory::new(&seed).unwrap();
-    KeyScheme {
-        child_0_owner: kf.private_child(ChildNumber::new(0)).unwrap(),
-        child_1_operator: kf.private_child(ChildNumber::new(1)).unwrap(),
-        child_2_val_network: kf.private_child(ChildNumber::new(2)).unwrap(),
-        child_3_fullnode_network: kf.private_child(ChildNumber::new(3)).unwrap(),
-        child_4_consensus: kf.private_child(ChildNumber::new(4)).unwrap(),
-        child_5_executor: kf.private_child(ChildNumber::new(5)).unwrap(),
-    }
-}
+//////// 0L ////////
+use miner::node_keys::KeyScheme;
 
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
@@ -56,7 +36,6 @@ impl StorageHelper {
     //////// 0L ////////
     pub fn new_with_path(path: PathBuf) -> Self {
         let path = libra_temppath::TempPath::new_with_dir(path);
-        // dbg!(&path);
         path.create_as_file().expect("Failed on create_as_file");
         File::create(path.path()).expect("Could not create file");
         Self { temppath: path }
@@ -65,7 +44,6 @@ impl StorageHelper {
     ///////// 0L  /////////
     pub fn get_with_path(path: PathBuf) -> Self {
         let path = libra_temppath::TempPath::new_with_dir(path);
-        // dbg!(&path);
         // path.create_as_file().expect("Failed on create_as_file");
         // File::create(path.path()).expect("Could not create file");
         Self { temppath: path }
@@ -73,7 +51,7 @@ impl StorageHelper {
 
     ///////// 0L  /////////
     pub fn initialize_with_mnemonic_swarm(&self, namespace: String, mnemonic: String) {
-        let keys = key_scheme(mnemonic);
+        let keys = KeyScheme::new_from_mnemonic(mnemonic);
         let mut storage = self.storage(namespace.clone());
         // let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
         let dummy_root = Ed25519PrivateKey::from_encoded_string("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
@@ -122,7 +100,7 @@ impl StorageHelper {
 
     ///////// 0L  /////////
     pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let keys = key_scheme(mnemonic);
+        let keys = KeyScheme::new_from_mnemonic(mnemonic);
         let mut storage_root = self.storage("root".to_owned());
         let mut storage_owner = self.storage(namespace.clone());
         let mut storage_oper = self.storage(namespace.clone() + "-oper");
@@ -203,7 +181,8 @@ impl StorageHelper {
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
         // idx 0 is for libra account in swarm tests.
-        if idx == 0 {
+        // idx 1  is for the first node OWNER, set a fixed mnemonic to derive keys for this one so we can simulate miner workflow.
+        if idx == 1 {
             self.initialize_with_mnemonic_swarm(namespace, mnem_alice);
         } else {
             self.initialize(namespace, seed);
@@ -257,8 +236,15 @@ impl StorageHelper {
             .unwrap();
     }
 
+    ///////// 0L /////////
+    pub fn swarm_pow_helper(&self, namespace: String){
+        let mut storage = self.storage(namespace);
+        let default_proof = GenesisMiningProof::default();
+        storage.set(libra_global_constants::PROOF_OF_WORK_PREIMAGE, default_proof.preimage).unwrap();
+        storage.set(libra_global_constants::PROOF_OF_WORK_PROOF, default_proof.proof).unwrap();
+    }
 
-    ///////// 0L  /////////
+    ///////// 0L /////////
     pub fn remote_string(ns: &str, path: &str) -> String {
         format!(
             "backend=github;repository_owner=OLSF;repository=dev-genesis;token={path}/github_token.txt;namespace={ns}",

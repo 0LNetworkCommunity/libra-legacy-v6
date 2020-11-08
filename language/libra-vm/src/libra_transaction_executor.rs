@@ -27,7 +27,6 @@ use libra_types::{
     },
     vm_status::{KeptVMStatus, StatusCode, VMStatus},
     write_set::{WriteSet, WriteSetMut},
-    upgrade_payload::UpgradePayloadResource,
 };
 use move_core_types::{
     account_address::AccountAddress,
