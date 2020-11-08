@@ -37,7 +37,7 @@ module Genesis {
         chain_id: u8,
     ) {
         //TODO: How to disable LR permissions after genesis.
-        LibraAccount::initialize(lr_account, x"50d1ac00000000001337000000000000");
+        LibraAccount::initialize(lr_account, x"00000000000000000000000000000000");
 
         ChainId::initialize(lr_account, chain_id);
 
@@ -70,9 +70,10 @@ module Genesis {
         LibraBlock::initialize_block_metadata(lr_account);
 
         // TODO: Does the LR key need rotate key.
-        // let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
-        // LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
-        // LibraAccount::restore_key_rotation_capability(lr_rotate_key_cap);
+        let lr_auth_key = x"0000000000000000000000000000000000000000000000000000000000000000";
+        let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
+        LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
+        LibraAccount::restore_key_rotation_capability(lr_rotate_key_cap);
 
         LibraTransactionPublishingOption::initialize(
             lr_account,
