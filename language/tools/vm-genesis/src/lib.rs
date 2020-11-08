@@ -622,6 +622,7 @@ pub fn test_genesis_change_set_and_validators(count: Option<usize>) -> (ChangeSe
 pub struct Validator {
     pub index: usize,
     pub key: Ed25519PrivateKey,
+    pub oper_key: Ed25519PrivateKey,
     pub name: Vec<u8>,
     pub operator_address: AccountAddress,
     pub owner_address: AccountAddress,
@@ -638,12 +639,14 @@ impl Validator {
     fn gen(index: usize, rng: &mut rand::rngs::StdRng) -> Self {
         let name = index.to_string().as_bytes().to_vec();
         let key = Ed25519PrivateKey::generate(rng);
-        let operator_address = account_address::from_public_key(&key.public_key());
-        let owner_address = libra_config::utils::validator_owner_account_from_name(&name);
+        let oper_key = Ed25519PrivateKey::generate(rng);        
+        let operator_address = account_address::from_public_key(&oper_key.public_key());
+        let owner_address = account_address::from_public_key(&key.public_key());
 
         Self {
             index,
             key,
+            oper_key,
             name,
             operator_address,
             owner_address,
@@ -672,10 +675,10 @@ impl Validator {
             lcs::to_bytes(&[0u8; 0]).unwrap(),
         );
         (
-            self.key.public_key(),
+            self.oper_key.public_key(),
             self.name.clone(),
             script,
-            self.owner_address, 
+            self.operator_address, 
         )
     }
 }
