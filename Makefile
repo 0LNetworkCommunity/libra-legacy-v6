@@ -8,7 +8,8 @@ GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt)
 # NS = $(ACC)
 REPO_ORG = OLSF
 REPO_NAME = dev-genesis
-CHAIN_ID = "1"
+#experimental network is #7
+CHAIN_ID = "7"
 ifndef NODE_ENV
 NODE_ENV = stage
 endif
