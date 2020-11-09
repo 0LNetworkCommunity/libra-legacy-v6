@@ -16,20 +16,13 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform,
 };
-use libra_types::{
-    account_address,
-    account_config::{
+use libra_types::{account_address, account_config::{
         self,
         events::{CreateAccountEvent},
-    },
-    chain_id::{ChainId},
-    contract_event::ContractEvent,
-    on_chain_config::VMPublishingOption,
-    transaction::{
+    }, chain_id::{ChainId}, contract_event::ContractEvent, chain_id::NamedChain, on_chain_config::VMPublishingOption, transaction::{
         authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
         WriteSetPayload,
-    },
-};
+    }};
 use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
 use move_core_types::{
     account_address::AccountAddress,
@@ -133,7 +126,6 @@ pub fn encode_genesis_change_set(
         type_params: vec![],
     });
 
-
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
@@ -146,8 +138,12 @@ pub fn encode_genesis_change_set(
     println!("OK create_and_initialize_main_accounts =============== ");
 
     //////// 0L ////////
-    initialize_testnet(&mut session, &log_context, true);
-    println!("OK initialize_testnet =============== ");
+    if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
+        .iter()
+        .any(|test_chain_id| test_chain_id.id() == chain_id.id())
+    {
+        initialize_testnet(&mut session, &log_context, true);
+    }
 
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
@@ -159,25 +155,10 @@ pub fn encode_genesis_change_set(
 
     println!("OK create_and_initialize_owners_operators =============== ");
 
-
-    
-
-
-    // initialize_miners(&mut session, &log_context, &operator_registrations);
-    
-    // println!("OK initialize_miners_alt =============== ");
-
     distribute_genesis_subsidy(&mut session, &log_context);
 
-
     reconfigure(&mut session, &log_context);
-    
-    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-    //     .iter()
-    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    // {
-    //     create_and_initialize_testnet_minting(&mut session, &log_context, &treasury_compliance_key);
-    // }
+
     let effects_1 = session.finish().unwrap();
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
