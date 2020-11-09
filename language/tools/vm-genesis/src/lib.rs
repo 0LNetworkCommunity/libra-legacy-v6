@@ -145,10 +145,6 @@ pub fn encode_genesis_change_set(
     );
     println!("OK create_and_initialize_main_accounts =============== ");
 
-    //////// 0L ////////
-    initialize_testnet(&mut session, &log_context, true);
-    println!("OK initialize_testnet =============== ");
-
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -802,15 +798,15 @@ impl Default for GenesisMiningProof {
 
 // 0L Changes
 
-fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext, _is_testnet: bool) {
-    let root_libra_root_address = account_config::libra_root_address();
+// fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext, _is_testnet: bool) {
+//     let root_libra_root_address = account_config::libra_root_address();
 
-    exec_function(
-        session,
-        log_context,
-        root_libra_root_address,
-        "Testnet",
-        "initialize",
-        vec![],
-        vec![Value::transaction_argument_signer_reference(root_libra_root_address)]);
-}
+//     exec_function(
+//         session,
+//         log_context,
+//         root_libra_root_address,
+//         "Testnet",
+//         "initialize",
+//         vec![],
+//         vec![Value::transaction_argument_signer_reference(root_libra_root_address)]);
+// }
