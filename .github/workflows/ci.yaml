@@ -7,31 +7,31 @@ on:
     branches: [ master, OLv4 ]
 
 jobs:
-  functional:
-    name: Functional Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            ./target_test
-          key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: 1.44.0
-            override: true
-            components: rustfmt, clippy
-      - name: check version
-        run: rustc -V
-      - name: Build stdlib
-        run: cd language/stdlib && cargo run --release
-      - name: Run 0L functional tests
-        run: cd language/move-lang/functional-tests && cargo test 0L
+  # functional:
+  #   name: Functional Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ~/.cargo/registry
+  #           ~/.cargo/git
+  #           target
+  #           ./target_test
+  #         key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
+  #     - name: Install Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #           toolchain: 1.44.0
+  #           override: true
+  #           components: rustfmt, clippy
+  #     - name: check version
+  #       run: rustc -V
+  #     - name: Build stdlib
+  #       run: cd language/stdlib && cargo run --release
+  #     - name: Run 0L functional tests
+  #       run: cd language/move-lang/functional-tests && cargo test 0L
 
   miner:
     name: Miner Tests
@@ -49,34 +49,34 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: 1.44.0
+            toolchain: 1.47.0
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
         run: cd miner && cargo test
-  e2e:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            ./target_test
-          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: 1.44.0
-            override: true
-            components: rustfmt, clippy
-      - name: Build stdlib
-        run: cd language/stdlib && cargo run --release
-      - name: Run 0L e2e tests
-        run: cd language/e2e-tests && cargo test 0l
+  # e2e:
+  #   name: E2E Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/cache@v2
+  #       with:
+  #         path: |
+  #           ~/.cargo/registry
+  #           ~/.cargo/git
+  #           target
+  #           ./target_test
+  #         key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+  #     - name: Install Rust
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #           toolchain: 1.44.0
+  #           override: true
+  #           components: rustfmt, clippy
+  #     - name: Build stdlib
+  #       run: cd language/stdlib && cargo run --release
+  #     - name: Run 0L e2e tests
+  #       run: cd language/e2e-tests && cargo test 0l
   
   # genesis_smoke:
   #   name: Genesis Smoke Test
