@@ -37,13 +37,9 @@ impl MinerConfig {
         .expect("key_store.json not found.");
     let json: serde_json::Value = serde_json::from_reader(file)
         .expect("could not parse JSON in key_store.json");
-    // let wp = json.get("Waypoint")
-    // .expect("file should have Waypoint key");
-
-    let name = ajson::get(&json.to_string(), "*waypoint.value.value").expect("could not find key: waypoint");
+    let name = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
     name.to_string()
 }
-
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
@@ -52,7 +48,7 @@ impl MinerConfig {
         // Load profile config
         conf.profile.account = param.address;
         conf.profile.auth_key = param.auth_key.to_string();
-        // conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
+
         // Load chain info
         conf.chain_info.node = Some(param.url.to_string());
         conf
