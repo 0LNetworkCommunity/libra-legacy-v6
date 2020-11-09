@@ -10,9 +10,6 @@ jobs:
   functional:
     name: Functional Tests
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      CARGO_TARGET_DIR: ./target_test
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -39,9 +36,6 @@ jobs:
   miner:
     name: Miner Tests
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      CARGO_TARGET_DIR: ./target_test/
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -63,9 +57,6 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      CARGO_TARGET_DIR: ./target_test
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
