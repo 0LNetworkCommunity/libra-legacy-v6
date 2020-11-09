@@ -158,6 +158,27 @@ start:
 # run in foreground. Only for testing, use a daemon for net.
 	cargo run -p libra-node -- --config ${DATA_PATH}/node.yaml
 
+daemon:
+# your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
+	sudo cp -f ~/.0L/node/libra-node.service /lib/systemd/system/
+# cp -f miner.service /lib/systemd/system/
+	if test -d ~/logs; then \
+		echo "WIPING SYSTEMD LOGS"; \
+		sudo rm -rf ~/logs*; \
+	fi 
+
+	sudo mkdir ~/logs
+	sudo touch ~/logs/node.log
+	sudo chmod 660 ~/logs
+	sudo chmod 660 ~/logs/node.log
+
+	sudo systemctl daemon-reload
+	sudo systemctl stop libra-node.service
+	sudo systemctl start libra-node.service
+	sudo sleep 2
+	sudo systemctl status libra-node.service &
+	sudo tail -f ~/logs/node.log
+
 #### TEST SETUP ####
 
 clear:
