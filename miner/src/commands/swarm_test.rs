@@ -22,18 +22,21 @@ pub struct SwarmCmd {
     #[options(help = "Test the onboading transaction.")]
     init: bool,
     #[options(help = "The home directory where the blocks will be stored")]
-    home: PathBuf, 
+    swarm_path: Option<PathBuf>, 
 }
 
 impl Runnable for SwarmCmd {
     /// Start the application.
     fn run(&self) {
-        println!("Testing Submit tx to Swarm. Using swarm private key");
+        println!("Testing Submit tx to Swarm.");
+        let path: PathBuf;
+        if self.swarm_path.is_some() { path = self.swarm_path.as_ref().unwrap().to_owned() }
+        else { path = PathBuf::from("~/.0L/temp") }
 
         if self.init {
-            val_init_test(self.home.to_owned());
+            val_init_test(path);
         } else {
-            test_runner(self.home.to_owned());
+            test_runner(path);
         }
     }
 }

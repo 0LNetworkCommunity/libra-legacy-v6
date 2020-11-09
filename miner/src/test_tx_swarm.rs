@@ -14,9 +14,9 @@ use reqwest::Url;
 use std::{fs, path::PathBuf};
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn test_runner(home: PathBuf) {
+pub fn test_runner(swarm_path: PathBuf) {
 
-    let tx_params = get_params_from_swarm(home).unwrap();
+    let tx_params = get_params_from_swarm(swarm_path).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
     backlog::process_backlog(&conf, &tx_params);
 
@@ -37,16 +37,16 @@ pub fn test_runner(home: PathBuf) {
 }
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn val_init_test(home: PathBuf) {
-    let file = "./blocks/val_init.json";
-    fs::copy("../fixtures/val_init_stage.json", file).unwrap();
-    let block_file = fs::read_to_string(file)
+pub fn val_init_test(swarm_path: PathBuf) {
+    // let file = "./blocks/val_init.json";
+    // fs::copy("../fixtures/val_init_stage.json", file).unwrap();
+    let init_file = fs::read_to_string("../fixtures/val_init_stage.json")
         .expect("Could not read init file");
 
     let init_file: ValConfigs =
-        serde_json::from_str(&block_file).expect("could not deserialize latest block");
+        serde_json::from_str(&init_file).expect("could not deserialize val_init.json");
 
-    let tx_params = get_params_from_swarm(home).unwrap();
+    let tx_params = get_params_from_swarm(swarm_path).unwrap();
         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
             Err(err)=>{ println!("{:?}", err) }
             Ok(res) => {println!("{:?}",Some(res));}
@@ -77,13 +77,10 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     (block.preimage, block.proof)
 }
 
-fn get_params_from_swarm (mut home: PathBuf) -> Result<TxParams, Error> {
-    home.push("0/node.yaml");
-    if !home.exists() {
-        home = PathBuf::from("/root/saved_logs/0/node.yaml")
-    }
-    let config = NodeConfig::load(&home)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &home));
+fn get_params_from_swarm (mut swarm_path: PathBuf) -> Result<TxParams, Error> {
+    swarm_path.push("0/node.yaml");
+    let config = NodeConfig::load(&swarm_path)
+        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
     let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();

@@ -1,6 +1,7 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
-DATA_PATH = /root/node_data
+HOME = /root/.0L
+DATA_PATH = ${HOME}/node
 IP = 1.2.3.4
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt)
 # # ACC = alice
@@ -25,14 +26,12 @@ endif
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
-oper: init oper-init
-# configs the operator
-owner: init owner-init assign
 
 # for testing
-smoke-init:
+smoke-root:
 # root is the "association", set up the keys
 	NS=root make root treasury layout
+
 smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
 
@@ -41,9 +40,9 @@ smoke-reg:
 #initialize the OWNER account
 	NS=${NS} make init
 # The OPERs initialize local accounts and submit pubkeys to github
-	NS=${NS}-oper make oper-init
+	NS=${NS}-oper make oper-key
 # The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
-	NS=${NS} make owner-init add-proofs
+	NS=${NS} make owner-key add-proofs
 # OWNER *assign* an operator.
 	NS=${NS} OPER=${NS}-oper make assign
 # OPERs send signed transaction with configurations for *OWNER* account
@@ -87,14 +86,14 @@ add-proofs:
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
-oper-init:
+oper-key:
 	cargo run -p libra-genesis-tool -- operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
-owner-init:
+owner-key:
 	cargo run -p libra-genesis-tool -- owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
@@ -181,6 +180,10 @@ echo:
 fix:
 ifdef TEST
 	echo ${NS}
+	if test ! -d ${HOME}; then \
+		mkdir ${HOME}; \
+		mkdir ${DATA_PATH}; \
+	fi
 
 	mkdir -p ${DATA_PATH}/blocks/
 
