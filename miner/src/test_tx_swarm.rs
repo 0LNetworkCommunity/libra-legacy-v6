@@ -14,10 +14,13 @@ use reqwest::Url;
 use std::{fs, path::PathBuf};
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn test_runner(swarm_path: PathBuf) {
+pub fn swarm_miner(swarm_path: PathBuf) {
 
     let tx_params = get_params_from_swarm(swarm_path).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
+    fs::create_dir_all("./swarm_temp/blocks").unwrap();
+    fs::copy("./fixtures/block_0.json.stage.alice", "./swarm_temp/blocks/block_0.json").expect("error copying file");
+
     backlog::process_backlog(&conf, &tx_params);
 
     loop {
@@ -37,7 +40,7 @@ pub fn test_runner(swarm_path: PathBuf) {
 }
 
 /// A test harness for the submit_tx with a local swarm 
-pub fn val_init_test(swarm_path: PathBuf) {
+pub fn swarm_onboarding(swarm_path: PathBuf) {
     // let file = "./blocks/val_init.json";
     // fs::copy("../fixtures/val_init_stage.json", file).unwrap();
     let init_file = fs::read_to_string("../fixtures/val_init_stage.json")

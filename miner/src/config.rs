@@ -49,6 +49,7 @@ impl MinerConfig {
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
         let mut conf = MinerConfig::default();
+        conf.workspace.miner_home = PathBuf::from("./swarm_temp");
         // Load profile config
         conf.profile.account = param.address;
         conf.profile.auth_key = param.auth_key.to_string();
