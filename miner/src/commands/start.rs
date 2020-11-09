@@ -35,7 +35,7 @@ impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
         let miner_configs = app_config();
-                let waypoint: Waypoint;
+        let waypoint: Waypoint;
         let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
         match parsed_waypoint {
             Ok(v) => {

@@ -14,8 +14,8 @@ use fs::File;
 #[derive(Command, Debug, Options)]
 pub struct GenesisCmd {
     // Option for setting path for the blocks/proofs that are mined.
-    #[options(help = "The home directory where the blocks will be stored")]
-    home: PathBuf, 
+    // #[options(help = "The home directory where the blocks will be stored")]
+    // home: PathBuf, 
 }
 
 impl Runnable for GenesisCmd {

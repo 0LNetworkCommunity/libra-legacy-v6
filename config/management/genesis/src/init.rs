@@ -12,7 +12,7 @@ pub struct Init {
     #[structopt(long, short)]
     pub namespace: String,
     #[structopt(long, short)]
-    pub path: PathBuf,
+    pub path: Option<PathBuf>,
 }
 
 
@@ -27,7 +27,13 @@ impl Init {
 
         match readline {
             Ok(mnemonic_string) => {
-                let helper = StorageHelper::new_with_path(self.path.into());
+                let path: PathBuf;
+                if self.path.is_some() {
+                    path = self.path.unwrap();
+                } else { 
+                    path = PathBuf::from("~/.0L/node");
+                }
+                let helper = StorageHelper::new_with_path(path.into());
                 helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string);
             }
             Err(ReadlineError::Interrupted) => {

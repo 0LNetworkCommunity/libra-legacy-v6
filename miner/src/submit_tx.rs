@@ -275,7 +275,7 @@ pub fn get_params (
 
     TxParams {
         auth_key,
-        address: config.profile.account.expect("No address provided in miner.toml").into(),
+        address: config.profile.account,
         url: Url::parse(url_str).expect("No url provided in miner.toml"),
         waypoint,
         keypair,

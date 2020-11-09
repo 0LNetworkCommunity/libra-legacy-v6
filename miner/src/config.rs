@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
-use libra_crypto::ValidCryptoMaterialStringExt;
+// use libra_crypto::ValidCryptoMaterialStringExt;
 use ajson;
 
 /// MinerApp Configuration
@@ -49,10 +49,11 @@ impl MinerConfig {
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
         let mut conf = MinerConfig::default();
+        conf.workspace.miner_home = PathBuf::from("./swarm_temp");
         // Load profile config
+        conf.profile.account = param.address;
         conf.profile.auth_key = param.auth_key.to_string();
-        conf.profile.account = Some(param.address);
-        conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
+        // conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
         // Load chain info
         conf.chain_info.node = Some(param.url.to_string());
         conf
@@ -180,8 +181,8 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            miner_home: PathBuf::from("."),
-            node_home: PathBuf::from(".")
+            miner_home: PathBuf::from("~/.0L/miner"),
+            node_home: PathBuf::from("~/.0L/node")
         }
     }
 }
@@ -216,14 +217,14 @@ impl Default for ChainInfo {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
+    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
+    pub account: AccountAddress,
+
     ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
 
-    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
-    pub account: Option<AccountAddress>,
-
-    ///The 0L private_key for signing transactions.
-    pub operator_private_key: Option<String>,
+    // ///The 0L private_key for signing transactions.
+    // pub operator_private_key: Option<String>,
 
     /// ip address of the miner. May be different from transaction URL.
     pub ip: Option<String>,
@@ -236,8 +237,7 @@ impl Default for Profile {
     fn default() -> Self {
         Self {
             auth_key: "".to_owned(),
-            account: None,
-            operator_private_key: None,
+            account: AccountAddress::from_hex_literal("0x0").unwrap(),
             ip: Some("0.0.0.0".to_owned()),
             statement: "Protests rage across the nation".to_owned(),
         }

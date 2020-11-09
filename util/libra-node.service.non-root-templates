@@ -1,0 +1,18 @@
+[Unit]
+Description=Libra Node Service
+
+[Service]
+LimitNOFILE=65536
+WorkingDirectory=/home/[YOUR USERNAME]/node_data/
+ExecStart=/usr/local/bin/libra-node --config /home/[YOUR USERNAME]/node_data/node.configs.toml
+
+Restart=always
+RestartSec=10s
+
+# Make sure you CREATE the directory and file for your output.log
+StandardOutput=file:/home/[YOUR USERNAME]/logs/output.log
+StandardError=file:/home/[YOUR USERNAME]/logs/output.log
+
+[Install]
+WantedBy=multi-user.target
+Alias=libra-node.service

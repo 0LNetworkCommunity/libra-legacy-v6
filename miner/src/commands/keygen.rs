@@ -24,17 +24,14 @@ impl Runnable for KeygenCmd {
         let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
 
         let mut miner_configs = config::MinerConfig::default();
+        miner_configs.profile.account = auth_key.derived_address();
         miner_configs.profile.auth_key = auth_key.to_string();
-        miner_configs.profile.account = Some(auth_key.derived_address());
 
         let toml = toml::to_string(&miner_configs).unwrap();
         println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
         println!("==========================\n");
         
-        // let mut config_path = PathBuf::from("./test_miner.toml");
-        // config_path.push(format!("test_miner.toml");
-        //println!("{:?}", &latest_block_path);
-        // let miner_config_file = "./miner.toml";
+        fs::create_dir_all(&miner_configs.workspace.miner_home).unwrap();
         let mut miner_toml_path = PathBuf::from(&miner_configs.workspace.miner_home);
         miner_toml_path.push("miner.toml");
         let file = fs::File::create(&miner_toml_path);
