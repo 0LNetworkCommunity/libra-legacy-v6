@@ -145,6 +145,9 @@ pub fn encode_genesis_change_set(
     );
     println!("OK create_and_initialize_main_accounts =============== ");
 
+    initialize_testnet(&mut session, &log_context);
+    println!("OK initialize_testnet =============== ");
+
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -155,14 +158,8 @@ pub fn encode_genesis_change_set(
 
     println!("OK create_and_initialize_owners_operators =============== ");
 
-
-    initialize_testnet(&mut session, &log_context);
-    println!("OK initialize_testnet =============== ");
-
-
     distribute_genesis_subsidy(&mut session, &log_context);
-
-
+    
     reconfigure(&mut session, &log_context);
     
     // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
