@@ -9,7 +9,6 @@ fn test_waypoint() {
     let config = config::MinerConfig::default();
 
     let mut path =  config.workspace.miner_home.clone();
-    dbg!(&path);
     fs::create_dir_all(path.to_str().unwrap()).unwrap();
     path.push("key_store.json");
     let mut file = fs::File::create(&path).unwrap();
