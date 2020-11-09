@@ -30,8 +30,9 @@ impl Runnable for SwarmCmd {
     fn run(&self) {
         println!("Testing Submit tx to Swarm.");
         let path: PathBuf;
+        // Note, the convention is to run this tests from <project_root>/, and to start swarm with a temp path in <project root>/swarm_temp/
         if self.swarm_path.is_some() { path = self.swarm_path.as_ref().unwrap().to_owned() }
-        else { path = PathBuf::from("~/.0L/temp") }
+        else { path = PathBuf::from("./swarm_temp") }
 
         if self.init {
             val_init_test(path);
