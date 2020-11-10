@@ -136,7 +136,7 @@ impl MinerConfig {
 
     /// Get where node key_store.json stored.
     pub fn get_key_store_path(&self)-> PathBuf {
-        let mut home = self.workspace.miner_home.clone();
+        let mut home = self.workspace.node_home.clone();
         home.push("key_store.json");
         home
     }
