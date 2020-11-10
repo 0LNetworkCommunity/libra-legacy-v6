@@ -19,7 +19,7 @@ use libra_crypto::{
 use libra_types::{account_address, account_config::{
         self,
         events::{CreateAccountEvent},
-    }, chain_id::{ChainId}, contract_event::ContractEvent, chain_id::NamedChain, on_chain_config::VMPublishingOption, transaction::{
+    }, chain_id::{ChainId}, contract_event::ContractEvent, on_chain_config::VMPublishingOption, transaction::{
         authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
         WriteSetPayload,
     }};
@@ -138,17 +138,18 @@ pub fn encode_genesis_change_set(
     println!("OK create_and_initialize_main_accounts =============== ");
 
     //////// 0L ////////
-    if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-        .iter()
-        .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    {
-        // if some tests need to use prod vdf values, set it with NODE_ENV=prod
-        dbg!(get_env());
-        if get_env() != "prod"  {
-            initialize_testnet(&mut session, &log_context);
-        }
+    // TODO: Replace set params by ENV with NamedChange
+    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
+    //     .iter()
+    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
+    // {
+    //     // if some tests need to use prod vdf values, set it with NODE_ENV=prod
+    //     dbg!(get_env());
+    // initialize_testnet(&mut session, &log_context);
+    // }
+    if get_env() == "test"  {
+        initialize_testnet(&mut session, &log_context);
     }
-
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
