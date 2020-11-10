@@ -68,8 +68,7 @@ impl Configurable<MinerConfig> for MinerCmd {
         // Check if the config file exists, and if it does not, ignore it.
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
-        let filename = PathBuf::from(CONFIG_FILE);
-
+in
         if filename.exists() {
             Some(filename)
         } else {

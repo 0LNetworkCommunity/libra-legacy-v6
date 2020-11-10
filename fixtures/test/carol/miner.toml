@@ -8,5 +8,6 @@ auth_key = "b24745757cb3817417c314ada1e4d07ee3da896091e7958dd7a4a475672f085a"
 statement = "Protests rage across the nation"
 
 [chain_info]
-chain_id = "0L testnet"
-block_dir = "test_fixtures_miner_2"
+chain_id = "testnet"
+block_dir = "blocks"
+node = "http://localhost:8080"
