@@ -26,8 +26,10 @@ pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 pub const FULLNODE_PEER_ID: &str = "fullnode_peer_id";
 pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
 pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
+pub const VDF_SECURITY_PARAM: u16 = 2048;
 
 /// Definitions of global data items (e.g., as held in secure storage)
 pub const SAFETY_DATA: &str = "safety_data";
 pub const WAYPOINT: &str = "waypoint";
 pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
+

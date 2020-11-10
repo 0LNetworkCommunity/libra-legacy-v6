@@ -3984,6 +3984,7 @@ dependencies = [
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
+ "libra-global-constants",
  "libra-json-rpc-types",
  "libra-logger",
  "libra-types",
@@ -4297,6 +4298,7 @@ version = "0.1.0"
 dependencies = [
  "hex 0.4.2",
  "libra-crypto",
+ "libra-global-constants",
  "libra-types",
  "libra-workspace-hack",
  "mirai-annotations",
