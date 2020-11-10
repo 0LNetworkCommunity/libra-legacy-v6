@@ -54,5 +54,5 @@ target-out-docker
 
 #0L
 swarm_temp
-miner.toml
+# miner.toml
 key_store.json

@@ -1,0 +1,12 @@
+[workspace]
+miner_home = "."
+node_home = "."
+
+[profile]
+account = "8FAB2B4D2AEEFF56155061CA2B4D9E29"
+auth_key = "80ba01a073c77549c760ec88f1b8a5aa8fab2b4d2aeeff56155061ca2b4d9e29"
+statement = "Protests rage across the nation"
+
+[chain_info]
+chain_id = "0L testnet"
+block_dir = "test_fixtures_miner_3"
