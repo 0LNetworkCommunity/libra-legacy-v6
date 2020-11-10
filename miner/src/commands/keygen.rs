@@ -36,7 +36,7 @@ impl Runnable for KeygenCmd {
         miner_toml_path.push("miner.toml");
         let file = fs::File::create(&miner_toml_path);
         file.unwrap().write(&toml.as_bytes())
-            .expect("Could not write block");
+            .expect("Could not write toml file");
 
 
         //////////////// Info ////////////////

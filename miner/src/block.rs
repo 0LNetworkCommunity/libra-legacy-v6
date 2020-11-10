@@ -299,7 +299,7 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 }
 #[test]
-#[ignore]
+// #[ignore]
 fn create_fixtures() {
     use libra_types::PeerId;
     use libra_wallet::WalletLibrary;
@@ -322,7 +322,7 @@ fn create_fixtures() {
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
-                account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+                account: auth_key.derived_address(),
                 ip: None,
                 statement: "Protests rage across the nation".to_owned(),
             },
@@ -346,6 +346,15 @@ fn create_fixtures() {
         let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
+        
+        // create miner.toml
+        let toml = toml::to_string(&configs_fixture).unwrap();
+        let mut toml_path = blocks_dir.to_path_buf();
+        toml_path.push("miner.toml");
+        let file = fs::File::create(&toml_path);
+        file.unwrap().write(&toml.as_bytes())
+            .expect("Could not write toml");
+
     }
 }
 
