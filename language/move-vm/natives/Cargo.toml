@@ -23,7 +23,7 @@ move-vm-types = { path = "../types", version = "0.1.0" }
 vm = { path = "../../vm", version = "0.1.0" }
 ######### 0L ########
 vdf = { path="../../../verifiable_delay/vdf",version = "0.1.0"}
-hex = "0.4.2"
+
 
 [features]
 default = []

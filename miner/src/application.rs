@@ -6,12 +6,7 @@ use abscissa_core::{
     config, trace, Application, EntryPoint, FrameworkError, StandardPaths,
 };
 
-pub(crate) const SECURITY_PARAM: u16 = 4096;
-
-// #[cfg(not(test))]
-// pub(crate) const DELAY_ITERATIONS: u64 = 2400000; // 10 Minutes approximately
-// #[cfg(test)]
-// pub(crate) const DELAY_ITERATIONS: u64 = 100;
+pub(crate) const SECURITY_PARAM: u16 = 2048; //4096;
 
 /// Application state
 pub static APPLICATION: AppCell<MinerApp> = AppCell::new();

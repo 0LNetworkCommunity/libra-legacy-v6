@@ -95,7 +95,7 @@ pub mod build_block {
 
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn mine_genesis(config: &MinerConfig) {
+    pub fn mine_genesis(config: &MinerConfig) -> Block {
         println!("Mining Genesis Proof");
         let preimage = config.genesis_preimage();
         let now = Instant::now();
@@ -111,6 +111,7 @@ pub mod build_block {
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
         println!("Proof mined. Genesis block_0.json created, exiting.");
+        block
     }
     /// Mine one block
     pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
@@ -334,12 +335,12 @@ fn create_fixtures() {
         };
         //clear from sideffects.
         let blocks_dir = Path::new(&configs_fixture.chain_info.block_dir);
-        // test_helper_clear_block_dir(blocks_dir);
 
         // mine
-        mine_genesis(&configs_fixture);
+        let block = mine_genesis(&configs_fixture);
+        dbg!(hex::encode(block.preimage));
 
-        // fs::create_dir(blocks_dir).unwrap();
+        // also create mnemonic
         let mut latest_block_path = blocks_dir.to_path_buf();
         latest_block_path.push(format!("miner_{}.mnemonic", ns));
         let mut file = fs::File::create(&latest_block_path).expect("Could not create file");

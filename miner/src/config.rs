@@ -176,8 +176,8 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            miner_home: PathBuf::from("~/.0L/miner"),
-            node_home: PathBuf::from("~/.0L/node")
+            miner_home: PathBuf::from("/root/.0L/miner"),
+            node_home: PathBuf::from("/root/.0L/node")
         }
     }
 }
