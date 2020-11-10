@@ -257,10 +257,10 @@ stop:
 
 ifeq ($(NS), alice)
 NS = alice
-ACC = f094dfc3d134331d5410a23f795117b8
-AUTH = f0dc83910c2263e5301431114c5c6d12f094dfc3d134331d5410a23f795117b8
+ACC = "0E7DA4499FB75CCD30E6527761A55A06"
+AUTH = "91ffe0bce9806e599cd3565958ed0d3a0e7da4499fb75ccd30e6527761a55a06"
 IP = 142.93.191.147
-MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
+MNEM = reunion liberty page dentist rule step negative erosion robot truth paddle image purpose patient work normal wet fruit toward embark speak rail endless final
 endif
 
 ifeq ($(NS), alice-oper)
@@ -268,10 +268,10 @@ IP = 142.93.191.147
 endif
 
 ifeq ($(NS), bob)
-ACC = 5831d5f6cb6c0c5c576c186f9c4efb63
-AUTH = b28f75b8cdd27913ac785d38161501665831d5f6cb6c0c5c576c186f9c4efb63
+ACC = "61A730A3B230BBC4B00AA0C1EB74F5A0"
+AUTH = "c06b6ec51678a72b3ec86a9a613aa27461a730a3b230bbc4b00aa0c1eb74f5a0"
 IP = 167.71.84.248
-MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
+MNEM = soldier call yellow stone share tortoise jewel gentle margin knock dismiss hurdle cable will surround october fringe input guess snap reveal excite mutual curve
 endif
 
 ifeq ($(NS), bob-oper)
@@ -279,10 +279,10 @@ IP = 167.71.84.248
 endif
 
 ifeq ($(NS), carol)
-ACC = 07dcd9c8d1dbaaa1611880cbe4ee9691
-AUTH = 89d1026ea2e6dd5a0366f96e773dec0b07dcd9c8d1dbaaa1611880cbe4ee9691
+ACC = "E3DA896091E7958DD7A4A475672F085A"
+AUTH = "b24745757cb3817417c314ada1e4d07ee3da896091e7958dd7a4a475672f085a"
 IP = 104.131.56.224
-MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
+MNEM = open neither replace gym pact happy net receive alpha door purse armor chase document forum into tube cherry step kitchen portion army praise keep
 endif
 
 ifeq ($(NS), carol-oper)
@@ -290,10 +290,10 @@ IP = 104.131.56.224
 endif
 
 ifeq ($(NS), dave)
-ACC = 4a6dcca79b3828fc665fca5c6218d793
-AUTH = 4a62540137e5f3b05c6ea608e37b3ab74a6dcca79b3828fc665fca5c6218d793
+ACC = "8FAB2B4D2AEEFF56155061CA2B4D9E29"
+AUTH = "80ba01a073c77549c760ec88f1b8a5aa8fab2b4d2aeeff56155061ca2b4d9e29"
 IP = 104.131.32.62
-MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
+MNEM = word rival cabin stay enroll swarm shop stuff cruel disorder custom wet awful winter erosion card fantasy member budget aerobic warfare shove embody armor
 endif
 
 ifeq ($(NS), dave-oper)
@@ -301,10 +301,10 @@ IP = 104.131.32.62
 endif
 
 ifeq ($(NS), eve)
-ACC = e9fbaf07795acc2e675961eb7649acdf
-AUTH = a34b9c1580fe7f7c518dac7ed9ddba0be9fbaf07795acc2e675961eb7649acdf
+ACC = "22172B8D4D5CCC8C13BCA0981EF986EF"
+AUTH = "f0e5b5ac5be816e87687b320273c815322172b8d4d5ccc8c13bca0981ef986ef"
 IP = 134.122.115.12
-MNEM = veteran category typical plastic service mimic photo sort face taste puppy slogan nature youth member lake symptom edit pepper stairs actual hub miss train
+MNEM = dry omit trade angry ahead edge remember stock ordinary elite scare gossip staff help exile minor swift crucial shrug boring stock believe violin vendor
 endif
 
 ifeq ($(NS), eve-oper)
