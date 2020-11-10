@@ -11,7 +11,7 @@ use std::{
 
 
 #[test]
-// #[ignore]
+#[ignore]
 pub fn integration() {
 
     // PREPARE FIXTURES
@@ -33,7 +33,7 @@ pub fn integration() {
     let _ = fs::copy("../fixtures/block_0.json.stage.alice", "blocks/block_0.json");
 
     // clean config dir
-    let config_dir = PathBuf::from("../saved_logs");
+    let config_dir = PathBuf::from("../swarm_temp");
     if config_dir.exists() {
         fs::remove_dir_all(&config_dir).unwrap();
     }
@@ -45,7 +45,9 @@ pub fn integration() {
     swarm_cmd.arg("run")
             .arg("-p").arg("libra-swarm")
             .arg("--").arg("-n").arg("1") 
-            .arg("-l").arg("-c").arg("saved_logs");
+            .arg("-c").arg("swarm_temp")
+            .arg("--libra-node").arg("target/debug/libra-node");
+
     let cmd = swarm_cmd.stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
                 .spawn();
@@ -84,7 +86,7 @@ pub fn integration() {
 }
 
 fn block_until_swarm_ready () -> bool {
-    let _swarm_configs_path = Path::new("../saved_logs/");
+    let _swarm_configs_path = Path::new("../swarm_temp/");
     let mut timeout = 100;
     let one_second = time::Duration::from_secs(1);
 
@@ -92,7 +94,7 @@ fn block_until_swarm_ready () -> bool {
         if timeout == 0 { 
             return false
         }
-        if Path::new("../saved_logs/").exists() {
+        if Path::new("../swarm_temp/").exists() {
             return true
         }
 

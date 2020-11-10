@@ -142,7 +142,7 @@ pub fn encode_genesis_change_set(
         .iter()
         .any(|test_chain_id| test_chain_id.id() == chain_id.id())
     {
-        initialize_testnet(&mut session, &log_context, true);
+        initialize_testnet(&mut session, &log_context);
     }
 
     // generate the genesis WriteSet
@@ -156,7 +156,6 @@ pub fn encode_genesis_change_set(
     println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
-
     reconfigure(&mut session, &log_context);
 
     let effects_1 = session.finish().unwrap();
@@ -688,35 +687,6 @@ pub fn generate_test_genesis(
     (genesis, validators)
 }
 
-
-// fn initialize_miners(
-//     session: &mut Session<StateViewCache>,
-//     log_context: &impl LogContext,
-//     operator_regs: &[OperatorRegistration]
-// ) {
-//     // Genesis will abort if mining can't be confirmed.
-//     let libra_root_address = account_config::libra_root_address();
-//     for (_oper_key, _, _, _oper_account, mining_proof) in operator_regs {
-//         // let operator_address = account_address::from_public_key(owner_key);
-//         let preimage = hex::decode(&mining_proof.preimage).unwrap();
-//         let proof = hex::decode(&mining_proof.proof).unwrap();
-
-//         exec_function(
-//             session,
-//             log_context,
-//             libra_root_address,
-//             "MinerState",
-//             "genesis_helper",
-//             vec![],
-//             vec![
-//                 Value::transaction_argument_signer_reference(libra_root_address),
-//                 Value::transaction_argument_signer_reference(*account),
-//                 Value::vector_u8(preimage),
-//                 Value::vector_u8(proof)]);
-//     }
-
-// }
-
 /// Genesis subsidy to miners
 fn distribute_genesis_subsidy(
     session: &mut Session<StateViewCache>,
@@ -783,7 +753,7 @@ impl Default for GenesisMiningProof {
 
 // 0L Changes
 
-fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext, _is_testnet: bool) {
+fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext) {
     let root_libra_root_address = account_config::libra_root_address();
 
     exec_function(

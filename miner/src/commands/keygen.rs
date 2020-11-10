@@ -65,9 +65,9 @@ impl Runnable for KeygenCmd {
     }
 }
 
-
 #[test]
-fn wallet () { 
+fn wallet() { 
+    use libra_wallet::Mnemonic;
     // let mut wallet = WalletLibrary::new();
 
     let mut wallet = WalletLibrary::new();
@@ -81,7 +81,7 @@ fn wallet () {
 
     // let mnemonic_string = r#"average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice"#;
 
-    let mut wallet = WalletLibrary::new_from_string(&mnemonic_string);
+    let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
 
     // println!("wallet\n:{:?}", wallet);
 

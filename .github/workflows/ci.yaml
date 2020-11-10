@@ -10,9 +10,6 @@ jobs:
   functional:
     name: Functional Tests
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      CARGO_TARGET_DIR: ./target_test
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -26,7 +23,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: 1.44.0
+            toolchain: 1.46.0
             override: true
             components: rustfmt, clippy
       - name: check version
@@ -35,13 +32,9 @@ jobs:
         run: cd language/stdlib && cargo run --release
       - name: Run 0L functional tests
         run: cd language/move-lang/functional-tests && cargo test 0L
-
   miner:
     name: Miner Tests
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      CARGO_TARGET_DIR: ./target_test/
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -55,7 +48,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: 1.44.0
+            toolchain: 1.46.0
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
@@ -63,9 +56,6 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    env:
-      CARGO_INCREMENTAL: 0
-      CARGO_TARGET_DIR: ./target_test
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
@@ -79,13 +69,13 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            toolchain: 1.44.0
+            toolchain: 1.46.0
             override: true
             components: rustfmt, clippy
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L e2e tests
-        run: cd language/e2e-tests && cargo test 0l
+        run: cd language/e2e-testsuite && cargo test 0l
   
   # genesis_smoke:
   #   name: Genesis Smoke Test

@@ -287,6 +287,7 @@ pub fn get_params (
 
 #[test]
 fn test_make_params() {
+    use libra_types::PeerId; 
     use crate::config::{
         Workspace,
         Profile,
@@ -304,10 +305,9 @@ fn test_make_params() {
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                 .to_owned(),
-            account: None,
-            operator_private_key: None,
+            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
             ip: None,
-            statement: "Protests rage across the Nation".to_owned(),
+            statement: "Protests rage across the nation".to_owned(),
         },
         chain_info: ChainInfo {
             chain_id: "0L testnet".to_owned(),

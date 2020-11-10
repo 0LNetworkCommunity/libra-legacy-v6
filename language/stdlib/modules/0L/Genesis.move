@@ -25,6 +25,8 @@ module Genesis {
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
     use 0x1::Oracle;
+    use 0x1::Testnet;
+    use 0x1::Debug::print;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -68,6 +70,10 @@ module Genesis {
         );
         LibraBlock::initialize_block_metadata(lr_account);
 
+        print(&Testnet::is_testnet()); 
+        // {
+        //     lr_auth_key = x"0100000000000000000000000000000000000000000000000000000000001ee7";
+        // };
         let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
         LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
         LibraAccount::restore_key_rotation_capability(lr_rotate_key_cap);
