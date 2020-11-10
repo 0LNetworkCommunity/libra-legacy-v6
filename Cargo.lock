@@ -4295,6 +4295,7 @@ dependencies = [
 name = "move-vm-natives"
 version = "0.1.0"
 dependencies = [
+ "hex 0.4.2",
  "libra-crypto",
  "libra-types",
  "libra-workspace-hack",

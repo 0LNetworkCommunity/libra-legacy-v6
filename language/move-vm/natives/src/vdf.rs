@@ -14,8 +14,8 @@ use move_vm_types::{
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 use vm::errors::{PartialVMError, PartialVMResult};
-
-const SECURITY_PARAM: u16 = 2048;
+use hex;
+// const SECURITY_PARAM: u16 = 2048;
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
     context: &impl NativeContext,
@@ -43,10 +43,10 @@ pub fn verify(
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(context.cost_table(), NativeCostIndex::VDF_VERIFY, 1);
 
-    let v = vdf::WesolowskiVDFParams(SECURITY_PARAM).new();
+    let v = vdf::WesolowskiVDFParams(2048).new();
     
-    // println!("vdf.rs - challenge: {}", hex::encode(&challenge));
-    // println!("vdf.rs - difficulty: {:?}", &difficulty);
+    println!("vdf.rs - challenge: {}", hex::encode(&challenge));
+    println!("vdf.rs - difficulty: {:?}", &difficulty);
 
 
     let result = v.verify(&challenge, difficulty, &alleged_solution);
