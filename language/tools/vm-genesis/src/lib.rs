@@ -143,6 +143,7 @@ pub fn encode_genesis_change_set(
         .any(|test_chain_id| test_chain_id.id() == chain_id.id())
     {
         // if some tests need to use prod vdf values, set it with NODE_ENV=prod
+        dbg!(get_env());
         if get_env() != "prod"  {
             initialize_testnet(&mut session, &log_context);
         }
@@ -491,7 +492,6 @@ fn create_and_initialize_owners_operators(
     for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
         // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,

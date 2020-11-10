@@ -104,7 +104,6 @@ address 0x1 {
       subsidy_units
     }
 
-    use 0x1::Debug::print;
     // Function code: 06 Prefix: 190106
     public fun genesis(vm_sig: &signer) {
       //Need to check for association or vm account
@@ -127,16 +126,15 @@ address 0x1 {
       );
       // Distribute gas coins to initial validators
       let subsidy_granted = subsidy_units / len;
-      print(&subsidy_granted);
 
       let i = 0;
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
-        print(&node_address);
+        // print(&node_address);
         //Transfer gas from association to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
-        print(&minted_coins);
+        // print(&minted_coins);
         LibraAccount::vm_deposit_with_metadata<GAS>(
           vm_sig,
           node_address,
