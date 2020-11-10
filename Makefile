@@ -11,7 +11,7 @@ REPO_NAME = dev-genesis
 #experimental network is #7
 CHAIN_ID = "7"
 ifndef NODE_ENV
-NODE_ENV = stage
+NODE_ENV = test
 endif
 
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NS}'
