@@ -142,7 +142,10 @@ pub fn encode_genesis_change_set(
         .iter()
         .any(|test_chain_id| test_chain_id.id() == chain_id.id())
     {
-        initialize_testnet(&mut session, &log_context);
+        // if some tests need to use prod vdf values, set it with NODE_ENV=prod
+        if get_env() != "prod"  {
+            initialize_testnet(&mut session, &log_context);
+        }
     }
 
     // generate the genesis WriteSet
@@ -707,6 +710,13 @@ fn distribute_genesis_subsidy(
     )
 }
 
+fn get_env() -> String {
+    match env::var("NODE_ENV") {
+        Ok(val) => val,
+        _ => "test".to_string() // default to "test" if not set
+    }
+}
+
 // 0L Change: Necessary for genesis transaction.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -717,10 +727,6 @@ pub struct GenesisMiningProof {
 
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
-        let node_env = match env::var("NODE_ENV") {
-            Ok(val) => val,
-            _ => "test".to_string() // default to "test" if not set
-        };
 
         // These use "alice" fixtures from ../fixtures and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
         //TODO: These fixtures should be moved to /fixtures/miner_fixtures.rs
@@ -735,11 +741,10 @@ impl Default for GenesisMiningProof {
 
         let hard_proof =  "0011a9a21f9b26934d21e10aa46fc1c030f2c68168d9148fc21b8ac475c5167b8ef859313bf9bb00e2b0b4a8aed14f95d817be8c0707a77d9039e9fd0c0c89a8e50d38ba88b2afc69966220ce966688ccdcde0910509e5ff3a68ca448caa82674d28a3f1f769cb330b01dd9dccfd155a022f3fd656ccc268ff3d07616aad0341b0fff58151d52a003b254ac18acc9941dce45e74653c38c80914eb93790dbc854295392b2218defcc9b6b7a6a6d15d43e02a341f1a09d3a0004383fe3e243439f6148f4d79b9a8b94a3ed4f93e71b293e61ff8d13348ad7082b19e21c92dea68b71af9c88f37d4cf9fc38b1efb178745735917afbae78d221ce9231e2824dbd52185000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001".to_owned();
 
-        if node_env == "prod"  {
+        if get_env() == "prod"  {
             return GenesisMiningProof {
                 preimage: hard_preimage,
                 proof: hard_proof,
-
             }
         } else {
             return GenesisMiningProof {
@@ -747,7 +752,6 @@ impl Default for GenesisMiningProof {
                 proof: easy_proof,
             }
         }
-
     }
 }
 
