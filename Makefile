@@ -46,9 +46,10 @@ deps:
 bins:
 	#TOML cli
 	cargo install toml-cli
-	#Build and install libra-node and miner
-	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	#Build and install genesis tool, libra-node, and miner
+	cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/genesis
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 
 	cargo build -
 
@@ -60,17 +61,17 @@ init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	cargo run -p libra-genesis-tool -- set-layout \
+	genesis set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./util/set_layout.toml
 
 root:
-		cargo run -p libra-genesis-tool -- libra-root-key \
+		genesis libra-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 treasury:
-		cargo run -p libra-genesis-tool -- treasury-compliance-key \
+		genesis treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -90,45 +91,45 @@ register:
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
 init-test:
-	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${ACC}
+	echo ${MNEM} | head -c -1 | genesis init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
 	@if test ! -d ${0L_PATH}/node; then \
 		mkdir ${0L_PATH}/node; \
 	fi 
-	cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${ACC}
+	genesis init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	cargo run -p libra-genesis-tool -- mining \
+	genesis mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	cargo run -p libra-genesis-tool -- operator-key \
+	genesis operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
-	cargo run -p libra-genesis-tool -- owner-key \
+	genesis owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
-	cargo run -p libra-genesis-tool -- set-operator \
+	genesis set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
 reg:
-	cargo run -p libra-genesis-tool -- validator-config \
+	genesis validator-config \
 	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -139,31 +140,31 @@ reg:
 
 ## Helpers to verify the local state.
 verify:
-	cargo run -p libra-genesis-tool -- verify \
+	genesis verify \
 	--validator-backend ${LOCAL}
 	# --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
-	cargo run -p libra-genesis-tool -- verify \
+	genesis verify \
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
 
 #### GENESIS  ####
 genesis:
-	cargo run -p libra-genesis-tool -- files \
+	genesis files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}
 
 # gen:
-# 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
+# 	NODE_ENV='${NODE_ENV}' genesis genesis \
 # 	--shared-backend ${REMOTE} \
 # 	--path ${DATA_PATH}/genesis.blob \
 # 	--chain-id ${CHAIN_ID}
 
 # way: 
-# 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- create-waypoint \
+# 	NODE_ENV='${NODE_ENV}' genesis create-waypoint \
 # 	--shared-backend ${REMOTE} \
 # 	--chain-id ${CHAIN_ID}
 
