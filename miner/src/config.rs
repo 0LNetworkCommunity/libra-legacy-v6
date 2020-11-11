@@ -4,7 +4,7 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::fs;
+use std::{net::Ipv4Addr, fs};
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::account_address::AccountAddress;
@@ -222,7 +222,7 @@ pub struct Profile {
     // pub operator_private_key: Option<String>,
 
     /// ip address of the miner. May be different from transaction URL.
-    pub ip: Option<String>,
+    pub ip: Ipv4Addr,
 
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
@@ -233,7 +233,7 @@ impl Default for Profile {
         Self {
             auth_key: "".to_owned(),
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
-            ip: Some("0.0.0.0".to_owned()),
+            ip: "0.0.0.0".parse().unwrap(),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

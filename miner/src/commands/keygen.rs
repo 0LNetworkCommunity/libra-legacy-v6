@@ -6,10 +6,9 @@ use libra_wallet::{WalletLibrary};
 use crate::config;
 use crate::commands::{CONFIG_FILE, APP_PATH};
 use toml;
-use std::{
-    fs,
-    io::Write,
-};
+use std::{net::Ipv4Addr, fs, io::Write};
+
+use rustyline::Editor;
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -18,6 +17,13 @@ pub struct KeygenCmd {}
 impl Runnable for KeygenCmd {
     /// Print version message
     fn run(&self) {
+        println!("Enter Miner configurations");
+        let mut rl = Editor::<()>::new();
+        let readline = rl.readline("IP address of node: ").expect("Must enter an ip address, or 0.0.0.0");
+        let ip_address: Ipv4Addr = readline.parse().expect("Could not parse IP address");
+        dbg!(ip_address);
+        
+        // Generate new keys
         let mut wallet = WalletLibrary::new();
         let mnemonic_string = wallet.mnemonic();
         // NOTE: Authkey uses the child number 0 by default
@@ -26,7 +32,7 @@ impl Runnable for KeygenCmd {
         let mut miner_configs = config::MinerConfig::default();
         miner_configs.profile.account = auth_key.derived_address();
         miner_configs.profile.auth_key = auth_key.to_string();
-
+        miner_configs.profile.ip = ip_address;
         let toml = toml::to_string(&miner_configs).unwrap();
         // println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
         // println!("==========================\n");
