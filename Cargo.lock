@@ -3022,6 +3022,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "consensus-types",
+ "dirs 2.0.2",
  "executor",
  "generate-key",
  "hex 0.4.2",
@@ -3978,6 +3979,7 @@ dependencies = [
  "cli",
  "compiled-stdlib",
  "criterion",
+ "dirs 2.0.2",
  "glob",
  "gumdrop",
  "hex 0.4.2",

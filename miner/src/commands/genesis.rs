@@ -47,9 +47,9 @@ impl Runnable for GenesisCmd {
             block_zero: block,
             consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
             validator_network_identity_pubkey: keys.child_2_val_network.get_public().to_bytes().into(),
-            validator_network_address: String::from(miner_configs.profile.ip.as_ref().unwrap()),
+            validator_network_address: miner_configs.profile.ip.to_string(),
             full_node_network_identity_pubkey: keys.child_3_fullnode_network.get_public().to_bytes().into(),
-            full_node_network_address: String::from(miner_configs.profile.ip.as_ref().unwrap()),
+            full_node_network_address: miner_configs.profile.ip.to_string(),
         };
 
         let mut file = File::create(json_path.as_path()).unwrap();

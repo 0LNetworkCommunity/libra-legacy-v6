@@ -4,15 +4,16 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::fs;
-
+use std::{net::Ipv4Addr, fs};
 use byteorder::{LittleEndian, WriteBytesExt};
-use libra_types::account_address::AccountAddress;
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
 use ajson;
+use dirs;
+use libra_global_constants::{MINER_HOME, NODE_HOME};
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -32,14 +33,22 @@ const STATEMENT_BYTES: usize = 1008;
 
 impl MinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
-    pub fn get_waypoint (&self) -> String {
-    let file = fs::File::open(self.get_key_store_path())
-        .expect("key_store.json not found.");
-    let json: serde_json::Value = serde_json::from_reader(file)
-        .expect("could not parse JSON in key_store.json");
-    let name = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-    name.to_string()
+    pub fn get_waypoint (&self) -> Option<Waypoint> {
+    match fs::File::open(self.get_key_store_path()) {
+        Ok(file) => {
+            let json: serde_json::Value = serde_json::from_reader(file)
+                .expect("could not parse JSON in key_store.json");
+            let name = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
+            Some(name.to_string().parse().unwrap())
+        }
+        Err(err) => {
+         println!("key_store.json not found. {:?}", err);
+         None
+        }
+    }
+
 }
+
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
@@ -176,8 +185,8 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            miner_home: PathBuf::from("/root/.0L/miner"),
-            node_home: PathBuf::from("/root/.0L/node")
+            miner_home: dirs::home_dir().unwrap().join(MINER_HOME),
+            node_home: dirs::home_dir().unwrap().join(NODE_HOME)
         }
     }
 }
@@ -193,7 +202,7 @@ pub struct ChainInfo {
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
-    pub base_waypoint: Option<String>,
+    pub base_waypoint: Option<Waypoint>,
 }
 
 // TODO: These defaults serving as test fixtures.
@@ -222,7 +231,7 @@ pub struct Profile {
     // pub operator_private_key: Option<String>,
 
     /// ip address of the miner. May be different from transaction URL.
-    pub ip: Option<String>,
+    pub ip: Ipv4Addr,
 
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
@@ -233,7 +242,7 @@ impl Default for Profile {
         Self {
             auth_key: "".to_owned(),
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
-            ip: Some("0.0.0.0".to_owned()),
+            ip: "0.0.0.0".parse().unwrap(),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

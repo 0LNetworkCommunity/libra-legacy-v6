@@ -24,9 +24,14 @@ use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
 use std::path::PathBuf;
+use dirs;
+use libra_global_constants::MINER_HOME;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "miner.toml";
+/// MinerApp Config Home
+// pub const APP_PATH: &str = ".0L/miner/";
+
 
 /// MinerApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
@@ -68,11 +73,16 @@ impl Configurable<MinerConfig> for MinerCmd {
         // Check if the config file exists, and if it does not, ignore it.
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
-        let filename = PathBuf::from(CONFIG_FILE);
 
-        if filename.exists() {
-            Some(filename)
+        let mut config_path = dirs::home_dir()
+        .unwrap();
+        config_path.push(MINER_HOME);
+        config_path.push(CONFIG_FILE);
+
+        if config_path.exists() {
+            Some(config_path)
         } else {
+            println!("No configs found at {:?} ", config_path);
             None
         }
     }
