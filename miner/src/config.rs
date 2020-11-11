@@ -38,8 +38,9 @@ impl MinerConfig {
         Ok(file) => {
             let json: serde_json::Value = serde_json::from_reader(file)
                 .expect("could not parse JSON in key_store.json");
-            let name = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-            Some(name.to_string().parse().unwrap())
+            let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
+            dbg!(&value);
+            Some(value.to_string().parse().unwrap())
         }
         Err(err) => {
          println!("key_store.json not found. {:?}", err);

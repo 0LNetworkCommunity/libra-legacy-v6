@@ -8,7 +8,7 @@ use miner::config;
 fn test_waypoint() {
     let config = config::MinerConfig::default();
 
-    let mut path =  config.workspace.miner_home.clone();
+    let mut path =  config.workspace.node_home.clone();
     fs::create_dir_all(path.to_str().unwrap()).unwrap();
     path.push("key_store.json");
     let mut file = fs::File::create(&path).unwrap();
@@ -24,6 +24,6 @@ fn test_waypoint() {
             .expect("Could not write json");
     
     let data = config.get_waypoint();
-    assert_eq!(data, "0:08148a7b1ac857caee13337c77e691734899b7cc82f4968b35455fb91c060df5", "json value not equal");
+    assert_eq!(data.unwrap().to_string(), "0:08148a7b1ac857caee13337c77e691734899b7cc82f4968b35455fb91c060df5", "json value not equal");
     fs::remove_file(path).unwrap();
 }
