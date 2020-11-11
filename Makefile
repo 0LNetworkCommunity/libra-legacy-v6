@@ -46,7 +46,7 @@ bins:
 	#TOML cli
 	cargo install toml-cli
 	#Build and install genesis tool, libra-node, and miner
-	cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/genesis
+	cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 
