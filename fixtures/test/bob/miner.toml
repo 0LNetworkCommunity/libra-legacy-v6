@@ -1,6 +1,6 @@
 [workspace]
-miner_home = "."
-node_home = "."
+miner_home = "/root/.0L/miner"
+node_home = "/root/.0L/node"
 
 [profile]
 account = "61A730A3B230BBC4B00AA0C1EB74F5A0"
