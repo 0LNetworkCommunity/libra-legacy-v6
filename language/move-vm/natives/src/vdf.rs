@@ -14,7 +14,7 @@ use move_vm_types::{
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 use vm::errors::{PartialVMError, PartialVMResult};
-use hex;
+// use hex;
 use libra_global_constants::VDF_SECURITY_PARAM;
 // const SECURITY_PARAM: u16 = 2048;
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
