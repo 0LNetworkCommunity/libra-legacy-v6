@@ -37,7 +37,6 @@ LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 deps:
 	#install rust
 	curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
-	export "$$HOME/.cargo/bin:$$PATH"
 	#target is Ubuntu
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev pkg-config libssl-dev
