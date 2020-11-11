@@ -42,10 +42,10 @@ deps:
 	sudo apt-get update
 	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
 
-	#TOML cli
-	cargo install toml-cli
 
 bins:
+	#TOML cli
+	cargo install toml-cli
 	#Build and install libra-node and miner
 	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
