@@ -4,10 +4,10 @@
 use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::{WalletLibrary};
 use crate::config;
+use crate::commands::{CONFIG_FILE, APP_PATH};
 use toml;
 use std::{
     fs,
-    path::PathBuf,
     io::Write,
 };
 
@@ -28,12 +28,20 @@ impl Runnable for KeygenCmd {
         miner_configs.profile.auth_key = auth_key.to_string();
 
         let toml = toml::to_string(&miner_configs).unwrap();
-        println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
-        println!("==========================\n");
+        // println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
+        // println!("==========================\n");
         
         fs::create_dir_all(&miner_configs.workspace.miner_home).unwrap();
-        let mut miner_toml_path = PathBuf::from(&miner_configs.workspace.miner_home);
-        miner_toml_path.push("miner.toml");
+        let mut miner_toml_path = dirs::home_dir()
+        .unwrap();
+        miner_toml_path.push(APP_PATH);
+        fs::create_dir_all(miner_toml_path.clone()).unwrap();
+
+        miner_toml_path.push(CONFIG_FILE);
+        dbg!(&miner_toml_path);
+        // let mut miner_toml_path = PathBuf::from(&miner_configs.workspace.miner_home);
+        // miner_toml_path.push("miner.toml");
+
         let file = fs::File::create(&miner_toml_path);
         file.unwrap().write(&toml.as_bytes())
             .expect("Could not write block");
@@ -43,7 +51,6 @@ impl Runnable for KeygenCmd {
         
         println!("Saved to: {}\n\
         ==========================\n\n", miner_toml_path.display());
-
 
         println!("0L Auth Key:\n\
         You will need this in your miner.toml configs.\n\
@@ -59,9 +66,6 @@ impl Runnable for KeygenCmd {
         WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\
         ---------\n\
         {}\n", &mnemonic_string.as_str());
-
-
-
     }
 }
 

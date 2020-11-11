@@ -3978,6 +3978,7 @@ dependencies = [
  "cli",
  "compiled-stdlib",
  "criterion",
+ "dirs 2.0.2",
  "glob",
  "gumdrop",
  "hex 0.4.2",

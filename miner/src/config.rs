@@ -13,7 +13,7 @@ use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
 use ajson;
-
+use dirs;
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -176,8 +176,8 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            miner_home: PathBuf::from("~/.0L/miner"),
-            node_home: PathBuf::from("~/.0L/node")
+            miner_home: dirs::home_dir().unwrap().join(".0L/miner"),
+            node_home: dirs::home_dir().unwrap().join(".0L/node")
         }
     }
 }
