@@ -40,7 +40,7 @@ deps:
 	export "$$HOME/.cargo/bin:$$PATH"
 	#target is Ubuntu
 	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev pkg-config libssl-dev
 
 
 bins:
