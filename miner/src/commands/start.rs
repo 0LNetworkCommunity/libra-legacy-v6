@@ -38,14 +38,26 @@ impl Runnable for StartCmd {
         let waypoint: Waypoint;
         let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
         match parsed_waypoint {
-            Ok(v) => {
-                println!("Using Waypoint from CLI args:\n{}", v);
-                waypoint = parsed_waypoint.unwrap();
+            Ok(from_cli) => {
+                println!("Using Waypoint from CLI args:\n{}", from_cli);
+                waypoint = from_cli;
             }
             Err(_e) => {
-                waypoint = miner_configs.get_waypoint().parse().unwrap();
+                status_info!("Waypoint:",format!("No waypoint parsed from command line args. Searching for waypoint in key_store.json"));
+                match miner_configs.get_waypoint() {
+                    Some(from_ks) => { waypoint = from_ks }
+                    None => {
+                       status_info!("Waypoint:",format!("No waypoint found in key_store.json. Failover to chain_info.base_waypoint in miner.toml"));
 
-                status_info!("Waypoint:",format!("No waypoint parsed from command line args. Using waypoint in key_store.json {:?}", waypoint));
+                       match miner_configs.chain_info.base_waypoint {
+                           Some(from_toml) => {waypoint = from_toml}
+                           None => {
+                               status_err!("No waypoint found in commandline, key_store.json, nor miner.toml. Exiting.");
+                               std::process::exit(-1);
+                           }
+                       }
+                    }
+                }
             }
         }
 

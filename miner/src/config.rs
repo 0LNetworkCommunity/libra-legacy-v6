@@ -7,7 +7,7 @@
 use std::{net::Ipv4Addr, fs};
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use libra_types::account_address::AccountAddress;
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
@@ -32,14 +32,22 @@ const STATEMENT_BYTES: usize = 1008;
 
 impl MinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
-    pub fn get_waypoint (&self) -> String {
-    let file = fs::File::open(self.get_key_store_path())
-        .expect("key_store.json not found.");
-    let json: serde_json::Value = serde_json::from_reader(file)
-        .expect("could not parse JSON in key_store.json");
-    let name = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-    name.to_string()
+    pub fn get_waypoint (&self) -> Option<Waypoint> {
+    match fs::File::open(self.get_key_store_path()) {
+        Ok(file) => {
+            let json: serde_json::Value = serde_json::from_reader(file)
+                .expect("could not parse JSON in key_store.json");
+            let name = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
+            Some(name.to_string().parse().unwrap())
+        }
+        Err(err) => {
+         println!("key_store.json not found. {:?}", err);
+         None
+        }
+    }
+
 }
+
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
@@ -193,7 +201,7 @@ pub struct ChainInfo {
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
-    pub base_waypoint: Option<String>,
+    pub base_waypoint: Option<Waypoint>,
 }
 
 // TODO: These defaults serving as test fixtures.
