@@ -12,14 +12,14 @@ endif
 
 # Account settings
 ifndef ACC
-ACC=$(shell toml get ${MINER_PATH}/miner.toml profile.account)
+ACC=$(shell sudo toml get ${MINER_PATH}/miner.toml profile.account)
 endif
 
 ifndef IP
 ifeq (TEST,y)
 IP = 1.2.3.4
 else
-IP=$(shell toml get ${MINER_PATH}/miner.toml profile.ip)
+IP=$(shell sudo toml get ${MINER_PATH}/miner.toml profile.ip)
 endif
 endif
 
