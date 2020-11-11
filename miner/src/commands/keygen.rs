@@ -5,7 +5,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::{WalletLibrary};
 use crate::config;
 use crate::commands::{CONFIG_FILE};
-use libra_global_constants::NODE_HOME;
+use libra_global_constants::MINER_HOME;
 use toml;
 use std::{net::Ipv4Addr, fs, io::Write};
 
@@ -41,7 +41,7 @@ impl Runnable for KeygenCmd {
         fs::create_dir_all(&miner_configs.workspace.miner_home).unwrap();
         let mut miner_toml_path = dirs::home_dir()
         .unwrap();
-        miner_toml_path.push(NODE_HOME);
+        miner_toml_path.push(MINER_HOME);
         fs::create_dir_all(miner_toml_path.clone()).unwrap();
 
         miner_toml_path.push(CONFIG_FILE);

@@ -1,59 +1,57 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
-HOME = /root/.0L
-DATA_PATH = ${HOME}/node
-IP = 1.2.3.4
-GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt)
-# # ACC = alice
-# NS = $(ACC)
-REPO_ORG = OLSF
-REPO_NAME = dev-genesis
-#experimental network is #7
+0L_PATH = /root/.0L
+DATA_PATH = ${0L_PATH}/node
+MINER_PATH = ${0L_PATH}/miner
+
+# Chain settings
 CHAIN_ID = "7"
 ifndef NODE_ENV
 NODE_ENV = stage
 endif
 
-REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${NS}'
-LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${NS}'
-
-ifndef OWNER
-OWNER = alice
+# Account settings
+ifndef ACC
+ACC=$(shell toml get ${MINER_PATH}/miner.toml profile.account)
 endif
 
-ifndef OPER
-OPER = bob
+ifndef IP
+ifeq (TEST,y)
+IP = 1.2.3.4
+else
+IP=$(shell toml get ${MINER_PATH}/miner.toml profile.ip)
 endif
+endif
+
+# Github settings
+GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
+REPO_ORG = OLSF
+REPO_NAME = dev-genesis
+#experimental network is #7
+
+# Registration params
+REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
+
+##### DEPENDENCIES #####
+deps:
+	#install rust
+	curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
+	export "$$HOME/.cargo/bin:$$PATH"
+	#target is Ubuntu
+	sudo apt-get update
+	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev
+
+	#TOML cli
+	cargo install toml-cli
+
+bins:
+	#Build and install libra-node and miner
+	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
-
-# for testing
-smoke-root:
-# root is the "association", set up the keys
-	NS=root make root treasury layout
-
-smoke-reg:
-# note: this uses the NS in local env to create files i.e. alice or bob
-
-# as a operator/owner pair.
-	make clear fix
-#initialize the OWNER account
-	NS=${NS} make init
-# The OPERs initialize local accounts and submit pubkeys to github
-	NS=${NS}-oper make oper-key
-# The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
-	NS=${NS} make owner-key add-proofs
-# OWNER *assign* an operator.
-	NS=${NS} OPER=${NS}-oper make assign
-# OPERs send signed transaction with configurations for *OWNER* account
-	NS=${NS}-oper OWNER=${NS} IP=${IP} make reg
-smoke-gen:
-	NS=${NS}-oper make genesis start
-smoke:
-	make smoke-reg
-# Create configs and start
-	make smoke-gen
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
@@ -75,9 +73,28 @@ treasury:
 		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
-init:
-	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${NS}
+register:
+# export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
+	@echo Initializing from ${DATA_PATH}/miner.toml with account:
+	@echo ${ACC}
+	make init
+	@echo the OPER initializes local accounts and submit pubkeys to github
+	ACC=${ACC}-oper make oper-key
+	@echo The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
+	make owner-key add-proofs
+	@echo OWNER *assigns* an operator.
+	OPER=${ACC}-oper make assign
+	@echo OPER send signed transaction with configurations for *OWNER* account
+	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
+init-test:
+	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${ACC}
+
+init:
+	@if test ! -d ${0L_PATH}/node; then \
+		mkdir ${0L_PATH}/node; \
+	fi 
+	cargo run -p libra-genesis-tool -- init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
@@ -135,7 +152,7 @@ genesis:
 	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
-	--namespace ${NS}
+	--namespace ${ACC}
 
 # gen:
 # 	NODE_ENV='${NODE_ENV}' cargo run -p libra-genesis-tool -- genesis \
@@ -163,7 +180,7 @@ daemon:
 # your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
 	sudo cp -f ~/.0L/node/libra-node.service /lib/systemd/system/
 # cp -f miner.service /lib/systemd/system/
-	if test -d ~/logs; then \
+	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		sudo rm -rf ~/logs*; \
 	fi 
@@ -188,38 +205,39 @@ clear:
 	fi
 
 #### HELPERS ####
-echo:
-	@echo NS: ${NS}
-	@echo test: ${TEST}
-	@echo env: ${NODE_ENV}
-	@echo path: ${DATA_PATH}
-	@echo ip: ${IP}
+check:
 	@echo account: ${ACC}
 	@echo github_token: ${GITHUB_TOKEN}
+	@echo ip: ${IP}
+	@echo node path: ${DATA_PATH}
+	@echo miner path: ${MINER_PATH}
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
+	@echo env: ${NODE_ENV}
+	@echo test mode: ${TEST}
+
 
 fix:
 ifdef TEST
-	echo ${NS}
-	if test ! -d ${HOME}; then \
-		mkdir ${HOME}; \
+	echo ${ACC}
+	@if test ! -d ${0L_PATH}; then \
+		mkdir ${0L_PATH}; \
 		mkdir ${DATA_PATH}; \
 	fi
 
 	mkdir -p ${DATA_PATH}/blocks/
 
-	if test -f ${DATA_PATH}/blocks/block_0.json; then \
+	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm ${DATA_PATH}/blocks/block_0.json; \
 	fi 
 
-	if test -f ${DATA_PATH}/miner.toml; then \
+	@if test -f ${DATA_PATH}/miner.toml; then \
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/miner.toml.${NS} ${DATA_PATH}/miner.toml
+	cp ./fixtures/miner.toml.${ACC} ${DATA_PATH}/miner.toml
 
-	cp ./fixtures/block_0.json.${NODE_ENV}.${NS} ${DATA_PATH}/blocks/block_0.json
+	cp ./fixtures/block_0.json.${NODE_ENV}.${ACC} ${DATA_PATH}/blocks/block_0.json
 
 endif
 
@@ -252,62 +270,90 @@ stop:
 	sudo service libra-node stop
 
 
+##### SMOKE TEST #####
+smoke-root:
+# root is the "association", set up the keys
+	ACC=root make root treasury layout
+
+smoke-reg:
+# note: this uses the ACC in local env to create files i.e. alice or bob
+
+# as a operator/owner pair.
+	make clear fix
+#initialize the OWNER account
+	ACC=${ACC} make init-test
+# The OPERs initialize local accounts and submit pubkeys to github
+	ACC=${ACC}-oper make oper-key
+# The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
+	ACC=${ACC} make owner-key add-proofs
+# OWNER *assign* an operator.
+	ACC=${ACC} OPER=${ACC}-oper make assign
+# OPERs send signed transaction with configurations for *OWNER* account
+	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
+smoke-gen:
+	ACC=${ACC}-oper make genesis start
+smoke:
+	make smoke-reg
+# Create configs and start
+	make smoke-gen
+
+
 ######################################
 ## TEST FIXTURES -- NOT FOR GENESIS ##
 
-ifeq ($(NS), alice)
-NS = alice
+ifeq ($(ACC), alice)
+ACC = alice
 ACC = f094dfc3d134331d5410a23f795117b8
 AUTH = f0dc83910c2263e5301431114c5c6d12f094dfc3d134331d5410a23f795117b8
 IP = 142.93.191.147
 MNEM = average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice
 endif
 
-ifeq ($(NS), alice-oper)
+ifeq ($(ACC), alice-oper)
 IP = 142.93.191.147
 endif
 
-ifeq ($(NS), bob)
+ifeq ($(ACC), bob)
 ACC = 5831d5f6cb6c0c5c576c186f9c4efb63
 AUTH = b28f75b8cdd27913ac785d38161501665831d5f6cb6c0c5c576c186f9c4efb63
 IP = 167.71.84.248
 MNEM = owner city siege lamp code utility humor inherit plug tuna orchard lion various hill arrow hold venture biology aisle talent desert expand nose city
 endif
 
-ifeq ($(NS), bob-oper)
+ifeq ($(ACC), bob-oper)
 IP = 167.71.84.248
 endif
 
-ifeq ($(NS), carol)
+ifeq ($(ACC), carol)
 ACC = 07dcd9c8d1dbaaa1611880cbe4ee9691
 AUTH = 89d1026ea2e6dd5a0366f96e773dec0b07dcd9c8d1dbaaa1611880cbe4ee9691
 IP = 104.131.56.224
 MNEM = motor employ crumble add original wealth spray lobster eyebrow title arrive hazard machine snake east dish alley drip mail erupt source dinner hobby day
 endif
 
-ifeq ($(NS), carol-oper)
+ifeq ($(ACC), carol-oper)
 IP = 104.131.56.224
 endif
 
-ifeq ($(NS), dave)
+ifeq ($(ACC), dave)
 ACC = 4a6dcca79b3828fc665fca5c6218d793
 AUTH = 4a62540137e5f3b05c6ea608e37b3ab74a6dcca79b3828fc665fca5c6218d793
 IP = 104.131.32.62
 MNEM = advice organ wage sick travel brief leave renew utility host roast barely can noble cheap cancel rotate series method inside damage beach tomorrow power
 endif
 
-ifeq ($(NS), dave-oper)
+ifeq ($(ACC), dave-oper)
 IP = 104.131.32.62
 endif
 
-ifeq ($(NS), eve)
+ifeq ($(ACC), eve)
 ACC = e9fbaf07795acc2e675961eb7649acdf
 AUTH = a34b9c1580fe7f7c518dac7ed9ddba0be9fbaf07795acc2e675961eb7649acdf
 IP = 134.122.115.12
 MNEM = veteran category typical plastic service mimic photo sort face taste puppy slogan nature youth member lake symptom edit pepper stairs actual hub miss train
 endif
 
-ifeq ($(NS), eve-oper)
+ifeq ($(ACC), eve-oper)
 IP = 134.122.115.12
 endif
 
