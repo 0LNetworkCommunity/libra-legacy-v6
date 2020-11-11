@@ -299,7 +299,6 @@ fn test_make_params() {
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
     let configs_fixture = MinerConfig {
         workspace: Workspace{
-            miner_home: PathBuf::from("."),
             node_home: PathBuf::from("."),
         },
         profile: Profile {

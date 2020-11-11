@@ -10,7 +10,6 @@ fn test_genesis_preimage() {
     // Create fixtures.
     let configs = MinerConfig {
         workspace: Workspace {
-            miner_home: PathBuf::from("."),
             node_home: PathBuf::from("."),
         },
         profile: Profile {

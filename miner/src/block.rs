@@ -153,7 +153,7 @@ pub mod build_block {
         tx_params: TxParams,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
-        let mut blocks_dir = config.workspace.miner_home.clone();
+        let mut blocks_dir = config.workspace.node_home.clone();
         blocks_dir.push(&config.chain_info.block_dir);
         let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
@@ -254,7 +254,6 @@ fn test_mine_genesis() {
     //let blocks_dir = Path::new("./test_blocks");
     let configs_fixture = MinerConfig {
         workspace: Workspace{
-            miner_home: PathBuf::from("."),
             node_home: PathBuf::from("."),
         },
         profile: Profile {
@@ -312,7 +311,6 @@ fn create_fixtures() {
 
         let configs_fixture = MinerConfig {
             workspace: Workspace{
-                miner_home: PathBuf::from("."),
                 node_home: PathBuf::from("."),
             },
             profile: Profile {
@@ -360,7 +358,6 @@ fn create_fixtures() {
         // if no file is found, the block height is 0
         let configs_fixture = MinerConfig {
             workspace: Workspace{
-                miner_home: PathBuf::from("."),
                 node_home: PathBuf::from("."),
             },
             profile: Profile {

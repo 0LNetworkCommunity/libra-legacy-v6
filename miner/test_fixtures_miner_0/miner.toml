@@ -1,5 +1,4 @@
 [workspace]
-miner_home = "."
 node_home = "."
 
 [profile]

@@ -13,7 +13,7 @@ use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
 use ajson;
 use dirs;
-use libra_global_constants::{MINER_HOME, NODE_HOME};
+use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -54,7 +54,7 @@ impl MinerConfig {
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
         let mut conf = MinerConfig::default();
-        conf.workspace.miner_home = PathBuf::from("./swarm_temp");
+        conf.workspace.node_home = PathBuf::from("./swarm_temp");
         // Load profile config
         conf.profile.account = param.address;
         conf.profile.auth_key = param.auth_key.to_string();
@@ -139,7 +139,7 @@ impl MinerConfig {
     }
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self)-> PathBuf {
-        let mut home = self.workspace.miner_home.clone();
+        let mut home = self.workspace.node_home.clone();
         home.push(&self.chain_info.block_dir);
         home
     }
@@ -177,8 +177,6 @@ impl Default for MinerConfig {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
-    /// home directory of miner
-    pub miner_home: PathBuf,
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
 }
@@ -186,7 +184,6 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            miner_home: dirs::home_dir().unwrap().join(MINER_HOME),
             node_home: dirs::home_dir().unwrap().join(NODE_HOME)
         }
     }
