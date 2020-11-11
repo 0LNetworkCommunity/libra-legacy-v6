@@ -86,7 +86,7 @@ pub mod build_block {
     use crate::submit_tx::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
     use libra_crypto::hash::HashValue;
-    use std::{net::Ipv4Addr, fs, io::{BufReader, Write}, path::PathBuf, time::Instant};
+    use std::{fs, io::{BufReader, Write}, path::PathBuf, time::Instant};
 
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight

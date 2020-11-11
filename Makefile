@@ -10,21 +10,21 @@ endif
 
 # Account settings
 ifndef ACC
-ACC=$(shell sudo toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
+ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
 endif
 
 ifndef IP
 ifeq (TEST,y)
 IP = 1.2.3.4
 else
-IP=$(shell sudo toml get ${DATA_PATH}/miner.toml profile.ip)
+IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
 endif
 endif
 
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
-REPO_NAME = experimental-genesis
+REPO_NAME = dev-genesis
 #experimental network is #7
 
 # Registration params
@@ -47,8 +47,6 @@ bins:
 	cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
-
-	cargo build -
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
@@ -153,23 +151,6 @@ genesis:
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}
-
-# gen:
-# 	NODE_ENV='${NODE_ENV}' genesis genesis \
-# 	--shared-backend ${REMOTE} \
-# 	--path ${DATA_PATH}/genesis.blob \
-# 	--chain-id ${CHAIN_ID}
-
-# way: 
-# 	NODE_ENV='${NODE_ENV}' genesis create-waypoint \
-# 	--shared-backend ${REMOTE} \
-# 	--chain-id ${CHAIN_ID}
-
-# insert-way: 
-# 	NODE_ENV='${NODE_ENV}' cargo run  -p libra-genesis-tool -- insert-waypoint \
-# 	--validator-backend ${LOCAL} \
-# 	--waypoint ${WAY}
-
 
 #### NODE MANAGEMENT ####
 start:
