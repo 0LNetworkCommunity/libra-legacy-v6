@@ -26,7 +26,7 @@ endif
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
-REPO_NAME = dev-genesis
+REPO_NAME = experimental-genesis
 #experimental network is #7
 
 # Registration params
@@ -49,6 +49,8 @@ bins:
 	#Build and install libra-node and miner
 	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
+
+	cargo build -
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
