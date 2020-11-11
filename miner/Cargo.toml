@@ -36,6 +36,7 @@ rustyline = "6.2.0"
 anyhow = "1.0.31"
 toml = "0.5.6"
 reqwest = { version = "0.10.6", features = ["blocking", "json"], default_features = false }
+libra-global-constants = { path = "../config/global-constants", version = "0.1.0"}
 dirs = "2.0.2"
 
 [dependencies.abscissa_core]

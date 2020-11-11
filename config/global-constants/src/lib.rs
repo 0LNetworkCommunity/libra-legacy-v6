@@ -21,12 +21,12 @@ pub const OWNER_KEY: &str = "owner";
 pub const VALIDATOR_NETWORK_ADDRESS_KEYS: &str = "validator_network_address_keys";
 pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 
-// 0L
-// TODO remove fullnode
-pub const FULLNODE_PEER_ID: &str = "fullnode_peer_id";
+//////// 0L ////////
+
 pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
 pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
-
+pub const MINER_HOME: &str = ".0L/miner";
+pub const NODE_HOME: &str = ".0L/node";
 /// Definitions of global data items (e.g., as held in secure storage)
 pub const SAFETY_DATA: &str = "safety_data";
 pub const WAYPOINT: &str = "waypoint";

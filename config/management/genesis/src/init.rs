@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 
+use libra_global_constants::NODE_HOME;
 use structopt::StructOpt;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use libra_management::error::Error;
 
 use crate::storage_helper::StorageHelper;
-
+use dirs;
 #[derive(Debug, StructOpt)]
 pub struct Init {
     #[structopt(long, short)]
@@ -31,7 +32,7 @@ impl Init {
                 if self.path.is_some() {
                     path = self.path.unwrap();
                 } else { 
-                    path = PathBuf::from("~/.0L/node");
+                    path = dirs::home_dir().unwrap().join(NODE_HOME);
                 }
                 let helper = StorageHelper::new_with_path(path.into());
                 helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string);

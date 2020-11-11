@@ -3022,6 +3022,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "consensus-types",
+ "dirs 2.0.2",
  "executor",
  "generate-key",
  "hex 0.4.2",
@@ -3985,6 +3986,7 @@ dependencies = [
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
+ "libra-global-constants",
  "libra-json-rpc-types",
  "libra-logger",
  "libra-types",
