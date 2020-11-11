@@ -20,7 +20,7 @@ fun main(_sender: &signer) {
   let solution = TestFixtures::eve_0_easy_sol();
   // Parse key and check
   let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-  assert(eve_addr == 0x298cfd27ba6301c76ae5527fc64610b6, 401);
+  assert(eve_addr == 0x22172b8d4d5ccc8c13bca0981ef986ef, 401);
  
   LibraAccount::create_validator_account_with_proof(
       &challenge,

@@ -1,8 +1,6 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
-0L_PATH = /root/.0L
-DATA_PATH = ${0L_PATH}/node
-MINER_PATH = ${0L_PATH}/miner
+DATA_PATH = $$HOME/.0L
 
 # Chain settings
 CHAIN_ID = "7"
@@ -12,14 +10,14 @@ endif
 
 # Account settings
 ifndef ACC
-ACC=$(shell sudo toml get ${MINER_PATH}/miner.toml profile.account)
+ACC=$(shell sudo toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
 endif
 
 ifndef IP
 ifeq (TEST,y)
 IP = 1.2.3.4
 else
-IP=$(shell sudo toml get ${MINER_PATH}/miner.toml profile.ip)
+IP=$(shell sudo toml get ${DATA_PATH}/miner.toml profile.ip)
 endif
 endif
 
@@ -212,7 +210,6 @@ check:
 	@echo github_token: ${GITHUB_TOKEN}
 	@echo ip: ${IP}
 	@echo node path: ${DATA_PATH}
-	@echo miner path: ${MINER_PATH}
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 	@echo env: ${NODE_ENV}
