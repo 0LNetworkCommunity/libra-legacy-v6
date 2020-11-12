@@ -20,23 +20,23 @@ impl Runnable for KeygenCmd {
     fn run(&self) {
         println!("Enter Miner configurations");
         let mut rl = Editor::<()>::new();
-        let readline = rl.readline("IP address of node: ").expect("Must enter an ip address, or 0.0.0.0");
+        let readline = rl.readline("IP address of node: ").expect("Must enter an ip address, eg. 0.0.0.0");
         let ip_address: Ipv4Addr = readline.parse().expect("Could not parse IP address");
-        dbg!(ip_address);
+        let get_statement = rl.readline("Your statement:").expect("Please enter a fun statement to go into genesis proof.");
         
         // Generate new keys
         let mut wallet = WalletLibrary::new();
         let mnemonic_string = wallet.mnemonic();
         // NOTE: Authkey uses the child number 0 by default
-        let (auth_key, _child_number) = wallet.new_address().expect("Could not generate address");
+        let (auth_key, _) = wallet.new_address().expect("Could not generate address");
 
         let mut miner_configs = config::MinerConfig::default();
         miner_configs.profile.account = auth_key.derived_address();
         miner_configs.profile.auth_key = auth_key.to_string();
         miner_configs.profile.ip = ip_address;
+        miner_configs.profile.statement = get_statement;
+
         let toml = toml::to_string(&miner_configs).unwrap();
-        // println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
-        // println!("==========================\n");
         
         fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
         let mut miner_toml_path = dirs::home_dir()
