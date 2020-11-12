@@ -43,12 +43,7 @@ impl Genesis {
 
         let chain_id = self.config()?.chain_id;
         
-        // TODO: allow open publishing
-        let script_policy = if chain_id == ChainId::test() {
-            Some(libra_types::on_chain_config::VMPublishingOption::open())
-        } else {
-            None // allowlist containing only stdlib scripts
-        };
+        let script_policy = Some(libra_types::on_chain_config::VMPublishingOption::open());
 
         let genesis = vm_genesis::encode_genesis_transaction(
             libra_root_key,

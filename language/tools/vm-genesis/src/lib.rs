@@ -83,7 +83,7 @@ pub fn encode_genesis_transaction(
         operator_registrations,
         stdlib_modules(StdLibOptions::Compiled), // Must use compiled stdlib,
         vm_publishing_option
-            .unwrap_or_else(|| VMPublishingOption::locked(StdlibScript::allowlist())),
+            .unwrap_or_else(|| VMPublishingOption::open()), // :)
         chain_id,
     )))
 }

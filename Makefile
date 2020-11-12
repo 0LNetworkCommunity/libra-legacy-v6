@@ -3,7 +3,7 @@ SHELL=/usr/bin/env bash
 DATA_PATH = $$HOME/.0L
 
 # Chain settings
-CHAIN_ID = "7"
+CHAIN_ID = 7
 ifndef NODE_ENV
 NODE_ENV = test
 endif
