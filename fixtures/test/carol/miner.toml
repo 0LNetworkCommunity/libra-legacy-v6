@@ -1,0 +1,13 @@
+[workspace]
+miner_home = "/root/.0L/miner"
+node_home = "/root/.0L/node"
+
+[profile]
+account = "E3DA896091E7958DD7A4A475672F085A"
+auth_key = "b24745757cb3817417c314ada1e4d07ee3da896091e7958dd7a4a475672f085a"
+statement = "Protests rage across the nation"
+
+[chain_info]
+chain_id = "testnet"
+block_dir = "blocks"
+node = "http://localhost:8080"

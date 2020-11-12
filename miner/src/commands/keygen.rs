@@ -5,7 +5,7 @@ use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::{WalletLibrary};
 use crate::config;
 use crate::commands::{CONFIG_FILE};
-use libra_global_constants::MINER_HOME;
+use libra_global_constants::NODE_HOME;
 use toml;
 use std::{net::Ipv4Addr, fs, io::Write};
 
@@ -38,20 +38,16 @@ impl Runnable for KeygenCmd {
         // println!("Saving miner.toml with Auth Key. Update miner.toml with preferences:\n{}", toml);
         // println!("==========================\n");
         
-        fs::create_dir_all(&miner_configs.workspace.miner_home).unwrap();
+        fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
         let mut miner_toml_path = dirs::home_dir()
         .unwrap();
-        miner_toml_path.push(MINER_HOME);
+        miner_toml_path.push(NODE_HOME);
         fs::create_dir_all(miner_toml_path.clone()).unwrap();
 
         miner_toml_path.push(CONFIG_FILE);
-        dbg!(&miner_toml_path);
-        // let mut miner_toml_path = PathBuf::from(&miner_configs.workspace.miner_home);
-        // miner_toml_path.push("miner.toml");
-
         let file = fs::File::create(&miner_toml_path);
         file.unwrap().write(&toml.as_bytes())
-            .expect("Could not write block");
+            .expect("Could not write toml file");
 
 
         //////////////// Info ////////////////

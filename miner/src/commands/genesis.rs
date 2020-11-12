@@ -14,8 +14,8 @@ use fs::File;
 #[derive(Command, Debug, Options)]
 pub struct GenesisCmd {
     // Option for setting path for the blocks/proofs that are mined.
-    // #[options(help = "The home directory where the blocks will be stored")]
-    // home: PathBuf, 
+    #[options(help = "The home directory where the blocks will be stored")]
+    home: PathBuf, 
 }
 
 impl Runnable for GenesisCmd {
@@ -32,11 +32,11 @@ impl Runnable for GenesisCmd {
         // Create val_init.json file.
         let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
 
-        let mut json_path = PathBuf::from(&miner_configs.workspace.miner_home);
+        let mut json_path = PathBuf::from(&miner_configs.workspace.node_home);
         json_path.push("val_init.json");
 
         // Read from block_0.json to confirm it's properly formed.
-        let mut block_json = PathBuf::from(&miner_configs.workspace.miner_home);
+        let mut block_json = PathBuf::from(&miner_configs.workspace.node_home);
         block_json.push("blocks/block_0.json");
         println!("load block_0 from {:?}", &block_json);
         let f = File::open(block_json).expect("Could not open block_0 files");

@@ -5,7 +5,6 @@
 //! for specifying it.
 
 use std::{net::Ipv4Addr, fs};
-
 use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use serde::{Deserialize, Serialize};
@@ -14,6 +13,8 @@ use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
 use ajson;
 use dirs;
+use libra_global_constants::NODE_HOME;
+
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -37,8 +38,9 @@ impl MinerConfig {
         Ok(file) => {
             let json: serde_json::Value = serde_json::from_reader(file)
                 .expect("could not parse JSON in key_store.json");
-            let name = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-            Some(name.to_string().parse().unwrap())
+            let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
+            dbg!(&value);
+            Some(value.to_string().parse().unwrap())
         }
         Err(err) => {
          println!("key_store.json not found. {:?}", err);
@@ -52,7 +54,7 @@ impl MinerConfig {
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
         let mut conf = MinerConfig::default();
-        conf.workspace.miner_home = PathBuf::from("./swarm_temp");
+        conf.workspace.node_home = PathBuf::from("./swarm_temp");
         // Load profile config
         conf.profile.account = param.address;
         conf.profile.auth_key = param.auth_key.to_string();
@@ -137,14 +139,14 @@ impl MinerConfig {
     }
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self)-> PathBuf {
-        let mut home = self.workspace.miner_home.clone();
+        let mut home = self.workspace.node_home.clone();
         home.push(&self.chain_info.block_dir);
         home
     }
 
     /// Get where node key_store.json stored.
     pub fn get_key_store_path(&self)-> PathBuf {
-        let mut home = self.workspace.miner_home.clone();
+        let mut home = self.workspace.node_home.clone();
         home.push("key_store.json");
         home
     }
@@ -175,8 +177,6 @@ impl Default for MinerConfig {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
-    /// home directory of miner
-    pub miner_home: PathBuf,
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
 }
@@ -184,8 +184,7 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            miner_home: dirs::home_dir().unwrap().join(".0L/miner"),
-            node_home: dirs::home_dir().unwrap().join(".0L/node")
+            node_home: dirs::home_dir().unwrap().join(NODE_HOME)
         }
     }
 }

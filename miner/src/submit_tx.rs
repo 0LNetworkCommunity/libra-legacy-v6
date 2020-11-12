@@ -299,14 +299,13 @@ fn test_make_params() {
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
     let configs_fixture = MinerConfig {
         workspace: Workspace{
-            miner_home: PathBuf::from("."),
             node_home: PathBuf::from("."),
         },
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                 .to_owned(),
             account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
-            ip: None,
+            ip: "1.1.1.1".parse().unwrap(),
             statement: "Protests rage across the nation".to_owned(),
         },
         chain_info: ChainInfo {

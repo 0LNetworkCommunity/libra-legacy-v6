@@ -25,9 +25,11 @@ pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 
 pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
 pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
-pub const MINER_HOME: &str = ".0L/miner";
-pub const NODE_HOME: &str = ".0L/node";
+pub const VDF_SECURITY_PARAM: u16 = 2048;
+
+pub const NODE_HOME: &str = ".0L/";
 /// Definitions of global data items (e.g., as held in secure storage)
 pub const SAFETY_DATA: &str = "safety_data";
 pub const WAYPOINT: &str = "waypoint";
 pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
+

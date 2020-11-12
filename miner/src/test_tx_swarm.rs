@@ -60,7 +60,7 @@ pub fn swarm_onboarding(swarm_path: PathBuf) {
 fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
-    let mut blocks_dir = config.workspace.miner_home.clone();
+    let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 

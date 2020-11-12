@@ -25,7 +25,7 @@ use abscissa_core::{
 };
 use std::path::PathBuf;
 use dirs;
-use libra_global_constants::MINER_HOME;
+use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "miner.toml";
@@ -76,7 +76,7 @@ impl Configurable<MinerConfig> for MinerCmd {
 
         let mut config_path = dirs::home_dir()
         .unwrap();
-        config_path.push(MINER_HOME);
+        config_path.push(NODE_HOME);
         config_path.push(CONFIG_FILE);
 
         if config_path.exists() {

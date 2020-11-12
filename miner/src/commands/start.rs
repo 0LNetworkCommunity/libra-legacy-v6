@@ -26,6 +26,9 @@ pub struct StartCmd {
     // Option for --backlog, only sends backlogged transactions.
     #[options(help = "Start but don't mine, and only resubmit backlog of proofs")]
     backlog: bool,
+
+    #[options(help = "Skip backlog")]
+    skip: bool,
     // Option for setting path for the blocks/proofs that are mined.
     #[options(help = "The home directory where the blocks will be stored")]
     home: PathBuf, 
@@ -67,7 +70,9 @@ impl Runnable for StartCmd {
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         
         // Check for, and submit backlog proofs.
-        backlog::process_backlog(&miner_configs, &tx_params);
+        if !self.skip {
+            backlog::process_backlog(&miner_configs, &tx_params);
+        }
 
         if !self.backlog {
             // Steady state.
@@ -78,9 +83,6 @@ impl Runnable for StartCmd {
                     println!("Failed to mine_and_submit: {}", err);
                 }
             }
-        } else {
-            // Chain needs to catch up to backlog of proofs.
-            backlog::process_backlog(&miner_configs, &tx_params);
         }
     }
 }
