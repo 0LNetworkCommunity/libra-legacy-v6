@@ -87,6 +87,7 @@ module Genesis {
             lr_account,
             instruction_schedule,
             native_schedule,
+            chain_id // 0L change
         );
 
         /////// 0L /////////

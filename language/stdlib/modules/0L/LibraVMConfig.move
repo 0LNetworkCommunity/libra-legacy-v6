@@ -7,7 +7,6 @@ module LibraVMConfig {
     use 0x1::LibraTimestamp;
     use 0x1::CoreAddresses;
     use 0x1::Roles;
-
     /// The struct to hold config data needed to operate the LibraVM.
     struct LibraVMConfig {
         /// Cost of running the VM.
@@ -73,11 +72,17 @@ module LibraVMConfig {
         lr_account: &signer,
         instruction_schedule: vector<u8>,
         native_schedule: vector<u8>,
+        chain_id: u8,
     ) {
         LibraTimestamp::assert_genesis();
 
         // The permission "UpdateVMConfig" is granted to LibraRoot [[H11]][PERMISSION].
         Roles::assert_libra_root(lr_account);
+
+        let min_price_per_gas_unit = 0;
+        if (chain_id == 7 || chain_id == 1) {
+            min_price_per_gas_unit = 1;
+        };
 
         let gas_constants = GasConstants {
             global_memory_per_byte_cost: 4,
@@ -86,7 +91,7 @@ module LibraVMConfig {
             large_transaction_cutoff: 600,
             intrinsic_gas_per_byte: 8,
             maximum_number_of_gas_units: 100000000000, // 0L: changed temporarily for oversized upgrade payload
-            min_price_per_gas_unit: 0,
+            min_price_per_gas_unit: min_price_per_gas_unit,
             max_price_per_gas_unit: 10000,
             max_transaction_size_in_bytes: 409600,     // 0L: changed temporarily for oversized upgrade payload
             gas_unit_scaling_factor: 1000,
