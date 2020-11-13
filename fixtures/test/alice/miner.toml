@@ -6,6 +6,7 @@ node_home = "/root/.0L/node"
 account = "0E7DA4499FB75CCD30E6527761A55A06"
 auth_key = "91ffe0bce9806e599cd3565958ed0d3a0e7da4499fb75ccd30e6527761a55a06"
 statement = "Protests rage across the nation"
+ip = "142.93.191.147"
 
 [chain_info]
 chain_id = "testnet"

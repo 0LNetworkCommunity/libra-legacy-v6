@@ -1,21 +1,16 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
-DATA_PATH = $$HOME/.0L
+DATA_PATH = ${HOME}/.0L
 
 # Chain settings
 CHAIN_ID = 7
 ifndef NODE_ENV
-NODE_ENV = test
+NODE_ENV = prod
 endif
 
 # Account settings
-ifndef TEST
 ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
 IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
-else
-ACC=${NS}
-IP = 1.2.3.4
-endif
 
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
@@ -183,6 +178,7 @@ clear:
 
 #### HELPERS ####
 check:
+	@echo data path: ${DATA_PATH}
 	@echo account: ${ACC}
 	@echo github_token: ${GITHUB_TOKEN}
 	@echo ip: ${IP}
