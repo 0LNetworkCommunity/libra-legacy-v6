@@ -310,7 +310,7 @@ fn create_fixtures() {
 
         let configs_fixture = MinerConfig {
             workspace: Workspace{
-                node_home: PathBuf::from("."),
+                node_home: PathBuf::from("/root/.0L"),
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
