@@ -1,12 +1,8 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
-
 # Chain settings
 CHAIN_ID = 7
-ifndef NODE_ENV
-NODE_ENV = prod
-endif
 
 # Account settings
 ifndef ACC
@@ -17,7 +13,14 @@ IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
+
+ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
+NODE_ENV = test
+else
+REPO_NAME = experimental-genesis
+NODE_ENV = prod
+endif
 #experimental network is #7
 
 # Registration params

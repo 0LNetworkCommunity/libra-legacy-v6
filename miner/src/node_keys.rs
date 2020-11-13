@@ -1,7 +1,7 @@
 //! Key derivation for 0L.
 
 use libra_types::{transaction::authenticator::AuthenticationKey, account_address::AccountAddress};
-use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
+use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey}};
 
 /// The key derivation used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
 // #[derive(Debug)]
