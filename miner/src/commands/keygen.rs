@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::WalletLibrary;
-use crate::config;
+use crate::{node_keys::KeyScheme, config};
 use crate::commands::CONFIG_FILE;
 use libra_global_constants::NODE_HOME;
 use toml;
@@ -46,8 +46,14 @@ impl Runnable for KeygenCmd {
         let mnemonic_string = wallet.mnemonic();
         // NOTE: Authkey uses the child number 0 by default
         let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+        let addresses_vec = wallet.get_addresses().expect("Could not generate address");
 
         miner_configs.profile.account = auth_key.derived_address();
+        dbg!(&addresses_vec);
+        dbg!(auth_key.derived_address());
+        let test_keys = KeyScheme::new_from_mnemonic(mnemonic_string.clone());
+        dbg!(&test_keys.derived_address());
+
         miner_configs.profile.auth_key = auth_key.to_string();
         miner_configs.profile.ip = ip_address;
         miner_configs.profile.statement = get_statement;

@@ -34,6 +34,7 @@ module LibraAccount {
     use 0x1::VDF;
     use 0x1::Globals;
     use 0x1::MinerState;
+    use 0x1::Debug::print;
 
     /// An `address` is a Libra Account iff it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -1820,6 +1821,8 @@ module LibraAccount {
         human_name: vector<u8>,
     ) acquires AccountOperationsCapability {
         let new_account = create_signer(new_account_address);
+        print(&new_account_address);
+        print(&human_name);
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role(lr_account, &new_account);
         Event::publish_generator(&new_account);

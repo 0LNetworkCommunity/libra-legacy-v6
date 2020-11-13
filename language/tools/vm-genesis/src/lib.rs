@@ -161,6 +161,8 @@ pub fn encode_genesis_change_set(
     println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
+    println!("OK Genesis subsidy =============== ");
+
     reconfigure(&mut session, &log_context);
 
     let effects_1 = session.finish().unwrap();
@@ -396,6 +398,7 @@ fn create_and_initialize_owners_operators(
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names. 
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
         // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         //TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();

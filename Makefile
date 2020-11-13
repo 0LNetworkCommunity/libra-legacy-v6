@@ -37,7 +37,7 @@ bins:
 	#TOML cli
 	cargo install toml-cli
 	#Build and install genesis tool, libra-node, and miner
-	cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
+	# cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 
@@ -49,17 +49,17 @@ init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	genesis set-layout \
+	cargo run -p libra-genesis-tool -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./util/set_layout.toml
 
 root:
-		genesis libra-root-key \
+		cargo run -p libra-genesis-tool --  libra-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 treasury:
-		genesis treasury-compliance-key \
+		cargo run -p libra-genesis-tool --  treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -69,55 +69,59 @@ register:
 	@echo Initializing from ${DATA_PATH}/miner.toml with account:
 	@echo ${ACC}
 	make init
+
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
+
 	@echo The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
 	make owner-key add-proofs
+
 	@echo OWNER *assigns* an operator.
 	OPER=${ACC}-oper make assign
+
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
 init-test:
-	echo ${MNEM} | head -c -1 | genesis init --path=${DATA_PATH} --namespace=${ACC}
+	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
 	@if test ! -d ${0L_PATH}/node; then \
 		mkdir ${0L_PATH}/node; \
 	fi 
-	genesis init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	genesis mining \
+	cargo run -p libra-genesis-tool --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	genesis operator-key \
+	cargo run -p libra-genesis-tool --  operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
-	genesis owner-key \
+	cargo run -p libra-genesis-tool --  owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
-	genesis set-operator \
+	cargo run -p libra-genesis-tool --  set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
 reg:
-	genesis validator-config \
+	cargo run -p libra-genesis-tool --  validator-config \
 	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -128,19 +132,19 @@ reg:
 
 ## Helpers to verify the local state.
 verify:
-	genesis verify \
+	cargo run -p libra-genesis-tool --  verify \
 	--validator-backend ${LOCAL}
 	# --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
-	genesis verify \
+	cargo run -p libra-genesis-tool --  verify \
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
 
 #### GENESIS  ####
 genesis:
-	genesis files \
+	cargo run -p libra-genesis-tool --  files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper
@@ -218,12 +222,12 @@ endif
 
 #### HELPERS ####
 get_waypoint:
-	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ~/node_data/key_store.json))
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
   
 	echo $$WAY
 
 client: get_waypoint
-	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 1
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 7
 
 compress: 
 	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
