@@ -143,7 +143,7 @@ genesis:
 	genesis files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
-	--namespace ${ACC}
+	--namespace ${ACC}-oper
 
 #### NODE MANAGEMENT ####
 start:
