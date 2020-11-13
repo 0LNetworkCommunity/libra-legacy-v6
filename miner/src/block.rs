@@ -320,9 +320,9 @@ fn create_fixtures() {
             },
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
-                block_dir: "test_fixtures_miner_".to_owned() + &ns, //  path should be unique for concurrent tests.
+                block_dir: "blocks".to_owned() + &ns, //  path should be unique for concurrent tests.
                 base_waypoint: None,
-                node: None,
+                node: "http://localhost:8080",
             },
         };
         //clear from sideffects.

@@ -1,5 +1,5 @@
 [workspace]
-node_home = "."
+node_home = "/root/.0L"
 
 [profile]
 account = "3DC18D1CF61FAAC6AC70E3A63F062E4B"
@@ -9,4 +9,5 @@ statement = "Protests rage across the nation"
 
 [chain_info]
 chain_id = "0L testnet"
-block_dir = "test_fixtures_miner_4"
+block_dir = "blocks"
+node = "http://localhost:8080"
