@@ -293,9 +293,8 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 }
 #[test]
-// #[ignore]
+
 fn create_fixtures() {
-    use libra_types::PeerId;
     use libra_wallet::WalletLibrary;
     use std::path::Path;
 
@@ -335,7 +334,7 @@ fn create_fixtures() {
 
         // also create mnemonic
         let mut latest_block_path = blocks_dir.to_path_buf();
-        latest_block_path.push(format!("miner_{}.mnemonic", ns));
+        latest_block_path.push(format!("owner.mnem", ns));
         let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
