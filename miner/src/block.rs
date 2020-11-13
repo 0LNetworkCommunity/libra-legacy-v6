@@ -293,8 +293,10 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 }
 #[test]
-
+#[ignore]
+//Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
+    
     use libra_wallet::WalletLibrary;
 
     // if no file is found, the block height is 0
