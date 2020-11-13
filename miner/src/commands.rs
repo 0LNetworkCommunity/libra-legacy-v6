@@ -82,7 +82,6 @@ impl Configurable<MinerConfig> for MinerCmd {
         if config_path.exists() {
             Some(config_path)
         } else {
-            println!("No configs found at {:?} ", config_path);
             None
         }
     }
