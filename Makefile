@@ -281,12 +281,12 @@ MNEM = open neither replace gym pact happy net receive alpha door purse armor ch
 endif
 
 
-ifeq ($(ACC), dave)
+ifeq ($(NS), dave)
 MNEM = word rival cabin stay enroll swarm shop stuff cruel disorder custom wet awful winter erosion card fantasy member budget aerobic warfare shove embody armor
 endif
 
 
-ifeq ($(ACC), eve)
+ifeq ($(NS), eve)
 MNEM = dry omit trade angry ahead edge remember stock ordinary elite scare gossip staff help exile minor swift crucial shrug boring stock believe violin vendor
 endif
 
