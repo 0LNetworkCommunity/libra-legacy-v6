@@ -309,7 +309,7 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
-        fs::create_dir_all(save_to.clone());
+        fs::create_dir_all(save_to.clone()).unwrap();
         let mut configs_fixture = MinerConfig {
             workspace: Workspace{
                 node_home: PathBuf::from("/root/.0L"),
