@@ -9,16 +9,12 @@ NODE_ENV = test
 endif
 
 # Account settings
-ifndef ACC
+ifndef TEST
 ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
-endif
-
-ifndef IP
-ifeq (TEST,y)
-IP = 1.2.3.4
-else
 IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
-endif
+else
+ACC=${NS}
+IP = 1.2.3.4
 endif
 
 # Github settings
@@ -194,12 +190,13 @@ check:
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 	@echo env: ${NODE_ENV}
-	@echo test mode: ${TEST}
+	@echo devnet mode: ${TEST}
+	@echo devnet name: ${NS}
 
 
 fix:
 ifdef TEST
-	echo ${ACC}
+	echo ${NS}
 	@if test ! -d ${0L_PATH}; then \
 		mkdir ${0L_PATH}; \
 		mkdir ${DATA_PATH}; \
@@ -215,9 +212,9 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/test/${ACC}/miner.toml ${DATA_PATH}/miner.toml
+	cp ./fixtures/test/${NS}/miner.toml ${DATA_PATH}/miner.toml
 
-	cp ./fixtures/test/${ACC}/block_0.json ${DATA_PATH}/blocks/block_0.json
+	cp ./fixtures/test/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
 
