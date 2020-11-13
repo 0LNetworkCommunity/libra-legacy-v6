@@ -293,9 +293,8 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 }
 #[test]
-// #[ignore]
+
 fn create_fixtures() {
-    use libra_types::PeerId;
     use libra_wallet::WalletLibrary;
     use std::path::Path;
 
@@ -311,7 +310,7 @@ fn create_fixtures() {
 
         let configs_fixture = MinerConfig {
             workspace: Workspace{
-                node_home: PathBuf::from("."),
+                node_home: PathBuf::from("/root/.0L"),
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
@@ -321,9 +320,9 @@ fn create_fixtures() {
             },
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
-                block_dir: "test_fixtures_miner_".to_owned() + &ns, //  path should be unique for concurrent tests.
+                block_dir: "blocks".to_owned() + &ns, //  path should be unique for concurrent tests.
                 base_waypoint: None,
-                node: None,
+                node: "http://localhost:8080",
             },
         };
         //clear from sideffects.
@@ -335,7 +334,7 @@ fn create_fixtures() {
 
         // also create mnemonic
         let mut latest_block_path = blocks_dir.to_path_buf();
-        latest_block_path.push(format!("miner_{}.mnemonic", ns));
+        latest_block_path.push(format!("owner.mnem", ns));
         let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");

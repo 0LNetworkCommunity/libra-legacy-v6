@@ -1,12 +1,8 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
-
 # Chain settings
 CHAIN_ID = 7
-ifndef NODE_ENV
-NODE_ENV = prod
-endif
 
 # Account settings
 ifndef ACC
@@ -17,7 +13,15 @@ IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
+
+ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
+NODE_ENV = test
+MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
+else
+REPO_NAME = experimental-genesis
+NODE_ENV = prod
+endif
 #experimental network is #7
 
 # Registration params
@@ -194,6 +198,7 @@ check:
 	@echo env: ${NODE_ENV}
 	@echo devnet mode: ${TEST}
 	@echo devnet name: ${NS}
+	@echo devnet mnem: ${MNEM}
 
 
 fix:
@@ -267,31 +272,3 @@ smoke:
 	make smoke-gen
 
 
-######################################
-## TEST FIXTURES -- NOT FOR GENESIS ##
-
-ifeq ($(NS), alice)
-MNEM = reunion liberty page dentist rule step negative erosion robot truth paddle image purpose patient work normal wet fruit toward embark speak rail endless final
-endif
-
-
-ifeq ($(NS), bob)
-MNEM = soldier call yellow stone share tortoise jewel gentle margin knock dismiss hurdle cable will surround october fringe input guess snap reveal excite mutual curve
-endif
-
-
-ifeq ($(NS), carol)
-MNEM = open neither replace gym pact happy net receive alpha door purse armor chase document forum into tube cherry step kitchen portion army praise keep
-endif
-
-
-ifeq ($(NS), dave)
-MNEM = word rival cabin stay enroll swarm shop stuff cruel disorder custom wet awful winter erosion card fantasy member budget aerobic warfare shove embody armor
-endif
-
-
-ifeq ($(NS), eve)
-MNEM = dry omit trade angry ahead edge remember stock ordinary elite scare gossip staff help exile minor swift crucial shrug boring stock believe violin vendor
-endif
-
-##########################
