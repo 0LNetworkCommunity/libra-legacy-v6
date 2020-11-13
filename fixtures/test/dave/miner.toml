@@ -1,11 +1,11 @@
 [workspace]
-miner_home = "/root/.0L/miner"
-node_home = "/root/.0L/node"
+node_home = "/root/.0L/"
 
 [profile]
 account = "8FAB2B4D2AEEFF56155061CA2B4D9E29"
 auth_key = "80ba01a073c77549c760ec88f1b8a5aa8fab2b4d2aeeff56155061ca2b4d9e29"
 statement = "Protests rage across the nation"
+ip = "104.131.32.62"
 
 [chain_info]
 chain_id = "testnet"

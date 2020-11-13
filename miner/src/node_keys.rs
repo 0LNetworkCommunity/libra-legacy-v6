@@ -1,5 +1,6 @@
 //! Key derivation for 0L.
 
+use libra_types::{transaction::authenticator::AuthenticationKey, account_address::AccountAddress};
 use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
 
 /// The key derivation used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
@@ -33,5 +34,11 @@ impl KeyScheme {
             child_5_executor: kf.private_child(ChildNumber::new(5)).unwrap(),
         }
     }
-    
+    /// Returns the default owner address given the key derivation.
+    pub fn derived_address(&self) -> AccountAddress {
+        let staged_owner_auth_key = AuthenticationKey::ed25519(&self.child_0_owner.get_public());
+        let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
+        owner_address
+    }
 }
