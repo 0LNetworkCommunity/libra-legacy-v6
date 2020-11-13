@@ -24,7 +24,7 @@ endif
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
-REPO_NAME = experimental-genesis
+REPO_NAME = dev-genesis
 #experimental network is #7
 
 # Registration params
