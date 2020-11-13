@@ -296,7 +296,6 @@ fn test_mine_genesis() {
 
 fn create_fixtures() {
     use libra_wallet::WalletLibrary;
-    use std::path::Path;
 
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
@@ -307,8 +306,9 @@ fn create_fixtures() {
         let (auth_key, _) = wallet.new_address().expect("Could not generate address");
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
-
-        let configs_fixture = MinerConfig {
+        let save_to = format!("./test_fixtures_{}/", ns);
+        fs::create_dir_all(save_to.clone());
+        let mut configs_fixture = MinerConfig {
             workspace: Workspace{
                 node_home: PathBuf::from("/root/.0L"),
             },
@@ -320,28 +320,28 @@ fn create_fixtures() {
             },
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
-                block_dir: "blocks".to_owned() + &ns, //  path should be unique for concurrent tests.
+                block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
                 base_waypoint: None,
-                node: "http://localhost:8080",
+                node: Some("http://localhost:8080".to_string()),
             },
         };
-        //clear from sideffects.
-        let blocks_dir = Path::new(&configs_fixture.chain_info.block_dir);
 
-        // mine
-        let block = mine_genesis(&configs_fixture);
-        dbg!(hex::encode(block.preimage));
+        // mine to save_to path
+        mine_genesis(&configs_fixture);
 
         // also create mnemonic
-        let mut latest_block_path = blocks_dir.to_path_buf();
-        latest_block_path.push(format!("owner.mnem", ns));
-        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
+        let mut mnemonic_path = PathBuf::from(save_to.clone());
+        mnemonic_path.push("owner.mnem");
+        dbg!(&mnemonic_path);
+        let mut file = fs::File::create(&mnemonic_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
         
         // create miner.toml
+        //rename the path for actual fixtures
+        configs_fixture.chain_info.block_dir = "blocks".to_string();
         let toml = toml::to_string(&configs_fixture).unwrap();
-        let mut toml_path = blocks_dir.to_path_buf();
+        let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
         let file = fs::File::create(&toml_path);
         file.unwrap().write(&toml.as_bytes())
