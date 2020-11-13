@@ -9,7 +9,9 @@ NODE_ENV = prod
 endif
 
 # Account settings
+ifndef ACC
 ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
+endif
 IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
 
 # Github settings
@@ -249,20 +251,10 @@ smoke-root:
 	ACC=root make root treasury layout
 
 smoke-reg:
-# note: this uses the ACC in local env to create files i.e. alice or bob
-
+# note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
 	make clear fix
-#initialize the OWNER account
-	ACC=${ACC} make init-test
-# The OPERs initialize local accounts and submit pubkeys to github
-	ACC=${ACC}-oper make oper-key
-# The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
-	ACC=${ACC} make owner-key add-proofs
-# OWNER *assign* an operator.
-	ACC=${ACC} OPER=${ACC}-oper make assign
-# OPERs send signed transaction with configurations for *OWNER* account
-	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
+	echo ${MNEM} | head -c -1 | make register
 smoke-gen:
 	ACC=${ACC}-oper make genesis start
 smoke:
@@ -274,60 +266,28 @@ smoke:
 ######################################
 ## TEST FIXTURES -- NOT FOR GENESIS ##
 
-ifeq ($(ACC), alice)
-ACC = alice
-ACC = f094dfc3d134331d5410a23f795117b8
-AUTH = f0dc83910c2263e5301431114c5c6d12f094dfc3d134331d5410a23f795117b8
-IP = 142.93.191.147
+ifeq ($(NS), alice)
 MNEM = reunion liberty page dentist rule step negative erosion robot truth paddle image purpose patient work normal wet fruit toward embark speak rail endless final
 endif
 
-ifeq ($(ACC), alice-oper)
-IP = 142.93.191.147
-endif
 
-ifeq ($(ACC), bob)
-ACC = 5831d5f6cb6c0c5c576c186f9c4efb63
-AUTH = b28f75b8cdd27913ac785d38161501665831d5f6cb6c0c5c576c186f9c4efb63
-IP = 167.71.84.248
+ifeq ($(NS), bob)
 MNEM = soldier call yellow stone share tortoise jewel gentle margin knock dismiss hurdle cable will surround october fringe input guess snap reveal excite mutual curve
 endif
 
-ifeq ($(ACC), bob-oper)
-IP = 167.71.84.248
-endif
 
-ifeq ($(ACC), carol)
-ACC = 07dcd9c8d1dbaaa1611880cbe4ee9691
-AUTH = 89d1026ea2e6dd5a0366f96e773dec0b07dcd9c8d1dbaaa1611880cbe4ee9691
-IP = 104.131.56.224
+ifeq ($(NS), carol)
 MNEM = open neither replace gym pact happy net receive alpha door purse armor chase document forum into tube cherry step kitchen portion army praise keep
 endif
 
-ifeq ($(ACC), carol-oper)
-IP = 104.131.56.224
-endif
 
 ifeq ($(ACC), dave)
-ACC = 4a6dcca79b3828fc665fca5c6218d793
-AUTH = 4a62540137e5f3b05c6ea608e37b3ab74a6dcca79b3828fc665fca5c6218d793
-IP = 104.131.32.62
 MNEM = word rival cabin stay enroll swarm shop stuff cruel disorder custom wet awful winter erosion card fantasy member budget aerobic warfare shove embody armor
 endif
 
-ifeq ($(ACC), dave-oper)
-IP = 104.131.32.62
-endif
 
 ifeq ($(ACC), eve)
-ACC = e9fbaf07795acc2e675961eb7649acdf
-AUTH = a34b9c1580fe7f7c518dac7ed9ddba0be9fbaf07795acc2e675961eb7649acdf
-IP = 134.122.115.12
 MNEM = dry omit trade angry ahead edge remember stock ordinary elite scare gossip staff help exile minor swift crucial shrug boring stock believe violin vendor
-endif
-
-ifeq ($(ACC), eve-oper)
-IP = 134.122.115.12
 endif
 
 ##########################
