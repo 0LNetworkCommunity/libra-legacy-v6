@@ -256,7 +256,7 @@ smoke-reg:
 	make clear fix
 	echo ${MNEM} | head -c -1 | make register
 smoke-gen:
-	ACC=${ACC}-oper make genesis start
+	make genesis start
 smoke:
 	make smoke-reg
 # Create configs and start
