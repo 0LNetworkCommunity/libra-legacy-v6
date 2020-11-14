@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::Block, block::ValConfigs, node_keys::KeyScheme};
+use crate::{block::Block, block::ValConfigs, node_keys::KeyScheme, block::build_block};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use std::{fs, path::PathBuf};
@@ -24,6 +24,8 @@ impl Runnable for GenesisCmd {
         let miner_configs = app_config();
         println!("Enter your 0L mnemonic:");
         let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
+
+        build_block::mine_genesis(&miner_configs);
 
         // Create val_init.json file.
         let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
