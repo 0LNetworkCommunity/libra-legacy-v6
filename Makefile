@@ -68,6 +68,9 @@ treasury:
 		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
+ceremony:
+	NODE_ENV=prod && miner ceremony
+
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
 	@echo Initializing from ${DATA_PATH}/miner.toml with account:
