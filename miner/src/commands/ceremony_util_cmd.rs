@@ -6,9 +6,9 @@ use crate::config;
 use crate::{keygen::keygen, commands::CONFIG_FILE, block::build_block};
 use libra_global_constants::NODE_HOME;
 use toml;
-use std::{net::Ipv4Addr, fs, io::Write};
+use std::{fs, io::Write};
 use rustyline::Editor;
-use libra_wallet::WalletLibrary;
+
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]

@@ -2,7 +2,7 @@
 
 #![allow(clippy::never_loop)]
 use abscissa_core::{Command, Options, Runnable};
-use crate::{config::MinerConfig, keygen::keygen};
+use crate::{keygen::keygen};
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
