@@ -39,7 +39,7 @@ impl Runnable for CeremonyUtilCmd {
         miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
         
         // Get optional statement which goes into genesis block
-        miner_configs.profile.statement = rl.readline("Your statement: ").expect("Please enter a fun statement to go into genesis proof.");
+        miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter a fun statement to go into genesis proof.");
 
         // Generate new keys
         let (authkey, account) = keygen();
