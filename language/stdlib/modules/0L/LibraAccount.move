@@ -265,6 +265,7 @@ module LibraAccount {
         );
 
         make_account(new_signer, auth_key_prefix);
+        MinerState::reset_rate_limit(sender_addr);
         new_account_address
     }
 
