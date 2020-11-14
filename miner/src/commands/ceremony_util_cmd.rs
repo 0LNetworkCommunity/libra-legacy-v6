@@ -53,11 +53,10 @@ impl Runnable for CeremonyUtilCmd {
         file.unwrap().write(&toml.as_bytes())
             .expect("Could not write toml file");    
 
-        println!("\nMining Proof of Work, block_0.json");
+
         println!("\nThis will take about 10 mins");
-
-
         build_block::mine_genesis(&miner_configs);
+
         println!("\nWelcome");
     }
 }

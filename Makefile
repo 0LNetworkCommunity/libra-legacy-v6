@@ -1,9 +1,6 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
-# Chain settings
-CHAIN_ID = 7
-
 
 ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
 IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
@@ -13,28 +10,18 @@ GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
 REPO_NAME = dev-genesis
 NODE_ENV = prod
-
+CHAIN_ID = 7
 
 # Registration params
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
 
-bins:
-	#TOML cli
-	cargo install toml-cli
-	#Build and install genesis tool, libra-node, and miner
-	cargo build -p libra-genesis-tool --release
-	sudo cp -f target/release/libra-genesis-tool ./genesis
-	cargo build -p miner --release
-	sudo cp -f target/release/miner ./miner_app
-
-
 #### GENESIS REGISTRATION ####
 
 ceremony:
 	chmod +x ./miner_app
-	./miner_app ceremony
+	export NODE_ENV=prod && ./miner_app ceremony
 
 register:
 	chmod +x ./genesis
@@ -115,3 +102,12 @@ check:
 	@echo devnet mode: ${TEST}
 	@echo devnet name: ${NS}
 	@echo devnet mnem: ${MNEM}
+
+bins:
+	#TOML cli
+	cargo install toml-cli
+	#Build and install genesis tool, libra-node, and miner
+	cargo build -p libra-genesis-tool --release
+	sudo cp -f target/release/libra-genesis-tool ./genesis
+	cargo build -p miner --release
+	sudo cp -f target/release/miner ./miner_app
