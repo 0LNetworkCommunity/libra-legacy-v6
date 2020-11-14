@@ -29,6 +29,7 @@ impl Command for DevCommand {
             Box::new(DevCommandChangeLibraVersion {}),
             Box::new(DevCommandEnableCustomScript {}),
             Box::new(AddToScriptAllowList {}),
+            Box::new(DevCommandNoop {}),
         ];
         subcommand_execute(&params[0], commands, client, &params[1..]);
     }
@@ -219,7 +220,7 @@ impl Command for DevCommandNoop {
 
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
 
-        match client.noop_demo(params) {
+        match client.noop_demo(params, true) {
             Ok(_) => println!("Successfully finished execution"),
             Err(e) => println!("{}", e),
         }

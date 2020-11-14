@@ -5121,7 +5121,6 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`minerstate_commit`](miner_state_commit.md#minerstate_commit)
 -  [`minerstate_helper`](miner_state_helper.md#minerstate_helper)
 -  [`minerstate_onboarding`](miner_state_onboarding.md#minerstate_onboarding)
--  [`noop`](noop.md#noop)
 -  [`ol_oracle_tx`](ol_oracle_tx.md#ol_oracle_tx)
 -  [`ol_reconfig_bulk_update_setup`](ol_reconfig_bulk_update_setup.md#ol_reconfig_bulk_update_setup)
 -  [`peer_to_peer_with_metadata`](transaction_script_documentation.md#peer_to_peer_with_metadata)

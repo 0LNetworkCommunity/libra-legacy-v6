@@ -696,8 +696,6 @@ pub enum ScriptCall {
         human_name: Bytes,
     },
 
-    Noop {},
-
     OlOracleTx {
         id: u64,
         data: Bytes,
@@ -1646,7 +1644,6 @@ impl ScriptCall {
                 full_node_network_address,
                 human_name,
             ),
-            Noop {} => encode_noop_script(),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
             OlReconfigBulkUpdateSetup {
                 alice,
@@ -2584,10 +2581,6 @@ pub fn encode_minerstate_onboarding_script(
             TransactionArgument::U8Vector(human_name),
         ],
     )
-}
-
-pub fn encode_noop_script() -> Script {
-    Script::new(NOOP_CODE.to_vec(), vec![], vec![])
 }
 
 pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
@@ -3728,10 +3721,6 @@ fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_noop_script(_script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::Noop {})
-}
-
 fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::OlOracleTx {
         id: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -3976,7 +3965,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         MINERSTATE_ONBOARDING_CODE.to_vec(),
         Box::new(decode_minerstate_onboarding_script),
     );
-    map.insert(NOOP_CODE.to_vec(), Box::new(decode_noop_script));
     map.insert(
         OL_ORACLE_TX_CODE.to_vec(),
         Box::new(decode_ol_oracle_tx_script),
@@ -4284,13 +4272,6 @@ const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
     0, 0, 0, 0, 0, 1, 0, 4, 5, 25, 14, 0, 14, 1, 11, 2, 11, 3, 11, 4, 11, 5, 17, 1, 12, 6, 10, 6,
     17, 2, 12, 7, 11, 7, 3, 15, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 6, 56, 0, 6, 0, 0, 0, 0, 0, 0,
     0, 0, 33, 12, 9, 11, 9, 3, 24, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
-];
-
-const NOOP_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 12, 8, 29, 16, 6,
-    45, 18, 0, 0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 9, 0, 0, 1, 5, 5, 68, 101, 98, 117, 103, 5, 112,
-    114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 1, 2, 5, 7, 0, 12, 0, 14, 0, 56, 0, 2,
 ];
 
 const OL_ORACLE_TX_CODE: &[u8] = &[
