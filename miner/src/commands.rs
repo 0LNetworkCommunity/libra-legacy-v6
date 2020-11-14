@@ -16,6 +16,7 @@ mod version;
 mod onboard;
 mod swarm_test;
 mod genesis;
+mod ceremony_util_cmd;
 
 use self::{
     start::StartCmd,
@@ -24,6 +25,7 @@ use self::{
     swarm_test::SwarmCmd,
     genesis::GenesisCmd,
     keygen_cmd::KeygenCmd,
+    ceremony_util_cmd::CeremonyUtilCmd,
 
 };
 use crate::config::MinerConfig;
@@ -62,6 +64,10 @@ pub enum MinerCmd {
     /// The `keygen` subcommand
     #[options(help = "Generate keys")]
     Keygen(KeygenCmd),
+
+    /// The `keygen` subcommand
+    #[options(help = "Generate keys")]
+    Ceremony(CeremonyUtilCmd),
 
     /// The `onboard` subcommand
     #[options(help = "Onboard a new miner with a block_0.json proof")]
