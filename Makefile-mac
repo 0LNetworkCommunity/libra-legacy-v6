@@ -4,25 +4,16 @@ DATA_PATH = ${HOME}/.0L
 # Chain settings
 CHAIN_ID = 7
 
-# Account settings
-ifndef ACC
+
 ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
-endif
 IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
+GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
 # Github settings
-GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
-
-ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-NODE_ENV = test
-MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
-else
-REPO_NAME = experimental-genesis
 NODE_ENV = prod
-endif
-#experimental network is #7
+
 
 # Registration params
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
@@ -33,20 +24,17 @@ bins:
 	#TOML cli
 	cargo install toml-cli
 	#Build and install genesis tool, libra-node, and miner
-	cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool ./genesisapp
-	cargo build -p miner --release && sudo cp -f ./minerapp
+	cargo build -p libra-genesis-tool --release && sudo cp -f target/release/libra-genesis-tool ./genesis
+	cargo build -p miner --release && sudo cp -f target/release/miner ./miner_app
 
 
 #### GENESIS REGISTRATION ####
-#### HELPERS ####
 
-keygen:
-	./minerapp keygen
-
-proof:
-	./minerapp genesis
+ceremony:
+	./miner_app ceremony
 
 register:
+# Account settings
 	cargo install toml-cli
 # export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
 	@echo Initializing from ${DATA_PATH}/miner.toml with account:
@@ -122,31 +110,3 @@ check:
 	@echo devnet mode: ${TEST}
 	@echo devnet name: ${NS}
 	@echo devnet mnem: ${MNEM}
-
-
-fix:
-ifdef TEST
-	echo ${NS}
-	@if test ! -d ${0L_PATH}; then \
-		mkdir ${0L_PATH}; \
-		mkdir ${DATA_PATH}; \
-	fi
-
-	mkdir -p ${DATA_PATH}/blocks/
-
-	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
-		rm ${DATA_PATH}/blocks/block_0.json; \
-	fi 
-
-	@if test -f ${DATA_PATH}/miner.toml; then \
-		rm ${DATA_PATH}/miner.toml; \
-	fi 
-
-	cp ./fixtures/test/${NS}/miner.toml ${DATA_PATH}/miner.toml
-
-	cp ./fixtures/test/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
-
-endif
-
-
-
