@@ -37,6 +37,8 @@ pub struct ValConfigs {
     pub full_node_network_identity_pubkey: Vec<u8>,
     /// IP address of full node
     pub full_node_network_address: String,
+    /// Human readable name of account
+    pub human_name: String,
 }
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>

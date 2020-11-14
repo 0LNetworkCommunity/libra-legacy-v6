@@ -229,6 +229,7 @@ module LibraAccount {
     // // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
     public fun create_validator_account_with_proof(
+        sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
         consensus_pubkey: vector<u8>,
@@ -236,7 +237,8 @@ module LibraAccount {
         fullnode_network_addresses: vector<u8>,
         human_name: vector<u8>,
     ):address acquires AccountOperationsCapability {
-        
+        let sender_addr = Signer::address_of(sender);
+        assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -263,6 +265,7 @@ module LibraAccount {
         );
 
         make_account(new_signer, auth_key_prefix);
+        MinerState::reset_rate_limit(sender_addr);
         new_account_address
     }
 

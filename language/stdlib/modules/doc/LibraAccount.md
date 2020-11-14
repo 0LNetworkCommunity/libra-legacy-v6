@@ -859,7 +859,7 @@ Initialize this module. This is only callable from genesis.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, consensus_pubkey: vector&lt;u8&gt;, validator_network_addresses: vector&lt;u8&gt;, fullnode_network_addresses: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;): address
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, consensus_pubkey: vector&lt;u8&gt;, validator_network_addresses: vector&lt;u8&gt;, fullnode_network_addresses: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;): address
 </code></pre>
 
 
@@ -869,6 +869,7 @@ Initialize this module. This is only callable from genesis.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(
+    sender: &signer,
     challenge: &vector&lt;u8&gt;,
     solution: &vector&lt;u8&gt;,
     consensus_pubkey: vector&lt;u8&gt;,
@@ -876,7 +877,8 @@ Initialize this module. This is only callable from genesis.
     fullnode_network_addresses: vector&lt;u8&gt;,
     human_name: vector&lt;u8&gt;,
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
-
+    <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
         &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
@@ -903,6 +905,7 @@ Initialize this module. This is only callable from genesis.
     );
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+    <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
     new_account_address
 }
 </code></pre>

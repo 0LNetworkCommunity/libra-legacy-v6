@@ -54,7 +54,6 @@ impl Runnable for CeremonyUtilCmd {
             .expect("Could not write toml file");    
 
 
-        println!("\nThis will take about 10 mins");
         build_block::mine_genesis(&miner_configs);
 
         println!("\nWelcome");

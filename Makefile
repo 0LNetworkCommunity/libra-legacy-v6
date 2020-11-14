@@ -69,7 +69,7 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony:
-	NODE_ENV=prod && miner ceremony
+	export NODE_ENV=prod && miner ceremony
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
@@ -93,9 +93,6 @@ init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	@if test ! -d ${0L_PATH}/node; then \
-		mkdir ${0L_PATH}/node; \
-	fi 
 	cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
