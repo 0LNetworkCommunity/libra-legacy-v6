@@ -1,4 +1,4 @@
-owners = ["alice", "bob", "carol", "dave", "eve"]
-operators = ["alice-oper", "bob-oper", "carol-oper", "dave-oper", "eve-oper"]
+owners = ["4C613C2F4B1E67CA8D98A542EE3F59F5"]
+operators = ["4C613C2F4B1E67CA8D98A542EE3F59F5-oper"]
 libra_root = "root"
 treasury_compliance = "root"

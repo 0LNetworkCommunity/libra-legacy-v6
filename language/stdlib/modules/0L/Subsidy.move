@@ -22,6 +22,8 @@ address 0x1 {
     use 0x1::LibraSystem;
     use 0x1::TransactionFee;
 
+    use 0x1::Debug::print;
+
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
@@ -112,6 +114,9 @@ address 0x1 {
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
+      print(&0x0000011111);
+      print(&genesis_validators);
+
       let len = Vector::length(&genesis_validators);
       // Calculate subsidy equally for all the validators based on subsidy curve
       // Calculate the split for subsidy and burn
@@ -130,6 +135,7 @@ address 0x1 {
       let i = 0;
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
         // print(&node_address);
         //Transfer gas from association to validator

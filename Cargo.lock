@@ -3754,6 +3754,7 @@ dependencies = [
  "hex 0.4.2",
  "hmac 0.9.0",
  "libra-crypto",
+ "libra-global-constants",
  "libra-temppath",
  "libra-types",
  "libra-workspace-hack",

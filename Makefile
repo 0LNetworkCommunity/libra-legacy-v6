@@ -1,30 +1,27 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
-DATA_PATH = $$HOME/.0L
-
+DATA_PATH = ${HOME}/.0L
 # Chain settings
 CHAIN_ID = 7
-ifndef NODE_ENV
-NODE_ENV = test
-endif
 
 # Account settings
 ifndef ACC
 ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
 endif
-
-ifndef IP
-ifeq (TEST,y)
-IP = 1.2.3.4
-else
 IP=$(shell toml get ${DATA_PATH}/miner.toml profile.ip)
-endif
-endif
 
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 REPO_ORG = OLSF
+
+ifeq (${TEST}, y)
+REPO_NAME = dev-genesis
+NODE_ENV = test
+MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
+else
 REPO_NAME = experimental-genesis
+NODE_ENV = prod
+endif
 #experimental network is #7
 
 # Registration params
@@ -44,7 +41,7 @@ bins:
 	#TOML cli
 	cargo install toml-cli
 	#Build and install genesis tool, libra-node, and miner
-	cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
+	# cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
 	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
 
@@ -56,17 +53,17 @@ init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	genesis set-layout \
+	cargo run -p libra-genesis-tool -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./util/set_layout.toml
 
 root:
-		genesis libra-root-key \
+		cargo run -p libra-genesis-tool --  libra-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 treasury:
-		genesis treasury-compliance-key \
+		cargo run -p libra-genesis-tool --  treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -76,55 +73,59 @@ register:
 	@echo Initializing from ${DATA_PATH}/miner.toml with account:
 	@echo ${ACC}
 	make init
+
 	@echo the OPER initializes local accounts and submit pubkeys to github
 	ACC=${ACC}-oper make oper-key
+
 	@echo The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
 	make owner-key add-proofs
+
 	@echo OWNER *assigns* an operator.
 	OPER=${ACC}-oper make assign
+
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
 init-test:
-	echo ${MNEM} | head -c -1 | genesis init --path=${DATA_PATH} --namespace=${ACC}
+	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
 	@if test ! -d ${0L_PATH}/node; then \
 		mkdir ${0L_PATH}/node; \
 	fi 
-	genesis init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	genesis mining \
+	cargo run -p libra-genesis-tool --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	genesis operator-key \
+	cargo run -p libra-genesis-tool --  operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
-	genesis owner-key \
+	cargo run -p libra-genesis-tool --  owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
-	genesis set-operator \
+	cargo run -p libra-genesis-tool --  set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
 reg:
-	genesis validator-config \
+	cargo run -p libra-genesis-tool --  validator-config \
 	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -135,22 +136,22 @@ reg:
 
 ## Helpers to verify the local state.
 verify:
-	genesis verify \
+	cargo run -p libra-genesis-tool --  verify \
 	--validator-backend ${LOCAL}
 	# --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
-	genesis verify \
+	cargo run -p libra-genesis-tool --  verify \
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
 
 #### GENESIS  ####
 genesis:
-	genesis files \
+	cargo run -p libra-genesis-tool --  files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
-	--namespace ${ACC}
+	--namespace ${ACC}-oper
 
 #### NODE MANAGEMENT ####
 start:
@@ -187,6 +188,7 @@ clear:
 
 #### HELPERS ####
 check:
+	@echo data path: ${DATA_PATH}
 	@echo account: ${ACC}
 	@echo github_token: ${GITHUB_TOKEN}
 	@echo ip: ${IP}
@@ -194,12 +196,14 @@ check:
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 	@echo env: ${NODE_ENV}
-	@echo test mode: ${TEST}
+	@echo devnet mode: ${TEST}
+	@echo devnet name: ${NS}
+	@echo devnet mnem: ${MNEM}
 
 
 fix:
 ifdef TEST
-	echo ${ACC}
+	echo ${NS}
 	@if test ! -d ${0L_PATH}; then \
 		mkdir ${0L_PATH}; \
 		mkdir ${DATA_PATH}; \
@@ -215,20 +219,20 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/miner.toml.${ACC} ${DATA_PATH}/miner.toml
+	cp ./fixtures/test/${NS}/miner.toml ${DATA_PATH}/miner.toml
 
-	cp ./fixtures/block_0.json.${NODE_ENV}.${ACC} ${DATA_PATH}/blocks/block_0.json
+	cp ./fixtures/test/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
 
 #### HELPERS ####
 get_waypoint:
-	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ~/node_data/key_store.json))
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
   
 	echo $$WAY
 
 client: get_waypoint
-	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 1
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 7
 
 compress: 
 	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
@@ -256,85 +260,15 @@ smoke-root:
 	ACC=root make root treasury layout
 
 smoke-reg:
-# note: this uses the ACC in local env to create files i.e. alice or bob
-
+# note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
 	make clear fix
-#initialize the OWNER account
-	ACC=${ACC} make init-test
-# The OPERs initialize local accounts and submit pubkeys to github
-	ACC=${ACC}-oper make oper-key
-# The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
-	ACC=${ACC} make owner-key add-proofs
-# OWNER *assign* an operator.
-	ACC=${ACC} OPER=${ACC}-oper make assign
-# OPERs send signed transaction with configurations for *OWNER* account
-	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
+	echo ${MNEM} | head -c -1 | make register
 smoke-gen:
-	ACC=${ACC}-oper make genesis start
+	make genesis start
 smoke:
 	make smoke-reg
 # Create configs and start
 	make smoke-gen
 
 
-######################################
-## TEST FIXTURES -- NOT FOR GENESIS ##
-
-ifeq ($(ACC), alice)
-ACC = alice
-ACC = f094dfc3d134331d5410a23f795117b8
-AUTH = f0dc83910c2263e5301431114c5c6d12f094dfc3d134331d5410a23f795117b8
-IP = 142.93.191.147
-MNEM = reunion liberty page dentist rule step negative erosion robot truth paddle image purpose patient work normal wet fruit toward embark speak rail endless final
-endif
-
-ifeq ($(ACC), alice-oper)
-IP = 142.93.191.147
-endif
-
-ifeq ($(ACC), bob)
-ACC = 5831d5f6cb6c0c5c576c186f9c4efb63
-AUTH = b28f75b8cdd27913ac785d38161501665831d5f6cb6c0c5c576c186f9c4efb63
-IP = 167.71.84.248
-MNEM = soldier call yellow stone share tortoise jewel gentle margin knock dismiss hurdle cable will surround october fringe input guess snap reveal excite mutual curve
-endif
-
-ifeq ($(ACC), bob-oper)
-IP = 167.71.84.248
-endif
-
-ifeq ($(ACC), carol)
-ACC = 07dcd9c8d1dbaaa1611880cbe4ee9691
-AUTH = 89d1026ea2e6dd5a0366f96e773dec0b07dcd9c8d1dbaaa1611880cbe4ee9691
-IP = 104.131.56.224
-MNEM = open neither replace gym pact happy net receive alpha door purse armor chase document forum into tube cherry step kitchen portion army praise keep
-endif
-
-ifeq ($(ACC), carol-oper)
-IP = 104.131.56.224
-endif
-
-ifeq ($(ACC), dave)
-ACC = 4a6dcca79b3828fc665fca5c6218d793
-AUTH = 4a62540137e5f3b05c6ea608e37b3ab74a6dcca79b3828fc665fca5c6218d793
-IP = 104.131.32.62
-MNEM = word rival cabin stay enroll swarm shop stuff cruel disorder custom wet awful winter erosion card fantasy member budget aerobic warfare shove embody armor
-endif
-
-ifeq ($(ACC), dave-oper)
-IP = 104.131.32.62
-endif
-
-ifeq ($(ACC), eve)
-ACC = e9fbaf07795acc2e675961eb7649acdf
-AUTH = a34b9c1580fe7f7c518dac7ed9ddba0be9fbaf07795acc2e675961eb7649acdf
-IP = 134.122.115.12
-MNEM = dry omit trade angry ahead edge remember stock ordinary elite scare gossip staff help exile minor swift crucial shrug boring stock believe violin vendor
-endif
-
-ifeq ($(ACC), eve-oper)
-IP = 134.122.115.12
-endif
-
-##########################
