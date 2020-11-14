@@ -19,7 +19,7 @@ script {
   let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
 
   let sender_addr = Signer::address_of(sender);
-  let epochs_since_creation = 10;
+  let epochs_since_creation = 6;
   MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
 
   LibraAccount::create_validator_account_with_proof(
@@ -40,4 +40,4 @@ script {
   assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101041000);
   }
 }
-//check: EXECUTED
+//check: ABORTED

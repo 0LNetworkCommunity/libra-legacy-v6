@@ -65,10 +65,9 @@ impl Runnable for OnboardCmd {
             init_data.block_zero.preimage.to_owned(),
             init_data.block_zero.proof.to_owned(),
             init_data.consensus_pubkey,
-            init_data.validator_network_identity_pubkey,
             init_data.validator_network_address,
-            init_data.full_node_network_identity_pubkey,
             init_data.full_node_network_address,
+            init_data.human_name
         ) {
             Ok(_res) => {
                 status_ok!("Success", "Validator initialization committed, exiting.");

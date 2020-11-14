@@ -132,10 +132,9 @@ pub fn submit_onboard_tx(
     preimage: Vec<u8>,
     proof: Vec<u8>,
     consensus_pubkey: Vec<u8>,
-    validator_network_identity_pubkey: Vec<u8>,
     validator_network_address: String,
-    full_node_network_identity_pubkey: Vec<u8>,
     full_node_network_address: String,
+    human_name: String,
 ) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
@@ -149,19 +148,30 @@ pub fn submit_onboard_tx(
         None => 0,
     };
 
-    // Create the unsigned MinerState transaction script
-    let script = Script::new(
-        transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(preimage),
-            TransactionArgument::U8Vector(proof),
-            TransactionArgument::U8Vector(consensus_pubkey),
-            TransactionArgument::U8Vector(validator_network_identity_pubkey),
-            TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
-            TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
-        ],
+    // // Create the unsigned MinerState transaction script
+    // let script = Script::new(
+    //     transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
+    //     vec![],
+    //     vec![
+    //         TransactionArgument::U8Vector(preimage),
+    //         TransactionArgument::U8Vector(proof),
+    //         TransactionArgument::U8Vector(consensus_pubkey),
+    //         TransactionArgument::U8Vector(validator_network_identity_pubkey),
+    //         TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
+    //         TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
+    //     ],
+    // );
+
+    let script = transaction_builder::encode_minerstate_onboarding_script(
+        preimage,
+        proof,
+        consensus_pubkey,
+        validator_network_address.as_bytes().to_vec(),
+        full_node_network_address.as_bytes().to_vec(),
+        human_name.as_bytes().to_vec(),
     );
+
+
 
     // sign the transaction script
     let txn = create_user_txn(
