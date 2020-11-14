@@ -202,6 +202,30 @@ impl Command for DevCommandChangeLibraVersion {
     }
 }
 
+pub struct DevCommandNoop {}
+
+impl Command for DevCommandNoop {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["noop", "n"]
+    }
+
+    fn get_params_help(&self) -> &'static str {
+        ""
+    }
+
+    fn get_description(&self) -> &'static str {
+        "Do nothing"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+
+        match client.noop_demo(params) {
+            Ok(_) => println!("Successfully finished execution"),
+            Err(e) => println!("{}", e),
+        }
+    }
+}
+
 pub struct DevCommandUpgradeStdlib {}
 
 impl Command for DevCommandUpgradeStdlib {

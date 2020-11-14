@@ -661,6 +661,23 @@ impl ClientProxy {
         }
     }
 
+        /// Modify the stored LibraVersion on chain.
+    pub fn noop_demo(
+        &mut self,
+        space_delim_strings: &[&str],
+    ) -> Result<()> {
+
+        let payload = TransactionPayload::Script(
+            transaction_builder::encode_noop_script(),
+        );
+        self.submit_program(
+            space_delim_strings,
+            payload
+        );
+        Ok(())
+    }
+
+
     /// Only allow executing predefined script in the Move standard library in the network.
     pub fn upgrade_stdlib(
         &mut self,
