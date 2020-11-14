@@ -160,7 +160,7 @@ module Globals {
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
-          difficulty: 1250000, //10 mins on macbook pro 2.5 ghz quadcore
+          difficulty: 12500000, //10 mins on macbook pro 2.5 ghz quadcore
           epoch_mining_threshold: 20,
           }
         }
