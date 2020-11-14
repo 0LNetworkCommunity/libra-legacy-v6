@@ -52,8 +52,6 @@ impl Runnable for CeremonyUtilCmd {
         let file = fs::File::create(&miner_toml_path);
         file.unwrap().write(&toml.as_bytes())
             .expect("Could not write toml file");    
-        println!("Miner configs saved to: {}\n\
-        ==========================\n\n", miner_toml_path.display());
 
         println!("\nMining Proof of Work, block_0.json");
 

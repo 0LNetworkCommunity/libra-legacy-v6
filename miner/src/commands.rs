@@ -66,7 +66,7 @@ pub enum MinerCmd {
     Keygen(KeygenCmd),
 
     /// The `keygen` subcommand
-    #[options(help = "Generate keys")]
+    #[options(help = "Wrapper for ceremony configurations")]
     Ceremony(CeremonyUtilCmd),
 
     /// The `onboard` subcommand
