@@ -25,10 +25,6 @@ impl Runnable for GenesisCmd {
         println!("Enter your 0L mnemonic:");
         let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
 
-        // Create blocks/block_0.json file.
-        build_block::mine_genesis(&miner_configs);
-        
-
         // Create val_init.json file.
         let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
 

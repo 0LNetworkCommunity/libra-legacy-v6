@@ -1,0 +1,11 @@
+[workspace]
+home = "."
+
+[profile]
+auth_key = "674b08ff08221dc2df63e7948a7fbde5439cbb50370d774db5aecf038e6f1c91"
+statement = "Protests rage across the nation"
+
+[chain_info]
+chain_id = "0L testnet"
+block_dir = "./blocks"
+base_waypoint = "0:8859e663dfc13a44d2b67b11bfa4bf7679c61691de5fb0c483c4874b4edae35b"
