@@ -4005,6 +4005,7 @@ dependencies = [
  "storage-interface",
  "thiserror",
  "toml",
+ "transaction-builder",
  "vdf",
  "vm-genesis",
  "wait-timeout",
