@@ -267,7 +267,7 @@
      count_proofs_in_epoch: 0u64,
      epochs_validating_and_mining: 0u64,
      contiguous_epochs_validating_and_mining: 0u64,
-     epochs_since_last_account_creation: 0u64,
+     epochs_since_last_account_creation: 10u64, // is not rate-limited
    });
 
    <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {

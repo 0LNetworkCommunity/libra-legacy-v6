@@ -1413,7 +1413,6 @@ impl<'env, 'translator> ModuleTranslator<'env, 'translator> {
 
         // Analyze in-function spec blocks.
         for (name, fun_def) in &module_def.functions {
-            dbg!(&name);
             let fun_spec_info = &function_infos.get(&name).unwrap().spec_info;
             let qsym = self.qualified_by_module_from_name(&name.0);
             for (spec_id, spec_block) in fun_def.specs.iter() {
