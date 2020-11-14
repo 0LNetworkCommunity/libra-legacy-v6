@@ -69,7 +69,7 @@ treasury:
 
 #### GENESIS REGISTRATION ####
 ceremony:
-	NODE_ENV=prod && miner ceremony
+	export NODE_ENV=prod && miner ceremony
 
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
