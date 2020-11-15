@@ -220,9 +220,9 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/test/${NS}/miner.toml ${DATA_PATH}/miner.toml
+	cp ./fixtures/${NODE_ENV}/${NS}/miner.toml ${DATA_PATH}/miner.toml
 
-	cp ./fixtures/test/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+	cp ./fixtures/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
 
