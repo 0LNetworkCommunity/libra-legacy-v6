@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::Block, block::ValConfigs, block::build_block, node_keys::NodePubKeys};
+use crate::{block::Block, block::ValConfigs, node_keys::KeyScheme, block::build_block};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use std::{fs, path::PathBuf};
@@ -10,7 +10,6 @@ use std::io::Write;
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use fs::File;
-use libra_crypto::ValidCryptoMaterial;
 
 #[derive(Command, Debug, Options)]
 pub struct GenesisCmd {
@@ -26,18 +25,16 @@ impl Runnable for GenesisCmd {
         println!("Enter your 0L mnemonic:");
         let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
 
-        // Create blocks/block_0.json file.
         build_block::mine_genesis(&miner_configs);
-        
 
         // Create val_init.json file.
-        let keys = NodePubKeys::new_from_mnemonic(mnemonic_string);
+        let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
 
-        let mut json_path = PathBuf::from(&miner_configs.workspace.miner_home);
+        let mut json_path = PathBuf::from(&miner_configs.workspace.node_home);
         json_path.push("val_init.json");
 
         // Read from block_0.json to confirm it's properly formed.
-        let mut block_json = PathBuf::from(&miner_configs.workspace.miner_home);
+        let mut block_json = PathBuf::from(&miner_configs.workspace.node_home);
         block_json.push("blocks/block_0.json");
         println!("load block_0 from {:?}", &block_json);
         let f = File::open(block_json).expect("Could not open block_0 files");
@@ -46,11 +43,12 @@ impl Runnable for GenesisCmd {
         let val_configs = ValConfigs {
             /// Block zero of the onboarded miner
             block_zero: block,
-            consensus_pubkey: keys.consensus_key.to_bytes().to_vec(),
-            validator_network_identity_pubkey: keys.validator_network_key.to_bytes().to_vec(),
-            validator_network_address: String::from(miner_configs.profile.ip.as_ref().unwrap()),
-            full_node_network_identity_pubkey: keys.fullnode_network_key.to_bytes().to_vec(),
-            full_node_network_address: String::from(miner_configs.profile.ip.as_ref().unwrap()),
+            consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
+            validator_network_identity_pubkey: keys.child_2_val_network.get_public().to_bytes().into(),
+            validator_network_address: miner_configs.profile.ip.to_string(),
+            full_node_network_identity_pubkey: keys.child_3_fullnode_network.get_public().to_bytes().into(),
+            full_node_network_address: miner_configs.profile.ip.to_string(),
+            human_name: miner_configs.profile.account.to_string(),
         };
 
         let mut file = File::create(json_path.as_path()).unwrap();

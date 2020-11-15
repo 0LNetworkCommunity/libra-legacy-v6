@@ -33,7 +33,7 @@ use move_core_types::{
     gas_schedule::{CostTable, GasAlgebra, GasCarrier, GasUnits},
     identifier::IdentStr,
 };
-use move_vm_runtime::{data_cache::RemoteCache, logging::LogContext, session::Session};
+use move_vm_runtime::{logging::LogContext, session::Session, data_cache::RemoteCache,};
 use move_vm_types::{
     gas_schedule::{zero_cost_schedule, CostStrategy},
     values::Value,
@@ -447,7 +447,7 @@ impl LibraVM {
         let mut cost_strategy = CostStrategy::system(&gas_schedule, GasUnits::new(0));
         let mut session = self.0.new_session(remote_cache);
 
-        if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.into_inner() {
+        if let Ok((round, timestamp, previous_vote, proposer)) = block_metadata.clone().into_inner() {
             let args = vec![
                 Value::transaction_argument_signer_reference(txn_data.sender),
                 Value::u64(round),
@@ -471,6 +471,13 @@ impl LibraVM {
         } else {
             return Err(VMStatus::Error(StatusCode::MALFORMED));
         };
+
+        // Consensus checking for oracle outcome
+        self.0.tick_oracle_consensus(&mut session, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
+        
+        // Apply upgrade for Upgrade oracle
+        self.0.apply_stdlib_upgrade(&mut session, &remote_cache, block_metadata.clone(), &txn_data, &mut cost_strategy, log_context)?;
+
         SYSTEM_TRANSACTIONS_EXECUTED.inc();
 
         let output = get_transaction_output(

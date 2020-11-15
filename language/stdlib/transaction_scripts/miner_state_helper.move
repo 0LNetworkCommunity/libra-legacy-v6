@@ -5,7 +5,7 @@ use 0x1::Testnet;
 use 0x1::Globals;
 use 0x1::TestFixtures;
 
-fun main(sender: &signer) {
+fun minerstate_helper(sender: &signer) {
     assert(Testnet::is_testnet(), 01);
     
     MinerState::test_helper(

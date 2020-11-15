@@ -161,6 +161,25 @@ pub fn build_stdlib() -> BTreeMap<String, CompiledModule> {
     modules
 }
 
+// Update stdlib with a byte string, used as part of the upgrade oracle
+pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
+    let modules : Vec<CompiledModule> = lcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
+        .unwrap_or(vec![]) // set as empty array if err occurred
+        .into_iter()
+        .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
+        .collect();
+
+    // verify the compiled module
+    let mut verified_modules = vec![];
+    for module in modules {
+        verify_module(&module).expect("stdlib module failed to verify");
+        DependencyChecker::verify_module(&module, &verified_modules)
+            .expect("stdlib module dependency failed to verify");
+        verified_modules.push(module)
+    }
+    verified_modules
+}
+
 pub fn compile_script(source_file_str: String) -> Vec<u8> {
     let (_, mut compiled_program) = move_compile(
         &[source_file_str],

@@ -31,7 +31,7 @@ pub fn resubmit_backlog(home: PathBuf, config: &MinerConfig){
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     let remote_state: MinerStateView  = match client.get_miner_state(tx_params.address.clone()) {
         Ok( s ) => { match s {
-            Some( state) => state,
+            Some(state) => state,
             None=> {
                 println!("No remote state found");
                 return
@@ -48,7 +48,7 @@ pub fn resubmit_backlog(home: PathBuf, config: &MinerConfig){
     println!("Remote tower height: {}", remote_height);
 
     // Getting local state height
-    let mut blocks_dir = config.workspace.miner_home.clone();
+    let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 

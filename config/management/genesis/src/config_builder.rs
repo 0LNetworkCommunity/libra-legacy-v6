@@ -97,6 +97,11 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
 
         self.storage_helper
             .initialize_by_idx(local_ns.clone(), 1 + index);
+        
+        //////// 0L /////////
+        self.storage_helper
+            .swarm_pow_helper(remote_ns.clone());
+
         let _ = self
             .storage_helper
             .owner_key(&local_ns, &remote_ns)

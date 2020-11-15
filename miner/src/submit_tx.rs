@@ -1,8 +1,5 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use libra_wallet::{Mnemonic, key_factory::{
-    Seed, KeyFactory, ChildNumber
-}};
 use libra_types::{waypoint::Waypoint};
 
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
@@ -18,12 +15,10 @@ use std::{io::{stdout, Write}, thread, time};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
-use crate::{
-    config::MinerConfig
-};
+use crate::{node_keys::KeyScheme, config::MinerConfig};
 use compiled_stdlib::transaction_scripts;
-use libra_json_rpc_types::views::TransactionView;
-use libra_types::vm_status::StatusCode;
+use libra_json_rpc_types::views::{TransactionView, VMStatusView};
+use libra_types::chain_id::ChainId;
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -56,6 +51,8 @@ pub fn submit_tx(
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
+    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+
     let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
@@ -66,7 +63,7 @@ pub fn submit_tx(
     // Create the unsigned MinerState transaction script
     if !is_onboading {
         script = Script::new(
-            transaction_scripts::StdlibScript::MinerState.compiled_bytes().into_vec(),
+            transaction_scripts::StdlibScript::MinerStateCommit.compiled_bytes().into_vec(),
             vec![],
             vec![
                 TransactionArgument::U8Vector(preimage),
@@ -74,16 +71,21 @@ pub fn submit_tx(
             ],
         );
     } else {
+
+        let consensus_pubkey = hex::decode("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
+        let validator_network_address = "test".as_bytes().to_vec();
+        let full_node_network_address = "test".as_bytes().to_vec();
+        let human_name = "test".as_bytes().to_vec();
         script = Script::new(
             transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
             vec![],
             vec![
-                TransactionArgument::U8Vector(preimage),
-                TransactionArgument::U8Vector(proof),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),
-                TransactionArgument::U8Vector("z".as_bytes().to_vec()),TransactionArgument::U8Vector("z".as_bytes().to_vec()),                
+                TransactionArgument::U8Vector(preimage), // challenge: vector<u8>,
+                TransactionArgument::U8Vector(proof), // solution: vector<u8>,
+                TransactionArgument::U8Vector(consensus_pubkey), // consensus_pubkey: vector<u8>,
+                TransactionArgument::U8Vector(validator_network_address),// validator_network_address: vector<u8>,
+                TransactionArgument::U8Vector(full_node_network_address),// full_node_network_address: vector<u8>,
+                TransactionArgument::U8Vector(human_name),// human_name: vector<u8>,
             ],
         );
     }
@@ -98,6 +100,7 @@ pub fn submit_tx(
         tx_params.coin_price_per_unit,
         "GAS".parse()?,
         tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+        chain_id,
     )?;
 
     // get account_data struct
@@ -129,34 +132,46 @@ pub fn submit_onboard_tx(
     preimage: Vec<u8>,
     proof: Vec<u8>,
     consensus_pubkey: Vec<u8>,
-    validator_network_identity_pubkey: Vec<u8>,
     validator_network_address: String,
-    full_node_network_identity_pubkey: Vec<u8>,
     full_node_network_address: String,
+    human_name: String,
 ) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let (account_state,_) = client.get_account_state(tx_params.address.clone(), true).unwrap();
+    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+
+    let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,
     };
 
-    // Create the unsigned MinerState transaction script
-    let script = Script::new(
-        transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(preimage),
-            TransactionArgument::U8Vector(proof),
-            TransactionArgument::U8Vector(consensus_pubkey),
-            TransactionArgument::U8Vector(validator_network_identity_pubkey),
-            TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
-            TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
-        ],
+    // // Create the unsigned MinerState transaction script
+    // let script = Script::new(
+    //     transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
+    //     vec![],
+    //     vec![
+    //         TransactionArgument::U8Vector(preimage),
+    //         TransactionArgument::U8Vector(proof),
+    //         TransactionArgument::U8Vector(consensus_pubkey),
+    //         TransactionArgument::U8Vector(validator_network_identity_pubkey),
+    //         TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
+    //         TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
+    //     ],
+    // );
+
+    let script = transaction_builder::encode_minerstate_onboarding_script(
+        preimage,
+        proof,
+        consensus_pubkey,
+        validator_network_address.as_bytes().to_vec(),
+        full_node_network_address.as_bytes().to_vec(),
+        human_name.as_bytes().to_vec(),
     );
+
+
 
     // sign the transaction script
     let txn = create_user_txn(
@@ -168,6 +183,7 @@ pub fn submit_onboard_tx(
         tx_params.coin_price_per_unit,
         "GAS".parse()?,
         tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+        chain_id,
     )?;
 
     // get account_data struct
@@ -185,7 +201,7 @@ pub fn submit_onboard_tx(
         txn
     ){
         Ok(_) => {
-            Ok( wait_for_tx(tx_params.address, sequence_number, &mut client) )
+            Ok(wait_for_tx(tx_params.address, sequence_number, &mut client))
         }
         Err(err) => Err(err)
     }
@@ -204,21 +220,19 @@ pub fn wait_for_tx (
         );
 
         loop {
-            
+            thread::sleep(time::Duration::from_millis(1000));
             // prevent all the logging the client does while it loops through the query.
             stdout().flush().unwrap();
             
             match &mut client.get_txn_by_acc_seq(sender_address, sequence_number, false){
-                Ok( Some(txn_view)) => {
+                Ok(Some(txn_view)) => {
                     return Some(txn_view.to_owned());
                 },
                 Err(e) => {
                     println!("Response with error: {:?}", e);
-
                 },
                 _ => {
                     print!(".");
-                    thread::sleep(time::Duration::from_millis(1000));
                 }
             }
 
@@ -232,12 +246,12 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
             // We receive a tx object.
             match tx_view {
                 Some(tx_view) => {
-                    if tx_view.vm_status != StatusCode::EXECUTED {
+                    if tx_view.vm_status != VMStatusView::Executed {
                         status_warn!("Transaction failed");
                         println!("Rejected with code:{:?}", tx_view.vm_status);
                         return false
                     } else {
-                        status_ok!("Success:", "proof committed to chain\n");
+                        status_ok!("\nSuccess:", "proof committed to chain");
                         return true
                     }
                 }
@@ -254,7 +268,6 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
             status_warn!("Transaction err: {:?}", e);
             return false
         }
-
     }
 }
 
@@ -264,17 +277,16 @@ pub fn get_params (
     waypoint: Waypoint,
     config: &MinerConfig
 ) -> TxParams {
-    let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-    let kf = KeyFactory::new(&seed).unwrap();
-    let child_0 = kf.private_child(ChildNumber::new(0)).unwrap();
-    let private_key = child_0.export_priv_key();
-    let keypair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(private_key);
+    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(pubkey);
     let url_str = config.chain_info.node.as_ref().unwrap();
 
     TxParams {
-        auth_key: child_0.get_authentication_key(),
-        address: child_0.get_authentication_key().derived_address(),
-        url: Url::parse(url_str).unwrap(),
+        auth_key,
+        address: config.profile.account,
+        url: Url::parse(url_str).expect("No url provided in miner.toml"),
         waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
@@ -285,6 +297,7 @@ pub fn get_params (
 
 #[test]
 fn test_make_params() {
+    use libra_types::PeerId; 
     use crate::config::{
         Workspace,
         Profile,
@@ -296,16 +309,14 @@ fn test_make_params() {
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
     let configs_fixture = MinerConfig {
         workspace: Workspace{
-            miner_home: PathBuf::from("."),
             node_home: PathBuf::from("."),
         },
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                 .to_owned(),
-            account: None,
-            operator_private_key: None,
-            ip: None,
-            statement: "Protests rage across the Nation".to_owned(),
+            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+            ip: "1.1.1.1".parse().unwrap(),
+            statement: "Protests rage across the nation".to_owned(),
         },
         chain_info: ChainInfo {
             chain_id: "0L testnet".to_owned(),

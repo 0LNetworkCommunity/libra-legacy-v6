@@ -16,20 +16,13 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform,
 };
-use libra_types::{
-    account_address,
-    account_config::{
+use libra_types::{account_address, account_config::{
         self,
         events::{CreateAccountEvent},
-    },
-    chain_id::{ChainId},
-    contract_event::ContractEvent,
-    on_chain_config::VMPublishingOption,
-    transaction::{
+    }, chain_id::{ChainId}, contract_event::ContractEvent, on_chain_config::VMPublishingOption, transaction::{
         authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
         WriteSetPayload,
-    },
-};
+    }};
 use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
 use move_core_types::{
     account_address::AccountAddress,
@@ -70,10 +63,10 @@ const ZERO_AUTH_KEY: [u8; 32] = [0; 32];
 
 pub type Name = Vec<u8>;
 // Defines a validator owner and maps that to an operator
-pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, AccountAddress, GenesisMiningProof);
+pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, GenesisMiningProof);
 
 // Defines a validator operator and maps that to a validator (config)
-pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress, GenesisMiningProof);
+pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress);
 
 pub fn encode_genesis_transaction(
     libra_root_key: Ed25519PublicKey,
@@ -90,7 +83,7 @@ pub fn encode_genesis_transaction(
         operator_registrations,
         stdlib_modules(StdLibOptions::Compiled), // Must use compiled stdlib,
         vm_publishing_option
-            .unwrap_or_else(|| VMPublishingOption::locked(StdlibScript::allowlist())),
+            .unwrap_or_else(|| VMPublishingOption::open()), // :)
         chain_id,
     )))
 }
@@ -133,7 +126,6 @@ pub fn encode_genesis_change_set(
         type_params: vec![],
     });
 
-
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
@@ -143,8 +135,21 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
-
     println!("OK create_and_initialize_main_accounts =============== ");
+
+    //////// 0L ////////
+    // TODO: Replace set params by ENV with NamedChange
+    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
+    //     .iter()
+    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
+    // {
+    //     // if some tests need to use prod vdf values, set it with NODE_ENV=prod
+    //     dbg!(get_env());
+    // initialize_testnet(&mut session, &log_context);
+    // }
+    if get_env() == "test"  {
+        initialize_testnet(&mut session, &log_context);
+    }
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
@@ -155,26 +160,11 @@ pub fn encode_genesis_change_set(
 
     println!("OK create_and_initialize_owners_operators =============== ");
 
-    //////// 0L ////////
-    initialize_testnet(&mut session, &log_context, true);
-    
-    println!("OK initialize_testnet =============== ");
-
-    // initialize_miners(&mut session, &log_context, &operator_assignments);
-    initialize_miners_alt(&mut session, &log_context, &operator_registrations);
-    println!("OK initialize_miners_alt =============== ");
-
     distribute_genesis_subsidy(&mut session, &log_context);
-
+    println!("OK Genesis subsidy =============== ");
 
     reconfigure(&mut session, &log_context);
-    
-    // if [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-    //     .iter()
-    //     .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    // {
-    //     create_and_initialize_testnet_minting(&mut session, &log_context, &treasury_compliance_key);
-    // }
+
     let effects_1 = session.finish().unwrap();
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
@@ -404,10 +394,14 @@ fn create_and_initialize_owners_operators(
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
     println!("0 ======== Create Owner Accounts");
-    for (owner_key, owner_name, _op_assignment, _ , _genesis_proof) in operator_assignments {
-        let staged_owner_auth_key =
-            libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+    for (owner_key, owner_name, _op_assignment, genesis_proof) in operator_assignments {
+        // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names. 
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
+        // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+        //TODO: why does this need to be derived from human name?
+        // let owner_address = staged_owner_auth_key.derived_address();
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
             0,
             owner_address,
@@ -425,21 +419,40 @@ fn create_and_initialize_owners_operators(
         let real_owner_auth_key = if let Some(owner_key) = owner_key {
             AuthenticationKey::ed25519(owner_key).to_vec()
         } else {
+            // TODO: is this used for tests?
             ZERO_AUTH_KEY.to_vec()
         };
 
+        // Rotate auth key.
         exec_script(
             session,
             log_context,
-            owner_address,
+            owner_address.clone(),
             &transaction_builder::encode_rotate_authentication_key_script(real_owner_auth_key),
+        );
+
+        // Submit mining proof
+        let preimage = hex::decode(&genesis_proof.preimage).unwrap();
+        let proof = hex::decode(&genesis_proof.proof).unwrap();
+        exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "MinerState",
+            "genesis_helper",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(owner_address),
+                Value::vector_u8(preimage),
+                Value::vector_u8(proof)
+            ]
         );
     }
 
     println!("1 ======== Create OP Accounts");
-    // dbg!(operator_registrations);
     // Create accounts for each validator operator
-    for (operator_key, operator_name, _, _, _genesis_proof) in operator_registrations {
+    for (operator_key, operator_name, _, _) in operator_registrations {
         let operator_auth_key = AuthenticationKey::ed25519(&operator_key);
         let operator_account = account_address::from_public_key(operator_key);
         let create_operator_script =
@@ -449,7 +462,6 @@ fn create_and_initialize_owners_operators(
                 operator_auth_key.prefix().to_vec(),
                 operator_name.clone(),
             );
-        // dbg!(&create_operator_script);
         exec_script(
             session,
             log_context,
@@ -462,17 +474,18 @@ fn create_and_initialize_owners_operators(
 
 
     // Authorize an operator for a validator/owner
-    for (_owner_key, owner_name, op_assignment_script, _op_account , _genesis_proof) in operator_assignments {
-        let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+    for (owner_key, _owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
+        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
 
         exec_script(session, log_context, owner_address, op_assignment_script);
     }
 
     println!("3 ======== OP sends network info to Owner config");
-    // dbg!(operator_registrations);
     // Set the validator operator configs for each owner
-    for (operator_key, _, registration, _account , _genesis_proof) in operator_registrations {
-        // dbg!(registration);
+    for (operator_key, _, registration, _account) in operator_registrations {
         let operator_account = account_address::from_public_key(operator_key);
         exec_script(session, log_context, operator_account, registration);
     }
@@ -480,8 +493,10 @@ fn create_and_initialize_owners_operators(
     println!("4 ======== Add owner to validator set");
 
     // Add each validator to the validator set
-    for (_owner_key, owner_name, _op_assignment, _account , _genesis_proof) in operator_assignments {
-        let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+    for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
+        let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        let owner_address = staged_owner_auth_key.derived_address();
+        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
             log_context,
@@ -594,6 +609,7 @@ pub fn test_genesis_change_set_and_validators(count: Option<usize>) -> (ChangeSe
 pub struct Validator {
     pub index: usize,
     pub key: Ed25519PrivateKey,
+    pub oper_key: Ed25519PrivateKey,
     pub name: Vec<u8>,
     pub operator_address: AccountAddress,
     pub owner_address: AccountAddress,
@@ -602,7 +618,7 @@ pub struct Validator {
 impl Validator {
     pub fn new_set(count: Option<usize>) -> Vec<Validator> {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
-        (0..count.unwrap_or(10))
+        (0..count.unwrap_or(4))
             .map(|idx| Validator::gen(idx, &mut rng))
             .collect()
     }
@@ -610,13 +626,14 @@ impl Validator {
     fn gen(index: usize, rng: &mut rand::rngs::StdRng) -> Self {
         let name = index.to_string().as_bytes().to_vec();
         let key = Ed25519PrivateKey::generate(rng);
-        let operator_address = account_address::from_public_key(&key.public_key());
-        let owner_address = libra_config::utils::validator_owner_account_from_name(&name);
-        // dbg!(operator_address);
-        // dbg!(owner_address);
+        let oper_key = Ed25519PrivateKey::generate(rng);        
+        let operator_address = account_address::from_public_key(&oper_key.public_key());
+        let owner_address = account_address::from_public_key(&key.public_key());
+
         Self {
             index,
             key,
+            oper_key,
             name,
             operator_address,
             owner_address,
@@ -633,8 +650,7 @@ impl Validator {
             Some(self.key.public_key()),
             self.name.clone(),
             set_operator_script,
-            self.operator_address,
-            GenesisMiningProof::default()
+            GenesisMiningProof::default() //NOTE: For testing only
         )
     }
 
@@ -646,11 +662,10 @@ impl Validator {
             lcs::to_bytes(&[0u8; 0]).unwrap(),
         );
         (
-            self.key.public_key(),
+            self.oper_key.public_key(),
             self.name.clone(),
             script,
-            self.owner_address, 
-            GenesisMiningProof::default()
+            self.operator_address, 
         )
     }
 }
@@ -661,7 +676,6 @@ pub fn generate_test_genesis(
     count: Option<usize>,
 ) -> (ChangeSet, Vec<Validator>) {
     let validators = Validator::new_set(count);
-
     let genesis = encode_genesis_change_set(
         &GENESIS_KEYPAIR.1,
         &GENESIS_KEYPAIR.1,
@@ -678,66 +692,6 @@ pub fn generate_test_genesis(
         ChainId::test(),
     );
     (genesis, validators)
-}
-
-/// Initialize each validator.
-fn _initialize_miners(session: &mut Session<StateViewCache>,
-                     log_context: &impl LogContext,
-    operator_assignments: &[OperatorAssignment]) {
-    // Genesis will abort if mining can't be confirmed.
-    let libra_root_address = account_config::libra_root_address();
-    for (owner_key, _, _, _account , mining_proof) in operator_assignments {
-        let operator_address = account_address::from_public_key(owner_key.as_ref().unwrap());
-        let preimage = hex::decode(&mining_proof.preimage).unwrap();
-        let proof = hex::decode(&mining_proof.proof).unwrap();
-
-        dbg!(operator_address);
-        exec_function(
-            session,
-            log_context,
-            libra_root_address,
-            "MinerState",
-            "genesis_helper",
-            vec![],
-            vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
-                Value::transaction_argument_signer_reference(operator_address),
-                Value::vector_u8(preimage),
-                Value::vector_u8(proof)]);
-    }
-
-}
-
-
-fn initialize_miners_alt(
-    session: &mut Session<StateViewCache>,
-    log_context: &impl LogContext,
-    operator_regs: &[OperatorRegistration]
-) {
-    // Genesis will abort if mining can't be confirmed.
-    let libra_root_address = account_config::libra_root_address();
-    for (owner_key, _, _, account, mining_proof) in operator_regs {
-        let _operator_address = account_address::from_public_key(owner_key);
-        let preimage = hex::decode(&mining_proof.preimage).unwrap();
-        let proof = hex::decode(&mining_proof.proof).unwrap();
-
-        println!("Miner:{:?},{:?}", owner_key, operator_address);
-
-        // dbg!(operator_address);
-        exec_function(
-            session,
-            log_context,
-            libra_root_address,
-            "MinerState",
-            "genesis_helper",
-            vec![],
-            vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
-                Value::transaction_argument_signer_reference(*account),
-                Value::vector_u8(preimage),
-                Value::vector_u8(proof)]);
-    }
-
 }
 
 /// Genesis subsidy to miners
@@ -760,6 +714,13 @@ fn distribute_genesis_subsidy(
     )
 }
 
+fn get_env() -> String {
+    match env::var("NODE_ENV") {
+        Ok(val) => val,
+        _ => "test".to_string() // default to "test" if not set
+    }
+}
+
 // 0L Change: Necessary for genesis transaction.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -770,29 +731,24 @@ pub struct GenesisMiningProof {
 
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
-        let node_env = match env::var("NODE_ENV") {
-            Ok(val) => val,
-            _ => "test".to_string() // default to "test" if not set
-        };
 
         // These use "alice" fixtures from ../fixtures and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
         //TODO: These fixtures should be moved to /fixtures/miner_fixtures.rs
 
-        let easy_preimage = "f0dc83910c2263e5301431114c5c6d12f094dfc3d134331d5410a23f795117b8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006578706572696d656e74616c6400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000074657374".to_owned();
+        let easy_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e65746400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
 
-        let easy_proof = "0000b20d390731ea0f4405e112809c18d7959a2421a54f77039c13dfd26d3170766ec4d969fd0b70c5f9c674c591a70974d2ce1198c03bedcd905442bc1177d9740c2097cff7c8081e46da4c1e4241201ce44dc99c446b03afec3d238c5263ac453fe36210664e39c4268a07d283db83a22b708fc9224408c5081f92ad13facd154145bbc514170c7dbe549b8f823a2c520f576dedf509f6ddfdd71550e988ad3af3df5be3c8524468b81dc886b7a91af98dce36eb2e07805e23adb843535dc8f88016e898d87f1d7dce9735ccb49398b083aefa3f19c1df4b0e85996bd22a1ba0a7d31dacae958828e808695e715d661b03e7347fef5367d55298b29cb94214b8ffffbf8e84a14e83de7697db052c5dddd3563084eb89fd35b39509f757e5f4f8151fee794773f053f9352a8aa63842509c5dfae4e82dc8e6f80840e63db891b16438f4e64f6743be1f94ea5bca0662340f3d2199ccc5150a8fc2bf9d910b54c73cd1321cb706e6c854132c0b1523bc4e630344f43f035f3b41eee17a7bce271234d3802a46781869dcb6f7a7056b52222ec383a4fda755b10eb8eb95b36189a3b7eb3fc2f35070bb625138e0ce6a169243339e136dfade1d4205151ac5a7a2b8f1ae2e4207a760470c353cecc205a05773eb85499f29c61e558fcdd0f0a6db828d506d7e2acb022899803156135bde344fea9734d9d295fbc4aa43864dab6a938300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001".to_owned();
+        let easy_proof = "002c4dc1276a8a58ea88fc9974c847f14866420cbc62e5712baf1ae26b6c38a393c4acba3f72d8653e4b2566c84369601bdd1de5249233f60391913b59f0b7f797f66897de17fb44a6024570d2f60e6c5c08e3156d559fbd901fad0f1343e0109a9083e661e5d7f8c1cc62e815afeee31d04af8b8f31c39a5f4636af2b468bf59a0010f48d79e7475be62e7007d71b7355944f8164e761cd9aca671a4066114e1382fbe98834fe32cf494d01f31d1b98e3ef6bffa543928810535a063c7bbf491c472263a44d9269b1cbcb0aa351f8bd894e278b5d5667cc3f26a35b9f8fd985e4424bedbb3b77bdcc678ccbb9ed92c1730dcdd3a89c1a8766cbefa75d6eeb7e5921000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001".to_owned();
 
         //NOTE: this is same as easy_preimage
         // let hard_preimage = easy_preimage.to_owned();
-        let hard_preimage = "f0dc83910c2263e5301431114c5c6d12f094dfc3d134331d5410a23f795117b8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006578706572696d656e74616c009f240000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000074657374".to_owned();
+        let hard_preimage = "91ffe0bce9806e599cd3565958ed0d3a0e7da4499fb75ccd30e6527761a55a06000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000746573746e6574009f240000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
 
-        let hard_proof =  "001f82a9582dfc54369c4ceb21062151b8f9e493dec76112b5ead760dc18f6e91fe202722f607f3f71ea4cee29ed39a50f28ece9fb502dbf022bff67427bb42a57a6d6ab2d4072da8f0e6f2d540289bd563a0130aff9cae95719df71847dea56f3c541d022d00bfbbf046c65fd810ff9cf5ffd3a6a1b492ccdc3de7889bd16058e6dbcc67e4900ba9d884dd00342591d41ce0e1a4d60999c867799468423183c76c795b5d3ea5be253eb65a8f4016790aa8299f4dd40d116982d76d5eb54c263a13b58bf5ddc297fa2ec4d9a4464a05bed4408548f64d465fc9bdc9891b0f8ef62c08aefd24fe76d956a8e3ba1dd5ebacb3808c257bc36a5f8632c444af8193363fff0087ae2e864d653df2dcf69fd6fd253ee07904adac1dc2d5418066be127ad186f5622a7ca15fe3471f282f43a201b8addd2d951afce908d9fcf3b5ca9ee09c6cf3e6784b9b186f020b6083af1968bd95ff49694ee07c6dca6e7a84b4eb3a7e6a9447dbc8bd2d2f5a123283322e3b4a8c31200bc61fdf0c4fe392119de819f158d8bef561807c55933259fdefa24810e92116aa054ca6392a70e00d60fb63ecbcfe80750d62f344fc1773aa76248d2c3907aa9b1b582d788327cf118f9e7ccc8bae2da547654fa67acafbd2479ba2ab932f299ce35cd3db99ba4d5ea4e6d29568e2121023ec685255996fe76599f6e1d2fe2be0ad02b0182b8b6a410cdde9bd700572851f862be5e9fa8469a3ca4a8770a8da9efdb36f51e110979c074189bedd9f79e67fd81e9626ceac2f0b181f98a39080b1921bea0e09be513227b85422bf51319d3bdf658b5eb395d32e09d23c6bfab5a44523529d03c73b2bf806d7923fcc8d76101d90844527d3a7697559c3e9e49fb1b13fa5471e30a3e9c06018c14dc89ea22769fcaa2d707fd1e9d022cadb115c02f0e03cffe2c8165061f3fc49f83adc04bc462c5b156f0b35a17fa0ca9a84bafe42bda92c7f6dea57f03a67b60e14a2b9c28ca30199305e6c8e6192adcb5e8957314ab71c50772655a33801bf25c2406f65016a2695e59f824173272611637fa3ec4fae6f1b91a439681bf2ec2a3ffc2493891497c5f7db03d3f6350f9d3b59bacb0332061ec918c78125777074d9b02c54fccbb6d5d4fb3c355b57d6fac89d3aeb9ef88d4b568d30795c15233db9cf2bcd5eb967c7b35690f75cb74484e34a1ff0e2eec44a0d971573964f9c3376b3cf52deaed62c3c4b1166e496bfa8ac7c150fc7009800773de60ffa93950c6759558a18f00795b68f901336dfdecce1c53a1f0f277b1dd3e5176047505c18e5da93e2714749eceaffd80b2f574e4715a24f331d3d128f13f547b26114c24d5862480a6fe63b3c7becdb85326a91fcad24ab093f53766c387aa66c0235244299d4fb7ed131d216972300c0090a107de40ae4dde86b50d360b5f581f76d2f53d93".to_owned();
+        let hard_proof =  "002081dc638812f346cd4b893e209cc0611ea3738116981b6c51ea0202dcea145ab8c3b473ed950a29cca0bb6273040f19ac2c307d147a56c832787cb1e57669a7e3821ef7576aac103c96bc8988855d82f21464ee0380f83aafe215313f3261983ee2c756922c2cf9af5d7ed8c7c00348e3792ed40fb96088ab979e8c5f336b6effeeac3e4c36d9245f4e4e73a7e754534f690e6c0033e10ea5bbeefb0c42fdd938b833057f65cfa72227333c4eeea13e584f4c1ef0d844cd1a57b06cee90538ec5e588fbe8052a29e53d741eabdfc55e5617524ddc403a9b8acb01894b83a3c262c088b963218156de818ce5bb067f16ef96b1bce5d5cdde7a706a048bd8369833000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001".to_owned();
 
-        if node_env == "prod"  {
+        if get_env() == "prod"  {
             return GenesisMiningProof {
                 preimage: hard_preimage,
                 proof: hard_proof,
-
             }
         } else {
             return GenesisMiningProof {
@@ -800,13 +756,12 @@ impl Default for GenesisMiningProof {
                 proof: easy_proof,
             }
         }
-
     }
 }
 
 // 0L Changes
 
-fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext, _is_testnet: bool) {
+fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext) {
     let root_libra_root_address = account_config::libra_root_address();
 
     exec_function(

@@ -2,11 +2,10 @@
 
 // use crate::block::Block;
 
-use crate::{config::MinerConfig, test_tx_swarm::val_init_test};
+use crate::{config::MinerConfig, test_tx_swarm::{swarm_miner, swarm_onboarding}};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use crate::test_tx_swarm::test_runner;
 use std::path::PathBuf;
 
 
@@ -22,18 +21,23 @@ pub struct SwarmCmd {
     #[options(help = "Test the onboading transaction.")]
     init: bool,
     #[options(help = "The home directory where the blocks will be stored")]
-    home: PathBuf, 
+    swarm_path: Option<PathBuf>, 
 }
 
 impl Runnable for SwarmCmd {
     /// Start the application.
-    fn run(&self) {
-        println!("Testing Submit tx to Swarm. Using swarm private key");
+    fn run(&self) {        
+        println!("Testing Submit tx to Swarm.");
+        let path: PathBuf;
+    
+        // Note, the convention is to run this tests from <project_root>/, and to start swarm with a temp path in <project root>/swarm_temp/
+        if self.swarm_path.is_some() { path = self.swarm_path.as_ref().unwrap().to_owned() }
+        else { path = PathBuf::from("./swarm_temp") }
 
         if self.init {
-            val_init_test(self.home.to_owned());
+            swarm_onboarding(path);
         } else {
-            test_runner(self.home.to_owned());
+            swarm_miner(path);
         }
     }
 }

@@ -14,7 +14,6 @@ use crate::{
         eval_tx_status},
 };
 use std::io::BufReader;
-use libra_json_rpc_types::views::MinerStateResourceView;
 use crate::block::build_block::parse_block_height;
 
 /// Submit a backlog of blocks that may have been mined while network is offline. Likely not more than 1. 
@@ -24,7 +23,9 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams) {
     println!("Fetching remote tower height");
     let remote_state  = match client.get_miner_state(tx_params.address.clone()) {
         Ok( s ) => { match s {
-            Some( state) => state,
+            Some(state) => {
+                state
+            },
             None => {
                 println!("Info: Received response but no remote state found, exiting.");
                 return
@@ -40,7 +41,7 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams) {
 
     println!("Remote tower height: {}", remote_height);
     // Getting local state height
-    let mut blocks_dir = config.workspace.miner_home.clone();
+    let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.chain_info.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 

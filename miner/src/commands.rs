@@ -10,23 +10,37 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod keygen;
+mod keygen_cmd;
 mod start;
 mod version;
 mod onboard;
 mod swarm_test;
 mod genesis;
+mod ceremony_util_cmd;
 
-use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
-           onboard::OnboardCmd, swarm_test::SwarmCmd, genesis::GenesisCmd};
+use self::{
+    start::StartCmd,
+    version::VersionCmd,
+    onboard::OnboardCmd,
+    swarm_test::SwarmCmd,
+    genesis::GenesisCmd,
+    keygen_cmd::KeygenCmd,
+    ceremony_util_cmd::CeremonyUtilCmd,
+
+};
 use crate::config::MinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
 use std::path::PathBuf;
+use dirs;
+use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "miner.toml";
+/// MinerApp Config Home
+// pub const APP_PATH: &str = ".0L/miner/";
+
 
 /// MinerApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
@@ -48,8 +62,12 @@ pub enum MinerCmd {
     Version(VersionCmd),
 
     /// The `keygen` subcommand
-    #[options(help = "generate a keypair ")]
+    #[options(help = "Generate keys")]
     Keygen(KeygenCmd),
+
+    /// The `keygen` subcommand
+    #[options(help = "Wrapper for ceremony configurations")]
+    Ceremony(CeremonyUtilCmd),
 
     /// The `onboard` subcommand
     #[options(help = "Onboard a new miner with a block_0.json proof")]
@@ -68,10 +86,14 @@ impl Configurable<MinerConfig> for MinerCmd {
         // Check if the config file exists, and if it does not, ignore it.
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
-        let filename = PathBuf::from(CONFIG_FILE);
 
-        if filename.exists() {
-            Some(filename)
+        let mut config_path = dirs::home_dir()
+        .unwrap();
+        config_path.push(NODE_HOME);
+        config_path.push(CONFIG_FILE);
+
+        if config_path.exists() {
+            Some(config_path)
         } else {
             None
         }

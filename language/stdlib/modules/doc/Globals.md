@@ -348,7 +348,7 @@
       min_node_density: 4,
       max_node_density: 300,
       burn_accounts: <a href="Vector.md#0x1_Vector_singleton">Vector::singleton</a>(0xDEADDEAD),
-      difficulty: 2400000, //10 mins on macbook pro 2.5 ghz quadcore
+      difficulty: 12500000, //10 mins on macbook pro 2.5 ghz quadcore
       epoch_mining_threshold: 20,
       }
     }

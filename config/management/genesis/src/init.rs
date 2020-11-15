@@ -1,18 +1,19 @@
 use std::path::PathBuf;
 
+use libra_global_constants::NODE_HOME;
 use structopt::StructOpt;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use libra_management::error::Error;
 
 use crate::storage_helper::StorageHelper;
-
+use dirs;
 #[derive(Debug, StructOpt)]
 pub struct Init {
     #[structopt(long, short)]
     pub namespace: String,
     #[structopt(long, short)]
-    pub path: PathBuf,
+    pub path: Option<PathBuf>,
 }
 
 
@@ -27,12 +28,13 @@ impl Init {
 
         match readline {
             Ok(mnemonic_string) => {
-                // dbg!(&mnemonic_string);
-                // dbg!(&self.path);
-
-                // let mnemonic_string_test = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
-                // let user = self.path.join(format!("key_store.{}.json", &self.namespace));
-                let helper = StorageHelper::new_with_path(self.path.into());
+                let path: PathBuf;
+                if self.path.is_some() {
+                    path = self.path.unwrap();
+                } else { 
+                    path = dirs::home_dir().unwrap().join(NODE_HOME);
+                }
+                let helper = StorageHelper::new_with_path(path.into());
                 helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string);
             }
             Err(ReadlineError::Interrupted) => {

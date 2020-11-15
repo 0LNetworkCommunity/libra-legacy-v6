@@ -33,9 +33,7 @@ impl Files {
         let chain_id = ChainId::new(1);
         let storage_helper = StorageHelper::get_with_path(output_dir.clone());
         let remote = StorageHelper::remote_string(&self.namespace, output_dir.to_str().unwrap());
-        
-        // let test = Seeds::new(output_dir.clone().join("genesis.blob").into()).get_network_peers_info();
-        // dbg!(test);
+
         // Get node configs template
         let mut config = NodeConfig::default();
         config.set_data_dir(output_dir.clone());

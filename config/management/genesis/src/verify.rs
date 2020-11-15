@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use executor::db_bootstrapper;
-use libra_global_constants::{CONSENSUS_KEY, FULLNODE_NETWORK_KEY, FULLNODE_PEER_ID, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY, SAFETY_DATA, VALIDATOR_NETWORK_KEY, WAYPOINT};
+use libra_global_constants::{CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY, SAFETY_DATA, VALIDATOR_NETWORK_KEY, WAYPOINT};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
     storage::StorageWrapper as Storage,
@@ -67,7 +67,6 @@ impl Verify {
 
         write_string(&validator_storage, &mut buffer, OPERATOR_ACCOUNT);
         write_string(&validator_storage, &mut buffer, OWNER_ACCOUNT);
-        write_string(&validator_storage, &mut buffer, FULLNODE_PEER_ID);
 
         write_safety_data(&validator_storage, &mut buffer, SAFETY_DATA);
         write_waypoint(&validator_storage, &mut buffer, WAYPOINT);
