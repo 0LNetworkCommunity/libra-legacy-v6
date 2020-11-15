@@ -175,7 +175,7 @@ impl StorageHelper {
 
     // 0L: change, initialize the 0th account with a fixture mnemonic "Alice". So we can test miner and other APIs.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
-        let mnem_alice = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
+        let mnem_alice = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
         let partial_seed = lcs::to_bytes(&idx).unwrap();
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
