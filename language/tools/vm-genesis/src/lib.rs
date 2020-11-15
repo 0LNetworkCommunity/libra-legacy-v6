@@ -147,7 +147,7 @@ pub fn encode_genesis_change_set(
     //     dbg!(get_env());
     // initialize_testnet(&mut session, &log_context);
     // }
-    if get_env() == "test"  {
+    if get_env() != "prod"  {
         initialize_testnet(&mut session, &log_context);
     }
     // generate the genesis WriteSet
@@ -761,14 +761,22 @@ impl Default for GenesisMiningProof {
 
 // 0L Changes
 
-fn initialize_testnet(session: &mut Session<StateViewCache>, log_context: &impl LogContext) {
+fn initialize_testnet(
+    session: &mut Session<StateViewCache>,
+    log_context: &impl LogContext
+) {
     let root_libra_root_address = account_config::libra_root_address();
-
+    let mut module_name = "Testnet";
+    if get_env() == "stage" { 
+        module_name = "StagingNet";
+    };
+    dbg!(get_env());
+    dbg!(&module_name);
     exec_function(
         session,
         log_context,
         root_libra_root_address,
-        "Testnet",
+        module_name,
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(root_libra_root_address)]);
