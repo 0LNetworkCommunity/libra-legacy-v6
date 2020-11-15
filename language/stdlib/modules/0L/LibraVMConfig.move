@@ -72,7 +72,7 @@ module LibraVMConfig {
         lr_account: &signer,
         instruction_schedule: vector<u8>,
         native_schedule: vector<u8>,
-        chain_id: u8,
+        _chain_id: u8,
     ) {
         LibraTimestamp::assert_genesis();
 
