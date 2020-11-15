@@ -16,7 +16,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-NODE_ENV = test
+NODE_ENV = stage
 MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
 else
 REPO_NAME = experimental-genesis
