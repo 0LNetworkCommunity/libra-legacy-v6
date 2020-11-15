@@ -80,9 +80,9 @@ module LibraVMConfig {
         Roles::assert_libra_root(lr_account);
 
         let min_price_per_gas_unit = 0;
-        // if (chain_id == 7 || chain_id == 1) {
-        //     min_price_per_gas_unit = 1;
-        // };
+        if (chain_id == 7 || chain_id == 1) {
+            min_price_per_gas_unit = 1;
+        };
 
         let gas_constants = GasConstants {
             global_memory_per_byte_cost: 4,
