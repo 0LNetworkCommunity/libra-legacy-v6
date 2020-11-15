@@ -34,21 +34,21 @@ const STATEMENT_BYTES: usize = 1008;
 impl MinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
     pub fn get_waypoint (&self) -> Option<Waypoint> {
-    match fs::File::open(self.get_key_store_path()) {
-        Ok(file) => {
-            let json: serde_json::Value = serde_json::from_reader(file)
-                .expect("could not parse JSON in key_store.json");
-            let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-            dbg!(&value);
-            Some(value.to_string().parse().unwrap())
-        }
-        Err(err) => {
-         println!("key_store.json not found. {:?}", err);
-         None
+        match fs::File::open(self.get_key_store_path()) {
+            Ok(file) => {
+                let json: serde_json::Value = serde_json::from_reader(file)
+                    .expect("could not parse JSON in key_store.json");
+                let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
+                dbg!(&value);
+                let waypoint: Waypoint = value.to_string().parse().unwrap();
+                Some(waypoint)
+            }
+            Err(err) => {
+            println!("key_store.json not found. {:?}", err);
+            None
+            }
         }
     }
-
-}
 
 
     /// Get configs from a running swarm instance.
