@@ -11,7 +11,7 @@ use std::{
 
 
 #[test]
-// #[ignore]
+#[ignore]
 pub fn integration() {
 
     // PREPARE FIXTURES
@@ -22,21 +22,11 @@ pub fn integration() {
 
     // the miner needs to start producing block_1.json. If block_1.json is not successful, then block_2 cannot be either, because it depends on certain on-chain state from block_1 correct submission.
     
-    // remove all files in miner/blocks/
-    let blocks_dir = PathBuf::from("./blocks/");
-    if blocks_dir.exists() {
-        fs::remove_dir_all(&blocks_dir).unwrap();
-    }
-    fs::create_dir(&blocks_dir).unwrap();
-
-    // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
-    let _ = fs::copy("../fixtures/block_0.json.stage.alice", "blocks/block_0.json");
-
     // clean config dir
-    let config_dir = PathBuf::from("../saved_logs");
-    if config_dir.exists() {
-        fs::remove_dir_all(&config_dir).unwrap();
-    }
+    // let config_dir = PathBuf::from("../saved_logs");
+    // if config_dir.exists() {
+    //     fs::remove_dir_all(&config_dir).unwrap();
+    // }
 
     // TODO: Assert that block_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");
@@ -44,8 +34,10 @@ pub fn integration() {
     swarm_cmd.current_dir("../");
     swarm_cmd.arg("run")
             .arg("-p").arg("libra-swarm")
-            .arg("--").arg("-n").arg("1") 
-            .arg("-l").arg("-c").arg("saved_logs");
+            .arg("--")
+            .arg("-n").arg("1")
+            .arg("--libra-node").arg("../target/debug/libra-node ")
+            .arg("-c").arg("swarm_temp");
     let cmd = swarm_cmd.stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
                 .spawn();
@@ -54,11 +46,15 @@ pub fn integration() {
         Ok(mut swarm_child) => {
             // need to wait for swarm to start-up before we have the configs needed to connect to it. Check stdout.
             block_until_swarm_ready();
+            println!("READY!");
             // wait a bit more, because the previous command only checks for config fils creation.
-
             let test_timeout = Duration::from_secs(30);
             thread::sleep(test_timeout);
-            println!("READY!");
+
+            // copy fixtures
+            fs::create_dir(&"../swarm_temp/blocks").unwrap();
+            // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
+            fs::copy("../fixtures/test/alice/block_0.json", "../swarm_temp/blocks/block_0.json").unwrap();
 
             // start the miner swarm test helper.
             let mut miner_cmd = Command::new("cargo");
@@ -77,14 +73,13 @@ pub fn integration() {
 
             // TODO: get output and evaluate with assert
             // assert_eq!()
-
         }
-        Err(err) => println!("Process did not even start: {}", err)
+        Err(err) => println!("Swarm child process did not start: {}", err)
     }
 }
 
-fn block_until_swarm_ready () -> bool {
-    let _swarm_configs_path = Path::new("../saved_logs/");
+fn block_until_swarm_ready() -> bool {
+    let _swarm_configs_path = Path::new("../swarm_temp/");
     let mut timeout = 100;
     let one_second = time::Duration::from_secs(1);
 
@@ -92,7 +87,7 @@ fn block_until_swarm_ready () -> bool {
         if timeout == 0 { 
             return false
         }
-        if Path::new("../saved_logs/").exists() {
+        if Path::new("../swarm_temp/").exists() {
             return true
         }
 
