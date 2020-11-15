@@ -813,6 +813,7 @@ pub struct MinerStateResourceView {
     pub count_proofs_in_epoch: u64,
     pub epochs_validating_and_mining: u64,
     pub contiguous_epochs_validating_and_mining: u64,
+    pub epochs_since_last_account_creation: u64
 }
 
 impl TryFrom<MinerStateResource> for MinerStateResourceView {
@@ -826,6 +827,7 @@ impl TryFrom<MinerStateResource> for MinerStateResourceView {
             count_proofs_in_epoch: state.count_proofs_in_epoch,
             epochs_validating_and_mining: state.epochs_validating_and_mining,
             contiguous_epochs_validating_and_mining: state.contiguous_epochs_validating_and_mining,
+            epochs_since_last_account_creation: state.epochs_since_last_account_creation
         })
     }
 }
