@@ -148,17 +148,19 @@ verify-gen:
 
 
 #### GENESIS  ####
-genesis:
-	cargo run -p libra-genesis-tool --  files \
-	--validator-backend ${LOCAL} \
-	--data-path ${DATA_PATH} \
-	--namespace ${ACC}-oper
-
 build-gen:
 	cargo run -p libra-genesis-tool -- genesis \
 	--chain-id 7 \
 	--shared-backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
+
+genesis:
+	cargo run -p libra-genesis-tool -- files \
+	--validator-backend ${LOCAL} \
+	--data-path ${DATA_PATH} \
+	--namespace ${ACC}-oper \
+	--repo ${REPO_NAME}
+
 
 #### NODE MANAGEMENT ####
 start:
