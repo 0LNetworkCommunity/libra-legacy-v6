@@ -69,16 +69,16 @@ pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, GenesisMi
 pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress);
 
 pub fn encode_genesis_transaction(
-    libra_root_key: Ed25519PublicKey,
-    treasury_compliance_key: Ed25519PublicKey,
+    libra_root_key: Option<&Ed25519PublicKey>,
+    treasury_compliance_key: Option<&Ed25519PublicKey>,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     vm_publishing_option: Option<VMPublishingOption>,
     chain_id: ChainId,
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
-        &libra_root_key,
-        &treasury_compliance_key,
+        libra_root_key,
+        treasury_compliance_key,
         operator_assignments,
         operator_registrations,
         stdlib_modules(StdLibOptions::Compiled), // Must use compiled stdlib,
@@ -99,8 +99,8 @@ fn merge_txn_effects(
 }
 
 pub fn encode_genesis_change_set(
-    libra_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    libra_root_key: Option<&Ed25519PublicKey>,
+    treasury_compliance_key: Option<&Ed25519PublicKey>,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
     stdlib_modules: &[CompiledModule],
@@ -129,8 +129,8 @@ pub fn encode_genesis_change_set(
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
-        &libra_root_key,
-        &treasury_compliance_key,
+        libra_root_key,
+        treasury_compliance_key,
         vm_publishing_option,
         &lbr_ty,
         chain_id,
@@ -251,13 +251,18 @@ fn exec_script(
 fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
-    libra_root_key: &Ed25519PublicKey,
-    _treasury_compliance_key: &Ed25519PublicKey,
+    libra_root_key: Option<&Ed25519PublicKey>,
+    _treasury_compliance_key: Option<&Ed25519PublicKey>,
     publishing_option: VMPublishingOption,
     lbr_ty: &TypeTag,
     chain_id: ChainId,
 ) {
-    let libra_root_auth_key = AuthenticationKey::ed25519(libra_root_key);
+    let libra_root_auth_key:AuthenticationKey;
+    if libra_root_key.is_some() {
+        libra_root_auth_key = AuthenticationKey::ed25519(&libra_root_key.unwrap());
+    } else {
+        libra_root_auth_key = AuthenticationKey::new([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+    }
     // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_libra_root_address = account_config::libra_root_address();
@@ -679,8 +684,8 @@ pub fn generate_test_genesis(
 ) -> (ChangeSet, Vec<Validator>) {
     let validators = Validator::new_set(count);
     let genesis = encode_genesis_change_set(
-        &GENESIS_KEYPAIR.1,
-        &GENESIS_KEYPAIR.1,
+        Some(&GENESIS_KEYPAIR.1),
+        Some(&GENESIS_KEYPAIR.1),
         &validators
             .iter()
             .map(|v| v.operator_assignment())

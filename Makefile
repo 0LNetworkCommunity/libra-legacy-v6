@@ -16,7 +16,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-NODE_ENV = stage
+# NODE_ENV = stage
 MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
 else
 REPO_NAME = experimental-genesis
@@ -56,10 +56,10 @@ init-backend:
 layout:
 	cargo run -p libra-genesis-tool -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./util/set_layout.toml
+	--path ./util/set_layout_${NODE_ENV}.toml
 
 root:
-		cargo run -p libra-genesis-tool --  libra-root-key \
+		cargo run -p libra-genesis-tool -- libra-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -148,11 +148,19 @@ verify-gen:
 
 
 #### GENESIS  ####
+build-gen:
+	cargo run -p libra-genesis-tool -- genesis \
+	--chain-id 7 \
+	--shared-backend ${REMOTE} \
+	--path ${DATA_PATH}/genesis.blob
+
 genesis:
-	cargo run -p libra-genesis-tool --  files \
+	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
-	--namespace ${ACC}-oper
+	--namespace ${ACC}-oper \
+	--repo ${REPO_NAME}
+
 
 #### NODE MANAGEMENT ####
 start:
@@ -220,7 +228,7 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/${NODE_ENV}/${NS}/miner.toml ${DATA_PATH}/miner.toml
+	cp ./fixtures/test/${NS}/miner.toml ${DATA_PATH}/miner.toml
 
 	cp ./fixtures/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
@@ -256,10 +264,6 @@ stop:
 
 
 ##### SMOKE TEST #####
-smoke-root:
-# root is the "association", set up the keys
-	ACC=root make root treasury layout
-
 smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.

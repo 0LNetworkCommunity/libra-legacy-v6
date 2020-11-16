@@ -244,15 +244,6 @@ impl StorageHelper {
         storage.set(libra_global_constants::PROOF_OF_WORK_PROOF, default_proof.proof).unwrap();
     }
 
-    ///////// 0L /////////
-    pub fn remote_string(ns: &str, path: &str) -> String {
-        format!(
-            "backend=github;repository_owner=OLSF;repository=dev-genesis;token={path}/github_token.txt;namespace={ns}",
-            ns = ns,
-            path = path,
-        )
-    }
-
     pub fn create_waypoint(&self, chain_id: ChainId) -> Result<Waypoint, Error> {
         let args = format!(
             "
