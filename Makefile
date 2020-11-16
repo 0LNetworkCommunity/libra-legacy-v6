@@ -16,7 +16,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-NODE_ENV = stage
+# NODE_ENV = stage
 MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
 else
 REPO_NAME = experimental-genesis
@@ -226,7 +226,7 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/${NODE_ENV}/${NS}/miner.toml ${DATA_PATH}/miner.toml
+	cp ./fixtures/test/${NS}/miner.toml ${DATA_PATH}/miner.toml
 
 	cp ./fixtures/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
@@ -262,10 +262,6 @@ stop:
 
 
 ##### SMOKE TEST #####
-smoke-root:
-# root is the "association", set up the keys
-	ACC=null make root treasury
-
 smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
