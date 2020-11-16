@@ -202,7 +202,7 @@ load this into memory at the startup of each block.
 Initialize the table under the libra root account
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraVMConfig.md#0x1_LibraVMConfig_initialize">initialize</a>(lr_account: &signer, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, chain_id: u8)
+<pre><code><b>public</b> <b>fun</b> <a href="LibraVMConfig.md#0x1_LibraVMConfig_initialize">initialize</a>(lr_account: &signer, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, _chain_id: u8)
 </code></pre>
 
 
@@ -215,7 +215,7 @@ Initialize the table under the libra root account
     lr_account: &signer,
     instruction_schedule: vector&lt;u8&gt;,
     native_schedule: vector&lt;u8&gt;,
-    chain_id: u8,
+    _chain_id: u8,
 ) {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
 
@@ -223,9 +223,9 @@ Initialize the table under the libra root account
     <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
 
     <b>let</b> min_price_per_gas_unit = 0;
-    <b>if</b> (chain_id == 7 || chain_id == 1) {
-        min_price_per_gas_unit = 1;
-    };
+    // <b>if</b> (chain_id == 7 || chain_id == 1) {
+    //     min_price_per_gas_unit = 1;
+    // };
 
     <b>let</b> gas_constants = <a href="LibraVMConfig.md#0x1_LibraVMConfig_GasConstants">GasConstants</a> {
         global_memory_per_byte_cost: 4,

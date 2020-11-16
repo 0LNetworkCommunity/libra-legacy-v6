@@ -272,7 +272,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
 }
 
 /// Form tx parameters struct 
-pub fn get_params (
+pub fn get_params(
     mnemonic: &str, 
     waypoint: Waypoint,
     config: &MinerConfig

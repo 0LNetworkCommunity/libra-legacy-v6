@@ -19,7 +19,7 @@ pub fn swarm_miner(swarm_path: PathBuf) {
     let tx_params = get_params_from_swarm(swarm_path).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
-    fs::copy("./fixtures/block_0.json.stage.alice", "./swarm_temp/blocks/block_0.json").expect("error copying file");
+    fs::copy("./fixtures/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
 
     backlog::process_backlog(&conf, &tx_params);
 
@@ -80,7 +80,7 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     (block.preimage, block.proof)
 }
 
-fn get_params_from_swarm (mut swarm_path: PathBuf) -> Result<TxParams, Error> {
+fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
