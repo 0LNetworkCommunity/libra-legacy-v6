@@ -86,7 +86,7 @@ fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
-    let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
+    let alice_mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
     let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  keys.child_0_owner.get_public();
@@ -103,7 +103,7 @@ fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
         waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 0,
+        coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     };
 
