@@ -36,8 +36,8 @@ impl Genesis {
 
     pub fn execute(self) -> Result<Transaction, Error> {
         let layout = self.layout()?;
-        let libra_root_key = self.libra_root_key(&layout)?;
-        let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
+        // let libra_root_key = self.libra_root_key(&layout)?;
+        // let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
         let operator_assignments = self.operator_assignments(&layout)?;
         let operator_registrations = self.operator_registrations(&layout)?;
 
@@ -46,8 +46,8 @@ impl Genesis {
         let script_policy = Some(libra_types::on_chain_config::VMPublishingOption::open());
 
         let genesis = vm_genesis::encode_genesis_transaction(
-            libra_root_key,
-            treasury_compliance_key,
+            None,
+            None,
             &operator_assignments,
             &operator_registrations,
             script_policy,

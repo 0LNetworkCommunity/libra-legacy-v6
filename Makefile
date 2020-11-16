@@ -58,7 +58,7 @@ layout:
 	--path ./util/set_layout.toml
 
 root:
-		cargo run -p libra-genesis-tool --  libra-root-key \
+		cargo run -p libra-genesis-tool -- libra-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -152,6 +152,12 @@ genesis:
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper
+
+build-gen:
+	cargo run -p libra-genesis-tool -- genesis \
+	--chain-id 7 \
+	--shared-backend ${REMOTE} \
+	--path ${DATA_PATH}/genesis.blob
 
 #### NODE MANAGEMENT ####
 start:
@@ -257,7 +263,7 @@ stop:
 ##### SMOKE TEST #####
 smoke-root:
 # root is the "association", set up the keys
-	ACC=root make root treasury layout
+	ACC=null make root treasury
 
 smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
