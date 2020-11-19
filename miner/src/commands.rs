@@ -10,15 +10,24 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod keygen;
+mod keygen_cmd;
 mod start;
 mod version;
 mod onboard;
 mod swarm_test;
 mod genesis;
+mod ceremony_util_cmd;
 
-use self::{keygen::KeygenCmd, start::StartCmd, version::VersionCmd,
-           onboard::OnboardCmd, swarm_test::SwarmCmd, genesis::GenesisCmd};
+use self::{
+    start::StartCmd,
+    version::VersionCmd,
+    onboard::OnboardCmd,
+    swarm_test::SwarmCmd,
+    genesis::GenesisCmd,
+    keygen_cmd::KeygenCmd,
+    ceremony_util_cmd::CeremonyUtilCmd,
+
+};
 use crate::config::MinerConfig;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
@@ -53,8 +62,12 @@ pub enum MinerCmd {
     Version(VersionCmd),
 
     /// The `keygen` subcommand
-    #[options(help = "generate a keypair ")]
+    #[options(help = "Generate keys")]
     Keygen(KeygenCmd),
+
+    /// The `keygen` subcommand
+    #[options(help = "Wrapper for ceremony configurations")]
+    Ceremony(CeremonyUtilCmd),
 
     /// The `onboard` subcommand
     #[options(help = "Onboard a new miner with a block_0.json proof")]

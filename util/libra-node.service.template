@@ -3,13 +3,13 @@ Description=Libra Node Service
 
 [Service]
 LimitNOFILE=65536
-WorkingDirectory=/root/node_data/
-ExecStart=/usr/local/bin/libra-node --config /root/node_data/node.configs.toml
+WorkingDirectory=/root/.0L
+ExecStart=/usr/local/bin/libra-node --config /root/.0L/node.yaml
 
 Restart=always
 RestartSec=10s
 
-# Make sure you CREATE the directory and file for your output.log
+# Make sure you CREATE the directory and file for your node.log
 StandardOutput=file:/root/logs/node.log
 StandardError=file:/root/logs/node.log
 

@@ -3,15 +3,15 @@ Description=Libra Node Service
 
 [Service]
 LimitNOFILE=65536
-WorkingDirectory=/home/[YOUR USERNAME]/node_data/
-ExecStart=/usr/local/bin/libra-node --config /home/[YOUR USERNAME]/node_data/node.configs.toml
+WorkingDirectory=/home/[USER]/.0L
+ExecStart=/usr/local/bin/libra-node --config /home/[USER]/.0L/node.yaml
 
 Restart=always
 RestartSec=10s
 
-# Make sure you CREATE the directory and file for your output.log
-StandardOutput=file:/home/[YOUR USERNAME]/logs/output.log
-StandardError=file:/home/[YOUR USERNAME]/logs/output.log
+# Make sure you CREATE the directory and file for your node.log
+StandardOutput=file:/home/[USER]/logs/node.log
+StandardError=file:/home/[USER]/logs/node.log
 
 [Install]
 WantedBy=multi-user.target

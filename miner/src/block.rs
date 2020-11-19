@@ -37,6 +37,8 @@ pub struct ValConfigs {
     pub full_node_network_identity_pubkey: Vec<u8>,
     /// IP address of full node
     pub full_node_network_address: String,
+    /// Human readable name of account
+    pub human_name: String,
 }
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
@@ -293,8 +295,10 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 }
 #[test]
-
+#[ignore]
+//Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
+    
     use libra_wallet::WalletLibrary;
 
     // if no file is found, the block height is 0
@@ -307,7 +311,7 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
-        fs::create_dir_all(save_to.clone());
+        fs::create_dir_all(save_to.clone()).unwrap();
         let mut configs_fixture = MinerConfig {
             workspace: Workspace{
                 node_home: PathBuf::from("/root/.0L"),

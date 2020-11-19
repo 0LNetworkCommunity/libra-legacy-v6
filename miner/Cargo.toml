@@ -38,6 +38,7 @@ toml = "0.5.6"
 reqwest = { version = "0.10.6", features = ["blocking", "json"], default_features = false }
 libra-global-constants = { path = "../config/global-constants", version = "0.1.0"}
 dirs = "2.0.2"
+transaction-builder = { path = "../language/transaction-builder", version = "0.1.0"}
 
 [dependencies.abscissa_core]
 version = "0.5.2"

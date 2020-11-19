@@ -11,7 +11,7 @@ use 0x1::TestFixtures;
 
 // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
 fun main(sender: &signer) {
-    let difficulty = 2400000;
+    let difficulty = 5000000;
     let height_after = 0;
 
     // return solution
@@ -40,7 +40,7 @@ use 0x1::TestFixtures;
 
 // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
 fun main(sender: &signer) {
-    let difficulty = 2400000;
+    let difficulty = 5000000;
     assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
     let height_after = 1;
     

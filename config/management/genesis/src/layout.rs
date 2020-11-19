@@ -19,8 +19,8 @@ use structopt::StructOpt;
 pub struct Layout {
     pub operators: Vec<String>,
     pub owners: Vec<String>,
-    pub libra_root: String,
-    pub treasury_compliance: String,
+    // pub libra_root: String,
+    // pub treasury_compliance: String,
 }
 
 impl Layout {

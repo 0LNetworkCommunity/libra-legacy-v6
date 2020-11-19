@@ -16,7 +16,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-NODE_ENV = test
+# NODE_ENV = stage
 MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
 else
 REPO_NAME = experimental-genesis
@@ -40,6 +40,7 @@ deps:
 bins:
 	#TOML cli
 	cargo install toml-cli
+	cargo run -p stdlib --release
 	#Build and install genesis tool, libra-node, and miner
 	# cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
 	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
@@ -55,10 +56,10 @@ init-backend:
 layout:
 	cargo run -p libra-genesis-tool -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./util/set_layout.toml
+	--path ./util/set_layout_${NODE_ENV}.toml
 
 root:
-		cargo run -p libra-genesis-tool --  libra-root-key \
+		cargo run -p libra-genesis-tool -- libra-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -68,6 +69,9 @@ treasury:
 		--shared-backend ${REMOTE}
 
 #### GENESIS REGISTRATION ####
+ceremony:
+	export NODE_ENV=prod && miner ceremony
+
 register:
 # export ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account)
 	@echo Initializing from ${DATA_PATH}/miner.toml with account:
@@ -90,9 +94,6 @@ init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	@if test ! -d ${0L_PATH}/node; then \
-		mkdir ${0L_PATH}/node; \
-	fi 
 	cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
@@ -147,11 +148,19 @@ verify-gen:
 
 
 #### GENESIS  ####
+build-gen:
+	cargo run -p libra-genesis-tool -- genesis \
+	--chain-id 7 \
+	--shared-backend ${REMOTE} \
+	--path ${DATA_PATH}/genesis.blob
+
 genesis:
-	cargo run -p libra-genesis-tool --  files \
+	cargo run -p libra-genesis-tool -- files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
-	--namespace ${ACC}-oper
+	--namespace ${ACC}-oper \
+	--repo ${REPO_NAME}
+
 
 #### NODE MANAGEMENT ####
 start:
@@ -160,7 +169,7 @@ start:
 
 daemon:
 # your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
-	sudo cp -f ~/.0L/node/libra-node.service /lib/systemd/system/
+	sudo cp -f ~/.0L/libra-node.service /lib/systemd/system/
 # cp -f miner.service /lib/systemd/system/
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
@@ -219,9 +228,9 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/test/${NS}/miner.toml ${DATA_PATH}/miner.toml
+	cp ./fixtures/${NODE_ENV}/${NS}/miner.toml ${DATA_PATH}/miner.toml
 
-	cp ./fixtures/test/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+	cp ./fixtures/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
 
@@ -255,10 +264,6 @@ stop:
 
 
 ##### SMOKE TEST #####
-smoke-root:
-# root is the "association", set up the keys
-	ACC=root make root treasury layout
-
 smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.

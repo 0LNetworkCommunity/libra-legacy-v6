@@ -18,6 +18,8 @@ pub struct Files {
     backend: ValidatorBackend,
     #[structopt(long)]
     namespace: String,
+    #[structopt(long)]
+    repo: String,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
@@ -32,14 +34,14 @@ impl Files {
         let output_dir = self.data_path;
         let chain_id = ChainId::new(1);
         let storage_helper = StorageHelper::get_with_path(output_dir.clone());
-        let remote = StorageHelper::remote_string(&self.namespace, output_dir.to_str().unwrap());
+        let remote = format!("backend=github;repository_owner=OLSF;repository={repo};token={path}/github_token.txt;namespace={ns}", repo=&self.repo, path=output_dir.to_str().unwrap(), ns=&self.namespace); 
 
         // Get node configs template
         let mut config = NodeConfig::default();
         config.set_data_dir(output_dir.clone());
         // Create Genesis File
         let genesis_path = output_dir.join("genesis.blob");
-        let _genesis = storage_helper
+        storage_helper
             .genesis_gh(chain_id, &remote, &genesis_path)
             .unwrap();
         config.execution.genesis_file_location = genesis_path.clone();

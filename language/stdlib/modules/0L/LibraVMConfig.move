@@ -72,7 +72,7 @@ module LibraVMConfig {
         lr_account: &signer,
         instruction_schedule: vector<u8>,
         native_schedule: vector<u8>,
-        chain_id: u8,
+        _chain_id: u8,
     ) {
         LibraTimestamp::assert_genesis();
 
@@ -80,9 +80,9 @@ module LibraVMConfig {
         Roles::assert_libra_root(lr_account);
 
         let min_price_per_gas_unit = 0;
-        if (chain_id == 7 || chain_id == 1) {
-            min_price_per_gas_unit = 1;
-        };
+        // if (chain_id == 7 || chain_id == 1) {
+        //     min_price_per_gas_unit = 1;
+        // };
 
         let gas_constants = GasConstants {
             global_memory_per_byte_cost: 4,
