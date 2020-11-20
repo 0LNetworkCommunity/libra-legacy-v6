@@ -20,9 +20,7 @@ script {
 
     use 0x1::LibraSystem;
     use 0x1::MinerState;
-    // use 0x1::TestFixtures;
     use 0x1::NodeWeight;
-    // use 0x1::Debug::print;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
 
@@ -39,8 +37,8 @@ script {
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
-        MinerState::test_helper_mock_mining(sender, 2);
-        assert(MinerState::test_helper_get_count({{alice}}) == 2, 7357300101071000);
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101071000);
     }
 }
 // check: EXECUTED
@@ -71,21 +69,30 @@ script {
 }
 //check: EXECUTED
 
-// //! block-prologue
-// //! proposer: alice
-// //! block-time: 2000000
-// //! round: 15
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::Cases;
+    // use 0x1::Debug::print;
+    
+    fun main(vm: &signer) {
+        // We are in a new epoch.
+        // Check alice is in the the correct case during reconfigure
+        assert(Cases::get_case(vm, {{alice}}, 0, 15) == 1, 7357000180109);
+    }
+}
 
-// //////////////////////////////////////////////
-// ///// CHECKS RECONFIGURATION IS HAPPENING ////
-// // check: NewEpochEvent
-// //////////////////////////////////////////////
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 2000000
+//! round: 15
 
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
 
-// //! block-prologue
-// //! proposer: alice
-// //! block-time: 16
-// //! NewBlockEvent
 
 //! new-transaction
 //! sender: libraroot
@@ -95,21 +102,18 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
+    use 0x1::Debug::print;
 
     // use 0x1::ValidatorUniverse;
     fun main(_account: &signer) {
         // We are in a new epoch.
 
         // Check the validator set is at expected size
-        // case 2 does not reject Alice.
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
-
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
-        
-        //case 2 does not get rewards.
-        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357000180112);  
-
-        //case 2 does not increment weight.
-        assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180113);  
+        print(&LibraAccount::balance<GAS>({{alice}}));
+        assert(LibraAccount::balance<GAS>({{alice}}) == 296, 7357000180112);  
+        assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180113);  
     }
 }
+//check: EXECUTED

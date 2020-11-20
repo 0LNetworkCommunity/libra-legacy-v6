@@ -118,58 +118,6 @@ script {
 }
 // check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
-
 //! new-transaction
 //! sender: libraroot
 script {
@@ -207,17 +155,18 @@ script {
     fun main(vm: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        assert(Cases::get_case(vm, {{dave}}) == 4, 7357000180109);
+        assert(Cases::get_case(vm, {{dave}}, 0, 15) == 4, 7357000180109);
     }
 }
 
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 15
+//! block-time: 2000000
 //! round: 15
 
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
