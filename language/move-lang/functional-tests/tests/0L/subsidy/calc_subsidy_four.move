@@ -37,7 +37,7 @@ script {
     };
 
     // print(&Subsidy::calculate_Subsidy(vm));
-    assert(Subsidy::calculate_Subsidy(vm) == 296, 7357190101021000);
+    assert(Subsidy::calculate_Subsidy(vm) == 296000000, 7357190101021000);
 
     }
 }

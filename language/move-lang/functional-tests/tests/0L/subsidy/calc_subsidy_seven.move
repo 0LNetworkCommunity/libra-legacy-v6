@@ -39,7 +39,7 @@ script {
       i = i + 1;
     };
 
-    assert(Subsidy::calculate_Subsidy(vm) == 293, 7357190101021000);
+    assert(Subsidy::calculate_Subsidy(vm) == 293000000, 7357190101021000);
 
     }
 }
