@@ -313,7 +313,7 @@
       epoch_length: 15,
       max_validator_per_epoch: 10,
       epoch_boundary_buffer: 5,
-      subsidy_ceiling_gas: 296,
+      subsidy_ceiling_gas: 296 * coin_scale,
       min_node_density: 4,
       max_node_density: 300,
       burn_accounts: <a href="Vector.md#0x1_Vector_singleton">Vector::singleton</a>(0xDEADDEAD),
