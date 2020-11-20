@@ -121,14 +121,14 @@ script {
 }
 // check: EXECUTED
 
-
-
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
 //! proposer: alice
 //! block-time: 2000000
+//! round: 15
 
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
@@ -239,11 +239,14 @@ script {
 }
 // check: EXECUTED
 
+///////////////////////////////////////////////
+///// Trigger reconfiguration at 4 seconds ////
 //! block-prologue
 //! proposer: alice
 //! block-time: 4000000
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+//! round: 15
+
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 

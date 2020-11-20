@@ -76,7 +76,7 @@ script {
         assert(LibraSystem::validator_set_size() == 6, 7357180103011000);
         assert(LibraSystem::is_validator({{alice}}), 7357180104011000);
 
-        Reconfigure::reconfigure(vm);
+        Reconfigure::reconfigure(vm, 15);
     }
 }
 //check: EXECUTED
@@ -85,10 +85,6 @@ script {
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
 
 //! new-transaction
 //! sender: libraroot
@@ -133,11 +129,16 @@ script {
         };
 
         // Even though Eve will be considered a case 2, it was because she was jailed. She will rejoin next epoch.
-        assert(Cases::get_case(vm, {{eve}}) == 2, 7357180106011000);
-        Reconfigure::reconfigure(vm);
+        assert(Cases::get_case(vm, {{eve}}, 0, 15) == 2, 7357180106011000);
+        Reconfigure::reconfigure(vm, 15);
     }
 }
 //check: EXECUTED
+
+//////////////////////////////////////////////
+///// CHECKS RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
 
 //! new-transaction
 //! sender: libraroot

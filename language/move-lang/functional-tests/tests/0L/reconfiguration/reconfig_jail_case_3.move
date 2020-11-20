@@ -75,7 +75,7 @@ script {
 
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
-        Reconfigure::reconfigure(vm);
+        Reconfigure::reconfigure(vm, 15);
         // Mock end of epoch for minerstate
         // MinerState::test_helper_mock_reconfig({{alice}});
     }
@@ -86,10 +86,6 @@ script {
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
 
 //! new-transaction
 //! sender: libraroot

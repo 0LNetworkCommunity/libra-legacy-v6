@@ -69,13 +69,26 @@ script {
 //check: EXECUTED
 
 
-////////// Update wall clock and trigger Reconfig //////////
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 100000000
-/////////////////////////////////////////////////////////////
+//! block-time: 2000000
+//! round: 15
 
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
+
+//! new-transaction
+//! sender: libraroot
+script {
+    
+    use 0x1::LibraSystem;
+    use 0x1::LibraConfig;
+    fun main(_account: &signer) {
+        assert(LibraSystem::validator_set_size() == 5, 7357180103011000);
+        assert(LibraConfig::get_current_epoch() == 2, 7357180103021000);
+    }
+}
+// check: EXECUTED
