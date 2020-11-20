@@ -1041,7 +1041,7 @@ impl ClientProxy {
 
     fn submit_program_alt(
         &mut self,
-        space_delim_strings: &[&str],
+        _space_delim_strings: &[&str],
         program: TransactionPayload,
     ) -> Result<()> {
         // let (sender_address, _) =
