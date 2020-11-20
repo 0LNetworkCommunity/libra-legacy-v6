@@ -45,57 +45,6 @@ script {
 }
 // check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
 
 //! new-transaction
 //! sender: libraroot
@@ -121,3 +70,46 @@ script {
     }
 }
 //check: EXECUTED
+
+// //! block-prologue
+// //! proposer: alice
+// //! block-time: 2000000
+// //! round: 15
+
+// //////////////////////////////////////////////
+// ///// CHECKS RECONFIGURATION IS HAPPENING ////
+// // check: NewEpochEvent
+// //////////////////////////////////////////////
+
+
+// //! block-prologue
+// //! proposer: alice
+// //! block-time: 16
+// //! NewBlockEvent
+
+//! new-transaction
+//! sender: libraroot
+script {
+    
+    use 0x1::LibraSystem;
+    use 0x1::NodeWeight;
+    use 0x1::GAS::GAS;
+    use 0x1::LibraAccount;
+
+    // use 0x1::ValidatorUniverse;
+    fun main(_account: &signer) {
+        // We are in a new epoch.
+
+        // Check the validator set is at expected size
+        // case 2 does not reject Alice.
+        assert(LibraSystem::validator_set_size() == 5, 7357000180110);
+
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
+        
+        //case 2 does not get rewards.
+        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357000180112);  
+
+        //case 2 does not increment weight.
+        assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180113);  
+    }
+}

@@ -28,13 +28,13 @@ script {
         // MinerState::test_helper_set_epochs(sender, 5);
         let voters = Vector::singleton<address>({{alice}});
         let i = 1;
-        while (i < 10) {
-            // Mock the validator doing work for 15 blocks, and stats being updated.
+        while (i < 9) {
+            // Mock the validator doing work for < 2/3 blocks, and stats being updated.
             Stats::process_set_votes(sender, &voters);
             i = i + 1;
         };
 
-        assert(Cases::get_case(sender, {{alice}}) == 3, 7357300103011000);
+        assert(Cases::get_case(sender, {{alice}}, 0, 15) == 3, 7357300103011000);
     }
 }
 //check: EXECUTED
