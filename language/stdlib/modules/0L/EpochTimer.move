@@ -4,14 +4,13 @@ module EpochTimer {
   use 0x1::LibraTimestamp;
   use 0x1::CoreAddresses;
   use 0x1::Signer;
-
+  use 0x1::Globals;
+  use 0x1::Debug::print;
   resource struct Timer { 
     epoch: u64,
     seconds_start: u64
   }
 
-  // const EPOCH_LENGTH: u64 = 60 * 60 * 24;
-  const EPOCH_LENGTH: u64 = 1;
 
   public fun initialize(vm: &signer) {
     let sender = Signer::address_of(vm);
@@ -25,13 +24,20 @@ module EpochTimer {
       );
   }
 
-  public fun is_up(): bool acquires Timer {
+  public fun epoch_finished(): bool acquires Timer {
+    let epoch_secs = Globals::get_epoch_length();
+    print(&epoch_secs);
     let time = borrow_global<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-    LibraTimestamp::now_seconds() > (EPOCH_LENGTH + time.seconds_start)
+    print(&time.seconds_start);
+    print(&LibraTimestamp::now_seconds());
+    LibraTimestamp::now_seconds() > (epoch_secs + time.seconds_start)
   }
 
-  public fun set(_vm: &signer) acquires Timer {
+  public fun reset_timer(vm: &signer) acquires Timer {
+    let sender = Signer::address_of(vm);
+    assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
     let time = borrow_global_mut<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+    time.epoch = time.epoch + 1;
     time.seconds_start = LibraTimestamp::now_seconds();
   }
 }

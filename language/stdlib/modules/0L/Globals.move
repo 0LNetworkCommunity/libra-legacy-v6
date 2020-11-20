@@ -118,11 +118,12 @@ module Globals {
       get_constants().epoch_mining_threshold
     }
 
+
     fun get_constants(): GlobalConstants  {
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()) {
         return GlobalConstants {
-          epoch_length: 15,
+          epoch_length: 1,
           max_validator_per_epoch: 10,
           epoch_boundary_buffer: 5,
           subsidy_ceiling_gas: 296,
@@ -136,7 +137,7 @@ module Globals {
       } else {
         if (StagingNet::is_staging_net()){
         return GlobalConstants {
-          epoch_length: 1000,
+          epoch_length: 60,
           max_validator_per_epoch: 300,
           epoch_boundary_buffer: 100,
           subsidy_ceiling_gas: 8640000 * coin_scale,
@@ -148,7 +149,7 @@ module Globals {
         } 
       } else {
           return GlobalConstants {
-          epoch_length: 128000, // approx 24 hours at 1.4 blocks/sec
+          epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
           epoch_boundary_buffer: 5000,
           // See LibraVMConfig for gas constants:

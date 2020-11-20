@@ -13,16 +13,17 @@ module Reconfigure {
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
     use 0x1::LibraSystem;
-    // use 0x1::TransactionFee;
+    use 0x1::EpochTimer;
     use 0x1::MinerState;
     use 0x1::Globals;
     use 0x1::Vector;
     use 0x1::Stats;
-    // use 0x1::Debug::print;
+    use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer) {
         assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
+        print(&0x33333333);
         
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
@@ -64,6 +65,7 @@ module Reconfigure {
         
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
+        EpochTimer::reset_timer(vm);
     }
 }
 }
