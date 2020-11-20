@@ -28,57 +28,6 @@ script {
 }
 // check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
 
 //! new-transaction
 //! sender: libraroot
@@ -119,10 +68,12 @@ script {
 }
 //check: EXECUTED
 
+
+////////// Update wall clock and trigger Reconfig //////////
 //! block-prologue
 //! proposer: alice
-//! block-time: 15
-//! round: 15
+//! block-time: 100000000
+/////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
