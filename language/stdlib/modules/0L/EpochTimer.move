@@ -5,6 +5,7 @@ module EpochTimer {
   use 0x1::CoreAddresses;
   use 0x1::Signer;
   use 0x1::Globals;
+  use 0x1::LibraConfig;
   use 0x1::Debug::print;
   resource struct Timer { 
     epoch: u64,
@@ -37,7 +38,7 @@ module EpochTimer {
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
     let time = borrow_global_mut<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-    time.epoch = time.epoch + 1;
+    time.epoch = LibraConfig::get_current_epoch() + 1;
     time.seconds_start = LibraTimestamp::now_seconds();
   }
 }

@@ -92,58 +92,6 @@ script {
 }
 //check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
-
 //! new-transaction
 //! sender: libraroot
 script {
@@ -174,9 +122,10 @@ script {
 // check: EXECUTED
 
 
+
 //! block-prologue
 //! proposer: alice
-//! block-time: 15
+//! block-time: 2000000
 
 //////////////////////////////////////////////
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
@@ -262,61 +211,7 @@ script {
 }
 //check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 17
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 18
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 19
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 20
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 21
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 22
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 23
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 24
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 25
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 26
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 27
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 28
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 29
 
 //! new-transaction
 //! sender: libraroot
@@ -346,16 +241,13 @@ script {
 
 //! block-prologue
 //! proposer: alice
-//! block-time: 30
-
+//! block-time: 4000000
 //////////////////////////////////////////////
 ///// CHECKS RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 31
+
 
 //! new-transaction
 //! sender: libraroot
