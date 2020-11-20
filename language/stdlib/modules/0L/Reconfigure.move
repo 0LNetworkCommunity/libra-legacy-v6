@@ -13,15 +13,56 @@ module Reconfigure {
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
     use 0x1::LibraSystem;
-    use 0x1::EpochTimer;
+    // use 0x1::EpochTimer;
     use 0x1::MinerState;
     use 0x1::Globals;
     use 0x1::Vector;
     use 0x1::Stats;
+    use 0x1::LibraTimestamp;
+    use 0x1::LibraConfig;
     use 0x1::Debug::print;
+
+    resource struct Timer { 
+        epoch: u64,
+        height_start: u64,
+        seconds_start: u64
+    }
+
+
+    public fun initialize(vm: &signer) {
+        let sender = Signer::address_of(vm);
+        assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
+        move_to<Timer>(
+        vm, 
+        Timer {
+            epoch: 0,
+            height_start: 0,
+            seconds_start: LibraTimestamp::now_seconds()
+            }
+        );
+    }
+
+    public fun epoch_finished(): bool acquires Timer {
+        let epoch_secs = Globals::get_epoch_length();
+        print(&epoch_secs);
+        let time = borrow_global<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        print(&time.seconds_start);
+        print(&LibraTimestamp::now_seconds());
+        LibraTimestamp::now_seconds() > (epoch_secs + time.seconds_start)
+    }
+
+    public fun reset_timer(vm: &signer, height: u64) acquires Timer {
+        let sender = Signer::address_of(vm);
+        assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
+        let time = borrow_global_mut<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        time.epoch = LibraConfig::get_current_epoch() + 1;
+        time.height_start = height;
+        time.seconds_start = LibraTimestamp::now_seconds();
+    }
+
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
-    public fun reconfigure(vm: &signer) {
+    public fun reconfigure(vm: &signer, height_now: u64) acquires Timer{
         assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
         print(&0x33333333);
         
@@ -65,7 +106,7 @@ module Reconfigure {
         
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
-        EpochTimer::reset_timer(vm);
+        reset_timer(vm, height_now);
     }
 }
 }

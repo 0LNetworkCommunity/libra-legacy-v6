@@ -24,7 +24,7 @@ module Genesis {
     use 0x1::GAS;
     use 0x1::Oracle;
     use 0x1::Hash;
-    use 0x1::EpochTimer;
+    use 0x1::Reconfigure;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -102,7 +102,7 @@ module Genesis {
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.
         LibraTimestamp::set_time_has_started(lr_account);
-        EpochTimer::initialize(lr_account);
+        Reconfigure::initialize(lr_account);
         // Oracle initialize
         Oracle::initialize(lr_account);
     }
