@@ -673,14 +673,14 @@ module LibraSystem {
     }
 
     //get_compliant_val_votes
-    public fun get_fee_ratio(vm: &signer): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
+    public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
         let validators = &get_libra_system_config().validators;
         let compliant_nodes = Vector::empty<address>();
         let total_votes = 0;
         let i = 0;
         while (i < Vector::length(validators)) {
             let addr = Vector::borrow(validators, i).addr;
-            if (Cases::get_case(vm, addr) == 1) {
+            if (Cases::get_case(vm, addr, height_start, height_end) == 1) {
                 let node_votes = Stats::node_current_votes(vm, addr);
                 Vector::push_back(&mut compliant_nodes, addr);
                 total_votes = total_votes + node_votes;

@@ -66,10 +66,12 @@ module Reconfigure {
         assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
         print(&0x33333333);
         
+        let timer = borrow_global<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        let height_start = timer.height_start;
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         
-        let subsidy_units = Subsidy::calculate_Subsidy(vm);
+        let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
         Subsidy::process_subsidy(vm, subsidy_units);
         
         Subsidy::process_fees(vm);

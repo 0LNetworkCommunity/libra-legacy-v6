@@ -25,7 +25,7 @@ address 0x1 {
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
-    public fun calculate_Subsidy(vm: &signer):u64 {
+    public fun calculate_Subsidy(vm: &signer, height_start: u64, height_end: u64):u64 {
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101014010);
 
@@ -37,7 +37,7 @@ address 0x1 {
       // Calculate the split for subsidy and burn
 
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-      let network_density = Stats::network_density(vm);
+      let network_density = Stats::network_density(vm, height_start, height_end);
       let max_node_count = Globals::get_max_node_density();
       let subsidy_units = subsidy_curve(
         subsidy_ceiling_gas,
@@ -117,7 +117,7 @@ address 0x1 {
       // Calculate the split for subsidy and burn
       // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-      let network_density = Stats::network_density(vm_sig);
+      let network_density = Stats::network_density(vm_sig, 0, 0);
       let max_node_count = Globals::get_max_node_density();
       let subsidy_units = subsidy_curve(
         subsidy_ceiling_gas,
