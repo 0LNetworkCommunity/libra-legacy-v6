@@ -52,7 +52,7 @@ script {
     // use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::Vector;
-    use 0x1::Reconfigure;
+    // use 0x1::Reconfigure;
     use 0x1::LibraSystem;
 
     fun main(vm: &signer) {
@@ -75,14 +75,18 @@ script {
 
         assert(LibraSystem::validator_set_size() == 6, 7357180103011000);
         assert(LibraSystem::is_validator({{alice}}), 7357180104011000);
-
-        Reconfigure::reconfigure(vm, 15);
     }
 }
 //check: EXECUTED
 
 //////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///// Trigger reconfiguration at 2 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 2000000
+//! round: 15
+
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
@@ -101,11 +105,10 @@ script {
 }
 //check: EXECUTED
 
-
 //! new-transaction
 //! sender: libraroot
 script {
-    use 0x1::Reconfigure;
+    // use 0x1::Reconfigure;
     use 0x1::Cases;
     use 0x1::Vector;
     use 0x1::Stats;
@@ -130,13 +133,19 @@ script {
 
         // Even though Eve will be considered a case 2, it was because she was jailed. She will rejoin next epoch.
         assert(Cases::get_case(vm, {{eve}}, 0, 15) == 2, 7357180106011000);
-        Reconfigure::reconfigure(vm, 15);
+        // Reconfigure::reconfigure(vm, 30);
     }
 }
 //check: EXECUTED
 
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///////////////////////////////////////////////
+///// Trigger reconfiguration at 4 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 4000000
+//! round: 30
+
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
