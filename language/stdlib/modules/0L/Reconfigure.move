@@ -72,9 +72,9 @@ module Reconfigure {
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         
         let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
-        Subsidy::process_subsidy(vm, subsidy_units);
+        Subsidy::process_subsidy(vm, subsidy_units, height_start, height_now);
         
-        Subsidy::process_fees(vm);
+        Subsidy::process_fees(vm, height_start, height_now);
         
         // Propose upcoming validator set:
         // Step 1: Sort Top N Elegible validators
@@ -85,7 +85,7 @@ module Reconfigure {
         // prepare_upcoming_validator_set(vm);
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validator_per_epoch());
-        let jailed_set = LibraSystem::get_jailed_set(vm);
+        let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
 
         let proposed_set = Vector::empty();
         let i = 0;

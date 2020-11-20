@@ -702,7 +702,7 @@ module LibraSystem {
         (compliant_nodes, fee_ratios)
     }
 
-    public fun get_jailed_set(vm: &signer): vector<address> {
+    public fun get_jailed_set(vm: &signer, height_start: u64, height_end: u64): vector<address> {
       let validator_set = get_val_set_addr();
       let jailed_set = Vector::empty<address>();
       let k = 0;
@@ -710,7 +710,8 @@ module LibraSystem {
         let addr = *Vector::borrow<address>(&validator_set, k);
 
         // consensus case 1 and 2, allow inclusion into the next validator set.
-        if (Cases::get_case(vm, addr) == 3 || Cases::get_case(vm, addr) == 4){
+        let case = Cases::get_case(vm, addr, height_start, height_end);
+        if (case == 3 || case == 4){
           Vector::push_back<address>(&mut jailed_set, addr)
         };
         k = k + 1;

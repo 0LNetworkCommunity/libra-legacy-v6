@@ -50,12 +50,12 @@ address 0x1 {
       subsidy_units
     }
     // Function code: 03 Prefix: 190103
-    public fun process_subsidy(vm_sig: &signer, subsidy_units: u64) {
+    public fun process_subsidy(vm_sig: &signer, subsidy_units: u64, height_start: u64, height_end: u64) {
       let sender = Signer::address_of(vm_sig);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101034010);
 
       // Get the split of payments from Stats.
-      let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm_sig);
+      let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm_sig, height_start, height_end);
       let length = Vector::length<address>(&outgoing_set);
 
       //TODO: assert the lengths of vectors are the same.
@@ -151,11 +151,11 @@ address 0x1 {
 
     }
     
-    public fun process_fees(vm: &signer) {
+    public fun process_fees(vm: &signer, height_start: u64, height_end: u64) {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
       let capability_token = LibraAccount::extract_withdraw_capability(vm);
 
-      let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm);
+      let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_end);
       let len = Vector::length<address>(&outgoing_set);
 
       let bal = TransactionFee::get_amount_to_distribute(vm);
