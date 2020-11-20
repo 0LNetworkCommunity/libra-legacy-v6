@@ -125,7 +125,7 @@ module Globals {
           epoch_length: 15,
           max_validator_per_epoch: 10,
           epoch_boundary_buffer: 5,
-          subsidy_ceiling_gas: 296,
+          subsidy_ceiling_gas: 296 * coin_scale,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
