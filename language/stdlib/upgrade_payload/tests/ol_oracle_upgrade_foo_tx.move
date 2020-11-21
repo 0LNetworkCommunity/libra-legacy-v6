@@ -6,7 +6,7 @@ script {
     use 0x1::Upgrade;
     use 0x1::Debug::print;
     fun ol_oracle_upgrade_foo_tx () {
-        print(&0x000000000000000000000000000be110); // Bello!
+        print(&0x0000000000000000000000000011e110); // Bello!
         Upgrade::foo();
     }
 }

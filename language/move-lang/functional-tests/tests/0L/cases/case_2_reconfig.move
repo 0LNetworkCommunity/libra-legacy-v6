@@ -15,7 +15,7 @@
 //! NewBlockEvent
 
 //! new-transaction
-//! sender: alice
+//! sender: bob
 script {
     
     use 0x1::LibraSystem;
@@ -28,70 +28,19 @@ script {
     fun main(_sender: &signer) {
         // Tests on initial size of validators 
         assert(LibraSystem::validator_set_size() == 5, 7357000180101);
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180102);
         assert(LibraSystem::is_validator({{eve}}) == true, 7357000180103);
-        assert(MinerState::test_helper_get_height({{alice}}) == 0, 7357000180104);
+        assert(MinerState::test_helper_get_height({{bob}}) == 0, 7357000180104);
 
         //// NO MINING ////
 
-        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357000180106);
-        assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180107);  
-        assert(MinerState::test_helper_get_height({{alice}}) == 0, 7357000180108);
+        assert(LibraAccount::balance<GAS>({{bob}}) == 1, 7357000180106);
+        assert(NodeWeight::proof_of_weight({{bob}}) == 0, 7357000180107);  
+        assert(MinerState::test_helper_get_height({{bob}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
 
 //! new-transaction
 //! sender: libraroot
@@ -124,25 +73,21 @@ script {
     fun main(vm: &signer) {
         // We are in a new epoch.
         // Check Alice is in the the correct case during reconfigure
-        assert(Cases::get_case(vm, {{alice}}) == 2, 7357000180109);
+        assert(Cases::get_case(vm, {{bob}}, 0, 15) == 2, 7357000180109);
     }
 }
 
-// //! block-prologue
-// //! proposer: alice
-// //! block-time: 15
-// //! round: 15
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 2000000
+//! round: 15
 
-// //////////////////////////////////////////////
-// ///// CHECKS RECONFIGURATION IS HAPPENING ////
-// // check: NewEpochEvent
-// //////////////////////////////////////////////
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
 
-
-// //! block-prologue
-// //! proposer: alice
-// //! block-time: 16
-// //! NewBlockEvent
 
 //! new-transaction
 //! sender: libraroot
@@ -161,12 +106,12 @@ script {
         // case 2 does not reject Alice.
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
 
-        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180111);
         
         //case 2 does not get rewards.
-        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357000180112);  
+        assert(LibraAccount::balance<GAS>({{bob}}) == 1, 7357000180112);  
 
         //case 2 does not increment weight.
-        assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357000180113);  
+        assert(NodeWeight::proof_of_weight({{bob}}) == 0, 7357000180113);  
     }
 }

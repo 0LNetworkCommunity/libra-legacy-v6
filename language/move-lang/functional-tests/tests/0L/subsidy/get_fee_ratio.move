@@ -26,8 +26,8 @@ script {
 script {
   use 0x1::Vector;
   use 0x1::Stats;
-  // use 0x1::FixedPoint32;
-  // use 0x1::LibraSystem;
+  use 0x1::FixedPoint32;
+  use 0x1::LibraSystem;
 
 
   fun main(vm: &signer) {
@@ -43,10 +43,10 @@ script {
       i = i + 1;
     };
 
-    // let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm);
-    // assert(Vector::length(&validators) == 2, 1);
-    // assert(Vector::length(&fee_ratios) == 2, 1);
-    // assert(*(Vector::borrow<FixedPoint32::FixedPoint32>(&fee_ratios, 1)) == FixedPoint32::create_from_raw_value(2147483648u64), 1);
+    let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
+    assert(Vector::length(&validators) == 2, 1);
+    assert(Vector::length(&fee_ratios) == 2, 1);
+    assert(*(Vector::borrow<FixedPoint32::FixedPoint32>(&fee_ratios, 1)) == FixedPoint32::create_from_raw_value(2147483648u64), 1);
 
   }
 }

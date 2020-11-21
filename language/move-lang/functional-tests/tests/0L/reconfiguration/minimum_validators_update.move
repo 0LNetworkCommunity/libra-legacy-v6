@@ -25,57 +25,6 @@ script {
 }
 // check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
 //! new-transaction
 //! sender: libraroot
 script {
@@ -110,17 +59,16 @@ script {
     }
 }
 
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 15
+//! block-time: 2000000
 //! round: 15
 
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
-//! NewBlockEvent
+//////////////////////////////////////////////
 
 
 //! new-transaction

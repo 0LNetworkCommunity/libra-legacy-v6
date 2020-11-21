@@ -14,30 +14,30 @@ script {
     use 0x1::Vector;
     use 0x1::Stats;
 
+
+    // Assumes an epoch changed at round 15
+    
     fun main(vm: &signer) {
       assert(Stats::node_current_props(vm, {{bob}}) == 0, 0);
       assert(Stats::node_current_votes(vm, {{alice}}) == 0, 0);
       assert(Stats::node_current_votes(vm, {{bob}}) == 0, 0);
 
+      let voters = Vector::empty<address>();
+      Vector::push_back<address>(&mut voters, {{alice}});
+      Vector::push_back<address>(&mut voters, {{bob}});
+      Vector::push_back<address>(&mut voters, {{carol}});
+      Vector::push_back<address>(&mut voters, {{dave}});
 
-        let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, {{alice}});
-        Vector::push_back<address>(&mut voters, {{bob}});
-        Vector::push_back<address>(&mut voters, {{carol}});
-        Vector::push_back<address>(&mut voters, {{dave}});
+      // Overwrite the statistics to mock that all have been validating.
+      let i = 1;
+      while (i < 5) {
+          // Mock the validator doing work for 15 blocks, and stats being updated.
+          Stats::process_set_votes(vm, &voters);
+          i = i + 1;
+      };
 
-        // Stats::process_set_votes(voters);
-
-        // Overwrite the statistics to mock that all have been validating.
-        let i = 1;
-        while (i < 5) {
-            // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(vm, &voters);
-            i = i + 1;
-        };
-
-      assert(!Stats::node_above_thresh(vm, {{alice}}), 0);
-      assert(Stats::network_density(vm) == 0, 0);
+      assert(!Stats::node_above_thresh(vm, {{alice}}, 0, 15), 0);
+      assert(Stats::network_density(vm, 0, 15) == 0, 0);
 
       let i = 1;
       while (i < 10) {
@@ -46,8 +46,8 @@ script {
           i = i + 1;
       };
 
-      assert(Stats::node_above_thresh(vm, {{alice}}), 0);
-      assert(Stats::network_density(vm) == 4, 0);
+      assert(Stats::node_above_thresh(vm, {{alice}}, 0, 15), 0);
+      assert(Stats::network_density(vm, 0, 15) == 4, 0);
     }
 }
 // check: EXECUTED

@@ -673,14 +673,14 @@ module LibraSystem {
     }
 
     //get_compliant_val_votes
-    public fun get_fee_ratio(vm: &signer): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
+    public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
         let validators = &get_libra_system_config().validators;
         let compliant_nodes = Vector::empty<address>();
         let total_votes = 0;
         let i = 0;
         while (i < Vector::length(validators)) {
             let addr = Vector::borrow(validators, i).addr;
-            if (Cases::get_case(vm, addr) == 1) {
+            if (Cases::get_case(vm, addr, height_start, height_end) == 1) {
                 let node_votes = Stats::node_current_votes(vm, addr);
                 Vector::push_back(&mut compliant_nodes, addr);
                 total_votes = total_votes + node_votes;
@@ -702,7 +702,7 @@ module LibraSystem {
         (compliant_nodes, fee_ratios)
     }
 
-    public fun get_jailed_set(vm: &signer): vector<address> {
+    public fun get_jailed_set(vm: &signer, height_start: u64, height_end: u64): vector<address> {
       let validator_set = get_val_set_addr();
       let jailed_set = Vector::empty<address>();
       let k = 0;
@@ -710,7 +710,8 @@ module LibraSystem {
         let addr = *Vector::borrow<address>(&validator_set, k);
 
         // consensus case 1 and 2, allow inclusion into the next validator set.
-        if (Cases::get_case(vm, addr) == 3 || Cases::get_case(vm, addr) == 4){
+        let case = Cases::get_case(vm, addr, height_start, height_end);
+        if (case == 3 || case == 4){
           Vector::push_back<address>(&mut jailed_set, addr)
         };
         k = k + 1;

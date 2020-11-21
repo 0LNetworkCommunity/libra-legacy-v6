@@ -24,7 +24,7 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
@@ -38,7 +38,7 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
@@ -49,15 +49,11 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    // use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::Vector;
-    use 0x1::Reconfigure;
     use 0x1::LibraSystem;
 
     fun main(vm: &signer) {
-        // todo: change name to Mock epochs
-        // MinerState::test_helper_set_epochs(sender, 5);
         let voters = Vector::singleton<address>({{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
@@ -75,21 +71,20 @@ script {
 
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
-        Reconfigure::reconfigure(vm);
-        // Mock end of epoch for minerstate
-        // MinerState::test_helper_mock_reconfig({{alice}});
     }
 }
 //check: EXECUTED
 
 //////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
-// check: NewEpochEvent
-//////////////////////////////////////////////
-
+///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 16
+//! block-time: 2000000
+//! round: 15
+
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
 
 //! new-transaction
 //! sender: libraroot

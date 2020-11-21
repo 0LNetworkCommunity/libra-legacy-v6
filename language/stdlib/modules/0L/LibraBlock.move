@@ -9,7 +9,6 @@ module LibraBlock {
     use 0x1::LibraTimestamp;
 
     //////// 0L ////////
-    use 0x1::Globals;
     use 0x1::Reconfigure;
     use 0x1::Stats;
 
@@ -102,9 +101,9 @@ module LibraBlock {
 
          //////// 0L ////////
         // reconfigure
-        if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
+        if (Reconfigure::epoch_finished()) {
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
-          Reconfigure::reconfigure(vm);
+          Reconfigure::reconfigure(vm, get_current_block_height());
         }
     }
     spec fun block_prologue {
