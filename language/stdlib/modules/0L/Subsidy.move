@@ -216,6 +216,10 @@ address 0x1 {
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       let subsidy = state.current_proof_price;
+
+      // abort if ceiling was met
+      if (state.current_gas_distributed + state.current_proof_price > fullnode_subsidy_cap(vm)) return;
+
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -232,13 +236,6 @@ address 0x1 {
       auctioneer(vm);
 
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-
-      // let epoch_length_mins = 24 * 60;
-      // let current_auction_multiplier: u64;
-      // let steady_state_nodes = 1000;
-      // let target_delay = 10;
-      // let baseline_auction_units = steady_state_nodes * epoch_length_hours * (epoch_length_mins/target_delay);
-
        // save 
       state.previous_epoch_proofs = state.current_proofs_verified;
       // reset counters
@@ -256,7 +253,8 @@ address 0x1 {
       let target_delay = 10;
       let baseline_auction_units = steady_state_nodes * (epoch_length_mins/target_delay);
 
-      let baseline_proof_price = cap() / baseline_auction_units;
+      let next_cap = fullnode_subsidy_cap(vm);
+      let baseline_proof_price = next_cap / baseline_auction_units;
       // set new price
       current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
 
@@ -266,12 +264,12 @@ address 0x1 {
         state.current_proof_price = baseline_proof_price
       };
       // set new cap
-      state.current_cap = cap();
+      state.current_cap = next_cap;
     }
 
-    fun cap():u64 {
+    fun fullnode_subsidy_cap(vm: &signer):u64 {
       //get TX fees from previous epoch.
-      100
+      TransactionFee::get_amount_to_distribute(vm)
     }
 
 }
