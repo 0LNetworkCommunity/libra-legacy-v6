@@ -21,7 +21,6 @@ address 0x1 {
     use 0x1::LibraTimestamp;
     use 0x1::TransactionFee;
     use 0x1::Roles;
-    use 0x1::Debug::print;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -171,9 +170,6 @@ address 0x1 {
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
 
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address);
-        print(&0x01);
-        print(&subsidy_granted);
-
         //Confirm the calculations, and that the ending balance is incremented accordingly.
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
         i = i + 1;
@@ -239,14 +235,10 @@ address 0x1 {
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       let subsidy = state.current_proof_price;
-      print(&0x02);
-      print(&subsidy);
       // abort if ceiling was met
       if (state.current_gas_distributed + state.current_proof_price > state.current_cap) return 0;
 
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
-      print(&0x03);
-      print(&minted_coins);
 
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
