@@ -64,6 +64,7 @@ impl ValidatorConfig {
         // and encrypt the validator address.
         let validator_address =
             validator_address.append_prod_protos(validator_network_key, HANDSHAKE_VERSION);
+
         let encryptor = config.validator_backend().encryptor();
         let validator_addresses = encryptor
             .encrypt(

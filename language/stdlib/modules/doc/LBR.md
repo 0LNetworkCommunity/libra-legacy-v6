@@ -163,6 +163,7 @@ restrictions are enforced in the <code><a href="Libra.md#0x1_Libra_register_curr
     // <a href="LBR.md#0x1_LBR">LBR</a> cannot be minted.
     <a href="Libra.md#0x1_Libra_update_minting_ability">Libra::update_minting_ability</a>&lt;<a href="LBR.md#0x1_LBR">LBR</a>&gt;(tc_account, <b>false</b>);
     <a href="AccountLimits.md#0x1_AccountLimits_publish_unrestricted_limits">AccountLimits::publish_unrestricted_limits</a>&lt;<a href="LBR.md#0x1_LBR">LBR</a>&gt;(lr_account);
+
     <b>let</b> preburn_cap = <a href="Libra.md#0x1_Libra_create_preburn">Libra::create_preburn</a>&lt;<a href="LBR.md#0x1_LBR">LBR</a>&gt;(tc_account);
     move_to(lr_account, <a href="LBR.md#0x1_LBR_Reserve">Reserve</a> { mint_cap, burn_cap, preburn_cap });
 }

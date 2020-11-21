@@ -55,7 +55,7 @@ The type tag representing the <code><a href="Coin1.md#0x1_Coin1">Coin1</a></code
 Registers the <code><a href="Coin1.md#0x1_Coin1">Coin1</a></code> cointype. This can only be called from genesis.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Coin1.md#0x1_Coin1_initialize">initialize</a>(lr_account: &signer, tc_account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Coin1.md#0x1_Coin1_initialize">initialize</a>(lr_account: &signer)
 </code></pre>
 
 
@@ -66,13 +66,13 @@ Registers the <code><a href="Coin1.md#0x1_Coin1">Coin1</a></code> cointype. This
 
 <pre><code><b>public</b> <b>fun</b> <a href="Coin1.md#0x1_Coin1_initialize">initialize</a>(
     lr_account: &signer,
-    tc_account: &signer,
+    // lr_account: &signer,
 ) {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
     <a href="Libra.md#0x1_Libra_register_SCS_currency">Libra::register_SCS_currency</a>&lt;<a href="Coin1.md#0x1_Coin1">Coin1</a>&gt;(
         lr_account,
-        tc_account,
-        <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 1), // exchange rate <b>to</b> <a href="LBR.md#0x1_LBR">LBR</a>
+        // lr_account,
+        <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 1), // exchange rate <b>to</b> <a href="GAS.md#0x1_GAS">GAS</a>
         1000000, // scaling_factor = 10^6
         100,     // fractional_part = 10^2
         b"<a href="Coin1.md#0x1_Coin1">Coin1</a>"
@@ -118,7 +118,7 @@ Only a TreasuryCompliance account can have the MintCapability [[H1]][PERMISSION]
 Moreover, only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
 
 
-<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
+<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: lr_account};
 </code></pre>
 
 

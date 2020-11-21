@@ -106,6 +106,7 @@ members = [
     "language/vm/serializer-tests",
     "libra-node",
     "mempool",
+    "miner",
     "network",
     "network/builder",
     "network/memsocket",
@@ -144,6 +145,11 @@ members = [
     "testsuite/smoke-test",
     "types",
     "vm-validator",
+    ######### 0L #########
+    "verifiable_delay/vdf",
+    "verifiable_delay/vdf-cli",
+    "verifiable_delay/classgroup",
+    "miner"
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should

@@ -32,6 +32,7 @@ use std::{
     convert::{TryFrom, TryInto},
     default::Default,
 };
+use libra_types::account_config::resources::miner_state::MinerStateResource;
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -799,6 +800,34 @@ impl TryFrom<AccountStateProof> for AccountStateProofView {
             transaction_info_to_account_proof: BytesView::from(&lcs::to_bytes(
                 account_state_proof.transaction_info_to_account_proof(),
             )?),
+        })
+    }
+}
+
+// add by Ping
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct MinerStateResourceView {
+    pub previous_proof_hash: BytesView,
+    pub verified_tower_height: u64, // user's latest verified_tower_height
+    pub latest_epoch_mining: u64,
+    pub count_proofs_in_epoch: u64,
+    pub epochs_validating_and_mining: u64,
+    pub contiguous_epochs_validating_and_mining: u64,
+    pub epochs_since_last_account_creation: u64
+}
+
+impl TryFrom<MinerStateResource> for MinerStateResourceView {
+    type Error = Error;
+
+    fn try_from(state: MinerStateResource) -> Result<MinerStateResourceView, Error> {
+        Ok(MinerStateResourceView {
+            previous_proof_hash: BytesView::from( state.previous_proof_hash),
+            verified_tower_height: state.verified_tower_height, // user's latest verified_tower_height
+            latest_epoch_mining: state.latest_epoch_mining,
+            count_proofs_in_epoch: state.count_proofs_in_epoch,
+            epochs_validating_and_mining: state.epochs_validating_and_mining,
+            contiguous_epochs_validating_and_mining: state.contiguous_epochs_validating_and_mining,
+            epochs_since_last_account_creation: state.epochs_since_last_account_creation
         })
     }
 }

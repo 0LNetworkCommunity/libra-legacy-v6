@@ -20,8 +20,7 @@ Module providing functionality for designated dealers.
 -  [Function `reset_window`](#0x1_DesignatedDealer_reset_window)
 
 
-<pre><code><b>use</b> <a href="Coin1.md#0x1_Coin1">0x1::Coin1</a>;
-<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
+<pre><code><b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
@@ -296,7 +295,7 @@ If <code>add_all_currencies = <b>true</b></code> this will add a <code><a href="
 and default tiers for each known currency at launch.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_publish_designated_dealer_credential">publish_designated_dealer_credential</a>&lt;CoinType&gt;(dd: &signer, tc_account: &signer, add_all_currencies: bool)
+<pre><code><b>public</b> <b>fun</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_publish_designated_dealer_credential">publish_designated_dealer_credential</a>&lt;CoinType&gt;(dd: &signer, tc_account: &signer, _add_all_currencies: bool)
 </code></pre>
 
 
@@ -308,17 +307,17 @@ and default tiers for each known currency at launch.
 <pre><code><b>public</b> <b>fun</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_publish_designated_dealer_credential">publish_designated_dealer_credential</a>&lt;CoinType&gt;(
     dd: &signer,
     tc_account: &signer,
-    add_all_currencies: bool,
-) <b>acquires</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    _add_all_currencies: bool,
+)  {
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(tc_account);
     <a href="Roles.md#0x1_Roles_assert_designated_dealer">Roles::assert_designated_dealer</a>(dd);
     <b>assert</b>(!<b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_Dealer">Dealer</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(dd)), <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_EDEALER">EDEALER</a>));
     move_to(dd, <a href="DesignatedDealer.md#0x1_DesignatedDealer_Dealer">Dealer</a> { mint_event_handle: <a href="Event.md#0x1_Event_new_event_handle">Event::new_event_handle</a>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_ReceivedMintEvent">ReceivedMintEvent</a>&gt;(dd) });
-    <b>if</b> (add_all_currencies) {
-        <a href="DesignatedDealer.md#0x1_DesignatedDealer_add_currency">add_currency</a>&lt;<a href="Coin1.md#0x1_Coin1">Coin1</a>&gt;(dd, tc_account);
-    } <b>else</b> {
-        <a href="DesignatedDealer.md#0x1_DesignatedDealer_add_currency">add_currency</a>&lt;CoinType&gt;(dd, tc_account);
-    };
+    // <b>if</b> (add_all_currencies) {
+    //     <a href="DesignatedDealer.md#0x1_DesignatedDealer_add_currency">add_currency</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(dd, tc_account);
+    // } <b>else</b> {
+    //     <a href="DesignatedDealer.md#0x1_DesignatedDealer_add_currency">add_currency</a>&lt;CoinType&gt;(dd, tc_account);
+    // };
 }
 </code></pre>
 
@@ -337,12 +336,8 @@ and default tiers for each known currency at launch.
 <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
 <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDesignatedDealer">Roles::AbortsIfNotDesignatedDealer</a>{account: dd};
 <b>aborts_if</b> <b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_Dealer">Dealer</a>&gt;(dd_addr) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
-<b>include</b> <b>if</b> (add_all_currencies) <a href="DesignatedDealer.md#0x1_DesignatedDealer_AddCurrencyAbortsIf">AddCurrencyAbortsIf</a>&lt;<a href="Coin1.md#0x1_Coin1">Coin1</a>&gt;{dd_addr: dd_addr}
-        <b>else</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_AddCurrencyAbortsIf">AddCurrencyAbortsIf</a>&lt;CoinType&gt;{dd_addr: dd_addr};
 <b>modifies</b> <b>global</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_Dealer">Dealer</a>&gt;(dd_addr);
 <b>ensures</b> <b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_Dealer">Dealer</a>&gt;(dd_addr);
-<b>modifies</b> <b>global</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;CoinType&gt;&gt;(dd_addr), <b>global</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;<a href="Coin1.md#0x1_Coin1">Coin1</a>&gt;&gt;(dd_addr);
-<b>ensures</b> <b>if</b> (add_all_currencies) <b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;<a href="Coin1.md#0x1_Coin1">Coin1</a>&gt;&gt;(dd_addr) <b>else</b> <b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;CoinType&gt;&gt;(dd_addr);
 </code></pre>
 
 
@@ -369,7 +364,7 @@ multi-signer transactions in order to add a new currency to an existing DD.
 
 <pre><code><b>public</b> <b>fun</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_add_currency">add_currency</a>&lt;CoinType&gt;(dd: &signer, tc_account: &signer)
 <b>acquires</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(tc_account);
     <b>let</b> dd_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(dd);
     <b>assert</b>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_exists_at">exists_at</a>(dd_addr), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_EDEALER">EDEALER</a>));
     <a href="Libra.md#0x1_Libra_publish_preburn_to_account">Libra::publish_preburn_to_account</a>&lt;CoinType&gt;(dd, tc_account);
@@ -456,7 +451,7 @@ multi-signer transactions in order to add a new currency to an existing DD.
     dd_addr: address,
     tier_upperbound: u64
 ) <b>acquires</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(tc_account);
     <b>assert</b>(<b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;CoinType&gt;&gt;(dd_addr), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_EDEALER">EDEALER</a>));
     <b>let</b> tiers = &<b>mut</b> borrow_global_mut&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;CoinType&gt;&gt;(dd_addr).tiers;
     <b>let</b> number_of_tiers = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(tiers);
@@ -534,7 +529,7 @@ multi-signer transactions in order to add a new currency to an existing DD.
     tier_index: u64,
     new_upperbound: u64
 ) <b>acquires</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(tc_account);
     <b>assert</b>(<b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;CoinType&gt;&gt;(dd_addr), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_EDEALER">EDEALER</a>));
     <b>let</b> tiers = &<b>mut</b> borrow_global_mut&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;CoinType&gt;&gt;(dd_addr).tiers;
     <b>let</b> number_of_tiers = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(tiers);
@@ -614,7 +609,7 @@ multi-signer transactions in order to add a new currency to an existing DD.
     dd_addr: address,
     tier_index: u64,
 ): <a href="Libra.md#0x1_Libra_Libra">Libra::Libra</a>&lt;CoinType&gt; <b>acquires</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer_Dealer">Dealer</a>, <a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(tc_account);
     <b>assert</b>(amount &gt; 0, <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_EINVALID_MINT_AMOUNT">EINVALID_MINT_AMOUNT</a>));
     <b>assert</b>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_exists_at">exists_at</a>(dd_addr), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_EDEALER">EDEALER</a>));
     <b>assert</b>(<b>exists</b>&lt;<a href="DesignatedDealer.md#0x1_DesignatedDealer_TierInfo">TierInfo</a>&lt;CoinType&gt;&gt;(dd_addr), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DesignatedDealer.md#0x1_DesignatedDealer_EDEALER">EDEALER</a>));

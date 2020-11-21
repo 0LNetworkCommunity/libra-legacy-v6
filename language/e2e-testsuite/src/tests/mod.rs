@@ -32,3 +32,10 @@ mod validator_set_management;
 mod vasps;
 mod verify_txn;
 mod write_set;
+
+// OL Changes
+mod reconfig_0l;
+mod upgrade_oracle_0l;
+mod minerstate_commit_0l;
+mod minerstate_onboarding_0l;
+mod demo_0l;

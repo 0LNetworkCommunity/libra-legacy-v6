@@ -1,7 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_crypto::noise::NoiseError;
+use libra_crypto::{noise::NoiseError, x25519::PublicKey};
 use libra_types::PeerId;
 use short_hex_str::ShortHexStr;
 use std::io;
@@ -60,9 +60,10 @@ pub enum NoiseHandshakeError {
 
     #[error(
         "noise server: client {0}: client's self-reported peer id and pubkey-derived peer \
-         id don't match: self-reported: {1}, derived: {2}"
+         id don't match: self-reported: {1}, derived: {2}, \
+         remote: {3}"
     )]
-    ClientPeerIdMismatch(ShortHexStr, PeerId, PeerId),
+    ClientPeerIdMismatch(ShortHexStr, PeerId, PeerId, PublicKey),
 
     #[error("noise server: client {0}: handshake message is missing the anti-replay timestamp")]
     MissingAntiReplayTimestamp(ShortHexStr),

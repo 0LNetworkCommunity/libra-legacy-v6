@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use executor::db_bootstrapper;
-use libra_global_constants::{
-    CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY,
-    SAFETY_DATA, VALIDATOR_NETWORK_KEY, WAYPOINT,
-};
+use libra_global_constants::{CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY, SAFETY_DATA, VALIDATOR_NETWORK_KEY, WAYPOINT};
 use libra_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
     storage::StorageWrapper as Storage,
@@ -70,6 +67,7 @@ impl Verify {
 
         write_string(&validator_storage, &mut buffer, OPERATOR_ACCOUNT);
         write_string(&validator_storage, &mut buffer, OWNER_ACCOUNT);
+
         write_safety_data(&validator_storage, &mut buffer, SAFETY_DATA);
         write_waypoint(&validator_storage, &mut buffer, WAYPOINT);
 
@@ -103,13 +101,12 @@ fn write_ed25519_key(storage: &Storage, buffer: &mut String, key: &'static str) 
         .unwrap_or_else(|e| e.to_string());
     writeln!(buffer, "{} - {}", key, value).unwrap();
 }
-
 fn write_x25519_key(storage: &Storage, buffer: &mut String, key: &'static str) {
     let value = storage
         .x25519_public_from_private(key)
         .map(|v| v.to_string())
         .unwrap_or_else(|e| e.to_string());
-    writeln!(buffer, "{} - {}", key, value).unwrap();
+    writeln!(buffer, "{} x25519 - {}", key, value).unwrap();
 }
 
 fn write_string(storage: &Storage, buffer: &mut String, key: &'static str) {
@@ -201,7 +198,7 @@ fn compare_genesis(
 
 /// Compute the ledger given a genesis writeset transaction and return access to that ledger and
 /// the waypoint for that state.
-fn compute_genesis(
+pub fn compute_genesis(
     genesis_path: &PathBuf,
     db_path: &Path,
 ) -> Result<(DbReaderWriter, Waypoint), Error> {

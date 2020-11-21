@@ -66,6 +66,7 @@ module LBR {
         // LBR cannot be minted.
         Libra::update_minting_ability<LBR>(tc_account, false);
         AccountLimits::publish_unrestricted_limits<LBR>(lr_account);
+        
         let preburn_cap = Libra::create_preburn<LBR>(tc_account);
         move_to(lr_account, Reserve { mint_cap, burn_cap, preburn_cap });
     }

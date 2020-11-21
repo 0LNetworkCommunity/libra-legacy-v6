@@ -331,7 +331,7 @@ Freeze the account at <code>addr</code>.
 )
 <b>acquires</b> <a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>, <a href="AccountFreezing.md#0x1_AccountFreezing_FreezeEventsHolder">FreezeEventsHolder</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(account);
     // The libra root account and TC cannot be frozen
     <b>assert</b>(frozen_address != <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AccountFreezing.md#0x1_AccountFreezing_ECANNOT_FREEZE_LIBRA_ROOT">ECANNOT_FREEZE_LIBRA_ROOT</a>));
     <b>assert</b>(frozen_address != <a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AccountFreezing.md#0x1_AccountFreezing_ECANNOT_FREEZE_TC">ECANNOT_FREEZE_TC</a>));
@@ -391,7 +391,7 @@ Unfreeze the account at <code>addr</code>.
 )
 <b>acquires</b> <a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>, <a href="AccountFreezing.md#0x1_AccountFreezing_FreezeEventsHolder">FreezeEventsHolder</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(account);
+    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(account);
     <b>assert</b>(<b>exists</b>&lt;<a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>&gt;(unfrozen_address), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountFreezing.md#0x1_AccountFreezing_EFREEZING_BIT">EFREEZING_BIT</a>));
     borrow_global_mut&lt;<a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>&gt;(unfrozen_address).is_frozen = <b>false</b>;
     <b>let</b> initiator_address = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
