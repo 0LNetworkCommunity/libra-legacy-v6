@@ -60,7 +60,9 @@ pub enum ScriptCall {
     /// * `Script::create_child_vasp_account`
     /// * `Script::create_parent_vasp_account`
     /// * `Script::peer_to_peer_with_metadata`
-    AddCurrencyToAccount { currency: TypeTag },
+    AddCurrencyToAccount {
+        currency: TypeTag,
+    },
 
     /// # Summary
     /// Stores the sending accounts ability to rotate its authentication key with a designated recovery
@@ -101,7 +103,9 @@ pub enum ScriptCall {
     /// # Related Scripts
     /// * `Script::create_recovery_address`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    AddRecoveryRotationCapability { recovery_address: AccountAddress },
+    AddRecoveryRotationCapability {
+        recovery_address: AccountAddress,
+    },
 
     /// # Summary
     /// Adds a script hash to the transaction allowlist. This transaction
@@ -136,7 +140,10 @@ pub enum ScriptCall {
     /// | `Errors::REQUIRES_ROLE`    | `Roles::ELIBRA_ROOT`                                                   | The sending account is not the Libra Root account.                                         |
     /// | `Errors::INVALID_ARGUMENT` | `LibraTransactionPublishingOption::EINVALID_SCRIPT_HASH`               | The script `hash` is an invalid length.                                                    |
     /// | `Errors::INVALID_ARGUMENT` | `LibraTransactionPublishingOption::EALLOWLIST_ALREADY_CONTAINS_SCRIPT` | The on-chain allowlist already contains the script `hash`.                                 |
-    AddToScriptAllowList { hash: Bytes, sliding_nonce: u64 },
+    AddToScriptAllowList {
+        hash: Bytes,
+        sliding_nonce: u64,
+    },
 
     /// # Summary
     /// Adds a validator account to the validator set, and triggers a
@@ -280,7 +287,9 @@ pub enum ScriptCall {
     /// # Related Scripts
     /// * `Script::burn`
     /// * `Script::cancel_burn`
-    BurnTxnFees { coin_type: TypeTag },
+    BurnTxnFees {
+        coin_type: TypeTag,
+    },
 
     /// # Summary
     /// Cancels and returns all coins held in the preburn area under
@@ -619,6 +628,10 @@ pub enum ScriptCall {
         human_name: Bytes,
     },
 
+    DemoE2e {
+        world: u64,
+    },
+
     /// # Summary
     /// Freezes the account at `address`. The sending account of this transaction
     /// must be the Treasury Compliance account. The account being frozen cannot be
@@ -665,6 +678,35 @@ pub enum ScriptCall {
     FreezeAccount {
         sliding_nonce: u64,
         to_freeze_account: AccountAddress,
+    },
+
+    MinerstateCommit {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
+    MinerstateHelper {},
+
+    MinerstateOnboarding {
+        challenge: Bytes,
+        solution: Bytes,
+        consensus_pubkey: Bytes,
+        validator_network_address: Bytes,
+        full_node_network_address: Bytes,
+        human_name: Bytes,
+    },
+
+    OlOracleTx {
+        id: u64,
+        data: Bytes,
+    },
+
+    OlReconfigBulkUpdateSetup {
+        alice: AccountAddress,
+        bob: AccountAddress,
+        carol: AccountAddress,
+        sha: AccountAddress,
+        ram: AccountAddress,
     },
 
     /// # Summary
@@ -767,7 +809,10 @@ pub enum ScriptCall {
     /// * `Script::cancel_burn`
     /// * `Script::burn`
     /// * `Script::burn_txn_fees`
-    Preburn { token: TypeTag, amount: u64 },
+    Preburn {
+        token: TypeTag,
+        amount: u64,
+    },
 
     /// # Summary
     /// Rotates the authentication key of the sending account to the
@@ -795,7 +840,9 @@ pub enum ScriptCall {
     ///
     /// # Related Scripts
     /// * `Script::rotate_shared_ed25519_public_key`
-    PublishSharedEd25519PublicKey { public_key: Bytes },
+    PublishSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration. This does not reconfigure the system and will not update
@@ -913,7 +960,9 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key_with_nonce`
     /// * `Script::rotate_authentication_key_with_nonce_admin`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKey { new_key: Bytes },
+    RotateAuthenticationKey {
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the sender's authentication key to the supplied new authentication key. May be sent by
@@ -946,7 +995,10 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key`
     /// * `Script::rotate_authentication_key_with_nonce_admin`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonce { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonce {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the specified account's authentication key to the supplied new authentication key. May
@@ -979,7 +1031,10 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key`
     /// * `Script::rotate_authentication_key_with_nonce`
     /// * `Script::rotate_authentication_key_with_recovery_address`
-    RotateAuthenticationKeyWithNonceAdmin { sliding_nonce: u64, new_key: Bytes },
+    RotateAuthenticationKeyWithNonceAdmin {
+        sliding_nonce: u64,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key of a specified account that is part of a recovery address to a
@@ -1055,7 +1110,10 @@ pub enum ScriptCall {
     /// * `Script::create_parent_vasp_account`
     /// * `Script::create_designated_dealer`
     /// * `Script::rotate_dual_attestation_info`
-    RotateDualAttestationInfo { new_url: Bytes, new_key: Bytes },
+    RotateDualAttestationInfo {
+        new_url: Bytes,
+        new_key: Bytes,
+    },
 
     /// # Summary
     /// Rotates the authentication key in a `SharedEd25519PublicKey`. This transaction can be sent by
@@ -1082,7 +1140,9 @@ pub enum ScriptCall {
     ///
     /// # Related Scripts
     /// * `Script::publish_shared_ed25519_public_key`
-    RotateSharedEd25519PublicKey { public_key: Bytes },
+    RotateSharedEd25519PublicKey {
+        public_key: Bytes,
+    },
 
     /// # Summary
     /// Updates a validator's configuration, and triggers a reconfiguration of the system to update the
@@ -1369,7 +1429,7 @@ pub enum ScriptCall {
     /// | Name                            | Type      | Description                                                                                                                        |
     /// | ------                          | ------    | -------------                                                                                                                      |
     /// | `Currency`                      | Type      | The Move type for the `Currency` whose exchange rate is being updated. `Currency` must be an already-registered currency on-chain. |
-    /// | `tc_account`                    | `&signer` | The signer reference of the sending account of this transaction. Must be the Treasury Compliance account.                          |
+    /// | `lr_account`                    | `&signer` | The signer reference of the sending account of this transaction. Must be the Treasury Compliance account.                          |
     /// | `sliding_nonce`                 | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for the transaction.                                                          |
     /// | `new_exchange_rate_numerator`   | `u64`     | The numerator for the new to micro-LBR exchange rate for `Currency`.                                                               |
     /// | `new_exchange_rate_denominator` | `u64`     | The denominator for the new to micro-LBR exchange rate for `Currency`.                                                             |
@@ -1377,12 +1437,12 @@ pub enum ScriptCall {
     /// # Common Abort Conditions
     /// | Error Category             | Error Reason                            | Description                                                                                |
     /// | ----------------           | --------------                          | -------------                                                                              |
-    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+    /// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `lr_account`.                             |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
-    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
-    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `tc_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `lr_account` is not the Treasury Compliance account.                                       |
+    /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `lr_account` is not the Treasury Compliance account.                                       |
     /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::EDENOMINATOR`            | `new_exchange_rate_denominator` is zero.                                                   |
     /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
     /// | `Errors::LIMIT_EXCEEDED`   | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
@@ -1423,7 +1483,10 @@ pub enum ScriptCall {
     /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED`       | The `sliding_nonce` has been previously recorded.                                          |
     /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ELIBRA_ROOT`                  | `account` is not the Libra Root account.                                                   |
     /// | `Errors::INVALID_ARGUMENT` | `LibraVersion::EINVALID_MAJOR_VERSION_NUMBER` | `major` is less-than or equal to the current major version stored on-chain.                |
-    UpdateLibraVersion { sliding_nonce: u64, major: u64 },
+    UpdateLibraVersion {
+        sliding_nonce: u64,
+        major: u64,
+    },
 
     /// # Summary
     /// Script to allow or disallow minting of new coins in a specified currency.  This transaction can
@@ -1556,10 +1619,39 @@ impl ScriptCall {
                 auth_key_prefix,
                 human_name,
             ),
+            DemoE2e { world } => encode_demo_e2e_script(world),
             FreezeAccount {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
+            MinerstateCommit {
+                challenge,
+                solution,
+            } => encode_minerstate_commit_script(challenge, solution),
+            MinerstateHelper {} => encode_minerstate_helper_script(),
+            MinerstateOnboarding {
+                challenge,
+                solution,
+                consensus_pubkey,
+                validator_network_address,
+                full_node_network_address,
+                human_name,
+            } => encode_minerstate_onboarding_script(
+                challenge,
+                solution,
+                consensus_pubkey,
+                validator_network_address,
+                full_node_network_address,
+                human_name,
+            ),
+            OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
+            OlReconfigBulkUpdateSetup {
+                alice,
+                bob,
+                carol,
+                sha,
+                ram,
+            } => encode_ol_reconfig_bulk_update_setup_script(alice, bob, carol, sha, ram),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -2389,6 +2481,14 @@ pub fn encode_create_validator_operator_account_script(
     )
 }
 
+pub fn encode_demo_e2e_script(world: u64) -> Script {
+    Script::new(
+        DEMO_E2E_CODE.to_vec(),
+        vec![],
+        vec![TransactionArgument::U64(world)],
+    )
+}
+
 /// # Summary
 /// Freezes the account at `address`. The sending account of this transaction
 /// must be the Treasury Compliance account. The account being frozen cannot be
@@ -2442,6 +2542,74 @@ pub fn encode_freeze_account_script(
         vec![
             TransactionArgument::U64(sliding_nonce),
             TransactionArgument::Address(to_freeze_account),
+        ],
+    )
+}
+
+pub fn encode_minerstate_commit_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
+    Script::new(
+        MINERSTATE_COMMIT_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+        ],
+    )
+}
+
+pub fn encode_minerstate_helper_script() -> Script {
+    Script::new(MINERSTATE_HELPER_CODE.to_vec(), vec![], vec![])
+}
+
+pub fn encode_minerstate_onboarding_script(
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+    consensus_pubkey: Vec<u8>,
+    validator_network_address: Vec<u8>,
+    full_node_network_address: Vec<u8>,
+    human_name: Vec<u8>,
+) -> Script {
+    Script::new(
+        MINERSTATE_ONBOARDING_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+            TransactionArgument::U8Vector(consensus_pubkey),
+            TransactionArgument::U8Vector(validator_network_address),
+            TransactionArgument::U8Vector(full_node_network_address),
+            TransactionArgument::U8Vector(human_name),
+        ],
+    )
+}
+
+pub fn encode_ol_oracle_tx_script(id: u64, data: Vec<u8>) -> Script {
+    Script::new(
+        OL_ORACLE_TX_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U64(id),
+            TransactionArgument::U8Vector(data),
+        ],
+    )
+}
+
+pub fn encode_ol_reconfig_bulk_update_setup_script(
+    alice: AccountAddress,
+    bob: AccountAddress,
+    carol: AccountAddress,
+    sha: AccountAddress,
+    ram: AccountAddress,
+) -> Script {
+    Script::new(
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(alice),
+            TransactionArgument::Address(bob),
+            TransactionArgument::Address(carol),
+            TransactionArgument::Address(sha),
+            TransactionArgument::Address(ram),
         ],
     )
 }
@@ -3306,7 +3474,7 @@ pub fn encode_update_dual_attestation_limit_script(
 /// | Name                            | Type      | Description                                                                                                                        |
 /// | ------                          | ------    | -------------                                                                                                                      |
 /// | `Currency`                      | Type      | The Move type for the `Currency` whose exchange rate is being updated. `Currency` must be an already-registered currency on-chain. |
-/// | `tc_account`                    | `&signer` | The signer reference of the sending account of this transaction. Must be the Treasury Compliance account.                          |
+/// | `lr_account`                    | `&signer` | The signer reference of the sending account of this transaction. Must be the Treasury Compliance account.                          |
 /// | `sliding_nonce`                 | `u64`     | The `sliding_nonce` (see: `SlidingNonce`) to be used for the transaction.                                                          |
 /// | `new_exchange_rate_numerator`   | `u64`     | The numerator for the new to micro-LBR exchange rate for `Currency`.                                                               |
 /// | `new_exchange_rate_denominator` | `u64`     | The denominator for the new to micro-LBR exchange rate for `Currency`.                                                             |
@@ -3314,12 +3482,12 @@ pub fn encode_update_dual_attestation_limit_script(
 /// # Common Abort Conditions
 /// | Error Category             | Error Reason                            | Description                                                                                |
 /// | ----------------           | --------------                          | -------------                                                                              |
-/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `tc_account`.                             |
+/// | `Errors::NOT_PUBLISHED`    | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `lr_account`.                             |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
 /// | `Errors::INVALID_ARGUMENT` | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
-/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `tc_account` is not the Treasury Compliance account.                                       |
-/// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `tc_account` is not the Treasury Compliance account.                                       |
+/// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`   | `lr_account` is not the Treasury Compliance account.                                       |
+/// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`           | `lr_account` is not the Treasury Compliance account.                                       |
 /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::EDENOMINATOR`            | `new_exchange_rate_denominator` is zero.                                                   |
 /// | `Errors::INVALID_ARGUMENT` | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
 /// | `Errors::LIMIT_EXCEEDED`   | `FixedPoint32::ERATIO_OUT_OF_RANGE`     | The quotient is unrepresentable as a `FixedPoint32`.                                       |
@@ -3518,10 +3686,55 @@ fn decode_create_validator_operator_account_script(script: &Script) -> Option<Sc
     })
 }
 
+fn decode_demo_e2e_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::DemoE2e {
+        world: decode_u64_argument(script.args().get(0)?.clone())?,
+    })
+}
+
 fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::FreezeAccount {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
         to_freeze_account: decode_address_argument(script.args().get(1)?.clone())?,
+    })
+}
+
+fn decode_minerstate_commit_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::MinerstateCommit {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+    })
+}
+
+fn decode_minerstate_helper_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::MinerstateHelper {})
+}
+
+fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::MinerstateOnboarding {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        consensus_pubkey: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        validator_network_address: decode_u8vector_argument(script.args().get(3)?.clone())?,
+        full_node_network_address: decode_u8vector_argument(script.args().get(4)?.clone())?,
+        human_name: decode_u8vector_argument(script.args().get(5)?.clone())?,
+    })
+}
+
+fn decode_ol_oracle_tx_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlOracleTx {
+        id: decode_u64_argument(script.args().get(0)?.clone())?,
+        data: decode_u8vector_argument(script.args().get(1)?.clone())?,
+    })
+}
+
+fn decode_ol_reconfig_bulk_update_setup_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::OlReconfigBulkUpdateSetup {
+        alice: decode_address_argument(script.args().get(0)?.clone())?,
+        bob: decode_address_argument(script.args().get(1)?.clone())?,
+        carol: decode_address_argument(script.args().get(2)?.clone())?,
+        sha: decode_address_argument(script.args().get(3)?.clone())?,
+        ram: decode_address_argument(script.args().get(4)?.clone())?,
     })
 }
 
@@ -3735,9 +3948,30 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE.to_vec(),
         Box::new(decode_create_validator_operator_account_script),
     );
+    map.insert(DEMO_E2E_CODE.to_vec(), Box::new(decode_demo_e2e_script));
     map.insert(
         FREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_freeze_account_script),
+    );
+    map.insert(
+        MINERSTATE_COMMIT_CODE.to_vec(),
+        Box::new(decode_minerstate_commit_script),
+    );
+    map.insert(
+        MINERSTATE_HELPER_CODE.to_vec(),
+        Box::new(decode_minerstate_helper_script),
+    );
+    map.insert(
+        MINERSTATE_ONBOARDING_CODE.to_vec(),
+        Box::new(decode_minerstate_onboarding_script),
+    );
+    map.insert(
+        OL_ORACLE_TX_CODE.to_vec(),
+        Box::new(decode_ol_oracle_tx_script),
+    );
+    map.insert(
+        OL_RECONFIG_BULK_UPDATE_SETUP_CODE.to_vec(),
+        Box::new(decode_ol_reconfig_bulk_update_setup_script),
     );
     map.insert(
         PEER_TO_PEER_WITH_METADATA_CODE.to_vec(),
@@ -3983,6 +4217,14 @@ const CREATE_VALIDATOR_OPERATOR_ACCOUNT_CODE: &[u8] = &[
     0, 10, 2, 11, 3, 11, 4, 17, 1, 2,
 ];
 
+const DEMO_E2E_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 3, 2, 6, 4, 8, 4, 5, 12, 9, 7, 21, 12, 8, 33, 16, 6,
+    49, 18, 0, 0, 0, 1, 0, 1, 1, 1, 0, 3, 0, 2, 1, 6, 9, 0, 0, 1, 3, 1, 5, 5, 68, 101, 98, 117,
+    103, 5, 112, 114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 7, 7, 0, 12, 1, 14, 1, 56, 0, 14, 0, 56,
+    1, 2,
+];
+
 const FREEZE_ACCOUNT_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 10, 5, 14, 14, 7, 28, 66, 8, 94, 16, 0, 0, 0,
     1, 0, 2, 0, 1, 0, 1, 3, 2, 1, 0, 2, 6, 12, 5, 0, 2, 6, 12, 3, 3, 6, 12, 3, 5, 15, 65, 99, 99,
@@ -3991,6 +4233,72 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
     116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98,
     111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10, 1, 17, 1,
     11, 0, 10, 2, 17, 0, 2,
+];
+
+const MINERSTATE_COMMIT_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 15, 5, 23, 24, 7, 47, 71, 8, 118, 16,
+    0, 0, 0, 1, 1, 3, 2, 0, 0, 2, 0, 1, 0, 1, 4, 2, 0, 0, 1, 5, 3, 4, 0, 0, 1, 3, 2, 6, 12, 8, 0,
+    3, 10, 2, 3, 10, 2, 1, 8, 0, 3, 6, 12, 10, 2, 10, 2, 7, 71, 108, 111, 98, 97, 108, 115, 10, 77,
+    105, 110, 101, 114, 83, 116, 97, 116, 101, 14, 103, 101, 116, 95, 100, 105, 102, 102, 105, 99,
+    117, 108, 116, 121, 5, 80, 114, 111, 111, 102, 12, 99, 111, 109, 109, 105, 116, 95, 115, 116,
+    97, 116, 101, 17, 99, 114, 101, 97, 116, 101, 95, 112, 114, 111, 111, 102, 95, 98, 108, 111,
+    98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 4, 9, 11, 1, 17, 0, 11, 2, 17, 2, 12,
+    3, 11, 0, 11, 3, 17, 1, 2,
+];
+
+const MINERSTATE_HELPER_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 8, 3, 8, 25, 5, 33, 22, 7, 55, 113, 8, 168, 1, 16, 0, 0,
+    0, 1, 0, 2, 0, 3, 0, 4, 0, 1, 0, 1, 5, 2, 0, 0, 2, 6, 0, 3, 0, 2, 7, 0, 3, 0, 3, 8, 0, 4, 0, 0,
+    1, 3, 4, 6, 12, 3, 10, 2, 10, 2, 1, 10, 2, 1, 1, 1, 6, 12, 2, 1, 3, 7, 71, 108, 111, 98, 97,
+    108, 115, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 12, 84, 101, 115, 116, 70, 105,
+    120, 116, 117, 114, 101, 115, 7, 84, 101, 115, 116, 110, 101, 116, 14, 103, 101, 116, 95, 100,
+    105, 102, 102, 105, 99, 117, 108, 116, 121, 11, 116, 101, 115, 116, 95, 104, 101, 108, 112,
+    101, 114, 17, 97, 108, 105, 99, 101, 95, 48, 95, 101, 97, 115, 121, 95, 99, 104, 97, 108, 16,
+    97, 108, 105, 99, 101, 95, 48, 95, 101, 97, 115, 121, 95, 115, 111, 108, 10, 105, 115, 95, 116,
+    101, 115, 116, 110, 101, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 6, 14, 17,
+    4, 12, 1, 11, 1, 3, 8, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 17, 0, 17, 2, 17, 3, 17,
+    1, 2,
+];
+
+const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 48, 7, 76, 86,
+    8, 162, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
+    7, 1, 5, 1, 3, 7, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1, 1, 7, 6, 12, 10, 2,
+    10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105,
+    98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67,
+    111, 110, 102, 105, 103, 7, 98, 97, 108, 97, 110, 99, 101, 35, 99, 114, 101, 97, 116, 101, 95,
+    118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105,
+    116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95, 118, 97, 108, 105, 100, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 26, 11, 0, 14, 1, 14, 2, 11, 3, 11, 4, 11, 5, 11, 6,
+    17, 1, 12, 7, 10, 7, 17, 2, 12, 8, 11, 8, 3, 16, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 7, 56, 0,
+    6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 10, 11, 10, 3, 25, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+];
+
+const OL_ORACLE_TX_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 13, 7, 30, 27, 8, 57, 16,
+    6, 73, 18, 0, 0, 0, 1, 0, 2, 0, 1, 1, 1, 1, 3, 2, 1, 0, 0, 3, 1, 6, 9, 0, 0, 3, 6, 12, 3, 10,
+    2, 1, 5, 5, 68, 101, 98, 117, 103, 6, 79, 114, 97, 99, 108, 101, 5, 112, 114, 105, 110, 116, 7,
+    104, 97, 110, 100, 108, 101, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 9, 7, 0, 12, 3, 14, 3, 56, 0, 11, 0, 10,
+    1, 11, 2, 17, 1, 2,
+];
+
+const OL_RECONFIG_BULK_UPDATE_SETUP_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 33, 4, 37, 6, 5, 43, 47, 7, 90, 97, 8, 187, 1,
+    16, 0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 1, 3, 2, 3, 1, 1, 1, 4, 4, 0, 1, 1, 0, 5, 5, 0, 0, 0, 6, 6,
+    7, 0, 0, 7, 0, 3, 0, 0, 6, 2, 6, 1, 6, 0, 1, 10, 9, 0, 1, 6, 10, 9, 0, 1, 3, 2, 7, 10, 9, 0, 9,
+    0, 2, 6, 12, 10, 5, 1, 5, 1, 1, 6, 6, 12, 5, 5, 5, 5, 5, 9, 1, 3, 1, 3, 1, 3, 1, 3, 10, 5, 11,
+    76, 105, 98, 114, 97, 83, 121, 115, 116, 101, 109, 6, 86, 101, 99, 116, 111, 114, 5, 101, 109,
+    112, 116, 121, 6, 108, 101, 110, 103, 116, 104, 9, 112, 117, 115, 104, 95, 98, 97, 99, 107, 22,
+    98, 117, 108, 107, 95, 117, 112, 100, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111,
+    114, 115, 12, 105, 115, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 18, 118, 97, 108, 105,
+    100, 97, 116, 111, 114, 95, 115, 101, 116, 95, 115, 105, 122, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 1, 0, 8, 9, 58, 56, 0, 12, 14, 13, 14, 10, 1, 56, 1, 13, 14, 10, 2, 56, 1,
+    13, 14, 10, 3, 56, 1, 13, 14, 10, 4, 56, 1, 13, 14, 10, 5, 56, 1, 14, 14, 56, 2, 6, 5, 0, 0, 0,
+    0, 0, 0, 0, 33, 12, 6, 11, 6, 3, 28, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 11, 14,
+    17, 3, 17, 5, 6, 5, 0, 0, 0, 0, 0, 0, 0, 33, 12, 8, 11, 8, 3, 39, 6, 2, 0, 0, 0, 0, 0, 0, 0,
+    39, 10, 4, 17, 4, 8, 33, 12, 10, 11, 10, 3, 48, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 1, 17, 4, 8,
+    33, 12, 12, 11, 12, 3, 57, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const PEER_TO_PEER_WITH_METADATA_CODE: &[u8] = &[
@@ -4131,8 +4439,8 @@ const SET_VALIDATOR_OPERATOR_CODE: &[u8] = &[
     105, 100, 97, 116, 111, 114, 79, 112, 101, 114, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103,
     14, 103, 101, 116, 95, 104, 117, 109, 97, 110, 95, 110, 97, 109, 101, 12, 115, 101, 116, 95,
     111, 112, 101, 114, 97, 116, 111, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5,
-    15, 10, 2, 17, 0, 11, 1, 33, 12, 3, 11, 3, 3, 11, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11,
-    0, 10, 2, 17, 1, 2,
+    15, 10, 2, 17, 0, 11, 1, 33, 12, 3, 11, 3, 3, 11, 11, 0, 1, 6, 111, 0, 0, 0, 0, 0, 0, 0, 39,
+    11, 0, 10, 2, 17, 1, 2,
 ];
 
 const SET_VALIDATOR_OPERATOR_WITH_NONCE_ADMIN_CODE: &[u8] = &[

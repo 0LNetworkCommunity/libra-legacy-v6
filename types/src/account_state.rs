@@ -15,6 +15,7 @@ use crate::{
         ConfigurationResource, LibraVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
     },
+    upgrade_payload::UpgradePayloadResource,
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
 };
 use anyhow::{bail, format_err, Error, Result};
@@ -169,6 +170,11 @@ impl AccountState {
 
     pub fn get_libra_block_resource(&self) -> Result<Option<LibraBlockResource>> {
         self.get_resource(&LibraBlockResource::resource_path())
+    }
+
+    // for upgrade
+    pub fn get_upgrade_payload_resource(&self) -> Result<Option<UpgradePayloadResource>> {
+        self.get_resource(&UpgradePayloadResource::resource_path())
     }
 
     pub fn get_event_handle_by_query_path(&self, query_path: &[u8]) -> Result<Option<EventHandle>> {

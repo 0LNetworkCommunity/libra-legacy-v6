@@ -19,7 +19,7 @@ use libra_mempool::MempoolClientSender;
 use libra_trace::prelude::*;
 use libra_types::{
     account_address::AccountAddress,
-    account_config::{from_currency_code_string, libra_root_address, AccountResource},
+    account_config::{from_currency_code_string, libra_root_address, AccountResource, miner_state::MinerStateResource},
     account_state::AccountState,
     chain_id::ChainId,
     event::EventKey,
@@ -38,6 +38,7 @@ use std::{
     sync::Arc,
 };
 use storage_interface::{DbReader, Order};
+use libra_json_rpc_types::views::MinerStateResourceView;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -630,6 +631,7 @@ pub(crate) fn build_registry() -> RpcRegistry {
         0
     );
     register_rpc_method!(registry, "get_network_status", get_network_status, 0, 0);
+    register_rpc_method!(registry, "get_miner_state", get_miner_state, 2, 0);
 
     registry
 }
@@ -650,4 +652,30 @@ fn invalid_param(index: usize, name: &str) -> JsonRpcError {
         _ => "unknown",
     };
     JsonRpcError::invalid_param(index, name, type_info)
+}
+
+/// add By OL
+/// Returns Miner states for a miner
+async fn get_miner_state(
+    service: JsonRpcService,
+    request: JsonRpcRequest,
+) -> Result<MinerStateResourceView, JsonRpcError> {
+
+    let account_address = request.parse_account_address(0)?;
+
+    // If versions are specified by the request parameters, use them, otherwise use the defaults
+    let version = request.parse_version_param(1, "version")?;
+
+    let account_state_with_proof =  service.get_account_state(account_address, version)?;
+    match account_state_with_proof {
+        Some(s) => {
+            let ms :Option<MinerStateResource> = s.get_resource(MinerStateResource::resource_path().as_slice())?;
+            if ms.is_some() {
+                let msv = MinerStateResourceView::try_from(ms.unwrap());
+                return Ok(msv.ok().unwrap());
+            }
+        },
+        None => {}
+    }
+    Err(JsonRpcError::invalid_request_with_msg("No Miner State found.".to_string()))
 }
