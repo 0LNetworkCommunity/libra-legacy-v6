@@ -196,7 +196,6 @@ address 0x1 {
       let passed = node_above_thresh(account, miner_addr);
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
       
-      miner_history.epochs_since_last_account_creation = miner_history.epochs_since_last_account_creation + 1u64;
       // Update statistics.
       if (passed) {
           let this_epoch = LibraConfig::get_current_epoch();
@@ -206,7 +205,7 @@ address 0x1 {
 
           miner_history.contiguous_epochs_validating_and_mining = miner_history.contiguous_epochs_validating_and_mining + 1u64;
 
-
+          miner_history.epochs_since_last_account_creation = miner_history.epochs_since_last_account_creation + 1u64;
       } else {
         // didn't meet the threshold, reset this count
         miner_history.contiguous_epochs_validating_and_mining = 0;
