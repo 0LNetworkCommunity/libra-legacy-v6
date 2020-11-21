@@ -144,7 +144,7 @@ pub static INITIAL_GAS_SCHEDULE: Lazy<CostTable> = Lazy::new(|| {
         (N::DESTROY_SIGNER, GasCost::new(212, 1)),
         (N::EMIT_EVENT, GasCost::new(52, 1)),
         //////// 0L ////////
-        (N::VDF_VERIFY, GasCost::new(10000, 1)),
+        (N::VDF_VERIFY, GasCost::new(1000000, 1)), // one second of cost.
         (N::VDF_PARSE, GasCost::new(100, 1)),
 
     ];

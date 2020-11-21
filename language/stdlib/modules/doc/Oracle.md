@@ -21,7 +21,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="LibraBlock.md#0x1_LibraBlock">0x1::LibraBlock</a>;
 <b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -502,7 +501,6 @@
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 123401011000);
   <b>let</b> s = borrow_global&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(0x0);
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="Oracle.md#0x1_Oracle_Vote">Vote</a>&gt;(&s.upgrade.votes);
-  print(&s.upgrade);
 
   <b>let</b> voters = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
   <b>let</b> i = 0;

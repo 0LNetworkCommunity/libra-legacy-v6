@@ -220,12 +220,17 @@ address 0x1 {
     
 
     public fun init_fullnode_sub(vm: &signer) {
+      let genesis_validators = ValidatorUniverse::get_eligible_validators(vm);
+      let validator_count = Vector::length(&genesis_validators);
+      // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
+      let baseline_cap = baseline_auction_units() * 175 * 1; 
+
       Roles::assert_libra_root(vm);
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
-        current_proof_price: 100u64,
-        current_cap: 10000u64, // TODO: For genesis make this the minimum for mining at the mininmum gas price for proof.
+        current_proof_price: baseline_cap/validator_count,
+        current_cap: baseline_cap, // baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
         current_gas_distributed: 0u64,
         current_proofs_verified: 0u64
       });
@@ -264,19 +269,21 @@ address 0x1 {
 
     }
 
+    fun baseline_auction_units():u64 {
+      let epoch_length_mins = 24 * 60;
+      let steady_state_nodes = 1000;
+      let target_delay = 10;
+      steady_state_nodes * (epoch_length_mins/target_delay)
+    }
+
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let epoch_length_mins = 24 * 60;
-      let current_auction_multiplier: u64;
-      let steady_state_nodes = 1000;
-      let target_delay = 10;
-      let baseline_auction_units = steady_state_nodes * (epoch_length_mins/target_delay);
-
+      let baseline_auction_units =  baseline_auction_units(); 
       let next_cap = fullnode_subsidy_cap(vm);
       let baseline_proof_price = next_cap / baseline_auction_units;
       // set new price
-      current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
+      let current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
 
       // cannot be more than the baseline for the cap
       state.current_proof_price = current_auction_multiplier * state.current_proof_price;
