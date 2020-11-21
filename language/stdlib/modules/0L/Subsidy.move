@@ -52,7 +52,11 @@ address 0x1 {
       subsidy_units
     }
     // Function code: 03 Prefix: 190103
-    public fun process_subsidy(vm_sig: &signer, subsidy_units: u64, outgoing_set: &vector<address>, fee_ratio: &vector<FixedPoint32>) {
+    public fun process_subsidy(
+      vm_sig: &signer,
+      subsidy_units: u64,
+      outgoing_set: &vector<address>,
+      fee_ratio: &vector<FixedPoint32>) {
       let sender = Signer::address_of(vm_sig);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101034010);
 
