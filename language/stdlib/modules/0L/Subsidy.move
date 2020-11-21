@@ -20,6 +20,7 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::LibraTimestamp;
     use 0x1::TransactionFee;
+    use 0x1::Roles;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -182,6 +183,78 @@ address 0x1 {
         i = i + 1;
       };
       LibraAccount::restore_withdraw_capability(capability_token);
+    }
+
+    //////// FULLNODE /////////
+
+    resource struct FullnodeSubsidy {
+        previous_epoch_proofs: u64,
+        current_proof_price: u64,
+        current_cap: u64,
+        current_gas_distributed: u64,
+        current_proofs_verified: u64
+    }
+
+    public fun init_fullnode_sub(vm: &signer) {
+      Roles::assert_libra_root(vm);
+      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
+      move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
+        previous_epoch_proofs: 0u64,
+        current_proof_price: 0u64,
+        current_cap: 0u64,
+        current_gas_distributed: 0u64,
+        current_proofs_verified: 0u64
+      });
+    }
+
+    public fun distribute_fullnode_subsidy(vm: &signer, _miner: address) acquires FullnodeSubsidy{
+      Roles::assert_libra_root(vm);
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+      state.current_gas_distributed = 1;
+    }
+
+    public fun fullnode_reconfig(vm: &signer) acquires FullnodeSubsidy {
+      Roles::assert_libra_root(vm);
+
+      auctioneer(vm);
+
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+
+      // let epoch_length_mins = 24 * 60;
+      // let current_auction_multiplier: u64;
+      // let steady_state_nodes = 1000;
+      // let target_delay = 10;
+      // let baseline_auction_units = steady_state_nodes * epoch_length_hours * (epoch_length_mins/target_delay);
+
+       // save 
+      state.previous_epoch_proofs = state.current_proofs_verified;
+      // reset counters
+      state.current_gas_distributed =  0u64;
+      state.current_proofs_verified = 0u64;
+
+    }
+
+    fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
+      Roles::assert_libra_root(vm);
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+      let epoch_length_mins = 24 * 60;
+      let current_auction_multiplier: u64;
+      let steady_state_nodes = 1000;
+      let target_delay = 10;
+      let baseline_auction_units = steady_state_nodes * (epoch_length_mins/target_delay);
+
+      // set new price
+      current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
+
+      state.current_proof_price = current_auction_multiplier * state.current_proof_price;
+
+      // set new cap
+      state.current_cap = cap();
+    }
+
+    fun cap():u64 {
+      //get TX fees from previous epoch.
+      100
     }
 
 }

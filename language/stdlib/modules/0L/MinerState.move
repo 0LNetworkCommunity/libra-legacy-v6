@@ -15,7 +15,7 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
-    // use 0x1::LibraTimestamp;
+
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
