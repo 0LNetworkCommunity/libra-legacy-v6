@@ -19,12 +19,15 @@
 -  [Function `init_miner_state`](#0x1_MinerState_init_miner_state)
 -  [Function `first_challenge_includes_address`](#0x1_MinerState_first_challenge_includes_address)
 -  [Function `get_miner_latest_epoch`](#0x1_MinerState_get_miner_latest_epoch)
+-  [Function `reset_rate_limit`](#0x1_MinerState_reset_rate_limit)
 -  [Function `get_epochs_mining`](#0x1_MinerState_get_epochs_mining)
+-  [Function `rate_limit_create_acc`](#0x1_MinerState_rate_limit_create_acc)
 -  [Function `test_helper_mock_mining`](#0x1_MinerState_test_helper_mock_mining)
 -  [Function `test_helper_mock_reconfig`](#0x1_MinerState_test_helper_mock_reconfig)
 -  [Function `test_helper_get_height`](#0x1_MinerState_test_helper_get_height)
 -  [Function `test_helper_get_contiguous`](#0x1_MinerState_test_helper_get_contiguous)
 -  [Function `test_helper_get_count`](#0x1_MinerState_test_helper_get_count)
+-  [Function `test_helper_set_rate_limit`](#0x1_MinerState_test_helper_set_rate_limit)
 -  [Function `test_helper_hash`](#0x1_MinerState_test_helper_hash)
 
 
@@ -129,6 +132,12 @@
 </dd>
 <dt>
 <code>contiguous_epochs_validating_and_mining: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>epochs_since_last_account_creation: u64</code>
 </dt>
 <dd>
 
@@ -258,6 +267,7 @@
      count_proofs_in_epoch: 0u64,
      epochs_validating_and_mining: 0u64,
      contiguous_epochs_validating_and_mining: 0u64,
+     epochs_since_last_account_creation: 10u64, // is not rate-limited
    });
 
    <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
@@ -397,7 +407,7 @@
   // Check that there was mining and validating in period.
   // Account may not have any proofs submitted in epoch, since the <b>resource</b> was last emptied.
   <b>let</b> passed = <a href="MinerState.md#0x1_MinerState_node_above_thresh">node_above_thresh</a>(account, miner_addr);
-  <b>let</b> miner_history= borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
+  <b>let</b> miner_history = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
   // Update statistics.
   <b>if</b> (passed) {
       <b>let</b> this_epoch = <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>();
@@ -406,6 +416,8 @@
       miner_history.epochs_validating_and_mining = miner_history.epochs_validating_and_mining + 1u64;
 
       miner_history.contiguous_epochs_validating_and_mining = miner_history.contiguous_epochs_validating_and_mining + 1u64;
+
+      miner_history.epochs_since_last_account_creation = miner_history.epochs_since_last_account_creation + 1u64;
   } <b>else</b> {
     // didn't meet the threshold, reset this count
     miner_history.contiguous_epochs_validating_and_mining = 0;
@@ -554,6 +566,7 @@
     count_proofs_in_epoch: 1u64,
     epochs_validating_and_mining: 0u64,
     contiguous_epochs_validating_and_mining: 0u64,
+    epochs_since_last_account_creation: 0u64,
   });
 
   <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
@@ -641,6 +654,31 @@
 
 </details>
 
+<a name="0x1_MinerState_reset_rate_limit"></a>
+
+## Function `reset_rate_limit`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_reset_rate_limit">reset_rate_limit</a>(node_addr: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_reset_rate_limit">reset_rate_limit</a>(node_addr: address) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+  <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr);
+  state.epochs_since_last_account_creation = 0;
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_MinerState_get_epochs_mining"></a>
 
 ## Function `get_epochs_mining`
@@ -659,6 +697,30 @@ Public APIs ///
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_get_epochs_mining">get_epochs_mining</a>(node_addr: address): u64 <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_validating_and_mining
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_rate_limit_create_acc"></a>
+
+## Function `rate_limit_create_acc`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+  borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; 7
 }
 </code></pre>
 
@@ -791,6 +853,32 @@ Public APIs ///
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_get_count">test_helper_get_count</a>(miner_addr: address): u64 <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, 130115014011);
   borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr).count_proofs_in_epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_test_helper_set_rate_limit"></a>
+
+## Function `test_helper_set_rate_limit`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_set_rate_limit">test_helper_set_rate_limit</a>(miner_addr: address, value: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_set_rate_limit">test_helper_set_rate_limit</a>(miner_addr: address, value: u64) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()== <b>true</b>, 130115014011);
+  <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
+  state.epochs_since_last_account_creation = value;
 }
 </code></pre>
 

@@ -132,10 +132,9 @@ pub fn submit_onboard_tx(
     preimage: Vec<u8>,
     proof: Vec<u8>,
     consensus_pubkey: Vec<u8>,
-    validator_network_identity_pubkey: Vec<u8>,
     validator_network_address: String,
-    full_node_network_identity_pubkey: Vec<u8>,
     full_node_network_address: String,
+    human_name: String,
 ) -> Result<Option<TransactionView>, Error> {
 
     // Create a client object
@@ -149,19 +148,30 @@ pub fn submit_onboard_tx(
         None => 0,
     };
 
-    // Create the unsigned MinerState transaction script
-    let script = Script::new(
-        transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
-        vec![],
-        vec![
-            TransactionArgument::U8Vector(preimage),
-            TransactionArgument::U8Vector(proof),
-            TransactionArgument::U8Vector(consensus_pubkey),
-            TransactionArgument::U8Vector(validator_network_identity_pubkey),
-            TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
-            TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
-        ],
+    // // Create the unsigned MinerState transaction script
+    // let script = Script::new(
+    //     transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
+    //     vec![],
+    //     vec![
+    //         TransactionArgument::U8Vector(preimage),
+    //         TransactionArgument::U8Vector(proof),
+    //         TransactionArgument::U8Vector(consensus_pubkey),
+    //         TransactionArgument::U8Vector(validator_network_identity_pubkey),
+    //         TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
+    //         TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
+    //     ],
+    // );
+
+    let script = transaction_builder::encode_minerstate_onboarding_script(
+        preimage,
+        proof,
+        consensus_pubkey,
+        validator_network_address.as_bytes().to_vec(),
+        full_node_network_address.as_bytes().to_vec(),
+        human_name.as_bytes().to_vec(),
     );
+
+
 
     // sign the transaction script
     let txn = create_user_txn(
@@ -262,7 +272,7 @@ pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
 }
 
 /// Form tx parameters struct 
-pub fn get_params (
+pub fn get_params(
     mnemonic: &str, 
     waypoint: Waypoint,
     config: &MinerConfig
@@ -280,7 +290,7 @@ pub fn get_params (
         waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 0,
+        coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     }
 }
@@ -295,7 +305,7 @@ fn test_make_params() {
     };
     use std::path::PathBuf;
 
-    let mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice";
+    let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
     let configs_fixture = MinerConfig {
         workspace: Workspace{

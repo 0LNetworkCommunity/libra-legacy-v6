@@ -22,6 +22,7 @@ pub struct MinerStateResource {
     pub count_proofs_in_epoch: u64,
     pub epochs_validating_and_mining: u64,
     pub contiguous_epochs_validating_and_mining: u64,
+    pub epochs_since_last_account_creation: u64,
 }
 
 impl MoveResource for MinerStateResource {

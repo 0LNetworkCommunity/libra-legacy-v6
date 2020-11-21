@@ -31,6 +31,7 @@ address 0x1 {
         count_proofs_in_epoch: u64,
         epochs_validating_and_mining: u64,
         contiguous_epochs_validating_and_mining: u64,
+        epochs_since_last_account_creation: u64
     }
 
     // Creates proof blob object from input parameters
@@ -104,6 +105,7 @@ address 0x1 {
         count_proofs_in_epoch: 0u64,
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
+        epochs_since_last_account_creation: 10u64, // is not rate-limited
       });
 
       let proof = Proof {
@@ -191,7 +193,7 @@ address 0x1 {
       // Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
       let passed = node_above_thresh(account, miner_addr);
-      let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
+      let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
       // Update statistics.
       if (passed) {
           let this_epoch = LibraConfig::get_current_epoch();
@@ -200,6 +202,8 @@ address 0x1 {
           miner_history.epochs_validating_and_mining = miner_history.epochs_validating_and_mining + 1u64;
 
           miner_history.contiguous_epochs_validating_and_mining = miner_history.contiguous_epochs_validating_and_mining + 1u64;
+
+          miner_history.epochs_since_last_account_creation = miner_history.epochs_since_last_account_creation + 1u64;
       } else {
         // didn't meet the threshold, reset this count
         miner_history.contiguous_epochs_validating_and_mining = 0;
@@ -275,6 +279,7 @@ address 0x1 {
         count_proofs_in_epoch: 1u64,
         epochs_validating_and_mining: 0u64,
         contiguous_epochs_validating_and_mining: 0u64,
+        epochs_since_last_account_creation: 0u64,
       });
 
       let difficulty = Globals::get_difficulty();
@@ -322,6 +327,11 @@ address 0x1 {
       *&addr_state.latest_epoch_mining
     }
 
+    public fun reset_rate_limit(node_addr: address) acquires MinerProofHistory {
+      let state = borrow_global_mut<MinerProofHistory>(node_addr);
+      state.epochs_since_last_account_creation = 0;
+    }
+
     ////////////////////
     /// Public APIs ///
     ///////////////////
@@ -331,6 +341,13 @@ address 0x1 {
     // TODO: Rename
     public fun get_epochs_mining(node_addr: address): u64 acquires MinerProofHistory {
       borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
+    }
+
+    // Returns if the miner is above the account creation rate-limit
+    // Permissions: PUBLIC, ANYONE
+    // TODO: Rename
+    public fun rate_limit_create_acc(node_addr: address): bool acquires MinerProofHistory {
+      borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > 7
     }
 
     ////////////////////
@@ -370,6 +387,12 @@ address 0x1 {
     public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);
       borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+    }
+
+    public fun test_helper_set_rate_limit(miner_addr: address, value: u64) acquires MinerProofHistory {
+      assert(Testnet::is_testnet()== true, 130115014011);
+      let state = borrow_global_mut<MinerProofHistory>(miner_addr);
+      state.epochs_since_last_account_creation = value;
     }
 
     public fun test_helper_hash(miner_addr: address): vector<u8> acquires MinerProofHistory {

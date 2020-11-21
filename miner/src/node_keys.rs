@@ -1,6 +1,7 @@
 //! Key derivation for 0L.
 
-use libra_wallet::{Mnemonic, key_factory::{ChildNumber, ExtendedPrivKey, KeyFactory, Seed}};
+use libra_types::{transaction::authenticator::AuthenticationKey, account_address::AccountAddress};
+use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey}};
 
 /// The key derivation used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
 // #[derive(Debug)]
@@ -22,8 +23,8 @@ pub struct KeyScheme {
 impl KeyScheme {
     /// Generates the necessary private key for validator and full node set up.
     pub fn new_from_mnemonic(mnemonic: String) -> Self {
-        let seed = Seed::new(&Mnemonic::from(&mnemonic).unwrap(), "0L");
-        let kf = KeyFactory::new(&seed).unwrap();
+        let wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic).unwrap());
+        let kf = wallet.get_key_factory();
         Self {
             child_0_owner: kf.private_child(ChildNumber::new(0)).unwrap(),
             child_1_operator: kf.private_child(ChildNumber::new(1)).unwrap(),
@@ -33,5 +34,11 @@ impl KeyScheme {
             child_5_executor: kf.private_child(ChildNumber::new(5)).unwrap(),
         }
     }
-    
+    /// Returns the default owner address given the key derivation.
+    pub fn derived_address(&self) -> AccountAddress {
+        let staged_owner_auth_key = AuthenticationKey::ed25519(&self.child_0_owner.get_public());
+        let owner_address = staged_owner_auth_key.derived_address();
+        dbg!(owner_address);
+        owner_address
+    }
 }

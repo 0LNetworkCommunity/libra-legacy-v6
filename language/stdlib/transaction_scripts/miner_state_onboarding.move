@@ -8,6 +8,7 @@ use 0x1::GAS::GAS;
 use 0x1::ValidatorConfig;
 
 fun minerstate_onboarding(
+  sender: &signer,
   challenge: vector<u8>,
   solution: vector<u8>,
   consensus_pubkey: vector<u8>,
@@ -17,6 +18,7 @@ fun minerstate_onboarding(
 ) {
 
     let new_account_address = LibraAccount::create_validator_account_with_proof(
+      sender,
       &challenge,
       &solution,
       consensus_pubkey,

@@ -13,6 +13,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -189,6 +190,9 @@
 
   // Get eligible validators list
   <b>let</b> genesis_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm_sig);
+  print(&0x0000011111);
+  print(&genesis_validators);
+
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
   // Calculate subsidy equally for all the validators based on subsidy curve
   // Calculate the split for subsidy and burn
@@ -207,6 +211,7 @@
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&genesis_validators, i));
+
     <b>let</b> old_validator_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
     // print(&node_address);
     //Transfer gas from association <b>to</b> validator

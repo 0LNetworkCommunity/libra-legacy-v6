@@ -19,7 +19,7 @@ pub fn swarm_miner(swarm_path: PathBuf) {
     let tx_params = get_params_from_swarm(swarm_path).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
-    fs::copy("./fixtures/block_0.json.stage.alice", "./swarm_temp/blocks/block_0.json").expect("error copying file");
+    fs::copy("./fixtures/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
 
     backlog::process_backlog(&conf, &tx_params);
 
@@ -80,13 +80,13 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     (block.preimage, block.proof)
 }
 
-fn get_params_from_swarm (mut swarm_path: PathBuf) -> Result<TxParams, Error> {
+fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
 
     // This mnemonic is hard coded into the swarm configs. see configs/config_builder
-    let alice_mnemonic = "average list time circle item couch resemble tool diamond spot winter pulse cloth laundry slice youth payment cage neutral bike armor balance way ice".to_string();
+    let alice_mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
     let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  keys.child_0_owner.get_public();
@@ -103,7 +103,7 @@ fn get_params_from_swarm (mut swarm_path: PathBuf) -> Result<TxParams, Error> {
         waypoint,
         keypair,
         max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 0,
+        coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     };
 

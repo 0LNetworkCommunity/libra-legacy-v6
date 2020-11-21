@@ -34,6 +34,7 @@ module LibraAccount {
     use 0x1::VDF;
     use 0x1::Globals;
     use 0x1::MinerState;
+    use 0x1::Debug::print;
 
     /// An `address` is a Libra Account iff it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -228,6 +229,7 @@ module LibraAccount {
     // // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
     public fun create_validator_account_with_proof(
+        sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
         consensus_pubkey: vector<u8>,
@@ -235,7 +237,8 @@ module LibraAccount {
         fullnode_network_addresses: vector<u8>,
         human_name: vector<u8>,
     ):address acquires AccountOperationsCapability {
-        
+        let sender_addr = Signer::address_of(sender);
+        assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -262,6 +265,7 @@ module LibraAccount {
         );
 
         make_account(new_signer, auth_key_prefix);
+        MinerState::reset_rate_limit(sender_addr);
         new_account_address
     }
 
@@ -1820,6 +1824,8 @@ module LibraAccount {
         human_name: vector<u8>,
     ) acquires AccountOperationsCapability {
         let new_account = create_signer(new_account_address);
+        print(&new_account_address);
+        print(&human_name);
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role(lr_account, &new_account);
         Event::publish_generator(&new_account);
