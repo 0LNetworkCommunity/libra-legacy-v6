@@ -11,12 +11,8 @@ address 0x1 {
 
     use 0x1::Vector;
     use 0x1::Signer;
-    use 0x1::FixedPoint32;
-    // use 0x1::Stats;
     use 0x1::Option::{Self, Option};
-    use 0x1::Globals;
     use 0x1::CoreAddresses;
-    // use 0x1::Debug;
 
     struct ValidatorEpochInfo {
         validator_address: address,
