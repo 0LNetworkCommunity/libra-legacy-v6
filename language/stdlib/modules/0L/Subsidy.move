@@ -207,10 +207,23 @@ address 0x1 {
       });
     }
 
-    public fun distribute_fullnode_subsidy(vm: &signer, _miner: address) acquires FullnodeSubsidy{
+    public fun submit_fullnode_proof(_miner: &signer, _preimage: vector<u8>, _proof: vector<u8>) {
+      //verify proof is in chain.
+      //distribute subsidy
+    }
+
+    public fun distribute_fullnode_subsidy(vm: &signer, miner: address) acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      state.current_gas_distributed = 1;
+      let subsidy = state.current_proof_price;
+      let minted_coins = Libra::mint<GAS>(vm, subsidy);
+      LibraAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        miner,
+        minted_coins,
+        x"", x""
+      );
+      state.current_gas_distributed = state.current_gas_distributed + subsidy;
     }
 
     public fun fullnode_reconfig(vm: &signer) acquires FullnodeSubsidy {
@@ -243,11 +256,15 @@ address 0x1 {
       let target_delay = 10;
       let baseline_auction_units = steady_state_nodes * (epoch_length_mins/target_delay);
 
+      let baseline_proof_price = cap() / baseline_auction_units;
       // set new price
       current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
 
+      // cannot be more than the baseline for the cap
       state.current_proof_price = current_auction_multiplier * state.current_proof_price;
-
+      if (state.current_proof_price > baseline_proof_price) {
+        state.current_proof_price = baseline_proof_price
+      };
       // set new cap
       state.current_cap = cap();
     }
