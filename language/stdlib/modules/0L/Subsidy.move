@@ -21,7 +21,6 @@ address 0x1 {
     use 0x1::LibraTimestamp;
     use 0x1::TransactionFee;
     use 0x1::Roles;
-    use 0x1::Debug::print;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -157,7 +156,6 @@ address 0x1 {
 
         // Function code: 06 Prefix: 190106
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
-      print(&0x00004);
       //Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
       assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101044010);
@@ -165,14 +163,13 @@ address 0x1 {
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
       let len = Vector::length(&genesis_validators);
-      print(&len);
+
       let i = 0;
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
 
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address);
-        print(&subsidy_granted);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
         i = i + 1;
