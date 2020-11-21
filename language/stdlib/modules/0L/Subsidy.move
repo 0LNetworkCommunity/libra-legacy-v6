@@ -19,10 +19,7 @@ address 0x1 {
     use 0x1::ValidatorUniverse;
     use 0x1::Globals;
     use 0x1::LibraTimestamp;
-    // use 0x1::LibraSystem;
     use 0x1::TransactionFee;
-
-    use 0x1::Debug::print;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -61,7 +58,6 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101034010);
 
       // Get the split of payments from Stats.
-      // let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm_sig, height_start, height_end);
       let length = Vector::length<address>(outgoing_set);
 
       //TODO: assert the lengths of vectors are the same.
@@ -118,8 +114,6 @@ address 0x1 {
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
-      print(&0x0000011111);
-      print(&genesis_validators);
 
       let len = Vector::length(&genesis_validators);
       // Calculate subsidy equally for all the validators based on subsidy curve
@@ -165,7 +159,6 @@ address 0x1 {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
       let capability_token = LibraAccount::extract_withdraw_capability(vm);
 
-      // let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_end);
       let len = Vector::length<address>(outgoing_set);
 
       let bal = TransactionFee::get_amount_to_distribute(vm);
