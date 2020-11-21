@@ -64,7 +64,7 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
+    // 
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -93,7 +93,7 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
+    // 
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -108,74 +108,19 @@ script {
     
     use 0x1::LibraSystem;
     use 0x1::MinerState;
-    use 0x1::Debug::print;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
-
-
+    
     fun main(_sender: &signer) {
         // Tests on initial size of validators 
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
         assert(LibraAccount::balance<GAS>({{carol}}) == 1, 7357000180106);
-        print(&MinerState::test_helper_get_height({{carol}}));
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
 
 //! new-transaction
 //! sender: libraroot
@@ -213,18 +158,18 @@ script {
     fun main(vm: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        // print(&Cases::get_case({{carol}}));
-        assert(Cases::get_case(vm, {{carol}}) == 3, 7357000180109);
+        assert(Cases::get_case(vm, {{carol}}, 0, 15) == 3, 7357000180109);
     }
 }
 
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 15
+//! block-time: 2000000
 //! round: 15
 
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 

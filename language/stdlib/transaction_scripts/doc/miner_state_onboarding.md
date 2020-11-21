@@ -15,7 +15,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, consensus_pubkey: vector&lt;u8&gt;, validator_network_address: vector&lt;u8&gt;, full_node_network_address: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, consensus_pubkey: vector&lt;u8&gt;, validator_network_address: vector&lt;u8&gt;, full_node_network_address: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -25,6 +25,7 @@
 
 
 <pre><code><b>fun</b> <a href="miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(
+  sender: &signer,
   challenge: vector&lt;u8&gt;,
   solution: vector&lt;u8&gt;,
   consensus_pubkey: vector&lt;u8&gt;,
@@ -34,6 +35,7 @@
 ) {
 
     <b>let</b> new_account_address = <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
+      sender,
       &challenge,
       &solution,
       consensus_pubkey,

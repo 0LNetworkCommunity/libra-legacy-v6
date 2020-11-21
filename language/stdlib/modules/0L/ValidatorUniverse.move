@@ -11,12 +11,8 @@ address 0x1 {
 
     use 0x1::Vector;
     use 0x1::Signer;
-    use 0x1::FixedPoint32;
-    // use 0x1::Stats;
     use 0x1::Option::{Self, Option};
-    use 0x1::Globals;
     use 0x1::CoreAddresses;
-    // use 0x1::Debug;
 
     struct ValidatorEpochInfo {
         validator_address: address,
@@ -72,12 +68,10 @@ address 0x1 {
       let i = 0;
       let validator_list = &collection.validators;
       let len = Vector::length<ValidatorEpochInfo>(validator_list);
-      // Debug::print(&len);
       while (i < len) {
           Vector::push_back(&mut eligible_validators, Vector::borrow<ValidatorEpochInfo>(validator_list, i).validator_address);
           i = i + 1;
       };
-      // Debug::print(&len);
       eligible_validators
     }
 
@@ -162,48 +156,38 @@ address 0x1 {
       }
     }
 
-    // Check the liveness of the validator in the previous epoch
-    // Function code: 07 Prefix: 220107
-    public fun check_if_active_validator(_addr: address, epoch_length: u64, current_block_height: u64): bool {
-      // Calculate the window in which we are evaluating the performance of validators.
-      // start and effective end block height for the current epoch
-      // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
-      let start_block_height = 1;
-      if (current_block_height > Globals::get_epoch_length()) {
-        start_block_height = current_block_height - epoch_length;
-      };
+    // // Check the liveness of the validator in the previous epoch
+    // // Function code: 07 Prefix: 220107
+    // public fun check_if_active_validator(_addr: address, epoch_length: u64, current_block_height: u64): bool {
+    //   // Calculate the window in which we are evaluating the performance of validators.
+    //   // start and effective end block height for the current epoch
+    //   // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
+    //   let start_block_height = 1;
+    //   if (current_block_height > Globals::get_epoch_length()) {
+    //     start_block_height = current_block_height - epoch_length;
+    //   };
 
-      // Debug::print(&0x2201070151200001);
+    //   let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
 
+    //   let blocks_in_window = adjusted_end_block_height - start_block_height;
 
-      let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
+    //   // The current block_height needs to be at least the length of one (the first) epoch.
+    //   // assert(current_block_height >= blocks_in_window, 220107015120);
 
-      // Debug::print(&0x2201070151200002);
+    //   // Calculating liveness threshold which is signing 66% of the blocks in epoch.
+    //   // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
 
+    //   let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * blocks_in_window;
 
-      let blocks_in_window = adjusted_end_block_height - start_block_height;
+    //   ////////  TODO: REMOVED IN MERGE PROCESS ///////
+    //   let block_signed_by_validator = 0; // Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
 
-      // Debug::print(&0x2201070151200003);
+    //   if (block_signed_by_validator < threshold_signing) {
+    //       return false
+    //   };
 
-      // The current block_height needs to be at least the length of one (the first) epoch.
-      // assert(current_block_height >= blocks_in_window, 220107015120);
-
-      // Calculating liveness threshold which is signing 66% of the blocks in epoch.
-      // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
-
-      let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * blocks_in_window;
-      // Debug::print(&0x2201070151200004);
-
-      ////////  TODO: REMOVED IN MERGE PROCESS ///////
-      let block_signed_by_validator = 0; // Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
-      // Debug::print(&0x2201070151200005);
-
-      if (block_signed_by_validator < threshold_signing) {
-          return false
-      };
-
-      true
-    }
+    //   true
+    // }
 
     // Function code: 06 Prefix: 220106
     public fun get_validator_weight(account: &signer, addr: address): u64 acquires ValidatorUniverse{

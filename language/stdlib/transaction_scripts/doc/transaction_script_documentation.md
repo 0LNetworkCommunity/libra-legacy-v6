@@ -5122,7 +5122,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`minerstate_helper`](miner_state_helper.md#minerstate_helper)
 -  [`minerstate_onboarding`](miner_state_onboarding.md#minerstate_onboarding)
 -  [`ol_oracle_tx`](ol_oracle_tx.md#ol_oracle_tx)
--  [`ol_reconfig_bulk_update_e2e_test_helper`](ol_reconfig_bulk_update_e2e_test_helper.md#ol_reconfig_bulk_update_e2e_test_helper)
+-  [`ol_reconfig_bulk_update_setup`](ol_reconfig_bulk_update_setup.md#ol_reconfig_bulk_update_setup)
 -  [`peer_to_peer_with_metadata`](transaction_script_documentation.md#peer_to_peer_with_metadata)
 -  [`preburn`](transaction_script_documentation.md#preburn)
 -  [`publish_shared_ed25519_public_key`](transaction_script_documentation.md#publish_shared_ed25519_public_key)

@@ -3,7 +3,6 @@ address 0x1 {
   module Oracle {
     use 0x1::Vector;
     use 0x1::Signer;
-    use 0x1::Debug::print;
     use 0x1::Testnet;
     use 0x1::LibraSystem;
     use 0x1::Upgrade;
@@ -59,6 +58,9 @@ address 0x1 {
           },
           // other oracles
         );
+
+        // call initialization of upgrade
+        Upgrade::initialize(vm);
         } 
       }
   
@@ -173,7 +175,6 @@ address 0x1 {
         assert(Testnet::is_testnet(), 123401011000);
         let s = borrow_global<Oracles>(0x0);
         let len = Vector::length<Vote>(&s.upgrade.votes);
-        print(&s.upgrade);
     
         let voters = Vector::empty<address>();
         let i = 0;

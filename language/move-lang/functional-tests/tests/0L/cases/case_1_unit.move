@@ -16,25 +16,25 @@ script {
 //check: EXECUTED
 
 
-// //! new-transaction
-// //! sender: libraroot
-// script {
-//     use 0x1::Stats;
-//     use 0x1::Vector;
-//     use 0x1::Cases;
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::Stats;
+    use 0x1::Vector;
+    use 0x1::Cases;
     
 
-//     fun main(sender: &signer) {
-//         let voters = Vector::singleton<address>({{alice}});
-//         let i = 1;
-//         while (i < 16) {
-//             // Mock the validator doing work for 15 blocks, and stats being updated.
-//             Stats::process_set_votes(sender, &voters);
-//             i = i + 1;
-//         };
+    fun main(sender: &signer) {
+        let voters = Vector::singleton<address>({{alice}});
+        let i = 1;
+        while (i < 16) {
+            // Mock the validator doing work for 15 blocks, and stats being updated.
+            Stats::process_set_votes(sender, &voters);
+            i = i + 1;
+        };
 
-//         assert(Cases::get_case(sender, {{alice}}) == 1, 7357300103011000);
-//     }
-// }
-// //check: EXECUTED
+        assert(Cases::get_case(sender, {{alice}}, 0 , 15) == 1, 7357300103011000);
+    }
+}
+//check: EXECUTED
 

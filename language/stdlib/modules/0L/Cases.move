@@ -14,11 +14,11 @@ address 0x1{
         // This happens at an epoch prologue, and labels the validator based on performance in the outgoing epoch.
         // The consensus case determines if the validator receives transaction fees or subsidy for performance, inclusion in following epoch, and at what voting power. 
         // Permissions: Public, VM Only
-        public fun get_case(vm: &signer, node_addr: address): u64 {
+        public fun get_case(vm: &signer, node_addr: address, height_start: u64, height_end: u64): u64 {
             let sender = Signer::address_of(vm);
             assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 030101014010);
             // did the validator sign blocks above threshold?
-            let signs = Stats::node_above_thresh(vm, node_addr);
+            let signs = Stats::node_above_thresh(vm, node_addr, height_start, height_end);
             let mines = MinerState::node_above_thresh(vm, node_addr);
 
             if (signs && mines) return 1; // compliant: in next set, gets paid, weight increments

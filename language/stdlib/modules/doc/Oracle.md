@@ -227,6 +227,9 @@
     },
     // other oracles
   );
+
+  // call initialization of upgrade
+  <a href="Upgrade.md#0x1_Upgrade_initialize">Upgrade::initialize</a>(vm);
   }
 }
 </code></pre>

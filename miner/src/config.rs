@@ -4,15 +4,16 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::fs;
-
+use std::{net::Ipv4Addr, fs};
 use byteorder::{LittleEndian, WriteBytesExt};
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
-use libra_crypto::ValidCryptoMaterialStringExt;
 use ajson;
+use dirs;
+use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -32,26 +33,32 @@ const STATEMENT_BYTES: usize = 1008;
 
 impl MinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
-    pub fn get_waypoint (&self) -> String {
-    let file = fs::File::open(self.get_key_store_path())
-        .expect("key_store.json not found.");
-    let json: serde_json::Value = serde_json::from_reader(file)
-        .expect("could not parse JSON in key_store.json");
-    // let wp = json.get("Waypoint")
-    // .expect("file should have Waypoint key");
-
-    let name = ajson::get(&json.to_string(), "*waypoint.value.value").expect("could not find key: waypoint");
-    name.to_string()
-}
+    pub fn get_waypoint (&self) -> Option<Waypoint> {
+        match fs::File::open(self.get_key_store_path()) {
+            Ok(file) => {
+                let json: serde_json::Value = serde_json::from_reader(file)
+                    .expect("could not parse JSON in key_store.json");
+                let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
+                dbg!(&value);
+                let waypoint: Waypoint = value.to_string().parse().unwrap();
+                Some(waypoint)
+            }
+            Err(err) => {
+            println!("key_store.json not found. {:?}", err);
+            None
+            }
+        }
+    }
 
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
         let mut conf = MinerConfig::default();
+        conf.workspace.node_home = PathBuf::from("./swarm_temp");
         // Load profile config
+        conf.profile.account = param.address;
         conf.profile.auth_key = param.auth_key.to_string();
-        conf.profile.account = Some(param.address.to_string());
-        conf.profile.operator_private_key = Some(param.keypair.private_key.to_encoded_string().unwrap());
+
         // Load chain info
         conf.chain_info.node = Some(param.url.to_string());
         conf
@@ -132,14 +139,14 @@ impl MinerConfig {
     }
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self)-> PathBuf {
-        let mut home = self.workspace.miner_home.clone();
+        let mut home = self.workspace.node_home.clone();
         home.push(&self.chain_info.block_dir);
         home
     }
 
     /// Get where node key_store.json stored.
     pub fn get_key_store_path(&self)-> PathBuf {
-        let mut home = self.workspace.miner_home.clone();
+        let mut home = self.workspace.node_home.clone();
         home.push("key_store.json");
         home
     }
@@ -170,8 +177,6 @@ impl Default for MinerConfig {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
-    /// home directory of miner
-    pub miner_home: PathBuf,
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
 }
@@ -179,8 +184,7 @@ pub struct Workspace {
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            miner_home: PathBuf::from("."),
-            node_home: PathBuf::from(".")
+            node_home: dirs::home_dir().unwrap().join(NODE_HOME)
         }
     }
 }
@@ -196,7 +200,7 @@ pub struct ChainInfo {
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
     /// Waypoint for last epoch which the node is syncing from.
-    pub base_waypoint: Option<String>,
+    pub base_waypoint: Option<Waypoint>,
 }
 
 // TODO: These defaults serving as test fixtures.
@@ -215,17 +219,17 @@ impl Default for ChainInfo {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
+    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
+    pub account: AccountAddress,
+
     ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
 
-    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
-    pub account: Option<String>,
-
-    ///The 0L private_key for signing transactions.
-    pub operator_private_key: Option<String>,
+    // ///The 0L private_key for signing transactions.
+    // pub operator_private_key: Option<String>,
 
     /// ip address of the miner. May be different from transaction URL.
-    pub ip: Option<String>,
+    pub ip: Ipv4Addr,
 
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
@@ -235,9 +239,8 @@ impl Default for Profile {
     fn default() -> Self {
         Self {
             auth_key: "".to_owned(),
-            account: None,
-            operator_private_key: None,
-            ip: Some("0.0.0.0".to_owned()),
+            account: AccountAddress::from_hex_literal("0x0").unwrap(),
+            ip: "0.0.0.0".parse().unwrap(),
             statement: "Protests rage across the nation".to_owned(),
         }
     }

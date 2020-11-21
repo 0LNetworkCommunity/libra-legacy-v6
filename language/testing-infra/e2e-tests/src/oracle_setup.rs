@@ -4,12 +4,9 @@ use libra_types::{
 };
 use include_dir::{include_dir, Dir};
 use compiled_stdlib::transaction_scripts::{StdlibScript, CompiledBytes};
-// TODO: should delete if we are not hashing the payload
-// use std::collections::hash_map::DefaultHasher;
-// use std::hash::{Hash, Hasher};
 
 const UPGRADE_DIR: Dir =
-    include_dir!("../../../language/stdlib/upgrade_payload");
+    include_dir!("../../../language/stdlib/upgrade_payload/tests");
 
 pub fn oracle_helper_tx(
     sender: &Account,
@@ -19,23 +16,8 @@ pub fn oracle_helper_tx(
     args.push(TransactionArgument::U64(1));
     let stdlib_bytes = std::include_bytes!("../../../stdlib/upgrade_payload/stdlib.mv"); 
     let stdlib_vec = stdlib_bytes.to_vec();
-    // let mut hasher = DefaultHasher::new();
-    // Hash::hash_slice(&stdlib_vec, &mut hasher);
-    // let hashed = hasher.finish();
-    // println!("Hash is {:x}!", *&hashed);
     args.push(TransactionArgument::U8Vector(stdlib_vec));
 
-    // sender.create_signed_txn_with_args(
-    //     StdlibScript::OracleTx
-    //         .compiled_bytes()
-    //         .into_vec(),
-    //     vec![],
-    //     args,
-    //     seq_num,
-    //     1_000_000_000, // give sufficient gas
-    //     0,
-    //     LBR_NAME.to_owned(),
-    // )
     sender
         .transaction()
         .script(Script::new(
@@ -60,15 +42,6 @@ pub fn upgrade_foo_tx(
                 .unwrap_or_else(|| panic!("File ol_oracle_upgrade_foo_tx.mv does not exist"));
 
     let compiled_code = CompiledBytes::new(file.contents().to_vec()).into_vec();
-    // sender.create_signed_txn_with_args(
-    //     compiled_code,
-    //     vec![],
-    //     vec![],
-    //     seq_num,
-    //     gas_costs::TXN_RESERVED, 
-    //     0,
-    //     LBR_NAME.to_owned(),
-    // )
 
     sender
         .transaction()

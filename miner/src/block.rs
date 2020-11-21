@@ -37,6 +37,8 @@ pub struct ValConfigs {
     pub full_node_network_identity_pubkey: Vec<u8>,
     /// IP address of full node
     pub full_node_network_address: String,
+    /// Human readable name of account
+    pub human_name: String,
 }
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
@@ -86,17 +88,12 @@ pub mod build_block {
     use crate::submit_tx::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
     use libra_crypto::hash::HashValue;
-    use std::{
-        fs,
-        io::{BufReader, Write},
-        path::PathBuf,
-        time::Instant,
-    };
+    use std::{fs, io::{BufReader, Write}, path::PathBuf, time::Instant};
+
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn mine_genesis(config: &MinerConfig) {
+    pub fn mine_genesis(config: &MinerConfig) -> Block {
         println!("Mining Genesis Proof");
-
         let preimage = config.genesis_preimage();
         let now = Instant::now();
         let proof = do_delay(&preimage);
@@ -111,11 +108,10 @@ pub mod build_block {
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
         println!("Proof mined. Genesis block_0.json created, exiting.");
-
+        block
     }
     /// Mine one block
     pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
-
         let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir() );
         // If there are files in path, continue mining.
         if let Some(max_block_path) = current_block_path {
@@ -159,7 +155,7 @@ pub mod build_block {
         tx_params: TxParams,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
-        let mut blocks_dir = config.workspace.miner_home.clone();
+        let mut blocks_dir = config.workspace.node_home.clone();
         blocks_dir.push(&config.chain_info.block_dir);
         let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
@@ -253,58 +249,57 @@ pub mod build_block {
             fs::remove_dir_all(blocks_dir).unwrap();
         }
     }
+#[test]
+fn test_mine_genesis() {
+    use libra_types::PeerId;
+    // if no file is found, the block height is 0
+    //let blocks_dir = Path::new("./test_blocks");
+    let configs_fixture = MinerConfig {
+        workspace: Workspace{
+            node_home: PathBuf::from("."),
+        },
+        profile: Profile {
+            auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
+            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+            ip: "1.1.1.1".parse().unwrap(),
+            statement: "Protests rage across the nation".to_owned(),
+        },
+        chain_info: ChainInfo {
+            chain_id: "0L testnet".to_owned(),
+            block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
+            base_waypoint: None,
+            node: None,
+        },
+    };
+    //clear from sideffects.
+    test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
 
-    #[test]
-    fn test_mine_genesis() {
-        // if no file is found, the block height is 0
-        //let blocks_dir = Path::new("./test_blocks");
-        let configs_fixture = MinerConfig {
-            workspace: Workspace{
-                miner_home: PathBuf::from("."),
-                node_home: PathBuf::from("."),
-            },
-            profile: Profile {
-                auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
-                account: None,
-                operator_private_key: None,
-                ip: None,
-                statement: "Protests rage across the Nation".to_owned(),
-            },
-            chain_info: ChainInfo {
-                chain_id: "0L testnet".to_owned(),
-                block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
-                base_waypoint: None,
-                node: None,
-            },
-        };
-        //clear from sideffects.
-        test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
+    // mine
+    mine_genesis(&configs_fixture);
 
-        // mine
-        mine_genesis(&configs_fixture);
+    // read file
+    let block_file =
+        // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));
+        fs::read_to_string("./test_blocks_temp_1/block_0.json").expect("Could not read latest block");
 
-        // read file
-        let block_file =
-            // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));
-            fs::read_to_string("./test_blocks_temp_1/block_0.json").expect("Could not read latest block");
+    let latest_block: Block =
+        serde_json::from_str(&block_file).expect("could not deserialize latest block");
 
-        let latest_block: Block =
-            serde_json::from_str(&block_file).expect("could not deserialize latest block");
+    // Test the file is read, and blockheight is 0
+    assert_eq!(latest_block.height, 0, "test");
 
-        // Test the file is read, and blockheight is 0
-        assert_eq!(latest_block.height, 0, "test");
+    // Test the expected proof is writtent to file correctly.
+    let correct_proof = "003d41f284017717cb66307f5a00093c74de74cbf7dedc66d964bae4fff96d2d433446fef7c3d0fa75c925dbf3d315bb12671a6039d0c20f1072287e461eef237095dbafa58ef902537668d870e21c9db778beb8c9218e4b8c49a901f42864d2104872c8616662b07976493d79ef0ebffaabf869b33c31875919d88d5e7f176913ffc68b09bebf2568068ee678db86b31c64d24a65e9390711a1a86c7ea7c705e271b4fe926027dd445f30e6df763e7a584a7b34a8126d8715eec6d30de906a21bd48533477aec05f8e05da33ba81698008ad2a919169b0249914af0324351cba6ac06a25a767c31c0306f19a8a922807c37bd790e02f593649ce4155c4d6d406db5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
+    assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
 
-        // Test the expected proof is writtent to file correctly.
-        let correct_proof = "0072c747e2b03d52a7c48497386dbac0ab8916d1a555d840f4a7d8357200c3266d6e026bfc981ab7abc1872bbc06832e6ebf0b493106f0074d56d066d73554d65c3cf209eb1eee739df5ffaacb4b88a7e487915b2255e7193e98b2db282fd9327ca21bd57af06330c4121153b132bf8b440fda42de67847b9ea80423f35c4f117cfde1560db693fbeff434900ed98c96264d4389773652d53569a1ae9e0855c4400afa4d86d094a262d7df403419952eecfc9ef4636569c25f892eb36158a6b99fbe2bb053f8deacd0b67346824a8b324412d2458f8e961998daa8efc79d8cd2a399fb40d9bb6fdb6014b464872322d96b97f6795d78ad9c749bc680fb7685792effbf344beed33a994bd20ab9da3c5ac17e70790b1d026a168751bdb1bc17e4339041e1869634a36be9e7c328a5cea9262f393714cd2470201a3db008d88f5d444cad63f874adfbfbf2a94ddd5b64be9e2a51539f844f1dadc0773ce37ad8b13b7a3e851e9faeafd1ebca9e1fdea2627116b28c2ec6d681838b803ff86c072e60bf4ab5f8a731df9463208bb33eb5faa8806bb0420d598d91a5f6ebe6917d2f90d9798d4e79b5e3bad254d17bf7412c9ae9c221139e4586b2cb73206b9a20930aa1b2d9a58b1335eff2a844344c1fe9cc70def78078f8d9a3dae999d7fde7ce8da8dff5a6430e6a9cbfa72e5162df258a2bf980428847ba273bcf935a2e60ce7bff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
-        assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
-
-        test_helper_clear_block_dir(&configs_fixture.get_block_dir());
-    }
+    test_helper_clear_block_dir(&configs_fixture.get_block_dir());
+}
 #[test]
 #[ignore]
+//Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
+    
     use libra_wallet::WalletLibrary;
-    use std::path::Path;
 
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
@@ -315,60 +310,65 @@ fn create_fixtures() {
         let (auth_key, _) = wallet.new_address().expect("Could not generate address");
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
-
-        let configs_fixture = MinerConfig {
+        let save_to = format!("./test_fixtures_{}/", ns);
+        fs::create_dir_all(save_to.clone()).unwrap();
+        let mut configs_fixture = MinerConfig {
             workspace: Workspace{
-                miner_home: PathBuf::from("."),
-                node_home: PathBuf::from("."),
+                node_home: PathBuf::from("/root/.0L"),
             },
             profile: Profile {
                 auth_key: auth_key.to_string(),
-                account: None,
-                operator_private_key: None,
-                ip: None,
-                statement: "Protests rage across the Nation".to_owned(),
+                account: auth_key.derived_address(),
+                ip: "1.1.1.1".parse().unwrap(),
+                statement: "Protests rage across the nation".to_owned(),
             },
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
-                block_dir: "test_fixtures_miner_".to_owned() + &ns, //  path should be unique for concurrent tests.
+                block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
                 base_waypoint: None,
-                node: None,
+                node: Some("http://localhost:8080".to_string()),
             },
         };
-        //clear from sideffects.
-        let blocks_dir = Path::new(&configs_fixture.chain_info.block_dir);
-        // test_helper_clear_block_dir(blocks_dir);
 
-        // mine
+        // mine to save_to path
         mine_genesis(&configs_fixture);
 
-        // fs::create_dir(blocks_dir).unwrap();
-        let mut latest_block_path = blocks_dir.to_path_buf();
-        latest_block_path.push(format!("miner_{}.mnemonic", ns));
-        let mut file = fs::File::create(&latest_block_path).expect("Could not create file");
+        // also create mnemonic
+        let mut mnemonic_path = PathBuf::from(save_to.clone());
+        mnemonic_path.push("owner.mnem");
+        dbg!(&mnemonic_path);
+        let mut file = fs::File::create(&mnemonic_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");
+        
+        // create miner.toml
+        //rename the path for actual fixtures
+        configs_fixture.chain_info.block_dir = "blocks".to_string();
+        let toml = toml::to_string(&configs_fixture).unwrap();
+        let mut toml_path = PathBuf::from(save_to);
+        toml_path.push("miner.toml");
+        let file = fs::File::create(&toml_path);
+        file.unwrap().write(&toml.as_bytes())
+            .expect("Could not write toml");
+
     }
 }
 
 
     #[test]
     fn test_mine_once() {
+        use libra_types::PeerId;
         // if no file is found, the block height is 0
-        //let blocks_dir = Path::new("./test_blocks");
-
         let configs_fixture = MinerConfig {
             workspace: Workspace{
-                miner_home: PathBuf::from("."),
                 node_home: PathBuf::from("."),
             },
             profile: Profile {
                 auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
                     .to_owned(),
-                account: None,
-                operator_private_key: None,
-                ip: None,
-                statement: "Protests rage across the Nation".to_owned(),
+                account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+                ip: "1.1.1.1".parse().unwrap(),
+                statement: "Protests rage across the nation".to_owned(),
             },
             chain_info: ChainInfo {
                 chain_id: "0L testnet".to_owned(),
@@ -392,19 +392,7 @@ fn create_fixtures() {
         };
 
         write_json(&fixture_block, &configs_fixture.get_block_dir() );
-
-        // confirm this fixture was written to systems.
-        // let block_file =fs::read_to_string("./test_blocks/block_0.json")
-        // .expect("Could not read latest block");
-        // let latest_block: Block = serde_json::from_str(&block_file)
-        // .expect("could not deserialize latest block");
-        // // Test the file is read, and blockheight is 0
-        // assert_eq!(latest_block.height, 0, "test");
-
         mine_once(&configs_fixture).unwrap();
-
-        // mine_once(&configs_fixture, "test mnemonic", Waypoint::default(), "".to_string() ).unwrap();
-
         // confirm this file was written to disk.
         let block_file = fs::read_to_string("./test_blocks_temp_2/block_1.json")
             .expect("Could not read latest block");
@@ -414,7 +402,7 @@ fn create_fixtures() {
         assert_eq!(latest_block.height, 1, "Not the droid you are looking for.");
 
         // Test the expected proof is writtent to file correctly.
-        let correct_proof = "0054a77c688865bd02300dce80911cf281df2ade94ba116a789f217dacfb4f44548a973630c3922a2fa339707b2af8ba461459c776d4f8c57da0f6f22a2104e9b6173b03f6382b6a1141a540a7c29b5d87fc988056f4e6d5124359ac8972f77e7f47a60cef1a2bde3c30f3c1ae87da6cd026f81388a411530005e935b3f7f56120d558b7191da800bceacd04069be03730c064c6d645d59ba4cd58d78462ac5e5da40bbba3110b0debc05495fd26da9aed13e60cf2680faadf9bcd6a0cc4a7178115a485584a2f5fed592a707626d164bd73dbfa8ee33de14cbf8f5bf5e812fc0586911c430715b34aafede3195256ba9bf9463a8bbc755c145dda4f315c9fa5bf0028bda8c949ad43ee742023b8d1cae3beb40b3d12faf33082d600462b2cc7df300a8aca87f847668c487c337ddedf3355635def7387e40edf70cbe811af2ca9d2a96ce6b27335203314619e88dcaa5f934ed6b7b6a6530c2cf36330390937901041362522f97a38c8265c67e7d808377c7623213c6aa4cf60926793298a2dead8ebeaa98c0a5bb30735682f9cf6df4ea468fba4243488b0f4e849149b059689adef603b5564be2a891fdadef82667017e4c8a7560e2d72971049b6e5640fffb86895f096b10611f585d1302339808bf6965195afe9cf77e8c0597a6e252216d63533d739b007ec19847cbf77d99a7fc5d8e66e2d000a16498cdd2cd9f437415d900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
+        let correct_proof = "006d5479373bd7b075fb8e55f655d62a800817b4c9dff48cbaf91c9249948c76a7ab900031d333436e10dcfa5e5e1c2c732b7ce01f603390ba43941bd49ce314f44156ca3210a1577d67f9d2517a647a387c9b0df5588139d9c48550592a1354ca457da54ee9b4371b465e22af269a2fa7545521163447ed70e291f1f9c57636a00056502b2198290840a4569859abcf08901ea4d7bd2f3a9807f053ea7ff03d3b6242aaab30c5dfa00fc51944fc96d7099311a2513a59ba1d61e7383ac9b12eaafa3fc5102c2430da354d3c00ebcf90fa7451856bac5b70ee85eceb61b7dca12d2a7c08573cc8c3ba9b39ec41249a819685c36b69aa9eef7302be0987f29363813f000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
         assert_eq!(
             hex::encode(&latest_block.proof),
             correct_proof,
@@ -470,7 +458,6 @@ fn create_fixtures() {
         let consensus_key_vec = hex::decode("2734465e8191b85abae0f713ababc8f6d4dcf6d58844779ea51c531489bd261c").unwrap();
         
         assert_eq!(init_configs.consensus_pubkey, consensus_key_vec, "Could not parse network address");
-        // dbg!(consensus_key_vec);
-        // dbg!(ValConfigs::get_init_data(&fixtures));
+
     }
 }

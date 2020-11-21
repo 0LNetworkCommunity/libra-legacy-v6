@@ -8,9 +8,7 @@ address 0x1 {
 module Genesis {
     use 0x1::AccountFreezing;
     use 0x1::ChainId;
-    // use 0x1::Coin1;
     use 0x1::DualAttestation;
-    // use 0x1::GAS;
     use 0x1::Libra;
     use 0x1::LibraAccount;
     use 0x1::LibraBlock;
@@ -26,7 +24,8 @@ module Genesis {
     use 0x1::GAS;
     use 0x1::AutoPay;
     use 0x1::Oracle;
-    use 0x1::Upgrade;
+    use 0x1::Hash;
+    use 0x1::Reconfigure;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -70,6 +69,10 @@ module Genesis {
         );
         LibraBlock::initialize_block_metadata(lr_account);
 
+        // outside of testing, brick the libraroot account.
+        if (chain_id == 1 || chain_id == 7) {
+            lr_auth_key = Hash::sha3_256(b"Protests rage across the nation");
+        };
         let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
         LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
         LibraAccount::restore_key_rotation_capability(lr_rotate_key_cap);
@@ -84,6 +87,7 @@ module Genesis {
             lr_account,
             instruction_schedule,
             native_schedule,
+            chain_id // 0L change
         );
 
         /////// 0L /////////
@@ -101,12 +105,9 @@ module Genesis {
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.
         LibraTimestamp::set_time_has_started(lr_account);
-
+        Reconfigure::initialize(lr_account);
         // Oracle initialize
         Oracle::initialize(lr_account);
-
-        // Upgrade Oracle initialize
-        Upgrade::initialize(lr_account);
     }
 
     /// For verification of genesis, the goal is to prove that all the invariants which

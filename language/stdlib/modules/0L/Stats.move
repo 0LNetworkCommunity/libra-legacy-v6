@@ -9,9 +9,9 @@ module Stats{
     use 0x1::CoreAddresses;
     use 0x1::Signer;
     use 0x1::Testnet;
-    use 0x1::Globals;
+    // use 0x1::Globals;
     use 0x1::FixedPoint32;
-    // use 0x1::Debug::print;
+    
 
     struct ValidatorSet {
       addr: vector<address>,
@@ -98,10 +98,10 @@ module Stats{
       *Vector::borrow<u64>(&mut stats.current.vote_count, i)
     }
 
-    public fun node_above_thresh(vm: &signer, node_addr: address): bool acquires T{
+    public fun node_above_thresh(vm: &signer, node_addr: address, height_start: u64, height_end: u64): bool acquires T{
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190206014010);
-      let range = Globals::get_epoch_length();
+      let range = height_end-height_start;
       let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(66, 100));
       if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
       return false
@@ -116,7 +116,7 @@ module Stats{
     // }
 
 
-    public fun network_density(vm: &signer): u64 acquires T {
+    public fun network_density(vm: &signer, height_start: u64, height_end: u64): u64 acquires T {
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190206014010);
       let density = 0u64;
@@ -125,7 +125,7 @@ module Stats{
       let k = 0;
       while (k < len) {
         let addr = *(Vector::borrow<address>(&nodes, k));
-        if (node_above_thresh(vm, addr)) {
+        if (node_above_thresh(vm, addr, height_start, height_end)) {
           density = density + 1;
         };
         k = k + 1;

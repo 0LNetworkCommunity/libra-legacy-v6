@@ -26,7 +26,6 @@ fun main(sender: &signer) {
     let proof = MinerState::create_proof_blob(challenge, difficulty, solution);
     MinerState::commit_state(sender, proof);
     let verified_tower_height_after = MinerState::test_helper_get_height({{alice}});
-    // Debug::print(&verified_tower_height_after);
 
     assert(verified_tower_height_after == reported_tower_height, 10008001);
 

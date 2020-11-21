@@ -1,6 +1,7 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
+use libra_types::PeerId;
 use miner::config::*;
 use abscissa_core::path::PathBuf;
 
@@ -9,14 +10,12 @@ fn test_genesis_preimage() {
     // Create fixtures.
     let configs = MinerConfig {
         workspace: Workspace {
-            miner_home: PathBuf::from("."),
             node_home: PathBuf::from("."),
         },
         profile: Profile {
             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_owned(),
-            account: None,
-            operator_private_key: None,
-            ip: None,
+            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+            ip: "1.1.1.1".parse().unwrap(),
             statement: "Protests rage across the Nation".to_owned(),
         },
         chain_info: ChainInfo {

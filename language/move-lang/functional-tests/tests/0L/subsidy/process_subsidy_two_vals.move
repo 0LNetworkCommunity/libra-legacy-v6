@@ -62,10 +62,10 @@ script {
     assert(LibraAccount::balance<GAS>({{carol}}) == 1, 7357190102031000);
     assert(LibraAccount::balance<GAS>({{dave}}) == 1, 7357190102041000);
 
-    assert(Cases::get_case(vm, {{alice}}) == 1, 7357190102051000);
-    assert(Cases::get_case(vm, {{bob}}) == 4, 7357190102061000);
-    assert(Cases::get_case(vm, {{carol}}) == 1, 7357190102071000);
-    assert(Cases::get_case(vm, {{dave}}) == 4, 7357190102081000);
+    assert(Cases::get_case(vm, {{alice}}, 0, 15) == 1, 7357190102051000);
+    assert(Cases::get_case(vm, {{bob}}, 0, 15) == 4, 7357190102061000);
+    assert(Cases::get_case(vm, {{carol}}, 0, 15) == 1, 7357190102071000);
+    assert(Cases::get_case(vm, {{dave}}, 0, 15) == 4, 7357190102081000);
   }
 }
 // check: EXECUTED
@@ -77,10 +77,11 @@ script {
   use 0x1::Subsidy;
   use 0x1::GAS::GAS;
   use 0x1::LibraAccount;
+  use 0x1::LibraSystem;
 
   fun main(vm: &signer) {
-
-    Subsidy::process_subsidy(vm, 100);
+    let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
+    Subsidy::process_subsidy(vm, 100, &validators, &fee_ratios);
 
     assert(LibraAccount::balance<GAS>({{alice}}) == 51, 7357190102091000);
     assert(LibraAccount::balance<GAS>({{bob}}) == 1, 7357190102101000);

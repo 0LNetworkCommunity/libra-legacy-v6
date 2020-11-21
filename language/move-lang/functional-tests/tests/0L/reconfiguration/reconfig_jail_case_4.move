@@ -23,9 +23,8 @@
 //! sender: alice
 script {
     use 0x1::MinerState;
-
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
@@ -39,7 +38,7 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
@@ -54,7 +53,7 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+    // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
@@ -69,7 +68,7 @@ script {
     use 0x1::MinerState;
 
     fun main(sender: &signer) {
-        // Alice is the only one that can update her mining stats. Hence this first transaction.
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
@@ -92,7 +91,7 @@ script {
 //check: EXECUTED
 
 ////////////////////
-// Skipping Frank.//
+// Skipping Frank //
 ////////////////////
 
 
@@ -102,7 +101,6 @@ script {
     // use 0x1::MinerState;
     use 0x1::Stats;
     use 0x1::Vector;
-    use 0x1::Reconfigure;
     use 0x1::LibraSystem;
 
     fun main(vm: &signer) {
@@ -124,7 +122,6 @@ script {
 
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
-        Reconfigure::reconfigure(vm);
         // Mock end of epoch for minerstate
         // MinerState::test_helper_mock_reconfig({{alice}});
     }
@@ -132,13 +129,16 @@ script {
 //check: EXECUTED
 
 //////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///// Trigger reconfiguration at 2 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 2000000
+//! round: 15
+
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 16
 
 //! new-transaction
 //! sender: libraroot

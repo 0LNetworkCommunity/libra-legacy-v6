@@ -26,6 +26,9 @@ pub struct StartCmd {
     // Option for --backlog, only sends backlogged transactions.
     #[options(help = "Start but don't mine, and only resubmit backlog of proofs")]
     backlog: bool,
+
+    #[options(help = "Skip backlog")]
+    skip: bool,
     // Option for setting path for the blocks/proofs that are mined.
     #[options(help = "The home directory where the blocks will be stored")]
     home: PathBuf, 
@@ -35,17 +38,29 @@ impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
         let miner_configs = app_config();
-                let waypoint: Waypoint;
+        let waypoint: Waypoint;
         let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
         match parsed_waypoint {
-            Ok(v) => {
-                println!("Using Waypoint from CLI args:\n{}", v);
-                waypoint = parsed_waypoint.unwrap();
+            Ok(from_cli) => {
+                println!("Using Waypoint from CLI args:\n{}", from_cli);
+                waypoint = from_cli;
             }
             Err(_e) => {
-                waypoint = miner_configs.get_waypoint().parse().unwrap();
+                status_info!("Waypoint:",format!("No waypoint parsed from command line args. Searching for waypoint in key_store.json"));
+                match miner_configs.get_waypoint() {
+                    Some(from_ks) => { waypoint = from_ks }
+                    None => {
+                       status_info!("Waypoint:",format!("No waypoint found in key_store.json. Failover to chain_info.base_waypoint in miner.toml"));
 
-                status_info!("Waypoint:",format!("No waypoint parsed from command line args. Using waypoint in key_store.json {:?}", waypoint));
+                       match miner_configs.chain_info.base_waypoint {
+                           Some(from_toml) => {waypoint = from_toml}
+                           None => {
+                               status_err!("No waypoint found in commandline, key_store.json, nor miner.toml. Exiting.");
+                               std::process::exit(-1);
+                           }
+                       }
+                    }
+                }
             }
         }
 
@@ -55,7 +70,9 @@ impl Runnable for StartCmd {
         let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         
         // Check for, and submit backlog proofs.
-        backlog::process_backlog(&miner_configs, &tx_params);
+        if !self.skip {
+            backlog::process_backlog(&miner_configs, &tx_params);
+        }
 
         if !self.backlog {
             // Steady state.
@@ -66,9 +83,6 @@ impl Runnable for StartCmd {
                     println!("Failed to mine_and_submit: {}", err);
                 }
             }
-        } else {
-            // Chain needs to catch up to backlog of proofs.
-            backlog::process_backlog(&miner_configs, &tx_params);
         }
     }
 }

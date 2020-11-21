@@ -41,7 +41,7 @@ script {
     // LibraAccount::mint_to_address<GAS>(vm, 0xFEE, 100);
 
     TransactionFee::pay_fee(Libra::mint<GAS>(vm, 100));
-    assert(Subsidy::calculate_Subsidy(vm) == 196, 7357190101021000);
+    assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 196, 7357190101021000);
 
     }
 }

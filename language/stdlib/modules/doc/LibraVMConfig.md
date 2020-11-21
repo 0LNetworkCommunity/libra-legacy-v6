@@ -202,7 +202,7 @@ load this into memory at the startup of each block.
 Initialize the table under the libra root account
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraVMConfig.md#0x1_LibraVMConfig_initialize">initialize</a>(lr_account: &signer, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="LibraVMConfig.md#0x1_LibraVMConfig_initialize">initialize</a>(lr_account: &signer, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, _chain_id: u8)
 </code></pre>
 
 
@@ -215,11 +215,17 @@ Initialize the table under the libra root account
     lr_account: &signer,
     instruction_schedule: vector&lt;u8&gt;,
     native_schedule: vector&lt;u8&gt;,
+    _chain_id: u8,
 ) {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
 
     // The permission "UpdateVMConfig" is granted <b>to</b> LibraRoot [[H11]][PERMISSION].
     <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+
+    <b>let</b> min_price_per_gas_unit = 0;
+    // <b>if</b> (chain_id == 7 || chain_id == 1) {
+    //     min_price_per_gas_unit = 1;
+    // };
 
     <b>let</b> gas_constants = <a href="LibraVMConfig.md#0x1_LibraVMConfig_GasConstants">GasConstants</a> {
         global_memory_per_byte_cost: 4,
@@ -227,10 +233,10 @@ Initialize the table under the libra root account
         min_transaction_gas_units: 600,
         large_transaction_cutoff: 600,
         intrinsic_gas_per_byte: 8,
-        maximum_number_of_gas_units: 4000000,
-        min_price_per_gas_unit: 0,
+        maximum_number_of_gas_units: 100000000000, // 0L: changed temporarily for oversized upgrade payload
+        min_price_per_gas_unit: min_price_per_gas_unit,
         max_price_per_gas_unit: 10000,
-        max_transaction_size_in_bytes: 4096,
+        max_transaction_size_in_bytes: 409600,     // 0L: changed temporarily for oversized upgrade payload
         gas_unit_scaling_factor: 1000,
         default_account_size: 800,
     };

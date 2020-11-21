@@ -28,6 +28,7 @@ use libra_types::{
 };
 use rand::{rngs::OsRng, Rng};
 use std::{collections::HashMap, path::Path};
+use libra_global_constants::SALT_0L;
 
 /// WalletLibrary contains all the information needed to recreate a particular wallet
 pub struct WalletLibrary {
@@ -50,7 +51,7 @@ impl WalletLibrary {
 
     /// Constructor that instantiates a new WalletLibrary from Mnemonic
     pub fn new_from_mnemonic(mnemonic: Mnemonic) -> Self {
-        let seed = Seed::new(&mnemonic, "LIBRA");
+        let seed = Seed::new(&mnemonic, SALT_0L);
         WalletLibrary {
             mnemonic,
             key_factory: KeyFactory::new(&seed).unwrap(),
@@ -182,6 +183,10 @@ impl WalletLibrary {
         } else {
             Err(WalletError::LibraWalletGeneric("missing address".to_string()).into())
         }
+    }
+
+    pub fn get_key_factory(&self) -> &KeyFactory{
+        &self.key_factory
     }
 }
 

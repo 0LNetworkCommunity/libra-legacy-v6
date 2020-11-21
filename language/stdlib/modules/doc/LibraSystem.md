@@ -40,7 +40,6 @@ and "configuration" are used for several distinct concepts.
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
@@ -1255,13 +1254,11 @@ Private function checks for membership of <code>addr</code> in validator set.
     <b>let</b> index = 0;
     <b>while</b> (index &lt; n) {
         <b>let</b> account_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&new_validators, index));
-        <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&account_address);
 
         // A prospective validator must have a validator config <b>resource</b>
         <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(account_address), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>));
 
         <b>let</b> config = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_config">ValidatorConfig::get_config</a>(account_address);
-        <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&config);
         <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> next_epoch_validators, <a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a> {
             addr: account_address,
             config, // <b>copy</b> the config over <b>to</b> ValidatorSet

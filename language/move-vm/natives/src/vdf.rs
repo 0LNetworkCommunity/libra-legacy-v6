@@ -15,7 +15,8 @@ use std::collections::VecDeque;
 use std::convert::TryFrom;
 use vm::errors::{PartialVMError, PartialVMResult};
 // use hex;
-
+use libra_global_constants::VDF_SECURITY_PARAM;
+// const SECURITY_PARAM: u16 = 2048;
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
     context: &impl NativeContext,
@@ -43,15 +44,12 @@ pub fn verify(
     // TODO change the `cost_index` when we have our own cost table.
     let cost = native_gas(context.cost_table(), NativeCostIndex::VDF_VERIFY, 1);
 
-    let v = vdf::WesolowskiVDFParams(4096).new();
-    
-    // println!("vdf.rs - challenge: {}", hex::encode(&challenge));
-    // println!("vdf.rs - difficulty: {:?}", &difficulty);
-
-
+    let v = vdf::WesolowskiVDFParams(VDF_SECURITY_PARAM).new();
     let result = v.verify(&challenge, difficulty, &alleged_solution);
 
-    // println!("vdf.rs - result: {:?}", result);
+    // dbg!( hex::encode(&challenge));
+    // dbg!(&difficulty);
+    // dbg!(&result);
 
     let return_values = vec![Value::bool(result.is_ok())];
     Ok(NativeResult::ok(cost, return_values))
@@ -71,16 +69,6 @@ pub fn extract_address_from_challenge(
         .value_as::<Vec<u8>>()?;
 
     let auth_key_vec = &challenge_vec[..32];
-
-    // TODO: Error handle on wrong size.
-    // if len < 32 {
-    //     return Err(NativeResult::err(
-    //         cost,
-    //         VMStatus::new(StatusCode::NATIVE_FUNCTION_ERROR)
-    //             .with_sub_status(DEFAULT_ERROR_CODE),
-    //     ));
-    // };
-
     let auth_key = AuthenticationKey::try_from(auth_key_vec).expect("Check length");
     let address = auth_key.derived_address();
     let return_values = vec![Value::address(address), Value::vector_u8(auth_key_vec[..16].to_owned())];

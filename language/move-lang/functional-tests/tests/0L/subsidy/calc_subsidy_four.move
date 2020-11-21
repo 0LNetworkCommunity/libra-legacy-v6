@@ -18,11 +18,10 @@ script {
   use 0x1::Subsidy;
   use 0x1::Vector;
   use 0x1::Stats;
-  // use 0x1::Debug::print;
-
 
   fun main(vm: &signer) {
     // check the case of a network density of 4 active validators.
+    // assume epoch changes at round 15
 
     let validators = Vector::singleton<address>({{alice}});
     Vector::push_back(&mut validators, {{bob}});
@@ -35,9 +34,7 @@ script {
       Stats::process_set_votes(vm, &validators);
       i = i + 1;
     };
-
-    // print(&Subsidy::calculate_Subsidy(vm));
-    assert(Subsidy::calculate_Subsidy(vm) == 296, 7357190101021000);
+    assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 296, 7357190101021000);
 
     }
 }

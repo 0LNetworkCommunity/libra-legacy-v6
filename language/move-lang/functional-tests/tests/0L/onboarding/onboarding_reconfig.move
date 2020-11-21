@@ -7,7 +7,7 @@
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: alice
 script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
@@ -15,13 +15,20 @@ script {
   use 0x1::TestFixtures;
   use 0x1::VDF;
   use 0x1::Roles;
+  use 0x1::Signer;
+  use 0x1::MinerState;
 
-  fun main(_account: &signer) {
+  fun main(sender: &signer) {
     let challenge = TestFixtures::alice_1_easy_chal();
     let solution = TestFixtures::alice_1_easy_sol();
     let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);    
 
+  let sender_addr = Signer::address_of(sender);
+  let epochs_since_creation = 10;
+  MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+
   LibraAccount::create_validator_account_with_proof(
+      sender,
       &challenge,
       &solution,
       x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // consensus_pubkey: vector<u8>,
