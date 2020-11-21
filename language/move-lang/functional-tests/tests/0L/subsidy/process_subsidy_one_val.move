@@ -79,10 +79,11 @@ script {
   use 0x1::Subsidy;
   use 0x1::GAS::GAS;
   use 0x1::LibraAccount;
+  use 0x1::LibraSystem;
 
   fun main(vm: &signer) {
-
-    Subsidy::process_subsidy(vm, 100);
+    let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
+    Subsidy::process_subsidy(vm, 100, &validators, &fee_ratios);
 
     // print(&LibraAccount::balance<GAS::T>({{alice}}));
     assert(LibraAccount::balance<GAS>({{alice}}) == 101, 7357190102091000);

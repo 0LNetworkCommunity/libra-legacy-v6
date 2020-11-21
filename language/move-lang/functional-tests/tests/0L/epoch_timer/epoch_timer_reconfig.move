@@ -19,14 +19,14 @@
 script {
     // use 0x1::PersistenceDemo;
     use 0x1::LibraTimestamp;
-    use 0x1::EpochTimer;
+    use 0x1::Reconfigure;
     use 0x1::Debug::print;
     fun main(){
-      print(&EpochTimer::epoch_finished());
+      print(&Reconfigure::epoch_finished());
       print(&LibraTimestamp::now_seconds());
 
       // the new epoch has reset the timer.
-      assert(!EpochTimer::epoch_finished(), 735701);
+      assert(!Reconfigure::epoch_finished(), 735701);
     }
 }
 // check: EXECUTED
