@@ -17,8 +17,6 @@
 //! sender: libraroot
 
 script {
-    // use 0x1::PersistenceDemo;
-    use 0x1::LibraTimestamp;
     use 0x1::Reconfigure;
     fun main(){
       // the new epoch has reset the timer.

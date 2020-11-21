@@ -7,8 +7,6 @@
 script {
 use 0x1::MinerState;
 use 0x1::TestFixtures;
-use 0x1::Signer;
-// use 0x1::Hash;
 // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
 fun main(sender: &signer) {
  
