@@ -5,7 +5,7 @@
 // We test creation of autopay, retiriving it using same and different accounts
 // Finally, we also test deleting of autopay
 
-// Test to create pledge and retrieve it
+// Test to create instruction and retrieve it
 //! new-transaction
 //! sender: shashank
 script {
@@ -14,8 +14,8 @@ script {
   fun main(sender: &signer) {
     AutoPay::enable_autopay(sender);
     assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
-    AutoPay::create_pledge(sender, 1, {{bob}}, 2, 5);
-    let (payee, end_epoch, percentage) = AutoPay::query_pledge(Signer::address_of(sender), 1);
+    AutoPay::create_instruction(sender, 1, {{bob}}, 2, 5);
+    let (payee, end_epoch, percentage) = AutoPay::query_instruction(Signer::address_of(sender), 1);
     assert(payee == {{bob}}, 1);
     assert(end_epoch == 2, 1);
     assert(percentage == 5, 1);
@@ -23,7 +23,7 @@ script {
 }
 // check: EXECUTED
 
-// Test to create another pledge
+// Test to create another instruction
 //! new-transaction
 //! sender: shashank
 script {
@@ -31,12 +31,12 @@ script {
   use 0x1::Signer;
   fun main(sender: &signer) {
     assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);    
-    AutoPay::create_pledge(sender, 2, {{alice}}, 4, 5);
+    AutoPay::create_instruction(sender, 2, {{alice}}, 4, 5);
     }
 }
 // check: EXECUTED
 
-// // // Test to create pledge with wrong UUID
+// // // Test to create instruction with wrong UUID
 // //! new-transaction
 // //! sender: shashank
 // script {
@@ -46,7 +46,7 @@ script {
 //   fun main(sender: &signer) {
 //     AutoPay::enable_autopay();
 //     Transaction::assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
-//     AutoPay::create_pledge(2, {{bob}}, 5, 5);
+//     AutoPay::create_instruction(2, {{bob}}, 5, 5);
 //     }
 // }
 // // check: EXECUTED

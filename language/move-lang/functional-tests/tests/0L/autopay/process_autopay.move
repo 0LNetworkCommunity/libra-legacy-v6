@@ -4,7 +4,7 @@
 // We test processing of autopay at differnt epochs and balance transfers
 // Finally, we also check the end_epoch functionality of autopay
 
-// creating the pledge
+// creating the instruction
 //! new-transaction
 //! sender: shashank
 script {
@@ -13,8 +13,8 @@ script {
   fun main(sender: &signer) {
     AutoPay::enable_autopay(sender);
     assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
-    AutoPay::create_pledge(sender, 1, {{bob}}, 2, 5);
-    let (payee, end_epoch, percentage) = AutoPay::query_pledge(Signer::address_of(sender), 1);
+    AutoPay::create_instruction(sender, 1, {{bob}}, 2, 5);
+    let (payee, end_epoch, percentage) = AutoPay::query_instruction(Signer::address_of(sender), 1);
     assert(payee == {{bob}}, 1);
     assert(end_epoch == 2, 1);
     assert(percentage == 5, 1);

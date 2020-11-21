@@ -55,6 +55,12 @@ module Reconfigure {
         time.height_start = height;
         time.seconds_start = LibraTimestamp::now_seconds();
     }
+    public fun get_timer_seconds_start(vm: &signer):u64 acquires Timer {
+        let sender = Signer::address_of(vm);
+        assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
+        let time = borrow_global_mut<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        time.seconds_start
+    }
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101

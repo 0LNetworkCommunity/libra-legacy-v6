@@ -12,6 +12,10 @@ address 0x1{
     use 0x1::GAS::{GAS};
     use 0x1::FixedPoint32;
     use 0x1::CoreAddresses;
+    use 0x1::LibraConfig;
+    use 0x1::LibraTimestamp;
+    use 0x1::Globals;
+    use 0x1::Reconfigure;
 
     // List of payments. Each account will own their own copy of this struct
     resource struct Data {
@@ -44,6 +48,11 @@ address 0x1{
     // Public functions only OxO //
     //////////////////////////////
 
+    public fun tick(vm: &signer): bool {
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
+      let timer = LibraTimestamp::now_seconds() - Reconfigure::get_timer_seconds_start(vm);
+      (timer > Globals::get_epoch_length()/2)
+    }
     // Initialize the entire autopay module by creating an empty AccountList object
     // Called in Genesis
     // Function code 010101
@@ -59,11 +68,12 @@ address 0x1{
     // Note: payments from epoch n are processed at the epoch_length/2
     // Function code 010106
     public fun process_autopay(
-      signer: &signer,
-      epoch: u64
+      vm: &signer,
     ) acquires AccountList, Data {
       // Only account 0x0 should be triggering this autopayment each block
-      assert(Signer::address_of(signer) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101064010);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101064010);
+
+      let epoch = LibraConfig::get_current_epoch();
 
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
@@ -90,9 +100,9 @@ address 0x1{
             // A payment will happen now
             // Obtain the amount to pay from percentage and balance
             let amount = FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.percentage, 100));
-            LibraAccount::make_payment<GAS>(*account_addr, payment.payee, amount, x"deadbeef", x"", signer);
+            LibraAccount::make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
           };
-          // ToDo: might want to delete inactive pledges to save memory
+          // ToDo: might want to delete inactive instructions to save memory
           payments_idx = payments_idx + 1;
         };
         account_idx = account_idx + 1;
@@ -101,7 +111,7 @@ address 0x1{
 
     ////////////////////////////////////////////
     // Public functions only account owner    //
-    // Enable, disable, create/delete pledges //
+    // Enable, disable, create/delete instructions //
     ////////////////////////////////////////////
 
     // Each account needs to initialize autopay on it's account
@@ -113,7 +123,7 @@ address 0x1{
       if (!Vector::contains<address>(accounts, &addr)) {
         Vector::push_back<address>(accounts, addr);
       };
-      // Initialize the pledges Data
+      // Initialize the instructions Data
       move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
     }
 
@@ -135,9 +145,9 @@ address 0x1{
       }      
     }
 
-    // Create a pledge from the sender's account
+    // Create a instruction from the sender's account
     // Function code 010104
-    public fun create_pledge(
+    public fun create_instruction(
         account: &signer, 
         uid: u64,
         payee: address,
@@ -161,9 +171,9 @@ address 0x1{
       });
     }
 
-    // Deletes the pledge with uid from the sender's account
+    // Deletes the instruction with uid from the sender's account
     // Function code 010105
-    public fun delete_pledge(account: &signer, uid: u64) acquires Data {
+    public fun delete_instruction(account: &signer, uid: u64) acquires Data {
       let addr = Signer::address_of(account);
       let index = find(addr, uid);
       if (Option::is_none<u64>(&index)) {
@@ -190,7 +200,7 @@ address 0x1{
     }
 
     // Returns (sender address,  end_epoch, percentage)
-    public fun query_pledge(account: address, uid: u64): (address, u64, u64) acquires Data {
+    public fun query_instruction(account: address, uid: u64): (address, u64, u64) acquires Data {
       // TODO: This can be made faster if Data.payments is stored as a BST sorted by 
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
