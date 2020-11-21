@@ -141,7 +141,7 @@ address 0x1 {
         assert(&proof.difficulty == &difficulty_constant, 130103021010);
       };
       
-      verify_and_update_state(miner_addr,proof, true);
+      verify_and_update_state(miner_addr, proof, true);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -165,7 +165,7 @@ address 0x1 {
       assert(valid, 130108041021);
 
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
-
+      
       // Increment the verified_tower_height
       if (steady_state) {
         miner_history.verified_tower_height = miner_history.verified_tower_height + 1;
