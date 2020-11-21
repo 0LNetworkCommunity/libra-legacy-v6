@@ -2,12 +2,14 @@
 
 // Tests the prologue reconfigures based on wall clock
 
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 10000000
+//! block-time: 2000000
+//! round: 15
 
-//////////////////////////////////////////////
-///// CHECKS RECONFIGURATION IS HAPPENING ////
+///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
