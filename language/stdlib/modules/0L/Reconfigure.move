@@ -20,7 +20,6 @@ module Reconfigure {
     use 0x1::Stats;
     use 0x1::LibraTimestamp;
     use 0x1::LibraConfig;
-    use 0x1::Debug::print;
 
     resource struct Timer { 
         epoch: u64,
@@ -44,10 +43,7 @@ module Reconfigure {
 
     public fun epoch_finished(): bool acquires Timer {
         let epoch_secs = Globals::get_epoch_length();
-        print(&epoch_secs);
         let time = borrow_global<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        print(&time.seconds_start);
-        print(&LibraTimestamp::now_seconds());
         LibraTimestamp::now_seconds() > (epoch_secs + time.seconds_start)
     }
 
@@ -63,9 +59,7 @@ module Reconfigure {
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer, height_now: u64) acquires Timer{
-        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
-        print(&0x33333333);
-        
+        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);        
         let timer = borrow_global<Timer>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         let height_start = timer.height_start;
         // Process outgoing validators:

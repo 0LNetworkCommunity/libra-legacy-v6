@@ -42,7 +42,7 @@ script {
   // use 0x1::Subsidy;
   use 0x1::Vector;
   use 0x1::Stats;
-  // use 0x1::Debug::print;
+  
   use 0x1::GAS::GAS;
   use 0x1::LibraAccount;
   use 0x1::Cases;

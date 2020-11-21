@@ -150,7 +150,7 @@ script {
 //! sender: libraroot
 script {
     use 0x1::Cases;
-    // use 0x1::Debug::print;
+    
     
     fun main(vm: &signer) {
         // We are in a new epoch.
@@ -180,13 +180,12 @@ script {
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::LibraConfig;
-    // use 0x1::Debug::print;
+    
 
     fun main(_account: &signer) {
         // We are in a new epoch.
 
         // Check the validator set is at expected size
-        // print(&LibraSystem::validator_set_size());
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{dave}}) == false, 7357000180111);            
         assert(LibraAccount::balance<GAS>({{dave}}) == 1, 7357000180112);

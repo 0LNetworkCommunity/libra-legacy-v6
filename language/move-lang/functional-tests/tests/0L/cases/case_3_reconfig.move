@@ -64,7 +64,7 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
+    // 
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -93,7 +93,7 @@ script {
     
     use 0x1::MinerState;
     use 0x1::Signer;
-    // use 0x1::Debug::print;
+    // 
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
@@ -108,7 +108,6 @@ script {
     
     use 0x1::LibraSystem;
     use 0x1::MinerState;
-    use 0x1::Debug::print;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     
@@ -118,7 +117,6 @@ script {
         assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180104);
         assert(LibraAccount::balance<GAS>({{carol}}) == 1, 7357000180106);
-        print(&MinerState::test_helper_get_height({{carol}}));
         assert(MinerState::test_helper_get_height({{carol}}) == 0, 7357000180108);
     }
 }
@@ -160,7 +158,6 @@ script {
     fun main(vm: &signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        // print(&Cases::get_case({{carol}}));
         assert(Cases::get_case(vm, {{carol}}, 0, 15) == 3, 7357000180109);
     }
 }

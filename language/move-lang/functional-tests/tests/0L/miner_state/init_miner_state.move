@@ -6,7 +6,6 @@
 //! sender: alice
 script {
 use 0x1::MinerState;
-use 0x1::Debug::print;
 use 0x1::TestFixtures;
 
 fun main(sender: &signer) {
@@ -16,8 +15,6 @@ fun main(sender: &signer) {
         &TestFixtures::alice_0_easy_chal(),
         &TestFixtures::alice_0_easy_sol()
     );
-    print(&MinerState::test_helper_get_height({{alice}}));
-
 }
 }
 // check: EXECUTED

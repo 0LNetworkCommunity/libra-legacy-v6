@@ -7,7 +7,7 @@
 script{
 use 0x1::ValidatorUniverse;
 use 0x1::Vector;
-// use 0x1::Debug::print;
+
 
 fun main(vm: &signer) {
     let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));

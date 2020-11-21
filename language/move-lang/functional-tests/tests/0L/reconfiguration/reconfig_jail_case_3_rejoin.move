@@ -112,7 +112,7 @@ script {
     use 0x1::Cases;
     use 0x1::Vector;
     use 0x1::Stats;
-    // use 0x1::Debug::print;
+    
 
     fun main(vm: &signer) {
         // start a new epoch.

@@ -11,7 +11,7 @@ module Stats{
     use 0x1::Testnet;
     // use 0x1::Globals;
     use 0x1::FixedPoint32;
-    // use 0x1::Debug::print;
+    
 
     struct ValidatorSet {
       addr: vector<address>,
