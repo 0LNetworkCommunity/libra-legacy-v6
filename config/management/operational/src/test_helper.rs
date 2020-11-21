@@ -12,7 +12,6 @@ use libra_config::config;
 use libra_crypto::{ed25519::Ed25519PublicKey, x25519};
 use libra_management::{error::Error, secure_backend::DISK};
 use libra_network_address::NetworkAddress;
-use libra_secure_json_rpc::VMStatusView;
 use libra_types::{account_address::AccountAddress, chain_id::ChainId, waypoint::Waypoint};
 use structopt::StructOpt;
 
@@ -66,6 +65,7 @@ impl OperationalTool {
         name: &str,
         path_to_key: &str,
         backend: &config::SecureBackend,
+        disable_validate: bool,
         command_name: CommandName,
         execute: fn(Command) -> Result<(TransactionContext, AccountAddress), Error>,
     ) -> Result<(TransactionContext, AccountAddress), Error> {
@@ -77,6 +77,7 @@ impl OperationalTool {
                 --json-server {host}
                 --chain-id {chain_id}
                 --validator-backend {backend_args}
+                {disable_validate}
             ",
             command = command(TOOL_NAME, command_name),
             name = name,
@@ -84,6 +85,7 @@ impl OperationalTool {
             host = self.host,
             chain_id = self.chain_id.id(),
             backend_args = backend_args(backend)?,
+            disable_validate = optional_flag("disable-validate", disable_validate),
         );
 
         let command = Command::from_iter(args.split_whitespace());
@@ -95,11 +97,13 @@ impl OperationalTool {
         name: &str,
         path_to_key: &str,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<(TransactionContext, AccountAddress), Error> {
         self.create_account(
             name,
             path_to_key,
             backend,
+            disable_validate,
             CommandName::CreateValidator,
             |cmd| cmd.create_validator(),
         )
@@ -110,11 +114,13 @@ impl OperationalTool {
         name: &str,
         path_to_key: &str,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<(TransactionContext, AccountAddress), Error> {
         self.create_account(
             name,
             path_to_key,
             backend,
+            disable_validate,
             CommandName::CreateValidatorOperator,
             |cmd| cmd.create_validator_operator(),
         )
@@ -179,16 +185,19 @@ impl OperationalTool {
         &self,
         waypoint: Waypoint,
         backend: &config::SecureBackend,
+        set_genesis: bool,
     ) -> Result<(), Error> {
         let args = format!(
             "
                 {command}
                 --waypoint {waypoint}
                 --validator-backend {backend_args}
+                {set_genesis}
             ",
             command = command(TOOL_NAME, CommandName::InsertWaypoint),
             waypoint = waypoint,
             backend_args = backend_args(backend)?,
+            set_genesis = optional_flag("set-genesis", set_genesis),
         );
         let command = Command::from_iter(args.split_whitespace());
         command.insert_waypoint()
@@ -213,11 +222,51 @@ impl OperationalTool {
         command.print_account()
     }
 
+    pub fn print_key(
+        &self,
+        key_name: &str,
+        backend: &config::SecureBackend,
+    ) -> Result<Ed25519PublicKey, Error> {
+        let args = format!(
+            "
+                {command}
+                --key-name {key_name}
+                --validator-backend {backend_args}
+            ",
+            command = command(TOOL_NAME, CommandName::PrintKey),
+            key_name = key_name,
+            backend_args = backend_args(backend)?,
+        );
+        let command = Command::from_iter(args.split_whitespace());
+        command.print_key()
+    }
+
+    pub fn print_waypoint(
+        &self,
+        waypoint_name: &str,
+        backend: &config::SecureBackend,
+    ) -> Result<Waypoint, Error> {
+        let args = format!(
+            "
+                {command}
+                --waypoint-name {waypoint_name}
+                --validator-backend {backend_args}
+            ",
+            command = command(TOOL_NAME, CommandName::PrintWaypoint),
+            waypoint_name = waypoint_name,
+            backend_args = backend_args(backend)?,
+        );
+        let command = Command::from_iter(args.split_whitespace());
+        command.print_waypoint()
+    }
+
     pub fn set_validator_config(
         &self,
         validator_address: Option<NetworkAddress>,
         fullnode_address: Option<NetworkAddress>,
         backend: &config::SecureBackend,
+        disable_validate: bool,
+        disable_address_validation: bool,
     ) -> Result<TransactionContext, Error> {
         let args = format!(
             "
@@ -227,6 +276,8 @@ impl OperationalTool {
                 --chain-id {chain_id}
                 --json-server {host}
                 --validator-backend {backend_args}
+                {disable_validate}
+                {disable_address_validation}
             ",
             command = command(TOOL_NAME, CommandName::SetValidatorConfig),
             host = self.host,
@@ -234,6 +285,9 @@ impl OperationalTool {
             fullnode_address = optional_arg("fullnode-address", fullnode_address),
             validator_address = optional_arg("validator-address", validator_address),
             backend_args = backend_args(backend)?,
+            disable_validate = optional_flag("disable-validate", disable_validate),
+            disable_address_validation =
+                optional_flag("disable-address-validation", disable_address_validation),
         );
 
         let command = Command::from_iter(args.split_whitespace());
@@ -243,6 +297,7 @@ impl OperationalTool {
     fn rotate_key<T>(
         &self,
         backend: &config::SecureBackend,
+        disable_validate: bool,
         name: CommandName,
         execute: fn(Command) -> Result<T, Error>,
     ) -> Result<T, Error> {
@@ -252,11 +307,13 @@ impl OperationalTool {
                 --chain-id {chain_id}
                 --json-server {host}
                 --validator-backend {backend_args}
+                {disable_validate}
             ",
             command = command(TOOL_NAME, name),
             host = self.host,
             chain_id = self.chain_id.id(),
             backend_args = backend_args(backend)?,
+            disable_validate = optional_flag("disable-validate", disable_validate),
         );
         let command = Command::from_iter(args.split_whitespace());
         execute(command)
@@ -265,44 +322,89 @@ impl OperationalTool {
     pub fn rotate_consensus_key(
         &self,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<(TransactionContext, Ed25519PublicKey), Error> {
-        self.rotate_key(backend, CommandName::RotateConsensusKey, |cmd| {
-            cmd.rotate_consensus_key()
-        })
+        self.rotate_key(
+            backend,
+            disable_validate,
+            CommandName::RotateConsensusKey,
+            |cmd| cmd.rotate_consensus_key(),
+        )
     }
 
     pub fn rotate_operator_key(
         &self,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<(TransactionContext, Ed25519PublicKey), Error> {
-        self.rotate_key(backend, CommandName::RotateOperatorKey, |cmd| {
-            cmd.rotate_operator_key()
-        })
+        self.rotate_key(
+            backend,
+            disable_validate,
+            CommandName::RotateOperatorKey,
+            |cmd| cmd.rotate_operator_key(),
+        )
+    }
+
+    pub fn rotate_operator_key_with_custom_validation(
+        &self,
+        backend: &config::SecureBackend,
+        disable_validate: bool,
+        sleep_interval: Option<u64>,
+        validate_timeout: Option<u64>,
+    ) -> Result<(TransactionContext, Ed25519PublicKey), Error> {
+        let args = format!(
+            "
+                {command}
+                --chain-id {chain_id}
+                --json-server {host}
+                --validator-backend {backend_args}
+                {disable_validate}
+                {sleep_interval}
+                {validate_timeout}
+            ",
+            command = command(TOOL_NAME, CommandName::RotateOperatorKey),
+            host = self.host,
+            chain_id = self.chain_id.id(),
+            backend_args = backend_args(backend)?,
+            disable_validate = optional_flag("disable-validate", disable_validate),
+            sleep_interval = optional_arg("sleep-interval", sleep_interval),
+            validate_timeout = optional_arg("validate-timeout", validate_timeout),
+        );
+        let command = Command::from_iter(args.split_whitespace());
+        command.rotate_operator_key()
     }
 
     pub fn rotate_validator_network_key(
         &self,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<(TransactionContext, x25519::PublicKey), Error> {
-        self.rotate_key(backend, CommandName::RotateValidatorNetworkKey, |cmd| {
-            cmd.rotate_validator_network_key()
-        })
+        self.rotate_key(
+            backend,
+            disable_validate,
+            CommandName::RotateValidatorNetworkKey,
+            |cmd| cmd.rotate_validator_network_key(),
+        )
     }
 
     pub fn rotate_fullnode_network_key(
         &self,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<(TransactionContext, x25519::PublicKey), Error> {
-        self.rotate_key(backend, CommandName::RotateFullNodeNetworkKey, |cmd| {
-            cmd.rotate_fullnode_network_key()
-        })
+        self.rotate_key(
+            backend,
+            disable_validate,
+            CommandName::RotateFullNodeNetworkKey,
+            |cmd| cmd.rotate_fullnode_network_key(),
+        )
     }
 
     pub fn validate_transaction(
         &self,
         account_address: AccountAddress,
         sequence_number: u64,
-    ) -> Result<Option<VMStatusView>, Error> {
+    ) -> Result<TransactionContext, Error> {
         let args = format!(
             "
                 {command}
@@ -325,6 +427,7 @@ impl OperationalTool {
         name: &str,
         account_address: AccountAddress,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<TransactionContext, Error> {
         let args = format!(
             "
@@ -334,6 +437,7 @@ impl OperationalTool {
                 --name {name}
                 --account-address {account_address}
                 --validator-backend {backend_args}
+                {disable_validate}
             ",
             command = command(TOOL_NAME, CommandName::SetValidatorOperator),
             json_server = self.host,
@@ -341,6 +445,7 @@ impl OperationalTool {
             chain_id = self.chain_id.id(),
             account_address = account_address,
             backend_args = backend_args(backend)?,
+            disable_validate = optional_flag("disable-validate", disable_validate),
         );
 
         let command = Command::from_iter(args.split_whitespace());
@@ -391,11 +496,14 @@ impl OperationalTool {
         command.validator_set()
     }
 
-    pub fn add_validator(
+    fn validator_operation<T>(
         &self,
         account_address: AccountAddress,
         backend: &config::SecureBackend,
-    ) -> Result<TransactionContext, Error> {
+        disable_validate: bool,
+        name: CommandName,
+        execute: fn(Command) -> Result<T, Error>,
+    ) -> Result<T, Error> {
         let args = format!(
             "
                 {command}
@@ -403,38 +511,47 @@ impl OperationalTool {
                 --chain-id {chain_id}
                 --account-address {account_address}
                 --validator-backend {backend_args}
+                {disable_validate}
             ",
-            command = command(TOOL_NAME, CommandName::AddValidator),
+            command = command(TOOL_NAME, name),
             host = self.host,
             chain_id = self.chain_id.id(),
             account_address = account_address,
             backend_args = backend_args(backend)?,
+            disable_validate = optional_flag("disable-validate", disable_validate),
         );
         let command = Command::from_iter(args.split_whitespace());
-        command.add_validator()
+        execute(command)
+    }
+
+    pub fn add_validator(
+        &self,
+        account_address: AccountAddress,
+        backend: &config::SecureBackend,
+        disable_validate: bool,
+    ) -> Result<TransactionContext, Error> {
+        self.validator_operation(
+            account_address,
+            backend,
+            disable_validate,
+            CommandName::AddValidator,
+            |cmd| cmd.add_validator(),
+        )
     }
 
     pub fn remove_validator(
         &self,
         account_address: AccountAddress,
         backend: &config::SecureBackend,
+        disable_validate: bool,
     ) -> Result<TransactionContext, Error> {
-        let args = format!(
-            "
-                {command}
-                --json-server {host}
-                --chain-id {chain_id}
-                --account-address {account_address}
-                --validator-backend {backend_args}
-            ",
-            command = command(TOOL_NAME, CommandName::RemoveValidator),
-            host = self.host,
-            chain_id = self.chain_id.id(),
-            account_address = account_address,
-            backend_args = backend_args(backend)?,
-        );
-        let command = Command::from_iter(args.split_whitespace());
-        command.remove_validator()
+        self.validator_operation(
+            account_address,
+            backend,
+            disable_validate,
+            CommandName::RemoveValidator,
+            |cmd| cmd.remove_validator(),
+        )
     }
 }
 
@@ -446,6 +563,15 @@ fn command(tool_name: &'static str, command: CommandName) -> String {
 fn optional_arg<T: std::fmt::Display>(name: &'static str, maybe_value: Option<T>) -> String {
     if let Some(value) = maybe_value {
         format!("--{name} {value}", name = name, value = value)
+    } else {
+        String::new()
+    }
+}
+
+/// Allow flags to be optional
+fn optional_flag(flag: &'static str, enable_flag: bool) -> String {
+    if enable_flag {
+        format!("--{flag}", flag = flag)
     } else {
         String::new()
     }
