@@ -85,12 +85,8 @@ module LibraBlock {
         // increment stats
         Stats::process_set_votes(vm, &previous_block_votes);
         Stats::inc_prop(vm, *&proposer);
+        if (AutoPay::tick(vm)) AutoPay::process_autopay(vm);
         ///////////////////
-        
-        // 0L Autopay module
-        if (AutoPay::tick(vm)){
-            AutoPay::process_autopay(vm);
-        };
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         LibraTimestamp::update_global_time(vm, proposer, timestamp);

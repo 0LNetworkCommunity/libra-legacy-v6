@@ -37,33 +37,54 @@ script {
 // check: EXECUTED
 
 ///////////////////////////////////////////////
-///// Trigger reconfiguration at 2 seconds ////
+///// Trigger Autopay Tick at 0.5 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 500000
+//! block-time: 100000
 //! round: 1
 
-///// TEST RECONFIGURATION IS HAPPENING ////
-// check: NewEpochEvent
+///// Trigger Autopay Tick at 0.5 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 200000
+//! round: 2
+
+///// Trigger Autopay Tick at 0.5 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 300000
+//! round: 2
+
 //////////////////////////////////////////////
 
 
-// Processing AutoPay to see if payments are done
 //! new-transaction
 //! sender: libraroot
 script {
-  use 0x1::LibraAccount;
-  use 0x1::GAS::GAS;
+  use 0x1::LibraTimestamp;
+  use 0x1::Debug::print;
   fun main() {
-    let sha_balance = 1000000; 
-    let _bob_balance = 10000; 
-    
-    let sha_balance_later = LibraAccount::balance<GAS>({{alice}});
-    assert(sha_balance_later < sha_balance, 416854);
-    
-    // let sha_transfered = sha_balance - sha_balance_later ;
-    // let bob_recieved = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
-    // assert(bob_recieved == sha_transfered, 416855);
-    }
+    let time = LibraTimestamp::now_seconds();
+    print(&time);
+  }
 }
-// check: EXECUTED
+
+// // Processing AutoPay to see if payments are done
+// //! new-transaction
+// //! sender: libraroot
+// script {
+//   use 0x1::LibraAccount;
+//   use 0x1::GAS::GAS;
+//   fun main() {
+//     let starting_balance = 1000000; 
+    
+//     // check GAS was withdrawn
+//     let ending_balance = LibraAccount::balance<GAS>({{alice}});
+//     assert(ending_balance < starting_balance, 416854);
+    
+//     // let sha_transfered = sha_balance - sha_balance_later ;
+//     // let bob_recieved = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
+//     // assert(bob_recieved == sha_transfered, 416855);
+//     }
+// }
+// // check: EXECUTED

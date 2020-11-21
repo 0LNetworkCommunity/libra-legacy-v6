@@ -47,10 +47,13 @@ address 0x1{
     ///////////////////////////////
     // Public functions only OxO //
     //////////////////////////////
-
+    use 0x1::Debug::print;
     public fun tick(vm: &signer): bool {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
       let timer = LibraTimestamp::now_seconds() - Reconfigure::get_timer_seconds_start(vm);
+      print(&0x222);
+      print(&LibraTimestamp::now_seconds());
+      print(&timer);
       (timer > Globals::get_epoch_length()/2)
     }
     // Initialize the entire autopay module by creating an empty AccountList object
