@@ -39,4 +39,5 @@ mod upgrade_oracle_0l;
 mod minerstate_commit_0l;
 mod minerstate_onboarding_0l;
 mod demo_0l;
-mod enable_autopay_0l;
+mod autopay_enable_0l;
+mod autopay_create_0l;

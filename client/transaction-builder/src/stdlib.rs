@@ -196,6 +196,8 @@ pub enum ScriptCall {
         validator_address: AccountAddress,
     },
 
+    AutopayCreateInstructionTx {},
+
     /// # Summary
     /// Burns all coins held in the preburn resource at the specified
     /// preburn address and removes them from the system. The sending account must
@@ -632,7 +634,7 @@ pub enum ScriptCall {
         world: u64,
     },
 
-    EnableAutopay {},
+    EnableAutopayTx {},
 
     /// # Summary
     /// Freezes the account at `address`. The sending account of this transaction
@@ -1545,6 +1547,7 @@ impl ScriptCall {
                 validator_name,
                 validator_address,
             ),
+            AutopayCreateInstructionTx {} => encode_autopay_create_instruction_tx_script(),
             Burn {
                 token,
                 sliding_nonce,
@@ -1622,7 +1625,7 @@ impl ScriptCall {
                 human_name,
             ),
             DemoE2e { world } => encode_demo_e2e_script(world),
-            EnableAutopay {} => encode_enable_autopay_script(),
+            EnableAutopayTx {} => encode_enable_autopay_tx_script(),
             FreezeAccount {
                 sliding_nonce,
                 to_freeze_account,
@@ -1979,6 +1982,10 @@ pub fn encode_add_validator_and_reconfigure_script(
             TransactionArgument::Address(validator_address),
         ],
     )
+}
+
+pub fn encode_autopay_create_instruction_tx_script() -> Script {
+    Script::new(AUTOPAY_CREATE_INSTRUCTION_TX_CODE.to_vec(), vec![], vec![])
 }
 
 /// # Summary
@@ -2492,8 +2499,8 @@ pub fn encode_demo_e2e_script(world: u64) -> Script {
     )
 }
 
-pub fn encode_enable_autopay_script() -> Script {
-    Script::new(ENABLE_AUTOPAY_CODE.to_vec(), vec![], vec![])
+pub fn encode_enable_autopay_tx_script() -> Script {
+    Script::new(ENABLE_AUTOPAY_TX_CODE.to_vec(), vec![], vec![])
 }
 
 /// # Summary
@@ -3618,6 +3625,10 @@ fn decode_add_validator_and_reconfigure_script(script: &Script) -> Option<Script
     })
 }
 
+fn decode_autopay_create_instruction_tx_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::AutopayCreateInstructionTx {})
+}
+
 fn decode_burn_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::Burn {
         token: script.ty_args().get(0)?.clone(),
@@ -3699,8 +3710,8 @@ fn decode_demo_e2e_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_enable_autopay_script(_script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::EnableAutopay {})
+fn decode_enable_autopay_tx_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::EnableAutopayTx {})
 }
 
 fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
@@ -3926,6 +3937,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         ADD_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(),
         Box::new(decode_add_validator_and_reconfigure_script),
     );
+    map.insert(
+        AUTOPAY_CREATE_INSTRUCTION_TX_CODE.to_vec(),
+        Box::new(decode_autopay_create_instruction_tx_script),
+    );
     map.insert(BURN_CODE.to_vec(), Box::new(decode_burn_script));
     map.insert(
         BURN_TXN_FEES_CODE.to_vec(),
@@ -3961,8 +3976,8 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     );
     map.insert(DEMO_E2E_CODE.to_vec(), Box::new(decode_demo_e2e_script));
     map.insert(
-        ENABLE_AUTOPAY_CODE.to_vec(),
-        Box::new(decode_enable_autopay_script),
+        ENABLE_AUTOPAY_TX_CODE.to_vec(),
+        Box::new(decode_enable_autopay_tx_script),
     );
     map.insert(
         FREEZE_ACCOUNT_CODE.to_vec(),
@@ -4139,6 +4154,18 @@ const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
     2,
 ];
 
+const AUTOPAY_CREATE_INSTRUCTION_TX_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 3, 6, 21, 4, 27, 2, 5, 29, 16, 7, 45, 64, 8, 109, 16,
+    6, 125, 18, 0, 0, 0, 1, 0, 2, 1, 3, 0, 1, 1, 1, 2, 4, 2, 3, 0, 0, 5, 2, 1, 0, 0, 6, 3, 4, 0, 0,
+    3, 1, 6, 9, 0, 0, 1, 6, 12, 1, 5, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 5, 68,
+    101, 98, 117, 103, 6, 83, 105, 103, 110, 101, 114, 5, 112, 114, 105, 110, 116, 10, 97, 100,
+    100, 114, 101, 115, 115, 95, 111, 102, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111,
+    112, 97, 121, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 1, 5, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 5, 15, 7, 0,
+    12, 1, 14, 1, 56, 0, 10, 0, 17, 2, 11, 0, 17, 1, 17, 3, 12, 2, 11, 2, 3, 14, 6, 0, 0, 0, 0, 0,
+    0, 0, 0, 39, 2,
+];
+
 const BURN_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 11, 4, 15, 2, 5, 17, 17, 7, 34, 46, 8, 80, 16,
     0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 1, 1, 1, 1, 4, 2, 6, 12, 3, 0, 2, 6, 12, 5, 3, 6, 12, 3, 5,
@@ -4240,7 +4267,7 @@ const DEMO_E2E_CODE: &[u8] = &[
     1, 2,
 ];
 
-const ENABLE_AUTOPAY_CODE: &[u8] = &[
+const ENABLE_AUTOPAY_TX_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 3, 6, 21, 4, 27, 2, 5, 29, 16, 7, 45, 64, 8, 109, 16,
     6, 125, 18, 0, 0, 0, 1, 0, 2, 1, 3, 0, 1, 1, 1, 2, 4, 2, 3, 0, 0, 5, 2, 1, 0, 0, 6, 3, 4, 0, 0,
     3, 1, 6, 9, 0, 0, 1, 6, 12, 1, 5, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 5, 68,

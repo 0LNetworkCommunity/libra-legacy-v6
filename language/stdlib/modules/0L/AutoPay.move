@@ -151,11 +151,12 @@ address 0x1{
     // Create a instruction from the sender's account
     // Function code 010104
     public fun create_instruction(
-        account: &signer, 
-        uid: u64,
-        payee: address,
-        end_epoch: u64,
-        percentage: u64) acquires Data {
+      account: &signer, 
+      uid: u64,
+      payee: address,
+      end_epoch: u64,
+      percentage: u64
+    ) acquires Data {
       
       let addr = Signer::address_of(account);
       // Confirm that no payment exists with the same uid

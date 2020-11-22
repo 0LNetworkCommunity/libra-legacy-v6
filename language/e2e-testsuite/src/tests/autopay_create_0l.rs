@@ -6,18 +6,18 @@ use language_e2e_tests::{
     executor::FakeExecutor
 };
 use libra_types::{transaction::TransactionStatus, vm_status::KeptVMStatus};
-use transaction_builder::encode_minerstate_commit_script;
+use transaction_builder;
 
 
 #[test]
-fn autopay() {
+fn autopay_create_test() {
   let mut executor = FakeExecutor::from_genesis_file();
 
   let seq_num = 1;
   let sender = Account::new_libra_root();
 
 
-  let script = transaction_builder::encode_enable_autopay_script();
+  let script = transaction_builder::encode_autopay_create_instruction_tx_script();
   let txn = sender
       .transaction()
       .script(script)

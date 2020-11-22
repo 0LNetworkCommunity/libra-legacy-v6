@@ -340,11 +340,12 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_create_instruction">create_instruction</a>(
-    account: &signer,
-    uid: u64,
-    payee: address,
-    end_epoch: u64,
-    percentage: u64) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
+  account: &signer,
+  uid: u64,
+  payee: address,
+  end_epoch: u64,
+  percentage: u64
+) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
 
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
   // Confirm that no payment <b>exists</b> <b>with</b> the same uid
