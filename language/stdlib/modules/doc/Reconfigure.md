@@ -5,12 +5,19 @@
 
 
 
+-  [Resource `Timer`](#0x1_Reconfigure_Timer)
+-  [Function `initialize`](#0x1_Reconfigure_initialize)
+-  [Function `epoch_finished`](#0x1_Reconfigure_epoch_finished)
+-  [Function `reset_timer`](#0x1_Reconfigure_reset_timer)
 -  [Function `reconfigure`](#0x1_Reconfigure_reconfigure)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
+<b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="MinerState.md#0x1_MinerState">0x1::MinerState</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -21,13 +28,52 @@
 
 
 
-<a name="0x1_Reconfigure_reconfigure"></a>
+<a name="0x1_Reconfigure_Timer"></a>
 
-## Function `reconfigure`
+## Resource `Timer`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer)
+<pre><code><b>resource</b> <b>struct</b> <a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a>
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>height_start: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>seconds_start: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_Reconfigure_initialize"></a>
+
+## Function `initialize`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_initialize">initialize</a>(vm: &signer)
 </code></pre>
 
 
@@ -36,16 +82,105 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer) {
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 180101014010);
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_initialize">initialize</a>(vm: &signer) {
+    <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
+    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
+    move_to&lt;<a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a>&gt;(
+    vm,
+    <a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a> {
+        epoch: 0,
+        height_start: 0,
+        seconds_start: <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>()
+        }
+    );
+}
+</code></pre>
 
+
+
+</details>
+
+<a name="0x1_Reconfigure_epoch_finished"></a>
+
+## Function `epoch_finished`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_epoch_finished">epoch_finished</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_epoch_finished">epoch_finished</a>(): bool <b>acquires</b> <a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a> {
+    <b>let</b> epoch_secs = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
+    <b>let</b> time = borrow_global&lt;<a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+    <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>() &gt; (epoch_secs + time.seconds_start)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Reconfigure_reset_timer"></a>
+
+## Function `reset_timer`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_timer">reset_timer</a>(vm: &signer, height: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reset_timer">reset_timer</a>(vm: &signer, height: u64) <b>acquires</b> <a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a> {
+    <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
+    <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
+    <b>let</b> time = borrow_global_mut&lt;<a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+    time.epoch = <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>() + 1;
+    time.height_start = height;
+    time.seconds_start = <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>();
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Reconfigure_reconfigure"></a>
+
+## Function `reconfigure`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer, height_now: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Reconfigure.md#0x1_Reconfigure_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) <b>acquires</b> <a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a>{
+    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 180101014010);
+    <b>let</b> timer = borrow_global&lt;<a href="Reconfigure.md#0x1_Reconfigure_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+    <b>let</b> height_start = timer.height_start;
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
 
-    <b>let</b> subsidy_units = <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">Subsidy::calculate_Subsidy</a>(vm);
-    <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units);
-
-    <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm);
+    <b>let</b> subsidy_units = <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">Subsidy::calculate_Subsidy</a>(vm, height_start, height_now);
+    <b>let</b> (outgoing_set, fee_ratio) = <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">LibraSystem::get_fee_ratio</a>(vm, height_start, height_now);
+    <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_set,  &fee_ratio);
+    <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_set, &fee_ratio);
 
     // Propose upcoming validator set:
     // Step 1: Sort Top N Elegible validators
@@ -56,7 +191,7 @@
     // prepare_upcoming_validator_set(vm);
     <b>let</b> top_accounts = <a href="NodeWeight.md#0x1_NodeWeight_top_n_accounts">NodeWeight::top_n_accounts</a>(
         vm, <a href="Globals.md#0x1_Globals_get_max_validator_per_epoch">Globals::get_max_validator_per_epoch</a>());
-    <b>let</b> jailed_set = <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">LibraSystem::get_jailed_set</a>(vm);
+    <b>let</b> jailed_set = <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">LibraSystem::get_jailed_set</a>(vm, height_start, height_now);
 
     <b>let</b> proposed_set = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>();
     <b>let</b> i = 0;
@@ -79,6 +214,7 @@
 
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
     <a href="LibraSystem.md#0x1_LibraSystem_bulk_update_validators">LibraSystem::bulk_update_validators</a>(vm, proposed_set);
+    <a href="Reconfigure.md#0x1_Reconfigure_reset_timer">reset_timer</a>(vm, height_now);
 }
 </code></pre>
 
