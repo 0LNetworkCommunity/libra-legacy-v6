@@ -41,3 +41,4 @@ mod minerstate_onboarding_0l;
 mod demo_0l;
 mod autopay_enable_0l;
 mod autopay_create_0l;
+mod trusted_account_update_0l;

@@ -25,9 +25,20 @@
 
 
 <pre><code><b>fun</b> <a href="autopay_create_0l.md#autopay_create_instruction_tx">autopay_create_instruction_tx</a>(sender: &signer) {
-    print(&0x0000000000000000000000000011e110); // Hello!
-    <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_enable_autopay">AutoPay::enable_autopay</a>(sender);
-    <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(<a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 0);
+  <b>let</b> account = <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  <b>let</b> uid = 1;
+  <b>let</b> payee = 0x02;
+  <b>let</b> end_epoch = 14;
+  <b>let</b> percentage = 1;
+  <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), 0);
+  print(&0x222222222222222); // Hello!
+  <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_create_instruction">AutoPay::create_instruction</a>(
+    sender,
+    uid,
+    payee,
+    end_epoch,
+    percentage,
+  );
 }
 </code></pre>
 

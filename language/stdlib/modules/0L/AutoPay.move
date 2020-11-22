@@ -151,14 +151,14 @@ address 0x1{
     // Create a instruction from the sender's account
     // Function code 010104
     public fun create_instruction(
-      account: &signer, 
+      sender: &signer, 
       uid: u64,
       payee: address,
       end_epoch: u64,
       percentage: u64
     ) acquires Data {
       
-      let addr = Signer::address_of(account);
+      let addr = Signer::address_of(sender);
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
       if (Option::is_some<u64>(&index)) {
@@ -193,7 +193,7 @@ address 0x1{
     // Can be queried by anyone  //
     //////////////////////////////
 
-    // Any account can check to see if any othe account has autopay enabled
+    // Any account can check to see if any of the accounts has autopay enabled
     // by checking in 0x0's AccountList
     public fun is_enabled(account: address): bool acquires AccountList {
       let accounts = &mut borrow_global_mut<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;

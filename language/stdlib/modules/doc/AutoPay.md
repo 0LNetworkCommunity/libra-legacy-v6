@@ -330,7 +330,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_create_instruction">create_instruction</a>(account: &signer, uid: u64, payee: address, end_epoch: u64, percentage: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_create_instruction">create_instruction</a>(sender: &signer, uid: u64, payee: address, end_epoch: u64, percentage: u64)
 </code></pre>
 
 
@@ -340,14 +340,14 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_create_instruction">create_instruction</a>(
-  account: &signer,
+  sender: &signer,
   uid: u64,
   payee: address,
   end_epoch: u64,
   percentage: u64
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
 
-  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // Confirm that no payment <b>exists</b> <b>with</b> the same uid
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay_find">find</a>(addr, uid);
   <b>if</b> (<a href="Option.md#0x1_Option_is_some">Option::is_some</a>&lt;u64&gt;(&index)) {

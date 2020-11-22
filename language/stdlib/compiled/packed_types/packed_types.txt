@@ -958,6 +958,15 @@
     }
   ],
   [
+    "01f4456fd5aed67352ea22edc62b077950ef92ae6e4e73408c188ada5fee577d6f",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "Payment",
+      "type_params": []
+    }
+  ],
+  [
     "01f6e6015dfdc87abb890b5e2eec18bda87af6c3a12ac8372c65b232ec94a68675",
     {
       "address": "00000000000000000000000000000001",
