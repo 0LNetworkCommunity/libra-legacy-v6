@@ -110,6 +110,15 @@
     }
   ],
   [
+    "011d1d5ec73e13f79f12ac414ad27470a4b394c90d74cb4ba22cd7e8dd4d95d847",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "AccountList",
+      "type_params": []
+    }
+  ],
+  [
     "011d57af3a45c686035178347e1b50849f0c2bad90b2baa2ead36bd208450ed175",
     {
       "address": "00000000000000000000000000000001",
@@ -178,6 +187,15 @@
       "address": "00000000000000000000000000000001",
       "module": "RegisteredCurrencies",
       "name": "RegisteredCurrencies",
+      "type_params": []
+    }
+  ],
+  [
+    "0123a33f97b62598672822dd2e803bba833f292ed52adabdc884c7c0c8bc346219",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Reconfigure",
+      "name": "Timer",
       "type_params": []
     }
   ],
@@ -774,6 +792,15 @@
       "address": "00000000000000000000000000000001",
       "module": "LibraBlock",
       "name": "BlockMetadata",
+      "type_params": []
+    }
+  ],
+  [
+    "01ca7f44542941b825f782e14fac9c5cfaad5eabac7b371590077dcce00df0e25a",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "Data",
       "type_params": []
     }
   ],
