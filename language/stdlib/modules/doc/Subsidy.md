@@ -25,6 +25,7 @@
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
 <b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
+<b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -336,17 +337,19 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">init_fullnode_sub</a>(vm: &signer) {
-  <b>let</b> genesis_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
+  <b>let</b> genesis_validators = <a href="LibraSystem.md#0x1_LibraSystem_get_val_set_addr">LibraSystem::get_val_set_addr</a>();
   <b>let</b> validator_count = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
+  <b>if</b> (validator_count &lt; 10) validator_count = 10;
   // baseline_cap: baseline units per epoch times the mininmum <b>as</b> used in tx, times minimum gas per unit.
-  <b>let</b> baseline_cap = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>() * 175 * 1;
+  <b>let</b> baseline_tx_cost = 1165 * 1;
+  <b>let</b> baseline_cap = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>() * baseline_tx_cost * validator_count;
 
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
   <b>assert</b>(!<b>exists</b>&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)), 130112011021);
   move_to&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(vm, <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>{
     previous_epoch_proofs: 0u64,
-    current_proof_price: baseline_cap/validator_count,
-    current_cap: baseline_cap, // baseline units per epoch times the mininmum <b>as</b> used in tx, times minimum gas per unit.
+    current_proof_price: baseline_tx_cost * 24 * 8, // number of proof submisisons in 1st epoch.
+    current_cap: baseline_cap,
     current_gas_distributed: 0u64,
     current_proofs_verified: 0u64
   });

@@ -1397,14 +1397,14 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_val_set_addr">get_val_set_addr</a>(): vector&lt;address&gt; {
-<b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
-<b>let</b> nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
-<b>let</b> i = 0;
-<b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
-   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> nodes, <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr);
-   i = i + 1;
-};
-nodes
+    <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
+    <b>let</b> nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
+        <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> nodes, <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr);
+        i = i + 1;
+    };
+    nodes
 }
 </code></pre>
 
