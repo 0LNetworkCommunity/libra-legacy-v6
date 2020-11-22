@@ -223,7 +223,7 @@ address 0x1 {
       let validator_count = Vector::length(&genesis_validators);
       if (validator_count < 10) validator_count = 10;
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
-      let baseline_tx_cost = 1165 * 1;
+      let baseline_tx_cost = 1173 * 1;
       let baseline_cap = baseline_auction_units() * baseline_tx_cost * validator_count;
 
       Roles::assert_libra_root(vm);
