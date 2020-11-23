@@ -13,6 +13,7 @@ address 0x1 {
     use 0x1::Libra;
     use 0x1::Signer;
     use 0x1::LibraAccount;
+    use 0x1::LibraSystem;
     use 0x1::Vector;
     use 0x1::FixedPoint32::{Self, FixedPoint32};    
     use 0x1::Stats;
@@ -20,6 +21,7 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::LibraTimestamp;
     use 0x1::TransactionFee;
+    use 0x1::Roles;
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -106,51 +108,73 @@ address 0x1 {
       subsidy_units
     }
 
-    // Function code: 06 Prefix: 190106
-    public fun genesis(vm_sig: &signer) {
+    // // Function code: 06 Prefix: 190106
+    // public fun genesis(vm_sig: &signer) {
+    //   //Need to check for association or vm account
+    //   let vm_addr = Signer::address_of(vm_sig);
+    //   assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101044010);
+
+    //   // Get eligible validators list
+    //   let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
+
+    //   let len = Vector::length(&genesis_validators);
+    //   // Calculate subsidy equally for all the validators based on subsidy curve
+    //   // Calculate the split for subsidy and burn
+    //   // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
+    //   let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
+    //   let network_density = Stats::network_density(vm_sig, 0, 0);
+    //   let max_node_count = Globals::get_max_node_density();
+    //   let subsidy_units = subsidy_curve(
+    //     subsidy_ceiling_gas,
+    //     network_density,
+    //     max_node_count,
+    //   );
+    //   // Distribute gas coins to initial validators
+    //   let subsidy_granted = subsidy_units / len;
+
+    //   let i = 0;
+    //   while (i < len) {
+    //     let node_address = *(Vector::borrow<address>(&genesis_validators, i));
+
+    //     let old_validator_bal = LibraAccount::balance<GAS>(node_address);
+    //     //Transfer gas from association to validator
+    //     let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
+    //     LibraAccount::vm_deposit_with_metadata<GAS>(
+    //       vm_sig,
+    //       node_address,
+    //       minted_coins,
+    //       x"", x""
+    //     );
+
+    //     //Confirm the calculations, and that the ending balance is incremented accordingly.
+    //     assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+    //     i = i + 1;
+    //   };
+
+    //   // assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
+
+    // }
+
+        // Function code: 06 Prefix: 190106
+    public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
       //Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
       assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101044010);
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
-
       let len = Vector::length(&genesis_validators);
-      // Calculate subsidy equally for all the validators based on subsidy curve
-      // Calculate the split for subsidy and burn
-      // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
-      let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-      let network_density = Stats::network_density(vm_sig, 0, 0);
-      let max_node_count = Globals::get_max_node_density();
-      let subsidy_units = subsidy_curve(
-        subsidy_ceiling_gas,
-        network_density,
-        max_node_count,
-      );
-      // Distribute gas coins to initial validators
-      let subsidy_granted = subsidy_units / len;
 
       let i = 0;
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
-
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
-        //Transfer gas from association to validator
-        let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
-        LibraAccount::vm_deposit_with_metadata<GAS>(
-          vm_sig,
-          node_address,
-          minted_coins,
-          x"", x""
-        );
 
+        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
         i = i + 1;
       };
-
-      // assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
-
     }
     
     public fun process_fees(vm: &signer, outgoing_set: &vector<address>, fee_ratio: &vector<FixedPoint32>,) {
@@ -182,6 +206,98 @@ address 0x1 {
         i = i + 1;
       };
       LibraAccount::restore_withdraw_capability(capability_token);
+    }
+
+    //////// FULLNODE /////////
+
+    resource struct FullnodeSubsidy {
+        previous_epoch_proofs: u64,
+        current_proof_price: u64,
+        current_cap: u64,
+        current_gas_distributed: u64,
+        current_proofs_verified: u64
+    }
+
+    public fun init_fullnode_sub(vm: &signer) {
+      let genesis_validators = LibraSystem::get_val_set_addr();
+      let validator_count = Vector::length(&genesis_validators);
+      if (validator_count < 10) validator_count = 10;
+      // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
+      let baseline_tx_cost = 1173 * 1;
+      let baseline_cap = baseline_auction_units() * baseline_tx_cost * validator_count;
+
+      Roles::assert_libra_root(vm);
+      assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
+      move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
+        previous_epoch_proofs: 0u64,
+        current_proof_price: baseline_tx_cost * 24 * 8, // number of proof submisisons in 1st epoch.
+        current_cap: baseline_cap,
+        current_gas_distributed: 0u64,
+        current_proofs_verified: 0u64
+      });
+    }
+
+    public fun distribute_fullnode_subsidy(vm: &signer, miner: address):u64 acquires FullnodeSubsidy{
+      Roles::assert_libra_root(vm);
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+      let subsidy = state.current_proof_price;
+      // abort if ceiling was met
+      if (state.current_gas_distributed + state.current_proof_price > state.current_cap) return 0;
+
+      let minted_coins = Libra::mint<GAS>(vm, subsidy);
+
+      LibraAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        miner,
+        minted_coins,
+        x"", x""
+      );
+      state.current_gas_distributed = state.current_gas_distributed + subsidy;
+      subsidy
+    }
+
+    public fun fullnode_reconfig(vm: &signer) acquires FullnodeSubsidy {
+      Roles::assert_libra_root(vm);
+
+      auctioneer(vm);
+
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+       // save 
+      state.previous_epoch_proofs = state.current_proofs_verified;
+      // reset counters
+      state.current_gas_distributed =  0u64;
+      state.current_proofs_verified = 0u64;
+
+    }
+
+    fun baseline_auction_units():u64 {
+      let epoch_length_mins = 24 * 60;
+      let steady_state_nodes = 1000;
+      let target_delay = 10;
+      steady_state_nodes * (epoch_length_mins/target_delay)
+    }
+
+    fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
+      Roles::assert_libra_root(vm);
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+      let baseline_auction_units =  baseline_auction_units(); 
+      let next_cap = fullnode_subsidy_cap(vm);
+      let baseline_proof_price = next_cap / baseline_auction_units;
+      // set new price
+      let current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
+
+      // cannot be more than the baseline for the cap
+      state.current_proof_price = current_auction_multiplier * state.current_proof_price;
+      if (state.current_proof_price > baseline_proof_price) {
+        state.current_proof_price = baseline_proof_price
+      };
+      // set new cap
+      state.current_cap = next_cap;
+    }
+
+    fun fullnode_subsidy_cap(vm: &signer):u64 {
+      //get TX fees from previous epoch.
+      TransactionFee::get_amount_to_distribute(vm)
     }
 
 }

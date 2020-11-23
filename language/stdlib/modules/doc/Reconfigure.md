@@ -9,7 +9,10 @@
 -  [Function `initialize`](#0x1_Reconfigure_initialize)
 -  [Function `epoch_finished`](#0x1_Reconfigure_epoch_finished)
 -  [Function `reset_timer`](#0x1_Reconfigure_reset_timer)
+<<<<<<< HEAD
 -  [Function `get_timer_seconds_start`](#0x1_Reconfigure_get_timer_seconds_start)
+=======
+>>>>>>> OLv4
 -  [Function `reconfigure`](#0x1_Reconfigure_reconfigure)
 
 
@@ -156,6 +159,7 @@
 
 </details>
 
+<<<<<<< HEAD
 <a name="0x1_Reconfigure_get_timer_seconds_start"></a>
 
 ## Function `get_timer_seconds_start`
@@ -183,6 +187,8 @@
 
 </details>
 
+=======
+>>>>>>> OLv4
 <a name="0x1_Reconfigure_reconfigure"></a>
 
 ## Function `reconfigure`
