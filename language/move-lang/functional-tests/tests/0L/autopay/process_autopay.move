@@ -1,4 +1,4 @@
-//! account: shashank, 1000000GAS
+//! account: alice, 1000000GAS
 //! account: bob, 10000GAS
 
 // We test processing of autopay at differnt epochs and balance transfers
@@ -6,7 +6,7 @@
 
 // creating the instruction
 //! new-transaction
-//! sender: shashank
+//! sender: alice
 script {
   use 0x1::AutoPay;
   use 0x1::Signer;
@@ -22,7 +22,6 @@ script {
 }
 // check: EXECUTED
 
-
 // Processing AutoPay to see if payments are done
 //! new-transaction
 //! sender: libraroot
@@ -31,58 +30,17 @@ script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
   fun main(sender: &signer) {
-    let _sha_balance = LibraAccount::balance<GAS>({{shashank}});
-    let _bob_balance = LibraAccount::balance<GAS>({{bob}});
-    // assert(sha_balance==1000000, 1);
+    let alice_balance = LibraAccount::balance<GAS>({{alice}});
+    let bob_balance = LibraAccount::balance<GAS>({{bob}});
+    assert(alice_balance==1000000, 1);
     AutoPay::process_autopay(sender);
     
-    // let sha_balance_later = LibraAccount::balance<GAS>({{shashank}});
-    // assert(sha_balance_later < sha_balance, 2);
+    let alice_balance_after = LibraAccount::balance<GAS>({{alice}});
+    assert(alice_balance_after < alice_balance, 2);
     
-    // let sha_transfered = sha_balance - sha_balance_later ;
-    // let bob_recieved = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
-    // assert(bob_recieved == sha_transfered, 2);
+    let transferred = alice_balance - alice_balance_after;
+    let bob_received = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
+    assert(bob_received == transferred, 2);
     }
 }
 // check: EXECUTED
-
-
-// // Processing AutoPay to see if payments are done
-// //! new-transaction
-// //! sender: libraroot
-// script {
-//   use 0x1::AutoPay;
-//   use 0x1::LibraAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(sender: &signer) {
-//     let sha_balance = LibraAccount::balance<GAS>({{shashank}});
-//     let bob_balance = LibraAccount::balance<GAS>({{bob}});
-//     AutoPay::process_autopay(sender, 2);
-    
-//     let sha_balance_later = LibraAccount::balance<GAS>({{shashank}});
-//     assert(sha_balance_later < sha_balance, 2);
-    
-//     let sha_transfered = sha_balance - sha_balance_later ;
-//     let bob_recieved = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
-//     assert(bob_recieved == sha_transfered, 2);
-//     }
-// }
-// // check: EXECUTED
-
-// // Processing AutoPay to check if the transaction terminates at end_epoch (3rd epoch)
-// //! new-transaction
-// //! sender: libraroot
-// script {
-//   use 0x1::AutoPay;
-//   use 0x1::LibraAccount;
-//   use 0x1::GAS::GAS;
-//   fun main(sender: &signer) {
-//     let sha_balance = LibraAccount::balance<GAS>({{shashank}});
-//     AutoPay::process_autopay(sender, 3);
-    
-//     let sha_balance_later = LibraAccount::balance<GAS>({{shashank}});
-    
-//     assert(sha_balance == sha_balance_later, 2);
-//     }
-// }
-// // check: EXECUTED

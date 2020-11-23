@@ -53,7 +53,7 @@ script {
 //! block-prologue
 //! proposer: alice
 //! block-time: 300000
-//! round: 2
+//! round: 3
 
 //////////////////////////////////////////////
 

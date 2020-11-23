@@ -2,6 +2,12 @@
 
 // Tests the prologue reconfigures based on wall clock
 
+//! block-prologue
+//! proposer: alice
+//! block-time: 1
+//! round: 1
+
+
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 2 seconds ////
 //! block-prologue
@@ -18,8 +24,10 @@
 
 script {
     use 0x1::Reconfigure;
+    use 0x1::LibraTimestamp;
     fun main(){
       // the new epoch has reset the timer.
+      assert(LibraTimestamp::now_seconds() == 2);
       assert(!Reconfigure::epoch_finished(), 735701);
     }
 }
