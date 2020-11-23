@@ -24,8 +24,10 @@ module TrustedAccounts {
       state.follow_operators_trusting_accounts = update_follow;
     }
 
-    public fun get_trusted(account: &signer): (vector<address>, vector<address>) acquires Trusted{
-      let state = borrow_global<Trusted>(Signer::address_of(account));
+
+    //////// PUBLIC GETTERS ////////
+    public fun get_trusted(account: address): (vector<address>, vector<address>) acquires Trusted{
+      let state = borrow_global<Trusted>(account);
       (*&state.my_trusted_accounts, *&state.follow_operators_trusting_accounts)
     }
   }
