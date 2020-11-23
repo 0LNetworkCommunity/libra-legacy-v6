@@ -28,8 +28,8 @@ script {
 ///// Trigger Autopay Tick at 0.5 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 3000001
-//! round: 15
+//! block-time: 60000000
+//! round: 
 
 ///// TEST RECONFIGURATION IS HAPPENING //////
 // check: NewEpochEvent
