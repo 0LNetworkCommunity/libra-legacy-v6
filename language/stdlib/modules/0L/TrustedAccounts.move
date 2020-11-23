@@ -19,6 +19,8 @@ module TrustedAccounts {
     }
 
     public fun update(account: &signer, update_my: vector<address>, update_follow: vector<address>) acquires Trusted{
+      // TODO: Check exists
+      // exists_at(payee)
       let state = borrow_global_mut<Trusted>(Signer::address_of(account));
       state.my_trusted_accounts = update_my;
       state.follow_operators_trusting_accounts = update_follow;
