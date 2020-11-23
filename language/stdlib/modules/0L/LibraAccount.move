@@ -34,6 +34,7 @@ module LibraAccount {
     use 0x1::VDF;
     use 0x1::Globals;
     use 0x1::MinerState;
+    use 0x1::TrustedAccounts;
 
     /// An `address` is a Libra Account iff it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -264,6 +265,7 @@ module LibraAccount {
         );
 
         make_account(new_signer, auth_key_prefix);
+
         MinerState::reset_rate_limit(sender_addr);
         new_account_address
     }
@@ -1068,6 +1070,9 @@ module LibraAccount {
                 sequence_number: 0,
             }
         );
+        //////// 0L ////////
+        TrustedAccounts::initialize(&new_account);
+
         destroy_signer(new_account);
     }
 
