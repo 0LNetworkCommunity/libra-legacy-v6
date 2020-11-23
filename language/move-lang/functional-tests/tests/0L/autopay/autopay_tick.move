@@ -6,7 +6,7 @@
 ///// Trigger Autopay Tick at 0.5 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 2000001
+//! block-time: 31000000
 //! round: 1
 //////////////////////////////////////////////
 
@@ -18,7 +18,7 @@ script {
   use 0x1::AutoPay;
   fun main(vm: &signer) {
     let time = LibraTimestamp::now_seconds();
-    assert(time == 2, 7357001);
+    assert(time == 31, 7357001);
     assert(AutoPay::tick(vm), 7357002);
   }
 }

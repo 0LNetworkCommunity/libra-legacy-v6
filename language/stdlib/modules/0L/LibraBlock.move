@@ -12,6 +12,7 @@ module LibraBlock {
     use 0x1::Reconfigure;
     use 0x1::Stats;
     use 0x1::AutoPay;
+    use 0x1::Debug::print;
 
     resource struct BlockMetadata {
         /// Height of the current block
@@ -85,7 +86,13 @@ module LibraBlock {
         // increment stats
         Stats::process_set_votes(vm, &previous_block_votes);
         Stats::inc_prop(vm, *&proposer);
-        if (AutoPay::tick(vm)) AutoPay::process_autopay(vm);
+
+        print(&0x0000222);
+        if (AutoPay::tick(vm)){
+            print(&0x0000444);
+            AutoPay::process_autopay(vm);
+        };
+
         ///////////////////
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());

@@ -14,7 +14,7 @@ address 0x1{
     use 0x1::CoreAddresses;
     use 0x1::LibraConfig;
     use 0x1::LibraTimestamp;
-    use 0x1::Globals;
+    // use 0x1::Globals;
     use 0x1::Reconfigure;
 
     // List of payments. Each account will own their own copy of this struct
@@ -51,10 +51,10 @@ address 0x1{
     public fun tick(vm: &signer): bool {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
       let timer = LibraTimestamp::now_seconds() - Reconfigure::get_timer_seconds_start(vm);
-      print(&0x222);
+      print(&0x333);
       print(&LibraTimestamp::now_seconds());
       print(&timer);
-      (timer > Globals::get_epoch_length()/2)
+      return (timer > 1)
     }
     // Initialize the entire autopay module by creating an empty AccountList object
     // Called in Genesis
@@ -73,6 +73,8 @@ address 0x1{
     public fun process_autopay(
       vm: &signer,
     ) acquires AccountList, Data {
+      print(&0x555);
+
       // Only account 0x0 should be triggering this autopayment each block
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101064010);
 
