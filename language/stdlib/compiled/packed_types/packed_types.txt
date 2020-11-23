@@ -182,6 +182,15 @@
     }
   ],
   [
+    "0123a33f97b62598672822dd2e803bba833f292ed52adabdc884c7c0c8bc346219",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Reconfigure",
+      "name": "Timer",
+      "type_params": []
+    }
+  ],
+  [
     "0125f9de45a06fbafa9cadfd8f442e44a935c085e6b79478b53fc08bc98a0c2d78",
     {
       "address": "00000000000000000000000000000001",
@@ -792,6 +801,15 @@
       "address": "00000000000000000000000000000001",
       "module": "DualAttestation",
       "name": "Limit",
+      "type_params": []
+    }
+  ],
+  [
+    "01ce7d05c22100acef408c68da277fb1e190474aaf52474e4a74db8bbd03bc3688",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Subsidy",
+      "name": "FullnodeSubsidy",
       "type_params": []
     }
   ],

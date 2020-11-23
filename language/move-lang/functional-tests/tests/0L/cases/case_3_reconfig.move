@@ -130,10 +130,11 @@ script {
     // This is the the epoch boundary.
     fun main(vm: &signer) {
         let voters = Vector::empty<address>();
-        // Case 3 skip Carol, did not validate.
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
-        // Vector::push_back<address>(&mut voters, {{carol}});
+
+        // Case 3 SKIP CAROL, did not validate.
+
         Vector::push_back<address>(&mut voters, {{dave}});
         Vector::push_back<address>(&mut voters, {{eve}});
         Vector::push_back<address>(&mut voters, {{frank}});

@@ -1301,7 +1301,7 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer): (vector&lt;address&gt;, vector&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;address&gt;, vector&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;)
 </code></pre>
 
 
@@ -1310,14 +1310,14 @@ Private function checks for membership of <code>addr</code> in validator set.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer): (vector&lt;address&gt;, vector&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;) {
+<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;address&gt;, vector&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;) {
     <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
     <b>let</b> compliant_nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
     <b>let</b> total_votes = 0;
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
         <b>let</b> addr = <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr;
-        <b>if</b> (<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr) == 1) {
+        <b>if</b> (<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end) == 1) {
             <b>let</b> node_votes = <a href="Stats.md#0x1_Stats_node_current_votes">Stats::node_current_votes</a>(vm, addr);
             <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> compliant_nodes, addr);
             total_votes = total_votes + node_votes;
@@ -1350,7 +1350,7 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">get_jailed_set</a>(vm: &signer): vector&lt;address&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">get_jailed_set</a>(vm: &signer, height_start: u64, height_end: u64): vector&lt;address&gt;
 </code></pre>
 
 
@@ -1359,7 +1359,7 @@ Private function checks for membership of <code>addr</code> in validator set.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">get_jailed_set</a>(vm: &signer): vector&lt;address&gt; {
+<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">get_jailed_set</a>(vm: &signer, height_start: u64, height_end: u64): vector&lt;address&gt; {
   <b>let</b> validator_set = <a href="LibraSystem.md#0x1_LibraSystem_get_val_set_addr">get_val_set_addr</a>();
   <b>let</b> jailed_set = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
   <b>let</b> k = 0;
@@ -1367,7 +1367,8 @@ Private function checks for membership of <code>addr</code> in validator set.
     <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&validator_set, k);
 
     // consensus case 1 and 2, allow inclusion into the next validator set.
-    <b>if</b> (<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr) == 3 || <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr) == 4){
+    <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end);
+    <b>if</b> (case == 3 || case == 4){
       <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> jailed_set, addr)
     };
     k = k + 1;
@@ -1396,14 +1397,14 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_val_set_addr">get_val_set_addr</a>(): vector&lt;address&gt; {
-<b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
-<b>let</b> nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
-<b>let</b> i = 0;
-<b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
-   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> nodes, <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr);
-   i = i + 1;
-};
-nodes
+    <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
+    <b>let</b> nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
+        <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> nodes, <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr);
+        i = i + 1;
+    };
+    nodes
 }
 </code></pre>
 
