@@ -138,6 +138,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 -  [`0x1::TestFixtures`](TestFixtures.md#0x1_TestFixtures)
 -  [`0x1::Testnet`](Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](TransactionFee.md#0x1_TransactionFee)
+-  [`0x1::TrustedAccounts`](TrustedAccounts.md#0x1_TrustedAccounts)
 -  [`0x1::Upgrade`](Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](VASP.md#0x1_VASP)
 -  [`0x1::VDF`](VDF.md#0x1_VDF)
