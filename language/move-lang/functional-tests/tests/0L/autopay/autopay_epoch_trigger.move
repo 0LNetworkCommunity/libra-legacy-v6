@@ -47,15 +47,6 @@ script {
 //! round: 22
 ///////////////////////////////////////////////////
 
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 2 secs           ////
-/// i.e. 1 second after 1/2 epoch (of 2 secs) /////
-//! block-prologue
-//! proposer: alice
-//! block-time: 45000000
-//! round: 33
-///////////////////////////////////////////////////
-
 //! new-transaction
 //! sender: libraroot
 script {
@@ -63,11 +54,13 @@ script {
   use 0x1::AutoPay;
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
+  use 0x1::Debug::print;
   fun main(vm: &signer) {
     let time = LibraTimestamp::now_seconds();
-    assert(time == 45, 7357001);
+    assert(time == 31, 7357001);
     assert(AutoPay::tick(vm), 7357002);
     let ending_balance = LibraAccount::balance<GAS>({{alice}});
+    print(&ending_balance);
     assert(ending_balance < 1000000, 7357003);
     assert(ending_balance == 950001, 7357004);
 
