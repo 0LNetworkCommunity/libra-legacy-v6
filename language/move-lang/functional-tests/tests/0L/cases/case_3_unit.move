@@ -28,8 +28,8 @@ script {
         // MinerState::test_helper_set_epochs(sender, 5);
         let voters = Vector::singleton<address>({{alice}});
         let i = 1;
-        while (i < 9) {
-            // Mock the validator doing work for < 2/3 blocks, and stats being updated.
+        while (i < 4) {
+            // Mock the validator signing for < 1/3 blocks, and stats being updated.
             Stats::process_set_votes(sender, &voters);
             i = i + 1;
         };
