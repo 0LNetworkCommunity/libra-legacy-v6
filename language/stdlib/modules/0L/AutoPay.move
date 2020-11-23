@@ -15,6 +15,7 @@ address 0x1{
     use 0x1::LibraConfig;
     use 0x1::LibraTimestamp;
     use 0x1::Epoch;
+    use 0x1::Globals;
 
     resource struct Tick {
       triggered: bool,
@@ -65,7 +66,8 @@ address 0x1{
         print(&0x333);
         print(&LibraTimestamp::now_seconds());
         print(&timer);
-        if (timer > 1) {
+        let tick_interval = Globals::get_epoch_length();
+        if (timer > tick_interval/2) {
           tick_state.triggered = true;
           return true
         }
