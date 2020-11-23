@@ -30,6 +30,7 @@ when executing from a fresh state.
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="Reconfigure.md#0x1_Reconfigure">0x1::Reconfigure</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
+<b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 </code></pre>
@@ -117,12 +118,7 @@ Initializes the Libra framework.
     /////// 0L /////////
     <a href="Stats.md#0x1_Stats_initialize">Stats::initialize</a>(lr_account);
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(lr_account);
-    // Subsidy::initialize(lr_account);
-    // <a href="GAS.md#0x1_GAS_initialize">GAS::initialize</a>(
-    //     lr_account,
-    //     lr_account,
-    // );
-
+    <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">Subsidy::init_fullnode_sub</a>(lr_account);
     // After we have called this function, all invariants which are guarded by
     // `<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_operating">LibraTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.
     // See also discussion at function specification.

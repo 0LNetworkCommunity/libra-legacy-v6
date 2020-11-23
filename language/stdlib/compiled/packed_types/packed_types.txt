@@ -805,6 +805,15 @@
     }
   ],
   [
+    "01ce7d05c22100acef408c68da277fb1e190474aaf52474e4a74db8bbd03bc3688",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Subsidy",
+      "name": "FullnodeSubsidy",
+      "type_params": []
+    }
+  ],
+  [
     "01d3eafb5278af3630a1f5580236ea7fef6090bcf190e21e62d5ac220bf4e67628",
     {
       "address": "00000000000000000000000000000001",
