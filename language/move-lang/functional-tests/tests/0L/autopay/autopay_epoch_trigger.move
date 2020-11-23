@@ -36,25 +36,13 @@ script {
 }
 // check: EXECUTED
 
-///////////////////////////////////////////////
-///// Trigger Autopay Tick at 0.5 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 100000
-//! round: 1
-
-///// Trigger Autopay Tick at 0.5 seconds ////
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 2 secs           ////
+/// i.e. 1 second after 1/2 epoch (of 2 secs) /////
 //! block-prologue
 //! proposer: alice
 //! block-time: 200000
-//! round: 2
-
-///// Trigger Autopay Tick at 0.5 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 300000
-//! round: 3
-
+//! round: 1
 //////////////////////////////////////////////
 
 
@@ -62,29 +50,31 @@ script {
 //! sender: libraroot
 script {
   use 0x1::LibraTimestamp;
-  use 0x1::Debug::print;
-  fun main() {
+  use 0x1::AutoPay;
+  fun main(vm: &signer) {
     let time = LibraTimestamp::now_seconds();
-    print(&time);
+    assert(time == 2, 7357001);
+    assert(AutoPay::tick(vm), 7357002);
   }
 }
+// check: EXECUTED
 
-// // Processing AutoPay to see if payments are done
-// //! new-transaction
-// //! sender: libraroot
-// script {
-//   use 0x1::LibraAccount;
-//   use 0x1::GAS::GAS;
-//   fun main() {
-//     let starting_balance = 1000000; 
+// Processing AutoPay to see if payments are done
+//! new-transaction
+//! sender: libraroot
+script {
+  use 0x1::LibraAccount;
+  use 0x1::GAS::GAS;
+  fun main() {
+    let starting_balance = 1000000; 
     
-//     // check GAS was withdrawn
-//     let ending_balance = LibraAccount::balance<GAS>({{alice}});
-//     assert(ending_balance < starting_balance, 416854);
+    // check GAS was withdrawn from Alice
+    let ending_balance = LibraAccount::balance<GAS>({{alice}});
+    assert(ending_balance < starting_balance, 416854);
     
-//     // let sha_transfered = sha_balance - sha_balance_later ;
-//     // let bob_recieved = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
-//     // assert(bob_recieved == sha_transfered, 416855);
-//     }
-// }
-// // check: EXECUTED
+    // let sha_transfered = sha_balance - sha_balance_later ;
+    // let bob_recieved = LibraAccount::balance<GAS>({{bob}}) - bob_balance;
+    // assert(bob_recieved == sha_transfered, 416855);
+    }
+}
+// check: EXECUTED
