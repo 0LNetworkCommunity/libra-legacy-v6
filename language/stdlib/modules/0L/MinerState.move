@@ -15,7 +15,7 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
-    // use 0x1::LibraTimestamp;
+
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -141,7 +141,7 @@ address 0x1 {
         assert(&proof.difficulty == &difficulty_constant, 130103021010);
       };
       
-      verify_and_update_state(miner_addr,proof, true);
+      verify_and_update_state(miner_addr, proof, true);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -165,7 +165,7 @@ address 0x1 {
       assert(valid, 130108041021);
 
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
-
+      
       // Increment the verified_tower_height
       if (steady_state) {
         miner_history.verified_tower_height = miner_history.verified_tower_height + 1;
@@ -190,10 +190,12 @@ address 0x1 {
       // Miner may not have been initialized. Simply return in this case (don't abort)
       if( !exists<MinerProofHistory>(miner_addr) ) { return };
 
+
       // Check that there was mining and validating in period.
       // Account may not have any proofs submitted in epoch, since the resource was last emptied.
       let passed = node_above_thresh(account, miner_addr);
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
+      
       // Update statistics.
       if (passed) {
           let this_epoch = LibraConfig::get_current_epoch();

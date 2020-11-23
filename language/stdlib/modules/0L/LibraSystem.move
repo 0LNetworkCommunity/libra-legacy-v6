@@ -719,7 +719,7 @@ module LibraSystem {
       jailed_set
     }
 
-         public fun get_val_set_addr(): vector<address> {
+    public fun get_val_set_addr(): vector<address> {
         let validators = &get_libra_system_config().validators;
         let nodes = Vector::empty<address>();
         let i = 0;

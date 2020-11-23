@@ -258,7 +258,7 @@
 
    <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
    //doubly check this is in test env.
-   <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 15, 130102024010);
+   <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 1, 130102024010);
 
    move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
      previous_proof_hash: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
@@ -320,7 +320,7 @@
     <b>assert</b>(&proof.difficulty == &difficulty_constant, 130103021010);
   };
 
-  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr,proof, <b>true</b>);
+  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 }
 </code></pre>
 
@@ -404,10 +404,12 @@
   // Miner may not have been initialized. Simply <b>return</b> in this case (don't <b>abort</b>)
   <b>if</b>( !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr) ) { <b>return</b> };
 
+
   // Check that there was mining and validating in period.
   // Account may not have any proofs submitted in epoch, since the <b>resource</b> was last emptied.
   <b>let</b> passed = <a href="MinerState.md#0x1_MinerState_node_above_thresh">node_above_thresh</a>(account, miner_addr);
   <b>let</b> miner_history = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
+
   // Update statistics.
   <b>if</b> (passed) {
       <b>let</b> this_epoch = <a href="LibraConfig.md#0x1_LibraConfig_get_current_epoch">LibraConfig::get_current_epoch</a>();

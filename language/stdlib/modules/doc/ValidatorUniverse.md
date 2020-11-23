@@ -14,13 +14,10 @@
 -  [Function `proof_of_weight`](#0x1_ValidatorUniverse_proof_of_weight)
 -  [Function `get_validator_index_`](#0x1_ValidatorUniverse_get_validator_index_)
 -  [Function `get_validator`](#0x1_ValidatorUniverse_get_validator)
--  [Function `check_if_active_validator`](#0x1_ValidatorUniverse_check_if_active_validator)
 -  [Function `get_validator_weight`](#0x1_ValidatorUniverse_get_validator_weight)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
-<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -177,12 +174,10 @@
   <b>let</b> i = 0;
   <b>let</b> validator_list = &collection.validators;
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_ValidatorEpochInfo">ValidatorEpochInfo</a>&gt;(validator_list);
-  // <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&len);
   <b>while</b> (i &lt; len) {
       <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> eligible_validators, <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_ValidatorEpochInfo">ValidatorEpochInfo</a>&gt;(validator_list, i).validator_address);
       i = i + 1;
   };
-  // <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&len);
   eligible_validators
 }
 </code></pre>
@@ -338,67 +333,6 @@
     validator_address: {{<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()}},
     weight: 0
   }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_ValidatorUniverse_check_if_active_validator"></a>
-
-## Function `check_if_active_validator`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_check_if_active_validator">check_if_active_validator</a>(_addr: address, epoch_length: u64, current_block_height: u64): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_check_if_active_validator">check_if_active_validator</a>(_addr: address, epoch_length: u64, current_block_height: u64): bool {
-  // Calculate the window in which we are evaluating the performance of validators.
-  // start and effective end block height for the current epoch
-  // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed <b>to</b> all nodes at the end of the boundary.
-  <b>let</b> start_block_height = 1;
-  <b>if</b> (current_block_height &gt; <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>()) {
-    start_block_height = current_block_height - epoch_length;
-  };
-
-  // <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&0x2201070151200001);
-
-
-  <b>let</b> adjusted_end_block_height = current_block_height - <a href="Globals.md#0x1_Globals_get_epoch_boundary_buffer">Globals::get_epoch_boundary_buffer</a>();
-
-  // <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&0x2201070151200002);
-
-
-  <b>let</b> blocks_in_window = adjusted_end_block_height - start_block_height;
-
-  // <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&0x2201070151200003);
-
-  // The current block_height needs <b>to</b> be at least the length of one (the first) epoch.
-  // <b>assert</b>(current_block_height &gt;= blocks_in_window, 220107015120);
-
-  // Calculating liveness threshold which is signing 66% of the blocks in epoch.
-  // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip <b>to</b> next block.
-
-  <b>let</b> threshold_signing = <a href="FixedPoint32.md#0x1_FixedPoint32_divide_u64">FixedPoint32::divide_u64</a>(66, <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(100, 1)) * blocks_in_window;
-  // <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&0x2201070151200004);
-
-  ////////  TODO: REMOVED IN MERGE PROCESS ///////
-  <b>let</b> block_signed_by_validator = 0; // Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
-  // <a href="Debug.md#0x1_Debug_print">Debug::print</a>(&0x2201070151200005);
-
-  <b>if</b> (block_signed_by_validator &lt; threshold_signing) {
-      <b>return</b> <b>false</b>
-  };
-
-  <b>true</b>
 }
 </code></pre>
 
