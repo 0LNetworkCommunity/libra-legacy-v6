@@ -39,8 +39,8 @@ script {
 // check: EXECUTED
 
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 2 secs           ////
-/// i.e. 1 second after 1/2 epoch (of 2 secs) /////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
 //! block-prologue
 //! proposer: alice
 //! block-time: 31000000

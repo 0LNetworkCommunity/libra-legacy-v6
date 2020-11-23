@@ -72,3 +72,49 @@ script {
   }
 }
 // check: EXECUTED
+
+
+///////////////////////////////////////////////
+///// Trigger Autopay Tick at 0.5 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 75000000
+//! round: 40
+//////////////////////////////////////////////
+
+
+//! new-transaction
+//! sender: libraroot
+script {
+  use 0x1::LibraTimestamp;
+  use 0x1::AutoPay;
+  fun main(vm: &signer) {
+    let time = LibraTimestamp::now_seconds();
+    assert(time == 75, 7357008);
+    assert(!AutoPay::tick(vm), 7357009);
+  }
+}
+// check: EXECUTED
+
+
+///////////////////////////////////////////////
+///// Trigger Autopay Tick at 0.5 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 92000000
+//! round: 50
+//////////////////////////////////////////////
+
+
+//! new-transaction
+//! sender: libraroot
+script {
+  use 0x1::LibraTimestamp;
+  use 0x1::AutoPay;
+  fun main(vm: &signer) {
+    let time = LibraTimestamp::now_seconds();
+    assert(time == 92, 7357010);
+    assert(AutoPay::tick(vm), 7357011);
+  }
+}
+// check: EXECUTED
