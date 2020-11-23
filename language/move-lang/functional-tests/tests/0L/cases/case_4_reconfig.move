@@ -130,8 +130,7 @@ script {
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
-        // SKIP DAVE
-        // Vector::push_back<address>(&mut voters, {{dave}});
+        // Case 4 SKIP DAVE, did not validate
         Vector::push_back<address>(&mut voters, {{eve}});
         Vector::push_back<address>(&mut voters, {{frank}});
 
