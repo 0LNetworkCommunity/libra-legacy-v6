@@ -9,14 +9,16 @@ address 0x1{
     use 0x1::Option::{Self,Option};
     use 0x1::Signer;
     use 0x1::LibraAccount;
-    use 0x1::GAS::{GAS};
+    use 0x1::GAS::GAS;
     use 0x1::FixedPoint32;
     use 0x1::CoreAddresses;
     use 0x1::LibraConfig;
     use 0x1::LibraTimestamp;
-    // use 0x1::Globals;
-    use 0x1::Reconfigure;
+    use 0x1::Epoch;
 
+    resource struct Tick {
+      triggered: bool,
+    }
     // List of payments. Each account will own their own copy of this struct
     resource struct Data {
       payments: vector<Payment>,
@@ -26,7 +28,7 @@ address 0x1{
     // It keeps track of all accounts that have autopay enabled and updates the 
     // list as accounts change their Status structs
 
-    // It also keeps track of the current epoch fo efficiency (to prevent repeated
+    // It also keeps track of the current epoch for efficiency (to prevent repeated
     // queries to LibraBlock)
     resource struct AccountList {
       accounts: vector<address>,
@@ -48,13 +50,32 @@ address 0x1{
     // Public functions only OxO //
     //////////////////////////////
     use 0x1::Debug::print;
-    public fun tick(vm: &signer): bool {
+    // public fun init_tick(vm: &signer) {
+    //   assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
+    //   move_to<Tick>(vm, Tick {triggered: false})
+    // }
+    public fun tick(vm: &signer): bool acquires Tick {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
-      let timer = LibraTimestamp::now_seconds() - Reconfigure::get_timer_seconds_start(vm);
-      print(&0x333);
-      print(&LibraTimestamp::now_seconds());
-      print(&timer);
-      return (timer > 1)
+      assert(exists<Tick>(CoreAddresses::LIBRA_ROOT_ADDRESS()), 0101024010);
+      
+      let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
+
+      if (!tick_state.triggered) {
+        let timer = LibraTimestamp::now_seconds() - Epoch::get_timer_seconds_start(vm);
+        print(&0x333);
+        print(&LibraTimestamp::now_seconds());
+        print(&timer);
+        if (timer > 1) {
+          tick_state.triggered = true;
+          return true
+        }
+      };
+      false
+    }
+
+    public fun reconfig_reset_tick(vm: &signer) acquires Tick{
+      let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
+      tick_state.triggered = false;
     }
     // Initialize the entire autopay module by creating an empty AccountList object
     // Called in Genesis
@@ -62,6 +83,7 @@ address 0x1{
     public fun initialize(sender: &signer) {
       assert(Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
       move_to<AccountList>(sender, AccountList { accounts: Vector::empty<address>(), current_epoch: 0, });
+      move_to<Tick>(sender, Tick {triggered: false})
     }
 
     // This is the main function for this module. It is called once every epoch
