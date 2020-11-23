@@ -34,7 +34,7 @@ script {
     let _sha_balance = LibraAccount::balance<GAS>({{shashank}});
     let _bob_balance = LibraAccount::balance<GAS>({{bob}});
     // assert(sha_balance==1000000, 1);
-    AutoPay::process_autopay(sender, 1);
+    AutoPay::process_autopay(sender);
     
     // let sha_balance_later = LibraAccount::balance<GAS>({{shashank}});
     // assert(sha_balance_later < sha_balance, 2);
