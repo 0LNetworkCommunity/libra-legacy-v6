@@ -43,7 +43,7 @@ script {
 
     let (test, _ ) = TrustedAccounts::get_trusted(parsed_address);
     let len = Vector::length<address>(&test);
-    assert(len == 0, 7357130101051000)
+    assert(len == 0, 7357130101051000);
   }
 }
 //check: EXECUTED

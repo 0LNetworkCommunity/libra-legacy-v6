@@ -27,6 +27,7 @@ module TrustedAccounts {
 
     //////// PUBLIC GETTERS ////////
     public fun get_trusted(account: address): (vector<address>, vector<address>) acquires Trusted{
+      assert(exists<Trusted>(account), 220101011000);
       let state = borrow_global<Trusted>(account);
       (*&state.my_trusted_accounts, *&state.follow_operators_trusting_accounts)
     }
