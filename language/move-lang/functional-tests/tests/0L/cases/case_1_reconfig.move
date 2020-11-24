@@ -32,7 +32,7 @@ script {
         assert(LibraSystem::is_validator({{eve}}) == true, 7357300101031000);
 
         assert(MinerState::test_helper_get_count({{alice}}) == 1, 7357300101041000);
-        assert(LibraAccount::balance<GAS>({{alice}}) == 1, 7357300101051000);
+        assert(LibraAccount::balance<GAS>({{alice}}) == 1000000, 7357300101051000);
         assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357300101051000);
 
         // Alice continues to mine after genesis.
@@ -109,7 +109,7 @@ script {
         // Check the validator set is at expected size
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
-        assert(LibraAccount::balance<GAS>({{alice}}) == 296, 7357000180112);  
+        assert(LibraAccount::balance<GAS>({{alice}}) == 296000000, 7357000180112);  
         assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180113);  
     }
 }

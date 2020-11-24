@@ -740,6 +740,15 @@
     }
   ],
   [
+    "01bac7708c12e42c61b6c9c8eb1a894a8ddf799e8093a0a94353bab042d57530e8",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "TrustedAccounts",
+      "name": "Trusted",
+      "type_params": []
+    }
+  ],
+  [
     "01bd2815ee2bf508840a11724140ed989e38a7cfcc4fd4acbb07c12a378adff8f5",
     {
       "address": "00000000000000000000000000000001",
