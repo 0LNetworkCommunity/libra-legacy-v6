@@ -258,7 +258,7 @@
 
    <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
    //doubly check this is in test env.
-   <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 1, 130102024010);
+   <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 60, 130102024010);
 
    move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_sig, <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>{
      previous_proof_hash: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),

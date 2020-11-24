@@ -17,8 +17,6 @@ module Globals {
       // For validator set.
       epoch_length: u64,
       max_validator_per_epoch: u64,
-      epoch_boundary_buffer: u64,
-      // For subsidy calcs.
       subsidy_ceiling_gas: u64,
       min_node_density: u64,
       max_node_density: u64,
@@ -96,10 +94,6 @@ module Globals {
        get_constants().subsidy_ceiling_gas
     }
 
-    public fun get_epoch_boundary_buffer(): u64 {
-      get_constants().epoch_boundary_buffer
-    }
-
     // Get max validator per epoch
     public fun get_max_node_density(): u64 {
        get_constants().max_node_density
@@ -123,9 +117,8 @@ module Globals {
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
       if (Testnet::is_testnet()) {
         return GlobalConstants {
-          epoch_length: 1,
+          epoch_length: 60, // seconds
           max_validator_per_epoch: 10,
-          epoch_boundary_buffer: 5,
           subsidy_ceiling_gas: 296,
           min_node_density: 4,
           max_node_density: 300,
@@ -139,7 +132,6 @@ module Globals {
         return GlobalConstants {
           epoch_length: 60,
           max_validator_per_epoch: 300,
-          epoch_boundary_buffer: 100,
           subsidy_ceiling_gas: 8640000 * coin_scale,
           min_node_density: 4,
           max_node_density: 300,
@@ -151,7 +143,6 @@ module Globals {
           return GlobalConstants {
           epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
-          epoch_boundary_buffer: 5000,
           // See LibraVMConfig for gas constants:
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs

@@ -14,8 +14,10 @@ when executing from a fresh state.
 
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
+<b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
@@ -28,7 +30,6 @@ when executing from a fresh state.
 <b>use</b> <a href="LibraVMConfig.md#0x1_LibraVMConfig">0x1::LibraVMConfig</a>;
 <b>use</b> <a href="LibraVersion.md#0x1_LibraVersion">0x1::LibraVersion</a>;
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
-<b>use</b> <a href="Reconfigure.md#0x1_Reconfigure">0x1::Reconfigure</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
@@ -118,12 +119,13 @@ Initializes the Libra framework.
     /////// 0L /////////
     <a href="Stats.md#0x1_Stats_initialize">Stats::initialize</a>(lr_account);
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(lr_account);
+    <a href="AutoPay.md#0x1_AutoPay_initialize">AutoPay::initialize</a>(lr_account);
     <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">Subsidy::init_fullnode_sub</a>(lr_account);
     // After we have called this function, all invariants which are guarded by
     // `<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_operating">LibraTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.
     // See also discussion at function specification.
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_set_time_has_started">LibraTimestamp::set_time_has_started</a>(lr_account);
-    <a href="Reconfigure.md#0x1_Reconfigure_initialize">Reconfigure::initialize</a>(lr_account);
+    <a href="Epoch.md#0x1_Epoch_initialize">Epoch::initialize</a>(lr_account);
     // <a href="Oracle.md#0x1_Oracle">Oracle</a> initialize
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(lr_account);
 }

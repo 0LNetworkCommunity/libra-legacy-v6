@@ -9,7 +9,6 @@
 -  [Function `get_epoch_length`](#0x1_Globals_get_epoch_length)
 -  [Function `get_max_validator_per_epoch`](#0x1_Globals_get_max_validator_per_epoch)
 -  [Function `get_subsidy_ceiling_gas`](#0x1_Globals_get_subsidy_ceiling_gas)
--  [Function `get_epoch_boundary_buffer`](#0x1_Globals_get_epoch_boundary_buffer)
 -  [Function `get_max_node_density`](#0x1_Globals_get_max_node_density)
 -  [Function `get_burn_accounts`](#0x1_Globals_get_burn_accounts)
 -  [Function `get_difficulty`](#0x1_Globals_get_difficulty)
@@ -48,12 +47,6 @@
 </dd>
 <dt>
 <code>max_validator_per_epoch: u64</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>epoch_boundary_buffer: u64</code>
 </dt>
 <dd>
 
@@ -164,30 +157,6 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">get_subsidy_ceiling_gas</a>(): u64 {
    <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().subsidy_ceiling_gas
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Globals_get_epoch_boundary_buffer"></a>
-
-## Function `get_epoch_boundary_buffer`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_epoch_boundary_buffer">get_epoch_boundary_buffer</a>(): u64
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_epoch_boundary_buffer">get_epoch_boundary_buffer</a>(): u64 {
-  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().epoch_boundary_buffer
 }
 </code></pre>
 
@@ -310,9 +279,8 @@
   <b>let</b> coin_scale = 1000000; //<a href="Libra.md#0x1_Libra_scaling_factor">Libra::scaling_factor</a>&lt;GAS::T&gt;();
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
-      epoch_length: 1,
+      epoch_length: 60, // seconds
       max_validator_per_epoch: 10,
-      epoch_boundary_buffer: 5,
       subsidy_ceiling_gas: 296,
       min_node_density: 4,
       max_node_density: 300,
@@ -326,7 +294,6 @@
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60,
       max_validator_per_epoch: 300,
-      epoch_boundary_buffer: 100,
       subsidy_ceiling_gas: 8640000 * coin_scale,
       min_node_density: 4,
       max_node_density: 300,
@@ -338,7 +305,6 @@
       <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
       max_validator_per_epoch: 300, // max expected for BFT limits.
-      epoch_boundary_buffer: 5000,
       // See <a href="LibraVMConfig.md#0x1_LibraVMConfig">LibraVMConfig</a> for gas constants:
       // Target max gas units per transaction 100000000
       // target max block time: 2 secs
