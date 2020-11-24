@@ -35,7 +35,7 @@ script {
             i = i + 1;
         };
 
-        assert(Cases::get_case(sender, {{alice}}) == 2, 7357300103011000);
+        assert(Cases::get_case(sender, {{alice}}, 0 , 15) == 2, 7357300103011000);
     }
 }
 //check: EXECUTED

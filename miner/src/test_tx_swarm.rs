@@ -102,7 +102,7 @@ fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
         url,
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 1_000_000,
+        max_gas_unit_for_tx: 5_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     };

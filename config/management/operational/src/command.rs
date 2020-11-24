@@ -7,8 +7,7 @@ use crate::{
 };
 use libra_crypto::{ed25519::Ed25519PublicKey, x25519};
 use libra_management::{error::Error, execute_command};
-use libra_secure_json_rpc::VMStatusView;
-use libra_types::account_address::AccountAddress;
+use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
 use serde::Serialize;
 use structopt::StructOpt;
 
@@ -32,7 +31,11 @@ pub enum Command {
     #[structopt(about = "Set the waypoint in the validator storage")]
     InsertWaypoint(libra_management::waypoint::InsertWaypoint),
     #[structopt(about = "Prints an account from the validator storage")]
-    PrintAccount(crate::account::PrintAccount),
+    PrintAccount(crate::print::PrintAccount),
+    #[structopt(about = "Prints a public key from the validator storage")]
+    PrintKey(crate::print::PrintKey),
+    #[structopt(about = "Prints a waypoint from the validator storage")]
+    PrintWaypoint(crate::print::PrintWaypoint),
     #[structopt(about = "Remove a validator from ValidatorSet")]
     RemoveValidator(crate::governance::RemoveValidator),
     #[structopt(about = "Rotates the consensus key for a validator")]
@@ -66,6 +69,8 @@ pub enum CommandName {
     ExtractPublicKey,
     InsertWaypoint,
     PrintAccount,
+    PrintKey,
+    PrintWaypoint,
     RemoveValidator,
     RotateConsensusKey,
     RotateOperatorKey,
@@ -90,6 +95,8 @@ impl From<&Command> for CommandName {
             Command::ExtractPublicKey(_) => CommandName::ExtractPublicKey,
             Command::InsertWaypoint(_) => CommandName::InsertWaypoint,
             Command::PrintAccount(_) => CommandName::PrintAccount,
+            Command::PrintKey(_) => CommandName::PrintKey,
+            Command::PrintWaypoint(_) => CommandName::PrintWaypoint,
             Command::RemoveValidator(_) => CommandName::RemoveValidator,
             Command::RotateConsensusKey(_) => CommandName::RotateConsensusKey,
             Command::RotateOperatorKey(_) => CommandName::RotateOperatorKey,
@@ -116,10 +123,12 @@ impl std::fmt::Display for CommandName {
             CommandName::ExtractPublicKey => "extract-public-key",
             CommandName::InsertWaypoint => "insert-waypoint",
             CommandName::PrintAccount => "print-account",
+            CommandName::PrintKey => "print-key",
+            CommandName::PrintWaypoint => "print-waypoint",
             CommandName::RemoveValidator => "remove-validator",
             CommandName::RotateConsensusKey => "rotate-consensus-key",
             CommandName::RotateOperatorKey => "rotate-operator-key",
-            CommandName::RotateFullNodeNetworkKey => "rotate-fullnode-network-key",
+            CommandName::RotateFullNodeNetworkKey => "rotate-full-node-network-key",
             CommandName::RotateValidatorNetworkKey => "rotate-validator-network-key",
             CommandName::SetValidatorConfig => "set-validator-config",
             CommandName::SetValidatorOperator => "set-validator-operator",
@@ -135,47 +144,63 @@ impl Command {
     pub fn execute(self) -> Result<String, Error> {
         match self {
             Command::AccountResource(cmd) => Self::pretty_print(cmd.execute()),
-            Command::AddValidator(cmd) => Self::pretty_print(cmd.execute()),
+            Command::AddValidator(cmd) => Self::print_transaction_context(cmd.execute()),
             Command::CheckEndpoint(cmd) => Self::pretty_print(cmd.execute()),
-            Command::CreateValidator(cmd) => Self::pretty_print(cmd.execute()),
-            Command::CreateValidatorOperator(cmd) => Self::pretty_print(cmd.execute()),
+            Command::CreateValidator(cmd) => {
+                Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
+            }
+            Command::CreateValidatorOperator(cmd) => {
+                Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
+            }
             Command::InsertWaypoint(cmd) => Self::print_success(cmd.execute()),
             Command::ExtractPrivateKey(cmd) => Self::print_success(cmd.execute()),
             Command::ExtractPublicKey(cmd) => Self::print_success(cmd.execute()),
             Command::PrintAccount(cmd) => Self::pretty_print(cmd.execute()),
-            Command::RemoveValidator(cmd) => Self::pretty_print(cmd.execute()),
-            Command::RotateConsensusKey(cmd) => Self::print_transaction_context(cmd.execute()),
-            Command::RotateOperatorKey(cmd) => Self::print_transaction_context(cmd.execute()),
+            Command::PrintKey(cmd) => Self::pretty_print(cmd.execute()),
+            Command::PrintWaypoint(cmd) => Self::pretty_print(cmd.execute()),
+            Command::RemoveValidator(cmd) => Self::print_transaction_context(cmd.execute()),
+            Command::RotateConsensusKey(cmd) => {
+                Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
+            }
+            Command::RotateOperatorKey(cmd) => {
+                Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
+            }
             Command::RotateFullNodeNetworkKey(cmd) => {
-                Self::print_transaction_context(cmd.execute())
+                Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
             }
             Command::RotateValidatorNetworkKey(cmd) => {
-                Self::print_transaction_context(cmd.execute())
+                Self::print_transaction_context(cmd.execute().map(|(txn_ctx, _)| txn_ctx))
             }
-            Command::SetValidatorConfig(cmd) => Self::pretty_print(cmd.execute()),
-            Command::SetValidatorOperator(cmd) => Self::pretty_print(cmd.execute()),
-            Command::ValidateTransaction(cmd) => Self::print_transaction_status(cmd.execute()),
+            Command::SetValidatorConfig(cmd) => Self::print_transaction_context(cmd.execute()),
+            Command::SetValidatorOperator(cmd) => Self::print_transaction_context(cmd.execute()),
+            Command::ValidateTransaction(cmd) => Self::print_transaction_context(cmd.execute()),
             Command::ValidatorConfig(cmd) => Self::pretty_print(cmd.execute()),
             Command::ValidatorSet(cmd) => Self::pretty_print(cmd.execute()),
         }
     }
 
-    /// Show the transaction status in a friendly way
-    fn print_transaction_status(
-        result: Result<Option<VMStatusView>, Error>,
+    /// Show the transaction context and validation result in a friendly way
+    pub fn print_transaction_context(
+        result: Result<TransactionContext, Error>,
     ) -> Result<String, Error> {
-        Self::pretty_print(result.map(|maybe_status| {
-            maybe_status.map_or(String::from("Not yet executed"), |status| {
-                status.to_string()
-            })
-        }))
+        match &result {
+            Ok(txn_ctx) => match &txn_ctx.execution_result {
+                Some(status) => Self::pretty_print(Ok(status.to_string())),
+                None => Self::print_unvalidated_transaction_context(txn_ctx),
+            },
+            Err(_) => Self::pretty_print(result),
+        }
     }
 
-    /// Show the transaction context, dropping the related key
-    fn print_transaction_context<Key>(
-        result: Result<(TransactionContext, Key), Error>,
+    /// Show a transaction context without an execution result
+    fn print_unvalidated_transaction_context(
+        transaction_context: &TransactionContext,
     ) -> Result<String, Error> {
-        Self::pretty_print(result.map(|(transaction, _)| transaction))
+        Self::pretty_print(Ok(UnvalidatedTransactionContext {
+            address: transaction_context.address,
+            sequence_number: transaction_context.sequence_number,
+            execution_result: "Not yet validated.",
+        }))
     }
 
     /// Show success or the error result
@@ -236,6 +261,14 @@ impl Command {
         execute_command!(self, Command::PrintAccount, CommandName::PrintAccount)
     }
 
+    pub fn print_key(self) -> Result<Ed25519PublicKey, Error> {
+        execute_command!(self, Command::PrintKey, CommandName::PrintKey)
+    }
+
+    pub fn print_waypoint(self) -> Result<Waypoint, Error> {
+        execute_command!(self, Command::PrintWaypoint, CommandName::PrintWaypoint)
+    }
+
     pub fn remove_validator(self) -> Result<TransactionContext, Error> {
         execute_command!(self, Command::RemoveValidator, CommandName::RemoveValidator)
     }
@@ -292,7 +325,7 @@ impl Command {
         )
     }
 
-    pub fn validate_transaction(self) -> Result<Option<VMStatusView>, Error> {
+    pub fn validate_transaction(self) -> Result<TransactionContext, Error> {
         execute_command!(
             self,
             Command::ValidateTransaction,
@@ -309,8 +342,17 @@ impl Command {
     }
 }
 
+/// A result wrapper for displaying either a correct execution result or an error.
 #[derive(Serialize)]
 pub enum ResultWrapper<T> {
     Result(T),
     Error(String),
+}
+
+/// A struct wrapper for displaying unvalidated transaction contexts.
+#[derive(Serialize)]
+struct UnvalidatedTransactionContext<'a> {
+    address: AccountAddress,
+    sequence_number: u64,
+    execution_result: &'a str,
 }

@@ -9,9 +9,11 @@ module LibraBlock {
     use 0x1::LibraTimestamp;
 
     //////// 0L ////////
-    use 0x1::Globals;
     use 0x1::Reconfigure;
     use 0x1::Stats;
+    use 0x1::AutoPay;
+    use 0x1::Epoch;
+    use 0x1::Debug::print;
 
     resource struct BlockMetadata {
         /// Height of the current block
@@ -85,6 +87,13 @@ module LibraBlock {
         // increment stats
         Stats::process_set_votes(vm, &previous_block_votes);
         Stats::inc_prop(vm, *&proposer);
+
+        print(&0x0000222);
+        if (AutoPay::tick(vm)){
+            print(&0x0000444);
+            AutoPay::process_autopay(vm);
+        };
+
         ///////////////////
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::LIBRA_ROOT_ADDRESS());
@@ -102,9 +111,9 @@ module LibraBlock {
 
          //////// 0L ////////
         // reconfigure
-        if ((get_current_block_height() % Globals::get_epoch_length()) == 0 ) {
+        if (Epoch::epoch_finished()) {
           // TODO: We don't need to pass block height to ReconfigureOL. It should use the BlockMetadata. But there's a circular reference there when we try.
-          Reconfigure::reconfigure(vm);
+          Reconfigure::reconfigure(vm, get_current_block_height());
         }
     }
     spec fun block_prologue {

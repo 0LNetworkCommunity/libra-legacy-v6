@@ -8,7 +8,7 @@
 script {
     use 0x1::Stats;
     use 0x1::Vector;
-    // use 0x1::Debug::print;
+    
 
     fun main(vm: &signer){
       // Checks that altstats was initialized in genesis for Alice.

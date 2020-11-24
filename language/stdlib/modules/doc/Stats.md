@@ -26,7 +26,6 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
-<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -313,7 +312,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(vm: &signer, node_addr: address): bool
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(vm: &signer, node_addr: address, height_start: u64, height_end: u64): bool
 </code></pre>
 
 
@@ -322,11 +321,11 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(vm: &signer, node_addr: address): bool <b>acquires</b> <a href="Stats.md#0x1_Stats_T">T</a>{
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(vm: &signer, node_addr: address, height_start: u64, height_end: u64): bool <b>acquires</b> <a href="Stats.md#0x1_Stats_T">T</a>{
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 99190206014010);
-  <b>let</b> range = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
-  <b>let</b> threshold_signing = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(range, <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(66, 100));
+  <b>let</b> range = height_end-height_start;
+  <b>let</b> threshold_signing = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(range, <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(33, 100));
   <b>if</b> (<a href="Stats.md#0x1_Stats_node_current_votes">node_current_votes</a>(vm, node_addr) &gt;  threshold_signing) { <b>return</b> <b>true</b> };
   <b>return</b> <b>false</b>
 }
@@ -342,7 +341,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_network_density">network_density</a>(vm: &signer): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_network_density">network_density</a>(vm: &signer, height_start: u64, height_end: u64): u64
 </code></pre>
 
 
@@ -351,7 +350,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_network_density">network_density</a>(vm: &signer): u64 <b>acquires</b> <a href="Stats.md#0x1_Stats_T">T</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_network_density">network_density</a>(vm: &signer, height_start: u64, height_end: u64): u64 <b>acquires</b> <a href="Stats.md#0x1_Stats_T">T</a> {
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 99190206014010);
   <b>let</b> density = 0u64;
@@ -360,7 +359,7 @@
   <b>let</b> k = 0;
   <b>while</b> (k &lt; len) {
     <b>let</b> addr = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&nodes, k));
-    <b>if</b> (<a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(vm, addr)) {
+    <b>if</b> (<a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(vm, addr, height_start, height_end)) {
       density = density + 1;
     };
     k = k + 1;

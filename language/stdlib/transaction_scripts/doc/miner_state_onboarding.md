@@ -31,33 +31,31 @@
   consensus_pubkey: vector&lt;u8&gt;,
   validator_network_address: vector&lt;u8&gt;,
   full_node_network_address: vector&lt;u8&gt;,
-  human_name: vector&lt;u8&gt;,
+  human_name: vector&lt;u8&gt;, // Todo: rename <b>to</b> address
 ) {
 
-    <b>let</b> new_account_address = <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
-      sender,
-      &challenge,
-      &solution,
-      consensus_pubkey,
-      validator_network_address,
-      full_node_network_address,
-      human_name
-    );
-  //   <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
-  //   &challenge,
-  //   &solution,
-  //   x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // consensus_pubkey: vector&lt;u8&gt;,
-  //   b"192.168.0.1", // validator_network_addresses: vector&lt;u8&gt;,
-  //   b"192.168.0.1", // fullnode_network_addresses: vector&lt;u8&gt;,
-  //   x"1ee7", // human_name: vector&lt;u8&gt;,
-  // );
+  <b>let</b> new_account_address = <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
+    sender,
+    &challenge,
+    &solution,
+    consensus_pubkey,
+    validator_network_address,
+    full_node_network_address,
+    human_name // todo human_name == address
+  );
 
-    // Check the account has the Validator role
-    <b>assert</b>(<a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(new_account_address), 03);
+  // add optional trusted accounts info
 
-    // Check the account <b>exists</b> and the balance is 0
-    <b>assert</b>(<a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="../../modules/doc/GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) == 0, 04);
+  // add optional autopay info
+  // enable autopay
+  // <b>update</b> tx
 
+
+  // Check the account has the Validator role
+  <b>assert</b>(<a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(new_account_address), 03);
+
+  // Check the account <b>exists</b> and the balance is 0
+  <b>assert</b>(<a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="../../modules/doc/GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) == 0, 04);
 }
 </code></pre>
 

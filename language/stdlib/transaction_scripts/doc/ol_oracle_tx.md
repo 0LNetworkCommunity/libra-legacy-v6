@@ -7,8 +7,7 @@
 
 
 
-<pre><code><b>use</b> <a href="../../modules/doc/Debug.md#0x1_Debug">0x1::Debug</a>;
-<b>use</b> <a href="../../modules/doc/Oracle.md#0x1_Oracle">0x1::Oracle</a>;
+<pre><code><b>use</b> <a href="../../modules/doc/Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 </code></pre>
 
 
@@ -24,7 +23,6 @@
 
 
 <pre><code><b>fun</b> <a href="ol_oracle_tx.md#ol_oracle_tx">ol_oracle_tx</a> (sender: &signer, id: u64, data: vector&lt;u8&gt;) {
-    print(&0x0000000000000000000000000011e110); // Hello!
     <a href="../../modules/doc/Oracle.md#0x1_Oracle_handler">Oracle::handler</a>(sender, id, data);
 }
 </code></pre>

@@ -37,7 +37,7 @@ script {
       Vector::push_back<address>(&mut set, {{bob}});
 
 
-      Reconfigure::reconfigure(vm);
+      Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
 
       assert(Stats::node_current_props(vm, {{alice}}) == 0, 7357190201091000);
       assert(Stats::node_current_props(vm, {{bob}}) == 0, 7357190201101000);

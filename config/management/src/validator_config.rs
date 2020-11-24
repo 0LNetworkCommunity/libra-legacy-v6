@@ -42,7 +42,14 @@ impl ValidatorConfig {
         fullnode_address: NetworkAddress,
         validator_address: NetworkAddress,
         reconfigure: bool,
+        disable_address_validation: bool,
     ) -> Result<Transaction, Error> {
+        if !disable_address_validation {
+            // Verify addresses
+            validate_address("validator address", &validator_address)?;
+            validate_address("fullnode address", &fullnode_address)?;
+        }
+
         let config = self.config()?;
         let mut storage = config.validator_backend();
 

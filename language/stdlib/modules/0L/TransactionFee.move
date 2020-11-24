@@ -5,7 +5,6 @@ address 0x1 {
 module TransactionFee {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    // use 0x1::Coin1::Coin1;
     use 0x1::LBR;
     use 0x1::Libra::{Self, Libra, Preburn};
     use 0x1::Roles;
