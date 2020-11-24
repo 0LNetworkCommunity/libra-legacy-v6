@@ -49,10 +49,10 @@ script {
 }
 
 //////////////////////////////////////////////
-///// Trigger reconfiguration at 2 seconds ////
+///// Trigger reconfiguration 61 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 2000000
+//! block-time: 61000000
 //! round: 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////

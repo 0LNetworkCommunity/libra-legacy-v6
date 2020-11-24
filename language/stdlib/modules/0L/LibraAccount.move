@@ -580,7 +580,6 @@ module LibraAccount {
         };
         include DepositOverflowAbortsIf<Token>{payee: preburn_address, amount: amount};
     }
-
     /// Helper to withdraw `amount` from the given account balance and return the withdrawn Libra<Token>
     fun withdraw_from_balance<Token>(
         payer: address,
@@ -803,6 +802,36 @@ module LibraAccount {
         aborts_if !exists_at(cap_addr) with Errors::NOT_PUBLISHED;
         aborts_if !delegated_withdraw_capability(cap_addr) with Errors::INVALID_STATE;
         ensures spec_holds_own_withdraw_cap(cap_addr);
+    }
+    
+    // 0L function for AutoPay module
+    // 0L error suffix 120101
+    public fun make_payment<Token>(
+        payer : address,
+        payee: address,
+        amount: u64,
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>,
+        vm: &signer
+    ) acquires LibraAccount , Balance, AccountOperationsCapability {
+        
+        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 120101014010);
+
+        assert(
+            !delegated_withdraw_capability(payer),
+            Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
+        );
+        assert(exists_at(payer), Errors::not_published(EACCOUNT));
+        let account = borrow_global_mut<LibraAccount>(payer);
+        let cap = Option::extract(&mut account.withdraw_capability);
+        deposit<Token>(
+            cap.account_address,
+            payee,
+            withdraw_from(&cap, payee, amount, copy metadata),
+            metadata,
+            metadata_signature
+        );
+        restore_withdraw_capability(cap);
     }
 
     /// Withdraw `amount` Libra<Token> from the address embedded in `WithdrawCapability` and
@@ -2120,7 +2149,8 @@ module LibraAccount {
             metadata_signature
         );
     }
-
+    
+    
     // // Deposits the `to_deposit` coin into the `payee`'s account balance with the attached `metadata` and
     // // sender address
     // fun deposit_with_sender_and_metadata<Token>(

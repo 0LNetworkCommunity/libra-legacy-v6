@@ -110,6 +110,15 @@
     }
   ],
   [
+    "011d1d5ec73e13f79f12ac414ad27470a4b394c90d74cb4ba22cd7e8dd4d95d847",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "AccountList",
+      "type_params": []
+    }
+  ],
+  [
     "011d57af3a45c686035178347e1b50849f0c2bad90b2baa2ead36bd208450ed175",
     {
       "address": "00000000000000000000000000000001",
@@ -178,15 +187,6 @@
       "address": "00000000000000000000000000000001",
       "module": "RegisteredCurrencies",
       "name": "RegisteredCurrencies",
-      "type_params": []
-    }
-  ],
-  [
-    "0123a33f97b62598672822dd2e803bba833f292ed52adabdc884c7c0c8bc346219",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Reconfigure",
-      "name": "Timer",
       "type_params": []
     }
   ],
@@ -488,6 +488,15 @@
     }
   ],
   [
+    "017955810437e8020dedb9ef06bc78d76740d1b349d2b5e5743dc052471ccb06ae",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "Tick",
+      "type_params": []
+    }
+  ],
+  [
     "017a4a58251f04101a37353bf3b1d02d2ad07f62df8f35c057f8454554400bf430",
     {
       "address": "00000000000000000000000000000001",
@@ -502,6 +511,15 @@
       "address": "00000000000000000000000000000001",
       "module": "Libra",
       "name": "BurnEvent",
+      "type_params": []
+    }
+  ],
+  [
+    "01800fcd9735e4df972c347d52b30b7d325ad284628e119e5bc8ea0db7d70662ba",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Epoch",
+      "name": "Timer",
       "type_params": []
     }
   ],
@@ -787,6 +805,15 @@
     }
   ],
   [
+    "01ca7f44542941b825f782e14fac9c5cfaad5eabac7b371590077dcce00df0e25a",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "Data",
+      "type_params": []
+    }
+  ],
+  [
     "01cc3019332ad35a38c479c561ec953c5ffa2ceab30717688f681070c4536efb3d",
     {
       "address": "00000000000000000000000000000001",
@@ -945,6 +972,15 @@
       "address": "00000000000000000000000000000001",
       "module": "ValidatorOperatorConfig",
       "name": "ValidatorOperatorConfig",
+      "type_params": []
+    }
+  ],
+  [
+    "01f4456fd5aed67352ea22edc62b077950ef92ae6e4e73408c188ada5fee577d6f",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "Payment",
       "type_params": []
     }
   ],
