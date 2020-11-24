@@ -22,7 +22,7 @@ script {
   use 0x1::Stats;
 
   fun main(vm: &signer) {
-    // check the case of a network density of 4 active validators.
+    // check the case of a network density of 7 active validators.
 
     let validators = Vector::singleton<address>({{alice}});
     Vector::push_back(&mut validators, {{bob}});
@@ -39,7 +39,7 @@ script {
       i = i + 1;
     };
 
-    assert(Subsidy::calculate_Subsidy(vm) == 293000000, 7357190101021000);
+    assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 293, 7357190101021000);
 
     }
 }

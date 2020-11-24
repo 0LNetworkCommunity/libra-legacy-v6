@@ -12,8 +12,7 @@ script {
         let index = 0;
         while (index < num_validators) {
             let addr = LibraSystem::get_ith_validator_address(index);
-            print(&LibraAccount::balance<GAS>(addr));
-            assert(LibraAccount::balance<GAS>(addr) == 74000000, 7357001);
+            assert(LibraAccount::balance<GAS>(addr) == 225216, 7357001);
             index = index + 1;
         };
     }
