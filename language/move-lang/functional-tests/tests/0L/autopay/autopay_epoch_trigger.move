@@ -44,26 +44,49 @@ script {
 //! block-prologue
 //! proposer: alice
 //! block-time: 31000000
-//! round: 22
+//! round: 23
+///////////////////////////////////////////////////
+
+
+// Weird. This next block needs to be added here otherwise the prologue above does not run.
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: alice
+//! block-time: 32000000
+//! round: 24
 ///////////////////////////////////////////////////
 
 //! new-transaction
 //! sender: libraroot
 script {
-  use 0x1::LibraTimestamp;
-  use 0x1::AutoPay;
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
   use 0x1::Debug::print;
-  fun main(vm: &signer) {
-    let time = LibraTimestamp::now_seconds();
-    assert(time == 31, 7357001);
-    assert(AutoPay::tick(vm), 7357002);
+  fun main(_vm: &signer) {
     let ending_balance = LibraAccount::balance<GAS>({{alice}});
     print(&ending_balance);
     assert(ending_balance < 1000000, 7357003);
     assert(ending_balance == 950001, 7357004);
-
   }
 }
 // check: EXECUTED
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: alice
+//! block-time: 33000000
+//! round: 25
+///////////////////////////////////////////////////
+
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs           ////
+/// i.e. 1 second after 1/2 epoch  /////
+//! block-prologue
+//! proposer: alice
+//! block-time: 34000000
+//! round: 26
+///////////////////////////////////////////////////

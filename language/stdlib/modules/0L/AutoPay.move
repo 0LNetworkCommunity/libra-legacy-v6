@@ -67,6 +67,8 @@ address 0x1{
         print(&LibraTimestamp::now_seconds());
         print(&timer);
         let tick_interval = Globals::get_epoch_length();
+        print(&tick_interval);
+
         if (timer > tick_interval/2) {
           tick_state.triggered = true;
           return true
