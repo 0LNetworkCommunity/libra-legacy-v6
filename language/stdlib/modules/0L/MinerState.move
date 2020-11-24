@@ -96,7 +96,7 @@ address 0x1 {
 
       assert(Testnet::is_testnet(), 130102014010);
       //doubly check this is in test env.
-      assert(Globals::get_epoch_length() == 1, 130102024010);
+      assert(Globals::get_epoch_length() == 60, 130102024010);
 
       move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
         previous_proof_hash: Vector::empty(),
