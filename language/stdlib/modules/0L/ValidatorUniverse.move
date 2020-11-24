@@ -156,39 +156,6 @@ address 0x1 {
       }
     }
 
-    // // Check the liveness of the validator in the previous epoch
-    // // Function code: 07 Prefix: 220107
-    // public fun check_if_active_validator(_addr: address, epoch_length: u64, current_block_height: u64): bool {
-    //   // Calculate the window in which we are evaluating the performance of validators.
-    //   // start and effective end block height for the current epoch
-    //   // End block for analysis happens a few blocks before the block boundar since not all blocks will be committed to all nodes at the end of the boundary.
-    //   let start_block_height = 1;
-    //   if (current_block_height > Globals::get_epoch_length()) {
-    //     start_block_height = current_block_height - epoch_length;
-    //   };
-
-    //   let adjusted_end_block_height = current_block_height - Globals::get_epoch_boundary_buffer();
-
-    //   let blocks_in_window = adjusted_end_block_height - start_block_height;
-
-    //   // The current block_height needs to be at least the length of one (the first) epoch.
-    //   // assert(current_block_height >= blocks_in_window, 220107015120);
-
-    //   // Calculating liveness threshold which is signing 66% of the blocks in epoch.
-    //   // Note that nodes in hotstuff stops voting after 2/3 consensus has been reached, and skip to next block.
-
-    //   let threshold_signing = FixedPoint32::divide_u64(66, FixedPoint32::create_from_rational(100, 1)) * blocks_in_window;
-
-    //   ////////  TODO: REMOVED IN MERGE PROCESS ///////
-    //   let block_signed_by_validator = 0; // Stats::node_heuristics(addr, start_block_height, adjusted_end_block_height);
-
-    //   if (block_signed_by_validator < threshold_signing) {
-    //       return false
-    //   };
-
-    //   true
-    // }
-
     // Function code: 06 Prefix: 220106
     public fun get_validator_weight(account: &signer, addr: address): u64 acquires ValidatorUniverse{
       let sender = Signer::address_of(account);

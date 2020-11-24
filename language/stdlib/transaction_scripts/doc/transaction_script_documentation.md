@@ -5063,6 +5063,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::Debug`](../../modules/doc/Debug.md#0x1_Debug)
 -  [`0x1::DesignatedDealer`](../../modules/doc/DesignatedDealer.md#0x1_DesignatedDealer)
 -  [`0x1::DualAttestation`](../../modules/doc/DualAttestation.md#0x1_DualAttestation)
+-  [`0x1::Epoch`](../../modules/doc/Epoch.md#0x1_Epoch)
 -  [`0x1::Errors`](../../modules/doc/Errors.md#0x1_Errors)
 -  [`0x1::Event`](../../modules/doc/Event.md#0x1_Event)
 -  [`0x1::FixedPoint32`](../../modules/doc/FixedPoint32.md#0x1_FixedPoint32)

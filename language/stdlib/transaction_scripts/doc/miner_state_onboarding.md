@@ -47,6 +47,9 @@
   // add optional trusted accounts info
 
   // add optional autopay info
+  // enable autopay
+  // <b>update</b> tx
+
 
   // Check the account has the Validator role
   <b>assert</b>(<a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(new_account_address), 03);

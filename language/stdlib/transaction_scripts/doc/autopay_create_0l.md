@@ -8,7 +8,6 @@
 
 
 <pre><code><b>use</b> <a href="../../modules/doc/AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
-<b>use</b> <a href="../../modules/doc/Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="../../modules/doc/Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
 
@@ -31,7 +30,6 @@
   <b>let</b> end_epoch = 14;
   <b>let</b> percentage = 1;
   <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), 0);
-  print(&0x222222222222222); // Hello!
   <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_create_instruction">AutoPay::create_instruction</a>(
     sender,
     uid,

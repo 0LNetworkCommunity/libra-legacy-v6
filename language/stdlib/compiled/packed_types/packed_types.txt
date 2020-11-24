@@ -191,15 +191,6 @@
     }
   ],
   [
-    "0123a33f97b62598672822dd2e803bba833f292ed52adabdc884c7c0c8bc346219",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Reconfigure",
-      "name": "Timer",
-      "type_params": []
-    }
-  ],
-  [
     "0125f9de45a06fbafa9cadfd8f442e44a935c085e6b79478b53fc08bc98a0c2d78",
     {
       "address": "00000000000000000000000000000001",
@@ -497,6 +488,15 @@
     }
   ],
   [
+    "017955810437e8020dedb9ef06bc78d76740d1b349d2b5e5743dc052471ccb06ae",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "AutoPay",
+      "name": "Tick",
+      "type_params": []
+    }
+  ],
+  [
     "017a4a58251f04101a37353bf3b1d02d2ad07f62df8f35c057f8454554400bf430",
     {
       "address": "00000000000000000000000000000001",
@@ -511,6 +511,15 @@
       "address": "00000000000000000000000000000001",
       "module": "Libra",
       "name": "BurnEvent",
+      "type_params": []
+    }
+  ],
+  [
+    "01800fcd9735e4df972c347d52b30b7d325ad284628e119e5bc8ea0db7d70662ba",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Epoch",
+      "name": "Timer",
       "type_params": []
     }
   ],

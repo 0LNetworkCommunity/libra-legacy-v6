@@ -25,6 +25,7 @@
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
 <b>use</b> <a href="LibraAccount.md#0x1_LibraAccount">0x1::LibraAccount</a>;
+<b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -250,41 +251,12 @@
 
   // Get eligible validators list
   <b>let</b> genesis_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm_sig);
-<<<<<<< HEAD
-
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
-  // Calculate subsidy equally for all the validators based on subsidy curve
-  // Calculate the split for subsidy and burn
-  // <b>let</b> subsidy_info = borrow_global_mut&lt;SubsidyInfo&gt;(0x0);
-  <b>let</b> subsidy_ceiling_gas = <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>();
-  <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm_sig, 0, 0);
-  <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_max_node_density">Globals::get_max_node_density</a>();
-  <b>let</b> subsidy_units = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">subsidy_curve</a>(
-    subsidy_ceiling_gas,
-    network_density,
-    max_node_count,
-  );
-  // Distribute gas coins <b>to</b> initial validators
-  <b>let</b> subsidy_granted = subsidy_units / len;
-=======
-  <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
->>>>>>> OLv4
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&genesis_validators, i));
     <b>let</b> old_validator_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
-<<<<<<< HEAD
-    //Transfer gas from association <b>to</b> validator
-    <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm_sig, subsidy_granted);
-    <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-      vm_sig,
-      node_address,
-      minted_coins,
-      x"", x""
-    );
-=======
->>>>>>> OLv4
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address);
     //Confirm the calculations, and that the ending balance is incremented accordingly.

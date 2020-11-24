@@ -101,6 +101,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 -  [`0x1::Debug`](Debug.md#0x1_Debug)
 -  [`0x1::DesignatedDealer`](DesignatedDealer.md#0x1_DesignatedDealer)
 -  [`0x1::DualAttestation`](DualAttestation.md#0x1_DualAttestation)
+-  [`0x1::Epoch`](Epoch.md#0x1_Epoch)
 -  [`0x1::Errors`](Errors.md#0x1_Errors)
 -  [`0x1::Event`](Event.md#0x1_Event)
 -  [`0x1::FixedPoint32`](FixedPoint32.md#0x1_FixedPoint32)

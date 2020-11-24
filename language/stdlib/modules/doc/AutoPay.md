@@ -5,10 +5,12 @@
 
 
 
+-  [Resource `Tick`](#0x1_AutoPay_Tick)
 -  [Resource `Data`](#0x1_AutoPay_Data)
 -  [Resource `AccountList`](#0x1_AutoPay_AccountList)
 -  [Struct `Payment`](#0x1_AutoPay_Payment)
 -  [Function `tick`](#0x1_AutoPay_tick)
+-  [Function `reconfig_reset_tick`](#0x1_AutoPay_reconfig_reset_tick)
 -  [Function `initialize`](#0x1_AutoPay_initialize)
 -  [Function `process_autopay`](#0x1_AutoPay_process_autopay)
 -  [Function `enable_autopay`](#0x1_AutoPay_enable_autopay)
@@ -22,6 +24,7 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -29,12 +32,38 @@
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Option.md#0x1_Option">0x1::Option</a>;
-<b>use</b> <a href="Reconfigure.md#0x1_Reconfigure">0x1::Reconfigure</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
+
+<a name="0x1_AutoPay_Tick"></a>
+
+## Resource `Tick`
+
+
+
+<pre><code><b>resource</b> <b>struct</b> <a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>triggered: bool</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
 
 <a name="0x1_AutoPay_Data"></a>
 
@@ -156,13 +185,51 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_tick">tick</a>(vm: &signer): bool {
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_tick">tick</a>(vm: &signer): bool <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a> {
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101014010);
-  <b>let</b> timer = <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>() - <a href="Reconfigure.md#0x1_Reconfigure_get_timer_seconds_start">Reconfigure::get_timer_seconds_start</a>(vm);
-  print(&0x222);
-  print(&<a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>());
-  print(&timer);
-  (timer &gt; <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>()/2)
+  <b>assert</b>(<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()), 0101024010);
+
+  <b>let</b> tick_state = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
+
+  <b>if</b> (!tick_state.triggered) {
+    <b>let</b> timer = <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>() - <a href="Epoch.md#0x1_Epoch_get_timer_seconds_start">Epoch::get_timer_seconds_start</a>(vm);
+    print(&0x333);
+    print(&<a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>());
+    print(&timer);
+    <b>let</b> tick_interval = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
+    print(&tick_interval);
+
+    <b>if</b> (timer &gt; tick_interval/2) {
+      tick_state.triggered = <b>true</b>;
+      <b>return</b> <b>true</b>
+    }
+  };
+  <b>false</b>
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_AutoPay_reconfig_reset_tick"></a>
+
+## Function `reconfig_reset_tick`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">reconfig_reset_tick</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">reconfig_reset_tick</a>(vm: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>{
+  <b>let</b> tick_state = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
+  tick_state.triggered = <b>false</b>;
 }
 </code></pre>
 
@@ -188,6 +255,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_initialize">initialize</a>(sender: &signer) {
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101014010);
   move_to&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(sender, <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a> { accounts: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(), current_epoch: 0, });
+  move_to&lt;<a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a>&gt;(sender, <a href="AutoPay.md#0x1_AutoPay_Tick">Tick</a> {triggered: <b>false</b>})
 }
 </code></pre>
 
@@ -213,6 +281,8 @@
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_process_autopay">process_autopay</a>(
   vm: &signer,
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
+  print(&0x555);
+
   // Only account 0x0 should be triggering this autopayment each block
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101064010);
 
