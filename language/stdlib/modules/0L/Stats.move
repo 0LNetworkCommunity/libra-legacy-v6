@@ -152,7 +152,7 @@ module Stats{
       let test = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
       Vector::push_back(&mut stats.current.prop_count, test + 1);
       Vector::swap_remove(&mut stats.current.prop_count, i);
-      // stats.current.total_props = stats.current.total_props + 1;
+      stats.current.total_props = stats.current.total_props + 1;
 
     }
     
@@ -187,6 +187,12 @@ module Stats{
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190208014010);
       *&borrow_global_mut<T>(CoreAddresses::LIBRA_ROOT_ADDRESS()).current.total_votes
+    }
+
+    public fun get_total_props(vm: &signer): u64 acquires T {
+      let sender = Signer::address_of(vm);
+      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190208014010);
+      *&borrow_global_mut<T>(CoreAddresses::LIBRA_ROOT_ADDRESS()).current.total_props
     }
 
     public fun get_history(): vector<ValidatorSet> acquires T {

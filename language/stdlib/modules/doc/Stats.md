@@ -20,6 +20,7 @@
 -  [Function `inc_vote`](#0x1_Stats_inc_vote)
 -  [Function `reconfig`](#0x1_Stats_reconfig)
 -  [Function `get_total_votes`](#0x1_Stats_get_total_votes)
+-  [Function `get_total_props`](#0x1_Stats_get_total_props)
 -  [Function `get_history`](#0x1_Stats_get_history)
 -  [Function `test_helper_inc_vote_addr`](#0x1_Stats_test_helper_inc_vote_addr)
 
@@ -424,7 +425,7 @@
   <b>let</b> test = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i);
   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.prop_count, test + 1);
   <a href="Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.prop_count, i);
-  // stats.current.total_props = stats.current.total_props + 1;
+  stats.current.total_props = stats.current.total_props + 1;
 
 }
 </code></pre>
@@ -516,6 +517,32 @@
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 99190208014010);
   *&borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_T">T</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).current.total_votes
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Stats_get_total_props"></a>
+
+## Function `get_total_props`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_total_props">get_total_props</a>(vm: &signer): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_total_props">get_total_props</a>(vm: &signer): u64 <b>acquires</b> <a href="Stats.md#0x1_Stats_T">T</a> {
+  <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
+  <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 99190208014010);
+  *&borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_T">T</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).current.total_props
 }
 </code></pre>
 

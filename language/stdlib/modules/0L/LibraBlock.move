@@ -13,7 +13,6 @@ module LibraBlock {
     use 0x1::Stats;
     use 0x1::AutoPay;
     use 0x1::Epoch;
-    use 0x1::Debug::print;
 
     resource struct BlockMetadata {
         /// Height of the current block
@@ -87,10 +86,8 @@ module LibraBlock {
         // increment stats
         Stats::process_set_votes(vm, &previous_block_votes);
         Stats::inc_prop(vm, *&proposer);
-
-        print(&0x0000222);
+        
         if (AutoPay::tick(vm)){
-            print(&0x0000444);
             AutoPay::process_autopay(vm);
         };
 
