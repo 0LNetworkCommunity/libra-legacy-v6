@@ -676,20 +676,25 @@ module LibraSystem {
     public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
         let validators = &get_libra_system_config().validators;
         let compliant_nodes = Vector::empty<address>();
-        let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
-        let total_props = Stats::get_total_props(vm);
-
+        let count_compliant_votes = 0;
         let i = 0;
         while (i < Vector::length(validators)) {
             let addr = Vector::borrow(validators, i).addr;
             if (Cases::get_case(vm, addr, height_start, height_end) == 1) {
-                let node_props = Stats::node_current_props(vm, addr);
+                let node_votes = Stats::node_current_votes(vm, addr);
                 Vector::push_back(&mut compliant_nodes, addr);
-                // what proportion of blocks were proposed by the node.
-                let ratio = FixedPoint32::create_from_rational(node_props, total_props);
-                Vector::push_back(&mut fee_ratios, ratio);
+                count_compliant_votes = count_compliant_votes + node_votes;
             };
             i = i + 1;
+        };
+        let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
+        let k = 0;
+        while (k < Vector::length(&compliant_nodes)) {
+            let addr = *Vector::borrow(&compliant_nodes, k);
+            let node_votes = Stats::node_current_votes(vm, addr);
+            let ratio = FixedPoint32::create_from_rational(node_votes, count_compliant_votes);
+            Vector::push_back(&mut fee_ratios, ratio);
+             k = k + 1;
         };
 
         assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),120201014010 );

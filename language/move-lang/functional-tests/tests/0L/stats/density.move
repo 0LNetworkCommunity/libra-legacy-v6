@@ -36,18 +36,18 @@ script {
           i = i + 1;
       };
 
-      assert(!Stats::node_above_thresh(vm, {{alice}}, 0, 15), 0);
-      assert(Stats::network_density(vm, 0, 15) == 0, 0);
+      assert(!Stats::node_above_thresh(vm, {{alice}}, 0, 50), 0);
+      assert(Stats::network_density(vm, 0, 50) == 0, 0);
 
       let i = 1;
       while (i < 10) {
-          // Mock the validator doing work for 15 blocks, and stats being updated.
+          // Mock the validator doing work for 9 blocks, above threshold, and stats being updated.
           Stats::process_set_votes(vm, &voters);
           i = i + 1;
       };
 
-      assert(Stats::node_above_thresh(vm, {{alice}}, 0, 15), 0);
-      assert(Stats::network_density(vm, 0, 15) == 4, 0);
+      assert(Stats::node_above_thresh(vm, {{alice}}, 0, 50), 0);
+      assert(Stats::network_density(vm, 0, 50) == 4, 0);
     }
 }
 // check: EXECUTED
