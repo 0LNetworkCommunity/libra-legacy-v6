@@ -102,7 +102,7 @@ module Stats{
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190206014010);
       let range = height_end-height_start;
-      let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(33, 100));
+      let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(10, 100));
       if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
       return false
     }
@@ -149,11 +149,10 @@ module Stats{
 
       let stats = borrow_global_mut<T>(sender);
       let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-      let test = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
-      Vector::push_back(&mut stats.current.prop_count, test + 1);
+      let current_count = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
+      Vector::push_back(&mut stats.current.prop_count, current_count + 1);
       Vector::swap_remove(&mut stats.current.prop_count, i);
       stats.current.total_props = stats.current.total_props + 1;
-
     }
     
     //TODO: Duplicate code.
