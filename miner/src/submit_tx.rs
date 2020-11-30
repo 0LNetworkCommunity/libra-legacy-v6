@@ -46,7 +46,7 @@ pub fn submit_tx(
     preimage: Vec<u8>,
     proof: Vec<u8>,
     is_onboading: bool,
-) -> Result<Option<TransactionView>, Error> {
+) -> Result<TransactionView, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -118,7 +118,10 @@ pub fn submit_tx(
         txn
     ){
         Ok(_) => {
-            Ok( wait_for_tx(tx_params.address, sequence_number, &mut client) )
+            match wait_for_tx(tx_params.address, sequence_number, &mut client) {
+                Some(res) => Ok(res),
+                None => Err(Error::msg("No Transaction View returned"))
+            }
         }
         Err(err) => Err(err)
     }
@@ -135,7 +138,7 @@ pub fn submit_onboard_tx(
     validator_network_address: String,
     full_node_network_address: String,
     human_name: String,
-) -> Result<Option<TransactionView>, Error> {
+) -> Result<TransactionView, Error> {
 
     // Create a client object
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -148,20 +151,6 @@ pub fn submit_onboard_tx(
         None => 0,
     };
 
-    // // Create the unsigned MinerState transaction script
-    // let script = Script::new(
-    //     transaction_scripts::StdlibScript::MinerStateOnboarding.compiled_bytes().into_vec(),
-    //     vec![],
-    //     vec![
-    //         TransactionArgument::U8Vector(preimage),
-    //         TransactionArgument::U8Vector(proof),
-    //         TransactionArgument::U8Vector(consensus_pubkey),
-    //         TransactionArgument::U8Vector(validator_network_identity_pubkey),
-    //         TransactionArgument::U8Vector(validator_network_address.as_bytes().to_vec()),
-    //         TransactionArgument::U8Vector(full_node_network_identity_pubkey),TransactionArgument::U8Vector(full_node_network_address.as_bytes().to_vec()),                
-    //     ],
-    // );
-
     let script = transaction_builder::encode_minerstate_onboarding_script(
         preimage,
         proof,
@@ -170,8 +159,6 @@ pub fn submit_onboard_tx(
         full_node_network_address.as_bytes().to_vec(),
         human_name.as_bytes().to_vec(),
     );
-
-
 
     // sign the transaction script
     let txn = create_user_txn(
@@ -201,7 +188,10 @@ pub fn submit_onboard_tx(
         txn
     ){
         Ok(_) => {
-            Ok(wait_for_tx(tx_params.address, sequence_number, &mut client))
+            match wait_for_tx(tx_params.address, sequence_number, &mut client) {
+                Some(res) => Ok(res),
+                None => Err(Error::msg("No Transaction View returned"))
+            }
         }
         Err(err) => Err(err)
     }
@@ -210,7 +200,7 @@ pub fn submit_onboard_tx(
 
 
 /// Wait for the response from the libra RPC.
-pub fn wait_for_tx (
+pub fn wait_for_tx(
     sender_address: AccountAddress,
     sequence_number: u64,
     client: &mut LibraClient) -> Option<TransactionView>{
@@ -240,34 +230,17 @@ pub fn wait_for_tx (
 }
 
 /// Evaluate the response of a submitted miner transaction.
-pub fn eval_tx_status (result: Result<Option<TransactionView>, Error>) -> bool {
-    match result {
-        Ok(tx_view) => {
-            // We receive a tx object.
-            match tx_view {
-                Some(tx_view) => {
-                    if tx_view.vm_status != VMStatusView::Executed {
-                        status_warn!("Transaction failed");
-                        println!("Rejected with code:{:?}", tx_view.vm_status);
-                        return false
-                    } else {
-                        status_ok!("\nSuccess:", "proof committed to chain");
-                        return true
-                    }
-                }
-                //did not receive tx_object but it wasn't in error. This is likely because it's the first sequence number and we are skipping.
-                None => {
-                    status_warn!("No tx_view returned");
-                    return false
-                }
-            }
-
-        },
-        // A tx_view was not returned because of timeout or client connection not established, or other unrelated to vm execution.
-        Err(e) => {
-            status_warn!("Transaction err: {:?}", e);
-            return false
+pub fn eval_tx_status(result: TransactionView) -> bool {
+    match result.vm_status == VMStatusView::Executed {
+        true => {
+                status_ok!("\nSuccess:", "transaction executed");
+                return true
         }
+        false => {
+                status_warn!("Transaction failed");
+                println!("Rejected with code:{:?}", result.vm_status);
+                return false
+        }, 
     }
 }
 

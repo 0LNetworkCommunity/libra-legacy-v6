@@ -174,13 +174,18 @@ pub mod build_block {
 
                 if let Some(ref _node) = config.chain_info.node {
 
-                    let res = submit_tx(&tx_params, block.preimage, block.proof, false);
+                    match submit_tx(&tx_params, block.preimage, block.proof, false) {
+                        Ok(tx_view) => {
+                            match eval_tx_status(tx_view) {
+                                true => status_ok!("Success:", "Proof committed to chain"),
+                                false => status_err!("Miner transaction rejected")
+                            }
+                            
+                        },
+                        Err(err) => status_err!("Miner transaction rejected: {}", err)
+                    }
 
-                    if eval_tx_status(res) == false {
-                        return Err(ErrorKind::Transaction
-                            .context("Error submitting mined block")
-                            .into());
-                    };
+
                 } else {
                     return Err(ErrorKind::Config
                         .context("No Node for submitting transactions")

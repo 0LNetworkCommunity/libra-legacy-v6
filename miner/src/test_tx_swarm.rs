@@ -29,8 +29,8 @@ pub fn swarm_miner(swarm_path: PathBuf) {
 
         match submit_tx(&tx_params, preimage, proof, false) {
             Err(err)=>{ println!("{:?}", err) }
-            res =>{
-                if eval_tx_status(res) == false {
+            Ok(res) =>{
+                if !eval_tx_status(res){
                     break;
                 };
 

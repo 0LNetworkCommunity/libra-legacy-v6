@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::ValConfigs, submit_tx::get_params};
+use crate::{block::ValConfigs, submit_tx::{eval_tx_status, get_params}};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
@@ -69,8 +69,9 @@ impl Runnable for OnboardCmd {
             init_data.full_node_network_address,
             init_data.human_name
         ) {
-            Ok(_res) => {
-                status_ok!("Success", "Validator initialization committed, exiting.");
+            Ok(res) => {
+                eval_tx_status(res);
+                // status_ok!("Success", "Validator initialization committed, exiting.");
             }
             Err(e) => {
                 status_warn!(format!("Validator initialization error: {:?}", e));
