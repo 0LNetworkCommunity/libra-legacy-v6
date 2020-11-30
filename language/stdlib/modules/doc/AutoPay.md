@@ -23,7 +23,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
@@ -193,12 +192,7 @@
 
   <b>if</b> (!tick_state.triggered) {
     <b>let</b> timer = <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>() - <a href="Epoch.md#0x1_Epoch_get_timer_seconds_start">Epoch::get_timer_seconds_start</a>(vm);
-    print(&0x333);
-    print(&<a href="LibraTimestamp.md#0x1_LibraTimestamp_now_seconds">LibraTimestamp::now_seconds</a>());
-    print(&timer);
     <b>let</b> tick_interval = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
-    print(&tick_interval);
-
     <b>if</b> (timer &gt; tick_interval/2) {
       tick_state.triggered = <b>true</b>;
       <b>return</b> <b>true</b>
@@ -281,8 +275,6 @@
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_process_autopay">process_autopay</a>(
   vm: &signer,
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
-  print(&0x555);
-
   // Only account 0x0 should be triggering this autopayment each block
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 0101064010);
 

@@ -281,7 +281,7 @@
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60, // seconds
       max_validator_per_epoch: 10,
-      subsidy_ceiling_gas: 296 * coin_scale,
+      subsidy_ceiling_gas: 296,
       min_node_density: 4,
       max_node_density: 300,
       burn_accounts: <a href="Vector.md#0x1_Vector_singleton">Vector::singleton</a>(0xDEADDEAD),

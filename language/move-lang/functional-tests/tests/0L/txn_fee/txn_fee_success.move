@@ -91,6 +91,7 @@ script {
         assert(bal == 1000, 7357190103011000);
 
         let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
+        //TODO: The fee ratio is unused in this proposal.
         Subsidy::process_fees(vm, &validators, &fee_ratios);
 
         assert(LibraAccount::balance<GAS>({{alice}}) == 1001, 7357190103021000);

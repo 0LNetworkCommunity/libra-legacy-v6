@@ -50,11 +50,6 @@ address 0x1{
     ///////////////////////////////
     // Public functions only OxO //
     //////////////////////////////
-    use 0x1::Debug::print;
-    // public fun init_tick(vm: &signer) {
-    //   assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
-    //   move_to<Tick>(vm, Tick {triggered: false})
-    // }
     public fun tick(vm: &signer): bool acquires Tick {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101014010);
       assert(exists<Tick>(CoreAddresses::LIBRA_ROOT_ADDRESS()), 0101024010);
@@ -63,12 +58,7 @@ address 0x1{
 
       if (!tick_state.triggered) {
         let timer = LibraTimestamp::now_seconds() - Epoch::get_timer_seconds_start(vm);
-        print(&0x333);
-        print(&LibraTimestamp::now_seconds());
-        print(&timer);
         let tick_interval = Globals::get_epoch_length();
-        print(&tick_interval);
-
         if (timer > tick_interval/2) {
           tick_state.triggered = true;
           return true
@@ -99,8 +89,6 @@ address 0x1{
     public fun process_autopay(
       vm: &signer,
     ) acquires AccountList, Data {
-      print(&0x555);
-
       // Only account 0x0 should be triggering this autopayment each block
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101064010);
 
