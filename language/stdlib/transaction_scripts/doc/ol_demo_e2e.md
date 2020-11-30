@@ -13,7 +13,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="demo_e2e_0L.md#demo_e2e">demo_e2e</a>(world: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_demo_e2e.md#demo_e2e">demo_e2e</a>(world: u64)
 </code></pre>
 
 
@@ -22,7 +22,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="demo_e2e_0L.md#demo_e2e">demo_e2e</a> (world: u64) {
+<pre><code><b>fun</b> <a href="ol_demo_e2e.md#demo_e2e">demo_e2e</a> (world: u64) {
     print(&0x0000000000000000000000000011e110); // Hello!
     print(&world); // World!
 }

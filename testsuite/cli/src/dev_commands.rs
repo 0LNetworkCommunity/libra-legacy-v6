@@ -215,7 +215,7 @@ impl Command for DevCommandNoop {
     }
 
     fn get_description(&self) -> &'static str {
-        "Do nothing"
+        "Calls demo_e2e tx script, for testing purposes"
     }
 
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {

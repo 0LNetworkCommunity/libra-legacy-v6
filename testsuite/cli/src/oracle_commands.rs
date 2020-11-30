@@ -10,7 +10,7 @@ impl Command for OracleCommand {
         vec!["oracle", "o"]
     }
     fn get_description(&self) -> &'static str {
-        "Oracle Related commands"
+        "Oracle related commands"
     }
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
         let commands: Vec<Box<dyn Command>> = vec![
@@ -29,11 +29,11 @@ impl Command for OracleCommandUpdate {
     }
 
     fn get_params_help(&self) -> &'static str {
-        "Put the stdlib.mv into \"language\\stdlib\\oracle_payload before run this command. "
+        "Put the stdlib.mv into \"language\\stdlib\\oracle_payload before running this command."
     }
 
     fn get_description(&self) -> &'static str {
-        "On-chain update stdlib"
+        "On-chain grade of stdlib"
     }
 
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
