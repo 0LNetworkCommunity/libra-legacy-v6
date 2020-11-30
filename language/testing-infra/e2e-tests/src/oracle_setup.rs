@@ -6,7 +6,7 @@ use include_dir::{include_dir, Dir};
 use compiled_stdlib::transaction_scripts::{StdlibScript, CompiledBytes};
 
 const UPGRADE_DIR: Dir =
-    include_dir!("../../../language/stdlib/upgrade_payload/tests");
+    include_dir!("../../../fixtures/upgrade_payload/tx_scripts");
 
 pub fn oracle_helper_tx(
     sender: &Account,
@@ -14,7 +14,7 @@ pub fn oracle_helper_tx(
 ) -> SignedTransaction {
     let mut args: Vec<TransactionArgument> = Vec::new();
     args.push(TransactionArgument::U64(1));
-    let stdlib_bytes = std::include_bytes!("../../../stdlib/upgrade_payload/stdlib.mv"); 
+    let stdlib_bytes = std::include_bytes!("../../../../fixtures/upgrade_payload/foo_stdlib.mv"); 
     let stdlib_vec = stdlib_bytes.to_vec();
     args.push(TransactionArgument::U8Vector(stdlib_vec));
 

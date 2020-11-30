@@ -81,7 +81,7 @@ address 0x1 {
             *&borrow_global<UpgradePayload>(CoreAddresses::LIBRA_ROOT_ADDRESS()).payload
         }
 
-        // /////// FOR E2E Testing ////////
+        //////// FOR E2E Testing ////////
         // Do not delete these lines. Uncomment when needed to generate e2e test fixtures.
         // 
         // use 0x1::Debug::print;
