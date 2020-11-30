@@ -56,17 +56,19 @@ fn main() {
                 .long("no-check-linking-layout-compatiblity")
                 .help("do not print information about linking and layout compatibility between the old and new standard library"),
         )
+        //////// 0L ////////
         // for upgrade oracle
-        // run with cargo run -- --create_upgrade_payload
+        // 1. build the stdlib first cargo run -p stdlib --release
+        // 2. compile into one file cargo run -p stdlib --release -- --create_upgrade_payload
         .arg(
-            Arg::with_name("create_upgrade_payload")
-                .long("create_upgrade_payload")
-                .help("generate staged/stdlib.mv for upgrade oracle"),
+            Arg::with_name("create-upgrade-payload")
+                .long("create-upgrade-payload")
+                .help("generate test/stdlib.mv for upgrade oracle"),
         );
     let matches = cli.get_matches();
     // for upgrade oracle
     let create_upgrade_payload =
-        matches.is_present("create_upgrade_payload");
+        matches.is_present("create-upgrade-payload");
     let no_doc = 
         create_upgrade_payload || matches.is_present("no-doc");
     let no_script_abi = 
