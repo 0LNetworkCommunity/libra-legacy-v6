@@ -102,19 +102,10 @@ module Stats{
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 99190206014010);
       let range = height_end-height_start;
-      let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(10, 100));
+      let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(1, 100));
       if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
       return false
     }
-
-    // public fun get_nodes_(node_addr: address): bool acquires ValStats{
-    //   Transaction::assert(Transaction::sender() == 0x0, 99190202014010);
-    //   let range = Globals::get_epoch_length();
-    //   let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(66, 100));
-    //   if (node_current_votes(node_addr) >  threshold_signing) return true;
-    //   return false
-    // }
-
 
     public fun network_density(vm: &signer, height_start: u64, height_end: u64): u64 acquires ValStats {
       let sender = Signer::address_of(vm);

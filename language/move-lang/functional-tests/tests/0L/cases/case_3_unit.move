@@ -24,13 +24,12 @@ script {
     use 0x1::Cases;
 
     fun main(sender: &signer) {
-        // todo: change name to Mock epochs
-        // MinerState::test_helper_set_epochs(sender, 5);
+
         let voters = Vector::singleton<address>({{alice}});
-        // only voted on 1 block out of 15
+        // only voted on 1 block out of 200
         Stats::process_set_votes(sender, &voters);
 
-        assert(Cases::get_case(sender, {{alice}}, 0, 15) == 3, 7357300103011000);
+        assert(Cases::get_case(sender, {{alice}}, 0, 200) == 3, 7357300103011000);
     }
 }
 //check: EXECUTED

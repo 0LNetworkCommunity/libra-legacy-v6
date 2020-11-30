@@ -26,11 +26,11 @@ script {
 
     fun main(sender: &signer) {
         let voters = Vector::singleton<address>({{alice}});
-        // only voted on 1 block out of 15
+        // only voted on 1 block out of 200
         Stats::process_set_votes(sender, &voters);
 
         // Mock end of epoch for minerstate
-        assert(Cases::get_case(sender, {{alice}}, 0, 15) == 4, 7357300103011000);
+        assert(Cases::get_case(sender, {{alice}}, 0, 200) == 4, 7357300103011000);
     }
 }
 //check: EXECUTED
