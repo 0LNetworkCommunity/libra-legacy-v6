@@ -94,6 +94,8 @@ Functions to initialize, accumulated, and burn transaction fees.
 
 
 <pre><code><b>public</b> <b>fun</b> <b>update</b>(account: &signer, update_my: vector&lt;address&gt;, update_follow: vector&lt;address&gt;) <b>acquires</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>{
+  // TODO: Check <b>exists</b>
+  // exists_at(payee)
   <b>let</b> state = borrow_global_mut&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account));
   state.my_trusted_accounts = update_my;
   state.follow_operators_trusting_accounts = update_follow;
@@ -110,7 +112,7 @@ Functions to initialize, accumulated, and burn transaction fees.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_get_trusted">get_trusted</a>(account: &signer): (vector&lt;address&gt;, vector&lt;address&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_get_trusted">get_trusted</a>(account: address): (vector&lt;address&gt;, vector&lt;address&gt;)
 </code></pre>
 
 
@@ -119,8 +121,9 @@ Functions to initialize, accumulated, and burn transaction fees.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_get_trusted">get_trusted</a>(account: &signer): (vector&lt;address&gt;, vector&lt;address&gt;) <b>acquires</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>{
-  <b>let</b> state = borrow_global&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account));
+<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_get_trusted">get_trusted</a>(account: address): (vector&lt;address&gt;, vector&lt;address&gt;) <b>acquires</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>{
+  <b>assert</b>(<b>exists</b>&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(account), 220101011000);
+  <b>let</b> state = borrow_global&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(account);
   (*&state.my_trusted_accounts, *&state.follow_operators_trusting_accounts)
 }
 </code></pre>

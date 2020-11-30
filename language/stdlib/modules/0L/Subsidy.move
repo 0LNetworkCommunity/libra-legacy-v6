@@ -55,20 +55,22 @@ address 0x1 {
       vm_sig: &signer,
       subsidy_units: u64,
       outgoing_set: &vector<address>,
-      fee_ratio: &vector<FixedPoint32>) {
+      _fee_ratio: &vector<FixedPoint32>) {
       let sender = Signer::address_of(vm_sig);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101034010);
 
       // Get the split of payments from Stats.
-      let length = Vector::length<address>(outgoing_set);
+      let len = Vector::length<address>(outgoing_set);
 
       //TODO: assert the lengths of vectors are the same.
       let i = 0;
-      while (i < length) {
+      while (i < len) {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-        let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
-        let subsidy_granted = FixedPoint32::multiply_u64(subsidy_units, node_ratio);
+        // let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
+        let subsidy_granted = subsidy_units/len;
+
+        // let subsidy_granted = FixedPoint32::multiply_u64(subsidy_units, node_ratio);
         // Transfer gas from vm address to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
         LibraAccount::vm_deposit_with_metadata<GAS>(
@@ -108,54 +110,7 @@ address 0x1 {
       subsidy_units
     }
 
-    // // Function code: 06 Prefix: 190106
-    // public fun genesis(vm_sig: &signer) {
-    //   //Need to check for association or vm account
-    //   let vm_addr = Signer::address_of(vm_sig);
-    //   assert(vm_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101044010);
-
-    //   // Get eligible validators list
-    //   let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
-
-    //   let len = Vector::length(&genesis_validators);
-    //   // Calculate subsidy equally for all the validators based on subsidy curve
-    //   // Calculate the split for subsidy and burn
-    //   // let subsidy_info = borrow_global_mut<SubsidyInfo>(0x0);
-    //   let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
-    //   let network_density = Stats::network_density(vm_sig, 0, 0);
-    //   let max_node_count = Globals::get_max_node_density();
-    //   let subsidy_units = subsidy_curve(
-    //     subsidy_ceiling_gas,
-    //     network_density,
-    //     max_node_count,
-    //   );
-    //   // Distribute gas coins to initial validators
-    //   let subsidy_granted = subsidy_units / len;
-
-    //   let i = 0;
-    //   while (i < len) {
-    //     let node_address = *(Vector::borrow<address>(&genesis_validators, i));
-
-    //     let old_validator_bal = LibraAccount::balance<GAS>(node_address);
-    //     //Transfer gas from association to validator
-    //     let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
-    //     LibraAccount::vm_deposit_with_metadata<GAS>(
-    //       vm_sig,
-    //       node_address,
-    //       minted_coins,
-    //       x"", x""
-    //     );
-
-    //     //Confirm the calculations, and that the ending balance is incremented accordingly.
-    //     assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
-    //     i = i + 1;
-    //   };
-
-    //   // assert(LibraAccount::balance<GAS>(vm_addr) == 0, 19010105100);
-
-    // }
-
-        // Function code: 06 Prefix: 190106
+    // Function code: 06 Prefix: 190106
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
       //Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
@@ -177,7 +132,11 @@ address 0x1 {
       };
     }
     
-    public fun process_fees(vm: &signer, outgoing_set: &vector<address>, fee_ratio: &vector<FixedPoint32>,) {
+    public fun process_fees(
+      vm: &signer,
+      outgoing_set: &vector<address>,
+      _fee_ratio: &vector<FixedPoint32>,
+    ){
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
       let capability_token = LibraAccount::extract_withdraw_capability(vm);
 
@@ -193,8 +152,8 @@ address 0x1 {
       let i = 0;
       while (i < len) {
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-        let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
-        let fees = FixedPoint32::multiply_u64(bal, node_ratio);
+        // let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
+        let fees = bal/len;
         
         LibraAccount::vm_deposit_with_metadata<GAS>(
             vm,

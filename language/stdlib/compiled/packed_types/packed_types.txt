@@ -227,6 +227,15 @@
     }
   ],
   [
+    "013d103ee3b205c54716b03c1eb42edac5b33ab1a15cd12962c45cad4e16a943a2",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Stats",
+      "name": "SetData",
+      "type_params": []
+    }
+  ],
+  [
     "013e931be30d1bbe123a84793a5b502b30386db08f7720ea02e3ff0bd5a76cb4ca",
     {
       "address": "00000000000000000000000000000001",
@@ -533,6 +542,15 @@
     }
   ],
   [
+    "01890583311ac8baad9e78380a843e151a46e4fdca87af8dbc121ba7e907d0a9db",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "Stats",
+      "name": "ValStats",
+      "type_params": []
+    }
+  ],
+  [
     "018c65376be60a3721fbec595c560878a7fc554c12a03f6b895cc89d20a2a6cd97",
     {
       "address": "00000000000000000000000000000001",
@@ -731,11 +749,11 @@
     }
   ],
   [
-    "01baa9bbba87d73a53c6757fa088c5c5ac357e76da7d3ac9222f93515a6436094e",
+    "01bac7708c12e42c61b6c9c8eb1a894a8ddf799e8093a0a94353bab042d57530e8",
     {
       "address": "00000000000000000000000000000001",
-      "module": "Stats",
-      "name": "ValidatorSet",
+      "module": "TrustedAccounts",
+      "name": "Trusted",
       "type_params": []
     }
   ],
@@ -864,15 +882,6 @@
       "address": "00000000000000000000000000000001",
       "module": "Oracle",
       "name": "UpgradeOracle",
-      "type_params": []
-    }
-  ],
-  [
-    "01d6c0f3c856cd977f5a840eca7998935aed9a6de6230390b8e15e52b79df18bc0",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "Stats",
-      "name": "T",
       "type_params": []
     }
   ],

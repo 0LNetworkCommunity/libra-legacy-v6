@@ -28,26 +28,27 @@ script {
       Vector::push_back<address>(&mut voters, {{carol}});
       Vector::push_back<address>(&mut voters, {{dave}});
 
-      // Overwrite the statistics to mock that all have been validating.
+      // Testing Below Threshold
       let i = 1;
       while (i < 5) {
-          // Mock the validator doing work for 15 blocks, and stats being updated.
+          // Below threshold: Mock 4 blocks of 500 blocks
           Stats::process_set_votes(vm, &voters);
           i = i + 1;
       };
 
-      assert(!Stats::node_above_thresh(vm, {{alice}}, 0, 15), 0);
-      assert(Stats::network_density(vm, 0, 15) == 0, 0);
+      assert(!Stats::node_above_thresh(vm, {{alice}}, 0, 500), 735701);
+      assert(Stats::network_density(vm, 0, 500) == 0, 735702);
 
+      // Testing Above Threshold
       let i = 1;
-      while (i < 10) {
-          // Mock the validator doing work for 15 blocks, and stats being updated.
+      while (i < 2) {
+          // Mock additional 2 blocks validated out of 500.
           Stats::process_set_votes(vm, &voters);
           i = i + 1;
       };
 
-      assert(Stats::node_above_thresh(vm, {{alice}}, 0, 15), 0);
-      assert(Stats::network_density(vm, 0, 15) == 4, 0);
+      assert(Stats::node_above_thresh(vm, {{alice}}, 0, 500), 735703);
+      assert(Stats::network_density(vm, 0, 500) == 4, 735704);
     }
 }
 // check: EXECUTED

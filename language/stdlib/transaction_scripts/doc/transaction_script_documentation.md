@@ -5098,6 +5098,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::TestFixtures`](../../modules/doc/TestFixtures.md#0x1_TestFixtures)
 -  [`0x1::Testnet`](../../modules/doc/Testnet.md#0x1_Testnet)
 -  [`0x1::TransactionFee`](../../modules/doc/TransactionFee.md#0x1_TransactionFee)
+-  [`0x1::TrustedAccounts`](../../modules/doc/TrustedAccounts.md#0x1_TrustedAccounts)
 -  [`0x1::Upgrade`](../../modules/doc/Upgrade.md#0x1_Upgrade)
 -  [`0x1::VASP`](../../modules/doc/VASP.md#0x1_VASP)
 -  [`0x1::VDF`](../../modules/doc/VDF.md#0x1_VDF)

@@ -4,7 +4,6 @@ address 0x1 {
         use 0x1::Signer;
         use 0x1::Vector;
         use 0x1::CoreAddresses;
-    
         /// Structs for UpgradePayload resource
         resource struct UpgradePayload {
             payload: vector<u8>, 
@@ -81,6 +80,14 @@ address 0x1 {
             assert(exists<UpgradePayload>(CoreAddresses::LIBRA_ROOT_ADDRESS()), 11111); // TODO: error code
             *&borrow_global<UpgradePayload>(CoreAddresses::LIBRA_ROOT_ADDRESS()).payload
         }
+
+        //////// FOR E2E Testing ////////
+        // Do not delete these lines. Uncomment when needed to generate e2e test fixtures.
+        // 
+        // use 0x1::Debug::print;
+        // public fun foo() {
+        //     print(&0x050D1AC);
+        // }
     }
-    }
+}
     
