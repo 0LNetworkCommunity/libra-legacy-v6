@@ -242,8 +242,8 @@ impl fmt::Display for StdlibScript {
                 // 0L
                 ReconfigSetup => "ol_reconfig_bulk_update_setup",
                 OracleTx => "ol_oracle_tx",
-                MinerStateCommit => "miner_state_commit",
-                MinerStateOnboarding => "miner_state_onboarding"
+                MinerStateCommit => "ol_miner_state_commit",
+                MinerStateOnboarding => "ol_miner_state_onboarding"
             }
         )
     }

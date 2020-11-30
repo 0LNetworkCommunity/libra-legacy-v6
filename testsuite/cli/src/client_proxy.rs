@@ -1039,25 +1039,6 @@ impl ClientProxy {
         self.wait_for_transaction(sender_address, sender_sequence + 1)
     }
 
-    fn submit_program_alt(
-        &mut self,
-        _space_delim_strings: &[&str],
-        program: TransactionPayload,
-    ) -> Result<()> {
-        // let (sender_address, _) =
-        //     self.get_account_address_from_parameter(space_delim_strings[1])?;
-        let sender_ref_id = 0;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sender_address = sender.address;
-        let sequence_number = sender.sequence_number;
-
-        let txn = self.create_txn_to_submit(program, &sender, None, None, None)?;
-
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        self.wait_for_transaction(sender_address, sequence_number + 1)
-    }
-
     fn submit_program(
         &mut self,
         space_delim_strings: &[&str],
