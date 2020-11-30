@@ -33,12 +33,12 @@ mod vasps;
 mod verify_txn;
 mod write_set;
 
-// OL Changes
-mod reconfig_0l;
-mod upgrade_oracle_0l;
-mod minerstate_commit_0l;
-mod minerstate_onboarding_0l;
-mod demo_0l;
-mod autopay_enable_0l;
-mod autopay_create_0l;
-mod trusted_account_update_0l;
+//////// 0L ////////
+mod ol_reconfig;
+mod ol_upgrade_oracle;
+mod ol_minerstate_commit;
+mod ol_minerstate_onboarding;
+mod ol_demo;
+mod ol_autopay_enable;
+mod ol_autopay_create;
+mod ol_trusted_account_update;

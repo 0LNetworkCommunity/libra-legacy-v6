@@ -178,8 +178,8 @@ daemon:
 
 	sudo mkdir ~/logs
 	sudo touch ~/logs/node.log
-	sudo chmod 660 ~/logs
-	sudo chmod 660 ~/logs/node.log
+	sudo chmod 777 ~/logs
+	sudo chmod 777 ~/logs/node.log
 
 	sudo systemctl daemon-reload
 	sudo systemctl stop libra-node.service

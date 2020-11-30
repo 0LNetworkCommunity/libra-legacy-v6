@@ -31,6 +31,7 @@ mod query_commands;
 mod transfer_commands;
 //////// 0L ////////
 mod node_commands;
+mod oracle_commands;
 
 /// Struct used to store data for each created account.  We track the sequence number
 /// so we can create new transactions easily
