@@ -28,7 +28,7 @@ pub struct OnboardCmd {
     #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in key_store.json")]
     waypoint: String,
     // Path of the block_0.json to submit.
-    #[options(help = "Path of the block_0.json to submit.")]
+    #[options(help = "Path of the init.json to submit.")]
     file: PathBuf, 
 }
 
