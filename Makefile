@@ -16,8 +16,7 @@ REPO_ORG = OLSF
 
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-# NODE_ENV = stage
-MNEM = $(shell cat fixtures/test/${NS}/owner.mnem)
+MNEM = $(shell cat fixtures/mnemonic/${NS}.mnem)
 else
 REPO_NAME = experimental-genesis
 NODE_ENV = prod
@@ -228,9 +227,9 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-	cp ./fixtures/${NODE_ENV}/${NS}/miner.toml ${DATA_PATH}/miner.toml
+	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
 
-	cp ./fixtures/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
+	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
 
