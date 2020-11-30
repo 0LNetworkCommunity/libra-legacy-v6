@@ -70,12 +70,19 @@ impl Runnable for OnboardCmd {
             init_data.human_name
         ) {
             Ok(res) => {
-                eval_tx_status(res);
-                // status_ok!("Success", "Validator initialization committed, exiting.");
+                match eval_tx_status(res.clone()) {
+                    true => { 
+                        status_ok!("Success", "Validator initialization committed, exiting.");
+
+                    },
+                    false => {
+                        status_err!("Init transaction failed with:");
+                        println!("{:?}", res);
+                    }
+                }
             }
             Err(e) => {
                 status_warn!(format!("Validator initialization error: {:?}", e));
-
             }
         }
     }
