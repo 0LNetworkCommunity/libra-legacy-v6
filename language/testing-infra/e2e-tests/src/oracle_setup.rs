@@ -5,6 +5,7 @@ use libra_types::{
 use include_dir::{include_dir, Dir};
 use compiled_stdlib::transaction_scripts::{StdlibScript, CompiledBytes};
 
+// NOTE: rerun fixtures with: cargo run -p stdlib --release -- --create-upgrade-payload
 const UPGRADE_DIR: Dir =
     include_dir!("../../../fixtures/upgrade_payload/tx_scripts");
 
