@@ -60,7 +60,7 @@ module Reconfigure {
         };
 
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
-        if(Vector::length<address>(&proposed_set)<= 4) proposed_set = LibraSystem::get_val_set_addr();
+        if(Vector::length<address>(&proposed_set)<= 3) proposed_set = LibraSystem::get_val_set_addr();
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
