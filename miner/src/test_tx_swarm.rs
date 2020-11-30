@@ -19,7 +19,7 @@ pub fn swarm_miner(swarm_path: PathBuf) {
     let tx_params = get_params_from_swarm(swarm_path).unwrap();
     let conf = MinerConfig::load_swarm_config(&tx_params);
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
-    fs::copy("./fixtures/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
+    fs::copy("./fixtures/blocks/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
 
     backlog::process_backlog(&conf, &tx_params);
 

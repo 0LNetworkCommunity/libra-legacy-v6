@@ -54,7 +54,7 @@ pub fn integration() {
             // copy fixtures
             fs::create_dir(&"../swarm_temp/blocks").unwrap();
             // copy fixtures/block_0.json.test.alice -> blocks/block_0.json
-            fs::copy("../fixtures/test/alice/block_0.json", "../swarm_temp/blocks/block_0.json").unwrap();
+            fs::copy("../fixtures/blocks/test/alice/block_0.json", "../swarm_temp/blocks/block_0.json").unwrap();
 
             // start the miner swarm test helper.
             let mut miner_cmd = Command::new("cargo");
