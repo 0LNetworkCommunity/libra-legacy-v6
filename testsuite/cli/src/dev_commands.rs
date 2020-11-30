@@ -29,6 +29,7 @@ impl Command for DevCommand {
             Box::new(DevCommandChangeLibraVersion {}),
             Box::new(DevCommandEnableCustomScript {}),
             Box::new(AddToScriptAllowList {}),
+            Box::new(DevCommandNoop {}),
         ];
         subcommand_execute(&params[0], commands, client, &params[1..]);
     }
@@ -196,6 +197,30 @@ impl Command for DevCommandChangeLibraVersion {
             return;
         }
         match client.change_libra_version(params, true) {
+            Ok(_) => println!("Successfully finished execution"),
+            Err(e) => println!("{}", e),
+        }
+    }
+}
+
+pub struct DevCommandNoop {}
+
+impl Command for DevCommandNoop {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["noop", "n"]
+    }
+
+    fn get_params_help(&self) -> &'static str {
+        ""
+    }
+
+    fn get_description(&self) -> &'static str {
+        "Calls demo_e2e tx script, for testing purposes"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+
+        match client.noop_demo(params, true) {
             Ok(_) => println!("Successfully finished execution"),
             Err(e) => println!("{}", e),
         }

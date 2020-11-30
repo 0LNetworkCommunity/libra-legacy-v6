@@ -22,7 +22,7 @@ script {
   use 0x1::Stats;
 
   fun main(vm: &signer) {
-    // check the case of a network density of 4 active validators.
+    // check the case of a network density of 7 active validators.
 
     let validators = Vector::singleton<address>({{alice}});
     Vector::push_back(&mut validators, {{bob}});

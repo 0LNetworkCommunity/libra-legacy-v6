@@ -90,7 +90,7 @@ fn main() {
     logger.init();
     crash_handler::setup_panic_handler();
 
-    let (commands, alias_to_cmd) = get_commands(args.faucet_account_file.is_some());
+    let (commands, alias_to_cmd) = get_commands(true);
 
     let faucet_account_file = args
         .faucet_account_file

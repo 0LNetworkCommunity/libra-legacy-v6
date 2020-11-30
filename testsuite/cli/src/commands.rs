@@ -10,6 +10,7 @@ use anyhow::Error;
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use std::{collections::HashMap, sync::Arc};
 use crate::node_commands::NodeCommand;
+use crate::oracle_commands::OracleCommand;
 
 /// Print the error and bump up error counter.
 pub fn report_error(msg: &str, e: Error) {
@@ -52,6 +53,7 @@ pub fn get_commands(
         Arc::new(InfoCommand {}),
         ///////// 0L ////////
         Arc::new(NodeCommand {}),
+        Arc::new(OracleCommand {}),
     ];
     if include_dev {
         commands.push(Arc::new(DevCommand {}));

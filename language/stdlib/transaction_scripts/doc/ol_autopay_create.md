@@ -14,7 +14,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="autopay_create_0l.md#autopay_create_instruction_tx">autopay_create_instruction_tx</a>(sender: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_autopay_create.md#autopay_create_instruction_tx">autopay_create_instruction_tx</a>(sender: &signer)
 </code></pre>
 
 
@@ -23,7 +23,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="autopay_create_0l.md#autopay_create_instruction_tx">autopay_create_instruction_tx</a>(sender: &signer) {
+<pre><code><b>fun</b> <a href="ol_autopay_create.md#autopay_create_instruction_tx">autopay_create_instruction_tx</a>(sender: &signer) {
   <b>let</b> account = <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>let</b> uid = 1;
   <b>let</b> payee = 0x02;

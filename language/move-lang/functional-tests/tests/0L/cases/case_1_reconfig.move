@@ -101,6 +101,7 @@ script {
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
+    use 0x1::Debug::print;
 
     // use 0x1::ValidatorUniverse;
     fun main(_account: &signer) {
@@ -109,6 +110,7 @@ script {
         // Check the validator set is at expected size
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
+        print(&LibraAccount::balance<GAS>({{alice}}));
         assert(LibraAccount::balance<GAS>({{alice}}) == 296, 7357000180112);  
         assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180113);  
     }
