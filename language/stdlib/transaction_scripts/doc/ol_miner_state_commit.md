@@ -14,7 +14,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="miner_state_commit.md#minerstate_commit">minerstate_commit</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_miner_state_commit.md#minerstate_commit">minerstate_commit</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -23,7 +23,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="miner_state_commit.md#minerstate_commit">minerstate_commit</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;) {
+<pre><code><b>fun</b> <a href="ol_miner_state_commit.md#minerstate_commit">minerstate_commit</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;) {
 
 
     <b>let</b> proof = <a href="../../modules/doc/MinerState.md#0x1_MinerState_create_proof_blob">MinerState::create_proof_blob</a>(
