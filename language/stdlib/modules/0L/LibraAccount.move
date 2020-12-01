@@ -271,13 +271,12 @@ module LibraAccount {
         // // Create OP Account
         let op_auth_key_prefix = x"fa72817f1b5aab94658238ddcdc08010";
         let op_human_name = x"1ee744";
-        let op_account_address = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
+        let op_account_address = 0xfa72817f1b5aab94658238ddcdc08010;
         let new_op_account = create_signer(op_account_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
         add_currencies_for_account<GAS>(&new_op_account, false);
-        // // destroy_signer(new_op_account);
 
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_account_address);
@@ -285,7 +284,7 @@ module LibraAccount {
         // OP sends network info to Owner config"
         ValidatorConfig::set_config(
             &new_op_account, // signer
-            sender_addr,
+            new_account_address,
             consensus_pubkey,
             validator_network_addresses,
             fullnode_network_addresses

@@ -3,15 +3,15 @@
 //! new-transaction
 //! sender: bob
 script {
-// use 0x1::VDF;
+use 0x1::VDF;
 use 0x1::LibraAccount;
 // use 0x1::GAS::GAS;
-// use 0x1::MinerState;
+use 0x1::MinerState;
 // use 0x1::NodeWeight;
 use 0x1::TestFixtures;
 // use 0x1::ValidatorConfig;
 // use 0x1::Roles;
-// use 0x1::Signer;
+use 0x1::Signer;
 
 // Test Prefix: 1301
 fun main(sender: &signer) {
@@ -19,12 +19,12 @@ fun main(sender: &signer) {
   let challenge = TestFixtures::eve_0_easy_chal();
   let solution = TestFixtures::eve_0_easy_sol();
   // // Parse key and check
-  // let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-  // assert(eve_addr == 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
+  let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
+  assert(eve_addr == 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
   
-  // let sender_addr = Signer::address_of(sender);
-  // let epochs_since_creation = 10;
-  // MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+  let sender_addr = Signer::address_of(sender);
+  let epochs_since_creation = 10;
+  MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
 
   LibraAccount::create_validator_account_with_proof(
       sender,
