@@ -96,13 +96,14 @@ module Genesis {
         ValidatorUniverse::initialize(lr_account);
         AutoPay::initialize(lr_account);
         Subsidy::init_fullnode_sub(lr_account);
+        Oracle::initialize(lr_account);
+        Fullnodes::initialize(lr_account);
         // After we have called this function, all invariants which are guarded by
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.
         LibraTimestamp::set_time_has_started(lr_account);
         Epoch::initialize(lr_account);
-        // Oracle initialize
-        Oracle::initialize(lr_account);
+
     }
 
     /// For verification of genesis, the goal is to prove that all the invariants which

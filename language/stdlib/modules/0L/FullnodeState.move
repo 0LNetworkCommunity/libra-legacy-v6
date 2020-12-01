@@ -5,36 +5,47 @@ module FullnodeState {
   use 0x1::Signer;
   use 0x1::Vector;
 
-  resource struct FullnodeState { 
-      address_vec: vector<address>,
-      proofs_vec: vector<u64>,
+  resource struct FullnodeCounter {
+    proofs_submitted_in_epoch: u64,
+    proofs_paid_in_epoch: u64,
+    cumulative_proofs_submitted: u64,
+    cumulative_proofs_paid: u64,
+
+
   }
 
-  public fun initialize(vm: &signer) {
-      let sender = Signer::address_of(vm);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
-      move_to<FullnodeState>(
-      vm, 
-      FullnodeState {
-          address_vec: Vector::empty<address>(),
-          proofs_vec: Vector::empty<u64>(),
+  public fun initialize(sender: &signer) {
+      move_to<FullnodeCounter>(
+      sender, 
+      FullnodeCounter {
+          proofs_submitted_in_epoch: 0,
+          proofs_paid_in_epoch: 0,
+          cumulative_proofs_submitted: 0,
+          cumulative_proofs_paid: 0,
         }
       );
   }
 
-
-  public fun reset(vm: &signer, height: u64) acquires FullnodeState {
+  public fun reconfig(vm: &signer, addr: &address) acquires FullnodeCounter {
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190201014010);
-      let state = borrow_global_mut<FullnodeState>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-      state.address_vec = Vector::empty<address>();
-      state.proofs_vec = Vector::empty<u64>();
+      let state = borrow_global_mut<FullnodeCounter>(addr);
+      state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + state.proofs_submitted_in_epoch;
+      state.cumulative_proofs_paid = state.cumulative_proofs_paid + state.proofs_paid_in_epoch;
+      // reset 
+      state.proofs_submitted_in_epoch= 0;
+      state.proofs_paid_in_epoch = 0;
+  }
+  public fun inc_proof(sender: &signer) acquires FullnodeCounter {
+    let addr = Signer::address_of(sender);
+    let state = borrow_global_mut<FullnodeCounter>(addr);
+    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
   }
 
-  public fun get_address_proof_count(addr: address):u64 acquires FullnodeState {
-      let state = borrow_global<FullnodeState>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-      let idx = Vector::index_of<address>(state.address_vec, addr);
-      Vector::borrow(state.proofs_vec, idx)
+  public fun get_address_proof_count(addr: address):u64 acquires FullnodeCounter {
+      let state = borrow_global<FullnodeCounter>(addr);
+      let (_, idx) = Vector::index_of<address>(&state.address_vec, &addr);
+      *Vector::borrow<u64>(&state.proofs_vec, idx)
   }
 }
 }

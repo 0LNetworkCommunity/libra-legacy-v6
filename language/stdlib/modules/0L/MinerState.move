@@ -292,7 +292,7 @@ address 0x1 {
       };
       
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-      Subsidy::queue_fullnode_subisdy(Signer::address_of(miner_sig));
+      // Subsidy::queue_fullnode_subisdy(Signer::address_of(miner_sig));
       //also add the miner to validator universe
       //TODO: #254 ValidatorUniverse::add_validators need to check permission.
       // Note: this should be in LibraAccount but causes cyclic dependency.
