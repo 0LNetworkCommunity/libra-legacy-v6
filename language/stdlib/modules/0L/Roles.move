@@ -128,9 +128,17 @@ module Roles {
         grant_role(new_account, VALIDATOR_ROLE_ID);
     }
 
-    spec fun new_validator_role {
+    spec fun new_validator_role_with_proof {
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
     }
+
+    // can only be called by signer
+    public fun new_validator_operator_role_with_proof(
+        new_account: &signer,
+    ) {
+        grant_role(new_account, VALIDATOR_OPERATOR_ROLE_ID);
+    }
+    
 
     /// Publish a ValidatorOperator `RoleId` under `new_account`.
     /// The `creating_account` must be LibraRoot
@@ -141,6 +149,7 @@ module Roles {
         assert_libra_root(creating_account);
         grant_role(new_account, VALIDATOR_OPERATOR_ROLE_ID);
     }
+
     spec fun new_validator_operator_role {
         include AbortsIfNotLibraRoot{account: creating_account};
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_OPERATOR_ROLE_ID};

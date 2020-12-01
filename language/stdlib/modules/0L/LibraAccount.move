@@ -252,7 +252,7 @@ module LibraAccount {
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
-        ValidatorConfig::publish_with_proof(&new_signer, human_name);
+        ValidatorConfig::publish_with_proof(&new_signer, *&human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
 
         // NOTE: VDF verification is being called twice!
@@ -264,29 +264,37 @@ module LibraAccount {
             validator_network_addresses,
             fullnode_network_addresses,
         );
-
-        make_account(new_signer, auth_key_prefix);
+        
         MinerState::reset_rate_limit(sender_addr);
 
-        // Create OP Account
-        // let new_op_account = create_signer(new_account_address);
-        // Roles::new_validator_operator_role(lr_account, &new_op_account);
-        // Event::publish_generator(&new_account);
-        // ValidatorOperatorConfig::publish(&new_account, lr_account, human_name);
-        // add_currencies_for_account<GAS>(&new_account, false);
-        // make_account(new_account, auth_key_prefix);
+        // // Create OP Account
+        // // let op_auth_key_prefix = x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010";
+        // let op_human_name = x"1ee744";
+        // let op_account_address = 0xfa72817f1b5aab94658238ddcdc08010;
+        // let new_op_account = create_signer(op_account_address);
+        // Roles::new_validator_operator_role_with_proof(&new_op_account);
+        // Event::publish_generator(&new_op_account);
+        // ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
+        // add_currencies_for_account<GAS>(&new_op_account, false);
+        // // destroy_signer(new_op_account);
 
-        // Link owner to OP
-        ValidatorConfig::set_operator(account, operator_account);
+        // // Link owner to OP
+        // ValidatorConfig::set_operator(&new_signer, op_account_address);
+        // // OP sends network info to Owner config"
+        // ValidatorConfig::set_config(
+        //     &new_op_account, // signer
+        //     sender_addr,
+        //     consensus_pubkey,
+        //     validator_network_addresses,
+        //     fullnode_network_addresses
+        // );
 
-        // OP sends network info to Owner config"
-        //     ValidatorConfig::set_config(
-        //         validator_operator_account, // signer
-        //         validator_account,
-        //         consensus_pubkey,
-        //         validator_network_addresses,
-        //         fullnode_network_addresses
-        //     );
+        make_account(new_signer, auth_key_prefix);
+        // destroy_signer(new_signer);
+
+        // make_account(new_op_account, op_auth_key_prefix);
+        // destroy_signer(new_op_account);
+
 
         new_account_address
 
