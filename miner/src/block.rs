@@ -471,9 +471,11 @@ fn create_fixtures() {
         let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
         assert_eq!(init_configs.op_fullnode_network_addresses, "134.122.115.12", "Could not parse network address");
 
-        let consensus_key_vec = hex::decode("b8f2287e6108964b5becb656fa5d98f02e063a7ab9f8ac5dbb5b7fac481255db").unwrap();
+        let consensus_key_vec = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
         
         assert_eq!(init_configs.op_consensus_pubkey, consensus_key_vec, "Could not parse pubkey");
+
+        assert_eq!(init_configs.op_consensus_pubkey, consensus_key_vec, "Human name must match");
 
     }
 }
