@@ -35,7 +35,6 @@ module LibraAccount {
     use 0x1::Globals;
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
-    // use 0x1::Authenticator;
     use 0x1::Debug::print;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
@@ -262,16 +261,8 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
-
-        // ValidatorConfig::init_val_config_with_proof(
-        //     &new_signer, // validator_operator_account: &signer,
-        //     consensus_pubkey,
-        //     validator_network_addresses,
-        //     fullnode_network_addresses,
-        // );
-        
-
-        // // Create OP Account
+        // Subsidy::genesis(&new_signer);
+        // Create OP Account
          
         let op_auth_key_prefix = x"fa72817f1b5aab94658238ddcdc08010";
         // let op_auth_key_prefix = Authenticator::ed25519_authentication_key(op_operator_pubkey);

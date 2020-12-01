@@ -174,7 +174,7 @@ address 0x1 {
         current_proof_price: u64,
         current_cap: u64,
         current_gas_distributed: u64,
-        current_proofs_verified: u64
+        current_proofs_verified: u64,
     }
 
     public fun init_fullnode_sub(vm: &signer) {
@@ -192,7 +192,7 @@ address 0x1 {
         current_proof_price: baseline_tx_cost * 24 * 8, // number of proof submisisons in 1st epoch.
         current_cap: baseline_cap,
         current_gas_distributed: 0u64,
-        current_proofs_verified: 0u64
+        current_proofs_verified: 0u64,
       });
     }
 
