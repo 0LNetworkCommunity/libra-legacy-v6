@@ -5,11 +5,11 @@
 script {
 use 0x1::VDF;
 use 0x1::LibraAccount;
-// use 0x1::GAS::GAS;
+use 0x1::GAS::GAS;
 use 0x1::MinerState;
-// use 0x1::NodeWeight;
+use 0x1::NodeWeight;
 use 0x1::TestFixtures;
-// use 0x1::ValidatorConfig;
+use 0x1::ValidatorConfig;
 use 0x1::Roles;
 use 0x1::Signer;
 
@@ -42,18 +42,19 @@ fun main(sender: &signer) {
   assert(Roles::assert_validator_addr(eve_addr), 7357130101011000);
   assert(Roles::assert_validator_operator_addr(0xfa72817f1b5aab94658238ddcdc08010), 7357130101021000);
 
-  // assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
+  assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
 
-  // assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101031000);
+  assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101031000);
 
-  // //Check the validator is in the validator universe.
-  // assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101041000);
+  //Check the validator is in the validator universe.
+  assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101041000);
 
-  // // Check the account exists and the balance is 0
-  // assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101051000);
+  // Check the account exists and the balance is 0
+  // TODO: Needs some balance
+  assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101051000);
 
-  // // Is rate-limited
-  // assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101061000);
+  // Is rate-limited
+  assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101061000);
 }
 }
 // check: EXECUTED
