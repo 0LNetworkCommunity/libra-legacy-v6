@@ -34,10 +34,13 @@ module Reconfigure {
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
 
-        let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
-        Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set,  &fee_ratio);
-        Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
+        if (Vector::length<address>(&outgoing_set) > 0) {
+            let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
+            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
+            Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
+        };
+
         
         // Propose upcoming validator set:
         // Step 1: Sort Top N Elegible validators
