@@ -243,7 +243,9 @@ module LibraAccount {
         op_human_name: vector<u8>,
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
-        assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
+
+        ///////////// TODO //////////// ONLY FOR TESTING
+        // assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),

@@ -1,10 +1,12 @@
 {
-    "human_name":"3DC18D1CF61FAAC6AC70E3A63F062E4B",
-    "consensus_pubkey": "b8f2287e6108964b5becb656fa5d98f02e063a7ab9f8ac5dbb5b7fac481255db",
-    "validator_network_identity_pubkey": "d528a7b507c056f1cfe7ba5f47acaef95a8d8c33fc100d3d27a09b0c4c8c82c4",
-    "validator_network_address": "134.122.115.12",
-    "full_node_network_identity_pubkey": "4d6f1faf02111c82ebd067d52a08023946c1d2c4b0a123f663d55941739997de",
-    "full_node_network_address": "134.122.115.12",
+    "ow_human_name":"3DC18D1CF61FAAC6AC70E3A63F062E4B",
+    "op_address": "2e063a7ab9f8ac5dbb5b7fac481255db",
+    "op_auth_key_prefix": "2e063a7ab9f8ac5dbb5b7fac481255db", 
+    "op_consensus_pubkey": "b8f2287e6108964b5becb656fa5d98f02e063a7ab9f8ac5dbb5b7fac481255db",
+    "op_validator_network_addresses": "134.122.115.12",
+    "op_fullnode_network_addresses": "134.122.115.12",
+    "op_human_name": "2e063a7ab9f8ac5dbb5b7fac481255db",
+        
     "block_zero": {
         "height": 0,
         "elapsed_secs": 9,
