@@ -173,7 +173,7 @@ address 0x1 {
         previous_epoch_proofs: u64,
         current_proof_price: u64,
         current_cap: u64,
-        current_gas_distributed: u64,
+        current_subsidy_distributed: u64,
         current_proofs_verified: u64,
     }
 
@@ -191,7 +191,7 @@ address 0x1 {
         previous_epoch_proofs: 0u64,
         current_proof_price: baseline_tx_cost * 24 * 8, // number of proof submisisons in 1st epoch.
         current_cap: baseline_cap,
-        current_gas_distributed: 0u64,
+        current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
       });
     }
@@ -199,10 +199,19 @@ address 0x1 {
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64 ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let subsidy = state.current_proof_price * count;
-      // abort if ceiling was met
-      //TODO: check modulo
-      if (state.current_gas_distributed + state.current_proof_price > state.current_cap) return 0;
+      // fail fast, abort if ceiling was met
+      if (state.current_subsidy_distributed > state.current_cap) return 0;
+      let proposed_subsidy = state.current_proof_price * count;
+      let subsidy;
+      // check if payments will exceed ceiling.
+      if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
+        // pay the remainder only
+        // TODO: This creates a race. Check ordering of list.
+        subsidy = state.current_cap - state.current_subsidy_distributed;
+      } else {
+        // happy case, the ceiling is not met.
+        subsidy = proposed_subsidy;
+      };
 
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
 
@@ -212,7 +221,7 @@ address 0x1 {
         minted_coins,
         x"", x""
       );
-      state.current_gas_distributed = state.current_gas_distributed + subsidy;
+      state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
       subsidy
     }
 
@@ -225,7 +234,7 @@ address 0x1 {
        // save 
       state.previous_epoch_proofs = state.current_proofs_verified;
       // reset counters
-      state.current_gas_distributed =  0u64;
+      state.current_subsidy_distributed =  0u64;
       state.current_proofs_verified = 0u64;
 
     }

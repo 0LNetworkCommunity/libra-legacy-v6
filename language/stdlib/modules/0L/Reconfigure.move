@@ -70,8 +70,10 @@ module Reconfigure {
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
             let count = FullnodeState::get_address_proof_count(addr);
-            Subsidy::distribute_fullnode_subsidy(vm, addr, count);
-            FullnodeState::reset(vm, addr);
+            let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
+            FullnodeState::inc_payment_count(vm, addr, count);
+            FullnodeState::inc_payment_value(vm, addr, value);
+            FullnodeState::reconfig(vm, addr);
             k = k + 1;
         };
 
