@@ -234,7 +234,7 @@ module LibraAccount {
         solution: &vector<u8>,
         ow_human_name: vector<u8>,
         op_address: address,
-        _op_operator_pubkey: vector<u8>,
+        op_auth_key_prefix: vector<u8>,
         op_consensus_pubkey: vector<u8>,
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
@@ -263,7 +263,6 @@ module LibraAccount {
         // Subsidy::genesis(&new_signer);
         // Create OP Account
          
-        let op_auth_key_prefix = x"fa72817f1b5aab94658238ddcdc08010";
         // let op_auth_key_prefix = Authenticator::ed25519_authentication_key(op_operator_pubkey);
 
         let new_op_account = create_signer(op_address);

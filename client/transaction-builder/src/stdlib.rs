@@ -694,10 +694,13 @@ pub enum ScriptCall {
     MinerstateOnboarding {
         challenge: Bytes,
         solution: Bytes,
-        consensus_pubkey: Bytes,
-        validator_network_address: Bytes,
-        full_node_network_address: Bytes,
-        human_name: Bytes,
+        ow_human_name: Bytes,
+        op_address: AccountAddress,
+        op_auth_key_prefix: Bytes,
+        op_consensus_pubkey: Bytes,
+        op_validator_network_addresses: Bytes,
+        op_fullnode_network_addresses: Bytes,
+        op_human_name: Bytes,
     },
 
     OlOracleTx {
@@ -1642,17 +1645,23 @@ impl ScriptCall {
             MinerstateOnboarding {
                 challenge,
                 solution,
-                consensus_pubkey,
-                validator_network_address,
-                full_node_network_address,
-                human_name,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
             } => encode_minerstate_onboarding_script(
                 challenge,
                 solution,
-                consensus_pubkey,
-                validator_network_address,
-                full_node_network_address,
-                human_name,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
             ),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
             OlReconfigBulkUpdateSetup {
@@ -2583,10 +2592,13 @@ pub fn encode_minerstate_helper_script() -> Script {
 pub fn encode_minerstate_onboarding_script(
     challenge: Vec<u8>,
     solution: Vec<u8>,
-    consensus_pubkey: Vec<u8>,
-    validator_network_address: Vec<u8>,
-    full_node_network_address: Vec<u8>,
-    human_name: Vec<u8>,
+    ow_human_name: Vec<u8>,
+    op_address: AccountAddress,
+    op_auth_key_prefix: Vec<u8>,
+    op_consensus_pubkey: Vec<u8>,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
+    op_human_name: Vec<u8>,
 ) -> Script {
     Script::new(
         MINERSTATE_ONBOARDING_CODE.to_vec(),
@@ -2594,10 +2606,13 @@ pub fn encode_minerstate_onboarding_script(
         vec![
             TransactionArgument::U8Vector(challenge),
             TransactionArgument::U8Vector(solution),
-            TransactionArgument::U8Vector(consensus_pubkey),
-            TransactionArgument::U8Vector(validator_network_address),
-            TransactionArgument::U8Vector(full_node_network_address),
-            TransactionArgument::U8Vector(human_name),
+            TransactionArgument::U8Vector(ow_human_name),
+            TransactionArgument::Address(op_address),
+            TransactionArgument::U8Vector(op_auth_key_prefix),
+            TransactionArgument::U8Vector(op_consensus_pubkey),
+            TransactionArgument::U8Vector(op_validator_network_addresses),
+            TransactionArgument::U8Vector(op_fullnode_network_addresses),
+            TransactionArgument::U8Vector(op_human_name),
         ],
     )
 }
@@ -3749,10 +3764,13 @@ fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateOnboarding {
         challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
         solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        consensus_pubkey: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        validator_network_address: decode_u8vector_argument(script.args().get(3)?.clone())?,
-        full_node_network_address: decode_u8vector_argument(script.args().get(4)?.clone())?,
-        human_name: decode_u8vector_argument(script.args().get(5)?.clone())?,
+        ow_human_name: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        op_address: decode_address_argument(script.args().get(1)?.clone())?,
+        op_auth_key_prefix: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        op_consensus_pubkey: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        op_validator_network_addresses: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        op_fullnode_network_addresses: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        op_human_name: decode_u8vector_argument(script.args().get(1)?.clone())?,
     })
 }
 

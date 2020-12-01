@@ -134,10 +134,13 @@ pub fn submit_onboard_tx(
     tx_params: &TxParams,
     preimage: Vec<u8>,
     proof: Vec<u8>,
-    consensus_pubkey: Vec<u8>,
-    validator_network_address: String,
-    full_node_network_address: String,
-    human_name: String,
+    ow_human_name: Vec<u8>,
+    op_address: AccountAddress,
+    op_auth_key_prefix: Vec<u8>,
+    op_consensus_pubkey: Vec<u8>,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
+    op_human_name: Vec<u8>,
 ) -> Result<TransactionView, Error> {
 
     // Create a client object
@@ -154,10 +157,13 @@ pub fn submit_onboard_tx(
     let script = transaction_builder::encode_minerstate_onboarding_script(
         preimage,
         proof,
-        consensus_pubkey,
-        validator_network_address.as_bytes().to_vec(),
-        full_node_network_address.as_bytes().to_vec(),
-        human_name.as_bytes().to_vec(),
+        ow_human_name,
+        op_address,
+        op_auth_key_prefix,
+        op_consensus_pubkey,
+        op_validator_network_addresses,
+        op_fullnode_network_addresses,
+        op_human_name,
     );
 
     // sign the transaction script
