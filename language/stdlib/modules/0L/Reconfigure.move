@@ -64,19 +64,23 @@ module Reconfigure {
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
         
+        // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         let miners = ValidatorUniverse::get_eligible_validators(vm);
+        let global_proofs_count = 0;
         let k = 0;
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
             let count = FullnodeState::get_address_proof_count(addr);
+            global_proofs_count = global_proofs_count + count;
             let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
             FullnodeState::inc_payment_count(vm, addr, count);
             FullnodeState::inc_payment_value(vm, addr, value);
             FullnodeState::reconfig(vm, addr);
             k = k + 1;
         };
-
+        // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
+        Subsidy::set_global_count(vm, global_proofs_count);
 
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
@@ -87,6 +91,7 @@ module Reconfigure {
 
 
         // reset clocks
+        Subsidy::fullnode_reconfig(vm);
         AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
     }

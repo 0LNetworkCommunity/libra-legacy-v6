@@ -228,9 +228,7 @@ address 0x1 {
 
     public fun fullnode_reconfig(vm: &signer) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
-
       auctioneer(vm);
-
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
        // save 
       state.previous_epoch_proofs = state.current_proofs_verified;
@@ -238,6 +236,11 @@ address 0x1 {
       state.current_subsidy_distributed = 0u64;
       state.current_proofs_verified = 0u64;
 
+    }
+
+    public fun set_global_count(vm: &signer, count: u64) acquires FullnodeSubsidy{
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+      state.current_proofs_verified = count;
     }
 
     fun baseline_auction_units():u64 {
@@ -250,17 +253,27 @@ address 0x1 {
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let baseline_auction_units =  baseline_auction_units(); 
-      let next_cap = fullnode_subsidy_cap(vm);
-      let baseline_proof_price = next_cap / baseline_auction_units;
-      // set new price
-      let current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
+      let baseline_auction_units = baseline_auction_units(); 
 
-      // cannot be more than the baseline for the cap
-      state.current_proof_price = current_auction_multiplier * state.current_proof_price;
-      if (state.current_proof_price > baseline_proof_price) {
-        state.current_proof_price = baseline_proof_price
+      let next_cap = fullnode_subsidy_cap(vm);
+
+      let baseline_proof_price = next_cap / baseline_auction_units;
+      let current_auction_multiplier;
+      // set new price
+      if (state.current_proofs_verified > 0) {
+        current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
+      } else {
+
+        current_auction_multiplier = baseline_auction_units / 1;
       };
+      // New unit price cannot be more than the ceiling
+      if ((current_auction_multiplier * baseline_proof_price) > next_cap) {
+        //Note: in failure case, the next miner gets the full ceiling
+        state.current_proof_price = next_cap
+      } else {
+        state.current_proof_price = current_auction_multiplier * baseline_proof_price
+      };
+
       // set new cap
       state.current_cap = next_cap;
     }

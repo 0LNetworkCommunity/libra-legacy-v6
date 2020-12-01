@@ -301,7 +301,7 @@ address 0x1 {
       //TODO: #254 ValidatorUniverse::add_validators need to check permission.
       // Note: this should be in LibraAccount but causes cyclic dependency.
       ValidatorUniverse::add_validator(miner_sig);
-      FullnodeState::initialize(miner_sig);
+      FullnodeState::val_init(miner_sig);
 
     }
 

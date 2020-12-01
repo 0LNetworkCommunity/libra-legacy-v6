@@ -35,7 +35,6 @@ module LibraAccount {
     use 0x1::Globals;
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
-    use 0x1::Debug::print;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -1114,8 +1113,6 @@ module LibraAccount {
         new_account: signer,
         auth_key_prefix: vector<u8>,
     ) acquires AccountOperationsCapability {
-        print(&0x11111111111111);
-
         let new_account_addr = Signer::address_of(&new_account);
         // cannot create an account at the reserved address 0x0
         // assert(
@@ -1126,23 +1123,19 @@ module LibraAccount {
             new_account_addr != CoreAddresses::CORE_CODE_ADDRESS(),
             Errors::invalid_argument(ECANNOT_CREATE_AT_CORE_CODE)
         );
-        print(&0x02);
         // Construct authentication key.
         let authentication_key = create_authentication_key(&new_account, auth_key_prefix);
-        print(&0x03);
 
         // Publish AccountFreezing::FreezingBit (initially not frozen)
         AccountFreezing::create(&new_account);
         // The AccountOperationsCapability is published during Genesis, so it should
         // always exist.  This is a sanity check.
-        print(&0x04);
 
         assert(
             exists<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()),
             Errors::not_published(EACCOUNT_OPERATIONS_CAPABILITY)
         );
         // Emit the CreateAccountEvent
-        print(&0x05);
 
         Event::emit_event(
             &mut borrow_global_mut<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()).creation_events,
@@ -1150,7 +1143,6 @@ module LibraAccount {
         );
         // Publishing the account resource last makes it possible to prove invariants that simplify
         // aborts_if's, etc.
-        print(&0x06);
 
 
         move_to(
@@ -1170,7 +1162,6 @@ module LibraAccount {
                 sequence_number: 0,
             }
         );
-        print(&0x07);
 
         //////// 0L ////////
         TrustedAccounts::initialize(&new_account);
@@ -1203,18 +1194,14 @@ module LibraAccount {
 
     /// Construct an authentication key, aborting if the prefix is not valid.
     fun create_authentication_key(account: &signer, auth_key_prefix: vector<u8>): vector<u8> {
-        print(&0x08);
         let authentication_key = auth_key_prefix;
         Vector::append(
             &mut authentication_key, LCS::to_bytes(Signer::borrow_address(account))
         );
-        print(&0x09);
-
         assert(
             Vector::length(&authentication_key) == 32,
             Errors::invalid_argument(EMALFORMED_AUTHENTICATION_KEY)
         );
-        print(&0x010);
 
         authentication_key
     }

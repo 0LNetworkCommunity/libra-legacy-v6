@@ -27,6 +27,7 @@ module Genesis {
     use 0x1::Hash;
     use 0x1::Subsidy;
     use 0x1::Epoch;
+    // use 0x1::FullnodeState;
 
     /// Initializes the Libra framework.
     fun initialize(
@@ -97,6 +98,7 @@ module Genesis {
         AutoPay::initialize(lr_account);
         Subsidy::init_fullnode_sub(lr_account);
         Oracle::initialize(lr_account);
+        // FullnodeState::global_init(lr_account);
         // After we have called this function, all invariants which are guarded by
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.
