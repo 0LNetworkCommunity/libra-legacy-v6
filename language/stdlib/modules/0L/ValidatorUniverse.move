@@ -11,12 +11,12 @@ address 0x1 {
 
     use 0x1::Vector;
     use 0x1::Signer;
-    use 0x1::Option::{Self, Option};
+    // use 0x1::Option::{Self, Option};
     use 0x1::CoreAddresses;
 
     struct ValidatorEpochInfo {
         validator_address: address,
-        weight: u64
+        // weight: u64
     }
 
     // resource for tracking the universe of accounts that have submitted a mined proof correctly, with the epoch number.
@@ -47,7 +47,7 @@ address 0x1 {
         &mut collection.validators,
         ValidatorEpochInfo{
         validator_address: addr,
-        weight: 1
+        // weight: 1
       });
     }
 
@@ -91,81 +91,81 @@ address 0x1 {
     // This function is the Proof of Weight. This is what calculates the values
     // for the consensus vote power, which will be used by Reconfiguration to call LibraSystem::bulk_update_validators.
     // Function code: 05 Prefix: 220105
-    public fun proof_of_weight(account: &signer, addr: address, is_validator_in_current_epoch: bool): u64 acquires ValidatorUniverse {
-      let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 22010105014010);
+    // public fun proof_of_weight(account: &signer, addr: address, is_validator_in_current_epoch: bool): u64 acquires ValidatorUniverse {
+    //   let sender = Signer::address_of(account);
+    //   assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 22010105014010);
 
-      //1. borrow the Validator's ValidatorEpochInfo
-      // Get the validator
-      let collection =  borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+    //   //1. borrow the Validator's ValidatorEpochInfo
+    //   // Get the validator
+    //   let collection =  borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
-      // Getting index of the validator
-      let index_vec = get_validator_index_(&collection.validators, addr);
-      assert(Option::is_some(&index_vec), 220105022040);
-      let index = *Option::borrow(&index_vec);
+    //   // Getting index of the validator
+    //   let index_vec = get_validator_index_(&collection.validators, addr);
+    //   assert(Option::is_some(&index_vec), 220105022040);
+    //   let index = *Option::borrow(&index_vec);
 
-      let validator_list = &mut collection.validators;
-      let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
+    //   let validator_list = &mut collection.validators;
+    //   let validatorInfo = Vector::borrow_mut<ValidatorEpochInfo>(validator_list, index);
 
 
-      // Weight is metric based on: The number of epochs the miners have been mining for
-      let weight = 1;
+    //   // Weight is metric based on: The number of epochs the miners have been mining for
+    //   let weight = 1;
 
-      // If the validator mined in current epoch, increment it's weight.
-      if(is_validator_in_current_epoch)
-        weight = validatorInfo.weight + 1;
+    //   // If the validator mined in current epoch, increment it's weight.
+    //   if(is_validator_in_current_epoch)
+    //     weight = validatorInfo.weight + 1;
 
-      validatorInfo.weight = weight;
-      weight
-    }
+    //   validatorInfo.weight = weight;
+    //   weight
+    // }
 
     // Get the index of the validator by address in the `validators` vector
-    fun get_validator_index_(validators: &vector<ValidatorEpochInfo>, addr: address): Option<u64>{
-      let size = Vector::length(validators);
+    // fun get_validator_index_(validators: &vector<ValidatorEpochInfo>, addr: address): Option<u64>{
+    //   let size = Vector::length(validators);
 
-      let i = 0;
-      while (i < size) {
-          let validator_info_ref = Vector::borrow(validators, i);
-          if (validator_info_ref.validator_address == addr) {
-              return Option::some(i)
-          };
-          i = i + 1;
-      };
+    //   let i = 0;
+    //   while (i < size) {
+    //       let validator_info_ref = Vector::borrow(validators, i);
+    //       if (validator_info_ref.validator_address == addr) {
+    //           return Option::some(i)
+    //       };
+    //       i = i + 1;
+    //   };
 
-      return Option::none()
-    }
+    //   return Option::none()
+    // }
 
     // Get the validatorInfo by address in the `validators` vector
-    fun get_validator(addr: address): ValidatorEpochInfo acquires ValidatorUniverse{
+    // fun get_validator(addr: address): ValidatorEpochInfo acquires ValidatorUniverse{
 
-      let validators = &borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS()).validators;
-      let size = Vector::length(validators);
+    //   let validators = &borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS()).validators;
+    //   let size = Vector::length(validators);
 
-      let i = 0;
-      while (i < size) {
-          let validator_info_ref = Vector::borrow(validators, i);
-          if (validator_info_ref.validator_address == addr) {
-              return *validator_info_ref
-          };
-          i = i + 1;
-      };
+    //   let i = 0;
+    //   while (i < size) {
+    //       let validator_info_ref = Vector::borrow(validators, i);
+    //       if (validator_info_ref.validator_address == addr) {
+    //           return *validator_info_ref
+    //       };
+    //       i = i + 1;
+    //   };
 
-      return ValidatorEpochInfo{
-        validator_address: {{CoreAddresses::LIBRA_ROOT_ADDRESS()}},
-        weight: 0
-      }
-    }
+    //   return ValidatorEpochInfo{
+    //     validator_address: {{CoreAddresses::LIBRA_ROOT_ADDRESS()}},
+    //     // weight: 0
+    //   }
+    // }
 
     // Function code: 06 Prefix: 220106
-    public fun get_validator_weight(account: &signer, addr: address): u64 acquires ValidatorUniverse{
-      let sender = Signer::address_of(account);
-      assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220106014010);
+    // public fun get_validator_weight(account: &signer, addr: address): u64 acquires ValidatorUniverse{
+    //   let sender = Signer::address_of(account);
+    //   assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220106014010);
 
-      let validatorInfo = get_validator(addr);
+    //   let validatorInfo = get_validator(addr);
 
-      // Validator not in universe error
-      assert(validatorInfo.validator_address != CoreAddresses::LIBRA_ROOT_ADDRESS(), 220106022040);
-      return validatorInfo.weight
-    }
+    //   // Validator not in universe error
+    //   assert(validatorInfo.validator_address != CoreAddresses::LIBRA_ROOT_ADDRESS(), 220106022040);
+    //   return validatorInfo.weight
+    // }
   }
 }
