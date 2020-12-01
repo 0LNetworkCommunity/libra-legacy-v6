@@ -35,6 +35,7 @@ module LibraAccount {
     use 0x1::Globals;
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
+    // use 0x1::Authenticator;
     use 0x1::Debug::print;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
@@ -233,10 +234,13 @@ module LibraAccount {
         sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
-        consensus_pubkey: vector<u8>,
-        validator_network_addresses: vector<u8>,
-        fullnode_network_addresses: vector<u8>,
-        human_name: vector<u8>,
+        ow_human_name: vector<u8>,
+        op_address: address,
+        _op_operator_pubkey: vector<u8>,
+        op_consensus_pubkey: vector<u8>,
+        op_validator_network_addresses: vector<u8>,
+        op_fullnode_network_addresses: vector<u8>,
+        op_human_name: vector<u8>,
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
@@ -253,7 +257,7 @@ module LibraAccount {
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
-        ValidatorConfig::publish_with_proof(&new_signer, *&human_name);
+        ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
 
         // NOTE: VDF verification is being called twice!
@@ -266,28 +270,28 @@ module LibraAccount {
         //     fullnode_network_addresses,
         // );
         
-        MinerState::reset_rate_limit(sender_addr);
 
         // // Create OP Account
+         
         let op_auth_key_prefix = x"fa72817f1b5aab94658238ddcdc08010";
-        let op_human_name = x"1ee744";
-        let op_account_address = 0xfa72817f1b5aab94658238ddcdc08010;
-        let new_op_account = create_signer(op_account_address);
+        // let op_auth_key_prefix = Authenticator::ed25519_authentication_key(op_operator_pubkey);
+
+        let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
         add_currencies_for_account<GAS>(&new_op_account, false);
 
         // Link owner to OP
-        ValidatorConfig::set_operator(&new_signer, op_account_address);
+        ValidatorConfig::set_operator(&new_signer, op_address);
 
         // OP sends network info to Owner config"
         ValidatorConfig::set_config(
             &new_op_account, // signer
             new_account_address,
-            consensus_pubkey,
-            validator_network_addresses,
-            fullnode_network_addresses
+            op_consensus_pubkey,
+            op_validator_network_addresses,
+            op_fullnode_network_addresses
         );
 
         make_account(new_signer, auth_key_prefix);
@@ -296,7 +300,7 @@ module LibraAccount {
         make_account(new_op_account, op_auth_key_prefix);
         // destroy_signer(new_op_account);
 
-
+        MinerState::reset_rate_limit(sender_addr);
         new_account_address
         // op_account_address
 

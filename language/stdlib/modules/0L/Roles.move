@@ -361,6 +361,18 @@ module Roles {
         include AbortsIfNotValidatorOperator{validator_operator_addr: Signer::spec_address_of(validator_operator_account)};
     }
 
+    //////// 0L ////////
+    /// Assert that the account has the validator operator role.
+    public fun assert_validator_operator_addr(validator_operator_addr: address):bool acquires RoleId {
+        // let validator_operator_addr = Signer::address_of(validator_operator_account);
+        assert(exists<RoleId>(validator_operator_addr), Errors::not_published(EROLE_ID));
+        assert(
+            borrow_global<RoleId>(validator_operator_addr).role_id == VALIDATOR_OPERATOR_ROLE_ID,
+            Errors::requires_role(EVALIDATOR_OPERATOR)
+        );
+        true
+    }
+
     /// Assert that the account has either the parent vasp or designated dealer role.
     public fun assert_parent_vasp_or_designated_dealer(account: &signer) acquires RoleId {
         let addr = Signer::address_of(account);

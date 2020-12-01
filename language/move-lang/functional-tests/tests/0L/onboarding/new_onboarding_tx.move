@@ -10,7 +10,7 @@ use 0x1::MinerState;
 // use 0x1::NodeWeight;
 use 0x1::TestFixtures;
 // use 0x1::ValidatorConfig;
-// use 0x1::Roles;
+use 0x1::Roles;
 use 0x1::Signer;
 
 // Test Prefix: 1301
@@ -30,13 +30,18 @@ fun main(sender: &signer) {
       sender,
       &challenge,
       &solution,
+      b"leet",
+      0xfa72817f1b5aab94658238ddcdc08010,
+      x"3808aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010",
       x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // random consensus_pubkey: vector<u8>,
       b"192.168.0.1", // validator_network_addresses: vector<u8>,
       b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
       x"1ee7", // human_name: vector<u8>,
   );
 
-  // assert(Roles::assert_validator_addr(eve_addr), 7357130101011000);
+  assert(Roles::assert_validator_addr(eve_addr), 7357130101011000);
+  assert(Roles::assert_validator_operator_addr(0xfa72817f1b5aab94658238ddcdc08010), 7357130101021000);
+
   // assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
 
   // assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101031000);
