@@ -32,6 +32,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
@@ -321,6 +322,7 @@
   };
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+  <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">FullnodeState::inc_proof</a>(miner_sign);
 }
 </code></pre>
 
@@ -360,6 +362,7 @@
 
   <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(&proof.challenge, &proof.difficulty, &proof.solution);
   <b>assert</b>(valid, 130108041021);
+
 
   miner_history.previous_proof_hash = <a href="Hash.md#0x1_Hash_sha3_256">Hash::sha3_256</a>(*&proof.solution);
 
@@ -555,6 +558,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner_sig: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+
   // NOTE Only <a href="Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
   <b>assert</b>(!<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig)), 130112011021);
@@ -579,11 +583,13 @@
   };
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
-
+  // Subsidy::queue_fullnode_subisdy(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig));
   //also add the miner <b>to</b> validator universe
   //TODO: #254 ValidatorUniverse::add_validators need <b>to</b> check permission.
   // Note: this should be in <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> but causes cyclic dependency.
   <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">ValidatorUniverse::add_validator</a>(miner_sig);
+  <a href="FullnodeState.md#0x1_FullnodeState_val_init">FullnodeState::val_init</a>(miner_sig);
+
 }
 </code></pre>
 
