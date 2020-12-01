@@ -246,6 +246,7 @@ module LibraAccount {
         );
         assert(valid, 120101011021);
 
+        //Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
@@ -265,10 +266,65 @@ module LibraAccount {
         );
 
         make_account(new_signer, auth_key_prefix);
-
         MinerState::reset_rate_limit(sender_addr);
+
+        // Create OP Account
+        // let new_op_account = create_signer(new_account_address);
+        // Roles::new_validator_operator_role(lr_account, &new_op_account);
+        // Event::publish_generator(&new_account);
+        // ValidatorOperatorConfig::publish(&new_account, lr_account, human_name);
+        // add_currencies_for_account<GAS>(&new_account, false);
+        // make_account(new_account, auth_key_prefix);
+
+        // Link owner to OP
+        ValidatorConfig::set_operator(account, operator_account);
+
+        // OP sends network info to Owner config"
+        //     ValidatorConfig::set_config(
+        //         validator_operator_account, // signer
+        //         validator_account,
+        //         consensus_pubkey,
+        //         validator_network_addresses,
+        //         fullnode_network_addresses
+        //     );
+
         new_account_address
+
     }
+
+    // public fun new_validator() {
+    //     // println!("0 ======== Create Owner Accounts");
+
+    //     LibraAccount::create_validator_account(
+    //         lr_account,
+    //         new_account_address,
+    //         auth_key_prefix,
+    //         human_name,
+    //     );
+
+    //     // println!("1 ======== Create OP Accounts");
+
+    //     LibraAccount::create_validator_operator_account(
+    //         lr_account,
+    //         new_account_address,
+    //         auth_key_prefix,
+    //         human_name,
+    //     );
+    //     // println!("2 ======== Link owner to OP");
+
+    //     assert(ValidatorOperatorConfig::get_human_name(operator_account) == operator_name, 111);
+    //     ValidatorConfig::set_operator(account, operator_account);
+        
+    //     // println!("3 ======== OP sends network info to Owner config");
+
+    //     ValidatorConfig::set_config(
+    //         validator_operator_account, // signer
+    //         validator_account,
+    //         consensus_pubkey,
+    //         validator_network_addresses,
+    //         fullnode_network_addresses
+    //     );
+    // }
 
     //0L TODO(nelaturuk): Specs need to be rewritten since we're using a different api.
     // spec fun create_validator_account_with_proof {
