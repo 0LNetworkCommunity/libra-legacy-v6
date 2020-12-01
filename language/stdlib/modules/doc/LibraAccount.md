@@ -88,6 +88,7 @@ before and after every transaction.
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="Coin1.md#0x1_Coin1">0x1::Coin1</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer">0x1::DesignatedDealer</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -120,7 +121,7 @@ before and after every transaction.
 
 ## Resource `LibraAccount`
 
-An <code>address</code> is a Libra Account iff it has a published LibraAccount resource.
+An <code>address</code> is a Libra Account if it has a published LibraAccount resource.
 
 
 <pre><code><b>resource</b> <b>struct</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>
@@ -860,7 +861,7 @@ Initialize this module. This is only callable from genesis.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, consensus_pubkey: vector&lt;u8&gt;, validator_network_addresses: vector&lt;u8&gt;, fullnode_network_addresses: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;): address
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;): address
 </code></pre>
 
 
@@ -873,10 +874,13 @@ Initialize this module. This is only callable from genesis.
     sender: &signer,
     challenge: &vector&lt;u8&gt;,
     solution: &vector&lt;u8&gt;,
-    consensus_pubkey: vector&lt;u8&gt;,
-    validator_network_addresses: vector&lt;u8&gt;,
-    fullnode_network_addresses: vector&lt;u8&gt;,
-    human_name: vector&lt;u8&gt;,
+    ow_human_name: vector&lt;u8&gt;,
+    op_address: address,
+    op_auth_key_prefix: vector&lt;u8&gt;,
+    op_consensus_pubkey: vector&lt;u8&gt;,
+    op_validator_network_addresses: vector&lt;u8&gt;,
+    op_fullnode_network_addresses: vector&lt;u8&gt;,
+    op_human_name: vector&lt;u8&gt;,
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
@@ -887,28 +891,58 @@ Initialize this module. This is only callable from genesis.
     );
     <b>assert</b>(valid, 120101011021);
 
+    //Create Owner Account
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
     // The lr_account account is verified <b>to</b> have the libra root role in `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
     <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);
     <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
-    <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">ValidatorConfig::publish_with_proof</a>(&new_signer, human_name);
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">ValidatorConfig::publish_with_proof</a>(&new_signer, ow_human_name);
     <a href="LibraAccount.md#0x1_LibraAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
 
     // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
     <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
 
-    <a href="ValidatorConfig.md#0x1_ValidatorConfig_init_val_config_with_proof">ValidatorConfig::init_val_config_with_proof</a>(
-        &new_signer, // validator_operator_account: &signer,
-        consensus_pubkey,
-        validator_network_addresses,
-        fullnode_network_addresses,
+    // <a href="ValidatorConfig.md#0x1_ValidatorConfig_init_val_config_with_proof">ValidatorConfig::init_val_config_with_proof</a>(
+    //     &new_signer, // validator_operator_account: &signer,
+    //     consensus_pubkey,
+    //     validator_network_addresses,
+    //     fullnode_network_addresses,
+    // );
+
+
+    // // Create OP Account
+
+    // <b>let</b> op_auth_key_prefix = <a href="Authenticator.md#0x1_Authenticator_ed25519_authentication_key">Authenticator::ed25519_authentication_key</a>(op_operator_pubkey);
+
+    <b>let</b> new_op_account = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(op_address);
+    <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">Roles::new_validator_operator_role_with_proof</a>(&new_op_account);
+    <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_op_account);
+    <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_publish_with_proof">ValidatorOperatorConfig::publish_with_proof</a>(&new_op_account, op_human_name);
+    <a href="LibraAccount.md#0x1_LibraAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_op_account, <b>false</b>);
+
+    // Link owner <b>to</b> OP
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_set_operator">ValidatorConfig::set_operator</a>(&new_signer, op_address);
+
+    // OP sends network info <b>to</b> Owner config"
+    <a href="ValidatorConfig.md#0x1_ValidatorConfig_set_config">ValidatorConfig::set_config</a>(
+        &new_op_account, // signer
+        new_account_address,
+        op_consensus_pubkey,
+        op_validator_network_addresses,
+        op_fullnode_network_addresses
     );
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+    // <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_signer);
+
+    <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
+    // <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_op_account);
 
     <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
     new_account_address
+    // op_account_address
+
 }
 </code></pre>
 
@@ -2363,6 +2397,8 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
     new_account: signer,
     auth_key_prefix: vector&lt;u8&gt;,
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    print(&0x11111111111111);
+
     <b>let</b> new_account_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&new_account);
     // cannot create an account at the reserved address 0x0
     // <b>assert</b>(
@@ -2373,25 +2409,33 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
         new_account_addr != <a href="CoreAddresses.md#0x1_CoreAddresses_CORE_CODE_ADDRESS">CoreAddresses::CORE_CODE_ADDRESS</a>(),
         <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_ECANNOT_CREATE_AT_CORE_CODE">ECANNOT_CREATE_AT_CORE_CODE</a>)
     );
-
+    print(&0x02);
     // Construct authentication key.
     <b>let</b> authentication_key = <a href="LibraAccount.md#0x1_LibraAccount_create_authentication_key">create_authentication_key</a>(&new_account, auth_key_prefix);
+    print(&0x03);
 
     // Publish <a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">AccountFreezing::FreezingBit</a> (initially not frozen)
     <a href="AccountFreezing.md#0x1_AccountFreezing_create">AccountFreezing::create</a>(&new_account);
     // The <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> is published during <a href="Genesis.md#0x1_Genesis">Genesis</a>, so it should
     // always exist.  This is a sanity check.
+    print(&0x04);
+
     <b>assert</b>(
         <b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()),
         <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EACCOUNT_OPERATIONS_CAPABILITY">EACCOUNT_OPERATIONS_CAPABILITY</a>)
     );
     // Emit the <a href="LibraAccount.md#0x1_LibraAccount_CreateAccountEvent">CreateAccountEvent</a>
+    print(&0x05);
+
     <a href="Event.md#0x1_Event_emit_event">Event::emit_event</a>(
         &<b>mut</b> borrow_global_mut&lt;<a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).creation_events,
         <a href="LibraAccount.md#0x1_LibraAccount_CreateAccountEvent">CreateAccountEvent</a> { created: new_account_addr, role_id: <a href="Roles.md#0x1_Roles_get_role_id">Roles::get_role_id</a>(new_account_addr) },
     );
     // Publishing the account <b>resource</b> last makes it possible <b>to</b> prove invariants that simplify
     // <b>aborts_if</b>'s, etc.
+    print(&0x06);
+
+
     move_to(
         &new_account,
         <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> {
@@ -2409,6 +2453,8 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
             sequence_number: 0,
         }
     );
+    print(&0x07);
+
     //////// 0L ////////
     <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">TrustedAccounts::initialize</a>(&new_account);
 
@@ -2474,14 +2520,19 @@ Construct an authentication key, aborting if the prefix is not valid.
 
 
 <pre><code><b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_authentication_key">create_authentication_key</a>(account: &signer, auth_key_prefix: vector&lt;u8&gt;): vector&lt;u8&gt; {
+    print(&0x08);
     <b>let</b> authentication_key = auth_key_prefix;
     <a href="Vector.md#0x1_Vector_append">Vector::append</a>(
         &<b>mut</b> authentication_key, <a href="LCS.md#0x1_LCS_to_bytes">LCS::to_bytes</a>(<a href="Signer.md#0x1_Signer_borrow_address">Signer::borrow_address</a>(account))
     );
+    print(&0x09);
+
     <b>assert</b>(
         <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&authentication_key) == 32,
         <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_EMALFORMED_AUTHENTICATION_KEY">EMALFORMED_AUTHENTICATION_KEY</a>)
     );
+    print(&0x010);
+
     authentication_key
 }
 </code></pre>
