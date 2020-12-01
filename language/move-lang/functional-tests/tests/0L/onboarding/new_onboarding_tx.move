@@ -42,19 +42,24 @@ fun main(sender: &signer) {
   assert(Roles::assert_validator_addr(eve_addr), 7357130101011000);
   assert(Roles::assert_validator_operator_addr(0xfa72817f1b5aab94658238ddcdc08010), 7357130101021000);
 
-  assert(ValidatorConfig::is_valid(eve_addr), 7357130101021000);
+  assert(ValidatorConfig::is_valid(eve_addr), 7357130101031000);
+  assert(ValidatorConfig::get_operator(eve_addr) == 0xfa72817f1b5aab94658238ddcdc08010, 7357130101041000);
+  
+  let config = ValidatorConfig::get_config(eve_addr);
+  let consensus_pubkey = ValidatorConfig::get_consensus_pubkey(&config);
+  assert(consensus_pubkey == &x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", 7357130101051000);
 
-  assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101031000);
+  assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
 
   //Check the validator is in the validator universe.
-  assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101041000);
+  assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
 
   // Check the account exists and the balance is 0
   // TODO: Needs some balance
-  assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101051000);
+  assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
 
   // Is rate-limited
-  assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101061000);
+  assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101091000);
 }
 }
 // check: EXECUTED
