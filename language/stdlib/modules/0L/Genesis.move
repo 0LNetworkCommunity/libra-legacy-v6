@@ -97,7 +97,6 @@ module Genesis {
         AutoPay::initialize(lr_account);
         Subsidy::init_fullnode_sub(lr_account);
         Oracle::initialize(lr_account);
-        Fullnodes::initialize(lr_account);
         // After we have called this function, all invariants which are guarded by
         // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.

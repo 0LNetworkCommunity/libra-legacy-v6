@@ -18,10 +18,10 @@ module Reconfigure {
     use 0x1::Globals;
     use 0x1::Vector;
     use 0x1::Stats;
-    // use 0x1::LibraTimestamp;
-    // use 0x1::LibraConfig;
+    use 0x1::ValidatorUniverse;
     use 0x1::AutoPay;
     use 0x1::Epoch;
+    use 0x1::FullnodeState;
 
 
     // This function is called by block-prologue once after n blocks.
@@ -60,9 +60,21 @@ module Reconfigure {
         };
 
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
-        if(Vector::length<address>(&proposed_set)<= 3) proposed_set = LibraSystem::get_val_set_addr();
+        // if(Vector::length<address>(&proposed_set)<= 3) proposed_set = LibraSystem::get_val_set_addr();
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
+        
+        // loop through validators and pay full node subsidies.
+        let miners = ValidatorUniverse::get_eligible_validators(vm);
+        let k = 0;
+        while (k < Vector::length(&miners)) {
+            let addr = *Vector::borrow(&miners, k);
+            let count = FullnodeState::get_address_proof_count(addr);
+            Subsidy::distribute_fullnode_subsidy(vm, addr, count);
+            FullnodeState::reset(vm, addr);
+            k = k + 1;
+        };
+
 
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
@@ -70,6 +82,7 @@ module Reconfigure {
         
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
+
 
         // reset clocks
         AutoPay::reconfig_reset_tick(vm);

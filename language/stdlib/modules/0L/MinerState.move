@@ -15,6 +15,7 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
+    use 0x1::FullnodeState;
 
     // Struct to store information about a VDF proof submitted
     struct Proof {
@@ -142,6 +143,7 @@ address 0x1 {
       };
       
       verify_and_update_state(miner_addr, proof, true);
+      FullnodeState::inc_proof(miner_sign);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -163,6 +165,7 @@ address 0x1 {
 
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
       assert(valid, 130108041021);
+
 
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
       
@@ -268,6 +271,7 @@ address 0x1 {
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
+      
       // NOTE Only Signer can update own state.
       // Should only happen once.
       assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), 130112011021);
@@ -297,6 +301,8 @@ address 0x1 {
       //TODO: #254 ValidatorUniverse::add_validators need to check permission.
       // Note: this should be in LibraAccount but causes cyclic dependency.
       ValidatorUniverse::add_validator(miner_sig);
+      FullnodeState::initialize(miner_sig);
+
     }
 
 

@@ -125,7 +125,7 @@ address 0x1 {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
 
-        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address);
+        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, 1);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
         i = i + 1;
@@ -196,11 +196,12 @@ address 0x1 {
       });
     }
 
-    public fun distribute_fullnode_subsidy(vm: &signer, miner: address):u64 acquires FullnodeSubsidy{
+    public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64 ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let subsidy = state.current_proof_price;
+      let subsidy = state.current_proof_price * count;
       // abort if ceiling was met
+      //TODO: check modulo
       if (state.current_gas_distributed + state.current_proof_price > state.current_cap) return 0;
 
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
