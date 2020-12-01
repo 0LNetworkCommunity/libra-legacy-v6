@@ -88,7 +88,6 @@ before and after every transaction.
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="Coin1.md#0x1_Coin1">0x1::Coin1</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer">0x1::DesignatedDealer</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -937,14 +936,11 @@ Initialize this module. This is only callable from genesis.
 
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
-    // <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_signer);
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
-    // <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_op_account);
 
     <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
     new_account_address
-    // op_account_address
 
 }
 </code></pre>
@@ -2400,8 +2396,6 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
     new_account: signer,
     auth_key_prefix: vector&lt;u8&gt;,
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
-    print(&0x11111111111111);
-
     <b>let</b> new_account_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&new_account);
     // cannot create an account at the reserved address 0x0
     // <b>assert</b>(
@@ -2412,23 +2406,18 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
         new_account_addr != <a href="CoreAddresses.md#0x1_CoreAddresses_CORE_CODE_ADDRESS">CoreAddresses::CORE_CODE_ADDRESS</a>(),
         <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_ECANNOT_CREATE_AT_CORE_CODE">ECANNOT_CREATE_AT_CORE_CODE</a>)
     );
-    print(&0x02);
     // Construct authentication key.
     <b>let</b> authentication_key = <a href="LibraAccount.md#0x1_LibraAccount_create_authentication_key">create_authentication_key</a>(&new_account, auth_key_prefix);
-    print(&0x03);
-
     // Publish <a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">AccountFreezing::FreezingBit</a> (initially not frozen)
     <a href="AccountFreezing.md#0x1_AccountFreezing_create">AccountFreezing::create</a>(&new_account);
     // The <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> is published during <a href="Genesis.md#0x1_Genesis">Genesis</a>, so it should
     // always exist.  This is a sanity check.
-    print(&0x04);
 
     <b>assert</b>(
         <b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()),
         <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EACCOUNT_OPERATIONS_CAPABILITY">EACCOUNT_OPERATIONS_CAPABILITY</a>)
     );
     // Emit the <a href="LibraAccount.md#0x1_LibraAccount_CreateAccountEvent">CreateAccountEvent</a>
-    print(&0x05);
 
     <a href="Event.md#0x1_Event_emit_event">Event::emit_event</a>(
         &<b>mut</b> borrow_global_mut&lt;<a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).creation_events,
@@ -2436,8 +2425,6 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
     );
     // Publishing the account <b>resource</b> last makes it possible <b>to</b> prove invariants that simplify
     // <b>aborts_if</b>'s, etc.
-    print(&0x06);
-
 
     move_to(
         &new_account,
@@ -2456,7 +2443,6 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
             sequence_number: 0,
         }
     );
-    print(&0x07);
 
     //////// 0L ////////
     <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">TrustedAccounts::initialize</a>(&new_account);
@@ -2523,19 +2509,14 @@ Construct an authentication key, aborting if the prefix is not valid.
 
 
 <pre><code><b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_authentication_key">create_authentication_key</a>(account: &signer, auth_key_prefix: vector&lt;u8&gt;): vector&lt;u8&gt; {
-    print(&0x08);
     <b>let</b> authentication_key = auth_key_prefix;
     <a href="Vector.md#0x1_Vector_append">Vector::append</a>(
         &<b>mut</b> authentication_key, <a href="LCS.md#0x1_LCS_to_bytes">LCS::to_bytes</a>(<a href="Signer.md#0x1_Signer_borrow_address">Signer::borrow_address</a>(account))
     );
-    print(&0x09);
-
     <b>assert</b>(
         <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&authentication_key) == 32,
         <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_EMALFORMED_AUTHENTICATION_KEY">EMALFORMED_AUTHENTICATION_KEY</a>)
     );
-    print(&0x010);
-
     authentication_key
 }
 </code></pre>
