@@ -883,6 +883,8 @@ Initialize this module. This is only callable from genesis.
     op_human_name: vector&lt;u8&gt;,
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+
+    ///////////// TODO //////////// ONLY FOR TESTING
     // <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
@@ -932,6 +934,7 @@ Initialize this module. This is only callable from genesis.
         op_validator_network_addresses,
         op_fullnode_network_addresses
     );
+
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
     // <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_signer);

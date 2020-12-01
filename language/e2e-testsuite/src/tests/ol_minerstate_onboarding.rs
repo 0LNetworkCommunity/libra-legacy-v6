@@ -5,7 +5,7 @@ use language_e2e_tests::{
     // account::{Account},
     executor::FakeExecutor
 };
-use libra_types::{transaction::TransactionStatus, vm_status::KeptVMStatus};
+use libra_types::{transaction::TransactionStatus, vm_status::KeptVMStatus, PeerId};
 use transaction_builder;
 use hex;
 use language_e2e_tests::account::AccountData;
@@ -46,19 +46,23 @@ fn miner_onboarding() {
         output.status(),
         &TransactionStatus::Keep(KeptVMStatus::Executed)
     );
-    println!("Help executed successfully");
-    let consensus_pubkey = hex::decode("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
-    let validator_network_address = "192.168.0.1".as_bytes().to_vec();
-    let full_node_network_address = "192.168.0.1".as_bytes().to_vec();
-    let human_name = "1ee7".as_bytes().to_vec();
+    println!("Helper executed successfully");
+
+    // let consensus_pubkey = hex::decode("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
+    // let validator_network_address = "192.168.0.1".as_bytes().to_vec();
+    // let full_node_network_address = "192.168.0.1".as_bytes().to_vec();
+    // let human_name = "1ee7".as_bytes().to_vec();
 
     let script = transaction_builder::encode_minerstate_onboarding_script(
         preimage,
         proof,
-        consensus_pubkey,
-        validator_network_address,
-        full_node_network_address,
-        human_name,
+        "3DC18D1CF61FAAC6AC70E3A63F062E4B".as_bytes().to_vec(),
+        PeerId::from_hex_literal("0x0E04E58B354EF058D08DD493F2352454").unwrap(),
+        "ecc59a4a0963f65b5eceb0fffa01ea99".as_bytes().to_vec(),
+        "cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d".as_bytes().to_vec(),
+        "134.122.115.12".as_bytes().to_vec(),
+        "134.122.115.12".as_bytes().to_vec(),
+        "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper".as_bytes().to_vec()
     );
 
     let txn = sender.account()
