@@ -235,7 +235,7 @@ address 0x1 {
        // save 
       state.previous_epoch_proofs = state.current_proofs_verified;
       // reset counters
-      state.current_subsidy_distributed =  0u64;
+      state.current_subsidy_distributed = 0u64;
       state.current_proofs_verified = 0u64;
 
     }
