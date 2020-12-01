@@ -43,12 +43,18 @@ impl Runnable for GenesisCmd {
         let val_configs = ValConfigs {
             /// Block zero of the onboarded miner
             block_zero: block,
-            consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
-            validator_network_identity_pubkey: keys.child_2_val_network.get_public().to_bytes().into(),
-            validator_network_address: miner_configs.profile.ip.to_string(),
-            full_node_network_identity_pubkey: keys.child_3_fullnode_network.get_public().to_bytes().into(),
-            full_node_network_address: miner_configs.profile.ip.to_string(),
-            human_name: miner_configs.profile.account.to_string(),
+            op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
+            op_validator_network_addresses: keys.child_2_val_network.get_public().to_bytes().into(),
+            // opvalidator_network_address: miner_configs.profile.ip.to_string(),
+            // full_node_network_identity_pubkey: keys.child_3_fullnode_network.get_public().to_bytes().into(),
+            // full_node_network_address: miner_configs.profile.ip.to_string(),
+            // human_name: miner_configs.profile.account.to_string(),
+            // TODO to set right value
+            op_fullnode_network_addresses: vec![],
+            op_address: "".to_string(),
+            op_auth_key_prefix: vec![],
+            op_human_name: "".to_string(),
+            ow_human_name: "".to_string()
         };
 
         let mut file = File::create(json_path.as_path()).unwrap();

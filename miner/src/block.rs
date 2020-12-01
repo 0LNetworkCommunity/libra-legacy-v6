@@ -21,24 +21,34 @@ pub struct Block {
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration files necessary to initialize a validator.
+// challenge: &vector<u8>,
+//         solution: &vector<u8>,
+//         ow_human_name: vector<u8>,
+//         op_address: address,
+//         op_auth_key_prefix: vector<u8>,
+//         op_consensus_pubkey: vector<u8>,
+//         op_validator_network_addresses: vector<u8>,
+//         op_fullnode_network_addresses: vector<u8>,
+//         op_human_name: vector<u8>,
 pub struct ValConfigs {
     /// Block zero of the onboarded miner
     pub block_zero: Block,
     /// Key validator will use in consensus
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub consensus_pubkey: Vec<u8>,
+    pub op_consensus_pubkey: Vec<u8>,
     /// Key validator will use for network connections
-    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub validator_network_identity_pubkey: Vec<u8>,
+    pub op_validator_network_addresses: Vec<u8>,
+    /// FullNode will use for network connections
+    pub op_fullnode_network_addresses: Vec<u8>,
     /// IP address of validator
-    pub validator_network_address: String,
+    pub op_address: String,
     /// Key full node will use for network connections
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub full_node_network_identity_pubkey: Vec<u8>,
-    /// IP address of full node
-    pub full_node_network_address: String,
+    pub op_auth_key_prefix: Vec<u8>,
     /// Human readable name of account
-    pub human_name: String,
+    pub op_human_name: String,
+    /// Human readable name of account
+    pub ow_human_name: String,
 }
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
