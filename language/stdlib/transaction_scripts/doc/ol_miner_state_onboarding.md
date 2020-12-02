@@ -15,7 +15,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, consensus_pubkey: vector&lt;u8&gt;, validator_network_address: vector&lt;u8&gt;, full_node_network_address: vector&lt;u8&gt;, human_name: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -24,32 +24,32 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(
+<pre><code><b>fun</b> <a href="ol_miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(
+
   sender: &signer,
   challenge: vector&lt;u8&gt;,
   solution: vector&lt;u8&gt;,
-  consensus_pubkey: vector&lt;u8&gt;,
-  validator_network_address: vector&lt;u8&gt;,
-  full_node_network_address: vector&lt;u8&gt;,
-  human_name: vector&lt;u8&gt;, // Todo: rename <b>to</b> address
+  ow_human_name: vector&lt;u8&gt;,
+  op_address: address,
+  op_auth_key_prefix: vector&lt;u8&gt;,
+  op_consensus_pubkey: vector&lt;u8&gt;,
+  op_validator_network_addresses: vector&lt;u8&gt;,
+  op_fullnode_network_addresses: vector&lt;u8&gt;,
+  op_human_name: vector&lt;u8&gt;,
 ) {
 
   <b>let</b> new_account_address = <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
-    sender,
-    &challenge,
-    &solution,
-    consensus_pubkey,
-    validator_network_address,
-    full_node_network_address,
-    human_name // todo human_name == address
+  sender,
+  &challenge,
+  &solution,
+  ow_human_name,
+  op_address,
+  op_auth_key_prefix,
+  op_consensus_pubkey,
+  op_validator_network_addresses,
+  op_fullnode_network_addresses,
+  op_human_name,
   );
-
-  // add optional trusted accounts info
-
-  // add optional autopay info
-  // enable autopay
-  // <b>update</b> tx
-
 
   // Check the account has the Validator role
   <b>assert</b>(<a href="../../modules/doc/ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(new_account_address), 03);

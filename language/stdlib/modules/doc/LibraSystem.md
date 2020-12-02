@@ -1238,7 +1238,8 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_bulk_update_validators">bulk_update_validators</a>(
     account: &signer,
-    new_validators: vector&lt;address&gt;) <b>acquires</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
+    new_validators: vector&lt;address&gt;
+) <b>acquires</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
     <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 1202014010);
 
@@ -1249,7 +1250,6 @@ Private function checks for membership of <code>addr</code> in validator set.
     <b>let</b> next_epoch_validators = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>();
 
     <b>let</b> n = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&new_validators);
-
     // Get the current validator and append it <b>to</b> list
     <b>let</b> index = 0;
     <b>while</b> (index &lt; n) {
@@ -1257,6 +1257,10 @@ Private function checks for membership of <code>addr</code> in validator set.
 
         // A prospective validator must have a validator config <b>resource</b>
         <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(account_address), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>));
+
+        <b>if</b> (!<a href="LibraSystem.md#0x1_LibraSystem_is_validator">is_validator</a>(account_address)) {
+            <a href="LibraSystem.md#0x1_LibraSystem_add_validator">add_validator</a>(account, account_address);
+        };
 
         <b>let</b> config = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_config">ValidatorConfig::get_config</a>(account_address);
         <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> next_epoch_validators, <a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a> {

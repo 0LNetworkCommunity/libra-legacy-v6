@@ -22,6 +22,7 @@ module Reconfigure {
     // use 0x1::LibraConfig;
     use 0x1::AutoPay;
     use 0x1::Epoch;
+    use 0x1::ValidatorUniverse;
 
 
     // This function is called by block-prologue once after n blocks.
@@ -33,10 +34,13 @@ module Reconfigure {
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
 
-        let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
-        Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set,  &fee_ratio);
-        Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
+        if (Vector::length<address>(&outgoing_set) > 0) {
+            let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
+            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
+            Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
+        };
+
         
         // Propose upcoming validator set:
         // Step 1: Sort Top N Elegible validators
@@ -60,7 +64,7 @@ module Reconfigure {
         };
 
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
-        if(Vector::length<address>(&proposed_set)<= 4) proposed_set = LibraSystem::get_val_set_addr();
+        if(Vector::length<address>(&proposed_set)<= 3) proposed_set = ValidatorUniverse::get_eligible_validators(vm);
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 

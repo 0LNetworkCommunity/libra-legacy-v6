@@ -8,31 +8,31 @@ script {
   use 0x1::ValidatorConfig;
 
   fun minerstate_onboarding(
+    
     sender: &signer,
     challenge: vector<u8>,
     solution: vector<u8>,
-    consensus_pubkey: vector<u8>,
-    validator_network_address: vector<u8>,
-    full_node_network_address: vector<u8>,
-    human_name: vector<u8>, // Todo: rename to address
+    ow_human_name: vector<u8>,
+    op_address: address,
+    op_auth_key_prefix: vector<u8>,
+    op_consensus_pubkey: vector<u8>,
+    op_validator_network_addresses: vector<u8>,
+    op_fullnode_network_addresses: vector<u8>,
+    op_human_name: vector<u8>,
   ) {
 
     let new_account_address = LibraAccount::create_validator_account_with_proof(
-      sender,
-      &challenge,
-      &solution,
-      consensus_pubkey,
-      validator_network_address,
-      full_node_network_address,
-      human_name // todo human_name == address
+    sender,
+    &challenge,
+    &solution,
+    ow_human_name,
+    op_address,
+    op_auth_key_prefix,
+    op_consensus_pubkey,
+    op_validator_network_addresses,
+    op_fullnode_network_addresses,
+    op_human_name,
     );
-
-    // add optional trusted accounts info
-
-    // add optional autopay info
-    // enable autopay
-    // update tx
-
 
     // Check the account has the Validator role
     assert(ValidatorConfig::is_valid(new_account_address), 03);

@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::ValConfigs, submit_tx::get_params};
+use crate::{block::ValConfigs, submit_tx::{eval_tx_status, get_params}};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
@@ -14,6 +14,7 @@ use std::path::PathBuf;
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
+use move_core_types::account_address::AccountAddress;
 
 /// `start` subcommand
 ///
@@ -28,7 +29,7 @@ pub struct OnboardCmd {
     #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in key_store.json")]
     waypoint: String,
     // Path of the block_0.json to submit.
-    #[options(help = "Path of the block_0.json to submit.")]
+    #[options(help = "Path of the init.json to submit.")]
     file: PathBuf, 
 }
 
@@ -64,17 +65,28 @@ impl Runnable for OnboardCmd {
             &tx_params,
             init_data.block_zero.preimage.to_owned(),
             init_data.block_zero.proof.to_owned(),
-            init_data.consensus_pubkey,
-            init_data.validator_network_address,
-            init_data.full_node_network_address,
-            init_data.human_name
+            init_data.ow_human_name.as_bytes().to_vec(),
+            AccountAddress::from_hex_literal(&init_data.op_address).unwrap(),
+            init_data.op_auth_key_prefix,
+            init_data.op_consensus_pubkey,
+            init_data.op_validator_network_addresses,
+            init_data.op_fullnode_network_addresses,
+            init_data.op_human_name.as_bytes().to_vec()
         ) {
-            Ok(_res) => {
-                status_ok!("Success", "Validator initialization committed, exiting.");
+            Ok(res) => {
+                match eval_tx_status(res.clone()) {
+                    true => { 
+                        status_ok!("Success", "Validator initialization committed, exiting.");
+
+                    },
+                    false => {
+                        status_err!("Init transaction failed with:");
+                        println!("{:?}", res);
+                    }
+                }
             }
             Err(e) => {
                 status_warn!(format!("Validator initialization error: {:?}", e));
-
             }
         }
     }

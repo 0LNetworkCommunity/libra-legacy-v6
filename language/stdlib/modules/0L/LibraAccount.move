@@ -36,7 +36,8 @@ module LibraAccount {
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
 
-    /// An `address` is a Libra Account iff it has a published LibraAccount resource.
+
+    /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
         /// The current authentication key.
         /// This can be different from the key used to create the account
@@ -232,12 +233,16 @@ module LibraAccount {
         sender: &signer,
         challenge: &vector<u8>,
         solution: &vector<u8>,
-        consensus_pubkey: vector<u8>,
-        validator_network_addresses: vector<u8>,
-        fullnode_network_addresses: vector<u8>,
-        human_name: vector<u8>,
+        ow_human_name: vector<u8>,
+        op_address: address,
+        op_auth_key_prefix: vector<u8>,
+        op_consensus_pubkey: vector<u8>,
+        op_validator_network_addresses: vector<u8>,
+        op_fullnode_network_addresses: vector<u8>,
+        op_human_name: vector<u8>,
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
+        // Rate limit spam accounts.
         assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
@@ -246,30 +251,57 @@ module LibraAccount {
         );
         assert(valid, 120101011021);
 
+        //Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
-        ValidatorConfig::publish_with_proof(&new_signer, human_name);
+        ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
 
-        ValidatorConfig::init_val_config_with_proof(
-            &new_signer, // validator_operator_account: &signer,
-            consensus_pubkey,
-            validator_network_addresses,
-            fullnode_network_addresses,
+        // ValidatorConfig::init_val_config_with_proof(
+        //     &new_signer, // validator_operator_account: &signer,
+        //     consensus_pubkey,
+        //     validator_network_addresses,
+        //     fullnode_network_addresses,
+        // );
+        
+
+        // // Create OP Account
+         
+        // let op_auth_key_prefix = Authenticator::ed25519_authentication_key(op_operator_pubkey);
+
+        let new_op_account = create_signer(op_address);
+        Roles::new_validator_operator_role_with_proof(&new_op_account);
+        Event::publish_generator(&new_op_account);
+        ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
+        add_currencies_for_account<GAS>(&new_op_account, false);
+
+        // Link owner to OP
+        ValidatorConfig::set_operator(&new_signer, op_address);
+
+        // OP sends network info to Owner config"
+        ValidatorConfig::set_config(
+            &new_op_account, // signer
+            new_account_address,
+            op_consensus_pubkey,
+            op_validator_network_addresses,
+            op_fullnode_network_addresses
         );
+        
 
         make_account(new_signer, auth_key_prefix);
 
+        make_account(new_op_account, op_auth_key_prefix);
+
         MinerState::reset_rate_limit(sender_addr);
         new_account_address
-    }
 
+    }
     //0L TODO(nelaturuk): Specs need to be rewritten since we're using a different api.
     // spec fun create_validator_account_with_proof {
     //     include CreateValidatorAccountWithProofAbortsIf;
@@ -1063,25 +1095,26 @@ module LibraAccount {
             new_account_addr != CoreAddresses::CORE_CODE_ADDRESS(),
             Errors::invalid_argument(ECANNOT_CREATE_AT_CORE_CODE)
         );
-
         // Construct authentication key.
         let authentication_key = create_authentication_key(&new_account, auth_key_prefix);
-
         // Publish AccountFreezing::FreezingBit (initially not frozen)
         AccountFreezing::create(&new_account);
         // The AccountOperationsCapability is published during Genesis, so it should
         // always exist.  This is a sanity check.
+
         assert(
             exists<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()),
             Errors::not_published(EACCOUNT_OPERATIONS_CAPABILITY)
         );
         // Emit the CreateAccountEvent
+
         Event::emit_event(
             &mut borrow_global_mut<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()).creation_events,
             CreateAccountEvent { created: new_account_addr, role_id: Roles::get_role_id(new_account_addr) },
         );
         // Publishing the account resource last makes it possible to prove invariants that simplify
         // aborts_if's, etc.
+
         move_to(
             &new_account,
             LibraAccount {
@@ -1099,6 +1132,7 @@ module LibraAccount {
                 sequence_number: 0,
             }
         );
+
         //////// 0L ////////
         TrustedAccounts::initialize(&new_account);
 

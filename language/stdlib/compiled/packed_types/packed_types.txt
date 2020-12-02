@@ -904,15 +904,6 @@
     }
   ],
   [
-    "01d8d0d983c718cb50c7cda1bd6a9c708a4906517bbba56178e02443cc04053ded",
-    {
-      "address": "00000000000000000000000000000001",
-      "module": "ValidatorUniverse",
-      "name": "ValidatorEpochInfo",
-      "type_params": []
-    }
-  ],
-  [
     "01d9f23b02755c18b16ed8347f25b543f75378a7f06fc097cfda338cf1c24c8934",
     {
       "address": "00000000000000000000000000000001",

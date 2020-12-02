@@ -53,17 +53,17 @@ init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	cargo run -p libra-genesis-tool -- set-layout \
+	cargo run -p libra-genesis-tool --release -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./util/set_layout_${NODE_ENV}.toml
 
 root:
-		cargo run -p libra-genesis-tool -- libra-root-key \
+		cargo run -p libra-genesis-tool --release -- libra-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 treasury:
-		cargo run -p libra-genesis-tool --  treasury-compliance-key \
+		cargo run -p libra-genesis-tool --release --  treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -93,39 +93,39 @@ init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p libra-genesis-tool --release --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	cargo run -p libra-genesis-tool --  mining \
+	cargo run -p libra-genesis-tool --release --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	cargo run -p libra-genesis-tool --  operator-key \
+	cargo run -p libra-genesis-tool --release --  operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
-	cargo run -p libra-genesis-tool --  owner-key \
+	cargo run -p libra-genesis-tool --release --  owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
-	cargo run -p libra-genesis-tool --  set-operator \
+	cargo run -p libra-genesis-tool --release --  set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
 reg:
-	cargo run -p libra-genesis-tool --  validator-config \
+	cargo run -p libra-genesis-tool --release --  validator-config \
 	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -136,25 +136,25 @@ reg:
 
 ## Helpers to verify the local state.
 verify:
-	cargo run -p libra-genesis-tool --  verify \
+	cargo run -p libra-genesis-tool --release --  verify \
 	--validator-backend ${LOCAL}
 	# --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
-	cargo run -p libra-genesis-tool --  verify \
+	cargo run -p libra-genesis-tool --release --  verify \
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
 
 #### GENESIS  ####
 build-gen:
-	cargo run -p libra-genesis-tool -- genesis \
+	cargo run -p libra-genesis-tool --release -- genesis \
 	--chain-id 7 \
 	--shared-backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
 
 genesis:
-	cargo run -p libra-genesis-tool -- files \
+	cargo run -p libra-genesis-tool --release -- files \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
