@@ -212,23 +212,6 @@
   // Initialize stats for first validator set from rust genesis.
   <b>let</b> node_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig);
   <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(vm_sig, node_addr);
-  //Check this originated from VM.
-  // <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-  // <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130102014010);
-  // // In rustland the vm_genesis creates a <a href="Signer.md#0x1_Signer">Signer</a> for the miner. So the SENDER is not the same and the <a href="Signer.md#0x1_Signer">Signer</a>.
-  // <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner) != sender, 130101014010);
-  // // <b>assert</b>(<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_genesis">LibraTimestamp::is_genesis</a>(), 130101024010);
-
-  // <b>let</b> difficulty = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
-  // <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
-  //   challenge,
-  //   difficulty,
-  //   solution,
-  // };
-  // <a href="MinerState.md#0x1_MinerState_init_miner_state">init_miner_state</a>(miner);
-  // <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner), proof, <b>false</b>);
-  // <a href="Stats.md#0x1_Stats_init_address">Stats::init_address</a>(account, <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner));
-
 }
 </code></pre>
 
@@ -251,7 +234,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a> (
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper">test_helper</a>(
    miner_sig: &signer,
    difficulty: u64,
    challenge: vector&lt;u8&gt;,
@@ -272,6 +255,7 @@
      epochs_since_last_account_creation: 10u64, // is not rate-limited
    });
 
+   // Needs difficulty <b>to</b> test between easy and hard mode.
    <b>let</b> proof = <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
      challenge,
      difficulty,
@@ -279,6 +263,8 @@
    };
 
    <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
+   <a href="FullnodeState.md#0x1_FullnodeState_val_init">FullnodeState::val_init</a>(miner_sig);
+
  }
 </code></pre>
 

@@ -21,6 +21,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -361,7 +362,7 @@
     current_subsidy_distributed: 0u64,
     current_proofs_verified: 0u64,
   });
-}
+  }
 </code></pre>
 
 
@@ -387,28 +388,44 @@
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
   // fail fast, <b>abort</b> <b>if</b> ceiling was met
+  print(&0x521);
   <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
   <b>let</b> proposed_subsidy = state.current_proof_price * count;
+  <b>if</b> (proposed_subsidy &lt; 1) <b>return</b> 0;
+  print(&proposed_subsidy);
   <b>let</b> subsidy;
+  print(&0x522);
   // check <b>if</b> payments will exceed ceiling.
   <b>if</b> (state.current_subsidy_distributed + proposed_subsidy &gt; state.current_cap) {
+    print(&0x5221);
+
     // pay the remainder only
     // TODO: This creates a race. Check ordering of list.
     subsidy = state.current_cap - state.current_subsidy_distributed;
   } <b>else</b> {
+    print(&0x5222);
+
     // happy case, the ceiling is not met.
     subsidy = proposed_subsidy;
   };
+  print(&subsidy);
+  print(&0x523);
 
   <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
-
+  print(&minted_coins);
+  print(&0x524);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
     miner,
     minted_coins,
     x"", x""
   );
+  print(&0x525);
+
+
+
   state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
+  print(&0x526);
   subsidy
 }
 </code></pre>
@@ -517,11 +534,16 @@
 
 
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_auctioneer">auctioneer</a>(vm: &signer) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a> {
+  print(&0x081);
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
   <b>let</b> baseline_auction_units = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
+  print(&0x0811);
 
   <b>let</b> next_cap = <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_cap">fullnode_subsidy_cap</a>(vm);
+  print(&next_cap);
+
+  <b>if</b> (next_cap &lt; 1) <b>return</b>;
 
   <b>let</b> baseline_proof_price = next_cap / baseline_auction_units;
   <b>let</b> current_auction_multiplier;
@@ -532,11 +554,16 @@
 
     current_auction_multiplier = baseline_auction_units / 1;
   };
+        print(&0x0812);
+
   // New unit price cannot be more than the ceiling
   <b>if</b> ((current_auction_multiplier * baseline_proof_price) &gt; next_cap) {
+  print(&0x08121);
     //Note: in failure case, the next miner gets the full ceiling
     state.current_proof_price = next_cap
   } <b>else</b> {
+  print(&0x08122);
+
     state.current_proof_price = current_auction_multiplier * baseline_proof_price
   };
 
