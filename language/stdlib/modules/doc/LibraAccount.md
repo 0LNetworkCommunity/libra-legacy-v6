@@ -882,6 +882,7 @@ Initialize this module. This is only callable from genesis.
     op_human_name: vector&lt;u8&gt;,
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+    // Rate limit spam accounts.
     <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
@@ -901,8 +902,9 @@ Initialize this module. This is only callable from genesis.
 
     // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
     <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
-    // <a href="Subsidy.md#0x1_Subsidy_genesis">Subsidy::genesis</a>(&new_signer);
-    // Create OP Account
+
+
+    // // Create OP Account
 
     // <b>let</b> op_auth_key_prefix = <a href="Authenticator.md#0x1_Authenticator_ed25519_authentication_key">Authenticator::ed25519_authentication_key</a>(op_operator_pubkey);
 
@@ -924,15 +926,13 @@ Initialize this module. This is only callable from genesis.
         op_fullnode_network_addresses
     );
 
+
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
-    // <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_signer);
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
-    // <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_op_account);
 
     <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
     new_account_address
-    // op_account_address
 
 }
 </code></pre>
@@ -2400,7 +2400,6 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
     );
     // Construct authentication key.
     <b>let</b> authentication_key = <a href="LibraAccount.md#0x1_LibraAccount_create_authentication_key">create_authentication_key</a>(&new_account, auth_key_prefix);
-
     // Publish <a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">AccountFreezing::FreezingBit</a> (initially not frozen)
     <a href="AccountFreezing.md#0x1_AccountFreezing_create">AccountFreezing::create</a>(&new_account);
     // The <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> is published during <a href="Genesis.md#0x1_Genesis">Genesis</a>, so it should
@@ -2418,7 +2417,6 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
     );
     // Publishing the account <b>resource</b> last makes it possible <b>to</b> prove invariants that simplify
     // <b>aborts_if</b>'s, etc.
-
 
     move_to(
         &new_account,

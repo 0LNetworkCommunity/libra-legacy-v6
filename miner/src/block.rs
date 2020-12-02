@@ -33,22 +33,23 @@ pub struct Block {
 pub struct ValConfigs {
     /// Block zero of the onboarded miner
     pub block_zero: Block,
+    /// Human readable name of Owner account
+    pub ow_human_name: String,
+
+    /// IP address of Operator
+    pub op_address: String,
+    /// Auth key prefix of Operator
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub op_auth_key_prefix: Vec<u8>,
     /// Key validator will use in consensus
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub op_consensus_pubkey: Vec<u8>,
     /// Key validator will use for network connections
-    pub op_validator_network_addresses: Vec<u8>,
+    pub op_validator_network_addresses: String, //NetworkAddress network/network-address/src/lib.rs
     /// FullNode will use for network connections
-    pub op_fullnode_network_addresses: Vec<u8>,
-    /// IP address of validator
-    pub op_address: String,
-    /// Key full node will use for network connections
-    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub op_auth_key_prefix: Vec<u8>,
+    pub op_fullnode_network_addresses: String, //NetworkAddress
     /// Human readable name of account
     pub op_human_name: String,
-    /// Human readable name of account
-    pub ow_human_name: String,
 }
 
 fn as_hex<S>(data: &[u8], serializer: S) -> Result<S::Ok, S::Error>
@@ -466,13 +467,15 @@ fn create_fixtures() {
     #[test]
     fn test_parse_init_file() {
         use super::ValConfigs;
-        let fixtures = PathBuf::from("../fixtures/val_init_stage.json");
+        let fixtures = PathBuf::from("../fixtures/eve_init_stage.json");
         let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
-        assert_eq!(init_configs.full_node_network_address, "134.122.115.12", "Could not parse network address");
+        assert_eq!(init_configs.op_fullnode_network_addresses, "134.122.115.12", "Could not parse network address");
 
-        let consensus_key_vec = hex::decode("2734465e8191b85abae0f713ababc8f6d4dcf6d58844779ea51c531489bd261c").unwrap();
+        let consensus_key_vec = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
         
-        assert_eq!(init_configs.consensus_pubkey, consensus_key_vec, "Could not parse network address");
+        assert_eq!(init_configs.op_consensus_pubkey, consensus_key_vec, "Could not parse pubkey");
+
+        assert_eq!(init_configs.op_consensus_pubkey, consensus_key_vec, "Human name must match");
 
     }
 }

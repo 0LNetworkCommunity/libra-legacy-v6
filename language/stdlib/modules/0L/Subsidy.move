@@ -190,7 +190,7 @@ address 0x1 {
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
-        current_proof_price: baseline_tx_cost * 24 * 8, // number of proof submisisons in 1st epoch.
+        current_proof_price: baseline_tx_cost * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
         current_cap: baseline_cap,
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
