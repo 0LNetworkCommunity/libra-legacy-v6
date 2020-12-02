@@ -904,6 +904,15 @@
     }
   ],
   [
+    "01d9bfe061cfb71e781e67e3e33af610cf7ea3e3261c7bade3853da1aebbd9437a",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "FullnodeState",
+      "name": "FullnodeCounter",
+      "type_params": []
+    }
+  ],
+  [
     "01d9f23b02755c18b16ed8347f25b543f75378a7f06fc097cfda338cf1c24c8934",
     {
       "address": "00000000000000000000000000000001",

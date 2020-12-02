@@ -36,7 +36,6 @@ module LibraAccount {
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
 
-
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
         /// The current authentication key.
@@ -262,13 +261,6 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
-
-        // ValidatorConfig::init_val_config_with_proof(
-        //     &new_signer, // validator_operator_account: &signer,
-        //     consensus_pubkey,
-        //     validator_network_addresses,
-        //     fullnode_network_addresses,
-        // );
         
 
         // // Create OP Account
@@ -302,77 +294,7 @@ module LibraAccount {
         new_account_address
 
     }
-    //0L TODO(nelaturuk): Specs need to be rewritten since we're using a different api.
-    // spec fun create_validator_account_with_proof {
-    //     include CreateValidatorAccountWithProofAbortsIf;
-    //     include CreateValidatorAccountWithProofEnsures;
-    // }
 
-    // spec schema CreateValidatorAccountWithProofAbortsIf {
-    //     new_account_address: address;
-    //     include MakeAccountAbortsIf{addr: new_account_address};
-    //     // from `ValidatorConfig::publish`
-    //     include LibraTimestamp::AbortsIfNotOperating;
-    //     aborts_if ValidatorConfig::exists_config(new_account_address) with Errors::ALREADY_PUBLISHED;
-    // }
-
-    // spec schema CreateValidatorAccountWithProofEnsures {
-    //     new_account_address: address;
-    //     // Note: `Roles::GrantRole` has both ensure's and aborts_if's.
-    //     include Roles::GrantRole{addr: new_account_address, role_id: Roles::VALIDATOR_ROLE_ID};
-    //     ensures exists_at(new_account_address);
-    //     ensures ValidatorConfig::exists_config(new_account_address);
-    // }
-
-    // public fun create_validator_account_with_vdf<Token>(
-    //     challenge: &vector<u8>,
-    //     solution: &vector<u8>,
-    //     consensus_pubkey: vector<u8>,
-    //     validator_network_identity_pubkey: vector<u8>,
-    //     validator_network_address: vector<u8>,
-    //     full_node_network_identity_pubkey: vector<u8>,
-    //     full_node_network_address: vector<u8>,
-    // ) {
-    //     // Note: A majority of the onboarding logic is contained here because of limitations on resources and signers
-    //     // LibraAccount is the only module which can simulate a Signer type, and move a resource onto an account, without the sender account, being the recipient account. 
-        
-    //     // Since this is an open function, we rate limit the callign with a proof of work, vdf. 
-    //     // Check that accounts are created with a VDF proof.
-
-    //     let valid = VDF::verify(
-    //         challenge,
-    //         &Globals::get_difficulty(),
-    //         solution
-    //     );
-    //     assert(valid, 120101011021);
-
-    //     let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
-
-    //     // publish an event for the account generation.
-    //     let new_signer = create_signer(new_account_address);
-    //     Event::publish_generator(&new_signer);
-
-    //     // set the role of the account, and move that resource to the account.
-    //     move_to(&new_signer, Role_temp<ValidatorRole> {role_type: ValidatorRole {}, is_certified: true});
-
-    //     // initialize the miner's state 
-    //     // NOTE: VDF verification is being called twice!
-    //     MinerState::init_miner_state(&new_signer, challenge, solution);
-    //     ValidatorConfig::publish_from_vdf(&new_signer);
-    //     ValidatorConfig::set_init_config(
-    //         &new_signer,
-    //         new_account_address,
-    //         consensus_pubkey,
-    //         validator_network_identity_pubkey,
-    //         validator_network_address,
-    //         full_node_network_identity_pubkey,
-    //         full_node_network_address,
-    //     );
-
-
-    //     // create the account, and also consume/destroy the new_signer.
-    //     make_account<Token, Empty::T>(new_signer, auth_key_prefix, Empty::create(), false);
-    // }
 
     /// Return `true` if `addr` has already published account limits for `Token`
     fun has_published_account_limits<Token>(addr: address): bool {
@@ -1172,6 +1094,7 @@ module LibraAccount {
             Vector::length(&authentication_key) == 32,
             Errors::invalid_argument(EMALFORMED_AUTHENTICATION_KEY)
         );
+
         authentication_key
     }
     spec fun create_authentication_key {

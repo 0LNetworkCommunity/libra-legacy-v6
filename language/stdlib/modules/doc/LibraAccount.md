@@ -903,13 +903,6 @@ Initialize this module. This is only callable from genesis.
     // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
     <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
 
-    // <a href="ValidatorConfig.md#0x1_ValidatorConfig_init_val_config_with_proof">ValidatorConfig::init_val_config_with_proof</a>(
-    //     &new_signer, // validator_operator_account: &signer,
-    //     consensus_pubkey,
-    //     validator_network_addresses,
-    //     fullnode_network_addresses,
-    // );
-
 
     // // Create OP Account
 
@@ -2516,6 +2509,7 @@ Construct an authentication key, aborting if the prefix is not valid.
         <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&authentication_key) == 32,
         <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_EMALFORMED_AUTHENTICATION_KEY">EMALFORMED_AUTHENTICATION_KEY</a>)
     );
+
     authentication_key
 }
 </code></pre>

@@ -15,7 +15,7 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
-
+    use 0x1::FullnodeState;
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -66,34 +66,16 @@ address 0x1 {
       // Initialize stats for first validator set from rust genesis. 
       let node_addr = Signer::address_of(miner_sig);
       Stats::init_address(vm_sig, node_addr);
-      //Check this originated from VM.
-      // let sender = Signer::address_of(account);
-      // assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130102014010);
-      // // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
-      // assert(Signer::address_of(miner) != sender, 130101014010);
-      // // assert(LibraTimestamp::is_genesis(), 130101024010);
-
-      // let difficulty = Globals::get_difficulty();
-      // let proof = Proof {
-      //   challenge,
-      //   difficulty,  
-      //   solution,
-      // };
-      // init_miner_state(miner);
-      // verify_and_update_state(Signer::address_of(miner), proof, false);
-      // Stats::init_address(account, Signer::address_of(miner));
-
     }
 
     // Function index: 03
     // Permissions: PUBLIC, SIGNER, TEST ONLY
-   public fun test_helper (
+   public fun test_helper(
       miner_sig: &signer,
       difficulty: u64,
       challenge: vector<u8>,
       solution: vector<u8>
     ) acquires MinerProofHistory {
-
       assert(Testnet::is_testnet(), 130102014010);
       //doubly check this is in test env.
       assert(Globals::get_epoch_length() == 60, 130102024010);
@@ -108,6 +90,7 @@ address 0x1 {
         epochs_since_last_account_creation: 10u64, // is not rate-limited
       });
 
+      // Needs difficulty to test between easy and hard mode.
       let proof = Proof {
         challenge,
         difficulty,  
@@ -115,6 +98,8 @@ address 0x1 {
       };
 
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
+      FullnodeState::val_init(miner_sig);
+
     }
 
     // This function verifies the proof and commits to chain.
@@ -142,6 +127,7 @@ address 0x1 {
       };
       
       verify_and_update_state(miner_addr, proof, true);
+      FullnodeState::inc_proof(miner_sign);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -163,6 +149,7 @@ address 0x1 {
 
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
       assert(valid, 130108041021);
+
 
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
       
@@ -268,6 +255,7 @@ address 0x1 {
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
     public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
+      
       // NOTE Only Signer can update own state.
       // Should only happen once.
       assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), 130112011021);
@@ -292,11 +280,13 @@ address 0x1 {
       };
       
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-
+      // Subsidy::queue_fullnode_subisdy(Signer::address_of(miner_sig));
       //also add the miner to validator universe
       //TODO: #254 ValidatorUniverse::add_validators need to check permission.
       // Note: this should be in LibraAccount but causes cyclic dependency.
       ValidatorUniverse::add_validator(miner_sig);
+      FullnodeState::val_init(miner_sig);
+
     }
 
 
