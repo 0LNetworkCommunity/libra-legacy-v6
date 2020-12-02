@@ -30,26 +30,19 @@ fun main(sender: &signer) {
 script {
 use 0x1::MinerState;
 use 0x1::TestFixtures;
-use 0x1::Debug::print;
 // SIMULATES THE SECOND PROOF OF THE MINER (block_1.json)
 fun main(sender: &signer) {
     let difficulty = 100u64;
     assert(MinerState::test_helper_get_height({{alice}}) == 0, 10008001);
     let height_after = 1;
-    print(&0x073570001);
     let proof = MinerState::create_proof_blob(
         TestFixtures::alice_1_easy_chal(),
         difficulty,
         TestFixtures::alice_1_easy_sol()
     );
-    print(&0x073570002);
 
     MinerState::commit_state(sender, proof);
-    print(&0x073570003);
-
     let verified_height = MinerState::test_helper_get_height({{alice}});
-    print(&0x073570004);
-
     assert(verified_height == height_after, 10008002);
 }
 }
