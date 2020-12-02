@@ -5067,6 +5067,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`0x1::Errors`](../../modules/doc/Errors.md#0x1_Errors)
 -  [`0x1::Event`](../../modules/doc/Event.md#0x1_Event)
 -  [`0x1::FixedPoint32`](../../modules/doc/FixedPoint32.md#0x1_FixedPoint32)
+-  [`0x1::FullnodeState`](../../modules/doc/FullnodeState.md#0x1_FullnodeState)
 -  [`0x1::GAS`](../../modules/doc/GAS.md#0x1_GAS)
 -  [`0x1::Globals`](../../modules/doc/Globals.md#0x1_Globals)
 -  [`0x1::Hash`](../../modules/doc/Hash.md#0x1_Hash)

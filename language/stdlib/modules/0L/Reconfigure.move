@@ -18,17 +18,16 @@ module Reconfigure {
     use 0x1::Globals;
     use 0x1::Vector;
     use 0x1::Stats;
-    // use 0x1::LibraTimestamp;
-    // use 0x1::LibraConfig;
+    use 0x1::ValidatorUniverse;
     use 0x1::AutoPay;
     use 0x1::Epoch;
-    use 0x1::ValidatorUniverse;
+    use 0x1::FullnodeState;
 
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer, height_now: u64) {
-        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);        
+        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
 
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
@@ -40,8 +39,6 @@ module Reconfigure {
             Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
-
-        
         // Propose upcoming validator set:
         // Step 1: Sort Top N Elegible validators
         // Step 2: Jail non-performing validators
@@ -68,14 +65,36 @@ module Reconfigure {
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
+        // Fullnode subsidy
+        // loop through validators and pay full node subsidies.
+        let miners = ValidatorUniverse::get_eligible_validators(vm);
+        let global_proofs_count = 0;
+        let k = 0;
+        while (k < Vector::length(&miners)) {
+            let addr = *Vector::borrow(&miners, k);
+
+            let count = FullnodeState::get_address_proof_count(addr);
+            if (count < 1) break;
+            global_proofs_count = global_proofs_count + count;
+
+            let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
+            FullnodeState::inc_payment_count(vm, addr, count);
+            FullnodeState::inc_payment_value(vm, addr, value);
+            FullnodeState::reconfig(vm, addr);
+            k = k + 1;
+        };
+
+        // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
+        Subsidy::set_global_count(vm, global_proofs_count);
+
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
         MinerState::reconfig(vm);
-        
+
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
-
         // reset clocks
+        Subsidy::fullnode_reconfig(vm);
         AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
     }

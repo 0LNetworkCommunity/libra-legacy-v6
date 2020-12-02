@@ -121,13 +121,14 @@ Initializes the Libra framework.
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(lr_account);
     <a href="AutoPay.md#0x1_AutoPay_initialize">AutoPay::initialize</a>(lr_account);
     <a href="Subsidy.md#0x1_Subsidy_init_fullnode_sub">Subsidy::init_fullnode_sub</a>(lr_account);
+    <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(lr_account);
+    // FullnodeState::global_init(lr_account);
     // After we have called this function, all invariants which are guarded by
     // `<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_operating">LibraTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.
     // See also discussion at function specification.
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_set_time_has_started">LibraTimestamp::set_time_has_started</a>(lr_account);
     <a href="Epoch.md#0x1_Epoch_initialize">Epoch::initialize</a>(lr_account);
-    // <a href="Oracle.md#0x1_Oracle">Oracle</a> initialize
-    <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(lr_account);
+
 }
 </code></pre>
 

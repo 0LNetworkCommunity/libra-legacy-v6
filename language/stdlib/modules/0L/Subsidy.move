@@ -125,7 +125,7 @@ address 0x1 {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
 
-        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address);
+        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, 1, true);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
         i = i + 1;
@@ -173,8 +173,8 @@ address 0x1 {
         previous_epoch_proofs: u64,
         current_proof_price: u64,
         current_cap: u64,
-        current_gas_distributed: u64,
-        current_proofs_verified: u64
+        current_subsidy_distributed: u64,
+        current_proofs_verified: u64,
     }
 
     public fun init_fullnode_sub(vm: &signer) {
@@ -182,7 +182,7 @@ address 0x1 {
       let validator_count = Vector::length(&genesis_validators);
       if (validator_count < 10) validator_count = 10;
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
-      
+      // estimated gas unit cost for proof submission.
       let baseline_tx_cost = 1173 * 1;
       let baseline_cap = baseline_auction_units() * baseline_tx_cost * validator_count;
 
@@ -192,42 +192,62 @@ address 0x1 {
         previous_epoch_proofs: 0u64,
         current_proof_price: baseline_tx_cost * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
         current_cap: baseline_cap,
-        current_gas_distributed: 0u64,
-        current_proofs_verified: 0u64
+        current_subsidy_distributed: 0u64,
+        current_proofs_verified: 0u64,
       });
-    }
+      }
 
-    public fun distribute_fullnode_subsidy(vm: &signer, miner: address):u64 acquires FullnodeSubsidy{
+    public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64, is_genesis: bool ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
+      // only for fullnodes, ie. not in current validator set.
+      if (!is_genesis){
+        if (LibraSystem::is_validator(miner)) return 0;
+      };
+
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let subsidy = state.current_proof_price;
-      // abort if ceiling was met
-      if (state.current_gas_distributed + state.current_proof_price > state.current_cap) return 0;
+      // fail fast, abort if ceiling was met
+      if (state.current_subsidy_distributed > state.current_cap) return 0;
+      let proposed_subsidy = state.current_proof_price * count;
+      if (proposed_subsidy < 1) return 0;
+      let subsidy;
+      // check if payments will exceed ceiling.
+      if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
+
+        // pay the remainder only
+        // TODO: This creates a race. Check ordering of list.
+        subsidy = state.current_cap - state.current_subsidy_distributed;
+      } else {
+
+        // happy case, the ceiling is not met.
+        subsidy = proposed_subsidy;
+      };
 
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
-
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
         miner,
         minted_coins,
         x"", x""
       );
-      state.current_gas_distributed = state.current_gas_distributed + subsidy;
+      state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
       subsidy
     }
 
     public fun fullnode_reconfig(vm: &signer) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
-
       auctioneer(vm);
-
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
        // save 
       state.previous_epoch_proofs = state.current_proofs_verified;
       // reset counters
-      state.current_gas_distributed =  0u64;
+      state.current_subsidy_distributed = 0u64;
       state.current_proofs_verified = 0u64;
 
+    }
+
+    public fun set_global_count(vm: &signer, count: u64) acquires FullnodeSubsidy{
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+      state.current_proofs_verified = count;
     }
 
     fun baseline_auction_units():u64 {
@@ -240,17 +260,27 @@ address 0x1 {
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let baseline_auction_units =  baseline_auction_units(); 
+      let baseline_auction_units = baseline_auction_units(); 
       let next_cap = fullnode_subsidy_cap(vm);
-      let baseline_proof_price = next_cap / baseline_auction_units;
-      // set new price
-      let current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
+      if (next_cap < 1) return;
 
-      // cannot be more than the baseline for the cap
-      state.current_proof_price = current_auction_multiplier * state.current_proof_price;
-      if (state.current_proof_price > baseline_proof_price) {
-        state.current_proof_price = baseline_proof_price
+      let baseline_proof_price = next_cap / baseline_auction_units;
+      let current_auction_multiplier;
+      // set new price
+      if (state.current_proofs_verified > 0) {
+        current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
+      } else {
+
+        current_auction_multiplier = baseline_auction_units / 1;
       };
+      // New unit price cannot be more than the ceiling
+      if ((current_auction_multiplier * baseline_proof_price) > next_cap) {
+        //Note: in failure case, the next miner gets the full ceiling
+        state.current_proof_price = next_cap
+      } else {
+        state.current_proof_price = current_auction_multiplier * baseline_proof_price
+      };
+
       // set new cap
       state.current_cap = next_cap;
     }
