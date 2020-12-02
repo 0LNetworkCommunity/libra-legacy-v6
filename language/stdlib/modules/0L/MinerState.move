@@ -16,7 +16,6 @@ address 0x1 {
     use 0x1::Testnet;
     use 0x1::Stats;
     use 0x1::FullnodeState;
-
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -77,7 +76,6 @@ address 0x1 {
       challenge: vector<u8>,
       solution: vector<u8>
     ) acquires MinerProofHistory {
-
       assert(Testnet::is_testnet(), 130102014010);
       //doubly check this is in test env.
       assert(Globals::get_epoch_length() == 60, 130102024010);

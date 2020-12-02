@@ -3,10 +3,6 @@ address 0x1 {
 module FullnodeState {
   use 0x1::CoreAddresses;
   use 0x1::Signer;
-  
-  // resource struct GlobalCounter {
-  //   global_proofs_in_epoch: u64
-  // }
 
   resource struct FullnodeCounter {
     proofs_submitted_in_epoch: u64,
@@ -31,22 +27,6 @@ module FullnodeState {
         }
       );
   }
-
-  //   public fun global_init(vm: &signer) {
-  //     CoreAddresses::assert_libra_root(vm);
-  //     assert(!exists<GlobalCounter>(Signer::address_of(vm)), 130112011021);
-  //     move_to<GlobalCounter>(
-  //     vm, 
-  //     GlobalCounter {
-  //         global_proofs_in_epoch: 0
-  //       }
-  //     );
-  // }
-
-  // public fun inc_global_count(vm: &signer, count: u64) {
-  //   let state = borrow_global_mut<GlobalCounter>(Signer::address_of(vm));
-  //   state.global_proofs_in_epoch = state.global_proofs_in_epoch + count;
-  // }
 
   /// On recongfiguration events, reset.
   public fun reconfig(vm: &signer, addr: address) acquires FullnodeCounter {
