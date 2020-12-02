@@ -12,6 +12,6 @@ fun main(vm: &signer) {
     Subsidy::genesis(vm);
     let new_account_bal = LibraAccount::balance<GAS>({{alice}});
     assert(new_account_bal>old_account_bal, 73570001);
-    assert(new_account_bal == 225316, 73570002);
+    assert(new_account_bal == 675748, 73570002);
 }
 }

@@ -14,8 +14,8 @@ script {
   use 0x1::Signer;
 
   fun main(sender: &signer) {
-  let challenge = TestFixtures::alice_1_easy_chal();
-  let solution = TestFixtures::alice_1_easy_sol();
+  let challenge = TestFixtures::eve_0_easy_chal();
+  let solution = TestFixtures::eve_0_easy_sol();
   let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
 
   let sender_addr = Signer::address_of(sender);
@@ -23,14 +23,18 @@ script {
   MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
 
   LibraAccount::create_validator_account_with_proof(
-    sender,
-    &challenge,
-    &solution,
-    x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // consensus_pubkey: vector<u8>,
-    b"192.168.0.1", // validator_network_addresses: vector<u8>,
-    b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
-    x"1ee7", // human_name: vector<u8>,
+      sender,
+      &challenge,
+      &solution,
+      b"leet",
+      0xfa72817f1b5aab94658238ddcdc08010,
+      x"fa72817f1b5aab94658238ddcdc08010",
+      x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // random consensus_pubkey: vector<u8>,
+      b"192.168.0.1", // validator_network_addresses: vector<u8>,
+      b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
+      x"1ee7", // human_name: vector<u8>,
   );
+
 
   // Check the account has the Validator role
   assert(Roles::assert_validator_addr(parsed_address), 7357130101011000);

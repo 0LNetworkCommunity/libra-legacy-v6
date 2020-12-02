@@ -221,7 +221,7 @@ module ValidatorConfig {
             Signature::ed25519_validate_pubkey(copy consensus_pubkey),
             Errors::invalid_argument(EINVALID_CONSENSUS_KEY)
         );
-        // // TODO(valerini): verify the proof of posession for consensus_pubkey
+        //TODO(valerini): verify the proof of posession for consensus_pubkey
         assert(exists_config(validator_addr), Errors::not_published(EVALIDATOR_CONFIG));
         let t_ref = borrow_global_mut<ValidatorConfig>(validator_addr);
         t_ref.config = Option::some(Config {

@@ -620,7 +620,8 @@ module LibraSystem {
     // TODO: Has this been superceded by update_config_and_reconfigure ?
     public fun bulk_update_validators(
         account: &signer,
-        new_validators: vector<address>) acquires CapabilityHolder {
+        new_validators: vector<address>
+    ) acquires CapabilityHolder {
         LibraTimestamp::assert_operating();
         assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 1202014010);
 
@@ -631,7 +632,6 @@ module LibraSystem {
         let next_epoch_validators = Vector::empty();
 
         let n = Vector::length<address>(&new_validators);
-
         // Get the current validator and append it to list
         let index = 0;
         while (index < n) {
@@ -639,6 +639,10 @@ module LibraSystem {
 
             // A prospective validator must have a validator config resource
             assert(ValidatorConfig::is_valid(account_address), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
+                        
+            if (!is_validator(account_address)) {
+                add_validator(account, account_address);
+            };
             
             let config = ValidatorConfig::get_config(account_address);
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {

@@ -16,7 +16,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="miner_state_helper.md#minerstate_helper">minerstate_helper</a>(sender: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_miner_state_helper.md#minerstate_helper">minerstate_helper</a>(sender: &signer)
 </code></pre>
 
 
@@ -25,7 +25,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="miner_state_helper.md#minerstate_helper">minerstate_helper</a>(sender: &signer) {
+<pre><code><b>fun</b> <a href="ol_miner_state_helper.md#minerstate_helper">minerstate_helper</a>(sender: &signer) {
     <b>assert</b>(<a href="../../modules/doc/Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 01);
 
     <a href="../../modules/doc/MinerState.md#0x1_MinerState_test_helper">MinerState::test_helper</a>(

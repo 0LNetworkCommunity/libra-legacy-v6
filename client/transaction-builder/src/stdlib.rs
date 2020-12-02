@@ -694,10 +694,13 @@ pub enum ScriptCall {
     MinerstateOnboarding {
         challenge: Bytes,
         solution: Bytes,
-        consensus_pubkey: Bytes,
-        validator_network_address: Bytes,
-        full_node_network_address: Bytes,
-        human_name: Bytes,
+        ow_human_name: Bytes,
+        op_address: AccountAddress,
+        op_auth_key_prefix: Bytes,
+        op_consensus_pubkey: Bytes,
+        op_validator_network_addresses: Bytes,
+        op_fullnode_network_addresses: Bytes,
+        op_human_name: Bytes,
     },
 
     OlOracleTx {
@@ -1642,17 +1645,23 @@ impl ScriptCall {
             MinerstateOnboarding {
                 challenge,
                 solution,
-                consensus_pubkey,
-                validator_network_address,
-                full_node_network_address,
-                human_name,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
             } => encode_minerstate_onboarding_script(
                 challenge,
                 solution,
-                consensus_pubkey,
-                validator_network_address,
-                full_node_network_address,
-                human_name,
+                ow_human_name,
+                op_address,
+                op_auth_key_prefix,
+                op_consensus_pubkey,
+                op_validator_network_addresses,
+                op_fullnode_network_addresses,
+                op_human_name,
             ),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
             OlReconfigBulkUpdateSetup {
@@ -2583,10 +2592,13 @@ pub fn encode_minerstate_helper_script() -> Script {
 pub fn encode_minerstate_onboarding_script(
     challenge: Vec<u8>,
     solution: Vec<u8>,
-    consensus_pubkey: Vec<u8>,
-    validator_network_address: Vec<u8>,
-    full_node_network_address: Vec<u8>,
-    human_name: Vec<u8>,
+    ow_human_name: Vec<u8>,
+    op_address: AccountAddress,
+    op_auth_key_prefix: Vec<u8>,
+    op_consensus_pubkey: Vec<u8>,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
+    op_human_name: Vec<u8>,
 ) -> Script {
     Script::new(
         MINERSTATE_ONBOARDING_CODE.to_vec(),
@@ -2594,10 +2606,13 @@ pub fn encode_minerstate_onboarding_script(
         vec![
             TransactionArgument::U8Vector(challenge),
             TransactionArgument::U8Vector(solution),
-            TransactionArgument::U8Vector(consensus_pubkey),
-            TransactionArgument::U8Vector(validator_network_address),
-            TransactionArgument::U8Vector(full_node_network_address),
-            TransactionArgument::U8Vector(human_name),
+            TransactionArgument::U8Vector(ow_human_name),
+            TransactionArgument::Address(op_address),
+            TransactionArgument::U8Vector(op_auth_key_prefix),
+            TransactionArgument::U8Vector(op_consensus_pubkey),
+            TransactionArgument::U8Vector(op_validator_network_addresses),
+            TransactionArgument::U8Vector(op_fullnode_network_addresses),
+            TransactionArgument::U8Vector(op_human_name),
         ],
     )
 }
@@ -3749,10 +3764,13 @@ fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateOnboarding {
         challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
         solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
-        consensus_pubkey: decode_u8vector_argument(script.args().get(2)?.clone())?,
-        validator_network_address: decode_u8vector_argument(script.args().get(3)?.clone())?,
-        full_node_network_address: decode_u8vector_argument(script.args().get(4)?.clone())?,
-        human_name: decode_u8vector_argument(script.args().get(5)?.clone())?,
+        ow_human_name: decode_u8vector_argument(script.args().get(2)?.clone())?,
+        op_address: decode_address_argument(script.args().get(3)?.clone())?,
+        op_auth_key_prefix: decode_u8vector_argument(script.args().get(4)?.clone())?,
+        op_consensus_pubkey: decode_u8vector_argument(script.args().get(5)?.clone())?,
+        op_validator_network_addresses: decode_u8vector_argument(script.args().get(6)?.clone())?,
+        op_fullnode_network_addresses: decode_u8vector_argument(script.args().get(7)?.clone())?,
+        op_human_name: decode_u8vector_argument(script.args().get(8)?.clone())?,
     })
 }
 
@@ -4338,17 +4356,18 @@ const MINERSTATE_HELPER_CODE: &[u8] = &[
 ];
 
 const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 48, 7, 76, 86,
-    8, 162, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
-    7, 1, 5, 1, 3, 7, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1, 1, 7, 6, 12, 10, 2,
-    10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105,
-    98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67,
-    111, 110, 102, 105, 103, 7, 98, 97, 108, 97, 110, 99, 101, 35, 99, 114, 101, 97, 116, 101, 95,
-    118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105,
-    116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95, 118, 97, 108, 105, 100, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 26, 11, 0, 14, 1, 14, 2, 11, 3, 11, 4, 11, 5, 11, 6,
-    17, 1, 12, 7, 10, 7, 17, 2, 12, 8, 11, 8, 3, 16, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 7, 56, 0,
-    6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 10, 11, 10, 3, 25, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 58, 7, 86, 86,
+    8, 172, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
+    7, 1, 5, 1, 3, 10, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1,
+    1, 10, 6, 12, 10, 2, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0,
+    1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97,
+    108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 7, 98, 97, 108, 97, 110, 99,
+    101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99,
+    99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95,
+    118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 29, 11, 0, 14,
+    1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 17, 1, 12, 10, 10, 10, 17, 2, 12,
+    11, 11, 11, 3, 19, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 10, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33,
+    12, 13, 11, 13, 3, 28, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const OL_ORACLE_TX_CODE: &[u8] = &[

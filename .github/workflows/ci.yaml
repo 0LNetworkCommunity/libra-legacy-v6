@@ -31,7 +31,7 @@ jobs:
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L functional tests
-        run: cd language/move-lang/functional-tests && cargo test 0L
+        run: cd language/move-lang/functional-tests && NODE_ENV=test cargo test 0L
   miner:
     name: Miner Tests
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
             override: true
             components: rustfmt, clippy
       - name: Run Miner tests
-        run: cd miner && cargo test
+        run: cd miner && NODE_ENV=test cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
@@ -75,7 +75,7 @@ jobs:
       - name: Build stdlib
         run: cd language/stdlib && cargo run --release
       - name: Run 0L e2e tests
-        run: cd language/e2e-testsuite && cargo test ol
+        run: cd language/e2e-testsuite && NODE_ENV=test cargo test ol
   
   # genesis_smoke:
   #   name: Genesis Smoke Test

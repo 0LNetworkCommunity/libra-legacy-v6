@@ -10,7 +10,7 @@ use libra_global_constants::VDF_SECURITY_PARAM;
 pub fn delay_difficulty() -> u64 {
     let node_env = match env::var("NODE_ENV") {
         Ok(val) => val,
-        _ => "test".to_string() // default to "test" if not set
+        _ => "prod".to_string() // default to "prod" if not set
     };
     // must explicitly set env to prod to use production difficulty.
     if node_env == "prod" {

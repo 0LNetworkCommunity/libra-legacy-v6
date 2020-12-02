@@ -362,6 +362,14 @@ address 0x1 {
       state.count_proofs_in_epoch = count;
     }
 
+    public fun test_helper_mock_mining_vm(vm: &signer, addr: address, count: u64) acquires MinerProofHistory {
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130115014011);
+
+      assert(Testnet::is_testnet(), 130115014011);
+      let state = borrow_global_mut<MinerProofHistory>(addr);
+      state.count_proofs_in_epoch = count;
+    }
+
     // Permissions: PUBLIC, VM, TESTING 
     public fun test_helper_mock_reconfig(account: &signer, miner_addr: address) acquires MinerProofHistory{
       let sender = Signer::address_of(account);

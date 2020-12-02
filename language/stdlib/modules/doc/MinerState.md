@@ -23,6 +23,7 @@
 -  [Function `get_epochs_mining`](#0x1_MinerState_get_epochs_mining)
 -  [Function `rate_limit_create_acc`](#0x1_MinerState_rate_limit_create_acc)
 -  [Function `test_helper_mock_mining`](#0x1_MinerState_test_helper_mock_mining)
+-  [Function `test_helper_mock_mining_vm`](#0x1_MinerState_test_helper_mock_mining_vm)
 -  [Function `test_helper_mock_reconfig`](#0x1_MinerState_test_helper_mock_reconfig)
 -  [Function `test_helper_get_height`](#0x1_MinerState_test_helper_get_height)
 -  [Function `test_helper_get_contiguous`](#0x1_MinerState_test_helper_get_contiguous)
@@ -748,6 +749,34 @@ Public APIs ///
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_mock_mining">test_helper_mock_mining</a>(sender: &signer,  count: u64) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130115014011);
   <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
+  state.count_proofs_in_epoch = count;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_test_helper_mock_mining_vm"></a>
+
+## Function `test_helper_mock_mining_vm`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_mock_mining_vm">test_helper_mock_mining_vm</a>(vm: &signer, addr: address, count: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_test_helper_mock_mining_vm">test_helper_mock_mining_vm</a>(vm: &signer, addr: address, count: u64) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130115014011);
+
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130115014011);
+  <b>let</b> state = borrow_global_mut&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(addr);
   state.count_proofs_in_epoch = count;
 }
 </code></pre>

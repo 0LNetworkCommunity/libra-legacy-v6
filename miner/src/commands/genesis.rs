@@ -40,16 +40,21 @@ impl Runnable for GenesisCmd {
         let f = File::open(block_json).expect("Could not open block_0 files");
         let block: Block = serde_json::from_reader(f).expect("Can not read block_0.json");
 
+        let owner_address = keys.child_0_owner.get_address().to_string();
+        // let op_authkey = keys.child_1_operator.get_address();
         let val_configs = ValConfigs {
             /// Block zero of the onboarded miner
             block_zero: block,
-            consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
-            validator_network_identity_pubkey: keys.child_2_val_network.get_public().to_bytes().into(),
-            validator_network_address: miner_configs.profile.ip.to_string(),
-            full_node_network_identity_pubkey: keys.child_3_fullnode_network.get_public().to_bytes().into(),
-            full_node_network_address: miner_configs.profile.ip.to_string(),
-            human_name: miner_configs.profile.account.to_string(),
+            ow_human_name: owner_address.clone(),
+            op_address: format!("0x{}", keys.child_1_operator.get_address().to_string()),
+            op_auth_key_prefix: keys.child_1_operator.get_authentication_key().prefix().to_vec(),
+            op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
+            op_validator_network_addresses: miner_configs.profile.ip.to_string(),
+            op_fullnode_network_addresses: miner_configs.profile.ip.to_string(),
+            op_human_name: format!("{}-oper", owner_address),
         };
+        
+        dbg!(&val_configs);
 
         let mut file = File::create(json_path.as_path()).unwrap();
         let buf = serde_json::to_string(&val_configs ).expect("Config should be export to json");
