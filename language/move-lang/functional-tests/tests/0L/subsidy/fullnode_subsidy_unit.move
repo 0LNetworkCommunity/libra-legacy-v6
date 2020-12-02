@@ -13,11 +13,10 @@ fun main(vm: &signer) {
     let value = Subsidy::distribute_fullnode_subsidy(vm, {{alice}}, 10);
     let new_account_bal = LibraAccount::balance<GAS>({{alice}});
     print(&value);
-    assert(value == 2252160, 735702);
-    assert(new_account_bal == 2252260, 735702);
+    assert(value == 6756480, 735701);
+    assert(new_account_bal == 6756580, 735702);
 
     print(&new_account_bal);
-    assert(new_account_bal>old_account_bal, 73570001);
-    // assert(new_account_bal == 225316, 73570002);
+    assert(new_account_bal>old_account_bal, 735703);
 }
 }

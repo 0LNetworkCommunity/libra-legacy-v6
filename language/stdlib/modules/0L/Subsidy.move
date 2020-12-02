@@ -195,34 +195,51 @@ address 0x1 {
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
       });
-    }
+      }
 
+    use 0x1::Debug::print;
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64 ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       // fail fast, abort if ceiling was met
+      print(&0x521);
       if (state.current_subsidy_distributed > state.current_cap) return 0;
       let proposed_subsidy = state.current_proof_price * count;
+      if (proposed_subsidy < 1) return 0;
+      print(&proposed_subsidy);
       let subsidy;
+      print(&0x522);
       // check if payments will exceed ceiling.
       if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
+        print(&0x5221);
+
         // pay the remainder only
         // TODO: This creates a race. Check ordering of list.
         subsidy = state.current_cap - state.current_subsidy_distributed;
       } else {
+        print(&0x5222);
+
         // happy case, the ceiling is not met.
         subsidy = proposed_subsidy;
       };
+      print(&subsidy);
+      print(&0x523);
 
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
-
+      print(&minted_coins);
+      print(&0x524);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
         miner,
         minted_coins,
         x"", x""
       );
+      print(&0x525);
+
+      
+
       state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
+      print(&0x526);
       subsidy
     }
 
@@ -251,11 +268,16 @@ address 0x1 {
     }
 
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
+      print(&0x081);
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       let baseline_auction_units = baseline_auction_units(); 
+      print(&0x0811);
 
       let next_cap = fullnode_subsidy_cap(vm);
+      print(&next_cap);
+
+      if (next_cap < 1) return;
 
       let baseline_proof_price = next_cap / baseline_auction_units;
       let current_auction_multiplier;
@@ -266,11 +288,16 @@ address 0x1 {
 
         current_auction_multiplier = baseline_auction_units / 1;
       };
+            print(&0x0812);
+
       // New unit price cannot be more than the ceiling
       if ((current_auction_multiplier * baseline_proof_price) > next_cap) {
+      print(&0x08121);
         //Note: in failure case, the next miner gets the full ceiling
         state.current_proof_price = next_cap
       } else {
+      print(&0x08122);
+
         state.current_proof_price = current_auction_multiplier * baseline_proof_price
       };
 
