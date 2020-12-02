@@ -1,4 +1,6 @@
 //! account: alice, 100, 0, validator
+//// frank is a fullnode
+//! account: frank, 100, 0
 
 //! new-transaction
 //! sender: libraroot
@@ -28,9 +30,9 @@ fun main(vm: &signer) {
     /// No proofs submitted in current epoch. So a single proof is worth the ceiling, i.e. equivalent to tx fees.
     Subsidy::set_global_count(vm, 10000);
     Subsidy::fullnode_reconfig(vm);
-    let old_account_bal = LibraAccount::balance<GAS>({{alice}});
-    let value = Subsidy::distribute_fullnode_subsidy(vm, {{alice}}, 1);
-    let new_account_bal = LibraAccount::balance<GAS>({{alice}});
+    let old_account_bal = LibraAccount::balance<GAS>({{frank}});
+    let value = Subsidy::distribute_fullnode_subsidy(vm, {{frank}}, 1);
+    let new_account_bal = LibraAccount::balance<GAS>({{frank}});
     assert(value == 84, 735702);
     assert(new_account_bal>old_account_bal, 73570001);
     assert(new_account_bal == 184, 73570002);

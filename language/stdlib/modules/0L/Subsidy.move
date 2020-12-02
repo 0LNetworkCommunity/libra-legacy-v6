@@ -200,6 +200,9 @@ address 0x1 {
     use 0x1::Debug::print;
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64 ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
+      // only for fullnodes, ie. not in current validator set.
+      if (LibraSystem::is_validator(miner)) return 0;
+
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       // fail fast, abort if ceiling was met
       print(&0x521);
