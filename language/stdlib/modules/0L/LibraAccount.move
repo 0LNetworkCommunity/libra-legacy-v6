@@ -1317,21 +1317,21 @@ module LibraAccount {
     public fun create_user_account_with_proof(
         challenge: &vector<u8>,
         solution: &vector<u8>,
-        new_account_address: address,
-        auth_key_prefix: vector<u8>,
-    ) acquires AccountOperationsCapability {
+    ):address acquires AccountOperationsCapability {
         // Rate limit with vdf proof.
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
             solution
         );
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         assert(valid, 120101011021);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
-        make_account(new_signer, auth_key_prefix)
+        make_account(new_signer, auth_key_prefix);
+        new_account_address
     }
 
     // spec fun create_user_account {
