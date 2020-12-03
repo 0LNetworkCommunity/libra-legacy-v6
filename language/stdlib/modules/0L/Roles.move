@@ -302,7 +302,9 @@ module Roles {
         // `LibraRoot`) cannot.
         has_parent_VASP_role(account) ||
         has_child_VASP_role(account) ||
-        has_designated_dealer_role(account) || has_user_role(account)
+        has_designated_dealer_role(account) || 
+        has_user_role(account) ||
+        has_validator_role(account)
     }
 
     // ===============

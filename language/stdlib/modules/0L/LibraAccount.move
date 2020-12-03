@@ -1314,11 +1314,19 @@ module LibraAccount {
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
     }
 
-    public fun create_user_account(
+    public fun create_user_account_with_proof(
+        challenge: &vector<u8>,
+        solution: &vector<u8>,
         new_account_address: address,
         auth_key_prefix: vector<u8>,
     ) acquires AccountOperationsCapability {
-        // TODO: Ratelimit sender with proof.
+        // Rate limit with vdf proof.
+        let valid = VDF::verify(
+            challenge,
+            &Globals::get_difficulty(),
+            solution
+        );
+        assert(valid, 120101011021);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
