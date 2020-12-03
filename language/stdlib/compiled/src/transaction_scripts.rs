@@ -61,6 +61,7 @@ pub enum StdlibScript {
     OracleTx,
     MinerStateCommit,
     MinerStateOnboarding,
+    CreateUserAccount,
     // ...add new scripts here
 }
 
@@ -110,6 +111,7 @@ impl StdlibScript {
             OracleTx,
             MinerStateCommit,
             MinerStateOnboarding,
+            CreateUserAccount,
             // ...add new scripts here
         ]
     }
@@ -243,7 +245,8 @@ impl fmt::Display for StdlibScript {
                 ReconfigSetup => "ol_reconfig_bulk_update_setup",
                 OracleTx => "ol_oracle_tx",
                 MinerStateCommit => "ol_miner_state_commit",
-                MinerStateOnboarding => "ol_miner_state_onboarding"
+                MinerStateOnboarding => "ol_miner_state_onboarding",
+                CreateUserAccount => "ol_create_user_account",
             }
         )
     }

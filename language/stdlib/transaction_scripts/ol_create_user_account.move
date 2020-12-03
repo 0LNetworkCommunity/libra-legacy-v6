@@ -16,6 +16,6 @@ script {
     );
 
     // Check the account exists and the balance is 0
-    assert(LibraAccount::balance<GAS>(new_account_address) == 0, 04);
+    assert(LibraAccount::balance<GAS>(new_account_address) == 0, 01);
 }
 }
