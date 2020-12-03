@@ -1,4 +1,4 @@
-//! account: bob, 100000, 0, validator
+//! account: bob, 100000, 0
 
 //! new-transaction
 //! sender: bob
@@ -9,7 +9,7 @@ use 0x1::TestFixtures;
 use 0x1::GAS::GAS;
 
 fun main(_sender: &signer) {
-  // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
+  // Scenario: Bob, an existing user, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
   // This proof will create a new account, with the preimage data.
   let challenge = TestFixtures::eve_0_easy_chal();
   let solution = TestFixtures::eve_0_easy_sol();
