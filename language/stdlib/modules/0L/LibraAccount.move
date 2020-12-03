@@ -1400,6 +1400,8 @@ module LibraAccount {
         include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
     }
 
+
+
     /// Create an account with the ChildVASP role at `new_account_address` with authentication key
     /// `auth_key_prefix` | `new_account_address` and a 0 balance of type `Token`. If
     /// `add_all_currencies` is true, 0 balances for all avaialable currencies in the system will
@@ -1449,6 +1451,21 @@ module LibraAccount {
         include VASP::PublishChildVASPEnsures;
         ensures exists_at(child_addr);
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
+    }
+
+    public fun create_user_account<Token>(
+        new_account_address: address,
+        auth_key_prefix: vector<u8>,
+        add_all_currencies: bool,
+    ) acquires AccountOperationsCapability {
+        let new_account = create_signer(new_account_address);
+        Event::publish_generator(&new_account);
+        add_currencies_for_account<Token>(&new_account, add_all_currencies);
+        make_account(new_account, auth_key_prefix)
+    }
+
+    spec fun create_user_account {
+        include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
     }
 
     ///////////////////////////////////////////////////////////////////////////
