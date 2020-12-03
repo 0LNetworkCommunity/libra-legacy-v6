@@ -904,11 +904,11 @@
     }
   ],
   [
-    "01d8d0d983c718cb50c7cda1bd6a9c708a4906517bbba56178e02443cc04053ded",
+    "01d9bfe061cfb71e781e67e3e33af610cf7ea3e3261c7bade3853da1aebbd9437a",
     {
       "address": "00000000000000000000000000000001",
-      "module": "ValidatorUniverse",
-      "name": "ValidatorEpochInfo",
+      "module": "FullnodeState",
+      "name": "FullnodeCounter",
       "type_params": []
     }
   ],

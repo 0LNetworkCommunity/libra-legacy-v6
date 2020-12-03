@@ -3,144 +3,107 @@
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
-//! account: eve, 1000000, 0, validator
 
 
 //! new-transaction
 //! sender: alice
 script {
   use 0x1::LibraAccount;
-  use 0x1::GAS::GAS;
+  // use 0x1::GAS::GAS;
   use 0x1::ValidatorConfig;
   use 0x1::TestFixtures;
   use 0x1::VDF;
-  use 0x1::Roles;
+  // use 0x1::Roles;
   use 0x1::Signer;
   use 0x1::MinerState;
 
   fun main(sender: &signer) {
-    let challenge = TestFixtures::alice_1_easy_chal();
-    let solution = TestFixtures::alice_1_easy_sol();
-    let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);    
+        // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
+    let challenge = TestFixtures::eve_0_easy_chal();
+    let solution = TestFixtures::eve_0_easy_sol();
+    // // Parse key and check
+    let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
+    assert(eve_addr == 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
 
-  let sender_addr = Signer::address_of(sender);
-  let epochs_since_creation = 10;
-  MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
+    let sender_addr = Signer::address_of(sender);
+    let epochs_since_creation = 10;
+    MinerState::test_helper_set_rate_limit(sender_addr, epochs_since_creation);
 
-  LibraAccount::create_validator_account_with_proof(
-      sender,
-      &challenge,
-      &solution,
-      x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // consensus_pubkey: vector<u8>,
-      b"192.168.0.1", // validator_network_addresses: vector<u8>,
-      b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
-      x"1ee7", // human_name: vector<u8>,
-  );
+    LibraAccount::create_validator_account_with_proof(
+        sender,
+        &challenge,
+        &solution,
+        b"leet",
+        0xfa72817f1b5aab94658238ddcdc08010,
+        x"fa72817f1b5aab94658238ddcdc08010",
+        x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", // random consensus_pubkey: vector<u8>,
+        b"192.168.0.1", // validator_network_addresses: vector<u8>,
+        b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
+        x"1ee7", // human_name: vector<u8>,
+    );
+    assert(ValidatorConfig::is_valid(eve_addr), 7357130101031000);
 
-    // Check the account has the Validator role
-  assert(Roles::assert_validator_addr(parsed_address), 7357130101011000);
-
-  assert(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
-
-  // Check the account exists and the balance is 0
-  assert(LibraAccount::balance<GAS>(parsed_address) == 0, 7357130101031000);
   }
 }
 //check: EXECUTED
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
 
 //! new-transaction
 //! sender: libraroot
 script {
     use 0x1::LibraSystem;
-    fun main(_account: &signer) {
+    use 0x1::Reconfigure;
+    use 0x1::Vector;
+    use 0x1::MinerState;
+    use 0x1::Stats;
+  
+    fun main(vm: &signer) {
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 5, 7357000180101);
+        assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
-    }
-}
-// check: EXECUTED
+        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180103);
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 3
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 4
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 5
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 6
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 7
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 8
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 9
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 10
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 11
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 12
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 13
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 14
-
-//! new-transaction
-//! sender: libraroot
-script {
-    use 0x1::Vector;
-    use 0x1::Stats;
-    // This is the the epoch boundary.
-    fun main(vm: &signer) {
+        // Mock everyone being a CASE 1
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
-        Vector::push_back<address>(&mut voters, {{eve}});
+        
 
-        // Overwrite the statistics to mock that all have been validating.
+        MinerState::test_helper_mock_mining_vm(vm, {{alice}}, 20);
+        MinerState::test_helper_mock_mining_vm(vm, {{bob}}, 20);
+        MinerState::test_helper_mock_mining_vm(vm, {{carol}}, 20);
+        MinerState::test_helper_mock_mining_vm(vm, {{dave}}, 20);
+
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
             Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
+
+        Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
     }
 }
-//! block-prologue
-//! proposer: alice
-//! block-time: 15
-//! round: 15
+// check: EXECUTED
+
+
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::LibraSystem;
+    use 0x1::ValidatorUniverse;
+    use 0x1::Vector;
+    fun main(vm: &signer) {
+        // Tests on initial size of validators 
+        // assert(LibraSystem::validator_set_size() == 4, 7357000180101);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        // assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
+        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
+        assert(LibraSystem::validator_set_size() == len, 7357000180104);
+      }
+}
+// check: EXECUTED
