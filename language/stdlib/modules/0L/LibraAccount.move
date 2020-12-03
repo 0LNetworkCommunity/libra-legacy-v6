@@ -216,10 +216,6 @@ module LibraAccount {
         create_libra_root_account(
             copy dummy_auth_key_prefix,
         );
-        // create_treasury_compliance_account(
-        //     lr_account,
-        //     copy dummy_auth_key_prefix,
-        // );
     }
 
     // //////// 0L ////////
@@ -261,12 +257,8 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
-        
 
-        // // Create OP Account
-         
-        // let op_auth_key_prefix = Authenticator::ed25519_authentication_key(op_operator_pubkey);
-
+        // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         Event::publish_generator(&new_op_account);
@@ -1322,20 +1314,21 @@ module LibraAccount {
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
     }
 
-    public fun create_user_account<Token>(
+    public fun create_user_account(
         new_account_address: address,
         auth_key_prefix: vector<u8>,
-        add_all_currencies: bool,
     ) acquires AccountOperationsCapability {
-        let new_account = create_signer(new_account_address);
-        Event::publish_generator(&new_account);
-        add_currencies_for_account<Token>(&new_account, add_all_currencies);
-        make_account(new_account, auth_key_prefix)
+        // TODO: Ratelimit sender with proof.
+        let new_signer = create_signer(new_account_address);
+        Roles::new_user_role_with_proof(&new_signer);
+        Event::publish_generator(&new_signer);
+        add_currencies_for_account<GAS>(&new_signer, false);
+        make_account(new_signer, auth_key_prefix)
     }
 
-    spec fun create_user_account {
-        include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
-    }
+    // spec fun create_user_account {
+    //     include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
+    // }
 
     ///////////////////////////////////////////////////////////////////////////
     // General purpose methods

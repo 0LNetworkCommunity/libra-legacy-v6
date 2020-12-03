@@ -43,7 +43,8 @@ module Roles {
     const VALIDATOR_OPERATOR_ROLE_ID: u64 = 4;
     const PARENT_VASP_ROLE_ID: u64 = 5;
     const CHILD_VASP_ROLE_ID: u64 = 6;
-    const OL_USER: u64 =8;
+    //////// 0L ////////
+    const USER_ID: u64 = 10;
 
     /// The roleId contains the role id for the account. This is only moved
     /// to an account as a top-level resource, and is otherwise immovable.
@@ -54,20 +55,20 @@ module Roles {
     // =============
     // Role Granting
 
-    /// Publishes libra root role. Granted only in genesis.
-    public fun grant_libra_user_role(
-        lr_account: &signer,
-    ) {
-        LibraTimestamp::assert_genesis();
-        // Checks actual Libra root because Libra root role is not set
-        // until next line of code.
-        CoreAddresses::assert_libra_root(lr_account);
-        // Grant the role to the libra root account
-        grant_role(lr_account, OL_USER);
-    }
-    spec fun grant_libra_user_role {
-        include GrantRole{addr: Signer::address_of(lr_account), role_id: OL_USER};
-    }
+    // /// Publishes libra root role. Granted only in genesis.
+    // public fun grant_libra_user_role(
+    //     lr_account: &signer,
+    // ) {
+    //     LibraTimestamp::assert_genesis();
+    //     // Checks actual Libra root because Libra root role is not set
+    //     // until next line of code.
+    //     CoreAddresses::assert_libra_root(lr_account);
+    //     // Grant the role to the libra root account
+    //     grant_role(lr_account, OL_USER);
+    // }
+    // spec fun grant_libra_user_role {
+    //     include GrantRole{addr: Signer::address_of(lr_account), role_id: OL_USER};
+    // }
 
     /// Publishes libra root role. Granted only in genesis.
     public fun grant_libra_root_role(
@@ -132,6 +133,26 @@ module Roles {
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
     }
 
+        //////// 0L /////////
+    // Creates a user account
+    /// Permissions: PUBLIC, ANYONE, SIGNER
+    /// Needs to be a signer, is called from LibraAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
+    public fun new_user_role_with_proof(
+        new_account: &signer
+    ) {
+        // assert_libra_root(creating_account);
+        grant_role(new_account, USER_ID);
+    }
+
+    spec fun new_user_role_with_proof {
+        include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
+    }
+
+
+    // spec fun new_validator_role_with_proof {
+    //     include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
+    // }
+
     //////// 0L ////////
     /// Publish a Validator `RoleId` under `new_account`.
     /// The `creating_account` must be libra root.
@@ -148,12 +169,19 @@ module Roles {
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
     }
 
+    //////// 0L ////////
+    // same for operator 
     // can only be called by signer
     public fun new_validator_operator_role_with_proof(
         new_account: &signer,
     ) {
         grant_role(new_account, VALIDATOR_OPERATOR_ROLE_ID);
     }
+
+    spec fun new_validator_operator_role_with_proof {
+        include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_OPERATOR_ROLE_ID};
+    }
+
     
 
     /// Publish a ValidatorOperator `RoleId` under `new_account`.
@@ -259,7 +287,7 @@ module Roles {
     }
 
     public fun has_user_role(account: &signer): bool acquires RoleId {
-        has_role(account, OL_USER)
+        has_role(account, USER_ID)
     }
 
     public fun get_role_id(a: address): u64 acquires RoleId {
