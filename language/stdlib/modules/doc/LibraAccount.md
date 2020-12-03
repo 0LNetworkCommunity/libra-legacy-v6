@@ -20,6 +20,7 @@ before and after every transaction.
 -  [Struct `CreateAccountEvent`](#0x1_LibraAccount_CreateAccountEvent)
 -  [Constants](#@Constants_0)
 -  [Function `initialize`](#0x1_LibraAccount_initialize)
+-  [Function `create_user_account_with_proof`](#0x1_LibraAccount_create_user_account_with_proof)
 -  [Function `create_validator_account_with_proof`](#0x1_LibraAccount_create_validator_account_with_proof)
 -  [Function `has_published_account_limits`](#0x1_LibraAccount_has_published_account_limits)
 -  [Function `should_track_limits_for_account`](#0x1_LibraAccount_should_track_limits_for_account)
@@ -46,7 +47,6 @@ before and after every transaction.
 -  [Function `create_designated_dealer`](#0x1_LibraAccount_create_designated_dealer)
 -  [Function `create_parent_vasp_account`](#0x1_LibraAccount_create_parent_vasp_account)
 -  [Function `create_child_vasp_account`](#0x1_LibraAccount_create_child_vasp_account)
--  [Function `create_user_account`](#0x1_LibraAccount_create_user_account)
 -  [Function `create_signer`](#0x1_LibraAccount_create_signer)
 -  [Function `destroy_signer`](#0x1_LibraAccount_destroy_signer)
 -  [Function `balance_for`](#0x1_LibraAccount_balance_for)
@@ -844,10 +844,46 @@ Initialize this module. This is only callable from genesis.
     <a href="LibraAccount.md#0x1_LibraAccount_create_libra_root_account">create_libra_root_account</a>(
         <b>copy</b> dummy_auth_key_prefix,
     );
-    // <a href="LibraAccount.md#0x1_LibraAccount_create_treasury_compliance_account">create_treasury_compliance_account</a>(
-    //     lr_account,
-    //     <b>copy</b> dummy_auth_key_prefix,
-    // );
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_LibraAccount_create_user_account_with_proof"></a>
+
+## Function `create_user_account_with_proof`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_user_account_with_proof">create_user_account_with_proof</a>(challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;): address
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_user_account_with_proof">create_user_account_with_proof</a>(
+    challenge: &vector&lt;u8&gt;,
+    solution: &vector&lt;u8&gt;,
+):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    // Rate limit <b>with</b> vdf proof.
+    <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
+        challenge,
+        &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
+        solution
+    );
+    <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
+    <b>assert</b>(valid, 120101011021);
+    <b>let</b> new_signer = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
+    <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
+    <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
+    <a href="LibraAccount.md#0x1_LibraAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
+    <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
+    new_account_address
 }
 </code></pre>
 
@@ -904,11 +940,7 @@ Initialize this module. This is only callable from genesis.
     // NOTE: <a href="VDF.md#0x1_VDF">VDF</a> verification is being called twice!
     <a href="MinerState.md#0x1_MinerState_init_miner_state">MinerState::init_miner_state</a>(&new_signer, challenge, solution);
 
-
-    // // Create OP Account
-
-    // <b>let</b> op_auth_key_prefix = <a href="Authenticator.md#0x1_Authenticator_ed25519_authentication_key">Authenticator::ed25519_authentication_key</a>(op_operator_pubkey);
-
+    // Create OP Account
     <b>let</b> new_op_account = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(op_address);
     <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">Roles::new_validator_operator_role_with_proof</a>(&new_op_account);
     <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_op_account);
@@ -2919,49 +2951,6 @@ also be added. This account will be a child of <code>creator</code>, which must 
     <b>ensures</b> <a href="LibraAccount.md#0x1_LibraAccount_exists_at">exists_at</a>(child_addr);
     <b>ensures</b> <a href="Roles.md#0x1_Roles_spec_has_child_VASP_role_addr">Roles::spec_has_child_VASP_role_addr</a>(child_addr);
 }
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_LibraAccount_create_user_account"></a>
-
-## Function `create_user_account`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_user_account">create_user_account</a>&lt;Token&gt;(new_account_address: address, auth_key_prefix: vector&lt;u8&gt;, add_all_currencies: bool)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_user_account">create_user_account</a>&lt;Token&gt;(
-    new_account_address: address,
-    auth_key_prefix: vector&lt;u8&gt;,
-    add_all_currencies: bool,
-) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
-    <b>let</b> new_account = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
-    <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_account);
-    <a href="LibraAccount.md#0x1_LibraAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;Token&gt;(&new_account, add_all_currencies);
-    <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_account, auth_key_prefix)
-}
-</code></pre>
-
-
-
-</details>
-
-<details>
-<summary>Specification</summary>
-
-
-
-<pre><code><b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_AddCurrencyForAccountEnsures">AddCurrencyForAccountEnsures</a>&lt;Token&gt;{addr: new_account_address};
 </code></pre>
 
 

@@ -14,11 +14,11 @@ For a conceptual discussion of roles, see the [LIP-2 document][ACCESS_CONTROL].
 
 -  [Resource `RoleId`](#0x1_Roles_RoleId)
 -  [Constants](#@Constants_0)
--  [Function `grant_libra_user_role`](#0x1_Roles_grant_libra_user_role)
 -  [Function `grant_libra_root_role`](#0x1_Roles_grant_libra_root_role)
 -  [Function `grant_treasury_compliance_role`](#0x1_Roles_grant_treasury_compliance_role)
 -  [Function `new_designated_dealer_role`](#0x1_Roles_new_designated_dealer_role)
 -  [Function `new_validator_role`](#0x1_Roles_new_validator_role)
+-  [Function `new_user_role_with_proof`](#0x1_Roles_new_user_role_with_proof)
 -  [Function `new_validator_role_with_proof`](#0x1_Roles_new_validator_role_with_proof)
 -  [Function `new_validator_operator_role_with_proof`](#0x1_Roles_new_validator_operator_role_with_proof)
 -  [Function `new_validator_operator_role`](#0x1_Roles_new_validator_operator_role)
@@ -211,15 +211,6 @@ The signer didn't have the required Validator Operator role
 
 
 
-<a name="0x1_Roles_OL_USER"></a>
-
-
-
-<pre><code><b>const</b> <a href="Roles.md#0x1_Roles_OL_USER">OL_USER</a>: u64 = 8;
-</code></pre>
-
-
-
 <a name="0x1_Roles_PARENT_VASP_ROLE_ID"></a>
 
 
@@ -234,6 +225,15 @@ The signer didn't have the required Validator Operator role
 
 
 <pre><code><b>const</b> <a href="Roles.md#0x1_Roles_TREASURY_COMPLIANCE_ROLE_ID">TREASURY_COMPLIANCE_ROLE_ID</a>: u64 = 1;
+</code></pre>
+
+
+
+<a name="0x1_Roles_USER_ID"></a>
+
+
+
+<pre><code><b>const</b> <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>: u64 = 10;
 </code></pre>
 
 
@@ -255,50 +255,6 @@ The signer didn't have the required Validator Operator role
 </code></pre>
 
 
-
-<a name="0x1_Roles_grant_libra_user_role"></a>
-
-## Function `grant_libra_user_role`
-
-Publishes libra root role. Granted only in genesis.
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_grant_libra_user_role">grant_libra_user_role</a>(lr_account: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_grant_libra_user_role">grant_libra_user_role</a>(
-    lr_account: &signer,
-) {
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
-    // Checks actual <a href="Libra.md#0x1_Libra">Libra</a> root because <a href="Libra.md#0x1_Libra">Libra</a> root role is not set
-    // until next line of code.
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(lr_account);
-    // Grant the role <b>to</b> the libra root account
-    <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(lr_account, <a href="Roles.md#0x1_Roles_OL_USER">OL_USER</a>);
-}
-</code></pre>
-
-
-
-</details>
-
-<details>
-<summary>Specification</summary>
-
-
-
-<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_GrantRole">GrantRole</a>{addr: <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(lr_account), role_id: <a href="Roles.md#0x1_Roles_OL_USER">OL_USER</a>};
-</code></pre>
-
-
-
-</details>
 
 <a name="0x1_Roles_grant_libra_root_role"></a>
 
@@ -479,6 +435,35 @@ The <code>creating_account</code> must be libra root.
 
 </details>
 
+<a name="0x1_Roles_new_user_role_with_proof"></a>
+
+## Function `new_user_role_with_proof`
+
+Permissions: PUBLIC, ANYONE, SIGNER
+Needs to be a signer, is called from LibraAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_user_role_with_proof">new_user_role_with_proof</a>(new_account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_user_role_with_proof">new_user_role_with_proof</a>(
+    new_account: &signer
+) {
+    // <a href="Roles.md#0x1_Roles_assert_libra_root">assert_libra_root</a>(creating_account);
+    <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>);
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Roles_new_validator_role_with_proof"></a>
 
 ## Function `new_validator_role_with_proof`
@@ -542,6 +527,18 @@ Needs to be a signer, is called from LibraAccount, which can create a signer. Ot
 ) {
     <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_VALIDATOR_OPERATOR_ROLE_ID">VALIDATOR_OPERATOR_ROLE_ID</a>);
 }
+</code></pre>
+
+
+
+</details>
+
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_GrantRole">GrantRole</a>{addr: <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account), role_id: <a href="Roles.md#0x1_Roles_VALIDATOR_OPERATOR_ROLE_ID">VALIDATOR_OPERATOR_ROLE_ID</a>};
 </code></pre>
 
 
@@ -946,7 +943,7 @@ Helper function to grant a role.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_has_user_role">has_user_role</a>(account: &signer): bool <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
-    <a href="Roles.md#0x1_Roles_has_role">has_role</a>(account, <a href="Roles.md#0x1_Roles_OL_USER">OL_USER</a>)
+    <a href="Roles.md#0x1_Roles_has_role">has_role</a>(account, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>)
 }
 </code></pre>
 
@@ -1001,7 +998,9 @@ Return true if <code>addr</code> is allowed to receive and send <code><a href="L
     // `LibraRoot`) cannot.
     <a href="Roles.md#0x1_Roles_has_parent_VASP_role">has_parent_VASP_role</a>(account) ||
     <a href="Roles.md#0x1_Roles_has_child_VASP_role">has_child_VASP_role</a>(account) ||
-    <a href="Roles.md#0x1_Roles_has_designated_dealer_role">has_designated_dealer_role</a>(account) || <a href="Roles.md#0x1_Roles_has_user_role">has_user_role</a>(account)
+    <a href="Roles.md#0x1_Roles_has_designated_dealer_role">has_designated_dealer_role</a>(account) ||
+    <a href="Roles.md#0x1_Roles_has_user_role">has_user_role</a>(account) ||
+    <a href="Roles.md#0x1_Roles_has_validator_role">has_validator_role</a>(account)
 }
 </code></pre>
 
@@ -1653,7 +1652,7 @@ ChildVASP have balances [[D7]][ROLE].
 }
 <a name="0x1_Roles_spec_has_user_role_addr"></a>
 <b>define</b> <a href="Roles.md#0x1_Roles_spec_has_user_role_addr">spec_has_user_role_addr</a>(addr: address): bool {
-    <a href="Roles.md#0x1_Roles_spec_has_role_id_addr">spec_has_role_id_addr</a>(addr, <a href="Roles.md#0x1_Roles_OL_USER">OL_USER</a>)
+    <a href="Roles.md#0x1_Roles_spec_has_role_id_addr">spec_has_role_id_addr</a>(addr, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>)
 }
 <a name="0x1_Roles_spec_can_hold_balance_addr"></a>
 <b>define</b> <a href="Roles.md#0x1_Roles_spec_can_hold_balance_addr">spec_can_hold_balance_addr</a>(addr: address): bool {

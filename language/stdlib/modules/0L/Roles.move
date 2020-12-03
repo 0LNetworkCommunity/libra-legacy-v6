@@ -144,9 +144,9 @@ module Roles {
         grant_role(new_account, USER_ID);
     }
 
-    spec fun new_user_role_with_proof {
-        include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
-    }
+    // spec fun new_user_role_with_proof {
+    //     include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
+    // }
 
 
     // spec fun new_validator_role_with_proof {
@@ -597,7 +597,7 @@ module Roles {
         }
 
         define spec_has_user_role_addr(addr: address): bool {
-            spec_has_role_id_addr(addr, OL_USER)
+            spec_has_role_id_addr(addr, USER_ID)
         }
 
         define spec_can_hold_balance_addr(addr: address): bool {

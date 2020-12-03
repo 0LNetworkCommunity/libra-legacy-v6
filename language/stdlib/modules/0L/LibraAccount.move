@@ -219,10 +219,36 @@ module LibraAccount {
     }
 
     // //////// 0L ////////
-    // // Accounts can be created permissionlessly, but they need a VDF to be submitted with the request.
-    // //Permissions: PUBLIC, ANYONE, OPEN!
-    // // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
-    // // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
+    // Accounts can be created permissionlessly, but they need a VDF to be submitted with the request.
+
+        /////// 0L ////////
+    public fun create_user_account_with_proof(
+        challenge: &vector<u8>,
+        solution: &vector<u8>,
+    ):address acquires AccountOperationsCapability {
+        // Rate limit with vdf proof.
+        let valid = VDF::verify(
+            challenge,
+            &Globals::get_difficulty(),
+            solution
+        );
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+        assert(valid, 120101011021);
+        let new_signer = create_signer(new_account_address);
+        Roles::new_user_role_with_proof(&new_signer);
+        Event::publish_generator(&new_signer);
+        add_currencies_for_account<GAS>(&new_signer, false);
+        make_account(new_signer, auth_key_prefix);
+        new_account_address
+    }
+
+    // spec fun create_user_account {
+    //     include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
+    // }
+
+    // Permissions: PUBLIC, ANYONE, OPEN!
+    // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
+    // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
     public fun create_validator_account_with_proof(
         sender: &signer,
@@ -1314,29 +1340,7 @@ module LibraAccount {
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
     }
 
-    public fun create_user_account_with_proof(
-        challenge: &vector<u8>,
-        solution: &vector<u8>,
-    ):address acquires AccountOperationsCapability {
-        // Rate limit with vdf proof.
-        let valid = VDF::verify(
-            challenge,
-            &Globals::get_difficulty(),
-            solution
-        );
-        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
-        assert(valid, 120101011021);
-        let new_signer = create_signer(new_account_address);
-        Roles::new_user_role_with_proof(&new_signer);
-        Event::publish_generator(&new_signer);
-        add_currencies_for_account<GAS>(&new_signer, false);
-        make_account(new_signer, auth_key_prefix);
-        new_account_address
-    }
 
-    // spec fun create_user_account {
-    //     include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
-    // }
 
     ///////////////////////////////////////////////////////////////////////////
     // General purpose methods

@@ -5119,6 +5119,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_designated_dealer`](transaction_script_documentation.md#create_designated_dealer)
 -  [`create_parent_vasp_account`](transaction_script_documentation.md#create_parent_vasp_account)
 -  [`create_recovery_address`](transaction_script_documentation.md#create_recovery_address)
+-  [`create_user_account`](ol_create_user_account.md#create_user_account)
 -  [`create_validator_account`](transaction_script_documentation.md#create_validator_account)
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
 -  [`demo_e2e`](ol_demo_e2e.md#demo_e2e)
