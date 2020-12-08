@@ -53,6 +53,8 @@ use std::{
     str::{self, FromStr},
     thread, time,
 };
+use std::fs::File;
+use std::io::Read;
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -350,6 +352,41 @@ impl ClientProxy {
         let hello_world= 100u64;
 
         let program = transaction_builder::encode_demo_e2e_script(hello_world);
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Calls the oracle upgrade script
+    pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let id = u64::from_str(space_delim_strings[2]).expect("Id should be a number ");
+        let path = space_delim_strings[3];
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let mut f = File::open(path)?;
+        let mut buffer = Vec::new();
+        // read the whole file
+        f.read_to_end(&mut buffer)?;
+
+        let program = transaction_builder::encode_ol_oracle_tx_script( id, buffer);
 
         let txn = self.create_txn_to_submit(
             TransactionPayload::Script(program),
