@@ -45,3 +45,32 @@ impl Command for OracleCommandUpdate {
     }
 }
 
+pub struct OracleQueryCommandUpdate {}
+
+impl Command for OracleQueryCommandUpdate {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["query", "q"]
+    }
+
+    fn get_params_help(&self) -> &'static str {
+        "Usage: oracle query"
+    }
+
+    fn get_description(&self) -> &'static str {
+        "query on-chain upgrade "
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.query_oracle_upgrade(params) {
+            Ok(view) => {
+                match view {
+                    Some(o)=>println!("{:?}", o),
+                    None=> println!("Nothing found")
+                }
+            },
+            Err(e) => println!("{}", e),
+        }
+    }
+}
+
+

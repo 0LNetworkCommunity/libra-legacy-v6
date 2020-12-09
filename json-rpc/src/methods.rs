@@ -38,7 +38,8 @@ use std::{
     sync::Arc,
 };
 use storage_interface::{DbReader, Order};
-use libra_json_rpc_types::views::MinerStateResourceView;
+use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
+use libra_types::account_config::resources::oracle_upgrade::OracleResource;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -678,4 +679,29 @@ async fn get_miner_state(
         None => {}
     }
     Err(JsonRpcError::invalid_request_with_msg("No Miner State found.".to_string()))
+}
+
+/// Returns Oracle Upgrade view
+async fn query_oracle_upgrade(
+    service: JsonRpcService,
+    request: JsonRpcRequest,
+) -> Result<OracleResourceView, JsonRpcError> {
+
+    let account_address = AccountAddress::ZERO;
+
+    // If versions are specified by the request parameters, use them, otherwise use the defaults
+    let version = request.parse_version_param(1, "version")?;
+
+    let account_state_with_proof =  service.get_account_state(account_address, version)?;
+    match account_state_with_proof {
+        Some(s) => {
+            let resouce :Option<OracleResource> = s.get_resource(OracleResource::resource_path().as_slice())?;
+            if resouce.is_some() {
+                let resource_view = OracleResourceView::try_from(resouce.unwrap());
+                return Ok(resource_view.ok().unwrap());
+            }
+        },
+        None => {}
+    }
+    Err(JsonRpcError::invalid_request_with_msg("No Upgrade Oracle found.".to_string()))
 }

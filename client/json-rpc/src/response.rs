@@ -8,7 +8,7 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
-use libra_json_rpc_types::views::MinerStateResourceView;
+use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]
@@ -24,6 +24,7 @@ pub enum JsonRpcResponse {
     AccountStateWithProofResponse(AccountStateWithProofView),
     NetworkStatusResponse(Number),
     MinerStateViewResponse(MinerStateResourceView),
+    OracleResourceViewResponse(OracleResourceView),
     UnknownResponse(Value),
 }
 
@@ -99,6 +100,12 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
             "get_miner_state" => {
                 let state: MinerStateResourceView = serde_json::from_value(value)?;
                 Ok(JsonRpcResponse::MinerStateViewResponse(
+                    state,
+                ))
+            }
+            "query_oracle_upgrade" => {
+                let state: OracleResourceView = serde_json::from_value(value)?;
+                Ok(JsonRpcResponse::OracleResourceViewResponse(
                     state,
                 ))
             }
@@ -210,6 +217,17 @@ impl ResponseAsView for AccountStateWithProofView {
 impl ResponseAsView for MinerStateResourceView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
         if let JsonRpcResponse::MinerStateViewResponse(resp) = response {
+            Ok(resp)
+        } else {
+            Self::unexpected_response_error::<Self>(response)
+        }
+    }
+}
+
+//add by Ping
+impl ResponseAsView for OracleResourceView {
+    fn from_response(response: JsonRpcResponse) -> Result<Self> {
+        if let JsonRpcResponse::OracleResourceViewResponse(resp) = response {
             Ok(resp)
         } else {
             Self::unexpected_response_error::<Self>(response)

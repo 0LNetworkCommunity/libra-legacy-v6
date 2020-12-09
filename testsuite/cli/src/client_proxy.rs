@@ -13,7 +13,7 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
 };
-use libra_json_rpc_client::views::{AccountView, EventView, MetadataView, TransactionView, VMStatusView, MinerStateResourceView};
+use libra_json_rpc_client::views::{AccountView, EventView, MetadataView, TransactionView, VMStatusView, MinerStateResourceView, OracleResourceView};
 use libra_logger::prelude::*;
 use libra_temppath::TempPath;
 use libra_types::{
@@ -442,6 +442,11 @@ impl ClientProxy {
         );
         let (address, _) = self.get_account_address_from_parameter(space_delim_strings[1])?;
         self.client.get_miner_state(address)
+    }
+
+    /// Query Oracle upgrade states
+    pub fn query_oracle_upgrade(&mut self, _space_delim_strings: &[&str]) -> Result<Option<OracleResourceView>> {
+        self.client.query_oracle_upgrade()
     }
 
     // //////// 0L ////////
