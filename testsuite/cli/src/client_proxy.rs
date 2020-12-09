@@ -434,15 +434,15 @@ impl ClientProxy {
     }
 
     // //////// 0L ////////
-    // /// Get balance from validator for the account specified.
-    // pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Result<Option<MinerStateResourceView>> {
-    //     ensure!(
-    //         space_delim_strings.len() == 2,
-    //         "Invalid number of arguments for getting miner status."
-    //     );
-    //     let (address, _) = self.get_account_address_from_parameter(space_delim_strings[1])?;
-    //     self.client.get_miner_state(address)
-    // }
+    /// Get balance from validator for the account specified.
+    pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Result<Option<MinerStateResourceView>> {
+        ensure!(
+            space_delim_strings.len() == 2,
+            "Invalid number of arguments for getting miner status."
+        );
+        let (address, _) = self.get_account_address_from_parameter(space_delim_strings[1])?;
+        self.client.get_miner_state(address)
+    }
 
     // //////// 0L ////////
     // /// Creates an upgrade vote. Formats the stdlib payload and calls the Oracle handler.
