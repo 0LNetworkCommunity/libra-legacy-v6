@@ -124,7 +124,7 @@ address 0x1 {
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
-
+        // start with sufficient gas for tests
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, 1, true);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
