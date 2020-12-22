@@ -2,7 +2,7 @@
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
 # Chain settings
-CHAIN_ID = 7
+CHAIN_ID = 1
 
 # Account settings
 ifndef ACC
@@ -149,12 +149,13 @@ verify-gen:
 #### GENESIS  ####
 build-gen:
 	cargo run -p libra-genesis-tool --release -- genesis \
-	--chain-id 7 \
+	--chain-id ${CHAIN_ID} \
 	--shared-backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
 
 genesis:
 	cargo run -p libra-genesis-tool --release -- files \
+	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
@@ -240,7 +241,7 @@ get_waypoint:
 	echo $$WAY
 
 client: get_waypoint
-	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id 7
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
 
 compress: 
 	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner

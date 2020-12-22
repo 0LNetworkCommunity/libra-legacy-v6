@@ -1732,6 +1732,7 @@ impl ClientProxy {
             Some(key_pair) => Box::new(key_pair),
             None => Box::new(&self.wallet),
         };
+        dbg!(&self.chain_id);
         create_user_txn(
             *signer,
             program,
