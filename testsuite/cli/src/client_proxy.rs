@@ -376,8 +376,8 @@ impl ClientProxy {
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let id = u64::from_str(space_delim_strings[2]).expect("Id should be a number ");
-        let path = space_delim_strings[3];
+        let path = space_delim_strings[2];
+        let id = 1; // upgrade is oracle #1
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
 
