@@ -22,6 +22,8 @@ address 0x1 {
     use 0x1::LibraTimestamp;
     use 0x1::TransactionFee;
     use 0x1::Roles;
+    use 0x1::Testnet::is_testnet;
+    use 0x1::StagingNet::is_staging_net;    
 
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -110,8 +112,7 @@ address 0x1 {
       subsidy_units
     }
 
-    use 0x1::Testnet::is_testnet;
-    use 0x1::StagingNet::is_staging_net;
+
     // Function code: 06 Prefix: 190106
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
       //Need to check for association or vm account
