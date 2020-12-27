@@ -80,7 +80,7 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     (block.preimage, block.proof)
 }
 
-fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
+pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));

@@ -7,6 +7,7 @@ use anyhow::Error;
 use libra_types::waypoint::Waypoint;
 use crate::submit_tx::submit_onboard_tx;
 use std::path::PathBuf;
+use crate::test_tx_swarm::get_params_from_swarm;
 
 // use rustyline::error::ReadlineError;
 // use rustyline::Editor;
@@ -30,7 +31,9 @@ pub struct OnboardCmd {
     waypoint: String,
     // Path of the block_0.json to submit.
     #[options(help = "Path of the init.json to submit.")]
-    file: PathBuf, 
+    file: PathBuf,
+    #[options(help = "Run as test on local swarm")]
+    swarm_path: PathBuf,
 }
 
 impl Runnable for OnboardCmd {
@@ -57,8 +60,14 @@ impl Runnable for OnboardCmd {
 
             }
         }
+        
+        let tx_params;
+        if self.swarm_path.exists(){
+            tx_params = get_params_from_swarm(self.swarm_path.clone()).unwrap();
+        } else {
+            tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
+        }
 
-        let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         let init_data = ValConfigs::get_init_data(&self.file).unwrap();
         
         match submit_onboard_tx(
