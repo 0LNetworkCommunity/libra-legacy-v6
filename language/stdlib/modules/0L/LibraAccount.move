@@ -249,7 +249,6 @@ module LibraAccount {
     // Permissions: PUBLIC, ANYONE, OPEN!
     // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
     // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
-
     public fun create_validator_account_with_proof(
         sender: &signer,
         challenge: &vector<u8>,
@@ -261,10 +260,13 @@ module LibraAccount {
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
+        my_trusted_accounts: vector<address>,
+        voter_trusted_accounts: vector<address>,
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
+
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -275,6 +277,7 @@ module LibraAccount {
         //Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
+
         // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
         Roles::new_validator_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
@@ -306,7 +309,13 @@ module LibraAccount {
         make_account(new_signer, auth_key_prefix);
 
         make_account(new_op_account, op_auth_key_prefix);
+        
+        // Trusted accounts Needs to wait for after make_account
+        let new_signer_again = create_signer(new_account_address);
+        TrustedAccounts::update(&new_signer_again, my_trusted_accounts, voter_trusted_accounts);
+        destroy_signer(new_signer_again);
 
+        
         MinerState::reset_rate_limit(sender_addr);
         new_account_address
     }

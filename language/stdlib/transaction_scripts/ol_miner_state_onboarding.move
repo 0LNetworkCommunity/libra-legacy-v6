@@ -19,6 +19,8 @@ script {
     op_validator_network_addresses: vector<u8>,
     op_fullnode_network_addresses: vector<u8>,
     op_human_name: vector<u8>,
+    my_trusted_accounts: vector<address>,
+    voter_trusted_accounts: vector<address>,
   ) {
 
     let new_account_address = LibraAccount::create_validator_account_with_proof(
@@ -32,6 +34,8 @@ script {
     op_validator_network_addresses,
     op_fullnode_network_addresses,
     op_human_name,
+    my_trusted_accounts,
+    voter_trusted_accounts,
     );
 
     // Check the account has the Validator role

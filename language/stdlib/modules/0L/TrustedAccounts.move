@@ -11,8 +11,8 @@ module TrustedAccounts {
       follow_operators_trusting_accounts: vector<address>
     }
 
-    public fun initialize(account: &signer) {
-      move_to<Trusted>(account, Trusted{
+    public fun initialize(account_sig: &signer) {
+      move_to<Trusted>(account_sig, Trusted{
         my_trusted_accounts: Vector::empty(),
         follow_operators_trusting_accounts: Vector::empty()
       });

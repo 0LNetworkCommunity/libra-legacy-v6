@@ -706,6 +706,8 @@ pub enum ScriptCall {
         op_validator_network_addresses: Bytes,
         op_fullnode_network_addresses: Bytes,
         op_human_name: Bytes,
+        my_trusted_accounts: AccountAddress,
+        voter_trusted_accounts: AccountAddress,
     },
 
     OlOracleTx {
@@ -1661,6 +1663,8 @@ impl ScriptCall {
                 op_validator_network_addresses,
                 op_fullnode_network_addresses,
                 op_human_name,
+                my_trusted_accounts,
+                voter_trusted_accounts,
             } => encode_minerstate_onboarding_script(
                 challenge,
                 solution,
@@ -1671,6 +1675,8 @@ impl ScriptCall {
                 op_validator_network_addresses,
                 op_fullnode_network_addresses,
                 op_human_name,
+                my_trusted_accounts,
+                voter_trusted_accounts,
             ),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script(id, data),
             OlReconfigBulkUpdateSetup {
@@ -2619,6 +2625,8 @@ pub fn encode_minerstate_onboarding_script(
     op_validator_network_addresses: Vec<u8>,
     op_fullnode_network_addresses: Vec<u8>,
     op_human_name: Vec<u8>,
+    my_trusted_accounts: AccountAddress,
+    voter_trusted_accounts: AccountAddress,
 ) -> Script {
     Script::new(
         MINERSTATE_ONBOARDING_CODE.to_vec(),
@@ -2633,6 +2641,8 @@ pub fn encode_minerstate_onboarding_script(
             TransactionArgument::U8Vector(op_validator_network_addresses),
             TransactionArgument::U8Vector(op_fullnode_network_addresses),
             TransactionArgument::U8Vector(op_human_name),
+            TransactionArgument::Address(my_trusted_accounts),
+            TransactionArgument::Address(voter_trusted_accounts),
         ],
     )
 }
@@ -3798,6 +3808,8 @@ fn decode_minerstate_onboarding_script(script: &Script) -> Option<ScriptCall> {
         op_validator_network_addresses: decode_u8vector_argument(script.args().get(6)?.clone())?,
         op_fullnode_network_addresses: decode_u8vector_argument(script.args().get(7)?.clone())?,
         op_human_name: decode_u8vector_argument(script.args().get(8)?.clone())?,
+        my_trusted_accounts: decode_address_argument(script.args().get(9)?.clone())?,
+        voter_trusted_accounts: decode_address_argument(script.args().get(10)?.clone())?,
     })
 }
 
@@ -4183,6 +4195,13 @@ fn decode_u8vector_argument(arg: TransactionArgument) -> Option<Vec<u8>> {
     }
 }
 
+fn decode_address_argument(arg: TransactionArgument) -> Option<AccountAddress> {
+    match arg {
+        TransactionArgument::Address(value) => Some(value),
+        _ => None,
+    }
+}
+
 const ADD_CURRENCY_TO_ACCOUNT_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 2, 3, 2, 6, 4, 8, 2, 5, 10, 7, 7, 17, 26, 8, 43, 16, 0,
     0, 0, 1, 0, 1, 1, 1, 0, 2, 1, 6, 12, 0, 1, 9, 0, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111,
@@ -4351,15 +4370,13 @@ const DEMO_E2E_CODE: &[u8] = &[
 ];
 
 const ENABLE_AUTOPAY_TX_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 3, 6, 21, 4, 27, 2, 5, 29, 16, 7, 45, 64, 8, 109, 16,
-    6, 125, 18, 0, 0, 0, 1, 0, 2, 1, 3, 0, 1, 1, 1, 2, 4, 2, 3, 0, 0, 5, 2, 1, 0, 0, 6, 3, 4, 0, 0,
-    3, 1, 6, 9, 0, 0, 1, 6, 12, 1, 5, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 5, 68,
-    101, 98, 117, 103, 6, 83, 105, 103, 110, 101, 114, 5, 112, 114, 105, 110, 116, 10, 97, 100,
-    100, 114, 101, 115, 115, 95, 111, 102, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111,
-    112, 97, 121, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 5, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 5, 15, 7, 0,
-    12, 1, 14, 1, 56, 0, 10, 0, 17, 2, 11, 0, 17, 1, 17, 3, 12, 2, 11, 2, 3, 14, 6, 0, 0, 0, 0, 0,
-    0, 0, 0, 39, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 11, 7, 30, 52, 8, 82, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 0, 2, 0, 0, 4, 1, 3, 0, 1, 6, 12, 1, 5, 0, 1, 1, 2, 1, 3, 7, 65, 117,
+    116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100, 114, 101, 115, 115,
+    95, 111, 102, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121, 10, 105,
+    115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+    4, 11, 10, 0, 17, 1, 11, 0, 17, 0, 17, 2, 12, 1, 11, 1, 3, 10, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39,
+    2,
 ];
 
 const FREEZE_ACCOUNT_CODE: &[u8] = &[
@@ -4398,18 +4415,19 @@ const MINERSTATE_HELPER_CODE: &[u8] = &[
 ];
 
 const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 58, 7, 86, 86,
-    8, 172, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
-    7, 1, 5, 1, 3, 10, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 1,
-    1, 10, 6, 12, 10, 2, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 5, 5, 1, 3, 1, 3, 0,
-    1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111, 117, 110, 116, 15, 86, 97,
-    108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 7, 98, 97, 108, 97, 110, 99,
-    101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97, 116, 111, 114, 95, 97, 99,
-    99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95,
-    118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 29, 11, 0, 14,
-    1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 17, 1, 12, 10, 10, 10, 17, 2, 12,
-    11, 11, 11, 3, 19, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 10, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33,
-    12, 13, 11, 13, 3, 28, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 2, 6, 4, 3, 10, 16, 4, 26, 2, 5, 28, 66, 7, 94, 86,
+    8, 180, 1, 16, 0, 0, 0, 1, 0, 2, 0, 0, 2, 0, 1, 3, 0, 1, 1, 1, 1, 4, 2, 0, 0, 2, 5, 0, 3, 0, 0,
+    7, 1, 5, 1, 3, 12, 6, 12, 6, 10, 2, 6, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 10,
+    5, 10, 5, 1, 1, 12, 6, 12, 10, 2, 10, 2, 10, 2, 5, 10, 2, 10, 2, 10, 2, 10, 2, 10, 2, 10, 5,
+    10, 5, 5, 5, 1, 3, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98, 114, 97, 65, 99, 99, 111,
+    117, 110, 116, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67, 111, 110, 102, 105, 103, 7,
+    98, 97, 108, 97, 110, 99, 101, 35, 99, 114, 101, 97, 116, 101, 95, 118, 97, 108, 105, 100, 97,
+    116, 111, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111,
+    111, 102, 8, 105, 115, 95, 118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 4, 5, 31, 11, 0, 14, 1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 11, 10,
+    11, 11, 17, 1, 12, 12, 10, 12, 17, 2, 12, 13, 11, 13, 3, 21, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10,
+    12, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 15, 11, 15, 3, 30, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39,
+    2,
 ];
 
 const OL_ORACLE_TX_CODE: &[u8] = &[

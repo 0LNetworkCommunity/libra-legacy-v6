@@ -8,7 +8,6 @@
 
 
 <pre><code><b>use</b> <a href="../../modules/doc/AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
-<b>use</b> <a href="../../modules/doc/Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="../../modules/doc/Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
 
@@ -25,7 +24,6 @@
 
 
 <pre><code><b>fun</b> <a href="ol_autopay_enable.md#enable_autopay_tx">enable_autopay_tx</a>(sender: &signer) {
-    print(&0x0000000000000000000000000011e110); // Hello!
     <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_enable_autopay">AutoPay::enable_autopay</a>(sender);
     <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(<a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 0);
 }

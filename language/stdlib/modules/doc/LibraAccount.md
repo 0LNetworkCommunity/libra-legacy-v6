@@ -897,7 +897,7 @@ Initialize this module. This is only callable from genesis.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;): address
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">create_validator_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;, my_trusted_accounts: vector&lt;address&gt;, voter_trusted_accounts: vector&lt;address&gt;): address
 </code></pre>
 
 
@@ -917,10 +917,13 @@ Initialize this module. This is only callable from genesis.
     op_validator_network_addresses: vector&lt;u8&gt;,
     op_fullnode_network_addresses: vector&lt;u8&gt;,
     op_human_name: vector&lt;u8&gt;,
+    my_trusted_accounts: vector&lt;address&gt;,
+    voter_trusted_accounts: vector&lt;address&gt;,
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     // Rate limit spam accounts.
     <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
+
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
         &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
@@ -931,6 +934,7 @@ Initialize this module. This is only callable from genesis.
     //Create Owner Account
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
+
     // The lr_account account is verified <b>to</b> have the libra root role in `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
     <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);
     <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
@@ -962,6 +966,12 @@ Initialize this module. This is only callable from genesis.
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
 
     <a href="LibraAccount.md#0x1_LibraAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
+
+    // Trusted accounts Needs <b>to</b> wait for after make_account
+    <b>let</b> new_signer_again = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
+    <a href="TrustedAccounts.md#0x1_TrustedAccounts_update">TrustedAccounts::update</a>(&new_signer_again, my_trusted_accounts, voter_trusted_accounts);
+    <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_signer_again);
+
 
     <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
     new_account_address

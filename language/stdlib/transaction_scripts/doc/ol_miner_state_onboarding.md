@@ -15,7 +15,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_miner_state_onboarding.md#minerstate_onboarding">minerstate_onboarding</a>(sender: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, ow_human_name: vector&lt;u8&gt;, op_address: address, op_auth_key_prefix: vector&lt;u8&gt;, op_consensus_pubkey: vector&lt;u8&gt;, op_validator_network_addresses: vector&lt;u8&gt;, op_fullnode_network_addresses: vector&lt;u8&gt;, op_human_name: vector&lt;u8&gt;, my_trusted_accounts: vector&lt;address&gt;, voter_trusted_accounts: vector&lt;address&gt;)
 </code></pre>
 
 
@@ -36,6 +36,8 @@
   op_validator_network_addresses: vector&lt;u8&gt;,
   op_fullnode_network_addresses: vector&lt;u8&gt;,
   op_human_name: vector&lt;u8&gt;,
+  my_trusted_accounts: vector&lt;address&gt;,
+  voter_trusted_accounts: vector&lt;address&gt;,
 ) {
 
   <b>let</b> new_account_address = <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
@@ -49,6 +51,8 @@
   op_validator_network_addresses,
   op_fullnode_network_addresses,
   op_human_name,
+  my_trusted_accounts,
+  voter_trusted_accounts,
   );
 
   // Check the account has the Validator role

@@ -57,7 +57,7 @@ Functions to initialize, accumulated, and burn transaction fees.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">initialize</a>(account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">initialize</a>(account_sig: &signer)
 </code></pre>
 
 
@@ -66,8 +66,8 @@ Functions to initialize, accumulated, and burn transaction fees.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">initialize</a>(account: &signer) {
-  move_to&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(account, <a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>{
+<pre><code><b>public</b> <b>fun</b> <a href="TrustedAccounts.md#0x1_TrustedAccounts_initialize">initialize</a>(account_sig: &signer) {
+  move_to&lt;<a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>&gt;(account_sig, <a href="TrustedAccounts.md#0x1_TrustedAccounts_Trusted">Trusted</a>{
     my_trusted_accounts: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
     follow_operators_trusting_accounts: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>()
   });
