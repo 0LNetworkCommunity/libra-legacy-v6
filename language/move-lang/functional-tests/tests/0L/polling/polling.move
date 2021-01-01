@@ -6,7 +6,7 @@
 
 // The data will be initialized and operated all through alice's account
 
-// Alice creates a new poll
+// Alice initializes the polling contract
 //! new-transaction
 //! sender: alice
 script {
@@ -18,19 +18,23 @@ script {
 }
 // check: EXECUTED
 
-// Bob votes "nay"
+// Bob creates a poll with index "0" and votes "nay"
 //! new-transaction
 //! sender: bob
 script {
     use 0x42::Polling;
     fun main(sender: &signer){ // bob's signer type added in tx.
       
-      Polling::vote(sender, {{alice}}, false);
+      let poll_index = Polling::create_poll(sender, {{alice}});
+      assert(poll_index == 0, 73570000);
+
+      Polling::vote(sender, {{alice}}, 0, false);
 
       // Check that Bob's vote was recorded and that voting is still open
-      assert(Polling::get_no_votes({{alice}}) == 1, 73570001);
-      assert(Polling::current_tally_is_no({{alice}}), 73570002);
-      assert(Polling::get_result_is_final({{alice}}) == false, 73570003);
+      let (yes, no) = Polling::get_tally({{alice}}, 0);
+      assert(yes == 0, 73570001);
+      assert(no == 1, 73570001);
+      assert(Polling::get_result_is_final({{alice}}, 0) == false, 73570003);
     }
 }
 // check: EXECUTED
@@ -42,27 +46,28 @@ script {
     use 0x42::Polling;
     fun main(sender: &signer){ // carol's signer type added in tx.
       
-      Polling::vote(sender, {{alice}}, true);
+      Polling::vote(sender, {{alice}}, 0, true);
 
       // Check that Carol's vote was recorded and that voting is still open
-      assert(Polling::get_yes_votes({{alice}}) == 1, 73570004);
-      assert(Polling::get_no_votes({{alice}}) == 1, 73570005);
-      assert(Polling::get_result_is_final({{alice}}) == false, 73570006);
+      let (yes, no) = Polling::get_tally({{alice}}, 0);
+      assert(yes == 1, 73570001);
+      assert(no == 1, 73570001);
+      assert(Polling::get_result_is_final({{alice}}, 0) == false, 73570006);
     }
 }
 // check: EXECUTED
 
-// Carol calls for the vote to be tallied. This should fail because Carol is not the owner of the module
+// Carol calls for the vote to be tallied. This should fail because Carol is not the creator of the poll (Bob is)
 //! new-transaction
 //! sender: carol
 script {
     use 0x42::Polling;
     fun main(sender: &signer){ // carol's signer type added in tx.
       
-      Polling::tally(sender, {{alice}});
+      Polling::tally(sender, {{alice}}, 0);
 
       // Tally should have failed because Carol doesn't own the module (is not the "surveyor")
-      assert(Polling::get_result_is_final({{alice}}) == false, 73570007);
+      assert(Polling::get_result_is_final({{alice}}, 0) == false, 73570007);
     }
 }
 // check: EXECUTED
@@ -74,27 +79,30 @@ script {
     use 0x42::Polling;
     fun main(sender: &signer){ // eve's signer type added in tx.
       
-      Polling::vote(sender, {{alice}}, false);
+      Polling::vote(sender, {{alice}}, 0, false);
 
       // Check that Eve's vote was *not* recorded and that voting is still open
-      assert(Polling::get_yes_votes({{alice}}) == 1, 73570002);
-      assert(Polling::get_no_votes({{alice}}) == 1, 73570002);
-      assert(Polling::get_result_is_final({{alice}}) == false, 73570002);
+      let (yes, no) = Polling::get_tally({{alice}}, 0);
+      assert(yes == 1, 73570001);
+      assert(no == 1, 73570001);
+      assert(Polling::get_result_is_final({{alice}}, 0) == false, 73570002);
     }
 }
 // check: EXECUTED
 
-// Alice calls for the vote to be tallied
+// Bob calls for the vote to be tallied. This should succeed because Bob is the creator of the poll
 //! new-transaction
-//! sender: alice
+//! sender: bob
 script {
     use 0x42::Polling;
-    fun main(sender: &signer){ // alice's signer type added in tx.
+    fun main(sender: &signer){ // bob's signer type added in tx.
       
-      Polling::tally(sender, {{alice}});
+      Polling::tally(sender, {{alice}}, 0);
 
-      assert(Polling::get_result_is_final({{alice}}) == true, 73570008);
-      assert(Polling::current_tally_is_tie({{alice}}), 73570009);
+      let (yes, no) = Polling::get_tally({{alice}}, 0);
+      assert(yes == 1, 73570001);
+      assert(no == 1, 73570001);
+      assert(Polling::get_result_is_final({{alice}}, 0) == true, 73570008);
     }
 }
 // check: EXECUTED
@@ -106,11 +114,35 @@ script {
     use 0x42::Polling;
     fun main(sender: &signer){ // dave's signer type added in tx.
       
-      Polling::vote(sender, {{alice}}, true);
+      Polling::vote(sender, {{alice}}, 0, true);
 
       // Check that Dave's late vote did not change the result
-      assert(Polling::get_result_is_final({{alice}}) == true, 73570010);
-      assert(Polling::current_tally_is_tie({{alice}}), 73570011);
+      let (yes, no) = Polling::get_tally({{alice}}, 0);
+      assert(yes == 1, 73570001);
+      assert(no == 1, 73570001);
+      assert(Polling::get_result_is_final({{alice}}, 0) == true, 73570008);
     }
 }
 // check: EXECUTED
+
+// Carol creates a second poll that gets index "1" and votes "aye"
+//! new-transaction
+//! sender: carol
+script {
+    use 0x42::Polling;
+    fun main(sender: &signer){ // carol's signer type added in tx.
+      
+      let poll_index = Polling::create_poll(sender, {{alice}});
+      assert(poll_index == 1, 73570020);
+
+      Polling::vote(sender, {{alice}}, 1, true);
+
+      // Check that Bob's vote was recorded and that voting is still open
+      let (yes, no) = Polling::get_tally({{alice}}, 1);
+      assert(yes == 1, 73570001);
+      assert(no == 0, 73570001);
+      assert(Polling::get_result_is_final({{alice}}, 1) == false, 73570003);
+    }
+}
+// check: EXECUTED
+
