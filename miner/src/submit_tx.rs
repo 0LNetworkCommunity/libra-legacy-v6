@@ -274,6 +274,74 @@ pub fn get_params(
     }
 }
 
+
+/// Submit a miner transaction to the network.
+pub fn util_save_tx(
+    tx_params: &TxParams,
+){
+
+    // Create a client object
+    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+
+    let chain_id = ChainId::new(1);
+
+    // let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
+    // let sequence_number = match account_state {
+    //     Some(av) => av.sequence_number,
+    //     None => 0,
+    // };
+
+    let script = transaction_builder::encode_demo_e2e_script(42);
+
+    // TODO, how does Alice get Bob's tx sequence number?
+    // sign the transaction script
+    let txn = create_user_txn(
+        &tx_params.keypair,
+        TransactionPayload::Script(script),
+        tx_params.address,
+        1,
+        tx_params.max_gas_unit_for_tx,
+        tx_params.coin_price_per_unit,
+        "GAS".parse().unwrap(),
+        tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+        chain_id,
+    );
+
+    match txn {
+        Ok(signed_tx) => {
+            println!("Signed tx: {:?}", signed_tx);
+        }
+        Err(e) => {
+            println!("Could not write tx: {:?}", e);
+        }
+    }
+
+    // // get account_data struct
+    // let mut sender_account_data = AccountData {
+    //     address: tx_params.address,
+    //     authentication_key: Some(tx_params.auth_key.to_vec()),
+    //     key_pair: Some(tx_params.keypair.clone()),
+    //     sequence_number,
+    //     status: AccountStatus::Persisted,
+    // };
+    
+    // // Submit the transaction with libra_client
+    // match client.submit_transaction(
+    //     Some(&mut sender_account_data),
+    //     txn
+    // ){
+    //     Ok(_) => {
+    //         match wait_for_tx(tx_params.address, sequence_number, &mut client) {
+    //             Some(res) => Ok(res),
+    //             None => Err(Error::msg("No Transaction View returned"))
+    //         }
+    //     }
+    //     Err(err) => Err(err)
+    // }
+
+}
+
+
 #[test]
 fn test_make_params() {
     use libra_types::PeerId; 
