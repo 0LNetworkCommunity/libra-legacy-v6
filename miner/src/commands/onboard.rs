@@ -43,28 +43,27 @@ impl Runnable for OnboardCmd {
 
         println!("Enter your 0L mnemonic:");
         let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
-
-        let waypoint: Waypoint;
-        let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
-        match parsed_waypoint {
-            Ok(v) => {
-                println!("Using Waypoint from CLI args:\n{}", v);
-                waypoint = parsed_waypoint.unwrap();
-            }
-            Err(_e) => {
-                println!("Info: No waypoint parsed from command line args. Received: {:?}\n\
-                Using waypoint in miner.toml\n {:?}",
-                self.waypoint,
-                miner_configs.chain_info.base_waypoint);
-                waypoint = miner_configs.get_waypoint().unwrap();
-
-            }
-        }
         
         let tx_params;
         if self.swarm_path.exists(){
             tx_params = get_params_from_swarm(self.swarm_path.clone()).unwrap();
         } else {
+            let waypoint: Waypoint;
+            let parsed_waypoint: Result<Waypoint, Error> = self.waypoint.parse();
+            match parsed_waypoint {
+                Ok(v) => {
+                    println!("Using Waypoint from CLI args:\n{}", v);
+                    waypoint = parsed_waypoint.unwrap();
+                }
+                Err(_e) => {
+                    println!("Info: No waypoint parsed from command line args. Received: {:?}\n\
+                    Using waypoint in miner.toml\n {:?}",
+                    self.waypoint,
+                    miner_configs.chain_info.base_waypoint);
+                    waypoint = miner_configs.get_waypoint().unwrap();
+
+                }
+            }
             tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         }
 

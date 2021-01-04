@@ -311,3 +311,9 @@ fn test_make_params() {
     // debug!("{:?}", p.url);
     //make_params
 }
+
+#[test]
+fn test_save_tx() {
+    dbg!(&"test");
+
+}
