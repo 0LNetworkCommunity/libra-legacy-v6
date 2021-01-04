@@ -30,6 +30,7 @@ fn quote_type_as_format(type_tag: &TypeTag) -> Format {
         Address => Format::TypeName("AccountAddress".into()),
         Vector(type_tag) => match type_tag.as_ref() {
             U8 => Format::Bytes,
+            Address => Format::TypeName("AccountAddress".into()),
             _ => type_not_allowed(type_tag),
         },
 
@@ -83,6 +84,7 @@ pub(crate) fn mangle_type(type_tag: &TypeTag) -> String {
         Address => "address".into(),
         Vector(type_tag) => match type_tag.as_ref() {
             U8 => "u8vector".into(),
+            Address => "address".into(),
             _ => type_not_allowed(type_tag),
         },
 

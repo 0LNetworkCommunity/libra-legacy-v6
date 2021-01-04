@@ -1535,6 +1535,11 @@ pub enum ScriptCall {
         currency: TypeTag,
         allow_minting: bool,
     },
+
+    UpdateTrusted {
+        vec_my: AccountAddress,
+        vec_follow: AccountAddress,
+    },
 }
 
 impl ScriptCall {
@@ -1806,6 +1811,9 @@ impl ScriptCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script(currency, allow_minting),
+            UpdateTrusted { vec_my, vec_follow } => {
+                encode_update_trusted_script(vec_my, vec_follow)
+            }
         }
     }
 
@@ -3646,6 +3654,17 @@ pub fn encode_update_minting_ability_script(currency: TypeTag, allow_minting: bo
     )
 }
 
+pub fn encode_update_trusted_script(vec_my: AccountAddress, vec_follow: AccountAddress) -> Script {
+    Script::new(
+        UPDATE_TRUSTED_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::AddressVector(vec_my),
+            TransactionArgument::AddressVector(vec_follow),
+        ],
+    )
+}
+
 fn decode_add_currency_to_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AddCurrencyToAccount {
         currency: script.ty_args().get(0)?.clone(),
@@ -3978,6 +3997,13 @@ fn decode_update_minting_ability_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_update_trusted_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::UpdateTrusted {
+        vec_my: decode_address_argument(script.args().get(0)?.clone())?,
+        vec_follow: decode_address_argument(script.args().get(1)?.clone())?,
+    })
+}
+
 type DecoderMap = std::collections::HashMap<
     Vec<u8>,
     Box<dyn Fn(&Script) -> Option<ScriptCall> + std::marker::Sync + std::marker::Send>,
@@ -4152,6 +4178,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         UPDATE_MINTING_ABILITY_CODE.to_vec(),
         Box::new(decode_update_minting_ability_script),
     );
+    map.insert(
+        UPDATE_TRUSTED_CODE.to_vec(),
+        Box::new(decode_update_trusted_script),
+    );
     map
 });
 
@@ -4179,6 +4209,13 @@ fn decode_address_argument(arg: TransactionArgument) -> Option<AccountAddress> {
 fn decode_u8vector_argument(arg: TransactionArgument) -> Option<Vec<u8>> {
     match arg {
         TransactionArgument::U8Vector(value) => Some(value),
+        _ => None,
+    }
+}
+
+fn decode_address_argument(arg: TransactionArgument) -> Option<AccountAddress> {
+    match arg {
+        TransactionArgument::AddressVector(value) => Some(value),
         _ => None,
     }
 }
@@ -4656,4 +4693,11 @@ const UPDATE_MINTING_ABILITY_CODE: &[u8] = &[
     0, 0, 1, 0, 1, 1, 1, 0, 2, 2, 6, 12, 1, 0, 1, 9, 0, 5, 76, 105, 98, 114, 97, 22, 117, 112, 100,
     97, 116, 101, 95, 109, 105, 110, 116, 105, 110, 103, 95, 97, 98, 105, 108, 105, 116, 121, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 4, 11, 0, 10, 1, 56, 0, 2,
+];
+
+const UPDATE_TRUSTED_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 2, 3, 2, 5, 5, 7, 8, 7, 15, 23, 8, 38, 16, 0, 0, 0, 1,
+    0, 1, 0, 3, 6, 12, 10, 5, 10, 5, 0, 15, 84, 114, 117, 115, 116, 101, 100, 65, 99, 99, 111, 117,
+    110, 116, 115, 6, 117, 112, 100, 97, 116, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    0, 0, 1, 5, 11, 0, 11, 1, 11, 2, 17, 0, 2,
 ];
