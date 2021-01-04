@@ -10,7 +10,6 @@
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
@@ -47,7 +46,6 @@
 
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
-    print(&0x1);
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
 
     <b>let</b> (outgoing_set, fee_ratio) = <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">LibraSystem::get_fee_ratio</a>(vm, height_start, height_now);
@@ -56,9 +54,6 @@
         <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_set, &fee_ratio);
         <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_set, &fee_ratio);
     };
-
-    print(&0x2);
-
     // Propose upcoming validator set:
     // Step 1: Sort Top N Elegible validators
     // Step 2: Jail non-performing validators
@@ -69,7 +64,6 @@
     <b>let</b> top_accounts = <a href="NodeWeight.md#0x1_NodeWeight_top_n_accounts">NodeWeight::top_n_accounts</a>(
         vm, <a href="Globals.md#0x1_Globals_get_max_validator_per_epoch">Globals::get_max_validator_per_epoch</a>());
     <b>let</b> jailed_set = <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">LibraSystem::get_jailed_set</a>(vm, height_start, height_now);
-    print(&0x3);
 
     <b>let</b> proposed_set = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>();
     <b>let</b> i = 0;
@@ -80,43 +74,30 @@
         };
         i = i+ 1;
     };
-    print(&0x4);
 
     // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set.
     <b>if</b>(<a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&proposed_set)&lt;= 3) proposed_set = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
     // Usually an issue in staging network for QA only.
     // This is very rare and theoretically impossible for network <b>with</b> at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b> at least 6 rounds, we would have at least 2/3rd of the validator set <b>with</b> at least 66% liveliness.
-    print(&0x5);
 
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     <b>let</b> miners = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-    print(&miners);
     <b>let</b> global_proofs_count = 0;
     <b>let</b> k = 0;
     <b>while</b> (k &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&miners)) {
         <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&miners, k);
-        print(&0x51);
 
         <b>let</b> count = <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">FullnodeState::get_address_proof_count</a>(addr);
         <b>if</b> (count &lt; 1) <b>break</b>;
-        print(&count);
-        print(&0x52);
         global_proofs_count = global_proofs_count + count;
 
-        <b>let</b> value = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">Subsidy::distribute_fullnode_subsidy</a>(vm, addr, count);
-        print(&0x53);
+        <b>let</b> value = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">Subsidy::distribute_fullnode_subsidy</a>(vm, addr, count, <b>false</b>);
         <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">FullnodeState::inc_payment_count</a>(vm, addr, count);
-        print(&0x54);
-
         <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">FullnodeState::inc_payment_value</a>(vm, addr, value);
-        print(&0x54);
-
         <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr);
         k = k + 1;
     };
-
-    print(&0x6);
 
     // needs <b>to</b> be set before the auctioneer runs in <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>
     <a href="Subsidy.md#0x1_Subsidy_set_global_count">Subsidy::set_global_count</a>(vm, global_proofs_count);
@@ -124,21 +105,13 @@
     //Reset Counters
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
     <a href="MinerState.md#0x1_MinerState_reconfig">MinerState::reconfig</a>(vm);
-    print(&0x7);
 
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
     <a href="LibraSystem.md#0x1_LibraSystem_bulk_update_validators">LibraSystem::bulk_update_validators</a>(vm, proposed_set);
-
-    print(&0x8);
-
     // reset clocks
     <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>(vm);
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
-    print(&0x9);
-
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
-    print(&0x11);
-
 }
 </code></pre>
 

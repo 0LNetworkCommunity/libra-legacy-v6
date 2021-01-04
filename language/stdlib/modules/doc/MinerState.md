@@ -240,7 +240,6 @@
    challenge: vector&lt;u8&gt;,
    solution: vector&lt;u8&gt;
  ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-
    <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
    //doubly check this is in test env.
    <b>assert</b>(<a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>() == 60, 130102024010);

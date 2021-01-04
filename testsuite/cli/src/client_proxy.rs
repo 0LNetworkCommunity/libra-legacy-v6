@@ -13,7 +13,7 @@ use libra_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
 };
-use libra_json_rpc_client::views::{AccountView, EventView, MetadataView, TransactionView, VMStatusView, MinerStateResourceView};
+use libra_json_rpc_client::views::{AccountView, EventView, MetadataView, TransactionView, VMStatusView, MinerStateResourceView, OracleResourceView};
 use libra_logger::prelude::*;
 use libra_temppath::TempPath;
 use libra_types::{
@@ -53,6 +53,8 @@ use std::{
     str::{self, FromStr},
     thread, time,
 };
+use std::fs::File;
+use std::io::Read;
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -338,7 +340,100 @@ impl ClientProxy {
             })
     }
 
-    // add by Ping
+    //////// 0L ////////
+    /// Calls the demo_e2e script
+    pub fn noop_demo(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+        let hello_world= 100u64;
+
+        let program = transaction_builder::encode_demo_e2e_script(hello_world);
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Calls the oracle upgrade script
+    pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let path = space_delim_strings[2];
+        let id = 1; // upgrade is oracle #1
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let mut f = File::open(path)?;
+        let mut buffer = Vec::new();
+        // read the whole file
+        f.read_to_end(&mut buffer)?;
+
+        let program = transaction_builder::encode_ol_oracle_tx_script( id, buffer);
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Submits a tx with proof of the account to be created.
+    pub fn create_user_account(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+        let hello_world= 100u64;
+
+        let program = transaction_builder::encode_demo_e2e_script(hello_world);
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    // //////// 0L ////////
     /// Get balance from validator for the account specified.
     pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Result<Option<MinerStateResourceView>> {
         ensure!(
@@ -348,6 +443,41 @@ impl ClientProxy {
         let (address, _) = self.get_account_address_from_parameter(space_delim_strings[1])?;
         self.client.get_miner_state(address)
     }
+
+    /// Query Oracle upgrade states
+    pub fn query_oracle_upgrade(&mut self, _space_delim_strings: &[&str]) -> Result<Option<OracleResourceView>> {
+        self.client.query_oracle_upgrade()
+    }
+
+    // //////// 0L ////////
+    // /// Creates an upgrade vote. Formats the stdlib payload and calls the Oracle handler.
+    // pub fn oracle_upgrade_vote(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+
+    //     let (sender_address, _) =
+    //         self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+    //     let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+    //     let sender = self.accounts.get(sender_ref_id).unwrap();
+    //     let sequence_number = sender.sequence_number;
+    //     let hello_world= 100u64;
+
+    //     let program = transaction_builder::encode_ol_oracle_tx_script(id, data)
+
+    //     let txn = self.create_txn_to_submit(
+    //         TransactionPayload::Script(program),
+    //         &sender,
+    //         Some(1000000),    /* max_gas_amount */
+    //         Some(1),    /* gas_unit_price */
+    //         Some("GAS".to_string()), /* gas_currency_code */
+    //     )?;
+
+    //     self.client
+    //         .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+    //     if is_blocking {
+    //         self.wait_for_transaction(sender_address, sequence_number + 1)?;
+    //     }
+    //     Ok(())
+    // }
+
 
     /// Get the latest sequence number from validator for the account specified.
     pub fn get_sequence_number(&mut self, space_delim_strings: &[&str]) -> Result<u64> {
@@ -661,78 +791,7 @@ impl ClientProxy {
         }
     }
 
-        /// Modify the stored LibraVersion on chain.
-
-    pub fn noop_demo(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        // ensure!(
-        //     space_delim_strings.len() >= 3 && space_delim_strings.len() <= 6,
-        //     "Invalid number of arguments for adding currency"
-        // );
-
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
-        let hello_world= 100u64;
-        // let currency_to_add = space_delim_strings[2];
-        // let currency_code = from_currency_code_string(currency_to_add).map_err(|_| {
-        //     format_err!(
-        //         "Invalid currency code {} provided to add currency",
-        //         currency_to_add
-        //     )
-        // })?;
-
-        // let gas_unit_price = if space_delim_strings.len() > 3 {
-        //     Some(space_delim_strings[3].parse::<u64>().map_err(|error| {
-        //         format_parse_data_error(
-        //             "gas_unit_price",
-        //             InputType::UnsignedInt,
-        //             space_delim_strings[3],
-        //             error,
-        //         )
-        //     })?)
-        // } else {
-        //     None
-        // };
-
-        // let max_gas_amount = if space_delim_strings.len() > 4 {
-        //     Some(space_delim_strings[4].parse::<u64>().map_err(|error| {
-        //         format_parse_data_error(
-        //             "max_gas_amount",
-        //             InputType::UnsignedInt,
-        //             space_delim_strings[4],
-        //             error,
-        //         )
-        //     })?)
-        // } else {
-        //     None
-        // };
-
-        // let gas_currency_code = if space_delim_strings.len() > 5 {
-        //     Some(space_delim_strings[5].to_owned())
-        // } else {
-        //     None
-        // };
-
-        let program = transaction_builder::encode_demo_e2e_script(hello_world);
-
-        let txn = self.create_txn_to_submit(
-            TransactionPayload::Script(program),
-            &sender,
-            Some(1000000),    /* max_gas_amount */
-            Some(1),    /* gas_unit_price */
-            Some("GAS".to_string()), /* gas_currency_code */
-        )?;
-
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        }
-        Ok(())
-    }
-
+        
     /// Only allow executing predefined script in the Move standard library in the network.
     pub fn upgrade_stdlib(
         &mut self,

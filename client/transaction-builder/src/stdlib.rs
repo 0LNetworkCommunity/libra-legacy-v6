@@ -537,6 +537,11 @@ pub enum ScriptCall {
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
 
+    CreateUserAccount {
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
     /// # Summary
     /// Creates a Validator account. This transaction can only be sent by the Libra
     /// Root account.
@@ -1609,6 +1614,10 @@ impl ScriptCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script(),
+            CreateUserAccount {
+                challenge,
+                solution,
+            } => encode_create_user_account_script(challenge, solution),
             CreateValidatorAccount {
                 sliding_nonce,
                 new_account_address,
@@ -2388,6 +2397,17 @@ pub fn encode_create_parent_vasp_account_script(
 /// * `Script::rotate_authentication_key_with_recovery_address`
 pub fn encode_create_recovery_address_script() -> Script {
     Script::new(CREATE_RECOVERY_ADDRESS_CODE.to_vec(), vec![], vec![])
+}
+
+pub fn encode_create_user_account_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
+    Script::new(
+        CREATE_USER_ACCOUNT_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+        ],
+    )
 }
 
 /// # Summary
@@ -3714,6 +3734,13 @@ fn decode_create_recovery_address_script(_script: &Script) -> Option<ScriptCall>
     Some(ScriptCall::CreateRecoveryAddress {})
 }
 
+fn decode_create_user_account_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::CreateUserAccount {
+        challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(1)?.clone())?,
+    })
+}
+
 fn decode_create_validator_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::CreateValidatorAccount {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -4004,6 +4031,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_create_recovery_address_script),
     );
     map.insert(
+        CREATE_USER_ACCOUNT_CODE.to_vec(),
+        Box::new(decode_create_user_account_script),
+    );
+    map.insert(
         CREATE_VALIDATOR_ACCOUNT_CODE.to_vec(),
         Box::new(decode_create_validator_account_script),
     );
@@ -4277,6 +4308,17 @@ const CREATE_RECOVERY_ADDRESS_CODE: &[u8] = &[
     121, 95, 114, 111, 116, 97, 116, 105, 111, 110, 95, 99, 97, 112, 97, 98, 105, 108, 105, 116,
     121, 7, 112, 117, 98, 108, 105, 115, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
     3, 5, 10, 0, 11, 0, 17, 0, 17, 1, 2,
+];
+
+const CREATE_USER_ACCOUNT_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 4, 2, 4, 4, 3, 8, 11, 4, 19, 2, 5, 21, 26, 7, 47, 56, 8,
+    103, 16, 0, 0, 0, 1, 0, 0, 2, 0, 1, 2, 0, 1, 1, 1, 1, 3, 2, 0, 0, 0, 6, 1, 5, 1, 3, 2, 6, 10,
+    2, 6, 10, 2, 3, 6, 12, 10, 2, 10, 2, 3, 5, 1, 3, 0, 1, 8, 0, 3, 71, 65, 83, 12, 76, 105, 98,
+    114, 97, 65, 99, 99, 111, 117, 110, 116, 7, 98, 97, 108, 97, 110, 99, 101, 30, 99, 114, 101,
+    97, 116, 101, 95, 117, 115, 101, 114, 95, 97, 99, 99, 111, 117, 110, 116, 95, 119, 105, 116,
+    104, 95, 112, 114, 111, 111, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 4, 14,
+    14, 1, 14, 2, 17, 1, 12, 3, 10, 3, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33, 12, 4, 11, 4, 3, 13,
+    6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const CREATE_VALIDATOR_ACCOUNT_CODE: &[u8] = &[

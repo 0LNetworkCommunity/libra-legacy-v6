@@ -25,23 +25,52 @@ pub struct OracleCommandUpdate {}
 
 impl Command for OracleCommandUpdate {
     fn get_aliases(&self) -> Vec<&'static str> {
-        vec!["update", "u"]
+        vec!["upgrade", "u"]
     }
 
     fn get_params_help(&self) -> &'static str {
-        "Put the stdlib.mv into \"language\\stdlib\\oracle_payload before running this command."
+        "Usage: oracle upgrade <sender> <path_to_new_stdlib>"
     }
 
     fn get_description(&self) -> &'static str {
-        "On-chain grade of stdlib"
+        "On-chain upgrade of stdlib"
     }
 
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
 
-        match client.noop_demo(params, true) {
+        match client.oracle_upgrade_stdlib(params, true) {
             Ok(_) => println!("Successfully finished execution"),
             Err(e) => println!("{}", e),
         }
     }
 }
+
+pub struct OracleQueryCommandUpdate {}
+
+impl Command for OracleQueryCommandUpdate {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["query", "q"]
+    }
+
+    fn get_params_help(&self) -> &'static str {
+        "Usage: oracle query"
+    }
+
+    fn get_description(&self) -> &'static str {
+        "query on-chain upgrade "
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.query_oracle_upgrade(params) {
+            Ok(view) => {
+                match view {
+                    Some(o)=>println!("{:?}", o),
+                    None=> println!("Nothing found")
+                }
+            },
+            Err(e) => println!("{}", e),
+        }
+    }
+}
+
 

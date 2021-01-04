@@ -110,6 +110,8 @@ address 0x1 {
       subsidy_units
     }
 
+    use 0x1::Testnet::is_testnet;
+    use 0x1::StagingNet::is_staging_net;
     // Function code: 06 Prefix: 190106
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
       //Need to check for association or vm account
@@ -124,8 +126,13 @@ address 0x1 {
       while (i < len) {
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
-
-        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, 1, true);
+        let count_proofs = 1;
+        if (is_testnet() || is_staging_net()) {
+          // start with sufficient gas for expensive tests e.g. upgrade
+          count_proofs = 100;
+        };
+        
+        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, count_proofs, true);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
         i = i + 1;

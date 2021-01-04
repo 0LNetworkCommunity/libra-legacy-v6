@@ -1,4 +1,4 @@
-//! account: alice, 100, 0, validator
+//! account: alice, 0, 0, validator
 
 //! new-transaction
 // Check if genesis subsidies have been distributed
@@ -12,6 +12,6 @@ fun main(vm: &signer) {
     Subsidy::genesis(vm);
     let new_account_bal = LibraAccount::balance<GAS>({{alice}});
     assert(new_account_bal>old_account_bal, 73570001);
-    assert(new_account_bal == 675748, 73570002);
+    assert(new_account_bal == 67564800, 73570002);
 }
 }

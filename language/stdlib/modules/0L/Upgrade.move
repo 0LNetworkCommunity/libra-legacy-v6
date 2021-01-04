@@ -82,8 +82,7 @@ address 0x1 {
         }
 
         //////// FOR E2E Testing ////////
-        // Do not delete these lines. Uncomment when needed to generate e2e test fixtures.
-        // 
+        // Do not delete these lines. Uncomment when needed to generate e2e test fixtures. 
         // use 0x1::Debug::print;
         // public fun foo() {
         //     print(&0x050D1AC);

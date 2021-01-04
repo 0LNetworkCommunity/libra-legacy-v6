@@ -20,6 +20,8 @@ pub struct Files {
     namespace: String,
     #[structopt(long)]
     repo: String,
+    #[structopt(long)]
+    chain_id: u8,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
@@ -32,7 +34,7 @@ pub struct Files {
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
         let output_dir = self.data_path;
-        let chain_id = ChainId::new(1);
+        let chain_id = ChainId::new(self.chain_id);
         let storage_helper = StorageHelper::get_with_path(output_dir.clone());
         let remote = format!("backend=github;repository_owner=OLSF;repository={repo};token={path}/github_token.txt;namespace={ns}", repo=&self.repo, path=output_dir.to_str().unwrap(), ns=&self.namespace); 
 
