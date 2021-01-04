@@ -832,8 +832,9 @@ fn convert_txn_args(args: &[TransactionArgument]) -> Vec<Value> {
             TransactionArgument::U128(i) => Value::u128(*i),
             TransactionArgument::Address(a) => Value::address(*a),
             TransactionArgument::Bool(b) => Value::bool(*b),
-            TransactionArgument::VecAddress(v) => Value::vector_address(v.clone()),
             TransactionArgument::U8Vector(v) => Value::vector_u8(v.clone()),
+            TransactionArgument::AddressVector(v) => Value::vector_address(v.clone()),
+
         })
         .collect()
 }

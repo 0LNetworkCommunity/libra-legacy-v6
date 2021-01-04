@@ -283,7 +283,7 @@ fn run(
             TransactionArgument::Address(a) => Value::address(*a),
             TransactionArgument::Bool(b) => Value::bool(*b),
             TransactionArgument::U8Vector(v) => Value::vector_u8(v.clone()),
-            TransactionArgument::VecAddress(v) => Value::vector_address(v.clone()),
+            TransactionArgument::AddressVector(v) => Value::vector_address(v.clone()),
 
         })
         .collect();
