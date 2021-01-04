@@ -216,17 +216,39 @@ module LibraAccount {
         create_libra_root_account(
             copy dummy_auth_key_prefix,
         );
-        // create_treasury_compliance_account(
-        //     lr_account,
-        //     copy dummy_auth_key_prefix,
-        // );
     }
 
     // //////// 0L ////////
-    // // Accounts can be created permissionlessly, but they need a VDF to be submitted with the request.
-    // //Permissions: PUBLIC, ANYONE, OPEN!
-    // // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
-    // // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
+    // Accounts can be created permissionlessly, but they need a VDF to be submitted with the request.
+
+        /////// 0L ////////
+    public fun create_user_account_with_proof(
+        challenge: &vector<u8>,
+        solution: &vector<u8>,
+    ):address acquires AccountOperationsCapability {
+        // Rate limit with vdf proof.
+        let valid = VDF::verify(
+            challenge,
+            &Globals::get_difficulty(),
+            solution
+        );
+        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+        assert(valid, 120101011021);
+        let new_signer = create_signer(new_account_address);
+        Roles::new_user_role_with_proof(&new_signer);
+        Event::publish_generator(&new_signer);
+        add_currencies_for_account<GAS>(&new_signer, false);
+        make_account(new_signer, auth_key_prefix);
+        new_account_address
+    }
+
+    // spec fun create_user_account {
+    //     include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
+    // }
+
+    // Permissions: PUBLIC, ANYONE, OPEN!
+    // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
+    // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
     public fun create_validator_account_with_proof(
         sender: &signer,
@@ -261,12 +283,8 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
-        
 
-        // // Create OP Account
-         
-        // let op_auth_key_prefix = Authenticator::ed25519_authentication_key(op_operator_pubkey);
-
+        // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         Event::publish_generator(&new_op_account);
@@ -285,14 +303,12 @@ module LibraAccount {
             op_fullnode_network_addresses
         );
         
-
         make_account(new_signer, auth_key_prefix);
 
         make_account(new_op_account, op_auth_key_prefix);
 
         MinerState::reset_rate_limit(sender_addr);
         new_account_address
-
     }
 
 
@@ -1007,6 +1023,7 @@ module LibraAccount {
         new_account: signer,
         auth_key_prefix: vector<u8>,
     ) acquires AccountOperationsCapability {
+
         let new_account_addr = Signer::address_of(&new_account);
         // cannot create an account at the reserved address 0x0
         // assert(
@@ -1094,7 +1111,6 @@ module LibraAccount {
             Vector::length(&authentication_key) == 32,
             Errors::invalid_argument(EMALFORMED_AUTHENTICATION_KEY)
         );
-
         authentication_key
     }
     spec fun create_authentication_key {
@@ -1271,6 +1287,8 @@ module LibraAccount {
         include AddCurrencyForAccountEnsures<Token>{addr: new_account_address};
     }
 
+
+
     /// Create an account with the ChildVASP role at `new_account_address` with authentication key
     /// `auth_key_prefix` | `new_account_address` and a 0 balance of type `Token`. If
     /// `add_all_currencies` is true, 0 balances for all avaialable currencies in the system will
@@ -1321,6 +1339,8 @@ module LibraAccount {
         ensures exists_at(child_addr);
         ensures Roles::spec_has_child_VASP_role_addr(child_addr);
     }
+
+
 
     ///////////////////////////////////////////////////////////////////////////
     // General purpose methods

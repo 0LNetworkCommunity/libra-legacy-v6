@@ -33,6 +33,7 @@ use std::{
     default::Default,
 };
 use libra_types::account_config::resources::miner_state::MinerStateResource;
+use libra_types::account_config::resources::oracle_upgrade::{UpgradeOracle, OracleResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -828,6 +829,22 @@ impl TryFrom<MinerStateResource> for MinerStateResourceView {
             epochs_validating_and_mining: state.epochs_validating_and_mining,
             contiguous_epochs_validating_and_mining: state.contiguous_epochs_validating_and_mining,
             epochs_since_last_account_creation: state.epochs_since_last_account_creation
+        })
+    }
+}
+
+// add by Ping
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct OracleResourceView {
+    pub upgrade: UpgradeOracle,
+}
+
+impl TryFrom<OracleResource> for OracleResourceView {
+    type Error = Error;
+
+    fn try_from(state: OracleResource) -> Result<OracleResourceView, Error> {
+        Ok(OracleResourceView {
+            upgrade: state.upgrade
         })
     }
 }

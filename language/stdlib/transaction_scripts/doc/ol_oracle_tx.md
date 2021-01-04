@@ -22,7 +22,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="ol_oracle_tx.md#ol_oracle_tx">ol_oracle_tx</a> (sender: &signer, id: u64, data: vector&lt;u8&gt;) {
+<pre><code><b>fun</b> <a href="ol_oracle_tx.md#ol_oracle_tx">ol_oracle_tx</a>(sender: &signer, id: u64, data: vector&lt;u8&gt;) {
     <a href="../../modules/doc/Oracle.md#0x1_Oracle_handler">Oracle::handler</a>(sender, id, data);
 }
 </code></pre>

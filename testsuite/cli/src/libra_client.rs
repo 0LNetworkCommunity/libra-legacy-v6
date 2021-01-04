@@ -26,7 +26,7 @@ use libra_types::{
     waypoint::Waypoint,
 };
 use reqwest::Url;
-use libra_json_rpc_client::views::MinerStateResourceView;
+use libra_json_rpc_client::views::{MinerStateResourceView, OracleResourceView};
 
 /// A client connection to an AdmissionControl (AC) service. `LibraClient` also
 /// handles verifying the server's responses, retrying on non-fatal failures, and
@@ -159,6 +159,28 @@ impl LibraClient {
             Err(e) => bail!(
                 "Failed to get miner state for account address {} with error: {:?}",
                 account,
+                e
+            ),
+        }
+    }
+
+    /// Query Oracle Upgrade.
+    pub fn query_oracle_upgrade(
+        &mut self,
+    ) -> Result<Option<OracleResourceView>> {
+        let mut batch = JsonRpcBatch::new();
+        // batch.add_miner_state_with_proof_request(account, Some(self.trusted_state.latest_version()));
+        batch.add_query_oracle_upgrade_with_proof_request( None);
+
+        let responses = self.client.execute(batch)?;
+        match get_response_from_batch(0, &responses)? {
+            Ok(result) => {
+                let resouce_view =
+                    OracleResourceView::from_response(result.clone())?;
+                Ok(Some(resouce_view))
+            }
+            Err(e) => bail!(
+                "Failed to query Oracle Upgrade with error: {:?}",
                 e
             ),
         }
