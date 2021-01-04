@@ -90,6 +90,8 @@ where
 
     fn output_script_call_enum_with_imports(&mut self, abis: &[ScriptABI]) -> Result<()> {
         let external_definitions = Self::get_external_definitions(self.local_types);
+        dbg!(&external_definitions);
+
         let script_registry: BTreeMap<_, _> = vec![(
             "ScriptCall".to_string(),
             common::make_abi_enum_container(abis),
@@ -450,7 +452,16 @@ fn decode_{}_argument(arg: TransactionArgument) -> Option<{}> {{
                         "Bytes".into()
                     }
                 },
-                Address => "AccountAddress".into(),
+                Address => {
+                    // TODO (Ping): stdlib.rs (after compile) should have a line like this at line 21, but it's not being generated;
+                    // type Bytes = Vec<u8>;
+                    // type AddressVector = Vec<AccountAddress>;
+                    if local_types {
+                        "Vec<AccountAddress>".into()
+                    } else {
+                        "AddressVector".into()
+                    }
+                },
                 _ => common::type_not_allowed(type_tag),
             },
 

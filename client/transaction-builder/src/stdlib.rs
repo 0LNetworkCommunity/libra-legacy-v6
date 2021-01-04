@@ -1356,10 +1356,6 @@ pub enum ScriptCall {
         tier_index: u64,
     },
 
-    TrustedAccountUpdateTx {
-        world: u64,
-    },
-
     /// # Summary
     /// Unfreezes the account at `address`. The sending account of this transaction must be the
     /// Treasury Compliance account. After the successful execution of this transaction transactions
@@ -1783,7 +1779,6 @@ impl ScriptCall {
                 mint_amount,
                 tier_index,
             ),
-            TrustedAccountUpdateTx { world } => encode_trusted_account_update_tx_script(world),
             UnfreezeAccount {
                 sliding_nonce,
                 to_unfreeze_account,
@@ -3433,14 +3428,6 @@ pub fn encode_tiered_mint_script(
     )
 }
 
-pub fn encode_trusted_account_update_tx_script(world: u64) -> Script {
-    Script::new(
-        TRUSTED_ACCOUNT_UPDATE_TX_CODE.to_vec(),
-        vec![],
-        vec![TransactionArgument::U64(world)],
-    )
-}
-
 /// # Summary
 /// Unfreezes the account at `address`. The sending account of this transaction must be the
 /// Treasury Compliance account. After the successful execution of this transaction transactions
@@ -3654,7 +3641,10 @@ pub fn encode_update_minting_ability_script(currency: TypeTag, allow_minting: bo
     )
 }
 
-pub fn encode_update_trusted_script(vec_my: AccountAddress, vec_follow: AccountAddress) -> Script {
+pub fn encode_update_trusted_script(
+    vec_my: Vec<AccountAddress>,
+    vec_follow: Vec<AccountAddress>,
+) -> Script {
     Script::new(
         UPDATE_TRUSTED_CODE.to_vec(),
         vec![],
@@ -3954,12 +3944,6 @@ fn decode_tiered_mint_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
-fn decode_trusted_account_update_tx_script(script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::TrustedAccountUpdateTx {
-        world: decode_u64_argument(script.args().get(0)?.clone())?,
-    })
-}
-
 fn decode_unfreeze_account_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UnfreezeAccount {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -3999,8 +3983,8 @@ fn decode_update_minting_ability_script(script: &Script) -> Option<ScriptCall> {
 
 fn decode_update_trusted_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::UpdateTrusted {
-        vec_my: decode_address_argument(script.args().get(0)?.clone())?,
-        vec_follow: decode_address_argument(script.args().get(1)?.clone())?,
+        vec_my: decode_addressvector_argument(script.args().get(0)?.clone())?,
+        vec_follow: decode_addressvector_argument(script.args().get(1)?.clone())?,
     })
 }
 
@@ -4155,10 +4139,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_tiered_mint_script),
     );
     map.insert(
-        TRUSTED_ACCOUNT_UPDATE_TX_CODE.to_vec(),
-        Box::new(decode_trusted_account_update_tx_script),
-    );
-    map.insert(
         UNFREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_unfreeze_account_script),
     );
@@ -4213,7 +4193,7 @@ fn decode_u8vector_argument(arg: TransactionArgument) -> Option<Vec<u8>> {
     }
 }
 
-fn decode_address_argument(arg: TransactionArgument) -> Option<AccountAddress> {
+fn decode_addressvector_argument(arg: TransactionArgument) -> Option<Vec<AccountAddress>> {
     match arg {
         TransactionArgument::AddressVector(value) => Some(value),
         _ => None,
@@ -4636,14 +4616,6 @@ const TIERED_MINT_CODE: &[u8] = &[
     110, 99, 101, 95, 111, 114, 95, 97, 98, 111, 114, 116, 11, 116, 105, 101, 114, 101, 100, 95,
     109, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 3, 1, 9, 10, 0, 10,
     1, 17, 0, 11, 0, 10, 2, 10, 3, 10, 4, 56, 0, 2,
-];
-
-const TRUSTED_ACCOUNT_UPDATE_TX_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 2, 3, 2, 6, 4, 8, 4, 5, 12, 9, 7, 21, 12, 8, 33, 16, 6,
-    49, 18, 0, 0, 0, 1, 0, 1, 1, 1, 0, 3, 0, 2, 1, 6, 9, 0, 0, 1, 3, 1, 5, 5, 68, 101, 98, 117,
-    103, 5, 112, 114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 7, 7, 0, 12, 1, 14, 1, 56, 0, 14, 0, 56,
-    1, 2,
 ];
 
 const UNFREEZE_ACCOUNT_CODE: &[u8] = &[
