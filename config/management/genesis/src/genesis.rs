@@ -42,7 +42,6 @@ impl Genesis {
         let operator_registrations = self.operator_registrations(&layout)?;
 
         let chain_id = self.config()?.chain_id;
-        
         let script_policy = Some(libra_types::on_chain_config::VMPublishingOption::open());
 
         let genesis = vm_genesis::encode_genesis_transaction(

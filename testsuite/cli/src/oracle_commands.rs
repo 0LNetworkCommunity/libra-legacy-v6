@@ -29,7 +29,7 @@ impl Command for OracleCommandUpdate {
     }
 
     fn get_params_help(&self) -> &'static str {
-        "Usage: oracle upgrade <sender> <id> <path_to_new_stdlib>"
+        "Usage: oracle upgrade <sender> <path_to_new_stdlib>"
     }
 
     fn get_description(&self) -> &'static str {

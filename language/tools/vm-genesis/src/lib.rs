@@ -283,7 +283,6 @@ fn create_and_initialize_main_accounts(
         .expect("Failure serializing genesis instr gas costs");
     let native_gas_costs = lcs::to_bytes(&genesis_gas_schedule.native_table)
         .expect("Failure serializing genesis native gas costs");
-
     exec_function(
         session,
         log_context,
