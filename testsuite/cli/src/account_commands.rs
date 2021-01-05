@@ -1,6 +1,8 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fs;
+
 use crate::{
     client_proxy::ClientProxy,
     commands::{blocking_cmd, report_error, subcommand_execute, Command},
@@ -185,6 +187,39 @@ impl Command for AccountCommandAddCurrency {
                 }
             }
             Err(e) => report_error("Error adding zero balance in currency to account", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a user account on-chain using a vdf proof.
+pub struct AccountCommandCreateUser {}
+
+impl Command for AccountCommandCreateUser {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["create_user", "cu"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Create on-chain user account from proof"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_proof_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        // let file = fs::File::open(params[1])
+        //     .expect("file should open read only");
+        // let json: serde_json::Value = serde_json::from_reader(file)
+        //     .expect("file should be proper JSON");
+        // let preimage = json.get("block_zero.preimage")
+        //     .expect("file should have block_zero and preimage key");
+
+        match client.create_next_account(true) {
+            Ok(account_data) => println!(
+                "Created/retrieved local account #{} address {}",
+                account_data.index,
+                hex::encode(account_data.address)
+            ),
+            Err(e) => report_error("Error creating local account", e),
         }
     }
 }

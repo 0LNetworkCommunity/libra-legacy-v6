@@ -370,6 +370,41 @@ impl ClientProxy {
     }
 
     //////// 0L ////////
+    /// Calls the demo_e2e script
+    pub fn create_user(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        let file = fs::File::open(space_delim_strings[2])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let preimage = json.get("block_zero.preimage")
+            .expect("file should have block_zero and preimage key");
+
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+        let hello_world= 100u64;
+
+        let program = transaction_builder::encode_demo_e2e_script(hello_world);
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+    //////// 0L ////////
     /// Calls the oracle upgrade script
     pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
 
