@@ -372,6 +372,10 @@ impl ClientProxy {
     //////// 0L ////////
     /// Calls the demo_e2e script
     pub fn create_user(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() == 2,
+            "Invalid number of arguments to create user. Did you pass your account and the file path?"
+        );
         let file = fs::File::open(space_delim_strings[2])
             .expect("file should open read only");
         let json: serde_json::Value = serde_json::from_reader(file)

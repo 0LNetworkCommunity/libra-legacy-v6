@@ -1,8 +1,6 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use std::fs;
-
 use crate::{
     client_proxy::ClientProxy,
     commands::{blocking_cmd, report_error, subcommand_execute, Command},
@@ -26,6 +24,8 @@ impl Command for AccountCommand {
             Box::new(AccountCommandWriteRecovery {}),
             Box::new(AccountCommandMint {}),
             Box::new(AccountCommandAddCurrency {}),
+            Box::new(AccountCommandCreateUser {})
+
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -213,12 +213,8 @@ impl Command for AccountCommandCreateUser {
         // let preimage = json.get("block_zero.preimage")
         //     .expect("file should have block_zero and preimage key");
 
-        match client.create_next_account(true) {
-            Ok(account_data) => println!(
-                "Created/retrieved local account #{} address {}",
-                account_data.index,
-                hex::encode(account_data.address)
-            ),
+        match client.create_user(params, true) {
+            Ok(()) => println!("Created account"),
             Err(e) => report_error("Error creating local account", e),
         }
     }
