@@ -30,9 +30,7 @@ fn quote_type_as_format(type_tag: &TypeTag) -> Format {
         Address => Format::TypeName("AccountAddress".into()),
         Vector(type_tag) => match type_tag.as_ref() {
             U8 => Format::Bytes,
-            // TODO: (ping): this next line should be "AddressVector", but it doesn't build if that is set.
-            //Address => Format::TypeName("AddressVector".into()),
-            Address => Format::TypeName("AccountAddress".into()),
+            Address => Format::Seq( Box::new(Format::TypeName("AccountAddress".into()))),
             _ => type_not_allowed(type_tag),
         },
 
