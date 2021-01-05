@@ -682,7 +682,7 @@ async fn get_miner_state(
 }
 
 /// Returns Oracle Upgrade view
-async fn query_oracle_upgrade(
+async fn _query_oracle_upgrade(
     service: JsonRpcService,
     request: JsonRpcRequest,
 ) -> Result<OracleResourceView, JsonRpcError> {

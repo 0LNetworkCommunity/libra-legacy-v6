@@ -16,7 +16,7 @@ fn demo() {
     let sender = Account::new_libra_root();
     let hello_world= 100u64;
     let seq_num = 1;
-    let script = transaction_builder::encode_trusted_account_update_tx_script(hello_world);
+    let script = transaction_builder::encode_demo_e2e_script(hello_world);
     let txn = sender
         .transaction()
         .script(script)

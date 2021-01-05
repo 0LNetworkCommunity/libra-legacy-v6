@@ -90,8 +90,6 @@ where
 
     fn output_script_call_enum_with_imports(&mut self, abis: &[ScriptABI]) -> Result<()> {
         let external_definitions = Self::get_external_definitions(self.local_types);
-        dbg!(&external_definitions);
-
         let script_registry: BTreeMap<_, _> = vec![(
             "ScriptCall".to_string(),
             common::make_abi_enum_container(abis),
