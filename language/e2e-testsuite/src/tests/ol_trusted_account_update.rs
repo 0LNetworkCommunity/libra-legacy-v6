@@ -10,13 +10,17 @@ use transaction_builder;
 
 
 #[test]
-fn demo() {
+fn trusted() {
     let mut executor = FakeExecutor::from_genesis_file();
     // use system account
     let sender = Account::new_libra_root();
-    let hello_world= 100u64;
     let seq_num = 1;
-    let script = transaction_builder::encode_demo_e2e_script(hello_world);
+
+    let new_account_address = *Account::new().address();
+    let new_account_address_two = *Account::new().address();
+
+    let vec_address = vec![new_account_address, new_account_address_two];
+    let script = transaction_builder::encode_update_trusted_script(vec_address.clone(), vec_address);
     let txn = sender
         .transaction()
         .script(script)
