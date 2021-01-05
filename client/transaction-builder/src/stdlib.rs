@@ -1533,8 +1533,8 @@ pub enum ScriptCall {
     },
 
     UpdateTrusted {
-        vec_my: AccountAddress,
-        vec_follow: AccountAddress,
+        vec_my: Vec<AccountAddress>,
+        vec_follow: Vec<AccountAddress>,
     },
 }
 
