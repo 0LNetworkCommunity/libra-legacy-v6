@@ -24,8 +24,8 @@ impl Command for AccountCommand {
             Box::new(AccountCommandWriteRecovery {}),
             Box::new(AccountCommandMint {}),
             Box::new(AccountCommandAddCurrency {}),
-            Box::new(AccountCommandCreateUser {})
-
+            Box::new(AccountCommandCreateUser {}),
+            Box::new(AccountCommandEnableAutopay {}),
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -206,14 +206,30 @@ impl Command for AccountCommandCreateUser {
         "<sending_account> <path_to_proof_file>"
     }
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
-        // let file = fs::File::open(params[1])
-        //     .expect("file should open read only");
-        // let json: serde_json::Value = serde_json::from_reader(file)
-        //     .expect("file should be proper JSON");
-        // let preimage = json.get("block_zero.preimage")
-        //     .expect("file should have block_zero and preimage key");
-
         match client.create_user(params, true) {
+            Ok(()) => println!("Created account"),
+            Err(e) => report_error("Error creating user account", e),
+        }
+    }
+}
+
+
+//////// 0L ////////
+/// 0L Sub command to create a user account on-chain using a vdf proof.
+pub struct AccountCommandEnableAutopay {}
+
+impl Command for AccountCommandEnableAutopay {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["enable_autopay", "ea"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Enables Autopay functionality on an account"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.enable_autopay(params, true) {
             Ok(()) => println!("Created account"),
             Err(e) => report_error("Error creating local account", e),
         }
