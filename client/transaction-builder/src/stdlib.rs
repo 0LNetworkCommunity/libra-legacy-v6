@@ -196,7 +196,14 @@ pub enum ScriptCall {
         validator_address: AccountAddress,
     },
 
-    AutopayCreateInstructionTx {},
+    AutopayCreateInstruction {
+        uid: u64,
+        payee: AccountAddress,
+        end_epoch: u64,
+        percentage: u64,
+    },
+
+    AutopayEnable {},
 
     /// # Summary
     /// Burns all coins held in the preburn resource at the specified
@@ -638,8 +645,6 @@ pub enum ScriptCall {
     DemoE2e {
         world: u64,
     },
-
-    EnableAutopayTx {},
 
     /// # Summary
     /// Freezes the account at `address`. The sending account of this transaction
@@ -1559,7 +1564,13 @@ impl ScriptCall {
                 validator_name,
                 validator_address,
             ),
-            AutopayCreateInstructionTx {} => encode_autopay_create_instruction_tx_script(),
+            AutopayCreateInstruction {
+                uid,
+                payee,
+                end_epoch,
+                percentage,
+            } => encode_autopay_create_instruction_script(uid, payee, end_epoch, percentage),
+            AutopayEnable {} => encode_autopay_enable_script(),
             Burn {
                 token,
                 sliding_nonce,
@@ -1641,7 +1652,6 @@ impl ScriptCall {
                 human_name,
             ),
             DemoE2e { world } => encode_demo_e2e_script(world),
-            EnableAutopayTx {} => encode_enable_autopay_tx_script(),
             FreezeAccount {
                 sliding_nonce,
                 to_freeze_account,
@@ -2007,8 +2017,26 @@ pub fn encode_add_validator_and_reconfigure_script(
     )
 }
 
-pub fn encode_autopay_create_instruction_tx_script() -> Script {
-    Script::new(AUTOPAY_CREATE_INSTRUCTION_TX_CODE.to_vec(), vec![], vec![])
+pub fn encode_autopay_create_instruction_script(
+    uid: u64,
+    payee: AccountAddress,
+    end_epoch: u64,
+    percentage: u64,
+) -> Script {
+    Script::new(
+        AUTOPAY_CREATE_INSTRUCTION_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::U64(uid),
+            TransactionArgument::Address(payee),
+            TransactionArgument::U64(end_epoch),
+            TransactionArgument::U64(percentage),
+        ],
+    )
+}
+
+pub fn encode_autopay_enable_script() -> Script {
+    Script::new(AUTOPAY_ENABLE_CODE.to_vec(), vec![], vec![])
 }
 
 /// # Summary
@@ -2531,10 +2559,6 @@ pub fn encode_demo_e2e_script(world: u64) -> Script {
         vec![],
         vec![TransactionArgument::U64(world)],
     )
-}
-
-pub fn encode_enable_autopay_tx_script() -> Script {
-    Script::new(ENABLE_AUTOPAY_TX_CODE.to_vec(), vec![], vec![])
 }
 
 /// # Summary
@@ -3673,8 +3697,17 @@ fn decode_add_validator_and_reconfigure_script(script: &Script) -> Option<Script
     })
 }
 
-fn decode_autopay_create_instruction_tx_script(_script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::AutopayCreateInstructionTx {})
+fn decode_autopay_create_instruction_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::AutopayCreateInstruction {
+        uid: decode_u64_argument(script.args().get(0)?.clone())?,
+        payee: decode_address_argument(script.args().get(1)?.clone())?,
+        end_epoch: decode_u64_argument(script.args().get(2)?.clone())?,
+        percentage: decode_u64_argument(script.args().get(3)?.clone())?,
+    })
+}
+
+fn decode_autopay_enable_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::AutopayEnable {})
 }
 
 fn decode_burn_script(script: &Script) -> Option<ScriptCall> {
@@ -3763,10 +3796,6 @@ fn decode_demo_e2e_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::DemoE2e {
         world: decode_u64_argument(script.args().get(0)?.clone())?,
     })
-}
-
-fn decode_enable_autopay_tx_script(_script: &Script) -> Option<ScriptCall> {
-    Some(ScriptCall::EnableAutopayTx {})
 }
 
 fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
@@ -4002,8 +4031,12 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_add_validator_and_reconfigure_script),
     );
     map.insert(
-        AUTOPAY_CREATE_INSTRUCTION_TX_CODE.to_vec(),
-        Box::new(decode_autopay_create_instruction_tx_script),
+        AUTOPAY_CREATE_INSTRUCTION_CODE.to_vec(),
+        Box::new(decode_autopay_create_instruction_script),
+    );
+    map.insert(
+        AUTOPAY_ENABLE_CODE.to_vec(),
+        Box::new(decode_autopay_enable_script),
     );
     map.insert(BURN_CODE.to_vec(), Box::new(decode_burn_script));
     map.insert(
@@ -4043,10 +4076,6 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_create_validator_operator_account_script),
     );
     map.insert(DEMO_E2E_CODE.to_vec(), Box::new(decode_demo_e2e_script));
-    map.insert(
-        ENABLE_AUTOPAY_TX_CODE.to_vec(),
-        Box::new(decode_enable_autopay_tx_script),
-    );
     map.insert(
         FREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_freeze_account_script),
@@ -4226,16 +4255,25 @@ const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
     2,
 ];
 
-const AUTOPAY_CREATE_INSTRUCTION_TX_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 3, 4, 15, 5, 19, 23, 7, 42, 56, 8, 98, 16, 6, 114,
-    18, 0, 0, 0, 1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 1, 4, 0, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5, 3,
-    3, 0, 1, 1, 7, 5, 3, 5, 3, 1, 3, 3, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110,
-    101, 114, 10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101,
-    95, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 10, 105, 115, 95, 101, 110, 97, 98,
-    108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 5, 19, 10, 0, 17, 0, 12, 1, 10, 1, 17, 2, 12, 5, 11, 5, 3, 12,
-    11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 6, 1, 0, 0, 0, 0, 0, 0, 0, 7, 0, 6, 14, 0, 0,
-    0, 0, 0, 0, 0, 6, 1, 0, 0, 0, 0, 0, 0, 0, 17, 1, 2,
+const AUTOPAY_CREATE_INSTRUCTION_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 19, 7, 38, 56, 8, 94, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 1, 4, 0, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5, 3, 3, 0, 1, 1,
+    3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100,
+    100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101, 95, 105, 110, 115, 116,
+    114, 117, 99, 116, 105, 111, 110, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 19, 10, 0, 17, 0, 12, 5, 10, 5, 17, 2, 12, 6,
+    11, 6, 3, 12, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 1, 10, 2, 10, 3, 10, 4, 17,
+    1, 2,
+];
+
+const AUTOPAY_ENABLE_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 11, 7, 30, 52, 8, 82, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 0, 2, 0, 0, 4, 1, 3, 0, 1, 6, 12, 1, 5, 0, 1, 1, 2, 1, 3, 7, 65, 117,
+    116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100, 114, 101, 115, 115,
+    95, 111, 102, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121, 10, 105,
+    115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+    4, 11, 10, 0, 17, 1, 11, 0, 17, 0, 17, 2, 12, 1, 11, 1, 3, 10, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39,
+    2,
 ];
 
 const BURN_CODE: &[u8] = &[
@@ -4348,18 +4386,6 @@ const DEMO_E2E_CODE: &[u8] = &[
     103, 5, 112, 114, 105, 110, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 16, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 3, 7, 7, 0, 12, 1, 14, 1, 56, 0, 14, 0, 56,
     1, 2,
-];
-
-const ENABLE_AUTOPAY_TX_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 7, 1, 0, 6, 3, 6, 21, 4, 27, 2, 5, 29, 16, 7, 45, 64, 8, 109, 16,
-    6, 125, 18, 0, 0, 0, 1, 0, 2, 1, 3, 0, 1, 1, 1, 2, 4, 2, 3, 0, 0, 5, 2, 1, 0, 0, 6, 3, 4, 0, 0,
-    3, 1, 6, 9, 0, 0, 1, 6, 12, 1, 5, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 5, 68,
-    101, 98, 117, 103, 6, 83, 105, 103, 110, 101, 114, 5, 112, 114, 105, 110, 116, 10, 97, 100,
-    100, 114, 101, 115, 115, 95, 111, 102, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111,
-    112, 97, 121, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 5, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 225, 16, 0, 2, 5, 15, 7, 0,
-    12, 1, 14, 1, 56, 0, 10, 0, 17, 2, 11, 0, 17, 1, 17, 3, 12, 2, 11, 2, 3, 14, 6, 0, 0, 0, 0, 0,
-    0, 0, 0, 39, 2,
 ];
 
 const FREEZE_ACCOUNT_CODE: &[u8] = &[
