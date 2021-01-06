@@ -83,6 +83,9 @@ struct Args {
 fn main() {
     let args = Args::from_args();
 
+    println!("Enter your 0L mnemonic:");
+    let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
+
     let mut logger = ::libra_logger::Logger::new();
     if !args.verbose {
         logger.level(::libra_logger::Level::Warn);
@@ -122,6 +125,7 @@ fn main() {
         args.sync,
         args.faucet_url.clone(),
         mnemonic_file,
+        Some(mnemonic_string.clone()),
         waypoint,
     )
     .expect("Failed to construct client.");
@@ -144,7 +148,12 @@ fn main() {
         "Connected to validator at: {}, {}",
         args.url, ledger_info_str
     );
-    if args.mnemonic_file.is_some() {
+    // if args.mnemonic_file.is_some() {
+    if true {
+        let wallet = ClientProxy::get_wallet_from_mnem(&mnemonic_string).unwrap();
+        client_proxy.set_wallet(wallet);
+
+        // self.recover_accounts_in_wallet()
         match client_proxy.recover_accounts_in_wallet() {
             Ok(account_data) => {
                 println!(

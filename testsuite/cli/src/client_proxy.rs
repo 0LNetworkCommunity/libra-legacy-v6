@@ -35,7 +35,7 @@ use libra_types::{
     },
     waypoint::Waypoint,
 };
-use libra_wallet::{io_utils, WalletLibrary};
+use libra_wallet::{Mnemonic, WalletLibrary, io_utils};
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
     identities::Zero,
@@ -132,6 +132,7 @@ impl ClientProxy {
         sync_on_wallet_recovery: bool,
         faucet_url: Option<String>,
         mnemonic_file: Option<String>,
+        mnemonic_string: Option<String>,
         waypoint: Waypoint,
     ) -> Result<Self> {
         // fail fast if url is not valid
@@ -195,6 +196,14 @@ impl ClientProxy {
             .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
             .collect::<HashMap<AccountAddress, usize>>();
 
+        // let wallet;
+        // if mnemonic_string.is_some(){
+        // } else {
+        // let wallet = Self::get_libra_wallet(mnemonic_file)?;
+        // }
+
+        let wallet = Self::get_wallet_from_mnem(&mnemonic_string.unwrap())?;
+
         Ok(ClientProxy {
             chain_id,
             client,
@@ -204,7 +213,7 @@ impl ClientProxy {
             libra_root_account,
             tc_account,
             testnet_designated_dealer_account: dd_account,
-            wallet: Self::get_libra_wallet(mnemonic_file)?,
+            wallet,
             sync_on_wallet_recovery,
             temp_files: vec![],
         })
@@ -1602,8 +1611,15 @@ impl ClientProxy {
         Ok(wallet)
     }
 
+    /// Get wallet from mnemonic string
+    pub fn get_wallet_from_mnem(mnemonic: &str) -> Result<WalletLibrary> {
+        let mnem = Mnemonic::from(mnemonic).unwrap();
+        let new_wallet = WalletLibrary::new_from_mnemonic(mnem);
+        Ok(new_wallet)
+    }
+
     /// Set wallet instance used by this client.
-    fn set_wallet(&mut self, wallet: WalletLibrary) {
+    pub fn set_wallet(&mut self, wallet: WalletLibrary) {
         self.wallet = wallet;
     }
 
@@ -1939,6 +1955,7 @@ mod tests {
             false,
             None,
             Some(mnemonic_path),
+            None,
             waypoint,
         )
         .unwrap();
