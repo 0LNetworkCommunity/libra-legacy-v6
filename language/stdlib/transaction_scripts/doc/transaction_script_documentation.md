@@ -5145,12 +5145,12 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`set_validator_operator`](transaction_script_documentation.md#set_validator_operator)
 -  [`set_validator_operator_with_nonce_admin`](transaction_script_documentation.md#set_validator_operator_with_nonce_admin)
 -  [`tiered_mint`](transaction_script_documentation.md#tiered_mint)
--  [`trusted_account_update_tx`](trusted_account_update.md#trusted_account_update_tx)
 -  [`unfreeze_account`](transaction_script_documentation.md#unfreeze_account)
 -  [`update_dual_attestation_limit`](transaction_script_documentation.md#update_dual_attestation_limit)
 -  [`update_exchange_rate`](transaction_script_documentation.md#update_exchange_rate)
 -  [`update_libra_version`](transaction_script_documentation.md#update_libra_version)
 -  [`update_minting_ability`](transaction_script_documentation.md#update_minting_ability)
+-  [`update_trusted`](ol_update_trusted.md#update_trusted)
 
 
 [//]: # ("File containing references which can be used from documentation")

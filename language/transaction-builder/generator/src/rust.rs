@@ -364,6 +364,7 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
             Address => ("Address", "Some(value)".to_string()),
             Vector(type_tag) => match type_tag.as_ref() {
                 U8 => ("U8Vector", "Some(value)".to_string()),
+                Address => ("AddressVector", "Some(value)".to_string()),
                 _ => common::type_not_allowed(type_tag),
             },
             Struct(_) | Signer => common::type_not_allowed(type_tag),
@@ -448,7 +449,17 @@ fn decode_{}_argument(arg: TransactionArgument) -> Option<{}> {{
                     } else {
                         "Bytes".into()
                     }
-                }
+                },
+                Address => {
+                    // TODO (Ping): stdlib.rs (after compile) should have a line like this at line 21, but it's not being generated;
+                    // type Bytes = Vec<u8>;
+                    // type AddressVector = Vec<AccountAddress>;
+                    if local_types {
+                        "Vec<AccountAddress>".into()
+                    } else {
+                        "AddressVector".into()
+                    }
+                },
                 _ => common::type_not_allowed(type_tag),
             },
 
@@ -466,6 +477,7 @@ fn decode_{}_argument(arg: TransactionArgument) -> Option<{}> {{
             Address => format!("TransactionArgument::Address({})", name),
             Vector(type_tag) => match type_tag.as_ref() {
                 U8 => format!("TransactionArgument::U8Vector({})", name),
+                Address => format!("TransactionArgument::AddressVector({})", name),
                 _ => common::type_not_allowed(type_tag),
             },
 
