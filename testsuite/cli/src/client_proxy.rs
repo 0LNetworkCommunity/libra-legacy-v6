@@ -1470,6 +1470,7 @@ impl ClientProxy {
     /// Recover accounts in wallets and sync state if sync_on_wallet_recovery is true.
     pub fn recover_accounts_in_wallet(&mut self) -> Result<Vec<AddressAndIndex>> {
         let wallet_addresses = self.wallet.get_addresses()?;
+        println!("length: {}", wallet_addresses.len());
         let mut account_data = Vec::new();
         for address in wallet_addresses {
             account_data.push(Self::get_account_data_from_address(
@@ -1614,7 +1615,8 @@ impl ClientProxy {
     /// Get wallet from mnemonic string
     pub fn get_wallet_from_mnem(mnemonic: &str) -> Result<WalletLibrary> {
         let mnem = Mnemonic::from(mnemonic).unwrap();
-        let new_wallet = WalletLibrary::new_from_mnemonic(mnem);
+        let mut new_wallet = WalletLibrary::new_from_mnemonic(mnem);
+        new_wallet.generate_addresses(6)?;
         Ok(new_wallet)
     }
 
