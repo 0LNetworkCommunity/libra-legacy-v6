@@ -137,12 +137,12 @@ address 0x1{
     // Function code 010102
     public fun enable_autopay(acc: &signer) acquires AccountList{
       let addr = Signer::address_of(acc);
-      // append to account list
+      // append to account list in system state 0x0
       let accounts = &mut borrow_global_mut<AccountList>(CoreAddresses::LIBRA_ROOT_ADDRESS()).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
         Vector::push_back<address>(accounts, addr);
       };
-      // Initialize the instructions Data
+      // Initialize the instructions Data on user account state 
       move_to<Data>(acc, Data { payments: Vector::empty<Payment>()});
     }
 

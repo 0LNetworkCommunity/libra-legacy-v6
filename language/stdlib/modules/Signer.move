@@ -1,3 +1,4 @@
+
 address 0x1 {
 module Signer {
     // Borrows the address of the signer
