@@ -377,138 +377,6 @@ impl ClientProxy {
     }
 
     //////// 0L ////////
-    /// Submits transaction creating user account from proof file.
-    pub fn create_user(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        ensure!(
-            space_delim_strings.len() == 3,
-            "Invalid number of arguments to create user. Did you pass your account and the file path?"
-        );
-
-        let file = fs::File::open(space_delim_strings[2])
-            .expect("file should open read only");
-        let json: serde_json::Value = serde_json::from_reader(file)
-            .expect("file should be proper JSON");
-        let block = json.get("block_zero")
-            .expect("file should have block_zero and preimage key");
-        // TODO: There's a shortcut here.
-        let preimage = block
-        .as_object().unwrap()
-        .get("preimage").unwrap()
-        .as_str().unwrap();
-        
-        let pre_hex = hex::decode(preimage).unwrap();
-
-        let proof = block
-        .as_object().unwrap()
-        .get("proof").unwrap()
-        .as_str().unwrap();
-        
-        let proof_hex = hex::decode(proof).unwrap();
-
-
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
-
-        let program = transaction_builder::encode_create_user_account_script(pre_hex, proof_hex);
-
-        let txn = self.create_txn_to_submit(
-            TransactionPayload::Script(program),
-            &sender,
-            Some(1000000),    /* max_gas_amount */
-            Some(1),    /* gas_unit_price */
-            Some("GAS".to_string()), /* gas_currency_code */
-        )?;
-
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        }
-        Ok(())
-    }
-
-    //////// 0L ////////
-    /// Enables autopay on the sending account.
-    pub fn autopay_enable(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        ensure!(
-            space_delim_strings.len() == 2,
-            "Invalid number of arguments to enable autopay. Did you pass your account address?"
-        );
-
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
-
-        let program = transaction_builder::encode_autopay_enable_script();
-
-        let txn = self.create_txn_to_submit(
-            TransactionPayload::Script(program),
-            &sender,
-            Some(1000000),    /* max_gas_amount */
-            Some(1),    /* gas_unit_price */
-            Some("GAS".to_string()), /* gas_currency_code */
-        )?;
-
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        }
-        Ok(())
-    }
-
-
-    //////// 0L ////////
-    /// creates an autopay instruction on the sending account.
-    pub fn autopay_create(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-
-        // sender: &signer,
-        // uid: u64,
-        // payee: address,
-        // end_epoch: u64,
-        // percentage: u64,
-
-        ensure!(
-            space_delim_strings.len() == 6,
-            "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
-        );
-
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
-        let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[3]).expect("payee address not submitted");
-        
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
-
-        let program = transaction_builder::encode_autopay_create_instruction_script(
-            space_delim_strings[2].parse::<u64>().unwrap(),
-            payee_address,
-            space_delim_strings[4].parse::<u64>().unwrap(),
-            space_delim_strings[5].parse::<u64>().unwrap(),
-        );
-
-        let txn = self.create_txn_to_submit(
-            TransactionPayload::Script(program),
-            &sender,
-            Some(1000000),    /* max_gas_amount */
-            Some(1),    /* gas_unit_price */
-            Some("GAS".to_string()), /* gas_currency_code */
-        )?;
-
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        }
-        Ok(())
-    }
-    //////// 0L ////////
     /// Calls the oracle upgrade script
     pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
 
@@ -544,6 +412,35 @@ impl ClientProxy {
     }
 
     //////// 0L ////////
+    /// Submits a tx with proof of the account to be created.
+    pub fn create_user_account(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+        let hello_world= 100u64;
+
+        let program = transaction_builder::encode_demo_e2e_script(hello_world);
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    // //////// 0L ////////
     /// Get balance from validator for the account specified.
     pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Result<Option<MinerStateResourceView>> {
         ensure!(

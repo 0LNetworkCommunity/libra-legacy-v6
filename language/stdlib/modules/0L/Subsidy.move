@@ -112,7 +112,6 @@ address 0x1 {
       subsidy_units
     }
 
-
     // Function code: 06 Prefix: 190106
     public fun genesis(vm_sig: &signer) acquires FullnodeSubsidy{
       //Need to check for association or vm account
