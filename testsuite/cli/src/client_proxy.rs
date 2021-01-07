@@ -35,7 +35,7 @@ use libra_types::{
     },
     waypoint::Waypoint,
 };
-use libra_wallet::{io_utils, WalletLibrary};
+use libra_wallet::{Mnemonic, WalletLibrary, io_utils};
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
     identities::Zero,
@@ -132,6 +132,7 @@ impl ClientProxy {
         sync_on_wallet_recovery: bool,
         faucet_url: Option<String>,
         mnemonic_file: Option<String>,
+        mnemonic_string: Option<String>,
         waypoint: Waypoint,
     ) -> Result<Self> {
         // fail fast if url is not valid
@@ -195,6 +196,12 @@ impl ClientProxy {
             .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
             .collect::<HashMap<AccountAddress, usize>>();
 
+        let mut wallet = Self::get_libra_wallet(mnemonic_file)?;        
+        // override file with entered mnemonic
+        if mnemonic_string.is_some() {
+            wallet = Self::get_wallet_from_mnem(&mnemonic_string.unwrap())?;
+        }
+
         Ok(ClientProxy {
             chain_id,
             client,
@@ -204,7 +211,7 @@ impl ClientProxy {
             libra_root_account,
             tc_account,
             testnet_designated_dealer_account: dd_account,
-            wallet: Self::get_libra_wallet(mnemonic_file)?,
+            wallet,
             sync_on_wallet_recovery,
             temp_files: vec![],
         })
@@ -250,10 +257,10 @@ impl ClientProxy {
         } else {
             for (ref index, ref account) in self.accounts.iter().enumerate() {
                 println!(
-                    "User account index: {}, address: {}, private_key: {:?}, sequence number: {}, status: {:?}",
+                    "User account index: {}, address: {}, sequence number: {}, status: {:?}",
                     index,
                     hex::encode(&account.address),
-                    hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
+                    // hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
                     account.sequence_number,
                     account.status,
                 );
@@ -370,6 +377,138 @@ impl ClientProxy {
     }
 
     //////// 0L ////////
+    /// Submits transaction creating user account from proof file.
+    pub fn create_user(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() == 3,
+            "Invalid number of arguments to create user. Did you pass your account and the file path?"
+        );
+
+        let file = fs::File::open(space_delim_strings[2])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let block = json.get("block_zero")
+            .expect("file should have block_zero and preimage key");
+        // TODO: There's a shortcut here.
+        let preimage = block
+        .as_object().unwrap()
+        .get("preimage").unwrap()
+        .as_str().unwrap();
+        
+        let pre_hex = hex::decode(preimage).unwrap();
+
+        let proof = block
+        .as_object().unwrap()
+        .get("proof").unwrap()
+        .as_str().unwrap();
+        
+        let proof_hex = hex::decode(proof).unwrap();
+
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_create_user_account_script(pre_hex, proof_hex);
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Enables autopay on the sending account.
+    pub fn autopay_enable(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() == 2,
+            "Invalid number of arguments to enable autopay. Did you pass your account address?"
+        );
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_autopay_enable_script();
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+
+    //////// 0L ////////
+    /// creates an autopay instruction on the sending account.
+    pub fn autopay_create(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+
+        // sender: &signer,
+        // uid: u64,
+        // payee: address,
+        // end_epoch: u64,
+        // percentage: u64,
+
+        ensure!(
+            space_delim_strings.len() == 6,
+            "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
+        );
+
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
+        let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[3]).expect("payee address not submitted");
+        
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_autopay_create_instruction_script(
+            space_delim_strings[2].parse::<u64>().unwrap(),
+            payee_address,
+            space_delim_strings[4].parse::<u64>().unwrap(),
+            space_delim_strings[5].parse::<u64>().unwrap(),
+        );
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+    //////// 0L ////////
     /// Calls the oracle upgrade script
     pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
 
@@ -405,35 +544,6 @@ impl ClientProxy {
     }
 
     //////// 0L ////////
-    /// Submits a tx with proof of the account to be created.
-    pub fn create_user_account(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-
-        let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
-        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
-        let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
-        let hello_world= 100u64;
-
-        let program = transaction_builder::encode_demo_e2e_script(hello_world);
-
-        let txn = self.create_txn_to_submit(
-            TransactionPayload::Script(program),
-            &sender,
-            Some(1000000),    /* max_gas_amount */
-            Some(1),    /* gas_unit_price */
-            Some("GAS".to_string()), /* gas_currency_code */
-        )?;
-
-        self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        }
-        Ok(())
-    }
-
-    // //////// 0L ////////
     /// Get balance from validator for the account specified.
     pub fn get_miner_state(&mut self, space_delim_strings: &[&str]) -> Result<Option<MinerStateResourceView>> {
         ensure!(
@@ -610,7 +720,7 @@ impl ClientProxy {
         let (receiver, receiver_auth_key_opt) =
             self.get_account_address_from_parameter(space_delim_strings[1])?;
         let receiver_auth_key = receiver_auth_key_opt.ok_or_else(|| {
-            format_err!("Need authentication key to create new account via minting from facuet")
+            format_err!("Need authentication key to create new account via minting from faucet")
         })?;
         let mint_currency = space_delim_strings[3];
         let use_base_units = space_delim_strings
@@ -1358,6 +1468,7 @@ impl ClientProxy {
     /// Recover accounts in wallets and sync state if sync_on_wallet_recovery is true.
     pub fn recover_accounts_in_wallet(&mut self) -> Result<Vec<AddressAndIndex>> {
         let wallet_addresses = self.wallet.get_addresses()?;
+        println!("length: {}", wallet_addresses.len());
         let mut account_data = Vec::new();
         for address in wallet_addresses {
             account_data.push(Self::get_account_data_from_address(
@@ -1497,6 +1608,14 @@ impl ClientProxy {
             new_wallet
         };
         Ok(wallet)
+    }
+
+    /// Get wallet from mnemonic string
+    fn get_wallet_from_mnem(mnemonic: &str) -> Result<WalletLibrary> {
+        let mnem = Mnemonic::from(mnemonic).unwrap();
+        let mut new_wallet = WalletLibrary::new_from_mnemonic(mnem);
+        new_wallet.generate_addresses(6)?;
+        Ok(new_wallet)
     }
 
     /// Set wallet instance used by this client.
@@ -1836,6 +1955,7 @@ mod tests {
             false,
             None,
             Some(mnemonic_path),
+            None,
             waypoint,
         )
         .unwrap();

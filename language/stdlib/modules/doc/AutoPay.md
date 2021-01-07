@@ -336,12 +336,12 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_enable_autopay">enable_autopay</a>(acc: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>{
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(acc);
-  // append <b>to</b> account list
+  // append <b>to</b> account list in system state 0x0
   <b>let</b> accounts = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).accounts;
   <b>if</b> (!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(accounts, &addr)) {
     <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(accounts, addr);
   };
-  // Initialize the instructions <a href="AutoPay.md#0x1_AutoPay_Data">Data</a>
+  // Initialize the instructions <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> on user account state
   move_to&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(acc, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> { payments: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;()});
 }
 </code></pre>

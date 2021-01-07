@@ -15,6 +15,7 @@
 
 
 <pre><code><b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -63,6 +64,8 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Demos.md#0x1_PersistenceDemo_initialize">initialize</a>(sender: &signer){
+  // `<b>assert</b> can be used <b>to</b> evaluate a bool and exit the program <b>with</b> an error code, e.g. testing <b>if</b> this is being run in testnet, and throwing error 01.
+  <b>assert</b>(is_testnet(), 01);
   // In the actual <b>module</b>, must <b>assert</b> that this is the sender is the association
   move_to&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(sender, <a href="Demos.md#0x1_PersistenceDemo_State">State</a>{ hist: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>() });
 }
@@ -88,9 +91,14 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Demos.md#0x1_PersistenceDemo_add_stuff">add_stuff</a>(sender: &signer ) <b>acquires</b> <a href="Demos.md#0x1_PersistenceDemo_State">State</a> {
+  <b>assert</b>(is_testnet(), 01);
+
+  // Resource Struct state is always "borrowed" and "moved" and generally cannot be copied. A <b>struct</b> can be mutably borrowed, <b>if</b> it is written <b>to</b>, useing `borrow_global_mut`. Note the Type <a href="Demos.md#0x1_PersistenceDemo_State">State</a>
   <b>let</b> st = borrow_global_mut&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
+  // the `&` <b>as</b> in Rust makes the assignment <b>to</b> a borrowed value. Each <a href="Vector.md#0x1_Vector">Vector</a> operation below <b>with</b> <b>use</b> a st.hist and <b>return</b> it before the next one can execute.
   <b>let</b> s = &<b>mut</b> st.hist;
 
+  // Move has very limited data types. <a href="Vector.md#0x1_Vector">Vector</a> is the most sophisticated and resembles a simplified Rust vector. Can be thought of <b>as</b> an array of a single type.
   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(s, 1);
   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(s, 2);
   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(s, 3);
@@ -117,6 +125,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Demos.md#0x1_PersistenceDemo_remove_stuff">remove_stuff</a>(sender: &signer) <b>acquires</b> <a href="Demos.md#0x1_PersistenceDemo_State">State</a>{
+  <b>assert</b>(is_testnet(), 01);
   <b>let</b> st = borrow_global_mut&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
   <b>let</b> s = &<b>mut</b> st.hist;
 
@@ -146,6 +155,9 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Demos.md#0x1_PersistenceDemo_isEmpty">isEmpty</a>(sender: &signer): bool <b>acquires</b> <a href="Demos.md#0x1_PersistenceDemo_State">State</a> {
+  <b>assert</b>(is_testnet(), 01);
+
+  // Note this is not a mutable borrow. Read only.
   <b>let</b> st = borrow_global&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
   <a href="Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&st.hist)
 }
@@ -171,6 +183,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Demos.md#0x1_PersistenceDemo_length">length</a>(sender: &signer): u64 <b>acquires</b> <a href="Demos.md#0x1_PersistenceDemo_State">State</a>{
+  <b>assert</b>(is_testnet(), 01);
   <b>let</b> st = borrow_global&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
   <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&st.hist)
 }
@@ -196,6 +209,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Demos.md#0x1_PersistenceDemo_contains">contains</a>(sender: &signer, num: u8): bool <b>acquires</b> <a href="Demos.md#0x1_PersistenceDemo_State">State</a> {
+  <b>assert</b>(is_testnet(), 01);
   <b>let</b> st = borrow_global&lt;<a href="Demos.md#0x1_PersistenceDemo_State">State</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
   <a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&st.hist, &num)
 }

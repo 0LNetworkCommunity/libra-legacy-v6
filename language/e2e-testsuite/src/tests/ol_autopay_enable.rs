@@ -10,7 +10,7 @@ fn autopay_enable_test() {
   let sender = AccountData::new(1_000_000, 1);
   executor.add_account_data(&sender);
   let seq_num = 1;
-  let script = transaction_builder::encode_enable_autopay_tx_script();
+  let script = transaction_builder::encode_autopay_enable_script();
   let txn = sender.into_account()
     .transaction()
     .script(script)
