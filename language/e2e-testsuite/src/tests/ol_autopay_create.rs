@@ -11,9 +11,12 @@ fn autopay_create_test() {
   let mut executor = FakeExecutor::from_genesis_file();
 
   let sender = AccountData::new(1_000_000, 1);
+  let recipient = AccountData::new(1_000_000, 1);
   executor.add_account_data(&sender);
+  executor.add_account_data(&recipient);
+
   let mut seq_num = 1;
-  let script = transaction_builder::encode_enable_autopay_tx_script();
+  let script = transaction_builder::encode_autopay_enable_script();
   let txn_enable = sender.clone().into_account()
     .transaction()
     .script(script)
@@ -29,18 +32,23 @@ fn autopay_create_test() {
 
   seq_num = 2;
 
-  let script = transaction_builder::encode_autopay_create_instruction_tx_script();
+  let script = transaction_builder::encode_autopay_create_instruction_script(
+    1,
+    *recipient.address(),
+    10,
+    10,
+  );
+  
   let txn_create = sender.into_account()
     .transaction()
     .script(script)
     .sequence_number(seq_num)
     .sign();
 
-//         // execute transaction
+    // execute transaction
     let output = executor.execute_transaction(txn_create);
     assert_eq!(
       output.status(),
       &TransactionStatus::Keep(KeptVMStatus::Executed)
     );
-//     executor.apply_write_set(output.write_set());
 }
