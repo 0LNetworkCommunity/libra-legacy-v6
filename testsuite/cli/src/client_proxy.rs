@@ -196,13 +196,16 @@ impl ClientProxy {
             .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
             .collect::<HashMap<AccountAddress, usize>>();
 
-        // let wallet;
-        // if mnemonic_string.is_some(){
-        // } else {
-        // let wallet = Self::get_libra_wallet(mnemonic_file)?;
-        // }
-
-        let wallet = Self::get_wallet_from_mnem(&mnemonic_string.unwrap())?;
+        let wallet;
+        if mnemonic_file.is_some(){
+            dbg!(&mnemonic_file);
+            wallet = Self::get_libra_wallet(mnemonic_file)?;
+        } 
+        
+        // override file with entered mnemonic
+        if menmonic_string.is_some() {
+            wallet = Self::get_wallet_from_mnem(&mnemonic_string.unwrap())?;
+        }
 
         Ok(ClientProxy {
             chain_id,
@@ -259,10 +262,10 @@ impl ClientProxy {
         } else {
             for (ref index, ref account) in self.accounts.iter().enumerate() {
                 println!(
-                    "User account index: {}, address: {}, private_key: {:?}, sequence number: {}, status: {:?}",
+                    "User account index: {}, address: {}, sequence number: {}, status: {:?}",
                     index,
                     hex::encode(&account.address),
-                    hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
+                    // hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
                     account.sequence_number,
                     account.status,
                 );
@@ -1613,7 +1616,7 @@ impl ClientProxy {
     }
 
     /// Get wallet from mnemonic string
-    pub fn get_wallet_from_mnem(mnemonic: &str) -> Result<WalletLibrary> {
+    fn get_wallet_from_mnem(mnemonic: &str) -> Result<WalletLibrary> {
         let mnem = Mnemonic::from(mnemonic).unwrap();
         let mut new_wallet = WalletLibrary::new_from_mnemonic(mnem);
         new_wallet.generate_addresses(6)?;
@@ -1621,7 +1624,7 @@ impl ClientProxy {
     }
 
     /// Set wallet instance used by this client.
-    pub fn set_wallet(&mut self, wallet: WalletLibrary) {
+    fn set_wallet(&mut self, wallet: WalletLibrary) {
         self.wallet = wallet;
     }
 
