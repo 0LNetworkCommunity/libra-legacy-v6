@@ -196,14 +196,9 @@ impl ClientProxy {
             .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
             .collect::<HashMap<AccountAddress, usize>>();
 
-        let wallet;
-        if mnemonic_file.is_some(){
-            dbg!(&mnemonic_file);
-            wallet = Self::get_libra_wallet(mnemonic_file)?;
-        } 
-        
+        let mut wallet = Self::get_libra_wallet(mnemonic_file)?;        
         // override file with entered mnemonic
-        if menmonic_string.is_some() {
+        if mnemonic_string.is_some() {
             wallet = Self::get_wallet_from_mnem(&mnemonic_string.unwrap())?;
         }
 
