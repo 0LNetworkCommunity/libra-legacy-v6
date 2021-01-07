@@ -58,6 +58,7 @@ struct Args {
     #[structopt(short = "n", long)]
     pub mnemonic_file: Option<String>,
     /// If set, client will sync with validator during wallet recovery.
+    /// 0L Deprecated, always syncs on recovery.
     #[structopt(short = "r", long = "sync")]
     pub sync: bool,
     /// If set, a client uses the waypoint parameter for its initial LedgerInfo verification.
@@ -82,6 +83,23 @@ struct Args {
 
 fn main() {
     let args = Args::from_args();
+
+    println!("Enter your 0L mnemonic:");
+    let mut entered_mnem = false;
+    let mnemonic_string = match rpassword::read_password_from_tty(Some("\u{1F511} ")) {
+        Ok(string) => {
+            if string.len() > 0 {
+                entered_mnem = true;
+                Some(string)
+                
+
+            } else {
+                None
+            }
+        },
+        _ => None,
+    };
+
 
     let mut logger = ::libra_logger::Logger::new();
     if !args.verbose {
@@ -113,19 +131,21 @@ fn main() {
             })
             .unwrap()
     });
+
     let mut client_proxy = ClientProxy::new(
         args.chain_id,
         &args.url,
         &faucet_account_file,
         &treasury_compliance_account_file,
         &dd_account_file,
-        args.sync,
+        true, // 0L change
         args.faucet_url.clone(),
         mnemonic_file,
+        mnemonic_string, // 0L change
         waypoint,
     )
     .expect("Failed to construct client.");
-
+    
     // Test connection to validator
     let block_metadata = client_proxy
         .test_validator_connection()
@@ -144,7 +164,9 @@ fn main() {
         "Connected to validator at: {}, {}",
         args.url, ledger_info_str
     );
-    if args.mnemonic_file.is_some() {
+    // if args.mnemonic_file.is_some() {
+    
+    if entered_mnem || args.mnemonic_file.is_some() {
         match client_proxy.recover_accounts_in_wallet() {
             Ok(account_data) => {
                 println!(

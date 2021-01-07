@@ -785,6 +785,7 @@ dependencies = [
  "proptest",
  "reqwest",
  "resource-viewer",
+ "rpassword",
  "rust_decimal",
  "rustyline",
  "serde",

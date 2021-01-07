@@ -35,7 +35,7 @@ use libra_types::{
     },
     waypoint::Waypoint,
 };
-use libra_wallet::{io_utils, WalletLibrary};
+use libra_wallet::{Mnemonic, WalletLibrary, io_utils};
 use num_traits::{
     cast::{FromPrimitive, ToPrimitive},
     identities::Zero,
@@ -132,6 +132,7 @@ impl ClientProxy {
         sync_on_wallet_recovery: bool,
         faucet_url: Option<String>,
         mnemonic_file: Option<String>,
+        mnemonic_string: Option<String>,
         waypoint: Waypoint,
     ) -> Result<Self> {
         // fail fast if url is not valid
@@ -195,6 +196,12 @@ impl ClientProxy {
             .map(|(ref_id, acc_data): (usize, &AccountData)| (acc_data.address, ref_id))
             .collect::<HashMap<AccountAddress, usize>>();
 
+        let mut wallet = Self::get_libra_wallet(mnemonic_file)?;        
+        // override file with entered mnemonic
+        if mnemonic_string.is_some() {
+            wallet = Self::get_wallet_from_mnem(&mnemonic_string.unwrap())?;
+        }
+
         Ok(ClientProxy {
             chain_id,
             client,
@@ -204,7 +211,7 @@ impl ClientProxy {
             libra_root_account,
             tc_account,
             testnet_designated_dealer_account: dd_account,
-            wallet: Self::get_libra_wallet(mnemonic_file)?,
+            wallet,
             sync_on_wallet_recovery,
             temp_files: vec![],
         })
@@ -250,10 +257,10 @@ impl ClientProxy {
         } else {
             for (ref index, ref account) in self.accounts.iter().enumerate() {
                 println!(
-                    "User account index: {}, address: {}, private_key: {:?}, sequence number: {}, status: {:?}",
+                    "User account index: {}, address: {}, sequence number: {}, status: {:?}",
                     index,
                     hex::encode(&account.address),
-                    hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
+                    // hex::encode(&self.wallet.get_private_key(&account.address).unwrap().to_bytes()),
                     account.sequence_number,
                     account.status,
                 );
@@ -1461,6 +1468,7 @@ impl ClientProxy {
     /// Recover accounts in wallets and sync state if sync_on_wallet_recovery is true.
     pub fn recover_accounts_in_wallet(&mut self) -> Result<Vec<AddressAndIndex>> {
         let wallet_addresses = self.wallet.get_addresses()?;
+        println!("length: {}", wallet_addresses.len());
         let mut account_data = Vec::new();
         for address in wallet_addresses {
             account_data.push(Self::get_account_data_from_address(
@@ -1600,6 +1608,14 @@ impl ClientProxy {
             new_wallet
         };
         Ok(wallet)
+    }
+
+    /// Get wallet from mnemonic string
+    fn get_wallet_from_mnem(mnemonic: &str) -> Result<WalletLibrary> {
+        let mnem = Mnemonic::from(mnemonic).unwrap();
+        let mut new_wallet = WalletLibrary::new_from_mnemonic(mnem);
+        new_wallet.generate_addresses(6)?;
+        Ok(new_wallet)
     }
 
     /// Set wallet instance used by this client.
@@ -1939,6 +1955,7 @@ mod tests {
             false,
             None,
             Some(mnemonic_path),
+            None,
             waypoint,
         )
         .unwrap();
