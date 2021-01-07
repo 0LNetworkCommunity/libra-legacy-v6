@@ -12,7 +12,6 @@ pub enum TransactionArgument {
     U128(u128),
     Address(AccountAddress),
     U8Vector(#[serde(with = "serde_bytes")] Vec<u8>),
-    AddressVector(Vec<AccountAddress>),
     Bool(bool),
 }
 
@@ -26,9 +25,6 @@ impl fmt::Debug for TransactionArgument {
             TransactionArgument::Address(address) => write!(f, "{{ADDRESS: {:?}}}", address),
             TransactionArgument::U8Vector(vector) => {
                 write!(f, "{{U8Vector: 0x{}}}", hex::encode(vector))
-            }
-            TransactionArgument::AddressVector(add_vector) => {
-                write!(f, "{{AddressVector: {:?}}}", add_vector)
             }
         }
     }
