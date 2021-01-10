@@ -129,7 +129,7 @@ address 0x1 {
         let count_proofs = 1;
         if (is_testnet() || is_staging_net()) {
           // start with sufficient gas for expensive tests e.g. upgrade
-          count_proofs = 100;
+          count_proofs = 500;
         };
         
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, count_proofs, true);

@@ -137,7 +137,9 @@ address 0x1 {
         upgrade_oracle.validators_voted = Vector::empty<address>();
         upgrade_oracle.vote_counts = Vector::empty<VoteCount>();
         upgrade_oracle.votes = Vector::empty<Vote>();
-        upgrade_oracle.vote_window = height + 1000;        // TODO: store constants
+        // TODO: change to Epochs instead of height. Could possibly be an argument as well.
+        // Setting the window to be approx two 24h periods.
+        upgrade_oracle.vote_window = height + 1000000;
         upgrade_oracle.consensus = VoteCount{
           data: Vector::empty<u8>(), 
           validators: Vector::empty<address>(),

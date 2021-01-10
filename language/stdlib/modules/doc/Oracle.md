@@ -405,7 +405,9 @@
   upgrade_oracle.validators_voted = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
   upgrade_oracle.vote_counts = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Oracle.md#0x1_Oracle_VoteCount">VoteCount</a>&gt;();
   upgrade_oracle.votes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="Oracle.md#0x1_Oracle_Vote">Vote</a>&gt;();
-  upgrade_oracle.vote_window = height + 1000;        // TODO: store constants
+  // TODO: change <b>to</b> Epochs instead of height. Could possibly be an argument <b>as</b> well.
+  // Setting the window <b>to</b> be approx two 24h periods.
+  upgrade_oracle.vote_window = height + 1000000;
   upgrade_oracle.consensus = <a href="Oracle.md#0x1_Oracle_VoteCount">VoteCount</a>{
     data: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;(),
     validators: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;(),
