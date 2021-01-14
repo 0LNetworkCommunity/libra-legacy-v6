@@ -130,13 +130,13 @@ module Globals {
       } else {
         if (StagingNet::is_staging_net()){
         return GlobalConstants {
-          epoch_length: 60,
+          epoch_length: 60 * 20, // 20 mins, enough for a hard miner proof.
           max_validator_per_epoch: 300,
           subsidy_ceiling_gas: 8640000 * coin_scale,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),
-          difficulty: 100,
+          difficulty: 5000000,
           epoch_mining_threshold: 1,
         } 
       } else {

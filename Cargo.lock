@@ -785,9 +785,11 @@ dependencies = [
  "proptest",
  "reqwest",
  "resource-viewer",
+ "rpassword",
  "rust_decimal",
  "rustyline",
  "serde",
+ "serde_json",
  "structopt 0.3.18",
  "transaction-builder",
  "walkdir",
@@ -6081,9 +6083,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.58"
+version = "1.0.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a230ea9107ca2220eea9d46de97eddcb04cd00e92d13dda78e478dd33fa82bd4"
+checksum = "4fceb2595057b6891a4ee808f70054bd2d12f0e97f1cbb78689b59f676df325a"
 dependencies = [
  "itoa",
  "ryu",

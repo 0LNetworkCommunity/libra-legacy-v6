@@ -24,6 +24,9 @@ impl Command for AccountCommand {
             Box::new(AccountCommandWriteRecovery {}),
             Box::new(AccountCommandMint {}),
             Box::new(AccountCommandAddCurrency {}),
+            Box::new(AccountCommandCreateUser {}),
+            Box::new(AccountCommandAutopayEnable {}),
+            Box::new(AccountCommandAutopayCreate {}),            
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -185,6 +188,74 @@ impl Command for AccountCommandAddCurrency {
                 }
             }
             Err(e) => report_error("Error adding zero balance in currency to account", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a user account on-chain using a vdf proof.
+pub struct AccountCommandCreateUser {}
+
+impl Command for AccountCommandCreateUser {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["create_user", "cu"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Create on-chain user account from proof"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_proof_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.create_user(params, true) {
+            Ok(()) => println!("Created account"),
+            Err(e) => report_error("Error creating user account", e),
+        }
+    }
+}
+
+
+//////// 0L ////////
+/// 0L Sub command to enable autopay state on system and user account.
+pub struct AccountCommandAutopayEnable {}
+
+impl Command for AccountCommandAutopayEnable {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["autopay_enable", "ae"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Enables Autopay functionality on an account"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.autopay_enable(params, true) {
+            Ok(()) => println!("Created account"),
+            Err(e) => report_error("Error creating local account", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a new autopay instruction.
+pub struct AccountCommandAutopayCreate {}
+
+impl Command for AccountCommandAutopayCreate {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["autopay_instruction", "ai"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Creates Autopay instruction"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <instruction_id> <payee_account> <end_epoch> <percent_integer>"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.autopay_create(params, true) {
+            Ok(()) => println!("Created autopay instruction"),
+            Err(e) => report_error("Error on autopay instruction tx", e),
         }
     }
 }
