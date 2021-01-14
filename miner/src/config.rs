@@ -6,7 +6,8 @@
 
 use std::{net::Ipv4Addr, fs};
 use byteorder::{LittleEndian, WriteBytesExt};
-use libra_types::{account_address::AccountAddress, waypoint::Waypoint};
+use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
@@ -14,6 +15,9 @@ use crate::submit_tx::TxParams;
 use ajson;
 use dirs;
 use libra_global_constants::NODE_HOME;
+use crate::commands::CONFIG_FILE;
+use std::{io::Write};
+
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -104,9 +108,6 @@ impl MinerConfig {
             .write_u64::<LittleEndian>(delay_difficulty())
             .unwrap();
 
-        // preimage
-        //     .write_u64::<LittleEndian>(delay_difficulty())
-        //     .unwrap();
         let mut padded_statements_bytes = {
             let mut statement_bytes = self.profile.statement.clone().into_bytes();
 
@@ -151,12 +152,42 @@ impl MinerConfig {
         home
     }
 
-    // /// Get where the backlog.json are stored.
-    // pub fn get_local_backlog_path(&self)-> PathBuf {
-    //     let mut home = self.workspace.home.clone();
-    //     home.push("backlog.json");
-    //     home
-    // }
+        /// Get where node key_store.json stored.
+    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress) -> PathBuf {
+
+        // TODO: Check if configs exist and warn on overwrite.
+        println!("Miner not initialized, creating configs at {}", NODE_HOME);
+        let mut miner_configs = MinerConfig::default();
+        miner_configs.workspace.node_home = dirs::home_dir().unwrap();
+        miner_configs.workspace.node_home.push(NODE_HOME);
+        fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
+
+        println!("Enter configs...");
+        // Set up github token
+        let mut rl = Editor::<()>::new();
+
+        // Get the ip address of node.
+        let readline = rl.readline("IP address for transactions: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
+        miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
+        
+        // Get optional statement which goes into genesis block
+        miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter a fun statement to go into genesis proof.");
+
+        // Generate new keys
+        miner_configs.profile.auth_key = authkey.to_string();
+        miner_configs.profile.account = account;
+
+        let toml = toml::to_string(&miner_configs).unwrap();
+        let home_path = miner_configs.workspace.node_home.clone();
+        let miner_toml_path = home_path.join(CONFIG_FILE);
+        let file = fs::File::create(&miner_toml_path);
+        file.unwrap().write(&toml.as_bytes())
+            .expect("Could not write toml file");
+
+        println!("Configs saved to {:?}", &miner_toml_path);
+        miner_toml_path 
+    }
+
 }
 
 /// Default configuration settings.

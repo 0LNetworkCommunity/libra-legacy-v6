@@ -164,6 +164,8 @@ pub fn submit_onboard_tx(
         op_validator_network_addresses.as_bytes().to_vec(),
         op_fullnode_network_addresses.as_bytes().to_vec(),
         op_human_name,
+        vec!(),
+        vec!(),
     );
 
     // sign the transaction script
