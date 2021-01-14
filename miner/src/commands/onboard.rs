@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::ValConfigs, submit_tx::{eval_tx_status, get_params}};
+use crate::{account::ValConfigs, submit_tx::{eval_tx_status, get_params}};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;

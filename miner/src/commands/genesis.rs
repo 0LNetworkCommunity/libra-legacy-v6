@@ -1,6 +1,6 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{block::Block, block::ValConfigs, node_keys::KeyScheme, block::build_block};
+use crate::{block::Block, account::ValConfigs, node_keys::KeyScheme, block::build_block};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use std::{fs, path::PathBuf};
