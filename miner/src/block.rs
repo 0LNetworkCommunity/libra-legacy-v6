@@ -82,7 +82,7 @@ pub mod build_block {
         let block = mine_genesis(config);
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        println!("Proof mined. Genesis block_0.json created, exiting.");
+        println!("Proof mined. Genesis block_0.json created. Exiting");
     }
     /// Mine one block
     pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
@@ -135,7 +135,7 @@ pub mod build_block {
 
         // If there are NO files in path, mine the genesis proof.
         if current_block_number.is_none() {
-            status_err!("Genesis block_0.json not found, exiting.");
+            status_err!("Genesis block_0.json not found. Exiting.");
             std::process::exit(0);
         } else {
             // mine continuously from the last block in the file systems

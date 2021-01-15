@@ -84,7 +84,7 @@ impl Runnable for OnboardCmd {
             Ok(res) => {
                 match eval_tx_status(res.clone()) {
                     true => { 
-                        status_ok!("Success", "Validator initialization committed, exiting.");
+                        status_ok!("Success", "Validator initialization committed. Exiting.");
 
                     },
                     false => {

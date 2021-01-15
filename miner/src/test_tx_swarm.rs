@@ -68,7 +68,7 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     if current_block_number.is_none() {
         status_info!("[swarm] Generating Genesis Proof", "0");
         mine_genesis(&config);
-        status_ok!("[swarm] Success", "Genesis block_0.json created, exiting.");
+        status_ok!("[swarm] Success", "Genesis block_0.json created. Exiting.");
         std::process::exit(0);
     }
 

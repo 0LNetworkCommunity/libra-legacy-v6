@@ -167,7 +167,7 @@ impl MinerConfig {
         let mut rl = Editor::<()>::new();
 
         // Get the ip address of node.
-        let readline = rl.readline("IP address of miner").expect("Must enter an ip address, or 0.0.0.0 as localhost");
+        let readline = rl.readline("IP address of miner: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
         miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
         
         // Get optional statement which goes into genesis block
