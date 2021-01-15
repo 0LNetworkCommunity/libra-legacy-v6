@@ -21,9 +21,8 @@ pub struct KeyScheme {
 }
 
 impl KeyScheme {
-    /// Generates the necessary private key for validator and full node set up.
-    pub fn new_from_mnemonic(mnemonic: String) -> Self {
-        let wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic).unwrap());
+    /// Generates the necessary private keys for validator and full node set up.
+    pub fn new(wallet: WalletLibrary) -> Self {
         let kf = wallet.get_key_factory();
         Self {
             child_0_owner: kf.private_child(ChildNumber::new(0)).unwrap(),
@@ -33,6 +32,11 @@ impl KeyScheme {
             child_4_consensus: kf.private_child(ChildNumber::new(4)).unwrap(),
             child_5_executor: kf.private_child(ChildNumber::new(5)).unwrap(),
         }
+    }
+    /// Get KeyScheme from a mnemonic string.
+    pub fn new_from_mnemonic(mnemonic: String) -> KeyScheme {
+        let wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic).unwrap());
+        KeyScheme::new(wallet)
     }
     /// Returns the default owner address given the key derivation.
     pub fn derived_address(&self) -> AccountAddress {

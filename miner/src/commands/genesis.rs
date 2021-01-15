@@ -16,7 +16,7 @@ impl Runnable for GenesisCmd {
         
         println!("Enter your 0L mnemonic:");
         let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
-        let (authkey, account) = keygen::get_account_from_mnem(mnemonic_string);
+        let (authkey, account, _) = keygen::get_account_from_mnem(mnemonic_string);
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
         build_block::write_genesis(&miner_configs);

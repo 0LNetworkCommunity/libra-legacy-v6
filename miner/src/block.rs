@@ -78,11 +78,12 @@ pub mod build_block {
     }
 
     /// Mines genesis and writes the file
-    pub fn write_genesis(config: &MinerConfig){
+    pub fn write_genesis(config: &MinerConfig) -> Block{
         let block = mine_genesis(config);
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
         println!("Proof mined. Genesis block_0.json created. Exiting");
+        block
     }
     /// Mine one block
     pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
@@ -213,7 +214,13 @@ pub mod build_block {
         }
         (max_block, max_block_path)
     }
-    
+
+    /// Parse a block_x.json file and return a Block
+    pub fn parse_block_file(path: PathBuf) -> Block{
+        let file = fs::File::open(&path).expect("Could not open block file");
+        let reader = BufReader::new(file);
+        serde_json::from_reader(reader).unwrap()
+    }
 
 /* ////////////// */
 /* / Unit tests / */

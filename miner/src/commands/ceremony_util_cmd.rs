@@ -41,7 +41,7 @@ impl Runnable for CeremonyUtilCmd {
         miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter a fun statement to go into genesis proof.");
 
         // Generate new keys
-        let (authkey, account) = keygen();
+        let (authkey, account, _) = keygen();
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
 

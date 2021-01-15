@@ -54,13 +54,13 @@ impl ValConfigs {
     /// New val config.
     pub fn new(
         block: Block,
-        mnemonic_string: String,
+        keys: KeyScheme,
         ip_address: String,
-    ) -> ValConfigs {
-        let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
+    ) -> Self {
+        // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
         let owner_address = keys.child_0_owner.get_address().to_string();
         // let op_authkey = keys.child_1_operator.get_address();
-        ValConfigs {
+        Self {
             /// Block zero of the onboarded miner
             block_zero: block,
             ow_human_name: owner_address.clone(),
@@ -73,15 +73,14 @@ impl ValConfigs {
         }
     }
     /// Creates the json file needed for onchain account creation - validator
-    pub fn create_validator_manifest(
+    pub fn create_manifest(
         &self,
-        val_configs: ValConfigs,
         mut json_path: PathBuf,
     ){
         //where file will be saved
         json_path.push("account.json");
         let mut file = File::create(json_path.as_path()).unwrap();
-        let buf = serde_json::to_string(&val_configs).expect("Config should be export to json");
+        let buf = serde_json::to_string(&self).expect("Config should be export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
     }
@@ -105,7 +104,7 @@ impl UserConfigs {
         }
     }
         /// Creates the json file needed for onchain account creation - user
-    pub fn create_user_manifest(
+    pub fn create_manifest(
         &self,
         mut json_path: PathBuf,
     ){
