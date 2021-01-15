@@ -17,7 +17,8 @@ pub struct CreateCmd {
     path: Option<PathBuf>,
     #[options(help = "path to file to be checked")]
     check: bool,
-
+    #[options(help = "regenerates account manifest from mnemonic")]
+    fix: bool,
 }
 
 impl Runnable for CreateCmd {
@@ -28,7 +29,7 @@ impl Runnable for CreateCmd {
         if self.check {
             check(path);
         } else {
-            create(path);
+            create(path, self.fix);
         }
 
     }
@@ -36,11 +37,21 @@ impl Runnable for CreateCmd {
 
 }
 
-fn create(path: PathBuf) {
+fn create(path: PathBuf, fix: bool) {
         let mut miner_configs = config::MinerConfig::default();
-        let (authkey, account) = keygen::keygen();
-        miner_configs.profile.auth_key = authkey.to_string();
-        miner_configs.profile.account = account;
+        
+        if fix {
+            let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
+            let (authkey, account) = keygen::get_account_from_mnem(mnemonic_string);
+            miner_configs.profile.auth_key = authkey.to_string();
+            miner_configs.profile.account = account;
+        } else {
+            let (authkey, account) = keygen::keygen();
+            miner_configs.profile.auth_key = authkey.to_string();
+            miner_configs.profile.account = account;
+        }
+
+
         let block = build_block::mine_genesis(&miner_configs);
         account::UserConfigs::new(block).create_user_manifest(path);
 }

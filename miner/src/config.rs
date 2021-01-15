@@ -37,7 +37,7 @@ const STATEMENT_BYTES: usize = 1008;
 
 impl MinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
-    pub fn get_waypoint (&self) -> Option<Waypoint> {
+    pub fn get_waypoint(&self) -> Option<Waypoint> {
         match fs::File::open(self.get_key_store_path()) {
             Ok(file) => {
                 let json: serde_json::Value = serde_json::from_reader(file)
@@ -167,11 +167,11 @@ impl MinerConfig {
         let mut rl = Editor::<()>::new();
 
         // Get the ip address of node.
-        let readline = rl.readline("IP address for transactions: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
+        let readline = rl.readline("IP address of miner").expect("Must enter an ip address, or 0.0.0.0 as localhost");
         miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
         
         // Get optional statement which goes into genesis block
-        miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter a fun statement to go into genesis proof.");
+        miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
 
         // Generate new keys
         miner_configs.profile.auth_key = authkey.to_string();
