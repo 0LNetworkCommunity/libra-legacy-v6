@@ -117,6 +117,13 @@ impl UserConfigs {
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
     }
+   /// Extract the preimage and proof from a genesis proof block_0.json
+    pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs,std::io::Error> {
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let configs: UserConfigs = serde_json::from_reader(reader).expect("account.json should deserialize");
+        return Ok(configs);
+    }
 }
 
 #[test]

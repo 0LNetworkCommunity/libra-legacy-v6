@@ -213,21 +213,21 @@ pub mod build_block {
         }
         (max_block, max_block_path)
     }
+    
 
+/* ////////////// */
+/* / Unit tests / */
+/* ////////////// */
 
-    /* ////////////// */
-    /* / Unit tests / */
-    /* ////////////// */
-
-    // Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
-    #[allow(dead_code)]
-    fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
-        // delete the temporary test file and directory.
-        // remove_dir_all is scary: be careful with this.
-        if blocks_dir.exists() {
-            fs::remove_dir_all(blocks_dir).unwrap();
-        }
+// Tests generate side-effects. For now run sequentially with `cargo test -- --test-threads 1`
+#[allow(dead_code)]
+fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
+    // delete the temporary test file and directory.
+    // remove_dir_all is scary: be careful with this.
+    if blocks_dir.exists() {
+        fs::remove_dir_all(blocks_dir).unwrap();
     }
+}
 #[test]
 fn test_mine_genesis() {
     use libra_types::PeerId;
