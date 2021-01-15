@@ -1,10 +1,8 @@
 //! Formatters for libra account creation
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-
 use crate::{block::Block, node_keys::KeyScheme};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
-
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -78,7 +76,7 @@ impl ValConfigs {
     pub fn create_validator_manifest(
         &self,
         val_configs: ValConfigs,
-        json_path: &mut PathBuf,
+        mut json_path: PathBuf,
     ){
         //where file will be saved
         json_path.push("account.json");
@@ -109,7 +107,7 @@ impl UserConfigs {
         /// Creates the json file needed for onchain account creation - user
     pub fn create_user_manifest(
         &self,
-        json_path: &mut PathBuf,
+        mut json_path: PathBuf,
     ){
         //where file will be saved
         json_path.push("account.json");
@@ -123,12 +121,12 @@ impl UserConfigs {
 
 #[test]
 fn test_parse_init_file() {
-    use super::ValConfigs;
+    use crate::account::ValConfigs;
     let fixtures = PathBuf::from("../fixtures/eve_init_stage.json");
     let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
     assert_eq!(init_configs.op_fullnode_network_addresses, "134.122.115.12", "Could not parse network address");
 
-    let consensus_key_vec = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
+    let consensus_key_vec = decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
     
     assert_eq!(init_configs.op_consensus_pubkey, consensus_key_vec, "Could not parse pubkey");
 

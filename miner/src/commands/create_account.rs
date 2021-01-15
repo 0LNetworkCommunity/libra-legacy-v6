@@ -14,18 +14,19 @@ pub struct CreateCmd {
     #[options(help = "create a validator account, instead of user account")]
     val: bool,
     #[options(help = "path to write account manifest")]
-    path: PathBuf,
+    path: Option<PathBuf>,
 }
 
 impl Runnable for CreateCmd {
     /// Print version message
     fn run(&self) {
+        let path = self.path.clone().unwrap_or_else(|| PathBuf::from("."));
+
         let mut miner_configs = config::MinerConfig::default();
         let (authkey, account) = keygen::keygen();
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
         let block = build_block::mine_genesis(&miner_configs);
-        let configs = UserConfigs::new(block);
-        configs.create_user_manifest(&mut self.path.clone());
+        UserConfigs::new(block).create_user_manifest(path);
     }
 }

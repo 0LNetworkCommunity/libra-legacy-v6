@@ -73,10 +73,16 @@ pub mod build_block {
             preimage,
             proof,
         };
+
+        block
+    }
+
+    /// Mines genesis and writes the file
+    pub fn write_genesis(config: &MinerConfig){
+        let block = mine_genesis(config);
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
         println!("Proof mined. Genesis block_0.json created, exiting.");
-        block
     }
     /// Mine one block
     pub fn mine_once(config: &MinerConfig) -> Result<Block, Error> {
@@ -248,8 +254,7 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
 
     // mine
-    mine_genesis(&configs_fixture);
-
+    write_genesis(&configs_fixture);
     // read file
     let block_file =
         // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));
@@ -304,7 +309,7 @@ fn create_fixtures() {
         };
 
         // mine to save_to path
-        mine_genesis(&configs_fixture);
+        write_genesis(&configs_fixture);
 
         // also create mnemonic
         let mut mnemonic_path = PathBuf::from(save_to.clone());
