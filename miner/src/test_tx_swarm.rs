@@ -43,7 +43,7 @@ pub fn swarm_miner(swarm_path: PathBuf) {
 pub fn swarm_onboarding(swarm_path: PathBuf) {
     // let file = "./blocks/val_init.json";
     // fs::copy("../fixtures/val_init_stage.json", file).unwrap();
-    let init_file = fs::read_to_string("./fixtures/val_init_stage.json")
+    let init_file = fs::read_to_string("./fixtures/eve_init_stage.json")
         .expect("Could not read init file");
 
     let init_file: ValConfigs =

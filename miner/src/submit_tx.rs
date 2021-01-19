@@ -138,8 +138,8 @@ pub fn submit_onboard_tx(
     op_address: AccountAddress,
     op_auth_key_prefix: Vec<u8>,
     op_consensus_pubkey: Vec<u8>,
-    op_validator_network_addresses: String,
-    op_fullnode_network_addresses: String,
+    op_validator_network_addresses: Vec<u8>,
+    op_fullnode_network_addresses: Vec<u8>,
     op_human_name: Vec<u8>,
 ) -> Result<TransactionView, Error> {
 
@@ -161,8 +161,8 @@ pub fn submit_onboard_tx(
         op_address,
         op_auth_key_prefix,
         op_consensus_pubkey,
-        op_validator_network_addresses.as_bytes().to_vec(),
-        op_fullnode_network_addresses.as_bytes().to_vec(),
+        op_validator_network_addresses,
+        op_fullnode_network_addresses,
         op_human_name,
         vec!(),
         vec!(),

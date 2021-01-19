@@ -1,8 +1,10 @@
 //! Formatters for libra account creation
 use crate::{block::Block, node_keys::KeyScheme};
+use libra_types::account_address::AccountAddress;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
+use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -60,6 +62,22 @@ impl ValConfigs {
         // let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
         let owner_address = keys.child_0_owner.get_address().to_string();
         // let op_authkey = keys.child_1_operator.get_address();
+        // let net_addr: Ipv4Addr = ip_address.parse().expect("could not parse ip_address");
+        let val_network_string = format!("/ip4/{}/tcp/6180", ip_address);
+        let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
+
+        let addr_obj: NetworkAddress = val_network_string.parse().expect("could not parse validator network address");
+        let encrypted_addr = vec![
+                addr_obj.encrypt(
+                &TEST_SHARED_VAL_NETADDR_KEY, //shared_val_netaddr_key: &Key,
+                TEST_SHARED_VAL_NETADDR_KEY_VERSION,//key_version: KeyVersion,
+                &owner_address.parse::<AccountAddress>().expect("unable to parse account address"), // account: &AccountAddress,
+                0,
+                0
+            ).expect("unable to encrypt network address")
+        ];
+        let serialized_addr = lcs::to_bytes(&encrypted_addr).unwrap();
+
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,
@@ -67,8 +85,8 @@ impl ValConfigs {
             op_address: format!("0x{}", keys.child_1_operator.get_address().to_string()),
             op_auth_key_prefix: keys.child_1_operator.get_authentication_key().prefix().to_vec(),
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
-            op_validator_network_addresses: ip_address.clone(),
-            op_fullnode_network_addresses: ip_address,
+            op_validator_network_addresses: encode(serialized_addr),
+            op_fullnode_network_addresses: encode(fullnode_network_string),
             op_human_name: format!("{}-oper", owner_address),
         }
     }

@@ -54,7 +54,6 @@ impl Seeds {
 
         let info = validator_set.payload();
         let mut seed_addr = SeedAddresses::default();
-        // let vec_peers: Vec<NetworkAddress> = Vec::new();
 
         for info in info.iter() {
             let seed_pubkey = info.config().consensus_public_key.clone();

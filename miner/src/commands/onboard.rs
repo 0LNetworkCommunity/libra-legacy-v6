@@ -8,9 +8,7 @@ use libra_types::waypoint::Waypoint;
 use crate::submit_tx::submit_onboard_tx;
 use std::path::PathBuf;
 use crate::test_tx_swarm::get_params_from_swarm;
-
-// use rustyline::error::ReadlineError;
-// use rustyline::Editor;
+use hex::decode;
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
@@ -77,8 +75,8 @@ impl Runnable for OnboardCmd {
             AccountAddress::from_hex_literal(&init_data.op_address).unwrap(),
             init_data.op_auth_key_prefix,
             init_data.op_consensus_pubkey,
-            init_data.op_validator_network_addresses,
-            init_data.op_fullnode_network_addresses,
+            decode(init_data.op_validator_network_addresses).unwrap(),
+            decode(init_data.op_fullnode_network_addresses).unwrap(),
             init_data.op_human_name.as_bytes().to_vec()
         ) {
             Ok(res) => {
