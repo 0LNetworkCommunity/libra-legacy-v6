@@ -168,9 +168,15 @@
 
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
     // <b>let</b> node_ratio = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>&gt;(fee_ratio, i));
-    <b>let</b> subsidy_granted = subsidy_units/len;
 
-    // <b>let</b> subsidy_granted = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(subsidy_units, node_ratio);
+    <b>let</b> subsidy_granted;
+    <b>if</b> (subsidy_units &gt; len) {
+      subsidy_granted = subsidy_units/len;
+    } <b>else</b> {
+      subsidy_granted = len;
+    };
+    // should not be possible
+    <b>if</b> (subsidy_granted == 0) <b>break</b>;
     // Transfer gas from vm address <b>to</b> validator
     <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm_sig, subsidy_granted);
     <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -260,9 +266,11 @@
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
+
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&genesis_validators, i));
     <b>let</b> old_validator_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
     <b>let</b> count_proofs = 1;
+
     <b>if</b> (is_testnet() || is_staging_net()) {
       // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
       count_proofs = 10000;
@@ -270,7 +278,9 @@
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address, count_proofs, <b>true</b>);
     //Confirm the calculations, and that the ending balance is incremented accordingly.
+
     <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+
     i = i + 1;
   };
 }
@@ -399,22 +409,24 @@
 
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
   // fail fast, <b>abort</b> <b>if</b> ceiling was met
+
   <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
+
   <b>let</b> proposed_subsidy = state.current_proof_price * count;
   <b>if</b> (proposed_subsidy &lt; 1) <b>return</b> 0;
+
   <b>let</b> subsidy;
   // check <b>if</b> payments will exceed ceiling.
   <b>if</b> (state.current_subsidy_distributed + proposed_subsidy &gt; state.current_cap) {
-
     // pay the remainder only
     // TODO: This creates a race. Check ordering of list.
     subsidy = state.current_cap - state.current_subsidy_distributed;
   } <b>else</b> {
-
     // happy case, the ceiling is not met.
     subsidy = proposed_subsidy;
   };
 
+  <b>if</b> (subsidy == 0) <b>return</b> 0;
   <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
@@ -422,7 +434,9 @@
     minted_coins,
     x"", x""
   );
+
   state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
+
   subsidy
 }
 </code></pre>
