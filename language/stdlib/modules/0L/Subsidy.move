@@ -70,9 +70,15 @@ address 0x1 {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
         // let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
-        let subsidy_granted = subsidy_units/len;
-
-        // let subsidy_granted = FixedPoint32::multiply_u64(subsidy_units, node_ratio);
+        
+        let subsidy_granted;
+        if (subsidy_units > len) {
+          subsidy_granted = subsidy_units/len;
+        } else {
+          subsidy_granted = len;
+        };
+        // should not be possible
+        if (subsidy_granted == 0) break;
         // Transfer gas from vm address to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
         LibraAccount::vm_deposit_with_metadata<GAS>(
@@ -124,9 +130,11 @@ address 0x1 {
 
       let i = 0;
       while (i < len) {
+
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
         let count_proofs = 1;
+
         if (is_testnet() || is_staging_net()) {
           // start with sufficient gas for expensive tests e.g. upgrade
           count_proofs = 10000;
@@ -134,7 +142,9 @@ address 0x1 {
         
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, count_proofs, true);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
+
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+
         i = i + 1;
       };
     }
@@ -213,22 +223,24 @@ address 0x1 {
 
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       // fail fast, abort if ceiling was met
+      
       if (state.current_subsidy_distributed > state.current_cap) return 0;
+
       let proposed_subsidy = state.current_proof_price * count;
       if (proposed_subsidy < 1) return 0;
+
       let subsidy;
       // check if payments will exceed ceiling.
       if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
-
         // pay the remainder only
         // TODO: This creates a race. Check ordering of list.
         subsidy = state.current_cap - state.current_subsidy_distributed;
       } else {
-
         // happy case, the ceiling is not met.
         subsidy = proposed_subsidy;
       };
 
+      if (subsidy == 0) return 0;
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -236,7 +248,9 @@ address 0x1 {
         minted_coins,
         x"", x""
       );
+
       state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
+
       subsidy
     }
 
