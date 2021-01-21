@@ -68,7 +68,7 @@ impl ValConfigs {
 
         let addr_obj: NetworkAddress = val_network_string.parse().expect("could not parse validator network address");
         let encrypted_addr = vec![
-                addr_obj.encrypt(
+            addr_obj.encrypt(
                 &TEST_SHARED_VAL_NETADDR_KEY, //shared_val_netaddr_key: &Key,
                 TEST_SHARED_VAL_NETADDR_KEY_VERSION,//key_version: KeyVersion,
                 &owner_address.parse::<AccountAddress>().expect("unable to parse account address"), // account: &AccountAddress,
@@ -156,4 +156,22 @@ fn test_parse_init_file() {
 
     assert_eq!(init_configs.op_consensus_pubkey, consensus_key_vec, "Human name must match");
 
+}
+
+#[test]
+fn val_config_ip_address() {
+    let block =  Block {
+        height: 0u64,
+        elapsed_secs: 0u64,
+        preimage: Vec::new(),
+        proof: Vec::new(),
+    };
+    let keys = KeyScheme::new_from_mnemonic("recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare".to_string());
+    
+    let val = ValConfigs::new(
+        block,
+        keys,
+        "161.35.13.169".to_string(),
+    );
+    dbg!(&val);
 }

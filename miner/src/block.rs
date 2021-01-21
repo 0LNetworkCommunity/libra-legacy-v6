@@ -48,7 +48,7 @@ impl Block {
 
 pub mod build_block {
     //! Functions for generating the 0L delay proof and writing data to file system.
-    use super::{Block};
+    use super::Block;
     use crate::config::*;
     use crate::delay::*;
     use crate::error::{Error, ErrorKind};
