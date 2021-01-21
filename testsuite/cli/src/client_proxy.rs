@@ -433,44 +433,76 @@ impl ClientProxy {
     //////// 0L ////////
     /// Submits transaction creating user account from proof file.
     pub fn create_val(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        // ensure!(
-        //     space_delim_strings.len() == 3,
-        //     "Invalid number of arguments to create user. Did you pass your account and the file path?"
-        // );
+        ensure!(
+            space_delim_strings.len() == 3,
+            "Invalid number of arguments to create user. Did you pass your account and the file path?"
+        );
 
-        // let file = fs::File::open(space_delim_strings[2])
-        //     .expect("file should open read only");
-        // let json: serde_json::Value = serde_json::from_reader(file)
-        //     .expect("file should be proper JSON");
-        // let block = json.get("block_zero")
-        //     .expect("file should have block_zero and preimage key");
-        // // TODO: There's a shortcut here.
-        // let preimage = block
-        // .as_object().unwrap()
-        // .get("preimage").unwrap()
-        // .as_str().unwrap();
+        //TODO: Parsing json should use Serde to deserialize from the miner::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
+
+        let file = fs::File::open(space_delim_strings[2])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let block = json.get("block_zero")
+            .expect("file should have block_zero and preimage key");
+
+        let preimage = block
+        .as_object().unwrap()
+        .get("preimage").unwrap()
+        .as_str().unwrap();
+        let challenge = hex::decode(preimage).unwrap();
+
+        let proof = block
+        .as_object().unwrap()
+        .get("proof").unwrap()
+        .as_str().unwrap();
+        let solution = hex::decode(proof).unwrap();
+
+        let ow_human_name = json
+        .get("ow_human_name")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .as_bytes()
+        .to_vec();
+
+        let op_address: AccountAddress = json
+        .get("op_address")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+
+        let op_auth_key_prefix = hex::decode("ecc59a4a0963f65b5eceb0fffa01ea99").unwrap();
+
+        let op_consensus_pubkey = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
         
-        // let pre_hex = hex::decode(preimage).unwrap();
+        let op_validator_network_addresses = hex::decode(
+            json.get("op_validator_network_addresses")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
 
-        // let proof = block
-        // .as_object().unwrap()
-        // .get("proof").unwrap()
-        // .as_str().unwrap();
-        
-        // let proof_hex = hex::decode(proof).unwrap();
+        let op_fullnode_network_addresses = hex::decode(
+            json.get("op_fullnode_network_addresses")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
 
-        let challenge = "test".as_bytes().to_vec();
-        let solution = "test".as_bytes().to_vec();
-        let ow_human_name = "test".as_bytes().to_vec();
-        let op_address = AccountAddress::random();
-        let op_auth_key_prefix = "test".as_bytes().to_vec();
-        let op_consensus_pubkey = "test".as_bytes().to_vec();
-        let op_validator_network_addresses = "test".as_bytes().to_vec();
-        let op_fullnode_network_addresses = "test".as_bytes().to_vec();
-        let op_human_name = "test".as_bytes().to_vec();
+        let op_human_name = json
+        .get("op_human_name")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .as_bytes()
+        .to_vec();
+
         let my_trusted_accounts = vec!(AccountAddress::random());
         let voter_trusted_accounts = vec!(AccountAddress::random());
-        
         
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");

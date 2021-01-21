@@ -337,9 +337,16 @@ address 0x1 {
 
     // Returns if the miner is above the account creation rate-limit
     // Permissions: PUBLIC, ANYONE
-    // TODO: Rename
     public fun rate_limit_create_acc(node_addr: address): bool acquires MinerProofHistory {
-      borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > 7
+      
+      // TODO: SETTING TRUE FOR TESTING.
+
+      
+      if (Testnet::is_testnet()) {
+        true
+      } else {
+        borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > 7
+      }
     }
 
     ////////////////////
