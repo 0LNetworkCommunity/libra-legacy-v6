@@ -21,6 +21,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -273,7 +274,7 @@
 
     <b>if</b> (is_testnet() || is_staging_net()) {
       // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
-      count_proofs = 10000;
+      count_proofs = 500;
     };
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address, count_proofs, <b>true</b>);
@@ -406,27 +407,39 @@
   <b>if</b> (!is_genesis){
     <b>if</b> (<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(miner)) <b>return</b> 0;
   };
-
+  print(&0x1);
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
   // fail fast, <b>abort</b> <b>if</b> ceiling was met
+  print(&0x11);
 
   <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
+  print(&0x12);
 
   <b>let</b> proposed_subsidy = state.current_proof_price * count;
   <b>if</b> (proposed_subsidy &lt; 1) <b>return</b> 0;
+  print(&0x13);
+  print(&state.current_cap);
+  print(&proposed_subsidy);
+  print(&state.current_subsidy_distributed);
 
   <b>let</b> subsidy;
   // check <b>if</b> payments will exceed ceiling.
   <b>if</b> (state.current_subsidy_distributed + proposed_subsidy &gt; state.current_cap) {
+          print(&0x131);
+
     // pay the remainder only
     // TODO: This creates a race. Check ordering of list.
     subsidy = state.current_cap - state.current_subsidy_distributed;
   } <b>else</b> {
+          print(&0x132);
+
     // happy case, the ceiling is not met.
     subsidy = proposed_subsidy;
   };
 
   <b>if</b> (subsidy == 0) <b>return</b> 0;
+  print(&0x14);
+
   <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
@@ -434,8 +447,10 @@
     minted_coins,
     x"", x""
   );
+  print(&0x15);
 
   state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
+  print(&0x16);
 
   subsidy
 }

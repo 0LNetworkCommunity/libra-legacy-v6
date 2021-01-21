@@ -21,7 +21,7 @@
 -  [Function `get_miner_latest_epoch`](#0x1_MinerState_get_miner_latest_epoch)
 -  [Function `reset_rate_limit`](#0x1_MinerState_reset_rate_limit)
 -  [Function `get_epochs_mining`](#0x1_MinerState_get_epochs_mining)
--  [Function `rate_limit_create_acc`](#0x1_MinerState_rate_limit_create_acc)
+-  [Function `can_create_val`](#0x1_MinerState_can_create_val)
 -  [Function `test_helper_mock_mining`](#0x1_MinerState_test_helper_mock_mining)
 -  [Function `test_helper_mock_mining_vm`](#0x1_MinerState_test_helper_mock_mining_vm)
 -  [Function `test_helper_mock_reconfig`](#0x1_MinerState_test_helper_mock_reconfig)
@@ -698,13 +698,13 @@ Public APIs ///
 
 </details>
 
-<a name="0x1_MinerState_rate_limit_create_acc"></a>
+<a name="0x1_MinerState_can_create_val"></a>
 
-## Function `rate_limit_create_acc`
+## Function `can_create_val`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_can_create_val">can_create_val</a>(node_addr: address): bool
 </code></pre>
 
 
@@ -713,16 +713,10 @@ Public APIs ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-
-  // TODO: SETTING TRUE FOR TESTING.
-
-
-  <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
-    <b>true</b>
-  } <b>else</b> {
-    borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; 7
-  }
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_can_create_val">can_create_val</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+    // <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) <b>return</b> <b>true</b>;
+    <b>let</b> epoch_passed = borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation;
+    epoch_passed &gt; 7
 }
 </code></pre>
 

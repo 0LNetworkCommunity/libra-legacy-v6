@@ -73,7 +73,6 @@ script {
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
         
-
         MinerState::test_helper_mock_mining_vm(vm, {{alice}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{bob}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{carol}}, 20);

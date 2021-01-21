@@ -148,7 +148,7 @@ fn test_parse_init_file() {
     use crate::account::ValConfigs;
     let fixtures = PathBuf::from("../fixtures/eve_init_stage.json");
     let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
-    assert_eq!(init_configs.op_fullnode_network_addresses, "134.122.115.12", "Could not parse network address");
+    assert_eq!(init_configs.op_fullnode_network_addresses, "2f6970342f302e302e302e302f7463702f36313739", "Could not parse network address");
 
     let consensus_key_vec = decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
     

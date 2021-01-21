@@ -922,7 +922,7 @@ Initialize this module. This is only callable from genesis.
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     // Rate limit spam accounts.
-    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_can_create_val">MinerState::can_create_val</a>(sender_addr), 120101011001);
 
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
@@ -971,7 +971,6 @@ Initialize this module. This is only callable from genesis.
     <b>let</b> new_signer_again = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
     <a href="TrustedAccounts.md#0x1_TrustedAccounts_update">TrustedAccounts::update</a>(&new_signer_again, my_trusted_accounts, voter_trusted_accounts);
     <a href="LibraAccount.md#0x1_LibraAccount_destroy_signer">destroy_signer</a>(new_signer_again);
-
 
     <a href="MinerState.md#0x1_MinerState_reset_rate_limit">MinerState::reset_rate_limit</a>(sender_addr);
     new_account_address
