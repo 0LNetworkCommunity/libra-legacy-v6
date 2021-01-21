@@ -24,7 +24,6 @@ address 0x1 {
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
     use 0x1::StagingNet::is_staging_net;    
-
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
     // Function code: 07 Prefix: 190107
@@ -137,7 +136,7 @@ address 0x1 {
 
         if (is_testnet() || is_staging_net()) {
           // start with sufficient gas for expensive tests e.g. upgrade
-          count_proofs = 10000;
+          count_proofs = 500;
         };
         
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, count_proofs, true);
@@ -214,33 +213,46 @@ address 0x1 {
       });
       }
 
+    use 0x1::Debug::print;
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64, is_genesis: bool ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
       // only for fullnodes, ie. not in current validator set.
       if (!is_genesis){
         if (LibraSystem::is_validator(miner)) return 0;
       };
-
+      print(&0x1);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       // fail fast, abort if ceiling was met
-      
+      print(&0x11);
+
       if (state.current_subsidy_distributed > state.current_cap) return 0;
+      print(&0x12);
 
       let proposed_subsidy = state.current_proof_price * count;
       if (proposed_subsidy < 1) return 0;
+      print(&0x13);
+      print(&state.current_cap);
+      print(&proposed_subsidy);
+      print(&state.current_subsidy_distributed);
 
       let subsidy;
       // check if payments will exceed ceiling.
       if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
+              print(&0x131);
+
         // pay the remainder only
         // TODO: This creates a race. Check ordering of list.
         subsidy = state.current_cap - state.current_subsidy_distributed;
       } else {
+              print(&0x132);
+
         // happy case, the ceiling is not met.
         subsidy = proposed_subsidy;
       };
 
       if (subsidy == 0) return 0;
+      print(&0x14);
+
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -248,8 +260,10 @@ address 0x1 {
         minted_coins,
         x"", x""
       );
+      print(&0x15);
 
       state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
+      print(&0x16);
 
       subsidy
     }

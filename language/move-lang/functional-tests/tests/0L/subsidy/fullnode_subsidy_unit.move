@@ -1,4 +1,5 @@
 //// frank is a fullnode
+//! account: dummy, 100, 0, validator
 //! account: frank, 100, 0
 
 //! new-transaction
