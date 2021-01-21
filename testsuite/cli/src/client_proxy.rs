@@ -501,8 +501,32 @@ impl ClientProxy {
         .as_bytes()
         .to_vec();
 
-        let my_trusted_accounts = vec!(AccountAddress::random());
-        let voter_trusted_accounts = vec!(AccountAddress::random());
+        let my_trusted_accounts = json
+        .get("my_trusted_accounts")
+        .expect("no array found at key my_trusted_accounts")
+        .as_array()
+        .unwrap()
+        .into_iter()
+        .map(|addr| { 
+            AccountAddress::from_str(
+                addr.as_str().unwrap()
+            ).unwrap()
+        })
+        .collect();
+
+        // vec!(AccountAddress::random());
+        let voter_trusted_accounts = json
+        .get("voter_trusted_accounts")
+        .expect("no array found at key my_trusted_accounts")
+        .as_array()
+        .unwrap()
+        .into_iter()
+        .map(|addr| { 
+            AccountAddress::from_str(
+                addr.as_str().unwrap()
+            ).unwrap()
+        })
+        .collect();
         
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");

@@ -11,5 +11,7 @@
     "op_consensus_pubkey": "cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d",
     "op_validator_network_addresses": "010000000000000000000000001a5033e421bfe7f41aa016d251130beb93aa683910bfbf1186acde",
     "op_fullnode_network_addresses": "2f6970342f302e302e302e302f7463702f36313739",
-    "op_human_name": "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper"
+    "op_human_name": "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper",
+    "my_trusted_accounts" : ["3DC18D1CF61FAAC6AC70E3A63F062E4B"],
+    "voter_trusted_accounts": ["3DC18D1CF61FAAC6AC70E3A63F062E4B"]
 }
