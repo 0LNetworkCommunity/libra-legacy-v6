@@ -27,7 +27,7 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams) {
                 state
             },
             None => {
-                println!("Info: Received response but no remote state found, exiting.");
+                println!("Info: Received response but no remote state found. Exiting.");
                 return
             }
         } },
