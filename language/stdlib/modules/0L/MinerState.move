@@ -16,6 +16,7 @@ address 0x1 {
     use 0x1::Testnet;
     use 0x1::Stats;
     use 0x1::FullnodeState;
+
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -337,16 +338,10 @@ address 0x1 {
 
     // Returns if the miner is above the account creation rate-limit
     // Permissions: PUBLIC, ANYONE
-    public fun rate_limit_create_acc(node_addr: address): bool acquires MinerProofHistory {
-      
-      // TODO: SETTING TRUE FOR TESTING.
-
-      
-      if (Testnet::is_testnet()) {
-        true
-      } else {
-        borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > 7
-      }
+    public fun can_create_val(node_addr: address): bool acquires MinerProofHistory {
+        // if (Testnet::is_testnet()) return true;
+        let epoch_passed = borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation;
+        epoch_passed > 7
     }
 
     ////////////////////

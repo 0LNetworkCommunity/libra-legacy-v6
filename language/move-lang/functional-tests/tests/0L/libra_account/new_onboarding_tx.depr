@@ -12,6 +12,7 @@ use 0x1::TestFixtures;
 use 0x1::ValidatorConfig;
 use 0x1::Roles;
 use 0x1::Signer;
+use 0x1::Vector;
 
 // Test Prefix: 1301
 fun main(sender: &signer) {
@@ -37,6 +38,9 @@ fun main(sender: &signer) {
       b"192.168.0.1", // validator_network_addresses: vector<u8>,
       b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
       x"1ee7", // human_name: vector<u8>,
+      Vector::singleton<address>({{bob}}),
+      Vector::singleton<address>({{bob}}),
+
   );
 
   assert(Roles::assert_validator_addr(eve_addr), 7357130101011000);
@@ -59,7 +63,7 @@ fun main(sender: &signer) {
   assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
 
   // Is rate-limited
-  assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101091000);
+  assert(MinerState::can_create_val(sender_addr) == false, 7357130101091000);
 }
 }
 // check: EXECUTED

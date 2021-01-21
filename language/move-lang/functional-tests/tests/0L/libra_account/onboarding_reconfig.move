@@ -13,12 +13,12 @@ script {
   use 0x1::ValidatorConfig;
   use 0x1::TestFixtures;
   use 0x1::VDF;
-  // use 0x1::Roles;
+  use 0x1::Vector;
   use 0x1::Signer;
   use 0x1::MinerState;
 
   fun main(sender: &signer) {
-        // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
+    // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
     // // Parse key and check
@@ -40,6 +40,8 @@ script {
         b"192.168.0.1", // validator_network_addresses: vector<u8>,
         b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
         x"1ee7", // human_name: vector<u8>,
+        Vector::singleton<address>({{alice}}),
+        Vector::singleton<address>({{alice}}),
     );
     assert(ValidatorConfig::is_valid(eve_addr), 7357130101031000);
 

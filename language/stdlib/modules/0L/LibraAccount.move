@@ -265,7 +265,7 @@ module LibraAccount {
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
+        assert(MinerState::can_create_val(sender_addr), 120101011001);
 
         let valid = VDF::verify(
             challenge,
@@ -314,7 +314,6 @@ module LibraAccount {
         let new_signer_again = create_signer(new_account_address);
         TrustedAccounts::update(&new_signer_again, my_trusted_accounts, voter_trusted_accounts);
         destroy_signer(new_signer_again);
-
         
         MinerState::reset_rate_limit(sender_addr);
         new_account_address

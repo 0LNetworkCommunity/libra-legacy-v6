@@ -135,7 +135,7 @@ pub fn encode_genesis_change_set(
         &lbr_ty,
         chain_id,
     );
-    println!("OK create_and_initialize_main_accounts =============== ");
+    println!("OK Create_and_initialize_main_accounts =============== ");
 
     //////// 0L ////////
     // TODO: Replace set params by ENV with NamedChange
@@ -160,7 +160,7 @@ pub fn encode_genesis_change_set(
         &operator_registrations,
     );
 
-    println!("OK create_and_initialize_owners_operators =============== ");
+    println!("OK Create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
     println!("OK Genesis subsidy =============== ");
