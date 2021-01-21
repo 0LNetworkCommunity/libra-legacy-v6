@@ -36,7 +36,9 @@ module Reconfigure {
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
-            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
+            if (subsidy_units > 0) {
+                Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
+            };
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
         // Propose upcoming validator set:
