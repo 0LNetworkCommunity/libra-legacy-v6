@@ -1,10 +1,11 @@
 //! Formatters for libra account creation
 use crate::{block::Block, node_keys::KeyScheme};
+use libra_crypto::x25519::PublicKey;
 use libra_types::account_address::AccountAddress;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
-use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
+use libra_network_address::{NetworkAddress, encrypted::{EncNetworkAddress, TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -22,9 +23,11 @@ pub struct ValConfigs {
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
     pub op_consensus_pubkey: Vec<u8>,
     /// Key validator will use for network connections
-    pub op_validator_network_addresses: String, //NetworkAddress network/network-address/src/lib.rs
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub op_validator_network_addresses: Vec<u8>, //NetworkAddress network/network-address/src/lib.rs
     /// FullNode will use for network connections
-    pub op_fullnode_network_addresses: String, //NetworkAddress
+    #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
+    pub op_fullnode_network_addresses: Vec<u8>, //NetworkAddress
     /// Human readable name of account
     pub op_human_name: String,
 }
@@ -67,6 +70,16 @@ impl ValConfigs {
         let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
 
         let addr_obj: NetworkAddress = val_network_string.parse().expect("could not parse validator network address");
+
+        let pubkey =  PublicKey::from_ed25519_public_bytes(
+            &keys
+            .child_2_val_network
+            .get_public()
+            .to_bytes()
+        ).unwrap();
+
+        let addr_obj = addr_obj.append_prod_protos(pubkey, 0);
+
         let encrypted_addr = vec![
             addr_obj.encrypt(
                 &TEST_SHARED_VAL_NETADDR_KEY, //shared_val_netaddr_key: &Key,
@@ -76,17 +89,17 @@ impl ValConfigs {
                 0
             ).expect("unable to encrypt network address")
         ];
-        let serialized_addr = lcs::to_bytes(&encrypted_addr).unwrap();
+        // let serialized_addr = lcs::to_bytes(&encrypted_addr).unwrap();
 
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,
             ow_human_name: owner_address.clone(),
-            op_address: format!("0x{}", keys.child_1_operator.get_address().to_string()),
+            op_address: keys.child_1_operator.get_address().to_string(),
             op_auth_key_prefix: keys.child_1_operator.get_authentication_key().prefix().to_vec(),
-            op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().into(),
-            op_validator_network_addresses: encode(serialized_addr),
-            op_fullnode_network_addresses: encode(fullnode_network_string),
+            op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
+            op_validator_network_addresses: lcs::to_bytes(&encrypted_addr).unwrap(),
+            op_fullnode_network_addresses: lcs::to_bytes(&fullnode_network_string).unwrap(),
             op_human_name: format!("{}-oper", owner_address),
         }
     }
@@ -146,9 +159,9 @@ impl UserConfigs {
 #[test]
 fn test_parse_init_file() {
     use crate::account::ValConfigs;
-    let fixtures = PathBuf::from("../fixtures/eve_init_stage.json");
+    let fixtures = PathBuf::from("../fixtures/eve_init_test.json");
     let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
-    assert_eq!(init_configs.op_fullnode_network_addresses, "2f6970342f302e302e302e302f7463702f36313739", "Could not parse network address");
+    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2f6970342f3136312e33352e31332e3136392f7463702f36313739").unwrap(), "Could not parse network address");
 
     let consensus_key_vec = decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
     
@@ -166,12 +179,31 @@ fn val_config_ip_address() {
         preimage: Vec::new(),
         proof: Vec::new(),
     };
-    let keys = KeyScheme::new_from_mnemonic("recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare".to_string());
-    
+    let eve_keys = KeyScheme::new_from_mnemonic("recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare".to_string());
+    let eve_account = eve_keys.derived_address();
+
     let val = ValConfigs::new(
         block,
-        keys,
+        eve_keys,
         "161.35.13.169".to_string(),
     );
-    dbg!(&val);
+
+    let correct_hex = "010000000000000000000000003e250c102074e46ce6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf0414d9acd8fea5b664688b864b54c8ec8ae".to_owned();
+    assert_eq!(
+        encode(&val.op_validator_network_addresses),
+        correct_hex
+    );
+
+    let mut enc_addr: Vec<EncNetworkAddress> = lcs::from_bytes(&val.op_validator_network_addresses)
+    .expect("couldn't deserialize encrypted network address");
+
+    let dec_addrs = enc_addr.pop().unwrap().decrypt(
+        &TEST_SHARED_VAL_NETADDR_KEY,
+        &eve_account,
+        0
+    ).unwrap();
+
+    assert_eq!(
+        dec_addrs.to_string(),
+        "/ip4/161.35.13.169/tcp/6180/ln-noise-ik/151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b11812/ln-handshake/0".to_string());
 }

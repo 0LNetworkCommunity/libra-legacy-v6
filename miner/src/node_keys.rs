@@ -41,8 +41,6 @@ impl KeyScheme {
     /// Returns the default owner address given the key derivation.
     pub fn derived_address(&self) -> AccountAddress {
         let staged_owner_auth_key = AuthenticationKey::ed25519(&self.child_0_owner.get_public());
-        let owner_address = staged_owner_auth_key.derived_address();
-        dbg!(owner_address);
-        owner_address
+        staged_owner_auth_key.derived_address()
     }
 }

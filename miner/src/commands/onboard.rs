@@ -77,7 +77,7 @@ impl Runnable for OnboardCmd {
             init_data.op_consensus_pubkey,
             decode(init_data.op_validator_network_addresses).unwrap(),
             decode(init_data.op_fullnode_network_addresses).unwrap(),
-            init_data.op_human_name.as_bytes().to_vec()
+            init_data.op_human_name.as_bytes().to_vec(),
         ) {
             Ok(res) => {
                 match eval_tx_status(res.clone()) {
