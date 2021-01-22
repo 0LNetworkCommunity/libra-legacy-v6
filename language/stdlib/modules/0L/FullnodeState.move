@@ -43,6 +43,7 @@ module FullnodeState {
   }
 
   /// Miner increments proofs by 1
+  /// TO
   public fun inc_proof(sender: &signer) acquires FullnodeCounter {
     let addr = Signer::address_of(sender);
     let state = borrow_global_mut<FullnodeCounter>(addr);

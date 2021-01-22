@@ -286,7 +286,7 @@ address 0x1 {
       // Note: this should be in LibraAccount but causes cyclic dependency.
       ValidatorUniverse::add_validator(miner_sig);
       FullnodeState::val_init(miner_sig);
-
+      FullnodeState::inc_proof(miner_sig);
     }
 
 
