@@ -67,21 +67,16 @@ impl ValConfigs {
         // let op_authkey = keys.child_1_operator.get_address();
         // let net_addr: Ipv4Addr = ip_address.parse().expect("could not parse ip_address");
         let val_network_string = format!("/ip4/{}/tcp/6180", ip_address);
-        let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
-
-        let addr_obj: NetworkAddress = val_network_string.parse().expect("could not parse validator network address");
-
-        let pubkey =  PublicKey::from_ed25519_public_bytes(
+        let val_addr_obj: NetworkAddress = val_network_string.parse().expect("could not parse validator network address");
+        let val_pubkey =  PublicKey::from_ed25519_public_bytes(
             &keys
             .child_2_val_network
             .get_public()
             .to_bytes()
         ).unwrap();
-
-        let addr_obj = addr_obj.append_prod_protos(pubkey, 0);
-
+        let val_addr_obj = val_addr_obj.append_prod_protos(val_pubkey, 0);
         let encrypted_addr = vec![
-            addr_obj.encrypt(
+            val_addr_obj.encrypt(
                 &TEST_SHARED_VAL_NETADDR_KEY, //shared_val_netaddr_key: &Key,
                 TEST_SHARED_VAL_NETADDR_KEY_VERSION,//key_version: KeyVersion,
                 &owner_address.parse::<AccountAddress>().expect("unable to parse account address"), // account: &AccountAddress,
@@ -91,6 +86,16 @@ impl ValConfigs {
         ];
         // let serialized_addr = lcs::to_bytes(&encrypted_addr).unwrap();
 
+        let fullnode_network_string = format!("/ip4/{}/tcp/6179", ip_address);
+        let fn_addr_obj: NetworkAddress = fullnode_network_string.parse().expect("could not parse fullnode network address");
+        let fn_pubkey =  PublicKey::from_ed25519_public_bytes(
+            &keys
+            .child_2_val_network
+            .get_public()
+            .to_bytes()
+        ).unwrap();
+        let fn_addr_obj = fn_addr_obj.append_prod_protos(fn_pubkey, 0);
+
         Self {
             /// Block zero of the onboarded miner
             block_zero: block,
@@ -99,7 +104,7 @@ impl ValConfigs {
             op_auth_key_prefix: keys.child_1_operator.get_authentication_key().prefix().to_vec(),
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
             op_validator_network_addresses: lcs::to_bytes(&encrypted_addr).unwrap(),
-            op_fullnode_network_addresses: lcs::to_bytes(&fullnode_network_string).unwrap(),
+            op_fullnode_network_addresses: lcs::to_bytes(&fn_addr_obj).unwrap(),
             op_human_name: format!("{}-oper", owner_address),
         }
     }
