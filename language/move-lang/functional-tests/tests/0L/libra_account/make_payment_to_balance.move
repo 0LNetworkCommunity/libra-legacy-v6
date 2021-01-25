@@ -22,3 +22,24 @@ script {
   }
 }
 // check: ABORTED
+
+
+//! new-transaction
+//! sender: libraroot
+script {
+  use 0x1::LibraAccount;
+  use 0x1::GAS::GAS;
+
+  fun main(vm: &signer) {
+    // Should be fine if the balance is 0
+    LibraAccount::make_payment<GAS>(
+      {{alice}},
+      {{bob}}, // has a 0 in balance
+      100,
+      x"",
+      x"",
+      vm
+    );
+  }
+}
+// check: EXECUTED
