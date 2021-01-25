@@ -575,7 +575,7 @@
   // Note: this should be in <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> but causes cyclic dependency.
   <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">ValidatorUniverse::add_validator</a>(miner_sig);
   <a href="FullnodeState.md#0x1_FullnodeState_val_init">FullnodeState::val_init</a>(miner_sig);
-
+  <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">FullnodeState::inc_proof</a>(miner_sig);
 }
 </code></pre>
 

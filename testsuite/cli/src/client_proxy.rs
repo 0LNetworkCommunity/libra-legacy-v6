@@ -352,7 +352,7 @@ impl ClientProxy {
     pub fn noop_demo(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
 
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
@@ -407,7 +407,7 @@ impl ClientProxy {
 
 
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
@@ -431,6 +431,139 @@ impl ClientProxy {
     }
 
     //////// 0L ////////
+    /// Submits transaction creating user account from proof file.
+    pub fn create_val(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() == 3,
+            "Invalid number of arguments to create user. Did you pass your account and the file path?"
+        );
+
+        //TODO: Parsing json should use Serde to deserialize from the miner::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
+
+        let file = fs::File::open(space_delim_strings[2])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let block = json.get("block_zero")
+            .expect("file should have block_zero and preimage key");
+
+        let preimage = block
+        .as_object().unwrap()
+        .get("preimage").unwrap()
+        .as_str().unwrap();
+        let challenge = hex::decode(preimage).unwrap();
+
+        let proof = block
+        .as_object().unwrap()
+        .get("proof").unwrap()
+        .as_str().unwrap();
+        let solution = hex::decode(proof).unwrap();
+
+        let ow_human_name = json
+        .get("ow_human_name")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .as_bytes()
+        .to_vec();
+
+        let op_address: AccountAddress = json
+        .get("op_address")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+
+        let op_auth_key_prefix = hex::decode("ecc59a4a0963f65b5eceb0fffa01ea99").unwrap();
+
+        let op_consensus_pubkey = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
+        
+        let op_validator_network_addresses = hex::decode(
+            json.get("op_validator_network_addresses")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
+
+        let op_fullnode_network_addresses = hex::decode(
+            json.get("op_fullnode_network_addresses")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
+
+        let op_human_name = json
+        .get("op_human_name")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .as_bytes()
+        .to_vec();
+
+        // let my_trusted_accounts = json
+        // .get("my_trusted_accounts")
+        // .expect("no array found at key my_trusted_accounts")
+        // .as_array()
+        // .unwrap()
+        // .into_iter()
+        // .map(|addr| { 
+        //     AccountAddress::from_str(
+        //         addr.as_str().unwrap()
+        //     ).unwrap()
+        // })
+        // .collect();
+
+        // vec!(AccountAddress::random());
+        // let voter_trusted_accounts = json
+        // .get("voter_trusted_accounts")
+        // .expect("no array found at key my_trusted_accounts")
+        // .as_array()
+        // .unwrap()
+        // .into_iter()
+        // .map(|addr| { 
+        //     AccountAddress::from_str(
+        //         addr.as_str().unwrap()
+        //     ).unwrap()
+        // })
+        // .collect();
+        
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_minerstate_onboarding_script(
+            challenge,
+            solution,
+            ow_human_name,
+            op_address,
+            op_auth_key_prefix,
+            op_consensus_pubkey,
+            op_validator_network_addresses,
+            op_fullnode_network_addresses,
+            op_human_name,
+            // my_trusted_accounts,
+            // voter_trusted_accounts,
+        );
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+    //////// 0L ////////
     /// Enables autopay on the sending account.
     pub fn autopay_enable(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
         ensure!(
@@ -439,7 +572,7 @@ impl ClientProxy {
         );
 
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
@@ -513,7 +646,7 @@ impl ClientProxy {
     pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
 
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let path = space_delim_strings[2];
         let id = 1; // upgrade is oracle #1
@@ -564,7 +697,7 @@ impl ClientProxy {
     // pub fn oracle_upgrade_vote(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
 
     //     let (sender_address, _) =
-    //         self.get_account_address_from_parameter(space_delim_strings[1]).expect("address no submitted");
+    //         self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
     //     let sender_ref_id = self.get_account_ref_id(&sender_address)?;
     //     let sender = self.accounts.get(sender_ref_id).unwrap();
     //     let sequence_number = sender.sequence_number;

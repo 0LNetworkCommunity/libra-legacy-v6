@@ -1,7 +1,7 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{node_keys::KeyScheme, backlog, block::ValConfigs};
+use crate::{node_keys::KeyScheme, backlog, account::ValConfigs};
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
@@ -43,7 +43,7 @@ pub fn swarm_miner(swarm_path: PathBuf) {
 pub fn swarm_onboarding(swarm_path: PathBuf) {
     // let file = "./blocks/val_init.json";
     // fs::copy("../fixtures/val_init_stage.json", file).unwrap();
-    let init_file = fs::read_to_string("./fixtures/val_init_stage.json")
+    let init_file = fs::read_to_string("./fixtures/eve_init_stage.json")
         .expect("Could not read init file");
 
     let init_file: ValConfigs =
@@ -68,7 +68,7 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     if current_block_number.is_none() {
         status_info!("[swarm] Generating Genesis Proof", "0");
         mine_genesis(&config);
-        status_ok!("[swarm] Success", "Genesis block_0.json created, exiting.");
+        status_ok!("[swarm] Success", "Genesis block_0.json created. Exiting.");
         std::process::exit(0);
     }
 
@@ -80,7 +80,8 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
     (block.preimage, block.proof)
 }
 
-fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
+/// Helper to extract params from a local running swarm.
+pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path)
         .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
@@ -102,7 +103,7 @@ fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
         url,
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 5_000,
+        max_gas_unit_for_tx: 5_000_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     };

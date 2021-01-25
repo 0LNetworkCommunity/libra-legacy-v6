@@ -151,6 +151,7 @@ On recongfiguration events, reset.
 ## Function `inc_proof`
 
 Miner increments proofs by 1
+TO
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">inc_proof</a>(sender: &signer)
