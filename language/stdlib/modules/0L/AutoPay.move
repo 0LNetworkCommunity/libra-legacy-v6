@@ -102,7 +102,6 @@ address 0x1{
 
       while (account_idx < accounts_length) {
 
-        /// TODO: Filter System Addresses
         let account_addr = Vector::borrow<address>(account_list, account_idx);
         
         // Obtain the account balance
@@ -174,8 +173,6 @@ address 0x1{
       end_epoch: u64,
       percentage: u64
     ) acquires Data {
-      /// TODO: Filter System Addresses
-
       let addr = Signer::address_of(sender);
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
