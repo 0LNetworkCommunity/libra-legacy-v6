@@ -6,8 +6,8 @@
 
 
 -  [Resource `FullnodeSubsidy`](#0x1_Subsidy_FullnodeSubsidy)
--  [Function `calculate_Subsidy`](#0x1_Subsidy_calculate_Subsidy)
 -  [Function `process_subsidy`](#0x1_Subsidy_process_subsidy)
+-  [Function `calculate_Subsidy`](#0x1_Subsidy_calculate_Subsidy)
 -  [Function `subsidy_curve`](#0x1_Subsidy_subsidy_curve)
 -  [Function `genesis`](#0x1_Subsidy_genesis)
 -  [Function `process_fees`](#0x1_Subsidy_process_fees)
@@ -91,51 +91,6 @@
 
 </details>
 
-<a name="0x1_Subsidy_calculate_Subsidy"></a>
-
-## Function `calculate_Subsidy`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64): u64
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64):u64 {
-  <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
-  <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190101014010);
-
-  // skip genesis
-  <b>assert</b>(!<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_genesis">LibraTimestamp::is_genesis</a>(), 190101021000);
-
-  // Gets the transaction fees in the epoch
-  <b>let</b> txn_fee_amount = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
-  // Calculate the split for subsidy and burn
-
-  <b>let</b> subsidy_ceiling_gas = <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>();
-  <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm, height_start, height_end);
-  <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_max_node_density">Globals::get_max_node_density</a>();
-  <b>let</b> subsidy_units = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">subsidy_curve</a>(
-    subsidy_ceiling_gas,
-    network_density,
-    max_node_count,
-    );
-
-  // deduct transaction fees from minimum guarantee.
-  subsidy_units = subsidy_units - txn_fee_amount;
-  subsidy_units
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_Subsidy_process_subsidy"></a>
 
 ## Function `process_subsidy`
@@ -168,9 +123,13 @@
 
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
     // <b>let</b> node_ratio = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>&gt;(fee_ratio, i));
-    <b>let</b> subsidy_granted = subsidy_units/len;
 
-    // <b>let</b> subsidy_granted = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(subsidy_units, node_ratio);
+    <b>let</b> subsidy_granted = 0;
+    <b>if</b> (subsidy_units &gt; len) {
+      subsidy_granted = subsidy_units/len;
+    };
+    // should not be possible
+    <b>if</b> (subsidy_granted == 0) <b>break</b>;
     // Transfer gas from vm address <b>to</b> validator
     <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm_sig, subsidy_granted);
     <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -181,6 +140,53 @@
     );
     i = i + 1;
   };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Subsidy_calculate_Subsidy"></a>
+
+## Function `calculate_Subsidy`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64):u64 {
+  <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
+  <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190101014010);
+
+  // skip genesis
+  <b>assert</b>(!<a href="LibraTimestamp.md#0x1_LibraTimestamp_is_genesis">LibraTimestamp::is_genesis</a>(), 190101021000);
+
+  // Gets the transaction fees in the epoch
+  <b>let</b> txn_fee_amount = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
+
+  // Calculate the split for subsidy and burn
+  <b>let</b> subsidy_ceiling_gas = <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>();
+  <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm, height_start, height_end);
+  <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_max_node_density">Globals::get_max_node_density</a>();
+  <b>let</b> guaranteed_minimum = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">subsidy_curve</a>(
+    subsidy_ceiling_gas,
+    network_density,
+    max_node_count,
+    );
+
+  // deduct transaction fees from guaranteed minimum.
+  <b>if</b> (guaranteed_minimum &gt; txn_fee_amount ){
+    <b>return</b> guaranteed_minimum - txn_fee_amount
+  };
+  0u64
 }
 </code></pre>
 
@@ -225,8 +231,8 @@
   <b>let</b> intercept = slope * max_node_count;
   //calculating subsidy and burn units
   // NOTE: confirm order of operations here:
-  <b>let</b> subsidy_units = intercept - slope * network_density;
-  subsidy_units
+  <b>let</b> guaranteed_minimum = intercept - slope * network_density;
+  guaranteed_minimum
 }
 </code></pre>
 
@@ -260,17 +266,21 @@
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
+
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&genesis_validators, i));
     <b>let</b> old_validator_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
     <b>let</b> count_proofs = 1;
+
     <b>if</b> (is_testnet() || is_staging_net()) {
       // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
-      count_proofs = 10000;
+      count_proofs = 500;
     };
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address, count_proofs, <b>true</b>);
     //Confirm the calculations, and that the ending balance is incremented accordingly.
+
     <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+
     i = i + 1;
   };
 }
@@ -396,12 +406,12 @@
   <b>if</b> (!is_genesis){
     <b>if</b> (<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(miner)) <b>return</b> 0;
   };
-
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
   // fail fast, <b>abort</b> <b>if</b> ceiling was met
   <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
   <b>let</b> proposed_subsidy = state.current_proof_price * count;
   <b>if</b> (proposed_subsidy &lt; 1) <b>return</b> 0;
+
   <b>let</b> subsidy;
   // check <b>if</b> payments will exceed ceiling.
   <b>if</b> (state.current_subsidy_distributed + proposed_subsidy &gt; state.current_cap) {
@@ -415,6 +425,8 @@
     subsidy = proposed_subsidy;
   };
 
+  <b>if</b> (subsidy == 0) <b>return</b> 0;
+
   <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
@@ -422,7 +434,9 @@
     minted_coins,
     x"", x""
   );
+
   state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
+
   subsidy
 }
 </code></pre>

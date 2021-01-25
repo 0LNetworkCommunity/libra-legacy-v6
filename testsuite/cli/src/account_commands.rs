@@ -25,8 +25,10 @@ impl Command for AccountCommand {
             Box::new(AccountCommandMint {}),
             Box::new(AccountCommandAddCurrency {}),
             Box::new(AccountCommandCreateUser {}),
+            Box::new(AccountCommandCreateVal {}),
             Box::new(AccountCommandAutopayEnable {}),
-            Box::new(AccountCommandAutopayCreate {}),            
+            Box::new(AccountCommandAutopayCreate {}),
+                        
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -214,6 +216,28 @@ impl Command for AccountCommandCreateUser {
     }
 }
 
+
+//////// 0L ////////
+/// 0L Sub command to create a validator account.
+pub struct AccountCommandCreateVal {}
+
+impl Command for AccountCommandCreateVal {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["create_val", "cv"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Create on-chain user account and configure validator"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_proof_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.create_val(params, true) {
+            Ok(()) => println!("Created account"),
+            Err(e) => report_error("Error creating user account", e),
+        }
+    }
+}
 
 //////// 0L ////////
 /// 0L Sub command to enable autopay state on system and user account.

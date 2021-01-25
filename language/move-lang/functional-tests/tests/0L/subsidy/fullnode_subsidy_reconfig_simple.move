@@ -20,7 +20,7 @@ script {
 
 
 //! new-transaction
-// Check if genesis subsidies have been distributed
+// Check if fullnode subsidies have been distributed
 //! sender: libraroot
 script {
 use 0x1::Subsidy;

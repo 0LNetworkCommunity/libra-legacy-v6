@@ -3,6 +3,7 @@ address 0x1 {
 module FullnodeState {
   use 0x1::CoreAddresses;
   use 0x1::Signer;
+  // use 0x1::LibraSystem;
 
   resource struct FullnodeCounter {
     proofs_submitted_in_epoch: u64,
@@ -43,10 +44,11 @@ module FullnodeState {
   }
 
   /// Miner increments proofs by 1
+  /// TO
   public fun inc_proof(sender: &signer) acquires FullnodeCounter {
     let addr = Signer::address_of(sender);
-    let state = borrow_global_mut<FullnodeCounter>(addr);
-    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
+      let state = borrow_global_mut<FullnodeCounter>(addr);
+      state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
   }
 
   /// VM Increments payments in epoch. Increases by `count`

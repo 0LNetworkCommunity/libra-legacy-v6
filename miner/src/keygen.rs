@@ -1,5 +1,5 @@
 //! Key generation
-use libra_wallet::WalletLibrary;
+use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
   account_address::AccountAddress,
   transaction::authenticator::AuthenticationKey
@@ -7,7 +7,7 @@ use libra_types::{
 
 
 /// Genereates keys from WalletLibrary, updates a MinerConfig
-pub fn keygen() -> (AuthenticationKey, AccountAddress) {
+pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
         // Generate new keys
         let mut wallet = WalletLibrary::new();
         let mnemonic_string = wallet.mnemonic();
@@ -31,7 +31,15 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress) {
         ---------\n\
         {}\n", &mnemonic_string.as_str());
 
-        (auth_key, account)
+        (auth_key, account, wallet)
+}
+
+/// Get authkey and account from mnemonic
+pub fn get_account_from_mnem(mnemonic_string: String) -> (AuthenticationKey, AccountAddress, WalletLibrary){
+      let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
+      let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+      let account = auth_key.derived_address();
+      (auth_key, account, wallet)
 }
 
 

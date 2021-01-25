@@ -12,7 +12,7 @@ use 0x1::TestFixtures;
 use 0x1::ValidatorConfig;
 use 0x1::Roles;
 use 0x1::Signer;
-
+use 0x1::Debug::print;
 // Test Prefix: 1301
 fun main(sender: &signer) {
   // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
@@ -56,6 +56,7 @@ fun main(sender: &signer) {
 
   // Check the account exists and the balance is 0
   // TODO: Needs some balance
+  print(&LibraAccount::balance<GAS>(eve_addr));
   assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
 
   // Is rate-limited
@@ -63,3 +64,23 @@ fun main(sender: &signer) {
 }
 }
 // check: EXECUTED
+
+
+//! new-transaction
+//! sender: libraroot
+script {
+  use 0x1::LibraAccount;
+  use 0x1::GAS::GAS;
+  use 0x1::Reconfigure;
+
+fun main(vm: &signer) {
+    let eve = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
+    let old_account_bal = LibraAccount::balance<GAS>(eve);
+    assert(old_account_bal == 0, 7357001);
+    Reconfigure::reconfigure(vm, 100);
+    let new_account_bal = LibraAccount::balance<GAS>(eve);
+    assert(new_account_bal == 675648, 7357002);
+    // print(&old_account_bal);
+    // print(&new_account_bal);
+}
+}

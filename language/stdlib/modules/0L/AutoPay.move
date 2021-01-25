@@ -173,7 +173,6 @@ address 0x1{
       end_epoch: u64,
       percentage: u64
     ) acquires Data {
-      
       let addr = Signer::address_of(sender);
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
