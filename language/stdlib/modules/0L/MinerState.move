@@ -40,7 +40,7 @@ address 0x1 {
       challenge: vector<u8>,
       difficulty: u64,
       solution: vector<u8>
-    ) : Proof {
+    ): Proof {
        Proof {
          challenge,
          difficulty,
@@ -127,6 +127,9 @@ address 0x1 {
       };
       
       verify_and_update_state(miner_addr, proof, true);
+
+      // TODO: This should not increment for validators in set.
+      // Including LibraSystem::is_validator causes a dependency cycling
       FullnodeState::inc_proof(miner_sign);
     }
 

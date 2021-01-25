@@ -166,7 +166,7 @@ fn test_parse_init_file() {
     use crate::account::ValConfigs;
     let fixtures = PathBuf::from("../fixtures/eve_init_test.json");
     let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
-    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2f6970342f3136312e33352e31332e3136392f7463702f36313739").unwrap(), "Could not parse network address");
+    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d0400a1230da90523180720151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b11812").unwrap(), "Could not parse network address");
 
     let consensus_key_vec = decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
     
@@ -178,6 +178,8 @@ fn test_parse_init_file() {
 
 #[test]
 fn val_config_ip_address() {
+    use libra_network_address::encrypted::EncNetworkAddress;
+
     let block =  Block {
         height: 0u64,
         elapsed_secs: 0u64,

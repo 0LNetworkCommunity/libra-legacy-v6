@@ -258,6 +258,8 @@ address 0x1 {
 
     public fun fullnode_reconfig(vm: &signer) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
+
+      // update values for the proof auction.
       auctioneer(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
        // save 
@@ -265,7 +267,6 @@ address 0x1 {
       // reset counters
       state.current_subsidy_distributed = 0u64;
       state.current_proofs_verified = 0u64;
-
     }
 
     public fun set_global_count(vm: &signer, count: u64) acquires FullnodeSubsidy{
