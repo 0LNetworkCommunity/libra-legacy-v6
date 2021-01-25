@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 use std::{
-    path::{PathBuf, Path},
+    path::{Path},
     time::{self, Duration},
     fs,
     thread,
@@ -21,12 +21,6 @@ pub fn integration() {
     // for the test to work:
 
     // the miner needs to start producing block_1.json. If block_1.json is not successful, then block_2 cannot be either, because it depends on certain on-chain state from block_1 correct submission.
-    
-    // clean config dir
-    // let config_dir = PathBuf::from("../saved_logs");
-    // if config_dir.exists() {
-    //     fs::remove_dir_all(&config_dir).unwrap();
-    // }
 
     // TODO: Assert that block_0.json is in blocks folder.
     std::env::set_var("RUST_LOG", "debug");

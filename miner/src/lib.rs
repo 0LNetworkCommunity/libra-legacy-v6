@@ -27,5 +27,5 @@ pub mod test_tx_swarm;
 pub mod backlog;
 pub mod node_keys;
 pub mod keygen;
-// pub mod submit_noop_helper;
+pub mod account;
 

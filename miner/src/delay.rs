@@ -27,3 +27,16 @@ pub fn do_delay(preimage: &[u8]) -> Vec<u8> {
     vdf.solve(preimage, delay_length)
         .expect("iterations should have been valiated earlier")
 }
+
+/// Verifies a proof
+pub fn verify(preimage: &[u8], proof: &[u8]) -> bool{
+    let vdf: vdf::WesolowskiVDF = WesolowskiVDFParams(VDF_SECURITY_PARAM).new();
+    
+    match vdf.verify(preimage, delay_difficulty(), proof) {
+       Ok(_) => true,
+       Err(e) => {
+        println!("Proof is not valid. {:?}", e);
+        false
+       }
+    }
+}

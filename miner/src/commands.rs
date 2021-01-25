@@ -17,6 +17,8 @@ mod onboard;
 mod swarm_test;
 mod genesis;
 mod ceremony_util_cmd;
+mod create_account;
+mod init;
 
 use self::{
     start::StartCmd,
@@ -26,7 +28,8 @@ use self::{
     genesis::GenesisCmd,
     keygen_cmd::KeygenCmd,
     ceremony_util_cmd::CeremonyUtilCmd,
-
+    create_account::CreateCmd,
+    init::InitCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -38,9 +41,6 @@ use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "miner.toml";
-/// MinerApp Config Home
-// pub const APP_PATH: &str = ".0L/miner/";
-
 
 /// MinerApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
@@ -50,7 +50,7 @@ pub enum MinerCmd {
     Help(Help<Self>),
 
     /// The `genesis` subcommand
-    #[options(help = "Mine the 0th block of the tower")]
+    #[options(help = "mine the 0th block of the tower")]
     Genesis(GenesisCmd),
 
     /// The `start` subcommand
@@ -62,21 +62,28 @@ pub enum MinerCmd {
     Version(VersionCmd),
 
     /// The `keygen` subcommand
-    #[options(help = "Generate keys")]
+    #[options(help = "generate keys")]
     Keygen(KeygenCmd),
 
     /// The `keygen` subcommand
-    #[options(help = "Wrapper for ceremony configurations")]
+    #[options(help = "wizard for genesis ceremony configurations")]
     Ceremony(CeremonyUtilCmd),
 
     /// The `onboard` subcommand
-    #[options(help = "Onboard a new miner with a block_0.json proof")]
+    #[options(help = "onboard a new miner with a block_0.json proof")]
     Onboard(OnboardCmd),
     
     /// The `swarm` subcommand
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
 
+    /// The `swarm` subcommand
+    #[options(help = "wizard to create accounts and local configs")]
+    Create(CreateCmd),
+
+    /// The `swarm` subcommand
+    #[options(help = "initialize miner configs miner.toml")]
+    Init(InitCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

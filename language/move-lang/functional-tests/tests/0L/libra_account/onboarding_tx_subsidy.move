@@ -64,3 +64,23 @@ fun main(sender: &signer) {
 }
 }
 // check: EXECUTED
+
+
+//! new-transaction
+//! sender: libraroot
+script {
+  use 0x1::LibraAccount;
+  use 0x1::GAS::GAS;
+  use 0x1::Reconfigure;
+
+fun main(vm: &signer) {
+    let eve = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
+    let old_account_bal = LibraAccount::balance<GAS>(eve);
+    assert(old_account_bal == 0, 7357001);
+    Reconfigure::reconfigure(vm, 100);
+    let new_account_bal = LibraAccount::balance<GAS>(eve);
+    assert(new_account_bal == 675648, 7357002);
+    // print(&old_account_bal);
+    // print(&new_account_bal);
+}
+}

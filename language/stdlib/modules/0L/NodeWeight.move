@@ -16,7 +16,6 @@ address 0x1 {
     use 0x1::Signer;
     use 0x1::MinerState;
     use 0x1::CoreAddresses;
-    // use 0x0::LibraSystem;
 
     public fun proof_of_weight (node_addr: address): u64 {
       // Calculate the weight/voting power for the next round.
