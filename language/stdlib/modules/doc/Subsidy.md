@@ -265,7 +265,7 @@
     <b>let</b> count_proofs = 1;
     <b>if</b> (is_testnet() || is_staging_net()) {
       // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
-      count_proofs = 10000;
+      count_proofs = 500;
     };
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address, count_proofs, <b>true</b>);
