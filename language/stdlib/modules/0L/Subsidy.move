@@ -284,32 +284,41 @@ address 0x1 {
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
       Roles::assert_libra_root(vm);
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+
+      // The targeted amount of proofs to be submitted network-wide per epoch.
       let baseline_auction_units = baseline_auction_units(); 
-      let next_cap = fullnode_subsidy_cap(vm);
-      if (next_cap < 1) return;
+      // The max subsidy that can be paid out in the next epoch.
+      let ceiling = fullnode_subsidy_ceiling(vm);
+      if (ceiling < 1) return;
 
-      let baseline_proof_price = next_cap / baseline_auction_units;
-      let current_auction_multiplier;
-      // set new price
+      // Calculate price per proof
+      // Find the baseline price of a proof, which will be altered based on performance.
+      let baseline_proof_price = ceiling / baseline_auction_units;
+
+      // Calculate the appropriate multiplier.
+      let current_auction_multiplier = FixedPoint32::create_from_rational(1, 1);
       if (state.current_proofs_verified > 0) {
-        current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
-      } else {
-
-        current_auction_multiplier = baseline_auction_units / 1;
+        // Increases price if too few submitted, or decreases price if many.
+        current_auction_multiplier = FixedPoint32::create_from_rational(
+          baseline_auction_units,
+          state.current_proofs_verified
+        );
       };
+      // Set the proof price using multiplier.
       // New unit price cannot be more than the ceiling
-      if ((current_auction_multiplier * baseline_proof_price) > next_cap) {
+      let proposed_price = FixedPoint32::multiply_u64(baseline_proof_price, current_auction_multiplier);
+      if (proposed_price > ceiling) {
         //Note: in failure case, the next miner gets the full ceiling
-        state.current_proof_price = next_cap
+        state.current_proof_price = ceiling
       } else {
-        state.current_proof_price = current_auction_multiplier * baseline_proof_price
+        state.current_proof_price = proposed_price
       };
 
-      // set new cap
-      state.current_cap = next_cap;
+      // Set new cap
+      state.current_cap = ceiling;
     }
 
-    fun fullnode_subsidy_cap(vm: &signer):u64 {
+    fun fullnode_subsidy_ceiling(vm: &signer):u64 {
       //get TX fees from previous epoch.
       TransactionFee::get_amount_to_distribute(vm)
     }
