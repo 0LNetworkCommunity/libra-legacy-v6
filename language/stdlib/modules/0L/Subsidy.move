@@ -58,7 +58,8 @@ address 0x1 {
           vm_sig,
           node_address,
           minted_coins,
-          x"", x""
+          x"",
+          x""
         );
         i = i + 1;
       };
@@ -203,14 +204,14 @@ address 0x1 {
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
       // estimated gas unit cost for proof submission.
       let baseline_tx_cost = 1173 * 1;
-      let baseline_cap = baseline_auction_units() * baseline_tx_cost * validator_count;
+      let ceiling = baseline_auction_units() * baseline_tx_cost * validator_count;
 
       Roles::assert_libra_root(vm);
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
         current_proof_price: baseline_tx_cost * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
-        current_cap: baseline_cap,
+        current_cap: ceiling,
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
       });
@@ -231,7 +232,6 @@ address 0x1 {
       let subsidy;
       // check if payments will exceed ceiling.
       if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
-
         // pay the remainder only
         // TODO: This creates a race. Check ordering of list.
         subsidy = state.current_cap - state.current_subsidy_distributed;
@@ -248,7 +248,8 @@ address 0x1 {
         vm,
         miner,
         minted_coins,
-        x"", x""
+        x"",
+        x""
       );
 
       state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
@@ -289,6 +290,7 @@ address 0x1 {
       let baseline_auction_units = baseline_auction_units(); 
       // The max subsidy that can be paid out in the next epoch.
       let ceiling = fullnode_subsidy_ceiling(vm);
+      // Skip resetting if the ceiling cannot be divisable into the proof count.
       if (ceiling < 1) return;
 
       // Calculate price per proof
@@ -296,14 +298,13 @@ address 0x1 {
       let baseline_proof_price = FixedPoint32::create_from_rational(ceiling, baseline_auction_units);
 
       // Calculate the appropriate multiplier.
-      let multiplier = FixedPoint32::create_from_rational(1, 1);
-      if (state.current_proofs_verified > 0) {
-        // Increases price if too few submitted, or decreases price if many.
-        multiplier = FixedPoint32::create_from_rational(
-          baseline_auction_units,
-          state.current_proofs_verified
-        );
-      };
+      let proofs = state.current_proofs_verified;
+      if (proofs < 1) proofs = 1;
+      let multiplier =  FixedPoint32::create_from_rational(
+        baseline_auction_units,
+        proofs
+      );
+
       // Set the proof price using multiplier.
       // New unit price cannot be more than the ceiling
       let proposed_price = FixedPoint32::multiply_u64(
@@ -318,7 +319,7 @@ address 0x1 {
         state.current_proof_price = proposed_price
       };
 
-      // Set new cap
+      // Set new ceiling
       state.current_cap = ceiling;
     }
 
