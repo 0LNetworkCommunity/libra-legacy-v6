@@ -293,20 +293,24 @@ address 0x1 {
 
       // Calculate price per proof
       // Find the baseline price of a proof, which will be altered based on performance.
-      let baseline_proof_price = ceiling / baseline_auction_units;
+      let baseline_proof_price = FixedPoint32::create_from_rational(ceiling, baseline_auction_units);
 
       // Calculate the appropriate multiplier.
-      let current_auction_multiplier = FixedPoint32::create_from_rational(1, 1);
+      let multiplier = FixedPoint32::create_from_rational(1, 1);
       if (state.current_proofs_verified > 0) {
         // Increases price if too few submitted, or decreases price if many.
-        current_auction_multiplier = FixedPoint32::create_from_rational(
+        multiplier = FixedPoint32::create_from_rational(
           baseline_auction_units,
           state.current_proofs_verified
         );
       };
       // Set the proof price using multiplier.
       // New unit price cannot be more than the ceiling
-      let proposed_price = FixedPoint32::multiply_u64(baseline_proof_price, current_auction_multiplier);
+      let proposed_price = FixedPoint32::multiply_u64(
+        FixedPoint32::get_raw_value(baseline_proof_price),
+        multiplier
+      );
+
       if (proposed_price > ceiling) {
         //Note: in failure case, the next miner gets the full ceiling
         state.current_proof_price = ceiling
@@ -322,6 +326,5 @@ address 0x1 {
       //get TX fees from previous epoch.
       TransactionFee::get_amount_to_distribute(vm)
     }
-
 }
 }

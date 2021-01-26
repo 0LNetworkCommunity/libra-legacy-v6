@@ -557,20 +557,24 @@
 
   // Calculate price per proof
   // Find the baseline price of a proof, which will be altered based on performance.
-  <b>let</b> baseline_proof_price = ceiling / baseline_auction_units;
+  <b>let</b> baseline_proof_price = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(ceiling, baseline_auction_units);
 
   // Calculate the appropriate multiplier.
-  <b>let</b> current_auction_multiplier = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 1);
+  <b>let</b> multiplier = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 1);
   <b>if</b> (state.current_proofs_verified &gt; 0) {
     // Increases price <b>if</b> too few submitted, or <b>decreases</b> price <b>if</b> many.
-    current_auction_multiplier = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(
+    multiplier = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(
       baseline_auction_units,
       state.current_proofs_verified
     );
   };
   // Set the proof price using multiplier.
   // New unit price cannot be more than the ceiling
-  <b>let</b> proposed_price = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(baseline_proof_price, current_auction_multiplier);
+  <b>let</b> proposed_price = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+    <a href="FixedPoint32.md#0x1_FixedPoint32_get_raw_value">FixedPoint32::get_raw_value</a>(baseline_proof_price),
+    multiplier
+  );
+
   <b>if</b> (proposed_price &gt; ceiling) {
     //Note: in failure case, the next miner gets the full ceiling
     state.current_proof_price = ceiling
