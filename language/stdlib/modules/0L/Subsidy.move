@@ -304,32 +304,44 @@ address 0x1 {
       state.current_cap = ceiling;
     }
 
-    fun calc_auction(
+    // use 0x1::Debug::print;
+    public fun calc_auction(
       ceiling: u64,
       baseline_auction_units: u64,
       current_proofs_verified: u64,
     ): u64 {
       // Calculate price per proof
       // Find the baseline price of a proof, which will be altered based on performance.
-      let baseline_proof_price = FixedPoint32::create_from_rational(
-        ceiling,
-        baseline_auction_units
-      );
+      // let baseline_proof_price = FixedPoint32::divide_u64(
+      //   ceiling,
+      //   FixedPoint32::create_from_raw_value(baseline_auction_units)
+      // );
+      let baseline_proof_price = ceiling/baseline_auction_units;
+      // print(&baseline_proof_price);
 
+      // print(&FixedPoint32::get_raw_value(copy baseline_proof_price));
       // Calculate the appropriate multiplier.
       let proofs = current_proofs_verified;
       if (proofs < 1) proofs = 1;
-      let multiplier =  FixedPoint32::create_from_rational(
-        baseline_auction_units,
-        proofs
-      );
+
+      let multiplier = baseline_auction_units/proofs;
+      
+      // let multiplier = FixedPoint32::create_from_rational(
+      //   baseline_auction_units,
+      //   proofs
+      // );
+      // print(&multiplier);
 
       // Set the proof price using multiplier.
       // New unit price cannot be more than the ceiling
-      let proposed_price = FixedPoint32::multiply_u64(
-        FixedPoint32::get_raw_value(baseline_proof_price),
-        multiplier
-      );
+      // let proposed_price = FixedPoint32::multiply_u64(
+      //   baseline_proof_price,
+      //   multiplier
+      // );
+
+      let proposed_price = baseline_proof_price * multiplier;
+
+      // print(&proposed_price);
 
       if (proposed_price < ceiling) {
         return proposed_price
@@ -341,10 +353,6 @@ address 0x1 {
     fun fullnode_subsidy_ceiling(vm: &signer):u64 {
       //get TX fees from previous epoch.
       TransactionFee::get_amount_to_distribute(vm)
-    }
-
-    public fun test_helper_auctioneer(vm: &signer) acquires FullnodeSubsidy{
-      auctioneer(vm)
     }
 }
 }

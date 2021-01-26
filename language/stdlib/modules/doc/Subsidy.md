@@ -19,7 +19,6 @@
 -  [Function `auctioneer`](#0x1_Subsidy_auctioneer)
 -  [Function `calc_auction`](#0x1_Subsidy_calc_auction)
 -  [Function `fullnode_subsidy_ceiling`](#0x1_Subsidy_fullnode_subsidy_ceiling)
--  [Function `test_helper_auctioneer`](#0x1_Subsidy_test_helper_auctioneer)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -581,7 +580,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(ceiling: u64, baseline_auction_units: u64, current_proofs_verified: u64): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(ceiling: u64, baseline_auction_units: u64, current_proofs_verified: u64): u64
 </code></pre>
 
 
@@ -590,32 +589,43 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(
   ceiling: u64,
   baseline_auction_units: u64,
   current_proofs_verified: u64,
 ): u64 {
   // Calculate price per proof
   // Find the baseline price of a proof, which will be altered based on performance.
-  <b>let</b> baseline_proof_price = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(
-    ceiling,
-    baseline_auction_units
-  );
+  // <b>let</b> baseline_proof_price = <a href="FixedPoint32.md#0x1_FixedPoint32_divide_u64">FixedPoint32::divide_u64</a>(
+  //   ceiling,
+  //   <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_raw_value">FixedPoint32::create_from_raw_value</a>(baseline_auction_units)
+  // );
+  <b>let</b> baseline_proof_price = ceiling/baseline_auction_units;
+  // print(&baseline_proof_price);
 
+  // print(&<a href="FixedPoint32.md#0x1_FixedPoint32_get_raw_value">FixedPoint32::get_raw_value</a>(<b>copy</b> baseline_proof_price));
   // Calculate the appropriate multiplier.
   <b>let</b> proofs = current_proofs_verified;
   <b>if</b> (proofs &lt; 1) proofs = 1;
-  <b>let</b> multiplier =  <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(
-    baseline_auction_units,
-    proofs
-  );
+
+  <b>let</b> multiplier = baseline_auction_units/proofs;
+
+  // <b>let</b> multiplier = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(
+  //   baseline_auction_units,
+  //   proofs
+  // );
+  // print(&multiplier);
 
   // Set the proof price using multiplier.
   // New unit price cannot be more than the ceiling
-  <b>let</b> proposed_price = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
-    <a href="FixedPoint32.md#0x1_FixedPoint32_get_raw_value">FixedPoint32::get_raw_value</a>(baseline_proof_price),
-    multiplier
-  );
+  // <b>let</b> proposed_price = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+  //   baseline_proof_price,
+  //   multiplier
+  // );
+
+  <b>let</b> proposed_price = baseline_proof_price * multiplier;
+
+  // print(&proposed_price);
 
   <b>if</b> (proposed_price &lt; ceiling) {
     <b>return</b> proposed_price
@@ -647,30 +657,6 @@
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm: &signer):u64 {
   //get TX fees from previous epoch.
   <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Subsidy_test_helper_auctioneer"></a>
-
-## Function `test_helper_auctioneer`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_test_helper_auctioneer">test_helper_auctioneer</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_test_helper_auctioneer">test_helper_auctioneer</a>(vm: &signer) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>{
-  <a href="Subsidy.md#0x1_Subsidy_auctioneer">auctioneer</a>(vm)
 }
 </code></pre>
 
