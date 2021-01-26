@@ -283,7 +283,9 @@ address 0x1 {
     }
 
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
+
       Roles::assert_libra_root(vm);
+
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
 
       // The targeted amount of proofs to be submitted network-wide per epoch.
@@ -291,9 +293,13 @@ address 0x1 {
       // The max subsidy that can be paid out in the next epoch.
       let ceiling = fullnode_subsidy_ceiling(vm);
       // Skip resetting if the ceiling cannot be divisable into the proof count.
-      if (ceiling < 1) return;
+      if (ceiling < 1) ceiling = 1;
 
-      state.current_proof_price = calc_auction(ceiling, baseline_auction_units, state.current_proofs_verified);
+      state.current_proof_price = calc_auction(
+        ceiling,
+        baseline_auction_units,
+        state.current_proofs_verified
+      );
       // Set new ceiling
       state.current_cap = ceiling;
     }

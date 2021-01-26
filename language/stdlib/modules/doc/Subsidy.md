@@ -549,7 +549,9 @@
 
 
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_auctioneer">auctioneer</a>(vm: &signer) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a> {
+
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
+
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
 
   // The targeted amount of proofs <b>to</b> be submitted network-wide per epoch.
@@ -557,9 +559,13 @@
   // The max subsidy that can be paid out in the next epoch.
   <b>let</b> ceiling = <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm);
   // Skip resetting <b>if</b> the ceiling cannot be divisable into the proof count.
-  <b>if</b> (ceiling &lt; 1) <b>return</b>;
+  <b>if</b> (ceiling &lt; 1) ceiling = 1;
 
-  state.current_proof_price = <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(ceiling, baseline_auction_units, state.current_proofs_verified);
+  state.current_proof_price = <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(
+    ceiling,
+    baseline_auction_units,
+    state.current_proofs_verified
+  );
   // Set new ceiling
   state.current_cap = ceiling;
 }
