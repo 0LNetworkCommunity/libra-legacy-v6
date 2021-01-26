@@ -293,12 +293,25 @@ address 0x1 {
       // Skip resetting if the ceiling cannot be divisable into the proof count.
       if (ceiling < 1) return;
 
+      state.current_proof_price = calc_auction(ceiling, baseline_auction_units, state.current_proofs_verified);
+      // Set new ceiling
+      state.current_cap = ceiling;
+    }
+
+    fun calc_auction(
+      ceiling: u64,
+      baseline_auction_units: u64,
+      current_proofs_verified: u64,
+    ): u64 {
       // Calculate price per proof
       // Find the baseline price of a proof, which will be altered based on performance.
-      let baseline_proof_price = FixedPoint32::create_from_rational(ceiling, baseline_auction_units);
+      let baseline_proof_price = FixedPoint32::create_from_rational(
+        ceiling,
+        baseline_auction_units
+      );
 
       // Calculate the appropriate multiplier.
-      let proofs = state.current_proofs_verified;
+      let proofs = current_proofs_verified;
       if (proofs < 1) proofs = 1;
       let multiplier =  FixedPoint32::create_from_rational(
         baseline_auction_units,
@@ -312,20 +325,20 @@ address 0x1 {
         multiplier
       );
 
-      if (proposed_price > ceiling) {
-        //Note: in failure case, the next miner gets the full ceiling
-        state.current_proof_price = ceiling
-      } else {
-        state.current_proof_price = proposed_price
+      if (proposed_price < ceiling) {
+        return proposed_price
       };
-
-      // Set new ceiling
-      state.current_cap = ceiling;
+      //Note: in failure case, the next miner gets the full ceiling
+      return ceiling
     }
 
     fun fullnode_subsidy_ceiling(vm: &signer):u64 {
       //get TX fees from previous epoch.
       TransactionFee::get_amount_to_distribute(vm)
+    }
+
+    public fun test_helper_auctioneer(vm: &signer) acquires FullnodeSubsidy{
+      auctioneer(vm)
     }
 }
 }
