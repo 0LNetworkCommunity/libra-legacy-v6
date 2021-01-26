@@ -76,13 +76,14 @@ module Reconfigure {
             let addr = *Vector::borrow(&miners, k);
 
             let count = FullnodeState::get_address_proof_count(addr);
-            if (count < 1) break;
-            global_proofs_count = global_proofs_count + count;
+            if (count > 0) {
+                global_proofs_count = global_proofs_count + count;
 
-            let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
-            FullnodeState::inc_payment_count(vm, addr, count);
-            FullnodeState::inc_payment_value(vm, addr, value);
-            FullnodeState::reconfig(vm, addr);
+                let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
+                FullnodeState::inc_payment_count(vm, addr, count);
+                FullnodeState::inc_payment_value(vm, addr, value);
+                FullnodeState::reconfig(vm, addr);
+            };
             k = k + 1;
         };
 

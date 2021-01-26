@@ -91,13 +91,14 @@
         <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&miners, k);
 
         <b>let</b> count = <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">FullnodeState::get_address_proof_count</a>(addr);
-        <b>if</b> (count &lt; 1) <b>break</b>;
-        global_proofs_count = global_proofs_count + count;
+        <b>if</b> (count &gt; 0) {
+            global_proofs_count = global_proofs_count + count;
 
-        <b>let</b> value = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">Subsidy::distribute_fullnode_subsidy</a>(vm, addr, count, <b>false</b>);
-        <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">FullnodeState::inc_payment_count</a>(vm, addr, count);
-        <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">FullnodeState::inc_payment_value</a>(vm, addr, value);
-        <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr);
+            <b>let</b> value = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">Subsidy::distribute_fullnode_subsidy</a>(vm, addr, count, <b>false</b>);
+            <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">FullnodeState::inc_payment_count</a>(vm, addr, count);
+            <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">FullnodeState::inc_payment_value</a>(vm, addr, value);
+            <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr);
+        };
         k = k + 1;
     };
 
