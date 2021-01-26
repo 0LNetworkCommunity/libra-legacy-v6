@@ -24,10 +24,12 @@ pub struct ValConfigs {
     pub op_consensus_pubkey: Vec<u8>,
     /// Key validator will use for network connections
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub op_validator_network_addresses: Vec<u8>, //NetworkAddress network/network-address/src/lib.rs
+    pub op_validator_network_addresses: Vec<u8>,
     /// FullNode will use for network connections
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub op_fullnode_network_addresses: Vec<u8>, //NetworkAddress
+    pub op_fullnode_network_addresses: Vec<u8>,
+    /// FullNode will use for network connections
+    pub op_fullnode_network_addresses_string: NetworkAddress,
     /// Human readable name of account
     pub op_human_name: String,
 }
@@ -90,7 +92,7 @@ impl ValConfigs {
         let fn_addr_obj: NetworkAddress = fullnode_network_string.parse().expect("could not parse fullnode network address");
         let fn_pubkey =  PublicKey::from_ed25519_public_bytes(
             &keys
-            .child_2_val_network
+            .child_3_fullnode_network
             .get_public()
             .to_bytes()
         ).unwrap();
@@ -105,6 +107,7 @@ impl ValConfigs {
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
             op_validator_network_addresses: lcs::to_bytes(&encrypted_addr).unwrap(),
             op_fullnode_network_addresses: lcs::to_bytes(&fn_addr_obj).unwrap(),
+            op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address),
         }
     }
