@@ -462,6 +462,8 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">fullnode_reconfig</a>(vm: &signer) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a> {
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
+
+  // <b>update</b> values for the proof auction.
   <a href="Subsidy.md#0x1_Subsidy_auctioneer">auctioneer</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
    // save
@@ -469,7 +471,6 @@
   // reset counters
   state.current_subsidy_distributed = 0u64;
   state.current_proofs_verified = 0u64;
-
 }
 </code></pre>
 
