@@ -557,7 +557,9 @@
   <b>let</b> baseline_auction_units = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
   // The max subsidy that can be paid out in the next epoch.
   <b>let</b> ceiling = <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm);
-  // Skip resetting <b>if</b> the ceiling cannot be divisable into the proof count.
+
+
+  // Failure case
   <b>if</b> (ceiling &lt; 1) ceiling = 1;
 
   state.current_proof_price = <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(
@@ -656,7 +658,11 @@
 
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm: &signer):u64 {
   //get TX fees from previous epoch.
-  <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm)
+  <b>let</b> fees = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
+
+  // Recover from failure case <b>where</b> there are no fees
+  <b>if</b> (fees &lt; <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>()) <b>return</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
+  fees
 }
 </code></pre>
 

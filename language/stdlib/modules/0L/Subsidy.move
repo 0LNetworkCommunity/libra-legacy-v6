@@ -292,7 +292,9 @@ address 0x1 {
       let baseline_auction_units = baseline_auction_units(); 
       // The max subsidy that can be paid out in the next epoch.
       let ceiling = fullnode_subsidy_ceiling(vm);
-      // Skip resetting if the ceiling cannot be divisable into the proof count.
+
+
+      // Failure case
       if (ceiling < 1) ceiling = 1;
 
       state.current_proof_price = calc_auction(
@@ -352,7 +354,10 @@ address 0x1 {
 
     fun fullnode_subsidy_ceiling(vm: &signer):u64 {
       //get TX fees from previous epoch.
-      TransactionFee::get_amount_to_distribute(vm)
+      let fees = TransactionFee::get_amount_to_distribute(vm);
+      // Recover from failure case where there are no fees
+      if (fees < baseline_auction_units()) return baseline_auction_units();
+      fees
     }
 }
 }
