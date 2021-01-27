@@ -649,7 +649,7 @@ impl ClientProxy {
         
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
+        // let sequence_number = sender.sequence_number;
 
         // parse json file
 
@@ -666,11 +666,21 @@ impl ClientProxy {
             let instruction = value.as_object().expect("expected json object");
             let payee_address = instruction["destination"].as_str().unwrap();
             let program = transaction_builder::encode_autopay_create_instruction_script(
-                index.into(), // TODO: temporary, test only
-                payee_address.parse(),
-                instruction["end_epoch"].as_u64().expect("could not parse end_epoch"),
-                instruction["percent_int"].as_u64().expect("could not parse percent_int"),
+                index as u64, // TODO: temporary, test only
+                payee_address.parse()
+                .expect(&format!("could not parse destination address at index:{:?}", index)),
+                instruction["end_epoch"].as_u64()
+                .expect(&format!("could not parse end_epoch at index:{:?}", index)),
+                instruction["percent_int"].as_u64()
+                .expect(&format!("could not parse percent_int at index:{:?}", index)),
             );
+            let txn = self.create_txn_to_submit(
+                TransactionPayload::Script(program),
+                &sender,
+                Some(1000000),    /* max_gas_amount */
+                Some(1),    /* gas_unit_price */
+                Some("GAS".to_string()), /* gas_currency_code */
+            )?;
             payee_address
         }).collect();
 
