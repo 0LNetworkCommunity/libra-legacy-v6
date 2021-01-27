@@ -649,7 +649,7 @@ impl ClientProxy {
         
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
-        // let sequence_number = sender.sequence_number;
+        let sequence_number = sender.sequence_number;
 
         // parse json file
 
@@ -662,7 +662,7 @@ impl ClientProxy {
         let batch = inst.as_array().unwrap().into_iter();
         // TODO: query instructions on-chain to get highest id number.
         
-        let list: Vec<&str> = batch.enumerate().map(|(index, value)|{
+        let list = batch.enumerate().map(|(index, value)|{
             let instruction = value.as_object().expect("expected json object");
             let payee_address = instruction["destination"].as_str().unwrap();
             let program = transaction_builder::encode_autopay_create_instruction_script(
@@ -674,14 +674,22 @@ impl ClientProxy {
                 instruction["percent_int"].as_u64()
                 .expect(&format!("could not parse percent_int at index:{:?}", index)),
             );
+
             let txn = self.create_txn_to_submit(
                 TransactionPayload::Script(program),
                 &sender,
                 Some(1000000),    /* max_gas_amount */
                 Some(1),    /* gas_unit_price */
                 Some("GAS".to_string()), /* gas_currency_code */
-            )?;
-            payee_address
+            ).unwrap();
+
+            self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)
+            .expect("Transaction error {}", e);
+
+            sequence_number = sequence_number + 1
+            self.wait_for_transaction(sender_address, sequence_number)
+            // payee_address
         }).collect();
 
         dbg!(&list);
