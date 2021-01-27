@@ -28,7 +28,7 @@ impl Command for AccountCommand {
             Box::new(AccountCommandCreateVal {}),
             Box::new(AccountCommandAutopayEnable {}),
             Box::new(AccountCommandAutopayCreate {}),
-                        
+            Box::new(AccountCommandAutopayBatch {}),            
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -280,6 +280,29 @@ impl Command for AccountCommandAutopayCreate {
         match client.autopay_create(params, true) {
             Ok(()) => println!("Created autopay instruction"),
             Err(e) => report_error("Error on autopay instruction tx", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a new autopay instruction.
+pub struct AccountCommandAutopayBatch {}
+
+impl Command for AccountCommandAutopayBatch {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["autopay_batch", "ab"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Batches Autopay instructions from file."
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<file path>"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.autopay_batch(params, true) {
+            Ok(()) => println!("Submitted autopay batch transactions"),
+            Err(e) => report_error("Error submitting batch autopay", e),
         }
     }
 }

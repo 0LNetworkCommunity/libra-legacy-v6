@@ -599,13 +599,6 @@ impl ClientProxy {
     //////// 0L ////////
     /// creates an autopay instruction on the sending account.
     pub fn autopay_create(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-
-        // sender: &signer,
-        // uid: u64,
-        // payee: address,
-        // end_epoch: u64,
-        // percentage: u64,
-
         ensure!(
             space_delim_strings.len() == 6,
             "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
@@ -641,6 +634,74 @@ impl ClientProxy {
         }
         Ok(())
     }
+ 
+    //////// 0L ////////
+    /// creates an autopay instruction on the sending account.
+    pub fn autopay_batch(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        // ensure!(
+        //     space_delim_strings.len() == 2,
+        //     "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
+        // );
+        
+        // assume 0th address in wallet for transactions.
+        let (sender_address, _) =
+            self.get_account_address_from_parameter("0").expect("address not submitted");
+        
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        // parse json file
+
+        let file = fs::File::open(space_delim_strings[1])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let inst = json.get("instructions")
+            .expect("file should have array of instructions");
+        let batch = inst.as_array().unwrap().into_iter();
+        // TODO: query instructions on-chain to get highest id number.
+        
+        let list: Vec<&str> = batch.enumerate().map(|(index, value)|{
+            let instruction = value.as_object().expect("expected json object");
+            let payee_address = instruction["destination"].as_str().unwrap();
+            let program = transaction_builder::encode_autopay_create_instruction_script(
+                index.into(), // TODO: temporary, test only
+                payee_address.parse(),
+                instruction["end_epoch"].as_u64().expect("could not parse end_epoch"),
+                instruction["percent_int"].as_u64().expect("could not parse percent_int"),
+            );
+            payee_address
+        }).collect();
+
+        dbg!(&list);
+
+        // let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[3]).expect("payee address not submitted");
+        
+
+        // let program = transaction_builder::encode_autopay_create_instruction_script(
+        //     space_delim_strings[2].parse::<u64>().unwrap(),
+        //     payee_address,
+        //     space_delim_strings[4].parse::<u64>().unwrap(),
+        //     space_delim_strings[5].parse::<u64>().unwrap(),
+        // );
+
+        // let txn = self.create_txn_to_submit(
+        //     TransactionPayload::Script(program),
+        //     &sender,
+        //     Some(1000000),    /* max_gas_amount */
+        //     Some(1),    /* gas_unit_price */
+        //     Some("GAS".to_string()), /* gas_currency_code */
+        // )?;
+
+        // self.client
+        //     .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        // if is_blocking {
+        //     self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        // }
+        Ok(())
+    }
+
     //////// 0L ////////
     /// Calls the oracle upgrade script
     pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {

@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    { "destination": "88E74DFED34420F2AD8032148280A84B",  "percent_int": 10, "end_epoch": 100},
+    { "destination": "E660402D586AD220ED9BEFF47D662D54",  "percent_int": 1, "end_epoch": 100}
+  ]
+}
