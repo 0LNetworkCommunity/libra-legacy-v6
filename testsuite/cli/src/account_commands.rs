@@ -1,6 +1,8 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fs;
+
 use crate::{
     client_proxy::ClientProxy,
     commands::{blocking_cmd, report_error, subcommand_execute, Command},
@@ -300,9 +302,37 @@ impl Command for AccountCommandAutopayBatch {
     }
 
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
-        match client.autopay_batch(params, true) {
-            Ok(()) => println!("Submitted autopay batch transactions"),
-            Err(e) => report_error("Error submitting batch autopay", e),
+        // do loop in here
+        let file = fs::File::open(params[1])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let inst = json.get("instructions")
+            .expect("file should have array of instructions");
+        let batch = inst.as_array().unwrap().into_iter();
+        // TODO: query instructions on-chain to get highest id number.
+        struct Instruction {
+            destination: String,
+            percent: u64,
+            end_epoch: u64,
         }
+        let list: Vec<Instruction> = batch.map(|value|{
+            let inst = value.as_object().expect("expected json object");
+            Instruction {
+                destination: inst["destination"].as_str().unwrap().to_owned(),
+                percent: inst["percent_int"].as_u64().unwrap(),
+                end_epoch: inst["end_epoch"].as_u64().unwrap(),
+            }
+        }).collect();
+
+        uid = 1;
+        for inst in list {
+            match client.autopay_batch(uid, inst.destination, inst.end_epoch, inst.percent ) {
+                Ok(()) => println!("Submitted autopay batch transactions"),
+                Err(e) => report_error("Error submitting batch autopay", e),
+            }
+            uid + 1;
+        }
+
     }
 }

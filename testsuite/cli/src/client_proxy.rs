@@ -43,6 +43,7 @@ use num_traits::{
 use reqwest::Url;
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use rust_decimal::Decimal;
+use serde_json::{Map, Value};
 use std::{
     collections::HashMap,
     convert::TryFrom,
@@ -637,7 +638,7 @@ impl ClientProxy {
  
     //////// 0L ////////
     /// creates an autopay instruction on the sending account.
-    pub fn autopay_batch(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+    pub fn autopay_batch(&mut self, uid: u64, payee_address: AccountAddress, end_epoch: u64, percentage: u64,) -> Result<()> {
         // ensure!(
         //     space_delim_strings.len() == 2,
         //     "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
@@ -649,75 +650,106 @@ impl ClientProxy {
         
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
-        let sequence_number = sender.sequence_number;
+        let mut sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_autopay_create_instruction_script(
+            uid,
+            payee_address,
+            end_epoch,
+            percentage,
+        );
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        
+        self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        Ok(())
 
         // parse json file
 
-        let file = fs::File::open(space_delim_strings[1])
-            .expect("file should open read only");
-        let json: serde_json::Value = serde_json::from_reader(file)
-            .expect("file should be proper JSON");
-        let inst = json.get("instructions")
-            .expect("file should have array of instructions");
-        let batch = inst.as_array().unwrap().into_iter();
-        // TODO: query instructions on-chain to get highest id number.
-        
-        let list = batch.enumerate().map(|(index, value)|{
-            let instruction = value.as_object().expect("expected json object");
-            let payee_address = instruction["destination"].as_str().unwrap();
-            let program = transaction_builder::encode_autopay_create_instruction_script(
-                index as u64, // TODO: temporary, test only
-                payee_address.parse()
-                .expect(&format!("could not parse destination address at index:{:?}", index)),
-                instruction["end_epoch"].as_u64()
-                .expect(&format!("could not parse end_epoch at index:{:?}", index)),
-                instruction["percent_int"].as_u64()
-                .expect(&format!("could not parse percent_int at index:{:?}", index)),
-            );
-
-            let txn = self.create_txn_to_submit(
-                TransactionPayload::Script(program),
-                &sender,
-                Some(1000000),    /* max_gas_amount */
-                Some(1),    /* gas_unit_price */
-                Some("GAS".to_string()), /* gas_currency_code */
-            ).unwrap();
-
-            self.client
-            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)
-            .expect("Transaction error {}", e);
-
-            sequence_number = sequence_number + 1
-            self.wait_for_transaction(sender_address, sequence_number)
-            // payee_address
-        }).collect();
-
-        dbg!(&list);
-
-        // let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[3]).expect("payee address not submitted");
-        
-
-        // let program = transaction_builder::encode_autopay_create_instruction_script(
-        //     space_delim_strings[2].parse::<u64>().unwrap(),
-        //     payee_address,
-        //     space_delim_strings[4].parse::<u64>().unwrap(),
-        //     space_delim_strings[5].parse::<u64>().unwrap(),
-        // );
-
-        // let txn = self.create_txn_to_submit(
-        //     TransactionPayload::Script(program),
-        //     &sender,
-        //     Some(1000000),    /* max_gas_amount */
-        //     Some(1),    /* gas_unit_price */
-        //     Some("GAS".to_string()), /* gas_currency_code */
-        // )?;
-
-        // self.client
-        //     .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        // if is_blocking {
-        //     self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        // let file = fs::File::open(space_delim_strings[1])
+        //     .expect("file should open read only");
+        // let json: serde_json::Value = serde_json::from_reader(file)
+        //     .expect("file should be proper JSON");
+        // let inst = json.get("instructions")
+        //     .expect("file should have array of instructions");
+        // let batch = inst.as_array().unwrap().into_iter();
+        // // TODO: query instructions on-chain to get highest id number.
+        // struct Instruction {
+        //     destination: String,
+        //     percent: u64,
+        //     end_epoch: u64,
         // }
-        Ok(())
+        // let list: Vec<Instruction> = batch.map(|value|{
+        //     let inst = value.as_object().expect("expected json object");
+        //     Instruction {
+        //         destination: inst["destination"].as_str().unwrap().to_owned(),
+        //         percent: inst["percent_int"].as_u64().unwrap(),
+        //         end_epoch: inst["end_epoch"].as_u64().unwrap(),
+        //     }
+        // }).collect();
+
+        // let index = 1;
+        // for instruction in list {
+        //     let program = transaction_builder::encode_autopay_create_instruction_script(
+        //         index as u64, // TODO: temporary, test only
+        //         instruction.destination.parse()
+        //         .expect(&format!("could not parse destination address at index:{:?}", index)),
+        //         instruction.end_epoch,
+        //         instruction.percent,
+        //     );
+
+        //     let txn = self.create_txn_to_submit(
+        //         TransactionPayload::Script(program),
+        //         &sender,
+        //         Some(1000000),    /* max_gas_amount */
+        //         Some(1),    /* gas_unit_price */
+        //         Some("GAS".to_string()), /* gas_currency_code */
+        //     ).unwrap();
+
+        //     self.client
+        //     .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)
+        //     .expect("Transaction error");
+
+        //     sequence_number = sequence_number + 1;
+        //     self.wait_for_transaction(sender_address, sequence_number).unwrap();
+        //     index + 1;
+        // }
+
+        // // dbg!(&list);
+
+        // // let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[3]).expect("payee address not submitted");
+        
+
+        // // let program = transaction_builder::encode_autopay_create_instruction_script(
+        // //     space_delim_strings[2].parse::<u64>().unwrap(),
+        // //     payee_address,
+        // //     space_delim_strings[4].parse::<u64>().unwrap(),
+        // //     space_delim_strings[5].parse::<u64>().unwrap(),
+        // // );
+
+        // // let txn = self.create_txn_to_submit(
+        // //     TransactionPayload::Script(program),
+        // //     &sender,
+        // //     Some(1000000),    /* max_gas_amount */
+        // //     Some(1),    /* gas_unit_price */
+        // //     Some("GAS".to_string()), /* gas_currency_code */
+        // // )?;
+
+        // // self.client
+        // //     .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        // // if is_blocking {
+        // //     self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        // // }
+        // Ok(())
     }
 
     //////// 0L ////////
