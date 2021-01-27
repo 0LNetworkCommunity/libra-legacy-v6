@@ -12,7 +12,7 @@ use crate::{
 };
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
-use crate::prelude::app_config;
+// use crate::prelude::app_config;
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -37,13 +37,13 @@ impl Runnable for CreateCmd {
         if self.check {
             check(path);
         } else {
-            create(path, self.fix, self.validator, &self.block_zero, app_config());
+            create(path, self.fix, self.validator, &self.block_zero);
         }
     }
 }
 
-fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<PathBuf>, miner_configs: MinerConfig) {
-    let mut miner_configs = config::MinerConfig::default();
+fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<PathBuf>) {
+    let mut miner_configs = MinerConfig::default();
 
     let (authkey, account, wallet) = if is_fix { 
         keygen::account_from_prompt()
