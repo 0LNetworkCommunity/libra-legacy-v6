@@ -1,7 +1,4 @@
 //! `start` subcommand - example of how to write a subcommand
-
-// use crate::block::Block;
-
 use crate::{config::MinerConfig, test_tx_swarm::{swarm_miner, swarm_onboarding}};
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.

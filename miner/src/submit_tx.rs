@@ -254,11 +254,11 @@ pub fn eval_tx_status(result: TransactionView) -> bool {
 
 /// Form tx parameters struct 
 pub fn get_params(
-    mnemonic: &str, 
+    keys: KeyScheme, 
     waypoint: Waypoint,
     config: &MinerConfig
 ) -> TxParams {
-    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
+    // let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(pubkey);
@@ -376,7 +376,8 @@ fn test_make_params() {
 
     };
 
-    let p = get_params(&mnemonic, waypoint, &configs_fixture);
+    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
+    let p = get_params(keys, waypoint, &configs_fixture);
     assert_eq!("http://localhost:8080/".to_string(), p.url.to_string());
     // debug!("{:?}", p.url);
     //make_params
@@ -413,9 +414,7 @@ fn test_save_tx() {
         },
 
     };
-
-    let p = get_params(&mnemonic, waypoint, &configs_fixture);
+    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
+    let p = get_params(keys, waypoint, &configs_fixture);
     util_save_tx(&p);
-    // dbg!(&p);
-
 }

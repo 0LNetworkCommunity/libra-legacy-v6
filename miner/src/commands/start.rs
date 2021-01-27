@@ -1,6 +1,12 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{backlog, block::*, submit_tx::get_params};
+use crate::{
+    backlog,
+    block::*,
+    submit_tx::get_params,
+    node_keys::KeyScheme,
+    keygen
+};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
@@ -64,10 +70,12 @@ impl Runnable for StartCmd {
             }
         }
 
-        println!("Enter your 0L mnemonic:");
-        let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
+        // println!("Enter your 0L mnemonic:");
+        // let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
+        let (_authkey, _account, wallet) = keygen::account_from_prompt();
+        let keys = KeyScheme::new(wallet);
 
-        let tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
+        let tx_params = get_params(keys, waypoint, &miner_configs);
         
         // Check for, and submit backlog proofs.
         if !self.skip {

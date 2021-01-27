@@ -122,6 +122,7 @@ impl ValConfigs {
         let buf = serde_json::to_string(&self).expect("Config should be export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
+        println!("Exported account manifest to {:?}", json_path);
     }
 
     /// Extract the preimage and proof from a genesis proof block_0.json
@@ -154,6 +155,7 @@ impl UserConfigs {
         let buf = serde_json::to_string(&self ).expect("Manifest should export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
+        println!("Exported account manifest to {:?}", json_path);
     }
    /// Extract the preimage and proof from a genesis proof block_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs,std::io::Error> {
@@ -198,7 +200,7 @@ fn val_config_ip_address() {
         "161.35.13.169".to_string(),
     );
     
-    let correct_fn_hex = "2d0400a1230da90523180720151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b118120800".to_owned();
+    let correct_fn_hex = "2d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
     assert_eq!(
         encode(&val.op_fullnode_network_addresses),
         correct_fn_hex
