@@ -2,9 +2,17 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{account, block::{build_block}, config, delay, keygen, node_keys::KeyScheme};
+use crate::{
+    account,
+    block::{build_block},
+    config::MinerConfig,
+    delay,
+    keygen,
+    node_keys::KeyScheme
+};
 use abscissa_core::{Command, Options, Runnable};
-use std::path::PathBuf;
+use std::{path::PathBuf};
+use crate::prelude::app_config;
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -24,18 +32,19 @@ pub struct CreateCmd {
 impl Runnable for CreateCmd {
     /// Print version message
     fn run(&self) {
-        
+        // let miner_configs = app_config();
         let path = self.path.clone().unwrap_or_else(|| PathBuf::from("."));
         if self.check {
             check(path);
         } else {
-            create(path, self.fix, self.validator, &self.block_zero);
+            create(path, self.fix, self.validator, &self.block_zero, app_config());
         }
     }
 }
 
-fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<PathBuf>) {
+fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<PathBuf>, miner_configs: MinerConfig) {
     let mut miner_configs = config::MinerConfig::default();
+
     let (authkey, account, wallet) = if is_fix { 
         keygen::account_from_prompt()
     } else {
@@ -54,6 +63,9 @@ fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<P
     }
 
     if is_validator {
+        // TODO: Parse ip from  miner.toml using abscissa app_config()
+        // otherwise the ip will default to 0.0.0.0
+        // miner_configs.profile.ip 
         account::ValConfigs::new(
             block,
             keys,  
@@ -69,7 +81,7 @@ fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<P
 /// Checks the format of the account manifest, including vdf proof
 fn check(path: PathBuf) {
     let user_data = account::UserConfigs::get_init_data(&path).expect(&format!("could not parse manifest in {:?}", &path));
-    
+
     match delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof) {
         true => println!("Proof verified in {:?}", &path),
         false => println!("Invalid proof in {:?}", &path)
