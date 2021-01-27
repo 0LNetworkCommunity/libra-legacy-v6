@@ -4,7 +4,7 @@ on:
   push:
     branches: [ OLv4, ci ]
   pull_request:
-    branches: [ master, OLv4 ]
+    branches: [ master, OLv4, 'release**' ]
 
 jobs:
   functional:
