@@ -15,21 +15,22 @@ mod start;
 mod version;
 mod onboard;
 mod swarm_test;
-mod genesis;
-mod ceremony_util_cmd;
-mod create_account;
-mod init;
+mod zero_cmd;
+mod genesis_ceremony;
+mod create_user;
+mod init_cmd;
+mod wizard_validator;
 
 use self::{
     start::StartCmd,
     version::VersionCmd,
     onboard::OnboardCmd,
     swarm_test::SwarmCmd,
-    genesis::GenesisCmd,
+    zero_cmd::ZeroCmd,
     keygen_cmd::KeygenCmd,
-    ceremony_util_cmd::CeremonyUtilCmd,
-    create_account::CreateCmd,
-    init::InitCmd,
+    genesis_ceremony::CeremonyUtilCmd,
+    create_user::CreateCmd,
+    init_cmd::InitCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -51,7 +52,7 @@ pub enum MinerCmd {
 
     /// The `genesis` subcommand
     #[options(help = "mine the 0th block of the tower")]
-    Genesis(GenesisCmd),
+    Zero(ZeroCmd),
 
     /// The `start` subcommand
     #[options(help = "start mining blocks")]

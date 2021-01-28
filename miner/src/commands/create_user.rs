@@ -12,7 +12,7 @@ use crate::{
 };
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
-// use crate::prelude::app_config;
+use crate::prelude::app_config;
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -45,8 +45,13 @@ impl Runnable for CreateCmd {
 fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<PathBuf>) {
     let mut miner_configs = MinerConfig::default();
 
+    let stored_configs = app_config();
+
     let (authkey, account, wallet) = if is_fix { 
+        // Use configs from miner
+        miner_configs = stored_configs.clone();
         keygen::account_from_prompt()
+        
     } else {
         keygen::keygen()
     };
@@ -63,6 +68,7 @@ fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<P
     }
 
     if is_validator {
+        // dbg!(&miner_configs.profile.ip);
         // TODO: Parse ip from  miner.toml using abscissa app_config()
         // otherwise the ip will default to 0.0.0.0
         // miner_configs.profile.ip 
