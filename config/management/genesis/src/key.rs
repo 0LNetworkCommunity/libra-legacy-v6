@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{OPERATOR_ACCOUNT, OPERATOR_KEY};
+use libra_global_constants::OPERATOR_ACCOUNT;
 use libra_management::{config:: ConfigPath, error::Error, secure_backend::{SecureBackend, SharedBackend}};
 use libra_secure_storage::OnDiskStorageInternal;
 use std::path::PathBuf;
@@ -62,9 +62,11 @@ impl Key {
     }
 }
 
-pub fn set_operator_key(path: &PathBuf) {
+pub fn set_operator_key(path: &PathBuf, namespace: &str) {
     let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
-    let key = storage.get_public_key(OPERATOR_KEY).unwrap().public_key;
+    // TODO: Remove hard coded field
+    let field = format!("{}-oper/operator", namespace);
+    let key = storage.get_public_key(&field).unwrap().public_key;
     let peer_id = libra_types::account_address::from_public_key(&key);
     storage.set(OPERATOR_ACCOUNT, peer_id).unwrap();
 }
