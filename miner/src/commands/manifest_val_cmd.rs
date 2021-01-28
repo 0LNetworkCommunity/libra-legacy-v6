@@ -5,13 +5,13 @@
 use crate::{
     account,
     block::{build_block},
-    config::MinerConfig,
     delay,
     keygen,
     node_keys::KeyScheme
 };
 use abscissa_core::{Command, Options, Runnable};
-use std::{path::PathBuf};
+use libra_wallet::WalletLibrary;
+use std::path::PathBuf;
 use crate::prelude::app_config;
 
 /// `version` subcommand
@@ -39,23 +39,23 @@ impl Runnable for CreateCmd {
         } else {
             let (_, _, wallet) = keygen::account_from_prompt();
 
-            write_manifest(path, wallet);
+            write_manifest(Some(path), wallet);
         }
     }
 }
-
-fn write_manifest(path: PathBuf, wallet: WalletLibrary ) {
+/// Creates an account.json file for the validator
+pub fn write_manifest(mut path: Option<PathBuf>, wallet: WalletLibrary ) {
     let stored_configs = app_config();
+    if !path.is_some() {path = Some(stored_configs.workspace.node_home.clone())};
 
     let keys = KeyScheme::new(wallet);
-
-    let block = build_block::parse_block_file(block_path.to_owned());
+    let block = build_block::parse_block_file(stored_configs.get_block_dir().join("block_0.json").to_owned());
 
     account::ValConfigs::new(
         block,
         keys,  
-        miner_configs.profile.ip.to_string()
-    ).create_manifest(path);
+        stored_configs.profile.ip.to_string()
+    ).create_manifest(path.unwrap());
 }
 
 /// Checks the format of the account manifest, including vdf proof

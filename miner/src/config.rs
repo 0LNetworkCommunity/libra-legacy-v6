@@ -184,7 +184,7 @@ impl MinerConfig {
         file.unwrap().write(&toml.as_bytes())
             .expect("Could not write toml file");
 
-        println!("Configs saved to {:?}", &miner_toml_path);
+        println!("Application configs saved to {:?}", &miner_toml_path);
         miner_toml_path 
     }
 
