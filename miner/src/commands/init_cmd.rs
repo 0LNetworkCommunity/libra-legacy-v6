@@ -5,7 +5,7 @@
 use crate::{application::app_config, config::MinerConfig, keygen};
 
 use abscissa_core::{Command, Options, Runnable};
-use libra_genesis_tool::{init, keyscheme::KeyScheme};
+use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
 use libra_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey
 };
@@ -33,4 +33,6 @@ pub fn initialize_validator(wallet: &WalletLibrary) {
     let home_dir = &stored_configs.workspace.node_home;
     let keys = KeyScheme::new(wallet); // TODO: Make it a reference
     init::key_store_init(home_dir, "test".to_owned(), keys);
+
+    key::set_operator_key(home_dir);
 }

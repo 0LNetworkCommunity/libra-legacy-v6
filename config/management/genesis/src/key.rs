@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_management::{
-    config::ConfigPath,
-    error::Error,
-    secure_backend::{SecureBackend, SharedBackend},
-};
+use libra_global_constants::{OPERATOR_ACCOUNT, OPERATOR_KEY};
+use libra_management::{config:: ConfigPath, error::Error, secure_backend::{SecureBackend, SharedBackend}};
+use libra_secure_storage::OnDiskStorageInternal;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use libra_secure_storage::CryptoStorage;
+use libra_secure_storage::KVStorage;
 
 libra_management::secure_backend!(
     ValidatorBackend,
@@ -60,6 +60,19 @@ impl Key {
 
         Ok(key)
     }
+}
+
+pub fn set_operator_key(path: &PathBuf) {
+
+    // let mut validator_storage = StorageWrapper {
+    //     storage_name: "test",
+    //     storage: libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.to_owned())) 
+    // };
+    let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.to_owned()));
+    let key = storage.get_public_key(OPERATOR_KEY).unwrap().public_key;
+    // let key = validator_storage.ed25519_public_from_private(OPERATOR_KEY).unwrap();
+    let peer_id = libra_types::account_address::from_public_key(&key);
+    storage.set(OPERATOR_ACCOUNT, peer_id).unwrap();
 }
 
 #[derive(Debug, StructOpt)]
