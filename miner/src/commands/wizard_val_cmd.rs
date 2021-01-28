@@ -39,8 +39,11 @@ pub fn validator() {
     // Initialize Miner
     init_cmd::initialize_miner(authkey, account);
 
-    // Initialize Validator
+    // Initialize Validator Keys
     init_cmd::initialize_validator(&wallet);
+
+    // Create Node Yaml
+    
 
     // Mine Block
     zero_cmd::mine_zero();
