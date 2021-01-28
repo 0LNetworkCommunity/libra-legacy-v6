@@ -16,6 +16,7 @@
 -  [Function `process_autopay`](#0x1_AutoPay_process_autopay)
 -  [Function `enable_autopay`](#0x1_AutoPay_enable_autopay)
 -  [Function `disable_autopay`](#0x1_AutoPay_disable_autopay)
+-  [Function `find_max_uid`](#0x1_AutoPay_find_max_uid)
 -  [Function `create_instruction`](#0x1_AutoPay_create_instruction)
 -  [Function `delete_instruction`](#0x1_AutoPay_delete_instruction)
 -  [Function `is_enabled`](#0x1_AutoPay_is_enabled)
@@ -403,13 +404,48 @@ Attempted to send funds to an account that does not exist
 
 </details>
 
+<a name="0x1_AutoPay_find_max_uid"></a>
+
+## Function `find_max_uid`
+
+
+
+<pre><code><b>fun</b> <a href="AutoPay.md#0x1_AutoPay_find_max_uid">find_max_uid</a>(account: &signer): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="AutoPay.md#0x1_AutoPay_find_max_uid">find_max_uid</a>(account: &signer): u64 <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
+  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+  <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(addr).payments;
+  <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments);
+  <b>let</b> max = 0;
+  <b>if</b> (len == 0) <b>return</b> 0;
+  <b>let</b> k = 0;
+  <b>while</b> (k &lt; len) {
+    <b>let</b> pmt = <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, k);
+    <b>if</b> (pmt.uid &gt; max) max = pmt.uid;
+    k = k + 1
+  };
+  max
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_AutoPay_create_instruction"></a>
 
 ## Function `create_instruction`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_create_instruction">create_instruction</a>(sender: &signer, uid: u64, payee: address, end_epoch: u64, percentage: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_create_instruction">create_instruction</a>(sender: &signer, payee: address, end_epoch: u64, percentage: u64)
 </code></pre>
 
 
@@ -420,12 +456,14 @@ Attempted to send funds to an account that does not exist
 
 <pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_create_instruction">create_instruction</a>(
   sender: &signer,
-  uid: u64,
   payee: address,
   end_epoch: u64,
   percentage: u64
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  <b>let</b> uid = <a href="AutoPay.md#0x1_AutoPay_find_max_uid">find_max_uid</a>(sender) + 1;
+
+  // TODO: redundant.
   // Confirm that no payment <b>exists</b> <b>with</b> the same uid
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay_find">find</a>(addr, uid);
   <b>if</b> (<a href="Option.md#0x1_Option_is_some">Option::is_some</a>&lt;u64&gt;(&index)) {

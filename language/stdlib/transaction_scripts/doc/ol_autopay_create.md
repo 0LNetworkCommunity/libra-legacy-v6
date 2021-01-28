@@ -14,7 +14,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ol_autopay_create.md#autopay_create_instruction">autopay_create_instruction</a>(sender: &signer, uid: u64, payee: address, end_epoch: u64, percentage: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="ol_autopay_create.md#autopay_create_instruction">autopay_create_instruction</a>(sender: &signer, payee: address, end_epoch: u64, percentage: u64)
 </code></pre>
 
 
@@ -25,7 +25,6 @@
 
 <pre><code><b>fun</b> <a href="ol_autopay_create.md#autopay_create_instruction">autopay_create_instruction</a>(
   sender: &signer,
-  uid: u64,
   payee: address,
   end_epoch: u64,
   percentage: u64,
@@ -34,7 +33,6 @@
   <b>assert</b>(<a href="../../modules/doc/AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(account), 0);
   <a href="../../modules/doc/AutoPay.md#0x1_AutoPay_create_instruction">AutoPay::create_instruction</a>(
     sender,
-    uid,
     payee,
     end_epoch,
     percentage,

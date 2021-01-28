@@ -608,7 +608,6 @@ impl ClientProxy {
         let sequence_number = sender.sequence_number;
 
         let program = transaction_builder::encode_autopay_create_instruction_script(
-            space_delim_strings[2].parse::<u64>().unwrap(),
             payee_address,
             space_delim_strings[4].parse::<u64>().unwrap(),
             space_delim_strings[5].parse::<u64>().unwrap(),
@@ -632,7 +631,11 @@ impl ClientProxy {
  
     //////// 0L ////////
     /// creates an autopay instruction on the sending account.
-    pub fn autopay_batch(&mut self, uid: u64, payee_address: AccountAddress, end_epoch: u64, percentage: u64,) -> Result<()> {
+    pub fn autopay_batch(&mut self,
+        payee_address: AccountAddress,
+        end_epoch: u64,
+        percentage: u64,
+    ) -> Result<()> {
         // ensure!(
         //     space_delim_strings.len() == 2,
         //     "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
@@ -647,7 +650,6 @@ impl ClientProxy {
         let sequence_number = sender.sequence_number;
 
         let program = transaction_builder::encode_autopay_create_instruction_script(
-            uid,
             payee_address,
             end_epoch,
             percentage,

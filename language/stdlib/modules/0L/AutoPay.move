@@ -168,16 +168,33 @@ address 0x1{
       }      
     }
 
+    fun find_max_uid(account: &signer): u64 acquires Data {
+      let addr = Signer::address_of(account);
+      let payments = &mut borrow_global_mut<Data>(addr).payments;
+      let len = Vector::length<Payment>(payments);
+      let max = 0;
+      if (len == 0) return 0;
+      let k = 0;
+      while (k < len) {
+        let pmt = Vector::borrow<Payment>(payments, k);
+        if (pmt.uid > max) max = pmt.uid;
+        k = k + 1
+      };
+      max
+    }
+
     // Create a instruction from the sender's account
     // Function code 010104
     public fun create_instruction(
       sender: &signer, 
-      uid: u64,
       payee: address,
       end_epoch: u64,
       percentage: u64
     ) acquires Data {
       let addr = Signer::address_of(sender);
+      let uid = find_max_uid(sender) + 1;
+
+      // TODO: redundant.
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
       if (Option::is_some<u64>(&index)) {

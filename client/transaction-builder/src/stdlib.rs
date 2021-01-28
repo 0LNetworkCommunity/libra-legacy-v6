@@ -197,7 +197,6 @@ pub enum ScriptCall {
     },
 
     AutopayCreateInstruction {
-        uid: u64,
         payee: AccountAddress,
         end_epoch: u64,
         percentage: u64,
@@ -1565,11 +1564,10 @@ impl ScriptCall {
                 validator_address,
             ),
             AutopayCreateInstruction {
-                uid,
                 payee,
                 end_epoch,
                 percentage,
-            } => encode_autopay_create_instruction_script(uid, payee, end_epoch, percentage),
+            } => encode_autopay_create_instruction_script(payee, end_epoch, percentage),
             AutopayEnable {} => encode_autopay_enable_script(),
             Burn {
                 token,
@@ -2018,7 +2016,6 @@ pub fn encode_add_validator_and_reconfigure_script(
 }
 
 pub fn encode_autopay_create_instruction_script(
-    uid: u64,
     payee: AccountAddress,
     end_epoch: u64,
     percentage: u64,
@@ -2027,7 +2024,6 @@ pub fn encode_autopay_create_instruction_script(
         AUTOPAY_CREATE_INSTRUCTION_CODE.to_vec(),
         vec![],
         vec![
-            TransactionArgument::U64(uid),
             TransactionArgument::Address(payee),
             TransactionArgument::U64(end_epoch),
             TransactionArgument::U64(percentage),
@@ -3699,10 +3695,9 @@ fn decode_add_validator_and_reconfigure_script(script: &Script) -> Option<Script
 
 fn decode_autopay_create_instruction_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::AutopayCreateInstruction {
-        uid: decode_u64_argument(script.args().get(0)?.clone())?,
-        payee: decode_address_argument(script.args().get(1)?.clone())?,
-        end_epoch: decode_u64_argument(script.args().get(2)?.clone())?,
-        percentage: decode_u64_argument(script.args().get(3)?.clone())?,
+        payee: decode_address_argument(script.args().get(0)?.clone())?,
+        end_epoch: decode_u64_argument(script.args().get(1)?.clone())?,
+        percentage: decode_u64_argument(script.args().get(2)?.clone())?,
     })
 }
 
@@ -4256,14 +4251,13 @@ const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
 ];
 
 const AUTOPAY_CREATE_INSTRUCTION_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 19, 7, 38, 56, 8, 94, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 1, 4, 0, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5, 3, 3, 0, 1, 1,
-    3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100,
-    100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101, 95, 105, 110, 115, 116,
-    114, 117, 99, 116, 105, 111, 110, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 19, 10, 0, 17, 0, 12, 5, 10, 5, 17, 2, 12, 6,
-    11, 6, 3, 12, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 1, 10, 2, 10, 3, 10, 4, 17,
-    1, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 18, 7, 37, 56, 8, 93, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 1, 4, 0, 1, 6, 12, 1, 5, 4, 6, 12, 5, 3, 3, 0, 1, 1, 3,
+    5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100,
+    114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101, 95, 105, 110, 115, 116, 114,
+    117, 99, 116, 105, 111, 110, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 18, 10, 0, 17, 0, 12, 4, 10, 4, 17, 2, 12, 5, 11, 5,
+    3, 12, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 1, 10, 2, 10, 3, 17, 1, 2,
 ];
 
 const AUTOPAY_ENABLE_CODE: &[u8] = &[
