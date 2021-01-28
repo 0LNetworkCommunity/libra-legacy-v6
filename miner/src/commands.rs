@@ -17,10 +17,10 @@ mod onboard_cmd;
 mod swarm_test_cmd;
 mod zero_cmd;
 mod ceremony_cmd;
-mod manifest_user_cmd;
-mod manifest_val_cmd;
+mod wizard_user_cmd;
+mod manifest_cmd;
 mod init_cmd;
-mod wizard_cmd;
+mod wizard_val_cmd;
 
 use self::{
     start_cmd::StartCmd,
@@ -30,9 +30,9 @@ use self::{
     zero_cmd::ZeroCmd,
     keygen_cmd::KeygenCmd,
     ceremony_cmd::CeremonyUtilCmd,
-    manifest_user_cmd::CreateCmd,
+    wizard_user_cmd::UserWizardCmd,
     init_cmd::InitCmd,
-    wizard_cmd::WizardCmd,
+    wizard_val_cmd::ValWizardCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -80,17 +80,17 @@ pub enum MinerCmd {
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
 
-    /// The `create` subcommand
+    /// The `user_wizard` subcommand
     #[options(help = "wizard to create accounts and local configs")]
-    Create(CreateCmd),
+    UserWizard(UserWizardCmd),
 
     /// The `init` subcommand
     #[options(help = "initialize miner configs miner.toml")]
     Init(InitCmd),
 
-    /// The `Wizard` subcommand
+    /// The `val_wizard` subcommand
     #[options(help = "run all steps for validator onboarding")]
-    Wizard(WizardCmd),
+    ValWizard(ValWizardCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

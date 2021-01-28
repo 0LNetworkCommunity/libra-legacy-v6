@@ -155,7 +155,7 @@ impl UserConfigs {
         let buf = serde_json::to_string(&self ).expect("Manifest should export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
-        println!("Account manigest saved to: {:?}", json_path);
+        println!("Account manifest saved to: {:?}", json_path);
     }
    /// Extract the preimage and proof from a genesis proof block_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs,std::io::Error> {
