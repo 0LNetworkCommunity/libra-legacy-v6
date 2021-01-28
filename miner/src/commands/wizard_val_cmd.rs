@@ -5,10 +5,8 @@
 use crate::keygen;
 
 use abscissa_core::{Command, Options, Runnable};
-use libra_global_constants::NODE_HOME;
-use std::{path::PathBuf, str::FromStr};
+use std::{path::PathBuf};
 use super::{init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
-use libra_genesis_tool::{init, keyscheme::KeyScheme};
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -42,9 +40,7 @@ pub fn validator() {
     init_cmd::initialize_miner(authkey, account);
 
     // Initialize Validator
-    let home_dir = PathBuf::from_str(NODE_HOME).unwrap();
-    let keys = KeyScheme::new(&wallet); // TODO: Make it a reference
-    init::key_store_init(home_dir, "test".to_owned(), keys);
+    init_cmd::initialize_validator(&wallet);
 
     // Mine Block
     zero_cmd::mine_zero();

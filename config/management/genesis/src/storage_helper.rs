@@ -15,7 +15,7 @@ use libra_network_address::NetworkAddress;
 use libra_secure_storage::{CryptoStorage, KVStorage, NamespacedStorage, OnDiskStorage, Storage};
 use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
 use vm_genesis::GenesisMiningProof;
-use std::{fs::File, path::{Path, PathBuf}};
+use std::{fs::{self, File}, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
 //////// 0L ////////
@@ -35,6 +35,7 @@ impl StorageHelper {
 
     //////// 0L ////////
     pub fn new_with_path(path: PathBuf) -> Self {
+        fs::create_dir_all(&path).unwrap();
         let path = libra_temppath::TempPath::new_with_dir(path);
         path.create_as_file().expect("Failed on create_as_file");
         File::create(path.path()).expect("Could not create file");

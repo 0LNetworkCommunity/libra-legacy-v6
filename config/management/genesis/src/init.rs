@@ -35,7 +35,7 @@ impl Init {
                     path = dirs::home_dir().unwrap().join(NODE_HOME);
                 }
                 let keys = KeyScheme::new_from_mnemonic(mnemonic_string);
-                key_store_init(path, self.namespace.clone(), keys)
+                key_store_init(&path, self.namespace.clone(), keys)
                 
                 // let helper = StorageHelper::new_with_path(path.into());
                 // helper.initialize_with_mnemonic(self.namespace.clone(), mnemonic_string);
@@ -60,7 +60,8 @@ impl Init {
     }
 }
 
-pub fn key_store_init(path: PathBuf, name: String, keys: KeyScheme) {
-    let helper = StorageHelper::new_with_path(path.into());
+pub fn key_store_init(path: &PathBuf, name: String, keys: KeyScheme) {
+    let helper = StorageHelper::new_with_path(path.to_owned().into());
     helper.initialize_with_mnemonic(name, keys);
+    println!("Key file initialized, saved to: {:?}", path.join("key_store.json"));
 }
