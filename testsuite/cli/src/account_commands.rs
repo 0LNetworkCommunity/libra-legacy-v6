@@ -317,6 +317,7 @@ impl Command for AccountCommandAutopayBatch {
         let batch = inst.as_array().unwrap().into_iter();
         // TODO: query instructions on-chain to get highest id number.
         struct Instruction {
+            uid: u64,
             destination: String,
             percent: u64,
             end_epoch: u64,
@@ -324,6 +325,7 @@ impl Command for AccountCommandAutopayBatch {
         let list: Vec<Instruction> = batch.map(|value|{
             let inst = value.as_object().expect("expected json object");
             Instruction {
+                uid: inst["uid"].as_u64().unwrap(),
                 destination: inst["destination"].as_str().unwrap().to_owned(),
                 percent: inst["percent_int"].as_u64().unwrap(),
                 end_epoch: inst["end_epoch"].as_u64().unwrap(),
@@ -335,18 +337,18 @@ impl Command for AccountCommandAutopayBatch {
             Err(e) => report_error("error creating local account", e),
         }
 
-        let mut uid = 0;
+        // let mut uid = 0;
         for inst in list {
             match client.autopay_batch(
-                uid,
+                inst.uid,
                 inst.destination.parse().unwrap(),
                 inst.end_epoch,
                 inst.percent
             ){
-                Ok(()) => println!("Submitted autopay batch instruction, uid: {}", uid),
+                Ok(()) => println!("Submitted autopay batch instruction, uid: {}", inst.uid),
                 Err(e) => report_error("Error submitting batch autopay", e),
             }
-            uid = uid + 1;
+            // uid = uid + 1;
         }
 
     }
