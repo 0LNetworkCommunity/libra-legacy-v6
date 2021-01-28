@@ -1,6 +1,6 @@
 {
   "instructions": [
-    { "uid": 0, "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",  "percent_int": 10, "end_epoch": 100},
-    { "uid": 1, "destination": "3DC18D1CF61FAAC6AC70E3A63F062E4B",  "percent_int": 1, "end_epoch": 100}
+    { "uid": 2, "destination": "88E74DFED34420F2AD8032148280A84B",  "percent_int": 10, "end_epoch": 100},
+    { "uid": 3, "destination": "88E74DFED34420F2AD8032148280A84B",  "percent_int": 1, "end_epoch": 100}
   ]
 }

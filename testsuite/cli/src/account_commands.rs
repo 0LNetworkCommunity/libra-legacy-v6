@@ -337,7 +337,6 @@ impl Command for AccountCommandAutopayBatch {
             Err(e) => report_error("error creating local account", e),
         }
 
-        // let mut uid = 0;
         for inst in list {
             match client.autopay_batch(
                 inst.uid,
@@ -348,8 +347,6 @@ impl Command for AccountCommandAutopayBatch {
                 Ok(()) => println!("Submitted autopay batch instruction, uid: {}", inst.uid),
                 Err(e) => report_error("Error submitting batch autopay", e),
             }
-            // uid = uid + 1;
         }
-
     }
 }
