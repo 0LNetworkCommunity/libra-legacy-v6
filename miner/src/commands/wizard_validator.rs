@@ -48,6 +48,6 @@ impl Runnable for CreateCmd {
         // Mine Block
         zero_cmd::mine_zero();
         // User Manifest
-
+        
     }
 }

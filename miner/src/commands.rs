@@ -11,25 +11,25 @@
 //! application's configuration file.
 
 mod keygen_cmd;
-mod start;
-mod version;
-mod onboard;
-mod swarm_test;
+mod start_cmd;
+mod version_cmd;
+mod onboard_cmd;
+mod swarm_test_cmd;
 mod zero_cmd;
-mod genesis_ceremony;
-mod create_user;
+mod ceremony_cmd;
+mod manifest_user_cmd;
 mod init_cmd;
 mod wizard_validator;
 
 use self::{
-    start::StartCmd,
-    version::VersionCmd,
-    onboard::OnboardCmd,
-    swarm_test::SwarmCmd,
+    start_cmd::StartCmd,
+    version_cmd::VersionCmd,
+    onboard_cmd::OnboardCmd,
+    swarm_test_cmd::SwarmCmd,
     zero_cmd::ZeroCmd,
     keygen_cmd::KeygenCmd,
-    genesis_ceremony::CeremonyUtilCmd,
-    create_user::CreateCmd,
+    ceremony_cmd::CeremonyUtilCmd,
+    manifest_user_cmd::CreateCmd,
     init_cmd::InitCmd,
 };
 use crate::config::MinerConfig;
