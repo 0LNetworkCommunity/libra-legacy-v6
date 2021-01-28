@@ -4,9 +4,10 @@ use crate::{
     backlog,
     block::*,
     submit_tx::get_params,
-    node_keys::KeyScheme,
     keygen
 };
+use libra_genesis_tool::keyscheme::KeyScheme;
+
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
@@ -73,7 +74,7 @@ impl Runnable for StartCmd {
         // println!("Enter your 0L mnemonic:");
         // let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
         let (_authkey, _account, wallet) = keygen::account_from_prompt();
-        let keys = KeyScheme::new(wallet);
+        let keys = KeyScheme::new(&wallet);
 
         let tx_params = get_params(keys, waypoint, &miner_configs);
         

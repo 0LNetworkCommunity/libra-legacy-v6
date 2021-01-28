@@ -7,8 +7,10 @@ use crate::{
     block::{build_block},
     delay,
     keygen,
-    node_keys::KeyScheme
 };
+
+use libra_genesis_tool::keyscheme::KeyScheme;
+
 use abscissa_core::{Command, Options, Runnable};
 use libra_wallet::WalletLibrary;
 use std::path::PathBuf;
@@ -48,7 +50,7 @@ pub fn write_manifest(mut path: Option<PathBuf>, wallet: WalletLibrary ) {
     let stored_configs = app_config();
     if !path.is_some() {path = Some(stored_configs.workspace.node_home.clone())};
 
-    let keys = KeyScheme::new(wallet);
+    let keys = KeyScheme::new(&wallet);
     let block = build_block::parse_block_file(stored_configs.get_block_dir().join("block_0.json").to_owned());
 
     account::ValConfigs::new(

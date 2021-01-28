@@ -19,7 +19,7 @@ use std::{fs::File, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
 //////// 0L ////////
-use miner::node_keys::KeyScheme;
+use crate::keyscheme::KeyScheme;
 
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
@@ -99,8 +99,8 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
-    pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let keys = KeyScheme::new_from_mnemonic(mnemonic);
+    pub fn initialize_with_mnemonic(&self, namespace: String, keys: KeyScheme) {
+        // let keys = KeyScheme::new_from_mnemonic(mnemonic);
         let mut storage_root = self.storage("root".to_owned());
         let mut storage_owner = self.storage(namespace.clone());
         let mut storage_oper = self.storage(namespace.clone() + "-oper");

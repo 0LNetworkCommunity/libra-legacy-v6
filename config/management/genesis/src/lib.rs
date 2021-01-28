@@ -12,9 +12,10 @@ mod validator_operator;
 mod verify;
 mod waypoint;
 //////// 0L ////////
-mod init;
+pub mod init;
 mod node_files;
 mod mining;
+pub mod keyscheme;
 ///////////////////
 #[cfg(any(test, feature = "testing"))]
 pub mod config_builder;

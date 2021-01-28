@@ -4,12 +4,14 @@ use crate::{
     account::ValConfigs,
     submit_tx::{eval_tx_status, get_params},
     keygen,
-    node_keys::KeyScheme,
     config::MinerConfig,
     test_tx_swarm::get_params_from_swarm,
     submit_tx::submit_onboard_tx,
     prelude::*
 };
+
+use libra_genesis_tool::keyscheme::KeyScheme;
+
 use anyhow::Error;
 use libra_types::waypoint::Waypoint;
 use std::path::PathBuf;
@@ -44,7 +46,7 @@ impl Runnable for OnboardCmd {
     fn run(&self) {
         let miner_configs = app_config();
         let (_authkey, _account, wallet) = keygen::account_from_prompt();
-        let keys = KeyScheme::new(wallet);
+        let keys = KeyScheme::new(&wallet);
 
         let tx_params;
         if self.swarm_path.exists(){
