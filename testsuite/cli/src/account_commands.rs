@@ -256,8 +256,13 @@ impl Command for AccountCommandAutopayEnable {
         "<sending_account>"
     }
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
-        match client.autopay_enable(params, true) {
-            Ok(()) => println!("Created account"),
+        assert!(
+            params.len() == 2,
+            "Invalid number of arguments to enable autopay. Did you pass your account address?"
+        );
+
+        match client.autopay_enable(params[1]) {
+            Ok(()) => println!("Enabled Autopay"),
             Err(e) => report_error("Error creating local account", e),
         }
     }
@@ -325,13 +330,23 @@ impl Command for AccountCommandAutopayBatch {
             }
         }).collect();
 
-        uid = 1;
+        match client.autopay_enable("0") {
+            Ok(()) => println!("Autopay enabled"),
+            Err(e) => report_error("error creating local account", e),
+        }
+
+        let mut uid = 0;
         for inst in list {
-            match client.autopay_batch(uid, inst.destination, inst.end_epoch, inst.percent ) {
-                Ok(()) => println!("Submitted autopay batch transactions"),
+            match client.autopay_batch(
+                uid,
+                inst.destination.parse().unwrap(),
+                inst.end_epoch,
+                inst.percent
+            ){
+                Ok(()) => println!("Submitted autopay batch instruction, uid: {}", uid),
                 Err(e) => report_error("Error submitting batch autopay", e),
             }
-            uid + 1;
+            uid = uid + 1;
         }
 
     }

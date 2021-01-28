@@ -43,7 +43,6 @@ use num_traits::{
 use reqwest::Url;
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use rust_decimal::Decimal;
-use serde_json::{Map, Value};
 use std::{
     collections::HashMap,
     convert::TryFrom,
@@ -566,14 +565,10 @@ impl ClientProxy {
     }
     //////// 0L ////////
     /// Enables autopay on the sending account.
-    pub fn autopay_enable(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        ensure!(
-            space_delim_strings.len() == 2,
-            "Invalid number of arguments to enable autopay. Did you pass your account address?"
-        );
+    pub fn autopay_enable(&mut self, account: &str) -> Result<()> {
 
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
+            self.get_account_address_from_parameter(account).expect("address not submitted");
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
@@ -590,9 +585,8 @@ impl ClientProxy {
 
         self.client
             .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        }
+        self.wait_for_transaction(sender_address, sequence_number + 1)?;
+
         Ok(())
     }
 
@@ -650,7 +644,7 @@ impl ClientProxy {
         
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
-        let mut sequence_number = sender.sequence_number;
+        let sequence_number = sender.sequence_number;
 
         let program = transaction_builder::encode_autopay_create_instruction_script(
             uid,
@@ -672,84 +666,6 @@ impl ClientProxy {
         
         self.wait_for_transaction(sender_address, sequence_number + 1)?;
         Ok(())
-
-        // parse json file
-
-        // let file = fs::File::open(space_delim_strings[1])
-        //     .expect("file should open read only");
-        // let json: serde_json::Value = serde_json::from_reader(file)
-        //     .expect("file should be proper JSON");
-        // let inst = json.get("instructions")
-        //     .expect("file should have array of instructions");
-        // let batch = inst.as_array().unwrap().into_iter();
-        // // TODO: query instructions on-chain to get highest id number.
-        // struct Instruction {
-        //     destination: String,
-        //     percent: u64,
-        //     end_epoch: u64,
-        // }
-        // let list: Vec<Instruction> = batch.map(|value|{
-        //     let inst = value.as_object().expect("expected json object");
-        //     Instruction {
-        //         destination: inst["destination"].as_str().unwrap().to_owned(),
-        //         percent: inst["percent_int"].as_u64().unwrap(),
-        //         end_epoch: inst["end_epoch"].as_u64().unwrap(),
-        //     }
-        // }).collect();
-
-        // let index = 1;
-        // for instruction in list {
-        //     let program = transaction_builder::encode_autopay_create_instruction_script(
-        //         index as u64, // TODO: temporary, test only
-        //         instruction.destination.parse()
-        //         .expect(&format!("could not parse destination address at index:{:?}", index)),
-        //         instruction.end_epoch,
-        //         instruction.percent,
-        //     );
-
-        //     let txn = self.create_txn_to_submit(
-        //         TransactionPayload::Script(program),
-        //         &sender,
-        //         Some(1000000),    /* max_gas_amount */
-        //         Some(1),    /* gas_unit_price */
-        //         Some("GAS".to_string()), /* gas_currency_code */
-        //     ).unwrap();
-
-        //     self.client
-        //     .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)
-        //     .expect("Transaction error");
-
-        //     sequence_number = sequence_number + 1;
-        //     self.wait_for_transaction(sender_address, sequence_number).unwrap();
-        //     index + 1;
-        // }
-
-        // // dbg!(&list);
-
-        // // let (payee_address, _) = self.get_account_address_from_parameter(space_delim_strings[3]).expect("payee address not submitted");
-        
-
-        // // let program = transaction_builder::encode_autopay_create_instruction_script(
-        // //     space_delim_strings[2].parse::<u64>().unwrap(),
-        // //     payee_address,
-        // //     space_delim_strings[4].parse::<u64>().unwrap(),
-        // //     space_delim_strings[5].parse::<u64>().unwrap(),
-        // // );
-
-        // // let txn = self.create_txn_to_submit(
-        // //     TransactionPayload::Script(program),
-        // //     &sender,
-        // //     Some(1000000),    /* max_gas_amount */
-        // //     Some(1),    /* gas_unit_price */
-        // //     Some("GAS".to_string()), /* gas_currency_code */
-        // // )?;
-
-        // // self.client
-        // //     .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        // // if is_blocking {
-        // //     self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        // // }
-        // Ok(())
     }
 
     //////// 0L ////////
@@ -1194,14 +1110,14 @@ impl ClientProxy {
                 Ok(Some(txn_view)) => {
                     println!();
                     if txn_view.vm_status == VMStatusView::Executed {
-                        println!("transaction executed!");
+                        println!("Transaction executed!");
                         if txn_view.events.is_empty() {
-                            println!("no events emitted");
+                            println!("No events emitted");
                         }
                         break Ok(());
                     } else {
                         break Err(format_err!(
-                            "transaction failed to execute; status: {:?}!",
+                            "Transaction failed to execute; status: {:?}!",
                             txn_view.vm_status
                         ));
                     }
