@@ -153,7 +153,7 @@ impl MinerConfig {
     }
 
         /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> PathBuf {
+    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> MinerConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = MinerConfig::default();
@@ -180,7 +180,6 @@ impl MinerConfig {
         // Get optional statement which goes into genesis block
         miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
 
-        // Generate new keys
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
 
@@ -192,7 +191,7 @@ impl MinerConfig {
             .expect("Could not write toml file");
 
         println!("Application configs saved to {:?}", &miner_toml_path);
-        miner_toml_path 
+        miner_configs
     }
 
 }

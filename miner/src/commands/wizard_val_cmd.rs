@@ -5,8 +5,10 @@
 use crate::keygen;
 
 use abscissa_core::{Command, Options, Runnable};
+use anyhow::Error;
 use std::{path::PathBuf};
 use super::{init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
+use std::{thread, time};
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -30,23 +32,39 @@ impl Runnable for ValWizardCmd {
     }
 }
 
-pub fn validator() {
+pub fn validator() -> Result<(), Error> {
     // Keygen
     keygen_cmd::generate_keys();
-    
+    println!("......... Keys generated");
+
+    // Get credentials from prompt
     let (authkey, account, wallet) = keygen::account_from_prompt();
 
     // Initialize Miner
-    init_cmd::initialize_miner(authkey, account);
+    // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
+    let miner_config = init_cmd::initialize_miner(authkey, account)?;
+    println!("......... App configs Saved");
+    // let secs = time::Duration::from_secs(10);
+    // thread::sleep(secs);
+
 
     // Initialize Validator Keys
-    init_cmd::initialize_validator(&wallet);
+    init_cmd::initialize_validator(&wallet, &miner_config)?;
+    println!("......... Validator Key File saved");
 
     // Create Node Yaml
+
+    //Create Genesis
     
 
     // Mine Block
-    zero_cmd::mine_zero();
+    zero_cmd::mine_zero(&miner_config);
+    println!("......... Proof Mined");
+
     // Write Manifest
     manifest_cmd::write_manifest(None, wallet);
+    println!("......... Account Manifest Saved");
+
+    Ok(())
+
 }
