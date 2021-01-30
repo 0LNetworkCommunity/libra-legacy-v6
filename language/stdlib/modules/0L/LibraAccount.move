@@ -3,6 +3,7 @@ address 0x1 {
 /// The `LibraAccount` module manages accounts. It defines the `LibraAccount` resource and
 /// numerous auxiliary data structures. It also defines the prolog and epilog that run
 /// before and after every transaction.
+// File Prefix for errors: 1201 used for OL errors
 
 module LibraAccount {
     use 0x1::AccountFreezing;
@@ -35,6 +36,7 @@ module LibraAccount {
     use 0x1::Globals;
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
+    use 0x1::LibraSystem;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -716,12 +718,20 @@ module LibraAccount {
     }
 
     /// Return a unique capability granting permission to withdraw from the sender's account balance.
+    // Function code: 10 Prefix: 170110
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires LibraAccount {
-        //////// 0L //////// Transfers disabled
+        //////// 0L //////// Transfers disabled by default
+        //////// 0L //////// Transfers of 10 GAS 
+        //////// 0L //////// enabled when validator count is 100. 
         let sender_addr = Signer::address_of(sender);
-        assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+
+        if (LibraSystem::validator_set_size() >= 100) {
+            assert(LibraSystem::is_validator({{sender_addr}}) || sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 170110014010);
+        } else {
+            assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        };
 
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
@@ -809,6 +819,7 @@ module LibraAccount {
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
     /// The `metadata_signature` will only be checked if this payment is subject to the dual
     /// attestation protocol
+    // Function code: 13 Prefix: 170113
     public fun pay_from<Token>(
         cap: &WithdrawCapability,
         payee: address,
@@ -816,6 +827,16 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
+        //////// 0L //////// Transfers disabled by default
+        //////// 0L //////// Transfers of 10 GAS 
+        //////// 0L //////// enabled when validator count is 100. 
+        if (LibraSystem::validator_set_size() >= 100 && LibraSystem::is_validator({{*&cap.account_address}})) {
+            // TODO: The withdrawal limit amount should be set in globals not as a constant here. 
+            assert(amount <= 10, Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        } else {
+            assert(*&cap.account_address == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        };
+
         deposit<Token>(
             *&cap.account_address,
             payee,
