@@ -21,6 +21,7 @@ mod wizard_user_cmd;
 mod manifest_cmd;
 mod init_cmd;
 mod wizard_val_cmd;
+mod genesis_cmd;
 
 use self::{
     start_cmd::StartCmd,
@@ -33,6 +34,7 @@ use self::{
     wizard_user_cmd::UserWizardCmd,
     init_cmd::InitCmd,
     wizard_val_cmd::ValWizardCmd,
+    genesis_cmd::GenesisCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -91,6 +93,10 @@ pub enum MinerCmd {
     /// The `val_wizard` subcommand
     #[options(help = "run all steps for validator onboarding")]
     ValWizard(ValWizardCmd),
+
+    /// The `genesis` subcommand
+    #[options(help = "build a genesis.blob")]
+    Genesis(GenesisCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

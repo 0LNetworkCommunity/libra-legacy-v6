@@ -42,12 +42,12 @@ pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress) -> 
 }
 
 pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) -> Result <(), Error>{
-    // let stored_configs = app_config();
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet); // TODO: Make it a reference
-    let namespace = "test".to_owned();
+    let namespace = miner_config.profile.auth_key.to_owned();
     init::key_store_init(home_dir, &namespace, keys);
 
+    // TODO: is this necessary?
     key::set_operator_key(home_dir, &namespace);
 
     Ok(())
@@ -96,6 +96,5 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) 
 //         shared_backend,
 //         path
 //     );
-    
 // }
 

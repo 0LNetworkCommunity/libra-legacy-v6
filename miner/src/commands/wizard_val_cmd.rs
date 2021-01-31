@@ -7,31 +7,33 @@ use crate::keygen;
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use std::{path::PathBuf};
-use super::{init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
+use super::{genesis_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
     #[options(help = "path to write account manifest")]
     path: Option<PathBuf>,
-    // #[options(help = "path to file to be checked")]
-    // check: bool,
-    // #[options(help = "regenerates account manifest from mnemonic")]
-    // fix: bool,
-    // #[options(help = "creates a validator account")]
-    // validator: bool,
-    // #[options(help = "use an existing block_0.json file and skip mining")]
-    // block_zero: Option<PathBuf>,
+    #[options(help = "id of the chain")]
+    chain_id: Option<u8>,
+    #[options(help = "github org of genesis repo")]
+    github_org: Option<String>,
+    #[options(help = "repo with with genesis transactions")]
+    repo: Option<String>,   
 }
 
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
-        validator().unwrap();
+        validator(
+            self.chain_id.unwrap_or_else(||{1}),
+            &self.github_org.clone().unwrap_or("OLSF".to_string()),
+            &self.repo.clone().unwrap_or("experimental-genesis".to_string())
+        ).unwrap();
     }
 }
 
-pub fn validator() -> Result<(), Error> {
+pub fn validator(chain_id: u8, github_org: &str, repo: &str) -> Result<(), Error> {
     // Keygen
     keygen_cmd::generate_keys();
     println!("......... Keys generated");
@@ -43,18 +45,19 @@ pub fn validator() -> Result<(), Error> {
     // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
     let miner_config = init_cmd::initialize_miner(authkey, account)?;
     println!("......... App configs Saved");
-    // let secs = time::Duration::from_secs(10);
-    // thread::sleep(secs);
-
 
     // Initialize Validator Keys
     init_cmd::initialize_validator(&wallet, &miner_config)?;
     println!("......... Validator Key File saved");
 
-    // Create Node Yaml
-
-    //Create Genesis
-    
+    // Build Genesis and node.yaml file
+    genesis_cmd::create_node_files(
+        &miner_config,
+        chain_id,
+        github_org,
+        repo,
+    );
+    println!("......... Genesis file created");
 
     // Mine Block
     zero_cmd::mine_zero(&miner_config);
@@ -65,5 +68,4 @@ pub fn validator() -> Result<(), Error> {
     println!("......... Account Manifest Saved");
 
     Ok(())
-
 }

@@ -2,52 +2,63 @@
 
 #![allow(clippy::never_loop)]
 
-use std::{path::PathBuf};
-
 use crate::{application::app_config, config::MinerConfig};
-
 use abscissa_core::{Command, Options, Runnable};
-use anyhow::Error;
-// use libra_config::config::{GitHubConfig, Token};
-use libra_genesis_tool::{init, key, keyscheme::KeyScheme, node_files};
-use libra_types::{
-    account_address::AccountAddress, transaction::authenticator::AuthenticationKey
-};
-// use libra_management::{
-//     config::ConfigPath,
-//     secure_backend::{SecureBackend, SharedBackend}
-
-// };
-
-
-use libra_wallet::WalletLibrary;
+use libra_genesis_tool::node_files;
 
 /// `genesis` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct InitCmd {}
+pub struct GenesisCmd {
+    #[options(help = "id of the chain")]
+    chain_id: u8,
+    #[options(help = "github org of genesis repo")]
+    github_org: String,
+    #[options(help = "repo with with genesis transactions")]
+    repo: String,   
+}
 
 
-impl Runnable for InitCmd {
+impl Runnable for GenesisCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config();
-        create_node_files(miner_configs.clone())
+        
+        create_node_files(
+            &miner_configs.clone(),
+            self.chain_id,
+            &self.github_org,
+            &self.repo,
+        )
         
     }
 }
 
-pub fn create_node_files(miner_config: MinerConfig) {
-    let home_dir = miner_config.workspace.node_home;
-
+pub fn create_node_files(
+    miner_config: &MinerConfig,
+    chain_id: u8,
+    github_org: &str,
+    repo: &str,
+) {
+    let home_dir = miner_config.workspace.node_home.to_owned();
+    let namespace = miner_config.profile.auth_key.as_str();
     node_files::create_files(
         home_dir, 
-        1,
-        "OLSF".to_string(),
-        "experimental-genesis".to_string(),
-        miner_config.profile.auth_key.to_string()
+        chain_id,
+        github_org,
+        repo,
+        namespace
     ).unwrap();
 }
 
+// pub fn experimental_defaults() {
+//     let miner_configs = app_config();
+//     create_node_files(
+//         miner_configs.clone(),
+//         1,
+//         "OLSF".to_string(),
+//         "experimental-genesis".to_string(),
+//     );
+// }
 // pub fn _build_genesis_storage_helper(
 //     output_dir: PathBuf,
 //     chain_id: u8,

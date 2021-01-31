@@ -38,16 +38,16 @@ pub struct Files {
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        create_files(self.data_path, self.chain_id, self.github_org, self.repo, self.namespace)
+        create_files(self.data_path, self.chain_id, &self.github_org, &self.repo, &self.namespace)
     }
 }
 
 pub fn create_files(
     output_dir: PathBuf,
     chain_id: u8,
-    github_org: String,
-    repo: String,
-    namespace: String
+    github_org: &str,
+    repo: &str,
+    namespace: &str
 ) -> Result<String, Error> {
 
     let github_token_path = output_dir.join("github_token.txt");
@@ -83,10 +83,11 @@ pub fn create_files(
     storage_helper
         .insert_waypoint(&namespace, waypoint)
         .unwrap();
+    
     let mut disk_storage = OnDiskStorageConfig::default();
     disk_storage.set_data_dir(output_dir.clone());
     disk_storage.path = output_dir.clone().join("key_store.json");
-    disk_storage.namespace = Some(namespace);
+    disk_storage.namespace = Some(namespace.to_owned());
 
     // Set network configs
     let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
