@@ -22,7 +22,7 @@ use hex::decode;
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use move_core_types::account_address::AccountAddress;
 
-/// `start` subcommand
+/// `onboard` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
 /// definition, and is defined in the `gumdrop` crate. See their documentation

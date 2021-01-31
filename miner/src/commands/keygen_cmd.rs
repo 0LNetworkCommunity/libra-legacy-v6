@@ -4,7 +4,7 @@
 use abscissa_core::{Command, Options, Runnable};
 use crate::keygen;
 
-/// `version` subcommand
+/// `keygen` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct KeygenCmd {}
 

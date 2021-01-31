@@ -9,7 +9,7 @@ use anyhow::Error;
 use std::{path::PathBuf};
 use super::{init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 
-/// `version` subcommand
+/// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
     #[options(help = "path to write account manifest")]
@@ -27,7 +27,7 @@ pub struct ValWizardCmd {
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
-        validator();
+        validator().unwrap();
     }
 }
 

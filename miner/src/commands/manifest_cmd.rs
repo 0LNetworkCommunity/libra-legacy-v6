@@ -16,7 +16,7 @@ use libra_wallet::WalletLibrary;
 use std::path::PathBuf;
 use crate::prelude::app_config;
 
-/// `version` subcommand
+/// `manifest` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ManifestCmd {
     #[options(help = "path to write account manifest")]

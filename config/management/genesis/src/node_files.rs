@@ -75,9 +75,9 @@ pub fn create_files(
     // config.execution.genesis_file_location = genesis_path.clone();
     // ////////////////////////////////
 
-    // Create and save waypoint
+    // Create genesis blob and save waypoint
     let waypoint = storage_helper
-        .create_waypoint_gh(chain_id, &remote, &genesis_path)
+        .build_genesis_from_github(chain_id, &remote, &genesis_path)
         .unwrap();
 
     storage_helper
@@ -125,12 +125,13 @@ pub fn create_files(
     config.storage.prune_window=Some(20_000);
 
     // Write yaml
+    let yaml_path = output_dir.join("node.yaml");
     fs::create_dir_all(&output_dir).expect("Unable to create output directory");
     config
-        .save(&output_dir.join("node.yaml"))
+        .save(&yaml_path)
         .expect("Unable to save node configs");
 
-    Ok("node.yaml created".to_string())
+    Ok(yaml_path.to_str().unwrap().to_string())
 }
 
 pub fn build_genesis_from_repo(

@@ -12,7 +12,7 @@ use crate::{
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
 
-/// `version` subcommand
+/// `user-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct UserWizardCmd {
     #[options(help = "path to write account manifest")]

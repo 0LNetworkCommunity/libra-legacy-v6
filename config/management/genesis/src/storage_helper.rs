@@ -264,7 +264,7 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
-    pub fn create_waypoint_gh(&self, chain_id: ChainId, remote: &str , genesis_path: &PathBuf) -> Result<Waypoint, Error> {
+    pub fn build_genesis_from_github(&self, chain_id: ChainId, remote: &str , genesis_path: &PathBuf) -> Result<Waypoint, Error> {
         let args = format!(
             "
                 libra-genesis-tool
