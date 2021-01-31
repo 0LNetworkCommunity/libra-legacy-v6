@@ -3993,6 +3993,7 @@ dependencies = [
  "libra-global-constants",
  "libra-json-rpc-types",
  "libra-logger",
+ "libra-management",
  "libra-network-address",
  "libra-types",
  "libra-wallet",

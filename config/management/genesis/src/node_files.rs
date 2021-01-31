@@ -2,12 +2,15 @@ use std::{path::PathBuf, fs};
 
 use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId};
 use libra_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
-use libra_management::{
-    config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
-};
-use libra_types::chain_id::ChainId;
+use libra_management::{config::ConfigPath, error::Error, secure_backend::{SharedBackend, ValidatorBackend}};
+use libra_temppath::TempPath;
+use libra_types::{chain_id::ChainId, waypoint::Waypoint};
+use libra_vm::LibraVM;
+use libradb::LibraDB;
+use storage_interface::DbReaderWriter;
 use structopt::StructOpt;
 use crate::{storage_helper::StorageHelper};
+use executor::db_bootstrapper;
 
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
@@ -39,9 +42,16 @@ impl Files {
 
 pub fn create_files(data_path: PathBuf, chain_id: u8, repo: String, namespace: String) -> Result<String, Error> {
     let output_dir = data_path;
+    let github_token_path = data_path.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
-    let remote = format!("backend=github;repository_owner=OLSF;repository={repo};token={path}/github_token.txt;namespace={ns}", repo=&repo, path=output_dir.to_str().unwrap(), ns=&namespace); 
+    
+    let remote = format!(
+        "backend=github;repository_owner=OLSF;repository={repo};token={path};namespace={ns}",
+        repo=&repo,
+        path=github_token_path.to_str().unwrap(),
+        ns=&namespace
+    ); 
 
     // Get node configs template
     let mut config = NodeConfig::default();
@@ -50,15 +60,15 @@ pub fn create_files(data_path: PathBuf, chain_id: u8, repo: String, namespace: S
     /////////////////////////////////////////
     // Create Genesis File
     let genesis_path = output_dir.join("genesis.blob");
-    storage_helper
-        .genesis_gh(chain_id, &remote, &genesis_path)
-        .unwrap();
-    config.execution.genesis_file_location = genesis_path.clone();
-    ////////////////////////////////
+    // storage_helper
+    //     .genesis_gh(chain_id, &remote, &genesis_path)
+    //     .unwrap();
+    // config.execution.genesis_file_location = genesis_path.clone();
+    // ////////////////////////////////
 
     // Create and save waypoint
     let waypoint = storage_helper
-        .create_waypoint_gh(chain_id, &remote)
+        .create_waypoint_gh(chain_id, &remote, &genesis_path)
         .unwrap();
 
     storage_helper
@@ -139,4 +149,30 @@ pub fn build_genesis_from_repo(
         .genesis_gh(chain_id, &remote, &genesis_path)
         .unwrap();
     genesis_path
+}
+
+pub fn build_genesis(
+    config: ConfigPath,
+    chain_id: u8,
+    shared_backend: SharedBackend,
+    path: PathBuf,
+) -> Result<Waypoint, Error> {
+    let chain_id = ChainId::new(chain_id);
+
+    let genesis_helper = crate::genesis::Genesis {
+        config: config,
+        chain_id: Some(chain_id),
+        backend: shared_backend,
+        path: Some(path),
+    };
+
+    let genesis = genesis_helper.execute()?;
+
+    let path = TempPath::new();
+    let libradb =
+        LibraDB::open(&path, false, None).map_err(|e| Error::UnexpectedError(e.to_string()))?;
+    let db_rw = DbReaderWriter::new(libradb);
+
+    db_bootstrapper::generate_waypoint::<LibraVM>(&db_rw, &genesis)
+        .map_err(|e| Error::UnexpectedError(e.to_string()))
 }

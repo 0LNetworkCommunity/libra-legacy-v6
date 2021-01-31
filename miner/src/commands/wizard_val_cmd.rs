@@ -8,7 +8,6 @@ use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use std::{path::PathBuf};
 use super::{init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
-use std::{thread, time};
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]

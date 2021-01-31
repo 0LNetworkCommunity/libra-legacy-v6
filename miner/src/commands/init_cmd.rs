@@ -4,14 +4,22 @@
 
 use std::{path::PathBuf, str::FromStr};
 
-use crate::{application::app_config, config::MinerConfig, keygen};
+use crate::{application::app_config, config::MinerConfig};
 
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
+// use libra_config::config::{GitHubConfig, Token};
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme, node_files};
 use libra_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey
 };
+use libra_management::{
+    config::ConfigPath,
+    secure_backend::{SecureBackend, SharedBackend}
+
+};
+
+
 use libra_wallet::WalletLibrary;
 
 /// `version` subcommand
@@ -24,13 +32,19 @@ impl Runnable for InitCmd {
     fn run(&self) {
         // let (authkey, account, _) = keygen::account_from_prompt();
         // initialize_miner(authkey, account);
-        build_genesis(
-            PathBuf::from_str("/root/.0L").unwrap(),
-            1,
-            "OLSF".to_owned(),
-            "experimental-genesis".to_owned(),
-            "test".to_owned(),
-        );
+
+        // build_genesis_helper(
+        //     PathBuf::from_str("/root/.0L").unwrap(),
+        //     1,
+        //     "OLSF".to_owned(),
+        //     "experimental-genesis".to_owned(),
+        //     "test".to_owned(),
+        // );
+        // create_node_files();
+        let miner_configs = app_config();
+
+        create_node_files(miner_configs.clone())
+        
     }
 }
 
@@ -51,13 +65,20 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) 
     Ok(())
 }
 
-// pub fn create_node_files() {
-//     node_files::create_files(home_dir, 1, "".to_string(), "test");
-//     // pub fn create_files(data_path: PathBuf, chain_id: u8, repo: String, namespace: String) -> Result<String, Error> {
+pub fn create_node_files(miner_config: MinerConfig) {
+    let home_dir = miner_config.workspace.node_home;
 
-// }
+    node_files::create_files(
+        home_dir, 
+        1, 
+        "experimental-genesis".to_string(),
+        "test".to_string()
+    );
+    // pub fn create_files(data_path: PathBuf, chain_id: u8, repo: String, namespace: String) -> Result<String, Error> {
 
-pub fn build_genesis(
+}
+
+pub fn build_genesis_storage_helper(
     output_dir: PathBuf,
     chain_id: u8,
     repo_owner: String,
@@ -72,3 +93,32 @@ pub fn build_genesis(
         namespace
     ))
 }
+
+// pub fn build_genesis(){
+//     let path = PathBuf::from_str("~/.0L/").unwrap();
+
+//     let config = ConfigPath {
+//         config: Some(path)
+//     };
+//     let chain_id = 1;
+
+//     let secure = SecureBackend::GitHub(GitHubConfig {
+//         repository_owner: "test".to_owned(),
+//         repository: "test".to_owned(),
+//         token: Token::FromDisk(path.join("github_token.txt")),
+//         namespace: None
+//     });
+
+//     let shared_backend = SharedBackend {
+//         shared_backend: Some(secure)
+//     };
+    
+//     node_files::build_genesis(
+//         config,
+//         chain_id,
+//         shared_backend,
+//         path
+//     );
+    
+// }
+

@@ -41,6 +41,7 @@ dirs = "2.0.2"
 transaction-builder = { path = "../language/transaction-builder", version = "0.1.0"}
 libra-network-address = { path = "../network/network-address", version = "0.1.0" }
 libra-genesis-tool = { path = "../config/management/genesis", version = "0.1.0" }
+libra-management = { path = "../config/management", version = "0.1.0" }
 
 [dependencies.abscissa_core]
 version = "0.5.2"

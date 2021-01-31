@@ -264,16 +264,18 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
-    pub fn create_waypoint_gh(&self, chain_id: ChainId, remote: &str ) -> Result<Waypoint, Error> {
+    pub fn create_waypoint_gh(&self, chain_id: ChainId, remote: &str , genesis_path: &PathBuf) -> Result<Waypoint, Error> {
         let args = format!(
             "
                 libra-genesis-tool
                 create-waypoint
                 --chain-id {chain_id}
                 --shared-backend {remote}
+                --genesis-path {genesis_path}
             ",
             chain_id = chain_id,
             remote = remote,
+            genesis_path = genesis_path.to_str().unwrap(),
         );
 
         let command = Command::from_iter(args.split_whitespace());
