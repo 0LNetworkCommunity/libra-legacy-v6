@@ -22,6 +22,8 @@ pub struct Files {
     #[structopt(long)]
     namespace: String,
     #[structopt(long)]
+    github_org: String,
+    #[structopt(long)]
     repo: String,
     #[structopt(long)]
     chain_id: u8,
@@ -36,18 +38,26 @@ pub struct Files {
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        create_files(self.data_path, self.chain_id, self.repo, self.namespace)
+        create_files(self.data_path, self.chain_id, self.github_org, self.repo, self.namespace)
     }
 }
 
-pub fn create_files(output_dir: PathBuf, chain_id: u8, repo: String, namespace: String) -> Result<String, Error> {
+pub fn create_files(
+    output_dir: PathBuf,
+    chain_id: u8,
+    github_org: String,
+    repo: String,
+    namespace: String
+) -> Result<String, Error> {
+
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
     
     let remote = format!(
-        "backend=github;repository_owner=OLSF;repository={repo};token={path};namespace={ns}",
+        "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
         repo=&repo,
+        github_org=&github_org,
         path=github_token_path.to_str().unwrap(),
         ns=&namespace
     ); 
