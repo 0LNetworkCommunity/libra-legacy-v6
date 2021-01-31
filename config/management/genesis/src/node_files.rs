@@ -40,9 +40,8 @@ impl Files {
     }
 }
 
-pub fn create_files(data_path: PathBuf, chain_id: u8, repo: String, namespace: String) -> Result<String, Error> {
-    let output_dir = data_path;
-    let github_token_path = data_path.join("github_token.txt");
+pub fn create_files(output_dir: PathBuf, chain_id: u8, repo: String, namespace: String) -> Result<String, Error> {
+    let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
     
