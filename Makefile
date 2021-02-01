@@ -255,6 +255,11 @@ miner-genesis:
 
 reset: stop clear fixtures init keys genesis daemon
 
+remove-keys:
+	sudo service libra-node stop
+	jq 'del(.["${ACC}/owner", "${ACC}/operator", "root/libra_root", "root/treasury_compliance"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
+	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
+	
 wipe: 
 	history -c
 	shred ~/.bash_history
