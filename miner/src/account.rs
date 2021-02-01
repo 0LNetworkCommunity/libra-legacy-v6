@@ -124,7 +124,7 @@ impl ValConfigs {
         let buf = serde_json::to_string(&self).expect("Config should be export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
-        println!("Account manifest saved to: {:?}", json_path);
+        println!("account manifest created, file saved to: {:?}", json_path);
     }
 
     /// Extract the preimage and proof from a genesis proof block_0.json

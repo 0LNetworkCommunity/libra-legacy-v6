@@ -63,5 +63,5 @@ impl Init {
 pub fn key_store_init(path: &PathBuf, name: &str, keys: KeyScheme, is_genesis: bool) {
     let helper = StorageHelper::new_with_path(path.to_owned().into());
     helper.initialize_with_mnemonic(name.to_owned(), keys, is_genesis);
-    println!("Key file initialized, saved to: {:?}", path.join("key_store.json"));
+    println!("validator keys initialized, file saved to: {:?}", path.join("key_store.json"));
 }

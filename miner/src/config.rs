@@ -166,19 +166,16 @@ impl MinerConfig {
 
         miner_configs.workspace.node_home.push(NODE_HOME);
         
-        println!("Miner not initialized, creating configs at {:?}", miner_configs.workspace.node_home);
         fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
-
-        println!("Enter configs...");
         // Set up github token
         let mut rl = Editor::<()>::new();
 
         // Get the ip address of node.
-        let readline = rl.readline("IP address of miner: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
+        let readline = rl.readline("IP address of your node: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
         miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
         
         // Get optional statement which goes into genesis block
-        miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
+        miner_configs.profile.statement = rl.readline("Enter a (fun) statement to go into your first transaction: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
 
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
@@ -190,7 +187,7 @@ impl MinerConfig {
         file.unwrap().write(&toml.as_bytes())
             .expect("Could not write toml file");
 
-        println!("Application configs saved to {:?}", &miner_toml_path);
+        println!("\nminer app initialized, file saved to: {:?}", &miner_toml_path);
         miner_configs
     }
 

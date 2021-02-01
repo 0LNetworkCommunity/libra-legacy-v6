@@ -38,7 +38,7 @@ pub struct Files {
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        create_files(self.data_path, self.chain_id, &self.github_org, &self.repo, &self.namespace)
+        create_files(self.data_path, self.chain_id, &self.github_org, &self.repo, &self.namespace, true)
     }
 }
 
@@ -47,7 +47,8 @@ pub fn create_files(
     chain_id: u8,
     github_org: &str,
     repo: &str,
-    namespace: &str
+    namespace: &str,
+    is_genesis: bool,
 ) -> Result<String, Error> {
 
     let github_token_path = output_dir.join("github_token.txt");
@@ -66,19 +67,24 @@ pub fn create_files(
     let mut config = NodeConfig::default();
     config.set_data_dir(output_dir.clone());
 
-    /////////////////////////////////////////
-    // Create Genesis File
-    let genesis_path = output_dir.join("genesis.blob");
-    // storage_helper
-    //     .genesis_gh(chain_id, &remote, &genesis_path)
-    //     .unwrap();
-    // config.execution.genesis_file_location = genesis_path.clone();
-    // ////////////////////////////////
 
-    // Create genesis blob and save waypoint
-    let waypoint = storage_helper
+    let genesis_path = output_dir.join("genesis.blob");
+    let waypoint: Waypoint;
+    if is_genesis {
+        // Create genesis blob from repo and saves waypoint
+        waypoint = storage_helper
         .build_genesis_from_github(chain_id, &remote, &genesis_path)
         .unwrap();
+    } else {
+        // assumes genesis.blob and genesis_waypoint is in output_dir, only inserts to key_store.json
+        // read genesis_waypoint file.
+        waypoint = fs::read_to_string( output_dir.join("genesis_waypoint"))
+        .expect("could not read waypoint file.")
+        .trim()
+        .parse()
+        .expect("could not parse waypoint string");
+    }
+
 
     storage_helper
         .insert_waypoint(&namespace, waypoint)

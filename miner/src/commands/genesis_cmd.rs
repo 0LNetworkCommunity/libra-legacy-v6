@@ -2,10 +2,12 @@
 
 #![allow(clippy::never_loop)]
 
+use std::{fs::File, path::{PathBuf}};
+
 use crate::{application::app_config, config::MinerConfig};
 use abscissa_core::{Command, Options, Runnable};
 use libra_genesis_tool::node_files;
-
+use std::io::Write;
 /// `genesis` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct GenesisCmd {
@@ -22,14 +24,12 @@ impl Runnable for GenesisCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config();
-        
         create_node_files(
             &miner_configs.clone(),
             self.chain_id,
             &self.github_org,
             &self.repo,
-        )
-        
+        ) 
     }
 }
 
@@ -40,66 +40,34 @@ pub fn create_node_files(
     repo: &str,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
-    let namespace = miner_config.profile.auth_key.as_str();
+    // 0L convention is for the namespace of the operator to be appended by '-oper'
+    let namespace = miner_config.profile.auth_key.clone() + "-oper";
     node_files::create_files(
-        home_dir, 
+        home_dir.clone(), 
         chain_id,
         github_org,
         repo,
-        namespace
+        &namespace,
+        false
     ).unwrap();
+    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("node.yaml"));
+
 }
 
-// pub fn experimental_defaults() {
-//     let miner_configs = app_config();
-//     create_node_files(
-//         miner_configs.clone(),
-//         1,
-//         "OLSF".to_string(),
-//         "experimental-genesis".to_string(),
-//     );
-// }
-// pub fn _build_genesis_storage_helper(
-//     output_dir: PathBuf,
-//     chain_id: u8,
-//     repo_owner: String,
-//     repo_name: String,
-//     namespace: String,
-// ) -> Result <PathBuf, Error>{
-//     Ok(node_files::build_genesis_from_repo(
-//         output_dir,
-//         chain_id,
-//         repo_owner,
-//         repo_name,
-//         namespace
-//     ))
-// }
+pub fn get_files(home_dir: PathBuf) {
+    let w_res = reqwest::blocking::get("https://raw.githubusercontent.com/OLSF/genesis-archive/main/genesis/genesis_waypoint");
 
-// pub fn build_genesis(){
-//     let path = PathBuf::from_str("~/.0L/").unwrap();
+    let w_path = &home_dir.join("genesis_waypoint");
+    let mut w_file = File::create(&w_path).expect("couldn't create file");
+    let w_content =  w_res.unwrap().text().unwrap();
+    w_file.write_all(w_content.as_bytes()).unwrap();
 
-//     let config = ConfigPath {
-//         config: Some(path)
-//     };
-//     let chain_id = 1;
+    let g_res = reqwest::blocking::get("https://raw.githubusercontent.com/OLSF/genesis-archive/main/genesis/genesis.blob");
 
-//     let secure = SecureBackend::GitHub(GitHubConfig {
-//         repository_owner: "test".to_owned(),
-//         repository: "test".to_owned(),
-//         token: Token::FromDisk(path.join("github_token.txt")),
-//         namespace: None
-//     });
+    let g_path = &home_dir.join("genesis.blob");
+    let mut g_file = File::create(&g_path).expect("couldn't create file");
+    let g_content =  g_res.unwrap().text().unwrap();
+    g_file.write_all(g_content.as_bytes()).unwrap();
 
-//     let shared_backend = SharedBackend {
-//         shared_backend: Some(secure)
-//     };
-    
-//     node_files::build_genesis(
-//         config,
-//         chain_id,
-//         shared_backend,
-//         path
-//     );
-    
-// }
-
+    println!("genesis transactions fetched, file saved to: {:?}", g_path);
+}
