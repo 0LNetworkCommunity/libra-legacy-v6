@@ -35,6 +35,7 @@ pub enum Command {
     Init(crate::init::Init),
     #[structopt(about = "Generates the config files for a validator node")]
     Files(crate::node_files::Files),
+    #[structopt(about = "Includes proof of work to the validator registrations")]
     Mining(crate::mining::Mining),
 }
 

@@ -45,7 +45,7 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) 
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet); // TODO: Make it a reference
     let namespace = miner_config.profile.auth_key.to_owned();
-    init::key_store_init(home_dir, &namespace, keys);
+    init::key_store_init(home_dir, &namespace, keys, false);
 
     // TODO: is this necessary?
     key::set_operator_key(home_dir, &namespace);
