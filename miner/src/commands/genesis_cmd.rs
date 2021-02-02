@@ -12,11 +12,11 @@ use std::io::Write;
 #[derive(Command, Debug, Default, Options)]
 pub struct GenesisCmd {
     #[options(help = "id of the chain")]
-    chain_id: u8,
+    chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
-    github_org: String,
+    github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
-    repo: String,   
+    repo: Option<String>,   
 }
 
 
@@ -24,32 +24,34 @@ impl Runnable for GenesisCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config();
-        create_node_files(
+        genesis_files(
             &miner_configs.clone(),
-            self.chain_id,
+            &self.chain_id,
             &self.github_org,
             &self.repo,
         ) 
     }
 }
 
-pub fn create_node_files(
+pub fn genesis_files(
     miner_config: &MinerConfig,
-    chain_id: u8,
-    github_org: &str,
-    repo: &str,
+    chain_id: &Option<u8>,
+    github_org: &Option<String>,
+    repo: &Option<String>,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
     let namespace = miner_config.profile.auth_key.clone() + "-oper";
+    
     node_files::create_files(
         home_dir.clone(), 
-        chain_id,
-        github_org,
-        repo,
+        chain_id.unwrap_or(1),
+        &github_org.clone().unwrap_or("OLSF".to_string()),
+        &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
-        false
+        if repo.is_some() {true} else {false},
     ).unwrap();
+
     println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("node.yaml"));
 
 }

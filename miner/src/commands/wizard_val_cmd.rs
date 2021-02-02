@@ -50,11 +50,11 @@ impl Runnable for ValWizardCmd {
         status_ok!("\nGenesis OK", "\n...........................\n");
 
         // Build Genesis and node.yaml file
-        genesis_cmd::create_node_files(
+        genesis_cmd::genesis_files(
             &miner_config,
-            self.chain_id.unwrap_or(1),
-            &self.github_org.clone().unwrap_or("OLSF".to_string()),
-            &self.repo.clone().unwrap_or("genesis-archive".to_string()),
+            &self.chain_id,
+            &self.github_org,
+            &self.repo,
         );
         status_ok!("\nNode config OK", "\n...........................\n");
 
