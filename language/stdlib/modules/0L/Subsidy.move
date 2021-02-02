@@ -58,7 +58,8 @@ address 0x1 {
           vm_sig,
           node_address,
           minted_coins,
-          x"", x""
+          x"",
+          x""
         );
         i = i + 1;
       };
@@ -203,14 +204,14 @@ address 0x1 {
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
       // estimated gas unit cost for proof submission.
       let baseline_tx_cost = 1173 * 1;
-      let baseline_cap = baseline_auction_units() * baseline_tx_cost * validator_count;
+      let ceiling = baseline_auction_units() * baseline_tx_cost * validator_count;
 
       Roles::assert_libra_root(vm);
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
         current_proof_price: baseline_tx_cost * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
-        current_cap: baseline_cap,
+        current_cap: ceiling,
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
       });
@@ -231,7 +232,6 @@ address 0x1 {
       let subsidy;
       // check if payments will exceed ceiling.
       if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
-
         // pay the remainder only
         // TODO: This creates a race. Check ordering of list.
         subsidy = state.current_cap - state.current_subsidy_distributed;
@@ -248,7 +248,8 @@ address 0x1 {
         vm,
         miner,
         minted_coins,
-        x"", x""
+        x"",
+        x""
       );
 
       state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
@@ -282,37 +283,81 @@ address 0x1 {
     }
 
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
+
       Roles::assert_libra_root(vm);
+
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+
+      // The targeted amount of proofs to be submitted network-wide per epoch.
       let baseline_auction_units = baseline_auction_units(); 
-      let next_cap = fullnode_subsidy_cap(vm);
-      if (next_cap < 1) return;
+      // The max subsidy that can be paid out in the next epoch.
+      let ceiling = fullnode_subsidy_ceiling(vm);
 
-      let baseline_proof_price = next_cap / baseline_auction_units;
-      let current_auction_multiplier;
-      // set new price
-      if (state.current_proofs_verified > 0) {
-        current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
-      } else {
 
-        current_auction_multiplier = baseline_auction_units / 1;
-      };
+      // Failure case
+      if (ceiling < 1) ceiling = 1;
+
+      state.current_proof_price = calc_auction(
+        ceiling,
+        baseline_auction_units,
+        state.current_proofs_verified
+      );
+      // Set new ceiling
+      state.current_cap = ceiling;
+    }
+
+    // use 0x1::Debug::print;
+    public fun calc_auction(
+      ceiling: u64,
+      baseline_auction_units: u64,
+      current_proofs_verified: u64,
+    ): u64 {
+      // Calculate price per proof
+      // Find the baseline price of a proof, which will be altered based on performance.
+      // let baseline_proof_price = FixedPoint32::divide_u64(
+      //   ceiling,
+      //   FixedPoint32::create_from_raw_value(baseline_auction_units)
+      // );
+      let baseline_proof_price = ceiling/baseline_auction_units;
+      // print(&baseline_proof_price);
+
+      // print(&FixedPoint32::get_raw_value(copy baseline_proof_price));
+      // Calculate the appropriate multiplier.
+      let proofs = current_proofs_verified;
+      if (proofs < 1) proofs = 1;
+
+      let multiplier = baseline_auction_units/proofs;
+      
+      // let multiplier = FixedPoint32::create_from_rational(
+      //   baseline_auction_units,
+      //   proofs
+      // );
+      // print(&multiplier);
+
+      // Set the proof price using multiplier.
       // New unit price cannot be more than the ceiling
-      if ((current_auction_multiplier * baseline_proof_price) > next_cap) {
-        //Note: in failure case, the next miner gets the full ceiling
-        state.current_proof_price = next_cap
-      } else {
-        state.current_proof_price = current_auction_multiplier * baseline_proof_price
+      // let proposed_price = FixedPoint32::multiply_u64(
+      //   baseline_proof_price,
+      //   multiplier
+      // );
+
+      let proposed_price = baseline_proof_price * multiplier;
+
+      // print(&proposed_price);
+
+      if (proposed_price < ceiling) {
+        return proposed_price
       };
-
-      // set new cap
-      state.current_cap = next_cap;
+      //Note: in failure case, the next miner gets the full ceiling
+      return ceiling
     }
 
-    fun fullnode_subsidy_cap(vm: &signer):u64 {
+    fun fullnode_subsidy_ceiling(vm: &signer):u64 {
       //get TX fees from previous epoch.
-      TransactionFee::get_amount_to_distribute(vm)
+      let fees = TransactionFee::get_amount_to_distribute(vm);
+      // Recover from failure case where there are no fees
+      if (fees < baseline_auction_units()) return baseline_auction_units();
+      fees
     }
-
 }
 }
