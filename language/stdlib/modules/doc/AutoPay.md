@@ -408,7 +408,6 @@
   end_epoch: u64,
   percentage: u64
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
-
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // Confirm that no payment <b>exists</b> <b>with</b> the same uid
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay_find">find</a>(addr, uid);

@@ -17,7 +17,8 @@
 -  [Function `set_global_count`](#0x1_Subsidy_set_global_count)
 -  [Function `baseline_auction_units`](#0x1_Subsidy_baseline_auction_units)
 -  [Function `auctioneer`](#0x1_Subsidy_auctioneer)
--  [Function `fullnode_subsidy_cap`](#0x1_Subsidy_fullnode_subsidy_cap)
+-  [Function `calc_auction`](#0x1_Subsidy_calc_auction)
+-  [Function `fullnode_subsidy_ceiling`](#0x1_Subsidy_fullnode_subsidy_ceiling)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -136,7 +137,8 @@
       vm_sig,
       node_address,
       minted_coins,
-      x"", x""
+      x"",
+      x""
     );
     i = i + 1;
   };
@@ -367,14 +369,14 @@
   // baseline_cap: baseline units per epoch times the mininmum <b>as</b> used in tx, times minimum gas per unit.
   // estimated gas unit cost for proof submission.
   <b>let</b> baseline_tx_cost = 1173 * 1;
-  <b>let</b> baseline_cap = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>() * baseline_tx_cost * validator_count;
+  <b>let</b> ceiling = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>() * baseline_tx_cost * validator_count;
 
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
   <b>assert</b>(!<b>exists</b>&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm)), 130112011021);
   move_to&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(vm, <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>{
     previous_epoch_proofs: 0u64,
     current_proof_price: baseline_tx_cost * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
-    current_cap: baseline_cap,
+    current_cap: ceiling,
     current_subsidy_distributed: 0u64,
     current_proofs_verified: 0u64,
   });
@@ -415,7 +417,6 @@
   <b>let</b> subsidy;
   // check <b>if</b> payments will exceed ceiling.
   <b>if</b> (state.current_subsidy_distributed + proposed_subsidy &gt; state.current_cap) {
-
     // pay the remainder only
     // TODO: This creates a race. Check ordering of list.
     subsidy = state.current_cap - state.current_subsidy_distributed;
@@ -432,7 +433,8 @@
     vm,
     miner,
     minted_coins,
-    x"", x""
+    x"",
+    x""
   );
 
   state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
@@ -462,6 +464,8 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">fullnode_reconfig</a>(vm: &signer) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a> {
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
+
+  // <b>update</b> values for the proof auction.
   <a href="Subsidy.md#0x1_Subsidy_auctioneer">auctioneer</a>(vm);
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
    // save
@@ -469,7 +473,6 @@
   // reset counters
   state.current_subsidy_distributed = 0u64;
   state.current_proofs_verified = 0u64;
-
 }
 </code></pre>
 
@@ -545,31 +548,27 @@
 
 
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_auctioneer">auctioneer</a>(vm: &signer) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a> {
+
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
+
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
+
+  // The targeted amount of proofs <b>to</b> be submitted network-wide per epoch.
   <b>let</b> baseline_auction_units = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
-  <b>let</b> next_cap = <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_cap">fullnode_subsidy_cap</a>(vm);
-  <b>if</b> (next_cap &lt; 1) <b>return</b>;
+  // The max subsidy that can be paid out in the next epoch.
+  <b>let</b> ceiling = <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm);
 
-  <b>let</b> baseline_proof_price = next_cap / baseline_auction_units;
-  <b>let</b> current_auction_multiplier;
-  // set new price
-  <b>if</b> (state.current_proofs_verified &gt; 0) {
-    current_auction_multiplier = baseline_auction_units / state.current_proofs_verified;
-  } <b>else</b> {
 
-    current_auction_multiplier = baseline_auction_units / 1;
-  };
-  // New unit price cannot be more than the ceiling
-  <b>if</b> ((current_auction_multiplier * baseline_proof_price) &gt; next_cap) {
-    //Note: in failure case, the next miner gets the full ceiling
-    state.current_proof_price = next_cap
-  } <b>else</b> {
-    state.current_proof_price = current_auction_multiplier * baseline_proof_price
-  };
+  // Failure case
+  <b>if</b> (ceiling &lt; 1) ceiling = 1;
 
-  // set new cap
-  state.current_cap = next_cap;
+  state.current_proof_price = <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(
+    ceiling,
+    baseline_auction_units,
+    state.current_proofs_verified
+  );
+  // Set new ceiling
+  state.current_cap = ceiling;
 }
 </code></pre>
 
@@ -577,13 +576,13 @@
 
 </details>
 
-<a name="0x1_Subsidy_fullnode_subsidy_cap"></a>
+<a name="0x1_Subsidy_calc_auction"></a>
 
-## Function `fullnode_subsidy_cap`
+## Function `calc_auction`
 
 
 
-<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_cap">fullnode_subsidy_cap</a>(vm: &signer): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(ceiling: u64, baseline_auction_units: u64, current_proofs_verified: u64): u64
 </code></pre>
 
 
@@ -592,9 +591,78 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_cap">fullnode_subsidy_cap</a>(vm: &signer):u64 {
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calc_auction">calc_auction</a>(
+  ceiling: u64,
+  baseline_auction_units: u64,
+  current_proofs_verified: u64,
+): u64 {
+  // Calculate price per proof
+  // Find the baseline price of a proof, which will be altered based on performance.
+  // <b>let</b> baseline_proof_price = <a href="FixedPoint32.md#0x1_FixedPoint32_divide_u64">FixedPoint32::divide_u64</a>(
+  //   ceiling,
+  //   <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_raw_value">FixedPoint32::create_from_raw_value</a>(baseline_auction_units)
+  // );
+  <b>let</b> baseline_proof_price = ceiling/baseline_auction_units;
+  // print(&baseline_proof_price);
+
+  // print(&<a href="FixedPoint32.md#0x1_FixedPoint32_get_raw_value">FixedPoint32::get_raw_value</a>(<b>copy</b> baseline_proof_price));
+  // Calculate the appropriate multiplier.
+  <b>let</b> proofs = current_proofs_verified;
+  <b>if</b> (proofs &lt; 1) proofs = 1;
+
+  <b>let</b> multiplier = baseline_auction_units/proofs;
+
+  // <b>let</b> multiplier = <a href="FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(
+  //   baseline_auction_units,
+  //   proofs
+  // );
+  // print(&multiplier);
+
+  // Set the proof price using multiplier.
+  // New unit price cannot be more than the ceiling
+  // <b>let</b> proposed_price = <a href="FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+  //   baseline_proof_price,
+  //   multiplier
+  // );
+
+  <b>let</b> proposed_price = baseline_proof_price * multiplier;
+
+  // print(&proposed_price);
+
+  <b>if</b> (proposed_price &lt; ceiling) {
+    <b>return</b> proposed_price
+  };
+  //Note: in failure case, the next miner gets the full ceiling
+  <b>return</b> ceiling
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Subsidy_fullnode_subsidy_ceiling"></a>
+
+## Function `fullnode_subsidy_ceiling`
+
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm: &signer): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm: &signer):u64 {
   //get TX fees from previous epoch.
-  <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm)
+  <b>let</b> fees = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
+
+  // Recover from failure case <b>where</b> there are no fees
+  <b>if</b> (fees &lt; <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>()) <b>return</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
+  fees
 }
 </code></pre>
 
