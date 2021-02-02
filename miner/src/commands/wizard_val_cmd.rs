@@ -66,6 +66,6 @@ impl Runnable for ValWizardCmd {
         manifest_cmd::write_manifest(None, wallet);
         status_ok!("\nAccount manifest OK", "\n...........................\n");
 
-        status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an account with GAS will need to do this for you.");
+        status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");
     }
 }
