@@ -20,19 +20,9 @@ pub struct InitCmd {}
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-        let (authkey, account, _) = keygen::account_from_prompt();
-        initialize_miner(authkey, account).unwrap();
-
-        // build_genesis_helper(
-        //     PathBuf::from_str("/root/.0L").unwrap(),
-        //     1,
-        //     "OLSF".to_owned(),
-        //     "experimental-genesis".to_owned(),
-        //     "test".to_owned(),
-        // );
-        // create_node_files();
-
-        
+        let (authkey, account, wallet) = keygen::account_from_prompt();
+        let miner_config = initialize_miner(authkey, account).unwrap();
+        initialize_validator(&wallet, &miner_config).unwrap();
     }
 }
 
@@ -43,12 +33,12 @@ pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress) -> 
 
 pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
-    let keys = KeyScheme::new(wallet); // TODO: Make it a reference
+    let keys = KeyScheme::new(wallet);
     let namespace = miner_config.profile.auth_key.to_owned();
     init::key_store_init(home_dir, &namespace, keys, false);
 
-    // TODO: is this necessary?
     key::set_operator_key(home_dir, &namespace);
+    key::set_owner_key(home_dir, &namespace);
 
     Ok(())
 }
@@ -70,31 +60,3 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) 
 //         namespace
 //     ))
 // }
-
-// pub fn build_genesis(){
-//     let path = PathBuf::from_str("~/.0L/").unwrap();
-
-//     let config = ConfigPath {
-//         config: Some(path)
-//     };
-//     let chain_id = 1;
-
-//     let secure = SecureBackend::GitHub(GitHubConfig {
-//         repository_owner: "test".to_owned(),
-//         repository: "test".to_owned(),
-//         token: Token::FromDisk(path.join("github_token.txt")),
-//         namespace: None
-//     });
-
-//     let shared_backend = SharedBackend {
-//         shared_backend: Some(secure)
-//     };
-    
-//     node_files::build_genesis(
-//         config,
-//         chain_id,
-//         shared_backend,
-//         path
-//     );
-// }
-

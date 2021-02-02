@@ -113,15 +113,15 @@ impl StorageHelper {
             storage_root
                 .import_private_key(LIBRA_ROOT_KEY, dummy_root.clone())
                 .unwrap();
-            // let libra_root_key = storage_owner.export_private_key(LIBRA_ROOT_KEY).unwrap();
             storage_root
                 .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
                 .unwrap();
             storage_owner
                 .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
                 .unwrap();
-
         }
+        // storage_oper.set(OWNER_ACCOUNT, peer_id).unwrap();
+
         storage_oper
             .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
             .unwrap();
