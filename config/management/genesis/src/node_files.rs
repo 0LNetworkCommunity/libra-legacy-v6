@@ -70,9 +70,6 @@ pub fn create_files(
     let genesis_path = output_dir.join("genesis.blob");
     let waypoint: Waypoint;
     if is_genesis {
-        storage_helper
-        .genesis_gh(chain_id, &remote, &genesis_path)
-        .unwrap();
         // Create genesis blob from repo and saves waypoint
         waypoint = storage_helper
         .build_genesis_from_github(chain_id, &remote, &genesis_path)
@@ -126,6 +123,7 @@ pub fn create_files(
     config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
     
     config.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+    config.execution.genesis_file_location = genesis_path.clone();
 
     config.consensus.safety_rules.service = SafetyRulesService::Thread;
     config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
