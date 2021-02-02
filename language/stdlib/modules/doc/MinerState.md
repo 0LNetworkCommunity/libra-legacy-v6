@@ -717,8 +717,7 @@ Public APIs ///
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-  borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; 6;
-  <b>true</b>
+  borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; 6
 }
 </code></pre>
 
