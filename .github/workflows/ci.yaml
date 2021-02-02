@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ OLv4, ci ]
+    branches: [ OLv4, 'release**', ci ]
   pull_request:
     branches: [ master, OLv4, 'release**' ]
 
