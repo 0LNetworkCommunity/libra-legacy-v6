@@ -20,19 +20,19 @@ pub struct ValWizardCmd {
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
     #[options(help = "skip the keygen if you have keys")]
-    skip_keys: bool,   
+    keygen: bool,   
 }
 
 impl Runnable for ValWizardCmd {
     /// Print version message
     fn run(&self) {
         // Keygen
-        if !self.skip_keys {
+        if self.keygen {
             keygen_cmd::generate_keys();
             status_ok!("\nKeys generated OK", "\n...........................\n");
         }
 
-        println!("Next you'll need to enter your mnemonic and some other info to configure your validator node and on-chain account.\n\n");
+        status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys you can re-run this command with the flag '--keygen', or run the standalone keygen subcommand with 'miner keygen'.\n\nYour first 0L proof-of-work will be mined now.Expect this to take up to 15 minutes on modern CPUs.\n");
 
         // Get credentials from prompt
         let (authkey, account, wallet) = keygen::account_from_prompt();
@@ -66,6 +66,6 @@ impl Runnable for ValWizardCmd {
         manifest_cmd::write_manifest(None, wallet);
         status_ok!("\nAccount manifest OK", "\n...........................\n");
 
-        status_info!("Your validator node and miner app are now configured.", "You can now use the account.json file to submit the account creation transaction.");
+        status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an account with GAS will need to do this for you.");
     }
 }
