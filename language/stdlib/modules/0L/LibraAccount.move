@@ -786,19 +786,24 @@ module LibraAccount {
         metadata_signature: vector<u8>,
         vm: &signer
     ) acquires LibraAccount , Balance, AccountOperationsCapability {
-        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 120101014010);
+        if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
 
         // Check payee can receive funds in this currency.
-        assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
+        if (!exists<Balance<Token>>(payee)) return; 
+        // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
 
         // Check there is a payer
-        assert(exists_at(payer), Errors::not_published(EACCOUNT));
+        if (!exists_at(payer)) return; 
+
+        // assert(exists_at(payer), Errors::not_published(EACCOUNT));
 
         // Check the payer is in possession of withdraw token.
-        assert(
-            !delegated_withdraw_capability(payer),
-            Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
-        );
+        if (delegated_withdraw_capability(payer)) return; 
+
+        // assert(
+        //     !delegated_withdraw_capability(payer),
+        //     Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
+        // );
 
         // VM can extract the withdraw token.
         let account = borrow_global_mut<LibraAccount>(payer);

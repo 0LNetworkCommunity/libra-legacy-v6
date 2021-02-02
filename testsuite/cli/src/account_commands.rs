@@ -1,6 +1,8 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::fs;
+
 use crate::{
     client_proxy::ClientProxy,
     commands::{blocking_cmd, report_error, subcommand_execute, Command},
@@ -28,7 +30,7 @@ impl Command for AccountCommand {
             Box::new(AccountCommandCreateVal {}),
             Box::new(AccountCommandAutopayEnable {}),
             Box::new(AccountCommandAutopayCreate {}),
-                        
+            Box::new(AccountCommandAutopayBatch {}),            
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -254,8 +256,13 @@ impl Command for AccountCommandAutopayEnable {
         "<sending_account>"
     }
     fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
-        match client.autopay_enable(params, true) {
-            Ok(()) => println!("Created account"),
+        assert!(
+            params.len() == 2,
+            "Invalid number of arguments to enable autopay. Did you pass your account address?"
+        );
+
+        match client.autopay_enable(params[1]) {
+            Ok(()) => println!("Enabled Autopay"),
             Err(e) => report_error("Error creating local account", e),
         }
     }
@@ -280,6 +287,66 @@ impl Command for AccountCommandAutopayCreate {
         match client.autopay_create(params, true) {
             Ok(()) => println!("Created autopay instruction"),
             Err(e) => report_error("Error on autopay instruction tx", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command to create a new autopay instruction.
+pub struct AccountCommandAutopayBatch {}
+
+impl Command for AccountCommandAutopayBatch {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["autopay_batch", "ab"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Batches Autopay instructions from file."
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<file path>"
+    }
+
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        // do loop in here
+        let file = fs::File::open(params[1])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        let inst = json.get("instructions")
+            .expect("file should have array of instructions");
+        let batch = inst.as_array().unwrap().into_iter();
+        // TODO: query instructions on-chain to get highest id number.
+        struct Instruction {
+            uid: u64,
+            destination: String,
+            percent: u64,
+            end_epoch: u64,
+        }
+        let list: Vec<Instruction> = batch.map(|value|{
+            let inst = value.as_object().expect("expected json object");
+            Instruction {
+                uid: inst["uid"].as_u64().unwrap(),
+                destination: inst["destination"].as_str().unwrap().to_owned(),
+                percent: inst["percent_int"].as_u64().unwrap(),
+                end_epoch: inst["end_epoch"].as_u64().unwrap(),
+            }
+        }).collect();
+
+        match client.autopay_enable("0") {
+            Ok(()) => println!("Autopay enabled"),
+            Err(e) => report_error("error creating local account", e),
+        }
+
+        for inst in list {
+            match client.autopay_batch(
+                inst.uid,
+                inst.destination.parse().unwrap(),
+                inst.end_epoch,
+                inst.percent
+            ){
+                Ok(()) => println!("Submitted autopay batch instruction, uid: {}", inst.uid),
+                Err(e) => report_error("Error submitting batch autopay", e),
+            }
         }
     }
 }
