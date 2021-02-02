@@ -4,21 +4,19 @@
 
 use crate::{
     account,
-    block::{build_block},
+    block::build_block,
     config::MinerConfig,
     delay,
     keygen,
-    node_keys::KeyScheme
 };
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};
-// use crate::prelude::app_config;
 
-/// `version` subcommand
+/// `user-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct CreateCmd {
+pub struct UserWizardCmd {
     #[options(help = "path to write account manifest")]
-    path: Option<PathBuf>,
+    home_path: Option<PathBuf>,
     #[options(help = "path to file to be checked")]
     check: bool,
     #[options(help = "regenerates account manifest from mnemonic")]
@@ -29,32 +27,35 @@ pub struct CreateCmd {
     block_zero: Option<PathBuf>,
 }
 
-impl Runnable for CreateCmd {
+impl Runnable for UserWizardCmd {
     /// Print version message
     fn run(&self) {
         // let miner_configs = app_config();
-        let path = self.path.clone().unwrap_or_else(|| PathBuf::from("."));
+        let home_path = self.home_path.clone().unwrap_or_else(|| PathBuf::from("."));
         if self.check {
-            check(path);
+            check(home_path);
         } else {
-            create(path, self.fix, self.validator, &self.block_zero);
+            wizard(home_path, self.fix,  &self.block_zero);
         }
     }
 }
 
-fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<PathBuf>) {
+fn wizard(path: PathBuf, is_fix: bool, block_zero: &Option<PathBuf>) {
     let mut miner_configs = MinerConfig::default();
-
-    let (authkey, account, wallet) = if is_fix { 
+    
+    let (authkey, account, _) = if is_fix { 
         keygen::account_from_prompt()
+        
     } else {
         keygen::keygen()
     };
 
+    // Where to save block_0
+    miner_configs.workspace.node_home = path.clone();
     miner_configs.profile.auth_key = authkey.to_string();
     miner_configs.profile.account = account;
-    let keys = KeyScheme::new(wallet);
 
+    // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {
         block = build_block::parse_block_file(block_path.to_owned());
@@ -62,20 +63,9 @@ fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<P
         block = build_block::write_genesis(&miner_configs);
     }
 
-    if is_validator {
-        // TODO: Parse ip from  miner.toml using abscissa app_config()
-        // otherwise the ip will default to 0.0.0.0
-        // miner_configs.profile.ip 
-        account::ValConfigs::new(
-            block,
-            keys,  
-            miner_configs.profile.ip.to_string()
-        ).create_manifest(path);
-
-    } else {
-        account::UserConfigs::new(block)
-        .create_manifest(path);
-    } 
+    // Create Manifest
+    account::UserConfigs::new(block)
+    .create_manifest(path);
 }
 
 /// Checks the format of the account manifest, including vdf proof

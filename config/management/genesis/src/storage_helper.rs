@@ -15,11 +15,11 @@ use libra_network_address::NetworkAddress;
 use libra_secure_storage::{CryptoStorage, KVStorage, NamespacedStorage, OnDiskStorage, Storage};
 use libra_types::{chain_id::ChainId, transaction::Transaction, waypoint::Waypoint};
 use vm_genesis::GenesisMiningProof;
-use std::{fs::File, path::{Path, PathBuf}};
+use std::{fs::{self, File}, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
 //////// 0L ////////
-use miner::node_keys::KeyScheme;
+use crate::keyscheme::KeyScheme;
 
 pub struct StorageHelper {
     temppath: libra_temppath::TempPath,
@@ -35,6 +35,7 @@ impl StorageHelper {
 
     //////// 0L ////////
     pub fn new_with_path(path: PathBuf) -> Self {
+        fs::create_dir_all(&path).unwrap();
         let path = libra_temppath::TempPath::new_with_dir(path);
         path.create_as_file().expect("Failed on create_as_file");
         File::create(path.path()).expect("Could not create file");
@@ -99,25 +100,28 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
-    pub fn initialize_with_mnemonic(&self, namespace: String, mnemonic: String) {
-        let keys = KeyScheme::new_from_mnemonic(mnemonic);
-        let mut storage_root = self.storage("root".to_owned());
+    pub fn initialize_with_mnemonic(&self, namespace: String, keys: KeyScheme, is_genesis: bool) {
+        
         let mut storage_owner = self.storage(namespace.clone());
         let mut storage_oper = self.storage(namespace.clone() + "-oper");
 
-        // let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
-        let dummy_root = Ed25519PrivateKey::from_encoded_string("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
+        if is_genesis {
+            // Data needed for testnet, swarm, and genesis ceremony.
+            let mut storage_root = self.storage("root".to_owned());
+            let dummy_root = Ed25519PrivateKey::from_encoded_string("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
 
-        storage_root
-            .import_private_key(LIBRA_ROOT_KEY, dummy_root.clone())
-            .unwrap();
-        // let libra_root_key = storage_owner.export_private_key(LIBRA_ROOT_KEY).unwrap();
-        storage_root
-            .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
-            .unwrap();
-        storage_owner
-            .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
-            .unwrap();
+            storage_root
+                .import_private_key(LIBRA_ROOT_KEY, dummy_root.clone())
+                .unwrap();
+            // let libra_root_key = storage_owner.export_private_key(LIBRA_ROOT_KEY).unwrap();
+            storage_root
+                .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
+                .unwrap();
+            storage_owner
+                .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
+                .unwrap();
+
+        }
         storage_oper
             .import_private_key(OPERATOR_KEY, keys.child_1_operator.get_private_key())
             .unwrap();
@@ -263,16 +267,18 @@ impl StorageHelper {
     }
 
     ///////// 0L  /////////
-    pub fn create_waypoint_gh(&self, chain_id: ChainId, remote: &str ) -> Result<Waypoint, Error> {
+    pub fn build_genesis_from_github(&self, chain_id: ChainId, remote: &str , genesis_path: &PathBuf) -> Result<Waypoint, Error> {
         let args = format!(
             "
                 libra-genesis-tool
                 create-waypoint
                 --chain-id {chain_id}
                 --shared-backend {remote}
+                --genesis-path {genesis_path}
             ",
             chain_id = chain_id,
             remote = remote,
+            genesis_path = genesis_path.to_str().unwrap(),
         );
 
         let command = Command::from_iter(args.split_whitespace());

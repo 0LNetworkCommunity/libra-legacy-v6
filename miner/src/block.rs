@@ -82,7 +82,7 @@ pub mod build_block {
         let block = mine_genesis(config);
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        println!("Genesis proof mined. File path: {:?}", &config.get_block_dir().join("block_0.json"));
+        println!("block zero proof mined, file saved to: {:?}", &config.get_block_dir().join("block_0.json"));
         block
     }
     /// Mine one block
@@ -217,7 +217,7 @@ pub mod build_block {
 
     /// Parse a block_x.json file and return a Block
     pub fn parse_block_file(path: PathBuf) -> Block{
-        let file = fs::File::open(&path).expect("Could not open block file");
+        let file = fs::File::open(&path).expect(&format!("Could not open block file: {:?}", path.to_str()));
         let reader = BufReader::new(file);
         serde_json::from_reader(reader).unwrap()
     }

@@ -6,7 +6,7 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use std::path::PathBuf;
 
 
-/// `start` subcommand
+/// `swarm` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
 /// definition, and is defined in the `gumdrop` crate. See their documentation

@@ -1,6 +1,8 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::path::PathBuf;
+
 use executor::db_bootstrapper;
 use libra_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
 use libra_temppath::TempPath;
@@ -20,6 +22,9 @@ pub struct CreateWaypoint {
     chain_id: Option<ChainId>,
     #[structopt(flatten)]
     shared_backend: SharedBackend,
+    #[structopt(long)]
+    genesis_path: PathBuf,
+
 }
 
 impl CreateWaypoint {
@@ -28,7 +33,7 @@ impl CreateWaypoint {
             config: self.config,
             chain_id: self.chain_id,
             backend: self.shared_backend,
-            path: None,
+            path: Some(self.genesis_path),
         };
 
         let genesis = genesis_helper.execute()?;
@@ -42,3 +47,4 @@ impl CreateWaypoint {
             .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
 }
+

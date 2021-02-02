@@ -1,11 +1,13 @@
 //! Formatters for libra account creation
-use crate::{block::Block, node_keys::KeyScheme};
+use crate::block::Block;
 use libra_crypto::x25519::PublicKey;
 use libra_types::account_address::AccountAddress;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
+use libra_genesis_tool::keyscheme::KeyScheme;
+
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -122,7 +124,7 @@ impl ValConfigs {
         let buf = serde_json::to_string(&self).expect("Config should be export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
-        println!("Exported account manifest to {:?}", json_path);
+        println!("account manifest created, file saved to: {:?}", json_path);
     }
 
     /// Extract the preimage and proof from a genesis proof block_0.json
@@ -155,7 +157,7 @@ impl UserConfigs {
         let buf = serde_json::to_string(&self ).expect("Manifest should export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
-        println!("Exported account manifest to {:?}", json_path);
+        println!("Account manifest saved to: {:?}", json_path);
     }
    /// Extract the preimage and proof from a genesis proof block_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs,std::io::Error> {
