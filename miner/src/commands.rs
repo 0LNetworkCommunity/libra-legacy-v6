@@ -77,11 +77,11 @@ pub enum MinerCmd {
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
 
-    /// The `swarm` subcommand
+    /// The `create` subcommand
     #[options(help = "wizard to create accounts and local configs")]
     Create(CreateCmd),
 
-    /// The `swarm` subcommand
+    /// The `init` subcommand
     #[options(help = "initialize miner configs miner.toml")]
     Init(InitCmd),
 }

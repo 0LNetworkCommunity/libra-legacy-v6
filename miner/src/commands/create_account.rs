@@ -2,9 +2,17 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{account, block::{build_block}, config, delay, keygen, node_keys::KeyScheme};
+use crate::{
+    account,
+    block::{build_block},
+    config::MinerConfig,
+    delay,
+    keygen,
+    node_keys::KeyScheme
+};
 use abscissa_core::{Command, Options, Runnable};
-use std::path::PathBuf;
+use std::{path::PathBuf};
+// use crate::prelude::app_config;
 
 /// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -24,7 +32,7 @@ pub struct CreateCmd {
 impl Runnable for CreateCmd {
     /// Print version message
     fn run(&self) {
-        
+        // let miner_configs = app_config();
         let path = self.path.clone().unwrap_or_else(|| PathBuf::from("."));
         if self.check {
             check(path);
@@ -35,22 +43,17 @@ impl Runnable for CreateCmd {
 }
 
 fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<PathBuf>) {
-    let mut miner_configs = config::MinerConfig::default();
-    let keys;
+    let mut miner_configs = MinerConfig::default();
 
-    if is_fix {
-        let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
-        let (authkey, account, wallet) = keygen::get_account_from_mnem(mnemonic_string);
-
-        miner_configs.profile.auth_key = authkey.to_string();
-        miner_configs.profile.account = account;
-        keys = KeyScheme::new(wallet);
+    let (authkey, account, wallet) = if is_fix { 
+        keygen::account_from_prompt()
     } else {
-        let (authkey, account, wallet) = keygen::keygen();
-        miner_configs.profile.auth_key = authkey.to_string();
-        miner_configs.profile.account = account;
-        keys = KeyScheme::new(wallet);
-    }
+        keygen::keygen()
+    };
+
+    miner_configs.profile.auth_key = authkey.to_string();
+    miner_configs.profile.account = account;
+    let keys = KeyScheme::new(wallet);
 
     let block;
     if let Some(block_path) = block_zero {
@@ -60,6 +63,9 @@ fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<P
     }
 
     if is_validator {
+        // TODO: Parse ip from  miner.toml using abscissa app_config()
+        // otherwise the ip will default to 0.0.0.0
+        // miner_configs.profile.ip 
         account::ValConfigs::new(
             block,
             keys,  
@@ -75,6 +81,7 @@ fn create(path: PathBuf, is_fix: bool, is_validator: bool, block_zero: &Option<P
 /// Checks the format of the account manifest, including vdf proof
 fn check(path: PathBuf) {
     let user_data = account::UserConfigs::get_init_data(&path).expect(&format!("could not parse manifest in {:?}", &path));
+
     match delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof) {
         true => println!("Proof verified in {:?}", &path),
         false => println!("Invalid proof in {:?}", &path)

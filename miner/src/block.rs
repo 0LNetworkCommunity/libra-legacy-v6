@@ -82,7 +82,7 @@ pub mod build_block {
         let block = mine_genesis(config);
         //TODO: check for overwriting file...
         write_json(&block, &config.get_block_dir());
-        println!("Genesis proof mined. File path: {:?}block_0.json", &config.get_block_dir());
+        println!("Genesis proof mined. File path: {:?}", &config.get_block_dir().join("block_0.json"));
         block
     }
     /// Mine one block
