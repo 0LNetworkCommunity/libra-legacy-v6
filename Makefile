@@ -159,8 +159,7 @@ genesis:
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
-	--repo ${REPO_NAME} \
-	--github-org ${REPO_ORG}
+	--repo ${REPO_NAME}
 
 
 #### NODE MANAGEMENT ####
@@ -193,7 +192,7 @@ daemon:
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
 
 #### HELPERS ####
@@ -255,11 +254,6 @@ miner-genesis:
 
 reset: stop clear fixtures init keys genesis daemon
 
-remove-keys:
-	sudo service libra-node stop
-	jq 'del(.["${ACC}/owner", "${ACC}/operator", "root/libra_root", "root/treasury_compliance"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
-	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
-	
 wipe: 
 	history -c
 	shred ~/.bash_history
@@ -276,10 +270,8 @@ smoke-reg:
 	make clear fix
 	echo ${MNEM} | head -c -1 | make register
 smoke-gen:
-	make genesis start
+	make genesis
 smoke:
 	make smoke-reg
-# Create configs and start
 	make smoke-gen
-
-
+	make start
