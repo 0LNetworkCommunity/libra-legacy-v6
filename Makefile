@@ -159,7 +159,8 @@ genesis:
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
-	--repo ${REPO_NAME}
+	--repo ${REPO_NAME} \
+	--github-org ${REPO_ORG}
 
 
 #### NODE MANAGEMENT ####
