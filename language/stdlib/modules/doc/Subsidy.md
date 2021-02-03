@@ -659,7 +659,6 @@
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_fullnode_subsidy_ceiling">fullnode_subsidy_ceiling</a>(vm: &signer):u64 {
   //get TX fees from previous epoch.
   <b>let</b> fees = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
-
   // Recover from failure case <b>where</b> there are no fees
   <b>if</b> (fees &lt; <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>()) <b>return</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
   fees

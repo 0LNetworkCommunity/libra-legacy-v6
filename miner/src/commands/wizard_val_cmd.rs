@@ -19,8 +19,10 @@ pub struct ValWizardCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
-    #[options(help = "skip the keygen if you have keys")]
+    #[options(help = "run keygen before wizard")]
     keygen: bool,   
+    #[options(help = "build genesis from ceremony repo")]
+    rebuild_genesis: bool,  
 }
 
 impl Runnable for ValWizardCmd {
@@ -46,15 +48,22 @@ impl Runnable for ValWizardCmd {
         init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
         status_ok!("\nKey file OK", "\n...........................\n");
 
-        genesis_cmd::get_files(miner_config.workspace.node_home.clone());
-        status_ok!("\nGenesis OK", "\n...........................\n");
+        if !self.rebuild_genesis {
+            genesis_cmd::get_files(
+                miner_config.workspace.node_home.clone(),
+                &self.github_org,
+                &self.repo,
+            );
+            status_ok!("\nGenesis OK", "\n...........................\n");
+        }
 
         // Build Genesis and node.yaml file
-        genesis_cmd::create_node_files(
+        genesis_cmd::genesis_files(
             &miner_config,
-            self.chain_id.unwrap_or(1),
-            &self.github_org.clone().unwrap_or("OLSF".to_string()),
-            &self.repo.clone().unwrap_or("genesis-archive".to_string()),
+            &self.chain_id,
+            &self.github_org,
+            &self.repo,
+            &self.rebuild_genesis,
         );
         status_ok!("\nNode config OK", "\n...........................\n");
 
