@@ -25,7 +25,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
+        assert(MinerState::get_count_in_epoch(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -39,7 +39,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
+        assert(MinerState::get_count_in_epoch(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -53,7 +53,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
+        assert(MinerState::get_count_in_epoch(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -68,7 +68,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
+        assert(MinerState::get_count_in_epoch(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -82,7 +82,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
+        assert(MinerState::get_count_in_epoch(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -97,7 +97,7 @@ script {
 
     fun main(sender: &signer) {
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count(Signer::address_of(sender)) == 5, 73570001);
+        assert(MinerState::get_count_in_epoch(Signer::address_of(sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED

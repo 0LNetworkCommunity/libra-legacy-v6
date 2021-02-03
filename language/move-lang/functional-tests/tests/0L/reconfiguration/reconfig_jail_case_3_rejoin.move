@@ -27,7 +27,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357180101011000);
+        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357180101011000);
     }
 }
 //check: EXECUTED
@@ -41,7 +41,7 @@ script {
         // Alice is the only one that can update her mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357180102011000);
+        assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357180102011000);
     }
 }
 //check: EXECUTED

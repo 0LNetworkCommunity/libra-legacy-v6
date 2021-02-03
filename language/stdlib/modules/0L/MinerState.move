@@ -15,7 +15,6 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
-    // use 0x1::FullnodeState;
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -98,8 +97,6 @@ address 0x1 {
       };
 
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-      // FullnodeState::val_init(miner_sig);
-
     }
 
     // This function verifies the proof and commits to chain.
@@ -127,10 +124,6 @@ address 0x1 {
       };
       
       verify_and_update_state(miner_addr, proof, true);
-
-      // TODO: This should not increment for validators in set.
-      // Including LibraSystem::is_validator causes a dependency cycling
-      // FullnodeState::inc_proof(miner_sign);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -282,12 +275,6 @@ address 0x1 {
       };
       
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-      // Subsidy::queue_fullnode_subisdy(Signer::address_of(miner_sig));
-      //also add the miner to validator universe
-      //TODO: #254 ValidatorUniverse::add_validators need to check permission.
-      // Note: this should be in LibraAccount but causes cyclic dependency.
-      // ValidatorUniverse::add_validator(miner_sig);
-
     }
 
 
@@ -313,8 +300,8 @@ address 0x1 {
 
     // Get latest epoch mined by node on given address
     // Permissions: public ony VM can call this function.
-    public fun get_miner_latest_epoch(account: &signer, addr: address): u64 acquires MinerProofHistory {
-      let sender = Signer::address_of(account);
+    public fun get_miner_latest_epoch(vm: &signer, addr: address): u64 acquires MinerProofHistory {
+      let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130114014010);
       let addr_state = borrow_global<MinerProofHistory>(addr);
       *&addr_state.latest_epoch_mining
@@ -325,9 +312,9 @@ address 0x1 {
       state.epochs_since_last_account_creation = 0;
     }
 
-    ////////////////////
-    /// Public APIs ///
-    ///////////////////
+    //////////////////////
+    /// Public Getters ///
+    /////////////////////
 
     // Returns number of epochs for input miner's state
     // Permissions: PUBLIC, ANYONE
@@ -336,6 +323,9 @@ address 0x1 {
       borrow_global<MinerProofHistory>(node_addr).epochs_validating_and_mining
     }
 
+    public fun get_count_in_epoch(miner_addr: address): u64 acquires MinerProofHistory {
+      borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+    }
     // Returns if the miner is above the account creation rate-limit
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
@@ -385,10 +375,6 @@ address 0x1 {
       borrow_global<MinerProofHistory>(miner_addr).contiguous_epochs_validating_and_mining
     }
 
-    public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
-      assert(Testnet::is_testnet()== true, 130115014011);
-      borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
-    }
 
     public fun test_helper_set_rate_limit(miner_addr: address, value: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);
