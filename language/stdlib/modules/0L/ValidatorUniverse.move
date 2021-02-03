@@ -18,7 +18,11 @@ address 0x1 {
         validators: vector<address>
     }
 
-    // function to initialize ValidatorUniverse in genesis.
+    resource struct JailedBit {
+        is_jailed: bool
+    }
+
+    // Genesis function to initialize ValidatorUniverse struct in 0x0.
     // This is triggered in new epoch by Configuration in Genesis.move
     // Function code: 01 Prefix: 220101
     public fun initialize(account: &signer){
@@ -35,7 +39,8 @@ address 0x1 {
     // TODO: This is public, anyone can add themselves to the validator universe.
     public fun add_validator(sender: &signer) acquires ValidatorUniverse {
       let addr = Signer::address_of(sender);
-      MinerState::node_above_thresh(sender, addr);
+      // Miner can only add self to set if the mining is above a threshold.
+      assert(MinerState::node_above_thresh(sender, addr), 220102014010);
       let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       let (in_set, _) = Vector::index_of<address>(&state.validators, &addr);
       if (!in_set) {
@@ -60,6 +65,29 @@ address 0x1 {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       *&state.validators
+    }
+
+    public fun jail(vm: &signer, validator: address) acquires JailedBit{
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
+      borrow_global_mut<JailedBit>(validator).is_jailed = true;
+    }
+
+    public fun un_jail(sender: &signer, validator: address) acquires JailedBit {
+      // only a validator can un-jail themselves.
+      assert(Signer::address_of(sender) == validator, 220101014010);
+      
+      if (!exists<JailedBit>(validator)) {
+        move_to<JailedBit>(sender, JailedBit{
+          is_jailed: false
+        });
+      };
+      // check the node has been mining before unjailing.
+      assert(MinerState::node_above_thresh(sender, validator), 220102014010);
+      borrow_global_mut<JailedBit>(validator).is_jailed = false;
+    }
+
+    public fun is_jailed(validator: address): bool acquires JailedBit {
+      borrow_global_mut<JailedBit>(validator).is_jailed
     }
 
     public fun genesis_helper(vm: &signer, validator: address) acquires ValidatorUniverse {

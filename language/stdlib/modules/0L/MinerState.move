@@ -15,6 +15,10 @@ address 0x1 {
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
+
+    resource struct MinerList {
+      list: vector<address>
+    }
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -47,6 +51,15 @@ address 0x1 {
       }
     }
 
+    // Private, can only be called within module
+    fun increment_miners_list(miner: address) acquires MinerList {
+      if (exists<MinerList>(0x0)) {
+        let state = borrow_global_mut<MinerList>(0x0);
+        if (!Vector::contains<address>(&mut state.list, &miner)) {
+          Vector::push_back<address>(&mut state.list, miner);
+        }
+      }
+    }
     // Helper function for genesis to process genesis proofs.
     // Permissions: PUBLIC, ONLY VM, AT GENESIS.
     public fun genesis_helper (
@@ -54,7 +67,7 @@ address 0x1 {
       miner_sig: &signer,
       challenge: vector<u8>,
       solution: vector<u8>
-    ) acquires MinerProofHistory{
+    ) acquires MinerProofHistory, MinerList {
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
       //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
@@ -74,7 +87,7 @@ address 0x1 {
       difficulty: u64,
       challenge: vector<u8>,
       solution: vector<u8>
-    ) acquires MinerProofHistory {
+    ) acquires MinerProofHistory, MinerList {
       assert(Testnet::is_testnet(), 130102014010);
       //doubly check this is in test env.
       assert(Globals::get_epoch_length() == 60, 130102024010);
@@ -105,7 +118,7 @@ address 0x1 {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires MinerProofHistory {
+    ) acquires MinerProofHistory, MinerList {
 
       //NOTE: Does not check that the Sender is the Signer. Which we must skip for the onboarding transaction.
 
@@ -132,10 +145,10 @@ address 0x1 {
       miner_addr: address,
       proof: Proof,
       steady_state: bool
-    ) acquires MinerProofHistory {
+    ) acquires MinerProofHistory, MinerList {
       // Get a mutable ref to the current state
       let miner_history = borrow_global_mut<MinerProofHistory>(miner_addr);
-
+      
       // For onboarding transaction the VDF has already been checked.
       // only do this in steady state.
       if (steady_state) {
@@ -146,6 +159,7 @@ address 0x1 {
       let valid = VDF::verify(&proof.challenge, &proof.difficulty, &proof.solution);
       assert(valid, 130108041021);
 
+      increment_miners_list(miner_addr);
 
       miner_history.previous_proof_hash = Hash::sha3_256(*&proof.solution);
       
@@ -225,19 +239,29 @@ address 0x1 {
 
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer, eligible_validators: &vector<address>) acquires MinerProofHistory {
+    public fun reconfig(vm: &signer, eligible_validators: &vector<address>) acquires MinerProofHistory, MinerList {
       // Check permissions
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130111014010);
+
+      // check minerlist
+      // Migration on hot upgrade
+      if (!exists<MinerList>(0x0)) {
+        move_to<MinerList>(vm, MinerList {
+          list: *eligible_validators
+        });
+      };
+
+      let minerlist_state = borrow_global_mut<MinerList>(0x0);
 
       // // Get list of validators from ValidatorUniverse
       // let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
 
       // Iterate through validators and call update_metrics for each validator that had proofs this epoch
-      let size = Vector::length<address>(eligible_validators);
+      let size = Vector::length<address>(& *&minerlist_state.list); //TODO: These references are weird
       let i = 0;
       while (i < size) {
-          let val = *Vector::borrow(eligible_validators, i);
+          let val = *Vector::borrow(& *&minerlist_state.list, i); //TODO: These references are weird
 
           // For testing: don't call update_metrics unless there is account state for the address.
           if (exists<MinerProofHistory>(val)){
@@ -245,11 +269,15 @@ address 0x1 {
           };
           i = i + 1;
       };
+
+      //reset miner list
+      minerlist_state.list = Vector::empty<address>();
+
     }
 
     // Function to initialize miner state
     // Permissions: PUBLIC, Signer, Validator only
-    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory {
+    public fun init_miner_state(miner_sig: &signer, challenge: &vector<u8>, solution: &vector<u8>) acquires MinerProofHistory, MinerList {
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
