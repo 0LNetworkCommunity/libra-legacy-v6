@@ -19,7 +19,7 @@ pub struct ValWizardCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
-    #[options(help = "skip the keygen if you have keys")]
+    #[options(help = "run keygen before wizard")]
     keygen: bool,   
 }
 
