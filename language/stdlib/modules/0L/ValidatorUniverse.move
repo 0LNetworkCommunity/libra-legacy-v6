@@ -11,6 +11,7 @@ address 0x1 {
     use 0x1::Vector;
     use 0x1::Signer;
     use 0x1::CoreAddresses;
+    use 0x1::MinerState;
 
     // resource for tracking the universe of accounts that have submitted a mined proof correctly, with the epoch number.
     resource struct ValidatorUniverse {
@@ -31,8 +32,10 @@ address 0x1 {
 
     // This function is called to add validator to the validator universe.
     // Function code: 02 Prefix: 220102
+    // TODO: This is public, anyone can add themselves to the validator universe.
     public fun add_validator(sender: &signer) acquires ValidatorUniverse {
       let addr = Signer::address_of(sender);
+      MinerState::node_above_thresh(sender, addr);
       let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       let (in_set, _) = Vector::index_of<address>(&state.validators, &addr);
       if (!in_set) {
@@ -42,7 +45,7 @@ address 0x1 {
 
     // Permissions: Public, VM Only
     public fun remove_validator(vm: &signer, validator: address) acquires ValidatorUniverse {
-      if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) { return }; // don't use assert(), will cause halt.
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
 
       let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       let (in_set, index) = Vector::index_of<address>(&state.validators, &validator);
@@ -57,6 +60,17 @@ address 0x1 {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       *&state.validators
+    }
+
+    public fun genesis_helper(vm: &signer, validator: address) acquires ValidatorUniverse {
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
+      // let addr = Signer::address_of(sender);
+      // MinerState::node_above_thresh(sender, addr);
+      let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+      let (in_set, _) = Vector::index_of<address>(&state.validators, &validator);
+      if (!in_set) {
+        Vector::push_back<address>(&mut state.validators, validator);
+      }
     }
   }
 }

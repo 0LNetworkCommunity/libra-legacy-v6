@@ -455,6 +455,19 @@ fn create_and_initialize_owners_operators(
                 Value::vector_u8(proof)
             ]
         );
+
+        exec_function(
+            session,
+            log_context,
+            libra_root_address,
+            "ValidatorUniverse",
+            "genesis_helper",
+            vec![],
+            vec![
+                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::address(owner_address),
+            ]
+        );
     }
 
     println!("1 ======== Create OP Accounts");

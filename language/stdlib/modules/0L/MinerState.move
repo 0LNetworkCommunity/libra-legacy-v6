@@ -8,14 +8,14 @@ address 0x1 {
     use 0x1::VDF;
     use 0x1::Vector;
     use 0x1::CoreAddresses;
-    use 0x1::ValidatorUniverse;
+    // use 0x1::ValidatorUniverse;
     use 0x1::Signer;
     use 0x1::LibraConfig;
     use 0x1::Globals;
     use 0x1::Hash;
     use 0x1::Testnet;
     use 0x1::Stats;
-    use 0x1::FullnodeState;
+    // use 0x1::FullnodeState;
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -98,7 +98,7 @@ address 0x1 {
       };
 
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
-      FullnodeState::val_init(miner_sig);
+      // FullnodeState::val_init(miner_sig);
 
     }
 
@@ -130,7 +130,7 @@ address 0x1 {
 
       // TODO: This should not increment for validators in set.
       // Including LibraSystem::is_validator causes a dependency cycling
-      FullnodeState::inc_proof(miner_sign);
+      // FullnodeState::inc_proof(miner_sign);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
@@ -205,7 +205,6 @@ address 0x1 {
       miner_history.count_proofs_in_epoch = 0u64;
     }
 
-
     public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
       let miner_history= borrow_global<MinerProofHistory>(miner_addr);
       return (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold())
@@ -233,19 +232,19 @@ address 0x1 {
 
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer) acquires MinerProofHistory {
+    public fun reconfig(vm: &signer, eligible_validators: &vector<address>) acquires MinerProofHistory {
       // Check permissions
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130111014010);
 
-      // Get list of validators from ValidatorUniverse
-      let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
+      // // Get list of validators from ValidatorUniverse
+      // let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
 
       // Iterate through validators and call update_metrics for each validator that had proofs this epoch
-      let size = Vector::length<address>(&eligible_validators);
+      let size = Vector::length<address>(eligible_validators);
       let i = 0;
       while (i < size) {
-          let val = *Vector::borrow(&eligible_validators, i);
+          let val = *Vector::borrow(eligible_validators, i);
 
           // For testing: don't call update_metrics unless there is account state for the address.
           if (exists<MinerProofHistory>(val)){
@@ -287,9 +286,8 @@ address 0x1 {
       //also add the miner to validator universe
       //TODO: #254 ValidatorUniverse::add_validators need to check permission.
       // Note: this should be in LibraAccount but causes cyclic dependency.
-      ValidatorUniverse::add_validator(miner_sig);
-      FullnodeState::val_init(miner_sig);
-      FullnodeState::inc_proof(miner_sig);
+      // ValidatorUniverse::add_validator(miner_sig);
+
     }
 
 
