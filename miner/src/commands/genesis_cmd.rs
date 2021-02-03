@@ -56,15 +56,26 @@ pub fn genesis_files(
 
 }
 
-pub fn get_files(home_dir: PathBuf) {
-    let w_res = reqwest::blocking::get("https://raw.githubusercontent.com/OLSF/genesis-archive/main/genesis/genesis_waypoint");
+pub fn get_files(
+    home_dir: PathBuf,
+    github_org: &Option<String>,
+    repo: &Option<String>
+) {
+    let github_org = github_org.unwrap_or("OLSF".to_string());
+    let repo = repo.unwrap_or("genesis-archive".to_string());
+
+
+    let base_url = format!("https://raw.githubusercontent.com/{github_org}/{repo}/main/genesis/", github_org=github_org, repo=repo);
+
+    let w_res = reqwest::blocking::get(&format!("{}genesis_waypoint", base_url));
 
     let w_path = &home_dir.join("genesis_waypoint");
     let mut w_file = File::create(&w_path).expect("couldn't create file");
     let w_content =  w_res.unwrap().text().unwrap();
     w_file.write_all(w_content.as_bytes()).unwrap();
 
-    let g_res = reqwest::blocking::get("https://raw.githubusercontent.com/OLSF/genesis-archive/main/genesis/genesis.blob");
+    let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url));
+
 
     let g_path = &home_dir.join("genesis.blob");
     let mut g_file = File::create(&g_path).expect("couldn't create file");

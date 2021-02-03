@@ -47,7 +47,7 @@ pub fn create_files(
     github_org: &str,
     repo: &str,
     namespace: &str,
-    is_genesis: bool,
+    rebuild_genesis: bool,
 ) -> Result<String, Error> {
 
     let github_token_path = output_dir.join("github_token.txt");
@@ -69,7 +69,7 @@ pub fn create_files(
 
     let genesis_path = output_dir.join("genesis.blob");
     let waypoint: Waypoint;
-    if is_genesis {
+    if rebuild_genesis {
         // Create genesis blob from repo and saves waypoint
         waypoint = storage_helper
         .build_genesis_from_github(chain_id, &remote, &genesis_path)
