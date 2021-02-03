@@ -80,11 +80,10 @@ pub fn get_files(
 
     let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url));
 
-
     let g_path = &home_dir.join("genesis.blob");
     let mut g_file = File::create(&g_path).expect("couldn't create file");
-    let g_content =  g_res.unwrap().text().unwrap();
-    g_file.write_all(g_content.as_bytes()).unwrap();
+    let g_content =  g_res.unwrap().bytes().unwrap().to_vec(); //.text().unwrap();
+    g_file.write_all(g_content.as_slice()).unwrap();
 
     println!("genesis transactions fetched, file saved to: {:?}", g_path);
 }
