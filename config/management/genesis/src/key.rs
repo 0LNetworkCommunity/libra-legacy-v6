@@ -70,13 +70,15 @@ pub fn set_operator_key(path: &PathBuf, namespace: &str) {
     let key = storage.get_public_key(&field).unwrap().public_key;
     let peer_id = libra_types::account_address::from_public_key(&key);
     storage.set(OPERATOR_ACCOUNT, peer_id).unwrap();
+    // storage.set(&format!("{}-oper/{}", namespace, OPERATOR_ACCOUNT), peer_id).unwrap();
+
 }
 
 pub fn set_owner_key(path: &PathBuf, namespace: &str) {
     let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
     let authkey: AuthenticationKey = namespace.parse().unwrap();
     let account = authkey.derived_address();
-    storage.set(OWNER_ACCOUNT, account).unwrap();
+    storage.set(&format!("{}-oper/{}", namespace, OWNER_ACCOUNT), account).unwrap();
 }
 
 #[derive(Debug, StructOpt)]
