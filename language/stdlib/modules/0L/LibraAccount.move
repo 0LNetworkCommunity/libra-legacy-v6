@@ -35,7 +35,7 @@ module LibraAccount {
     use 0x1::Globals;
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
-
+    use 0x1::FullnodeState;
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
         /// The current authentication key.
@@ -283,7 +283,7 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
-
+        FullnodeState::init(&new_signer);
         // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);

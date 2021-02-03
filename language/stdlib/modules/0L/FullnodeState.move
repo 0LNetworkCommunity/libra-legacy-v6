@@ -14,7 +14,7 @@ module FullnodeState {
     cumulative_subsidy: u64,
   }
 
-  public fun val_init(sender: &signer) {
+  public fun init(sender: &signer) {
       assert(!exists<FullnodeCounter>(Signer::address_of(sender)), 130112011021);
       move_to<FullnodeCounter>(
       sender, 
