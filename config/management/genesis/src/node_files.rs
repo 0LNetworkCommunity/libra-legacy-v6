@@ -37,7 +37,7 @@ pub struct Files {
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        create_files(self.data_path, self.chain_id, &self.github_org, &self.repo, &self.namespace, true)
+        create_files(self.data_path, self.chain_id, &self.github_org, &self.repo, &self.namespace, &true)
     }
 }
 
@@ -47,7 +47,7 @@ pub fn create_files(
     github_org: &str,
     repo: &str,
     namespace: &str,
-    rebuild_genesis: bool,
+    rebuild_genesis: &bool,
 ) -> Result<String, Error> {
 
     let github_token_path = output_dir.join("github_token.txt");
@@ -69,7 +69,7 @@ pub fn create_files(
 
     let genesis_path = output_dir.join("genesis.blob");
     let waypoint: Waypoint;
-    if rebuild_genesis {
+    if *rebuild_genesis {
         // Create genesis blob from repo and saves waypoint
         waypoint = storage_helper
         .build_genesis_from_github(chain_id, &remote, &genesis_path)

@@ -21,6 +21,8 @@ pub struct ValWizardCmd {
     repo: Option<String>,   
     #[options(help = "run keygen before wizard")]
     keygen: bool,   
+    #[options(help = "build genesis from ceremony repo")]
+    rebuild_genesis: bool,  
 }
 
 impl Runnable for ValWizardCmd {
@@ -46,7 +48,7 @@ impl Runnable for ValWizardCmd {
         init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
         status_ok!("\nKey file OK", "\n...........................\n");
 
-        if self.repo.is_none() {
+        if !self.rebuild_genesis {
             genesis_cmd::get_files(
                 miner_config.workspace.node_home.clone(),
                 &self.github_org,
@@ -61,6 +63,7 @@ impl Runnable for ValWizardCmd {
             &self.chain_id,
             &self.github_org,
             &self.repo,
+            &self.rebuild_genesis,
         );
         status_ok!("\nNode config OK", "\n...........................\n");
 

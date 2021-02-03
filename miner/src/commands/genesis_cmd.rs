@@ -17,6 +17,8 @@ pub struct GenesisCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
+    #[options(help = "build genesis from ceremony repo")]
+    rebuild_genesis: bool, 
 }
 
 
@@ -29,6 +31,7 @@ impl Runnable for GenesisCmd {
             &self.chain_id,
             &self.github_org,
             &self.repo,
+            &self.rebuild_genesis,
         ) 
     }
 }
@@ -38,6 +41,7 @@ pub fn genesis_files(
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,
+    rebuild_genesis: &bool,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -49,7 +53,7 @@ pub fn genesis_files(
         &github_org.clone().unwrap_or("OLSF".to_string()),
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
-        if repo.is_some() {true} else {false},
+        rebuild_genesis,
     ).unwrap();
 
     println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("node.yaml"));
