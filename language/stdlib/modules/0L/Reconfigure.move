@@ -73,6 +73,8 @@ module Reconfigure {
             vm, Globals::get_max_validator_per_epoch());
         let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
 
+        // 1. remove jailed set from validator universe
+        // 2. get top accounts.
         let proposed_set = Vector::empty();
         let i = 0;
         while (i < Vector::length(&top_accounts)) {

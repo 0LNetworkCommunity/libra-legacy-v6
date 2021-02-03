@@ -40,6 +40,17 @@ address 0x1 {
       }
     }
 
+    // Permissions: Public, VM Only
+    public fun remove_validator(vm: &signer, validator: address) acquires ValidatorUniverse {
+      if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) { return }; // don't use assert(), will cause halt.
+
+      let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+      let (in_set, index) = Vector::index_of<address>(&state.validators, &validator);
+      if (in_set) {
+        Vector::remove<address>(&mut state.validators, index);
+      }
+    }
+
     // A simple public function to query the EligibleValidators.
     // Function code: 03 Prefix: 220103
     public fun get_eligible_validators(vm: &signer): vector<address> acquires ValidatorUniverse {
