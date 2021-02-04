@@ -276,3 +276,7 @@ smoke:
 	make smoke-reg
 	make smoke-gen
 	make start
+
+smoke-new:
+	#starts config for a new miner "eve"
+	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis
