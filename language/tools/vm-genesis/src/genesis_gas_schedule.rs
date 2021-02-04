@@ -146,7 +146,7 @@ pub static INITIAL_GAS_SCHEDULE: Lazy<CostTable> = Lazy::new(|| {
         //////// 0L ////////
         (N::VDF_VERIFY, GasCost::new(1000000, 1)), // one second of cost.
         (N::VDF_PARSE, GasCost::new(100, 1)),
-
+        (N::ZKP_VERIFY, GasCost::new(1000000, 1)), // one second of cost.
     ];
     native_table.sort_by_key(|cost| cost.0 as u64);
     let raw_native_table = native_table

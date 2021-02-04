@@ -7,7 +7,7 @@ use move_core_types::{
     account_address::AccountAddress, gas_schedule::CostTable, value::MoveTypeLayout,
     vm_status::StatusType,
 };
-use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector, vdf};
+use move_vm_natives::{account, debug, event, hash, lcs, signature, signer, vector, vdf, zkp};
 use move_vm_types::{
     data_store::DataStore,
     gas_schedule::CostStrategy,
@@ -47,6 +47,7 @@ pub(crate) enum NativeFunction {
     DestroySigner,
     //////// 0L ////////
     VDFVerify,
+    ZKPVerify,
     RedeemAuthKeyParse,
 }
 
@@ -82,6 +83,7 @@ impl NativeFunction {
             //////// 0L ////////
             (&CORE_CODE_ADDRESS, "VDF", "verify") => VDFVerify, // OL Change
             (&CORE_CODE_ADDRESS, "VDF", "extract_address_from_challenge") => RedeemAuthKeyParse,   // 0L change
+            (&CORE_CODE_ADDRESS, "ZKP", "verify") => ZKPVerify, // OL Change
             _ => return None,
 
         })
@@ -118,6 +120,7 @@ impl NativeFunction {
             //////// 0L ////////
             Self::VDFVerify => vdf::verify(ctx, t, v), // 0L change
             Self::RedeemAuthKeyParse => vdf::extract_address_from_challenge(ctx, t, v),
+            Self::ZKPVerify => zkp::verify(ctx, t, v), // 0L change
         };
         debug_assert!(match &result {
             Err(e) => e.major_status().status_type() == StatusType::InvariantViolation,

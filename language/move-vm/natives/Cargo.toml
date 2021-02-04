@@ -25,6 +25,7 @@ vm = { path = "../../vm", version = "0.1.0" }
 vdf = { path="../../../verifiable_delay/vdf",version = "0.1.0"}
 hex = "0.4.2"
 libra-global-constants = { path = "../../../config/global-constants", version = "0.1.0"}
+zkp = { git = "https://github.com/simsekgokhan/rustSTARK", branch = "main" }
 
 [features]
 default = []
