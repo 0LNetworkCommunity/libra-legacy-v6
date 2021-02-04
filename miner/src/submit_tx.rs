@@ -271,7 +271,7 @@ pub fn get_params(
         url: Url::parse(url_str).expect("No url provided in miner.toml"),
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 50_000,
+        max_gas_unit_for_tx: 5_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     }

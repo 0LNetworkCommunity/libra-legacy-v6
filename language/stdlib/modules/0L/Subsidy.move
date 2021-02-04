@@ -208,8 +208,7 @@ address 0x1 {
       // Cost for verification prod/hard difficulty: 2294 / 1000000
       // Cost for account creation prod/hard: 4336
 
-      // 1 gas coin
-      let baseline_tx_cost = 1 * 1000000; //microgas
+      let baseline_tx_cost = 4336; // microgas
       let ceiling = baseline_auction_units() * baseline_tx_cost * validator_count;
 
       Roles::assert_libra_root(vm);

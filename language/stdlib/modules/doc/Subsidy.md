@@ -372,7 +372,7 @@
   // Cost for verification prod/hard difficulty: 2294 / 1000000
   // Cost for account creation prod/hard: 4336
 
-  <b>let</b> baseline_tx_cost = 5000; //microgas
+  <b>let</b> baseline_tx_cost = 4336; // microgas
   <b>let</b> ceiling = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>() * baseline_tx_cost * validator_count;
 
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);

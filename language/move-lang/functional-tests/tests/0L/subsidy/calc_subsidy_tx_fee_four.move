@@ -21,7 +21,8 @@ script {
   use 0x1::TransactionFee;
   use 0x1::GAS::GAS;
   use 0x1::Libra;
-
+  use 0x1::Debug::print;
+  
   fun main(vm: &signer) {
     // check the case of a network density of 4 active validators.
 
@@ -41,6 +42,7 @@ script {
     // LibraAccount::mint_to_address<GAS>(vm, 0xFEE, 100);
 
     TransactionFee::pay_fee(Libra::mint<GAS>(vm, 100));
+    print(&Subsidy::calculate_Subsidy(vm, 0, 15));
     assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 196, 7357190101021000);
 
     }
