@@ -18,6 +18,7 @@ script {
   use 0x1::Subsidy;
   use 0x1::Vector;
   use 0x1::Stats;
+  use 0x1::Debug::print;
 
   fun main(vm: &signer) {
     // check the case of a network density of 4 active validators.
@@ -35,7 +36,7 @@ script {
       i = i + 1;
     };
 
-    // print(&Subsidy::calculate_Subsidy(vm));
+    print(&Subsidy::calculate_Subsidy(vm));
     assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 296, 7357190101021000);
 
     }
