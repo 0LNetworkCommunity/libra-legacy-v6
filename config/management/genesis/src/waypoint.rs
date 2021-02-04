@@ -23,7 +23,7 @@ pub struct CreateWaypoint {
     #[structopt(flatten)]
     shared_backend: SharedBackend,
     #[structopt(long)]
-    genesis_path: PathBuf,
+    genesis_path: Option<PathBuf>,
 
 }
 
@@ -33,7 +33,7 @@ impl CreateWaypoint {
             config: self.config,
             chain_id: self.chain_id,
             backend: self.shared_backend,
-            path: Some(self.genesis_path),
+            path: self.genesis_path,
         };
 
         let genesis = genesis_helper.execute()?;
