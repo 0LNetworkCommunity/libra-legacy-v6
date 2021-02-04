@@ -81,7 +81,7 @@ fun main(vm: &signer) {
     Reconfigure::reconfigure(vm, 100);
     let new_account_bal = LibraAccount::balance<GAS>(eve);
     print(&new_account_bal);
-    assert(new_account_bal == 576000000, 7357002);
+    assert(new_account_bal == 2497536, 7357002);
     // print(&old_account_bal);
     // print(&new_account_bal);
 }
