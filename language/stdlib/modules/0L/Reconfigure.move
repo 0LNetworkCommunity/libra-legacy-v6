@@ -63,7 +63,7 @@ module Reconfigure {
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
         // Propose upcoming validator set:
-        // Step 1: Sort Top N Elegible validators
+        // Step 1: Sort Top N eligible validators
         // Step 2: Jail non-performing validators
         // Step 3: Reset counters
         // Step 4: Bulk update validator set (reconfig)
@@ -85,9 +85,9 @@ module Reconfigure {
             i = i+ 1;
         };
 
-        let elegible = ValidatorUniverse::get_eligible_validators(vm);
+        let eligible = ValidatorUniverse::get_eligible_validators(vm);
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&elegible;
+        if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&eligible;
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
@@ -97,7 +97,7 @@ module Reconfigure {
 
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
-        MinerState::reconfig(vm, &elegible);
+        MinerState::reconfig(vm, &eligible);
 
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
