@@ -38,12 +38,9 @@ script {
       i = i + 1;
     };
 
-    //TODO: Use TxFEE::pay_fee
-    // LibraAccount::mint_to_address<GAS>(vm, 0xFEE, 100);
-
-    TransactionFee::pay_fee(Libra::mint<GAS>(vm, 100));
-    print(&Subsidy::calculate_Subsidy(vm, 0, 15));
-    assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 196, 7357190101021000);
+    TransactionFee::pay_fee(Libra::mint<GAS>(vm, 100000000));
+    print(&Subsidy::calculate_subsidy(vm, 0, 15));
+    assert(Subsidy::calculate_subsidy(vm, 0, 15) == 196000000, 7357190101021000);
 
     }
 }

@@ -39,8 +39,8 @@ script {
       Stats::process_set_votes(vm, &validators);
       i = i + 1;
     };
-    print(&Subsidy::calculate_Subsidy(vm, 0, 15));
-    assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 293, 7357190101021000);
+    print(&Subsidy::calculate_subsidy(vm, 0, 15));
+    assert(Subsidy::calculate_subsidy(vm, 0, 15) == 293000000, 7357190101021000);
 
     }
 }

@@ -341,14 +341,15 @@ address 0x1 {
     // Returns if the miner is above the account creation rate-limit
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
-    public fun rate_limit_create_acc(node_addr: address): bool acquires MinerProofHistory {
+    public fun can_create_val_account(node_addr: address): bool acquires MinerProofHistory {
       if(Testnet::is_testnet()) return true;
+      // check if rate limited, needs 7 epochs of validating.
       borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > 6
     }
 
-    ////////////////////
-    // TEST HELPERS ///
-    ////////////////////
+    //////////////////
+    // TEST HELPERS //
+    //////////////////
 
     public fun test_helper_mock_mining(sender: &signer,  count: u64) acquires MinerProofHistory {
       assert(Testnet::is_testnet(), 130115014011);

@@ -36,8 +36,8 @@ script {
       i = i + 1;
     };
 
-    print(&Subsidy::calculate_Subsidy(vm, 0, 15));
-    assert(Subsidy::calculate_Subsidy(vm, 0, 15) == 296, 7357190101021000);
+    print(&Subsidy::calculate_subsidy(vm, 0, 15));
+    assert(Subsidy::calculate_subsidy(vm, 0, 15) == 296000000, 7357190101021000);
 
     }
 }
