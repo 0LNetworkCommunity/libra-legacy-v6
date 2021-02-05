@@ -255,6 +255,11 @@ miner-genesis:
 
 reset: stop clear fixtures init keys genesis daemon
 
+remove-keys:
+	make stop
+	jq 'del(.["${ACC}-oper/owner", "${NAMESPACE}-oper/operator"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
+	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
+
 wipe: 
 	history -c
 	shred ~/.bash_history
