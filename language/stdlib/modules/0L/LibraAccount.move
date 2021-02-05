@@ -1840,7 +1840,6 @@ module LibraAccount {
     ///////////////////////////////////////////////////////////////////////////
     // Proof of concept code used for Validator and ValidatorOperator roles management
     ///////////////////////////////////////////////////////////////////////////
-
     public fun create_validator_account(
         lr_account: &signer,
         new_account_address: address,

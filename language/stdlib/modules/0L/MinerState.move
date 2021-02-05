@@ -342,6 +342,7 @@ address 0x1 {
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
     public fun rate_limit_create_acc(node_addr: address): bool acquires MinerProofHistory {
+      if(Testnet::is_testnet()) return true;
       borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > 6
     }
 

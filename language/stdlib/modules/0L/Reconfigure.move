@@ -26,23 +26,31 @@ module Reconfigure {
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
+    use 0x1::Debug::print;
     public fun reconfigure(vm: &signer, height_now: u64) {
+        print(&0x111111111111111);
         assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
         
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
+        print(&0x12);
         let miners = ValidatorUniverse::get_eligible_validators(vm);
+        print(&miners);
         let global_proofs_count = 0;
         let k = 0;
+        print(&0x12);
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
 
             let count = FullnodeState::get_address_proof_count(addr);
             if (count > 0) {
+                print(&0x121);
                 global_proofs_count = global_proofs_count + count;
 
                 let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
+                print(&value);
+
                 FullnodeState::inc_payment_count(vm, addr, count);
                 FullnodeState::inc_payment_value(vm, addr, value);
                 FullnodeState::reconfig(vm, addr);
@@ -53,10 +61,17 @@ module Reconfigure {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
+        print(&0x13);
 
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
+        print(&outgoing_set);
+        print(&fee_ratio);
+
+        print(&0x14);
         if (Vector::length<address>(&outgoing_set) > 0) {
-            let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
+            let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
+            print(&subsidy_units);
+
             if (subsidy_units > 0) {
                 Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
             };

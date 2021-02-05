@@ -67,7 +67,10 @@ address 0x1 {
 
 
     // Function code: 07 Prefix: 190107
-    public fun calculate_Subsidy(vm: &signer, height_start: u64, height_end: u64):u64 {
+    use 0x1::Debug::print;
+    public fun calculate_subsidy(vm: &signer, height_start: u64, height_end: u64):u64 {
+      print(&0x333333333333333333);
+
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101014010);
 
@@ -76,7 +79,8 @@ address 0x1 {
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
-
+      print(&0x31);
+      print(&txn_fee_amount);
       // Calculate the split for subsidy and burn
       let subsidy_ceiling_gas = Globals::get_subsidy_ceiling_gas();
       let network_density = Stats::network_density(vm, height_start, height_end);
@@ -86,7 +90,8 @@ address 0x1 {
         network_density,
         max_node_count,
         );
-
+      print(&0x32);
+      print(&guaranteed_minimum);
       // deduct transaction fees from guaranteed minimum.
       if (guaranteed_minimum > txn_fee_amount ){
         return guaranteed_minimum - txn_fee_amount
@@ -140,7 +145,7 @@ address 0x1 {
 
         if (is_testnet()) {
           // start with sufficient gas for expensive tests e.g. upgrade
-          count_proofs = 100;
+          count_proofs = 10;
         };
         
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, count_proofs, true);

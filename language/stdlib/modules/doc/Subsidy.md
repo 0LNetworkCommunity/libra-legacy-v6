@@ -7,7 +7,7 @@
 
 -  [Resource `FullnodeSubsidy`](#0x1_Subsidy_FullnodeSubsidy)
 -  [Function `process_subsidy`](#0x1_Subsidy_process_subsidy)
--  [Function `calculate_Subsidy`](#0x1_Subsidy_calculate_Subsidy)
+-  [Function `calculate_subsidy`](#0x1_Subsidy_calculate_subsidy)
 -  [Function `subsidy_curve`](#0x1_Subsidy_subsidy_curve)
 -  [Function `genesis`](#0x1_Subsidy_genesis)
 -  [Function `process_fees`](#0x1_Subsidy_process_fees)
@@ -22,6 +22,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -148,13 +149,13 @@
 
 </details>
 
-<a name="0x1_Subsidy_calculate_Subsidy"></a>
+<a name="0x1_Subsidy_calculate_subsidy"></a>
 
-## Function `calculate_Subsidy`
+## Function `calculate_subsidy`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, height_start: u64, height_end: u64): u64
 </code></pre>
 
 
@@ -163,7 +164,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64):u64 {
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, height_start: u64, height_end: u64):u64 {
+  print(&0x333333333333333333);
+
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190101014010);
 
@@ -172,7 +175,8 @@
 
   // Gets the transaction fees in the epoch
   <b>let</b> txn_fee_amount = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
-
+  print(&0x31);
+  print(&txn_fee_amount);
   // Calculate the split for subsidy and burn
   <b>let</b> subsidy_ceiling_gas = <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>();
   <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm, height_start, height_end);
@@ -182,7 +186,8 @@
     network_density,
     max_node_count,
     );
-
+  print(&0x32);
+  print(&guaranteed_minimum);
   // deduct transaction fees from guaranteed minimum.
   <b>if</b> (guaranteed_minimum &gt; txn_fee_amount ){
     <b>return</b> guaranteed_minimum - txn_fee_amount
@@ -274,7 +279,7 @@
 
     <b>if</b> (is_testnet()) {
       // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
-      count_proofs = 100;
+      count_proofs = 10;
     };
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address, count_proofs, <b>true</b>);

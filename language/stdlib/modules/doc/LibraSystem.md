@@ -40,6 +40,7 @@ and "configuration" are used for several distinct concepts.
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
@@ -1315,13 +1316,20 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;address&gt;, vector&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;) {
+    print(&0x0222222222222222);
     <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
+    print(validators);
+
     <b>let</b> compliant_nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
     <b>let</b> count_compliant_votes = 0;
     <b>let</b> i = 0;
+    print(&0x021);
     <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
         <b>let</b> addr = <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr;
-        <b>if</b> (<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end) == 1) {
+
+        <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end);
+        print(&case);
+        <b>if</b> (case == 1) {
             <b>let</b> node_votes = <a href="Stats.md#0x1_Stats_node_current_votes">Stats::node_current_votes</a>(vm, addr);
             <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> compliant_nodes, addr);
             count_compliant_votes = count_compliant_votes + node_votes;
