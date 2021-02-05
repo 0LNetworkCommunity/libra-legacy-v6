@@ -193,7 +193,7 @@ daemon:
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml && rm blocks/* \
 	fi
 
 #### HELPERS ####
@@ -237,7 +237,7 @@ endif
 
 #### HELPERS ####
 get_waypoint:
-	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
   
 	echo $$WAY
 
@@ -279,4 +279,5 @@ smoke:
 
 smoke-new:
 	#starts config for a new miner "eve"
+	make clear
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis
