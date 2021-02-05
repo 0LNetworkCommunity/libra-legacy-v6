@@ -63,7 +63,7 @@ module Reconfigure {
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
         // Propose upcoming validator set:
-        // Step 1: Sort Top N Elegible validators
+        // Step 1: Sort Top N eligible validators
         // Step 2: Jail non-performing validators
         // Step 3: Reset counters
         // Step 4: Bulk update validator set (reconfig)
