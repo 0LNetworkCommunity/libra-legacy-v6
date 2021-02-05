@@ -1,4 +1,5 @@
 //! Key generation
+use abscissa_core::status_info;
 use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
   account_address::AccountAddress,
@@ -16,20 +17,21 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
         let account = auth_key.derived_address();
         //////////////// Info ////////////////
         
-        println!("0L Auth Key:\n\
-        You will need this in your miner.toml configs.\n\
-        ---------\n\
-        {:?}\n", &auth_key.to_string());
-
-        println!("0L Address:\n\
-        This address is derived from your Auth Key, it has not yet been created on chain. You'll need to submit a genesis miner proof for that.\n\
-        ---------\n\
+        println!("0L Account Address:\n\
+        ...........................\n\
         {:?}\n", &account);
 
+        // TODO: Auth key is not needed anywhere.
+        // println!("0L Auth Key:\n\
+        // ...........................\n\
+        // {:?}\n", &auth_key.to_string());
+
         println!("0L mnemonic:\n\
-        WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\
-        ---------\n\
-        {}\n", &mnemonic_string.as_str());
+        ...........................");
+      
+
+        status_info!(&mnemonic_string.as_str(), "\n");
+        println!("WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\n");
 
         (auth_key, account, wallet)
 }
@@ -40,6 +42,17 @@ pub fn get_account_from_mnem(mnemonic_string: String) -> (AuthenticationKey, Acc
       let (auth_key, _) = wallet.new_address().expect("Could not generate address");
       let account = auth_key.derived_address();
       (auth_key, account, wallet)
+}
+
+/// Prompts user to type mnemonic securely.
+pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+    println!("Enter your 0L mnemonic:");
+    let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} "))
+    .unwrap()
+    // .clone()
+    .trim()
+    .to_string();
+    get_account_from_mnem(mnemonic_string)
 }
 
 
