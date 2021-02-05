@@ -23,7 +23,7 @@ address 0x1 {
     use 0x1::TransactionFee;
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
-    use 0x1::StagingNet::is_staging_net;    
+    // use 0x1::StagingNet::is_staging_net;    
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
 
@@ -138,9 +138,9 @@ address 0x1 {
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
         let count_proofs = 1;
 
-        if (is_testnet() || is_staging_net()) {
+        if (is_testnet()) {
           // start with sufficient gas for expensive tests e.g. upgrade
-          count_proofs = 500;
+          count_proofs = 100;
         };
         
         let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, count_proofs, true);
@@ -202,8 +202,13 @@ address 0x1 {
       let validator_count = Vector::length(&genesis_validators);
       if (validator_count < 10) validator_count = 10;
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
-      // estimated gas unit cost for proof submission.
-      let baseline_tx_cost = 1173 * 1;
+
+      // estimated gas unit cost for proof verification divided coin scaling factor
+      // Cost for verification test/easy difficulty: 1173 / 1000000
+      // Cost for verification prod/hard difficulty: 2294 / 1000000
+      // Cost for account creation prod/hard: 4336
+
+      let baseline_tx_cost = 4336; // microgas
       let ceiling = baseline_auction_units() * baseline_tx_cost * validator_count;
 
       Roles::assert_libra_root(vm);

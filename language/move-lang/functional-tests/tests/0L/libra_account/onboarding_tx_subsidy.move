@@ -72,6 +72,7 @@ script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
   use 0x1::Reconfigure;
+  use 0x1::Debug::print;
 
 fun main(vm: &signer) {
     let eve = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
@@ -79,7 +80,8 @@ fun main(vm: &signer) {
     assert(old_account_bal == 0, 7357001);
     Reconfigure::reconfigure(vm, 100);
     let new_account_bal = LibraAccount::balance<GAS>(eve);
-    assert(new_account_bal == 675648, 7357002);
+    print(&new_account_bal);
+    assert(new_account_bal == 2497536, 7357002);
     // print(&old_account_bal);
     // print(&new_account_bal);
 }

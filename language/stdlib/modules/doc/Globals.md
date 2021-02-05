@@ -275,7 +275,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a>  {
+<pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
   <b>let</b> coin_scale = 1000000; //<a href="Libra.md#0x1_Libra_scaling_factor">Libra::scaling_factor</a>&lt;GAS::T&gt;();
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
