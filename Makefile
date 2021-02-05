@@ -236,7 +236,7 @@ ifdef TEST
 endif
 
 #### HELPERS ####
-get_waypoint:
+get-waypoint:
 	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
   
 	echo $$WAY
