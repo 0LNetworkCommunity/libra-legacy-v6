@@ -43,6 +43,7 @@ module Reconfigure {
                 global_proofs_count = global_proofs_count + count;
 
                 let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
+
                 FullnodeState::inc_payment_count(vm, addr, count);
                 FullnodeState::inc_payment_value(vm, addr, value);
                 FullnodeState::reconfig(vm, addr);
@@ -55,15 +56,17 @@ module Reconfigure {
         let height_start = Epoch::get_timer_height_start(vm);
 
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
+
         if (Vector::length<address>(&outgoing_set) > 0) {
-            let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
+            let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
+
             if (subsidy_units > 0) {
                 Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
             };
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
         // Propose upcoming validator set:
-        // Step 1: Sort Top N Elegible validators
+        // Step 1: Sort Top N eligible validators
         // Step 2: Jail non-performing validators
         // Step 3: Reset counters
         // Step 4: Bulk update validator set (reconfig)
