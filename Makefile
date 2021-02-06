@@ -241,7 +241,7 @@ get-waypoint:
   
 	echo $$WAY
 
-client: get_waypoint
+client: get-waypoint
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
 
 compress: 
