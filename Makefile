@@ -193,7 +193,7 @@ daemon:
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml && rm blocks/* \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml && rm blocks/*; \
 	fi
 
 #### HELPERS ####
