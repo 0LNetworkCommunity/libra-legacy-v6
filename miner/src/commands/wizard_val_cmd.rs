@@ -67,10 +67,12 @@ impl Runnable for ValWizardCmd {
         );
         status_ok!("\nNode config OK", "\n...........................\n");
 
-        // Mine Block
-        zero_cmd::mine_zero(&miner_config);
-        status_ok!("\nProof OK", "\n...........................\n");
-
+        if (!self.skip_mining){
+            // Mine Block
+            zero_cmd::mine_zero(&miner_config);
+            status_ok!("\nProof OK", "\n...........................\n");
+        }
+        
         // Write Manifest
         manifest_cmd::write_manifest(None, wallet);
         status_ok!("\nAccount manifest OK", "\n...........................\n");
