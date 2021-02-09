@@ -14,6 +14,7 @@ address 0x1 {
     use 0x1::Globals;
     use 0x1::Hash;
     use 0x1::Testnet;
+    use 0x1::StagingNet;
     use 0x1::Stats;
     use 0x1::FullnodeState;
     // Struct to store information about a VDF proof submitted
@@ -342,7 +343,7 @@ address 0x1 {
     // Permissions: PUBLIC, ANYONE
     // TODO: Rename
     public fun can_create_val_account(node_addr: address): bool acquires MinerProofHistory {
-      if(Testnet::is_testnet()) return true;
+      if(Testnet::is_testnet() || StagingNet::is_staging_net()) return true;
       // check if rate limited, needs 7 epochs of validating.
       borrow_global<MinerProofHistory>(node_addr).epochs_since_last_account_creation > 6
     }
