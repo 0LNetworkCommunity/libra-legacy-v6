@@ -16,10 +16,6 @@ address 0x1{
     use 0x1::LibraTimestamp;
     use 0x1::Epoch;
     use 0x1::Globals;
-    use 0x1::Errors;
-
-    /// Attempted to send funds to an account that does not exist
-    const EPAYEE_DOES_NOT_EXIST: u64 = 17;
 
     resource struct Tick {
       triggered: bool,
@@ -185,9 +181,6 @@ address 0x1{
         assert(false, 010104011021);
       };
       let payments = &mut borrow_global_mut<Data>(addr).payments;
-
-      assert(LibraAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
-
       Vector::push_back<Payment>(payments, Payment {
         // name: name,
         uid: uid,

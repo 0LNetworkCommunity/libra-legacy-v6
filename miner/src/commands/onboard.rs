@@ -1,20 +1,13 @@
 //! `start` subcommand - example of how to write a subcommand
 
-use crate::{
-    account::ValConfigs,
-    submit_tx::{eval_tx_status, get_params},
-    keygen,
-    config::MinerConfig,
-    test_tx_swarm::get_params_from_swarm,
-    submit_tx::submit_onboard_tx,
-    prelude::*
-};
-
-use libra_genesis_tool::keyscheme::KeyScheme;
-
+use crate::{account::ValConfigs, submit_tx::{eval_tx_status, get_params}};
+use crate::config::MinerConfig;
+use crate::prelude::*;
 use anyhow::Error;
 use libra_types::waypoint::Waypoint;
+use crate::submit_tx::submit_onboard_tx;
 use std::path::PathBuf;
+use crate::test_tx_swarm::get_params_from_swarm;
 use hex::decode;
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
@@ -22,7 +15,7 @@ use hex::decode;
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use move_core_types::account_address::AccountAddress;
 
-/// `onboard` subcommand
+/// `start` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
 /// definition, and is defined in the `gumdrop` crate. See their documentation
@@ -45,9 +38,10 @@ impl Runnable for OnboardCmd {
     /// Start the application.
     fn run(&self) {
         let miner_configs = app_config();
-        let (_authkey, _account, wallet) = keygen::account_from_prompt();
-        let keys = KeyScheme::new(&wallet);
 
+        println!("Enter your 0L mnemonic:");
+        let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
+        
         let tx_params;
         if self.swarm_path.exists(){
             tx_params = get_params_from_swarm(self.swarm_path.clone()).unwrap();
@@ -68,7 +62,7 @@ impl Runnable for OnboardCmd {
 
                 }
             }
-            tx_params = get_params(keys, waypoint, &miner_configs);
+            tx_params = get_params(&mnemonic_string, waypoint, &miner_configs);
         }
 
         let init_data = ValConfigs::get_init_data(&self.file).unwrap();

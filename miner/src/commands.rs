@@ -11,30 +11,25 @@
 //! application's configuration file.
 
 mod keygen_cmd;
-mod start_cmd;
-mod version_cmd;
-mod onboard_cmd;
-mod swarm_test_cmd;
-mod zero_cmd;
-mod ceremony_cmd;
-mod wizard_user_cmd;
-mod manifest_cmd;
-mod init_cmd;
-mod wizard_val_cmd;
-mod genesis_cmd;
+mod start;
+mod version;
+mod onboard;
+mod swarm_test;
+mod genesis;
+mod ceremony_util_cmd;
+mod create_account;
+mod init;
 
 use self::{
-    start_cmd::StartCmd,
-    version_cmd::VersionCmd,
-    onboard_cmd::OnboardCmd,
-    swarm_test_cmd::SwarmCmd,
-    zero_cmd::ZeroCmd,
+    start::StartCmd,
+    version::VersionCmd,
+    onboard::OnboardCmd,
+    swarm_test::SwarmCmd,
+    genesis::GenesisCmd,
     keygen_cmd::KeygenCmd,
-    ceremony_cmd::CeremonyUtilCmd,
-    wizard_user_cmd::UserWizardCmd,
-    init_cmd::InitCmd,
-    wizard_val_cmd::ValWizardCmd,
-    genesis_cmd::GenesisCmd,
+    ceremony_util_cmd::CeremonyUtilCmd,
+    create_account::CreateCmd,
+    init::InitCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -56,7 +51,7 @@ pub enum MinerCmd {
 
     /// The `genesis` subcommand
     #[options(help = "mine the 0th block of the tower")]
-    Zero(ZeroCmd),
+    Genesis(GenesisCmd),
 
     /// The `start` subcommand
     #[options(help = "start mining blocks")]
@@ -82,21 +77,13 @@ pub enum MinerCmd {
     #[options(help = "test connection to a local swarm")]
     Swarm(SwarmCmd),
 
-    /// The `user_wizard` subcommand
+    /// The `swarm` subcommand
     #[options(help = "wizard to create accounts and local configs")]
-    UserWizard(UserWizardCmd),
+    Create(CreateCmd),
 
-    /// The `init` subcommand
+    /// The `swarm` subcommand
     #[options(help = "initialize miner configs miner.toml")]
     Init(InitCmd),
-
-    /// The `val_wizard` subcommand
-    #[options(help = "run all steps for validator onboarding")]
-    ValWizard(ValWizardCmd),
-
-    /// The `genesis` subcommand
-    #[options(help = "build a genesis.blob")]
-    Genesis(GenesisCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

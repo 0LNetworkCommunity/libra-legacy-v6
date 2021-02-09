@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{OPERATOR_ACCOUNT, OWNER_ACCOUNT};
-use libra_management::{config:: ConfigPath, error::Error, secure_backend::{SecureBackend, SharedBackend}};
-use libra_secure_storage::OnDiskStorageInternal;
-use libra_types::transaction::authenticator::AuthenticationKey;
+use libra_management::{
+    config::ConfigPath,
+    error::Error,
+    secure_backend::{SecureBackend, SharedBackend},
+};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use libra_secure_storage::CryptoStorage;
-use libra_secure_storage::KVStorage;
 
 libra_management::secure_backend!(
     ValidatorBackend,
@@ -61,24 +60,6 @@ impl Key {
 
         Ok(key)
     }
-}
-
-pub fn set_operator_key(path: &PathBuf, namespace: &str) {
-    let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
-    // TODO: Remove hard coded field
-    let field = format!("{}-oper/operator", namespace);
-    let key = storage.get_public_key(&field).unwrap().public_key;
-    let peer_id = libra_types::account_address::from_public_key(&key);
-    storage.set(OPERATOR_ACCOUNT, peer_id).unwrap();
-    // storage.set(&format!("{}-oper/{}", namespace, OPERATOR_ACCOUNT), peer_id).unwrap();
-
-}
-
-pub fn set_owner_key(path: &PathBuf, namespace: &str) {
-    let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
-    let authkey: AuthenticationKey = namespace.parse().unwrap();
-    let account = authkey.derived_address();
-    storage.set(&format!("{}-oper/{}", namespace, OWNER_ACCOUNT), account).unwrap();
 }
 
 #[derive(Debug, StructOpt)]

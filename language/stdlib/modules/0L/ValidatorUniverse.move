@@ -42,7 +42,7 @@ address 0x1 {
 
     // A simple public function to query the EligibleValidators.
     // Function code: 03 Prefix: 220103
-    public fun get_eligible_validators(vm: &signer): vector<address> acquires ValidatorUniverse {
+    public fun get_eligible_validators(vm: &signer) : vector<address> acquires ValidatorUniverse {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       *&state.validators

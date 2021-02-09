@@ -5,17 +5,16 @@
 
 pub mod command;
 mod genesis;
-pub mod key;
+mod key;
 pub mod layout;
 mod validator_config;
 mod validator_operator;
 mod verify;
 mod waypoint;
 //////// 0L ////////
-pub mod init;
-pub mod node_files;
+mod init;
+mod node_files;
 mod mining;
-pub mod keyscheme;
 ///////////////////
 #[cfg(any(test, feature = "testing"))]
 pub mod config_builder;

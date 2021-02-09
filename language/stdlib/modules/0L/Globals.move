@@ -11,8 +11,7 @@ module Globals {
     use 0x1::Vector;
     use 0x1::Testnet;
     use 0x1::StagingNet;
-    use 0x1::Libra;
-    use 0x1::GAS;
+
     // Some constants need to changed based on environment; dev, testing, prod.
     struct GlobalConstants {
       // For validator set.
@@ -114,16 +113,13 @@ module Globals {
     }
 
 
-    fun get_constants(): GlobalConstants {
-      
+    fun get_constants(): GlobalConstants  {
       let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
-      assert(coin_scale == Libra::scaling_factor<GAS::GAS>(), 07010110001);
-
       if (Testnet::is_testnet()) {
         return GlobalConstants {
           epoch_length: 60, // seconds
           max_validator_per_epoch: 10,
-          subsidy_ceiling_gas: 296 * coin_scale,
+          subsidy_ceiling_gas: 296,
           min_node_density: 4,
           max_node_density: 300,
           burn_accounts: Vector::singleton(0xDEADDEAD),

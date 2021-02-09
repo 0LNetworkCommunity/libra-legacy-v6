@@ -71,7 +71,7 @@ impl TempPath {
 
     pub fn create_as_file(&self) -> io::Result<()> {
         let mut builder = fs::OpenOptions::new();
-        builder.write(true).create(true); //overwrite keystore file
+        builder.write(true).create_new(true);
         builder.open(self.path())?;
         Ok(())
     }

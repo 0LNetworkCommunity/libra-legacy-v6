@@ -60,20 +60,7 @@ fun main(sender: &signer) {
   assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
 
   // Is rate-limited
-  // assert(MinerState::can_create_val_account(sender_addr) == false, 7357130101091000);
+  assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101091000);
 }
 }
 // check: EXECUTED
-
-//! new-transaction
-//! sender: libraroot
-script {
-use 0x1::MinerState;
-use 0x1::Testnet;
-fun main(vm: &signer) {
-  Testnet::remove_testnet(vm); // need to remove testnet for this test, since testnet does not ratelimit account creation.
-  
-  // check is rate-limited
-  assert(MinerState::can_create_val_account({{bob}}) == false, 7357130101091000);
-}
-}

@@ -10,8 +10,7 @@ script {
   use 0x1::GAS::GAS;
 
   fun main(vm: &signer) {
-    // Does not fail when trying to make payment to an account which cannot receive balance.
-    // fails silently, as asserts can cause the VM to halt.
+    // Catch the error where payment is sent to system address
     LibraAccount::make_payment<GAS>(
       {{alice}},
       0x0, // cannot receive balance
@@ -22,7 +21,7 @@ script {
     );
   }
 }
-// check: EXECUTED
+// check: ABORTED
 
 
 //! new-transaction

@@ -92,7 +92,7 @@ mod tests {
             vec!["alice".to_string(), "bob".to_string()]
         );
         assert_eq!(layout.owners, vec!["carol".to_string()]);
-        // assert_eq!(layout.libra_root, "dave");
-        // assert_eq!(layout.treasury_compliance, "other_dave");
+        assert_eq!(layout.libra_root, "dave");
+        assert_eq!(layout.treasury_compliance, "other_dave");
     }
 }

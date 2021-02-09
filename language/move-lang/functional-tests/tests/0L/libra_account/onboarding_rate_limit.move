@@ -41,7 +41,7 @@ script {
   assert(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
   // Check the account exists and the balance is 0
   assert(LibraAccount::balance<GAS>(parsed_address) == 0, 7357130101031000);
-  assert(MinerState::can_create_val_account(sender_addr) == false, 7357130101041000);
+  assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101041000);
   }
 }
 //check: ABORTED

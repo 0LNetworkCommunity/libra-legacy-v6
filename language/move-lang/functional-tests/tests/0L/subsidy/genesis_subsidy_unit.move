@@ -15,6 +15,6 @@ fun main(vm: &signer) {
     let new_account_bal = LibraAccount::balance<GAS>({{alice}});
     print(&new_account_bal);
     assert(new_account_bal>old_account_bal, 73570001);
-    assert(new_account_bal == 24975360, 73570002);
+    assert(new_account_bal == 337824000, 73570002);
 }
 }

@@ -5,11 +5,7 @@
 
 address 0x1 {
   module VDF {
-      native public fun verify(
-        challenge: &vector<u8>,
-        difficulty: &u64,
-        alleged_solution: &vector<u8>
-      ): bool;
+      native public fun verify(challenge: &vector<u8>, difficulty: &u64, alleged_solution: &vector<u8>): bool;
       native public fun extract_address_from_challenge(challenge: &vector<u8>): (address, vector<u8>);
   }
 }

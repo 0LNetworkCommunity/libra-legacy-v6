@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ OLv4, 'release**', ci ]
+    branches: [ OLv4, ci ]
   pull_request:
-    branches: [ master, OLv4, 'release**' ]
+    branches: [ master, OLv4 ]
 
 jobs:
   functional:

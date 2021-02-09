@@ -9,7 +9,7 @@ use toml;
 use std::{fs, io::Write};
 use rustyline::Editor;
 
-/// `ceremony` subcommand
+/// `version` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CeremonyUtilCmd {}
 
