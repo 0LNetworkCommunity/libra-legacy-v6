@@ -7857,7 +7857,7 @@ dependencies = [
 [[package]]
 name = "zkp"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/rustSTARK?branch=main#ace6f23b1d12efb9f98c4067bfebc8cc544320d0"
+source = "git+https://github.com/simsekgokhan/rustSTARK?branch=main#5a9c1a15ea6760b5bde91bb52a48861e536f147b"
 dependencies = [
  "cc",
 ]
