@@ -193,9 +193,11 @@ daemon:
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml && rm blocks/*; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
-
+	if test -d ${DATA_PATH}/blocks; then \
+		rm -f ${DATA_PATH}/blocks/*.json; \
+	fi
 #### HELPERS ####
 check:
 	@echo data path: ${DATA_PATH}
@@ -217,9 +219,8 @@ ifdef TEST
 	@if test ! -d ${0L_PATH}; then \
 		mkdir ${0L_PATH}; \
 		mkdir ${DATA_PATH}; \
+		mkdir -p ${DATA_PATH}/blocks/; \
 	fi
-
-	mkdir -p ${DATA_PATH}/blocks/
 
 	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm ${DATA_PATH}/blocks/block_0.json; \
