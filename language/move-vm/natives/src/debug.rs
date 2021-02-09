@@ -23,14 +23,14 @@ pub fn native_print(
     debug_assert!(args.len() == 1);
 
     // No-op if the feature flag is not present.
-    #[cfg(feature = "debug_module")]
+    // #[cfg(feature = "debug_module")]
     {
         let ty = ty_args.pop().unwrap();
         let r = pop_arg!(args, Reference);
 
         let mut buf = String::new();
         print_reference(&mut buf, &r)?;
-        println!("[debug] {}", buf);
+        println!("[move print] {}", buf);
     }
 
     Ok(NativeResult::ok(ONE_GAS_UNIT, vec![]))

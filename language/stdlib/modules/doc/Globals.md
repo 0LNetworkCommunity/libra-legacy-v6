@@ -16,7 +16,9 @@
 -  [Function `get_constants`](#0x1_Globals_get_constants)
 
 
-<pre><code><b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
+<pre><code><b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
+<b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -275,13 +277,16 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a>  {
+<pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
+
   <b>let</b> coin_scale = 1000000; //<a href="Libra.md#0x1_Libra_scaling_factor">Libra::scaling_factor</a>&lt;GAS::T&gt;();
+  <b>assert</b>(coin_scale == <a href="Libra.md#0x1_Libra_scaling_factor">Libra::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(), 07010110001);
+
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60, // seconds
       max_validator_per_epoch: 10,
-      subsidy_ceiling_gas: 296,
+      subsidy_ceiling_gas: 296 * coin_scale,
       min_node_density: 4,
       max_node_density: 300,
       burn_accounts: <a href="Vector.md#0x1_Vector_singleton">Vector::singleton</a>(0xDEADDEAD),

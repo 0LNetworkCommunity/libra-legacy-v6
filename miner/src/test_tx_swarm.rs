@@ -1,7 +1,7 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{node_keys::KeyScheme, backlog, account::ValConfigs};
+use crate::{backlog, account::ValConfigs};
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
@@ -12,6 +12,7 @@ use libra_crypto::test_utils::KeyPair;
 use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
 use std::{fs, path::PathBuf};
+use libra_genesis_tool::keyscheme::KeyScheme;
 
 /// A test harness for the submit_tx with a local swarm 
 pub fn swarm_miner(swarm_path: PathBuf) {

@@ -165,8 +165,8 @@ TO
 
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">inc_proof</a>(sender: &signer) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-  <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
-  state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
+    <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
+    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
 }
 </code></pre>
 
