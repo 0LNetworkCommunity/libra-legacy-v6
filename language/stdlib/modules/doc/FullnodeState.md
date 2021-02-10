@@ -6,12 +6,10 @@
 
 
 -  [Resource `FullnodeCounter`](#0x1_FullnodeState_FullnodeCounter)
--  [Function `val_init`](#0x1_FullnodeState_val_init)
+-  [Function `init`](#0x1_FullnodeState_init)
 -  [Function `reconfig`](#0x1_FullnodeState_reconfig)
--  [Function `inc_proof`](#0x1_FullnodeState_inc_proof)
 -  [Function `inc_payment_count`](#0x1_FullnodeState_inc_payment_count)
 -  [Function `inc_payment_value`](#0x1_FullnodeState_inc_payment_value)
--  [Function `get_address_proof_count`](#0x1_FullnodeState_get_address_proof_count)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -77,13 +75,13 @@
 
 </details>
 
-<a name="0x1_FullnodeState_val_init"></a>
+<a name="0x1_FullnodeState_init"></a>
 
-## Function `val_init`
+## Function `init`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_val_init">val_init</a>(sender: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_init">init</a>(sender: &signer)
 </code></pre>
 
 
@@ -92,7 +90,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_val_init">val_init</a>(sender: &signer) {
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_init">init</a>(sender: &signer) {
     <b>assert</b>(!<b>exists</b>&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 130112011021);
     move_to&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(
     sender,
@@ -119,7 +117,7 @@
 On recongfiguration events, reset.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_reconfig">reconfig</a>(vm: &signer, addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_reconfig">reconfig</a>(vm: &signer, addr: address, proofs_in_epoch: u64)
 </code></pre>
 
 
@@ -128,45 +126,17 @@ On recongfiguration events, reset.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_reconfig">reconfig</a>(vm: &signer, addr: address) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_reconfig">reconfig</a>(vm: &signer, addr: address, proofs_in_epoch: u64) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
     <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
     <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
     <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
-    state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + state.proofs_submitted_in_epoch;
+    state.cumulative_proofs_submitted = state.cumulative_proofs_submitted + proofs_in_epoch;
     state.cumulative_proofs_paid = state.cumulative_proofs_paid + state.proofs_paid_in_epoch;
     state.cumulative_subsidy = state.cumulative_subsidy + state.subsidy_in_epoch;
     // reset
-    state.proofs_submitted_in_epoch= 0;
+    state.proofs_submitted_in_epoch= proofs_in_epoch;
     state.proofs_paid_in_epoch = 0;
     state.subsidy_in_epoch = 0;
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_FullnodeState_inc_proof"></a>
-
-## Function `inc_proof`
-
-Miner increments proofs by 1
-TO
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">inc_proof</a>(sender: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">inc_proof</a>(sender: &signer) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
-  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-    <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
-    state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
 }
 </code></pre>
 
@@ -178,6 +148,8 @@ TO
 
 ## Function `inc_payment_count`
 
+Miner increments proofs by 1
+TO
 VM Increments payments in epoch. Increases by <code>count</code>
 
 
@@ -221,31 +193,6 @@ VM Increments payments in epoch. Increases by <code>count</code>
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190201014010);
   <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
   state.subsidy_in_epoch = state.subsidy_in_epoch + value;
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_FullnodeState_get_address_proof_count"></a>
-
-## Function `get_address_proof_count`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">get_address_proof_count</a>(addr: address): u64
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">get_address_proof_count</a>(addr: address):u64 <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
-  <b>let</b> state = borrow_global&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
-  state.proofs_submitted_in_epoch
 }
 </code></pre>
 

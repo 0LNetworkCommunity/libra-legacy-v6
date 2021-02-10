@@ -58,8 +58,8 @@ address 0x1 {
           vm_sig,
           node_address,
           minted_coins,
-          x"",
-          x""
+          b"validator subsidy",
+          b""
         );
         i = i + 1;
       };
@@ -179,8 +179,8 @@ address 0x1 {
             vm,
             node_address,
             TransactionFee::get_transaction_fees_coins_amount<GAS>(vm, fees),
-            x"",
-            x""
+            b"transaction fees",
+            b""
         );
         i = i + 1;
       };
@@ -248,8 +248,8 @@ address 0x1 {
         vm,
         miner,
         minted_coins,
-        x"",
-        x""
+        b"fullnode subsidy",
+        b""
       );
 
       state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
@@ -278,8 +278,8 @@ address 0x1 {
     fun baseline_auction_units():u64 {
       let epoch_length_mins = 24 * 60;
       let steady_state_nodes = 1000;
-      let target_delay = 10;
-      steady_state_nodes * (epoch_length_mins/target_delay)
+      let target_delay_mins = 10;
+      steady_state_nodes * (epoch_length_mins/target_delay_mins)
     }
 
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
@@ -306,7 +306,7 @@ address 0x1 {
       state.current_cap = ceiling;
     }
 
-    // use 0x1::Debug::print;
+    
     public fun calc_auction(
       ceiling: u64,
       baseline_auction_units: u64,
@@ -358,6 +358,22 @@ address 0x1 {
       // Recover from failure case where there are no fees
       if (fees < baseline_auction_units()) return baseline_auction_units();
       fees
+    }
+
+    fun bootstrap_validator_balance(vm: &signer, miner: address) {
+      let mins_per_day = 60 * 24;
+      let proofs_per_day = mins_per_day / 10; // 10 min proofs
+      let proof_cost = 4000; // assumes 1 microgas per gas unit 
+      let subsidy_value = proofs_per_day * proof_cost;
+
+      let minted_coins = Libra::mint<GAS>(vm, subsidy_value);
+      LibraAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        miner,
+        minted_coins,
+        b"validator bootstrapping",
+        b""
+      );
     }
 }
 }

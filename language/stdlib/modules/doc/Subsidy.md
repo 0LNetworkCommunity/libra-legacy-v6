@@ -19,6 +19,7 @@
 -  [Function `auctioneer`](#0x1_Subsidy_auctioneer)
 -  [Function `calc_auction`](#0x1_Subsidy_calc_auction)
 -  [Function `fullnode_subsidy_ceiling`](#0x1_Subsidy_fullnode_subsidy_ceiling)
+-  [Function `bootstrap_validator_balance`](#0x1_Subsidy_bootstrap_validator_balance)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -137,8 +138,8 @@
       vm_sig,
       node_address,
       minted_coins,
-      x"",
-      x""
+      b"validator subsidy",
+      b""
     );
     i = i + 1;
   };
@@ -334,8 +335,8 @@
         vm,
         node_address,
         <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">TransactionFee::get_transaction_fees_coins_amount</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, fees),
-        x"",
-        x""
+        b"transaction fees",
+        b""
     );
     i = i + 1;
   };
@@ -433,8 +434,8 @@
     vm,
     miner,
     minted_coins,
-    x"",
-    x""
+    b"fullnode subsidy",
+    b""
   );
 
   state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
@@ -523,8 +524,8 @@
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>():u64 {
   <b>let</b> epoch_length_mins = 24 * 60;
   <b>let</b> steady_state_nodes = 1000;
-  <b>let</b> target_delay = 10;
-  steady_state_nodes * (epoch_length_mins/target_delay)
+  <b>let</b> target_delay_mins = 10;
+  steady_state_nodes * (epoch_length_mins/target_delay_mins)
 }
 </code></pre>
 
@@ -662,6 +663,42 @@
   // Recover from failure case <b>where</b> there are no fees
   <b>if</b> (fees &lt; <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>()) <b>return</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
   fees
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Subsidy_bootstrap_validator_balance"></a>
+
+## Function `bootstrap_validator_balance`
+
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address) {
+  <b>let</b> mins_per_day = 60 * 24;
+  <b>let</b> proofs_per_day = mins_per_day / 10; // 10 min proofs
+  <b>let</b> proof_cost = 4000; // assumes 1 microgas per gas unit
+  <b>let</b> subsidy_value = proofs_per_day * proof_cost;
+
+  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy_value);
+  <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+    vm,
+    miner,
+    minted_coins,
+    b"validator bootstrapping",
+    b""
+  );
 }
 </code></pre>
 
