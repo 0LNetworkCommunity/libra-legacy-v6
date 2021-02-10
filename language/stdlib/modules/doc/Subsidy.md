@@ -24,6 +24,7 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
+<b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
@@ -414,7 +415,17 @@
   <b>if</b> (!is_genesis){
     <b>if</b> (<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(miner)) <b>return</b> 0;
   };
+
+
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
+
+
+  // <b>if</b> it's the first payment <b>to</b> the miner, assuming it's a validator onboarding.
+  <b>if</b> (<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(miner) && (<a href="FullnodeState.md#0x1_FullnodeState_get_cumulative_subsidy">FullnodeState::get_cumulative_subsidy</a>(miner)==0)) {
+    <b>let</b> value = <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm, miner);
+    <b>return</b> value
+  };
+
   // fail fast, <b>abort</b> <b>if</b> ceiling was met
   <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
   <b>let</b> proposed_subsidy = state.current_proof_price * count;
@@ -681,7 +692,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address)
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address): u64
 </code></pre>
 
 
@@ -690,13 +701,13 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address) {
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address):u64 {
   <b>let</b> mins_per_day = 60 * 24;
   <b>let</b> proofs_per_day = mins_per_day / 10; // 10 min proofs
   <b>let</b> proof_cost = 4000; // assumes 1 microgas per gas unit
   <b>let</b> subsidy_value = proofs_per_day * proof_cost;
 
-  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy_value);
+  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *&subsidy_value);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
     miner,
@@ -704,6 +715,7 @@
     b"validator bootstrapping",
     b""
   );
+  subsidy_value
 }
 </code></pre>
 

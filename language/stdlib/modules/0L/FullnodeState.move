@@ -64,5 +64,10 @@ module FullnodeState {
     let state = borrow_global_mut<FullnodeCounter>(addr);
     state.subsidy_in_epoch = state.subsidy_in_epoch + value;
   }
+
+  public fun get_cumulative_subsidy(addr: address): u64 acquires FullnodeCounter{
+    let state = borrow_global<FullnodeCounter>(addr);
+    state.cumulative_subsidy
+  }
 }
 }
