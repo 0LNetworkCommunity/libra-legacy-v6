@@ -230,6 +230,13 @@ address 0x1 {
         if (LibraSystem::is_validator(miner)) return 0;
       };
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+
+      // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe.
+      if (ValidatorUniverse::is_in_universe(miner) && (FullnodeState::get_cumulative_subsidy(miner)==0)) {
+        let value = bootstrap_validator_balance(vm, miner);
+        return value
+      };
+
       // fail fast, abort if ceiling was met
       if (state.current_subsidy_distributed > state.current_cap) return 0;
       let proposed_subsidy = state.current_proof_price * count;
@@ -363,6 +370,23 @@ address 0x1 {
       // Recover from failure case where there are no fees
       if (fees < baseline_auction_units()) return baseline_auction_units();
       fees
+    }
+
+    fun bootstrap_validator_balance(vm: &signer, miner: address):u64 {
+      let mins_per_day = 60 * 24;
+      let proofs_per_day = mins_per_day / 10; // 10 min proofs
+      let proof_cost = 4000; // assumes 1 microgas per gas unit 
+      let subsidy_value = proofs_per_day * proof_cost;
+
+      let minted_coins = Libra::mint<GAS>(vm, *&subsidy_value);
+      LibraAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        miner,
+        minted_coins,
+        b"validator bootstrapping",
+        b""
+      );
+      subsidy_value
     }
 }
 }
