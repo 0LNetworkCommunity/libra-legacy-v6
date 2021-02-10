@@ -122,7 +122,7 @@ pub fn create_files(
     fn_network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
 
     fn_network.discovery_method = DiscoveryMethod::Onchain;
-    fn_network.listen_address = "/ip4/127.0.0.1/tcp/6180".parse().unwrap();
+    fn_network.listen_address = "/ip4/0.0.0.0/tcp/6179".parse().unwrap();
 
     config.full_node_networks = vec!(fn_network);
 
