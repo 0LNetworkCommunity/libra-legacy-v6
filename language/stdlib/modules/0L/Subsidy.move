@@ -226,34 +226,44 @@ address 0x1 {
 
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64, is_genesis: bool ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
+      // Payment is only for fullnodes, ie. not in current validator set.
+      // exception being genesis.
+      if (!is_genesis){
+        if (LibraSystem::is_validator(miner)) return 0;
+      };
 
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       let subsidy;
+      let bootstrap_value = bootstrap_validator_balance();
       // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe. 
-      // Then skip the usual distributions.
-      if (!is_genesis && ValidatorUniverse::is_in_universe(miner) && (FullnodeState::is_onboarding(miner))) {
-        subsidy = bootstrap_validator_balance();
+      // Then skip the usual calculation.
+      if (
+        !is_genesis && // not genesis, steady state
+        ValidatorUniverse::is_in_universe(miner) && // is a candidate for validator, but not yet in set.
+        FullnodeState::is_onboarding(miner) // is in an onboarding state
+      ) {
+        if (bootstrap_value < state.current_proof_price) {
+          // the current price would be insufficient.
+          subsidy = bootstrap_validator_balance();
+        } else {
+          subsidy = state.current_proof_price
+        } 
+        // Boostrap values can exceed the cap for the fullnode subisdy.
       } else {
         // Steady state
 
-        // only for fullnodes, ie. not in current validator set.
-        // exception being genesis.
-        if (!is_genesis){
-          if (LibraSystem::is_validator(miner)) return 0;
-        };
         // fail fast, abort if ceiling was met
         if (state.current_subsidy_distributed > state.current_cap) return 0;
+
         let proposed_subsidy = state.current_proof_price * count;
-        if (proposed_subsidy < 1) return 0;
 
-
+        if (proposed_subsidy == 0) return 0;
         // check if payments will exceed ceiling.
         if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
           // pay the remainder only
           // TODO: This creates a race. Check ordering of list.
           subsidy = state.current_cap - state.current_subsidy_distributed;
         } else {
-
           // happy case, the ceiling is not met.
           subsidy = proposed_subsidy;
         };
@@ -382,15 +392,6 @@ address 0x1 {
       let proofs_per_day = mins_per_day / 10; // 10 min proofs
       let proof_cost = 4000; // assumes 1 microgas per gas unit 
       let subsidy_value = proofs_per_day * proof_cost;
-
-      // let minted_coins = Libra::mint<GAS>(vm, *&subsidy_value);
-      // LibraAccount::vm_deposit_with_metadata<GAS>(
-      //   vm,
-      //   miner,
-      //   minted_coins,
-      //   b"validator bootstrapping",
-      //   b""
-      // );
       subsidy_value
     }
 }
