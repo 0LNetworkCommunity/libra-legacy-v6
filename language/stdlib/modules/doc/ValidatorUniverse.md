@@ -9,6 +9,7 @@
 -  [Function `initialize`](#0x1_ValidatorUniverse_initialize)
 -  [Function `add_validator`](#0x1_ValidatorUniverse_add_validator)
 -  [Function `get_eligible_validators`](#0x1_ValidatorUniverse_get_eligible_validators)
+-  [Function `is_in_universe`](#0x1_ValidatorUniverse_is_in_universe)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -122,6 +123,31 @@
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 220101014010);
   <b>let</b> state = borrow_global&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
   *&state.validators
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorUniverse_is_in_universe"></a>
+
+## Function `is_in_universe`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">is_in_universe</a>(miner: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">is_in_universe</a>(miner: address): bool <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
+  <b>let</b> state = borrow_global&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+  <a href="Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&state.validators, &miner)
 }
 </code></pre>
 
