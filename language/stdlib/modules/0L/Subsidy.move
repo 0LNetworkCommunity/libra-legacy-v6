@@ -23,6 +23,7 @@ address 0x1 {
     use 0x1::TransactionFee;
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
+    use 0x1::FullnodeState;
     // use 0x1::StagingNet::is_staging_net;    
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
@@ -232,7 +233,7 @@ address 0x1 {
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
 
       // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe.
-      if (ValidatorUniverse::is_in_universe(miner) && (FullnodeState::get_cumulative_subsidy(miner)==0)) {
+      if (ValidatorUniverse::is_in_universe(miner) && (FullnodeState::is_onboarding(miner))) {
         let value = bootstrap_validator_balance(vm, miner);
         return value
       };

@@ -19,10 +19,12 @@
 -  [Function `auctioneer`](#0x1_Subsidy_auctioneer)
 -  [Function `calc_auction`](#0x1_Subsidy_calc_auction)
 -  [Function `fullnode_subsidy_ceiling`](#0x1_Subsidy_fullnode_subsidy_ceiling)
+-  [Function `bootstrap_validator_balance`](#0x1_Subsidy_bootstrap_validator_balance)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
+<b>use</b> <a href="FullnodeState.md#0x1_FullnodeState">0x1::FullnodeState</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
@@ -414,6 +416,13 @@
     <b>if</b> (<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(miner)) <b>return</b> 0;
   };
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
+
+  // Bootstrap gas <b>if</b> it's the first payment <b>to</b> a prospective validator. Check no fullnode payments have been made, and is in validator universe.
+  <b>if</b> (<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(miner) && (<a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(miner))) {
+    <b>let</b> value = <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm, miner);
+    <b>return</b> value
+  };
+
   // fail fast, <b>abort</b> <b>if</b> ceiling was met
   <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
   <b>let</b> proposed_subsidy = state.current_proof_price * count;
@@ -667,6 +676,43 @@
   // Recover from failure case <b>where</b> there are no fees
   <b>if</b> (fees &lt; <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>()) <b>return</b> <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>();
   fees
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Subsidy_bootstrap_validator_balance"></a>
+
+## Function `bootstrap_validator_balance`
+
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>(vm: &signer, miner: address):u64 {
+  <b>let</b> mins_per_day = 60 * 24;
+  <b>let</b> proofs_per_day = mins_per_day / 10; // 10 min proofs
+  <b>let</b> proof_cost = 4000; // assumes 1 microgas per gas unit
+  <b>let</b> subsidy_value = proofs_per_day * proof_cost;
+
+  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *&subsidy_value);
+  <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+    vm,
+    miner,
+    minted_coins,
+    b"validator bootstrapping",
+    b""
+  );
+  subsidy_value
 }
 </code></pre>
 
