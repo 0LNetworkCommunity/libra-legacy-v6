@@ -50,23 +50,21 @@ script {
 // use 0x1::Subsidy;
 use 0x1::LibraAccount;
 use 0x1::GAS::GAS;
-use 0x1::Debug::print;
+// use 0x1::Debug::print;
 use 0x1::Reconfigure;
 fun main(vm: &signer) {
     let eve_addr = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
     let old_account_bal = LibraAccount::balance<GAS>(eve_addr);
-    print(&old_account_bal);
+    // print(&old_account_bal);
 
     Reconfigure::reconfigure(vm, 100);
-    // let value = Subsidy::distribute_fullnode_subsidy(vm, eve_addr, 10, false);
-    // print(&value);
 
     let new_account_bal = LibraAccount::balance<GAS>(eve_addr);
-    print(&new_account_bal);
+    // print(&new_account_bal);
 
-    // assert(value == 576000, 735701);
-    // assert(new_account_bal == 576000, 735702);
-    // assert(new_account_bal>old_account_bal, 735703);
+    assert(value == 576000, 735701);
+    assert(new_account_bal == 576000, 735702);
+    assert(new_account_bal>old_account_bal, 735703);
 }
 }
 // check: EXECUTED
