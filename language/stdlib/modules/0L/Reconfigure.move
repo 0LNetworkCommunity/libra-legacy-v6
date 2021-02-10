@@ -33,6 +33,11 @@ module Reconfigure {
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
         let miners = MinerState::get_miner_list();
+        
+        // Migration
+
+        if (Vector::length(&miners) == 0) { miners = ValidatorUniverse::get_eligible_validators(vm) };
+
         let global_proofs_count = 0;
         let k = 0;
         while (k < Vector::length(&miners)) {

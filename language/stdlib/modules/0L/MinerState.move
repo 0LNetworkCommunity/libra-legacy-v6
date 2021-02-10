@@ -239,16 +239,16 @@ address 0x1 {
 
     // Used at end of epoch with reconfig bulk_update the MinerState with the vector of validators from current epoch.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer, eligible_validators: &vector<address>) acquires MinerProofHistory, MinerList {
+    public fun reconfig(vm: &signer, migrate_eligible_validators: &vector<address>) acquires MinerProofHistory, MinerList {
       // Check permissions
       let sender = Signer::address_of(vm);
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130111014010);
 
-      // check minerlist
+      // check minerlist exists, or use eligible_validators to initialize.
       // Migration on hot upgrade
       if (!exists<MinerList>(0x0)) {
         move_to<MinerList>(vm, MinerList {
-          list: *eligible_validators
+          list: *migrate_eligible_validators
         });
       };
 
@@ -343,6 +343,16 @@ address 0x1 {
     //////////////////////
     /// Public Getters ///
     /////////////////////
+
+    // Returns number of epochs for input miner's state
+    // Permissions: PUBLIC, ANYONE
+    // TODO: Rename
+    public fun get_miner_list(): vector<address> acquires MinerList {
+      if (!exists<MinerList>(0x0)) {
+        return Vector::empty<address>()  
+      };
+      *&borrow_global<MinerList>(0x0).list
+    }
 
     // Returns number of epochs for input miner's state
     // Permissions: PUBLIC, ANYONE
