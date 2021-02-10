@@ -22,16 +22,16 @@ script {
   ) {
 
     let new_account_address = LibraAccount::create_validator_account_with_proof(
-    sender,
-    &challenge,
-    &solution,
-    ow_human_name,
-    op_address,
-    op_auth_key_prefix,
-    op_consensus_pubkey,
-    op_validator_network_addresses,
-    op_fullnode_network_addresses,
-    op_human_name,
+      sender,
+      &challenge,
+      &solution,
+      ow_human_name,
+      op_address,
+      op_auth_key_prefix,
+      op_consensus_pubkey,
+      op_validator_network_addresses,
+      op_fullnode_network_addresses,
+      op_human_name,
     );
 
     // Check the account has the Validator role

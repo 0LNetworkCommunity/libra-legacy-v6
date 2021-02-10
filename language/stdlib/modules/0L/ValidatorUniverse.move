@@ -47,5 +47,11 @@ address 0x1 {
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       *&state.validators
     }
+
+    // Is a candidate for validation
+    public fun is_in_universe(miner: address): bool acquires ValidatorUniverse {
+      let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+      Vector::contains<address>(&state.validators, &miner)
+    }
   }
 }
