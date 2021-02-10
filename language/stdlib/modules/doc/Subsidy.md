@@ -7,7 +7,7 @@
 
 -  [Resource `FullnodeSubsidy`](#0x1_Subsidy_FullnodeSubsidy)
 -  [Function `process_subsidy`](#0x1_Subsidy_process_subsidy)
--  [Function `calculate_Subsidy`](#0x1_Subsidy_calculate_Subsidy)
+-  [Function `calculate_subsidy`](#0x1_Subsidy_calculate_subsidy)
 -  [Function `subsidy_curve`](#0x1_Subsidy_subsidy_curve)
 -  [Function `genesis`](#0x1_Subsidy_genesis)
 -  [Function `process_fees`](#0x1_Subsidy_process_fees)
@@ -32,7 +32,6 @@
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
@@ -150,13 +149,13 @@
 
 </details>
 
-<a name="0x1_Subsidy_calculate_Subsidy"></a>
+<a name="0x1_Subsidy_calculate_subsidy"></a>
 
-## Function `calculate_Subsidy`
+## Function `calculate_subsidy`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, height_start: u64, height_end: u64): u64
 </code></pre>
 
 
@@ -165,7 +164,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">calculate_Subsidy</a>(vm: &signer, height_start: u64, height_end: u64):u64 {
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">calculate_subsidy</a>(vm: &signer, height_start: u64, height_end: u64):u64 {
+
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 190101014010);
 
@@ -183,7 +183,7 @@
     subsidy_ceiling_gas,
     network_density,
     max_node_count,
-    );
+  );
 
   // deduct transaction fees from guaranteed minimum.
   <b>if</b> (guaranteed_minimum &gt; txn_fee_amount ){
@@ -274,9 +274,9 @@
     <b>let</b> old_validator_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
     <b>let</b> count_proofs = 1;
 
-    <b>if</b> (is_testnet() || is_staging_net()) {
+    <b>if</b> (is_testnet()) {
       // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
-      count_proofs = 500;
+      count_proofs = 10;
     };
 
     <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address, count_proofs, <b>true</b>);
@@ -368,8 +368,13 @@
   <b>let</b> validator_count = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
   <b>if</b> (validator_count &lt; 10) validator_count = 10;
   // baseline_cap: baseline units per epoch times the mininmum <b>as</b> used in tx, times minimum gas per unit.
-  // estimated gas unit cost for proof submission.
-  <b>let</b> baseline_tx_cost = 1173 * 1;
+
+  // estimated gas unit cost for proof verification divided coin scaling factor
+  // Cost for verification test/easy difficulty: 1173 / 1000000
+  // Cost for verification prod/hard difficulty: 2294 / 1000000
+  // Cost for account creation prod/hard: 4336
+
+  <b>let</b> baseline_tx_cost = 4336; // microgas
   <b>let</b> ceiling = <a href="Subsidy.md#0x1_Subsidy_baseline_auction_units">baseline_auction_units</a>() * baseline_tx_cost * validator_count;
 
   <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);

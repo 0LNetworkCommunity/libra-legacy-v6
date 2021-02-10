@@ -264,7 +264,7 @@ module LibraAccount {
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
+        assert(MinerState::can_create_val_account(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -1840,7 +1840,6 @@ module LibraAccount {
     ///////////////////////////////////////////////////////////////////////////
     // Proof of concept code used for Validator and ValidatorOperator roles management
     ///////////////////////////////////////////////////////////////////////////
-
     public fun create_validator_account(
         lr_account: &signer,
         new_account_address: address,

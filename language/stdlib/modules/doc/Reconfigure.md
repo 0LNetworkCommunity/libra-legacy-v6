@@ -47,7 +47,12 @@
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
-    <b>let</b> miners = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
+    <b>let</b> miners = <a href="MinerState.md#0x1_MinerState_get_miner_list">MinerState::get_miner_list</a>();
+
+    // Migration
+
+    <b>if</b> (<a href="Vector.md#0x1_Vector_length">Vector::length</a>(&miners) == 0) { miners = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm) };
+
     <b>let</b> global_proofs_count = 0;
     <b>let</b> k = 0;
     <b>while</b> (k &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&miners)) {
@@ -70,8 +75,10 @@
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
 
     <b>let</b> (outgoing_set, fee_ratio) = <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">LibraSystem::get_fee_ratio</a>(vm, height_start, height_now);
+
     <b>if</b> (<a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&outgoing_set) &gt; 0) {
-        <b>let</b> subsidy_units = <a href="Subsidy.md#0x1_Subsidy_calculate_Subsidy">Subsidy::calculate_Subsidy</a>(vm, height_start, height_now);
+        <b>let</b> subsidy_units = <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, height_start, height_now);
+
         <b>if</b> (subsidy_units &gt; 0) {
             <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_set, &fee_ratio);
         };
@@ -112,6 +119,8 @@
 
     //Reset Counters
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
+
+    // Migrate elegible: in case there is no minerlist <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
     <a href="MinerState.md#0x1_MinerState_reconfig">MinerState::reconfig</a>(vm, &eligible);
 
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network

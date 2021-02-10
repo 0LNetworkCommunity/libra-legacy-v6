@@ -193,7 +193,7 @@ daemon:
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml && rm ${DATA_PATH}/blocks/*; \
 	fi
 
 #### HELPERS ####
@@ -236,12 +236,12 @@ ifdef TEST
 endif
 
 #### HELPERS ####
-get_waypoint:
-	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
+get-waypoint:
+	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
   
 	echo $$WAY
 
-client: get_waypoint
+client: get-waypoint
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
 
 compress: 
@@ -254,6 +254,11 @@ miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
 
 reset: stop clear fixtures init keys genesis daemon
+
+remove-keys:
+	make stop
+	jq 'del(.["${ACC}-oper/owner", "${ACC}-oper/operator"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
+	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
 
 wipe: 
 	history -c
@@ -276,3 +281,8 @@ smoke:
 	make smoke-reg
 	make smoke-gen
 	make start
+
+smoke-new:
+	#starts config for a new miner "eve"
+	make clear
+	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis

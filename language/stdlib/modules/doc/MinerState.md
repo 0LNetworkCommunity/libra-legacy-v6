@@ -22,9 +22,10 @@
 -  [Function `first_challenge_includes_address`](#0x1_MinerState_first_challenge_includes_address)
 -  [Function `get_miner_latest_epoch`](#0x1_MinerState_get_miner_latest_epoch)
 -  [Function `reset_rate_limit`](#0x1_MinerState_reset_rate_limit)
+-  [Function `get_miner_list`](#0x1_MinerState_get_miner_list)
 -  [Function `get_epochs_mining`](#0x1_MinerState_get_epochs_mining)
 -  [Function `get_count_in_epoch`](#0x1_MinerState_get_count_in_epoch)
--  [Function `rate_limit_create_acc`](#0x1_MinerState_rate_limit_create_acc)
+-  [Function `can_create_val_account`](#0x1_MinerState_can_create_val_account)
 -  [Function `test_helper_mock_mining`](#0x1_MinerState_test_helper_mock_mining)
 -  [Function `test_helper_mock_mining_vm`](#0x1_MinerState_test_helper_mock_mining_vm)
 -  [Function `test_helper_mock_reconfig`](#0x1_MinerState_test_helper_mock_reconfig)
@@ -546,7 +547,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_reconfig">reconfig</a>(vm: &signer, eligible_validators: &vector&lt;address&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_reconfig">reconfig</a>(vm: &signer, migrate_eligible_validators: &vector&lt;address&gt;)
 </code></pre>
 
 
@@ -555,16 +556,16 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_reconfig">reconfig</a>(vm: &signer, eligible_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_reconfig">reconfig</a>(vm: &signer, migrate_eligible_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
   // Check permissions
   <b>let</b> sender = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130111014010);
 
-  // check minerlist
+  // check minerlist <b>exists</b>, or <b>use</b> eligible_validators <b>to</b> initialize.
   // Migration on hot upgrade
   <b>if</b> (!<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>&gt;(0x0)) {
     move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>&gt;(vm, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
-      list: *eligible_validators
+      list: *migrate_eligible_validators
     });
   };
 
@@ -734,11 +735,38 @@
 
 </details>
 
+<a name="0x1_MinerState_get_miner_list"></a>
+
+## Function `get_miner_list`
+
+Public Getters ///
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_get_miner_list">get_miner_list</a>(): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_get_miner_list">get_miner_list</a>(): vector&lt;address&gt; <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>&gt;(0x0)) {
+    <b>return</b> <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
+  };
+  *&borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>&gt;(0x0).list
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_MinerState_get_epochs_mining"></a>
 
 ## Function `get_epochs_mining`
 
-Public Getters ///
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_get_epochs_mining">get_epochs_mining</a>(node_addr: address): u64
@@ -783,13 +811,13 @@ Public Getters ///
 
 </details>
 
-<a name="0x1_MinerState_rate_limit_create_acc"></a>
+<a name="0x1_MinerState_can_create_val_account"></a>
 
-## Function `rate_limit_create_acc`
+## Function `can_create_val_account`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_can_create_val_account">can_create_val_account</a>(node_addr: address): bool
 </code></pre>
 
 
@@ -798,7 +826,9 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_can_create_val_account">can_create_val_account</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+  <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) <b>return</b> <b>true</b>;
+  // check <b>if</b> rate limited, needs 7 epochs of validating.
   borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; 6
 }
 </code></pre>

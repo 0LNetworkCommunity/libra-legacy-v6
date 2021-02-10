@@ -32,7 +32,7 @@ module Reconfigure {
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
-        let miners = ValidatorUniverse::get_eligible_validators(vm);
+        let miners = MinerState::get_miner_list();
         let global_proofs_count = 0;
         let k = 0;
         while (k < Vector::length(&miners)) {
@@ -55,8 +55,10 @@ module Reconfigure {
         let height_start = Epoch::get_timer_height_start(vm);
 
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
+
         if (Vector::length<address>(&outgoing_set) > 0) {
-            let subsidy_units = Subsidy::calculate_Subsidy(vm, height_start, height_now);
+            let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
+
             if (subsidy_units > 0) {
                 Subsidy::process_subsidy(vm, subsidy_units, &outgoing_set, &fee_ratio);
             };
@@ -97,6 +99,8 @@ module Reconfigure {
 
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
+
+        // Migrate elegible: in case there is no minerlist struct, use eligible for migrate_eligible_validators
         MinerState::reconfig(vm, &eligible);
 
         // Reconfigure the network
