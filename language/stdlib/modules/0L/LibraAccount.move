@@ -36,7 +36,7 @@ module LibraAccount {
     use 0x1::Globals;
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
-    use 0x1::LibraSystem;
+    // use 0x1::LibraSystem;
 
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
@@ -727,11 +727,11 @@ module LibraAccount {
         //////// 0L //////// enabled when validator count is 100. 
         let sender_addr = Signer::address_of(sender);
 
-        if (LibraSystem::validator_set_size() >= 100) {
-            assert(LibraSystem::is_validator({{sender_addr}}) || sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 170110014010);
-        } else {
-            assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
-        };
+        // if (LibraSystem::validator_set_size() >= 100) {
+        //     assert(LibraSystem::is_validator({{sender_addr}}) || sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 170110014010);
+        // } else {
+        //     assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        // };
 
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
@@ -830,12 +830,23 @@ module LibraAccount {
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when validator count is 100. 
-        if (LibraSystem::validator_set_size() >= 100 && LibraSystem::is_validator({{*&cap.account_address}})) {
-            // TODO: The withdrawal limit amount should be set in globals not as a constant here. 
-            assert(amount <= 10, Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
-        } else {
-            assert(*&cap.account_address == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
-        };
+        // if (LibraSystem::validator_set_size() >= 100 && LibraSystem::is_validator({{*&cap.account_address}})) {
+        //     // TODO: The withdrawal limit amount should be set in globals not as a constant here. 
+        //     assert(amount <= 10, Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        // } else {
+        //     assert(*&cap.account_address == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        // };
+
+        // Ensure that this deposit is compliant with the account limits on
+        // this account.
+        assert(
+                AccountLimits::update_withdrawal_limits<Token>(
+                    amount,
+                    {{*&cap.account_address}},
+                    &borrow_global<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()).limits_cap
+                ),
+                Errors::limit_exceeded(EDEPOSIT_EXCEEDS_LIMITS)
+            );
 
         deposit<Token>(
             *&cap.account_address,
