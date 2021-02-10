@@ -1,6 +1,12 @@
 use std::{path::PathBuf, fs};
 
-use libra_config::{config::{ NetworkConfig, SecureBackend, DiscoveryMethod, NodeConfig}, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, WaypointConfig}, network_id::NetworkId};
+use libra_config::{config::{ 
+        NetworkConfig,
+        SecureBackend,
+        DiscoveryMethod,
+        NodeConfig
+    }, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, UpstreamConfig, WaypointConfig}, network_id::NetworkId};
+
 use libra_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use libra_management::{
     config::ConfigPath,
@@ -9,8 +15,8 @@ use libra_management::{
 };
 use libra_types::{chain_id::ChainId, waypoint::Waypoint};
 use structopt::StructOpt;
-use crate::{storage_helper::StorageHelper};
-
+use crate::storage_helper::StorageHelper;
+use crate::seeds::Seeds;
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
 pub struct Files {
@@ -110,14 +116,20 @@ pub fn create_files(
 
     config.validator_network = Some(network.clone());
     
-    // TODO: Set a fullnode network key for the fullnodes which can connect to this validator.
-    // config.full_node_networks = vec!(network);
+    ///////// FULL NODE CONFIGS ////////
+    let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
+    
+    fn_network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
+
+    fn_network.discovery_method = DiscoveryMethod::Onchain;
+    fn_network.listen_address = "/ip4/127.0.0.1/tcp/6180".parse().unwrap();
+
+    config.full_node_networks = vec!(fn_network);
 
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
-    // config.upstream = UpstreamConfig { networks: vec!(NetworkId::Validator)};
+    config.upstream = UpstreamConfig { networks: vec!(NetworkId::Public)};
     
     // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
-    // network.seed_addrs = Seeds::new(genesis_path.clone()).get_network_peers_info().expect("Could not get seed peers");
     
     // Consensus
     config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
