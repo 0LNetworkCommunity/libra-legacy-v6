@@ -289,7 +289,7 @@ smoke:
 	make smoke-gen
 	make start
 
-smoke-new:
+smoke-onboard:
 	#starts config for a new miner "eve"
 	make clear
 	make fix
