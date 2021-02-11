@@ -235,11 +235,13 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
+# skip generating genesis files with fixtures
 	cp ./fixtures/genesis/previous/genesis.blob ${DATA_PATH}/
 	cp ./fixtures/genesis/previous/genesis_waypoint ${DATA_PATH}/
 
+# skip miner configuration with fixtures
 	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
-
+# skip mining proof zero with fixtures
 	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
@@ -281,7 +283,13 @@ stop:
 
 
 ##### SMOKE TEST #####
-smoke-default: fix smoke-onboard start
+devnet-keys: 
+	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+
+devnet-genesis-files:
+	cargo run -p miner -- genesis
+
+smoke-default: fix devnet-keys devnet-genesis-files start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 
 smoke-reg:
