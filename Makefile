@@ -286,20 +286,21 @@ stop:
 devnet-keys: 
 	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
 
-devnet-genesis-files:
+devnet-yaml:
 	cargo run -p miner -- genesis
 
-smoke-default: clear fix devnet-keys devnet-genesis-files start
+smoke: clear fix devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 
-smoke-reg:
+smoke-ceremony:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
 	make clear fix
 	echo ${MNEM} | head -c -1 | make register
 
-smoke: smoke-reg genesis start
-
 smoke-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
+
+smoke-fresh: smoke-ceremony genesis start
+
