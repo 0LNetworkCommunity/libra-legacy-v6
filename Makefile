@@ -294,7 +294,7 @@ devnet-keys:
 devnet-yaml:
 	cargo run -p miner -- genesis
 
-smoke-previous: stop clear fix devnet-keys devnet-yaml daemon client
+smoke-previous: stop clear fix devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 
 smoke: smoke-ceremony genesis start
