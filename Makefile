@@ -198,6 +198,11 @@ clear:
 	if test -d ${DATA_PATH}/blocks; then \
 		rm -f ${DATA_PATH}/blocks/*.json; \
 	fi
+
+fixture-stdlib:
+	make stdlib
+	cp language/stdlib/staged/stdlib.mv fixtures/stdlib/fresh_stdlib.mv
+
 #### HELPERS ####
 check:
 	@echo data path: ${DATA_PATH}
