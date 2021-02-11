@@ -245,8 +245,9 @@ get-waypoint:
 client: get-waypoint
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
 
-compress: 
-	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+stdlib:
+	cargo run --release -p stdlib
+	cargo run --release -p stdlib -- --create-upgrade-payload
   
 keygen:
 	cd ${DATA_PATH} && miner keygen
