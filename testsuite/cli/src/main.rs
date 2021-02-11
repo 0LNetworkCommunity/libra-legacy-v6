@@ -83,21 +83,24 @@ struct Args {
 
 fn main() {
     let args = Args::from_args();
-
     // TODO: Duplicated with 0L miner.
     println!("Enter your 0L mnemonic: \u{1F511}");
-    let mut entered_mnem = false;
-    let mnemonic_string = match rpassword::read_password() {
-        Ok(string) => {
-            if string.len() > 0 {
-                entered_mnem = true;
-                Some(string.trim().to_string())
-            } else {
-                None
-            }
+    
+    let mnemonic_string = match env::var("NODE_ENV") {
+        Ok(val) => {
+           match val.as_str() {
+            "prod" => rpassword::read_password_from_tty(Some("\u{1F511}")),
+            // for test and stage environments, so mnemonics can be inputted.
+             _ => {
+               println!("(unsafe STDIN input for testing) \u{1F511}");
+               rpassword::read_password()
+             }
+           }          
         },
-        _ => None,
+        // if not set assume prod
+        _ => rpassword::read_password_from_tty(Some("\u{1F511}"))
     };
+    if mnemonic_string.is_ok() { entered_mnem = true; }
 
 
     let mut logger = ::libra_logger::Logger::new();
