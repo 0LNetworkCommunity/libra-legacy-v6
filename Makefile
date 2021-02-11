@@ -253,7 +253,12 @@ get-waypoint:
 	echo $$WAY
 
 client: get-waypoint
+ifeq (${TEST}, y)
+	echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
+else
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
+endif
+
 
 stdlib:
 	cargo run --release -p stdlib
@@ -289,7 +294,7 @@ devnet-keys:
 devnet-yaml:
 	cargo run -p miner -- genesis
 
-smoke-previous: clear fix devnet-keys devnet-yaml start
+smoke-previous: stop clear fix devnet-keys devnet-yaml daemon client
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 
 smoke: smoke-ceremony genesis start
