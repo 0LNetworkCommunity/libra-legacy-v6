@@ -81,7 +81,7 @@ struct Args {
 fn main() {
     let args = Args::from_args();
     // TODO: Duplicated with 0L miner.
-    println!("Enter your 0L mnemonic: \u{1F511}");
+    println!("Enter your 0L mnemonic:");
     let mut entered_mnem = false;
     let mnemonic_string = match env::var("NODE_ENV") {
         Ok(val) => {
