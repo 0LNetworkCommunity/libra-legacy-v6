@@ -289,7 +289,7 @@ devnet-keys:
 devnet-genesis-files:
 	cargo run -p miner -- genesis
 
-smoke-default: fix devnet-keys devnet-genesis-files start
+smoke-default: clear fix devnet-keys devnet-genesis-files start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 
 smoke-reg:
