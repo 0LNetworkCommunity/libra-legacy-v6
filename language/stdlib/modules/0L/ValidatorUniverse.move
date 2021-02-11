@@ -69,7 +69,6 @@ address 0x1 {
 
     // Is in set
     public fun is_in_universe(miner: address): bool acquires ValidatorUniverse {
-      // assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       Vector::contains<address>(&state.validators, &miner)
     }

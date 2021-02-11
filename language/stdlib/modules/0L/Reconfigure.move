@@ -13,7 +13,6 @@ module Reconfigure {
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
     use 0x1::LibraSystem;
-    // use 0x1::EpochTimer;
     use 0x1::MinerState;
     use 0x1::Globals;
     use 0x1::Vector;

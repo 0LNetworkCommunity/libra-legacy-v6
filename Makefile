@@ -193,9 +193,11 @@ daemon:
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml && rm ${DATA_PATH}/blocks/*; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
-
+	if test -d ${DATA_PATH}/blocks; then \
+		rm -f ${DATA_PATH}/blocks/*.json; \
+	fi
 #### HELPERS ####
 check:
 	@echo data path: ${DATA_PATH}
@@ -217,9 +219,8 @@ ifdef TEST
 	@if test ! -d ${0L_PATH}; then \
 		mkdir ${0L_PATH}; \
 		mkdir ${DATA_PATH}; \
+		mkdir -p ${DATA_PATH}/blocks/; \
 	fi
-
-	mkdir -p ${DATA_PATH}/blocks/
 
 	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm ${DATA_PATH}/blocks/block_0.json; \
@@ -244,8 +245,9 @@ get-waypoint:
 client: get-waypoint
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
 
-compress: 
-	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+stdlib:
+	cargo run --release -p stdlib
+	cargo run --release -p stdlib -- --create-upgrade-payload
   
 keygen:
 	cd ${DATA_PATH} && miner keygen
@@ -285,4 +287,5 @@ smoke:
 smoke-new:
 	#starts config for a new miner "eve"
 	make clear
-	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis
+	make fix
+	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
