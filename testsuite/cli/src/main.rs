@@ -13,10 +13,7 @@ use cli::{
 };
 use libra_types::{chain_id::ChainId, waypoint::Waypoint};
 use rustyline::{config::CompletionType, error::ReadlineError, Config, Editor};
-use std::{
-    str::FromStr,
-    time::{Duration, UNIX_EPOCH},
-};
+use std::{env, str::FromStr, time::{Duration, UNIX_EPOCH}};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -85,7 +82,7 @@ fn main() {
     let args = Args::from_args();
     // TODO: Duplicated with 0L miner.
     println!("Enter your 0L mnemonic: \u{1F511}");
-    
+    let mut entered_mnem = false;
     let mnemonic_string = match env::var("NODE_ENV") {
         Ok(val) => {
            match val.as_str() {
@@ -143,7 +140,7 @@ fn main() {
         true, // 0L change
         args.faucet_url.clone(),
         mnemonic_file,
-        mnemonic_string, // 0L change
+        Some(mnemonic_string.unwrap()), // 0L change
         waypoint,
     )
     .expect("Failed to construct client.");
