@@ -46,10 +46,9 @@ pub fn get_account_from_mnem(mnemonic_string: String) -> (AuthenticationKey, Acc
 
 /// Prompts user to type mnemonic securely.
 pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
-    println!("Enter your 0L mnemonic:");
-    let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} "))
+    println!("Enter your 0L mnemonic: \u{1F511}");
+    let mnemonic_string = rpassword::read_password()
     .unwrap()
-    // .clone()
     .trim()
     .to_string();
     get_account_from_mnem(mnemonic_string)

@@ -85,15 +85,13 @@ fn main() {
     let args = Args::from_args();
 
     // TODO: Duplicated with 0L miner.
-    println!("Enter your 0L mnemonic:");
+    println!("Enter your 0L mnemonic: \u{1F511}");
     let mut entered_mnem = false;
-    let mnemonic_string = match rpassword::read_password_from_tty(Some("\u{1F511} ")) {
+    let mnemonic_string = match rpassword::read_password() {
         Ok(string) => {
             if string.len() > 0 {
                 entered_mnem = true;
                 Some(string.trim().to_string())
-                
-
             } else {
                 None
             }
