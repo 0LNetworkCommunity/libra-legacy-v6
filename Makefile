@@ -289,8 +289,10 @@ devnet-keys:
 devnet-yaml:
 	cargo run -p miner -- genesis
 
-smoke: clear fix devnet-keys devnet-yaml start
+smoke-previous: clear fix devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+
+smoke: smoke-ceremony genesis start
 
 smoke-ceremony:
 # note: this uses the NS in local env to create files i.e. alice or bob
@@ -302,5 +304,4 @@ smoke-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
 
-smoke-fresh: smoke-ceremony genesis start
 
