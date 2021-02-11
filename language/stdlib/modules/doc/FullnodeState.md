@@ -12,6 +12,8 @@
 -  [Function `inc_payment_count`](#0x1_FullnodeState_inc_payment_count)
 -  [Function `inc_payment_value`](#0x1_FullnodeState_inc_payment_value)
 -  [Function `get_address_proof_count`](#0x1_FullnodeState_get_address_proof_count)
+-  [Function `get_cumulative_subsidy`](#0x1_FullnodeState_get_cumulative_subsidy)
+-  [Function `is_onboarding`](#0x1_FullnodeState_is_onboarding)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -246,6 +248,56 @@ VM Increments payments in epoch. Increases by <code>count</code>
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">get_address_proof_count</a>(addr: address):u64 <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
   <b>let</b> state = borrow_global&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
   state.proofs_submitted_in_epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_FullnodeState_get_cumulative_subsidy"></a>
+
+## Function `get_cumulative_subsidy`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_cumulative_subsidy">get_cumulative_subsidy</a>(addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_cumulative_subsidy">get_cumulative_subsidy</a>(addr: address): u64 <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>{
+  <b>let</b> state = borrow_global&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
+  state.cumulative_subsidy
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_FullnodeState_is_onboarding"></a>
+
+## Function `is_onboarding`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">is_onboarding</a>(addr: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">is_onboarding</a>(addr: address): bool <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>{
+  <b>let</b> state = borrow_global&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
+  state.cumulative_subsidy == 0
 }
 </code></pre>
 
