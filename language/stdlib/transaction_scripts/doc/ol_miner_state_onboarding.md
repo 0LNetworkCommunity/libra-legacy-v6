@@ -39,16 +39,16 @@
 ) {
 
   <b>let</b> new_account_address = <a href="../../modules/doc/LibraAccount.md#0x1_LibraAccount_create_validator_account_with_proof">LibraAccount::create_validator_account_with_proof</a>(
-  sender,
-  &challenge,
-  &solution,
-  ow_human_name,
-  op_address,
-  op_auth_key_prefix,
-  op_consensus_pubkey,
-  op_validator_network_addresses,
-  op_fullnode_network_addresses,
-  op_human_name,
+    sender,
+    &challenge,
+    &solution,
+    ow_human_name,
+    op_address,
+    op_auth_key_prefix,
+    op_consensus_pubkey,
+    op_validator_network_addresses,
+    op_fullnode_network_addresses,
+    op_human_name,
   );
 
   // Check the account has the Validator role

@@ -69,5 +69,17 @@ module FullnodeState {
     let state = borrow_global<FullnodeCounter>(addr);
     state.proofs_submitted_in_epoch
   }
+
+  public fun get_cumulative_subsidy(addr: address): u64 acquires FullnodeCounter{
+    let state = borrow_global<FullnodeCounter>(addr);
+    state.cumulative_subsidy
+  }
+
+  public fun is_onboarding(addr: address): bool acquires FullnodeCounter{
+    let state = borrow_global<FullnodeCounter>(addr);
+    state.cumulative_subsidy == 0
+  }
+
+
 }
 }

@@ -22,7 +22,9 @@ pub struct ValWizardCmd {
     #[options(help = "run keygen before wizard")]
     keygen: bool,   
     #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool,  
+    rebuild_genesis: bool, 
+    #[options(help = "skip mining a block zero")]
+    skip_mining: bool,   
 }
 
 impl Runnable for ValWizardCmd {
@@ -67,10 +69,12 @@ impl Runnable for ValWizardCmd {
         );
         status_ok!("\nNode config OK", "\n...........................\n");
 
-        // Mine Block
-        zero_cmd::mine_zero(&miner_config);
-        status_ok!("\nProof OK", "\n...........................\n");
-
+        if !self.skip_mining {
+            // Mine Block
+            zero_cmd::mine_zero(&miner_config);
+            status_ok!("\nProof OK", "\n...........................\n");
+        }
+        
         // Write Manifest
         manifest_cmd::write_manifest(None, wallet);
         status_ok!("\nAccount manifest OK", "\n...........................\n");
