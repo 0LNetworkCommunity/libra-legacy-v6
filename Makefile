@@ -286,4 +286,5 @@ smoke:
 smoke-new:
 	#starts config for a new miner "eve"
 	make clear
+	make fix
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
