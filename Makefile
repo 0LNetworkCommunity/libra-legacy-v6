@@ -341,7 +341,7 @@ devnet-save-genesis:
 	git push
 
 devnet-hard:
-	git reset --hard origin ${VERSION} 
+	git reset --hard origin/${VERSION} 
 
 devnet-pull:
 # must be on a branch
