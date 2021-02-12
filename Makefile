@@ -327,7 +327,7 @@ devnet-reset: devnet-reset-ceremony genesis start
 devnet-reset-ceremony:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
-	make clear fix
+	SKIP_BLOB=y make clear fix
 	echo ${MNEM} | head -c -1 | make register
 
 devnet-reset-onboard: clear 
