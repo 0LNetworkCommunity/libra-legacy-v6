@@ -239,10 +239,11 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-# skip generating genesis files with fixtures
+# skip  genesis files with fixtures, there may be no version
+ifndef SKIP_BLOB
 	cp ./fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
 	cp ./fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
-
+endif
 # skip miner configuration with fixtures
 	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
 # skip mining proof zero with fixtures
@@ -329,8 +330,10 @@ devnet-reset-ceremony:
 	make clear fix
 	echo ${MNEM} | head -c -1 | make register
 
-devnet-reset-onboard: clear fix
-	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+devnet-reset-onboard: clear 
+# fixtures needs a file that works
+	SKIP_BLOB=y fix
+# starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
