@@ -4,6 +4,10 @@ DATA_PATH = ${HOME}/.0L
 # Chain settings
 CHAIN_ID = 1
 
+ifndef VERSION
+VERSION=previous
+endif
+
 # Account settings
 ifndef ACC
 ACC=$(shell toml get ${DATA_PATH}/miner.toml profile.account | tr -d '"')
@@ -236,8 +240,8 @@ ifdef TEST
 	fi 
 
 # skip generating genesis files with fixtures
-	cp ./fixtures/genesis/previous/genesis.blob ${DATA_PATH}/
-	cp ./fixtures/genesis/previous/genesis_waypoint ${DATA_PATH}/
+	cp ./fixtures/genesis/${VERSION}/genesis.blob ${DATA_PATH}/
+	cp ./fixtures/genesis/${VERSION}/genesis_waypoint ${DATA_PATH}/
 
 # skip miner configuration with fixtures
 	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
@@ -245,6 +249,7 @@ ifdef TEST
 	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
+
 
 #### HELPERS ####
 get-waypoint:
@@ -298,6 +303,9 @@ devnet-yaml:
 	cargo run -p miner -- genesis
 
 smoke-previous: stop clear fix devnet-keys devnet-yaml start
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+
+smoke-current: stop clear fix-current devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 
 smoke: smoke-ceremony genesis start
