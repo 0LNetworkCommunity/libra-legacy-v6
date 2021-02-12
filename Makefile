@@ -295,29 +295,50 @@ debug:
 	make smoke-onboard <<< $$'${MNEM}'
  
 
-##### SMOKE TEST #####
+##### DEVNET TESTS #####
+# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
+
 devnet-keys: 
 	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
 
 devnet-yaml:
 	cargo run -p miner -- genesis
 
-smoke-previous: stop clear fix devnet-keys devnet-yaml start
+devnet-onboard: clear fix
+	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+
+devnet-previous: stop clear 
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+	VERSION=previous make fix devnet-keys devnet-yaml start
 
-smoke-current: stop clear fix-current devnet-keys devnet-yaml start
+
+devnet-current: stop clear
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+	VERSION=previous make fix devnet-keys devnet-yaml start
 
-smoke: smoke-ceremony genesis start
+### FULL DEVNET RESET ####
 
-smoke-ceremony:
+devnet-reset: devnet-reset-ceremony genesis start
+# Tests the full genesis ceremony cycle, and rebuilds all genesis and waypoints.
+
+devnet-reset-ceremony:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
 	make clear fix
 	echo ${MNEM} | head -c -1 | make register
 
-smoke-onboard: clear fix
+devnet-reset-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
 
+#### GIT HELPERS FOR DEVNET AUTOMATION ####
+devnet-save-genesis:
+	cp ~/.0L/genesis* ~/libra/fixtures/genesis/${VERSION}/
+	git add ~/libra/fixtures/genesis/${VERSION}/
+	git commit -a -m "save genesis fixtures to ${VERSION}"
+	git push
+
+devnet-pull:
+	git fetch && git checkout ${VERSION} -f && git pull
 
