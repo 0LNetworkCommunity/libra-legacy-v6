@@ -1,8 +1,13 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
+
 # Chain settings
 CHAIN_ID = 1
+
+ifndef SOURCE
+SOURCE=${HOME}/libra
+endif
 
 ifndef V
 V=previous
@@ -45,9 +50,8 @@ bins:
 	cargo install toml-cli
 	cargo run -p stdlib --release
 	#Build and install genesis tool, libra-node, and miner
-	# cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
-	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
-	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	cargo build -p miner --release && sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
+	cargo build -p libra-node --release && sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
@@ -337,18 +341,12 @@ devnet-reset-onboard: clear
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
 devnet-save-genesis: get-waypoint
-	echo $$WAY > ~/.0L/genesis_waypoint
-	rsync -a ~/.0L/genesis* ~/libra/fixtures/genesis/${V}/
-	git add ~/libra/fixtures/genesis/${V}/
+	echo $$WAY > ${DATA_PATH}/genesis_waypoint
+	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
+	git add ${SOURCE}/fixtures/genesis/${V}/
 	git commit -a -m "save genesis fixtures to ${V}"
 	git push
 
-devnet-save-genesis: get-waypoint
-	echo $$WAY > ~/.0L/genesis_waypoint
-	rsync -a ~/.0L/genesis* ~/libra/fixtures/genesis/${V}/
-	git add ~/libra/fixtures/genesis/${V}/
-	git commit -a -m "save genesis fixtures to ${V}"
-	git push
 devnet-hard:
 	git reset --hard origin/${V} 
 
