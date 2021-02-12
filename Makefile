@@ -337,6 +337,7 @@ devnet-reset-onboard: clear
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
 devnet-save-genesis:
+	make get-waypoint > ~/.0L/genesis_waypoint
 	rsync -a ~/.0L/genesis* ~/libra/fixtures/genesis/${V}/
 	git add ~/libra/fixtures/genesis/${V}/
 	git commit -a -m "save genesis fixtures to ${V}"
