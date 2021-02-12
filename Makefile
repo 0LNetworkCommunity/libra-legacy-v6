@@ -4,8 +4,8 @@ DATA_PATH = ${HOME}/.0L
 # Chain settings
 CHAIN_ID = 1
 
-ifndef VERSION
-VERSION=previous
+ifndef V
+V=previous
 endif
 
 # Account settings
@@ -240,8 +240,8 @@ ifdef TEST
 	fi 
 
 # skip generating genesis files with fixtures
-	cp ./fixtures/genesis/${VERSION}/genesis.blob ${DATA_PATH}/
-	cp ./fixtures/genesis/${VERSION}/genesis_waypoint ${DATA_PATH}/
+	cp ./fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
 
 # skip miner configuration with fixtures
 	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
@@ -301,7 +301,7 @@ debug:
 devnet: stop clear
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
-	VERSION=current make fix devnet-keys devnet-yaml start
+	V=current make fix devnet-keys devnet-yaml start
 
 devnet-keys: 
 	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
@@ -315,7 +315,7 @@ devnet-onboard: clear fix
 
 devnet-previous: stop clear 
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-	VERSION=previous make fix devnet-keys devnet-yaml start
+	V=previous make fix devnet-keys devnet-yaml start
 
 
 ### FULL DEVNET RESET ####
@@ -335,15 +335,15 @@ devnet-reset-onboard: clear fix
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
 devnet-save-genesis:
-	cp ~/.0L/genesis* ~/libra/fixtures/genesis/${VERSION}/
-	git add ~/libra/fixtures/genesis/${VERSION}/
-	git commit -a -m "save genesis fixtures to ${VERSION}"
+	cp ~/.0L/genesis* ~/libra/fixtures/genesis/${V}/
+	git add ~/libra/fixtures/genesis/${V}/
+	git commit -a -m "save genesis fixtures to ${V}"
 	git push
 
 devnet-hard:
-	git reset --hard origin/${VERSION} 
+	git reset --hard origin/${V} 
 
 devnet-pull:
 # must be on a branch
-	git fetch && git checkout ${VERSION} -f && git pull
+	git fetch && git checkout ${V} -f && git pull
 
