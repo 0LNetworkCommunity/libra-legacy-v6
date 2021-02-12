@@ -298,7 +298,7 @@ debug:
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
 
-devnet: stop clear devnet-pull
+devnet: stop clear
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 	VERSION=current make fix devnet-keys devnet-yaml start
@@ -340,7 +340,10 @@ devnet-save-genesis:
 	git commit -a -m "save genesis fixtures to ${VERSION}"
 	git push
 
+devnet-hard:
+	git reset --hard origin ${VERSION} 
+
 devnet-pull:
-	git reset --hard origin
+# must be on a branch
 	git fetch && git checkout ${VERSION} -f && git pull
 
