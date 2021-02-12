@@ -169,9 +169,9 @@ start:
 	cargo run -p libra-node -- --config ${DATA_PATH}/node.yaml
 
 daemon:
-# your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
+# your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
 	sudo cp -f ~/.0L/libra-node.service /lib/systemd/system/
-# cp -f miner.service /lib/systemd/system/
+
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		sudo rm -rf ~/logs*; \
