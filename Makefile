@@ -299,10 +299,9 @@ debug:
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
 
-devnet: stop clear
+devnet: stop clear make fix devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
-	V=current make fix devnet-keys devnet-yaml start
 
 devnet-keys: 
 	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
