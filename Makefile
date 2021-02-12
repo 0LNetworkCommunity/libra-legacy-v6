@@ -343,6 +343,12 @@ devnet-save-genesis: get-waypoint
 	git commit -a -m "save genesis fixtures to ${V}"
 	git push
 
+devnet-save-genesis: get-waypoint
+	echo $$WAY > ~/.0L/genesis_waypoint
+	rsync -a ~/.0L/genesis* ~/libra/fixtures/genesis/${V}/
+	git add ~/libra/fixtures/genesis/${V}/
+	git commit -a -m "save genesis fixtures to ${V}"
+	git push
 devnet-hard:
 	git reset --hard origin/${V} 
 
