@@ -235,11 +235,13 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
+# skip generating genesis files with fixtures
 	cp ./fixtures/genesis/previous/genesis.blob ${DATA_PATH}/
 	cp ./fixtures/genesis/previous/genesis_waypoint ${DATA_PATH}/
 
+# skip miner configuration with fixtures
 	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
-
+# skip mining proof zero with fixtures
 	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
@@ -251,7 +253,12 @@ get-waypoint:
 	echo $$WAY
 
 client: get-waypoint
+ifeq (${TEST}, y)
+	echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
+else
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
+endif
+
 
 stdlib:
 	cargo run --release -p stdlib
@@ -284,17 +291,25 @@ debug:
  
 
 ##### SMOKE TEST #####
-smoke-default: fix smoke-onboard start
+devnet-keys: 
+	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+
+devnet-yaml:
+	cargo run -p miner -- genesis
+
+smoke-previous: stop clear fix devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 
-smoke-reg:
+smoke: smoke-ceremony genesis start
+
+smoke-ceremony:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
 	make clear fix
 	echo ${MNEM} | head -c -1 | make register
 
-smoke: smoke-reg genesis start
-
 smoke-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
+
+

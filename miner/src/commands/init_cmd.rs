@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 // use std::{path::PathBuf};
-use crate::{config::MinerConfig, keygen};
+use crate::{application::app_config, config::MinerConfig, keygen};
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
@@ -14,15 +14,22 @@ use libra_wallet::WalletLibrary;
 
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct InitCmd {}
+pub struct InitCmd {
+    #[options(help = "Skip miner app configs")]
+    skip_miner: bool,
+    #[options(help = "Skip validator init")]
+    skip_val: bool,
+}
 
 
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
         let (authkey, account, wallet) = keygen::account_from_prompt();
-        let miner_config = initialize_miner(authkey, account).unwrap();
-        initialize_validator(&wallet, &miner_config).unwrap();
+        let mut miner_config = app_config().to_owned();
+        
+        if !self.skip_miner { miner_config = initialize_miner(authkey, account).unwrap() };
+        if !self.skip_val { initialize_validator(&wallet, &miner_config).unwrap() };
     }
 }
 
