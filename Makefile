@@ -279,6 +279,9 @@ wipe:
 stop:
 	sudo service libra-node stop
 
+debug:
+	make smoke-onboard <<< $$'${MNEM}'
+ 
 
 ##### SMOKE TEST #####
 smoke-default: fix smoke-onboard start
