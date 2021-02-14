@@ -271,8 +271,7 @@ stop:
 	sudo service libra-node stop
 
 backup-epoch:
-	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --end-epoch ${EPOCH} --start-epoch ${EPOCH} local-fs --dir ${DATA_PATH}/db
-
+# IMPORTANT: The manifest file includes OS paths to chunks. Those paths are relative and fail. You should edit the file  .manifest file so that the "ledger_infos" includes a full path "/root/epoch-archive/epoch_ending_70-.0987/70-.chunk"
 	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --start-epoch 70 --end-epoch 72 local-fs --dir ~/.0L/db
 
 restore-epoch:
