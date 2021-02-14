@@ -273,6 +273,20 @@ stop:
 backup-epoch:
 	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --end-epoch ${EPOCH} --start-epoch ${EPOCH} local-fs --dir ${DATA_PATH}/db
 
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --start-epoch 70 --end-epoch 72 local-fs --dir ~/.0L/db
+
+restore-epoch:
+	cargo run --release -p backup-cli --bin db-restore -- --target-db-dir ~/.0L/db epoch-ending --epoch-ending-manifest ~/epoch-archive/epoch_ending_68-.0a14/epoch_ending.manifest local-fs --dir ~/.0L/db 
+
+backup-transaction:
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup transaction --num_transactions 10000 --start-version 37538428 local-fs --dir ~/.0L/db
+
+restore-transaction:
+	cargo run --release -p backup-cli --bin db-restore -- --target-db-dir ~/.0L/db transaction --transaction-manifest ~/epoch-archive/transaction_37538428-.215e/transaction.manifest local-fs --dir ~/.0L/db
+
+backup-snapshot:
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup state-snapshot --state-version 39170318 local-fs --dir ~/.0L/db
+
 ##### SMOKE TEST #####
 smoke-reg:
 # note: this uses the NS in local env to create files i.e. alice or bob
