@@ -272,7 +272,11 @@ stop:
 
 backup-epoch:
 # IMPORTANT: The manifest file includes OS paths to chunks. Those paths are relative and fail. You should edit the file  .manifest file so that the "ledger_infos" includes a full path "/root/epoch-archive/epoch_ending_70-.0987/70-.chunk"
-	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --start-epoch 70 --end-epoch 72 local-fs --dir ~/.0L/db
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --start-epoch 68 --end-epoch 69 local-fs --dir ~/.0L/db
+
+# save to epoch archive repo for testing
+	cp -r ~/.0L/db/epoch_ending* ~/epoch-archive/
+	git add -A && git commit -a -m "epoch archive" && git push
 
 restore-epoch:
 	cargo run --release -p backup-cli --bin db-restore -- --target-db-dir ~/.0L/db epoch-ending --epoch-ending-manifest ~/epoch-archive/epoch_ending_68-.0a14/epoch_ending.manifest local-fs --dir ~/.0L/db 
