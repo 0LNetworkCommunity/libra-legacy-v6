@@ -270,6 +270,8 @@ wipe:
 stop:
 	sudo service libra-node stop
 
+backup-epoch:
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --end-epoch ${EPOCH} --start-epoch ${EPOCH} local-fs --dir ${DATA_PATH}/db
 
 ##### SMOKE TEST #####
 smoke-reg:
