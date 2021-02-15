@@ -1,4 +1,3 @@
-//// frank is a fullnode
 //! account: bob, 100, 0, validator
 
 //! new-transaction
@@ -7,19 +6,14 @@
 script {
 use 0x1::VDF;
 use 0x1::LibraAccount;
-// use 0x1::GAS::GAS;
 use 0x1::MinerState;
-// use 0x1::NodeWeight;
 use 0x1::TestFixtures;
-// use 0x1::ValidatorConfig;
-// use 0x1::Roles;
 use 0x1::Signer;
-// use 0x1::Debug::print;
-      // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
+      // Scenario: Bob, an existing validator, is sending an onboarding transaction for Eve.
 fun main(sender: &signer) {
   let challenge = TestFixtures::eve_0_easy_chal();
   let solution = TestFixtures::eve_0_easy_sol();
-  // // Parse key and check
+  // Parse key and check
   let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
   assert(eve_addr == 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
   
@@ -44,25 +38,28 @@ fun main(sender: &signer) {
 // check: EXECUTED
 
 //! new-transaction
-// Check if genesis subsidies have been distributed
+
 //! sender: libraroot
 script {
-// use 0x1::Subsidy;
+use 0x1::Subsidy;
 use 0x1::LibraAccount;
 use 0x1::GAS::GAS;
-// use 0x1::Debug::print;
+use 0x1::Debug::print;
 use 0x1::Reconfigure;
 fun main(vm: &signer) {
     let eve_addr = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
     let old_account_bal = LibraAccount::balance<GAS>(eve_addr);
-    // print(&old_account_bal);
+    print(&old_account_bal);
 
+    // Make the current auction price above minimum guarantee.
+    Subsidy::test_set_fullnode_fixtures(vm, 0, 1000000, 0, 0, 0);
+    // Fullnode rewards are paid at epoch boundary.
     Reconfigure::reconfigure(vm, 100);
 
     let new_account_bal = LibraAccount::balance<GAS>(eve_addr);
-    // print(&new_account_bal);
+    print(&new_account_bal);
 
-    assert(new_account_bal == 576000, 735702);
+    assert(new_account_bal == 1000000, 735702);
     assert(new_account_bal>old_account_bal, 735703);
 }
 }

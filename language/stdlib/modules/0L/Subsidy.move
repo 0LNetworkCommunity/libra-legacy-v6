@@ -222,8 +222,9 @@ address 0x1 {
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
       });
-      }
+    }
 
+    use 0x1::Debug::print;
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64, is_genesis: bool ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
       // Payment is only for fullnodes, ie. not in current validator set.
@@ -242,10 +243,17 @@ address 0x1 {
         ValidatorUniverse::is_in_universe(miner) && // is a candidate for validator, but not yet in set.
         FullnodeState::is_onboarding(miner) // is in an onboarding state
       ) {
+        print(&0x011111111);
+        // if insufficient balance, override auction
         if (state.current_proof_price < bootstrap_value) {
+          print(&0x012);
+          print(&state.current_proof_price);
+          print(&bootstrap_value);
           // the current price would be insufficient.
           subsidy = bootstrap_value;
         } else {
+          print(&0x013);
+
           subsidy = state.current_proof_price
         } 
         // Boostrap values can exceed the cap for the fullnode subisdy.
@@ -394,5 +402,25 @@ address 0x1 {
       let subsidy_value = proofs_per_day * proof_cost;
       subsidy_value
     }
+
+    //////// TEST HELPERS ///////
+    public fun test_set_fullnode_fixtures(
+      vm: &signer,
+      previous_epoch_proofs: u64,
+      current_proof_price: u64,
+      current_cap: u64,
+      current_subsidy_distributed: u64,
+      current_proofs_verified: u64,
+    ) acquires FullnodeSubsidy {
+      Roles::assert_libra_root(vm);
+      assert(is_testnet(), 1000);
+      let state = borrow_global_mut<FullnodeSubsidy>(0x0);
+      state.previous_epoch_proofs = previous_epoch_proofs;
+      state.current_proof_price = current_proof_price;
+      state.current_cap = current_cap;
+      state.current_subsidy_distributed = current_subsidy_distributed;
+      state.current_proofs_verified = current_proofs_verified;
+    }
+
 }
 }
