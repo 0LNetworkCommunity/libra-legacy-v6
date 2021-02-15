@@ -79,7 +79,5 @@ module FullnodeState {
     let state = borrow_global<FullnodeCounter>(addr);
     state.cumulative_subsidy == 0
   }
-
-
 }
 }

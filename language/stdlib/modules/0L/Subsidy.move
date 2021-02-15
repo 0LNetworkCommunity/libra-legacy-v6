@@ -242,9 +242,9 @@ address 0x1 {
         ValidatorUniverse::is_in_universe(miner) && // is a candidate for validator, but not yet in set.
         FullnodeState::is_onboarding(miner) // is in an onboarding state
       ) {
-        if (bootstrap_value < state.current_proof_price) {
+        if (state.current_proof_price < bootstrap_value) {
           // the current price would be insufficient.
-          subsidy = bootstrap_validator_balance();
+          subsidy = bootstrap_value;
         } else {
           subsidy = state.current_proof_price
         } 
