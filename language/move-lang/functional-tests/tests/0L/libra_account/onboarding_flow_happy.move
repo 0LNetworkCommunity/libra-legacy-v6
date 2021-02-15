@@ -8,6 +8,7 @@ use 0x1::LibraAccount;
 use 0x1::MinerState;
 use 0x1::TestFixtures;
 use 0x1::Signer;
+use 0x1::Vector;
 
 
 // Test Prefix: 1301
@@ -17,7 +18,7 @@ fun main(sender: &signer) {
   let solution = TestFixtures::eve_0_easy_sol();
   // // Parse key and check
   let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-  assert(eve_addr == 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
+  assert(eve_addr == 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
   
   let sender_addr = Signer::address_of(sender);
   let epochs_since_creation = 10;
@@ -35,6 +36,9 @@ fun main(sender: &signer) {
       b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
       x"1ee7", // human_name: vector<u8>,
   );
+
+  // the prospective validator is in the current miner list.
+  assert(Vector::contains<address>(&MinerState::get_miner_list(), &eve_addr), 7357401002);
 }
 }
 // check: EXECUTED
@@ -55,11 +59,11 @@ fun main(vm: &signer) {
   Subsidy::test_set_fullnode_fixtures(vm, 0, 0, 0, 0, 0);
   Reconfigure::reconfigure(vm, 10); // need to remove testnet for this test, since testnet does not ratelimit account creation.
   let bal = LibraAccount::balance<GAS>(eve_addr);
-  assert(bal == 576000, 73570001);
+  assert(bal == 576000, 7357401003);
 
-  assert(!ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357001);
-  assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357002);
-  assert(!ValidatorUniverse::is_jailed(eve_addr), 7357003);
+  assert(!ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357401004);
+  assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
+  assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
 }
 }
 
@@ -93,7 +97,7 @@ fun main(vm: &signer) {
   // let addr = Signer::address_of(validator);
   // if is above threshold continue, or raise error.
   let new_signer = LibraAccount::test_helper_create_signer(vm, eve_addr);
-  assert(MinerState::node_above_thresh(&new_signer, eve_addr), 01);
+  assert(MinerState::node_above_thresh(&new_signer, eve_addr), 7357401007);
   // if is not in universe, add back
   if (!ValidatorUniverse::is_in_universe(eve_addr)) {
       ValidatorUniverse::add_self(&new_signer);
@@ -118,8 +122,8 @@ fun main(_vm: &signer) {
   let eve_addr = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
   /// mock mining above threshold.
-  assert(ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357001);
-  assert(ValidatorUniverse::is_in_universe(eve_addr), 7357002);
-  assert(!ValidatorUniverse::is_jailed(eve_addr), 7357003);
+  assert(ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357401008);
+  assert(ValidatorUniverse::is_in_universe(eve_addr), 7357401009);
+  assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401010);
 }
 }
