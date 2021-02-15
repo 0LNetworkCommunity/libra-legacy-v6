@@ -1,8 +1,17 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
+
 # Chain settings
 CHAIN_ID = 1
+
+ifndef SOURCE
+SOURCE=${HOME}/libra
+endif
+
+ifndef V
+V=previous
+endif
 
 # Account settings
 ifndef ACC
@@ -41,9 +50,8 @@ bins:
 	cargo install toml-cli
 	cargo run -p stdlib --release
 	#Build and install genesis tool, libra-node, and miner
-	# cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
-	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
-	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	cargo build -p miner --release && sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
+	cargo build -p libra-node --release && sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
@@ -235,16 +243,18 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
-# skip generating genesis files with fixtures
-	cp ./fixtures/genesis/previous/genesis.blob ${DATA_PATH}/
-	cp ./fixtures/genesis/previous/genesis_waypoint ${DATA_PATH}/
-
+# skip  genesis files with fixtures, there may be no version
+ifndef SKIP_BLOB
+	cp ./fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+endif
 # skip miner configuration with fixtures
 	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
 # skip mining proof zero with fixtures
 	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
+
 
 #### HELPERS ####
 get-waypoint:
@@ -290,26 +300,57 @@ debug:
 	make smoke-onboard <<< $$'${MNEM}'
  
 
-##### SMOKE TEST #####
+##### DEVNET TESTS #####
+# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
+
+devnet: stop clear fix devnet-keys devnet-yaml start
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+
 devnet-keys: 
 	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
 
 devnet-yaml:
 	cargo run -p miner -- genesis
 
-smoke-previous: stop clear fix devnet-keys devnet-yaml start
+devnet-onboard: clear fix
+	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+
+devnet-previous: stop clear 
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+	V=previous make fix devnet-keys devnet-yaml start
 
-smoke: smoke-ceremony genesis start
 
-smoke-ceremony:
+### FULL DEVNET RESET ####
+
+devnet-reset: devnet-reset-ceremony genesis start
+# Tests the full genesis ceremony cycle, and rebuilds all genesis and waypoints.
+
+devnet-reset-ceremony:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
-	make clear fix
+	SKIP_BLOB=y make clear fix
 	echo ${MNEM} | head -c -1 | make register
 
-smoke-onboard: clear fix
-	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+devnet-reset-onboard: clear 
+# fixtures needs a file that works
+	SKIP_BLOB=y fix
+# starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
 
+#### GIT HELPERS FOR DEVNET AUTOMATION ####
+devnet-save-genesis: get-waypoint
+	echo $$WAY > ${DATA_PATH}/genesis_waypoint
+	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
+	git add ${SOURCE}/fixtures/genesis/${V}/
+	git commit -a -m "save genesis fixtures to ${V}"
+	git push
+
+devnet-hard:
+	git reset --hard origin/${V} 
+
+devnet-pull:
+# must be on a branch
+	git fetch && git checkout ${V} -f && git pull
 
