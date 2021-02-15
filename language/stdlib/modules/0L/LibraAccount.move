@@ -36,6 +36,7 @@ module LibraAccount {
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
     use 0x1::FullnodeState;
+    use 0x1::Testnet::is_testnet;
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
         /// The current authentication key.
@@ -2136,6 +2137,20 @@ module LibraAccount {
             metadata,
             metadata_signature
         );
+    }
+
+    /////// TEST HELPERS //////
+    // TODO: This is scary stuff.
+    public fun test_helper_create_signer(vm: &signer, addr: address): signer {
+        CoreAddresses::assert_libra_root(vm);
+        assert(is_testnet(), 120102011021);
+        create_signer(addr)
+    } 
+
+    public fun test_helper_destroy_signer(vm: &signer, to_destroy: signer) {
+        CoreAddresses::assert_libra_root(vm);
+        assert(is_testnet(), 120103011021);
+        destroy_signer(to_destroy);
     }
 }
 }

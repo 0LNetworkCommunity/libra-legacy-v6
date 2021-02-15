@@ -62,6 +62,7 @@ pub enum StdlibScript {
     MinerStateCommit,
     MinerStateOnboarding,
     CreateUserAccount,
+    Join,
     Demo,
     // ...add new scripts here
 }
@@ -113,6 +114,7 @@ impl StdlibScript {
             MinerStateCommit,
             MinerStateOnboarding,
             CreateUserAccount,
+            Join,
             Demo,
             // ...add new scripts here
         ]
@@ -249,6 +251,7 @@ impl fmt::Display for StdlibScript {
                 MinerStateCommit => "ol_miner_state_commit",
                 MinerStateOnboarding => "ol_miner_state_onboarding",
                 CreateUserAccount => "ol_create_user_account",
+                Join => "ol_join_validator_set",
                 Demo => "ol_demo_e2e",
             }
         )

@@ -239,12 +239,11 @@ address 0x1 {
       // Then skip the usual calculation.
       if (
         !is_genesis && // not genesis, steady state
-        ValidatorUniverse::is_in_universe(miner) && // is a candidate for validator, but not yet in set.
         FullnodeState::is_onboarding(miner) // is in an onboarding state
       ) {
-        if (bootstrap_value < state.current_proof_price) {
+        if (state.current_proof_price < bootstrap_value) {
           // the current price would be insufficient.
-          subsidy = bootstrap_validator_balance();
+          subsidy = bootstrap_value;
         } else {
           subsidy = state.current_proof_price
         } 
@@ -394,6 +393,25 @@ address 0x1 {
       let proof_cost = 4000; // assumes 1 microgas per gas unit 
       let subsidy_value = proofs_per_day * proof_cost;
       subsidy_value
+    }
+
+        //////// TEST HELPERS ///////
+    public fun test_set_fullnode_fixtures(
+      vm: &signer,
+      previous_epoch_proofs: u64,
+      current_proof_price: u64,
+      current_cap: u64,
+      current_subsidy_distributed: u64,
+      current_proofs_verified: u64,
+    ) acquires FullnodeSubsidy {
+      Roles::assert_libra_root(vm);
+      assert(is_testnet(), 1000);
+      let state = borrow_global_mut<FullnodeSubsidy>(0x0);
+      state.previous_epoch_proofs = previous_epoch_proofs;
+      state.current_proof_price = current_proof_price;
+      state.current_cap = current_cap;
+      state.current_subsidy_distributed = current_subsidy_distributed;
+      state.current_proofs_verified = current_proofs_verified;
     }
 }
 }

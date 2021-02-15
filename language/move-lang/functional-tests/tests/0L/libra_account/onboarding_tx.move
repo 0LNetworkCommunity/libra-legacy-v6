@@ -53,7 +53,7 @@ fun main(sender: &signer) {
 
   assert(MinerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
 
-  //Check the validator is in the validator universe.
+  //Check the validator has 0 proof of weight.
   assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
 
   // Check the account exists and the balance is 0
@@ -66,9 +66,6 @@ fun main(sender: &signer) {
   assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357130101091000);
   // Does not have a jailedbit since was not added to validator universe yet.
   assert(!ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357130101101000);
-
-  // Is rate-limited
-  // assert(MinerState::can_create_val_account(sender_addr) == false, 7357130101091000);
 }
 }
 // check: EXECUTED

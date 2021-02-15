@@ -75,6 +75,8 @@ module FullnodeState {
     state.cumulative_subsidy == 0
   }
 
-
+  public fun is_init(addr: address): bool {
+    exists<FullnodeCounter>(addr)
+  }
 }
 }

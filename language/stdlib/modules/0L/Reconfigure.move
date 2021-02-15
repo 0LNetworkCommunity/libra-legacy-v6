@@ -21,7 +21,7 @@ module Reconfigure {
     use 0x1::AutoPay;
     use 0x1::Epoch;
     use 0x1::FullnodeState;
-
+    use 0x1::Debug::print;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
@@ -31,25 +31,44 @@ module Reconfigure {
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
+        print(&0x222222222);
+        // There may be new validators which have not mined yet.
         let miners = MinerState::get_miner_list();
+        print(&miners);
         
-        // Migration
-
+        // Migration for miner list.
         if (Vector::length(&miners) == 0) { miners = ValidatorUniverse::get_eligible_validators(vm) };
+        print(&21);
 
         let global_proofs_count = 0;
         let k = 0;
         while (k < Vector::length(&miners)) {
+            print(&212);
+
             let addr = *Vector::borrow(&miners, k);
 
+            // // If miner is in list, but hasn't mined, they are in the onboarding process.
+            // if (!MinerState::is_init(addr)) {
+            //     Subsidy::distribute_onboarding_subsidy(vm, addr);
+            //     return
+            // };
+
             let count = MinerState::get_count_in_epoch(addr);
+            print(&2121);
+
             if (count > 0) {
+                print(&213);
                 global_proofs_count = global_proofs_count + count;
 
                 let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
+                print(&214);
+
+                if (!FullnodeState::is_init(addr)) return;
                 FullnodeState::inc_payment_count(vm, addr, count);
                 FullnodeState::inc_payment_value(vm, addr, value);
                 FullnodeState::reconfig(vm, addr, count);
+                print(&215);
+
             };
             k = k + 1;
         };
@@ -57,8 +76,10 @@ module Reconfigure {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
+        print(&22);
 
         let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
+        print(&23);
 
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
@@ -68,6 +89,8 @@ module Reconfigure {
             };
             Subsidy::process_fees(vm, &outgoing_set, &fee_ratio);
         };
+        print(&24);
+
         // Propose upcoming validator set:
         // Step 1: Sort Top N eligible validators
         // Step 2: Jail non-performing validators
@@ -78,6 +101,7 @@ module Reconfigure {
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validator_per_epoch());
         let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
+        print(&25);
 
         // 1. remove jailed set from validator universe
         // 2. get top accounts.
@@ -90,6 +114,7 @@ module Reconfigure {
             };
             i = i+ 1;
         };
+        print(&26);
 
         let eligible = ValidatorUniverse::get_eligible_validators(vm);
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
@@ -97,6 +122,7 @@ module Reconfigure {
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
+        print(&27);
 
         // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig
         Subsidy::set_global_count(vm, global_proofs_count);
@@ -106,6 +132,7 @@ module Reconfigure {
 
         // Migrate elegible: in case there is no minerlist struct, use eligible for migrate_eligible_validators
         MinerState::reconfig(vm, &eligible);
+        print(&28);
 
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
@@ -113,6 +140,8 @@ module Reconfigure {
         Subsidy::fullnode_reconfig(vm);
         AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
+        print(&29);
+
     }
 }
 }
