@@ -906,6 +906,8 @@ pub enum ScriptCall {
         fullnode_network_addresses: Bytes,
     },
 
+    RemoveSelf {},
+
     /// # Summary
     /// This script removes a validator account from the validator set, and triggers a reconfiguration
     /// of the system to remove the validator from the system. This transaction can only be
@@ -1721,6 +1723,7 @@ impl ScriptCall {
                 validator_network_addresses,
                 fullnode_network_addresses,
             ),
+            RemoveSelf {} => encode_remove_self_script(),
             RemoveValidatorAndReconfigure {
                 sliding_nonce,
                 validator_name,
@@ -2906,6 +2909,10 @@ pub fn encode_register_validator_config_script(
     )
 }
 
+pub fn encode_remove_self_script() -> Script {
+    Script::new(REMOVE_SELF_CODE.to_vec(), vec![], vec![])
+}
+
 /// # Summary
 /// This script removes a validator account from the validator set, and triggers a reconfiguration
 /// of the system to remove the validator from the system. This transaction can only be
@@ -3890,6 +3897,10 @@ fn decode_register_validator_config_script(script: &Script) -> Option<ScriptCall
     })
 }
 
+fn decode_remove_self_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::RemoveSelf {})
+}
+
 fn decode_remove_validator_and_reconfigure_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::RemoveValidatorAndReconfigure {
         sliding_nonce: decode_u64_argument(script.args().get(0)?.clone())?,
@@ -4124,6 +4135,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
     map.insert(
         REGISTER_VALIDATOR_CONFIG_CODE.to_vec(),
         Box::new(decode_register_validator_config_script),
+    );
+    map.insert(
+        REMOVE_SELF_CODE.to_vec(),
+        Box::new(decode_remove_self_script),
     );
     map.insert(
         REMOVE_VALIDATOR_AND_RECONFIGURE_CODE.to_vec(),
@@ -4525,6 +4540,16 @@ const REGISTER_VALIDATOR_CONFIG_CODE: &[u8] = &[
     0, 1, 0, 5, 6, 12, 5, 10, 2, 10, 2, 10, 2, 0, 15, 86, 97, 108, 105, 100, 97, 116, 111, 114, 67,
     111, 110, 102, 105, 103, 10, 115, 101, 116, 95, 99, 111, 110, 102, 105, 103, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 7, 11, 0, 10, 1, 11, 2, 11, 3, 11, 4, 17, 0, 2,
+];
+
+const REMOVE_SELF_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 8, 7, 27, 63, 8, 90, 16, 0, 0, 0, 1,
+    0, 2, 0, 1, 0, 1, 3, 1, 2, 0, 1, 4, 0, 3, 0, 1, 6, 12, 1, 5, 1, 1, 0, 6, 83, 105, 103, 110,
+    101, 114, 17, 86, 97, 108, 105, 100, 97, 116, 111, 114, 85, 110, 105, 118, 101, 114, 115, 101,
+    10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 14, 105, 115, 95, 105, 110, 95, 117, 110,
+    105, 118, 101, 114, 115, 101, 11, 114, 101, 109, 111, 118, 101, 95, 115, 101, 108, 102, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 13, 10, 0, 17, 0, 12, 1, 10, 1, 17, 1, 3, 7,
+    5, 10, 11, 0, 17, 2, 5, 12, 11, 0, 1, 2,
 ];
 
 const REMOVE_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[

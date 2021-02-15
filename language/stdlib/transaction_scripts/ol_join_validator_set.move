@@ -2,7 +2,7 @@ script {
     use 0x1::ValidatorUniverse;
     use 0x1::Signer;
     use 0x1::MinerState;
-    fun join (validator: &signer) {
+    fun join(validator: &signer) {
         let addr = Signer::address_of(validator);
         // if is above threshold continue, or raise error.
         assert(MinerState::node_above_thresh(validator, addr), 01);

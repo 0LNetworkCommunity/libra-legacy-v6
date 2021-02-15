@@ -20,6 +20,7 @@
 -  [Function `calc_auction`](#0x1_Subsidy_calc_auction)
 -  [Function `fullnode_subsidy_ceiling`](#0x1_Subsidy_fullnode_subsidy_ceiling)
 -  [Function `bootstrap_validator_balance`](#0x1_Subsidy_bootstrap_validator_balance)
+-  [Function `test_set_fullnode_fixtures`](#0x1_Subsidy_test_set_fullnode_fixtures)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -424,12 +425,11 @@
   // Then skip the usual calculation.
   <b>if</b> (
     !is_genesis && // not genesis, steady state
-    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(miner) && // is a candidate for validator, but not yet in set.
     <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(miner) // is in an onboarding state
   ) {
-    <b>if</b> (bootstrap_value &lt; state.current_proof_price) {
+    <b>if</b> (state.current_proof_price &lt; bootstrap_value) {
       // the current price would be insufficient.
-      subsidy = <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>();
+      subsidy = bootstrap_value;
     } <b>else</b> {
       subsidy = state.current_proof_price
     }
@@ -718,6 +718,44 @@
   <b>let</b> proof_cost = 4000; // assumes 1 microgas per gas unit
   <b>let</b> subsidy_value = proofs_per_day * proof_cost;
   subsidy_value
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Subsidy_test_set_fullnode_fixtures"></a>
+
+## Function `test_set_fullnode_fixtures`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_test_set_fullnode_fixtures">test_set_fullnode_fixtures</a>(vm: &signer, previous_epoch_proofs: u64, current_proof_price: u64, current_cap: u64, current_subsidy_distributed: u64, current_proofs_verified: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_test_set_fullnode_fixtures">test_set_fullnode_fixtures</a>(
+  vm: &signer,
+  previous_epoch_proofs: u64,
+  current_proof_price: u64,
+  current_cap: u64,
+  current_subsidy_distributed: u64,
+  current_proofs_verified: u64,
+) <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a> {
+  <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
+  <b>assert</b>(is_testnet(), 1000);
+  <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(0x0);
+  state.previous_epoch_proofs = previous_epoch_proofs;
+  state.current_proof_price = current_proof_price;
+  state.current_cap = current_cap;
+  state.current_subsidy_distributed = current_subsidy_distributed;
+  state.current_proofs_verified = current_proofs_verified;
 }
 </code></pre>
 

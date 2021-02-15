@@ -767,6 +767,15 @@
     }
   ],
   [
+    "01bda405833efa4b8a5acc9dcd41a796cf26d65de100c76b2c79a48a0f1f8618bc",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "MinerState",
+      "name": "MinerList",
+      "type_params": []
+    }
+  ],
+  [
     "01c2c4723b0bd92ffc1deb11516a1b982543a814d0e53bb31fcc92b074db73c12a",
     {
       "address": "00000000000000000000000000000001",

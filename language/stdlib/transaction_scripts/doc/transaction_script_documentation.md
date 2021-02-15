@@ -5135,6 +5135,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`preburn`](transaction_script_documentation.md#preburn)
 -  [`publish_shared_ed25519_public_key`](transaction_script_documentation.md#publish_shared_ed25519_public_key)
 -  [`register_validator_config`](transaction_script_documentation.md#register_validator_config)
+-  [`remove_self`](ol_remove_self_validator_universe.md#remove_self)
 -  [`remove_validator_and_reconfigure`](transaction_script_documentation.md#remove_validator_and_reconfigure)
 -  [`rotate_authentication_key`](transaction_script_documentation.md#rotate_authentication_key)
 -  [`rotate_authentication_key_with_nonce`](transaction_script_documentation.md#rotate_authentication_key_with_nonce)

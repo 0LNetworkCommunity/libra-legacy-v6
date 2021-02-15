@@ -47,10 +47,10 @@
     // Fullnode subsidy
     // <b>loop</b> through validators and pay full node subsidies.
     // Should happen before transactionfees get distributed.
+    // There may be new validators which have not mined yet.
     <b>let</b> miners = <a href="MinerState.md#0x1_MinerState_get_miner_list">MinerState::get_miner_list</a>();
 
-    // Migration
-
+    // Migration for miner list.
     <b>if</b> (<a href="Vector.md#0x1_Vector_length">Vector::length</a>(&miners) == 0) { miners = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm) };
 
     <b>let</b> global_proofs_count = 0;
@@ -63,6 +63,8 @@
             global_proofs_count = global_proofs_count + count;
 
             <b>let</b> value = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">Subsidy::distribute_fullnode_subsidy</a>(vm, addr, count, <b>false</b>);
+
+            <b>if</b> (!<a href="FullnodeState.md#0x1_FullnodeState_is_init">FullnodeState::is_init</a>(addr)) <b>return</b>;
             <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">FullnodeState::inc_payment_count</a>(vm, addr, count);
             <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">FullnodeState::inc_payment_value</a>(vm, addr, value);
             <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr, count);
@@ -84,6 +86,7 @@
         };
         <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_set, &fee_ratio);
     };
+
     // Propose upcoming validator set:
     // Step 1: Sort Top N eligible validators
     // Step 2: Jail non-performing validators
@@ -113,7 +116,6 @@
     // Usually an issue in staging network for QA only.
     // This is very rare and theoretically impossible for network <b>with</b> at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b> at least 6 rounds, we would have at least 2/3rd of the validator set <b>with</b> at least 66% liveliness.
 
-
     // needs <b>to</b> be set before the auctioneer runs in <a href="Subsidy.md#0x1_Subsidy_fullnode_reconfig">Subsidy::fullnode_reconfig</a>
     <a href="Subsidy.md#0x1_Subsidy_set_global_count">Subsidy::set_global_count</a>(vm, global_proofs_count);
 
@@ -122,7 +124,6 @@
 
     // Migrate elegible: in case there is no minerlist <b>struct</b>, <b>use</b> eligible for migrate_eligible_validators
     <a href="MinerState.md#0x1_MinerState_reconfig">MinerState::reconfig</a>(vm, &eligible);
-
     // <a href="Reconfigure.md#0x1_Reconfigure">Reconfigure</a> the network
     <a href="LibraSystem.md#0x1_LibraSystem_bulk_update_validators">LibraSystem::bulk_update_validators</a>(vm, proposed_set);
     // reset clocks

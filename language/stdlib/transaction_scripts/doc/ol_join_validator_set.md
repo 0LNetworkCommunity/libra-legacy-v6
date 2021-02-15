@@ -24,7 +24,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="ol_join_validator_set.md#join">join</a> (validator: &signer) {
+<pre><code><b>fun</b> <a href="ol_join_validator_set.md#join">join</a>(validator: &signer) {
     <b>let</b> addr = <a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator);
     // <b>if</b> is above threshold <b>continue</b>, or raise error.
     <b>assert</b>(<a href="../../modules/doc/MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(validator, addr), 01);

@@ -19,6 +19,7 @@
 -  [Function `unjail`](#0x1_ValidatorUniverse_unjail)
 -  [Function `is_jailed`](#0x1_ValidatorUniverse_is_jailed)
 -  [Function `genesis_helper`](#0x1_ValidatorUniverse_genesis_helper)
+-  [Function `test_exists_jailedbit`](#0x1_ValidatorUniverse_test_exists_jailedbit)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -411,6 +412,30 @@
   // <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, addr);
   <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(validator);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorUniverse_test_exists_jailedbit"></a>
+
+## Function `test_exists_jailedbit`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_test_exists_jailedbit">test_exists_jailedbit</a>(addr: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_test_exists_jailedbit">test_exists_jailedbit</a>(addr: address): bool {
+  <b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(addr)
 }
 </code></pre>
 
