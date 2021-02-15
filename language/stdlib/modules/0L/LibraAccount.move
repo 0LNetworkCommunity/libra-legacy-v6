@@ -302,7 +302,7 @@ module LibraAccount {
             op_validator_network_addresses,
             op_fullnode_network_addresses
         );
-        
+
         make_account(new_signer, auth_key_prefix);
 
         make_account(new_op_account, op_auth_key_prefix);
@@ -310,7 +310,6 @@ module LibraAccount {
         MinerState::reset_rate_limit(sender_addr);
         new_account_address
     }
-
 
     /// Return `true` if `addr` has already published account limits for `Token`
     fun has_published_account_limits<Token>(addr: address): bool {

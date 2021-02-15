@@ -37,14 +37,20 @@ address 0x1 {
     // This function is called to add validator to the validator universe.
     // Function code: 02 Prefix: 220102
     // TODO: This is public, anyone can add themselves to the validator universe.
-    public fun add_validator(sender: &signer) acquires ValidatorUniverse {
+    public fun add_self(sender: &signer) acquires ValidatorUniverse, JailedBit {
       let addr = Signer::address_of(sender);
       // Miner can only add self to set if the mining is above a threshold.
       assert(MinerState::node_above_thresh(sender, addr), 220102014010);
+      add(sender);
+    }
+
+    fun add(sender: &signer) acquires ValidatorUniverse, JailedBit {
+      let addr = Signer::address_of(sender);
       let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       let (in_set, _) = Vector::index_of<address>(&state.validators, &addr);
       if (!in_set) {
         Vector::push_back<address>(&mut state.validators, addr);
+        unjail(sender);
       }
     }
 
@@ -78,7 +84,7 @@ address 0x1 {
       *&state.validators
     }
 
-    // Is in set
+    // Is in list
     public fun is_in_universe(miner: address): bool acquires ValidatorUniverse {
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       Vector::contains<address>(&state.validators, &miner)
@@ -86,36 +92,47 @@ address 0x1 {
 
     public fun jail(vm: &signer, validator: address) acquires JailedBit{
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
+
       borrow_global_mut<JailedBit>(validator).is_jailed = true;
     }
 
-    public fun un_jail(sender: &signer, validator: address) acquires JailedBit {
+    public fun unjail_self(sender: &signer) acquires JailedBit {
       // only a validator can un-jail themselves.
-      assert(Signer::address_of(sender) == validator, 220101014010);
-      
-      if (!exists<JailedBit>(validator)) {
+      let validator = Signer::address_of(sender);
+      // check the node has been mining before unjailing.
+      assert(MinerState::node_above_thresh(sender, validator), 220102014010);
+      unjail(sender);
+    }
+
+    fun unjail(sender: &signer) acquires JailedBit {
+      let addr = Signer::address_of(sender);
+      if (!exists<JailedBit>(addr)) {
         move_to<JailedBit>(sender, JailedBit{
           is_jailed: false
         });
       };
-      // check the node has been mining before unjailing.
-      assert(MinerState::node_above_thresh(sender, validator), 220102014010);
-      borrow_global_mut<JailedBit>(validator).is_jailed = false;
+
+      borrow_global_mut<JailedBit>(addr).is_jailed = false;
     }
 
     public fun is_jailed(validator: address): bool acquires JailedBit {
+      if (!exists<JailedBit>(validator)) {
+        return false
+      };
       borrow_global_mut<JailedBit>(validator).is_jailed
     }
 
-    public fun genesis_helper(vm: &signer, validator: address) acquires ValidatorUniverse {
+    public fun genesis_helper(vm: &signer, validator: &signer) acquires ValidatorUniverse, JailedBit {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
       // let addr = Signer::address_of(sender);
       // MinerState::node_above_thresh(sender, addr);
-      let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-      let (in_set, _) = Vector::index_of<address>(&state.validators, &validator);
-      if (!in_set) {
-        Vector::push_back<address>(&mut state.validators, validator);
-      }
+      add(validator);
     }
+
+    //////// TEST ////////
+    public fun test_exists_jailedbit(addr: address): bool {
+      exists<JailedBit>(addr)
+    }
+
   }
 }

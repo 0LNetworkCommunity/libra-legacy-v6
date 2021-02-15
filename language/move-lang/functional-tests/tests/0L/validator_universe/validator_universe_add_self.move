@@ -30,7 +30,7 @@ fun main(eve_sig: &signer) {
     MinerState::init_miner_state(eve_sig, &TestFixtures::easy_chal(), &TestFixtures::easy_sol());
 
     MinerState::test_helper_mock_mining(eve_sig, 5);
-    ValidatorUniverse::add_validator(eve_sig);
+    ValidatorUniverse::add_self(eve_sig);
 }
 }
 // check: EXECUTED

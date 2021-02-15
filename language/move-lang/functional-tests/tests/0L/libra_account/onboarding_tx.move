@@ -13,6 +13,8 @@ use 0x1::ValidatorConfig;
 use 0x1::Roles;
 use 0x1::Signer;
 use 0x1::Debug::print;
+use 0x1::ValidatorUniverse;
+
 // Test Prefix: 1301
 fun main(sender: &signer) {
   // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
@@ -59,6 +61,12 @@ fun main(sender: &signer) {
   print(&LibraAccount::balance<GAS>(eve_addr));
   assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
 
+  // Should not automatically be in validator universe
+  // Needs to mine and submit the join transaction.
+  assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357130101091000);
+  // Does not have a jailedbit since was not added to validator universe yet.
+  assert(!ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357130101101000);
+
   // Is rate-limited
   // assert(MinerState::can_create_val_account(sender_addr) == false, 7357130101091000);
 }
@@ -70,10 +78,14 @@ fun main(sender: &signer) {
 script {
 use 0x1::MinerState;
 use 0x1::Testnet;
+// use 0x1::ValidatorUniverse;
 fun main(vm: &signer) {
   Testnet::remove_testnet(vm); // need to remove testnet for this test, since testnet does not ratelimit account creation.
   
   // check is rate-limited
   assert(MinerState::can_create_val_account({{bob}}) == false, 7357130101091000);
+
+  // let universe = ValidatorUniverse::get_eligible_validators(vm);
+  // print(&universe);
 }
 }

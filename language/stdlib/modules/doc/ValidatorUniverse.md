@@ -8,12 +8,15 @@
 -  [Resource `ValidatorUniverse`](#0x1_ValidatorUniverse_ValidatorUniverse)
 -  [Resource `JailedBit`](#0x1_ValidatorUniverse_JailedBit)
 -  [Function `initialize`](#0x1_ValidatorUniverse_initialize)
--  [Function `add_validator`](#0x1_ValidatorUniverse_add_validator)
--  [Function `remove_validator`](#0x1_ValidatorUniverse_remove_validator)
+-  [Function `add_self`](#0x1_ValidatorUniverse_add_self)
+-  [Function `add`](#0x1_ValidatorUniverse_add)
+-  [Function `remove_validator_vm`](#0x1_ValidatorUniverse_remove_validator_vm)
+-  [Function `remove_self`](#0x1_ValidatorUniverse_remove_self)
 -  [Function `get_eligible_validators`](#0x1_ValidatorUniverse_get_eligible_validators)
 -  [Function `is_in_universe`](#0x1_ValidatorUniverse_is_in_universe)
 -  [Function `jail`](#0x1_ValidatorUniverse_jail)
--  [Function `un_jail`](#0x1_ValidatorUniverse_un_jail)
+-  [Function `unjail_self`](#0x1_ValidatorUniverse_unjail_self)
+-  [Function `unjail`](#0x1_ValidatorUniverse_unjail)
 -  [Function `is_jailed`](#0x1_ValidatorUniverse_is_jailed)
 -  [Function `genesis_helper`](#0x1_ValidatorUniverse_genesis_helper)
 
@@ -109,13 +112,13 @@
 
 </details>
 
-<a name="0x1_ValidatorUniverse_add_validator"></a>
+<a name="0x1_ValidatorUniverse_add_self"></a>
 
-## Function `add_validator`
+## Function `add_self`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">add_validator</a>(sender: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">add_self</a>(sender: &signer)
 </code></pre>
 
 
@@ -124,14 +127,40 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_validator">add_validator</a>(sender: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">add_self</a>(sender: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>, <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
   <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // Miner can only add self <b>to</b> set <b>if</b> the mining is above a threshold.
   <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, addr), 220102014010);
+  <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorUniverse_add"></a>
+
+## Function `add`
+
+
+
+<pre><code><b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(sender: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>, <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
+  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>let</b> state = borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
   <b>let</b> (in_set, _) = <a href="Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&state.validators, &addr);
   <b>if</b> (!in_set) {
     <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> state.validators, addr);
+    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail">unjail</a>(sender);
   }
 }
 </code></pre>
@@ -140,13 +169,13 @@
 
 </details>
 
-<a name="0x1_ValidatorUniverse_remove_validator"></a>
+<a name="0x1_ValidatorUniverse_remove_validator_vm"></a>
 
-## Function `remove_validator`
+## Function `remove_validator_vm`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_validator">remove_validator</a>(vm: &signer, validator: address)
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_validator_vm">remove_validator_vm</a>(vm: &signer, validator: address)
 </code></pre>
 
 
@@ -155,11 +184,40 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_validator">remove_validator</a>(vm: &signer, validator: address) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_validator_vm">remove_validator_vm</a>(vm: &signer, validator: address) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 220101014010);
 
   <b>let</b> state = borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
   <b>let</b> (in_set, index) = <a href="Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&state.validators, &validator);
+  <b>if</b> (in_set) {
+    <a href="Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;address&gt;(&<b>mut</b> state.validators, index);
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorUniverse_remove_self"></a>
+
+## Function `remove_self`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_self">remove_self</a>(validator: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_self">remove_self</a>(validator: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
+  <b>let</b> val = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator);
+  <b>let</b> state = borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+  <b>let</b> (in_set, index) = <a href="Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&state.validators, &val);
   <b>if</b> (in_set) {
     <a href="Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;address&gt;(&<b>mut</b> state.validators, index);
   }
@@ -238,6 +296,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_jail">jail</a>(vm: &signer, validator: address) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>{
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 220101014010);
+
   borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator).is_jailed = <b>true</b>;
 }
 </code></pre>
@@ -246,13 +305,13 @@
 
 </details>
 
-<a name="0x1_ValidatorUniverse_un_jail"></a>
+<a name="0x1_ValidatorUniverse_unjail_self"></a>
 
-## Function `un_jail`
+## Function `unjail_self`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_un_jail">un_jail</a>(sender: &signer, validator: address)
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail_self">unjail_self</a>(sender: &signer)
 </code></pre>
 
 
@@ -261,18 +320,43 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_un_jail">un_jail</a>(sender: &signer, validator: address) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail_self">unjail_self</a>(sender: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
   // only a validator can un-jail themselves.
-  <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender) == validator, 220101014010);
+  <b>let</b> validator = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  // check the node has been mining before unjailing.
+  <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, validator), 220102014010);
+  <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail">unjail</a>(sender);
+}
+</code></pre>
 
-  <b>if</b> (!<b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator)) {
+
+
+</details>
+
+<a name="0x1_ValidatorUniverse_unjail"></a>
+
+## Function `unjail`
+
+
+
+<pre><code><b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail">unjail</a>(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail">unjail</a>(sender: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
+  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  <b>if</b> (!<b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(addr)) {
     move_to&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(sender, <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>{
       is_jailed: <b>false</b>
     });
   };
-  // check the node has been mining before unjailing.
-  <b>assert</b>(<a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, validator), 220102014010);
-  borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator).is_jailed = <b>false</b>;
+
+  borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(addr).is_jailed = <b>false</b>;
 }
 </code></pre>
 
@@ -296,6 +380,9 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_jailed">is_jailed</a>(validator: address): bool <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator)) {
+    <b>return</b> <b>false</b>
+  };
   borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator).is_jailed
 }
 </code></pre>
@@ -310,7 +397,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_genesis_helper">genesis_helper</a>(vm: &signer, validator: address)
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_genesis_helper">genesis_helper</a>(vm: &signer, validator: &signer)
 </code></pre>
 
 
@@ -319,15 +406,11 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_genesis_helper">genesis_helper</a>(vm: &signer, validator: address) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_genesis_helper">genesis_helper</a>(vm: &signer, validator: &signer) <b>acquires</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>, <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a> {
   <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 220101014010);
   // <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(sender, addr);
-  <b>let</b> state = borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-  <b>let</b> (in_set, _) = <a href="Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&state.validators, &validator);
-  <b>if</b> (!in_set) {
-    <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> state.validators, validator);
-  }
+  <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add">add</a>(validator);
 }
 </code></pre>
 

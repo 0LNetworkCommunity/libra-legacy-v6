@@ -694,6 +694,8 @@ pub enum ScriptCall {
         to_freeze_account: AccountAddress,
     },
 
+    Join {},
+
     MinerstateCommit {
         challenge: Bytes,
         solution: Bytes,
@@ -1656,6 +1658,7 @@ impl ScriptCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script(sliding_nonce, to_freeze_account),
+            Join {} => encode_join_script(),
             MinerstateCommit {
                 challenge,
                 solution,
@@ -2616,6 +2619,10 @@ pub fn encode_freeze_account_script(
             TransactionArgument::Address(to_freeze_account),
         ],
     )
+}
+
+pub fn encode_join_script() -> Script {
+    Script::new(JOIN_CODE.to_vec(), vec![], vec![])
 }
 
 pub fn encode_minerstate_commit_script(challenge: Vec<u8>, solution: Vec<u8>) -> Script {
@@ -3805,6 +3812,10 @@ fn decode_freeze_account_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_join_script(_script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::Join {})
+}
+
 fn decode_minerstate_commit_script(script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateCommit {
         challenge: decode_u8vector_argument(script.args().get(0)?.clone())?,
@@ -4080,6 +4091,7 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         FREEZE_ACCOUNT_CODE.to_vec(),
         Box::new(decode_freeze_account_script),
     );
+    map.insert(JOIN_CODE.to_vec(), Box::new(decode_join_script));
     map.insert(
         MINERSTATE_COMMIT_CODE.to_vec(),
         Box::new(decode_minerstate_commit_script),
@@ -4396,6 +4408,20 @@ const FREEZE_ACCOUNT_CODE: &[u8] = &[
     116, 21, 114, 101, 99, 111, 114, 100, 95, 110, 111, 110, 99, 101, 95, 111, 114, 95, 97, 98,
     111, 114, 116, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1, 7, 10, 0, 10, 1, 17, 1,
     11, 0, 10, 2, 17, 0, 2,
+];
+
+const JOIN_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 6, 3, 6, 30, 5, 36, 16, 7, 52, 111, 8, 163, 1, 16, 0, 0,
+    0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 4, 2, 3, 0, 2, 5, 2, 4, 0, 2, 6, 3, 1, 0, 2, 7, 3, 1, 0, 2, 8, 2,
+    4, 0, 2, 6, 12, 5, 1, 1, 1, 6, 12, 1, 5, 0, 3, 5, 1, 3, 10, 77, 105, 110, 101, 114, 83, 116,
+    97, 116, 101, 6, 83, 105, 103, 110, 101, 114, 17, 86, 97, 108, 105, 100, 97, 116, 111, 114, 85,
+    110, 105, 118, 101, 114, 115, 101, 17, 110, 111, 100, 101, 95, 97, 98, 111, 118, 101, 95, 116,
+    104, 114, 101, 115, 104, 10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 8, 97, 100, 100,
+    95, 115, 101, 108, 102, 14, 105, 115, 95, 105, 110, 95, 117, 110, 105, 118, 101, 114, 115, 101,
+    9, 105, 115, 95, 106, 97, 105, 108, 101, 100, 11, 117, 110, 106, 97, 105, 108, 95, 115, 101,
+    108, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 30, 10, 0, 17, 1, 12, 1, 10,
+    0, 10, 1, 17, 0, 12, 2, 11, 2, 3, 13, 11, 0, 1, 6, 1, 0, 0, 0, 0, 0, 0, 0, 39, 10, 1, 17, 3,
+    32, 3, 18, 5, 20, 10, 0, 17, 2, 10, 1, 17, 4, 3, 24, 5, 27, 11, 0, 17, 5, 5, 29, 11, 0, 1, 2,
 ];
 
 const MINERSTATE_COMMIT_CODE: &[u8] = &[

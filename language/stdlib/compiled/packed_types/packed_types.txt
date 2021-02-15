@@ -796,6 +796,15 @@
     }
   ],
   [
+    "01c6cc706ffa9200097a1d070abf78c10e0b1aea8d4249e984da9d5259882f6d26",
+    {
+      "address": "00000000000000000000000000000001",
+      "module": "ValidatorUniverse",
+      "name": "JailedBit",
+      "type_params": []
+    }
+  ],
+  [
     "01c98376d68a63e184162b6a088c99555340521bc61c3c6cd842b03935f96827e4",
     {
       "address": "00000000000000000000000000000001",

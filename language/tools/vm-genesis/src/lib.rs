@@ -465,7 +465,7 @@ fn create_and_initialize_owners_operators(
             vec![],
             vec![
                 Value::transaction_argument_signer_reference(libra_root_address),
-                Value::address(owner_address),
+                Value::transaction_argument_signer_reference(owner_address),
             ]
         );
 

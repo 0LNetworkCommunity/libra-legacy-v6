@@ -5125,6 +5125,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`create_validator_operator_account`](transaction_script_documentation.md#create_validator_operator_account)
 -  [`demo_e2e`](ol_demo_e2e.md#demo_e2e)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
+-  [`join`](ol_join_validator_set.md#join)
 -  [`minerstate_commit`](ol_miner_state_commit.md#minerstate_commit)
 -  [`minerstate_helper`](ol_miner_state_helper.md#minerstate_helper)
 -  [`minerstate_onboarding`](ol_miner_state_onboarding.md#minerstate_onboarding)
