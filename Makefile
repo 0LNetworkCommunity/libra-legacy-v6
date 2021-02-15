@@ -32,8 +32,8 @@ deps:
 	#install rust
 	curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 	#target is Ubuntu
-	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev pkg-config libssl-dev
+	sudo apt update
+	sudo apt install -y git vim zip jq build-essential cmake clang llvm libgmp-dev secure-delete pkg-config libssl-dev
 
 
 bins:
