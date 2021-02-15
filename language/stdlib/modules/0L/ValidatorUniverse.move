@@ -49,11 +49,22 @@ address 0x1 {
     }
 
     // Permissions: Public, VM Only
-    public fun remove_validator(vm: &signer, validator: address) acquires ValidatorUniverse {
+    public fun remove_validator_vm(vm: &signer, validator: address) acquires ValidatorUniverse {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101014010);
 
       let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
       let (in_set, index) = Vector::index_of<address>(&state.validators, &validator);
+      if (in_set) {
+        Vector::remove<address>(&mut state.validators, index);
+      }
+    }
+
+    // Permissions: Public, Anyone.
+    // Can only remove self from validator list.
+    public fun remove_self(validator: &signer) acquires ValidatorUniverse {
+      let val = Signer::address_of(validator);
+      let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+      let (in_set, index) = Vector::index_of<address>(&state.validators, &val);
       if (in_set) {
         Vector::remove<address>(&mut state.validators, index);
       }
