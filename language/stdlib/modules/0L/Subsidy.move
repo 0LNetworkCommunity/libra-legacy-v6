@@ -224,7 +224,6 @@ address 0x1 {
       });
     }
 
-    use 0x1::Debug::print;
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64, is_genesis: bool ):u64 acquires FullnodeSubsidy{
       Roles::assert_libra_root(vm);
       // Payment is only for fullnodes, ie. not in current validator set.
@@ -243,17 +242,11 @@ address 0x1 {
         ValidatorUniverse::is_in_universe(miner) && // is a candidate for validator, but not yet in set.
         FullnodeState::is_onboarding(miner) // is in an onboarding state
       ) {
-        print(&0x011111111);
         // if insufficient balance, override auction
         if (state.current_proof_price < bootstrap_value) {
-          print(&0x012);
-          print(&state.current_proof_price);
-          print(&bootstrap_value);
           // the current price would be insufficient.
           subsidy = bootstrap_value;
         } else {
-          print(&0x013);
-
           subsidy = state.current_proof_price
         } 
         // Boostrap values can exceed the cap for the fullnode subisdy.

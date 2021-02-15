@@ -51,7 +51,7 @@ fun main(vm: &signer) {
     let old_account_bal = LibraAccount::balance<GAS>(eve_addr);
     print(&old_account_bal);
 
-    // Set the auction price to 0, so we check if we trigger guaranteed price.
+    // Set the auction proof price to 0, so we check if we trigger guaranteed price.
     Subsidy::test_set_fullnode_fixtures(vm, 0, 0, 0, 0, 0);
     // Fullnode rewards are paid at epoch boundary.
     Reconfigure::reconfigure(vm, 100);
