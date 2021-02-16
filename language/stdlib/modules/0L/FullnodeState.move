@@ -66,8 +66,6 @@ module FullnodeState {
   }
 
   public fun get_address_proof_count(addr: address):u64 acquires FullnodeCounter {
-    if (is_onboarding(addr)) return 1; // node may be stuck without sufficient balance.
-
     let state = borrow_global<FullnodeCounter>(addr);
     state.proofs_submitted_in_epoch
   }
