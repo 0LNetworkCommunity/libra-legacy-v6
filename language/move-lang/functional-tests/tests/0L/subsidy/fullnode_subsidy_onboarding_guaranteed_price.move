@@ -46,6 +46,7 @@ use 0x1::LibraAccount;
 use 0x1::GAS::GAS;
 use 0x1::Debug::print;
 use 0x1::Reconfigure;
+use 0x1::FullnodeState;
 
 fun main(vm: &signer) {
     let eve_addr = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;

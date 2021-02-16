@@ -30,7 +30,7 @@ fun main(vm: &signer) {
     /// No proofs submitted in current epoch. 
     Subsidy::fullnode_reconfig(vm);
     let old_account_bal = LibraAccount::balance<GAS>({{frank}});
-    let value = Subsidy::distribute_fullnode_subsidy(vm, {{frank}}, 1, false);
+    let value = Subsidy::distribute_fullnode_subsidy(vm, {{frank}}, 1,);
     let new_account_bal = LibraAccount::balance<GAS>({{frank}});
     assert(value == 864000, 735702);
     assert(new_account_bal>old_account_bal, 73570001);
