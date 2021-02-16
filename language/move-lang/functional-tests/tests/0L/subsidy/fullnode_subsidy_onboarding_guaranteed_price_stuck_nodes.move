@@ -46,6 +46,7 @@ use 0x1::LibraAccount;
 use 0x1::GAS::GAS;
 use 0x1::Debug::print;
 use 0x1::Reconfigure;
+use 0x1::FullnodeState;
 
 fun main(vm: &signer) {
     let eve_addr = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
@@ -55,6 +56,9 @@ fun main(vm: &signer) {
     print(&FullnodeState::is_onboarding(eve_addr));
     // Set the auction proof price to 0, so we check if we trigger guaranteed price.
     Subsidy::test_set_fullnode_fixtures(vm, 0, 0, 0, 0, 0);
+
+    // Simulate stuck nodes, proof already paid but below bootstrap guarantee.
+    FullnodeState::test_set_fullnode_fixtures(vm, eve_addr, 0, 0, 0, 1, 1, 100);
 
     // Fullnode rewards are paid at epoch boundary.
     Reconfigure::reconfigure(vm, 100);
