@@ -1,4 +1,6 @@
 //! Key generation
+use std::env;
+
 use abscissa_core::status_info;
 use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
@@ -47,12 +49,26 @@ pub fn get_account_from_mnem(mnemonic_string: String) -> (AuthenticationKey, Acc
 /// Prompts user to type mnemonic securely.
 pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
     println!("Enter your 0L mnemonic:");
-    let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} "))
-    .unwrap()
-    // .clone()
-    .trim()
-    .to_string();
-    get_account_from_mnem(mnemonic_string)
+    let mnemonic_string = match env::var("NODE_ENV") {
+        Ok(val) => {
+           match val.as_str() {
+            "prod" => rpassword::read_password_from_tty(Some("\u{1F511}")),
+            // for test and stage environments, so mnemonics can be inputted.
+             _ => {
+               println!("(unsafe STDIN input for testing) \u{1F511}");
+               rpassword::read_password()
+             }
+           }          
+        },
+        // if not set assume prod
+        _ => rpassword::read_password_from_tty(Some("\u{1F511}"))
+    };
+
+    get_account_from_mnem(
+      mnemonic_string.unwrap()
+      .trim()
+      .to_string()
+    )
 }
 
 
