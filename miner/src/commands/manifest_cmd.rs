@@ -2,12 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{
-    account,
-    block::{build_block},
-    delay,
-    keygen,
-};
+use crate::{account, block::{build_block}, config::MinerConfig, delay, keygen};
 
 use libra_genesis_tool::keyscheme::KeyScheme;
 
@@ -40,14 +35,21 @@ impl Runnable for ManifestCmd {
             check(path);
         } else {
             let (_, _, wallet) = keygen::account_from_prompt();
-
-            write_manifest(Some(path), wallet);
+            // assumes the miner has been initialized, and there is a miner.toml
+            write_manifest(Some(path), wallet, None);
         }
     }
 }
 /// Creates an account.json file for the validator
-pub fn write_manifest(mut path: Option<PathBuf>, wallet: WalletLibrary ) {
-    let stored_configs = app_config();
+pub fn write_manifest(mut path: Option<PathBuf>, wallet: WalletLibrary, miner_configs: Option<MinerConfig> ) {
+    let stored_configs = match miner_configs {
+        Some(config) => config,
+        _ => {
+            let config = app_config().to_owned();
+            config
+        }
+    };
+
     if !path.is_some() {path = Some(stored_configs.workspace.node_home.clone())};
 
     let keys = KeyScheme::new(&wallet);

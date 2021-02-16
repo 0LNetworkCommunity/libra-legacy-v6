@@ -32,8 +32,8 @@ deps:
 	#install rust
 	curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 	#target is Ubuntu
-	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev pkg-config libssl-dev
+	sudo apt update
+	sudo apt install -y git vim zip jq build-essential cmake clang llvm libgmp-dev secure-delete pkg-config libssl-dev
 
 
 bins:
@@ -270,6 +270,25 @@ wipe:
 stop:
 	sudo service libra-node stop
 
+backup-epoch:
+# IMPORTANT: The manifest file includes OS paths to chunks. Those paths are relative and fail. You should edit the file  .manifest file so that the "ledger_infos" includes a full path "/root/epoch-archive/epoch_ending_70-.0987/70-.chunk"
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup epoch-ending --start-epoch 68 --end-epoch 69 local-fs --dir ~/.0L/db
+
+# save to epoch archive repo for testing
+	cp -r ~/.0L/db/epoch_ending* ~/epoch-archive/
+	git add -A && git commit -a -m "epoch archive" && git push
+
+restore-epoch:
+	cargo run --release -p backup-cli --bin db-restore -- --target-db-dir ~/.0L/db epoch-ending --epoch-ending-manifest ~/epoch-archive/epoch_ending_68-.0a14/epoch_ending.manifest local-fs --dir ~/.0L/db 
+
+backup-transaction:
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup transaction --num_transactions 10000 --start-version 37538428 local-fs --dir ~/.0L/db
+
+restore-transaction:
+	cargo run --release -p backup-cli --bin db-restore -- --target-db-dir ~/.0L/db transaction --transaction-manifest ~/epoch-archive/transaction_37538428-.215e/transaction.manifest local-fs --dir ~/.0L/db
+
+backup-snapshot:
+	cargo run --release -p backup-cli --bin db-backup -- one-shot backup state-snapshot --state-version 39170318 local-fs --dir ~/.0L/db
 
 ##### SMOKE TEST #####
 smoke-reg:
