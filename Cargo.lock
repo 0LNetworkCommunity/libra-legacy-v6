@@ -7275,6 +7275,52 @@ dependencies = [
 ]
 
 [[package]]
+name = "txs"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "ajson",
+ "anyhow",
+ "byteorder",
+ "classgroup",
+ "cli",
+ "compiled-stdlib",
+ "criterion",
+ "dirs 2.0.2",
+ "glob",
+ "gumdrop",
+ "hex 0.4.2",
+ "libra-canonical-serialization",
+ "libra-config",
+ "libra-crypto",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-json-rpc-types",
+ "libra-logger",
+ "libra-management",
+ "libra-network-address",
+ "libra-types",
+ "libra-wallet",
+ "libradb",
+ "move-core-types",
+ "once_cell",
+ "regex",
+ "reqwest",
+ "rpassword",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "stdlib",
+ "storage-interface",
+ "thiserror",
+ "toml",
+ "transaction-builder",
+ "vdf",
+ "vm-genesis",
+ "wait-timeout",
+]
+
+[[package]]
 name = "typed-arena"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
