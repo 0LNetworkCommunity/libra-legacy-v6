@@ -82,7 +82,7 @@ fn main() {
     let args = Args::from_args();
 
     // TODO: Duplicated with 0L miner.
-    println!("Enter your 0L mnemonic:");
+
     let mut entered_mnem = false;
     println!("Enter your 0L mnemonic:");
     let mnemonic_string = match env::var("NODE_ENV") {
