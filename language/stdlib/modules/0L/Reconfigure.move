@@ -85,6 +85,7 @@ module Reconfigure {
         while (i < Vector::length(&top_accounts)) {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
+            // TODO: temporary until jail-refactor merge.
             if ((!Vector::contains(&jailed_set, &addr)) && mined_last_epoch) {
                 Vector::push_back(&mut proposed_set, addr);
             };
