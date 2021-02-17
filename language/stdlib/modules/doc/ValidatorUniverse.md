@@ -19,7 +19,7 @@
 -  [Function `unjail`](#0x1_ValidatorUniverse_unjail)
 -  [Function `is_jailed`](#0x1_ValidatorUniverse_is_jailed)
 -  [Function `genesis_helper`](#0x1_ValidatorUniverse_genesis_helper)
--  [Function `test_exists_jailedbit`](#0x1_ValidatorUniverse_test_exists_jailedbit)
+-  [Function `exists_jailedbit`](#0x1_ValidatorUniverse_exists_jailedbit)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -384,7 +384,7 @@
   <b>if</b> (!<b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator)) {
     <b>return</b> <b>false</b>
   };
-  borrow_global_mut&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator).is_jailed
+  borrow_global&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(validator).is_jailed
 }
 </code></pre>
 
@@ -419,13 +419,13 @@
 
 </details>
 
-<a name="0x1_ValidatorUniverse_test_exists_jailedbit"></a>
+<a name="0x1_ValidatorUniverse_exists_jailedbit"></a>
 
-## Function `test_exists_jailedbit`
+## Function `exists_jailedbit`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_test_exists_jailedbit">test_exists_jailedbit</a>(addr: address): bool
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">exists_jailedbit</a>(addr: address): bool
 </code></pre>
 
 
@@ -434,7 +434,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_test_exists_jailedbit">test_exists_jailedbit</a>(addr: address): bool {
+<pre><code><b>public</b> <b>fun</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">exists_jailedbit</a>(addr: address): bool {
   <b>exists</b>&lt;<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_JailedBit">JailedBit</a>&gt;(addr)
 }
 </code></pre>

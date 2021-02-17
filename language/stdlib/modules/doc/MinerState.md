@@ -526,7 +526,7 @@
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130109014010);
 
   // Miner may not have been initialized. Simply <b>return</b> in this case (don't <b>abort</b>)
-  <b>if</b>( !<a href="MinerState.md#0x1_MinerState_is_init">is_init</a>(miner_addr) ) { <b>return</b> };
+  <b>if</b>(!<a href="MinerState.md#0x1_MinerState_is_init">is_init</a>(miner_addr)) { <b>return</b> };
 
 
   // Check that there was mining and validating in period.

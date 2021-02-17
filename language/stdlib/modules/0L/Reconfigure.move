@@ -77,24 +77,38 @@ module Reconfigure {
         // Step 3: Reset counters
         // Step 4: Bulk update validator set (reconfig)
 
-        // prepare_upcoming_validator_set(vm);
-        let top_accounts = NodeWeight::top_n_accounts(
-            vm, Globals::get_max_validator_per_epoch());
+        // TODO: Temporary until JailedBit is fully migrated.
+        // 1. remove jailed set from validator universe
+        
+        // save all the eligible list, before the jailing removes them.
+        let eligible = ValidatorUniverse::get_eligible_validators(vm);
+
         let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
 
-        // 1. remove jailed set from validator universe
-        // 2. get top accounts.
-        let proposed_set = Vector::empty();
         let i = 0;
-        while (i < Vector::length(&top_accounts)) {
-            let addr = *Vector::borrow(&top_accounts, i);
-            if (!Vector::contains(&jailed_set, &addr)){
-                Vector::push_back(&mut proposed_set, addr);
-            };
+        while (i < Vector::length(&jailed_set)) {
+            // TODO: Set Jailedbit to true
+            let addr = *Vector::borrow(&jailed_set, i);
+            ValidatorUniverse::remove_validator_vm(vm, addr);
             i = i+ 1;
         };
 
-        let eligible = ValidatorUniverse::get_eligible_validators(vm);
+        // let proposed_set = Vector::empty();
+        // let i = 0;
+        // while (i < Vector::length(&top_accounts)) {
+        //     let addr = *Vector::borrow(&top_accounts, i);
+        //     if (!Vector::contains(&jailed_set, &addr)){
+        //         Vector::push_back(&mut proposed_set, addr);
+        //     };
+        //     i = i+ 1;
+        // };
+
+        // 2. get top accounts.
+        // TODO: This is temporary. Top N is after jailed have been removed
+        let proposed_set = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
+        // let proposed_set = top_accounts;
+
+
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
         if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&eligible;
         // Usually an issue in staging network for QA only.
