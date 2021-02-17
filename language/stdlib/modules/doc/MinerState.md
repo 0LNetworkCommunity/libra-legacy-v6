@@ -526,7 +526,7 @@
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130109014010);
 
   // Miner may not have been initialized. Simply <b>return</b> in this case (don't <b>abort</b>)
-  <b>if</b>( !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr) ) { <b>return</b> };
+  <b>if</b>( !<a href="MinerState.md#0x1_MinerState_is_init">is_init</a>(miner_addr) ) { <b>return</b> };
 
 
   // Check that there was mining and validating in period.
@@ -575,7 +575,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_node_above_thresh">node_above_thresh</a>(_account: &signer, miner_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>let</b> miner_history= borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
-  <b>return</b> (miner_history.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_mining_threshold">Globals::get_mining_threshold</a>())
+  miner_history.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_mining_threshold">Globals::get_mining_threshold</a>()
 }
 </code></pre>
 

@@ -65,7 +65,7 @@ fun main(sender: &signer) {
   // Needs to mine and submit the join transaction.
   assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357130101091000);
   // Does not have a jailedbit since was not added to validator universe yet.
-  assert(!ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357130101101000);
+  assert(!ValidatorUniverse::exists_jailedbit(eve_addr), 7357130101101000);
 }
 }
 // check: EXECUTED

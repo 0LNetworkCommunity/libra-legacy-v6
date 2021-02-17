@@ -199,7 +199,7 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
-      if( !exists<MinerProofHistory>(miner_addr) ) { return };
+      if(!is_init(miner_addr)) { return };
 
 
       // Check that there was mining and validating in period.
@@ -228,7 +228,7 @@ address 0x1 {
 
     public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
       let miner_history= borrow_global<MinerProofHistory>(miner_addr);
-      return (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold())
+      miner_history.count_proofs_in_epoch > Globals::get_mining_threshold()
     }
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.

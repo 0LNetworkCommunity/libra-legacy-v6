@@ -16,7 +16,7 @@ script {
         assert(LibraSystem::validator_set_size() == 2, 7357220101011000);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357220101021000);
         assert(NodeWeight::proof_of_weight({{alice}}) == 0, 7357220101031000);
-        assert(ValidatorUniverse::test_exists_jailedbit({{alice}}), 7357220101041000);
+        assert(ValidatorUniverse::exists_jailedbit({{alice}}), 7357220101041000);
     }
 }
 // check: EXECUTED

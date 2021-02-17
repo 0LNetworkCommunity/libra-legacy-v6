@@ -119,7 +119,7 @@ address 0x1 {
       if (!exists<JailedBit>(validator)) {
         return false
       };
-      borrow_global_mut<JailedBit>(validator).is_jailed
+      borrow_global<JailedBit>(validator).is_jailed
     }
 
     public fun genesis_helper(vm: &signer, validator: &signer) acquires ValidatorUniverse, JailedBit {
@@ -130,7 +130,7 @@ address 0x1 {
     }
 
     //////// TEST ////////
-    public fun test_exists_jailedbit(addr: address): bool {
+    public fun exists_jailedbit(addr: address): bool {
       exists<JailedBit>(addr)
     }
 

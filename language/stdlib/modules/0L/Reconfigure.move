@@ -41,13 +41,14 @@ module Reconfigure {
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
 
+            if (!MinerState::is_init(addr)) continue; // fail-safe
             let count = MinerState::get_count_in_epoch(addr);
             if (count > 0) {
                 global_proofs_count = global_proofs_count + count;
 
                 let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
 
-                if (!FullnodeState::is_init(addr)) return;
+                if (!FullnodeState::is_init(addr)) continue; // fail-safe
                 FullnodeState::inc_payment_count(vm, addr, count);
                 FullnodeState::inc_payment_value(vm, addr, value);
                 FullnodeState::reconfig(vm, addr, count);

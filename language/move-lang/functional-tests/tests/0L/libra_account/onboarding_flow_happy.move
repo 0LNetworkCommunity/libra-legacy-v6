@@ -61,7 +61,7 @@ fun main(vm: &signer) {
   let bal = LibraAccount::balance<GAS>(eve_addr);
   assert(bal == 576000, 7357401003);
 
-  assert(!ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357401004);
+  assert(!ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
   assert(!ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
   assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
 }
@@ -122,7 +122,7 @@ fun main(_vm: &signer) {
   let eve_addr = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
   /// mock mining above threshold.
-  assert(ValidatorUniverse::test_exists_jailedbit(eve_addr), 7357401008);
+  assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401008);
   assert(ValidatorUniverse::is_in_universe(eve_addr), 7357401009);
   assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401010);
 }
