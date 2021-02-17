@@ -62,7 +62,7 @@ script {
         assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
-        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180103);
+        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180104);
 
         // Mock everyone being a CASE 1
         let voters = Vector::empty<address>();
@@ -100,7 +100,7 @@ script {
         // Tests on initial size of validators 
         // assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
-        // assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
+
         assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
         assert(LibraSystem::validator_set_size() == len, 7357000180104);
