@@ -41,6 +41,66 @@ pub struct TxParams {
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
 
+/// --- Submit a transaction to the network.
+pub fn submit_tx_(
+    tx_params: &TxParams,
+) -> Result<TransactionView, Error> {
+
+    // Create a client object
+    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+
+    let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+
+    let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
+    let sequence_number = match account_state {
+        Some(av) => av.sequence_number,
+        None => 0,
+    };
+
+    // Doing a no-op transaction here which will print
+    // [debug] 000000000000000011e110  in the logs if successful.
+    let hello_world= 24u64;
+    let script = transaction_builder::encode_demo_e2e_script(hello_world);
+
+    // sign the transaction script
+    let txn = create_user_txn(
+        &tx_params.keypair,
+        TransactionPayload::Script(script),
+        tx_params.address,
+        sequence_number,
+        tx_params.max_gas_unit_for_tx,
+        tx_params.coin_price_per_unit,
+        "GAS".parse()?,
+        tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+        chain_id,
+    )?;
+
+    // get account_data struct
+    let mut sender_account_data = AccountData {
+        address: tx_params.address,
+        authentication_key: Some(tx_params.auth_key.to_vec()),
+        key_pair: Some(tx_params.keypair.clone()),
+        sequence_number,
+        status: AccountStatus::Persisted,
+    };
+    
+    // Submit the transaction with libra_client
+    match client.submit_transaction(
+        Some(&mut sender_account_data),
+        txn
+    ){
+        Ok(_) => {
+            match wait_for_tx(tx_params.address, sequence_number, &mut client) {
+                Some(res) => Ok(res),
+                None => Err(Error::msg("No Transaction View returned"))
+            }
+        }
+        Err(err) => Err(err)
+    }
+
+}
+
+
 /// Submit a miner transaction to the network.
 pub fn submit_tx(
     tx_params: &TxParams,
