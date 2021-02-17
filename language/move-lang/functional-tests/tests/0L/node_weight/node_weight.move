@@ -81,7 +81,7 @@ script {
         let len = Vector::length<address>(&vec);
         assert(len == 5, 7357140102011000);
 
-        MinerState::reconfig(vm);
+        MinerState::reconfig(vm, &vec);
 
         // This is the base case: check case of the validator set limit being less than universe size.
         let top_n_is_under = NodeWeight::top_n_accounts(vm, 3);
