@@ -138,14 +138,14 @@ address 0x1 {
 
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
         let old_validator_bal = LibraAccount::balance<GAS>(node_address);
-        let count_proofs = 1;
+        // let count_proofs = 1;
 
-        if (is_testnet()) {
-          // start with sufficient gas for expensive tests e.g. upgrade
-          count_proofs = 10;
-        };
+        // if (is_testnet()) {
+        //   // start with sufficient gas for expensive tests e.g. upgrade
+        //   count_proofs = 10;
+        // };
         
-        let subsidy_granted = distribute_fullnode_subsidy(vm_sig, node_address, count_proofs, true);
+        let subsidy_granted = distribute_onboarding_subsidy(vm_sig, node_address);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
 
         assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
@@ -222,62 +222,67 @@ address 0x1 {
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
       });
-      }
+    }
 
-    public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64, is_genesis: bool ):u64 acquires FullnodeSubsidy{
-      Roles::assert_libra_root(vm);
-      // Payment is only for fullnodes, ie. not in current validator set.
-      // exception being genesis.
-      if (!is_genesis){
-        if (LibraSystem::is_validator(miner)) return 0;
-      };
-
-      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
-      let subsidy;
-      let bootstrap_value = bootstrap_validator_balance();
+    public fun distribute_onboarding_subsidy(
+      vm: &signer,
+      miner: address
+    ):u64 acquires FullnodeSubsidy {
       // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe. 
-      // Then skip the usual calculation.
-      if (
-        !is_genesis && // not genesis, steady state
-        ValidatorUniverse::is_in_universe(miner) && // is a candidate for validator, but not yet in set.
-        FullnodeState::is_onboarding(miner) // is in an onboarding state
-      ) {
-        if (bootstrap_value < state.current_proof_price) {
-          // the current price would be insufficient.
-          subsidy = bootstrap_validator_balance();
-        } else {
-          subsidy = state.current_proof_price
-        } 
-        // Boostrap values can exceed the cap for the fullnode subisdy.
-      } else {
-        // Steady state
+      CoreAddresses::assert_libra_root(vm);
 
-        // fail fast, abort if ceiling was met
-        if (state.current_subsidy_distributed > state.current_cap) return 0;
+      FullnodeState::is_onboarding(miner);
+      
+      let state = borrow_global<FullnodeSubsidy>(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
-        let proposed_subsidy = state.current_proof_price * count;
-
-        if (proposed_subsidy == 0) return 0;
-        // check if payments will exceed ceiling.
-        if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
-          // pay the remainder only
-          // TODO: This creates a race. Check ordering of list.
-          subsidy = state.current_cap - state.current_subsidy_distributed;
-        } else {
-          // happy case, the ceiling is not met.
-          subsidy = proposed_subsidy;
-        };
-
-        if (subsidy == 0) return 0;
-      };
+      let subsidy = bootstrap_validator_balance();
+      if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
 
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
         miner,
         minted_coins,
-        x"",
-        x""
+        b"onboarding_subsidy",
+        b""
+      );
+      subsidy
+    }
+
+
+    public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64):u64 acquires FullnodeSubsidy{
+      CoreAddresses::assert_libra_root(vm);
+      // Payment is only for fullnodes, ie. not in current validator set.
+      if (LibraSystem::is_validator(miner)) return 0;
+
+      let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
+      let subsidy;
+
+      // fail fast, abort if ceiling was met
+      if (state.current_subsidy_distributed > state.current_cap) return 0;
+
+      let proposed_subsidy = state.current_proof_price * count;
+
+      if (proposed_subsidy == 0) return 0;
+      // check if payments will exceed ceiling.
+      if (state.current_subsidy_distributed + proposed_subsidy > state.current_cap) {
+        // pay the remainder only
+        // TODO: This creates a race. Check ordering of list.
+        subsidy = state.current_cap - state.current_subsidy_distributed;
+      } else {
+        // happy case, the ceiling is not met.
+        subsidy = proposed_subsidy;
+      };
+
+      if (subsidy == 0) return 0;
+
+      let minted_coins = Libra::mint<GAS>(vm, subsidy);
+      LibraAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        miner,
+        minted_coins,
+        b"fullnode_subsidy",
+        b""
       );
 
       state.current_subsidy_distributed = state.current_subsidy_distributed + subsidy;
@@ -394,5 +399,25 @@ address 0x1 {
       let subsidy_value = proofs_per_day * proof_cost;
       subsidy_value
     }
+
+    //////// TEST HELPERS ///////
+    public fun test_set_fullnode_fixtures(
+      vm: &signer,
+      previous_epoch_proofs: u64,
+      current_proof_price: u64,
+      current_cap: u64,
+      current_subsidy_distributed: u64,
+      current_proofs_verified: u64,
+    ) acquires FullnodeSubsidy {
+      Roles::assert_libra_root(vm);
+      assert(is_testnet(), 1000);
+      let state = borrow_global_mut<FullnodeSubsidy>(0x0);
+      state.previous_epoch_proofs = previous_epoch_proofs;
+      state.current_proof_price = current_proof_price;
+      state.current_cap = current_cap;
+      state.current_subsidy_distributed = current_subsidy_distributed;
+      state.current_proofs_verified = current_proofs_verified;
+    }
+
 }
 }
