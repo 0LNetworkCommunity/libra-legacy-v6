@@ -18,7 +18,7 @@ script {
   use 0x1::MinerState;
 
   fun main(sender: &signer) {
-        // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
+    // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
     // // Parse key and check
@@ -101,7 +101,8 @@ script {
         // assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
 
-        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
+        // Is not yet validator until sends a "join" transaction
+        assert(!LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180104);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
         assert(LibraSystem::validator_set_size() == len, 7357000180104);
       }
