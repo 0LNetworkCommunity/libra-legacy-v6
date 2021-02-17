@@ -12,6 +12,7 @@
 -  [Function `genesis`](#0x1_Subsidy_genesis)
 -  [Function `process_fees`](#0x1_Subsidy_process_fees)
 -  [Function `init_fullnode_sub`](#0x1_Subsidy_init_fullnode_sub)
+-  [Function `distribute_onboarding_subsidy`](#0x1_Subsidy_distribute_onboarding_subsidy)
 -  [Function `distribute_fullnode_subsidy`](#0x1_Subsidy_distribute_fullnode_subsidy)
 -  [Function `fullnode_reconfig`](#0x1_Subsidy_fullnode_reconfig)
 -  [Function `set_global_count`](#0x1_Subsidy_set_global_count)
@@ -274,14 +275,14 @@
 
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&genesis_validators, i));
     <b>let</b> old_validator_bal = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address);
-    <b>let</b> count_proofs = 1;
+    // <b>let</b> count_proofs = 1;
 
-    <b>if</b> (is_testnet()) {
-      // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
-      count_proofs = 10;
-    };
+    // <b>if</b> (is_testnet()) {
+    //   // start <b>with</b> sufficient gas for expensive tests e.g. upgrade
+    //   count_proofs = 10;
+    // };
 
-    <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm_sig, node_address, count_proofs, <b>true</b>);
+    <b>let</b> subsidy_granted = <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">distribute_onboarding_subsidy</a>(vm_sig, node_address);
     //Confirm the calculations, and that the ending balance is incremented accordingly.
 
     <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(node_address) == old_validator_bal + subsidy_granted, 19010105100);
@@ -388,7 +389,52 @@
     current_subsidy_distributed: 0u64,
     current_proofs_verified: 0u64,
   });
-  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Subsidy_distribute_onboarding_subsidy"></a>
+
+## Function `distribute_onboarding_subsidy`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">distribute_onboarding_subsidy</a>(vm: &signer, miner: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_distribute_onboarding_subsidy">distribute_onboarding_subsidy</a>(
+  vm: &signer,
+  miner: address
+):u64 <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a> {
+  // Bootstrap gas <b>if</b> it's the first payment <b>to</b> a prospective validator. Check no fullnode payments have been made, and is in validator universe.
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(vm);
+
+  <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(miner);
+
+  <b>let</b> state = borrow_global&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+
+  <b>let</b> subsidy = <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>();
+  <b>if</b> (state.current_proof_price &gt; subsidy) subsidy = state.current_proof_price;
+
+  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
+  <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+    vm,
+    miner,
+    minted_coins,
+    b"onboarding_subsidy",
+    b""
+  );
+  subsidy
+}
 </code></pre>
 
 
@@ -401,7 +447,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm: &signer, miner: address, count: u64, is_genesis: bool): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm: &signer, miner: address, count: u64): u64
 </code></pre>
 
 
@@ -410,50 +456,28 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm: &signer, miner: address, count: u64, is_genesis: bool ):u64 <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>{
-  <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(vm);
+<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_distribute_fullnode_subsidy">distribute_fullnode_subsidy</a>(vm: &signer, miner: address, count: u64):u64 <b>acquires</b> <a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>{
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(vm);
   // Payment is only for fullnodes, ie. not in current validator set.
-  // exception being genesis.
-  <b>if</b> (!is_genesis){
-    <b>if</b> (<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(miner)) <b>return</b> 0;
-  };
+  <b>if</b> (<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(miner)) <b>return</b> 0;
 
   <b>let</b> state = borrow_global_mut&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
   <b>let</b> subsidy;
-  <b>let</b> bootstrap_value = <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>();
-  // Bootstrap gas <b>if</b> it's the first payment <b>to</b> a prospective validator. Check no fullnode payments have been made, and is in validator universe.
-  // Then skip the usual calculation.
-  <b>if</b> (
-    !is_genesis && // not genesis, steady state
-    <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">FullnodeState::is_onboarding</a>(miner) // is in an onboarding state
-  ) {
-    <b>if</b> (state.current_proof_price &lt; bootstrap_value) {
-      // the current price would be insufficient.
-      subsidy = bootstrap_value;
-    } <b>else</b> {
-      subsidy = state.current_proof_price
-    }
-    // Boostrap values can exceed the cap for the fullnode subisdy.
+
+  // fail fast, <b>abort</b> <b>if</b> ceiling was met
+  <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
+
+  <b>let</b> proposed_subsidy = state.current_proof_price * count;
+
+  <b>if</b> (proposed_subsidy == 0) <b>return</b> 0;
+  // check <b>if</b> payments will exceed ceiling.
+  <b>if</b> (state.current_subsidy_distributed + proposed_subsidy &gt; state.current_cap) {
+    // pay the remainder only
+    // TODO: This creates a race. Check ordering of list.
+    subsidy = state.current_cap - state.current_subsidy_distributed;
   } <b>else</b> {
-    // Steady state
-
-    // fail fast, <b>abort</b> <b>if</b> ceiling was met
-    <b>if</b> (state.current_subsidy_distributed &gt; state.current_cap) <b>return</b> 0;
-
-    <b>let</b> proposed_subsidy = state.current_proof_price * count;
-
-    <b>if</b> (proposed_subsidy == 0) <b>return</b> 0;
-    // check <b>if</b> payments will exceed ceiling.
-    <b>if</b> (state.current_subsidy_distributed + proposed_subsidy &gt; state.current_cap) {
-      // pay the remainder only
-      // TODO: This creates a race. Check ordering of list.
-      subsidy = state.current_cap - state.current_subsidy_distributed;
-    } <b>else</b> {
-      // happy case, the ceiling is not met.
-      subsidy = proposed_subsidy;
-    };
-
-    <b>if</b> (subsidy == 0) <b>return</b> 0;
+    // happy case, the ceiling is not met.
+    subsidy = proposed_subsidy;
   };
 
   <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
@@ -461,7 +485,7 @@
     vm,
     miner,
     minted_coins,
-    b"fullnode subsidy",
+    b"fullnode_subsidy",
     b""
   );
 

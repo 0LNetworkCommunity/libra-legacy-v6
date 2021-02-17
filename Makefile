@@ -316,6 +316,7 @@ devnet-yaml:
 devnet-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+	cargo r -p miner -- genesis
 
 devnet-previous: stop clear 
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.

@@ -40,19 +40,26 @@ module Reconfigure {
         let k = 0;
         while (k < Vector::length(&miners)) {
             let addr = *Vector::borrow(&miners, k);
+            
+            if (!FullnodeState::is_init(addr)) continue; // fail-safe
 
-            if (!MinerState::is_init(addr)) continue; // fail-safe
-            let count = MinerState::get_count_in_epoch(addr);
-            if (count > 0) {
-                global_proofs_count = global_proofs_count + count;
-
-                let value = Subsidy::distribute_fullnode_subsidy(vm, addr, count, false);
-
-                if (!FullnodeState::is_init(addr)) continue; // fail-safe
-                FullnodeState::inc_payment_count(vm, addr, count);
-                FullnodeState::inc_payment_value(vm, addr, value);
-                FullnodeState::reconfig(vm, addr, count);
+            let count = FullnodeState::get_address_proof_count(addr);
+            global_proofs_count = global_proofs_count + count;
+            
+            let value: u64;
+            // check if is in onboarding state (or stuck)
+            if (FullnodeState::is_onboarding(addr)) {
+                value = Subsidy::distribute_onboarding_subsidy(vm, addr);
+            } else {
+                value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
             };
+            
+
+            // TODO: Move inc_payment_count to reconfig
+            FullnodeState::inc_payment_count(vm, addr, count);
+            FullnodeState::inc_payment_value(vm, addr, value);
+            FullnodeState::reconfig(vm, addr, count);
+
             k = k + 1;
         };
 
