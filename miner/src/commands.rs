@@ -70,7 +70,7 @@ pub enum MinerCmd {
     #[options(help = "generate keys")]
     Keygen(KeygenCmd),
 
-    /// The `keygen` subcommand
+    /// The `ceremony` subcommand
     #[options(help = "wizard for genesis ceremony configurations")]
     Ceremony(CeremonyUtilCmd),
 

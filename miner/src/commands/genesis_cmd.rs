@@ -25,7 +25,7 @@ pub struct GenesisCmd {
 impl Runnable for GenesisCmd {
     /// Print version message
     fn run(&self) {
-        let miner_configs = app_config();
+        let miner_configs = app_config().to_owned();
         genesis_files(
             &miner_configs.clone(),
             &self.chain_id,

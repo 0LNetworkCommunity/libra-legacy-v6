@@ -71,8 +71,6 @@ impl Runnable for StartCmd {
             }
         }
 
-        // println!("Enter your 0L mnemonic:");
-        // let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} ")).unwrap();
         let (_authkey, _account, wallet) = keygen::account_from_prompt();
         let keys = KeyScheme::new(&wallet);
 
