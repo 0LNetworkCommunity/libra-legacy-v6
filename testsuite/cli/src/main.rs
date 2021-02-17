@@ -81,7 +81,7 @@ struct Args {
 fn main() {
     let args = Args::from_args();
     // TODO: Duplicated with 0L miner.
-    println!("Enter your 0L mnemonic: \u{1F511}");
+    println!("Enter your 0L mnemonic:");
     let mut entered_mnem = false;
     let mnemonic_string = match env::var("NODE_ENV") {
         Ok(val) => {
@@ -97,7 +97,9 @@ fn main() {
         // if not set assume prod
         _ => rpassword::read_password_from_tty(Some("\u{1F511}"))
     };
-    if mnemonic_string.is_ok() { entered_mnem = true; }
+    if mnemonic_string.is_ok() { 
+        entered_mnem = true;
+    }
 
 
     let mut logger = ::libra_logger::Logger::new();
@@ -140,7 +142,7 @@ fn main() {
         true, // 0L change
         args.faucet_url.clone(),
         mnemonic_file,
-        Some(mnemonic_string.unwrap()), // 0L change
+        Some(mnemonic_string.unwrap().trim().to_owned()), // 0L change
         waypoint,
     )
     .expect("Failed to construct client.");
