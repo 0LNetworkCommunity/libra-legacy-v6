@@ -10,6 +10,11 @@ script {
         if (!ValidatorUniverse::is_in_universe(addr)) {
             ValidatorUniverse::add_self(validator);
         };
+        // Initiate jailbit if not present
+        if (!ValidatorUniverse::exists_jailedbit(addr)) {
+            ValidatorUniverse::unjail_self(validator);
+        };
+
         // if is jailed, try to unjail
         if (ValidatorUniverse::is_jailed(addr)) {
             ValidatorUniverse::unjail_self(validator);
