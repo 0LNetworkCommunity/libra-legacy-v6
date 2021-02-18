@@ -1,9 +1,9 @@
 # 0L
-### A neutral replicated state machine
+### A reference implementation of a neutral replicated state machine
 
 
-Join the network with a [validator node](https://github.com/OLSF/libra/wiki/Onboarding-process-for-validators), to secure the chain.
+Join a network with a [validator node](https://github.com/OLSF/libra/wiki/Onboarding-process-for-validators), to secure the state machine.
 
 Run a [fullnode](https://github.com/OLSF/libra/wiki/Mining-VDF-Proofs), to keep a copy of the state machine.
 
-Contribute to [issues](https://github.com/OLSF/libra/issues).
+Contribute to [discussion and issues](https://github.com/OLSF/libra/issues).
