@@ -39,20 +39,18 @@ address 0x1 {
 
       // Get the split of payments from Stats.
       let len = Vector::length<address>(outgoing_set);
+      
+      // equal subsidy for all active validators
+      let subsidy_granted;
+      if (subsidy_units > len && subsidy_units > 0 ) { // arithmetic safety check
+        subsidy_granted = subsidy_units/len;
+      } else { return };
 
-      //TODO: assert the lengths of vectors are the same.
       let i = 0;
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-        // let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
-        
-        let subsidy_granted = 0;
-        if (subsidy_units > len) {
-          subsidy_granted = subsidy_units/len;
-        };
-        // should not be possible
-        if (subsidy_granted == 0) break;
+
         // Transfer gas from vm address to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
         LibraAccount::vm_deposit_with_metadata<GAS>(
