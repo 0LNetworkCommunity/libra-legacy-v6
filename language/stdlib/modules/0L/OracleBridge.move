@@ -3,12 +3,13 @@ address 0x1 {
   module OracleBridge {
     use 0x1::Vector;
     use 0x1::Signer;
-    // use 0x1::Testnet;
     use 0x1::LibraSystem;
     use 0x1::Upgrade;
     use 0x1::LibraBlock;
     use 0x1::CoreAddresses;
     use 0x1::LCS;
+    // use 0x1::Bridge;
+    // use 0x1::Event;
 
       resource struct Bridge {
         eth: vector<Election>
@@ -138,6 +139,9 @@ address 0x1 {
         while (i < len) {
             let entry = Vector::borrow(vote_counts, i);
             if (Vector::length(&entry.validators) >= threshold) {
+
+              // Consensus should trigger an event for the Bridge.
+
               return *entry
             };
             i = i + 1;
@@ -147,6 +151,15 @@ address 0x1 {
           validators: Vector::empty<address>()
         }
       }
+
+
+      // public fun emit(account: &signer, i: u64) {
+      //   let addr = Signer::address_of(account);
+
+      //   let handle = borrow_global_mut<Bridge::Handle>(addr);
+
+      //   Event::emit_event(&mut handle.h, Bridge::AnEvent { i })
+      // }
   
       fun null_vote():Vote {
         Vote {

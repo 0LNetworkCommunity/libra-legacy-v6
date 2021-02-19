@@ -13,6 +13,27 @@ address 0x1{
     use 0x1::GAS::GAS;
     use 0x1::Signer;
     use 0x1::LibraAccount;
+    use 0x1::Event;
+
+    struct AnEvent { i: u64 }
+    resource struct Handle { h: Event::EventHandle<AnEvent> }
+
+    public fun init_handle(sender: &signer) {
+      let account = Signer::address_of(sender);
+      if (!exists<Handle>(account)) {
+        Event::publish_generator(sender);
+        move_to(sender, Handle { h: Event::new_event_handle(sender) })
+      };
+    }
+
+    public fun emit(account: &signer, i: u64) acquires Handle{
+      let addr = Signer::address_of(account);
+
+      let handle = borrow_global_mut<Handle>(addr);
+
+      Event::emit_event(&mut handle.h, AnEvent { i })
+    }
+
 
     // TODO: Demoware, Change this to EventHandle
     resource struct EthBridge{
