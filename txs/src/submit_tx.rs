@@ -44,6 +44,7 @@ pub struct TxParams {
 /// --- Submit a transaction to the network.
 pub fn submit_tx_(
     tx_params: &TxParams,
+    script: Script,
 ) -> Result<TransactionView, Error> {
 
     // Create a client object
@@ -56,11 +57,6 @@ pub fn submit_tx_(
         Some(av) => av.sequence_number,
         None => 0,
     };
-
-    // Doing a no-op transaction here which will print
-    // [debug] 000000000000000011e110  in the logs if successful.
-    let hello_world= 24u64;
-    let script = transaction_builder::encode_demo_e2e_script(hello_world);
 
     // sign the transaction script
     let txn = create_user_txn(
@@ -302,7 +298,8 @@ pub fn wait_for_tx(
 pub fn eval_tx_status(result: TransactionView) -> bool {
     match result.vm_status == VMStatusView::Executed {
         true => {
-                status_ok!("\nSuccess:", "transaction executed");
+                // status_ok!("\nSuccess:", "transaction executed");
+                println!("\nSuccess: transaction executed");
                 return true
         }
         false => {
