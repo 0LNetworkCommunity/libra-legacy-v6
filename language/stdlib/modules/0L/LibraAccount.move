@@ -727,8 +727,6 @@ module LibraAccount {
         //////// 0L //////// enabled when validator count is 100. 
         let sender_addr = Signer::address_of(sender);
         if (LibraConfig::check_transfer_enabled()) {
-            assert(LibraSystem::is_validator({{sender_addr}}) || 
-            sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), 170110014010);
             if(!AccountLimits::has_limits_published<GAS>(sender_addr)){
                 AccountLimits::publish_restricted_limits_definition_OL<GAS>(sender);
             };
@@ -837,8 +835,7 @@ module LibraAccount {
         //////// 0L //////// Transfers disabled by default
         //////// 0L //////// Transfers of 10 GAS 
         //////// 0L //////// enabled when validator count is 100. 
-        if (LibraConfig::check_transfer_enabled() && 
-        LibraSystem::is_validator({{*&cap.account_address}})) {
+        if (LibraConfig::check_transfer_enabled()) {
             // Ensure that this withdrawal is compliant with the account limits on
             // this account.
             assert(
