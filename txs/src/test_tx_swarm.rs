@@ -6,6 +6,7 @@ use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
+use crate::keygen;
 use anyhow::Error;
 use libra_config::config::NodeConfig;
 use libra_crypto::test_utils::KeyPair;
@@ -84,19 +85,18 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 /// Helper to extract params from a local running swarm.
 pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
     swarm_path.push("0/node.yaml");
-    let config = NodeConfig::load(&swarm_path)
-        .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path));
+    let config = NodeConfig::load(&swarm_path).unwrap_or_else(
+        |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
+    );
 
-    // This mnemonic is hard coded into the swarm configs. see configs/config_builder
-    let alice_mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse".to_string();
-    let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
-    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-    let pubkey =  keys.child_0_owner.get_public();
-    let auth_key = AuthenticationKey::ed25519(&pubkey);
-    let address = auth_key.derived_address();
-
-    let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
+    let url =  Url::parse(
+        format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
+    ).unwrap();
     let waypoint = config.base.waypoint.genesis_waypoint();
+
+    let (auth_key, address, wallet) = keygen::account_from_prompt();
+    let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
 
     let tx_params = TxParams {
         auth_key,
@@ -104,7 +104,7 @@ pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error>
         url,
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 5_000_000,
+        max_gas_unit_for_tx: 1_000_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     };
