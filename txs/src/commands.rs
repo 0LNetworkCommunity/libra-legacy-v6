@@ -13,6 +13,7 @@
 mod keygen_cmd;
 mod start_cmd;
 mod version_cmd;
+mod create_account_cmd;
 mod onboard_cmd;
 mod swarm_test_cmd;
 mod zero_cmd;
@@ -26,6 +27,7 @@ mod genesis_cmd;
 use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
+    create_account_cmd::CreateAccountCmd,
     onboard_cmd::OnboardCmd,
     swarm_test_cmd::SwarmCmd,
     zero_cmd::ZeroCmd,
@@ -65,6 +67,10 @@ pub enum MinerCmd {
     /// The `version` subcommand
     #[options(help = "display version information")]
     Version(VersionCmd),
+
+    /// The `create-account` subcommand
+    #[options(help = "create user account")]
+    CreateAccount(CreateAccountCmd),
 
     /// The `keygen` subcommand
     #[options(help = "generate keys")]

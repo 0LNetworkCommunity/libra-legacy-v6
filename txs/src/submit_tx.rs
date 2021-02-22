@@ -298,8 +298,7 @@ pub fn wait_for_tx(
 pub fn eval_tx_status(result: TransactionView) -> bool {
     match result.vm_status == VMStatusView::Executed {
         true => {
-                // status_ok!("\nSuccess:", "transaction executed");
-                println!("\nSuccess: transaction executed");
+                status_ok!("\nSuccess:", "transaction executed");
                 return true
         }
         false => {
