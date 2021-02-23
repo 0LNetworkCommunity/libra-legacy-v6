@@ -10,7 +10,6 @@ use crate::keygen;
 use anyhow::Error;
 use libra_config::config::NodeConfig;
 use libra_crypto::test_utils::KeyPair;
-use libra_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
 use std::{fs, path::PathBuf};
 use libra_genesis_tool::keyscheme::KeyScheme;

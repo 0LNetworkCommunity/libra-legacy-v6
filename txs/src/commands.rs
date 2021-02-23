@@ -14,6 +14,7 @@ mod keygen_cmd;
 mod start_cmd;
 mod version_cmd;
 mod create_account_cmd;
+mod oracle_upgrade_cmd;
 mod onboard_cmd;
 mod swarm_test_cmd;
 mod zero_cmd;
@@ -28,6 +29,7 @@ use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
     create_account_cmd::CreateAccountCmd,
+    oracle_upgrade_cmd::OracleUpgradeCmd,
     onboard_cmd::OnboardCmd,
     swarm_test_cmd::SwarmCmd,
     zero_cmd::ZeroCmd,
@@ -71,6 +73,10 @@ pub enum MinerCmd {
     /// The `create-account` subcommand
     #[options(help = "create user account")]
     CreateAccount(CreateAccountCmd),
+
+    /// The `oracle-upgrade` subcommand
+    #[options(help = "oracle upgrade")]
+    OracleUpgrade(OracleUpgradeCmd),    
 
     /// The `keygen` subcommand
     #[options(help = "generate keys")]

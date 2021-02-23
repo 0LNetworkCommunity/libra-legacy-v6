@@ -13,7 +13,7 @@ use libra_types::{transaction::{Script}};
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateAccountCmd {
     #[options(help = "Path of account.json")]
-    account_json: PathBuf,
+    account_json_path: PathBuf,
 }
 
 pub fn create_user_account_script(
@@ -48,8 +48,11 @@ impl Runnable for CreateAccountCmd {
         let swarm_path = PathBuf::from("./swarm_temp");
         let tx_params = get_params_from_swarm(swarm_path).unwrap();
     
-        let account_json = self.account_json.to_str().unwrap();
-        match submit_tx_(&tx_params, create_user_account_script(account_json)) {
+        let account_json = self.account_json_path.to_str().unwrap();
+        match submit_tx_(
+            &tx_params, 
+            create_user_account_script(account_json)
+        ) {
             Err(err) => { println!("{:?}", err) }
             Ok(res)  => {
                 eval_tx_status(res);
