@@ -18,7 +18,7 @@ module ChainId {
     /// Publish the chain ID `id` of this Libra instance under the LibraRoot account
     public fun initialize(lr_account: &signer, id: u8) {
         LibraTimestamp::assert_genesis();
-        CoreAddresses::assert_libra_root(lr_account);
+        CoreAddresses::assert_diem_root(lr_account);
         assert(!exists<ChainId>(Signer::address_of(lr_account)), Errors::already_published(ECHAIN_ID));
         move_to(lr_account, ChainId { id })
     }

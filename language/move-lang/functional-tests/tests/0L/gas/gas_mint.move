@@ -1,7 +1,7 @@
 //! account: alice, 1000000, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Libra;
 use 0x1::GAS::GAS;

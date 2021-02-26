@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! The following is a minimalist version of a hierarchical key derivation library for the
-//! LibraWallet.
+//! The following is a minimalist version of a hierarchical key derivation diemry for the
+//! DiemWallet.
 //!
-//! Note that the Libra Blockchain makes use of ed25519 Edwards Digital Signature Algorithm
+//! Note that the Diem Blockchain makes use of ed25519 Edwards Digital Signature Algorithm
 //! (EdDSA) and therefore, BIP32 Public Key derivation is not available without falling back to
-//! a non-deterministic Schnorr signature scheme. As LibraWallet is meant to be a minimalist
+//! a non-deterministic Schnorr signature scheme. As DiemWallet is meant to be a minimalist
 //! reference implementation of a simple wallet, the following does not deviate from the
 //! ed25519 spec. In a future iteration of this wallet, we will also provide an implementation
 //! of a Schnorr variant over curve25519 and demonstrate our proposal for BIP32-like public key
@@ -19,14 +19,14 @@ use crate::mnemonic::Mnemonic;
 use anyhow::{anyhow, Result};
 use byteorder::{ByteOrder, LittleEndian};
 use hmac::Hmac;
-use libra_crypto::{
+use diem_crypto::{
     compat::Sha3_256,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     hash::CryptoHash,
     hkdf::Hkdf,
     traits::SigningKey,
 };
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use mirai_annotations::*;
 use pbkdf2::pbkdf2;
 use serde::{Deserialize, Serialize};
@@ -85,7 +85,7 @@ pub struct ExtendedPrivKey {
 
 impl ExtendedPrivKey {
     /// Constructor for creating an ExtendedPrivKey from a ed25519 PrivateKey. Note that the
-    /// ChildNumber are not used in this iteration of LibraWallet, but in order to
+    /// ChildNumber are not used in this iteration of DiemWallet, but in order to
     /// enable more general Hierarchical KeyDerivation schemes, we include it for completeness.
     pub fn new(_child_number: ChildNumber, private_key: Ed25519PrivateKey) -> Self {
         Self {
@@ -101,7 +101,7 @@ impl ExtendedPrivKey {
 
     /// Compute the account address for this account's public key
     pub fn get_address(&self) -> AccountAddress {
-        libra_types::account_address::from_public_key(&self.get_public())
+        diem_types::account_address::from_public_key(&self.get_public())
     }
 
     /// Get private key
@@ -114,16 +114,16 @@ impl ExtendedPrivKey {
         AuthenticationKey::ed25519(&self.get_public())
     }
 
-    /// Libra specific sign function that is capable of signing an arbitrary
+    /// Diem specific sign function that is capable of signing an arbitrary
     /// Serializable value.
     ///
-    /// NOTE: In Libra, we do not sign the raw bytes of a transaction, but
+    /// NOTE: In Diem, we do not sign the raw bytes of a transaction, but
     /// those raw bytes prefixed by a domain separation hash.
     /// Informally signed_bytes = sha3(domain_separator) || lcs_serialization_bytes
     ///
     /// The domain separator hash is derived automatically from a `#[derive(CryptoHasher,
     /// LCSCryptoHash)]` annotation, or can be declared manually in a process
-    /// described in `libra_crypto::hash`.
+    /// described in `diem_crypto::hash`.
     ///
     pub fn sign<T: CryptoHash + Serialize>(&self, msg: &T) -> Ed25519Signature {
         self.private_key.sign(msg)
@@ -159,7 +159,7 @@ impl KeyFactory {
     ///
     /// Note that the function below  adheres to [HKDF RFC 5869](https://tools.ietf.org/html/rfc5869).
     pub fn private_child(&self, child: ChildNumber) -> Result<ExtendedPrivKey> {
-        // application info in the HKDF context is defined as Libra derived key$child_number.
+        // application info in the HKDF context is defined as Diem derived key$child_number.
         let mut le_n = [0u8; 8];
         LittleEndian::write_u64(&mut le_n, child.0);
         let mut info = KeyFactory::INFO_PREFIX.to_vec();
@@ -181,7 +181,7 @@ pub struct Seed([u8; 32]);
 
 impl Seed {
     /// This constructor implements the one-way function that allows to generate a Seed from a
-    /// particular Mnemonic and salt. WalletLibrary implements a fixed salt, but a user could
+    /// particular Mnemonic and salt. WalletDiemry implements a fixed salt, but a user could
     /// choose a user-defined salt instead of the hardcoded one.
     pub fn new(mnemonic: &Mnemonic, salt: &str) -> Seed {
         let mut output = [0u8; 32];

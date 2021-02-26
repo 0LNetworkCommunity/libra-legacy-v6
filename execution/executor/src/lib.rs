@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -33,14 +33,14 @@ use executor_types::{
     TransactionReplayer,
 };
 use fail::fail_point;
-use libra_crypto::{
+use diem_crypto::{
     hash::{CryptoHash, EventAccumulatorHasher, TransactionAccumulatorHasher},
     HashValue,
 };
-use libra_logger::prelude::*;
-use libra_state_view::StateViewId;
-use libra_trace::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_state_view::StateViewId;
+use diem_trace::prelude::*;
+use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
@@ -55,7 +55,7 @@ use libra_types::{
     },
     write_set::{WriteOp, WriteSet},
 };
-use libra_vm::VMExecutor;
+use diem_vm::VMExecutor;
 use scratchpad::SparseMerkleTree;
 use std::{
     collections::{hash_map, HashMap, HashSet},

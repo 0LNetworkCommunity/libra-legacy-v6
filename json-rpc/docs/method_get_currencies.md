@@ -2,7 +2,7 @@
 
 **Description**
 
-Get information about various currencies supported by the Libra blockchain
+Get information about various currencies supported by the Diem blockchain
 
 
 ### Parameters
@@ -19,15 +19,15 @@ Returns array of [CurrencyInfo](type_currency_info.md) objects.
 
 ```
 // Request: fetches currencies supported by the system
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_currencies","params":[],"id":1}' https://testnet.libra.org/v1
+curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_currencies","params":[],"id":1}' https://testnet.diem.org/v1
 
 // Response
 {
   "id": 1,
   "jsonrpc": "2.0",
-  "libra_chain_id": 2,
-  "libra_ledger_timestampusec": 1596680410015647,
-  "libra_ledger_version": 3252698,
+  "diem_chain_id": 2,
+  "diem_ledger_timestampusec": 1596680410015647,
+  "diem_ledger_version": 3252698,
   "result": [
     {
       "burn_events_key": "02000000000000000000000000000000000000000a550c18",

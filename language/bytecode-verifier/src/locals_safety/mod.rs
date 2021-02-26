@@ -13,7 +13,7 @@ use crate::{
     binary_views::{BinaryIndexedView, FunctionView},
 };
 use abstract_state::{AbstractState, LocalState};
-use libra_types::vm_status::StatusCode;
+use diem_types::vm_status::StatusCode;
 use mirai_annotations::*;
 use vm::{
     errors::{PartialVMError, PartialVMResult},

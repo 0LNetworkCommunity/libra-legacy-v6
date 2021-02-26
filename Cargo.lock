@@ -18,10 +18,10 @@ dependencies = [
  "codespan-reporting",
  "datatest-stable",
  "heck",
- "libra-canonical-serialization",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "move-core-types",
  "move-prover",
@@ -77,9 +77,9 @@ name = "accumulator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-crypto",
- "libra-types",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "proptest",
  "rand 0.7.3",
@@ -300,19 +300,19 @@ dependencies = [
  "futures 0.3.6",
  "hex 0.4.2",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-infallible",
- "libra-jellyfish-merkle",
- "libra-logger",
- "libra-proptest-helpers",
- "libra-secure-push-metrics",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-jellyfish-merkle",
+ "diem-logger",
+ "diem-proptest-helpers",
+ "diem-secure-push-metrics",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "once_cell",
  "proptest",
  "rand 0.7.3",
@@ -335,15 +335,15 @@ dependencies = [
  "bytes",
  "futures 0.3.6",
  "hyper",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-logger",
- "libra-metrics",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-logger",
+ "diem-metrics",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
+ "diemdb",
  "once_cell",
  "reqwest",
  "serde",
@@ -492,7 +492,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 name = "borrow-graph"
 version = "0.0.1"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "mirai-annotations",
 ]
 
@@ -502,7 +502,7 @@ version = "0.1.0"
 dependencies = [
  "futures 0.3.6",
  "futures-semaphore",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "tokio",
 ]
 
@@ -552,9 +552,9 @@ dependencies = [
  "datatest-stable",
  "ir-to-bytecode",
  "itertools 0.9.0",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "move-core-types",
  "num 0.3.0",
@@ -570,9 +570,9 @@ dependencies = [
  "anyhow",
  "codespan",
  "codespan-reporting",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-ir-types",
  "serde",
@@ -586,8 +586,8 @@ dependencies = [
  "anyhow",
  "borrow-graph",
  "invalid-mutations",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "petgraph",
@@ -601,8 +601,8 @@ dependencies = [
  "bytecode-verifier",
  "compiled-stdlib",
  "invalid-mutations",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "petgraph",
  "proptest",
@@ -696,10 +696,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.6",
- "libra-infallible",
- "libra-metrics",
- "libra-types",
- "libra-workspace-hack",
+ "diem-infallible",
+ "diem-metrics",
+ "diem-types",
+ "diem-workspace-hack",
  "tokio",
 ]
 
@@ -769,17 +769,17 @@ dependencies = [
  "crash-handler",
  "generate-key",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-json-rpc-client",
- "libra-logger",
- "libra-metrics",
- "libra-network-address",
- "libra-temppath",
- "libra-types",
- "libra-wallet",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-json-rpc-client",
+ "diem-logger",
+ "diem-metrics",
+ "diem-network-address",
+ "diem-temppath",
+ "diem-types",
+ "diem-wallet",
+ "diem-workspace-hack",
  "num-traits",
  "once_cell",
  "proptest",
@@ -829,26 +829,26 @@ dependencies = [
  "itertools 0.9.0",
  "k8s-openapi",
  "kube",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-global-constants",
- "libra-infallible",
- "libra-json-rpc-client",
- "libra-logger",
- "libra-management",
- "libra-mempool",
- "libra-network-address",
- "libra-network-address-encryption",
- "libra-node",
- "libra-operational-tool",
- "libra-retrier",
- "libra-secure-storage",
- "libra-swarm",
- "libra-trace",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-infallible",
+ "diem-json-rpc-client",
+ "diem-logger",
+ "diem-management",
+ "diem-mempool",
+ "diem-network-address",
+ "diem-network-address-encryption",
+ "diem-node",
+ "diem-operational-tool",
+ "diem-retrier",
+ "diem-secure-storage",
+ "diem-swarm",
+ "diem-trace",
+ "diem-types",
+ "diem-workspace-hack",
  "network",
  "network-builder",
  "num_cpus",
@@ -933,10 +933,10 @@ dependencies = [
  "anyhow",
  "bytecode-verifier",
  "include_dir",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "once_cell",
  "sha2 0.9.1",
  "stdlib",
@@ -952,9 +952,9 @@ dependencies = [
  "bytecode-verifier",
  "compiled-stdlib",
  "ir-to-bytecode",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "move-ir-types",
  "serde_json",
  "structopt 0.3.18",
@@ -979,19 +979,19 @@ dependencies = [
  "fail",
  "futures 0.3.6",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-infallible",
- "libra-logger",
- "libra-mempool",
- "libra-metrics",
- "libra-secure-storage",
- "libra-temppath",
- "libra-trace",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-logger",
+ "diem-mempool",
+ "diem-metrics",
+ "diem-secure-storage",
+ "diem-temppath",
+ "diem-trace",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "mirai-annotations",
  "network",
  "num-derive",
@@ -1020,12 +1020,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "executor-types",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-infallible",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-infallible",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "proptest",
  "serde",
@@ -1064,8 +1064,8 @@ name = "crash-handler"
 version = "0.1.0"
 dependencies = [
  "backtrace",
- "libra-logger",
- "libra-workspace-hack",
+ "diem-logger",
+ "diem-workspace-hack",
  "serde",
  "toml",
 ]
@@ -1310,7 +1310,7 @@ dependencies = [
 name = "datatest-stable"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "regex",
  "structopt 0.3.18",
  "termcolor",
@@ -1323,13 +1323,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "executor",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "storage-interface",
  "structopt 0.3.18",
 ]
@@ -1340,9 +1340,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bytes",
- "libra-logger",
- "libra-metrics",
- "libra-workspace-hack",
+ "diem-logger",
+ "diem-metrics",
+ "diem-workspace-hack",
  "reqwest",
  "tokio",
  "warp",
@@ -1353,7 +1353,7 @@ name = "diagen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "regex",
 ]
 
@@ -1461,8 +1461,8 @@ dependencies = [
  "bytecode-verifier",
  "colored",
  "ir-to-bytecode-syntax",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-coverage",
  "move-ir-types",
@@ -1486,8 +1486,8 @@ dependencies = [
  "codespan-reporting",
  "datatest-stable",
  "itertools 0.9.0",
- "libra-temppath",
- "libra-workspace-hack",
+ "diem-temppath",
+ "diem-workspace-hack",
  "log",
  "move-prover",
  "num 0.3.0",
@@ -1609,9 +1609,9 @@ dependencies = [
  "anyhow",
  "codespan-reporting",
  "datatest-stable",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "move-core-types",
  "move-prover",
@@ -1629,19 +1629,19 @@ dependencies = [
  "executor",
  "executor-test-helpers",
  "executor-types",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-global-constants",
- "libra-infallible",
- "libra-logger",
- "libra-secure-net",
- "libra-secure-storage",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-infallible",
+ "diem-logger",
+ "diem-secure-net",
+ "diem-secure-storage",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "rand 0.7.3",
  "serde",
  "storage-client",
@@ -1661,21 +1661,21 @@ dependencies = [
  "executor-types",
  "fail",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-infallible",
- "libra-logger",
- "libra-metrics",
- "libra-secure-net",
- "libra-state-view",
- "libra-temppath",
- "libra-trace",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-infallible",
+ "diem-logger",
+ "diem-metrics",
+ "diem-secure-net",
+ "diem-state-view",
+ "diem-temppath",
+ "diem-trace",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "move-core-types",
  "once_cell",
  "proptest",
@@ -1695,15 +1695,15 @@ dependencies = [
  "executor",
  "executor-types",
  "itertools 0.9.0",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-infallible",
- "libra-logger",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-infallible",
+ "diem-logger",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "rand 0.7.3",
  "rayon",
  "storage-client",
@@ -1720,14 +1720,14 @@ dependencies = [
  "anyhow",
  "executor",
  "executor-types",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "rand 0.7.3",
  "storage-interface",
  "storage-service",
@@ -1741,11 +1741,11 @@ name = "executor-types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-secure-net",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-secure-net",
+ "diem-types",
+ "diem-workspace-hack",
  "scratchpad",
  "serde",
  "storage-interface",
@@ -1855,12 +1855,12 @@ dependencies = [
  "hex 0.4.2",
  "itertools 0.9.0",
  "language-e2e-tests",
- "libra-config",
- "libra-crypto",
- "libra-state-view",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-config",
+ "diem-crypto",
+ "diem-state-view",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "once_cell",
@@ -1943,7 +1943,7 @@ name = "futures-semaphore"
 version = "0.1.0"
 dependencies = [
  "futures 0.3.6",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "tokio",
 ]
 
@@ -1994,13 +1994,13 @@ version = "0.1.0"
 dependencies = [
  "consensus",
  "consensus-types",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-network-address",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-network-address",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "network",
  "rand 0.7.3",
@@ -2014,10 +2014,10 @@ dependencies = [
 name = "generate-key"
 version = "0.1.0"
 dependencies = [
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-temppath",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-temppath",
+ "diem-workspace-hack",
  "rand 0.7.3",
 ]
 
@@ -2054,9 +2054,9 @@ name = "genesis-viewer"
 version = "0.1.0"
 dependencies = [
  "compiled-stdlib",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "resource-viewer",
  "structopt 0.3.18",
  "vm",
@@ -2484,9 +2484,9 @@ checksum = "5b141fdc7836c525d4d594027d318c84161ca17aaf8113ab1f81ab93ae897485"
 name = "invalid-mutations"
 version = "0.1.0"
 dependencies = [
- "libra-proptest-helpers",
- "libra-types",
- "libra-workspace-hack",
+ "diem-proptest-helpers",
+ "diem-types",
+ "diem-workspace-hack",
  "proptest",
  "vm",
 ]
@@ -2516,8 +2516,8 @@ dependencies = [
  "datatest-stable",
  "functional-tests",
  "ir-to-bytecode",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "move-ir-types",
  "vm",
 ]
@@ -2531,8 +2531,8 @@ dependencies = [
  "codespan",
  "codespan-reporting",
  "ir-to-bytecode-syntax",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "move-core-types",
  "move-ir-types",
@@ -2547,8 +2547,8 @@ dependencies = [
  "anyhow",
  "codespan",
  "hex 0.4.2",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-ir-types",
 ]
@@ -2693,11 +2693,11 @@ dependencies = [
  "bytecode-verifier",
  "criterion",
  "language-e2e-tests",
- "libra-proptest-helpers",
- "libra-state-view",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-proptest-helpers",
+ "diem-state-view",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "move-core-types",
  "move-lang",
  "move-vm-runtime",
@@ -2715,14 +2715,14 @@ dependencies = [
  "compiler",
  "hex 0.4.2",
  "include_dir",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-proptest-helpers",
- "libra-state-view",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-proptest-helpers",
+ "diem-state-view",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
@@ -2744,13 +2744,13 @@ dependencies = [
  "compiler",
  "hex 0.4.2",
  "language-e2e-tests",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-logger",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libra-writeset-generator",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-logger",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diem-writeset-generator",
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
@@ -2800,12 +2800,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-bitvec"
+name = "diem-bitvec"
 version = "0.1.0"
 dependencies = [
- "libra-canonical-serialization",
- "libra-proptest-helpers",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-proptest-helpers",
+ "diem-workspace-hack",
  "proptest",
  "proptest-derive",
  "serde",
@@ -2813,13 +2813,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-canonical-serialization"
+name = "diem-canonical-serialization"
 version = "0.1.0"
 dependencies = [
  "criterion",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-workspace-hack",
  "proptest",
  "proptest-derive",
  "rand 0.7.3",
@@ -2828,21 +2828,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-config"
+name = "diem-config"
 version = "0.1.0"
 dependencies = [
  "get_if_addrs",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-global-constants",
- "libra-logger",
- "libra-network-address",
- "libra-network-address-encryption",
- "libra-secure-storage",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-global-constants",
+ "diem-logger",
+ "diem-network-address",
+ "diem-network-address-encryption",
+ "diem-secure-storage",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "mirai-annotations",
  "rand 0.7.3",
@@ -2852,7 +2852,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-crypto"
+name = "diem-crypto"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
@@ -2868,10 +2868,10 @@ dependencies = [
  "ed25519-dalek 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.4.2",
  "hkdf",
- "libra-canonical-serialization",
- "libra-crypto-derive",
- "libra-nibble",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto-derive",
+ "diem-nibble",
+ "diem-workspace-hack",
  "mirai-annotations",
  "once_cell",
  "proptest",
@@ -2895,26 +2895,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-crypto-derive"
+name = "diem-crypto-derive"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "proc-macro2 1.0.24",
  "quote 1.0.7",
  "syn 1.0.42",
 ]
 
 [[package]]
-name = "libra-dev"
+name = "diem-dev"
 version = "0.1.0"
 dependencies = [
  "bindgen",
  "libc",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "rand 0.7.3",
  "static_assertions",
@@ -2922,11 +2922,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-documentation-tool"
+name = "diem-documentation-tool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "once_cell",
  "regex",
  "serde",
@@ -2938,20 +2938,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-faucet"
+name = "diem-faucet"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "generate-key",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-infallible",
- "libra-json-rpc-client",
- "libra-logger",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-json-rpc-client",
+ "diem-logger",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "reqwest",
  "serde",
@@ -2965,17 +2965,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-fuzz"
+name = "diem-fuzz"
 version = "0.1.0"
 dependencies = [
  "libfuzzer-sys",
- "libra-fuzzer",
- "libra-workspace-hack",
+ "diem-fuzzer",
+ "diem-workspace-hack",
  "once_cell",
 ]
 
 [[package]]
-name = "libra-fuzzer"
+name = "diem-fuzzer"
 version = "0.1.0"
 dependencies = [
  "accumulator",
@@ -2988,17 +2988,17 @@ dependencies = [
  "executor-types",
  "hex 0.4.2",
  "language-e2e-tests",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-jellyfish-merkle",
- "libra-json-rpc",
- "libra-mempool",
- "libra-proptest-helpers",
- "libra-secure-json-rpc",
- "libra-types",
- "libra-vault-client",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-jellyfish-merkle",
+ "diem-json-rpc",
+ "diem-mempool",
+ "diem-proptest-helpers",
+ "diem-secure-json-rpc",
+ "diem-types",
+ "diem-vault-client",
+ "diem-workspace-hack",
+ "diemdb",
  "move-core-types",
  "move-vm-types",
  "network",
@@ -3019,7 +3019,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-genesis-tool"
+name = "diem-genesis-tool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3028,22 +3028,22 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-global-constants",
- "libra-management",
- "libra-network-address",
- "libra-network-address-encryption",
- "libra-secure-json-rpc",
- "libra-secure-storage",
- "libra-secure-time",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-wallet",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-global-constants",
+ "diem-management",
+ "diem-network-address",
+ "diem-network-address-encryption",
+ "diem-secure-json-rpc",
+ "diem-secure-storage",
+ "diem-secure-time",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-wallet",
+ "diem-workspace-hack",
+ "diemdb",
  "rand 0.7.3",
  "rustyline",
  "serde",
@@ -3057,12 +3057,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-github-client"
+name = "diem-github-client"
 version = "0.1.0"
 dependencies = [
  "base64 0.13.0",
- "libra-crypto",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-workspace-hack",
  "serde",
  "serde_json",
  "thiserror",
@@ -3070,29 +3070,29 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-global-constants"
+name = "diem-global-constants"
 version = "0.1.0"
 
 [[package]]
-name = "libra-infallible"
+name = "diem-infallible"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
 ]
 
 [[package]]
-name = "libra-jellyfish-merkle"
+name = "diem-jellyfish-merkle"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "byteorder",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-infallible",
- "libra-nibble",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-infallible",
+ "diem-nibble",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "num-derive",
  "num-traits",
@@ -3104,7 +3104,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-json-rpc"
+name = "diem-json-rpc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3116,22 +3116,22 @@ dependencies = [
  "generate-key",
  "hex 0.4.2",
  "hyper",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-json-rpc-client",
- "libra-json-rpc-types",
- "libra-logger",
- "libra-mempool",
- "libra-metrics",
- "libra-node",
- "libra-proptest-helpers",
- "libra-temppath",
- "libra-trace",
- "libra-types",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-json-rpc-client",
+ "diem-json-rpc-types",
+ "diem-logger",
+ "diem-mempool",
+ "diem-metrics",
+ "diem-node",
+ "diem-proptest-helpers",
+ "diem-temppath",
+ "diem-trace",
+ "diem-types",
+ "diem-workspace-hack",
+ "diemdb",
  "move-core-types",
  "move-vm-types",
  "network",
@@ -3151,31 +3151,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-json-rpc-client"
+name = "diem-json-rpc-client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-json-rpc-types",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-json-rpc-types",
+ "diem-types",
+ "diem-workspace-hack",
  "reqwest",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "libra-json-rpc-types"
+name = "diem-json-rpc-types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "compiled-stdlib",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-explain",
  "serde",
@@ -3184,7 +3184,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-key-manager"
+name = "diem-key-manager"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3192,21 +3192,21 @@ dependencies = [
  "executor-test-helpers",
  "executor-types",
  "futures 0.3.6",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-global-constants",
- "libra-json-rpc",
- "libra-logger",
- "libra-network-address",
- "libra-secure-json-rpc",
- "libra-secure-push-metrics",
- "libra-secure-storage",
- "libra-secure-time",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-json-rpc",
+ "diem-logger",
+ "diem-network-address",
+ "diem-secure-json-rpc",
+ "diem-secure-push-metrics",
+ "diem-secure-storage",
+ "diem-secure-time",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "once_cell",
  "rand 0.7.3",
  "serde",
@@ -3218,26 +3218,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-log-derive"
+name = "diem-log-derive"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "proc-macro2 1.0.24",
  "quote 1.0.7",
  "syn 1.0.42",
 ]
 
 [[package]]
-name = "libra-logger"
+name = "diem-logger"
 version = "0.1.0"
 dependencies = [
  "chrono",
  "erased-serde",
  "hex 0.4.2",
  "hostname",
- "libra-infallible",
- "libra-log-derive",
- "libra-workspace-hack",
+ "diem-infallible",
+ "diem-log-derive",
+ "diem-workspace-hack",
  "once_cell",
  "prometheus",
  "serde",
@@ -3245,27 +3245,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-management"
+name = "diem-management"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "executor",
  "generate-key",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-global-constants",
- "libra-network-address",
- "libra-network-address-encryption",
- "libra-secure-json-rpc",
- "libra-secure-storage",
- "libra-secure-time",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-global-constants",
+ "diem-network-address",
+ "diem-network-address-encryption",
+ "diem-secure-json-rpc",
+ "diem-secure-storage",
+ "diem-secure-time",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "serde",
  "serde_yaml",
  "storage-interface",
@@ -3277,7 +3277,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-mempool"
+name = "diem-mempool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3286,17 +3286,17 @@ dependencies = [
  "fail",
  "futures 0.3.6",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-infallible",
- "libra-logger",
- "libra-metrics",
- "libra-network-address",
- "libra-proptest-helpers",
- "libra-trace",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-logger",
+ "diem-metrics",
+ "diem-network-address",
+ "diem-proptest-helpers",
+ "diem-trace",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "netcore",
  "network",
@@ -3313,16 +3313,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-metrics"
+name = "diem-metrics"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_approx_eq",
  "futures 0.3.6",
  "hyper",
- "libra-logger",
- "libra-metrics-core",
- "libra-workspace-hack",
+ "diem-logger",
+ "diem-metrics-core",
+ "diem-workspace-hack",
  "once_cell",
  "prometheus",
  "rusty-fork",
@@ -3331,22 +3331,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-metrics-core"
+name = "diem-metrics-core"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "prometheus",
 ]
 
 [[package]]
-name = "libra-network-address"
+name = "diem-network-address"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-workspace-hack",
  "move-core-types",
  "proptest",
  "proptest-derive",
@@ -3357,17 +3357,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-network-address-encryption"
+name = "diem-network-address-encryption"
 version = "0.1.0"
 dependencies = [
  "base64 0.13.0",
- "libra-canonical-serialization",
- "libra-global-constants",
- "libra-infallible",
- "libra-logger",
- "libra-network-address",
- "libra-secure-storage",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-global-constants",
+ "diem-infallible",
+ "diem-logger",
+ "diem-network-address",
+ "diem-secure-storage",
+ "diem-workspace-hack",
  "move-core-types",
  "rand 0.7.3",
  "serde",
@@ -3375,16 +3375,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-nibble"
+name = "diem-nibble"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "proptest",
  "serde",
 ]
 
 [[package]]
-name = "libra-node"
+name = "diem-node"
 version = "0.1.0"
 dependencies = [
  "backup-service",
@@ -3396,20 +3396,20 @@ dependencies = [
  "fail",
  "futures 0.3.6",
  "jemallocator",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-json-rpc",
- "libra-logger",
- "libra-mempool",
- "libra-metrics",
- "libra-secure-storage",
- "libra-temppath",
- "libra-trace",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-json-rpc",
+ "diem-logger",
+ "diem-mempool",
+ "diem-metrics",
+ "diem-secure-storage",
+ "diem-temppath",
+ "diem-trace",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "network-builder",
  "state-synchronizer",
  "storage-client",
@@ -3421,28 +3421,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-operational-tool"
+name = "diem-operational-tool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "executor",
  "generate-key",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-global-constants",
- "libra-management",
- "libra-network-address",
- "libra-network-address-encryption",
- "libra-secure-json-rpc",
- "libra-secure-storage",
- "libra-secure-time",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-global-constants",
+ "diem-management",
+ "diem-network-address",
+ "diem-network-address-encryption",
+ "diem-secure-json-rpc",
+ "diem-secure-storage",
+ "diem-secure-time",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "serde",
  "serde_json",
  "storage-interface",
@@ -3454,40 +3454,40 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-proptest-helpers"
+name = "diem-proptest-helpers"
 version = "0.1.0"
 dependencies = [
  "crossbeam",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "proptest",
  "proptest-derive",
 ]
 
 [[package]]
-name = "libra-retrier"
+name = "diem-retrier"
 version = "0.1.0"
 dependencies = [
- "libra-logger",
- "libra-workspace-hack",
+ "diem-logger",
+ "diem-workspace-hack",
  "tokio",
 ]
 
 [[package]]
-name = "libra-secure-json-rpc"
+name = "diem-secure-json-rpc"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.6",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-json-rpc",
- "libra-proptest-helpers",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-json-rpc",
+ "diem-proptest-helpers",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
+ "diemdb",
  "proptest",
  "serde",
  "serde_json",
@@ -3499,48 +3499,48 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-secure-net"
+name = "diem-secure-net"
 version = "0.1.0"
 dependencies = [
- "libra-config",
- "libra-logger",
- "libra-secure-push-metrics",
- "libra-workspace-hack",
+ "diem-config",
+ "diem-logger",
+ "diem-secure-push-metrics",
+ "diem-workspace-hack",
  "once_cell",
  "serde",
  "thiserror",
 ]
 
 [[package]]
-name = "libra-secure-push-metrics"
+name = "diem-secure-push-metrics"
 version = "0.1.0"
 dependencies = [
- "libra-logger",
- "libra-metrics-core",
- "libra-workspace-hack",
+ "diem-logger",
+ "diem-metrics-core",
+ "diem-workspace-hack",
  "ureq",
 ]
 
 [[package]]
-name = "libra-secure-storage"
+name = "diem-secure-storage"
 version = "0.1.0"
 dependencies = [
  "base64 0.13.0",
  "chrono",
  "consensus-types",
  "enum_dispatch",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-github-client",
- "libra-global-constants",
- "libra-infallible",
- "libra-logger",
- "libra-secure-time",
- "libra-temppath",
- "libra-types",
- "libra-vault-client",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-github-client",
+ "diem-global-constants",
+ "diem-infallible",
+ "diem-logger",
+ "diem-secure-time",
+ "diem-temppath",
+ "diem-types",
+ "diem-vault-client",
+ "diem-workspace-hack",
  "rand 0.7.3",
  "serde",
  "serde_json",
@@ -3548,33 +3548,33 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-secure-time"
+name = "diem-secure-time"
 version = "0.1.0"
 dependencies = [
- "libra-infallible",
- "libra-workspace-hack",
+ "diem-infallible",
+ "diem-workspace-hack",
 ]
 
 [[package]]
-name = "libra-state-view"
+name = "diem-state-view"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-crypto",
- "libra-types",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
 ]
 
 [[package]]
-name = "libra-storage-inspector"
+name = "diem-storage-inspector"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-crypto",
- "libra-logger",
- "libra-types",
- "libra-workspace-hack",
- "libradb",
+ "diem-crypto",
+ "diem-logger",
+ "diem-types",
+ "diem-workspace-hack",
+ "diemdb",
  "storage-interface",
  "structopt 0.3.18",
  "tempfile",
@@ -3582,41 +3582,41 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-swarm"
+name = "diem-swarm"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "ctrlc",
  "debug-interface",
- "libra-config",
- "libra-genesis-tool",
- "libra-logger",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
+ "diem-config",
+ "diem-genesis-tool",
+ "diem-logger",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
  "reqwest",
  "structopt 0.3.18",
  "thiserror",
 ]
 
 [[package]]
-name = "libra-temppath"
+name = "diem-temppath"
 version = "0.1.0"
 dependencies = [
  "hex 0.4.2",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "rand 0.7.3",
 ]
 
 [[package]]
-name = "libra-trace"
+name = "diem-trace"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "libra-logger",
- "libra-metrics",
- "libra-workspace-hack",
+ "diem-logger",
+ "diem-metrics",
+ "diem-workspace-hack",
  "once_cell",
  "reqwest",
  "serde",
@@ -3626,19 +3626,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-transaction-replay"
+name = "diem-transaction-replay"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "compiled-stdlib",
  "difference",
- "libra-canonical-serialization",
- "libra-state-view",
- "libra-types",
- "libra-validator-interface",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-state-view",
+ "diem-types",
+ "diem-validator-interface",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "move-core-types",
  "move-lang",
  "move-vm-runtime",
@@ -3652,7 +3652,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-types"
+name = "diem-types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3660,13 +3660,13 @@ dependencies = [
  "chrono",
  "hex 0.4.2",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-infallible",
- "libra-network-address",
- "libra-proptest-helpers",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-infallible",
+ "diem-network-address",
+ "diem-proptest-helpers",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "once_cell",
@@ -3683,31 +3683,31 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-validator-interface"
+name = "diem-validator-interface"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-canonical-serialization",
- "libra-json-rpc-client",
- "libra-state-view",
- "libra-types",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-json-rpc-client",
+ "diem-state-view",
+ "diem-types",
+ "diem-workspace-hack",
+ "diemdb",
  "reqwest",
  "scratchpad",
  "storage-interface",
 ]
 
 [[package]]
-name = "libra-vault-client"
+name = "diem-vault-client"
 version = "0.1.0"
 dependencies = [
  "base64 0.13.0",
  "chrono",
- "libra-crypto",
- "libra-proptest-helpers",
- "libra-types",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-proptest-helpers",
+ "diem-types",
+ "diem-workspace-hack",
  "native-tls",
  "once_cell",
  "proptest",
@@ -3718,19 +3718,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-vm"
+name = "diem-vm"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "fail",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-logger",
- "libra-metrics",
- "libra-state-view",
- "libra-trace",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-logger",
+ "diem-metrics",
+ "diem-state-view",
+ "diem-trace",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "move-vm-runtime",
@@ -3746,7 +3746,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-wallet"
+name = "diem-wallet"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -3755,11 +3755,11 @@ dependencies = [
  "ed25519-dalek 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.4.2",
  "hmac 0.9.0",
- "libra-crypto",
- "libra-global-constants",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-global-constants",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "pbkdf2",
  "rand 0.7.3",
@@ -3769,7 +3769,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-workspace-hack"
+name = "diem-workspace-hack"
 version = "0.1.0"
 dependencies = [
  "bytes",
@@ -3785,14 +3785,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "libra-writeset-generator"
+name = "diem-writeset-generator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "handlebars",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "move-lang",
  "serde",
  "serde_json",
@@ -3802,7 +3802,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libradb"
+name = "diemdb"
 version = "0.1.0"
 dependencies = [
  "accumulator",
@@ -3810,16 +3810,16 @@ dependencies = [
  "arc-swap",
  "byteorder",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-infallible",
- "libra-jellyfish-merkle",
- "libra-logger",
- "libra-metrics",
- "libra-proptest-helpers",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-jellyfish-merkle",
+ "diem-logger",
+ "diem-metrics",
+ "diem-proptest-helpers",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
  "num-derive",
  "num-traits",
  "num-variants",
@@ -3885,7 +3885,7 @@ version = "0.1.0"
 dependencies = [
  "channel",
  "futures 0.3.6",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "structopt 0.3.18",
 ]
 
@@ -3949,8 +3949,8 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "futures 0.3.6",
- "libra-infallible",
- "libra-workspace-hack",
+ "diem-infallible",
+ "diem-workspace-hack",
  "once_cell",
 ]
 
@@ -3986,18 +3986,18 @@ dependencies = [
  "glob",
  "gumdrop",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-global-constants",
- "libra-json-rpc-types",
- "libra-logger",
- "libra-management",
- "libra-network-address",
- "libra-types",
- "libra-wallet",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-json-rpc-types",
+ "diem-logger",
+ "diem-management",
+ "diem-network-address",
+ "diem-types",
+ "diem-wallet",
+ "diemdb",
  "move-core-types",
  "once_cell",
  "regex",
@@ -4101,8 +4101,8 @@ version = "0.1.0"
 dependencies = [
  "bytecode-verifier",
  "ir-to-bytecode",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-ir-types",
  "rand 0.7.3",
@@ -4119,11 +4119,11 @@ dependencies = [
  "difference",
  "disassembler",
  "errmapgen",
- "libra-canonical-serialization",
- "libra-state-view",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-state-view",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "move-core-types",
  "move-lang",
  "move-vm-runtime",
@@ -4141,10 +4141,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-workspace-hack",
  "mirai-annotations",
  "once_cell",
  "proptest",
@@ -4168,9 +4168,9 @@ dependencies = [
  "bytecode-source-map",
  "codespan",
  "colored",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-ir-types",
  "once_cell",
@@ -4185,8 +4185,8 @@ version = "0.1.0"
 dependencies = [
  "compiled-stdlib",
  "errmapgen",
- "libra-canonical-serialization",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-workspace-hack",
  "move-core-types",
  "structopt 0.3.18",
 ]
@@ -4198,8 +4198,8 @@ dependencies = [
  "anyhow",
  "codespan",
  "hex 0.4.2",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "once_cell",
  "serde",
@@ -4219,9 +4219,9 @@ dependencies = [
  "difference",
  "hex 0.4.2",
  "ir-to-bytecode",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-ir-types",
  "petgraph",
@@ -4239,8 +4239,8 @@ dependencies = [
  "anyhow",
  "datatest-stable",
  "functional-tests",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "move-lang",
  "tempfile",
 ]
@@ -4264,9 +4264,9 @@ dependencies = [
  "handlebars",
  "hex 0.4.2",
  "itertools 0.9.0",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "move-ir-types",
  "move-lang",
@@ -4291,7 +4291,7 @@ name = "move-vm-integration-tests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "move-core-types",
  "move-lang",
  "move-vm-runtime",
@@ -4306,10 +4306,10 @@ name = "move-vm-natives"
 version = "0.1.0"
 dependencies = [
  "hex 0.4.2",
- "libra-crypto",
- "libra-global-constants",
- "libra-types",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-global-constants",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "move-vm-types",
@@ -4328,12 +4328,12 @@ dependencies = [
  "compiler",
  "fail",
  "hex 0.4.2",
- "libra-crypto",
- "libra-infallible",
- "libra-logger",
- "libra-state-view",
- "libra-types",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-logger",
+ "diem-state-view",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "move-lang",
@@ -4349,7 +4349,7 @@ name = "move-vm-test-utils"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "move-core-types",
  "move-vm-runtime",
  "vm",
@@ -4359,9 +4359,9 @@ dependencies = [
 name = "move-vm-types"
 version = "0.1.0"
 dependencies = [
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "once_cell",
@@ -4431,10 +4431,10 @@ dependencies = [
  "async-trait",
  "bytes",
  "futures 0.3.6",
- "libra-logger",
- "libra-network-address",
- "libra-types",
- "libra-workspace-hack",
+ "diem-logger",
+ "diem-network-address",
+ "diem-types",
+ "diem-workspace-hack",
  "memsocket",
  "pin-project",
  "serde",
@@ -4452,18 +4452,18 @@ dependencies = [
  "futures 0.3.6",
  "futures-util",
  "hex 0.4.2",
- "libra-bitvec",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-crypto-derive",
- "libra-infallible",
- "libra-logger",
- "libra-metrics",
- "libra-network-address",
- "libra-proptest-helpers",
- "libra-types",
- "libra-workspace-hack",
+ "diem-bitvec",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-infallible",
+ "diem-logger",
+ "diem-metrics",
+ "diem-network-address",
+ "diem-proptest-helpers",
+ "diem-types",
+ "diem-workspace-hack",
  "memsocket",
  "netcore",
  "network-builder",
@@ -4492,17 +4492,17 @@ version = "0.1.0"
 dependencies = [
  "channel",
  "futures 0.3.6",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-infallible",
- "libra-logger",
- "libra-metrics",
- "libra-network-address",
- "libra-network-address-encryption",
- "libra-secure-storage",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-logger",
+ "diem-metrics",
+ "diem-network-address",
+ "diem-network-address-encryption",
+ "diem-secure-storage",
+ "diem-types",
+ "diem-workspace-hack",
  "netcore",
  "network",
  "network-simple-onchain-discovery",
@@ -4521,15 +4521,15 @@ dependencies = [
  "anyhow",
  "channel",
  "futures 0.3.6",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-logger",
- "libra-metrics",
- "libra-network-address",
- "libra-network-address-encryption",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-logger",
+ "diem-metrics",
+ "diem-network-address",
+ "diem-network-address-encryption",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "network",
  "once_cell",
@@ -4719,7 +4719,7 @@ dependencies = [
 name = "num-variants"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "proc-macro2 1.0.24",
  "quote 1.0.7",
  "syn 1.0.42",
@@ -5585,10 +5585,10 @@ dependencies = [
  "anyhow",
  "compiled-stdlib",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-state-view",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-state-view",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
@@ -5839,20 +5839,20 @@ dependencies = [
  "consensus-types",
  "crash-handler",
  "criterion",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-global-constants",
- "libra-infallible",
- "libra-logger",
- "libra-proptest-helpers",
- "libra-secure-net",
- "libra-secure-push-metrics",
- "libra-secure-storage",
- "libra-temppath",
- "libra-types",
- "libra-vault-client",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-global-constants",
+ "diem-infallible",
+ "diem-logger",
+ "diem-proptest-helpers",
+ "diem-secure-net",
+ "diem-secure-push-metrics",
+ "diem-secure-storage",
+ "diem-temppath",
+ "diem-types",
+ "diem-vault-client",
+ "diem-workspace-hack",
  "once_cell",
  "proptest",
  "rand 0.7.3",
@@ -5887,9 +5887,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "byteorder",
- "libra-metrics",
- "libra-temppath",
- "libra-workspace-hack",
+ "diem-metrics",
+ "diem-temppath",
+ "diem-workspace-hack",
  "once_cell",
  "proptest",
  "rocksdb",
@@ -5913,10 +5913,10 @@ name = "scratchpad"
 version = "0.1.0"
 dependencies = [
  "itertools 0.9.0",
- "libra-crypto",
- "libra-infallible",
- "libra-types",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-types",
+ "diem-workspace-hack",
  "proptest",
 ]
 
@@ -5961,18 +5961,18 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-key-manager",
- "libra-logger",
- "libra-network-address",
- "libra-secure-json-rpc",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-key-manager",
+ "diem-logger",
+ "diem-network-address",
+ "diem-secure-json-rpc",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "rand 0.7.3",
  "serde_yaml",
  "storage-interface",
@@ -6145,7 +6145,7 @@ dependencies = [
 name = "serializer-tests"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "proptest",
  "proptest-derive",
  "vm",
@@ -6249,7 +6249,7 @@ name = "short-hex-str"
 version = "0.1.0"
 dependencies = [
  "hex 0.4.2",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "mirai-annotations",
  "proptest",
  "serde",
@@ -6324,28 +6324,28 @@ dependencies = [
  "debug-interface",
  "generate-key",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-global-constants",
- "libra-infallible",
- "libra-json-rpc",
- "libra-key-manager",
- "libra-logger",
- "libra-management",
- "libra-network-address",
- "libra-operational-tool",
- "libra-secure-json-rpc",
- "libra-secure-storage",
- "libra-secure-time",
- "libra-swarm",
- "libra-temppath",
- "libra-trace",
- "libra-transaction-replay",
- "libra-types",
- "libra-vault-client",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-infallible",
+ "diem-json-rpc",
+ "diem-key-manager",
+ "diem-logger",
+ "diem-management",
+ "diem-network-address",
+ "diem-operational-tool",
+ "diem-secure-json-rpc",
+ "diem-secure-storage",
+ "diem-secure-time",
+ "diem-swarm",
+ "diem-temppath",
+ "diem-trace",
+ "diem-transaction-replay",
+ "diem-types",
+ "diem-vault-client",
+ "diem-workspace-hack",
  "num 0.3.0",
  "num-traits",
  "once_cell",
@@ -6361,12 +6361,12 @@ name = "socket-bench-server"
 version = "0.1.0"
 dependencies = [
  "futures 0.3.6",
- "libra-config",
- "libra-crypto",
- "libra-logger",
- "libra-network-address",
- "libra-types",
- "libra-workspace-hack",
+ "diem-config",
+ "diem-crypto",
+ "diem-logger",
+ "diem-network-address",
+ "diem-types",
+ "diem-workspace-hack",
  "memsocket",
  "netcore",
  "network",
@@ -6399,8 +6399,8 @@ dependencies = [
  "codespan-reporting",
  "datatest-stable",
  "itertools 0.9.0",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "move-core-types",
  "move-ir-types",
@@ -6442,21 +6442,21 @@ dependencies = [
  "fail",
  "futures 0.3.6",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-genesis-tool",
- "libra-infallible",
- "libra-logger",
- "libra-mempool",
- "libra-metrics",
- "libra-network-address",
- "libra-proptest-helpers",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-genesis-tool",
+ "diem-infallible",
+ "diem-logger",
+ "diem-mempool",
+ "diem-metrics",
+ "diem-network-address",
+ "diem-proptest-helpers",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "memsocket",
  "netcore",
  "network",
@@ -6503,10 +6503,10 @@ dependencies = [
  "bytecode-verifier",
  "clap",
  "datatest-stable",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "log",
  "move-lang",
  "move-prover",
@@ -6570,13 +6570,13 @@ name = "storage-client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-infallible",
- "libra-logger",
- "libra-secure-net",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-infallible",
+ "diem-logger",
+ "diem-secure-net",
+ "diem-types",
+ "diem-workspace-hack",
  "serde",
  "storage-interface",
 ]
@@ -6587,12 +6587,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-secure-net",
- "libra-state-view",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-secure-net",
+ "diem-state-view",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "scratchpad",
  "serde",
@@ -6607,16 +6607,16 @@ dependencies = [
  "async-trait",
  "futures 0.3.6",
  "itertools 0.9.0",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-logger",
- "libra-metrics",
- "libra-secure-net",
- "libra-temppath",
- "libra-types",
- "libra-workspace-hack",
- "libradb",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-logger",
+ "diem-metrics",
+ "diem-secure-net",
+ "diem-temppath",
+ "diem-types",
+ "diem-workspace-hack",
+ "diemdb",
  "proptest",
  "rand 0.7.3",
  "storage-client",
@@ -6630,7 +6630,7 @@ version = "0.1.0"
 dependencies = [
  "futures 0.3.6",
  "futures-semaphore",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "pin-project",
  "tokio",
 ]
@@ -6699,8 +6699,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "channel",
- "libra-types",
- "libra-workspace-hack",
+ "diem-types",
+ "diem-workspace-hack",
 ]
 
 [[package]]
@@ -6720,10 +6720,10 @@ name = "swiss-knife"
 version = "0.1.0"
 dependencies = [
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-crypto",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "rand 0.7.3",
  "serde",
@@ -6842,12 +6842,12 @@ dependencies = [
  "hex 0.4.2",
  "itertools 0.9.0",
  "language-e2e-tests",
- "libra-config",
- "libra-logger",
- "libra-state-view",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-config",
+ "diem-logger",
+ "diem-state-view",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "mirai-annotations",
  "module-generation",
  "move-core-types",
@@ -6864,7 +6864,7 @@ name = "test-utils"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "prettydiff",
  "regex",
 ]
@@ -7185,7 +7185,7 @@ dependencies = [
 name = "transaction-builder"
 version = "0.1.0"
 dependencies = [
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "mirai-annotations",
  "transaction-builder-generated",
 ]
@@ -7195,10 +7195,10 @@ name = "transaction-builder-generated"
 version = "0.1.0"
 dependencies = [
  "compiled-stdlib",
- "libra-canonical-serialization",
- "libra-proptest-helpers",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-proptest-helpers",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "once_cell",
  "proptest",
@@ -7212,9 +7212,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "heck",
- "libra-canonical-serialization",
- "libra-types",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-types",
+ "diem-workspace-hack",
  "move-core-types",
  "regex",
  "serde-generate",
@@ -7451,9 +7451,9 @@ name = "vm"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "libra-crypto",
- "libra-proptest-helpers",
- "libra-workspace-hack",
+ "diem-crypto",
+ "diem-proptest-helpers",
+ "diem-workspace-hack",
  "mirai-annotations",
  "move-core-types",
  "num-variants",
@@ -7472,15 +7472,15 @@ dependencies = [
  "bytecode-verifier",
  "compiled-stdlib",
  "hex 0.4.2",
- "libra-canonical-serialization",
- "libra-config",
- "libra-crypto",
- "libra-network-address",
- "libra-proptest-helpers",
- "libra-state-view",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
+ "diem-canonical-serialization",
+ "diem-config",
+ "diem-crypto",
+ "diem-network-address",
+ "diem-proptest-helpers",
+ "diem-state-view",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
  "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
@@ -7501,14 +7501,14 @@ dependencies = [
  "executor",
  "executor-test-helpers",
  "fail",
- "libra-config",
- "libra-crypto",
- "libra-state-view",
- "libra-temppath",
- "libra-types",
- "libra-vm",
- "libra-workspace-hack",
- "libradb",
+ "diem-config",
+ "diem-crypto",
+ "diem-state-view",
+ "diem-temppath",
+ "diem-types",
+ "diem-vm",
+ "diem-workspace-hack",
+ "diemdb",
  "move-core-types",
  "rand 0.7.3",
  "scratchpad",
@@ -7764,7 +7764,7 @@ dependencies = [
  "glob",
  "guppy",
  "indoc",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "log",
  "serde",
  "serde_json",
@@ -7779,7 +7779,7 @@ name = "x-core"
 version = "0.1.0"
 dependencies = [
  "guppy",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "once_cell",
  "rental",
  "serde",
@@ -7791,7 +7791,7 @@ name = "x-lint"
 version = "0.1.0"
 dependencies = [
  "guppy",
- "libra-workspace-hack",
+ "diem-workspace-hack",
  "once_cell",
  "serde",
  "toml",

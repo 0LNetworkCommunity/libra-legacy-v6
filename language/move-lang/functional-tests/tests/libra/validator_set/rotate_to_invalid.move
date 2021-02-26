@@ -2,7 +2,7 @@
 //! account: alice, 0, 0, address
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{alice}}, {{alice::auth_key}}, b"alice"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"

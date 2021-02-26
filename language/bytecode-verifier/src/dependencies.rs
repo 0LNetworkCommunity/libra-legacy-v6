@@ -3,7 +3,7 @@
 
 //! This module contains the public APIs supported by the bytecode verifier.
 use crate::binary_views::BinaryIndexedView;
-use libra_types::vm_status::StatusCode;
+use diem_types::vm_status::StatusCode;
 use move_core_types::{identifier::Identifier, language_storage::ModuleId};
 use std::collections::{BTreeMap, HashMap};
 use vm::{

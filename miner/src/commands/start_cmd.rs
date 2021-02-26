@@ -6,12 +6,12 @@ use crate::{
     submit_tx::get_params,
     keygen
 };
-use libra_genesis_tool::keyscheme::KeyScheme;
+use diem_genesis_tool::keyscheme::KeyScheme;
 
 use crate::config::MinerConfig;
 use crate::prelude::*;
 use anyhow::Error;
-use libra_types::waypoint::Waypoint;
+use diem_types::waypoint::Waypoint;
 use std::path::PathBuf;
 
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`

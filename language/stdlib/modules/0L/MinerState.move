@@ -10,7 +10,7 @@ address 0x1 {
     use 0x1::CoreAddresses;
     use 0x1::ValidatorUniverse;
     use 0x1::Signer;
-    use 0x1::LibraConfig;
+    use 0x1::DiemConfig;
     use 0x1::Globals;
     use 0x1::Hash;
     use 0x1::Testnet;
@@ -60,7 +60,7 @@ address 0x1 {
       // In rustland the vm_genesis creates a Signer for the miner. So the SENDER is not the same and the Signer.
 
       //TODO: Previously in OLv3 is_genesis() returned true. How to check that this is part of genesis? is_genesis returns false here.
-      // assert(LibraTimestamp::is_genesis(), 130101024010);
+      // assert(DiemTimestamp::is_genesis(), 130101024010);
       init_miner_state(miner_sig, &challenge, &solution);
 
       // TODO: Move this elsewhere? 
@@ -130,7 +130,7 @@ address 0x1 {
       verify_and_update_state(miner_addr, proof, true);
 
       // TODO: This should not increment for validators in set.
-      // Including LibraSystem::is_validator causes a dependency cycling
+      // Including DiemSystem::is_validator causes a dependency cycling
       FullnodeState::inc_proof(miner_sign);
     }
 
@@ -166,7 +166,7 @@ address 0x1 {
         miner_history.count_proofs_in_epoch = 1
       };
     
-      miner_history.latest_epoch_mining = LibraConfig::get_current_epoch();
+      miner_history.latest_epoch_mining = DiemConfig::get_current_epoch();
     }
 
     // Checks that the validator has been mining above the count threshold
@@ -189,7 +189,7 @@ address 0x1 {
       
       // Update statistics.
       if (passed) {
-          let this_epoch = LibraConfig::get_current_epoch();
+          let this_epoch = DiemConfig::get_current_epoch();
           miner_history.latest_epoch_mining = this_epoch;
 
           miner_history.epochs_validating_and_mining = miner_history.epochs_validating_and_mining + 1u64;
@@ -225,7 +225,7 @@ address 0x1 {
 
       // Update the statistics.
       let miner_history= borrow_global_mut<MinerProofHistory>(miner_addr);
-      let this_epoch = LibraConfig::get_current_epoch();
+      let this_epoch = DiemConfig::get_current_epoch();
       miner_history.latest_epoch_mining = this_epoch;
 
       // Return its weight
@@ -263,8 +263,8 @@ address 0x1 {
       // NOTE Only Signer can update own state.
       // Should only happen once.
       assert(!exists<MinerProofHistory>(Signer::address_of(miner_sig)), 130112011021);
-      // LibraAccount calls this.
-      // Exception is LibraAccount which can simulate a Signer.
+      // DiemAccount calls this.
+      // Exception is DiemAccount which can simulate a Signer.
       // Initialize MinerProofHistory object and give to miner account
       move_to<MinerProofHistory>(miner_sig, MinerProofHistory{
         previous_proof_hash: Vector::empty(),
@@ -287,7 +287,7 @@ address 0x1 {
       // Subsidy::queue_fullnode_subisdy(Signer::address_of(miner_sig));
       //also add the miner to validator universe
       //TODO: #254 ValidatorUniverse::add_validators need to check permission.
-      // Note: this should be in LibraAccount but causes cyclic dependency.
+      // Note: this should be in DiemAccount but causes cyclic dependency.
       ValidatorUniverse::add_validator(miner_sig);
       FullnodeState::val_init(miner_sig);
       FullnodeState::inc_proof(miner_sig);

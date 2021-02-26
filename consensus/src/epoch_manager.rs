@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -6,7 +6,7 @@ use crate::{
     counters,
     error::{error_kind, DbError},
     liveness::{
-        leader_reputation::{ActiveInactiveHeuristic, LeaderReputation, LibraDBBackend},
+        leader_reputation::{ActiveInactiveHeuristic, LeaderReputation, DiemDBBackend},
         proposal_generator::ProposalGenerator,
         proposer_election::ProposerElection,
         rotating_proposer_election::{choose_leader, RotatingProposer},
@@ -23,17 +23,17 @@ use crate::{
     util::time_service::TimeService,
 };
 use anyhow::{bail, ensure, Context};
-use channel::libra_channel;
+use channel::diem_channel;
 use consensus_types::{
     common::{Author, Round},
     epoch_retrieval::EpochRetrievalRequest,
 };
 use futures::{select, StreamExt};
-use libra_config::config::{ConsensusConfig, ConsensusProposerType, NodeConfig};
-use libra_infallible::duration_since_epoch;
-use libra_logger::prelude::*;
-use libra_metrics::monitor;
-use libra_types::{
+use diem_config::config::{ConsensusConfig, ConsensusProposerType, NodeConfig};
+use diem_infallible::duration_since_epoch;
+use diem_logger::prelude::*;
+use diem_metrics::monitor;
+use diem_types::{
     account_address::AccountAddress,
     epoch_change::EpochChangeProof,
     epoch_state::EpochState,
@@ -81,7 +81,7 @@ pub struct EpochManager {
     storage: Arc<dyn PersistentLivenessStorage>,
     safety_rules_manager: SafetyRulesManager,
     processor: Option<RoundProcessor>,
-    reconfig_events: libra_channel::Receiver<(), OnChainConfigPayload>,
+    reconfig_events: diem_channel::Receiver<(), OnChainConfigPayload>,
 }
 
 impl EpochManager {
@@ -94,7 +94,7 @@ impl EpochManager {
         txn_manager: Arc<dyn TxnManager>,
         state_computer: Arc<dyn StateComputer>,
         storage: Arc<dyn PersistentLivenessStorage>,
-        reconfig_events: libra_channel::Receiver<(), OnChainConfigPayload>,
+        reconfig_events: diem_channel::Receiver<(), OnChainConfigPayload>,
     ) -> Self {
         let author = node_config.validator_network.as_ref().unwrap().peer_id();
         let config = node_config.consensus.clone();
@@ -169,9 +169,9 @@ impl EpochManager {
                 ))
             }
             ConsensusProposerType::LeaderReputation(heuristic_config) => {
-                let backend = Box::new(LibraDBBackend::new(
+                let backend = Box::new(DiemDBBackend::new(
                     proposers.len(),
-                    self.storage.libra_db(),
+                    self.storage.diem_db(),
                 ));
                 let heuristic = Box::new(ActiveInactiveHeuristic::new(
                     heuristic_config.active_weights,
@@ -203,7 +203,7 @@ impl EpochManager {
         );
         let proof = self
             .storage
-            .libra_db()
+            .diem_db()
             .get_epoch_ending_ledger_infos(request.start_epoch, request.end_epoch)
             .map_err(DbError::from)
             .context("[EpochManager] Failed to get epoch proof")?;

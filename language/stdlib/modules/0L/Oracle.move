@@ -4,9 +4,9 @@ address 0x1 {
     use 0x1::Vector;
     use 0x1::Signer;
     use 0x1::Testnet;
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::Upgrade;
-    use 0x1::LibraBlock;
+    use 0x1::DiemBlock;
     use 0x1::CoreAddresses;
   
       resource struct Oracles {
@@ -67,7 +67,7 @@ address 0x1 {
       public fun handler (sender: &signer, id: u64, data: vector<u8>) acquires Oracles {
         // receives payload from oracle_tx.move
         // Check the sender is a validator. 
-        assert(LibraSystem::is_validator(Signer::address_of(sender)), 11111); // TODO: error code
+        assert(DiemSystem::is_validator(Signer::address_of(sender)), 11111); // TODO: error code
   
         if (id == 1) {
           upgrade_handler(sender, data);
@@ -76,7 +76,7 @@ address 0x1 {
       }
   
       fun upgrade_handler (sender: &signer, data: vector<u8>) acquires Oracles {
-        let current_height = LibraBlock::get_current_block_height();
+        let current_height = DiemBlock::get_current_block_height();
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::LIBRA_ROOT_ADDRESS()).upgrade;
   
         // check if qualifies as a new round
@@ -148,7 +148,7 @@ address 0x1 {
   
       // check to see if threshold is reached every time receiving a vote
       fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle) {
-        let validator_num = LibraSystem::validator_set_size();
+        let validator_num = DiemSystem::validator_set_size();
         let threshold = validator_num * 2 / 3;
         let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
   
@@ -167,7 +167,7 @@ address 0x1 {
   
         if (!Vector::is_empty(&payload)) {
           Upgrade::set_update(vm, *&payload); 
-          let current_height = LibraBlock::get_current_block_height();
+          let current_height = DiemBlock::get_current_block_height();
           Upgrade::record_history(vm, upgrade_oracle.version_id, payload, validators, current_height);
           enter_new_upgrade_round(upgrade_oracle, current_height);
         }

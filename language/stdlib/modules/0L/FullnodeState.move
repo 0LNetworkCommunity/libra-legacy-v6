@@ -93,7 +93,7 @@ module FullnodeState {
     cumulative_proofs_paid: u64,
     cumulative_subsidy: u64,
   ) acquires FullnodeCounter {
-    CoreAddresses::assert_libra_root(vm);
+    CoreAddresses::assert_diem_root(vm);
     assert(is_testnet(), 130112011101);
 
     let state = borrow_global_mut<FullnodeCounter>(addr);

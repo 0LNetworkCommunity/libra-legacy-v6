@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     operational_tooling::launch_swarm_with_op_tool_and_backend,
-    test_utils::libra_swarm_utils::load_node_config,
+    test_utils::diem_swarm_utils::load_node_config,
 };
-use libra_config::config::SecureBackend;
-use libra_network_address::NetworkAddress;
-use libra_secure_json_rpc::VMStatusView;
-use libra_secure_storage::{KVStorage, Storage};
+use diem_config::config::SecureBackend;
+use diem_network_address::NetworkAddress;
+use diem_secure_json_rpc::VMStatusView;
+use diem_secure_storage::{KVStorage, Storage};
 use std::{convert::TryInto, str::FromStr};
 
 #[test]

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use bindgen::EnumVariation;
@@ -20,13 +20,13 @@ fn main() {
         .default_enum_style(EnumVariation::Rust {
             non_exhaustive: false,
         })
-        .whitelist_type("LibraStatus")
-        .whitelist_type("LibraP2PTransferTransactionArgument")
-        .whitelist_type("LibraTransactionPayload")
-        .whitelist_type("LibraRawTransaction")
-        .whitelist_type("LibraSignedTransaction")
+        .whitelist_type("DiemStatus")
+        .whitelist_type("DiemP2PTransferTransactionArgument")
+        .whitelist_type("DiemTransactionPayload")
+        .whitelist_type("DiemRawTransaction")
+        .whitelist_type("DiemSignedTransaction")
         .whitelist_type("TransactionType")
-        .whitelist_type("LibraAccountKey")
+        .whitelist_type("DiemAccountKey")
         .whitelist_var("LIBRA_PUBKEY_SIZE")
         .whitelist_var("LIBRA_PRIVKEY_SIZE")
         .whitelist_var("LIBRA_AUTHKEY_SIZE")

@@ -49,7 +49,7 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::Reconfigure;
@@ -93,7 +93,7 @@ script {
 // The new node is in validatorUniverse but not in validator set
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::ValidatorUniverse;
@@ -112,7 +112,7 @@ script {
 // The new node starts mining and submiting proofs in the epoch 2
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::Reconfigure;
@@ -156,7 +156,7 @@ script {
 // The new node is in validatorUniverse and also in validator set
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::ValidatorUniverse;

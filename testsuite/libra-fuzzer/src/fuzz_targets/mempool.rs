@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{corpus_from_strategy, fuzz_data_to_value, FuzzTargetImpl};
-use libra_mempool::fuzzing::{
+use diem_mempool::fuzzing::{
     mempool_incoming_transactions_strategy, test_mempool_process_incoming_transactions_impl,
 };
-use libra_proptest_helpers::ValueGenerator;
+use diem_proptest_helpers::ValueGenerator;
 
 #[derive(Debug, Default)]
 pub struct MempoolIncomingTransactions;

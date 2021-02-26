@@ -1,8 +1,8 @@
-use libra_crypto::x25519::PublicKey;
-use libra_management::error::Error;
-use libra_config::config::{SeedAddresses};
-use libra_temppath::TempPath;
-use libra_types::{account_config, account_state::AccountState, PeerId, on_chain_config::ValidatorSet};
+use diem_crypto::x25519::PublicKey;
+use diem_management::error::Error;
+use diem_config::config::{SeedAddresses};
+use diem_temppath::TempPath;
+use diem_types::{account_config, account_state::AccountState, PeerId, on_chain_config::ValidatorSet};
 use structopt::StructOpt;
 use std::{
     convert::TryFrom,

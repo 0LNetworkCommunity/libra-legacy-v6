@@ -2,17 +2,17 @@
 use std::env;
 
 use abscissa_core::status_info;
-use libra_wallet::{Mnemonic, WalletLibrary};
-use libra_types::{
+use diem_wallet::{Mnemonic, WalletDiemry};
+use diem_types::{
   account_address::AccountAddress,
   transaction::authenticator::AuthenticationKey
 };
 
 
-/// Genereates keys from WalletLibrary, updates a MinerConfig
-pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+/// Genereates keys from WalletDiemry, updates a MinerConfig
+pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletDiemry) {
         // Generate new keys
-        let mut wallet = WalletLibrary::new();
+        let mut wallet = WalletDiemry::new();
         let mnemonic_string = wallet.mnemonic();
         // NOTE: Authkey uses the child number 0 by default
         let (auth_key, _) = wallet.new_address().expect("Could not generate address");
@@ -39,15 +39,15 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
 }
 
 /// Get authkey and account from mnemonic
-pub fn get_account_from_mnem(mnemonic_string: String) -> (AuthenticationKey, AccountAddress, WalletLibrary){
-      let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
+pub fn get_account_from_mnem(mnemonic_string: String) -> (AuthenticationKey, AccountAddress, WalletDiemry){
+      let mut wallet = WalletDiemry::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
       let (auth_key, _) = wallet.new_address().expect("Could not generate address");
       let account = auth_key.derived_address();
       (auth_key, account, wallet)
 }
 
 /// Prompts user to type mnemonic securely.
-pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletDiemry) {
     println!("Enter your 0L mnemonic:");
     let mnemonic_string = match env::var("NODE_ENV") {
         Ok(val) => {
@@ -74,10 +74,10 @@ pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrar
 
 #[test]
 fn wallet() { 
-    use libra_wallet::Mnemonic;
-    // let mut wallet = WalletLibrary::new();
+    use diem_wallet::Mnemonic;
+    // let mut wallet = WalletDiemry::new();
 
-    let mut wallet = WalletLibrary::new();
+    let mut wallet = WalletDiemry::new();
 
     let (auth_key, child_number) = wallet.new_address().expect("Could not generate address");
     let mnemonic_string = wallet.mnemonic(); //wallet
@@ -86,7 +86,7 @@ fn wallet() {
     println!("child_number:\n{:?}", child_number);
     println!("mnemonic:\n{}", mnemonic_string);
 
-    let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
+    let mut wallet = WalletDiemry::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
 
     // println!("wallet\n:{:?}", wallet);
 

@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! This file defines system store APIs that operates data not part of the Libra core data
+//! This file defines system store APIs that operates data not part of the Diem core data
 //! structures but information with regard to system running status, statistics, etc.
 
 use crate::{
@@ -9,8 +9,8 @@ use crate::{
     schema::ledger_counters::LedgerCountersSchema,
 };
 use anyhow::Result;
-use libra_logger::prelude::*;
-use libra_types::transaction::Version;
+use diem_logger::prelude::*;
+use diem_types::transaction::Version;
 use schemadb::{SchemaBatch, DB};
 use std::sync::Arc;
 

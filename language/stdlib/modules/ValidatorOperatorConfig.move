@@ -22,7 +22,7 @@ module ValidatorOperatorConfig {
         human_name: vector<u8>,
     ) {
         LibraTimestamp::assert_operating();
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
         Roles::assert_validator_operator(validator_operator_account);
         assert(
             !has_validator_operator_config(Signer::address_of(validator_operator_account)),

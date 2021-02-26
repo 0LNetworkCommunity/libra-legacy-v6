@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_fuzzer::FuzzTarget;
+use diem_fuzzer::FuzzTarget;
 use std::{fs, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "Libra-Fuzzer Investigator",
-    author = "The Libra Association",
+    name = "Diem-Fuzzer Investigator",
+    author = "The Diem Association",
     about = "Utility tool to investigate fuzzing artifacts"
 )]
 struct Args {

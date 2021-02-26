@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,8 +9,8 @@ use crate::{
     common_transactions::create_account_txn,
     gas_costs,
 };
-use libra_proptest_helpers::Index;
-use libra_types::{
+use diem_proptest_helpers::Index;
+use diem_types::{
     account_config,
     transaction::{SignedTransaction, TransactionStatus},
     vm_status::{AbortLocation, KeptVMStatus, StatusCode},

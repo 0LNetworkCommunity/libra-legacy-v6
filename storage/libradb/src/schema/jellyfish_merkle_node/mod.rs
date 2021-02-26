@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines physical storage schema for nodes in the state Jellyfish Merkle Tree.
@@ -11,8 +11,8 @@
 use crate::schema::JELLYFISH_MERKLE_NODE_CF_NAME;
 use anyhow::Result;
 use byteorder::{BigEndian, WriteBytesExt};
-use libra_jellyfish_merkle::node_type::{Node, NodeKey};
-use libra_types::transaction::Version;
+use diem_jellyfish_merkle::node_type::{Node, NodeKey};
+use diem_types::transaction::Version;
 use schemadb::{
     define_schema,
     schema::{KeyCodec, SeekKeyCodec, ValueCodec},

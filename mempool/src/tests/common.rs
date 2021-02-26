@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::core_mempool::{CoreMempool, TimelineState, TxnPointer};
 use anyhow::{format_err, Result};
-use libra_config::config::NodeConfig;
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_config::config::NodeConfig;
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_types::{
     account_address::AccountAddress,
     account_config::COIN1_NAME,
     chain_id::ChainId,

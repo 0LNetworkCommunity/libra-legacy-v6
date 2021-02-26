@@ -6,7 +6,7 @@
 //! account: carrol, 1000000, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{alice}}, {{alice::auth_key}}, b"alice"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"
@@ -23,7 +23,7 @@ script {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 // remove_validator cannot be called on a non-validator
 script{
     use 0x1::LibraSystem;

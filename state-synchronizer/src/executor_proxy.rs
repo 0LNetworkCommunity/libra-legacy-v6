@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,8 +9,8 @@ use crate::{
 use anyhow::{format_err, Result};
 use executor_types::{ChunkExecutor, ExecutedTrees};
 use itertools::Itertools;
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_types::{
     account_state::AccountState,
     contract_event::ContractEvent,
     ledger_info::LedgerInfoWithSignatures,
@@ -52,7 +52,7 @@ pub trait ExecutorProxyTrait: Send {
     /// Load all on-chain configs from storage
     /// Note: this method is being exposed as executor proxy trait temporarily because storage read is currently
     /// using the tonic storage read client, which needs the tokio runtime to block on with no runtime/async issues
-    /// Once we make storage reads sync (by replacing the storage read client with direct LibraDB),
+    /// Once we make storage reads sync (by replacing the storage read client with direct DiemDB),
     /// we can make this entirely internal to `ExecutorProxy`'s initialization procedure
     fn load_on_chain_configs(&mut self) -> Result<()>;
 

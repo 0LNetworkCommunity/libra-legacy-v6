@@ -32,7 +32,7 @@ script {
 // check: "Keep(ABORTED { code: 2051,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{alice}}, {{alice::auth_key}}, b"alice"
 stdlib_script::create_validator_operator_account
 // check: CreateAccountEvent
@@ -163,13 +163,13 @@ script {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{alex}}, {{alex::auth_key}}, b"alex"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: alex
 script {
 use 0x1::ValidatorOperatorConfig;

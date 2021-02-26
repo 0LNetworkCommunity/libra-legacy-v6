@@ -1,19 +1,19 @@
 use std::{path::PathBuf, fs};
 
-use libra_config::{config::{ 
+use diem_config::{config::{ 
         NetworkConfig,
         SecureBackend,
         DiscoveryMethod,
         NodeConfig
     }, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, UpstreamConfig, WaypointConfig}, network_id::NetworkId};
 
-use libra_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
-use libra_management::{
+use diem_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
+use diem_management::{
     config::ConfigPath,
     error::Error,
     secure_backend::ValidatorBackend
 };
-use libra_types::{chain_id::ChainId, waypoint::Waypoint};
+use diem_types::{chain_id::ChainId, waypoint::Waypoint};
 use structopt::StructOpt;
 use crate::storage_helper::StorageHelper;
 use crate::seeds::Seeds;

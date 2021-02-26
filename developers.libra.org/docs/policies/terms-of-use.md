@@ -1,11 +1,11 @@
 ---
 id: terms-of-use
-title: Libra Association Website Terms of Use
+title: Diem Association Website Terms of Use
 ---
 
 <!-- hide the edit button --><style>.edit-page-link {display: none !important; visibility: hidden !important;}</style>
 
-These Terms of Use (“Terms”) govern the use of the Libra Association website and any other website or online service that links to these Terms (collectively, the “Website”). These terms constitute an agreement between you and Libra Association, so it is important that you review them carefully. 
+These Terms of Use (“Terms”) govern the use of the Diem Association website and any other website or online service that links to these Terms (collectively, the “Website”). These terms constitute an agreement between you and Diem Association, so it is important that you review them carefully. 
 
 ## Content
  The Website is available only for your personal and informational purposes. We make no representations or warranties of any kind as to the accuracy, currency, or completeness of the information and other materials made available through the Website. The Website is not liable for any decisions you may make in reliance of this content. 

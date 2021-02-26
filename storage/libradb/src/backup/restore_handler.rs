@@ -1,15 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     change_set::ChangeSet, ledger_store::LedgerStore,
     schema::transaction_accumulator::TransactionAccumulatorSchema, state_store::StateStore,
-    transaction_store::TransactionStore, LibraDB,
+    transaction_store::TransactionStore, DiemDB,
 };
 use anyhow::{ensure, Result};
-use libra_crypto::{hash::SPARSE_MERKLE_PLACEHOLDER_HASH, HashValue};
-use libra_jellyfish_merkle::restore::JellyfishMerkleRestore;
-use libra_types::{
+use diem_crypto::{hash::SPARSE_MERKLE_PLACEHOLDER_HASH, HashValue};
+use diem_jellyfish_merkle::restore::JellyfishMerkleRestore;
+use diem_types::{
     ledger_info::LedgerInfoWithSignatures,
     proof::{definition::LeafCount, position::FrozenSubTreeIterator},
     transaction::{Transaction, TransactionInfo, Version, PRE_GENESIS_VERSION},
@@ -18,11 +18,11 @@ use schemadb::DB;
 use std::sync::Arc;
 use storage_interface::{DbReader, TreeState};
 
-/// Provides functionalities for LibraDB data restore.
+/// Provides functionalities for DiemDB data restore.
 #[derive(Clone)]
 pub struct RestoreHandler {
     db: Arc<DB>,
-    pub libradb: Arc<LibraDB>,
+    pub diemdb: Arc<DiemDB>,
     ledger_store: Arc<LedgerStore>,
     transaction_store: Arc<TransactionStore>,
     state_store: Arc<StateStore>,
@@ -31,14 +31,14 @@ pub struct RestoreHandler {
 impl RestoreHandler {
     pub(crate) fn new(
         db: Arc<DB>,
-        libradb: Arc<LibraDB>,
+        diemdb: Arc<DiemDB>,
         ledger_store: Arc<LedgerStore>,
         transaction_store: Arc<TransactionStore>,
         state_store: Arc<StateStore>,
     ) -> Self {
         Self {
             db,
-            libradb,
+            diemdb,
             ledger_store,
             transaction_store,
             state_store,
@@ -152,7 +152,7 @@ impl RestoreHandler {
 
     pub fn get_next_expected_transaction_version(&self) -> Result<Version> {
         Ok(self
-            .libradb
+            .diemdb
             .get_latest_transaction_info_option()?
             .map_or(0, |(ver, _txn_info)| ver + 1))
     }

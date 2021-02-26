@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -12,8 +12,8 @@ use crate::{
 };
 use async_trait::async_trait;
 use futures::future::try_join_all;
-use libra_infallible::duration_since_epoch;
-use libra_logger::info;
+use diem_infallible::duration_since_epoch;
+use diem_logger::info;
 use rand::Rng;
 use std::{
     collections::HashSet,

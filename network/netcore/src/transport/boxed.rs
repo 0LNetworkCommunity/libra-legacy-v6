@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::transport::Transport;
@@ -6,8 +6,8 @@ use futures::{
     future::{Future, FutureExt},
     stream::{Stream, StreamExt},
 };
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
+use diem_network_address::NetworkAddress;
+use diem_types::PeerId;
 use std::pin::Pin;
 
 pub type Listener<O, E> =

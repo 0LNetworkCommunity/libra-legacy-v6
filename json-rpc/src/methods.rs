@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Module contains RPC method handlers for Full Node JSON-RPC interface
@@ -13,13 +13,13 @@ use anyhow::{ensure, format_err, Error, Result};
 use core::future::Future;
 use fail::fail_point;
 use futures::{channel::oneshot, SinkExt};
-use libra_config::config::RoleType;
-use libra_crypto::hash::CryptoHash;
-use libra_mempool::MempoolClientSender;
-use libra_trace::prelude::*;
-use libra_types::{
+use diem_config::config::RoleType;
+use diem_crypto::hash::CryptoHash;
+use diem_mempool::MempoolClientSender;
+use diem_trace::prelude::*;
+use diem_types::{
     account_address::AccountAddress,
-    account_config::{from_currency_code_string, libra_root_address, AccountResource, miner_state::MinerStateResource},
+    account_config::{from_currency_code_string, diem_root_address, AccountResource, miner_state::MinerStateResource},
     account_state::AccountState,
     chain_id::ChainId,
     event::EventKey,
@@ -38,8 +38,8 @@ use std::{
     sync::Arc,
 };
 use storage_interface::{DbReader, Order};
-use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
-use libra_types::account_config::resources::oracle_upgrade::OracleResource;
+use diem_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
+use diem_types::account_config::resources::oracle_upgrade::OracleResource;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
@@ -305,9 +305,9 @@ async fn get_metadata(service: JsonRpcService, request: JsonRpcRequest) -> Resul
 
     let mut script_hash_allow_list: Option<Vec<BytesView>> = None;
     let mut module_publishing_allowed: Option<bool> = None;
-    let mut libra_version: Option<u64> = None;
+    let mut diem_version: Option<u64> = None;
     if version == request.version() {
-        if let Some(account) = service.get_account_state(libra_root_address(), version)? {
+        if let Some(account) = service.get_account_state(diem_root_address(), version)? {
             if let Some(vm_publishing_option) = account.get_vm_publishing_option()? {
                 script_hash_allow_list = Some(
                     vm_publishing_option
@@ -319,8 +319,8 @@ async fn get_metadata(service: JsonRpcService, request: JsonRpcRequest) -> Resul
 
                 module_publishing_allowed = Some(vm_publishing_option.is_open_module);
             }
-            if let Some(v) = account.get_libra_version()? {
-                libra_version = Some(v.major)
+            if let Some(v) = account.get_diem_version()? {
+                diem_version = Some(v.major)
             }
         }
     }
@@ -331,7 +331,7 @@ async fn get_metadata(service: JsonRpcService, request: JsonRpcRequest) -> Resul
         chain_id,
         script_hash_allow_list,
         module_publishing_allowed,
-        libra_version,
+        diem_version,
     })
 }
 
@@ -466,7 +466,7 @@ async fn get_currencies(
     request: JsonRpcRequest,
 ) -> Result<Vec<CurrencyInfoView>> {
     if let Some(account_state) =
-        service.get_account_state(libra_root_address(), request.version())?
+        service.get_account_state(diem_root_address(), request.version())?
     {
         Ok(account_state
             .get_registered_currency_info_resources()?
@@ -647,7 +647,7 @@ fn invalid_param(index: usize, name: &str) -> JsonRpcError {
         "include_events" => "boolean",
         "account address" => "hex-encoded string",
         "event key" => "hex-encoded string",
-        "data" => "hex-encoded string of LCS serialized Libra SignedTransaction type",
+        "data" => "hex-encoded string of LCS serialized Diem SignedTransaction type",
         "version" => "unsigned int64",
         "ledger version for proof" => "unsigned int64",
         _ => "unknown",

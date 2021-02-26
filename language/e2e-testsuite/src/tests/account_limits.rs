@@ -8,7 +8,7 @@ use language_e2e_tests::{
     account::{self, Account},
     executor::FakeExecutor,
 };
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_config,
     transaction::{Script, TransactionArgument, TransactionOutput, WriteSetPayload},
@@ -163,7 +163,7 @@ fn account_limits() {
     let vasp_b = Account::new();
     let vasp_a_child = Account::new();
     let vasp_b_child = Account::new();
-    let libra_root = Account::new_libra_root();
+    let diem_root = Account::new_diem_root();
     let blessed = Account::new_blessed_tc();
     let dd = Account::new_genesis_account(account_config::testnet_dd_account_address());
 
@@ -234,7 +234,7 @@ fn account_limits() {
     );
 
     executor.execute_and_apply(
-        libra_root
+        diem_root
             .transaction()
             .write_set(encode_add_account_limits_admin_script(*vasp_a.address()))
             .sequence_number(1)
@@ -242,7 +242,7 @@ fn account_limits() {
     );
 
     executor.execute_and_apply(
-        libra_root
+        diem_root
             .transaction()
             .write_set(encode_add_account_limits_admin_script(*vasp_b.address()))
             .sequence_number(2)

@@ -1,5 +1,5 @@
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Libra;
 use 0x1::Coin1::Coin1;
@@ -71,7 +71,7 @@ module Holder {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Libra;
 use 0x1::Coin1::Coin1;
@@ -94,7 +94,7 @@ fun main(lr_account: &signer) {
 // check: "Keep(ABORTED { code: 262,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Libra;
 use 0x1::FixedPoint32;
@@ -115,7 +115,7 @@ fun main(lr_account: &signer) {
 // check: "Keep(ABORTED { code: 263,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Libra;
 use 0x1::FixedPoint32;

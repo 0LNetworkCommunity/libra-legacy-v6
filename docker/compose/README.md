@@ -1,7 +1,7 @@
 ---
 id: docker_compose
 title: Libra Docker-Compose Configuration
-custom_edit_url: https://github.com/libra/libra/edit/master/docker/compose/README.md
+custom_edit_url: https://github.com/diem/diem/edit/master/docker/compose/README.md
 ---
 
 This directory contains the following compose configurations:
@@ -23,7 +23,7 @@ To build your own complete testnet:
 2. Start **mint**:
     1. Enter the **mint** directory: `cd mint`
     2. Copy the testnet waypoint: `cp ../validator-testnet/waypoint.txt .`
-    3. Copy the testnet mint.key: `cp ../validator-testnet/libra_root_key mint.key`
+    3. Copy the testnet mint.key: `cp ../validator-testnet/diem_root_key mint.key`
     4. Start the composition `docker-compose up -d`
     5. Return to the compose directory: `cd ..`
 3. Enjoy your testnet:

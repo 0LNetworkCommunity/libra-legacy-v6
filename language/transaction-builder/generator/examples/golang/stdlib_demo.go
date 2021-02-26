@@ -5,22 +5,22 @@ package main
 
 import (
 	"fmt"
-	stdlib "testing/librastdlib"
-	libra "testing/libratypes"
+	stdlib "testing/diemstdlib"
+	diem "testing/diemtypes"
 )
 
 func main() {
-	token := &libra.TypeTag__Struct{
-		Value: libra.StructTag{
-			Address: libra.AccountAddress(
+	token := &diem.TypeTag__Struct{
+		Value: diem.StructTag{
+			Address: diem.AccountAddress(
 				[16]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 			),
-			Module:     libra.Identifier("LBR"),
-			Name:       libra.Identifier("LBR"),
-			TypeParams: []libra.TypeTag{},
+			Module:     diem.Identifier("LBR"),
+			Name:       diem.Identifier("LBR"),
+			TypeParams: []diem.TypeTag{},
 		},
 	}
-	payee := libra.AccountAddress(
+	payee := diem.AccountAddress(
 		[16]uint8{0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22},
 	)
 	amount := uint64(1_234_567)

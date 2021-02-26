@@ -1,29 +1,29 @@
 [package]
-name = "libra-canonical-serialization"
+name = "diem-canonical-serialization"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra Canonical Serialization (LCS)"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.org>"]
+description = "Diem Canonical Serialization (LCS)"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.org"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-libra-workspace-hack = { path = "../workspace-hack", version = "0.1.0" }
+diem-workspace-hack = { path = "../workspace-hack", version = "0.1.0" }
 thiserror = "1.0.21"
 serde = { version = "1.0.116", features = ["derive"] }
 
 [dev-dependencies]
 criterion = "0.3.3"
-libra-crypto = { path = "../../crypto/crypto", version = "0.1.0", features = ["fuzzing"] }
-libra-crypto-derive = { path = "../../crypto/crypto-derive", version = "0.1.0" }
+diem-crypto = { path = "../../crypto/crypto", version = "0.1.0", features = ["fuzzing"] }
+diem-crypto-derive = { path = "../../crypto/crypto-derive", version = "0.1.0" }
 proptest = "0.10.1"
 proptest-derive = "0.2.0"
 rand = "0.7.3"
 
 [features]
-fuzzing = ["libra-crypto/fuzzing"]
+fuzzing = ["diem-crypto/fuzzing"]
 
 [[bench]]
 name = "lcs_bench"

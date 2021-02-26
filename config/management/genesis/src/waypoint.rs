@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use std::path::PathBuf;
 
 use executor::db_bootstrapper;
-use libra_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
-use libra_temppath::TempPath;
-use libra_types::{chain_id::ChainId, waypoint::Waypoint};
-use libra_vm::LibraVM;
-use libradb::LibraDB;
+use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
+use diem_temppath::TempPath;
+use diem_types::{chain_id::ChainId, waypoint::Waypoint};
+use diem_vm::DiemVM;
+use diemdb::DiemDB;
 use storage_interface::DbReaderWriter;
 use structopt::StructOpt;
 
@@ -39,11 +39,11 @@ impl CreateWaypoint {
         let genesis = genesis_helper.execute()?;
 
         let path = TempPath::new();
-        let libradb =
-            LibraDB::open(&path, false, None).map_err(|e| Error::UnexpectedError(e.to_string()))?;
-        let db_rw = DbReaderWriter::new(libradb);
+        let diemdb =
+            DiemDB::open(&path, false, None).map_err(|e| Error::UnexpectedError(e.to_string()))?;
+        let db_rw = DbReaderWriter::new(diemdb);
 
-        db_bootstrapper::generate_waypoint::<LibraVM>(&db_rw, &genesis)
+        db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &genesis)
             .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
 }

@@ -1,15 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! The following document is a minimalist version of Libra Wallet. Note that this Wallet does
+//! The following document is a minimalist version of Diem Wallet. Note that this Wallet does
 //! not promote security as the mnemonic is stored in unencrypted form. In future iterations,
 //! we will be releasing more robust Wallet implementations. It is our intention to present a
-//! foundation that is simple to understand and incrementally improve the LibraWallet
+//! foundation that is simple to understand and incrementally improve the DiemWallet
 //! implementation and it's security guarantees throughout testnet. For a more robust wallet
 //! reference, the authors suggest to audit the file of the same name in the rust-wallet crate.
 //! That file can be found here:
 //!
-//! https://github.com/rust-bitcoin/rust-wallet/blob/master/wallet/src/walletlibrary.rs
+//! https://github.com/rust-bitcoin/rust-wallet/blob/master/wallet/src/walletdiemry.rs
 
 use crate::{
     error::WalletError,
@@ -18,8 +18,8 @@ use crate::{
     mnemonic::Mnemonic,
 };
 use anyhow::Result;
-use libra_crypto::ed25519::Ed25519PrivateKey;
-use libra_types::{
+use diem_crypto::ed25519::Ed25519PrivateKey;
+use diem_types::{
     account_address::AccountAddress,
     transaction::{
         authenticator::AuthenticationKey, helpers::TransactionSigner, RawTransaction,
@@ -28,19 +28,19 @@ use libra_types::{
 };
 use rand::{rngs::OsRng, Rng};
 use std::{collections::HashMap, path::Path};
-use libra_global_constants::SALT_0L;
+use diem_global_constants::SALT_0L;
 
-/// WalletLibrary contains all the information needed to recreate a particular wallet
-pub struct WalletLibrary {
+/// WalletDiemry contains all the information needed to recreate a particular wallet
+pub struct WalletDiemry {
     mnemonic: Mnemonic,
     key_factory: KeyFactory,
     addr_map: HashMap<AccountAddress, ChildNumber>,
     key_leaf: ChildNumber,
 }
 
-impl WalletLibrary {
+impl WalletDiemry {
     /// Constructor that generates a Mnemonic from OS randomness and subsequently instantiates an
-    /// empty WalletLibrary from that Mnemonic
+    /// empty WalletDiemry from that Mnemonic
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let mut rng = OsRng;
@@ -49,10 +49,10 @@ impl WalletLibrary {
         Self::new_from_mnemonic(mnemonic)
     }
 
-    /// Constructor that instantiates a new WalletLibrary from Mnemonic
+    /// Constructor that instantiates a new WalletDiemry from Mnemonic
     pub fn new_from_mnemonic(mnemonic: Mnemonic) -> Self {
         let seed = Seed::new(&mnemonic, SALT_0L);
-        WalletLibrary {
+        WalletDiemry {
             mnemonic,
             key_factory: KeyFactory::new(&seed).unwrap(),
             addr_map: HashMap::new(),
@@ -60,7 +60,7 @@ impl WalletLibrary {
         }
     }
 
-    /// Function that returns the string representation of the WalletLibrary Mnemonic
+    /// Function that returns the string representation of the WalletDiemry Mnemonic
     /// NOTE: This is not secure, and in general the mnemonic should be stored in encrypted format
     pub fn mnemonic(&self) -> String {
         self.mnemonic.to_string()
@@ -75,7 +75,7 @@ impl WalletLibrary {
     }
 
     /// Recover wallet from input_file_path
-    pub fn recover(input_file_path: &Path) -> Result<WalletLibrary> {
+    pub fn recover(input_file_path: &Path) -> Result<WalletDiemry> {
         io_utils::recover(&input_file_path)
     }
 
@@ -88,7 +88,7 @@ impl WalletLibrary {
     pub fn generate_addresses(&mut self, depth: u64) -> Result<()> {
         let current = self.key_leaf.0;
         if current > depth {
-            return Err(WalletError::LibraWalletGeneric(
+            return Err(WalletError::DiemWalletGeneric(
                 "Addresses already generated up to the supplied depth".to_string(),
             )
             .into());
@@ -122,7 +122,7 @@ impl WalletLibrary {
         {
             Ok((authentication_key, old_key_leaf))
         } else {
-            Err(WalletError::LibraWalletGeneric(
+            Err(WalletError::DiemWalletGeneric(
                 "This address is already in your wallet".to_string(),
             )
             .into())
@@ -144,7 +144,7 @@ impl WalletLibrary {
                     ret.push(*account_address);
                 }
                 None => {
-                    return Err(WalletError::LibraWalletGeneric(format!(
+                    return Err(WalletError::DiemWalletGeneric(format!(
                         "Child num {} not exist while depth is {}",
                         i,
                         self.addr_map.len()
@@ -156,7 +156,7 @@ impl WalletLibrary {
         Ok(ret)
     }
 
-    /// Simple public function that allows to sign a Libra RawTransaction with the PrivateKey
+    /// Simple public function that allows to sign a Diem RawTransaction with the PrivateKey
     /// associated to a particular AccountAddress. If the PrivateKey associated to an
     /// AccountAddress is not contained in the addr_map, then this function will return an Error
     pub fn sign_txn(&self, txn: RawTransaction) -> Result<SignedTransaction> {
@@ -169,7 +169,7 @@ impl WalletLibrary {
                 signature,
             ))
         } else {
-            Err(WalletError::LibraWalletGeneric(
+            Err(WalletError::DiemWalletGeneric(
                 "Well, that address is nowhere to be found... This is awkward".to_string(),
             )
             .into())
@@ -181,7 +181,7 @@ impl WalletLibrary {
         if let Some(child) = self.addr_map.get(&address) {
             Ok(self.key_factory.private_child(*child)?.get_private_key())
         } else {
-            Err(WalletError::LibraWalletGeneric("missing address".to_string()).into())
+            Err(WalletError::DiemWalletGeneric("missing address".to_string()).into())
         }
     }
 
@@ -190,8 +190,8 @@ impl WalletLibrary {
     }
 }
 
-/// WalletLibrary naturally support TransactionSigner trait.
-impl TransactionSigner for WalletLibrary {
+/// WalletDiemry naturally support TransactionSigner trait.
+impl TransactionSigner for WalletDiemry {
     fn sign_txn(&self, raw_txn: RawTransaction) -> Result<SignedTransaction, anyhow::Error> {
         Ok(self.sign_txn(raw_txn)?)
     }

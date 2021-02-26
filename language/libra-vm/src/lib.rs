@@ -111,21 +111,21 @@ pub mod data_cache;
 pub mod foreign_contracts;
 
 mod errors;
-mod libra_vm;
+mod diem_vm;
 pub mod transaction_metadata;
 
-pub mod libra_transaction_executor;
-pub mod libra_transaction_validator;
+pub mod diem_transaction_executor;
+pub mod diem_transaction_validator;
 pub mod logging;
 pub mod system_module_names;
 
 pub use crate::{
-    libra_transaction_executor::LibraVM, libra_transaction_validator::LibraVMValidator,
-    libra_vm::txn_effects_to_writeset_and_events,
+    diem_transaction_executor::LibraVM, diem_transaction_validator::LibraVMValidator,
+    diem_vm::txn_effects_to_writeset_and_events,
 };
 
-use libra_state_view::StateView;
-use libra_types::{
+use diem_state_view::StateView;
+use diem_types::{
     access_path::AccessPath,
     transaction::{SignedTransaction, Transaction, TransactionOutput, VMValidatorResult},
     vm_status::VMStatus,

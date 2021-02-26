@@ -1,16 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
-//! # Libra Canonical Serialization (LCS)
+//! # Diem Canonical Serialization (LCS)
 //!
 //! LCS defines a deterministic means for translating a message or data structure into bytes
 //! irrespective of platform, architecture, or programming language.
 //!
 //! ## Background
 //!
-//! In Libra, participants pass around messages or data structures that often times need to be
+//! In Diem, participants pass around messages or data structures that often times need to be
 //! signed by a prover and verified by one or more verifiers. Serialization in this context refers
 //! to the process of converting a message into a byte array. Many serialization approaches support
 //! loose standards such that two implementations can produce two different byte streams that would
@@ -24,7 +24,7 @@
 //! participants to maintain both a copy of the serialized bytes and the deserialized message often
 //! leading to confusion about safety and correctness. While there exist a handful of existing
 //! deterministic serialization formats, there is no obvious choice. To address this, we propose
-//! Libra Canonical Serialization that defines a deterministic means for translating a message into
+//! Diem Canonical Serialization that defines a deterministic means for translating a message into
 //! bytes and back again.
 //!
 //! ## Specification
@@ -115,7 +115,7 @@
 //! is present then the serialized form of that data follows. For example:
 //!
 //! ```rust
-//! # use libra_canonical_serialization::{Result, to_bytes};
+//! # use diem_canonical_serialization::{Result, to_bytes};
 //! # fn main() -> Result<()> {
 //! let some_data: Option<u8> = Some(8);
 //! assert_eq!(to_bytes(&some_data)?, vec![1, 8]);
@@ -136,7 +136,7 @@
 //! `MAX_SEQUENCE_LENGTH` elements long or less.
 //!
 //! ```rust
-//! # use libra_canonical_serialization::{Result, to_bytes};
+//! # use diem_canonical_serialization::{Result, to_bytes};
 //! # fn main() -> Result<()> {
 //! let fixed: [u16; 3] = [1, 2, 3];
 //! assert_eq!(to_bytes(&fixed)?, vec![1, 0, 2, 0, 3, 0]);
@@ -156,7 +156,7 @@
 //! representation of the string.
 //!
 //! ```rust
-//! # use libra_canonical_serialization::{Result, to_bytes};
+//! # use diem_canonical_serialization::{Result, to_bytes};
 //! # fn main() -> Result<()> {
 //! // Note that this string has 10 characters but has a byte length of 24
 //! let utf8_str = "çå∞≠¢õß∂ƒ∫";
@@ -177,9 +177,9 @@
 //! defined within the tuple, i.e. [tuple.0, tuple.2].
 //!
 //! ```rust
-//! # use libra_canonical_serialization::{Result, to_bytes};
+//! # use diem_canonical_serialization::{Result, to_bytes};
 //! # fn main() -> Result<()> {
-//! let tuple = (-1i8, "libra");
+//! let tuple = (-1i8, "diem");
 //! let expecting = vec![0xFF, 5, b'l', b'i', b'b', b'r', b'a'];
 //! assert_eq!(to_bytes(&tuple)?, expecting);
 //! # Ok(())}
@@ -195,7 +195,7 @@
 //! defines the organization within the serialization stream.
 //!
 //! ```rust
-//! # use libra_canonical_serialization::{Result, to_bytes};
+//! # use diem_canonical_serialization::{Result, to_bytes};
 //! # use serde::Serialize;
 //! # fn main() -> Result<()> {
 //! # #[derive(Serialize)]
@@ -242,7 +242,7 @@
 //! of `0`, the second an index of `1`, etc.
 //!
 //! ```rust
-//! # use libra_canonical_serialization::{Result, to_bytes};
+//! # use diem_canonical_serialization::{Result, to_bytes};
 //! # use serde::Serialize;
 //! # fn main() -> Result<()> {
 //! # #[derive(Serialize)]
@@ -272,7 +272,7 @@
 //! it is preceded by the number of tuples, encoded in ULEB128.
 //!
 //! ```rust
-//! # use libra_canonical_serialization::{Result, to_bytes};
+//! # use diem_canonical_serialization::{Result, to_bytes};
 //! # use std::collections::HashMap;
 //! # fn main() -> Result<()> {
 //! let mut map = HashMap::new();

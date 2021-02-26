@@ -42,10 +42,10 @@ discussed below.
 
 All options available via the command line, plus some more, can be also configured via a file. Moreover, you can
 set an environment variable which contains a path to the default configuration file the prover should use. This is handy,
-for example, to let the prover automatically find dependencies to the Move standard library, as shown below:
+for example, to let the prover automatically find dependencies to the Move standard diemry, as shown below:
 
 ```shell script
-> echo "move_deps = [\"<path-to-libra>/language/stdlib/modules\"]" > ~/.mvprc
+> echo "move_deps = [\"<path-to-diem>/language/stdlib/modules\"]" > ~/.mvprc
 > export MOVE_PROVER_CONFIG=~/.mvprc
 ```
 

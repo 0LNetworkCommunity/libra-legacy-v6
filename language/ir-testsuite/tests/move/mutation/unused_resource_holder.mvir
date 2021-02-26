@@ -2,18 +2,18 @@
 
 module A {
 import 0x1.Coin1;
-    import 0x1.Libra;
+    import 0x1.Diem;
 
-    resource T{g: Libra.Libra<Coin1.Coin1>}
+    resource T{g: Diem.Diem<Coin1.Coin1>}
 
-    public new(g: Libra.Libra<Coin1.Coin1>): Self.T {
+    public new(g: Diem.Diem<Coin1.Coin1>): Self.T {
         return T{g: move(g)};
     }
 
     public destroy(a: Self.T) {
-        let c: Libra.Libra<Coin1.Coin1>;
+        let c: Diem.Diem<Coin1.Coin1>;
         T{g: c} = move(a);
-        Libra.destroy_zero<Coin1.Coin1>(move(c));
+        Diem.destroy_zero<Coin1.Coin1>(move(c));
         return;
     }
 }
@@ -22,12 +22,12 @@ import 0x1.Coin1;
 
 import {{default}}.A;
 import 0x1.Coin1;
-import 0x1.Libra;
+import 0x1.Diem;
 
 main() {
-    let zero_resource: Libra.Libra<Coin1.Coin1>;
+    let zero_resource: Diem.Diem<Coin1.Coin1>;
     let s: A.T;
-    zero_resource = Libra.zero<Coin1.Coin1>();
+    zero_resource = Diem.zero<Coin1.Coin1>();
     s = A.new(move(zero_resource));
 
     return;

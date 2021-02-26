@@ -10,10 +10,10 @@ use crate::{
     prelude::*
 };
 
-use libra_genesis_tool::keyscheme::KeyScheme;
+use diem_genesis_tool::keyscheme::KeyScheme;
 
 use anyhow::Error;
-use libra_types::waypoint::Waypoint;
+use diem_types::waypoint::Waypoint;
 use std::path::PathBuf;
 use hex::decode;
 

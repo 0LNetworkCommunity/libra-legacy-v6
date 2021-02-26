@@ -16,7 +16,7 @@ script {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 fun main(creator: &signer) {
@@ -31,13 +31,13 @@ fun main(creator: &signer) {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{alex}}, {{alex::auth_key}}, b"alex"
 stdlib_script::create_validator_account
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: alex
 script {
 use 0x1::ValidatorConfig;

@@ -1,10 +1,10 @@
 [package]
-name = "libra-crypto"
+name = "diem-crypto"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra libra-crypto"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.org>"]
+description = "Diem diem-crypto"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.org"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -36,10 +36,10 @@ tiny-keccak = { version = "2.0.2", features = ["sha3"] }
 vanilla-x25519-dalek = { version = "1.0.1", package = 'x25519-dalek', default-features = false, features = ["std"], optional = true }
 x25519-dalek = { git = "https://github.com/novifinancial/x25519-dalek.git", branch = "fiat3", version = "1.0.1", default-features = false, features = ["std", "fiat_u64_backend"], optional = true}
 aes-gcm = "0.7.0"
-libra-crypto-derive = { path = "../crypto-derive", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-nibble = { path = "../../common/nibble", version = "0.1.0" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
+diem-crypto-derive = { path = "../crypto-derive", version = "0.1.0" }
+lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+diem-nibble = { path = "../../common/nibble", version = "0.1.0" }
+diem-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
 
 [dev-dependencies]
 bitvec = "0.17.4"

@@ -6,11 +6,11 @@
 use crate::{application::app_config, config::MinerConfig, keygen};
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
-use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
-use libra_types::{
+use diem_genesis_tool::{init, key, keyscheme::KeyScheme};
+use diem_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey
 };
-use libra_wallet::WalletLibrary;
+use diem_wallet::WalletDiemry;
 
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -38,7 +38,7 @@ pub fn initialize_miner(authkey: AuthenticationKey, account: AccountAddress) -> 
     Ok(miner_config)
 }
 
-pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) -> Result <(), Error>{
+pub fn initialize_validator(wallet: &WalletDiemry, miner_config: &MinerConfig) -> Result <(), Error>{
     let home_dir = &miner_config.workspace.node_home;
     let keys = KeyScheme::new(wallet);
     let namespace = miner_config.profile.auth_key.to_owned();

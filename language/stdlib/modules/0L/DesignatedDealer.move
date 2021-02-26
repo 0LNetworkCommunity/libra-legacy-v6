@@ -3,8 +3,8 @@ address 0x1 {
 /// Module providing functionality for designated dealers.
 module DesignatedDealer {
     use 0x1::Errors;
-    use 0x1::Libra;
-    use 0x1::LibraTimestamp;
+    use 0x1::Diem;
+    use 0x1::DiemTimestamp;
     use 0x1::Vector;
     use 0x1::Event;
     use 0x1::Roles;
@@ -26,7 +26,7 @@ module DesignatedDealer {
 
     /// The `TierInfo` resource holds the information needed to track which
     /// tier a mint to a DD needs to be in.
-    // Preburn published at top level in Libra.move
+    // Preburn published at top level in Diem.move
     resource struct TierInfo<CoinType> {
         /// Time window start in microseconds
         window_start: u64,
@@ -91,7 +91,7 @@ module DesignatedDealer {
         tc_account: &signer,
         _add_all_currencies: bool,
     )  {
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_diem_root(tc_account);
         Roles::assert_designated_dealer(dd);
         assert(!exists<Dealer>(Signer::address_of(dd)), Errors::already_published(EDEALER));
         move_to(dd, Dealer { mint_event_handle: Event::new_event_handle<ReceivedMintEvent>(dd) });
@@ -126,18 +126,18 @@ module DesignatedDealer {
     /// multi-signer transactions in order to add a new currency to an existing DD.
     public fun add_currency<CoinType>(dd: &signer, tc_account: &signer)
     acquires TierInfo {
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_diem_root(tc_account);
         let dd_addr = Signer::address_of(dd);
         assert(exists_at(dd_addr), Errors::not_published(EDEALER));
-        Libra::publish_preburn_to_account<CoinType>(dd, tc_account);
+        Diem::publish_preburn_to_account<CoinType>(dd, tc_account);
         assert(!exists<TierInfo<CoinType>>(dd_addr), Errors::already_published(EDEALER));
         move_to(dd, TierInfo<CoinType> {
-            window_start: LibraTimestamp::now_microseconds(),
+            window_start: DiemTimestamp::now_microseconds(),
             window_inflow: 0,
             tiers: Vector::empty(),
         });
         // Add tier amounts in base_units of CoinType
-        let coin_scaling_factor = Libra::scaling_factor<CoinType>();
+        let coin_scaling_factor = Diem::scaling_factor<CoinType>();
         add_tier<CoinType>(tc_account, dd_addr, TIER_0_DEFAULT * coin_scaling_factor);
         add_tier<CoinType>(tc_account, dd_addr, TIER_1_DEFAULT * coin_scaling_factor);
         add_tier<CoinType>(tc_account, dd_addr, TIER_2_DEFAULT * coin_scaling_factor);
@@ -153,12 +153,12 @@ module DesignatedDealer {
         include AbortsIfNoDealer{dd_addr: dd_addr};
         include AddCurrencyAbortsIf<CoinType>{dd_addr: dd_addr};
 
-        modifies global<Libra::Preburn<CoinType>>(dd_addr);
+        modifies global<Diem::Preburn<CoinType>>(dd_addr);
         modifies global<TierInfo<CoinType>>(dd_addr);
         ensures exists<TierInfo<CoinType>>(dd_addr);
         ensures global<TierInfo<CoinType>>(dd_addr) ==
             TierInfo<CoinType> {
-                window_start: LibraTimestamp::spec_now_microseconds(),
+                window_start: DiemTimestamp::spec_now_microseconds(),
                 window_inflow: 0,
                 tiers: global<TierInfo<CoinType>>(dd_addr).tiers,
             };
@@ -167,10 +167,10 @@ module DesignatedDealer {
     spec schema AddCurrencyAbortsIf<CoinType> {
         dd_addr: address;
         aborts_if exists<TierInfo<CoinType>>(dd_addr) with Errors::ALREADY_PUBLISHED;
-        include Libra::AbortsIfNoCurrency<CoinType>;
-        aborts_if Libra::is_synthetic_currency<CoinType>() with Errors::INVALID_ARGUMENT;
-        aborts_if exists<Libra::Preburn<CoinType>>(dd_addr) with Errors::ALREADY_PUBLISHED;
-        include LibraTimestamp::AbortsIfNotOperating;
+        include Diem::AbortsIfNoCurrency<CoinType>;
+        aborts_if Diem::is_synthetic_currency<CoinType>() with Errors::INVALID_ARGUMENT;
+        aborts_if exists<Diem::Preburn<CoinType>>(dd_addr) with Errors::ALREADY_PUBLISHED;
+        include DiemTimestamp::AbortsIfNotOperating;
     }
 
     public fun add_tier<CoinType>(
@@ -178,7 +178,7 @@ module DesignatedDealer {
         dd_addr: address,
         tier_upperbound: u64
     ) acquires TierInfo {
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_diem_root(tc_account);
         assert(exists<TierInfo<CoinType>>(dd_addr), Errors::not_published(EDEALER));
         let tiers = &mut borrow_global_mut<TierInfo<CoinType>>(dd_addr).tiers;
         let number_of_tiers = Vector::length(tiers);
@@ -220,7 +220,7 @@ module DesignatedDealer {
         tier_index: u64,
         new_upperbound: u64
     ) acquires TierInfo {
-        Roles::assert_libra_root(tc_account);
+        Roles::assert_diem_root(tc_account);
         assert(exists<TierInfo<CoinType>>(dd_addr), Errors::not_published(EDEALER));
         let tiers = &mut borrow_global_mut<TierInfo<CoinType>>(dd_addr).tiers;
         let number_of_tiers = Vector::length(tiers);
@@ -271,8 +271,8 @@ module DesignatedDealer {
         amount: u64,
         dd_addr: address,
         tier_index: u64,
-    ): Libra::Libra<CoinType> acquires Dealer, TierInfo {
-        Roles::assert_libra_root(tc_account);
+    ): Diem::Diem<CoinType> acquires Dealer, TierInfo {
+        Roles::assert_diem_root(tc_account);
         assert(amount > 0, Errors::invalid_argument(EINVALID_MINT_AMOUNT));
         assert(exists_at(dd_addr), Errors::not_published(EDEALER));
         assert(exists<TierInfo<CoinType>>(dd_addr), Errors::not_published(EDEALER));
@@ -282,12 +282,12 @@ module DesignatedDealer {
         Event::emit_event<ReceivedMintEvent>(
             &mut borrow_global_mut<Dealer>(dd_addr).mint_event_handle,
             ReceivedMintEvent {
-                currency_code: Libra::currency_code<CoinType>(),
+                currency_code: Diem::currency_code<CoinType>(),
                 destination_address: dd_addr,
                 amount: amount,
             },
         );
-        Libra::mint<CoinType>(tc_account, amount)
+        Diem::mint<CoinType>(tc_account, amount)
     }
     spec fun tiered_mint {
         use 0x1::CoreAddresses;
@@ -295,14 +295,14 @@ module DesignatedDealer {
 
         include TieredMintAbortsIf<CoinType>;
 
-        modifies global<Libra::CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
-        ensures exists<Libra::CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
+        modifies global<Diem::CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
+        ensures exists<Diem::CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         modifies global<TierInfo<CoinType>>(dd_addr);
         ensures exists<TierInfo<CoinType>>(dd_addr);
         ensures global<TierInfo<CoinType>>(dd_addr).tiers == old(global<TierInfo<CoinType>>(dd_addr).tiers);
         let dealer = global<TierInfo<CoinType>>(dd_addr);
-        let current_time = LibraTimestamp::spec_now_microseconds();
-        let currency_info = global<Libra::CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
+        let current_time = DiemTimestamp::spec_now_microseconds();
+        let currency_info = global<Diem::CurrencyInfo<CoinType>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         ensures old(dealer.window_start) <= dealer.window_start;
         ensures
             dealer.window_start == current_time && dealer.window_inflow == amount ||
@@ -324,11 +324,11 @@ module DesignatedDealer {
         include AbortsIfNoTierInfo<CoinType>;
         let tier_info = global<TierInfo<CoinType>>(dd_addr);
         aborts_if tier_index >= len(tier_info.tiers) with Errors::INVALID_ARGUMENT;
-        let new_amount = if (LibraTimestamp::spec_now_microseconds() <= tier_info.window_start + ONE_DAY) { tier_info.window_inflow + amount } else { amount };
+        let new_amount = if (DiemTimestamp::spec_now_microseconds() <= tier_info.window_start + ONE_DAY) { tier_info.window_inflow + amount } else { amount };
         aborts_if new_amount > tier_info.tiers[tier_index] with Errors::INVALID_ARGUMENT;
-        include LibraTimestamp::AbortsIfNotOperating;
-        aborts_if !exists<Libra::MintCapability<CoinType>>(Signer::spec_address_of(tc_account)) with Errors::REQUIRES_CAPABILITY;
-        include Libra::MintAbortsIf<CoinType>{value: amount};
+        include DiemTimestamp::AbortsIfNotOperating;
+        aborts_if !exists<Diem::MintCapability<CoinType>>(Signer::spec_address_of(tc_account)) with Errors::REQUIRES_CAPABILITY;
+        include Diem::MintAbortsIf<CoinType>{value: amount};
     }
 
     public fun exists_at(dd_addr: address): bool {
@@ -364,7 +364,7 @@ module DesignatedDealer {
     // If the time window starting at `dealer.window_start` and lasting for
     // `ONE_DAY` has elapsed, resets the window and the inflow and outflow records.
     fun reset_window<CoinType>(tier_info: &mut TierInfo<CoinType>) {
-        let current_time = LibraTimestamp::now_microseconds();
+        let current_time = DiemTimestamp::now_microseconds();
         if (current_time > ONE_DAY && current_time - ONE_DAY > tier_info.window_start) {
             tier_info.window_start = current_time;
             tier_info.window_inflow = 0;
@@ -372,8 +372,8 @@ module DesignatedDealer {
     }
     spec fun reset_window {
         pragma opaque;
-        include LibraTimestamp::AbortsIfNotOperating;
-        let current_time = LibraTimestamp::spec_now_microseconds();
+        include DiemTimestamp::AbortsIfNotOperating;
+        let current_time = DiemTimestamp::spec_now_microseconds();
         ensures
             if (current_time > ONE_DAY && current_time - ONE_DAY > old(tier_info).window_start)
                 tier_info == update_field(update_field(old(tier_info),

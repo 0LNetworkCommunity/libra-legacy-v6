@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::FuzzTarget;
 use anyhow::{bail, format_err, Context, Result};
-use libra_proptest_helpers::ValueGenerator;
+use diem_proptest_helpers::ValueGenerator;
 use sha1::{Digest, Sha1};
 use std::{
     env,

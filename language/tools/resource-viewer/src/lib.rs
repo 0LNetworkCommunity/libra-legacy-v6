@@ -7,8 +7,8 @@ use crate::{
     resolver::Resolver,
 };
 use anyhow::{anyhow, Result};
-use libra_state_view::StateView;
-use libra_types::{
+use diem_state_view::StateView;
+use diem_types::{
     access_path::AccessPath, account_address::AccountAddress, account_state::AccountState,
     contract_event::ContractEvent,
 };

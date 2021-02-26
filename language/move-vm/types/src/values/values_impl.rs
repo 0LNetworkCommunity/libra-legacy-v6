@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::natives::function::NativeResult;
@@ -463,7 +463,7 @@ impl ValueImpl {
  * Copy Value
  *
  *   Implementation of Move copy. Extra care needs to be taken when copying references.
- *   It is intentional we avoid implementing the standard library trait Clone, to prevent
+ *   It is intentional we avoid implementing the standard diemry trait Clone, to prevent
  *   surprising behaviors from happening.
  *
  **************************************************************************************/
@@ -576,7 +576,7 @@ impl Value {
  *
  *   Equality tests of Move values. Errors are raised when types mismatch.
  *
- *   It is intented to NOT use or even implement the standard library traits Eq and
+ *   It is intented to NOT use or even implement the standard diemry traits Eq and
  *   Partial Eq due to:
  *     1. They do not allow errors to be returned.
  *     2. They can be invoked without the user being noticed thanks to operator

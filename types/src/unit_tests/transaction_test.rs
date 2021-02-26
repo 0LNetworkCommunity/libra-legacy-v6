@@ -11,7 +11,7 @@ use crate::{
     },
 };
 use lcs::test_helpers::assert_canonical_encode_decode;
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{self, Ed25519PrivateKey, Ed25519Signature},
     PrivateKey, Uniform,
 };

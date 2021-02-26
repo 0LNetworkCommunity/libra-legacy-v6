@@ -6,8 +6,8 @@ module DualAttestation {
     use 0x1::Errors;
     use 0x1::GAS::GAS;
     use 0x1::LCS;
-    use 0x1::Libra;
-    use 0x1::LibraTimestamp;
+    use 0x1::Diem;
+    use 0x1::DiemTimestamp;
     use 0x1::Roles;
     use 0x1::Signature;
     use 0x1::Signer;
@@ -28,11 +28,11 @@ module DualAttestation {
         ///     transactions subject to the travel rule)
         /// (2) information exchanged in the off-chain protocols (e.g., KYC info in the travel rule
         ///     protocol)
-        /// Note that this is different than `authentication_key` used in LibraAccount, which is
+        /// Note that this is different than `authentication_key` used in DiemAccount, which is
         /// a hash of a public key + signature scheme identifier, not a public key. Mutable.
         compliance_public_key: vector<u8>,
         /// Expiration date in microseconds from unix epoch. For V1, it is always set to
-        /// U64_MAX. Mutable, but only by LibraRoot.
+        /// U64_MAX. Mutable, but only by DiemRoot.
         expiration_date: u64,
         /// Event handle for `compliance_public_key` rotation events. Emitted
         /// every time this `compliance_public_key` is rotated.
@@ -96,7 +96,7 @@ module DualAttestation {
         human_name: vector<u8>,
     ) {
         Roles::assert_parent_vasp_or_designated_dealer(created);
-        Roles::assert_libra_root(creator);
+        Roles::assert_diem_root(creator);
         assert(
             !exists<Credential>(Signer::address_of(created)),
             Errors::already_published(ECREDENTIAL)
@@ -129,7 +129,7 @@ module DualAttestation {
         credential.base_url = copy new_url;
         Event::emit_event(&mut credential.base_url_rotation_events, BaseUrlRotationEvent {
             new_base_url: new_url,
-            time_rotated_seconds: LibraTimestamp::now_seconds(),
+            time_rotated_seconds: DiemTimestamp::now_seconds(),
         });
     }
     spec fun rotate_base_url {
@@ -143,7 +143,7 @@ module DualAttestation {
         /// Must abort if the account does not have the resource Credential [[H16]][PERMISSION].
         include AbortsIfNoCredential{addr: sender};
 
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
     }
     spec schema AbortsIfNoCredential {
         addr: address;
@@ -172,7 +172,7 @@ module DualAttestation {
         credential.compliance_public_key = copy new_key;
         Event::emit_event(&mut credential.compliance_key_rotation_events, ComplianceKeyRotationEvent {
             new_compliance_public_key: new_key,
-            time_rotated_seconds: LibraTimestamp::now_seconds(),
+            time_rotated_seconds: DiemTimestamp::now_seconds(),
         });
 
     }
@@ -188,7 +188,7 @@ module DualAttestation {
         /// Must abort if the account does not have the resource Credential [[H16]][PERMISSION].
         include AbortsIfNoCredential{addr: sender};
 
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         aborts_if !Signature::ed25519_validate_pubkey(new_key) with Errors::INVALID_ARGUMENT;
     }
     spec schema RotateCompliancePublicKeyEnsures {
@@ -280,9 +280,9 @@ module DualAttestation {
         payer: address, payee: address, deposit_value: u64
     ): bool acquires Limit {
         // travel rule applies for payments over a limit
-        let travel_rule_limit_microlibra = get_cur_microlibra_limit();
-        let approx_lbr_microlibra_value = Libra::approx_lbr_for_value<Token>(deposit_value);
-        let above_limit = approx_lbr_microlibra_value >= travel_rule_limit_microlibra;
+        let travel_rule_limit_microdiem = get_cur_microdiem_limit();
+        let approx_lbr_microdiem_value = Diem::approx_lbr_for_value<Token>(deposit_value);
+        let above_limit = approx_lbr_microdiem_value >= travel_rule_limit_microdiem;
         if (!above_limit) {
             return false
         };
@@ -302,7 +302,7 @@ module DualAttestation {
     }
     spec schema DualAttestationRequiredAbortsIf<Token> {
         deposit_value: num;
-        include Libra::ApproxLbrForValueAbortsIf<Token>{from_value: deposit_value};
+        include Diem::ApproxLbrForValueAbortsIf<Token>{from_value: deposit_value};
         aborts_if !spec_is_published() with Errors::NOT_PUBLISHED;
     }
     spec define spec_is_inter_vasp(payer: address, payee: address): bool {
@@ -313,8 +313,8 @@ module DualAttestation {
     spec define spec_dual_attestation_required<Token>(
         payer: address, payee: address, deposit_value: u64
     ): bool {
-        Libra::spec_approx_lbr_for_value<Token>(deposit_value)
-                    >= spec_get_cur_microlibra_limit() &&
+        Diem::spec_approx_lbr_for_value<Token>(deposit_value)
+                    >= spec_get_cur_microdiem_limit() &&
         payer != payee &&
         spec_is_inter_vasp(payer, payee)
     }
@@ -445,10 +445,10 @@ module DualAttestation {
 
     /// Travel rule limit set during genesis
     public fun initialize(lr_account: &signer) {
-        LibraTimestamp::assert_genesis();
-        CoreAddresses::assert_libra_root(lr_account); // operational constraint.
+        DiemTimestamp::assert_genesis();
+        CoreAddresses::assert_diem_root(lr_account); // operational constraint.
         assert(!exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::already_published(ELIMIT));
-        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Libra::scaling_factor<GAS>() as u128);
+        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Diem::scaling_factor<GAS>() as u128);
         assert(initial_limit <= MAX_U64, Errors::limit_exceeded(ELIMIT));
         move_to(
             lr_account,
@@ -458,33 +458,33 @@ module DualAttestation {
         )
     }
     spec fun initialize {
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include CoreAddresses::AbortsIfNotLibraRoot{account: lr_account};
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include CoreAddresses::AbortsIfNotDiemRoot{account: lr_account};
         aborts_if exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()) with Errors::ALREADY_PUBLISHED;
-        let initial_limit = INITIAL_DUAL_ATTESTATION_LIMIT * Libra::spec_scaling_factor<GAS>();
+        let initial_limit = INITIAL_DUAL_ATTESTATION_LIMIT * Diem::spec_scaling_factor<GAS>();
         aborts_if initial_limit > MAX_U64 with Errors::LIMIT_EXCEEDED;
-        include Libra::AbortsIfNoCurrency<GAS>; // for scaling_factor.
+        include Diem::AbortsIfNoCurrency<GAS>; // for scaling_factor.
     }
 
-    /// Return the current dual attestation limit in microlibra
-    public fun get_cur_microlibra_limit(): u64 acquires Limit {
+    /// Return the current dual attestation limit in microdiem
+    public fun get_cur_microdiem_limit(): u64 acquires Limit {
         assert(exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::not_published(ELIMIT));
         borrow_global<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()).micro_lbr_limit
     }
-    spec fun get_cur_microlibra_limit {
+    spec fun get_cur_microdiem_limit {
         pragma opaque;
         aborts_if !spec_is_published() with Errors::NOT_PUBLISHED;
-        ensures result == spec_get_cur_microlibra_limit();
+        ensures result == spec_get_cur_microdiem_limit();
     }
 
-    /// Set the dual attestation limit to `micro_libra_limit`.
+    /// Set the dual attestation limit to `micro_diem_limit`.
     /// Aborts if `tc_account` does not have the TreasuryCompliance role
-    public fun set_microlibra_limit(tc_account: &signer, micro_lbr_limit: u64) acquires Limit {
-        Roles::assert_libra_root(tc_account);
+    public fun set_microdiem_limit(tc_account: &signer, micro_lbr_limit: u64) acquires Limit {
+        Roles::assert_diem_root(tc_account);
         assert(exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::not_published(ELIMIT));
         borrow_global_mut<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()).micro_lbr_limit = micro_lbr_limit;
     }
-    spec fun set_microlibra_limit {
+    spec fun set_microdiem_limit {
         /// Must abort if the signer does not have the TreasuryCompliance role [[H6]][PERMISSION].
         /// The permission UpdateDualAttestationLimit is granted to TreasuryCompliance.
         include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
@@ -500,7 +500,7 @@ module DualAttestation {
 
     /// The Limit resource should be published after genesis
     spec module {
-        invariant [global] LibraTimestamp::is_operating() ==> spec_is_published();
+        invariant [global] DiemTimestamp::is_operating() ==> spec_is_published();
     }
 
     /// # Helper Functions
@@ -510,8 +510,8 @@ module DualAttestation {
             exists<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS())
         }
 
-        /// Mirrors `Self::get_cur_microlibra_limit`.
-        define spec_get_cur_microlibra_limit(): u64 {
+        /// Mirrors `Self::get_cur_microdiem_limit`.
+        define spec_get_cur_microdiem_limit(): u64 {
             global<Limit>(CoreAddresses::LIBRA_ROOT_ADDRESS()).micro_lbr_limit
         }
     }
@@ -544,14 +544,14 @@ module DualAttestation {
                 Roles::spec_has_designated_dealer_role_addr(addr1));
     }
 
-    /// Only set_microlibra_limit can change the limit [[H6]][PERMISSION].
+    /// Only set_microdiem_limit can change the limit [[H6]][PERMISSION].
     spec schema DualAttestationLimitRemainsSame {
         /// The DualAttestation limit stays constant.
         ensures old(spec_is_published())
-            ==> spec_get_cur_microlibra_limit() == old(spec_get_cur_microlibra_limit());
+            ==> spec_get_cur_microdiem_limit() == old(spec_get_cur_microdiem_limit());
     }
     spec module {
-        apply DualAttestationLimitRemainsSame to * except set_microlibra_limit;
+        apply DualAttestationLimitRemainsSame to * except set_microdiem_limit;
     }
 
     /// Only rotate_compliance_public_key can rotate the compliance public key [[H16]][PERMISSION].

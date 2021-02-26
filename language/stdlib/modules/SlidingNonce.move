@@ -105,12 +105,12 @@ module SlidingNonce {
     }
 
     /// Publishes nonce resource into specific account
-    /// Only the Libra root account can create this resource for different accounts
+    /// Only the Diem root account can create this resource for different accounts
     public fun publish_nonce_resource(
         lr_account: &signer,
         account: &signer
     ) {
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
         let new_resource = SlidingNonce {
             min_nonce: 0,
             nonce_mask: 0,

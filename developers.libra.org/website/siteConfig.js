@@ -1,5 +1,5 @@
 /**
- * Copyright (c) The Libra Core Contributors
+ * Copyright (c) The Diem Core Contributors
  * SPDX-License-Identifier: CC-BY-4.0
  *
  * @format
@@ -17,36 +17,36 @@ const baseUrl = '/';
 const users = [];
 
 const siteConfig = {
-  title: 'Libra',
+  title: 'Diem',
   tagline:
-    'The Libra Association’s mission is to enable a simple global payment system and financial infrastructure that empowers billions of people.',
-  url: 'https://developers.libra.org',
+    'The Diem Association’s mission is to enable a simple global payment system and financial infrastructure that empowers billions of people.',
+  url: 'https://developers.diem.org',
   baseUrl: baseUrl,
   cleanUrl: true, // No .html extensions for paths
   blogSidebarCount: 'ALL', // Show all blog posts
-  headerIcon: 'img/libra-nav-logo.svg',
-  headerLogoUrl: 'https://libra.org',
-  footerIcon: 'img/libra-logomark-white.png',
-  favicon: 'img/libra.ico',
-  cname: 'developers.libra.org',
+  headerIcon: 'img/diem-nav-logo.svg',
+  headerLogoUrl: 'https://diem.org',
+  footerIcon: 'img/diem-logomark-white.png',
+  favicon: 'img/diem.ico',
+  cname: 'developers.diem.org',
 
   // used for publishing and more
-  organizationName: 'libra',
-  projectName: 'libra',
+  organizationName: 'diem',
+  projectName: 'diem',
 
   // links that will be used in the header navigation bar
   headerLinks: [
-    { href: 'https://libra.org/vision/', label: 'Vision' },
-    { href: 'https://libra.org/association/', label: 'Association' },
+    { href: 'https://diem.org/vision/', label: 'Vision' },
+    { href: 'https://diem.org/association/', label: 'Association' },
     {
-      href: 'https://libra.org/developers/',
+      href: 'https://diem.org/developers/',
       label: 'Developers',
       selected: true,
     },
-    { href: 'https://libra.org/learn-faqs/', label: 'Learn' },
-    { href: 'https://libra.org/media-press-news/', label: 'Media' },
+    { href: 'https://diem.org/learn-faqs/', label: 'Learn' },
+    { href: 'https://diem.org/media-press-news/', label: 'Media' },
     {
-      href: 'https://libra.org/white-paper/',
+      href: 'https://diem.org/white-paper/',
       label: 'White Paper',
       highlight: true,
       mobileImg: {
@@ -59,12 +59,12 @@ const siteConfig = {
   ],
 
   subHeaderLinks: [
-    { href: 'https://libra.org/developers/', label: 'Overview' },
-    { doc: 'welcome-to-libra', label: 'Libra Docs' },
-    { href: '/docs/rustdocs/', label: 'Libra Rust Crates' },
-    { href: 'https://lip.libra.org', label: 'Governance' },
-    { href: 'https://community.libra.org', label: 'Community' },
-    { href: 'https://github.com/libra/libra', label: 'GitHub', external: true },
+    { href: 'https://diem.org/developers/', label: 'Overview' },
+    { doc: 'welcome-to-diem', label: 'Diem Docs' },
+    { href: '/docs/rustdocs/', label: 'Diem Rust Crates' },
+    { href: 'https://lip.diem.org', label: 'Governance' },
+    { href: 'https://community.diem.org', label: 'Community' },
+    { href: 'https://github.com/diem/diem', label: 'GitHub', external: true },
     { search: true },
   ],
 
@@ -76,7 +76,7 @@ const siteConfig = {
   // This website manually inserts the Algolia Search bar in Footer.js
   algolia: {
     apiKey: '0d48ee629d39ddc4916eeef7755a0c4c',
-    indexName: 'libra',
+    indexName: 'diem',
   },
 
   // colors for website
@@ -123,11 +123,11 @@ const siteConfig = {
   docsSideNavCollapsible: false,
 
   // URL for editing docs
-  editUrl: 'https://github.com/libra/libra/edit/master/developers.libra.org/docs/',
+  editUrl: 'https://github.com/diem/diem/edit/master/developers.diem.org/docs/',
 
   // Open Graph and Twitter card images
-  ogImage: 'img/libra.png',
-  twitterImage: 'img/libra.png',
+  ogImage: 'img/diem.png',
+  twitterImage: 'img/diem.png',
 
   // custom highlighter for Move
   highlight: {

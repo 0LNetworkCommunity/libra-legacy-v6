@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_global_constants::{OWNER_ACCOUNT, OWNER_KEY};
-use libra_management::{constants, error::Error, secure_backend::SharedBackend};
-use libra_network_address::NetworkAddress;
-use libra_types::transaction::{authenticator::AuthenticationKey, Transaction};
+use diem_global_constants::{OWNER_ACCOUNT, OWNER_KEY};
+use diem_management::{constants, error::Error, secure_backend::SharedBackend};
+use diem_network_address::NetworkAddress;
+use diem_types::transaction::{authenticator::AuthenticationKey, Transaction};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -12,7 +12,7 @@ pub struct ValidatorConfig {
     #[structopt(long)]
     owner_name: String,
     #[structopt(flatten)]
-    validator_config: libra_management::validator_config::ValidatorConfig,
+    validator_config: diem_management::validator_config::ValidatorConfig,
     #[structopt(long)]
     validator_address: NetworkAddress,
     #[structopt(long)]
@@ -32,7 +32,7 @@ impl ValidatorConfig {
 
         // Retrieve and set owner account
         // let owner_account =
-        //     libra_config::utils::validator_owner_account_from_name(self.owner_name.as_bytes());
+        //     diem_config::utils::validator_owner_account_from_name(self.owner_name.as_bytes());
         let remote_storage = config.shared_backend_with_namespace(self.owner_name.into());
         let owner_key = remote_storage.ed25519_key(OWNER_KEY)?;
         let staged_owner_auth_key = AuthenticationKey::ed25519(&owner_key);

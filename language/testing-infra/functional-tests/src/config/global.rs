@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // The config holds the options that define the testing environment.
@@ -9,8 +9,8 @@ use language_e2e_tests::{
     account::{Account, AccountData, AccountRoleSpecifier},
     keygen::KeyGen,
 };
-use libra_crypto::PrivateKey;
-use libra_types::account_config;
+use diem_crypto::PrivateKey;
+use diem_types::account_config;
 use move_core_types::identifier::Identifier;
 use once_cell::sync::Lazy;
 use std::{

@@ -2,7 +2,7 @@
 //! account: bob, 1000000, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::Upgrade;
   use 0x1::Vector;

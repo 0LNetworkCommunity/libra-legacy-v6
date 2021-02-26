@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -7,7 +7,7 @@ use crate::{
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use libra_logger::prelude::*;
+use diem_logger::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
@@ -40,7 +40,7 @@ impl MetadataCacheOpt {
             .unwrap_or_else(|| {
                 dirs::home_dir()
                     .expect("Can't find home dir. Specify metadata cache path explicitly.")
-                    .join("libra_backup_metadata")
+                    .join("diem_backup_metadata")
             })
             .join(Self::SUB_DIR)
     }

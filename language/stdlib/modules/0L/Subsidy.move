@@ -10,16 +10,16 @@ address 0x1 {
   module Subsidy {
     use 0x1::CoreAddresses;
     use 0x1::GAS::GAS;
-    use 0x1::Libra;
+    use 0x1::Diem;
     use 0x1::Signer;
-    use 0x1::LibraAccount;
-    use 0x1::LibraSystem;
+    use 0x1::DiemAccount;
+    use 0x1::DiemSystem;
     use 0x1::Vector;
     use 0x1::FixedPoint32::{Self, FixedPoint32};    
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::Globals;
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     use 0x1::TransactionFee;
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
@@ -52,8 +52,8 @@ address 0x1 {
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
 
         // Transfer gas from vm address to validator
-        let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
-        LibraAccount::vm_deposit_with_metadata<GAS>(
+        let minted_coins = Diem::mint<GAS>(vm_sig, subsidy_granted);
+        DiemAccount::vm_deposit_with_metadata<GAS>(
           vm_sig,
           node_address,
           minted_coins,
@@ -72,7 +72,7 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190101014010);
 
       // skip genesis
-      assert(!LibraTimestamp::is_genesis(), 190101021000);
+      assert(!DiemTimestamp::is_genesis(), 190101021000);
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
@@ -135,7 +135,7 @@ address 0x1 {
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(&genesis_validators, i));
-        let old_validator_bal = LibraAccount::balance<GAS>(node_address);
+        let old_validator_bal = DiemAccount::balance<GAS>(node_address);
         // let count_proofs = 1;
 
         // if (is_testnet()) {
@@ -146,7 +146,7 @@ address 0x1 {
         let subsidy_granted = distribute_onboarding_subsidy(vm_sig, node_address);
         //Confirm the calculations, and that the ending balance is incremented accordingly.
 
-        assert(LibraAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
+        assert(DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy_granted, 19010105100);
 
         i = i + 1;
       };
@@ -158,14 +158,14 @@ address 0x1 {
       _fee_ratio: &vector<FixedPoint32>,
     ){
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
-      let capability_token = LibraAccount::extract_withdraw_capability(vm);
+      let capability_token = DiemAccount::extract_withdraw_capability(vm);
 
       let len = Vector::length<address>(outgoing_set);
 
       let bal = TransactionFee::get_amount_to_distribute(vm);
     // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
       if (bal < len) {
-        LibraAccount::restore_withdraw_capability(capability_token);
+        DiemAccount::restore_withdraw_capability(capability_token);
         return
       };
 
@@ -175,7 +175,7 @@ address 0x1 {
         // let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
         let fees = bal/len;
         
-        LibraAccount::vm_deposit_with_metadata<GAS>(
+        DiemAccount::vm_deposit_with_metadata<GAS>(
             vm,
             node_address,
             TransactionFee::get_transaction_fees_coins_amount<GAS>(vm, fees),
@@ -184,7 +184,7 @@ address 0x1 {
         );
         i = i + 1;
       };
-      LibraAccount::restore_withdraw_capability(capability_token);
+      DiemAccount::restore_withdraw_capability(capability_token);
     }
 
     //////// FULLNODE /////////
@@ -198,7 +198,7 @@ address 0x1 {
     }
 
     public fun init_fullnode_sub(vm: &signer) {
-      let genesis_validators = LibraSystem::get_val_set_addr();
+      let genesis_validators = DiemSystem::get_val_set_addr();
       let validator_count = Vector::length(&genesis_validators);
       if (validator_count < 10) validator_count = 10;
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
@@ -211,7 +211,7 @@ address 0x1 {
       let baseline_tx_cost = 4336; // microgas
       let ceiling = baseline_auction_units() * baseline_tx_cost * validator_count;
 
-      Roles::assert_libra_root(vm);
+      Roles::assert_diem_root(vm);
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
@@ -227,7 +227,7 @@ address 0x1 {
       miner: address
     ):u64 acquires FullnodeSubsidy {
       // Bootstrap gas if it's the first payment to a prospective validator. Check no fullnode payments have been made, and is in validator universe. 
-      CoreAddresses::assert_libra_root(vm);
+      CoreAddresses::assert_diem_root(vm);
 
       FullnodeState::is_onboarding(miner);
       
@@ -236,8 +236,8 @@ address 0x1 {
       let subsidy = bootstrap_validator_balance();
       if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
 
-      let minted_coins = Libra::mint<GAS>(vm, subsidy);
-      LibraAccount::vm_deposit_with_metadata<GAS>(
+      let minted_coins = Diem::mint<GAS>(vm, subsidy);
+      DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
         miner,
         minted_coins,
@@ -249,9 +249,9 @@ address 0x1 {
 
 
     public fun distribute_fullnode_subsidy(vm: &signer, miner: address, count: u64):u64 acquires FullnodeSubsidy{
-      CoreAddresses::assert_libra_root(vm);
+      CoreAddresses::assert_diem_root(vm);
       // Payment is only for fullnodes, ie. not in current validator set.
-      if (LibraSystem::is_validator(miner)) return 0;
+      if (DiemSystem::is_validator(miner)) return 0;
 
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
       let subsidy;
@@ -274,8 +274,8 @@ address 0x1 {
 
       if (subsidy == 0) return 0;
 
-      let minted_coins = Libra::mint<GAS>(vm, subsidy);
-      LibraAccount::vm_deposit_with_metadata<GAS>(
+      let minted_coins = Diem::mint<GAS>(vm, subsidy);
+      DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
         miner,
         minted_coins,
@@ -289,7 +289,7 @@ address 0x1 {
     }
 
     public fun fullnode_reconfig(vm: &signer) acquires FullnodeSubsidy {
-      Roles::assert_libra_root(vm);
+      Roles::assert_diem_root(vm);
 
       // update values for the proof auction.
       auctioneer(vm);
@@ -315,7 +315,7 @@ address 0x1 {
 
     fun auctioneer(vm: &signer) acquires FullnodeSubsidy {
 
-      Roles::assert_libra_root(vm);
+      Roles::assert_diem_root(vm);
 
       let state = borrow_global_mut<FullnodeSubsidy>(Signer::address_of(vm));
 
@@ -407,7 +407,7 @@ address 0x1 {
       current_subsidy_distributed: u64,
       current_proofs_verified: u64,
     ) acquires FullnodeSubsidy {
-      Roles::assert_libra_root(vm);
+      Roles::assert_diem_root(vm);
       assert(is_testnet(), 1000);
       let state = borrow_global_mut<FullnodeSubsidy>(0x0);
       state.previous_epoch_proofs = previous_epoch_proofs;

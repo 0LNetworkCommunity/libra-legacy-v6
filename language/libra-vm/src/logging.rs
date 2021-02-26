@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::counters::CRITICAL_ERRORS;
-use libra_crypto::HashValue;
-use libra_logger::Schema;
-use libra_state_view::StateViewId;
-use libra_types::transaction::Version;
+use diem_crypto::HashValue;
+use diem_logger::Schema;
+use diem_state_view::StateViewId;
+use diem_types::transaction::Version;
 use move_vm_runtime::logging::LogContext;
 use serde::Serialize;
 

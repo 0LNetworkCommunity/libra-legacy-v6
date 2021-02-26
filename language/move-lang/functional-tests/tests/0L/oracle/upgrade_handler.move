@@ -68,7 +68,7 @@ script {
 // check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::Oracle;
   use 0x1::Upgrade;

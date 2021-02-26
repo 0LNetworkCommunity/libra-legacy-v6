@@ -5,7 +5,7 @@ title: Privacy Policy
 
 <!-- hide the edit button --><style>.edit-page-link {display: none !important; visibility: hidden !important;}</style>
 
- This website is owned and operated by the Libra Association (“Libra,” “us,” “our”). This Data Policy applies to the Libra Association website (“Website”). This Data Policy describes our practices for handling your information collected in connection with this Website.
+ This website is owned and operated by the Diem Association (“Diem,” “us,” “our”). This Data Policy applies to the Diem Association website (“Website”). This Data Policy describes our practices for handling your information collected in connection with this Website.
 
 ## Collection of Information
  When you interact with us through our Website, we may collect or receive the following of information:
@@ -21,7 +21,7 @@ title: Privacy Policy
  We may share your information with certain third parties as set forth below: 
 
 * _**Authorized third-party vendors and service providers.**_ We share your information with third-party vendors and service providers who support our website, such as by providing technical infrastructure services, business analytics, and data processing. 
-* _**Partners.**_ We may share information with the entities that make up the Libra Association (“Partners”). For more information about our Partners, look at the “Association” tab. 
+* _**Partners.**_ We may share information with the entities that make up the Diem Association (“Partners”). For more information about our Partners, look at the “Association” tab. 
 * _**Legal and safety purposes.**_ We may disclose information to respond to subpoenas, court orders, legal process, law enforcement requests, legal claims or government inquiries, detect fraud, and to protect and defend the rights, interests, safety, and security of the website, our affiliates, owner, users, or the public.
 * _**Business transfers.**_ We may share your information in connection with a substantial corporate transaction, such as the sale of a website, a merger, consolidation, asset sale, or in the unlikely event of bankruptcy. 
 * _**With your consent.**_ We may share information for any other purposes disclosed to you at the time we collect the information and pursuant to your consent. 
@@ -47,7 +47,7 @@ You may withdraw consent at any time. Such withdrawal of consent will not affect
     * the right to object to our processing of your data where we are performing a task in the public interest or pursuing our legitimate interests or those of a third party, and
     * the right to have us delete your personal information.
 
-You may delete your information at any time by contacting us at [optout@libra.org](mailto:optout@libra.org). We will delete all the information we have about you, such as information from cookies and information you have provided us. 
+You may delete your information at any time by contacting us at [optout@diem.org](mailto:optout@diem.org). We will delete all the information we have about you, such as information from cookies and information you have provided us. 
 
 ## Data Retention
  We generally retain information until it is no longer necessary to serve the purposes for which it was collected. This is a case-by-case determination that depends on things like the nature of the data, why it is collected and processed, and relevant legal or operational retention needs. 
@@ -56,9 +56,9 @@ You may delete your information at any time by contacting us at [optout@libra.or
  We utilize standard contract clauses approved by the European Commission and rely on the European Commission’s [adequacy decisions](https://ec.europa.eu/info/law/law-topic/data-protection/data-transfers-outside-eu/adequacy-protection-personal-data-non-eu-countries_en) about certain countries, as applicable, for data transfers from the European Economic Area to the United States and other countries.
 
 ## Contact Information
- The data controller responsible for your information is Libra, which you can contact us at:
+ The data controller responsible for your information is Diem, which you can contact us at:
 
-	Libra Association
+	Diem Association
 	Quai de l'Ile, 13
 	1204 Geneva
 	SWITZERLAND

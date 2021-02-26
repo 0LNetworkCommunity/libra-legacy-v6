@@ -20,7 +20,7 @@ Contains functions for [ed25519](https://en.wikipedia.org/wiki/EdDSA) digital si
 
 Return <code><b>true</b></code> if the bytes in <code>public_key</code> can be parsed as a valid Ed25519 public key.
 Returns <code><b>false</b></code> if <code>public_key</code> is not 32 bytes OR is 32 bytes, but does not pass
-points-on-curve or small subgroup checks. See the Rust <code>libra_crypto::Ed25519PublicKey</code> type
+points-on-curve or small subgroup checks. See the Rust <code>diem_crypto::Ed25519PublicKey</code> type
 for more details.
 Does not abort.
 
@@ -77,6 +77,6 @@ Does not abort.
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{corpus_from_strategy, fuzz_data_to_value, FuzzTargetImpl};
-use libra_crypto::HashValue;
-use libra_proptest_helpers::ValueGenerator;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_proptest_helpers::ValueGenerator;
+use diem_types::{
     account_state_blob::AccountStateBlob,
     ledger_info::LedgerInfo,
     proof::{

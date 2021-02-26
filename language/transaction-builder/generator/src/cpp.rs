@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common;
-use libra_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
+use diem_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
 use move_core_types::language_storage::TypeTag;
 use serde_generate::indent::{IndentConfig, IndentedWriter};
 
@@ -11,7 +11,7 @@ use std::{
     path::PathBuf,
 };
 
-/// Output a header-only library providing C++ transaction builders for the given ABIs.
+/// Output a header-only diemry providing C++ transaction builders for the given ABIs.
 pub fn output(out: &mut dyn Write, abis: &[ScriptABI], namespace: Option<&str>) -> Result<()> {
     let mut emitter = CppEmitter {
         out: IndentedWriter::new(out, IndentConfig::Space(4)),
@@ -27,8 +27,8 @@ pub fn output(out: &mut dyn Write, abis: &[ScriptABI], namespace: Option<&str>) 
     emitter.output_close_namespace()
 }
 
-/// Output the headers of a library providing C++ transaction builders for the given ABIs.
-pub fn output_library_header(
+/// Output the headers of a diemry providing C++ transaction builders for the given ABIs.
+pub fn output_diemry_header(
     out: &mut dyn Write,
     abis: &[ScriptABI],
     namespace: Option<&str>,
@@ -47,11 +47,11 @@ pub fn output_library_header(
     emitter.output_close_namespace()
 }
 
-/// Output the function definitions of a library providing C++ transaction builders for the given ABIs.
-pub fn output_library_body(
+/// Output the function definitions of a diemry providing C++ transaction builders for the given ABIs.
+pub fn output_diemry_body(
     out: &mut dyn Write,
     abis: &[ScriptABI],
-    library_name: &str,
+    diemry_name: &str,
     namespace: Option<&str>,
 ) -> Result<()> {
     let mut emitter = CppEmitter {
@@ -59,7 +59,7 @@ pub fn output_library_body(
         namespace,
         inlined_definitions: false,
     };
-    writeln!(emitter.out, "#include \"{}.hpp\"\n", library_name)?;
+    writeln!(emitter.out, "#include \"{}.hpp\"\n", diemry_name)?;
     emitter.output_open_namespace()?;
     emitter.output_using_namespaces()?;
     for abi in abis {
@@ -87,7 +87,7 @@ where
             self.out,
             r#"#pragma once
 
-#include "libra_types.hpp"
+#include "diem_types.hpp"
 "#
         )
     }
@@ -97,7 +97,7 @@ where
             self.out,
             r#"
 using namespace serde;
-using namespace libra_types;
+using namespace diem_types;
 "#
         )
     }
@@ -267,10 +267,10 @@ impl crate::SourceInstaller for Installer {
         std::fs::create_dir_all(dir_path)?;
         let header_path = dir_path.join(name.to_string() + ".hpp");
         let mut header = std::fs::File::create(&header_path)?;
-        output_library_header(&mut header, abis, Some(name))?;
+        output_diemry_header(&mut header, abis, Some(name))?;
         let body_path = dir_path.join(name.to_string() + ".cpp");
         let mut body = std::fs::File::create(&body_path)?;
-        output_library_body(&mut body, abis, name, Some(name))?;
+        output_diemry_body(&mut body, abis, name, Some(name))?;
         Ok(())
     }
 }

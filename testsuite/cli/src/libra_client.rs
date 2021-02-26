@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::AccountData;
 use anyhow::{bail, ensure, Result};
-use libra_json_rpc_client::{
+use diem_json_rpc_client::{
     errors::JsonRpcError,
     get_response_from_batch,
     views::{
@@ -12,8 +12,8 @@ use libra_json_rpc_client::{
     },
     JsonRpcBatch, JsonRpcClient, JsonRpcResponse, ResponseAsView,
 };
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config::{ACCOUNT_RECEIVED_EVENT_PATH, ACCOUNT_SENT_EVENT_PATH},
@@ -26,23 +26,23 @@ use libra_types::{
     waypoint::Waypoint,
 };
 use reqwest::Url;
-use libra_json_rpc_client::views::{MinerStateResourceView, OracleResourceView};
+use diem_json_rpc_client::views::{MinerStateResourceView, OracleResourceView};
 
-/// A client connection to an AdmissionControl (AC) service. `LibraClient` also
+/// A client connection to an AdmissionControl (AC) service. `DiemClient` also
 /// handles verifying the server's responses, retrying on non-fatal failures, and
 /// ratcheting our latest verified state, which includes the latest verified
 /// version and latest verified epoch change ledger info.
 ///
 /// ### Note
 ///
-/// `LibraClient` will reject out-of-date responses. For example, this can happen if
+/// `DiemClient` will reject out-of-date responses. For example, this can happen if
 ///
 /// 1. We make a request to the remote AC service.
 /// 2. The remote service crashes and it forgets the most recent state or an
 ///    out-of-date replica takes its place.
 /// 3. We make another request to the remote AC service. In this case, the remote
 ///    AC will be behind us and we will reject their response as stale.
-pub struct LibraClient {
+pub struct DiemClient {
     client: JsonRpcClient,
     /// The latest verified chain state.
     trusted_state: TrustedState,
@@ -52,12 +52,12 @@ pub struct LibraClient {
     latest_epoch_change_li: Option<LedgerInfoWithSignatures>,
 }
 
-impl LibraClient {
+impl DiemClient {
     /// Construct a new Client instance.
     pub fn new(url: Url, waypoint: Waypoint) -> Result<Self> {
         let initial_trusted_state = TrustedState::from(waypoint);
         let client = JsonRpcClient::new(url)?;
-        Ok(LibraClient {
+        Ok(DiemClient {
             client,
             trusted_state: initial_trusted_state,
             latest_epoch_change_li: None,

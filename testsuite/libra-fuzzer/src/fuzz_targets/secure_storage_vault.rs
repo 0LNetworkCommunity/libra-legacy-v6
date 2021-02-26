@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{corpus_from_strategy, fuzz_data_to_value, FuzzTargetImpl};
-use libra_proptest_helpers::ValueGenerator;
-use libra_vault_client::{
+use diem_proptest_helpers::ValueGenerator;
+use diem_vault_client::{
     fuzzing::{
         arb_generic_response, arb_policy_list_response, arb_secret_list_response,
         arb_secret_read_response, arb_token_create_response, arb_token_renew_response,

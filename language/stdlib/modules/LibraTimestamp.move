@@ -5,15 +5,15 @@ address 0x1 {
 ///
 /// * Genesis: to initialize the timestamp
 /// * VASP: to keep track of when credentials expire
-/// * LibraSystem, LibraAccount, LibraConfig: to check if the current state is in the genesis state
-/// * LibraBlock: to reach consensus on the global wall clock time
+/// * DiemSystem, DiemAccount, DiemConfig: to check if the current state is in the genesis state
+/// * DiemBlock: to reach consensus on the global wall clock time
 /// * AccountLimits: to limit the time of account limits
 ///
 /// This module moreover enables code to assert that it is running in genesis (`Self::assert_genesis`) or after
 /// genesis (`Self::assert_operating`). These are essentially distinct states of the system. Specifically,
 /// if `Self::assert_operating` succeeds, assumptions about invariants over the global state can be made
 /// which reflect that the system has been successfully initialized.
-module LibraTimestamp {
+module DiemTimestamp {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
 
@@ -36,17 +36,17 @@ module LibraTimestamp {
     /// account.
     public fun set_time_has_started(lr_account: &signer) {
         assert_genesis();
-        CoreAddresses::assert_libra_root(lr_account);
+        CoreAddresses::assert_diem_root(lr_account);
         let timer = CurrentTimeMicroseconds { microseconds: 0 };
         move_to(lr_account, timer);
     }
     spec fun set_time_has_started {
         /// Verification of this function is turned off because it cannot be verified without genesis execution
-        /// context. After time has started, all invariants guarded by `LibraTimestamp::is_operating` will become
+        /// context. After time has started, all invariants guarded by `DiemTimestamp::is_operating` will become
         /// activated and need to hold.
         pragma verify = false;
         include AbortsIfNotGenesis;
-        include CoreAddresses::AbortsIfNotLibraRoot{account: lr_account};
+        include CoreAddresses::AbortsIfNotDiemRoot{account: lr_account};
         ensures is_operating();
     }
 
@@ -57,7 +57,7 @@ module LibraTimestamp {
         timestamp: u64
     ) acquires CurrentTimeMicroseconds {
         assert_operating();
-        // Can only be invoked by LibraVM signer.
+        // Can only be invoked by DiemVM signer.
         CoreAddresses::assert_vm(account);
 
         let global_timer = borrow_global_mut<CurrentTimeMicroseconds>(CoreAddresses::LIBRA_ROOT_ADDRESS());
@@ -114,7 +114,7 @@ module LibraTimestamp {
         global<CurrentTimeMicroseconds>(CoreAddresses::LIBRA_ROOT_ADDRESS()).microseconds / MICRO_CONVERSION_FACTOR
     }
 
-    /// Helper function to determine if Libra is in genesis state.
+    /// Helper function to determine if Diem is in genesis state.
     public fun is_genesis(): bool {
         !exists<CurrentTimeMicroseconds>(CoreAddresses::LIBRA_ROOT_ADDRESS())
     }
@@ -133,7 +133,7 @@ module LibraTimestamp {
         aborts_if !is_genesis() with Errors::INVALID_STATE;
     }
 
-    /// Helper function to determine if Libra is operating. This is the same as `!is_genesis()` and is provided
+    /// Helper function to determine if Diem is operating. This is the same as `!is_genesis()` and is provided
     /// for convenience. Testing `is_operating()` is more frequent than `is_genesis()`.
     public fun is_operating(): bool {
         exists<CurrentTimeMicroseconds>(CoreAddresses::LIBRA_ROOT_ADDRESS())

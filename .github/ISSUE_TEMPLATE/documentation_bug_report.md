@@ -1,6 +1,6 @@
 ---
-name: "\U0001F41B Documentation/developers.libra.org Bug report"
-about: Create a bug report to help improve the Libra Developers' Website
+name: "\U0001F41B Documentation/developers.diem.org Bug report"
+about: Create a bug report to help improve the Diem Developers' Website
 title: "[Bug]"
 labels: bug
 assignees: ''
@@ -9,11 +9,11 @@ assignees: ''
 
 # 🐛 Bug
 
-If you're looking to report an issue with the Libra Core project go to https://github.com/libra/libra
+If you're looking to report an issue with the Diem Core project go to https://github.com/diem/diem
 
 <!-- A clear and concise description of what the bug is.
 
-If you've uncovered a security issue, please email security@libra.org -->
+If you've uncovered a security issue, please email security@diem.org -->
 
 ## Steps to reproduce
 

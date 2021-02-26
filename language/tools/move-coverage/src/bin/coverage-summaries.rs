@@ -36,7 +36,7 @@ struct Args {
     /// Whether function coverage summaries should be displayed
     #[structopt(long = "summarize-functions", short = "f")]
     pub summarize_functions: bool,
-    /// The path to the standard library binary directory for Move
+    /// The path to the standard diemry binary directory for Move
     #[structopt(long = "stdlib-path", short = "s")]
     pub stdlib_path: Option<String>,
     /// Output CSV data of coverage

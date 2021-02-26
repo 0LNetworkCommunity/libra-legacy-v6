@@ -388,7 +388,7 @@ rate for the currency given by <code>currency_code</code> is updated.
 <dd>
  The new on-chain to-LBR exchange rate between the
  <code>currency_code</code> currency and LBR. Represented in conversion
- between the (on-chain) base-units for the currency and microlibra.
+ between the (on-chain) base-units for the currency and microdiem.
 </dd>
 </dl>
 
@@ -1614,7 +1614,7 @@ adds the currency to the set of <code><a href="">RegisteredCurrencies</a></code>
     currency_code: vector&lt;u8&gt;,
 ): (<a href="LibraTest.md#0x1_LibraTest_MintCapability">MintCapability</a>&lt;CoinType&gt;, <a href="LibraTest.md#0x1_LibraTest_BurnCapability">BurnCapability</a>&lt;CoinType&gt;)
 {
-    <a href="_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
     // Operational constraint that it must be stored under a specific address.
     <b>assert</b>(
         <a href="_address_of">Signer::address_of</a>(lr_account) == <a href="_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>(),
@@ -1650,7 +1650,7 @@ adds the currency to the set of <code><a href="">RegisteredCurrencies</a></code>
 
 
 
-<pre><code><b>aborts_if</b> !<a href="_spec_has_libra_root_role_addr">Roles::spec_has_libra_root_role_addr</a>(<a href="_spec_address_of">Signer::spec_address_of</a>(lr_account));
+<pre><code><b>aborts_if</b> !<a href="_spec_has_diem_root_role_addr">Roles::spec_has_diem_root_role_addr</a>(<a href="_spec_address_of">Signer::spec_address_of</a>(lr_account));
 <b>aborts_if</b> <a href="_spec_address_of">Signer::spec_address_of</a>(lr_account) != <a href="_CURRENCY_INFO_ADDRESS">CoreAddresses::CURRENCY_INFO_ADDRESS</a>();
 <b>aborts_if</b> <b>exists</b>&lt;<a href="LibraTest.md#0x1_LibraTest_CurrencyInfo">CurrencyInfo</a>&lt;CoinType&gt;&gt;(<a href="_spec_address_of">Signer::spec_address_of</a>(lr_account));
 <b>aborts_if</b> <a href="LibraTest.md#0x1_LibraTest_spec_is_currency">spec_is_currency</a>&lt;CoinType&gt;();

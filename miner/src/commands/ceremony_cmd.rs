@@ -4,7 +4,7 @@
 use abscissa_core::{Command, Options, Runnable};
 use crate::config;
 use crate::{keygen::keygen, commands::CONFIG_FILE, block::build_block};
-use libra_global_constants::NODE_HOME;
+use diem_global_constants::NODE_HOME;
 use toml;
 use std::{fs, io::Write};
 use rustyline::Editor;

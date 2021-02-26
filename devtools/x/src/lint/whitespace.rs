@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use glob::Pattern;
@@ -84,7 +84,7 @@ impl ContentLinter for TrailingWhitespace {
 fn skip_whitespace_checks<'l>(file: &FileContext<'l>) -> RunStatus<'l> {
     // glob based opt outs
     // TODO Reevaluate skipping whitespace checks in .md files for the website
-    let patterns = [".github/actions/*/dist/*", "developers.libra.org/**/*.md"];
+    let patterns = [".github/actions/*/dist/*", "developers.diem.org/**/*.md"];
 
     if let Some(pattern) = patterns
         .iter()

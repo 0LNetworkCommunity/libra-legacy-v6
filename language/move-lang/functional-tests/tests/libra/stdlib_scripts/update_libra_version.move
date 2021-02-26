@@ -1,5 +1,5 @@
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, 13
-stdlib_script::update_libra_version
+stdlib_script::update_diem_version
 // check: "Keep(EXECUTED)"

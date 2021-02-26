@@ -4,9 +4,9 @@ use crate::{
 };
 
 use chrono::{DateTime, Utc};
-use libra_types::waypoint::Waypoint;
+use diem_types::waypoint::Waypoint;
 use std::time::{Duration, UNIX_EPOCH};
-// use libra_json_rpc_client::views::MinerStateResourceView;
+// use diem_json_rpc_client::views::MinerStateResourceView;
 // use anyhow::Error;
 
 /// Major command for query operations.

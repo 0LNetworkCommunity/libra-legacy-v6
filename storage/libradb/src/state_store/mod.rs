@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This file defines state store APIs that are related account state Merkle tree.
@@ -14,12 +14,12 @@ use crate::{
     },
 };
 use anyhow::Result;
-use libra_crypto::{hash::CryptoHash, HashValue};
-use libra_jellyfish_merkle::{
+use diem_crypto::{hash::CryptoHash, HashValue};
+use diem_jellyfish_merkle::{
     node_type::{LeafNode, Node, NodeKey},
     JellyfishMerkleTree, NodeBatch, TreeReader, TreeWriter, ROOT_NIBBLE_HEIGHT,
 };
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_state_blob::AccountStateBlob,
     proof::{SparseMerkleProof, SparseMerkleRangeProof},

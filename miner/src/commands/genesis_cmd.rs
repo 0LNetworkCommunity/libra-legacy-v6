@@ -6,7 +6,7 @@ use std::{fs::File, path::{PathBuf}};
 
 use crate::{application::app_config, config::MinerConfig};
 use abscissa_core::{Command, Options, Runnable};
-use libra_genesis_tool::node_files;
+use diem_genesis_tool::node_files;
 use std::io::Write;
 /// `genesis` subcommand
 #[derive(Command, Debug, Default, Options)]

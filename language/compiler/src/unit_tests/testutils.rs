@@ -8,7 +8,7 @@ use ir_to_bytecode::{
     compiler::{compile_module, compile_script},
     parser::{parse_module, parse_script},
 };
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use vm::{
     access::ScriptAccess,
     errors::{Location, VMError},

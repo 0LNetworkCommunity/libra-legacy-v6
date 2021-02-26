@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
-//! This crate provides [`LibraDB`] which represents physical storage of the core Libra data
+//! This crate provides [`DiemDB`] which represents physical storage of the core Diem data
 //! structures.
 //!
 //! It relays read/write operations on the physical storage via [`schemadb`] to the underlying
-//! Key-Value storage system, and implements libra data structures on top of it.
+//! Key-Value storage system, and implements diem data structures on top of it.
 
 // Used in this and other crates for testing.
 #[cfg(any(test, feature = "fuzzing"))]
@@ -29,15 +29,15 @@ mod transaction_store;
 
 #[cfg(any(test, feature = "fuzzing"))]
 #[allow(dead_code)]
-mod libradb_test;
+mod diemdb_test;
 
 #[cfg(feature = "fuzzing")]
-pub use libradb_test::test_save_blocks_impl;
+pub use diemdb_test::test_save_blocks_impl;
 
 use crate::{
     backup::{backup_handler::BackupHandler, restore_handler::RestoreHandler},
     change_set::{ChangeSet, SealedChangeSet},
-    errors::LibraDbError,
+    errors::DiemDbError,
     event_store::EventStore,
     ledger_counters::LedgerCounters,
     ledger_store::LedgerStore,
@@ -55,9 +55,9 @@ use crate::{
 };
 use anyhow::{ensure, Result};
 use itertools::{izip, zip_eq};
-use libra_crypto::hash::{CryptoHash, HashValue, SPARSE_MERKLE_PLACEHOLDER_HASH};
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_crypto::hash::{CryptoHash, HashValue, SPARSE_MERKLE_PLACEHOLDER_HASH};
+use diem_logger::prelude::*;
+use diem_types::{
     account_address::AccountAddress,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
     contract_event::{ContractEvent, EventWithProof},
@@ -85,16 +85,16 @@ const MAX_NUM_EPOCH_ENDING_LEDGER_INFO: usize = 100;
 
 fn error_if_too_many_requested(num_requested: u64, max_allowed: u64) -> Result<()> {
     if num_requested > max_allowed {
-        Err(LibraDbError::TooManyRequested(num_requested, max_allowed).into())
+        Err(DiemDbError::TooManyRequested(num_requested, max_allowed).into())
     } else {
         Ok(())
     }
 }
 
 /// This holds a handle to the underlying DB responsible for physical storage and provides APIs for
-/// access to the core Libra data structures.
+/// access to the core Diem data structures.
 #[derive(Debug)]
-pub struct LibraDB {
+pub struct DiemDB {
     db: Arc<DB>,
     ledger_store: Arc<LedgerStore>,
     transaction_store: Arc<TransactionStore>,
@@ -104,7 +104,7 @@ pub struct LibraDB {
     pruner: Option<Pruner>,
 }
 
-impl LibraDB {
+impl DiemDB {
     fn column_families() -> Vec<ColumnFamilyName> {
         vec![
             /* LedgerInfo CF = */ DEFAULT_CF_NAME,
@@ -125,7 +125,7 @@ impl LibraDB {
     fn new_with_db(db: DB, prune_window: Option<u64>) -> Self {
         let db = Arc::new(db);
 
-        LibraDB {
+        DiemDB {
             db: Arc::clone(&db),
             event_store: EventStore::new(Arc::clone(&db)),
             ledger_store: Arc::new(LedgerStore::new(Arc::clone(&db))),
@@ -146,19 +146,19 @@ impl LibraDB {
             "Do not set prune_window when opening readonly.",
         );
 
-        let path = db_root_path.as_ref().join("libradb");
+        let path = db_root_path.as_ref().join("diemdb");
         let instant = Instant::now();
 
         let db = if readonly {
-            DB::open_readonly(path.clone(), "libradb_ro", Self::column_families())?
+            DB::open_readonly(path.clone(), "diemdb_ro", Self::column_families())?
         } else {
-            DB::open(path.clone(), "libradb", Self::column_families())?
+            DB::open(path.clone(), "diemdb", Self::column_families())?
         };
 
         info!(
             path = path,
             time_ms = %instant.elapsed().as_millis(),
-            "Opened LibraDB.",
+            "Opened DiemDB.",
         );
 
         Ok(Self::new_with_db(db, prune_window))
@@ -168,14 +168,14 @@ impl LibraDB {
         db_root_path: P,
         secondary_path: P,
     ) -> Result<Self> {
-        let primary_path = db_root_path.as_ref().join("libradb");
+        let primary_path = db_root_path.as_ref().join("diemdb");
         let secondary_path = secondary_path.as_ref().to_path_buf();
 
         Ok(Self::new_with_db(
             DB::open_as_secondary(
                 primary_path,
                 secondary_path,
-                "libradb_sec",
+                "diemdb_sec",
                 Self::column_families(),
             )?,
             None, // prune_window
@@ -190,7 +190,7 @@ impl LibraDB {
             false, /* readonly */
             None,  /* pruner */
         )
-        .expect("Unable to open LibraDB")
+        .expect("Unable to open DiemDB")
     }
 
     /// Returns ledger infos reflecting epoch bumps starting with the given epoch. If there are no
@@ -477,7 +477,7 @@ impl LibraDB {
     }
 }
 
-impl DbReader for LibraDB {
+impl DbReader for DiemDB {
     fn get_epoch_ending_ledger_infos(
         &self,
         start_epoch: u64,
@@ -769,7 +769,7 @@ impl DbReader for LibraDB {
     }
 }
 
-impl DbWriter for LibraDB {
+impl DbWriter for DiemDB {
     /// `first_version` is the version of the first transaction in `txns_to_commit`.
     /// When `ledger_info_with_sigs` is provided, verify that the transaction accumulator root hash
     /// it carries is generated after the `txns_to_commit` are applied.
@@ -873,7 +873,7 @@ pub trait GetRestoreHandler {
     fn get_restore_handler(&self) -> RestoreHandler;
 }
 
-impl GetRestoreHandler for Arc<LibraDB> {
+impl GetRestoreHandler for Arc<DiemDB> {
     fn get_restore_handler(&self) -> RestoreHandler {
         RestoreHandler::new(
             Arc::clone(&self.db),
@@ -899,7 +899,7 @@ where
             warn!(
                 api_name = api_name,
                 error = ?e,
-                "LibraDB API returned error."
+                "DiemDB API returned error."
             );
             "Err"
         }

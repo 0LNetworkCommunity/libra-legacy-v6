@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines traits and implementations of
 //! [cryptographic hash functions](https://en.wikipedia.org/wiki/Cryptographic_hash_function)
-//! for the Libra project.
+//! for the Diem project.
 //!
 //! It is designed to help authors protect against two types of real world attacks:
 //!
@@ -21,26 +21,26 @@
 //!    same input to the hash function and therefore the same hash. This
 //!    creates a collision.
 //!
-//! Regarding (1), this library makes it easy for Libra developers to create as
+//! Regarding (1), this diemry makes it easy for Diem developers to create as
 //! many new "hashable" Rust types as needed so that each Rust type hashed and signed
-//! in Libra has a unique meaning, that is, unambiguously captures the intent of a signer.
+//! in Diem has a unique meaning, that is, unambiguously captures the intent of a signer.
 //!
-//! Regarding (2), this library provides the `CryptoHasher` abstraction to easily manage
+//! Regarding (2), this diemry provides the `CryptoHasher` abstraction to easily manage
 //! cryptographic seeds for hashing. Hashing seeds aim to ensure that
 //! the hashes of values of a given type `MyNewStruct` never collide with hashes of values
 //! from another type.
 //!
 //! Finally, to prevent format ambiguity within a same type `MyNewStruct` and facilitate protocol
-//! specifications, we use [Libra Canonical Serialization (LCS)](../../libra_canonical_serialization/index.html)
+//! specifications, we use [Diem Canonical Serialization (LCS)](../../diem_canonical_serialization/index.html)
 //! as the recommended solution to write Rust values into a hasher.
 //!
 //! # Quick Start
 //!
 //! To obtain a `hash()` method for any new type `MyNewStruct`, it is (strongly) recommended to
-//! use the derive macros of `serde` and `libra_crypto_derive` as follows:
+//! use the derive macros of `serde` and `diem_crypto_derive` as follows:
 //! ```
-//! use libra_crypto::hash::CryptoHash;
-//! use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+//! use diem_crypto::hash::CryptoHash;
+//! use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
 //! use serde::{Deserialize, Serialize};
 //! #[derive(Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
 //! struct MyNewStruct { /*...*/ }
@@ -63,7 +63,7 @@
 //! use the derive macro [`CryptoHasher`](https://doc.rust-lang.org/reference/procedural-macros.html).
 //!
 //! ```
-//! use libra_crypto_derive::CryptoHasher;
+//! use diem_crypto_derive::CryptoHasher;
 //! use serde::Deserialize;
 //! #[derive(Deserialize, CryptoHasher)]
 //! #[serde(rename = "OptionalCustomSerdeName")]
@@ -71,7 +71,7 @@
 //! ```
 //!
 //! The macro `CryptoHasher` will define a hasher automatically called `MyNewStructHasher`, and derive a salt
-//! using the name of the type as seen by the Serde library. In the example above, this name
+//! using the name of the type as seen by the Serde diemry. In the example above, this name
 //! was changed using the Serde parameter `rename`: the salt will be based on the value `OptionalCustomSerdeName`
 //! instead of the default name `MyNewStruct`.
 //!
@@ -79,7 +79,7 @@
 //!
 //! **IMPORTANT:** Do NOT use this for new code unless you know what you are doing.
 //!
-//! This library also provides a few customized hashers defined in the code as follows:
+//! This diemry also provides a few customized hashers defined in the code as follows:
 //!
 //! ```
 //! # // To get around that there's no way to doc-test a non-exported macro:
@@ -92,7 +92,7 @@
 //! **IMPORTANT:** Do NOT use this for new code unless you know what you are doing.
 //!
 //! ```
-//! use libra_crypto::hash::{CryptoHasher, TestOnlyHasher};
+//! use diem_crypto::hash::{CryptoHasher, TestOnlyHasher};
 //!
 //! let mut hasher = TestOnlyHasher::default();
 //! hasher.update("Test message".as_bytes());
@@ -101,7 +101,7 @@
 
 use anyhow::{ensure, Error, Result};
 use bytes::Bytes;
-use libra_nibble::Nibble;
+use diem_nibble::Nibble;
 use mirai_annotations::*;
 use once_cell::sync::{Lazy, OnceCell};
 #[cfg(any(test, feature = "fuzzing"))]
@@ -113,7 +113,7 @@ use static_assertions::const_assert;
 use std::{self, convert::AsRef, fmt, str::FromStr};
 use tiny_keccak::{Hasher, Sha3};
 
-/// A prefix used to begin the salt of every libra hashable structure. The salt
+/// A prefix used to begin the salt of every diem hashable structure. The salt
 /// consists in this global prefix, concatenated with the specified
 /// serialization name of the struct.
 pub(crate) const LIBRA_HASH_PREFIX: &[u8] = b"LIBRA::";
@@ -640,7 +640,7 @@ pub static GENESIS_BLOCK_ID: Lazy<HashValue> = Lazy::new(|| {
 ///
 /// # Example
 /// ```
-/// use libra_crypto::hash::TestOnlyHash;
+/// use diem_crypto::hash::TestOnlyHash;
 ///
 /// b"hello world".test_only_hash();
 /// ```

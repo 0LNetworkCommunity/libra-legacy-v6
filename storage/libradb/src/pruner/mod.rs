@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module provides `Pruner` which manages a thread pruning old data in the background and is
@@ -14,10 +14,10 @@ use crate::{
     },
 };
 use anyhow::Result;
-use libra_infallible::Mutex;
-use libra_jellyfish_merkle::StaleNodeIndex;
-use libra_logger::prelude::*;
-use libra_types::transaction::Version;
+use diem_infallible::Mutex;
+use diem_jellyfish_merkle::StaleNodeIndex;
+use diem_logger::prelude::*;
+use diem_types::transaction::Version;
 use schemadb::{ReadOptions, SchemaBatch, SchemaIterator, DB};
 #[cfg(test)]
 use std::thread::sleep;
@@ -32,7 +32,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-/// The `Pruner` is meant to be part of a `LibraDB` instance and runs in the background to prune old
+/// The `Pruner` is meant to be part of a `DiemDB` instance and runs in the background to prune old
 /// data.
 ///
 /// It creates a worker thread on construction and joins it on destruction. When destructed, it
@@ -62,7 +62,7 @@ impl Pruner {
 
         LIBRA_STORAGE_PRUNE_WINDOW.set(historical_versions_to_keep as i64);
         let worker_thread = std::thread::Builder::new()
-            .name("libradb_pruner".into())
+            .name("diemdb_pruner".into())
             .spawn(move || Worker::new(db, command_receiver, worker_progress_clone).work_loop())
             .expect("Creating pruner thread should succeed.");
 

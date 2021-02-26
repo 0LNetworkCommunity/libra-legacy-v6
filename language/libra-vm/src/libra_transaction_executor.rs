@@ -5,7 +5,7 @@ use crate::{
     counters::*,
     data_cache::StateViewCache,
     errors::expect_only_successful_execution,
-    libra_vm::{
+    diem_vm::{
         charge_global_write_gas_usage, get_currency_info, get_transaction_output,
         txn_effects_to_writeset_and_events_cached, LibraVMImpl, LibraVMInternals,
     },
@@ -15,10 +15,10 @@ use crate::{
     txn_effects_to_writeset_and_events, VMExecutor,
 };
 use fail::fail_point;
-use libra_logger::prelude::*;
-use libra_state_view::StateView;
-use libra_trace::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_state_view::StateView;
+use diem_trace::prelude::*;
+use diem_types::{
     account_config,
     block_metadata::BlockMetadata,
     transaction::{
@@ -529,7 +529,7 @@ impl LibraVM {
             }
             TransactionPayload::Module(_) | TransactionPayload::Script(_) => {
                 log_context.alert();
-                error!(*log_context, "[libra_vm] UNREACHABLE");
+                error!(*log_context, "[diem_vm] UNREACHABLE");
                 return Ok(discard_error_vm_status(VMStatus::Error(
                     StatusCode::UNREACHABLE,
                 )));
@@ -655,7 +655,7 @@ impl LibraVM {
                 Ok(PreprocessedTransaction::BlockPrologue(block_metadata)) => {
                     execute_block_trace_guard.clear();
                     current_block_id = block_metadata.id();
-                    trace_code_block!("libra_vm::execute_block_impl", {"block", current_block_id}, execute_block_trace_guard);
+                    trace_code_block!("diem_vm::execute_block_impl", {"block", current_block_id}, execute_block_trace_guard);
                     let (vm_status, output) =
                         self.process_block_prologue(data_cache, block_metadata, &log_context)?;
                     (vm_status, output, Some("block_prologue".to_string()))
@@ -759,7 +759,7 @@ fn preprocess_transaction(txn: Transaction) -> Result<PreprocessedTransaction, V
 }
 
 fn is_reconfiguration(vm_output: &TransactionOutput) -> bool {
-    let new_epoch_event_key = libra_types::on_chain_config::new_epoch_event_key();
+    let new_epoch_event_key = diem_types::on_chain_config::new_epoch_event_key();
     vm_output
         .events()
         .iter()

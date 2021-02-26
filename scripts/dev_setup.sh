@@ -1,7 +1,7 @@
 #!/bin/bash
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
-# This script sets up the environment for the Libra build by installing necessary dependencies.
+# This script sets up the environment for the Diem build by installing necessary dependencies.
 #
 # Usage ./dev_setup.sh <options>
 #   v - verbose, print all statements
@@ -27,7 +27,7 @@ cd "$SCRIPT_PATH/.." || exit
 
 function usage {
   echo "Usage:"
-  echo "Installs or updates necessary dev tools for libra/libra."
+  echo "Installs or updates necessary dev tools for diem/diem."
   echo "-b batch mode, no user interactions and miminal output"
   echo "-p update ${HOME}/.profile"
   echo "-t install build tools"
@@ -35,7 +35,7 @@ function usage {
   echo "-y installs or updates Move prover tools: z3, dotnet, boogie"
   echo "-v verbose mode"
   echo "If no toolchain component is selected with -t, -o, -y, or -p, the behavior is as if -t had been provided."
-  echo "This command must be called from the root folder of the Libra project."
+  echo "This command must be called from the root folder of the Diem project."
 }
 
 function add_to_profile {
@@ -383,10 +383,10 @@ function install_z3 {
 
 function welcome_message {
 cat <<EOF
-Welcome to Libra!
+Welcome to Diem!
 
 This script will download and install the necessary dependencies needed to
-build, test and inspect Libra Core.
+build, test and inspect Diem Core.
 
 Based on your selection, these tools will be included:
 EOF
@@ -488,7 +488,7 @@ if [[ "$INSTALL_BUILD_TOOLS" == "false" ]] && \
 fi
 
 if [ ! -f rust-toolchain ]; then
-	echo "Unknown location. Please run this from the libra repository. Abort."
+	echo "Unknown location. Please run this from the diem repository. Abort."
 	exit 1
 fi
 

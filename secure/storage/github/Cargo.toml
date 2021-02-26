@@ -1,10 +1,10 @@
 [package]
-name = "libra-github-client"
+name = "diem-github-client"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-repository = "https://github.com/libra/libra"
-description = "Libra's Restful GitHub Client"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.org>"]
+repository = "https://github.com/diem/diem"
+description = "Diem's Restful GitHub Client"
+homepage = "https://diem.org"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -15,8 +15,8 @@ serde_json = "1.0.58"
 thiserror = "1.0.21"
 ureq = { version = "1.5.1", features = ["json", "native-tls"], default-features = false }
 
-libra-crypto = { path = "../../../crypto/crypto", version = "0.1.0" }
-libra-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
+diem-crypto = { path = "../../../crypto/crypto", version = "0.1.0" }
+diem-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
 
 [dev-dependencies]
 base64 = "0.13.0"

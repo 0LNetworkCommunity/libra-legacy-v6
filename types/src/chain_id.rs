@@ -30,7 +30,7 @@ pub enum NamedChain {
 
 impl NamedChain {
     fn str_to_chain_id(s: &str) -> Result<ChainId> {
-        // TODO implement custom macro that derives FromStr impl for enum (similar to libra/common/num-variants)
+        // TODO implement custom macro that derives FromStr impl for enum (similar to diem/common/num-variants)
         let reserved_chain = match s {
             "MAINNET" => NamedChain::MAINNET,
             "TESTNET" => NamedChain::TESTNET,

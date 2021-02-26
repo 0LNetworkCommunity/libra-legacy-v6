@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{test_helper::arb_blocks_to_commit, LibraDB};
+use crate::{test_helper::arb_blocks_to_commit, DiemDB};
 use anyhow::Result;
-use libra_temppath::TempPath;
+use diem_temppath::TempPath;
 use proptest::prelude::*;
 use storage_interface::DbWriter;
 
@@ -13,7 +13,7 @@ proptest! {
     #[test]
     fn test_get_transaction_iter(input in arb_blocks_to_commit()) {
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
 
         let mut cur_ver = 0;
         for (txns_to_commit, ledger_info_with_sigs) in input.iter() {

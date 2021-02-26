@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Gas costs for common transactions.
@@ -8,15 +8,15 @@ use crate::{
     common_transactions::{create_account_txn, peer_to_peer_txn, rotate_key_txn},
     executor::FakeExecutor,
 };
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_types::{
     account_config,
     transaction::{authenticator::AuthenticationKey, SignedTransaction},
 };
 use once_cell::sync::Lazy;
 
 /// The gas each transaction is configured to reserve. If the gas available in the account,
-/// converted to microlibra, falls below this threshold, transactions are expected to fail with
+/// converted to microdiem, falls below this threshold, transactions are expected to fail with
 /// an insufficient balance.
 pub const TXN_RESERVED: u64 = 500_000;
 

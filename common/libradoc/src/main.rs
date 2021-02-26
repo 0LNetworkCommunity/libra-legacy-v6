@@ -1,21 +1,21 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! # Tool to help maintaining libra specifications.
+//! # Tool to help maintaining diem specifications.
 //!
 //! '''bash
-//! cargo run -p libra-documentation-tool -- --help
+//! cargo run -p diem-documentation-tool -- --help
 //! '''
 
-use libra_documentation_tool as libra_doc;
+use diem_documentation_tool as diem_doc;
 use serde_reflection::Registry;
 use std::{collections::BTreeMap, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "libra documentation tool",
-    about = "Tool to help maintaining libra specifications"
+    name = "diem documentation tool",
+    about = "Tool to help maintaining diem specifications"
 )]
 struct Options {
     /// Path to the YAML-encoded Serde formats.
@@ -24,7 +24,7 @@ struct Options {
 
     /// Directory where to update markdown files in place (otherwise print sample code on stdout).
     #[structopt(long)]
-    update_libra_specs_dir: Option<PathBuf>,
+    update_diem_specs_dir: Option<PathBuf>,
 }
 
 fn process_specs(dir: PathBuf, definitions: &BTreeMap<String, String>) -> std::io::Result<()> {
@@ -35,7 +35,7 @@ fn process_specs(dir: PathBuf, definitions: &BTreeMap<String, String>) -> std::i
             continue;
         }
         let file = std::io::BufReader::new(std::fs::File::open(path.clone())?);
-        let output = libra_doc::update_rust_quotes(file, definitions)?;
+        let output = diem_doc::update_rust_quotes(file, definitions)?;
         std::fs::write(path, &output)?;
     }
     Ok(())
@@ -47,10 +47,10 @@ fn main() {
     let registry = serde_yaml::from_str::<Registry>(content.as_str())
         .expect("input file should be correct YAML for a Serde registry");
 
-    let definitions = libra_doc::quote_container_definitions(&registry)
+    let definitions = diem_doc::quote_container_definitions(&registry)
         .expect("generating definitions should not fail");
 
-    match options.update_libra_specs_dir {
+    match options.update_diem_specs_dir {
         None => println!("{:#?}", definitions),
         Some(dir) => process_specs(dir, &definitions).expect("failed to process specifications"),
     }

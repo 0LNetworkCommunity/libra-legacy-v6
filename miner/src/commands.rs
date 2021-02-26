@@ -42,7 +42,7 @@ use abscissa_core::{
 };
 use std::path::PathBuf;
 use dirs;
-use libra_global_constants::NODE_HOME;
+use diem_global_constants::NODE_HOME;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "miner.toml";

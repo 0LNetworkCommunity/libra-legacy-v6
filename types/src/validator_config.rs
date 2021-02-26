@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account_address::AccountAddress;
-use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_network_address::{encrypted::EncNetworkAddress, NetworkAddress};
+use diem_crypto::ed25519::Ed25519PublicKey;
+use diem_network_address::{encrypted::EncNetworkAddress, NetworkAddress};
 use move_core_types::move_resource::MoveResource;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;

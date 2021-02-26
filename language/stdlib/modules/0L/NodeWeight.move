@@ -3,7 +3,7 @@
 // Node Weight
 /////////////////////////////////////////////////////////////////////////
 // Node Weight - used for reconfiguring the network, for selecting top N validators to new validator set.
-// This module is used to select the validators who would participate in LibraBFT protocol. Due to the restrictions on throughput with increasing validators above a threshold,
+// This module is used to select the validators who would participate in DiemBFT protocol. Due to the restrictions on throughput with increasing validators above a threshold,
 // we rank nodes based on node weight (i.e. previous participation heuristics and mining) to select the validators for an epoch.
 // File Prefix for errors: 1401
 ///////////////////////////////////////////////////////////////////////////

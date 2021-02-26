@@ -8,7 +8,7 @@ stdlib_script::create_parent_vasp_account
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: alice
 script {
 use 0x1::AccountLimits;

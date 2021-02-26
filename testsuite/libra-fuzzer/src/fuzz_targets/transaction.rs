@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{corpus_from_strategy, fuzz_data_to_value, FuzzTargetImpl};
@@ -6,8 +6,8 @@ use language_e2e_tests::account_universe::{
     all_transactions_strategy, log_balance_strategy, run_and_assert_universe, AUTransactionGen,
     AccountUniverseGen,
 };
-use libra_proptest_helpers::ValueGenerator;
-use libra_types::transaction::SignedTransaction;
+use diem_proptest_helpers::ValueGenerator;
+use diem_types::transaction::SignedTransaction;
 use once_cell::sync::Lazy;
 use proptest::{
     collection::vec,

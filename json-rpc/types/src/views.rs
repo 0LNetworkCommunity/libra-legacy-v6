@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{format_err, Error, Result};
 use compiled_stdlib::transaction_scripts::StdlibScript;
-use libra_crypto::HashValue;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_types::{
     account_config::{
         AccountResource, AccountRole, AdminTransactionEvent, BalanceResource, BaseUrlRotationEvent,
         BurnEvent, CancelBurnEvent, ComplianceKeyRotationEvent, CreateAccountEvent,
@@ -32,8 +32,8 @@ use std::{
     convert::{TryFrom, TryInto},
     default::Default,
 };
-use libra_types::account_config::resources::miner_state::MinerStateResource;
-use libra_types::account_config::resources::oracle_upgrade::{UpgradeOracle, OracleResource};
+use diem_types::account_config::resources::miner_state::MinerStateResource;
+use diem_types::account_config::resources::oracle_upgrade::{UpgradeOracle, OracleResource};
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct AmountView {
@@ -353,7 +353,7 @@ pub struct MetadataView {
     pub chain_id: u8,
     pub script_hash_allow_list: Option<Vec<BytesView>>,
     pub module_publishing_allowed: Option<bool>,
-    pub libra_version: Option<u64>,
+    pub diem_version: Option<u64>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]

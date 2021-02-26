@@ -1,10 +1,10 @@
 [package]
-name = "libra-json-rpc-client"
+name = "diem-json-rpc-client"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra JSONRPC client"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.org>"]
+description = "Diem JSONRPC client"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.org"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -16,10 +16,10 @@ reqwest = { version = "0.10.8", features = ["blocking", "json"], default_feature
 serde = { version = "1.0.116", default-features = false }
 serde_json = "1.0.58"
 
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
-libra-json-rpc-types  = { path = "../../json-rpc/types" }
-libra-types = { path = "../../types", version = "0.1.0" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
+lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+diem-json-rpc-types  = { path = "../../json-rpc/types" }
+diem-types = { path = "../../types", version = "0.1.0" }
+diem-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
 
 [features]
 default = ["tls"]

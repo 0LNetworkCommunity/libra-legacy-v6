@@ -405,7 +405,7 @@ impl AstDebug for ModuleDefinition {
         w.writeln(if *is_source_module {
             "source module"
         } else {
-            "library module"
+            "diemry module"
         });
         for sdef in structs {
             sdef.ast_debug(w);

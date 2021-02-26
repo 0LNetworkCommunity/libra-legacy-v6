@@ -25,7 +25,7 @@ script {
 
 // Checking balance before autopay module
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
@@ -59,7 +59,7 @@ script {
 ///////////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;

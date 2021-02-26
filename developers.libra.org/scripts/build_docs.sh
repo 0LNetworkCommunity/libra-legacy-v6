@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
 
 # run this script from the project root using `./scripts/build_docs.sh`
@@ -8,11 +8,11 @@
 function usage() {
   echo "Usage: $0 [-b] [-r]"
   echo ""
-  echo "Build Libra documentation."
+  echo "Build Diem documentation."
   echo ""
   echo "  -b   Build static version of documentation (otherwise start server)"
   echo ""
-  echo "  -r   Build Libra Rust crate documentation"
+  echo "  -r   Build Diem Rust crate documentation"
   echo ""
 }
 
@@ -29,10 +29,10 @@ function install_rustup {
 BUILD_STATIC=false
 BUILD_RUSTDOCS=false
 
-if [[ "$(basename $PWD)" != "developers.libra.org" ]]; then
+if [[ "$(basename $PWD)" != "developers.diem.org" ]]; then
   echo "Didn't pass directory check."
   echo ""
-  echo "The script must be run from the developers.libra.org directory via ./scripts/build_docs.sh"
+  echo "The script must be run from the developers.diem.org directory via ./scripts/build_docs.sh"
   echo ""
   echo "You are running it from: "
   echo $(echo $(basename $PWD))
@@ -85,13 +85,13 @@ sed -i.old '/^# /d' ../language/vm/README.md; cp ../language/vm/README.md docs/c
 echo "-----------------------------------"
 echo "Manually Copy Coding Guidelines"
 echo "-----------------------------------"
-sed -i.old '/^# Libra Core Coding Guidelines/d' ../documentation/coding_guidelines.md
+sed -i.old '/^# Diem Core Coding Guidelines/d' ../documentation/coding_guidelines.md
 cp ../documentation/coding_guidelines.md docs/community/coding-guidelines.md
 
 echo "-----------------------------------"
 echo "Manually Copy Contributing Guidelines"
 echo "-----------------------------------"
-sed -i.old '/^# Libra Core Contributing Guidelines/d' ../CONTRIBUTING.md
+sed -i.old '/^# Diem Core Contributing Guidelines/d' ../CONTRIBUTING.md
 cp ../CONTRIBUTING.md docs/community/contributing.md
 
 if [[ $BUILD_RUSTDOCS == true ]]; then
@@ -99,7 +99,7 @@ if [[ $BUILD_RUSTDOCS == true ]]; then
   echo "Generating API reference via Rustdoc"
   echo "-----------------------------------"
 
-  # Back to the Libra repo root dir
+  # Back to the Diem repo root dir
   cd ..
 
   # Build the rust crate docs
@@ -108,10 +108,10 @@ if [[ $BUILD_RUSTDOCS == true ]]; then
   export PATH="$PATH:$HOME/.cargo/bin"
   RUSTC_BOOTSTRAP=1 RUSTDOCFLAGS="-Z unstable-options --enable-index-page" cargo doc --no-deps --workspace --lib || exit 1
   # Use the '.' to make sure we only copy the content from the doc dir, not the doc dir itself too.
-  # Avoids having developers.libra.org/docs/rustdocs/doc. We want developers.libra.org/docs/rustdocs/
+  # Avoids having developers.diem.org/docs/rustdocs/doc. We want developers.diem.org/docs/rustdocs/
   RUSTDOC_DIR='../target/doc/.'
   DOCUSAURUS_RUSTDOC_DIR='website/static/docs/rustdocs/'
-  cd developers.libra.org || exit
+  cd developers.diem.org || exit
 
   mkdir -p $DOCUSAURUS_RUSTDOC_DIR
   cp -r $RUSTDOC_DIR $DOCUSAURUS_RUSTDOC_DIR

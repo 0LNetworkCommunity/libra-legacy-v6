@@ -22,7 +22,7 @@ fun main(account: &signer) {
 }
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: bob
 script {
 use 0x1::AccountLimits;
@@ -34,7 +34,7 @@ fun main(lr: &signer, bob_account: &signer) {
 }
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: bob
 script {
 use 0x1::AccountLimits;
@@ -82,7 +82,7 @@ fun main(tc: &signer) {
 }
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::AccountLimits;
 use 0x1::Coin1::Coin1;
@@ -195,7 +195,7 @@ fun main(tc: &signer) {
 }
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::AccountLimits;
 use 0x1::Coin1::Coin1;
@@ -232,7 +232,7 @@ fun main() {
 }
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: bob
 script {
 use 0x1::AccountLimits;

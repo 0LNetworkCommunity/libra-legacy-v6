@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! This library defines a BitVec struct that represents a bit vector.
+//! This diemry defines a BitVec struct that represents a bit vector.
 
 use serde::{de::Error, Deserialize, Deserializer, Serialize};
 use std::ops::BitAnd;

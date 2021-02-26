@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module provides reusable helpers in tests.
 
 use super::*;
-use libra_crypto::hash::CryptoHash;
-use libra_temppath::TempPath;
-use libra_types::{
+use diem_crypto::hash::CryptoHash;
+use diem_temppath::TempPath;
+use diem_types::{
     block_info::BlockInfo,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     proptest_types::{AccountInfoUniverse, LedgerInfoGen, TransactionToCommitGen},
@@ -17,10 +17,10 @@ use proptest::{collection::vec, prelude::*};
 fn to_blocks_to_commit(
     partial_blocks: Vec<(Vec<TransactionToCommit>, LedgerInfo, Vec<ValidatorSigner>)>,
 ) -> Result<Vec<(Vec<TransactionToCommit>, LedgerInfoWithSignatures)>> {
-    // Use temporary LibraDB and STORE LEVEL APIs to calculate hashes on a per transaction basis.
+    // Use temporary DiemDB and STORE LEVEL APIs to calculate hashes on a per transaction basis.
     // Result is used to test the batch PUBLIC API for saving everything, i.e. `save_transactions()`
     let tmp_dir = TempPath::new();
-    let db = LibraDB::new_for_test(&tmp_dir);
+    let db = DiemDB::new_for_test(&tmp_dir);
 
     let mut cur_ver = 0;
     let mut cur_txn_accu_hash = HashValue::zero();

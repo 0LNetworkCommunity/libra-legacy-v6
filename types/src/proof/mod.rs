@@ -15,14 +15,14 @@ use crate::{
     transaction::{TransactionInfo, Version},
 };
 use anyhow::{ensure, Result};
-use libra_crypto::{
+use diem_crypto::{
     hash::{
         CryptoHash, CryptoHasher, EventAccumulatorHasher, SparseMerkleInternalHasher,
         TestOnlyHasher, TransactionAccumulatorHasher,
     },
     HashValue,
 };
-use libra_crypto_derive::CryptoHasher;
+use diem_crypto_derive::CryptoHasher;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};

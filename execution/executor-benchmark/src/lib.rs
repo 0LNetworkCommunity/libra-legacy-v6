@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use executor::{
@@ -6,14 +6,14 @@ use executor::{
     Executor,
 };
 use executor_types::BlockExecutor;
-use libra_config::{config::NodeConfig, utils::get_genesis_txn};
-use libra_crypto::{
+use diem_config::{config::NodeConfig, utils::get_genesis_txn};
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     hash::HashValue,
     PrivateKey, SigningKey, Uniform,
 };
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_types::{
     account_address::AccountAddress,
     account_config::{
         coin1_tmp_tag, testnet_dd_account_address, treasury_compliance_account_address,
@@ -26,8 +26,8 @@ use libra_types::{
         authenticator::AuthenticationKey, RawTransaction, Script, SignedTransaction, Transaction,
     },
 };
-use libra_vm::LibraVM;
-use libradb::LibraDB;
+use diem_vm::DiemVM;
+use diemdb::DiemDB;
 use rand::{rngs::StdRng, SeedableRng};
 use std::{
     collections::BTreeMap,
@@ -86,7 +86,7 @@ impl TransactionGenerator {
         for _i in 0..num_accounts {
             let private_key = Ed25519PrivateKey::generate(&mut rng);
             let public_key = private_key.public_key();
-            let address = libra_types::account_address::from_public_key(&public_key);
+            let address = diem_types::account_address::from_public_key(&public_key);
             let account = AccountData {
                 private_key,
                 public_key,
@@ -229,14 +229,14 @@ impl TransactionGenerator {
 }
 
 struct TransactionExecutor {
-    executor: Executor<LibraVM>,
+    executor: Executor<DiemVM>,
     parent_block_id: HashValue,
     block_receiver: mpsc::Receiver<Vec<Transaction>>,
 }
 
 impl TransactionExecutor {
     fn new(
-        executor: Executor<LibraVM>,
+        executor: Executor<DiemVM>,
         parent_block_id: HashValue,
         block_receiver: mpsc::Receiver<Vec<Transaction>>,
     ) -> Self {
@@ -303,17 +303,17 @@ impl TransactionExecutor {
 
 fn create_storage_service_and_executor(
     config: &NodeConfig,
-) -> (Arc<dyn DbReader>, Executor<LibraVM>) {
+) -> (Arc<dyn DbReader>, Executor<DiemVM>) {
     let (db, db_rw) = DbReaderWriter::wrap(
-        LibraDB::open(
+        DiemDB::open(
             &config.storage.dir(),
             false, /* readonly */
             None,  /* pruner */
         )
         .expect("DB should open."),
     );
-    let waypoint = generate_waypoint::<LibraVM>(&db_rw, get_genesis_txn(config).unwrap()).unwrap();
-    maybe_bootstrap::<LibraVM>(&db_rw, get_genesis_txn(config).unwrap(), waypoint).unwrap();
+    let waypoint = generate_waypoint::<DiemVM>(&db_rw, get_genesis_txn(config).unwrap()).unwrap();
+    maybe_bootstrap::<DiemVM>(&db_rw, get_genesis_txn(config).unwrap(), waypoint).unwrap();
 
     let _handle = start_storage_service_with_db(config, db.clone());
     let executor = Executor::new(
@@ -331,7 +331,7 @@ pub fn run_benchmark(
     num_transfer_blocks: usize,
     db_dir: Option<PathBuf>,
 ) {
-    let (mut config, genesis_key) = libra_genesis_tool::test_config();
+    let (mut config, genesis_key) = diem_genesis_tool::test_config();
     if let Some(path) = db_dir {
         config.storage.dir = path;
     }
@@ -376,7 +376,7 @@ fn create_transaction(
     public_key: Ed25519PublicKey,
     program: Script,
 ) -> Transaction {
-    let now = libra_infallible::duration_since_epoch();
+    let now = diem_infallible::duration_since_epoch();
     let expiration_time = now.as_secs() + 3600;
 
     let raw_txn = RawTransaction::new_script(

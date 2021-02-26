@@ -6,7 +6,7 @@ address 0x1 {
 
 module VASP {
     use 0x1::Errors;
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
     use 0x1::AccountLimits;
@@ -40,11 +40,11 @@ module VASP {
     ///////////////////////////////////////////////////////////////////////////
 
     /// Create a new `ParentVASP` resource under `vasp`
-    /// Aborts if `lr_account` is not the libra root account,
+    /// Aborts if `lr_account` is not the diem root account,
     /// or if there is already a VASP (child or parent) at this account.
     public fun publish_parent_vasp_credential(vasp: &signer, tc_account: &signer) {
-        LibraTimestamp::assert_operating();
-        Roles::assert_libra_root(tc_account);
+        DiemTimestamp::assert_operating();
+        Roles::assert_diem_root(tc_account);
         Roles::assert_parent_vasp_role(vasp);
         let vasp_addr = Signer::address_of(vasp);
         assert(!is_vasp(vasp_addr), Errors::already_published(EPARENT_OR_CHILD_VASP));
@@ -52,7 +52,7 @@ module VASP {
     }
 
     spec fun publish_parent_vasp_credential {
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
         include Roles::AbortsIfNotParentVasp{account: vasp};
         let vasp_addr = Signer::spec_address_of(vasp);

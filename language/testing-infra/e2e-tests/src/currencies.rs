@@ -1,23 +1,23 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{account::Account, compile, executor::FakeExecutor};
-use libra_types::{account_address::AccountAddress, transaction::WriteSetPayload};
+use diem_types::{account_address::AccountAddress, transaction::WriteSetPayload};
 
 pub fn add_currency_to_system(
     executor: &mut FakeExecutor,
     currency_code_to_register: &str,
     current_lr_sequence_number: u64,
 ) -> u64 {
-    let lr_account = Account::new_libra_root();
+    let lr_account = Account::new_diem_root();
     let mut lr_sequence_number = current_lr_sequence_number;
 
     {
         let compiled_script = {
             let script = "
-            import 0x1.LibraTransactionPublishingOption;
+            import 0x1.DiemTransactionPublishingOption;
             main(config: &signer) {
-                LibraTransactionPublishingOption.set_open_module(move(config), false);
+                DiemTransactionPublishingOption.set_open_module(move(config), false);
                 return;
             }
             ";
@@ -41,11 +41,11 @@ pub fn add_currency_to_system(
         let module = format!(
             r#"
             module {} {{
-                import 0x1.Libra;
+                import 0x1.Diem;
                 import 0x1.FixedPoint32;
                 resource {currency_code} {{ x: bool }}
                 public init(lr_account: &signer, tc_account: &signer) {{
-                    Libra.register_SCS_currency<Self.{currency_code}>(
+                    Diem.register_SCS_currency<Self.{currency_code}>(
                         move(lr_account),
                         move(tc_account),
                         FixedPoint32.create_from_rational(1, 1),

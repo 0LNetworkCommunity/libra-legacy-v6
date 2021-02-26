@@ -1,12 +1,12 @@
 // Make sure bob can rotate his key locally.
-// The libra root account may trigger bulk update to incorporate
+// The diem root account may trigger bulk update to incorporate
 // bob's key key into the validator set.
 
 //! account: alice, 0, 0, address
 //! account: bob, 0, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{alice}}, {{alice::auth_key}}, b"alice"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"

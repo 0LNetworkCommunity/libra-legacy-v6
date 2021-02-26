@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use compiled_stdlib::StdLibOptions;
 use executor::process_write_set;
 use executor_types::ProofReader;
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_state_blob::AccountStateBlob,
     transaction::{Transaction, WriteSetPayload},

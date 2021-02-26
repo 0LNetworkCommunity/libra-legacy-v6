@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 //! Helpers for fuzz testing.
 
-use libra_fuzzer::{commands, FuzzTarget};
+use diem_fuzzer::{commands, FuzzTarget};
 use once_cell::sync::Lazy;
 use std::{env, ffi::OsString, fs, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "fuzzer", about = "Libra fuzzer")]
+#[structopt(name = "fuzzer", about = "Diem fuzzer")]
 struct Opt {
     /// Print extended debug output
     #[structopt(long = "debug")]

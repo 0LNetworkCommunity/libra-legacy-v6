@@ -6,7 +6,7 @@ use compiler::Compiler;
 use language_e2e_tests::{
     account::AccountData, compile::compile_script_with_address, executor::FakeExecutor,
 };
-use libra_types::{
+use diem_types::{
     transaction::{Module, SignedTransaction, Transaction, TransactionStatus},
     vm_status::KeptVMStatus,
 };

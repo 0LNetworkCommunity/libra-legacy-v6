@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines the structs transported during the network messaging protocol v1.
-//! These should serialize as per the [specification](https://github.com/libra/libra/blob/master/specifications/network/messaging-v1.md)
+//! These should serialize as per the [specification](https://github.com/diem/diem/blob/master/specifications/network/messaging-v1.md)
 
 use crate::protocols::wire::handshake::v1::ProtocolId;
 use serde::{Deserialize, Serialize};

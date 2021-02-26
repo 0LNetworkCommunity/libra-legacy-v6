@@ -1,5 +1,5 @@
 use crate::account::Account;
-use libra_types::{
+use diem_types::{
     transaction::{SignedTransaction, TransactionArgument, Script},
 };
 use include_dir::{include_dir, Dir};

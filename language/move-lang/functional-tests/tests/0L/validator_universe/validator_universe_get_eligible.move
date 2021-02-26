@@ -2,7 +2,7 @@
 //! account: alice, 100000, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
 use 0x1::ValidatorUniverse;
 use 0x1::Vector;

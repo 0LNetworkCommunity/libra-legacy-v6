@@ -10,7 +10,7 @@ use crate::{
     },
     block_metadata::{LibraBlockResource, NEW_BLOCK_EVENT_PATH},
     event::EventHandle,
-    libra_timestamp::LibraTimestampResource,
+    diem_timestamp::LibraTimestampResource,
     on_chain_config::{
         ConfigurationResource, LibraVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
@@ -79,7 +79,7 @@ impl AccountState {
         self.get_resource(&ConfigurationResource::resource_path())
     }
 
-    pub fn get_libra_timestamp_resource(&self) -> Result<Option<LibraTimestampResource>> {
+    pub fn get_diem_timestamp_resource(&self) -> Result<Option<LibraTimestampResource>> {
         self.get_resource(&LibraTimestampResource::resource_path())
     }
 
@@ -136,7 +136,7 @@ impl AccountState {
         self.get_resource(&ValidatorSet::CONFIG_ID.access_path().path)
     }
 
-    pub fn get_libra_version(&self) -> Result<Option<LibraVersion>> {
+    pub fn get_diem_version(&self) -> Result<Option<LibraVersion>> {
         self.get_resource(&LibraVersion::CONFIG_ID.access_path().path)
     }
 
@@ -168,7 +168,7 @@ impl AccountState {
         }
     }
 
-    pub fn get_libra_block_resource(&self) -> Result<Option<LibraBlockResource>> {
+    pub fn get_diem_block_resource(&self) -> Result<Option<LibraBlockResource>> {
         self.get_resource(&LibraBlockResource::resource_path())
     }
 
@@ -185,8 +185,8 @@ impl AccountState {
             self.get_account_resource()?
                 .map(|account_resource| account_resource.sent_events().clone())
         } else if *NEW_BLOCK_EVENT_PATH == query_path {
-            self.get_libra_block_resource()?
-                .map(|libra_block_resource| libra_block_resource.new_block_events().clone())
+            self.get_diem_block_resource()?
+                .map(|diem_block_resource| diem_block_resource.new_block_events().clone())
         } else {
             bail!("Unrecognized query path: {:?}", query_path);
         };
@@ -227,9 +227,9 @@ impl fmt::Debug for AccountState {
             .map(|account_resource_opt| format!("{:#?}", account_resource_opt))
             .unwrap_or_else(|e| format!("parse error: {:#?}", e));
 
-        let libra_timestamp_str = self
-            .get_libra_timestamp_resource()
-            .map(|libra_timestamp_opt| format!("{:#?}", libra_timestamp_opt))
+        let diem_timestamp_str = self
+            .get_diem_timestamp_resource()
+            .map(|diem_timestamp_opt| format!("{:#?}", diem_timestamp_opt))
             .unwrap_or_else(|e| format!("parse: {:#?}", e));
 
         let validator_config_str = self
@@ -250,7 +250,7 @@ impl fmt::Debug for AccountState {
              ValidatorConfig {{ {} }} \n \
              ValidatorSet {{ {} }} \n \
              }}",
-            account_resource_str, libra_timestamp_str, validator_config_str, validator_set_str,
+            account_resource_str, diem_timestamp_str, validator_config_str, validator_set_str,
         )
     }
 }

@@ -2,7 +2,7 @@
 //! account: bob
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 use 0x1::Coin1::Coin1;

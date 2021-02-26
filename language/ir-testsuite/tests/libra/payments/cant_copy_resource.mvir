@@ -1,13 +1,13 @@
-import 0x1.LibraAccount;
+import 0x1.DiemAccount;
 import 0x1.Coin1;
-import 0x1.Libra;
+import 0x1.Diem;
 
 main(account: &signer) {
-    let coin: Libra.Libra<Coin1.Coin1>;
+    let coin: Diem.Diem<Coin1.Coin1>;
 
-    coin = Libra.zero<Coin1.Coin1>();
-    Libra.destroy_zero<Coin1.Coin1>(copy(coin));
-    Libra.destroy_zero<Coin1.Coin1>(move(coin));
+    coin = Diem.zero<Coin1.Coin1>();
+    Diem.destroy_zero<Coin1.Coin1>(copy(coin));
+    Diem.destroy_zero<Coin1.Coin1>(move(coin));
 
     return;
 }

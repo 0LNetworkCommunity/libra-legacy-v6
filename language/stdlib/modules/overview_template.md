@@ -1,7 +1,7 @@
-# Libra Framework Modules
+# Diem Framework Modules
 
-This is the root document for the Libra framework module documentation. The Libra framework provides a set of Move
-modules which define the resources and functions available for the Libra blockchain. Each module is individually
+This is the root document for the Diem framework module documentation. The Diem framework provides a set of Move
+modules which define the resources and functions available for the Diem blockchain. Each module is individually
 documented here, together with its implementation and
 [formal specification](../../transaction_scripts/doc/spec_documentation.md).
 
@@ -9,7 +9,7 @@ Move modules are not directly called by clients, but instead are used to impleme
 For documentation of transaction scripts which constitute the client API, see
 [../../transaction_scripts/doc/transaction_script_documentation.md](../../transaction_scripts/doc/transaction_script_documentation.md).
 
-The Move modules in the Libra Framework can be bucketed in to a couple categories:
+The Move modules in the Diem Framework can be bucketed in to a couple categories:
 
 ### Treasury and Compliance
 * `AccountFreezing`
@@ -19,7 +19,7 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 
 * `Coin1` (Note: name will be updated once final name has been determined)
 * `GAS` (Note: will be updated once the GAS makeup has been determined)
-* `Libra`
+* `Diem`
 * `RegisteredCurrencies`
 
 ### Authentication
@@ -29,25 +29,25 @@ The Move modules in the Libra Framework can be bucketed in to a couple categorie
 * `Signature`
 
 ### Accounts and Access Control
-* `LibraAccount`
+* `DiemAccount`
 * `Roles`
 * `VASP`
 
 ### System Management
 * `ChainId`
-* `LibraBlock`
-* `LibraConfig`
-* `LibraTimestamp`
-* `LibraTransactionPublishingOption`
-* `LibraVersion`
-* `LibraVMConfig`
+* `DiemBlock`
+* `DiemConfig`
+* `DiemTimestamp`
+* `DiemTransactionPublishingOption`
+* `DiemVersion`
+* `DiemVMConfig`
 * `TransactionFee`
-* `LibraSystem`
+* `DiemSystem`
 * `ValidatorConfig`
 * `ValidatorOperatorConfig`
 * `Genesis` (Note: not published)
 
-### Module Utility Libraries
+### Module Utility Diemries
 * `Errors`
 * `CoreAddresses`
 * `Event`

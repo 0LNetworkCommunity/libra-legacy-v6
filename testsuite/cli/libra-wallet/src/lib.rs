@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -19,8 +19,8 @@ pub mod key_factory;
 /// Utils for mnemonic seed
 pub mod mnemonic;
 
-/// Utils for wallet library
-mod wallet_library;
+/// Utils for wallet diemry
+mod wallet_diemry;
 
 /// Default imports
-pub use crate::{mnemonic::Mnemonic, wallet_library::WalletLibrary};
+pub use crate::{mnemonic::Mnemonic, wallet_diemry::WalletDiemry};

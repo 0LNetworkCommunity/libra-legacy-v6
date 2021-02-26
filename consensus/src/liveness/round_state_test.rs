@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -13,8 +13,8 @@ use consensus_types::{
     timeout_certificate::TimeoutCertificate, vote_data::VoteData,
 };
 use futures::StreamExt;
-use libra_crypto::HashValue;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_types::{
     block_info::BlockInfo,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
 };

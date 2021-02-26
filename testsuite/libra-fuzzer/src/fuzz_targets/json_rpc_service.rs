@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::FuzzTargetImpl;
-use libra_json_rpc::{
+use diem_json_rpc::{
     fuzzing::{fuzzer, generate_corpus, method_fuzzer},
     gen_request_params,
 };
-use libra_proptest_helpers::ValueGenerator;
+use diem_proptest_helpers::ValueGenerator;
 
 const ADDRESS: &str = "000000000000000000000000000000dd";
 

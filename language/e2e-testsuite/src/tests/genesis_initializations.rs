@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use language_e2e_tests::executor::FakeExecutor;
-use libra_types::account_config;
+use diem_types::account_config;
 use move_core_types::account_address::AccountAddress;
 use move_vm_types::values::Value;
 
 #[test]
-fn test_libra_initialize() {
+fn test_diem_initialize() {
     let mut executor = FakeExecutor::stdlib_only_genesis();
 
     // LR doesn't have role yet, so role check will fail
@@ -16,21 +16,21 @@ fn test_libra_initialize() {
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
     assert_eq!(output.unwrap_err().move_abort_code(), Some(5));
 
     // Grant the LR role
     executor.exec(
         "Roles",
-        "grant_libra_root_role",
+        "grant_diem_root_role",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     // Now initialize, it should all succeed.
@@ -39,9 +39,9 @@ fn test_libra_initialize() {
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     // Second time you try though you'll get an already published error with EMODIFY_CAPABILITY
@@ -51,16 +51,16 @@ fn test_libra_initialize() {
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     assert_eq!(output.unwrap_err().move_abort_code(), Some(262));
 }
 
 #[test]
-fn test_libra_initialize_tc_account() {
+fn test_diem_initialize_tc_account() {
     let mut executor = FakeExecutor::stdlib_only_genesis();
 
     // LR doesn't have role yet, so role check will fail
@@ -69,21 +69,21 @@ fn test_libra_initialize_tc_account() {
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
     assert_eq!(output.unwrap_err().move_abort_code(), Some(5));
 
     // Grant the LR role
     executor.exec(
         "Roles",
-        "grant_libra_root_role",
+        "grant_diem_root_role",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     // Grant the TC role
@@ -95,9 +95,9 @@ fn test_libra_initialize_tc_account() {
             Value::transaction_argument_signer_reference(
                 account_config::treasury_compliance_account_address(),
             ),
-            Value::transaction_argument_signer_reference(account_config::libra_root_address()),
+            Value::transaction_argument_signer_reference(account_config::diem_root_address()),
         ],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     // Try to initialize, invalid sender so role check will fail
@@ -119,9 +119,9 @@ fn test_libra_initialize_tc_account() {
         "initialize",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     // Second time you try though you'll get an already published error with EMODIFY_CAPABILITY
@@ -140,7 +140,7 @@ fn test_libra_initialize_tc_account() {
 }
 
 #[test]
-fn test_libra_timestamp_time_has_started() {
+fn test_diem_timestamp_time_has_started() {
     let mut executor = FakeExecutor::stdlib_only_genesis();
     let account_address = AccountAddress::random();
 
@@ -161,9 +161,9 @@ fn test_libra_timestamp_time_has_started() {
         "set_time_has_started",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     let output = executor.try_exec(
@@ -171,16 +171,16 @@ fn test_libra_timestamp_time_has_started() {
         "set_time_has_started",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     assert_eq!(output.unwrap_err().move_abort_code(), Some(1));
 }
 
 #[test]
-fn test_libra_block_double_init() {
+fn test_diem_block_double_init() {
     let mut executor = FakeExecutor::stdlib_only_genesis();
 
     executor.exec(
@@ -188,9 +188,9 @@ fn test_libra_block_double_init() {
         "publish_generator",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     executor.exec(
@@ -198,9 +198,9 @@ fn test_libra_block_double_init() {
         "initialize_block_metadata",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     let output = executor.try_exec(
@@ -208,9 +208,9 @@ fn test_libra_block_double_init() {
         "initialize_block_metadata",
         vec![],
         vec![Value::transaction_argument_signer_reference(
-            account_config::libra_root_address(),
+            account_config::diem_root_address(),
         )],
-        &account_config::libra_root_address(),
+        &account_config::diem_root_address(),
     );
 
     assert_eq!(output.unwrap_err().move_abort_code(), Some(6));

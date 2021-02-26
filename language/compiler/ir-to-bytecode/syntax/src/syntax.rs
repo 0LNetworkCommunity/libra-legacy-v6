@@ -6,7 +6,7 @@ use codespan::{ByteIndex, Span};
 use std::{fmt, str::FromStr};
 
 use crate::lexer::*;
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use move_core_types::identifier::{IdentStr, Identifier};
 use move_ir_types::{ast::*, location::*, spec_language_ast::*};
 

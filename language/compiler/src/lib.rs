@@ -15,7 +15,7 @@ use ir_to_bytecode::{
     compiler::{compile_module, compile_script},
     parser::{parse_module, parse_script},
 };
-use libra_types::{account_address::AccountAddress, account_config};
+use diem_types::{account_address::AccountAddress, account_config};
 use move_ir_types::location::Loc;
 use std::mem;
 use vm::file_format::{CompiledModule, CompiledScript};

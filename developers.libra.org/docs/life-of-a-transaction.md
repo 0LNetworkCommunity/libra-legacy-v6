@@ -3,19 +3,19 @@ id: life-of-a-transaction
 title: Life of a Transaction
 ---
 
-_**Note to readers:** This information was published before the Association released White Paper v2.0, which includes a number of key updates to the Libra payment system. This information has not been modified to incorporate those updates and should be read in that context._
+_**Note to readers:** This information was published before the Association released White Paper v2.0, which includes a number of key updates to the Diem payment system. This information has not been modified to incorporate those updates and should be read in that context._
 
-To get a deeper understanding of the lifecycle of a Libra transaction, we will follow a transaction on its journey from being submitted to a Libra validator to being committed to the Libra Blockchain. We will then “zoom-in” on each logical component of a validator and take a look at its interactions with other components.
+To get a deeper understanding of the lifecycle of a Diem transaction, we will follow a transaction on its journey from being submitted to a Diem validator to being committed to the Diem Blockchain. We will then “zoom-in” on each logical component of a validator and take a look at its interactions with other components.
 
 ## Client Submits a Transaction
 
-A Libra **client constructs a raw transaction** (let us call it T~5~raw) to transfer 10 LBR from Alice’s account to Bob’s account. The raw transaction includes the following fields. Each field is linked to its glossary definition.
+A Diem **client constructs a raw transaction** (let us call it T~5~raw) to transfer 10 LBR from Alice’s account to Bob’s account. The raw transaction includes the following fields. Each field is linked to its glossary definition.
 
 * Alice's [account address](reference/glossary.md#account-address).
 * A program that indicates the actions to be performed on Alice's behalf. It contains:
     * A Move bytecode [peer-to-peer transaction script](reference/glossary.md#transaction-script).
     * A list of inputs to the script (for this example, Bob's account address and the amount of payment).
-* [Gas price](reference/glossary.md#gas-price) (in microlibra/gas units) &mdash; The amount Alice is willing to pay per unit of gas, to execute the transaction. Gas is a way to pay for computation and storage. A gas unit is an abstract measurement of computation with no inherent real-world value.
+* [Gas price](reference/glossary.md#gas-price) (in microdiem/gas units) &mdash; The amount Alice is willing to pay per unit of gas, to execute the transaction. Gas is a way to pay for computation and storage. A gas unit is an abstract measurement of computation with no inherent real-world value.
 * [Maximum gas amount](reference/glossary.md#maximum-gas-amount) Alice is willing to pay for this transaction.
 * [Expiration time](reference/glossary.md#expiration-time) of the transaction.
 * [Sequence number](reference/glossary.md#sequence-number) &mdash; 5
@@ -31,7 +31,7 @@ The **client signs transaction** T~5~raw with Alice's private key. The signed tr
 
 To describe the lifecycle of transaction T~5~, we will assume that:
 
-* Alice and Bob have [accounts](reference/glossary.md#accounts) on the Libra Blockchain.
+* Alice and Bob have [accounts](reference/glossary.md#accounts) on the Diem Blockchain.
 * Alice's account has 110 LBR.
 * The current [sequence number](reference/glossary.md#sequence-number) of Alice's account is 5 (which indicates that 5 transactions have already been sent from Alice's account).
 * There are a total of 100 validators &mdash; V~1~ to V~100~ on the network.
@@ -40,7 +40,7 @@ To describe the lifecycle of transaction T~5~, we will assume that:
 
 ## Lifecycle of the Transaction
 
-In this section, we will describe the lifecycle of transaction T~5~, from being submitted by the client to being committed to the Libra Blockchain.
+In this section, we will describe the lifecycle of transaction T~5~, from being submitted by the client to being committed to the Diem Blockchain.
 
 Where relevant, and following a numbered step in the lifecycle, we have provided a link to the corresponding inter-component interactions of the validator node. After you are familiar with all the steps in the lifecycle of the transaction, you may want to refer to the information on the corresponding inter-component interactions for each step.
 
@@ -70,7 +70,7 @@ Where relevant, and following a numbered step in the lifecycle, we have provided
 
 **6** &mdash; As validator V~1~ is a proposer/leader, it will pull a block of transactions from its mempool and replicate this block as a proposal to other validators via its consensus component. (Consensus → Mempool [MP.3](#consensus-mempool-mp3), [CO.1](#consensus-mempool-co1))
 
-**7** &mdash; The consensus component of V~1~ is responsible for coordinating agreement among all validators on the order of transactions in the proposed block. (Consensus → Other Validators [CO.2](#consensus-other-validators-co2)). Refer to our technical paper [State Machine Replication in the Libra Blockchain](state-machine-replication-paper.md) for details of our proposed consensus protocol LibraBFT.
+**7** &mdash; The consensus component of V~1~ is responsible for coordinating agreement among all validators on the order of transactions in the proposed block. (Consensus → Other Validators [CO.2](#consensus-other-validators-co2)). Refer to our technical paper [State Machine Replication in the Diem Blockchain](state-machine-replication-paper.md) for details of our proposed consensus protocol DiemBFT.
 
 ### Executing the Block and Reaching Consensus
 
@@ -93,7 +93,7 @@ Where relevant, and following a numbered step in the lifecycle, we have provided
 In the [previous section](#lifecycle-of-the-transaction), we described the typical lifecycle of a sample transaction from being submitted to being committed to the blockchain's distributed database. Now let's look in more depth at the inter-component interactions of a validator as the validator processes transactions and responds to queries. This information will be most useful to those who:
 
 * Would like to get an overall idea of how the system works under the covers.
-* Are interested in eventually contributing to the Libra Core software.
+* Are interested in eventually contributing to the Diem Core software.
 
 For our narrative, we will assume that a client submits a  transaction T~N~ to a validator V~X~. For each validator component, we will describe each of its inter-component interactions in subsections under the respective component's section. Note that subsections describing the inter-component interactions are not listed strictly in the order in which they are performed. Most of the interactions are relevant to the processing of a transaction, and a few are relevant to read queries by the client (queries for existing information on the blockchain).
 
@@ -106,7 +106,7 @@ For our narrative, we will assume that a client submits a  transaction T~N~ to a
 * [Virtual Machine](#virtual-machine-vm)
 * [Storage](#storage)
 
-At the end of each section, we provide the link to the corresponding "README" of [Libra Core](libra-core-overview.md).
+At the end of each section, we provide the link to the corresponding "README" of [Diem Core](diem-core-overview.md).
 
 ## Admission Control (AC)
 
@@ -131,7 +131,7 @@ Once `VM::ValidateTransaction()` returns without errors, AC forwards the transac
 
 ### AC → Storage (AC.4)
 
-When the client performs a read query on the Libra Blockchain (for example, to get the balance of Alice's account), AC interacts with the storage component directly to obtain the requested information.
+When the client performs a read query on the Diem Blockchain (for example, to get the balance of Alice's account), AC interacts with the storage component directly to obtain the requested information.
 
 ### Admission Control README
 
@@ -288,7 +288,7 @@ When consensus calls `Execution::ExecuteBlock()`, execution reads the current st
 * Once consensus is reached on a block of transactions, execution calls storage via `Storage::SaveTransactions()` to save the block of transactions and permanently record them. This will also store the signatures from the validator nodes who agreed on this block of transactions.
 * The in-memory data in “scratchpad” for this block is passed to updated storage and persist the transactions.
 * When the storage is updated, the sequence numbers of all resources modified by each transaction are updated accordingly.
-* Note: The sequence number of an account on the Libra Blockchain increments by one for each committed transaction originating from that account.
+* Note: The sequence number of an account on the Diem Blockchain increments by one for each committed transaction originating from that account.
 
 ### AC → Storage (ST.4)
 
@@ -300,11 +300,11 @@ For implementation details refer to the [Storage README](crates/storage.md).
 
 ## Reference
 
-* [Welcome page](welcome-to-libra.md).
-* [Libra Protocol: Key Concepts](libra-protocol.md) &mdash; Introduces you to the fundamental concepts of the Libra protocol.
-* [My First Transaction](my-first-transaction.md) &mdash; Guides you through executing your very first transaction on the Libra Blockchain using the Libra CLI client.
+* [Welcome page](welcome-to-diem.md).
+* [Diem Protocol: Key Concepts](diem-protocol.md) &mdash; Introduces you to the fundamental concepts of the Diem protocol.
+* [My First Transaction](my-first-transaction.md) &mdash; Guides you through executing your very first transaction on the Diem Blockchain using the Diem CLI client.
 * [Getting Started With Move](move-overview.md) &mdash; Introduces you to a new blockchain programming language called Move.
-* [Libra Core Overview](libra-core-overview.md) &mdash; Provides the concept and implementation details of the Libra Core components through READMEs.
-* [CLI Guide](reference/libra-cli.md) &mdash; Lists the commands (and their usage) of the Libra CLI client.
-* [Libra Glossary](reference/glossary.md) &mdash; Provides a quick reference to Libra terminology.
-* [State Machine Replication in the Libra Blockchain](state-machine-replication-paper.md) &mdash; Provides a detailed look into our consensus protocol **LibraBFT**.
+* [Diem Core Overview](diem-core-overview.md) &mdash; Provides the concept and implementation details of the Diem Core components through READMEs.
+* [CLI Guide](reference/diem-cli.md) &mdash; Lists the commands (and their usage) of the Diem CLI client.
+* [Diem Glossary](reference/glossary.md) &mdash; Provides a quick reference to Diem terminology.
+* [State Machine Replication in the Diem Blockchain](state-machine-replication-paper.md) &mdash; Provides a detailed look into our consensus protocol **DiemBFT**.

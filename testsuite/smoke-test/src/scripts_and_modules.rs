@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     test_utils::{compare_balances, setup_swarm_and_client_proxy},
     workspace_builder,
 };
-use libra_crypto::HashValue;
-use libra_temppath::TempPath;
-use libra_types::account_address::AccountAddress;
+use diem_crypto::HashValue;
+use diem_temppath::TempPath;
+use diem_types::account_address::AccountAddress;
 use std::{
     fs, io,
     io::Write,

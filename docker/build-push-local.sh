@@ -18,7 +18,7 @@ echo "[$(date)] Using tag $TAG"
 for (( i=0; i < ${#BUILD_PROJECTS[@]}; i++ ));
 do
    PROJECT=${BUILD_PROJECTS[$i]}
-   export LIBRA_BUILD_TAG="$REPO/libra_${PROJECT/-/_}:$TAG"
+   export LIBRA_BUILD_TAG="$REPO/diem_${PROJECT/-/_}:$TAG"
    DOCKER_BUILDER="$PROJECT"
    echo "[$(date)] Building $PROJECT via $DOCKER_BUILDER"
    "./docker/${DOCKER_BUILDER}/build.sh" --incremental

@@ -3,7 +3,7 @@
 
 # Module `0x1::Authenticator`
 
-Move representation of the authenticator types used in Libra. The supported types are Ed25519 (single-sig)
+Move representation of the authenticator types used in Diem. The supported types are Ed25519 (single-sig)
 and MultiEd25519 (K-of-N multisig).
 
 
@@ -334,6 +334,6 @@ Return the threshold for the multisig policy <code>k</code>
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

@@ -1,16 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::test_utils::{
     compare_balances,
-    libra_swarm_utils::{get_op_tool, load_libra_root_storage},
+    diem_swarm_utils::{get_op_tool, load_diem_root_storage},
     setup_swarm_and_client_proxy,
 };
 use cli::client_proxy::ClientProxy;
 use debug_interface::NodeDebugClient;
-use libra_trace::trace::trace_node;
-use libra_types::{
-    account_config::{libra_root_address, testnet_dd_account_address},
+use diem_trace::trace::trace_node;
+use diem_types::{
+    account_config::{diem_root_address, testnet_dd_account_address},
     ledger_info::LedgerInfo,
     waypoint::Waypoint,
 };
@@ -26,7 +26,7 @@ fn test_create_mint_transfer_block_metadata() {
     // assert committed version > # of user transactions
     let (_account, version) = env
         .get_validator_client(0, None)
-        .get_latest_account(&["q", &libra_root_address().to_string()])
+        .get_latest_account(&["q", &diem_root_address().to_string()])
         .unwrap();
     assert!(
         version > 4,
@@ -123,9 +123,9 @@ fn test_client_waypoints() {
         .validator_peer_id()
         .unwrap();
     let op_tool = get_op_tool(&env.validator_swarm, 1);
-    let libra_root = load_libra_root_storage(&env.validator_swarm, 0);
+    let diem_root = load_diem_root_storage(&env.validator_swarm, 0);
     let _ = op_tool
-        .remove_validator(peer_id, &libra_root, false)
+        .remove_validator(peer_id, &diem_root, false)
         .unwrap();
 
     client

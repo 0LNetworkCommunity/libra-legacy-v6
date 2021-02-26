@@ -20,27 +20,27 @@ orbs:
 executors:
   build-executor:
     docker:
-      - image: docker.io/libra/build_environment:circleci-latest
+      - image: docker.io/diem/build_environment:circleci-latest
     resource_class: 2xlarge
   unittest-executor:
     docker:
-      - image: docker.io/libra/build_environment:circleci-latest
+      - image: docker.io/diem/build_environment:circleci-latest
     resource_class: 2xlarge+
   test-executor:
     docker:
-      - image: docker.io/libra/build_environment:circleci-latest
+      - image: docker.io/diem/build_environment:circleci-latest
     resource_class: xlarge
   premainnet-cluster-test-executor:
     docker:
-      - image: docker.io/libra/build_environment:circleci-latest
+      - image: docker.io/diem/build_environment:circleci-latest
     resource_class: xlarge
   audit-executor:
     docker:
-      - image: docker.io/libra/build_environment:circleci-latest
+      - image: docker.io/diem/build_environment:circleci-latest
     resource_class: medium
   small-executor:
     docker:
-      - image: docker.io/libra/build_environment:circleci-latest
+      - image: docker.io/diem/build_environment:circleci-latest
     resource_class: small
   vm-2xlarge-executor:
     machine:
@@ -440,9 +440,9 @@ jobs:
       - run:
           command: RUST_BACKTRACE=1 $CARGO $CARGOFLAGS build -j 16 -p language-benchmarks
       - run:
-          command: RUST_BACKTRACE=1 $CARGO $CARGOFLAGS build -j 16 -p libra-fuzzer
+          command: RUST_BACKTRACE=1 $CARGO $CARGOFLAGS build -j 16 -p diem-fuzzer
       - run:
-          command: RUST_BACKTRACE=1 $CARGO $CARGOFLAGS build -j 16 -p libra-swarm
+          command: RUST_BACKTRACE=1 $CARGO $CARGOFLAGS build -j 16 -p diem-swarm
       - run:
           command: RUST_BACKTRACE=1 $CARGO $CARGOFLAGS build -j 16 -p test-generation
       - run:
@@ -678,7 +678,7 @@ jobs:
   # Only if "release" parameter is true, will docker images be pushed to Dockerhub and Novi AWS ECR    #
   # Dockerhub Image prunning also occurs after a push removing old Dockerhub Images                    #
   # The "target-image" parameter determines which docker image in to build:                            #
-  #   libra/docker/ci/< target-image >/Dockerfile                                                      #
+  #   diem/docker/ci/< target-image >/Dockerfile                                                      #
   # Only circlci images need to be released, others general should not be and only exist to test the   #
   # dev_setup.sh script                                                                                #
   ######################################################################################################
@@ -688,7 +688,7 @@ jobs:
       target-image:
         description: |
           The "target-image" parameter determines which docker image in to build:
-          ex: libra/docker/ci/< target-image >/Dockerfile
+          ex: diem/docker/ci/< target-image >/Dockerfile
         type: enum
         enum: ["circleci", "alpine", "arch", "centos"]
       release:
@@ -710,16 +710,16 @@ jobs:
       - run:
           name: Build/test << parameters.target-image >> docker image file
           command: |
-            docker build -f docker/ci/<< parameters.target-image >>/Dockerfile -t libra/build_environment:<< parameters.target-image >>-latest .
+            docker build -f docker/ci/<< parameters.target-image >>/Dockerfile -t diem/build_environment:<< parameters.target-image >>-latest .
       - when:
           condition: << parameters.release >>
           steps:
             - setup_docker_signing
             - run:
-                name: push libra/build_environment:<< parameters.target-image >>-latest docker image
+                name: push diem/build_environment:<< parameters.target-image >>-latest docker image
                 command: |
                   #signs the pushed image
-                  docker push --disable-content-trust=false libra/build_environment:<< parameters.target-image >>-latest
+                  docker push --disable-content-trust=false diem/build_environment:<< parameters.target-image >>-latest
 
   docker-update-base-images:
     executor: vm-medium-executor
@@ -748,8 +748,8 @@ jobs:
             set -x
             echo "$BUSTER_TAGS" | while IFS= read -r tag ; do
               tag_no_sha=`echo $tag | sed 's/@.*//'`
-              docker tag debian:$tag ${AWS_ECR_ACCOUNT_URL}/library/debian:${tag_no_sha}
-              docker push ${AWS_ECR_ACCOUNT_URL}/library/debian:${tag_no_sha}
+              docker tag debian:$tag ${AWS_ECR_ACCOUNT_URL}/diemry/debian:${tag_no_sha}
+              docker push ${AWS_ECR_ACCOUNT_URL}/diemry/debian:${tag_no_sha}
             done
 
   ######################################################################################################
@@ -876,7 +876,7 @@ jobs:
           command: |
             set -x
             SUFFIX="$(date +"%Y-%m-%d")-$(git rev-parse --short=8 HEAD)"
-            PREFIX="ci-artifacts.libra.org/coverage";
+            PREFIX="ci-artifacts.diem.org/coverage";
             #Push grcov
             aws s3 cp --recursive ${CODECOV_OUTPUT}/grcovhtml "s3://${PREFIX}/unit-coverage/${SUFFIX}/";
             aws s3 cp --recursive ${CODECOV_OUTPUT}/grcovhtml "s3://${PREFIX}/unit-coverage/latest/";
@@ -898,7 +898,7 @@ workflows:
   latched-publish-workflow:
     jobs:
       - code_coverage:
-          context: libra_ci
+          context: diem_ci
           filters:
             branches:
               only:

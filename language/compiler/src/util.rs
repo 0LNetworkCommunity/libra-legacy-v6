@@ -4,7 +4,7 @@
 use anyhow::Context;
 use bytecode_source_map::source_map::SourceMap;
 use ir_to_bytecode::{compiler::compile_module, parser::parse_module};
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use move_ir_types::location::Loc;
 use std::{fs, path::Path};
 use vm::{access::ModuleAccess, file_format::CompiledModule};

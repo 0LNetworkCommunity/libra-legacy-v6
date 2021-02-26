@@ -3,7 +3,7 @@
 
 use crate::{unit_tests::TestInterface, LibraDebugger};
 use anyhow::bail;
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_config::AccountResource,
     event::{EventHandle, EventKey},

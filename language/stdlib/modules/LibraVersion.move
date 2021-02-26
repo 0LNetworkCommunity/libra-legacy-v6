@@ -1,68 +1,68 @@
 address 0x1 {
 
 
-/// Maintains the version number for the Libra blockchain. The version is stored in a
-/// LibraConfig, and may be updated by Libra root.
-module LibraVersion {
+/// Maintains the version number for the Diem blockchain. The version is stored in a
+/// DiemConfig, and may be updated by Diem root.
+module DiemVersion {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    use 0x1::LibraConfig::{Self, LibraConfig};
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemConfig::{Self, DiemConfig};
+    use 0x1::DiemTimestamp;
     use 0x1::Roles;
 
-    struct LibraVersion {
+    struct DiemVersion {
         major: u64,
     }
 
     /// Tried to set an invalid major version for the VM. Major versions must be strictly increasing
     const EINVALID_MAJOR_VERSION_NUMBER: u64 = 0;
 
-    /// Publishes the LibraVersion config. Must be called during Genesis.
+    /// Publishes the DiemVersion config. Must be called during Genesis.
     public fun initialize(
         lr_account: &signer,
     ) {
-        LibraTimestamp::assert_genesis();
-        Roles::assert_libra_root(lr_account);
-        LibraConfig::publish_new_config<LibraVersion>(
+        DiemTimestamp::assert_genesis();
+        Roles::assert_diem_root(lr_account);
+        DiemConfig::publish_new_config<DiemVersion>(
             lr_account,
-            LibraVersion { major: 1 },
+            DiemVersion { major: 1 },
         );
     }
     spec fun initialize {
-        /// Must abort if the signer does not have the LibraRoot role [[H10]][PERMISSION].
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        /// Must abort if the signer does not have the DiemRoot role [[H10]][PERMISSION].
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
 
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include LibraConfig::PublishNewConfigAbortsIf<LibraVersion>;
-        include LibraConfig::PublishNewConfigEnsures<LibraVersion>{payload: LibraVersion { major: 1 }};
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include DiemConfig::PublishNewConfigAbortsIf<DiemVersion>;
+        include DiemConfig::PublishNewConfigEnsures<DiemVersion>{payload: DiemVersion { major: 1 }};
     }
 
-    /// Allows Libra root to update the major version to a larger version.
+    /// Allows Diem root to update the major version to a larger version.
     public fun set(lr_account: &signer, major: u64) {
-        LibraTimestamp::assert_operating();
+        DiemTimestamp::assert_operating();
 
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
 
-        let old_config = LibraConfig::get<LibraVersion>();
+        let old_config = DiemConfig::get<DiemVersion>();
 
         assert(
             old_config.major < major,
             Errors::invalid_argument(EINVALID_MAJOR_VERSION_NUMBER)
         );
 
-        LibraConfig::set<LibraVersion>(
+        DiemConfig::set<DiemVersion>(
             lr_account,
-            LibraVersion { major }
+            DiemVersion { major }
         );
     }
     spec fun set {
-        /// Must abort if the signer does not have the LibraRoot role [[H10]][PERMISSION].
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        /// Must abort if the signer does not have the DiemRoot role [[H10]][PERMISSION].
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
 
-        include LibraTimestamp::AbortsIfNotOperating;
-        aborts_if LibraConfig::get<LibraVersion>().major >= major with Errors::INVALID_ARGUMENT;
-        include LibraConfig::SetAbortsIf<LibraVersion>{account: lr_account};
-        include LibraConfig::SetEnsures<LibraVersion>{payload: LibraVersion { major }};
+        include DiemTimestamp::AbortsIfNotOperating;
+        aborts_if DiemConfig::get<DiemVersion>().major >= major with Errors::INVALID_ARGUMENT;
+        include DiemConfig::SetAbortsIf<DiemVersion>{account: lr_account};
+        include DiemConfig::SetEnsures<DiemVersion>{payload: DiemVersion { major }};
     }
 
     // =================================================================
@@ -73,24 +73,24 @@ module LibraVersion {
     /// # Initialization
     spec module {
         /// After genesis, version is published.
-        invariant [global] LibraTimestamp::is_operating() ==> LibraConfig::spec_is_published<LibraVersion>();
+        invariant [global] DiemTimestamp::is_operating() ==> DiemConfig::spec_is_published<DiemVersion>();
     }
 
     /// # Access Control
 
-    /// Only "set" can modify the LibraVersion config [[H10]][PERMISSION]
-    spec schema LibraVersionRemainsSame {
-        ensures old(LibraConfig::spec_is_published<LibraVersion>()) ==>
-            global<LibraConfig<LibraVersion>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) ==
-                old(global<LibraConfig<LibraVersion>>(CoreAddresses::LIBRA_ROOT_ADDRESS()));
+    /// Only "set" can modify the DiemVersion config [[H10]][PERMISSION]
+    spec schema DiemVersionRemainsSame {
+        ensures old(DiemConfig::spec_is_published<DiemVersion>()) ==>
+            global<DiemConfig<DiemVersion>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) ==
+                old(global<DiemConfig<DiemVersion>>(CoreAddresses::LIBRA_ROOT_ADDRESS()));
     }
     spec module {
-        apply LibraVersionRemainsSame to * except set;
+        apply DiemVersionRemainsSame to * except set;
     }
 
     spec module {
-        /// The permission "UpdateLibraProtocolVersion" is granted to LibraRoot [[H10]][PERMISSION].
-        invariant [global, isolated] forall addr: address where exists<LibraConfig<LibraVersion>>(addr):
+        /// The permission "UpdateDiemProtocolVersion" is granted to DiemRoot [[H10]][PERMISSION].
+        invariant [global, isolated] forall addr: address where exists<DiemConfig<DiemVersion>>(addr):
             addr == CoreAddresses::LIBRA_ROOT_ADDRESS();
     }
 
@@ -98,7 +98,7 @@ module LibraVersion {
     spec module {
         /// Version number never decreases
         invariant update [global, isolated]
-            old(LibraConfig::get<LibraVersion>().major) <= LibraConfig::get<LibraVersion>().major;
+            old(DiemConfig::get<DiemVersion>().major) <= DiemConfig::get<DiemVersion>().major;
     }
 
 }

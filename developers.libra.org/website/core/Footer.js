@@ -1,5 +1,5 @@
 /**
- * Copyright (c) The Libra Core Contributors
+ * Copyright (c) The Diem Core Contributors
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -8,7 +8,7 @@ const React = require('react');
 const CookieBanner = require(`${process.cwd()}/core/CookieBanner`);
 
 function SocialFooter(props) {
-  const projectName = 'libra';
+  const projectName = 'diem';
   const repoUrl = `https://github.com/${props.config.organizationName}/${
     projectName
   }`;
@@ -24,16 +24,16 @@ function SocialFooter(props) {
           data-count-href={`${repoUrl}/stargazers`}
           data-show-count="true"
           data-count-aria-label="# stargazers on GitHub"
-          aria-label="Star Libra on GitHub">
+          aria-label="Star Diem on GitHub">
           {projectName}
         </a>
       </div>
       <div className="social">
         <a
-          href={"https://twitter.com/libradev?ref_src=twsrc%5Etfw"}
+          href={"https://twitter.com/diemdev?ref_src=twsrc%5Etfw"}
           className={"twitter-follow-button"}
           data-show-count={false}>
-            Follow @libradev
+            Follow @diemdev
         </a>
         <script
           async
@@ -79,13 +79,13 @@ class Footer extends React.Component {
             </a>
           )}
           <div className="footerSection">
-            <h5>Learn About Libra</h5>
-            <a href={this.docUrl('welcome-to-libra')}>Welcome to Libra</a>
-            <a href={this.docUrl('libra-protocol')}>Libra Protocol</a>
-            <a href={this.docUrl('the-libra-blockchain-paper')}>Libra Blockchain</a>
+            <h5>Learn About Diem</h5>
+            <a href={this.docUrl('welcome-to-diem')}>Welcome to Diem</a>
+            <a href={this.docUrl('diem-protocol')}>Diem Protocol</a>
+            <a href={this.docUrl('the-diem-blockchain-paper')}>Diem Blockchain</a>
             <a href={this.docUrl('life-of-a-transaction')}>Life of a Transaction</a>
             <p />
-            <h5>Try Libra Core </h5>
+            <h5>Try Diem Core </h5>
             <a href={this.docUrl('my-first-transaction')}>My First Transaction</a>
             <a href={this.docUrl('move-overview')}>Getting Started With Move</a>
           </div>
@@ -97,8 +97,8 @@ class Footer extends React.Component {
             <a href={this.docUrl('policies/code-of-conduct')}>Code of Conduct</a>
             <p />
             <h5>Community</h5>
-            <a href="https://community.libra.org/">Developer Forum</a>
-            <a href="https://developers.libra.org/newsletter_form">Newsletter</a>
+            <a href="https://community.diem.org/">Developer Forum</a>
+            <a href="https://developers.diem.org/newsletter_form">Newsletter</a>
           </div>
           <SocialFooter config={this.props.config} />
         </section>
@@ -106,7 +106,7 @@ class Footer extends React.Component {
           {this.props.config.copyright && (
             <span>{this.props.config.copyright}</span>
           )}{' '}
-          &copy; Libra Association
+          &copy; Diem Association
         </section>
         <CookieBanner />
       </footer>

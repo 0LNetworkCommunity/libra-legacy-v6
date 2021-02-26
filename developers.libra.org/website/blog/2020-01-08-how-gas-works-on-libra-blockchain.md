@@ -1,6 +1,6 @@
 ---
-author: Libra Engineering Team
-title: How gas works on the Libra blockchain
+author: Diem Engineering Team
+title: How gas works on the Diem blockchain
 ---
 
 <script>
@@ -9,13 +9,13 @@ title: How gas works on the Libra blockchain
         if (items[i].innerHTML = '<p class="post-meta">January 08, 2020</p>') items[i].innerHTML = '<p class="post-meta">January 08, 2020</p>';
     }
     var slug = location.pathname.slice(location.pathname.lastIndexOf('/')+1);
-    var redirect = 'https://libra.org/en-US/blog/' + slug;
+    var redirect = 'https://diem.org/en-US/blog/' + slug;
     window.location = redirect;    
 </script>
 
-**Note** : The Libra Core software and the Move language are still under development; the information and the terminology used in this document are subject to change.
+**Note** : The Diem Core software and the Move language are still under development; the information and the terminology used in this document are subject to change.
 
-This post starts a series on gas on the Libra blockchain. The goal of this series is to take you from "I have no idea what gas means" to understanding what gas is and, at a high level, how it works. As the first post in this series, our goal here is to introduce the subject and provide an overview of the design and design goals. In subsequent posts we'll dig in and explore each area in more technical detail.
+This post starts a series on gas on the Diem blockchain. The goal of this series is to take you from "I have no idea what gas means" to understanding what gas is and, at a high level, how it works. As the first post in this series, our goal here is to introduce the subject and provide an overview of the design and design goals. In subsequent posts we'll dig in and explore each area in more technical detail.
 
 ## What is gas?
 
@@ -31,11 +31,11 @@ Gas is a way to ensure that all programs terminate; it also provides the ability
 
 ### _What does gas look like for a developer?_
 
-The transaction a client submits for execution contains a specified `max_gas_amount` and `gas_price`. `max_gas_amount` is the maximum amount of gas that can be used to execute the transaction, and therefore it bounds the amount of computational resources that can be consumed by the transaction. `gas_price` is a way to move from the abstract units of resource consumption that are used in the virtual machine (VM) — _gas units_ — into Libra. Consequently, the transaction submitter is guaranteed to be charged _at most_ `gas_price * max_gas_amount` (the "gas liability") for the execution of the transaction.
+The transaction a client submits for execution contains a specified `max_gas_amount` and `gas_price`. `max_gas_amount` is the maximum amount of gas that can be used to execute the transaction, and therefore it bounds the amount of computational resources that can be consumed by the transaction. `gas_price` is a way to move from the abstract units of resource consumption that are used in the virtual machine (VM) — _gas units_ — into Diem. Consequently, the transaction submitter is guaranteed to be charged _at most_ `gas_price * max_gas_amount` (the "gas liability") for the execution of the transaction.
 
 ### Similarities with other blockchains
 
-Fees for executing transactions were originally pioneered by Bitcoin, and the idea of gas and gas-based execution fees were introduced by Ethereum. The design of gas on the Libra blockchain has benefited greatly from their designs, and in many ways the gas design for the Libra blockchain is similar to Ethereum's.
+Fees for executing transactions were originally pioneered by Bitcoin, and the idea of gas and gas-based execution fees were introduced by Ethereum. The design of gas on the Diem blockchain has benefited greatly from their designs, and in many ways the gas design for the Diem blockchain is similar to Ethereum's.
 
 ## Core design principles
 
@@ -57,7 +57,7 @@ For the VM to execute a transaction, the gas system needs to track the primary r
 
 Each of these resource dimensions can fluctuate independently of the other. However, we also have only one gas price. This means the gas usage contributed for each resource dimension needs to be correct, because the gas price only acts as a multiplier to the total gas usage, not usage by dimension. Thus, the essential property that we design for is that the gas usage of a transaction needs to be as highly correlated with the real-world cost associated with executing the transaction as possible.
 
-That's all on this area for now, but stay tuned for an upcoming post where we'll dive into the details of this part of the gas system and how to determine the ratios between different resource dimensions in the Libra blockchain. Now, let's take a look at how gas is implemented in the VM.
+That's all on this area for now, but stay tuned for an upcoming post where we'll dive into the details of this part of the gas system and how to determine the ratios between different resource dimensions in the Diem blockchain. Now, let's take a look at how gas is implemented in the VM.
 
 ### Gas and transaction flow
 
@@ -67,7 +67,7 @@ When a transaction is executed by the VM, it is responsible for computing the re
 
 Note in the diagram that both the prologue and epilogue sections are marked in red. This is because both of these sections of the transaction flow need to be _unmetered_:
 
-- In the prologue, it's not known if the submitting account has enough Libra to cover its gas liability, or if the transaction submitter even has authority over the submitting account. Due to this lack of knowledge, when the prologue is executed, it needs to be unmetered; deducting gas for transactions that fail the prologue could allow unauthorized deductions from accounts.
+- In the prologue, it's not known if the submitting account has enough Diem to cover its gas liability, or if the transaction submitter even has authority over the submitting account. Due to this lack of knowledge, when the prologue is executed, it needs to be unmetered; deducting gas for transactions that fail the prologue could allow unauthorized deductions from accounts.
 
 - The epilogue is in part responsible for debiting the execution fee from the sending account and distributing it<font size="2"><sup>[2]</sup></font>. Because of this, the epilogue must run even if the transaction execution has run out of gas. Likewise, we don't want it to run out of gas while debiting the transaction sender's account as this would cause additional computation to be performed without any transaction fee being charged.
 
@@ -77,7 +77,7 @@ After the prologue has run and we've checked in part that the account can cover 
 
 ## Wrapping things up
 
-In this post, we offered a high-level overview of the design space around gas in the Libra blockchain. In future posts, we'll explore each aspect of gas in further technical detail.
+In this post, we offered a high-level overview of the design space around gas in the Diem blockchain. In future posts, we'll explore each aspect of gas in further technical detail.
 
 ## Endnotes
 

@@ -9,7 +9,7 @@ module CoreAddresses {
     use 0x1::Errors;
     use 0x1::Signer;
 
-    /// The address of the Libra root account. This account is
+    /// The address of the Diem root account. This account is
     /// created in genesis, and cannot be changed. This address has
     /// ultimate authority over the permissions granted (or removed) from
     /// accounts on-chain.
@@ -17,7 +17,7 @@ module CoreAddresses {
         0x0
     }
 
-    /// The (singleton) address under which the `0x1::Libra::CurrencyInfo` resource for
+    /// The (singleton) address under which the `0x1::Diem::CurrencyInfo` resource for
     /// every registered currency is published. This is the same as the
     /// `LIBRA_ROOT_ADDRESS` but there is no requirement that it must
     /// be this from an operational viewpoint, so this is why this is separated out.
@@ -46,7 +46,7 @@ module CoreAddresses {
         0x1
     }
 
-    /// The operation can only be performed by the account at 0xA550C18 (Libra Root)
+    /// The operation can only be performed by the account at 0xA550C18 (Diem Root)
     const ELIBRA_ROOT: u64 = 0;
     /// The operation can only be performed by the account at 0xB1E55ED (Treasury & Compliance)
     const ETREASURY_COMPLIANCE: u64 = 1;
@@ -55,17 +55,17 @@ module CoreAddresses {
     /// The operation can only be performed by the account where currencies are registered
     const ECURRENCY_INFO: u64 = 4; // TODO: This error code and below should decrease by 1.
 
-    /// Assert that the account is the Libra root address.
-    public fun assert_libra_root(account: &signer) {
+    /// Assert that the account is the Diem root address.
+    public fun assert_diem_root(account: &signer) {
         assert(Signer::address_of(account) == LIBRA_ROOT_ADDRESS(), Errors::requires_address(ELIBRA_ROOT))
     }
-    spec fun assert_libra_root {
+    spec fun assert_diem_root {
         pragma opaque;
-        include AbortsIfNotLibraRoot;
+        include AbortsIfNotDiemRoot;
     }
 
-    /// Specifies that a function aborts if the account does not have the Libra root address.
-    spec schema AbortsIfNotLibraRoot {
+    /// Specifies that a function aborts if the account does not have the Diem root address.
+    spec schema AbortsIfNotDiemRoot {
         account: signer;
         aborts_if Signer::spec_address_of(account) != LIBRA_ROOT_ADDRESS()
             with Errors::REQUIRES_ADDRESS;

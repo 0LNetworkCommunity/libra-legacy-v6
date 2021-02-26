@@ -5,10 +5,10 @@ pub mod account;
 pub mod addresses;
 pub mod coins;
 pub mod event;
-pub mod libra;
+pub mod diem;
 
 pub use account::*;
 pub use addresses::*;
 pub use coins::*;
 pub use event::*;
-pub use libra::*;
+pub use diem::*;

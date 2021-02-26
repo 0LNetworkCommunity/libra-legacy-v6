@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -24,10 +24,10 @@ pub struct Args {
     /// Run test on the provided packages
     package: Vec<String>,
     #[structopt(long, short)]
-    /// Skip running expensive libra testsuite integration tests
+    /// Skip running expensive diem testsuite integration tests
     unit: bool,
     #[structopt(long)]
-    /// Test only this package's library unit tests, skipping doctests
+    /// Test only this package's diemry unit tests, skipping doctests
     lib: bool,
     #[structopt(long)]
     /// Do not fast fail the run if tests (or test executables) fail

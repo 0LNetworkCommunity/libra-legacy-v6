@@ -6,7 +6,7 @@ DATA_PATH = ${HOME}/.0L
 CHAIN_ID = 1
 
 ifndef SOURCE
-SOURCE=${HOME}/libra
+SOURCE=${HOME}/diem
 endif
 
 ifndef V
@@ -49,9 +49,9 @@ bins:
 	#TOML cli
 	cargo install toml-cli
 	cargo run -p stdlib --release
-	#Build and install genesis tool, libra-node, and miner
+	#Build and install genesis tool, diem-node, and miner
 	cargo build -p miner --release && sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
-	cargo build -p libra-node --release && sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
+	cargo build -p diem-node --release && sudo cp -f ${SOURCE}/target/release/diem-node /usr/local/bin/diem-node
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
@@ -61,17 +61,17 @@ init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
-	cargo run -p libra-genesis-tool --release -- set-layout \
+	cargo run -p diem-genesis-tool --release -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ./util/set_layout_${NODE_ENV}.toml
 
 root:
-		cargo run -p libra-genesis-tool --release -- libra-root-key \
+		cargo run -p diem-genesis-tool --release -- diem-root-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
 treasury:
-		cargo run -p libra-genesis-tool --release --  treasury-compliance-key \
+		cargo run -p diem-genesis-tool --release --  treasury-compliance-key \
 		--validator-backend ${LOCAL} \
 		--shared-backend ${REMOTE}
 
@@ -98,42 +98,42 @@ register:
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
 init-test:
-	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
+	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-	cargo run -p libra-genesis-tool --release --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p diem-genesis-tool --release --  init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
-	cargo run -p libra-genesis-tool --release --  mining \
+	cargo run -p diem-genesis-tool --release --  mining \
 	--path-to-genesis-pow ${DATA_PATH}/blocks/block_0.json \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits operator key to github, and creates local OPERATOR_ACCOUNT
 oper-key:
-	cargo run -p libra-genesis-tool --release --  operator-key \
+	cargo run -p diem-genesis-tool --release --  operator-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
 owner-key:
-	cargo run -p libra-genesis-tool --release --  owner-key \
+	cargo run -p diem-genesis-tool --release --  owner-key \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
 assign: 
-	cargo run -p libra-genesis-tool --release --  set-operator \
+	cargo run -p diem-genesis-tool --release --  set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
 
 # OPER does this
 # Submits signed validator registration transaction to github.
 reg:
-	cargo run -p libra-genesis-tool --release --  validator-config \
+	cargo run -p diem-genesis-tool --release --  validator-config \
 	--owner-name ${OWNER} \
 	--chain-id ${CHAIN_ID} \
 	--validator-address "/ip4/${IP}/tcp/6180" \
@@ -144,25 +144,25 @@ reg:
 
 ## Helpers to verify the local state.
 verify:
-	cargo run -p libra-genesis-tool --release --  verify \
+	cargo run -p diem-genesis-tool --release --  verify \
 	--validator-backend ${LOCAL}
 	# --genesis-path ${DATA_PATH}/genesis.blob
 
 verify-gen:
-	cargo run -p libra-genesis-tool --release --  verify \
+	cargo run -p diem-genesis-tool --release --  verify \
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
 
 #### GENESIS  ####
 build-gen:
-	cargo run -p libra-genesis-tool --release -- genesis \
+	cargo run -p diem-genesis-tool --release -- genesis \
 	--chain-id ${CHAIN_ID} \
 	--shared-backend ${REMOTE} \
 	--path ${DATA_PATH}/genesis.blob
 
 genesis:
-	cargo run -p libra-genesis-tool --release -- files \
+	cargo run -p diem-genesis-tool --release -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
@@ -174,11 +174,11 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p libra-node -- --config ${DATA_PATH}/node.yaml
+	cargo run -p diem-node -- --config ${DATA_PATH}/node.yaml
 
 daemon:
-# your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
-	sudo cp -f ~/.0L/libra-node.service /lib/systemd/system/
+# your node's custom diem-node.service lives in ~/.0L. Take the template from diem/util and edit for your needs.
+	sudo cp -f ~/.0L/diem-node.service /lib/systemd/system/
 
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
@@ -191,17 +191,17 @@ daemon:
 	sudo chmod 777 ~/logs/node.log
 
 	sudo systemctl daemon-reload
-	sudo systemctl stop libra-node.service
-	sudo systemctl start libra-node.service
+	sudo systemctl stop diem-node.service
+	sudo systemctl start diem-node.service
 	sudo sleep 2
-	sudo systemctl status libra-node.service &
+	sudo systemctl status diem-node.service &
 	sudo tail -f ~/logs/node.log
 
 #### TEST SETUP ####
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
+		cd ${DATA_PATH} && rm -rf diemdb *.yaml *.blob *.json db *.toml; \
 	fi
 	if test -d ${DATA_PATH}/blocks; then \
 		rm -f ${DATA_PATH}/blocks/*.json; \
@@ -294,7 +294,7 @@ wipe:
 	srm ~/.bash_history
 
 stop:
-	sudo service libra-node stop
+	sudo service diem-node stop
 
 debug:
 	make smoke-onboard <<< $$'${MNEM}'

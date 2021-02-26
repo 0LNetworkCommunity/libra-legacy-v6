@@ -25,15 +25,15 @@ Null - If transaction does not exist
 
 ```
 // Request: fetches transaction for account address "1668f6be25668c1a17cd8caf6b8d2f25" and sequence number 0, with including events associated with this transaction
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_account_transaction","params":["1668f6be25668c1a17cd8caf6b8d2f25", 0, true],"id":1}' https://testnet.libra.org/v1
+curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_account_transaction","params":["1668f6be25668c1a17cd8caf6b8d2f25", 0, true],"id":1}' https://testnet.diem.org/v1
 
 // Response
 {
   "id": 1,
   "jsonrpc": "2.0",
-  "libra_chain_id": 2,
-  "libra_ledger_timestampusec": 1596694618402871,
-  "libra_ledger_version": 3309406,
+  "diem_chain_id": 2,
+  "diem_ledger_timestampusec": 1596694618402871,
+  "diem_ledger_version": 3309406,
   "result": {
     "events": [
       {

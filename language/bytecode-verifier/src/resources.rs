@@ -3,7 +3,7 @@
 
 //! This module implements a checker for verifying that a non-resource struct does not
 //! have resource fields inside it.
-use libra_types::vm_status::StatusCode;
+use diem_types::vm_status::StatusCode;
 use vm::{
     access::ModuleAccess,
     errors::{verification_error, Location, PartialVMResult, VMResult},

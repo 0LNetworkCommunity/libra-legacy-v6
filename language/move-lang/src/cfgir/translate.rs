@@ -13,7 +13,7 @@ use crate::{
     parser::ast::{ConstantName, FunctionName, ModuleIdent, StructName, Var},
     shared::unique_map::UniqueMap,
 };
-use libra_types::account_address::AccountAddress as LibraAddress;
+use diem_types::account_address::AccountAddress as LibraAddress;
 use move_core_types::value::MoveValue;
 use move_ir_types::location::*;
 use std::{

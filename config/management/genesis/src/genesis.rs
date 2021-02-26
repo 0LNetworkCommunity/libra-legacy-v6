@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::layout::Layout;
-// use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{OPERATOR_KEY, OWNER_KEY};
-use libra_management::{
+// use diem_crypto::ed25519::Ed25519PublicKey;
+use diem_global_constants::{OPERATOR_KEY, OWNER_KEY};
+use diem_management::{
     config::ConfigPath, constants, error::Error, secure_backend::SharedBackend,
 };
-use libra_types::{account_address, chain_id::ChainId, transaction::{Transaction, TransactionPayload}};
+use diem_types::{account_address, chain_id::ChainId, transaction::{Transaction, TransactionPayload}};
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
 use vm_genesis::{OperatorAssignment, OperatorRegistration, GenesisMiningProof};
@@ -27,7 +27,7 @@ pub struct Genesis {
 }
 
 impl Genesis {
-    fn config(&self) -> Result<libra_management::config::Config, Error> {
+    fn config(&self) -> Result<diem_management::config::Config, Error> {
         self.config
             .load()?
             .override_chain_id(self.chain_id)
@@ -36,13 +36,13 @@ impl Genesis {
 
     pub fn execute(self) -> Result<Transaction, Error> {
         let layout = self.layout()?;
-        // let libra_root_key = self.libra_root_key(&layout)?;
+        // let diem_root_key = self.diem_root_key(&layout)?;
         // let treasury_compliance_key = self.treasury_compliance_key(&layout)?;
         let operator_assignments = self.operator_assignments(&layout)?;
         let operator_registrations = self.operator_registrations(&layout)?;
 
         let chain_id = self.config()?.chain_id;
-        let script_policy = Some(libra_types::on_chain_config::VMPublishingOption::open());
+        let script_policy = Some(diem_types::on_chain_config::VMPublishingOption::open());
 
         let genesis = vm_genesis::encode_genesis_transaction(
             None,
@@ -68,11 +68,11 @@ impl Genesis {
         Ok(genesis)
     }
 
-    // /// Retrieves the libra root key from the remote storage. Note, at this point in time, genesis
-    // /// only supports a single libra root key.
-    // pub fn libra_root_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
+    // /// Retrieves the diem root key from the remote storage. Note, at this point in time, genesis
+    // /// only supports a single diem root key.
+    // pub fn diem_root_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
     //     let config = self.config()?;
-    //     let storage = config.shared_backend_with_namespace(layout.libra_root.clone());
+    //     let storage = config.shared_backend_with_namespace(layout.diem_root.clone());
     //     storage.ed25519_key(LIBRA_ROOT_KEY)
     // }
 
@@ -105,8 +105,8 @@ impl Genesis {
             );
 
             let pow = GenesisMiningProof {
-                preimage: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
-                proof: owner_storage.string(libra_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
+                preimage: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PREIMAGE).unwrap(),
+                proof: owner_storage.string(diem_global_constants::PROOF_OF_WORK_PROOF).unwrap(),
             };
 
             let owner_name_vec = owner.as_bytes().to_vec();
@@ -156,7 +156,7 @@ impl Genesis {
     // /// Retrieves the treasury root key from the remote storage.
     // pub fn treasury_compliance_key(&self, layout: &Layout) -> Result<Ed25519PublicKey, Error> {
     //     let config = self.config()?;
-    //     let storage = config.shared_backend_with_namespace(layout.libra_root.clone());
-    //     storage.ed25519_key(libra_global_constants::TREASURY_COMPLIANCE_KEY)
+    //     let storage = config.shared_backend_with_namespace(layout.diem_root.clone());
+    //     storage.ed25519_key(diem_global_constants::TREASURY_COMPLIANCE_KEY)
     // }
 }

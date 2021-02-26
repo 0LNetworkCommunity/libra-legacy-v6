@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use crate::LibraDB;
+use crate::DiemDB;
 use itertools::Itertools;
-use libra_crypto::hash::ACCUMULATOR_PLACEHOLDER_HASH;
-use libra_proptest_helpers::Index;
-use libra_temppath::TempPath;
-use libra_types::{
+use diem_crypto::hash::ACCUMULATOR_PLACEHOLDER_HASH;
+use diem_proptest_helpers::Index;
+use diem_temppath::TempPath;
+use diem_types::{
     account_address::AccountAddress,
     contract_event::ContractEvent,
     event::EventKey,
@@ -36,7 +36,7 @@ fn save(store: &EventStore, version: Version, events: &[ContractEvent]) -> HashV
 #[test]
 fn test_put_empty() {
     let tmp_dir = TempPath::new();
-    let db = LibraDB::new_for_test(&tmp_dir);
+    let db = DiemDB::new_for_test(&tmp_dir);
     let store = &db.event_store;
     let mut cs = ChangeSet::new();
     assert_eq!(
@@ -48,7 +48,7 @@ fn test_put_empty() {
 #[test]
 fn test_error_on_get_from_empty() {
     let tmp_dir = TempPath::new();
-    let db = LibraDB::new_for_test(&tmp_dir);
+    let db = DiemDB::new_for_test(&tmp_dir);
     let store = &db.event_store;
 
     assert!(store
@@ -62,7 +62,7 @@ proptest! {
     #[test]
     fn test_put_get_verify(events in vec(any::<ContractEvent>().no_shrink(), 1..100)) {
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
         let store = &db.event_store;
 
         let root_hash = save(store, 100, &events);
@@ -94,7 +94,7 @@ proptest! {
     ) {
 
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
         let store = &db.event_store;
         // Save 3 chunks at different versions
         save(store, 99 /*version*/, &events1);
@@ -186,7 +186,7 @@ proptest! {
 fn test_get_events_by_access_path_impl(event_batches: Vec<Vec<ContractEvent>>) {
     // Put into db.
     let tmp_dir = TempPath::new();
-    let db = LibraDB::new_for_test(&tmp_dir);
+    let db = DiemDB::new_for_test(&tmp_dir);
     let store = &db.event_store;
 
     let mut cs = ChangeSet::new();

@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use crate::LibraDB;
-use libra_proptest_helpers::Index;
-use libra_temppath::TempPath;
-use libra_types::{
+use crate::DiemDB;
+use diem_proptest_helpers::Index;
+use diem_temppath::TempPath;
+use diem_types::{
     block_metadata::BlockMetadata,
     proptest_types::{AccountInfoUniverse, SignatureCheckedTransactionGen},
     transaction::{SignedTransaction, Transaction},
@@ -24,7 +24,7 @@ proptest! {
         ),
     ) {
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
         let store = &db.transaction_store;
         let txns = init_store(universe, gens, &store);
 
@@ -58,7 +58,7 @@ proptest! {
         ),
     ) {
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
         let store = &db.transaction_store;
         let txns = init_store(universe, gens, &store);
 
@@ -114,7 +114,7 @@ proptest! {
         )
     ) {
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
         let store = &db.transaction_store;
 
         let mut cs = ChangeSet::new();

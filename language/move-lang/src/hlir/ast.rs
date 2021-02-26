@@ -568,7 +568,7 @@ impl AstDebug for ModuleDefinition {
             functions,
         } = self;
         if *is_source_module {
-            w.writeln("library module")
+            w.writeln("diemry module")
         } else {
             w.writeln("source module")
         }

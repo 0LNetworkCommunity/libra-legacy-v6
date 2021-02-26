@@ -1,10 +1,10 @@
 [package]
-name = "libra-writeset-generator"
+name = "diem-writeset-generator"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
+authors = ["Libra Association <opensource@diem.org>"]
 description = "Generating writesets used for incident management"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.org"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -19,8 +19,8 @@ handlebars = "3.5.0"
 serde = { version = "1.0.116", default-features = false }
 serde_json = "1.0.58"
 
-libra-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
-libra-types = { path = "../../../types", version = "0.1.0" }
+diem-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
+diem-types = { path = "../../../types", version = "0.1.0" }
 stdlib = { path = "../../stdlib", version = "0.1.0" }
 move-lang = { path = "../../move-lang", version = "0.0.1" }
-lcs = { path = "../../../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
+lcs = { path = "../../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }

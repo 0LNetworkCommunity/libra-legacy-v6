@@ -1,6 +1,6 @@
 # JSON-RPC
 
-JSON-RPC service provides APIs for client applications to query the Libra blockchain.
+JSON-RPC service provides APIs for client applications to query the Diem blockchain.
 
 There are two types of clients, and thus two types of APIs:
 
@@ -9,7 +9,7 @@ There are two types of clients, and thus two types of APIs:
 
 ## Usage and versioning
 
-Refer to the [specification](https://github.com/libra/libra/blob/master/json-rpc/json-rpc-spec.md).
+Refer to the [specification](https://github.com/diem/diem/blob/master/json-rpc/json-rpc-spec.md).
 
 ## Security Concerns
 

@@ -9,10 +9,10 @@ use crate::{
     keygen,
 };
 
-use libra_genesis_tool::keyscheme::KeyScheme;
+use diem_genesis_tool::keyscheme::KeyScheme;
 
 use abscissa_core::{Command, Options, Runnable};
-use libra_wallet::WalletLibrary;
+use diem_wallet::WalletDiemry;
 use std::path::PathBuf;
 use crate::prelude::app_config;
 
@@ -46,7 +46,7 @@ impl Runnable for ManifestCmd {
     }
 }
 /// Creates an account.json file for the validator
-pub fn write_manifest(mut path: Option<PathBuf>, wallet: WalletLibrary ) {
+pub fn write_manifest(mut path: Option<PathBuf>, wallet: WalletDiemry ) {
     let stored_configs = app_config();
     if !path.is_some() {path = Some(stored_configs.workspace.node_home.clone())};
 

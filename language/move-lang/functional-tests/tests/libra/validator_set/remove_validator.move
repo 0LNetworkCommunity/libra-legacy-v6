@@ -9,7 +9,7 @@
 //! block-time: 3
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 // remove_validator cannot be called on a non-validator
 script{
     use 0x1::LibraSystem;
@@ -33,7 +33,7 @@ script{
 // check: "Keep(ABORTED { code: 2,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 // should work because Vivian is a validator
 script{
     use 0x1::LibraSystem;
@@ -46,7 +46,7 @@ script{
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 // double-removing Vivian should fail
 script{
     use 0x1::LibraSystem;

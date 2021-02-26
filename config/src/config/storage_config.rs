@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::utils;
@@ -33,7 +33,7 @@ impl Default for StorageConfig {
             grpc_max_receive_len: Some(100_000_000),
             // ~50GB state tree history (about 1 day at 100 tps)
             prune_window: Some(10_000_000),
-            data_dir: PathBuf::from("/opt/libra/data"),
+            data_dir: PathBuf::from("/opt/diem/data"),
             // Default read/write/connection timeout, in milliseconds
             timeout_ms: 30_000,
         }

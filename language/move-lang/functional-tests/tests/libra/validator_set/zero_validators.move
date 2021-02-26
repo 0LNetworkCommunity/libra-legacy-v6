@@ -5,7 +5,7 @@
 //! block-time: 3
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     fun main() {
@@ -15,7 +15,7 @@ script {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     fun main(account: &signer) {
@@ -32,7 +32,7 @@ script {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     fun main() {

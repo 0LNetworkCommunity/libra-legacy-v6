@@ -1,10 +1,10 @@
 address 0x1 {
 
-/// The `LibraAccount` module manages accounts. It defines the `LibraAccount` resource and
+/// The `DiemAccount` module manages accounts. It defines the `DiemAccount` resource and
 /// numerous auxiliary data structures. It also defines the prolog and epilog that run
 /// before and after every transaction.
 
-module LibraAccount {
+module DiemAccount {
     use 0x1::AccountFreezing;
     use 0x1::CoreAddresses;
     use 0x1::ChainId;
@@ -16,9 +16,9 @@ module LibraAccount {
     use 0x1::Hash;
     use 0x1::GAS::GAS;
     use 0x1::LCS;
-    use 0x1::LibraConfig;
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraTransactionPublishingOption;
+    use 0x1::DiemConfig;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemTransactionPublishingOption;
     use 0x1::Signer;
     use 0x1::SlidingNonce;
     use 0x1::TransactionFee;
@@ -27,7 +27,7 @@ module LibraAccount {
     use 0x1::VASP;
     use 0x1::Vector;
     use 0x1::DesignatedDealer;
-    use 0x1::Libra::{Self, Libra};
+    use 0x1::Diem::{Self, Diem};
     use 0x1::Option::{Self, Option};
     use 0x1::Roles;
     //////// 0L ////////
@@ -36,8 +36,8 @@ module LibraAccount {
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
 
-    /// An `address` is a Libra Account if it has a published LibraAccount resource.
-    resource struct LibraAccount {
+    /// An `address` is a Diem Account if it has a published DiemAccount resource.
+    resource struct DiemAccount {
         /// The current authentication key.
         /// This can be different from the key used to create the account
         authentication_key: vector<u8>,
@@ -71,11 +71,11 @@ module LibraAccount {
         /// Stores the value of the balance in its balance field. A coin has
         /// a `value` field. The amount of money in the balance is changed
         /// by modifying this field.
-        coin: Libra<Token>,
+        coin: Diem<Token>,
     }
 
-    /// The holder of WithdrawCapability for account_address can withdraw Libra from
-    /// account_address/LibraAccount/balance.
+    /// The holder of WithdrawCapability for account_address can withdraw Diem from
+    /// account_address/DiemAccount/balance.
     /// There is at most one WithdrawCapability in existence for a given address.
     resource struct WithdrawCapability {
         /// Address that WithdrawCapability was associated with when it was created.
@@ -84,7 +84,7 @@ module LibraAccount {
     }
 
     /// The holder of KeyRotationCapability for account_address can rotate the authentication key for
-    /// account_address (i.e., write to account_address/LibraAccount/authentication_key).
+    /// account_address (i.e., write to account_address/DiemAccount/authentication_key).
     /// There is at most one KeyRotationCapability in existence for a given address.
     resource struct KeyRotationCapability {
         /// Address that KeyRotationCapability was associated with when it was created.
@@ -100,14 +100,14 @@ module LibraAccount {
     }
 
     /// A resource that holds the event handle for all the past WriteSet transactions that have been committed on chain.
-    resource struct LibraWriteSetManager {
+    resource struct DiemWriteSetManager {
         upgrade_events: Event::EventHandle<Self::AdminTransactionEvent>,
     }
 
 
     /// Message for sent events
     struct SentPaymentEvent {
-        /// The amount of Libra<Token> sent
+        /// The amount of Diem<Token> sent
         amount: u64,
         /// The code symbol for the currency that was sent
         currency_code: vector<u8>,
@@ -119,7 +119,7 @@ module LibraAccount {
 
     /// Message for received events
     struct ReceivedPaymentEvent {
-        /// The amount of Libra<Token> received
+        /// The amount of Diem<Token> received
         amount: u64,
         /// The code symbol for the currency that was received
         currency_code: vector<u8>,
@@ -145,7 +145,7 @@ module LibraAccount {
 
     const MAX_U64: u128 = 18446744073709551615;
 
-    /// The `LibraAccount` resource is not in the required state
+    /// The `DiemAccount` resource is not in the required state
     const EACCOUNT: u64 = 0;
     /// The account's sequence number has exceeded the maximum representable value
     const ESEQUENCE_NUMBER: u64 = 1;
@@ -174,7 +174,7 @@ module LibraAccount {
     /// Attempted to send funds to an account that does not exist
     const EPAYEE_DOES_NOT_EXIST: u64 = 17;
     /// Attempted to send funds in a currency that the receiving account does not hold.
-    /// e.g., `Libra<GAS>` to an account that exists, but does not have a `Balance<GAS>` resource
+    /// e.g., `Diem<GAS>` to an account that exists, but does not have a `Balance<GAS>` resource
     const EPAYEE_CANT_ACCEPT_CURRENCY_TYPE: u64 = 18;
     /// Tried to withdraw funds in a currency that the account does hold
     const EPAYER_DOESNT_HOLD_CURRENCY: u64 = 19;
@@ -182,7 +182,7 @@ module LibraAccount {
     const EGAS: u64 = 20;
     /// The `AccountOperationsCapability` was not in the required state
     const EACCOUNT_OPERATIONS_CAPABILITY: u64 = 22;
-    /// The `LibraWriteSetManager` was not in the required state
+    /// The `DiemWriteSetManager` was not in the required state
     const EWRITESET_MANAGER: u64 = 23;
     /// An account cannot be created at the reserved core code address of 0x1
     const ECANNOT_CREATE_AT_CORE_CODE: u64 = 24;
@@ -209,11 +209,11 @@ module LibraAccount {
         lr_account: &signer,
         dummy_auth_key_prefix: vector<u8>,
     ) acquires AccountOperationsCapability {
-        LibraTimestamp::assert_genesis();
+        DiemTimestamp::assert_genesis();
         // Operational constraint, not a privilege constraint.
-        CoreAddresses::assert_libra_root(lr_account);
+        CoreAddresses::assert_diem_root(lr_account);
 
-        create_libra_root_account(
+        create_diem_root_account(
             copy dummy_auth_key_prefix,
         );
     }
@@ -248,7 +248,7 @@ module LibraAccount {
 
     // Permissions: PUBLIC, ANYONE, OPEN!
     // This function has no permissions, it doesn't check the signer. And it exceptionally is moving a resource to a different account than the signer.
-    // LibraAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
+    // DiemAccount is the only code in the VM which can place a resource in an account. As such the module and especially this function has an attack surface.
 
     public fun create_validator_account_with_proof(
         sender: &signer,
@@ -275,7 +275,7 @@ module LibraAccount {
         //Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
-        // The lr_account account is verified to have the libra root role in `Roles::new_validator_role`
+        // The lr_account account is verified to have the diem root role in `Roles::new_validator_role`
         Roles::new_validator_role_with_proof(&new_signer);
         Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
@@ -366,14 +366,14 @@ module LibraAccount {
     fun deposit<Token>(
         payer: address,
         payee: address,
-        to_deposit: Libra<Token>,
+        to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
-        LibraTimestamp::assert_operating();
+    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+        DiemTimestamp::assert_operating();
         AccountFreezing::assert_not_frozen(payee);
         // Check that the `to_deposit` coin is non-zero
-        let deposit_value = Libra::value(&to_deposit);
+        let deposit_value = Diem::value(&to_deposit);
         assert(deposit_value > 0, Errors::invalid_argument(ECOIN_DEPOSIT_IS_ZERO));
         // Check that an account exists at `payee`
         assert(exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
@@ -400,13 +400,13 @@ module LibraAccount {
             );
         };
         // Deposit the `to_deposit` coin
-        Libra::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
+        Diem::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
         // Log a received event
         Event::emit_event<ReceivedPaymentEvent>(
-            &mut borrow_global_mut<LibraAccount>(payee).received_events,
+            &mut borrow_global_mut<DiemAccount>(payee).received_events,
             ReceivedPaymentEvent {
                 amount: deposit_value,
-                currency_code: Libra::currency_code<Token>(),
+                currency_code: Diem::currency_code<Token>(),
                 payer,
                 metadata
             }
@@ -415,12 +415,12 @@ module LibraAccount {
     spec fun deposit {
         pragma opaque;
         modifies global<Balance<Token>>(payee);
-        modifies global<LibraAccount>(payee);
+        modifies global<DiemAccount>(payee);
         modifies global<AccountLimits::Window<Token>>(VASP::spec_parent_address(payee));
-        ensures exists<LibraAccount>(payee);
+        ensures exists<DiemAccount>(payee);
         ensures exists<Balance<Token>>(payee);
-        ensures global<LibraAccount>(payee).withdraw_capability
-            == old(global<LibraAccount>(payee).withdraw_capability);
+        ensures global<DiemAccount>(payee).withdraw_capability
+            == old(global<DiemAccount>(payee).withdraw_capability);
         include DepositAbortsIf<Token>{amount: to_deposit.value};
         include DepositOverflowAbortsIf<Token>{amount: to_deposit.value};
         include DepositEnsures<Token>{amount: to_deposit.value};
@@ -447,7 +447,7 @@ module LibraAccount {
         amount: u64;
         metadata_signature: vector<u8>;
         metadata: vector<u8>;
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         aborts_if amount == 0 with Errors::INVALID_ARGUMENT;
         include DualAttestation::AssertPaymentOkAbortsIf<Token>{value: amount};
         include
@@ -459,7 +459,7 @@ module LibraAccount {
             spec_should_track_limits_for_account<Token>(payer, payee, false) &&
                 !AccountLimits::spec_update_deposit_limits<Token>(amount, VASP::spec_parent_address(payee))
             with Errors::LIMIT_EXCEEDED;
-        include Libra::AbortsIfNoCurrency<Token>;
+        include Diem::AbortsIfNoCurrency<Token>;
     }
     spec schema DepositEnsures<Token> {
         payee: address;
@@ -475,7 +475,7 @@ module LibraAccount {
         designated_dealer_address: address,
         mint_amount: u64,
         tier_index: u64,
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability {
         let coin = DesignatedDealer::tiered_mint<Token>(
             tc_account, mint_amount, designated_dealer_address, tier_index
         );
@@ -487,7 +487,7 @@ module LibraAccount {
     spec fun tiered_mint {
         pragma opaque;
         modifies global<Balance<Token>>(designated_dealer_address);
-        modifies global<Libra::CurrencyInfo<Token>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
+        modifies global<Diem::CurrencyInfo<Token>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         include TieredMintAbortsIf<Token>;
         include TieredMintEnsures<Token>;
     }
@@ -507,7 +507,7 @@ module LibraAccount {
         designated_dealer_address: address;
         mint_amount: u64;
         let dealer_balance = global<Balance<Token>>(designated_dealer_address).coin.value;
-        let currency_info = global<Libra::CurrencyInfo<Token>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
+        let currency_info = global<Diem::CurrencyInfo<Token>>(CoreAddresses::CURRENCY_INFO_ADDRESS());
         /// Total value of the currency increases by `amount`.
         ensures currency_info == update_field(old(currency_info), total_value, old(currency_info.total_value) + mint_amount);
         /// The balance of designated dealer increases by `amount`.
@@ -519,8 +519,8 @@ module LibraAccount {
     public fun cancel_burn<Token>(
         account: &signer,
         preburn_address: address,
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
-        let coin = Libra::cancel_burn<Token>(account, preburn_address);
+    ) acquires DiemAccount, Balance, AccountOperationsCapability {
+        let coin = Diem::cancel_burn<Token>(account, preburn_address);
         // record both sender and recipient as `preburn_address`: the coins are moving from
         // `preburn_address`'s `Preburn` resource to its balance
         deposit(preburn_address, preburn_address, coin, x"", x"")
@@ -528,8 +528,8 @@ module LibraAccount {
 
     spec fun cancel_burn {
         include CancelBurnAbortsIf<Token>;
-        include Libra::CancelBurnWithCapEnsures<Token>;
-        let preburn_value_at_addr = global<Libra::Preburn<Token>>(preburn_address).to_burn.value;
+        include Diem::CancelBurnWithCapEnsures<Token>;
+        let preburn_value_at_addr = global<Diem::Preburn<Token>>(preburn_address).to_burn.value;
         let balance_at_addr = balance<Token>(preburn_address);
         ensures balance_at_addr == old(balance_at_addr) + old(preburn_value_at_addr);
     }
@@ -537,10 +537,10 @@ module LibraAccount {
     spec schema CancelBurnAbortsIf<Token> {
         account: signer;
         preburn_address: address;
-        let amount = global<Libra::Preburn<Token>>(preburn_address).to_burn.value;
-        aborts_if !exists<Libra::BurnCapability<Token>>(Signer::spec_address_of(account))
+        let amount = global<Diem::Preburn<Token>>(preburn_address).to_burn.value;
+        aborts_if !exists<Diem::BurnCapability<Token>>(Signer::spec_address_of(account))
             with Errors::REQUIRES_CAPABILITY;
-        include Libra::CancelBurnWithCapAbortsIf<Token>;
+        include Diem::CancelBurnWithCapAbortsIf<Token>;
         include DepositAbortsIf<Token>{
             payer: preburn_address,
             payee: preburn_address,
@@ -550,14 +550,14 @@ module LibraAccount {
         };
         include DepositOverflowAbortsIf<Token>{payee: preburn_address, amount: amount};
     }
-    /// Helper to withdraw `amount` from the given account balance and return the withdrawn Libra<Token>
+    /// Helper to withdraw `amount` from the given account balance and return the withdrawn Diem<Token>
     fun withdraw_from_balance<Token>(
         payer: address,
         payee: address,
         balance: &mut Balance<Token>,
         amount: u64
-    ): Libra<Token> acquires AccountOperationsCapability {
-        LibraTimestamp::assert_operating();
+    ): Diem<Token> acquires AccountOperationsCapability {
+        DiemTimestamp::assert_operating();
         AccountFreezing::assert_not_frozen(payer);
         // Make sure that this withdrawal is compliant with the limits on
         // the account if it's a inter-VASP transfer,
@@ -571,8 +571,8 @@ module LibraAccount {
         };
         let coin = &mut balance.coin;
         // Abort if this withdrawal would make the `payer`'s balance go negative
-        assert(Libra::value(coin) >= amount, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
-        Libra::withdraw(coin, amount)
+        assert(Diem::value(coin) >= amount, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
+        Diem::withdraw(coin, amount)
     }
     spec fun withdraw_from_balance {
         modifies global<AccountLimits::Window<Token>>(VASP::spec_parent_address(payer));
@@ -602,27 +602,27 @@ module LibraAccount {
           payee: address;
           balance: Balance<Token>;
           amount: u64;
-          include LibraTimestamp::AbortsIfNotOperating;
+          include DiemTimestamp::AbortsIfNotOperating;
           include AccountFreezing::AbortsIfFrozen{account: payer};
           aborts_if balance.coin.value < amount with Errors::LIMIT_EXCEEDED;
     }
     spec schema WithdrawFromBalanceEnsures<Token> {
         balance: Balance<Token>;
         amount: u64;
-        result: Libra<Token>;
+        result: Diem<Token>;
         ensures balance.coin.value == old(balance.coin.value) - amount;
         ensures result.value == amount;
     }
 
-    /// Withdraw `amount` `Libra<Token>`'s from the account balance under
+    /// Withdraw `amount` `Diem<Token>`'s from the account balance under
     /// `cap.account_address`
     fun withdraw_from<Token>(
         cap: &WithdrawCapability,
         payee: address,
         amount: u64,
         metadata: vector<u8>,
-    ): Libra<Token> acquires Balance, AccountOperationsCapability, LibraAccount {
-        LibraTimestamp::assert_operating();
+    ): Diem<Token> acquires Balance, AccountOperationsCapability, DiemAccount {
+        DiemTimestamp::assert_operating();
         let payer = cap.account_address;
         assert(exists_at(payer), Errors::not_published(EACCOUNT));
         assert(exists<Balance<Token>>(payer), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
@@ -631,10 +631,10 @@ module LibraAccount {
         let account_balance = borrow_global_mut<Balance<Token>>(payer);
         // Load the payer's account and emit an event to record the withdrawal
         Event::emit_event<SentPaymentEvent>(
-            &mut borrow_global_mut<LibraAccount>(payer).sent_events,
+            &mut borrow_global_mut<DiemAccount>(payer).sent_events,
             SentPaymentEvent {
                 amount,
-                currency_code: Libra::currency_code<Token>(),
+                currency_code: Diem::currency_code<Token>(),
                 payee,
                 metadata
             },
@@ -645,10 +645,10 @@ module LibraAccount {
     spec fun withdraw_from {
         let payer = cap.account_address;
         modifies global<Balance<Token>>(payer);
-        modifies global<LibraAccount>(payer);
-        ensures exists<LibraAccount>(payer);
-        ensures global<LibraAccount>(payer).withdraw_capability
-                    == old(global<LibraAccount>(payer).withdraw_capability);
+        modifies global<DiemAccount>(payer);
+        ensures exists<DiemAccount>(payer);
+        ensures global<DiemAccount>(payer).withdraw_capability
+                    == old(global<DiemAccount>(payer).withdraw_capability);
         include WithdrawFromAbortsIf<Token>;
         include WithdrawFromBalanceEnsures<Token>{balance: global<Balance<Token>>(payer)};
         include WithdrawOnlyFromCapAddress<Token>;
@@ -659,8 +659,8 @@ module LibraAccount {
         payee: address;
         amount: u64;
         let payer = cap.account_address;
-        include LibraTimestamp::AbortsIfNotOperating;
-        include Libra::AbortsIfNoCurrency<Token>;
+        include DiemTimestamp::AbortsIfNotOperating;
+        include Diem::AbortsIfNoCurrency<Token>;
         include WithdrawFromBalanceAbortsIf<Token>{payer, balance: global<Balance<Token>>(payer)};
         aborts_if !exists_at(payer) with Errors::NOT_PUBLISHED;
         aborts_if !exists<Balance<Token>>(payer) with Errors::NOT_PUBLISHED;
@@ -674,25 +674,25 @@ module LibraAccount {
             balance<Token>(addr) == old(balance<Token>(addr));
     }
 
-    /// Withdraw `amount` `Libra<Token>`'s from `cap.address` and send them to the `Preburn`
+    /// Withdraw `amount` `Diem<Token>`'s from `cap.address` and send them to the `Preburn`
     /// resource under `dd`.
     public fun preburn<Token>(
         dd: &signer,
         cap: &WithdrawCapability,
         amount: u64
-    ) acquires Balance, AccountOperationsCapability, LibraAccount {
-        LibraTimestamp::assert_operating();
-        Libra::preburn_to<Token>(dd, withdraw_from(cap, Signer::address_of(dd), amount, x""))
+    ) acquires Balance, AccountOperationsCapability, DiemAccount {
+        DiemTimestamp::assert_operating();
+        Diem::preburn_to<Token>(dd, withdraw_from(cap, Signer::address_of(dd), amount, x""))
     }
 
     spec fun preburn {
         pragma opaque;
         let dd_addr = Signer::spec_address_of(dd);
         let payer = cap.account_address;
-        modifies global<LibraAccount>(payer);
-        ensures exists<LibraAccount>(payer);
-        ensures global<LibraAccount>(payer).withdraw_capability
-                == old(global<LibraAccount>(payer).withdraw_capability);
+        modifies global<DiemAccount>(payer);
+        ensures exists<DiemAccount>(payer);
+        ensures global<DiemAccount>(payer).withdraw_capability
+                == old(global<DiemAccount>(payer).withdraw_capability);
         include PreburnAbortsIf<Token>;
         include PreburnEnsures<Token>{dd_addr, payer};
     }
@@ -701,26 +701,26 @@ module LibraAccount {
         dd: signer;
         cap: WithdrawCapability;
         amount: u64;
-        include LibraTimestamp::AbortsIfNotOperating{};
+        include DiemTimestamp::AbortsIfNotOperating{};
         include WithdrawFromAbortsIf<Token>{payee: Signer::spec_address_of(dd)};
-        include Libra::PreburnToAbortsIf<Token>{account: dd};
+        include Diem::PreburnToAbortsIf<Token>{account: dd};
     }
 
     spec schema PreburnEnsures<Token> {
         dd_addr: address;
         payer: address;
         let payer_balance = global<Balance<Token>>(payer).coin.value;
-        let preburn = global<Libra::Preburn<Token>>(dd_addr);
+        let preburn = global<Diem::Preburn<Token>>(dd_addr);
         /// The balance of payer decreases by `amount`.
         ensures payer_balance == old(payer_balance) - amount;
         /// The value of preburn at `dd_addr` increases by `amount`;
-        include Libra::PreburnEnsures<Token>{preburn: preburn};
+        include Diem::PreburnEnsures<Token>{preburn: preburn};
     }
 
     /// Return a unique capability granting permission to withdraw from the sender's account balance.
     public fun extract_withdraw_capability(
         sender: &signer
-    ): WithdrawCapability acquires LibraAccount {
+    ): WithdrawCapability acquires DiemAccount {
         //////// 0L //////// Transfers disabled
         let sender_addr = Signer::address_of(sender);
         assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
@@ -731,18 +731,18 @@ module LibraAccount {
             Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
         );
         assert(exists_at(sender_addr), Errors::not_published(EACCOUNT));
-        let account = borrow_global_mut<LibraAccount>(sender_addr);
+        let account = borrow_global_mut<DiemAccount>(sender_addr);
         Option::extract(&mut account.withdraw_capability)
     }
 
     spec fun extract_withdraw_capability {
         pragma opaque;
         let sender_addr = Signer::spec_address_of(sender);
-        modifies global<LibraAccount>(sender_addr);
+        modifies global<DiemAccount>(sender_addr);
         include ExtractWithdrawCapAbortsIf{sender_addr};
-        ensures exists<LibraAccount>(sender_addr);
+        ensures exists<DiemAccount>(sender_addr);
         ensures result == old(spec_get_withdraw_cap(sender_addr));
-        ensures global<LibraAccount>(sender_addr) == update_field(old(global<LibraAccount>(sender_addr)),
+        ensures global<DiemAccount>(sender_addr) == update_field(old(global<DiemAccount>(sender_addr)),
             withdraw_capability, Option::spec_none());
         ensures result.account_address == sender_addr;
     }
@@ -755,7 +755,7 @@ module LibraAccount {
 
     /// Return the withdraw capability to the account it originally came from
     public fun restore_withdraw_capability(cap: WithdrawCapability)
-    acquires LibraAccount {
+    acquires DiemAccount {
         assert(exists_at(cap.account_address), Errors::not_published(EACCOUNT));
         // Abort if the withdraw capability for this account is not extracted,
         // indicating that the withdraw capability is not unique.
@@ -763,14 +763,14 @@ module LibraAccount {
             delegated_withdraw_capability(cap.account_address),
             Errors::invalid_state(EWITHDRAW_CAPABILITY_NOT_EXTRACTED)
         );
-        let account = borrow_global_mut<LibraAccount>(cap.account_address);
+        let account = borrow_global_mut<DiemAccount>(cap.account_address);
         Option::fill(&mut account.withdraw_capability, cap)
     }
 
     spec fun restore_withdraw_capability {
         pragma opaque;
         let cap_addr = cap.account_address;
-        modifies global<LibraAccount>(cap_addr);
+        modifies global<DiemAccount>(cap_addr);
         aborts_if !exists_at(cap_addr) with Errors::NOT_PUBLISHED;
         aborts_if !delegated_withdraw_capability(cap_addr) with Errors::INVALID_STATE;
         ensures spec_holds_own_withdraw_cap(cap_addr);
@@ -785,7 +785,7 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires LibraAccount , Balance, AccountOperationsCapability {
+    ) acquires DiemAccount , Balance, AccountOperationsCapability {
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
 
         // Check payee can receive funds in this currency.
@@ -806,7 +806,7 @@ module LibraAccount {
         // );
 
         // VM can extract the withdraw token.
-        let account = borrow_global_mut<LibraAccount>(payer);
+        let account = borrow_global_mut<DiemAccount>(payer);
         let cap = Option::extract(&mut account.withdraw_capability);
         deposit<Token>(
             cap.account_address,
@@ -818,7 +818,7 @@ module LibraAccount {
         restore_withdraw_capability(cap);
     }
 
-    /// Withdraw `amount` Libra<Token> from the address embedded in `WithdrawCapability` and
+    /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
     /// deposits it into the `payee`'s account balance.
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
     /// The `metadata_signature` will only be checked if this payment is subject to the dual
@@ -829,7 +829,7 @@ module LibraAccount {
         amount: u64,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability {
         deposit<Token>(
             *&cap.account_address,
             payee,
@@ -842,16 +842,16 @@ module LibraAccount {
     spec fun pay_from {
         pragma opaque;
         let payer = cap.account_address;
-        modifies global<LibraAccount>(payer);
-        modifies global<LibraAccount>(payee);
+        modifies global<DiemAccount>(payer);
+        modifies global<DiemAccount>(payee);
         modifies global<Balance<Token>>(payer);
         modifies global<Balance<Token>>(payee);
         ensures exists_at(payer);
         ensures exists_at(payee);
         ensures exists<Balance<Token>>(payer);
         ensures exists<Balance<Token>>(payee);
-        ensures global<LibraAccount>(payer).withdraw_capability ==
-            old(global<LibraAccount>(payer).withdraw_capability);
+        ensures global<DiemAccount>(payer).withdraw_capability ==
+            old(global<DiemAccount>(payer).withdraw_capability);
         include PayFromAbortsIf<Token>;
         include PayFromEnsures<Token>{payer};
 
@@ -890,9 +890,9 @@ module LibraAccount {
     public fun rotate_authentication_key(
         cap: &KeyRotationCapability,
         new_authentication_key: vector<u8>,
-    ) acquires LibraAccount  {
+    ) acquires DiemAccount  {
         assert(exists_at(cap.account_address), Errors::not_published(EACCOUNT));
-        let sender_account_resource = borrow_global_mut<LibraAccount>(cap.account_address);
+        let sender_account_resource = borrow_global_mut<DiemAccount>(cap.account_address);
         // Don't allow rotating to clearly invalid key
         assert(
             Vector::length(&new_authentication_key) == 32,
@@ -914,7 +914,7 @@ module LibraAccount {
     spec schema RotateAuthenticationKeyEnsures {
         addr: address;
         new_authentication_key: vector<u8>;
-        ensures global<LibraAccount>(addr).authentication_key == new_authentication_key;
+        ensures global<DiemAccount>(addr).authentication_key == new_authentication_key;
     }
 
     /// # Access Control
@@ -922,12 +922,12 @@ module LibraAccount {
         cap: KeyRotationCapability;
         /// Can only rotate the authentication_key of cap.account_address [[H17]][PERMISSION].
         ensures forall addr: address where addr != cap.account_address && old(exists_at(addr)):
-            global<LibraAccount>(addr).authentication_key == old(global<LibraAccount>(addr).authentication_key);
+            global<DiemAccount>(addr).authentication_key == old(global<DiemAccount>(addr).authentication_key);
     }
 
     /// Return a unique capability granting permission to rotate the sender's authentication key
     public fun extract_key_rotation_capability(account: &signer): KeyRotationCapability
-    acquires LibraAccount {
+    acquires DiemAccount {
         let account_address = Signer::address_of(account);
         // Abort if we already extracted the unique key rotation capability for this account.
         assert(
@@ -935,7 +935,7 @@ module LibraAccount {
             Errors::invalid_state(EKEY_ROTATION_CAPABILITY_ALREADY_EXTRACTED)
         );
         assert(exists_at(account_address), Errors::not_published(EACCOUNT));
-        let account = borrow_global_mut<LibraAccount>(account_address);
+        let account = borrow_global_mut<DiemAccount>(account_address);
         Option::extract(&mut account.key_rotation_capability)
     }
     spec fun extract_key_rotation_capability {
@@ -959,9 +959,9 @@ module LibraAccount {
 
     /// Return the key rotation capability to the account it originally came from
     public fun restore_key_rotation_capability(cap: KeyRotationCapability)
-    acquires LibraAccount {
+    acquires DiemAccount {
         assert(exists_at(cap.account_address), Errors::not_published(EACCOUNT));
-        let account = borrow_global_mut<LibraAccount>(cap.account_address);
+        let account = borrow_global_mut<DiemAccount>(cap.account_address);
         Option::fill(&mut account.key_rotation_capability, cap)
     }
     spec fun restore_key_rotation_capability {
@@ -1009,12 +1009,12 @@ module LibraAccount {
     spec schema AddCurrencyForAccountAbortsIf<Token> {
         addr: address;
         add_all_currencies: bool;
-        include Libra::AbortsIfNoCurrency<Token>;
+        include Diem::AbortsIfNoCurrency<Token>;
         aborts_if exists<Balance<Token>>(addr) with Errors::ALREADY_PUBLISHED;
         include add_all_currencies && !exists<Balance<Coin1>>(addr)
-            ==> Libra::AbortsIfNoCurrency<Coin1>;
+            ==> Diem::AbortsIfNoCurrency<Coin1>;
         include add_all_currencies && !exists<Balance<GAS>>(addr)
-            ==> Libra::AbortsIfNoCurrency<GAS>;
+            ==> Diem::AbortsIfNoCurrency<GAS>;
     }
 
     spec schema AddCurrencyForAccountEnsures<Token> {
@@ -1070,7 +1070,7 @@ module LibraAccount {
 
         move_to(
             &new_account,
-            LibraAccount {
+            DiemAccount {
                 authentication_key,
                 withdraw_capability: Option::some(
                     WithdrawCapability {
@@ -1107,7 +1107,7 @@ module LibraAccount {
         aborts_if exists<AccountFreezing::FreezingBit>(addr) with Errors::ALREADY_PUBLISHED;
         // There is an invariant below that says that there is always an AccountOperationsCapability
         // after Genesis, so this can only abort during Genesis.
-        aborts_if LibraTimestamp::is_genesis()
+        aborts_if DiemTimestamp::is_genesis()
             && !exists<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS())
             with Errors::NOT_PUBLISHED;
         include CreateAuthenticationKeyAbortsIf;
@@ -1147,16 +1147,16 @@ module LibraAccount {
     spec define spec_abstract_create_authentication_key(auth_key_prefix: vector<u8>): vector<u8>;
 
 
-    /// Creates the libra root account (during genesis). Publishes the Libra root role,
+    /// Creates the diem root account (during genesis). Publishes the Diem root role,
     /// Publishes a SlidingNonce resource, sets up event generator, publishes
     /// AccountOperationsCapability, WriteSetManager, and finally makes the account.
-    fun create_libra_root_account(
+    fun create_diem_root_account(
         auth_key_prefix: vector<u8>,
     ) acquires AccountOperationsCapability {
-        LibraTimestamp::assert_genesis();
+        DiemTimestamp::assert_genesis();
         let lr_account = create_signer(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        CoreAddresses::assert_libra_root(&lr_account);
-        Roles::grant_libra_root_role(&lr_account);
+        CoreAddresses::assert_diem_root(&lr_account);
+        Roles::grant_diem_root_role(&lr_account);
         SlidingNonce::publish_nonce_resource(&lr_account, &lr_account);
         Event::publish_generator(&lr_account);
 
@@ -1172,12 +1172,12 @@ module LibraAccount {
             }
         );
         assert(
-            !exists<LibraWriteSetManager>(CoreAddresses::LIBRA_ROOT_ADDRESS()),
+            !exists<DiemWriteSetManager>(CoreAddresses::LIBRA_ROOT_ADDRESS()),
             Errors::already_published(EWRITESET_MANAGER)
         );
         move_to(
             &lr_account,
-            LibraWriteSetManager {
+            DiemWriteSetManager {
                 upgrade_events: Event::new_event_handle<Self::AdminTransactionEvent>(&lr_account),
             }
         );
@@ -1192,8 +1192,8 @@ module LibraAccount {
         lr_account: &signer,
         auth_key_prefix: vector<u8>,
     ) acquires AccountOperationsCapability {
-        LibraTimestamp::assert_genesis();
-        Roles::assert_libra_root(lr_account);
+        DiemTimestamp::assert_genesis();
+        Roles::assert_diem_root(lr_account);
         let new_account_address = CoreAddresses::TREASURY_COMPLIANCE_ADDRESS();
         let new_account = create_signer(new_account_address);
         Roles::grant_treasury_compliance_role(&new_account, lr_account);
@@ -1235,7 +1235,7 @@ module LibraAccount {
         new_account_address: address;
         auth_key_prefix: vector<u8>;
         add_all_currencies: bool;
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         include Roles::AbortsIfNotTreasuryCompliance{account: creator_account};
         aborts_if exists<Roles::RoleId>(new_account_address) with Errors::ALREADY_PUBLISHED;
         aborts_if exists<DesignatedDealer::Dealer>(new_account_address) with Errors::ALREADY_PUBLISHED;
@@ -1285,7 +1285,7 @@ module LibraAccount {
         new_account_address: address;
         auth_key_prefix: vector<u8>;
         add_all_currencies: bool;
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         include Roles::AbortsIfNotTreasuryCompliance{account: creator_account};
         aborts_if exists<Roles::RoleId>(new_account_address) with Errors::ALREADY_PUBLISHED;
         aborts_if VASP::is_vasp(new_account_address) with Errors::ALREADY_PUBLISHED;
@@ -1365,7 +1365,7 @@ module LibraAccount {
 
     /// Helper to return the u64 value of the `balance` for `account`
     fun balance_for<Token>(balance: &Balance<Token>): u64 {
-        Libra::value<Token>(&balance.coin)
+        Diem::value<Token>(&balance.coin)
     }
 
     /// Return the current balance of the account at `addr`.
@@ -1380,7 +1380,7 @@ module LibraAccount {
     /// Add a balance of `Token` type to the sending account
     public fun add_currency<Token>(account: &signer) {
         // aborts if `Token` is not a currency type in the system
-        Libra::assert_is_currency<Token>();
+        Diem::assert_is_currency<Token>();
         // Check that an account with this role is allowed to hold funds
         // assert(
         //     Roles::can_hold_balance(account),
@@ -1390,7 +1390,7 @@ module LibraAccount {
         let addr = Signer::address_of(account);
         assert(!exists<Balance<Token>>(addr), Errors::already_published(EADD_EXISTING_CURRENCY));
 
-        move_to(account, Balance<Token>{ coin: Libra::zero<Token>() })
+        move_to(account, Balance<Token>{ coin: Diem::zero<Token>() })
     }
     spec fun add_currency {
         include AddCurrencyAbortsIf<Token>;
@@ -1399,7 +1399,7 @@ module LibraAccount {
     spec schema AddCurrencyAbortsIf<Token> {
         account: signer;
         /// `Currency` must be valid
-        include Libra::AbortsIfNoCurrency<Token>;
+        include Diem::AbortsIfNoCurrency<Token>;
         /// `account` cannot have an existing balance in `Currency`
         aborts_if exists<Balance<Token>>(Signer::address_of(account)) with Errors::ALREADY_PUBLISHED;
         /// `account` must be allowed to hold balances.
@@ -1411,7 +1411,7 @@ module LibraAccount {
         /// This publishes a `Balance<Currency>` to the caller's account
         ensures exists<Balance<Token>>(addr);
         ensures global<Balance<Token>>(addr)
-            == Balance<Token>{ coin: Libra<Token> { value: 0 } };
+            == Balance<Token>{ coin: Diem<Token> { value: 0 } };
     }
 
     /// # Access Control
@@ -1428,34 +1428,34 @@ module LibraAccount {
     }
 
     /// Helper to return the sequence number field for given `account`
-    fun sequence_number_for_account(account: &LibraAccount): u64 {
+    fun sequence_number_for_account(account: &DiemAccount): u64 {
         account.sequence_number
     }
 
     /// Return the current sequence number at `addr`
-    public fun sequence_number(addr: address): u64 acquires LibraAccount {
+    public fun sequence_number(addr: address): u64 acquires DiemAccount {
         assert(exists_at(addr), Errors::not_published(EACCOUNT));
-        sequence_number_for_account(borrow_global<LibraAccount>(addr))
+        sequence_number_for_account(borrow_global<DiemAccount>(addr))
     }
 
     /// Return the authentication key for this account
-    public fun authentication_key(addr: address): vector<u8> acquires LibraAccount {
+    public fun authentication_key(addr: address): vector<u8> acquires DiemAccount {
         assert(exists_at(addr), Errors::not_published(EACCOUNT));
-        *&borrow_global<LibraAccount>(addr).authentication_key
+        *&borrow_global<DiemAccount>(addr).authentication_key
     }
 
     /// Return true if the account at `addr` has delegated its key rotation capability
     public fun delegated_key_rotation_capability(addr: address): bool
-    acquires LibraAccount {
+    acquires DiemAccount {
         assert(exists_at(addr), Errors::not_published(EACCOUNT));
-        Option::is_none(&borrow_global<LibraAccount>(addr).key_rotation_capability)
+        Option::is_none(&borrow_global<DiemAccount>(addr).key_rotation_capability)
     }
 
     /// Return true if the account at `addr` has delegated its withdraw capability
     public fun delegated_withdraw_capability(addr: address): bool
-    acquires LibraAccount {
+    acquires DiemAccount {
         assert(exists_at(addr), Errors::not_published(EACCOUNT));
-        Option::is_none(&borrow_global<LibraAccount>(addr).withdraw_capability)
+        Option::is_none(&borrow_global<DiemAccount>(addr).withdraw_capability)
     }
 
     /// Return a reference to the address associated with the given withdraw capability
@@ -1470,7 +1470,7 @@ module LibraAccount {
 
     /// Checks if an account exists at `check_addr`
     public fun exists_at(check_addr: address): bool {
-        exists<LibraAccount>(check_addr)
+        exists<DiemAccount>(check_addr)
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1486,9 +1486,9 @@ module LibraAccount {
         txn_max_gas_units: u64,
         txn_expiration_time: u64,
         chain_id: u8,
-    ) acquires LibraAccount, Balance {
+    ) acquires DiemAccount, Balance {
         assert(
-            LibraTransactionPublishingOption::is_module_allowed(sender),
+            DiemTransactionPublishingOption::is_module_allowed(sender),
             Errors::invalid_state(PROLOGUE_EMODULE_NOT_ALLOWED),
         );
 
@@ -1528,9 +1528,9 @@ module LibraAccount {
             txn_expiration_time_seconds,
         };
         /// Aborts only in genesis. Does not need to be handled.
-        include LibraTransactionPublishingOption::AbortsIfNoTransactionPublishingOption;
+        include DiemTransactionPublishingOption::AbortsIfNoTransactionPublishingOption;
         /// Covered: L75 (Match 9)
-        aborts_if !LibraTransactionPublishingOption::spec_is_module_allowed(sender) with Errors::INVALID_STATE;
+        aborts_if !DiemTransactionPublishingOption::spec_is_module_allowed(sender) with Errors::INVALID_STATE;
     }
 
     /// The prologue for script transaction
@@ -1543,9 +1543,9 @@ module LibraAccount {
         txn_expiration_time: u64,
         chain_id: u8,
         script_hash: vector<u8>,
-    ) acquires LibraAccount, Balance {
+    ) acquires DiemAccount, Balance {
         assert(
-            LibraTransactionPublishingOption::is_script_allowed(sender, &script_hash),
+            DiemTransactionPublishingOption::is_script_allowed(sender, &script_hash),
             Errors::invalid_state(PROLOGUE_ESCRIPT_NOT_ALLOWED),
         );
 
@@ -1579,9 +1579,9 @@ module LibraAccount {
         let transaction_sender = Signer::spec_address_of(sender);
         include PrologueCommonAbortsIf<Token> {transaction_sender};
         /// Aborts only in Genesis. Does not need to be handled.
-        include LibraTransactionPublishingOption::AbortsIfNoTransactionPublishingOption;
+        include DiemTransactionPublishingOption::AbortsIfNoTransactionPublishingOption;
         /// Covered: L74 (Match 8)
-        aborts_if !LibraTransactionPublishingOption::spec_is_script_allowed(sender, script_hash) with Errors::INVALID_STATE;
+        aborts_if !DiemTransactionPublishingOption::spec_is_script_allowed(sender, script_hash) with Errors::INVALID_STATE;
     }
 
     /// The prologue for WriteSet transaction
@@ -1591,12 +1591,12 @@ module LibraAccount {
         txn_public_key: vector<u8>,
         txn_expiration_time: u64,
         chain_id: u8,
-    ) acquires LibraAccount, Balance {
+    ) acquires DiemAccount, Balance {
         assert(
             Signer::address_of(sender) == CoreAddresses::LIBRA_ROOT_ADDRESS(),
             Errors::invalid_argument(PROLOGUE_INVALID_WRITESET_SENDER)
         );
-        assert(Roles::has_libra_root_role(sender), Errors::invalid_argument(PROLOGUE_INVALID_WRITESET_SENDER));
+        assert(Roles::has_diem_root_role(sender), Errors::invalid_argument(PROLOGUE_INVALID_WRITESET_SENDER));
 
         // Currency code don't matter here as it won't be charged anyway. Gas constants are ommitted.
         prologue_common<Coin1>(
@@ -1613,7 +1613,7 @@ module LibraAccount {
     spec fun writeset_prologue {
         include WritesetPrologueAbortsIf {txn_expiration_time_seconds: txn_expiration_time};
         ensures prologue_guarantees(sender);
-        ensures Roles::has_libra_root_role(sender);
+        ensures Roles::has_diem_root_role(sender);
     }
 
     spec schema WritesetPrologueAbortsIf {
@@ -1625,9 +1625,9 @@ module LibraAccount {
         let transaction_sender = Signer::spec_address_of(sender);
         /// Covered: L146 (Match 0)
         aborts_if transaction_sender != CoreAddresses::LIBRA_ROOT_ADDRESS() with Errors::INVALID_ARGUMENT;
-        /// Must abort if the signer does not have the LibraRoot role [[H9]][PERMISSION].
+        /// Must abort if the signer does not have the DiemRoot role [[H9]][PERMISSION].
         /// Covered: L146 (Match 0)
-        aborts_if !Roles::spec_has_libra_root_role_addr(transaction_sender) with Errors::INVALID_ARGUMENT;
+        aborts_if !Roles::spec_has_diem_root_role_addr(transaction_sender) with Errors::INVALID_ARGUMENT;
         include PrologueCommonAbortsIf<Coin1>{
             transaction_sender,
             max_transaction_fee: 0,
@@ -1647,7 +1647,7 @@ module LibraAccount {
         txn_max_gas_units: u64,
         txn_expiration_time_seconds: u64,
         chain_id: u8,
-    ) acquires LibraAccount, Balance {
+    ) acquires DiemAccount, Balance {
         let transaction_sender = Signer::address_of(sender);
 
         // [PCA1]: Check that the chain ID stored on-chain matches the chain ID specified by the transaction
@@ -1663,7 +1663,7 @@ module LibraAccount {
         );
 
         // Load the transaction sender's account
-        let sender_account = borrow_global<LibraAccount>(transaction_sender);
+        let sender_account = borrow_global<DiemAccount>(transaction_sender);
 
         // [PCA4]: Check that the hash of the transaction's public key matches the account's auth key
         assert(
@@ -1696,7 +1696,7 @@ module LibraAccount {
 
         // [PCA8]: Check that the transaction hasn't expired
         assert(
-            LibraTimestamp::now_seconds() < txn_expiration_time_seconds,
+            DiemTimestamp::now_seconds() < txn_expiration_time_seconds,
             Errors::invalid_argument(PROLOGUE_ETRANSACTION_EXPIRED)
         );
 
@@ -1732,7 +1732,7 @@ module LibraAccount {
         max_transaction_fee: u128;
         txn_expiration_time_seconds: u64;
         /// Only happens if this is called in Genesis. Doesn't need to be handled.
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         /// [PCA1] Covered: L73 (Match 7)
         aborts_if chain_id != ChainId::spec_get_chain_id() with Errors::INVALID_ARGUMENT;
         /// [PCA2] Covered: L65 (Match 4)
@@ -1740,7 +1740,7 @@ module LibraAccount {
         /// [PCA3] Covered: L57 (Match 0)
         aborts_if AccountFreezing::spec_account_is_frozen(transaction_sender) with Errors::INVALID_STATE;
         /// [PCA4] Covered: L59 (Match 1)
-        aborts_if Hash::sha3_256(txn_public_key) != global<LibraAccount>(transaction_sender).authentication_key with Errors::INVALID_ARGUMENT;
+        aborts_if Hash::sha3_256(txn_public_key) != global<DiemAccount>(transaction_sender).authentication_key with Errors::INVALID_ARGUMENT;
         /// [PCA5] Covered: L69 (Match 5)
         aborts_if max_transaction_fee > MAX_U64 with Errors::INVALID_ARGUMENT;
         /// [PCA6] Covered: L69 (Match 5)
@@ -1748,11 +1748,11 @@ module LibraAccount {
         /// [PCA7] Covered: L69 (Match 5)
         aborts_if max_transaction_fee > 0 && balance<Token>(transaction_sender) < max_transaction_fee with Errors::INVALID_ARGUMENT;
         /// [PCA8] Covered: L72 (Match 6)
-        aborts_if LibraTimestamp::spec_now_seconds() >= txn_expiration_time_seconds with Errors::INVALID_ARGUMENT;
+        aborts_if DiemTimestamp::spec_now_seconds() >= txn_expiration_time_seconds with Errors::INVALID_ARGUMENT;
         /// [PCA9] Covered: L61 (Match 2)
-        aborts_if txn_sequence_number < global<LibraAccount>(transaction_sender).sequence_number with Errors::INVALID_ARGUMENT;
+        aborts_if txn_sequence_number < global<DiemAccount>(transaction_sender).sequence_number with Errors::INVALID_ARGUMENT;
         /// [PCA10] Covered: L63 (match 3)
-        aborts_if txn_sequence_number > global<LibraAccount>(transaction_sender).sequence_number with Errors::INVALID_ARGUMENT;
+        aborts_if txn_sequence_number > global<DiemAccount>(transaction_sender).sequence_number with Errors::INVALID_ARGUMENT;
     }
 
     /// Collects gas and bumps the sequence number for executing a transaction.
@@ -1765,7 +1765,7 @@ module LibraAccount {
         txn_gas_price: u64,
         txn_max_gas_units: u64,
         gas_units_remaining: u64
-    ) acquires LibraAccount, Balance {
+    ) acquires DiemAccount, Balance {
         let sender = Signer::address_of(account);
 
         // [EA1; Invariant]: Make sure that the transaction's `max_gas_units` is greater
@@ -1784,7 +1784,7 @@ module LibraAccount {
         // [EA3; Invariant]: Make sure that account exists, and load the
         // transaction sender's account. Already checked in [PCA2].
         assert(exists_at(sender), Errors::not_published(EACCOUNT));
-        let sender_account = borrow_global_mut<LibraAccount>(sender);
+        let sender_account = borrow_global_mut<DiemAccount>(sender);
 
         // [EA4; Condition]: Make sure account's sequence number is within the
         // representable range of u64. Bump the sequence number
@@ -1812,12 +1812,12 @@ module LibraAccount {
 
             // [EA4; Condition]: Abort if this withdrawal would make the `sender_account`'s balance go negative
             assert(
-                transaction_fee_amount <= Libra::value(coin),
+                transaction_fee_amount <= Diem::value(coin),
                 Errors::limit_exceeded(PROLOGUE_ECANT_PAY_GAS_DEPOSIT)
             );
 
             // NB: `withdraw_from_balance` is not used as limits do not apply to this transaction fee
-            TransactionFee::pay_fee(Libra::withdraw(coin, transaction_fee_amount))
+            TransactionFee::pay_fee(Diem::withdraw(coin, transaction_fee_amount))
         }
     }
 
@@ -1826,15 +1826,15 @@ module LibraAccount {
         lr_account: &signer,
         txn_sequence_number: u64,
         should_trigger_reconfiguration: bool,
-    ) acquires LibraWriteSetManager, LibraAccount, Balance {
-        let writeset_events_ref = borrow_global_mut<LibraWriteSetManager>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+    ) acquires DiemWriteSetManager, DiemAccount, Balance {
+        let writeset_events_ref = borrow_global_mut<DiemWriteSetManager>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         Event::emit_event<AdminTransactionEvent>(
             &mut writeset_events_ref.upgrade_events,
-            AdminTransactionEvent { committed_timestamp_secs: LibraTimestamp::now_seconds() },
+            AdminTransactionEvent { committed_timestamp_secs: DiemTimestamp::now_seconds() },
         );
         // Currency code don't matter here as it won't be charged anyway.
         epilogue<Coin1>(lr_account, txn_sequence_number, 0, 0, 0);
-        if (should_trigger_reconfiguration) LibraConfig::reconfigure(lr_account)
+        if (should_trigger_reconfiguration) DiemConfig::reconfigure(lr_account)
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1863,10 +1863,10 @@ module LibraAccount {
         lr_account: signer;
         new_account_address: address;
         // from `Roles::new_validator_role`
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
         include MakeAccountAbortsIf{addr: new_account_address};
         // from `ValidatorConfig::publish`
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         aborts_if ValidatorConfig::exists_config(new_account_address) with Errors::ALREADY_PUBLISHED;
     }
 
@@ -1885,7 +1885,7 @@ module LibraAccount {
         human_name: vector<u8>,
     ) acquires AccountOperationsCapability {
         let new_account = create_signer(new_account_address);
-        // The lr_account is verified to have the libra root role in `Roles::new_validator_operator_role`
+        // The lr_account is verified to have the diem root role in `Roles::new_validator_operator_role`
         Roles::new_validator_operator_role(lr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorOperatorConfig::publish(&new_account, lr_account, human_name);
@@ -1902,10 +1902,10 @@ module LibraAccount {
         lr_account: signer;
         new_account_address: address;
         // from `Roles::new_validator_operator_role`
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
         include MakeAccountAbortsIf{addr: new_account_address};
         // from `ValidatorConfig::publish`
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         aborts_if ValidatorOperatorConfig::has_validator_operator_config(new_account_address) with Errors::ALREADY_PUBLISHED;
     }
 
@@ -1952,8 +1952,8 @@ module LibraAccount {
     spec schema PreserveKeyRotationCapAbsence {
         /// The absence of KeyRotationCap is preserved.
         ensures forall addr: address:
-            old(!exists<LibraAccount>(addr) || !spec_has_key_rotation_cap(addr)) ==>
-                (!exists<LibraAccount>(addr) || !spec_has_key_rotation_cap(addr));
+            old(!exists<DiemAccount>(addr) || !spec_has_key_rotation_cap(addr)) ==>
+                (!exists<DiemAccount>(addr) || !spec_has_key_rotation_cap(addr));
     }
 
     /// ## Withdraw Capability
@@ -1982,8 +1982,8 @@ module LibraAccount {
     spec schema PreserveWithdrawCapAbsence {
         /// The absence of WithdrawCap is preserved.
         ensures forall addr: address:
-            old(!exists<LibraAccount>(addr) || Option::is_none(global<LibraAccount>(addr).withdraw_capability)) ==>
-                (!exists<LibraAccount>(addr) || Option::is_none(global<LibraAccount>(addr).withdraw_capability));
+            old(!exists<DiemAccount>(addr) || Option::is_none(global<DiemAccount>(addr).withdraw_capability)) ==>
+                (!exists<DiemAccount>(addr) || Option::is_none(global<DiemAccount>(addr).withdraw_capability));
     }
 
     /// ## Authentication Key
@@ -1995,7 +1995,7 @@ module LibraAccount {
 
     spec schema AuthenticationKeyRemainsSame {
         ensures forall addr: address where old(exists_at(addr)):
-            global<LibraAccount>(addr).authentication_key == old(global<LibraAccount>(addr).authentication_key);
+            global<DiemAccount>(addr).authentication_key == old(global<DiemAccount>(addr).authentication_key);
     }
 
     /// ## Balance
@@ -2024,11 +2024,11 @@ module LibraAccount {
 
         /// After genesis, the `AccountOperationsCapability` exists.
         invariant [global]
-            LibraTimestamp::is_operating() ==> exists<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+            DiemTimestamp::is_operating() ==> exists<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
-        /// After genesis, the `LibraWriteSetManager` exists.
+        /// After genesis, the `DiemWriteSetManager` exists.
         invariant [global]
-            LibraTimestamp::is_operating() ==> exists<LibraWriteSetManager>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+            DiemTimestamp::is_operating() ==> exists<DiemWriteSetManager>(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
         /// Every address that has a published account has a published RoleId
         invariant [global] forall addr: address where exists_at(addr): exists<Roles::RoleId>(addr);
@@ -2052,9 +2052,9 @@ module LibraAccount {
     /// ## Capabilities
 
     spec module {
-        /// Returns field `key_rotation_capability` of the LibraAccount under `addr`.
+        /// Returns field `key_rotation_capability` of the DiemAccount under `addr`.
         define spec_get_key_rotation_cap_field(addr: address): Option<KeyRotationCapability> {
-            global<LibraAccount>(addr).key_rotation_capability
+            global<DiemAccount>(addr).key_rotation_capability
         }
 
         /// Returns the KeyRotationCapability of the field `key_rotation_capability`.
@@ -2067,7 +2067,7 @@ module LibraAccount {
             Option::is_some(spec_get_key_rotation_cap_field(addr))
         }
 
-        /// Returns true if the LibraAccount at `addr` holds
+        /// Returns true if the DiemAccount at `addr` holds
         /// `KeyRotationCapability` for itself.
         define spec_holds_own_key_rotation_cap(addr: address): bool {
             spec_has_key_rotation_cap(addr)
@@ -2079,9 +2079,9 @@ module LibraAccount {
             exists<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS())
         }
 
-        /// Returns field `withdraw_capability` of LibraAccount under `addr`.
+        /// Returns field `withdraw_capability` of DiemAccount under `addr`.
         define spec_get_withdraw_cap_field(addr: address): Option<WithdrawCapability> {
-            global<LibraAccount>(addr).withdraw_capability
+            global<DiemAccount>(addr).withdraw_capability
         }
 
         /// Returns the WithdrawCapability of the field `withdraw_capability`.
@@ -2089,12 +2089,12 @@ module LibraAccount {
             Option::borrow(spec_get_withdraw_cap_field(addr))
         }
 
-        /// Returns true if the LibraAccount at `addr` holds a `WithdrawCapability`.
+        /// Returns true if the DiemAccount at `addr` holds a `WithdrawCapability`.
         define spec_has_withdraw_cap(addr: address): bool {
             Option::is_some(spec_get_withdraw_cap_field(addr))
         }
 
-        /// Returns true if the LibraAccount at `addr` holds `WithdrawCapability` for itself.
+        /// Returns true if the DiemAccount at `addr` holds `WithdrawCapability` for itself.
         define spec_holds_own_withdraw_cap(addr: address): bool {
             spec_has_withdraw_cap(addr)
             && addr == spec_get_withdraw_cap(addr).account_address
@@ -2102,7 +2102,7 @@ module LibraAccount {
 
         /// Returns true of the account holds a delegated withdraw capability.
         define spec_holds_delegated_withdraw_capability(addr: address): bool {
-            exists_at(addr) && Option::is_none(global<LibraAccount>(addr).withdraw_capability)
+            exists_at(addr) && Option::is_none(global<DiemAccount>(addr).withdraw_capability)
         }
 
     }
@@ -2110,7 +2110,7 @@ module LibraAccount {
     /// ## Prologue
     spec define prologue_guarantees(sender: signer) : bool {
         let addr = Signer::spec_address_of(sender);
-        LibraTimestamp::is_operating() && exists_at(addr) && !AccountFreezing::account_is_frozen(addr)
+        DiemTimestamp::is_operating() && exists_at(addr) && !AccountFreezing::account_is_frozen(addr)
     }
 
     /// Used in transaction script to specify properties checked by the prologue.
@@ -2124,10 +2124,10 @@ module LibraAccount {
     public fun vm_deposit_with_metadata<Token>(
         payer: &signer,
         payee: address,
-        to_deposit: Libra<Token>,
+        to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
-    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+    ) acquires DiemAccount, Balance, AccountOperationsCapability {
         let sender = Signer::address_of(payer);
         assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 4010);
         deposit(

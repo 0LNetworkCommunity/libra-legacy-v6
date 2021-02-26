@@ -1,15 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This file defines transaction store APIs that are related to committed signed transactions.
 
 use crate::{
     change_set::ChangeSet,
-    errors::LibraDbError,
+    errors::DiemDbError,
     schema::{transaction::TransactionSchema, transaction_by_account::TransactionByAccountSchema},
 };
 use anyhow::{ensure, format_err, Result};
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     block_metadata::BlockMetadata,
     transaction::{Transaction, Version},
@@ -50,7 +50,7 @@ impl TransactionStore {
     pub fn get_transaction(&self, version: Version) -> Result<Transaction> {
         self.db
             .get::<TransactionSchema>(&version)?
-            .ok_or_else(|| LibraDbError::NotFound(format!("Txn {}", version)).into())
+            .ok_or_else(|| DiemDbError::NotFound(format!("Txn {}", version)).into())
     }
 
     /// Gets an iterator that yields `num_transactions` transactions starting from `start_version`.
@@ -92,7 +92,7 @@ impl TransactionStore {
             }
         }
 
-        Err(LibraDbError::NotFound(format!("BlockMetadata preceding version {}", version)).into())
+        Err(DiemDbError::NotFound(format!("BlockMetadata preceding version {}", version)).into())
     }
 
     /// Save signed transaction at `version`

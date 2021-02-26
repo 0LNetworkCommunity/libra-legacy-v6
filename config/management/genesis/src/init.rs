@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use libra_global_constants::NODE_HOME;
+use diem_global_constants::NODE_HOME;
 use structopt::StructOpt;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-use libra_management::error::Error;
+use diem_management::error::Error;
 
 use crate::{keyscheme::KeyScheme, storage_helper::StorageHelper};
 use dirs;

@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{smoke_test_environment::SmokeTestEnvironment, test_utils::compare_balances};
-use libra_types::account_config::{
+use diem_types::account_config::{
     testnet_dd_account_address, treasury_compliance_account_address,
 };
 

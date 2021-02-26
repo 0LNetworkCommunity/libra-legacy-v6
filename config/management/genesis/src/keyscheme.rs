@@ -1,7 +1,7 @@
 //! Key derivation for 0L.
 
-use libra_types::{transaction::authenticator::AuthenticationKey, account_address::AccountAddress};
-use libra_wallet::{Mnemonic, WalletLibrary, key_factory::{ChildNumber, ExtendedPrivKey}};
+use diem_types::{transaction::authenticator::AuthenticationKey, account_address::AccountAddress};
+use diem_wallet::{Mnemonic, WalletDiemry, key_factory::{ChildNumber, ExtendedPrivKey}};
 
 /// The key derivation used throughout 0L for configuration of validators and miners. Depended on by config/management for genesis.
 // #[derive(Debug)]
@@ -22,7 +22,7 @@ pub struct KeyScheme {
 
 impl KeyScheme {
     /// Generates the necessary private keys for validator and full node set up.
-    pub fn new(wallet: &WalletLibrary) -> Self {
+    pub fn new(wallet: &WalletDiemry) -> Self {
         let kf = wallet.get_key_factory();
         Self {
             child_0_owner: kf.private_child(ChildNumber::new(0)).unwrap(),
@@ -35,7 +35,7 @@ impl KeyScheme {
     }
     /// Get KeyScheme from a mnemonic string.
     pub fn new_from_mnemonic(mnemonic: String) -> KeyScheme {
-        let wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic).unwrap());
+        let wallet = WalletDiemry::new_from_mnemonic(Mnemonic::from(&mnemonic).unwrap());
         KeyScheme::new(&wallet)
     }
     /// Returns the default owner address given the key derivation.

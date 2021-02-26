@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
@@ -10,7 +10,7 @@ use crate::storage::{
     },
 };
 use futures::Future;
-use libra_temppath::TempPath;
+use diem_temppath::TempPath;
 use proptest::prelude::*;
 use std::str::FromStr;
 use tokio::runtime::Runtime;

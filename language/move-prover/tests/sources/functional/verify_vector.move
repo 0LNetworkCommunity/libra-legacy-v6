@@ -1,4 +1,4 @@
-// This file is created to verify the vector module in the standard library.
+// This file is created to verify the vector module in the standard diemry.
 // This file is basically a clone of `stdlib/modules/vector.move` with renaming the module and function names.
 // In this file, the functions with prefix of `verify_model` are verifying the corresponding built-in Boogie
 // procedures that they inline (e.g., `verify_model_remove`).

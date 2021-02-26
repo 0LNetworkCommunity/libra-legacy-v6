@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines physical storage schema for an event index via which a ContractEvent (
@@ -13,7 +13,7 @@
 use crate::schema::{ensure_slice_len_eq, EVENT_BY_KEY_CF_NAME};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use libra_types::{event::EventKey, transaction::Version};
+use diem_types::{event::EventKey, transaction::Version};
 use schemadb::{
     define_schema,
     schema::{KeyCodec, ValueCodec},

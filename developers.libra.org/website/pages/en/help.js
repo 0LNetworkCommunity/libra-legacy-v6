@@ -1,14 +1,14 @@
 /**
- * Copyright (c) The Libra Core Contributors
+ * Copyright (c) The Diem Core Contributors
  * SPDX-License-Identifier: Apache-2.0
  */
 
 const React = require('react');
 
-const CompLibrary = require('../../core/CompLibrary.js');
+const CompDiemry = require('../../core/CompDiemry.js');
 
-const Container = CompLibrary.Container;
-const GridBlock = CompLibrary.GridBlock;
+const Container = CompDiemry.Container;
+const GridBlock = CompDiemry.GridBlock;
 
 function Help(props) {
   const {config: siteConfig, language = ''} = props;
@@ -20,7 +20,7 @@ function Help(props) {
   const supportLinks = [
     {
       content: `Learn more using the [documentation on this site.](${docUrl(
-        'welcome-to-libra.html',
+        'welcome-to-diem.html',
       )})`,
       title: 'Browse Docs',
     },

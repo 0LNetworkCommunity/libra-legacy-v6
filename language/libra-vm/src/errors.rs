@@ -1,7 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_logger::prelude::*;
+use diem_logger::prelude::*;
 use move_core_types::vm_status::{known_locations, StatusCode, VMStatus};
 use move_vm_runtime::logging::LogContext;
 use vm::errors::VMError;
@@ -21,7 +21,7 @@ pub const ETRANSACTION_EXPIRED: u64 = 1006; // transaction expiration time excee
 pub const EBAD_CHAIN_ID: u64 = 1007; // chain_id in transaction doesn't match the one on-chain
 pub const ESCRIPT_NOT_ALLOWED: u64 = 1008;
 pub const EMODULE_NOT_ALLOWED: u64 = 1009;
-pub const EINVALID_WRITESET_SENDER: u64 = 1010; // invalid sender (not libra root) for write set
+pub const EINVALID_WRITESET_SENDER: u64 = 1010; // invalid sender (not diem root) for write set
 
 const INVALID_STATE: u8 = 1;
 const INVALID_ARGUMENT: u8 = 7;
@@ -50,7 +50,7 @@ pub fn convert_normal_prologue_error(
             log_context.alert();
             error!(
                 *log_context,
-                "[libra_vm] Unexpected prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
+                "[diem_vm] Unexpected prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                 location, code, category, reason,
             );
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
@@ -80,7 +80,7 @@ pub fn convert_normal_prologue_error(
                     log_context.alert();
                     error!(
                         *log_context,
-                        "[libra_vm] Unexpected prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
+                        "[diem_vm] Unexpected prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                         location, code, category, reason,
                     );
                     return Err(VMStatus::Error(
@@ -94,7 +94,7 @@ pub fn convert_normal_prologue_error(
             log_context.alert();
             error!(
                 *log_context,
-                "[libra_vm] Unexpected prologue error: {:?}", status
+                "[diem_vm] Unexpected prologue error: {:?}", status
             );
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
         }
@@ -118,7 +118,7 @@ pub fn convert_normal_success_epilogue_error(
             log_context.alert();
             error!(
                 *log_context,
-                "[libra_vm] Unexpected success epilogue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
+                "[diem_vm] Unexpected success epilogue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                 location, code, category, reason,
             );
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
@@ -130,7 +130,7 @@ pub fn convert_normal_success_epilogue_error(
                 log_context.alert();
                 error!(
                     *log_context,
-                    "[libra_vm] Unexpected success epilogue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
+                    "[diem_vm] Unexpected success epilogue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                     location, code, category, reason,
                 );
                 VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
@@ -141,7 +141,7 @@ pub fn convert_normal_success_epilogue_error(
             log_context.alert();
             error!(
                 *log_context,
-                "[libra_vm] Unexpected success epilogue error: {:?}", status,
+                "[diem_vm] Unexpected success epilogue error: {:?}", status,
             );
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
         }
@@ -165,7 +165,7 @@ pub fn convert_write_set_prologue_error(
             log_context.alert();
             error!(
                 *log_context,
-                "[libra_vm] Unexpected write set prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
+                "[diem_vm] Unexpected write set prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                 location, code, category, reason,
             );
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
@@ -182,7 +182,7 @@ pub fn convert_write_set_prologue_error(
                 log_context.alert();
                 error!(
                     *log_context,
-                    "[libra_vm] Unexpected write set prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
+                    "[diem_vm] Unexpected write set prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                     location, code, category, reason,
                 );
                 VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
@@ -193,7 +193,7 @@ pub fn convert_write_set_prologue_error(
             log_context.alert();
             error!(
                 *log_context,
-                "[libra_vm] Unexpected write set prologue error: {:?}", status
+                "[diem_vm] Unexpected write set prologue error: {:?}", status
             );
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
         }
@@ -216,7 +216,7 @@ pub fn expect_only_successful_execution(
             log_context.alert();
             error!(
                 *log_context,
-                "[libra_vm] Unexpected error from known Move function, '{}'. Error: {:?}",
+                "[diem_vm] Unexpected error from known Move function, '{}'. Error: {:?}",
                 function_name,
                 status,
             );

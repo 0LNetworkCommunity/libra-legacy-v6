@@ -1,7 +1,7 @@
 // Do not add validators here, the settings added here will overwrite the genesis defaults which is what we are checking for.
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::LibraAccount;

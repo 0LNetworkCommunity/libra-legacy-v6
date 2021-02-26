@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -7,11 +7,11 @@ use crate::{
 };
 use bytes::{Bytes, BytesMut};
 use futures::{future, io::AsyncWriteExt, stream::StreamExt};
-use libra_config::{config::HANDSHAKE_VERSION, network_id::NetworkContext};
-use libra_crypto::{test_utils::TEST_SEED, traits::Uniform, x25519};
-use libra_infallible::RwLock;
-use libra_network_address::{NetworkAddress, Protocol::*};
-use libra_types::{chain_id::ChainId, PeerId};
+use diem_config::{config::HANDSHAKE_VERSION, network_id::NetworkContext};
+use diem_crypto::{test_utils::TEST_SEED, traits::Uniform, x25519};
+use diem_infallible::RwLock;
+use diem_network_address::{NetworkAddress, Protocol::*};
+use diem_types::{chain_id::ChainId, PeerId};
 use netcore::{
     framing::{read_u16frame, write_u16frame},
     transport::{memory, ConnectionOrigin, Transport},
@@ -50,8 +50,8 @@ fn setup<TTransport>(
     auth: Auth,
 ) -> (
     Runtime,
-    (PeerId, LibraNetTransport<TTransport>),
-    (PeerId, LibraNetTransport<TTransport>),
+    (PeerId, DiemNetTransport<TTransport>),
+    (PeerId, DiemNetTransport<TTransport>),
     Option<Arc<RwLock<HashMap<PeerId, HashSet<x25519::PublicKey>>>>>,
     SupportedProtocols,
 )
@@ -90,7 +90,7 @@ where
         [ProtocolId::ConsensusRpc, ProtocolId::DiscoveryDirectSend].iter(),
     );
     let chain_id = ChainId::default();
-    let listener_transport = LibraNetTransport::new(
+    let listener_transport = DiemNetTransport::new(
         base_transport.clone(),
         NetworkContext::mock_with_peer_id(listener_peer_id),
         listener_key,
@@ -101,7 +101,7 @@ where
         false, /* Disable proxy protocol */
     );
 
-    let dialer_transport = LibraNetTransport::new(
+    let dialer_transport = DiemNetTransport::new(
         base_transport,
         NetworkContext::mock_with_peer_id(dialer_peer_id),
         dialer_key,
@@ -294,7 +294,7 @@ fn test_transport_rejects_unauthed_dialer<TTransport>(
 }
 
 ////////////////////////////////////////
-// LibraNetTransport<MemoryTransport> //
+// DiemNetTransport<MemoryTransport> //
 ////////////////////////////////////////
 
 #[test]
@@ -327,7 +327,7 @@ fn test_memory_transport_rejects_unauthed_dialer() {
 }
 
 /////////////////////////////////////
-// LibraNetTransport<TcpTransport> //
+// DiemNetTransport<TcpTransport> //
 /////////////////////////////////////
 
 #[test]

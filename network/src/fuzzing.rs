@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,8 +9,8 @@ use crate::{
     testutils::fake_socket::ReadOnlyTestSocketVec,
 };
 use futures::executor::block_on;
-use libra_config::network_id::NetworkId;
-use libra_types::chain_id::ChainId;
+use diem_config::network_id::NetworkId;
+use diem_types::chain_id::ChainId;
 use proptest::{collection::btree_map, prelude::*};
 
 //

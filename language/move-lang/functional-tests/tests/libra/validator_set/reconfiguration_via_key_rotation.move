@@ -5,13 +5,13 @@
 //! account: viola, 1000000, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{bob}}, {{bob::auth_key}}, b"bob"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{dave}}, {{dave::auth_key}}, b"dave"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"

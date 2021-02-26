@@ -14,7 +14,7 @@ fun main() {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::AccountFreezing;
 // A special association privilege is needed for freezing an account
@@ -72,7 +72,7 @@ fun main() { }
 script {
 use 0x1::AccountFreezing::{Self};
 fun main(account: &signer) {
-    AccountFreezing::freeze_account(account, {{libraroot}});
+    AccountFreezing::freeze_account(account, {{diemroot}});
 }
 }
 // check: "Keep(ABORTED { code: 775,"
@@ -134,7 +134,7 @@ fun main(account: &signer) {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::AccountFreezing;
     fun main(account: &signer) {
@@ -144,7 +144,7 @@ script {
 // check: "Keep(ABORTED { code: 258,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::AccountFreezing;
     fun main(account: &signer) {
@@ -158,7 +158,7 @@ script {
 script {
     use 0x1::AccountFreezing;
     fun main(account: &signer) {
-        AccountFreezing::freeze_account(account, {{libraroot}});
+        AccountFreezing::freeze_account(account, {{diemroot}});
     }
 }
 // check: "Keep(ABORTED { code: 775,"
@@ -174,7 +174,7 @@ script {
 // check: "Keep(ABORTED { code: 1031,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::AccountFreezing;
     fun main(account: &signer) {
@@ -184,7 +184,7 @@ script {
 // check: "Keep(ABORTED { code: 1,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::AccountFreezing;
     fun main() {

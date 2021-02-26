@@ -1,6 +1,6 @@
-## Fuzzing support for Libra
+## Fuzzing support for Diem
 
-This crate contains support for fuzzing Libra targets. This support sincludes:
+This crate contains support for fuzzing Diem targets. This support sincludes:
 
 * corpus generation with `proptest`
 * automatically running failing examples with `cargo test`
@@ -11,21 +11,21 @@ Install [`cargo-fuzz`](https://rust-fuzz.github.io/book/cargo-fuzz.html) if not 
 
 ### Fuzzing a target
 
-First, switch to the directory this README is in: `cd testsuite/libra-fuzzer`.
+First, switch to the directory this README is in: `cd testsuite/diem-fuzzer`.
 
-To list out known fuzz targets, run `cargo run --bin libra-fuzzer list`.
+To list out known fuzz targets, run `cargo run --bin diem-fuzzer list`.
 
 To be effective, fuzzing requires a corpus of existing inputs. This
 crate contains support for generating corpuses with `proptest`. Generate
-a corpus with `cargo run --bin libra-fuzzer generate <target>`.
+a corpus with `cargo run --bin diem-fuzzer generate <target>`.
 
 Once a corpus has been generated, the fuzzer is ready to use, simply run:
 
 ```
-RUSTC_BOOTSTRAP=1 cargo run --bin libra-fuzzer fuzz <target> -- --release --debug-assertions
+RUSTC_BOOTSTRAP=1 cargo run --bin diem-fuzzer fuzz <target> -- --release --debug-assertions
 ```
 
-For more options, run `cargo run --bin libra-fuzzer -- --help`. Note that `RUSTC_BOOTSTRAP=1` is
+For more options, run `cargo run --bin diem-fuzzer -- --help`. Note that `RUSTC_BOOTSTRAP=1` is
 required as `cargo fuzz` uses unstable compiler flags.
 
 ### Adding a new target
@@ -36,7 +36,7 @@ creating a new type and implementing `FuzzTargetImpl` for it.
 For examples, see the existing implementations in `src/fuzz_targets/`.
 
 Remember to add your target to `ALL_TARGETS` in `src/fuzz_targets.rs`.
-Once that has been done, `cargo run --bin libra-fuzzer list` should list your new target.
+Once that has been done, `cargo run --bin diem-fuzzer list` should list your new target.
 
 ### Debugging and testing artifacts
 
@@ -86,7 +86,7 @@ See [Google OSS-Fuzz's documentation on reproducing bugs](https://google.github.
 To obtain a flamegraph of a harness test, run the following command:
 
 ```sh
-FUZZ_TARGET=compiled_module cargo flamegraph -p libra-fuzzer --bin flamegraph
+FUZZ_TARGET=compiled_module cargo flamegraph -p diem-fuzzer --bin flamegraph
 ```
 
 It is good to first generate some corpus and run the fuzzer over it for a bit (to find new corpus). The larger corpus, the better flamegraph you will obtain.
@@ -96,7 +96,7 @@ It is good to first generate some corpus and run the fuzzer over it for a bit (t
 To test coverage of our fuzzers you can run the following command with [grcov](https://github.com/mozilla/grcov):
 
 ```sh
-RUSTFLAGS='--cfg feature="fuzzing"' CORPUS_PATH=fuzz/corpus cargo xtest --html-cov-dir <some path for html output> -p libra-fuzzer -- coverage
+RUSTFLAGS='--cfg feature="fuzzing"' CORPUS_PATH=fuzz/corpus cargo xtest --html-cov-dir <some path for html output> -p diem-fuzzer -- coverage
 ```
 
 ### Google OSS-Fuzz Integration

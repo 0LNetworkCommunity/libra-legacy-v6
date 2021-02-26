@@ -26,7 +26,7 @@
 //!
 //! ## Usage
 //!
-//! First, install Rust, Cargo, and the GNU Multiprecision Library (GMP).  Then,
+//! First, install Rust, Cargo, and the GNU Multiprecision Diemry (GMP).  Then,
 //! follow one of the below steps.
 //!
 //! ### To use the command line interface
@@ -41,7 +41,7 @@
 //! Proof is valid
 //! ```
 //!
-//! ### To use the VDF library
+//! ### To use the VDF diemry
 //!
 //! ```rust
 //! extern crate vdf;
@@ -120,7 +120,7 @@ pub trait VDFParams: Clone + Eq {
     /// errors should be checked by the factory functions for `Self::Params`.
     ///
     /// This function **MAY** panic for other reasons.  For example, it is
-    /// allowed to panic if an allocation fails, or if a needed external library
+    /// allowed to panic if an allocation fails, or if a needed external diemry
     /// could not be dynamically loaded.
     fn new(self) -> Self::VDF;
 }

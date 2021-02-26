@@ -7,7 +7,7 @@ use crate::{
 };
 use anyhow::{anyhow, Result};
 use compiled_stdlib::{stdlib_modules, StdLibOptions};
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use move_core_types::{
     identifier::{IdentStr, Identifier},
     language_storage::{ModuleId, StructTag, TypeTag},

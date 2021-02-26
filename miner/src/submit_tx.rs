@@ -1,25 +1,25 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use libra_types::{waypoint::Waypoint};
+use diem_types::{waypoint::Waypoint};
 
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
-use libra_crypto::{
+use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use diem_crypto::{
     test_utils::KeyPair,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
 use anyhow::Error;
-use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
 use std::{io::{stdout, Write}, thread, time};
 
-use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
-use libra_types::{transaction::helpers::*};
+use diem_types::transaction::{Script, TransactionArgument, TransactionPayload};
+use diem_types::{transaction::helpers::*};
 use crate::config::MinerConfig;
 use compiled_stdlib::transaction_scripts;
-use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_types::chain_id::ChainId;
-use libra_genesis_tool::keyscheme::KeyScheme;
+use diem_json_rpc_types::views::{TransactionView, VMStatusView};
+use diem_types::chain_id::ChainId;
+use diem_genesis_tool::keyscheme::KeyScheme;
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -50,7 +50,7 @@ pub fn submit_tx(
 ) -> Result<TransactionView, Error> {
 
     // Create a client object
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
 
@@ -113,7 +113,7 @@ pub fn submit_tx(
         status: AccountStatus::Persisted,
     };
     
-    // Submit the transaction with libra_client
+    // Submit the transaction with diem_client
     match client.submit_transaction(
         Some(&mut sender_account_data),
         txn
@@ -145,7 +145,7 @@ pub fn submit_onboard_tx(
 ) -> Result<TransactionView, Error> {
 
     // Create a client object
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
 
@@ -191,7 +191,7 @@ pub fn submit_onboard_tx(
         status: AccountStatus::Persisted,
     };
     
-    // Submit the transaction with libra_client
+    // Submit the transaction with diem_client
     match client.submit_transaction(
         Some(&mut sender_account_data),
         txn
@@ -208,11 +208,11 @@ pub fn submit_onboard_tx(
 }
 
 
-/// Wait for the response from the libra RPC.
+/// Wait for the response from the diem RPC.
 pub fn wait_for_tx(
     sender_address: AccountAddress,
     sequence_number: u64,
-    client: &mut LibraClient) -> Option<TransactionView>{
+    client: &mut DiemClient) -> Option<TransactionView>{
         println!(
             "Awaiting tx status \nSubmitted from account: {} with sequence number: {}",
             sender_address, sequence_number
@@ -284,7 +284,7 @@ pub fn util_save_tx(
 ){
 
     // Create a client object
-    // let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    // let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
     let chain_id = ChainId::new(1);
 
@@ -328,7 +328,7 @@ pub fn util_save_tx(
     //     status: AccountStatus::Persisted,
     // };
     
-    // // Submit the transaction with libra_client
+    // // Submit the transaction with diem_client
     // match client.submit_transaction(
     //     Some(&mut sender_account_data),
     //     txn
@@ -347,7 +347,7 @@ pub fn util_save_tx(
 
 #[test]
 fn test_make_params() {
-    use libra_types::PeerId; 
+    use diem_types::PeerId; 
     use crate::config::{
         Workspace,
         Profile,
@@ -386,7 +386,7 @@ fn test_make_params() {
 
 #[test]
 fn test_save_tx() {
-    use libra_types::PeerId; 
+    use diem_types::PeerId; 
     use crate::config::{
         Workspace,
         Profile,

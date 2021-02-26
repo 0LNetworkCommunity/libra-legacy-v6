@@ -4,8 +4,8 @@
 #![forbid(unsafe_code)]
 
 use anyhow::Result;
-use libra_state_view::StateView;
-use libra_types::access_path::AccessPath;
+use diem_state_view::StateView;
+use diem_types::access_path::AccessPath;
 use move_core_types::language_storage::ModuleId;
 use std::collections::HashMap;
 use vm::CompiledModule;

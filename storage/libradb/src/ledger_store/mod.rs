@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This file defines ledger store APIs that are related to the main ledger accumulator, from the
@@ -6,7 +6,7 @@
 
 use crate::{
     change_set::ChangeSet,
-    errors::LibraDbError,
+    errors::DiemDbError,
     schema::{
         epoch_by_version::EpochByVersionSchema, ledger_info::LedgerInfoSchema,
         transaction_accumulator::TransactionAccumulatorSchema,
@@ -17,11 +17,11 @@ use accumulator::{HashReader, MerkleAccumulator};
 use anyhow::{ensure, format_err, Result};
 use arc_swap::ArcSwap;
 use itertools::Itertools;
-use libra_crypto::{
+use diem_crypto::{
     hash::{CryptoHash, TransactionAccumulatorHasher},
     HashValue,
 };
-use libra_types::{
+use diem_types::{
     epoch_state::EpochState,
     ledger_info::LedgerInfoWithSignatures,
     proof::{
@@ -104,7 +104,7 @@ impl LedgerStore {
         let li = self
             .db
             .get::<LedgerInfoSchema>(&epoch)?
-            .ok_or_else(|| LibraDbError::NotFound(format!("LedgerInfo for epoch {}.", epoch)))?;
+            .ok_or_else(|| DiemDbError::NotFound(format!("LedgerInfo for epoch {}.", epoch)))?;
         ensure!(
             li.ledger_info().version() == version,
             "Epoch {} didn't end at version {}",
@@ -126,7 +126,7 @@ impl LedgerStore {
 
     pub fn get_latest_ledger_info(&self) -> Result<LedgerInfoWithSignatures> {
         self.get_latest_ledger_info_option()
-            .ok_or_else(|| LibraDbError::NotFound(String::from("Genesis LedgerInfo")).into())
+            .ok_or_else(|| DiemDbError::NotFound(String::from("Genesis LedgerInfo")).into())
     }
 
     pub fn set_latest_ledger_info(&self, ledger_info_with_sigs: LedgerInfoWithSignatures) {
@@ -136,7 +136,7 @@ impl LedgerStore {
 
     pub fn get_latest_ledger_info_in_epoch(&self, epoch: u64) -> Result<LedgerInfoWithSignatures> {
         self.db.get::<LedgerInfoSchema>(&epoch)?.ok_or_else(|| {
-            LibraDbError::NotFound(format!("Last LedgerInfo of epoch {}", epoch)).into()
+            DiemDbError::NotFound(format!("Last LedgerInfo of epoch {}", epoch)).into()
         })
     }
 
@@ -147,7 +147,7 @@ impl LedgerStore {
             self.db
                 .get::<LedgerInfoSchema>(&(epoch - 1))?
                 .ok_or_else(|| {
-                    LibraDbError::NotFound(format!("Last LedgerInfo of epoch {}", epoch - 1))
+                    DiemDbError::NotFound(format!("Last LedgerInfo of epoch {}", epoch - 1))
                 })?;
         let latest_epoch_state = ledger_info_with_sigs
             .ledger_info()
@@ -230,7 +230,7 @@ impl LedgerStore {
     /// version can be greater than what's in the latest LedgerInfo.
     pub fn get_latest_transaction_info(&self) -> Result<(Version, TransactionInfo)> {
         self.get_latest_transaction_info_option()?
-            .ok_or_else(|| LibraDbError::NotFound(String::from("Genesis TransactionInfo.")).into())
+            .ok_or_else(|| DiemDbError::NotFound(String::from("Genesis TransactionInfo.")).into())
     }
 
     /// Gets an iterator that yields `num_transaction_infos` transaction infos starting from

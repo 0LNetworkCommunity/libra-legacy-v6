@@ -17,7 +17,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 2,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
 use 0x1::LibraVersion;
 fun main(account: &signer) {

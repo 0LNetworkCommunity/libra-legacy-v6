@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{error::MempoolError, state_replication::TxnManager};
@@ -8,13 +8,13 @@ use executor_types::StateComputeResult;
 use fail::fail_point;
 use futures::channel::{mpsc, oneshot};
 use itertools::Itertools;
-use libra_logger::prelude::*;
-use libra_mempool::{
+use diem_logger::prelude::*;
+use diem_mempool::{
     CommittedTransaction, ConsensusRequest, ConsensusResponse, TransactionExclusion,
 };
-use libra_metrics::monitor;
-use libra_trace::prelude::*;
-use libra_types::transaction::TransactionStatus;
+use diem_metrics::monitor;
+use diem_trace::prelude::*;
+use diem_types::transaction::TransactionStatus;
 use std::time::Duration;
 use tokio::time::{delay_for, timeout};
 

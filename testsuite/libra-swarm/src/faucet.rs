@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{format_err, Context, Result};
-use libra_types::chain_id::ChainId;
+use diem_types::chain_id::ChainId;
 use reqwest::{blocking, StatusCode, Url};
 use std::{
     path::Path,
@@ -38,7 +38,7 @@ impl Process {
         faucet_bin_path: &Path,
         port: u16,
         server_port: u16,
-        libra_root_key_path: &Path,
+        diem_root_key_path: &Path,
     ) -> Self {
         Self {
             port,
@@ -49,9 +49,9 @@ impl Process {
                 .arg(format!("{}", port))
                 .arg("-m")
                 .arg(
-                    libra_root_key_path
+                    diem_root_key_path
                         .canonicalize()
-                        .expect("Unable to get canonical path of libra root key file")
+                        .expect("Unable to get canonical path of diem root key file")
                         .to_str()
                         .unwrap(),
                 )

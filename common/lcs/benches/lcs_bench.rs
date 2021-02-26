@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use libra_canonical_serialization::to_bytes;
+use diem_canonical_serialization::to_bytes;
 use std::collections::{BTreeMap, HashMap};
 
 pub fn lcs_benchmark(c: &mut Criterion) {

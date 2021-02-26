@@ -45,7 +45,7 @@ pub fn integration_full() {
     let mut swarm_cmd = Command::new("cargo");
     swarm_cmd.current_dir("../");
     swarm_cmd.arg("run")
-            .arg("-p").arg("libra-swarm")
+            .arg("-p").arg("diem-swarm")
             .arg("--").arg("-n").arg("1") 
             .arg("-l").arg("-c").arg("saved_logs");
     let cmd = swarm_cmd.stdout(Stdio::inherit())

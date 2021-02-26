@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! NibblePath library simplify operations with nibbles in a compact format for modified sparse
+//! NibblePath diemry simplify operations with nibbles in a compact format for modified sparse
 //! Merkle tree by providing powerful iterators advancing by either bit or nibble.
 
 #[cfg(test)]
 mod nibble_path_test;
 
 use crate::ROOT_NIBBLE_HEIGHT;
-use libra_nibble::Nibble;
+use diem_nibble::Nibble;
 use mirai_annotations::*;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest::{collection::vec, prelude::*};

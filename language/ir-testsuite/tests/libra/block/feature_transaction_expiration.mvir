@@ -6,8 +6,8 @@
 
 //! new-transaction
 //! expiration-time: 99
-import 0x1.LibraSystem;
-import 0x1.LibraTimestamp;
+import 0x1.DiemSystem;
+import 0x1.DiemTimestamp;
 
 main() {
     return;
@@ -16,8 +16,8 @@ main() {
 
 //! new-transaction
 //! expiration-time: 100
-import 0x1.LibraSystem;
-import 0x1.LibraTimestamp;
+import 0x1.DiemSystem;
+import 0x1.DiemTimestamp;
 
 main() {
     return;
@@ -26,8 +26,8 @@ main() {
 
 //! new-transaction
 //! expiration-time: 101
-import 0x1.LibraSystem;
-import 0x1.LibraTimestamp;
+import 0x1.DiemSystem;
+import 0x1.DiemTimestamp;
 
 main() {
     return;
@@ -36,8 +36,8 @@ main() {
 
 //! new-transaction
 //! expiration-time: 86500
-import 0x1.LibraSystem;
-import 0x1.LibraTimestamp;
+import 0x1.DiemSystem;
+import 0x1.DiemTimestamp;
 
 main() {
     return;
@@ -50,8 +50,8 @@ main() {
 
 //! new-transaction
 //! expiration-time: 86500
-import 0x1.LibraSystem;
-import 0x1.LibraTimestamp;
+import 0x1.DiemSystem;
+import 0x1.DiemTimestamp;
 
 main() {
     return;
@@ -60,8 +60,8 @@ main() {
 
 //! new-transaction
 //! expiration-time: 101
-import 0x1.LibraSystem;
-import 0x1.LibraTimestamp;
+import 0x1.DiemSystem;
+import 0x1.DiemTimestamp;
 
 main() {
     return;
@@ -70,8 +70,8 @@ main() {
 
 //! new-transaction
 //! expiration-time: 18446744073710
-import 0x1.LibraSystem;
-import 0x1.LibraTimestamp;
+import 0x1.DiemSystem;
+import 0x1.DiemTimestamp;
 
 main() {
     return;

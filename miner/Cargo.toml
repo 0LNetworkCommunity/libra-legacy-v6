@@ -15,19 +15,19 @@ hex = "0.4"
 byteorder = "1"
 glob = "0.3"
 serde_json = "1"
-libra-crypto = { path = "../crypto/crypto", version = "0.1.0" }
-libra-wallet = { path = "../testsuite/cli/libra-wallet", version = "0.1.0" }
+diem-crypto = { path = "../crypto/crypto", version = "0.1.0" }
+diem-wallet = { path = "../testsuite/cli/diem-wallet", version = "0.1.0" }
 cli = { path = "../testsuite/cli/", version = "0.1.0" }
-libra-types = { path = "../types/", version = "0.1.0" }
-libra-config = { path = "../config/", version = "0.1.0" }
-libra-json-rpc-types = { path = "../json-rpc/types", version = "0.1.0"} 
+diem-types = { path = "../types/", version = "0.1.0" }
+diem-config = { path = "../config/", version = "0.1.0" }
+diem-json-rpc-types = { path = "../json-rpc/types", version = "0.1.0"} 
 stdlib = { path = "../language/stdlib", version = "0.1.0" }
 compiled-stdlib = { path = "../language/stdlib/compiled", version = "0.1.0" }
-libradb = { path = "../storage/libradb", version="0.1.0"}
-libra-logger = { path = "../common/logger", version = "0.1.0" }
+diemdb = { path = "../storage/diemdb", version="0.1.0"}
+diem-logger = { path = "../common/logger", version = "0.1.0" }
 storage-interface= {path = "../storage/storage-interface", version="0.1.0"}
 vm-genesis={path="../language/tools/vm-genesis", version="0.1.0"}
-lcs = { path = "../common/lcs", version = "0.1.0", package = "libra-canonical-serialization" }
+lcs = { path = "../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
 move-core-types={path="../language/move-core/types", version="0.1.0"}
 regex = "1"
 rpassword = "5.0"
@@ -36,12 +36,12 @@ rustyline = "6.2.0"
 anyhow = "1.0.31"
 toml = "0.5.6"
 reqwest = { version = "0.10.6", features = ["blocking", "json"], default_features = false }
-libra-global-constants = { path = "../config/global-constants", version = "0.1.0"}
+diem-global-constants = { path = "../config/global-constants", version = "0.1.0"}
 dirs = "2.0.2"
 transaction-builder = { path = "../language/transaction-builder", version = "0.1.0"}
-libra-network-address = { path = "../network/network-address", version = "0.1.0" }
-libra-genesis-tool = { path = "../config/management/genesis", version = "0.1.0" }
-libra-management = { path = "../config/management", version = "0.1.0" }
+diem-network-address = { path = "../network/network-address", version = "0.1.0" }
+diem-genesis-tool = { path = "../config/management/genesis", version = "0.1.0" }
+diem-management = { path = "../config/management", version = "0.1.0" }
 
 [dependencies.abscissa_core]
 version = "0.5.2"

@@ -14,7 +14,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 2567,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 use 0x1::Coin1::Coin1;
@@ -38,7 +38,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 6151,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 use 0x1::LBR::LBR;

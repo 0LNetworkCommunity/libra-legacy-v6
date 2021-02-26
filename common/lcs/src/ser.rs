@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::{Error, Result};
@@ -14,7 +14,7 @@ use serde::{ser, Serialize};
 /// # Examples
 ///
 /// ```
-/// use libra_canonical_serialization::to_bytes;
+/// use diem_canonical_serialization::to_bytes;
 /// use serde::Serialize;
 ///
 /// #[derive(Serialize)]

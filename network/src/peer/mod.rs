@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! The Peer actor owns the underlying connection and is responsible for listening for
@@ -21,9 +21,9 @@ use futures::{
     stream::StreamExt,
     FutureExt, SinkExt, TryFutureExt,
 };
-use libra_config::network_id::NetworkContext;
-use libra_logger::prelude::*;
-use libra_types::PeerId;
+use diem_config::network_id::NetworkContext;
+use diem_logger::prelude::*;
+use diem_types::PeerId;
 use netcore::compat::IoCompat;
 use serde::{export::Formatter, Serialize};
 use std::{fmt::Debug, io, sync::Arc};

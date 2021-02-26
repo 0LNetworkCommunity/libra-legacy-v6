@@ -35,7 +35,7 @@ module LibraTransactionPublishingOption {
         module_publishing_allowed: bool,
     ) {
         LibraTimestamp::assert_genesis();
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
 
         LibraConfig::publish_new_config(
             lr_account,
@@ -62,7 +62,7 @@ module LibraTransactionPublishingOption {
 
         Vector::is_empty(&publish_option.script_allow_list)
             || Vector::contains(&publish_option.script_allow_list, hash)
-            || Roles::has_libra_root_role(account)
+            || Roles::has_diem_root_role(account)
     }
     spec fun is_script_allowed {
         include AbortsIfNoTransactionPublishingOption;
@@ -75,7 +75,7 @@ module LibraTransactionPublishingOption {
     public fun is_module_allowed(account: &signer): bool {
         let publish_option = LibraConfig::get<LibraTransactionPublishingOption>();
 
-        publish_option.module_publishing_allowed || Roles::has_libra_root_role(account)
+        publish_option.module_publishing_allowed || Roles::has_diem_root_role(account)
     }
     spec fun is_module_allowed{
         include AbortsIfNoTransactionPublishingOption;
@@ -83,7 +83,7 @@ module LibraTransactionPublishingOption {
 
     /// Add `new_hash` to the list of script hashes that is allowed to be executed by the network.
     public fun add_to_script_allow_list(lr_account: &signer, new_hash: vector<u8>) {
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
 
         assert(Vector::length(&new_hash) == SCRIPT_HASH_LENGTH, Errors::invalid_argument(EINVALID_SCRIPT_HASH));
 
@@ -108,7 +108,7 @@ module LibraTransactionPublishingOption {
 
     /// Allow the execution of arbitrary script or not.
     public fun set_open_script(lr_account: &signer) {
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
         let publish_option = LibraConfig::get<LibraTransactionPublishingOption>();
 
         publish_option.script_allow_list = Vector::empty();
@@ -124,7 +124,7 @@ module LibraTransactionPublishingOption {
 
     /// Allow module publishing from arbitrary sender or not.
     public fun set_open_module(lr_account: &signer, open_module: bool) {
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
 
         let publish_option = LibraConfig::get<LibraTransactionPublishingOption>();
 
@@ -166,12 +166,12 @@ module LibraTransactionPublishingOption {
             let publish_option = LibraConfig::spec_get_config<LibraTransactionPublishingOption>();
             Vector::is_empty(publish_option.script_allow_list)
                 || Vector::spec_contains(publish_option.script_allow_list, hash)
-                || Roles::has_libra_root_role(account)
+                || Roles::has_diem_root_role(account)
         }
 
         define spec_is_module_allowed(account: signer): bool {
             let publish_option = LibraConfig::spec_get_config<LibraTransactionPublishingOption>();
-            publish_option.module_publishing_allowed || Roles::has_libra_root_role(account)
+            publish_option.module_publishing_allowed || Roles::has_diem_root_role(account)
         }
     }
 }

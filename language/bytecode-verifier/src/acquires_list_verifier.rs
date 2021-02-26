@@ -10,7 +10,7 @@
 //! - No missing resources (any resource acquired must be present)
 //! - No additional resources (no extraneous resources not actually acquired)
 
-use libra_types::vm_status::StatusCode;
+use diem_types::vm_status::StatusCode;
 use std::collections::{BTreeSet, HashMap};
 use vm::{
     access::ModuleAccess,

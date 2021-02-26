@@ -55,7 +55,7 @@ pub mod build_block {
     use crate::prelude::*;
     use crate::submit_tx::{submit_tx, TxParams, eval_tx_status};
     use glob::glob;
-    use libra_crypto::hash::HashValue;
+    use diem_crypto::hash::HashValue;
     use std::{fs, io::{BufReader, Write}, path::PathBuf, time::Instant};
 
 
@@ -237,7 +237,7 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
 }
 #[test]
 fn test_mine_genesis() {
-    use libra_types::PeerId;
+    use diem_types::PeerId;
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     let configs_fixture = MinerConfig {
@@ -284,13 +284,13 @@ fn test_mine_genesis() {
 //Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
     
-    use libra_wallet::WalletLibrary;
+    use diem_wallet::WalletDiemry;
 
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     for i in 0..6 {
         let ns = i.to_string();
-        let mut wallet = WalletLibrary::new();
+        let mut wallet = WalletDiemry::new();
 
         let (auth_key, _) = wallet.new_address().expect("Could not generate address");
 
@@ -342,7 +342,7 @@ fn create_fixtures() {
 
 #[test]
 fn test_mine_once() {
-    use libra_types::PeerId;
+    use diem_types::PeerId;
     // if no file is found, the block height is 0
     let configs_fixture = MinerConfig {
         workspace: Workspace{

@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! This module defines error types used by [`LibraDB`](crate::LibraDB).
+//! This module defines error types used by [`DiemDB`](crate::DiemDB).
 
 use thiserror::Error;
 
-/// This enum defines errors commonly used among [`LibraDB`](crate::LibraDB) APIs.
+/// This enum defines errors commonly used among [`DiemDB`](crate::DiemDB) APIs.
 #[derive(Debug, Error)]
-pub enum LibraDbError {
+pub enum DiemDbError {
     /// A requested item is not found.
     #[error("{0} not found.")]
     NotFound(String),

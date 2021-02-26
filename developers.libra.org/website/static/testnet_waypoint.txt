@@ -1,1 +1,1 @@
-https://testnet.libra.org/waypoint.txt
+https://testnet.diem.org/waypoint.txt

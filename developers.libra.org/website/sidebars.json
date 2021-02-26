@@ -1,33 +1,33 @@
 {
   "docs": {
-    "Learn About Libra": [
-      "welcome-to-libra",
-      "libra-protocol",
+    "Learn About Diem": [
+      "welcome-to-diem",
+      "diem-protocol",
       "life-of-a-transaction",
       {
         "type": "subcategory",
         "label": "Technical Papers",
         "ids": [
-          "the-libra-blockchain-paper",
+          "the-diem-blockchain-paper",
           "move-paper",
           "state-machine-replication-paper"
             ]
       }
     ],
-    "Try Libra Core": [
+    "Try Diem Core": [
       "my-first-transaction",
       "move-overview",
       "run-local-network",
       "run-move-locally"
     ],
     "Community" : [
-      "libra-open-source-paper",
+      "diem-open-source-paper",
       "community/contributing",
       "community/coding-guidelines",
       "policies/security"
     ],
-    "Libra Codebase": [
-      "libra-core-overview",
+    "Diem Codebase": [
+      "diem-core-overview",
       {
         "type": "subcategory",
         "label": "READMEs",
@@ -47,7 +47,7 @@
       }
     ],
     "Reference": [
-      "reference/libra-cli",
+      "reference/diem-cli",
       "reference/glossary"
     ]
   }

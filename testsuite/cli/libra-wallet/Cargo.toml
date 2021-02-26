@@ -1,10 +1,10 @@
 [package]
-name = "libra-wallet"
+name = "diem-wallet"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra wallet"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.org>"]
+description = "Diem wallet"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.org"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -21,16 +21,16 @@ sha2 = "0.9.1"
 thiserror = "1.0.21"
 vanilla-ed25519-dalek = { version = "1.0.0", package = 'ed25519-dalek', optional = true}
 ed25519-dalek = { git = "https://github.com/novifinancial/ed25519-dalek.git", branch = "fiat4", version = "1.0.0", default-features = false, features = ["std", "fiat_u64_backend"], optional = true}
-libra-crypto = { path = "../../../crypto/crypto", version = "0.1.0", features = ["fuzzing"] }
-libra-temppath = { path = "../../../common/temppath/", version = "0.1.0" }
-libra-types = { path = "../../../types", version = "0.1.0" }
-libra-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
+diem-crypto = { path = "../../../crypto/crypto", version = "0.1.0", features = ["fuzzing"] }
+diem-temppath = { path = "../../../common/temppath/", version = "0.1.0" }
+diem-types = { path = "../../../types", version = "0.1.0" }
+diem-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
 mirai-annotations = "1.10.1"
 
 ######## 0L ########
-libra-global-constants = { path = "../../../config/global-constants", version = "0.1.0"}
+diem-global-constants = { path = "../../../config/global-constants", version = "0.1.0"}
 [features]
 default = ["fiat"]
 fiat = ["ed25519-dalek"]
 vanilla = ["vanilla-ed25519-dalek"]
-fuzzing = ["libra-types/fuzzing"]
+fuzzing = ["diem-types/fuzzing"]

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -20,13 +20,13 @@ use consensus_types::{
     vote_data::VoteData,
     vote_proposal::{MaybeSignedVoteProposal, VoteProposal},
 };
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PublicKey, Ed25519Signature},
     hash::HashValue,
     traits::Signature,
 };
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_types::{
     block_info::BlockInfo, epoch_change::EpochChangeProof, epoch_state::EpochState,
     ledger_info::LedgerInfo, validator_signer::ValidatorSigner, waypoint::Waypoint,
 };

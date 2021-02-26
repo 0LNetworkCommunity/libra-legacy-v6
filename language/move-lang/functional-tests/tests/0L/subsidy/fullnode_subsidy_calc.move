@@ -2,7 +2,7 @@
 
 //! new-transaction
 // Check if genesis subsidies have been distributed
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Subsidy;
 fun main(_vm: &signer) {

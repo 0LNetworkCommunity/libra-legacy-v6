@@ -1,7 +1,7 @@
 //! account: alice, 1, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::TransactionFee;
     use 0x1::Libra;

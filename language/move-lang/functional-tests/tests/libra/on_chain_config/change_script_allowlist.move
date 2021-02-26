@@ -35,7 +35,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 2,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraTransactionPublishingOption;
 fun main(account: &signer) {
@@ -45,7 +45,7 @@ fun main(account: &signer) {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraTransactionPublishingOption;
 fun main(account: &signer) {
@@ -63,7 +63,7 @@ fun main() {
 // check: "Discard(UNKNOWN_SCRIPT)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraTransactionPublishingOption;
 fun main(account: &signer) {
@@ -73,7 +73,7 @@ fun main(account: &signer) {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraTransactionPublishingOption;
 fun main(account: &signer) {
@@ -85,7 +85,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 263,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraTransactionPublishingOption;
 fun main(account: &signer) {
@@ -99,7 +99,7 @@ fun main(account: &signer) {
 //! block-time: 2
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 // Step 2: Change option to CustomModule
 script {
 use 0x1::LibraTransactionPublishingOption;

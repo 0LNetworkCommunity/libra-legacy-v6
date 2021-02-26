@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use libra_fuzzer::FuzzTarget;
+use diem_fuzzer::FuzzTarget;
 use once_cell::sync::Lazy;
 use std::process;
 

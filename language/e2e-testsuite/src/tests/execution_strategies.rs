@@ -15,13 +15,13 @@ use language_e2e_tests::{
         types::Executor,
     },
 };
-use libra_types::{account_config, transaction::SignedTransaction, vm_status::VMStatus};
+use diem_types::{account_config, transaction::SignedTransaction, vm_status::VMStatus};
 
 fn txn(seq_num: u64) -> SignedTransaction {
     let account = Account::new();
-    let libra_root = Account::new_libra_root();
+    let diem_root = Account::new_diem_root();
     create_account_txn(
-        &libra_root,
+        &diem_root,
         &account,
         seq_num + 1,
         0,

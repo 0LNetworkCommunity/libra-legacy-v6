@@ -1,7 +1,7 @@
 // Transaction script FOR ONBOARDING. Assumes tower-height 0, and that the challenge has a public key which will be turned into an auth_key and subsequently an address.
 // The same algortihm for generating account addresses is available offline. This transaction confirms the address.
 script {
-  use 0x1::LibraAccount;
+  use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   // use 0x1::Transaction;
   // use 0x1::VDF;
@@ -21,7 +21,7 @@ script {
     op_human_name: vector<u8>,
   ) {
 
-    let new_account_address = LibraAccount::create_validator_account_with_proof(
+    let new_account_address = DiemAccount::create_validator_account_with_proof(
       sender,
       &challenge,
       &solution,
@@ -38,6 +38,6 @@ script {
     assert(ValidatorConfig::is_valid(new_account_address), 03);
 
     // Check the account exists and the balance is 0
-    assert(LibraAccount::balance<GAS>(new_account_address) == 0, 04);
+    assert(DiemAccount::balance<GAS>(new_account_address) == 0, 04);
 }
 }

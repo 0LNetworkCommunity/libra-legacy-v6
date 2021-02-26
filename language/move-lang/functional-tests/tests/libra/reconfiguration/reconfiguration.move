@@ -7,7 +7,7 @@
 //! block-time: 2
 
 //! new-transaction
-// Reconfiguration can only be invoked by the libra root.
+// Reconfiguration can only be invoked by the diem root.
 script {
 use 0x1::LibraConfig;
 
@@ -19,7 +19,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 2,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraConfig;
 
@@ -38,7 +38,7 @@ fun main(account: &signer) {
 
 // Make sure two reconfigurations will only trigger one reconfiguration event.
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraConfig;
 

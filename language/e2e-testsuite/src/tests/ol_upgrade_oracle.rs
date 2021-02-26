@@ -6,7 +6,7 @@ use language_e2e_tests::{
   executor::FakeExecutor,
   oracle_setup::{oracle_helper_tx, upgrade_foo_tx},
 };
-use libra_types::{
+use diem_types::{
   vm_status::KeptVMStatus,
   account_config::{lbr_type_tag, from_currency_code_string},
 };
@@ -15,7 +15,7 @@ pub const LBR_NAME: &str = "GAS";
 
 fn set_up_validators(
   executor : &mut FakeExecutor, 
-  libra_root: Account, 
+  diem_root: Account, 
 ) -> Vec<Account> {
     let mut sequence_number = 1u64;
   // creates five validator accounts
@@ -25,17 +25,17 @@ fn set_up_validators(
   }
   println!("created new validator accounts");
 
-  // Register account data for libra root
-  let libra_root_data = AccountData::with_account(
-      libra_root, 1_000_000_000_000,
+  // Register account data for diem root
+  let diem_root_data = AccountData::with_account(
+      diem_root, 1_000_000_000_000,
       from_currency_code_string(LBR_NAME).unwrap(), sequence_number, AccountRoleSpecifier::LibraRoot);
-  executor.add_account_data(&libra_root_data);
+  executor.add_account_data(&diem_root_data);
 
   let names = vec!["alice", "bob", "carol", "sha", "ram"];
   // Create a transaction allowing the accounts to serve as validators
   for i in 0..5 {
       executor.execute_and_apply(
-          libra_root_data.account().transaction()
+          diem_root_data.account().transaction()
               .script(encode_create_validator_account_script(
                   sequence_number,
                   *accounts.get(i).unwrap().address(),
@@ -55,7 +55,7 @@ fn set_up_validators(
   let mint_amount = 1_000_000_000;
   for i in 0..5 {
       executor.execute_and_apply(
-          libra_root_data.account().transaction()
+          diem_root_data.account().transaction()
               .script(encode_peer_to_peer_with_metadata_script(
                   lbr_type_tag(),
                   *accounts.get(i).unwrap().address(),
@@ -99,7 +99,7 @@ fn set_up_validators(
   // Actually register the accounts as validators
   for i in 0..5 {
       executor.execute_and_apply(
-          libra_root_data.account()
+          diem_root_data.account()
               .transaction()
               .script(encode_add_validator_and_reconfigure_script(
                   sequence_number,
@@ -152,7 +152,7 @@ fn set_up_validators(
   //////////////////////////////////////////////////////////////////////////////////////////////
   // Construct the signed tx script for test setup.
   let output = executor.execute_and_apply(
-    libra_root_data.account()
+    diem_root_data.account()
         .transaction()
         .script(encode_ol_reconfig_bulk_update_setup_script(
             *accounts.get(0).unwrap().address(),
@@ -199,8 +199,8 @@ fn test_single_oracle_tx() {
   let mut executor = FakeExecutor::from_genesis_file();
 
   // create an association account and validator accounts
-  let libra_root = Account::new_libra_root();
-  let accounts = set_up_validators(&mut executor, libra_root);
+  let diem_root = Account::new_diem_root();
+  let accounts = set_up_validators(&mut executor, diem_root);
 
   // Construct a valid and signed tx script.
   let txn = oracle_helper_tx(&accounts.get(0).unwrap(), 3);
@@ -225,8 +225,8 @@ fn test_validators_oracle_tx() {
   let mut executor = FakeExecutor::from_genesis_file();
 
   // create an association account and validator accounts
-  let libra_root = Account::new_libra_root();
-  let accounts = set_up_validators(&mut executor, libra_root);
+  let diem_root = Account::new_diem_root();
+  let accounts = set_up_validators(&mut executor, diem_root);
 
   executor.new_custom_block(2);
 

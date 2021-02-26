@@ -7,12 +7,12 @@ use language_e2e_tests::{
     executor::FakeExecutor,
     keygen::KeyGen,
 };
-use libra_crypto::{
+use diem_crypto::{
     ed25519::Ed25519PrivateKey,
     multi_ed25519::{MultiEd25519PublicKey, MultiEd25519Signature},
     PrivateKey, SigningKey, Uniform,
 };
-use libra_types::{
+use diem_types::{
     transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionStatus},
     vm_status::{KeptVMStatus, StatusCode},
 };

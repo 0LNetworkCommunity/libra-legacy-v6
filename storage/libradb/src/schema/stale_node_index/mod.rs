@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines the physical storage schema for information related to outdated state
@@ -20,8 +20,8 @@
 use crate::schema::{ensure_slice_len_eq, ensure_slice_len_gt, STALE_NODE_INDEX_CF_NAME};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use libra_jellyfish_merkle::{node_type::NodeKey, StaleNodeIndex};
-use libra_types::transaction::Version;
+use diem_jellyfish_merkle::{node_type::NodeKey, StaleNodeIndex};
+use diem_types::transaction::Version;
 use schemadb::{
     define_schema,
     schema::{KeyCodec, SeekKeyCodec, ValueCodec},

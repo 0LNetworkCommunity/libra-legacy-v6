@@ -6,14 +6,14 @@ use language_e2e_tests::{
     common_transactions::peer_to_peer_txn,
     executor::FakeExecutor,
 };
-use libra_crypto::HashValue;
-use libra_types::{
-    account_config::libra_root_address,
+use diem_crypto::HashValue;
+use diem_types::{
+    account_config::diem_root_address,
     on_chain_config::new_epoch_event_key,
     transaction::{TransactionPayload, TransactionStatus},
     vm_status::KeptVMStatus,
 };
-use libra_writeset_generator::{
+use diem_writeset_generator::{
     encode_custom_script, encode_halt_network_transaction, encode_remove_validators_transaction,
 };
 use move_core_types::vm_status::StatusCode;
@@ -24,13 +24,13 @@ use transaction_builder::*;
 #[test]
 fn validator_batch_remove() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let libra_root_account = Account::new_libra_root();
+    let diem_root_account = Account::new_diem_root();
     let validator_account_0 = Account::new();
     let validator_account_1 = Account::new();
 
     // Add validator_0
     executor.execute_and_apply(
-        libra_root_account
+        diem_root_account
             .transaction()
             .script(encode_create_validator_account_script(
                 0,
@@ -62,7 +62,7 @@ fn validator_batch_remove() {
     );
 
     executor.execute_and_apply(
-        libra_root_account
+        diem_root_account
             .transaction()
             .script(encode_add_validator_and_reconfigure_script(
                 2,
@@ -76,7 +76,7 @@ fn validator_batch_remove() {
     // Add validator_1
     executor.new_block();
     executor.execute_and_apply(
-        libra_root_account
+        diem_root_account
             .transaction()
             .script(encode_create_validator_account_script(
                 0,
@@ -108,7 +108,7 @@ fn validator_batch_remove() {
     );
 
     executor.execute_and_apply(
-        libra_root_account
+        diem_root_account
             .transaction()
             .script(encode_add_validator_and_reconfigure_script(
                 3,
@@ -155,10 +155,10 @@ fn validator_batch_remove() {
             "remove_validator",
             vec![],
             vec![
-                Value::transaction_argument_signer_reference(libra_root_address()),
+                Value::transaction_argument_signer_reference(diem_root_address()),
                 Value::address(*validator_account_0.address())
             ],
-            libra_root_account.address()
+            diem_root_account.address()
         )
         .is_err());
     assert!(executor
@@ -167,10 +167,10 @@ fn validator_batch_remove() {
             "remove_validator",
             vec![],
             vec![
-                Value::transaction_argument_signer_reference(libra_root_address()),
+                Value::transaction_argument_signer_reference(diem_root_address()),
                 Value::address(*validator_account_1.address())
             ],
-            libra_root_account.address()
+            diem_root_account.address()
         )
         .is_err());
 }
@@ -178,7 +178,7 @@ fn validator_batch_remove() {
 #[test]
 fn halt_network() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let libra_root_account = Account::new_libra_root();
+    let diem_root_account = Account::new_diem_root();
     let sender = AccountData::new(1_000_000, 10);
     let receiver = AccountData::new(100_000, 10);
     executor.add_account_data(&sender);
@@ -216,7 +216,7 @@ fn halt_network() {
 
     // LibraRoot can still send transaction
     executor.execute_and_apply(
-        libra_root_account
+        diem_root_account
             .transaction()
             .script(encode_add_to_script_allow_list_script(script_hash, 0))
             .sequence_number(1)

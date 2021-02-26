@@ -1,22 +1,22 @@
 //! MinerApp resubmit_tx module
 #![forbid(unsafe_code)]
 
-use cli::{libra_client::LibraClient};
+use cli::{diem_client::DiemClient};
 use std::fs::File;
 use glob::glob;
 use crate::{block::Block};
 use std::io::BufReader;
-use libra_json_rpc_types::views::MinerStateView;
+use diem_json_rpc_types::views::MinerStateView;
 use std::path::PathBuf;
 //use crate::submit_tx::LocalMinerState;
 use crate::config::MinerConfig;
 use crate::submit_tx_alt::{TxParams, submit_tx, eval_tx_status};
-use libra_config::config::NodeConfig;
-use libra_types::{
+use diem_config::config::NodeConfig;
+use diem_types::{
     transaction::authenticator::AuthenticationKey,
     waypoint::Waypoint
 };
-use libra_crypto::{
+use diem_crypto::{
     test_utils::KeyPair,
 };
 use reqwest::Url;
@@ -28,7 +28,7 @@ pub fn resubmit_backlog(home: PathBuf, config: &MinerConfig){
     
     // Getting remote miner state
     let tx_params = get_params_from_swarm(home).unwrap();
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     let remote_state: MinerStateView  = match client.get_miner_state(tx_params.address.clone()) {
         Ok( s ) => { match s {
             Some(state) => state,

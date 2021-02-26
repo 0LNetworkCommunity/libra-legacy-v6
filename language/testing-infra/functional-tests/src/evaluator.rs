@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,9 +9,9 @@ use crate::{
 use bytecode_verifier::DependencyChecker;
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
 use language_e2e_tests::executor::FakeExecutor;
-use libra_crypto::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
-use libra_state_view::StateView;
-use libra_types::{
+use diem_crypto::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
+use diem_state_view::StateView;
+use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config,
@@ -21,7 +21,7 @@ use libra_types::{
     on_chain_config::VMPublishingOption,
     transaction::{
         Module as TransactionModule, RawTransaction, Script as TransactionScript,
-        SignedTransaction, Transaction as LibraTransaction, TransactionOutput, TransactionStatus,
+        SignedTransaction, Transaction as DiemTransaction, TransactionOutput, TransactionStatus,
     },
     vm_status::KeptVMStatus,
 };
@@ -62,13 +62,13 @@ pub struct Transaction<'a> {
     pub input: String,
 }
 
-/// Commands that drives the operation of LibraVM. Such as:
+/// Commands that drives the operation of DiemVM. Such as:
 /// 1. Execute user transaction
 /// 2. Publish a new block metadata
 ///
-/// In the future we will add more commands to mimic the full public API of LibraVM,
-/// including reloading the on-chain configuration that will affect the code path for LibraVM,
-/// cleaning the cache in the LibraVM, etc.
+/// In the future we will add more commands to mimic the full public API of DiemVM,
+/// including reloading the on-chain configuration that will affect the code path for DiemVM,
+/// cleaning the cache in the DiemVM, etc.
 #[derive(Debug)]
 pub enum Command<'a> {
     Transaction(Transaction<'a>),
@@ -693,7 +693,7 @@ pub fn eval_block_metadata(
     log: &mut EvaluationLog,
 ) -> Result<Status> {
     let outputs =
-        executor.execute_transaction_block(vec![LibraTransaction::BlockMetadata(block_metadata)]);
+        executor.execute_transaction_block(vec![DiemTransaction::BlockMetadata(block_metadata)]);
 
     match outputs {
         Ok(mut outputs) => {

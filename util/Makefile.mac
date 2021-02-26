@@ -46,7 +46,7 @@ register:
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
 init-test:
-	echo ${MNEM} | head -c -1 | cargo run -p libra-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
+	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
 	./genesis init --path=${DATA_PATH} --namespace=${ACC}
@@ -106,8 +106,8 @@ check:
 bins:
 	#TOML cli
 	cargo install toml-cli
-	#Build and install genesis tool, libra-node, and miner
-	cargo build -p libra-genesis-tool --release
-	sudo cp -f target/release/libra-genesis-tool ./genesis
+	#Build and install genesis tool, diem-node, and miner
+	cargo build -p diem-genesis-tool --release
+	sudo cp -f target/release/diem-genesis-tool ./genesis
 	cargo build -p miner --release
 	sudo cp -f target/release/miner ./miner_app

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{corpus_from_strategy, fuzz_data_to_value, FuzzTargetImpl};
@@ -7,13 +7,13 @@ use accumulator::test_helpers::{
     test_append_empty_impl, test_append_many_impl, test_consistency_proof_impl,
     test_get_frozen_subtree_hashes_impl, test_proof_impl, test_range_proof_impl,
 };
-use libra_jellyfish_merkle::test_helper::{
+use diem_jellyfish_merkle::test_helper::{
     arb_existent_kvs_and_nonexistent_keys, arb_kv_pair_with_distinct_last_nibble,
     arb_tree_with_index, test_get_range_proof, test_get_with_proof,
     test_get_with_proof_with_distinct_last_nibble,
 };
-use libra_proptest_helpers::ValueGenerator;
-use libradb::{
+use diem_proptest_helpers::ValueGenerator;
+use diemdb::{
     schema::fuzzing::fuzz_decode, test_helper::arb_blocks_to_commit, test_save_blocks_impl,
 };
 use proptest::{collection::vec, prelude::*};

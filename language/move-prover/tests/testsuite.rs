@@ -7,7 +7,7 @@ use codespan_reporting::term::termcolor::Buffer;
 
 use anyhow::anyhow;
 use itertools::Itertools;
-use libra_temppath::TempPath;
+use diem_temppath::TempPath;
 use move_prover::{cli::Options, run_move_prover};
 use test_utils::{baseline_test::verify_or_update_baseline, extract_test_directives, read_env_var};
 
@@ -45,7 +45,7 @@ fn test_runner(path: &Path) -> datatest_stable::Result<()> {
         if !NOT_CONFIGURED_WARNED.compare_and_swap(false, true, Ordering::Relaxed) {
             warn!(
                 "Prover tools are not configured, verification tests will be skipped. \
-        See https://github.com/libra/libra/tree/master/language/move-prover/doc/user/install.md \
+        See https://github.com/diem/diem/tree/master/language/move-prover/doc/user/install.md \
         for instructions."
             );
         }

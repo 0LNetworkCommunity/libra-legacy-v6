@@ -21,8 +21,8 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="LibraBlock.md#0x1_LibraBlock">0x1::LibraBlock</a>;
-<b>use</b> <a href="LibraSystem.md#0x1_LibraSystem">0x1::LibraSystem</a>;
+<b>use</b> <a href="DiemBlock.md#0x1_DiemBlock">0x1::DiemBlock</a>;
+<b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="Upgrade.md#0x1_Upgrade">0x1::Upgrade</a>;
@@ -255,7 +255,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_handler">handler</a> (sender: &signer, id: u64, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
   // receives payload from oracle_tx.<b>move</b>
   // Check the sender is a validator.
-  <b>assert</b>(<a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 11111); // TODO: error code
+  <b>assert</b>(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 11111); // TODO: error code
 
   <b>if</b> (id == 1) {
     <a href="Oracle.md#0x1_Oracle_upgrade_handler">upgrade_handler</a>(sender, data);
@@ -284,7 +284,7 @@
 
 
 <pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_upgrade_handler">upgrade_handler</a> (sender: &signer, data: vector&lt;u8&gt;) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
-  <b>let</b> current_height = <a href="LibraBlock.md#0x1_LibraBlock_get_current_block_height">LibraBlock::get_current_block_height</a>();
+  <b>let</b> current_height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>();
   <b>let</b> upgrade_oracle = &<b>mut</b> borrow_global_mut&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).upgrade;
 
   // check <b>if</b> qualifies <b>as</b> a new round
@@ -435,7 +435,7 @@
 
 
 <pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_tally_upgrade">tally_upgrade</a> (upgrade_oracle: &<b>mut</b> <a href="Oracle.md#0x1_Oracle_UpgradeOracle">UpgradeOracle</a>) {
-  <b>let</b> validator_num = <a href="LibraSystem.md#0x1_LibraSystem_validator_set_size">LibraSystem::validator_set_size</a>();
+  <b>let</b> validator_num = <a href="DiemSystem.md#0x1_DiemSystem_validator_set_size">DiemSystem::validator_set_size</a>();
   <b>let</b> threshold = validator_num * 2 / 3;
   <b>let</b> result = <a href="Oracle.md#0x1_Oracle_check_consensus">check_consensus</a>(&upgrade_oracle.vote_counts, threshold);
 
@@ -473,7 +473,7 @@
 
   <b>if</b> (!<a href="Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&payload)) {
     <a href="Upgrade.md#0x1_Upgrade_set_update">Upgrade::set_update</a>(vm, *&payload);
-    <b>let</b> current_height = <a href="LibraBlock.md#0x1_LibraBlock_get_current_block_height">LibraBlock::get_current_block_height</a>();
+    <b>let</b> current_height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>();
     <a href="Upgrade.md#0x1_Upgrade_record_history">Upgrade::record_history</a>(vm, upgrade_oracle.version_id, payload, validators, current_height);
     <a href="Oracle.md#0x1_Oracle_enter_new_upgrade_round">enter_new_upgrade_round</a>(upgrade_oracle, current_height);
   }
@@ -522,6 +522,6 @@
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

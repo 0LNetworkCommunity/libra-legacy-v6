@@ -152,7 +152,7 @@ Event emitted when a new account is created
 |-----------------|--------|--------------------------------|
 | type            | string | Constant string "createaccount"|
 | created_address | string | Address of the created account |
-| role_id         | u64    | Role id of the created account, see [LIP-2](https://lip.libra.org/lip-2/#move-implementation) for more details |
+| role_id         | u64    | Role id of the created account, see [LIP-2](https://lip.diem.org/lip-2/#move-implementation) for more details |
 
 #### unknown
 
@@ -162,4 +162,4 @@ Represents events currently unsupported by JSON-RPC API.
 |---------|--------|-----------------------------|
 | type    | string | Constant string "unknown"   |
 
-[1]: https://developers.libra.org/docs/rustdocs/libra_canonical_serialization/index.html "LCS"
+[1]: https://developers.diem.org/docs/rustdocs/diem_canonical_serialization/index.html "LCS"

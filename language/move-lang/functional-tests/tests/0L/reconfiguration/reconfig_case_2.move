@@ -89,7 +89,7 @@ script {
 //check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::Stats;
     use 0x1::Vector;
@@ -128,7 +128,7 @@ script {
 //////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::LibraConfig;

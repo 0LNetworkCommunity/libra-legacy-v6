@@ -3,17 +3,17 @@
 //! account: alice, 0, 0, address
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 fun main(account: &signer) {
-    Roles::grant_libra_root_role(account);
+    Roles::grant_diem_root_role(account);
 }
 }
 // check: "Keep(ABORTED { code: 1,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 fun main(account: &signer) {
@@ -23,7 +23,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 1,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 fun main(account: &signer) {
@@ -33,7 +33,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 258,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 fun main(account: &signer) {
@@ -43,7 +43,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 258,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 use 0x1::Coin1::Coin1;
@@ -75,7 +75,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 2,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 fun main(account: &signer) {
@@ -100,7 +100,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 2,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 fun main(account: &signer) {
@@ -110,7 +110,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 6,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 use 0x1::Coin1::Coin1;
@@ -170,7 +170,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 6,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 fun main(account: &signer) {
@@ -180,7 +180,7 @@ fun main(account: &signer) {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Roles;
 use 0x1::Signer;

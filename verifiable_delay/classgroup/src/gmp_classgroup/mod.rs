@@ -307,7 +307,7 @@ impl GmpClassGroup {
     ///
     /// # Panics
     ///
-    /// Panics if called recursively.  This library guarantees that it will
+    /// Panics if called recursively.  This diemry guarantees that it will
     /// never call this function from any function that takes a parameter of
     /// type `&mut Ctx`.
     pub fn with_context<T, U>(cb: T) -> U

@@ -1,21 +1,21 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     error::*,
     interface::{
-        LibraP2PTransferTransactionArgument, LibraRawTransaction, LibraSignedTransaction,
-        LibraStatus, LibraTransactionPayload, TransactionType, LIBRA_PUBKEY_SIZE,
+        DiemP2PTransferTransactionArgument, DiemRawTransaction, DiemSignedTransaction,
+        DiemStatus, DiemTransactionPayload, TransactionType, LIBRA_PUBKEY_SIZE,
         LIBRA_SIGNATURE_SIZE,
     },
 };
 use lcs::{from_bytes, to_bytes};
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature, ED25519_PUBLIC_KEY_LENGTH},
     test_utils::KeyPair,
     PrivateKey,
 };
-use libra_types::{
+use diem_types::{
     account_address::{self, AccountAddress},
     account_config::{
         coin1_tmp_tag, from_currency_code_string, type_tag_for_currency_code, COIN1_NAME,
@@ -33,7 +33,7 @@ use transaction_builder::{
 };
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_SignedTransactionBytes_from(
+pub unsafe extern "C" fn diem_SignedTransactionBytes_from(
     sender_private_key_bytes: *const u8,
     sequence: u64,
     max_gas_amount: u64,
@@ -45,12 +45,12 @@ pub unsafe extern "C" fn libra_SignedTransactionBytes_from(
     script_len: usize,
     ptr_buf: *mut *mut u8,
     ptr_len: *mut usize,
-) -> LibraStatus {
+) -> DiemStatus {
     clear_error();
 
     if sender_private_key_bytes.is_null() {
         update_last_error("sender_private_key_bytes parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let private_key_buf: &[u8] =
         slice::from_raw_parts(sender_private_key_bytes, Ed25519PrivateKey::LENGTH);
@@ -58,13 +58,13 @@ pub unsafe extern "C" fn libra_SignedTransactionBytes_from(
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Invalid private key bytes: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
     if script_bytes.is_null() {
         update_last_error("script_bytes parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let script_buf: &[u8] = slice::from_raw_parts(script_bytes, script_len);
 
@@ -72,7 +72,7 @@ pub unsafe extern "C" fn libra_SignedTransactionBytes_from(
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Invalid script bytes: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -99,7 +99,7 @@ pub unsafe extern "C" fn libra_SignedTransactionBytes_from(
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Error signing transaction: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -110,7 +110,7 @@ pub unsafe extern "C" fn libra_SignedTransactionBytes_from(
                 "Error serializing signed transaction: {}",
                 e.to_string()
             ));
-            return LibraStatus::InternalError;
+            return DiemStatus::InternalError;
         }
     };
     let txn_buf: *mut u8 = libc::malloc(signed_txn_bytes.len()).cast();
@@ -119,11 +119,11 @@ pub unsafe extern "C" fn libra_SignedTransactionBytes_from(
     *ptr_buf = txn_buf;
     *ptr_len = signed_txn_bytes.len();
 
-    LibraStatus::Ok
+    DiemStatus::Ok
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_TransactionP2PScript_from(
+pub unsafe extern "C" fn diem_TransactionP2PScript_from(
     receiver: *const u8,
     identifier: *const i8,
     num_coins: u64,
@@ -133,12 +133,12 @@ pub unsafe extern "C" fn libra_TransactionP2PScript_from(
     metadata_signature_len: usize,
     ptr_buf: *mut *mut u8,
     ptr_len: *mut usize,
-) -> LibraStatus {
+) -> DiemStatus {
     clear_error();
 
     if receiver.is_null() {
         update_last_error("receiver parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let receiver_buf = slice::from_raw_parts(receiver, AccountAddress::LENGTH);
     let receiver_address = match AccountAddress::try_from(receiver_buf) {
@@ -148,7 +148,7 @@ pub unsafe extern "C" fn libra_TransactionP2PScript_from(
                 "Invalid receiver account address: {}",
                 e.to_string()
             ));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -172,7 +172,7 @@ pub unsafe extern "C" fn libra_TransactionP2PScript_from(
         Ok(coin_ident) => type_tag_for_currency_code(coin_ident),
         Err(e) => {
             update_last_error(format!("Invalid coin identifier: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -188,7 +188,7 @@ pub unsafe extern "C" fn libra_TransactionP2PScript_from(
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Error serializing P2P Script: {}", e.to_string()));
-            return LibraStatus::InternalError;
+            return DiemStatus::InternalError;
         }
     };
 
@@ -198,15 +198,15 @@ pub unsafe extern "C" fn libra_TransactionP2PScript_from(
     *ptr_buf = script_buf;
     *ptr_len = script_bytes.len();
 
-    LibraStatus::Ok
+    DiemStatus::Ok
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_TransactionAddCurrencyScript_from(
+pub unsafe extern "C" fn diem_TransactionAddCurrencyScript_from(
     identifier: *const i8,
     ptr_buf: *mut *mut u8,
     ptr_len: *mut usize,
-) -> LibraStatus {
+) -> DiemStatus {
     clear_error();
 
     let coin_type_tag = match from_currency_code_string(
@@ -218,7 +218,7 @@ pub unsafe extern "C" fn libra_TransactionAddCurrencyScript_from(
         Ok(coin_ident) => type_tag_for_currency_code(coin_ident),
         Err(e) => {
             update_last_error(format!("Invalid coin identifier: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -231,7 +231,7 @@ pub unsafe extern "C" fn libra_TransactionAddCurrencyScript_from(
                 "Error serializing add currency to account Script: {}",
                 e.to_string()
             ));
-            return LibraStatus::InternalError;
+            return DiemStatus::InternalError;
         }
     };
 
@@ -241,17 +241,17 @@ pub unsafe extern "C" fn libra_TransactionAddCurrencyScript_from(
     *ptr_buf = script_buf;
     *ptr_len = script_bytes.len();
 
-    LibraStatus::Ok
+    DiemStatus::Ok
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_TransactionRotateDualAttestationInfoScript_from(
+pub unsafe extern "C" fn diem_TransactionRotateDualAttestationInfoScript_from(
     new_url_bytes: *const u8,
     new_url_len: usize,
     new_key_bytes: *const u8,
     ptr_buf: *mut *mut u8,
     ptr_len: *mut usize,
-) -> LibraStatus {
+) -> DiemStatus {
     clear_error();
 
     let new_url = if new_url_bytes.is_null() {
@@ -262,7 +262,7 @@ pub unsafe extern "C" fn libra_TransactionRotateDualAttestationInfoScript_from(
 
     if new_key_bytes.is_null() {
         update_last_error("new_key_bytes parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let new_key_buf: &[u8] = slice::from_raw_parts(new_key_bytes, ED25519_PUBLIC_KEY_LENGTH);
     let new_compliance_public_key = match Ed25519PublicKey::try_from(new_key_buf) {
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn libra_TransactionRotateDualAttestationInfoScript_from(
                 "Invalid compliance public key bytes: {}",
                 e.to_string()
             ));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -288,7 +288,7 @@ pub unsafe extern "C" fn libra_TransactionRotateDualAttestationInfoScript_from(
                 "Error serializing rotate compliance public key Script: {}",
                 e.to_string()
             ));
-            return LibraStatus::InternalError;
+            return DiemStatus::InternalError;
         }
     };
 
@@ -298,17 +298,17 @@ pub unsafe extern "C" fn libra_TransactionRotateDualAttestationInfoScript_from(
     *ptr_buf = script_buf;
     *ptr_len = script_bytes.len();
 
-    LibraStatus::Ok
+    DiemStatus::Ok
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_free_bytes_buffer(buf: *const u8) {
+pub unsafe extern "C" fn diem_free_bytes_buffer(buf: *const u8) {
     assert!(!buf.is_null());
     libc::free(buf as *mut libc::c_void);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_RawTransactionBytes_from(
+pub unsafe extern "C" fn diem_RawTransactionBytes_from(
     sender: *const u8,
     receiver: *const u8,
     sequence: u64,
@@ -323,32 +323,32 @@ pub unsafe extern "C" fn libra_RawTransactionBytes_from(
     metadata_signature_len: usize,
     buf: *mut *mut u8,
     len: *mut usize,
-) -> LibraStatus {
+) -> DiemStatus {
     clear_error();
 
     if sender.is_null() {
         update_last_error("sender parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let sender_buf = slice::from_raw_parts(sender, AccountAddress::LENGTH);
     let sender_address = match AccountAddress::try_from(sender_buf) {
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Invalid sender address: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
     if receiver.is_null() {
         update_last_error("receiver parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let receiver_buf = slice::from_raw_parts(receiver, AccountAddress::LENGTH);
     let receiver_address = match AccountAddress::try_from(receiver_buf) {
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Invalid receiver address: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -389,7 +389,7 @@ pub unsafe extern "C" fn libra_RawTransactionBytes_from(
                 "Error serializing raw transaction: {}",
                 e.to_string()
             ));
-            return LibraStatus::InternalError;
+            return DiemStatus::InternalError;
         }
     };
 
@@ -399,11 +399,11 @@ pub unsafe extern "C" fn libra_RawTransactionBytes_from(
     *buf = txn_buf;
     *len = raw_txn_bytes.len();
 
-    LibraStatus::Ok
+    DiemStatus::Ok
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_RawTransaction_sign(
+pub unsafe extern "C" fn diem_RawTransaction_sign(
     buf_raw_txn: *const u8,
     len_raw_txn: usize,
     buf_public_key: *const u8,
@@ -412,11 +412,11 @@ pub unsafe extern "C" fn libra_RawTransaction_sign(
     len_signature: usize,
     buf_result: *mut *mut u8,
     len_result: *mut usize,
-) -> LibraStatus {
+) -> DiemStatus {
     clear_error();
     if buf_raw_txn.is_null() {
         update_last_error("buf_raw_txn parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let raw_txn_bytes: &[u8] = slice::from_raw_parts(buf_raw_txn, len_raw_txn);
     let raw_txn: RawTransaction = match lcs::from_bytes(&raw_txn_bytes) {
@@ -426,33 +426,33 @@ pub unsafe extern "C" fn libra_RawTransaction_sign(
                 "Error deserializing raw transaction, invalid raw_txn bytes or length: {}",
                 e.to_string()
             ));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
     if buf_public_key.is_null() {
         update_last_error("buf_public_key parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let public_key_bytes: &[u8] = slice::from_raw_parts(buf_public_key, len_public_key);
     let public_key = match Ed25519PublicKey::try_from(public_key_bytes) {
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Invalid public key bytes: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
     if buf_signature.is_null() {
         update_last_error("buf_signature parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let signature_bytes: &[u8] = slice::from_raw_parts(buf_signature, len_signature);
     let signature = match Ed25519Signature::try_from(signature_bytes) {
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Invalid signature bytes: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -464,7 +464,7 @@ pub unsafe extern "C" fn libra_RawTransaction_sign(
                 "Error serializing signed transaction: {}",
                 e.to_string()
             ));
-            return LibraStatus::InternalError;
+            return DiemStatus::InternalError;
         }
     };
 
@@ -474,26 +474,26 @@ pub unsafe extern "C" fn libra_RawTransaction_sign(
     *buf_result = txn_buf;
     *len_result = signed_txn_bytes.len();
 
-    LibraStatus::Ok
+    DiemStatus::Ok
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn libra_LibraSignedTransaction_from(
+pub unsafe extern "C" fn diem_DiemSignedTransaction_from(
     buf: *const u8,
     len: usize,
-    out: *mut LibraSignedTransaction,
-) -> LibraStatus {
+    out: *mut DiemSignedTransaction,
+) -> DiemStatus {
     clear_error();
     if buf.is_null() {
         update_last_error("buf parameter must not be null.".to_string());
-        return LibraStatus::InvalidArgument;
+        return DiemStatus::InvalidArgument;
     }
     let buffer = slice::from_raw_parts(buf, len);
     let signed_txn: SignedTransaction = match lcs::from_bytes(buffer) {
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Error deserializing signed transaction, invalid signed transaction bytes or length: {}", e.to_string()));
-            return LibraStatus::InvalidArgument;
+            return DiemStatus::InvalidArgument;
         }
     };
 
@@ -505,7 +505,7 @@ pub unsafe extern "C" fn libra_LibraSignedTransaction_from(
     let expiration_timestamp_secs = signed_txn.expiration_timestamp_secs();
     let chain_id = signed_txn.chain_id().id();
     // TODO: this will not work with multisig transactions, where both the pubkey and signature
-    // have different sizes than the ones expected here. We will either need LibraSignedTransaction
+    // have different sizes than the ones expected here. We will either need DiemSignedTransaction
     // types for single and multisig authenticators or adapt the type to work  with both
     // authenticators
     let public_key_bytes = signed_txn.authenticator().public_key_bytes();
@@ -531,9 +531,9 @@ pub unsafe extern "C" fn libra_LibraSignedTransaction_from(
                         [0u8; AuthenticationKey::LENGTH - AccountAddress::LENGTH];
                     auth_key_prefix_buffer.copy_from_slice(auth_key_prefix.as_slice());
 
-                    txn_payload = Some(LibraTransactionPayload {
+                    txn_payload = Some(DiemTransactionPayload {
                         txn_type: TransactionType::PeerToPeer,
-                        args: LibraP2PTransferTransactionArgument {
+                        args: DiemP2PTransferTransactionArgument {
                             value: *amount,
                             address: addr.into(),
                             metadata_bytes: vec![].as_ptr(),
@@ -544,7 +544,7 @@ pub unsafe extern "C" fn libra_LibraSignedTransaction_from(
                     });
                 } else {
                     update_last_error("Fail to decode transaction payload".to_string());
-                    return LibraStatus::InternalError;
+                    return DiemStatus::InternalError;
                 }
             }
             "peer_to_peer_with_metadata_transaction" => {
@@ -552,9 +552,9 @@ pub unsafe extern "C" fn libra_LibraSignedTransaction_from(
                 if let [TransactionArgument::Address(addr), TransactionArgument::U64(amount), TransactionArgument::U8Vector(metadata), TransactionArgument::U8Vector(metadata_signature)] =
                     &args[..]
                 {
-                    txn_payload = Some(LibraTransactionPayload {
+                    txn_payload = Some(DiemTransactionPayload {
                         txn_type: TransactionType::PeerToPeer,
-                        args: LibraP2PTransferTransactionArgument {
+                        args: DiemP2PTransferTransactionArgument {
                             value: *amount,
                             address: addr.into(),
                             metadata_bytes: (*Box::into_raw(metadata.clone().into_boxed_slice()))
@@ -569,18 +569,18 @@ pub unsafe extern "C" fn libra_LibraSignedTransaction_from(
                     });
                 } else {
                     update_last_error("Fail to decode transaction payload".to_string());
-                    return LibraStatus::InternalError;
+                    return DiemStatus::InternalError;
                 }
             }
             _ => {
                 update_last_error("Transaction type not supported".to_string());
-                return LibraStatus::InternalError;
+                return DiemStatus::InternalError;
             }
         }
     }
 
     let raw_txn = match txn_payload {
-        Some(payload) => LibraRawTransaction {
+        Some(payload) => DiemRawTransaction {
             sender,
             sequence_number,
             payload,
@@ -590,42 +590,42 @@ pub unsafe extern "C" fn libra_LibraSignedTransaction_from(
             chain_id,
         },
         None => {
-            let raw_txn_other = LibraRawTransaction {
+            let raw_txn_other = DiemRawTransaction {
                 sender,
                 sequence_number,
-                payload: LibraTransactionPayload {
+                payload: DiemTransactionPayload {
                     txn_type: TransactionType::Unknown,
-                    args: LibraP2PTransferTransactionArgument::default(),
+                    args: DiemP2PTransferTransactionArgument::default(),
                 },
                 max_gas_amount,
                 gas_unit_price,
                 expiration_timestamp_secs,
                 chain_id,
             };
-            *out = LibraSignedTransaction {
+            *out = DiemSignedTransaction {
                 raw_txn: raw_txn_other,
                 public_key,
                 signature,
             };
-            return LibraStatus::Ok;
+            return DiemStatus::Ok;
         }
     };
 
-    *out = LibraSignedTransaction {
+    *out = DiemSignedTransaction {
         raw_txn,
         public_key,
         signature,
     };
 
-    LibraStatus::Ok
+    DiemStatus::Ok
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use lcs::from_bytes;
-    use libra_crypto::{PrivateKey, SigningKey, Uniform};
-    use libra_types::{
+    use diem_crypto::{PrivateKey, SigningKey, Uniform};
+    use diem_types::{
         account_config::COIN1_NAME,
         transaction::{SignedTransaction, TransactionArgument},
     };
@@ -657,7 +657,7 @@ mod test {
         let mut script_len: usize = 0;
 
         let script_result = unsafe {
-            libra_TransactionP2PScript_from(
+            diem_TransactionP2PScript_from(
                 receiver_address.as_ref().as_ptr(),
                 coin_ident.as_ptr(),
                 amount,
@@ -669,7 +669,7 @@ mod test {
                 &mut script_len,
             )
         };
-        assert_eq!(script_result, LibraStatus::Ok);
+        assert_eq!(script_result, DiemStatus::Ok);
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let _deserialized_script: Script =
@@ -680,7 +680,7 @@ mod test {
         let mut len: usize = 0;
 
         let result = unsafe {
-            libra_SignedTransactionBytes_from(
+            diem_SignedTransactionBytes_from(
                 private_key_bytes.as_ptr(),
                 sequence,
                 max_gas_amount,
@@ -695,7 +695,7 @@ mod test {
             )
         };
 
-        assert_eq!(result, LibraStatus::Ok);
+        assert_eq!(result, DiemStatus::Ok);
 
         let signed_txn_bytes_buf: &[u8] = unsafe { slice::from_raw_parts(buf, len) };
         let deserialized_signed_txn: SignedTransaction =
@@ -730,7 +730,7 @@ mod test {
         let mut len2: usize = 0;
         let coin_idnet = std::ffi::CString::new(COIN1_NAME).expect("Invalid ident");
         let result2 = unsafe {
-            libra_SignedTransactionBytes_from(
+            diem_SignedTransactionBytes_from(
                 private_key_bytes.as_ptr(),
                 sequence,
                 max_gas_amount,
@@ -745,7 +745,7 @@ mod test {
             )
         };
 
-        assert_eq!(result2, LibraStatus::Ok);
+        assert_eq!(result2, DiemStatus::Ok);
         assert_ne!(buf, buf2);
         assert_eq!(len, len2);
 
@@ -762,13 +762,13 @@ mod test {
         let mut script_len: usize = 0;
 
         let script_result = unsafe {
-            libra_TransactionAddCurrencyScript_from(
+            diem_TransactionAddCurrencyScript_from(
                 coin_ident_2.as_ptr(),
                 script_buf_ptr,
                 &mut script_len,
             )
         };
-        assert_eq!(script_result, LibraStatus::Ok);
+        assert_eq!(script_result, DiemStatus::Ok);
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let _deserialized_script: Script =
@@ -779,7 +779,7 @@ mod test {
         let mut len: usize = 0;
 
         let result = unsafe {
-            libra_SignedTransactionBytes_from(
+            diem_SignedTransactionBytes_from(
                 private_key_bytes.as_ptr(),
                 sequence,
                 max_gas_amount,
@@ -794,7 +794,7 @@ mod test {
             )
         };
 
-        assert_eq!(result, LibraStatus::Ok);
+        assert_eq!(result, DiemStatus::Ok);
 
         let signed_txn_bytes_buf: &[u8] = unsafe { slice::from_raw_parts(buf, len) };
         let deserialized_signed_txn: SignedTransaction =
@@ -825,9 +825,9 @@ mod test {
         assert!(deserialized_signed_txn.check_signature().is_ok());
 
         unsafe {
-            libra_free_bytes_buffer(script_buf);
-            libra_free_bytes_buffer(buf);
-            libra_free_bytes_buffer(buf2);
+            diem_free_bytes_buffer(script_buf);
+            diem_free_bytes_buffer(buf);
+            diem_free_bytes_buffer(buf2);
         };
     }
 
@@ -846,7 +846,7 @@ mod test {
         let mut script_len: usize = 0;
 
         let script_result = unsafe {
-            libra_TransactionP2PScript_from(
+            diem_TransactionP2PScript_from(
                 receiver_address.as_ref().as_ptr(),
                 coin_ident.as_ptr(),
                 amount,
@@ -859,7 +859,7 @@ mod test {
             )
         };
 
-        assert_eq!(script_result, LibraStatus::Ok);
+        assert_eq!(script_result, DiemStatus::Ok);
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let deserialized_script: Script =
@@ -887,7 +887,7 @@ mod test {
         }
 
         unsafe {
-            libra_free_bytes_buffer(script_buf);
+            diem_free_bytes_buffer(script_buf);
         };
     }
 
@@ -901,14 +901,14 @@ mod test {
         let mut script_len: usize = 0;
 
         let script_result = unsafe {
-            libra_TransactionAddCurrencyScript_from(
+            diem_TransactionAddCurrencyScript_from(
                 coin_ident.as_ptr(),
                 script_buf_ptr,
                 &mut script_len,
             )
         };
 
-        assert_eq!(script_result, LibraStatus::Ok);
+        assert_eq!(script_result, DiemStatus::Ok);
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let deserialized_script: Script =
@@ -929,7 +929,7 @@ mod test {
         }
 
         unsafe {
-            libra_free_bytes_buffer(script_buf);
+            diem_free_bytes_buffer(script_buf);
         };
     }
 
@@ -945,7 +945,7 @@ mod test {
         let mut script_len: usize = 0;
 
         let script_result = unsafe {
-            libra_TransactionRotateDualAttestationInfoScript_from(
+            diem_TransactionRotateDualAttestationInfoScript_from(
                 new_url.as_ptr(),
                 new_url.len(),
                 new_compliance_public_key.to_bytes().as_ptr(),
@@ -954,7 +954,7 @@ mod test {
             )
         };
 
-        assert_eq!(script_result, LibraStatus::Ok);
+        assert_eq!(script_result, DiemStatus::Ok);
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let deserialized_script: Script = from_bytes(script_bytes)
@@ -972,13 +972,13 @@ mod test {
         }
 
         unsafe {
-            libra_free_bytes_buffer(script_buf);
+            diem_free_bytes_buffer(script_buf);
         };
     }
 
     /// Generate a Raw Transaction, sign it, then deserialize
     #[test]
-    fn test_libra_raw_transaction_bytes_from() {
+    fn test_diem_raw_transaction_bytes_from() {
         let private_key = Ed25519PrivateKey::generate_for_testing();
         let public_key = private_key.public_key();
 
@@ -996,7 +996,7 @@ mod test {
         let mut buf_ptr: *mut u8 = &mut buf;
         let mut len: usize = 0;
         unsafe {
-            libra_RawTransactionBytes_from(
+            diem_RawTransactionBytes_from(
                 sender_address.as_ref().as_ptr(),
                 receiver_address.as_ref().as_ptr(),
                 sequence,
@@ -1025,7 +1025,7 @@ mod test {
         let mut signed_txn_buf_ptr: *mut u8 = &mut signed_txn_buf;
         let mut signed_txn_len: usize = 0;
         unsafe {
-            libra_RawTransaction_sign(
+            diem_RawTransaction_sign(
                 raw_txn_bytes.as_ptr(),
                 raw_txn_bytes.len(),
                 public_key.to_bytes().as_ptr(),
@@ -1059,14 +1059,14 @@ mod test {
 
         // free memory
         unsafe {
-            libra_free_bytes_buffer(buf_ptr);
-            libra_free_bytes_buffer(signed_txn_buf_ptr);
+            diem_free_bytes_buffer(buf_ptr);
+            diem_free_bytes_buffer(signed_txn_buf_ptr);
         };
     }
 
     /// Generate a Signed Transaction and deserialize
     #[test]
-    fn test_libra_signed_transaction_deserialize() {
+    fn test_diem_signed_transaction_deserialize() {
         let public_key = Ed25519PrivateKey::generate_for_testing().public_key();
         let sender = AccountAddress::random();
         let receiver = AccountAddress::random();
@@ -1102,34 +1102,34 @@ mod test {
         );
         let txn_bytes = lcs::to_bytes(&signed_txn).expect("Unable to serialize SignedTransaction");
 
-        let mut libra_signed_txn = LibraSignedTransaction::default();
+        let mut diem_signed_txn = DiemSignedTransaction::default();
         let result = unsafe {
-            libra_LibraSignedTransaction_from(
+            diem_DiemSignedTransaction_from(
                 txn_bytes.as_ptr(),
                 txn_bytes.len() - 1, // pass in wrong length so that SignedTransaction cannot deserialize
-                &mut libra_signed_txn,
+                &mut diem_signed_txn,
             )
         };
-        assert_eq!(result, LibraStatus::InvalidArgument);
+        assert_eq!(result, DiemStatus::InvalidArgument);
 
         unsafe {
-            let error_msg = libra_strerror();
+            let error_msg = diem_strerror();
             let error_string: &CStr = CStr::from_ptr(error_msg);
             assert_eq!(error_string.to_str().unwrap(), "Error deserializing signed transaction, invalid signed transaction bytes or length: unexpected end of input");
         };
 
         let result = unsafe {
-            libra_LibraSignedTransaction_from(
+            diem_DiemSignedTransaction_from(
                 txn_bytes.as_ptr(),
                 txn_bytes.len(),
-                &mut libra_signed_txn,
+                &mut diem_signed_txn,
             )
         };
 
-        assert_eq!(result, LibraStatus::Ok);
+        assert_eq!(result, DiemStatus::Ok);
 
         unsafe {
-            let error_msg = libra_strerror();
+            let error_msg = diem_strerror();
             let error_string: &CStr = CStr::from_ptr(error_msg);
             assert_eq!(error_string.to_str().unwrap(), "");
         };
@@ -1138,40 +1138,40 @@ mod test {
         if let TransactionPayload::Script(_script) = payload {
             assert_eq!(
                 TransactionType::PeerToPeer,
-                libra_signed_txn.raw_txn.payload.txn_type
+                diem_signed_txn.raw_txn.payload.txn_type
             );
-            assert_eq!(amount, libra_signed_txn.raw_txn.payload.args.value);
+            assert_eq!(amount, diem_signed_txn.raw_txn.payload.args.value);
             let txn_metadata = unsafe {
                 slice::from_raw_parts(
-                    libra_signed_txn.raw_txn.payload.args.metadata_bytes,
-                    libra_signed_txn.raw_txn.payload.args.metadata_len,
+                    diem_signed_txn.raw_txn.payload.args.metadata_bytes,
+                    diem_signed_txn.raw_txn.payload.args.metadata_len,
                 )
             };
             assert_eq!(metadata, txn_metadata);
             let txn_metadata_signature = unsafe {
                 slice::from_raw_parts(
-                    libra_signed_txn
+                    diem_signed_txn
                         .raw_txn
                         .payload
                         .args
                         .metadata_signature_bytes,
-                    libra_signed_txn.raw_txn.payload.args.metadata_signature_len,
+                    diem_signed_txn.raw_txn.payload.args.metadata_signature_len,
                 )
             };
             assert_eq!(metadata_signature, txn_metadata_signature);
         }
-        assert_eq!(sender, AccountAddress::new(libra_signed_txn.raw_txn.sender));
-        assert_eq!(sequence_number, libra_signed_txn.raw_txn.sequence_number);
-        assert_eq!(max_gas_amount, libra_signed_txn.raw_txn.max_gas_amount);
-        assert_eq!(gas_unit_price, libra_signed_txn.raw_txn.gas_unit_price);
-        assert_eq!(public_key.to_bytes(), libra_signed_txn.public_key);
+        assert_eq!(sender, AccountAddress::new(diem_signed_txn.raw_txn.sender));
+        assert_eq!(sequence_number, diem_signed_txn.raw_txn.sequence_number);
+        assert_eq!(max_gas_amount, diem_signed_txn.raw_txn.max_gas_amount);
+        assert_eq!(gas_unit_price, diem_signed_txn.raw_txn.gas_unit_price);
+        assert_eq!(public_key.to_bytes(), diem_signed_txn.public_key);
         assert_eq!(
             signature,
-            Ed25519Signature::try_from(libra_signed_txn.signature.as_ref()).unwrap()
+            Ed25519Signature::try_from(diem_signed_txn.signature.as_ref()).unwrap()
         );
         assert_eq!(
             expiration_timestamp_secs,
-            libra_signed_txn.raw_txn.expiration_timestamp_secs
+            diem_signed_txn.raw_txn.expiration_timestamp_secs
         );
     }
 }

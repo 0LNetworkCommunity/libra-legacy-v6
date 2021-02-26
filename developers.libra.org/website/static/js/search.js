@@ -23,7 +23,7 @@
       var search = docsearch({
         appId: '70WKXLZ6RZ',
         apiKey: '7c82db8b8ceae28c1601f34346452f65',
-        indexName: 'libra.github.io',
+        indexName: 'diem.github.io',
         inputSelector: '#search_input_react'
       });
     `;

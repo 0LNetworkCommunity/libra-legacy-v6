@@ -24,7 +24,7 @@ script {
 
 // Processing AutoPay to see if payments are done
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::AutoPay;
   use 0x1::LibraAccount;

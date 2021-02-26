@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{format_err, Result};
-use libra_types::{account_address::AccountAddress, transaction::Transaction};
-use libra_writeset_generator::{
+use diem_types::{account_address::AccountAddress, transaction::Transaction};
+use diem_writeset_generator::{
     encode_custom_script, encode_halt_network_transaction, encode_remove_validators_transaction,
 };
 use std::path::PathBuf;

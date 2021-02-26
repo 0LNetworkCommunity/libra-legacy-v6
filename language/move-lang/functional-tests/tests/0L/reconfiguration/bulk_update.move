@@ -9,7 +9,7 @@
 // This avoids an error when a reconfig function happens before the first epoch is completed
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     
     use 0x1::LibraSystem;

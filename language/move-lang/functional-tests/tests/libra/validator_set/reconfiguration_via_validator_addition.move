@@ -9,7 +9,7 @@
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
     use 0x1::LibraSystem;
     fun main(account: &signer) {
@@ -29,7 +29,7 @@ script{
 
 //! new-transaction
 //! sender: bob
-// bob cannot remove itself, only the libra root account can remove validators from the set
+// bob cannot remove itself, only the diem root account can remove validators from the set
 script{
     use 0x1::LibraSystem;
     fun main(account: &signer) {
@@ -54,7 +54,7 @@ script{
 // check: "ABORTED { code: 2,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
     use 0x1::LibraSystem;
     fun main(account: &signer) {
@@ -64,7 +64,7 @@ script{
 // check: "ABORTED { code: 263,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
     use 0x1::LibraSystem;
     fun main(account: &signer) {
@@ -78,7 +78,7 @@ script{
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
     use 0x1::LibraSystem;
     fun main(account: &signer) {

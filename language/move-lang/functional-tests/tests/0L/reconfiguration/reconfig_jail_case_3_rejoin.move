@@ -103,7 +103,7 @@ script {
 //check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     // use 0x1::MinerState;
     use 0x1::Stats;
@@ -147,7 +147,7 @@ script {
 //////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::LibraConfig;
@@ -162,7 +162,7 @@ script {
 //check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     // use 0x1::Reconfigure;
     use 0x1::Cases;
@@ -291,7 +291,7 @@ script {
 //////////////////////////////////////////////
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     use 0x1::LibraConfig;

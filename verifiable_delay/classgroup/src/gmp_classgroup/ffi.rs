@@ -16,7 +16,7 @@
 //! is too high-level.  High-performance bignum computation requires that
 //! bignums be modified in-place, so that their storage can be reused.
 //! Furthermore, the `rust-gmp` crate doesn’t support many operations that
-//! this library requires.
+//! this diemry requires.
 #![allow(unsafe_code)]
 pub use super::super::gmp::mpz::Mpz;
 use super::super::gmp::mpz::{mp_bitcnt_t, mp_limb_t};

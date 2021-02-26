@@ -42,7 +42,7 @@ before and after every transaction.
 -  [Function `add_currencies_for_account`](#0x1_LibraAccount_add_currencies_for_account)
 -  [Function `make_account`](#0x1_LibraAccount_make_account)
 -  [Function `create_authentication_key`](#0x1_LibraAccount_create_authentication_key)
--  [Function `create_libra_root_account`](#0x1_LibraAccount_create_libra_root_account)
+-  [Function `create_diem_root_account`](#0x1_LibraAccount_create_diem_root_account)
 -  [Function `create_treasury_compliance_account`](#0x1_LibraAccount_create_treasury_compliance_account)
 -  [Function `create_designated_dealer`](#0x1_LibraAccount_create_designated_dealer)
 -  [Function `create_parent_vasp_account`](#0x1_LibraAccount_create_parent_vasp_account)
@@ -839,9 +839,9 @@ Initialize this module. This is only callable from genesis.
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
     // Operational constraint, not a privilege constraint.
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(lr_account);
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(lr_account);
 
-    <a href="LibraAccount.md#0x1_LibraAccount_create_libra_root_account">create_libra_root_account</a>(
+    <a href="LibraAccount.md#0x1_LibraAccount_create_diem_root_account">create_diem_root_account</a>(
         <b>copy</b> dummy_auth_key_prefix,
     );
 }
@@ -931,7 +931,7 @@ Initialize this module. This is only callable from genesis.
     //Create Owner Account
     <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
     <b>let</b> new_signer = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
-    // The lr_account account is verified <b>to</b> have the libra root role in `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
+    // The lr_account account is verified <b>to</b> have the diem root role in `<a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>`
     <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">Roles::new_validator_role_with_proof</a>(&new_signer);
     <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">ValidatorConfig::publish_with_proof</a>(&new_signer, ow_human_name);
@@ -2607,16 +2607,16 @@ key prefix of a specific length.
 
 </details>
 
-<a name="0x1_LibraAccount_create_libra_root_account"></a>
+<a name="0x1_LibraAccount_create_diem_root_account"></a>
 
-## Function `create_libra_root_account`
+## Function `create_diem_root_account`
 
-Creates the libra root account (during genesis). Publishes the Libra root role,
+Creates the diem root account (during genesis). Publishes the Libra root role,
 Publishes a SlidingNonce resource, sets up event generator, publishes
 AccountOperationsCapability, WriteSetManager, and finally makes the account.
 
 
-<pre><code><b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_libra_root_account">create_libra_root_account</a>(auth_key_prefix: vector&lt;u8&gt;)
+<pre><code><b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_diem_root_account">create_diem_root_account</a>(auth_key_prefix: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -2625,13 +2625,13 @@ AccountOperationsCapability, WriteSetManager, and finally makes the account.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_libra_root_account">create_libra_root_account</a>(
+<pre><code><b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_create_diem_root_account">create_diem_root_account</a>(
     auth_key_prefix: vector&lt;u8&gt;,
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
     <b>let</b> lr_account = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(&lr_account);
-    <a href="Roles.md#0x1_Roles_grant_libra_root_role">Roles::grant_libra_root_role</a>(&lr_account);
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(&lr_account);
+    <a href="Roles.md#0x1_Roles_grant_diem_root_role">Roles::grant_diem_root_role</a>(&lr_account);
     <a href="SlidingNonce.md#0x1_SlidingNonce_publish_nonce_resource">SlidingNonce::publish_nonce_resource</a>(&lr_account, &lr_account);
     <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&lr_account);
 
@@ -2688,7 +2688,7 @@ event handle generator, then makes the account.
     auth_key_prefix: vector&lt;u8&gt;,
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
     <b>let</b> new_account_address = <a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">CoreAddresses::TREASURY_COMPLIANCE_ADDRESS</a>();
     <b>let</b> new_account = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
     <a href="Roles.md#0x1_Roles_grant_treasury_compliance_role">Roles::grant_treasury_compliance_role</a>(&new_account, lr_account);
@@ -3690,7 +3690,7 @@ The prologue for WriteSet transaction
         <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(),
         <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_PROLOGUE_INVALID_WRITESET_SENDER">PROLOGUE_INVALID_WRITESET_SENDER</a>)
     );
-    <b>assert</b>(<a href="Roles.md#0x1_Roles_has_libra_root_role">Roles::has_libra_root_role</a>(sender), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_PROLOGUE_INVALID_WRITESET_SENDER">PROLOGUE_INVALID_WRITESET_SENDER</a>));
+    <b>assert</b>(<a href="Roles.md#0x1_Roles_has_diem_root_role">Roles::has_diem_root_role</a>(sender), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraAccount.md#0x1_LibraAccount_PROLOGUE_INVALID_WRITESET_SENDER">PROLOGUE_INVALID_WRITESET_SENDER</a>));
 
     // Currency code don't matter here <b>as</b> it won't be charged anyway. Gas constants are ommitted.
     <a href="LibraAccount.md#0x1_LibraAccount_prologue_common">prologue_common</a>&lt;<a href="Coin1.md#0x1_Coin1">Coin1</a>&gt;(
@@ -3716,7 +3716,7 @@ The prologue for WriteSet transaction
 
 <pre><code><b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_WritesetPrologueAbortsIf">WritesetPrologueAbortsIf</a> {txn_expiration_time_seconds: txn_expiration_time};
 <b>ensures</b> <a href="LibraAccount.md#0x1_LibraAccount_prologue_guarantees">prologue_guarantees</a>(sender);
-<b>ensures</b> <a href="Roles.md#0x1_Roles_has_libra_root_role">Roles::has_libra_root_role</a>(sender);
+<b>ensures</b> <a href="Roles.md#0x1_Roles_has_diem_root_role">Roles::has_diem_root_role</a>(sender);
 </code></pre>
 
 
@@ -3751,7 +3751,7 @@ Covered: L146 (Match 0)
 
 
 <pre><code><b>schema</b> <a href="LibraAccount.md#0x1_LibraAccount_WritesetPrologueAbortsIf">WritesetPrologueAbortsIf</a> {
-    <b>aborts_if</b> !<a href="Roles.md#0x1_Roles_spec_has_libra_root_role_addr">Roles::spec_has_libra_root_role_addr</a>(transaction_sender) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+    <b>aborts_if</b> !<a href="Roles.md#0x1_Roles_spec_has_diem_root_role_addr">Roles::spec_has_diem_root_role_addr</a>(transaction_sender) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
     <b>include</b> <a href="LibraAccount.md#0x1_LibraAccount_PrologueCommonAbortsIf">PrologueCommonAbortsIf</a>&lt;<a href="Coin1.md#0x1_Coin1">Coin1</a>&gt;{
         transaction_sender,
         max_transaction_fee: 0,
@@ -4223,7 +4223,7 @@ Epilogue for WriteSet trasnaction
     human_name: vector&lt;u8&gt;,
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> new_account = <a href="LibraAccount.md#0x1_LibraAccount_create_signer">create_signer</a>(new_account_address);
-    // The lr_account is verified <b>to</b> have the libra root role in `<a href="Roles.md#0x1_Roles_new_validator_operator_role">Roles::new_validator_operator_role</a>`
+    // The lr_account is verified <b>to</b> have the diem root role in `<a href="Roles.md#0x1_Roles_new_validator_operator_role">Roles::new_validator_operator_role</a>`
     <a href="Roles.md#0x1_Roles_new_validator_operator_role">Roles::new_validator_operator_role</a>(lr_account, &new_account);
     <a href="Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_account);
     <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_publish">ValidatorOperatorConfig::publish</a>(&new_account, lr_account, human_name);
@@ -4736,6 +4736,6 @@ Used in transaction script to specify properties checked by the prologue.
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

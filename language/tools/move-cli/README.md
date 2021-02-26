@@ -5,7 +5,7 @@ This is a tool for experimenting with Move without validators, a blockchain, or 
 ## Installation
 ```
 λ cargo build --release
-λ export LIBRA_HOME=<path_to_your_libra_repo>
+λ export LIBRA_HOME=<path_to_your_diem_repo>
 λ alias move="$LIBRA_HOME/target/release/move-cli $@"
 ```
 
@@ -32,7 +32,7 @@ The `--signers 0xf` part indicates which account address(es) have signed off on 
 
 ## Adding new modules via `move_src`
 
-By default, the CLI compiles and includes all files from the Move standard library and Libra Framework. New modules can be added to the `move_src` directory (or a directory of your choosing specified via `--move-src`. The `move run` command will compile and publish each module source file in this directory before running the given script.
+By default, the CLI compiles and includes all files from the Move standard diemry and Libra Framework. New modules can be added to the `move_src` directory (or a directory of your choosing specified via `--move-src`. The `move run` command will compile and publish each module source file in this directory before running the given script.
 
 Try saving this code in `move_src/Test.move`:
 
@@ -154,7 +154,7 @@ resource 00000000::Test::Resource {
 Take a look at `tests/testsuite/liba_smoke/args.txt`. This test uses the CLI to run a fairly realistic Libra genesis setup and a few basic transactions. Running
 
 ```
-λ NO_MOVE_CLEAN=1 cargo xtest libra_smoke
+λ NO_MOVE_CLEAN=1 cargo xtest diem_smoke
 ```
 
 will execute each command in this file and leave you the resulting `move_data` to experiment with.

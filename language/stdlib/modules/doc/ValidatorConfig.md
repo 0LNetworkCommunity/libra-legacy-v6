@@ -4,10 +4,10 @@
 # Module `0x1::ValidatorConfig`
 
 The ValidatorConfig resource holds information about a validator. Information
-is published and updated by Libra root in a <code><a href="ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">Self::ValidatorConfig</a></code> in preparation for
-later inclusion (by functions in LibraConfig) in a <code><a href="LibraConfig.md#0x1_LibraConfig_LibraConfig">LibraConfig::LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;</code>
-struct (the <code><a href="ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">Self::ValidatorConfig</a></code> in a <code>LibraConfig::ValidatorInfo</code> which is a member
-of the <code><a href="LibraSystem.md#0x1_LibraSystem_LibraSystem">LibraSystem::LibraSystem</a>.validators</code> vector).
+is published and updated by Diem root in a <code><a href="ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">Self::ValidatorConfig</a></code> in preparation for
+later inclusion (by functions in DiemConfig) in a <code><a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;</code>
+struct (the <code><a href="ValidatorConfig.md#0x1_ValidatorConfig_ValidatorConfig">Self::ValidatorConfig</a></code> in a <code>DiemConfig::ValidatorInfo</code> which is a member
+of the <code><a href="DiemSystem.md#0x1_DiemSystem_DiemSystem">DiemSystem::DiemSystem</a>.validators</code> vector).
 
 
 -  [Struct `Config`](#0x1_ValidatorConfig_Config)
@@ -34,7 +34,7 @@ of the <code><a href="LibraSystem.md#0x1_LibraSystem_LibraSystem">LibraSystem::L
 
 
 <pre><code><b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
-<b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
+<b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signature.md#0x1_Signature">0x1::Signature</a>;
@@ -190,8 +190,8 @@ and the address of the validator operator.
     lr_account: &signer,
     human_name: vector&lt;u8&gt;,
 ) {
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
     <a href="Roles.md#0x1_Roles_assert_validator">Roles::assert_validator</a>(validator_account);
     <b>assert</b>(
         !<b>exists</b>&lt;<a href="ValidatorConfig.md#0x1_ValidatorConfig">ValidatorConfig</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_account)),
@@ -227,8 +227,8 @@ and the address of the validator operator.
 <pre><code><b>schema</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_PublishAbortsIf">PublishAbortsIf</a> {
     validator_addr: address;
     lr_account: signer;
-    <b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotOperating">LibraTimestamp::AbortsIfNotOperating</a>;
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotLibraRoot">Roles::AbortsIfNotLibraRoot</a>{account: lr_account};
+    <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: lr_account};
     <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidator">Roles::AbortsIfNotValidator</a>{validator_addr: validator_addr};
     <b>aborts_if</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_exists_config">exists_config</a>(validator_addr)
         <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
@@ -250,7 +250,7 @@ and the address of the validator operator.
 
 <pre><code><b>schema</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_PublishWProofAbortsIf">PublishWProofAbortsIf</a> {
     validator_addr: address;
-    <b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotOperating">LibraTimestamp::AbortsIfNotOperating</a>;
+    <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
     <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidator">Roles::AbortsIfNotValidator</a>{validator_addr: validator_addr};
     <b>aborts_if</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_exists_config">exists_config</a>(validator_addr)
         <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
@@ -269,7 +269,7 @@ Publishes a mostly empty ValidatorConfig struct. Eventually, it
 will have critical info such as keys, network addresses for validators,
 and the address of the validator operator.
 Permissions: PUBLIC, ANYONE, SIGNER
-Needs to be a signer, is called from LibraAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
+Needs to be a signer, is called from DiemAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish_with_proof">publish_with_proof</a>(validator_account: &signer, human_name: vector&lt;u8&gt;)
@@ -285,7 +285,7 @@ Needs to be a signer, is called from LibraAccount, which can create a signer. Ot
     validator_account: &signer,
     human_name: vector&lt;u8&gt;,
 ) {
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
     <a href="Roles.md#0x1_Roles_assert_validator">Roles::assert_validator</a>(validator_account);
     <b>assert</b>(
         !<b>exists</b>&lt;<a href="ValidatorConfig.md#0x1_ValidatorConfig">ValidatorConfig</a>&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_account)),
@@ -495,7 +495,7 @@ The signer can only change its own operator account [[H15]][PERMISSION].
 
 Rotate the config in the validator_account.
 Once the config is set, it can not go back to <code><a href="Option.md#0x1_Option_none">Option::none</a></code> - this is crucial for validity
-of the LibraSystem's code.
+of the DiemSystem's code.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_set_config">set_config</a>(validator_operator_account: &signer, validator_addr: address, consensus_pubkey: vector&lt;u8&gt;, validator_network_addresses: vector&lt;u8&gt;, fullnode_network_addresses: vector&lt;u8&gt;)
@@ -899,7 +899,7 @@ that the change has been authorized by the validator owner via signing the trans
 
 ### Validity of Validators
 
-See comment on <code><a href="ValidatorConfig.md#0x1_ValidatorConfig_set_config">ValidatorConfig::set_config</a></code> -- LibraSystem depends on this.
+See comment on <code><a href="ValidatorConfig.md#0x1_ValidatorConfig_set_config">ValidatorConfig::set_config</a></code> -- DiemSystem depends on this.
 
 A validator stays valid once it becomes valid.
 
@@ -924,7 +924,7 @@ Every address that has a ValidatorConfig also has a validator role.
 
 
 LIP-6 Property: If address has a ValidatorConfig, it has a validator role.  This invariant is useful
-in LibraSystem so we don't have to check whether every validator address has a validator role.
+in DiemSystem so we don't have to check whether every validator address has a validator role.
 
 
 <pre><code><b>invariant</b> [<b>global</b>] <b>forall</b> addr: address <b>where</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_exists_config">exists_config</a>(addr):
@@ -961,6 +961,6 @@ Returns true if addr has an operator account.
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

@@ -20,9 +20,9 @@
 {
   "id": 1,
   "jsonrpc": "2.0",
-  "libra_chain_id": 2,
-  "libra_ledger_timestampusec": 1596680410015647,
-  "libra_ledger_version": 3252698,
+  "diem_chain_id": 2,
+  "diem_ledger_timestampusec": 1596680410015647,
+  "diem_ledger_version": 3252698,
   "result": [
     {
       "burn_events_key": "02000000000000000000000000000000000000000a550c18",

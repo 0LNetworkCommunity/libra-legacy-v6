@@ -8,7 +8,7 @@ use crate::{
     binary_views::{BinaryIndexedView, FunctionView},
     control_flow_graph::ControlFlowGraph,
 };
-use libra_types::vm_status::StatusCode;
+use diem_types::vm_status::StatusCode;
 use mirai_annotations::*;
 use vm::{
     errors::{PartialVMError, PartialVMResult},

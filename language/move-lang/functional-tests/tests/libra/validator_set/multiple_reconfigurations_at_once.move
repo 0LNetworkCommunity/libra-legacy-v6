@@ -9,13 +9,13 @@
 //! block-time: 2
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{bob}}, {{bob::auth_key}}, b"bob"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! args: 0, {{dave}}, {{dave::auth_key}}, b"dave"
 stdlib_script::create_validator_operator_account
 // check: "Keep(EXECUTED)"
@@ -45,7 +45,7 @@ script {
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
     use 0x1::LibraSystem;
     // Decertify two validators to make sure we can remove both

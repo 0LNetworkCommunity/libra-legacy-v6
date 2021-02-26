@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use libra_types::ledger_info::LedgerInfoWithSignatures;
+use diem_types::ledger_info::LedgerInfoWithSignatures;
 use proptest::prelude::*;
 use schemadb::schema::assert_encode_decode;
 

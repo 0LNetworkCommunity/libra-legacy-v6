@@ -1,37 +1,37 @@
 /**
- * Copyright (c) The Libra Core Contributors
+ * Copyright (c) The Diem Core Contributors
  * SPDX-License-Identifier: Apache-2.0
  */
 
 const React = require('react');
 
-const CompLibrary = require('../../core/CompLibrary.js');
+const CompDiemry = require('../../core/CompDiemry.js');
 
-const Container = CompLibrary.Container;
-const GridBlock = CompLibrary.GridBlock;
+const Container = CompDiemry.Container;
+const GridBlock = CompDiemry.GridBlock;
 const papersLocation = '/docs/assets/papers';
 
 // Metadata on the paper versions. Whenever a new paper is added just add the
 // new date at the top of the corresponding "dates" array.
 // TODO (joshua): Automate the list of papers by looking at the directories.
 const paperMeta = {
-  'The Libra Blockchain': {
-    abstractUrl: '/docs/the-libra-blockchain-paper/',
-    paperBase: `${papersLocation}/the-libra-blockchain`,
+  'The Diem Blockchain': {
+    abstractUrl: '/docs/the-diem-blockchain-paper/',
+    paperBase: `${papersLocation}/the-diem-blockchain`,
     dates: ['2020-05-26', '2020-04-09', '2019-09-26', '2019-09-18', '2019-06-25'],
-    imgLoc: '/docs/assets/illustrations/libra-blockchain-pdf.png',
-    imgAlt: 'The Libra Blockchain PDF Download',
+    imgLoc: '/docs/assets/illustrations/diem-blockchain-pdf.png',
+    imgAlt: 'The Diem Blockchain PDF Download',
   },
   'Move Programming Language': {
     abstractUrl: '/docs/move-paper/',
-    paperBase: `${papersLocation}/libra-move-a-language-with-programmable-resources`,
+    paperBase: `${papersLocation}/diem-move-a-language-with-programmable-resources`,
     dates: ['2020-05-26', '2020-04-09', '2019-09-26', '2019-06-18'],
     imgLoc: '/docs/assets/illustrations/move-language-pdf.png',
     imgAlt: 'Move: A Language With Programmable Resources PDF Download',
   },
   'State Machine Replication': {
     abstractUrl: '/docs/state-machine-replication-paper/',
-    paperBase: `${papersLocation}/libra-consensus-state-machine-replication-in-the-libra-blockchain`,
+    paperBase: `${papersLocation}/diem-consensus-state-machine-replication-in-the-diem-blockchain`,
     dates: [
       '2020-05-26',
       '2020-04-09',
@@ -42,7 +42,7 @@ const paperMeta = {
       '2019-06-28',
     ],
     imgLoc: '/docs/assets/illustrations/state-machine-pdf.png',
-    imgAlt: 'State Machine Replication in the Libra Blockchain PDF Download',
+    imgAlt: 'State Machine Replication in the Diem Blockchain PDF Download',
   },
 };
 

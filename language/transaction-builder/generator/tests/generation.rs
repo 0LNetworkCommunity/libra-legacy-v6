@@ -1,7 +1,7 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_types::transaction::ScriptABI;
+use diem_types::transaction::ScriptABI;
 use serde_generate as serdegen;
 use serde_generate::SourceInstaller as _;
 use serde_reflection::Registry;
@@ -10,8 +10,8 @@ use tempfile::tempdir;
 use transaction_builder_generator as buildgen;
 use transaction_builder_generator::SourceInstaller as _;
 
-fn get_libra_registry() -> Registry {
-    let path = "../../../testsuite/generate-format/tests/staged/libra.yaml";
+fn get_diem_registry() -> Registry {
+    let path = "../../../testsuite/generate-format/tests/staged/diem.yaml";
     let content = std::fs::read_to_string(path).unwrap();
     serde_yaml::from_str::<Registry>(content.as_str()).unwrap()
 }
@@ -27,21 +27,21 @@ const EXPECTED_OUTPUT : &str = "225 1 161 28 235 11 1 0 0 0 7 1 0 2 2 2 4 3 6 16
 #[test]
 #[ignore]
 fn test_that_python_code_parses_and_passes_pyre_check() {
-    let registry = get_libra_registry();
+    let registry = get_diem_registry();
     let abis = get_stdlib_script_abis();
     let dir = tempdir().unwrap();
 
     let src_dir_path = dir.path().join("src");
     let installer =
         serdegen::python3::Installer::new(src_dir_path.clone(), /* package */ None);
-    let config = serdegen::CodeGeneratorConfig::new("libra_types".to_string())
+    let config = serdegen::CodeGeneratorConfig::new("diem_types".to_string())
         .with_encodings(vec![serdegen::Encoding::Lcs])
-        .with_custom_code(buildgen::python3::get_custom_libra_code("libra_types"));
+        .with_custom_code(buildgen::python3::get_custom_diem_code("diem_types"));
     installer.install_module(&config, &registry).unwrap();
     installer.install_serde_runtime().unwrap();
     installer.install_lcs_runtime().unwrap();
 
-    let stdlib_dir_path = src_dir_path.join("libra_stdlib");
+    let stdlib_dir_path = src_dir_path.join("diem_stdlib");
     std::fs::create_dir_all(stdlib_dir_path.clone()).unwrap();
     let source_path = stdlib_dir_path.join("__init__.py");
 
@@ -71,7 +71,7 @@ fn test_that_python_code_parses_and_passes_pyre_check() {
         EXPECTED_OUTPUT
     );
 
-    // This temporarily requires a checkout of serde-reflection.git next to libra.git
+    // This temporarily requires a checkout of serde-reflection.git next to diem.git
     // Hopefully, numpy's next release will include typeshed (.pyi) files and we will only
     // require a local install of numpy (on top of python3 and pyre).
     let status = Command::new("cp")
@@ -115,30 +115,30 @@ fn test_that_python_code_parses_and_passes_pyre_check() {
 
 #[test]
 fn test_that_rust_code_compiles() {
-    let registry = get_libra_registry();
+    let registry = get_diem_registry();
     let abis = get_stdlib_script_abis();
     let dir = tempdir().unwrap();
 
     let installer = serdegen::rust::Installer::new(dir.path().to_path_buf());
-    let config = serdegen::CodeGeneratorConfig::new("libra-types".to_string());
+    let config = serdegen::CodeGeneratorConfig::new("diem-types".to_string());
     installer.install_module(&config, &registry).unwrap();
 
-    let stdlib_dir_path = dir.path().join("libra-stdlib");
+    let stdlib_dir_path = dir.path().join("diem-stdlib");
     std::fs::create_dir_all(stdlib_dir_path.clone()).unwrap();
 
     let mut cargo = std::fs::File::create(&stdlib_dir_path.join("Cargo.toml")).unwrap();
     write!(
         cargo,
         r#"[package]
-name = "libra-stdlib"
+name = "diem-stdlib"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-libra-types = {{ path = "../libra-types", version = "0.1.0" }}
+diem-types = {{ path = "../diem-types", version = "0.1.0" }}
 serde_bytes = "0.11"
 serde = {{ version = "1.0.114", features = ["derive"] }}
-libra-canonical-serialization = {{ path = "{}", version = "0.1.0" }}
+diem-canonical-serialization = {{ path = "{}", version = "0.1.0" }}
 once_cell = "1.4.0"
 
 [[bin]]
@@ -166,7 +166,7 @@ test = false
     // Use a stable `target` dir to avoid downloading and recompiling crates everytime.
     let target_dir = std::env::current_dir().unwrap().join("../../target");
     let status = Command::new("cargo")
-        .current_dir(dir.path().join("libra-stdlib"))
+        .current_dir(dir.path().join("diem-stdlib"))
         .arg("build")
         .arg("--target-dir")
         .arg(target_dir.clone())
@@ -187,11 +187,11 @@ test = false
 #[test]
 #[ignore]
 fn test_that_cpp_code_compiles_and_demo_runs() {
-    let registry = get_libra_registry();
+    let registry = get_diem_registry();
     let abis = get_stdlib_script_abis();
     let dir = tempdir().unwrap();
 
-    let config = serdegen::CodeGeneratorConfig::new("libra_types".to_string())
+    let config = serdegen::CodeGeneratorConfig::new("diem_types".to_string())
         .with_encodings(vec![serdegen::Encoding::Lcs]);
     let lcs_installer = serdegen::cpp::Installer::new(dir.path().to_path_buf());
     lcs_installer.install_module(&config, &registry).unwrap();
@@ -200,7 +200,7 @@ fn test_that_cpp_code_compiles_and_demo_runs() {
 
     let abi_installer = buildgen::cpp::Installer::new(dir.path().to_path_buf());
     abi_installer
-        .install_transaction_builders("libra_stdlib", &abis)
+        .install_transaction_builders("diem_stdlib", &abis)
         .unwrap();
 
     std::fs::copy(
@@ -212,7 +212,7 @@ fn test_that_cpp_code_compiles_and_demo_runs() {
     let status = Command::new("clang++")
         .arg("--std=c++17")
         .arg("-g")
-        .arg(dir.path().join("libra_stdlib.cpp"))
+        .arg(dir.path().join("diem_stdlib.cpp"))
         .arg(dir.path().join("stdlib_demo.cpp"))
         .arg("-o")
         .arg(dir.path().join("stdlib_demo"))
@@ -233,14 +233,14 @@ fn test_that_cpp_code_compiles_and_demo_runs() {
 #[test]
 #[ignore]
 fn test_that_java_code_compiles_and_demo_runs() {
-    let registry = get_libra_registry();
+    let registry = get_diem_registry();
     let abis = get_stdlib_script_abis();
     let dir = tempdir().unwrap();
 
-    let config = serdegen::CodeGeneratorConfig::new("org.libra.types".to_string())
+    let config = serdegen::CodeGeneratorConfig::new("org.diem.types".to_string())
         .with_encodings(vec![serdegen::Encoding::Lcs])
-        .with_custom_code(buildgen::java::get_custom_libra_code(
-            &"org.libra.types"
+        .with_custom_code(buildgen::java::get_custom_diem_code(
+            &"org.diem.types"
                 .split('.')
                 .map(String::from)
                 .collect::<Vec<_>>(),
@@ -252,7 +252,7 @@ fn test_that_java_code_compiles_and_demo_runs() {
 
     let abi_installer = buildgen::java::Installer::new(dir.path().to_path_buf());
     abi_installer
-        .install_transaction_builders("org.libra.stdlib", &abis)
+        .install_transaction_builders("org.diem.stdlib", &abis)
         .unwrap();
 
     std::fs::copy(
@@ -265,8 +265,8 @@ fn test_that_java_code_compiles_and_demo_runs() {
         std::iter::empty()
             .chain(std::fs::read_dir(dir.path().join("com/novi/serde")).unwrap())
             .chain(std::fs::read_dir(dir.path().join("com/novi/lcs")).unwrap())
-            .chain(std::fs::read_dir(dir.path().join("org/libra/types")).unwrap())
-            .chain(std::fs::read_dir(dir.path().join("org/libra/stdlib")).unwrap())
+            .chain(std::fs::read_dir(dir.path().join("org/diem/types")).unwrap())
+            .chain(std::fs::read_dir(dir.path().join("org/diem/stdlib")).unwrap())
             .map(|e| e.unwrap().path())
             .chain(std::iter::once(dir.path().join("StdlibDemo.java")))
     };
@@ -309,11 +309,11 @@ fn test_that_java_code_compiles_and_demo_runs() {
 #[test]
 #[ignore]
 fn test_that_golang_code_compiles_and_demo_runs() {
-    let registry = get_libra_registry();
+    let registry = get_diem_registry();
     let abis = get_stdlib_script_abis();
     let dir = tempdir().unwrap();
 
-    let config = serdegen::CodeGeneratorConfig::new("libratypes".to_string())
+    let config = serdegen::CodeGeneratorConfig::new("diemtypes".to_string())
         .with_encodings(vec![serdegen::Encoding::Lcs]);
     let lcs_installer = serdegen::golang::Installer::new(
         dir.path().to_path_buf(),
@@ -327,7 +327,7 @@ fn test_that_golang_code_compiles_and_demo_runs() {
         Some("testing".to_string()),
     );
     abi_installer
-        .install_transaction_builders("librastdlib", &abis)
+        .install_transaction_builders("diemstdlib", &abis)
         .unwrap();
 
     std::fs::copy(

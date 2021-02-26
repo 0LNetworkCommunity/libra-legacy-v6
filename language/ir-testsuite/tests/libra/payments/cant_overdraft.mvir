@@ -1,26 +1,26 @@
 //! account: alice, 0, 0, 0Coin1
 
-import 0x1.LibraAccount;
+import 0x1.DiemAccount;
 import 0x1.Coin1;
-import 0x1.Libra;
+import 0x1.Diem;
 import 0x1.Signer;
 
 main(account: &signer) {
     let sender_balance: u64;
-    let all_coins: Libra.Libra<Coin1.Coin1>;
-    let one_coin: Libra.Libra<Coin1.Coin1>;
+    let all_coins: Diem.Diem<Coin1.Coin1>;
+    let one_coin: Diem.Diem<Coin1.Coin1>;
     let addr: address;
-    let with_cap: LibraAccount.WithdrawCapability;
+    let with_cap: DiemAccount.WithdrawCapability;
 
     addr = Signer.address_of(copy(account));
-    sender_balance = LibraAccount.balance<Coin1.Coin1>(copy(addr));
-    with_cap = LibraAccount.extract_withdraw_capability(copy(account));
-    LibraAccount.pay_from<Coin1.Coin1>(&with_cap, {{alice}}, copy(sender_balance), h"", h"");
+    sender_balance = DiemAccount.balance<Coin1.Coin1>(copy(addr));
+    with_cap = DiemAccount.extract_withdraw_capability(copy(account));
+    DiemAccount.pay_from<Coin1.Coin1>(&with_cap, {{alice}}, copy(sender_balance), h"", h"");
 
-    assert(LibraAccount.balance<Coin1.Coin1>(copy(addr)) == 0, 42);
+    assert(DiemAccount.balance<Coin1.Coin1>(copy(addr)) == 0, 42);
 
-    LibraAccount.pay_from<Coin1.Coin1>(&with_cap, {{alice}}, move(sender_balance), h"", h"");
-    LibraAccount.restore_withdraw_capability(move(with_cap));
+    DiemAccount.pay_from<Coin1.Coin1>(&with_cap, {{alice}}, move(sender_balance), h"", h"");
+    DiemAccount.restore_withdraw_capability(move(with_cap));
 
     return;
 }

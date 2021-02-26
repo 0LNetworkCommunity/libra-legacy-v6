@@ -6,7 +6,7 @@ mod bisection_tests;
 use crate::LibraValidatorInterface;
 use anyhow::{bail, Result};
 use compiled_stdlib::StdLibOptions;
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     account_state_blob::AccountStateBlob,

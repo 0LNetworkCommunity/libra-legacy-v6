@@ -46,7 +46,7 @@ Since B conflicts with E, all of B's descendants and B itself are no longer vali
 
 To ensure the correnctness of execution, i.e., the enforcement of the state-changing rule,
 a secure and audited execution service is necessary to guarantee this statement. In Libra Core, it is LEC that plays
-this role, which is built on top of `Executor` library which has the following two jobs to help :
+this role, which is built on top of `Executor` diemry which has the following two jobs to help :
 
 * **execution**: Executor can accept transactions to execute based on a specific state merkle tree and generates a new speculative tree according to the changeset produced by the VM processing the transactions.
 * **commit**: Executor is the only module in Libra core that has write access to Storage. Once a new state has reached consensus across the quorum, it is Executor that commits the agreed state to Storage.

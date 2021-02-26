@@ -3,7 +3,7 @@
 //! account: alice, 10000000GAS
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
 use 0x1::ValidatorUniverse;
 use 0x1::Vector;
@@ -28,7 +28,7 @@ fun main(alice_sender: &signer) {
 // check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script{
 use 0x1::ValidatorUniverse;
 use 0x1::Vector;

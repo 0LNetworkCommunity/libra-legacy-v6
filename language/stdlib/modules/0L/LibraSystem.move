@@ -6,16 +6,16 @@ address 0x1 {
 ///
 /// > Note: When trying to understand this code, it's important to know that "config"
 /// and "configuration" are used for several distinct concepts.
-module LibraSystem {
+module DiemSystem {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
-    use 0x1::LibraConfig::{Self, ModifyConfigCapability};
+    use 0x1::DiemConfig::{Self, ModifyConfigCapability};
     use 0x1::Option::{Self, Option};
     use 0x1::Signer;
     use 0x1::ValidatorConfig;
     use 0x1::Vector;
     use 0x1::Roles;
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     //////// 0L ////////
     use 0x1::FixedPoint32;
     use 0x1::Stats;
@@ -37,29 +37,29 @@ module LibraSystem {
         last_config_update_time: u64,
     }
 
-    /// Enables a scheme that restricts the LibraSystem config
-    /// in LibraConfig from being modified by any other module.  Only
-    /// code in this module can get a reference to the ModifyConfigCapability<LibraSystem>,
-    /// which is required by `LibraConfig::set_with_capability_and_reconfigure` to
-    /// modify the LibraSystem config. This is only needed by `update_config_and_reconfigure`.
-    /// Only Libra root can add or remove a validator from the validator set, so the
+    /// Enables a scheme that restricts the DiemSystem config
+    /// in DiemConfig from being modified by any other module.  Only
+    /// code in this module can get a reference to the ModifyConfigCapability<DiemSystem>,
+    /// which is required by `DiemConfig::set_with_capability_and_reconfigure` to
+    /// modify the DiemSystem config. This is only needed by `update_config_and_reconfigure`.
+    /// Only Diem root can add or remove a validator from the validator set, so the
     /// capability is not needed for access control in those functions.
     resource struct CapabilityHolder {
-        /// Holds a capability returned by `LibraConfig::publish_new_config_and_get_capability`
+        /// Holds a capability returned by `DiemConfig::publish_new_config_and_get_capability`
         /// which is called in `initialize_validator_set`.
-        cap: ModifyConfigCapability<LibraSystem>,
+        cap: ModifyConfigCapability<DiemSystem>,
     }
 
-    /// The LibraSystem struct stores the validator set and crypto scheme in
-    /// LibraConfig. The LibraSystem struct is stored by LibraConfig, which publishes a
-    /// LibraConfig<LibraSystem> resource.
-    struct LibraSystem {
+    /// The DiemSystem struct stores the validator set and crypto scheme in
+    /// DiemConfig. The DiemSystem struct is stored by DiemConfig, which publishes a
+    /// DiemConfig<DiemSystem> resource.
+    struct DiemSystem {
         /// The current consensus crypto scheme.
         scheme: u8,
         /// The current validator set.
         validators: vector<ValidatorInfo>,
     }
-    spec struct LibraSystem {
+    spec struct DiemSystem {
         /// Members of `validators` vector (the validator set) have unique addresses.
         invariant
             forall i in 0..len(validators), j in 0..len(validators):
@@ -89,20 +89,20 @@ module LibraSystem {
     ///////////////////////////////////////////////////////////////////////////
 
 
-    /// Publishes the LibraConfig for the LibraSystem struct, which contains the current
+    /// Publishes the DiemConfig for the DiemSystem struct, which contains the current
     /// validator set. Also publishes the `CapabilityHolder` with the
-    /// ModifyConfigCapability<LibraSystem> returned by the publish function, which allows
-    /// code in this module to change LibraSystem config (including the validator set).
-    /// Must be invoked by the Libra root a single time in Genesis.
+    /// ModifyConfigCapability<DiemSystem> returned by the publish function, which allows
+    /// code in this module to change DiemSystem config (including the validator set).
+    /// Must be invoked by the Diem root a single time in Genesis.
     public fun initialize_validator_set(
         lr_account: &signer,
     ) {
-        LibraTimestamp::assert_genesis();
-        Roles::assert_libra_root(lr_account);
+        DiemTimestamp::assert_genesis();
+        Roles::assert_diem_root(lr_account);
 
-        let cap = LibraConfig::publish_new_config_and_get_capability<LibraSystem>(
+        let cap = DiemConfig::publish_new_config_and_get_capability<DiemSystem>(
             lr_account,
-            LibraSystem {
+            DiemSystem {
                 scheme: 0,
                 validators: Vector::empty(),
             },
@@ -114,45 +114,45 @@ module LibraSystem {
         move_to(lr_account, CapabilityHolder { cap })
     }
     spec fun initialize_validator_set {
-        modifies global<LibraConfig::LibraConfig<LibraSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
         let lr_addr = Signer::spec_address_of(lr_account);
         // TODO: The next two aborts_if's are not independent. Perhaps they can be
         // simplified.
-        aborts_if LibraConfig::spec_is_published<LibraSystem>() with Errors::ALREADY_PUBLISHED;
+        aborts_if DiemConfig::spec_is_published<DiemSystem>() with Errors::ALREADY_PUBLISHED;
         aborts_if exists<CapabilityHolder>(lr_addr) with Errors::ALREADY_PUBLISHED;
         ensures exists<CapabilityHolder>(lr_addr);
-        ensures LibraConfig::spec_is_published<LibraSystem>();
+        ensures DiemConfig::spec_is_published<DiemSystem>();
         ensures len(spec_get_validators()) == 0;
     }
 
-    /// Copies a LibraSystem struct into the LibraConfig<LibraSystem> resource
+    /// Copies a DiemSystem struct into the DiemConfig<DiemSystem> resource
     /// Called by the add, remove, and update functions.
-    fun set_libra_system_config(value: LibraSystem) acquires CapabilityHolder {
-        LibraTimestamp::assert_operating();
+    fun set_diem_system_config(value: DiemSystem) acquires CapabilityHolder {
+        DiemTimestamp::assert_operating();
         assert(
             exists<CapabilityHolder>(CoreAddresses::LIBRA_ROOT_ADDRESS()),
             Errors::not_published(ECAPABILITY_HOLDER)
         );
-        // Updates the LibraConfig<LibraSystem> and emits a reconfigure event.
-        LibraConfig::set_with_capability_and_reconfigure<LibraSystem>(
+        // Updates the DiemConfig<DiemSystem> and emits a reconfigure event.
+        DiemConfig::set_with_capability_and_reconfigure<DiemSystem>(
             &borrow_global<CapabilityHolder>(CoreAddresses::LIBRA_ROOT_ADDRESS()).cap,
             value
         )
     }
-    spec fun set_libra_system_config {
+    spec fun set_diem_system_config {
         pragma opaque;
-        modifies global<LibraConfig::LibraConfig<LibraSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        modifies global<LibraConfig::Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        include LibraTimestamp::AbortsIfNotOperating;
-        include LibraConfig::ReconfigureAbortsIf;
-        /// `payload` is the only field of LibraConfig, so next completely specifies it.
-        ensures global<LibraConfig::LibraConfig<LibraSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS()).payload == value;
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        modifies global<DiemConfig::Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        include DiemTimestamp::AbortsIfNotOperating;
+        include DiemConfig::ReconfigureAbortsIf;
+        /// `payload` is the only field of DiemConfig, so next completely specifies it.
+        ensures global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS()).payload == value;
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // Methods operating the Validator Set config callable by the libra root account
+    // Methods operating the Validator Set config callable by the diem root account
     ///////////////////////////////////////////////////////////////////////////
 
     /// Adds a new validator to the validator set.
@@ -161,40 +161,40 @@ module LibraSystem {
         validator_addr: address
     ) acquires CapabilityHolder {
 
-        LibraTimestamp::assert_operating();
-        Roles::assert_libra_root(lr_account);
+        DiemTimestamp::assert_operating();
+        Roles::assert_diem_root(lr_account);
         // A prospective validator must have a validator config resource
         assert(ValidatorConfig::is_valid(validator_addr), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
 
-        let libra_system_config = get_libra_system_config();
+        let diem_system_config = get_diem_system_config();
 
         // Ensure that this address is not already a validator
         assert(
-            !is_validator_(validator_addr, &libra_system_config.validators),
+            !is_validator_(validator_addr, &diem_system_config.validators),
             Errors::invalid_argument(EALREADY_A_VALIDATOR)
         );
         // it is guaranteed that the config is non-empty
         let config = ValidatorConfig::get_config(validator_addr);
-        Vector::push_back(&mut libra_system_config.validators, ValidatorInfo {
+        Vector::push_back(&mut diem_system_config.validators, ValidatorInfo {
             addr: validator_addr,
             config, // copy the config over to ValidatorSet
             consensus_voting_power: 1,
-            last_config_update_time: LibraTimestamp::now_microseconds(),
+            last_config_update_time: DiemTimestamp::now_microseconds(),
         });
 
-        set_libra_system_config(libra_system_config);
+        set_diem_system_config(diem_system_config);
     }
     spec fun add_validator {
-        modifies global<LibraConfig::LibraConfig<LibraSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         include AddValidatorAbortsIf;
         include AddValidatorEnsures;
     }
     spec schema AddValidatorAbortsIf {
         lr_account: signer;
         validator_addr: address;
-        include LibraTimestamp::AbortsIfNotOperating;
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
-        include LibraConfig::ReconfigureAbortsIf;
+        include DiemTimestamp::AbortsIfNotOperating;
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
+        include DiemConfig::ReconfigureAbortsIf;
         aborts_if !ValidatorConfig::is_valid(validator_addr) with Errors::INVALID_ARGUMENT;
         aborts_if spec_is_validator(validator_addr) with Errors::INVALID_ARGUMENT;
     }
@@ -214,40 +214,40 @@ module LibraSystem {
                                          addr: validator_addr,
                                          config: ValidatorConfig::spec_get_config(validator_addr),
                                          consensus_voting_power: 1,
-                                         last_config_update_time: LibraTimestamp::spec_now_microseconds(),
+                                         last_config_update_time: DiemTimestamp::spec_now_microseconds(),
                                       }
                                    );
     }
 
 
-    /// Removes a validator, aborts unless called by libra root account
+    /// Removes a validator, aborts unless called by diem root account
     public fun remove_validator(
         lr_account: &signer,
         validator_addr: address
     ) acquires CapabilityHolder {
-        LibraTimestamp::assert_operating();
-        Roles::assert_libra_root(lr_account);
-        let libra_system_config = get_libra_system_config();
+        DiemTimestamp::assert_operating();
+        Roles::assert_diem_root(lr_account);
+        let diem_system_config = get_diem_system_config();
         // Ensure that this address is an active validator
-        let to_remove_index_vec = get_validator_index_(&libra_system_config.validators, validator_addr);
+        let to_remove_index_vec = get_validator_index_(&diem_system_config.validators, validator_addr);
         assert(Option::is_some(&to_remove_index_vec), Errors::invalid_argument(ENOT_AN_ACTIVE_VALIDATOR));
         let to_remove_index = *Option::borrow(&to_remove_index_vec);
         // Remove corresponding ValidatorInfo from the validator set
-        _  = Vector::swap_remove(&mut libra_system_config.validators, to_remove_index);
+        _  = Vector::swap_remove(&mut diem_system_config.validators, to_remove_index);
 
-        set_libra_system_config(libra_system_config);
+        set_diem_system_config(diem_system_config);
     }
     spec fun remove_validator {
-        modifies global<LibraConfig::LibraConfig<LibraSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         include RemoveValidatorAbortsIf;
         include RemoveValidatorEnsures;
     }
     spec schema RemoveValidatorAbortsIf {
         lr_account: signer;
         validator_addr: address;
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
-        include LibraTimestamp::AbortsIfNotOperating;
-        include LibraConfig::ReconfigureAbortsIf;
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
+        include DiemTimestamp::AbortsIfNotOperating;
+        include DiemConfig::ReconfigureAbortsIf;
         aborts_if !spec_is_validator(validator_addr) with Errors::INVALID_ARGUMENT;
     }
     spec schema RemoveValidatorEnsures {
@@ -261,36 +261,36 @@ module LibraSystem {
 
     /// Copy the information from ValidatorConfig into the validator set.
     /// This function makes no changes to the size or the members of the set.
-    /// If the config in the ValidatorSet changes, it stores the new LibraSystem
+    /// If the config in the ValidatorSet changes, it stores the new DiemSystem
     /// and emits a reconfigurationevent.
     public fun update_config_and_reconfigure(
         validator_operator_account: &signer,
         validator_addr: address,
     ) acquires CapabilityHolder {
-        LibraTimestamp::assert_operating();
+        DiemTimestamp::assert_operating();
         Roles::assert_validator_operator(validator_operator_account);
         assert(
             ValidatorConfig::get_operator(validator_addr) == Signer::address_of(validator_operator_account),
             Errors::invalid_argument(EINVALID_TRANSACTION_SENDER)
         );
-        let libra_system_config = get_libra_system_config();
-        let to_update_index_vec = get_validator_index_(&libra_system_config.validators, validator_addr);
+        let diem_system_config = get_diem_system_config();
+        let to_update_index_vec = get_validator_index_(&diem_system_config.validators, validator_addr);
         assert(Option::is_some(&to_update_index_vec), Errors::invalid_argument(ENOT_AN_ACTIVE_VALIDATOR));
         let to_update_index = *Option::borrow(&to_update_index_vec);
-        let is_validator_info_updated = update_ith_validator_info_(&mut libra_system_config.validators, to_update_index);
+        let is_validator_info_updated = update_ith_validator_info_(&mut diem_system_config.validators, to_update_index);
         if (is_validator_info_updated) {
-            let validator_info = Vector::borrow_mut(&mut libra_system_config.validators, to_update_index);
-            assert(LibraTimestamp::now_microseconds() >
+            let validator_info = Vector::borrow_mut(&mut diem_system_config.validators, to_update_index);
+            assert(DiemTimestamp::now_microseconds() >
                    validator_info.last_config_update_time + FIVE_MINUTES,
                    ECONFIG_UPDATE_RATE_LIMITED);
-            validator_info.last_config_update_time = LibraTimestamp::now_microseconds();
-            set_libra_system_config(libra_system_config);
+            validator_info.last_config_update_time = DiemTimestamp::now_microseconds();
+            set_diem_system_config(diem_system_config);
         }
     }
     spec fun update_config_and_reconfigure {
         pragma opaque;
         pragma verify_duration_estimate = 100;
-        modifies global<LibraConfig::LibraConfig<LibraSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        modifies global<DiemConfig::DiemConfig<DiemSystem>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         include UpdateConfigAndReconfigureAbortsIf;
         include UpdateConfigAndReconfigureEnsures;
         // The property below is not in `UpdateConfigAndReconfigureEnsures` because that is reused
@@ -304,13 +304,13 @@ module LibraSystem {
             (exists v_info in spec_get_validators():
                 v_info.addr == validator_addr
                 && v_info.config != ValidatorConfig::spec_get_config(validator_addr));
-        include is_validator_info_updated ==> LibraConfig::ReconfigureAbortsIf;
+        include is_validator_info_updated ==> DiemConfig::ReconfigureAbortsIf;
     }
     spec schema UpdateConfigAndReconfigureAbortsIf {
         validator_addr: address;
         validator_operator_account: signer;
         let validator_operator_addr = Signer::address_of(validator_operator_account);
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         /// Must abort if the signer does not have the ValidatorOperator role [[H14]][PERMISSION].
         include Roles::AbortsIfNotValidatorOperator{validator_operator_addr: validator_operator_addr};
         include ValidatorConfig::AbortsIfNoValidatorConfig{addr: validator_addr};
@@ -343,26 +343,26 @@ module LibraSystem {
     // Publicly callable APIs: getters
     ///////////////////////////////////////////////////////////////////////////
 
-    /// Get the LibraSystem configuration from LibraConfig
-    public fun get_libra_system_config(): LibraSystem {
-        LibraConfig::get<LibraSystem>()
+    /// Get the DiemSystem configuration from DiemConfig
+    public fun get_diem_system_config(): DiemSystem {
+        DiemConfig::get<DiemSystem>()
     }
-    spec fun get_libra_system_config {
+    spec fun get_diem_system_config {
         pragma opaque;
-        include LibraConfig::AbortsIfNotPublished<LibraSystem>;
-        ensures result == LibraConfig::get<LibraSystem>();
+        include DiemConfig::AbortsIfNotPublished<DiemSystem>;
+        ensures result == DiemConfig::get<DiemSystem>();
     }
 
     /// Return true if `addr` is in the current validator set
     public fun is_validator(addr: address): bool {
-        is_validator_(addr, &get_libra_system_config().validators)
+        is_validator_(addr, &get_diem_system_config().validators)
     }
     spec fun is_validator {
         pragma opaque;
-        // TODO: Publication of LibraConfig<LibraSystem> in initialization
+        // TODO: Publication of DiemConfig<DiemSystem> in initialization
         // and persistence of configs implies that the next abort cannot
         // actually happen.
-        include LibraConfig::AbortsIfNotPublished<LibraSystem>;
+        include DiemConfig::AbortsIfNotPublished<DiemSystem>;
         ensures result == spec_is_validator(addr);
     }
     spec define spec_is_validator(addr: address): bool {
@@ -371,38 +371,38 @@ module LibraSystem {
 
     /// Returns validator config. Aborts if `addr` is not in the validator set.
     public fun get_validator_config(addr: address): ValidatorConfig::Config {
-        let libra_system_config = get_libra_system_config();
-        let validator_index_vec = get_validator_index_(&libra_system_config.validators, addr);
+        let diem_system_config = get_diem_system_config();
+        let validator_index_vec = get_validator_index_(&diem_system_config.validators, addr);
         assert(Option::is_some(&validator_index_vec), Errors::invalid_argument(ENOT_AN_ACTIVE_VALIDATOR));
-        *&(Vector::borrow(&libra_system_config.validators, *Option::borrow(&validator_index_vec))).config
+        *&(Vector::borrow(&diem_system_config.validators, *Option::borrow(&validator_index_vec))).config
     }
     spec fun get_validator_config {
         pragma opaque;
-        include LibraConfig::AbortsIfNotPublished<LibraSystem>;
+        include DiemConfig::AbortsIfNotPublished<DiemSystem>;
         aborts_if !spec_is_validator(addr) with Errors::INVALID_ARGUMENT;
         ensures
-            exists info in LibraConfig::get<LibraSystem>().validators where info.addr == addr:
+            exists info in DiemConfig::get<DiemSystem>().validators where info.addr == addr:
                 result == info.config;
     }
 
     /// Return the size of the current validator set
     public fun validator_set_size(): u64 {
-        Vector::length(&get_libra_system_config().validators)
+        Vector::length(&get_diem_system_config().validators)
     }
     spec fun validator_set_size {
         pragma opaque;
-        include LibraConfig::AbortsIfNotPublished<LibraSystem>;
+        include DiemConfig::AbortsIfNotPublished<DiemSystem>;
         ensures result == len(spec_get_validators());
     }
 
     /// Used in `transaction_fee.move` to distribute transaction fees among validators
     public fun get_ith_validator_address(i: u64): address {
         assert(i < validator_set_size(), Errors::invalid_argument(EVALIDATOR_INDEX));
-        Vector::borrow(&get_libra_system_config().validators, i).addr
+        Vector::borrow(&get_diem_system_config().validators, i).addr
     }
     spec fun get_ith_validator_address {
         pragma opaque;
-        include LibraConfig::AbortsIfNotPublished<LibraSystem>;
+        include DiemConfig::AbortsIfNotPublished<DiemSystem>;
         aborts_if i >= len(spec_get_validators()) with Errors::INVALID_ARGUMENT;
         ensures result == spec_get_validators()[i].addr;
     }
@@ -446,7 +446,7 @@ module LibraSystem {
         /// If `addr` is not in validator set, returns none.
         ensures (forall i in 0..size: validators[i].addr != addr) ==> Option::is_none(result);
         /// If `addr` is in validator set, return the least index of an entry with that address.
-        /// The data invariant associated with the LibraSystem.validators that implies
+        /// The data invariant associated with the DiemSystem.validators that implies
         /// that there is exactly one such address.
         ensures
             (exists i in 0..size: validators[i].addr == addr) ==>
@@ -532,10 +532,10 @@ module LibraSystem {
 
     /// # Initialization
     spec module {
-        /// After genesis, the `LibraSystem` configuration is published, as well as the capability
+        /// After genesis, the `DiemSystem` configuration is published, as well as the capability
         /// which grants the right to modify it to certain functions in this module.
-        invariant [global] LibraTimestamp::is_operating() ==>
-            LibraConfig::spec_is_published<LibraSystem>() &&
+        invariant [global] DiemTimestamp::is_operating() ==>
+            DiemConfig::spec_is_published<DiemSystem>() &&
             exists<CapabilityHolder>(CoreAddresses::LIBRA_ROOT_ADDRESS());
     }
 
@@ -550,8 +550,8 @@ module LibraSystem {
     /// `update_config_and_reconfigure`.
 
     spec module {
-       /// The permission "{Add, Remove} Validator" is granted to LibraRoot [[H13]][PERMISSION].
-       apply Roles::AbortsIfNotLibraRoot{account: lr_account} to add_validator, remove_validator;
+       /// The permission "{Add, Remove} Validator" is granted to DiemRoot [[H13]][PERMISSION].
+       apply Roles::AbortsIfNotDiemRoot{account: lr_account} to add_validator, remove_validator;
     }
 
     spec schema ValidatorSetConfigRemainsSame {
@@ -560,22 +560,22 @@ module LibraSystem {
     spec module {
         /// Only {add, remove} validator [[H13]][PERMISSION] and update_config_and_reconfigure
         /// [[H14]][PERMISSION] may change the set of validators in the configuration.
-        /// `set_libra_system_config` is a private function which is only called by other
+        /// `set_diem_system_config` is a private function which is only called by other
         /// functions in the "except" list. `initialize_validator_set` is only called in
         /// Genesis.
         apply ValidatorSetConfigRemainsSame to *, *<T>
            except add_validator, remove_validator, update_config_and_reconfigure,
-               initialize_validator_set, set_libra_system_config;
+               initialize_validator_set, set_diem_system_config;
     }
 
 
 
     /// # Helper Functions
     spec module {
-        /// Fetches the currently published validator set from the published LibraConfig<LibraSystem>
+        /// Fetches the currently published validator set from the published DiemConfig<DiemSystem>
         /// resource.
         define spec_get_validators(): vector<ValidatorInfo> {
-            LibraConfig::get<LibraSystem>().validators
+            DiemConfig::get<DiemSystem>().validators
         }
     }
 
@@ -585,7 +585,7 @@ module LibraSystem {
        /// (meaning of ValidatorConfig::is_valid).
        /// > Unfortunately, this times out for unknown reasons (it doesn't seem to be hard),
        /// so it is deactivated.
-       /// The Prover can prove it if the uniqueness invariant for the LibraSystem resource
+       /// The Prover can prove it if the uniqueness invariant for the DiemSystem resource
        /// is commented out, along with aborts for update_config_and_reconfigure and everything
        /// else that breaks (e.g., there is an ensures in remove_validator that has to be
        /// commented out)
@@ -593,7 +593,7 @@ module LibraSystem {
            ValidatorConfig::is_valid(spec_get_validators()[i1].addr);
 
        /// Every validator in the validator set has a validator role.
-       /// > Note: Verification of LibraSystem seems to be very sensitive, and will
+       /// > Note: Verification of DiemSystem seems to be very sensitive, and will
        /// often time out after small changes.  Disabling this property
        /// (with [deactivate, global]) is sometimes a quick temporary fix.
        invariant [global] forall i1 in 0..len(spec_get_validators()):
@@ -603,7 +603,7 @@ module LibraSystem {
        /// field may have different values in which case this property will have to
        /// change. It's here currently because and accidental or illicit change
        /// to the voting power of a validator could defeat the Byzantine fault tolerance
-       /// of LibraBFT.
+       /// of DiemBFT.
        invariant [global] forall i1 in 0..len(spec_get_validators()):
            spec_get_validators()[i1].consensus_voting_power == 1;
 
@@ -622,7 +622,7 @@ module LibraSystem {
         account: &signer,
         new_validators: vector<address>
     ) acquires CapabilityHolder {
-        LibraTimestamp::assert_operating();
+        DiemTimestamp::assert_operating();
         assert(Signer::address_of(account) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 1202014010);
 
         // Either check for each validator and add/remove them or clear the current list and append the list.
@@ -649,7 +649,7 @@ module LibraSystem {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
                 consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
-                last_config_update_time: LibraTimestamp::now_microseconds(),
+                last_config_update_time: DiemTimestamp::now_microseconds(),
             });
 
             // NOTE: This was move to redeem. Update the ValidatorUniverse.mining_epoch_count with +1 at the end of the epoch.
@@ -664,21 +664,21 @@ module LibraSystem {
 
         // We have vector of validators - updated!
         // Next, let us get the current validator set for the current parameters
-        let outgoing_validator_set = get_libra_system_config();
+        let outgoing_validator_set = get_diem_system_config();
 
         // We create a new Validator set using scheme from outgoingValidatorset and update the validator set.
-        let updated_validator_set = LibraSystem {
+        let updated_validator_set = DiemSystem {
             scheme: outgoing_validator_set.scheme,
             validators: next_epoch_validators,
         };
 
         // Updated the configuration using updated validator set. Now, start new epoch
-        set_libra_system_config(updated_validator_set);
+        set_diem_system_config(updated_validator_set);
     }
 
     //get_compliant_val_votes
     public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
-        let validators = &get_libra_system_config().validators;
+        let validators = &get_diem_system_config().validators;
 
         let compliant_nodes = Vector::empty<address>();
         let count_compliant_votes = 0;
@@ -727,7 +727,7 @@ module LibraSystem {
     }
 
     public fun get_val_set_addr(): vector<address> {
-        let validators = &get_libra_system_config().validators;
+        let validators = &get_diem_system_config().validators;
         let nodes = Vector::empty<address>();
         let i = 0;
         while (i < Vector::length(validators)) {

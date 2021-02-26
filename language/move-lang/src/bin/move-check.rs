@@ -19,7 +19,7 @@ pub struct Options {
     #[structopt(name = "PATH_TO_SOURCE_FILE")]
     pub source_files: Vec<String>,
 
-    /// The library files needed as dependencies
+    /// The diemry files needed as dependencies
     #[structopt(
         name = "PATH_TO_DEPENDENCY_FILE",
         short = cli::DEPENDENCY_SHORT,

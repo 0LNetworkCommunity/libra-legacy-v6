@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{account_address::AccountAddress, on_chain_config::ValidatorSet};
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PublicKey, Ed25519Signature},
     hash::CryptoHash,
     Signature, VerifyingKey,
@@ -377,7 +377,7 @@ pub fn random_validator_verifier(
 mod tests {
     use super::*;
     use crate::validator_signer::ValidatorSigner;
-    use libra_crypto::test_utils::{TestLibraCrypto, TEST_SEED};
+    use diem_crypto::test_utils::{TestLibraCrypto, TEST_SEED};
     use std::collections::BTreeMap;
 
     #[test]

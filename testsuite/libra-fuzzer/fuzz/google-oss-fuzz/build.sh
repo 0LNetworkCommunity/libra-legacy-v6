@@ -1,5 +1,5 @@
 #!/bin/bash -eux
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
 
 # This build script is used with Google OSS-Fuzz to build fuzzer with their docker container.
@@ -17,12 +17,12 @@ cargo fetch
 export RUSTFLAGS="-C link-arg=-L/usr/local/lib -C link-arg=-lc++"
 
 # 1. list fuzzers
-cargo run --bin libra-fuzzer list --no-desc > fuzzer_list
+cargo run --bin diem-fuzzer list --no-desc > fuzzer_list
 
 # 2. build corpus and move to $OUT
 cat fuzzer_list | while read -r line
 do
-    cargo run --bin libra-fuzzer generate -n 128 $line
+    cargo run --bin diem-fuzzer generate -n 128 $line
     zip -r $OUT/"$line"_seed_corpus.zip fuzz/corpus/$line
     rm -r fuzz/corpus/$line
 done
@@ -55,5 +55,5 @@ do
     export SINGLE_FUZZ_TARGET="$line"
     cargo build --manifest-path fuzz/Cargo.toml --bin fuzzer_builder --target x86_64-unknown-linux-gnu
     # move fuzzer to $OUT
-    mv $SRC/libra/target/x86_64-unknown-linux-gnu/debug/fuzzer_builder $OUT/$SINGLE_FUZZ_TARGET
+    mv $SRC/diem/target/x86_64-unknown-linux-gnu/debug/fuzzer_builder $OUT/$SINGLE_FUZZ_TARGET
 done

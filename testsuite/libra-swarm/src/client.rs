@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Context;
-use libra_types::{chain_id::ChainId, waypoint::Waypoint};
+use diem_types::{chain_id::ChainId, waypoint::Waypoint};
 use std::{
     io,
     path::Path,
@@ -40,7 +40,7 @@ impl InteractiveClient {
     pub fn new_with_inherit_io(
         cli_bin_path: &Path,
         port: u16,
-        libra_root_key_path: &Path,
+        diem_root_key_path: &Path,
         mnemonic_file_path: &Path,
         waypoint: Waypoint,
     ) -> Self {
@@ -55,9 +55,9 @@ impl InteractiveClient {
                     .arg(format!("http://localhost:{}", port))
                     .arg("-m")
                     .arg(
-                        libra_root_key_path
+                        diem_root_key_path
                             .canonicalize()
-                            .expect("Unable to get canonical path of libra root key file")
+                            .expect("Unable to get canonical path of diem root key file")
                             .to_str()
                             .unwrap(),
                     )

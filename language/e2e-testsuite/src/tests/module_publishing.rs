@@ -8,7 +8,7 @@ use language_e2e_tests::{
     executor::FakeExecutor,
     transaction_status_eq,
 };
-use libra_types::{
+use diem_types::{
     account_config::{self},
     on_chain_config::VMPublishingOption,
     transaction::TransactionStatus,
@@ -150,7 +150,7 @@ pub fn test_publishing_no_modules_non_allowlist_script_proper_sender() {
     let executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::custom_scripts());
 
     // create a transaction trying to publish a new module.
-    let sender = Account::new_libra_root();
+    let sender = Account::new_diem_root();
 
     let program = String::from(
         "
@@ -179,7 +179,7 @@ pub fn test_publishing_no_modules_proper_sender() {
     let executor = FakeExecutor::allowlist_genesis();
 
     // create a transaction trying to publish a new module.
-    let sender = Account::new_libra_root();
+    let sender = Account::new_diem_root();
 
     let program = String::from(
         "

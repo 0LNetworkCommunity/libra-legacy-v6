@@ -16,8 +16,8 @@ use language_e2e_tests::{
     gas_costs,
     keygen::KeyGen,
 };
-use libra_crypto::{ed25519::Ed25519PrivateKey, traits::SigningKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, traits::SigningKey, PrivateKey, Uniform};
+use diem_types::{
     account_address::AccountAddress,
     account_config,
     transaction::{authenticator::AuthenticationKey, Script, TransactionOutput, TransactionStatus},

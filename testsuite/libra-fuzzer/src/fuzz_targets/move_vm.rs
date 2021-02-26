@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::FuzzTargetImpl;
 use anyhow::{bail, format_err, Result};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use libra_proptest_helpers::ValueGenerator;
+use diem_proptest_helpers::ValueGenerator;
 use move_core_types::value::{MoveKindInfo, MoveTypeLayout};
 use move_vm_types::values::{prop::layout_kinfo_and_value_strategy, Value};
 use std::io::Cursor;

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use language_e2e_tests::{account, account::AccountData, executor::FakeExecutor};
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_config,
     on_chain_config::VMPublishingOption,

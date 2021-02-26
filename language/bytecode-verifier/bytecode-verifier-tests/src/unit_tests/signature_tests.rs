@@ -3,7 +3,7 @@
 
 use bytecode_verifier::{verify_module, SignatureChecker};
 use invalid_mutations::signature::{FieldRefMutation, SignatureRefMutation};
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use move_core_types::identifier::Identifier;
 use proptest::{collection::vec, prelude::*, sample::Index as PropIndex};
 use vm::file_format::{Bytecode::*, CompiledModule, SignatureToken::*, *};

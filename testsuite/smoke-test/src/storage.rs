@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     test_utils::{
         compare_balances,
-        libra_swarm_utils::{insert_waypoint, load_node_config, save_node_config},
+        diem_swarm_utils::{insert_waypoint, load_node_config, save_node_config},
         setup_swarm_and_client_proxy,
     },
     workspace_builder,
@@ -13,8 +13,8 @@ use crate::{
 use anyhow::{bail, Result};
 use backup_cli::metadata::view::BackupStorageState;
 use cli::client_proxy::ClientProxy;
-use libra_temppath::TempPath;
-use libra_types::transaction::Version;
+use diem_temppath::TempPath;
+use diem_types::transaction::Version;
 use rand::random;
 use std::{
     fs,
@@ -79,7 +79,7 @@ fn test_db_restore() {
     insert_waypoint(&mut node0_config, genesis_waypoint);
     save_node_config(&mut node0_config, &env.validator_swarm, 0);
     let db_dir = node0_config.storage.dir();
-    fs::remove_dir_all(db_dir.join("libradb")).unwrap();
+    fs::remove_dir_all(db_dir.join("diemdb")).unwrap();
     fs::remove_dir_all(db_dir.join("consensusdb")).unwrap();
 
     // restore db from backup
@@ -254,10 +254,10 @@ fn transfer_and_reconfig(
     while !quit.load(Ordering::Relaxed) {
         if random::<u16>() % 10 == 0 {
             println!(
-                "Changing libra version to {}: {:?}",
+                "Changing diem version to {}: {:?}",
                 transferred,
-                client.change_libra_version(
-                    &["change_libra_version", &transferred.to_string()],
+                client.change_diem_version(
+                    &["change_diem_version", &transferred.to_string()],
                     true
                 )
             );

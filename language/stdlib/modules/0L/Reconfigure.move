@@ -12,7 +12,7 @@ module Reconfigure {
     use 0x1::CoreAddresses;
     use 0x1::Subsidy;
     use 0x1::NodeWeight;
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::MinerState;
     use 0x1::Globals;
     use 0x1::Vector;
@@ -59,7 +59,7 @@ module Reconfigure {
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         let height_start = Epoch::get_timer_height_start(vm);
 
-        let (outgoing_set, fee_ratio) = LibraSystem::get_fee_ratio(vm, height_start, height_now);
+        let (outgoing_set, fee_ratio) = DiemSystem::get_fee_ratio(vm, height_start, height_now);
 
         if (Vector::length<address>(&outgoing_set) > 0) {
             let subsidy_units = Subsidy::calculate_subsidy(vm, height_start, height_now);
@@ -78,7 +78,7 @@ module Reconfigure {
         // prepare_upcoming_validator_set(vm);
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validator_per_epoch());
-        let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
+        let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
         let proposed_set = Vector::empty();
         let i = 0;
@@ -106,7 +106,7 @@ module Reconfigure {
         MinerState::reconfig(vm);
 
         // Reconfigure the network
-        LibraSystem::bulk_update_validators(vm, proposed_set);
+        DiemSystem::bulk_update_validators(vm, proposed_set);
         // reset clocks
         Subsidy::fullnode_reconfig(vm);
         AutoPay::reconfig_reset_tick(vm);

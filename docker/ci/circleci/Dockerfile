@@ -1,10 +1,10 @@
 #while using circle we'll use circle's base image.
 FROM cimg/base:2020.08@sha256:f19c30e3f8019f5c91fe14fc87c9f280293c5baef56f154e82d48fa5b1a21e86  AS setup_ci
 
-WORKDIR /libra
-COPY rust-toolchain /libra/rust-toolchain
-COPY cargo-toolchain /libra/cargo-toolchain
-COPY scripts/dev_setup.sh /libra/scripts/dev_setup.sh
+WORKDIR /diem
+COPY rust-toolchain /diem/rust-toolchain
+COPY cargo-toolchain /diem/cargo-toolchain
+COPY scripts/dev_setup.sh /diem/scripts/dev_setup.sh
 
 #Batch mode and all operations tooling
 RUN scripts/dev_setup.sh -t -o -b -p -y
@@ -30,8 +30,8 @@ RUN [ -x "$(command -v shellcheck)" ] \
     && [ -x "$(command -v aws)" ] \
     && [ -x "$(command -v z3)" ] \
     && [ -x "$(command -v "$HOME/.dotnet/tools/boogie")" ] \
-    && [ -x "$(xargs rustup which cargo --toolchain < /libra/rust-toolchain )" ] \
-    && [ -x "$(xargs rustup which cargo --toolchain < /libra/cargo-toolchain)" ]
+    && [ -x "$(xargs rustup which cargo --toolchain < /diem/rust-toolchain )" ] \
+    && [ -x "$(xargs rustup which cargo --toolchain < /diem/cargo-toolchain)" ]
 
 #should be a no-op
 # sccache builds fine, but is not executable ??? in alpine, ends up being recompiled.  Wierd.

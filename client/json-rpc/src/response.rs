@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 use crate::views::{
     AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, MetadataView,
@@ -8,7 +8,7 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
-use libra_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
+use diem_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]

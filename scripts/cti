@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
 set -e
 set -o pipefail
@@ -85,7 +85,7 @@ kube_select_cluster () {
       local context=${K8S_CONTEXT_PATTERN/CLUSTERNAME/ct-${i}}
       local running_pods=$(kubectl --context="${context}" get pods -l app=cluster-test --field-selector=status.phase==Running 2> /dev/null  | grep -v ^NAME | wc -l)
       local pending_pods=$(kubectl --context="${context}" get pods -l app=cluster-test --field-selector=status.phase==Pending 2> /dev/null | grep -v ^NAME | wc -l)
-      local prometheus_healthy_containers=$(kubectl --context="${context}" get pod/libra-testnet-prometheus-server-0 | grep 'libra-testnet-prometheus-server-0' | awk '{print $2}')
+      local prometheus_healthy_containers=$(kubectl --context="${context}" get pod/diem-testnet-prometheus-server-0 | grep 'diem-testnet-prometheus-server-0' | awk '{print $2}')
       if [[ "${pending_pods}" -gt 0 ]]; then
         echo "ct-${i} has ${pending_pods} pending pods. Skipping."
       elif [[ ${prometheus_healthy_containers} != "2/2" ]]; then

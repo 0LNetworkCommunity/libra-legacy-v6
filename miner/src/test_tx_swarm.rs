@@ -7,12 +7,12 @@ use crate::config::MinerConfig;
 use crate::prelude::*;
 use crate::submit_tx::{ submit_tx, TxParams, eval_tx_status};
 use anyhow::Error;
-use libra_config::config::NodeConfig;
-use libra_crypto::test_utils::KeyPair;
-use libra_types::transaction::authenticator::AuthenticationKey;
+use diem_config::config::NodeConfig;
+use diem_crypto::test_utils::KeyPair;
+use diem_types::transaction::authenticator::AuthenticationKey;
 use reqwest::Url;
 use std::{fs, path::PathBuf};
-use libra_genesis_tool::keyscheme::KeyScheme;
+use diem_genesis_tool::keyscheme::KeyScheme;
 
 /// A test harness for the submit_tx with a local swarm 
 pub fn swarm_miner(swarm_path: PathBuf) {

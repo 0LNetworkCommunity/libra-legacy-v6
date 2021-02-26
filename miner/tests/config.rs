@@ -1,7 +1,7 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
-use libra_types::PeerId;
+use diem_types::PeerId;
 use miner::config::*;
 use abscissa_core::path::PathBuf;
 

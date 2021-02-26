@@ -8,7 +8,7 @@
 // BEGIN: registration of a currency
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 // Change option to CustomModule
 script {
 use 0x1::LibraTransactionPublishingOption;
@@ -24,7 +24,7 @@ fun main(config: &signer) {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 address 0x1 {
 module COIN {
     use 0x1::FixedPoint32;
@@ -52,7 +52,7 @@ module COIN {
 //! block-time: 4
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: blessed
 script {
 use 0x1::TransactionFee;
@@ -68,7 +68,7 @@ fun main(lr_account: &signer, tc_account: &signer) {
 
 // LibraRoot should not be able to add a balance
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 use 0x1::Coin1::Coin1;
@@ -93,7 +93,7 @@ fun main(account: &signer) {
 
 // Validators and ValidatorOperators should not be able to add a balance
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::LibraAccount;
 fun main(account: &signer) {

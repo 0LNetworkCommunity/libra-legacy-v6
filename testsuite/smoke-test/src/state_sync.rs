@@ -1,18 +1,18 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     smoke_test_environment::SmokeTestEnvironment,
     test_utils::{
         compare_balances,
-        libra_swarm_utils::{insert_waypoint, load_node_config, save_node_config},
+        diem_swarm_utils::{insert_waypoint, load_node_config, save_node_config},
         setup_swarm_and_client_proxy,
     },
     workspace_builder,
 };
-use libra_config::config::NodeConfig;
-use libra_crypto::HashValue;
-use libra_types::waypoint::Waypoint;
+use diem_config::config::NodeConfig;
+use diem_crypto::HashValue;
+use diem_types::waypoint::Waypoint;
 use std::{fs, path::PathBuf};
 
 #[test]
@@ -143,7 +143,7 @@ fn test_startup_sync_state() {
     env.validator_swarm.kill_node(peer_to_stop);
     let (node_config, _) = load_node_config(&env.validator_swarm, peer_to_stop);
     // TODO Remove hardcoded path to state db
-    let state_db_path = node_config.storage.dir().join("libradb");
+    let state_db_path = node_config.storage.dir().join("diemdb");
     // Verify that state_db_path exists and
     // we are not deleting a non-existent directory
     assert!(state_db_path.as_path().exists());

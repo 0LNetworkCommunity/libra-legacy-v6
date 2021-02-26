@@ -1,12 +1,12 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-#include "libra_stdlib.hpp"
-#include "libra_types.hpp"
+#include "diem_stdlib.hpp"
+#include "diem_types.hpp"
 #include <memory>
 
-using namespace libra_stdlib;
-using namespace libra_types;
+using namespace diem_stdlib;
+using namespace diem_types;
 
 int main() {
     auto token = TypeTag{TypeTag::Struct{StructTag{

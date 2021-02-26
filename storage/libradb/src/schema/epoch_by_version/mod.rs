@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines physical storage schema for an index to help us find out which epoch a
@@ -17,7 +17,7 @@
 use crate::schema::{ensure_slice_len_eq, EPOCH_BY_VERSION_CF_NAME};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt};
-use libra_types::transaction::Version;
+use diem_types::transaction::Version;
 use schemadb::{
     define_schema,
     schema::{KeyCodec, ValueCodec},

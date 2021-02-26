@@ -3,8 +3,8 @@
 
 use anyhow::Result;
 use difference::Changeset;
-use libra_transaction_replay::LibraDebugger;
-use libra_types::{account_address::AccountAddress, transaction::Version};
+use diem_transaction_replay::LibraDebugger;
+use diem_types::{account_address::AccountAddress, transaction::Version};
 use move_vm_test_utils::ChangeSet;
 use std::path::PathBuf;
 use stdlib::build_stdlib;

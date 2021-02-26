@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines physical storage schema for system counters associated with ledger versions.
@@ -16,7 +16,7 @@ use super::LEDGER_COUNTERS_CF_NAME;
 use crate::{ledger_counters::LedgerCounters, schema::ensure_slice_len_eq};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt};
-use libra_types::transaction::Version;
+use diem_types::transaction::Version;
 use schemadb::{
     define_schema,
     schema::{KeyCodec, ValueCodec},

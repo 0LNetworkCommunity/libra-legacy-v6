@@ -43,7 +43,7 @@ While LibraNet does not assume a specific network topology, we will frame the sp
 
 Below is a diagram that illustrates the set of standard Libra node types, the different network configurations, and the different connection authentication modes.
 
-![Standard Libra Network Topology](../images/libranet_network_topology.png)
+![Standard Libra Network Topology](../images/diemnet_network_topology.png)
 
 ## Base Transport
 

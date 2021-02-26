@@ -2,13 +2,13 @@ address 0x1 {
 
 /// This module defines structs and methods to initialize VM configurations,
 /// including different costs of running the VM.
-module LibraVMConfig {
-    use 0x1::LibraConfig::{Self, LibraConfig};
-    use 0x1::LibraTimestamp;
+module DiemVMConfig {
+    use 0x1::DiemConfig::{Self, DiemConfig};
+    use 0x1::DiemTimestamp;
     use 0x1::CoreAddresses;
     use 0x1::Roles;
-    /// The struct to hold config data needed to operate the LibraVM.
-    struct LibraVMConfig {
+    /// The struct to hold config data needed to operate the DiemVM.
+    struct DiemVMConfig {
         /// Cost of running the VM.
         gas_schedule: GasSchedule,
     }
@@ -21,7 +21,7 @@ module LibraVMConfig {
     /// 1. In the case that an instruction is deleted from the bytecode, that part of the cost schedule
     ///    still needs to remain the same; once a slot in the table is taken by an instruction, that is its
     ///    slot for the rest of time (since that instruction could already exist in a module on-chain).
-    /// 2. The initialization of the module will publish the instruction table to the libra root account
+    /// 2. The initialization of the module will publish the instruction table to the diem root account
     ///    address, and will preload the vector with the gas schedule for instructions. The VM will then
     ///    load this into memory at the startup of each block.
     struct GasSchedule {
@@ -67,17 +67,17 @@ module LibraVMConfig {
         default_account_size: u64,
     }
 
-    /// Initialize the table under the libra root account
+    /// Initialize the table under the diem root account
     public fun initialize(
         lr_account: &signer,
         instruction_schedule: vector<u8>,
         native_schedule: vector<u8>,
         _chain_id: u8,
     ) {
-        LibraTimestamp::assert_genesis();
+        DiemTimestamp::assert_genesis();
 
-        // The permission "UpdateVMConfig" is granted to LibraRoot [[H11]][PERMISSION].
-        Roles::assert_libra_root(lr_account);
+        // The permission "UpdateVMConfig" is granted to DiemRoot [[H11]][PERMISSION].
+        Roles::assert_diem_root(lr_account);
 
         let min_price_per_gas_unit = 0;
         // if (chain_id == 7 || chain_id == 1) {
@@ -98,9 +98,9 @@ module LibraVMConfig {
             default_account_size: 800,
         };
 
-        LibraConfig::publish_new_config(
+        DiemConfig::publish_new_config(
             lr_account,
-            LibraVMConfig {
+            DiemVMConfig {
                 gas_schedule: GasSchedule {
                     instruction_schedule,
                     native_schedule,
@@ -124,13 +124,13 @@ module LibraVMConfig {
             default_account_size: 800,
         };
 
-        /// Must abort if the signer does not have the LibraRoot role [[H11]][PERMISSION].
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        /// Must abort if the signer does not have the DiemRoot role [[H11]][PERMISSION].
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
 
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include LibraConfig::PublishNewConfigAbortsIf<LibraVMConfig>;
-        include LibraConfig::PublishNewConfigEnsures<LibraVMConfig> {
-            payload: LibraVMConfig {
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include DiemConfig::PublishNewConfigAbortsIf<DiemVMConfig>;
+        include DiemConfig::PublishNewConfigEnsures<DiemVMConfig> {
+            payload: DiemVMConfig {
                 gas_schedule: GasSchedule {
                     instruction_schedule,
                     native_schedule,
@@ -144,19 +144,19 @@ module LibraVMConfig {
     /// # Initialization
 
     spec module {
-        invariant [global] LibraTimestamp::is_operating() ==> LibraConfig::spec_is_published<LibraVMConfig>();
+        invariant [global] DiemTimestamp::is_operating() ==> DiemConfig::spec_is_published<DiemVMConfig>();
     }
 
     /// # Access Control
 
-    /// Currently, no one can update LibraVMConfig [[H11]][PERMISSION]
-    spec schema LibraVMConfigRemainsSame {
-        ensures old(LibraConfig::spec_is_published<LibraVMConfig>()) ==>
-            global<LibraConfig<LibraVMConfig>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) ==
-                old(global<LibraConfig<LibraVMConfig>>(CoreAddresses::LIBRA_ROOT_ADDRESS()));
+    /// Currently, no one can update DiemVMConfig [[H11]][PERMISSION]
+    spec schema DiemVMConfigRemainsSame {
+        ensures old(DiemConfig::spec_is_published<DiemVMConfig>()) ==>
+            global<DiemConfig<DiemVMConfig>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) ==
+                old(global<DiemConfig<DiemVMConfig>>(CoreAddresses::LIBRA_ROOT_ADDRESS()));
     }
     spec module {
-        apply LibraVMConfigRemainsSame to *;
+        apply DiemVMConfigRemainsSame to *;
     }
 }
 }

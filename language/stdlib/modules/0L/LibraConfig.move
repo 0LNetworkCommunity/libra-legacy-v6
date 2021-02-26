@@ -3,21 +3,21 @@ address 0x1 {
 /// Publishes configuration information for validators, and issues reconfiguration events
 /// to synchronize configuration changes for the validators.
 
-module LibraConfig {
+module DiemConfig {
     use 0x1::CoreAddresses;
     use 0x1::Errors;
     use 0x1::Event;
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
 
     /// A generic singleton resource that holds a value of a specific type.
-    resource struct LibraConfig<Config: copyable> {
+    resource struct DiemConfig<Config: copyable> {
         /// Holds specific info for instance of `Config` type.
         payload: Config
     }
 
-    /// Event that signals LibraBFT algorithm to start a new epoch,
+    /// Event that signals DiemBFT algorithm to start a new epoch,
     /// with new configuration information. This is also called a
     /// "reconfiguration event"
     struct NewEpochEvent {
@@ -34,12 +34,12 @@ module LibraConfig {
         events: Event::EventHandle<NewEpochEvent>,
     }
 
-    /// Accounts with this privilege can modify LibraConfig<TypeName> under Libra root address.
+    /// Accounts with this privilege can modify DiemConfig<TypeName> under Diem root address.
     resource struct ModifyConfigCapability<TypeName> {}
 
     /// The `Configuration` resource is in an invalid state
     const ECONFIGURATION: u64 = 0;
-    /// A `LibraConfig` resource is in an invalid state
+    /// A `DiemConfig` resource is in an invalid state
     const ELIBRA_CONFIG: u64 = 1;
     /// A `ModifyConfigCapability` is in a different state than was expected
     const EMODIFY_CAPABILITY: u64 = 2;
@@ -48,12 +48,12 @@ module LibraConfig {
     /// The largest possible u64 value
     const MAX_U64: u64 = 18446744073709551615;
 
-    /// Publishes `Configuration` resource. Can only be invoked by Libra root, and only a single time in Genesis.
+    /// Publishes `Configuration` resource. Can only be invoked by Diem root, and only a single time in Genesis.
     public fun initialize(
         lr_account: &signer,
     ) {
-        LibraTimestamp::assert_genesis();
-        CoreAddresses::assert_libra_root(lr_account);
+        DiemTimestamp::assert_genesis();
+        CoreAddresses::assert_diem_root(lr_account);
         assert(!exists<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS()), Errors::already_published(ECONFIGURATION));
         move_to<Configuration>(
             lr_account,
@@ -72,8 +72,8 @@ module LibraConfig {
     }
     spec schema InitializeAbortsIf {
         lr_account: signer;
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include CoreAddresses::AbortsIfNotLibraRoot{account: lr_account};
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include CoreAddresses::AbortsIfNotDiemRoot{account: lr_account};
         aborts_if spec_has_config() with Errors::ALREADY_PUBLISHED;
     }
     spec schema InitializeEnsures {
@@ -86,10 +86,10 @@ module LibraConfig {
 
     /// Returns a copy of `Config` value stored under `addr`.
     public fun get<Config: copyable>(): Config
-    acquires LibraConfig {
+    acquires DiemConfig {
         let addr = CoreAddresses::LIBRA_ROOT_ADDRESS();
-        assert(exists<LibraConfig<Config>>(addr), Errors::not_published(ELIBRA_CONFIG));
-        *&borrow_global<LibraConfig<Config>>(addr).payload
+        assert(exists<DiemConfig<Config>>(addr), Errors::not_published(ELIBRA_CONFIG));
+        *&borrow_global<DiemConfig<Config>>(addr).payload
     }
     spec fun get {
         pragma opaque;
@@ -97,20 +97,20 @@ module LibraConfig {
         ensures result == get<Config>();
     }
     spec schema AbortsIfNotPublished<Config> {
-        aborts_if !exists<LibraConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) with Errors::NOT_PUBLISHED;
+        aborts_if !exists<DiemConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) with Errors::NOT_PUBLISHED;
     }
 
     /// Set a config item to a new value with the default capability stored under config address and trigger a
-    /// reconfiguration. This function requires that the signer be Libra root.
+    /// reconfiguration. This function requires that the signer be Diem root.
     public fun set<Config: copyable>(account: &signer, payload: Config)
-    acquires LibraConfig, Configuration {
+    acquires DiemConfig, Configuration {
         let signer_address = Signer::address_of(account);
         // Next should always be true if properly initialized.
         assert(exists<ModifyConfigCapability<Config>>(signer_address), Errors::requires_capability(EMODIFY_CAPABILITY));
 
         let addr = CoreAddresses::LIBRA_ROOT_ADDRESS();
-        assert(exists<LibraConfig<Config>>(addr), Errors::not_published(ELIBRA_CONFIG));
-        let config = borrow_global_mut<LibraConfig<Config>>(addr);
+        assert(exists<DiemConfig<Config>>(addr), Errors::not_published(ELIBRA_CONFIG));
+        let config = borrow_global_mut<DiemConfig<Config>>(addr);
         config.payload = payload;
 
         reconfigure_();
@@ -140,16 +140,16 @@ module LibraConfig {
     /// Set a config item to a new value and trigger a reconfiguration. This function
     /// requires a reference to a `ModifyConfigCapability`, which is returned when the
     /// config is published using `publish_new_config_and_get_capability`.
-    /// It is called by `LibraSystem::update_config_and_reconfigure`, which allows
+    /// It is called by `DiemSystem::update_config_and_reconfigure`, which allows
     /// validator operators to change the validator set.  All other config changes require
-    /// a Libra root signer.
+    /// a Diem root signer.
     public fun set_with_capability_and_reconfigure<Config: copyable>(
         _cap: &ModifyConfigCapability<Config>,
         payload: Config
-    ) acquires LibraConfig, Configuration {
+    ) acquires DiemConfig, Configuration {
         let addr = CoreAddresses::LIBRA_ROOT_ADDRESS();
-        assert(exists<LibraConfig<Config>>(addr), Errors::not_published(ELIBRA_CONFIG));
-        let config = borrow_global_mut<LibraConfig<Config>>(addr);
+        assert(exists<DiemConfig<Config>>(addr), Errors::not_published(ELIBRA_CONFIG));
+        let config = borrow_global_mut<DiemConfig<Config>>(addr);
         config.payload = payload;
         reconfigure_();
     }
@@ -158,7 +158,7 @@ module LibraConfig {
         modifies global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         include AbortsIfNotPublished<Config>;
         include ReconfigureAbortsIf;
-        modifies global<LibraConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        modifies global<DiemConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         include SetEnsures<Config>;
     }
 
@@ -170,29 +170,29 @@ module LibraConfig {
         lr_account: &signer,
         payload: Config,
     ): ModifyConfigCapability<Config> {
-        LibraTimestamp::assert_genesis();
-        Roles::assert_libra_root(lr_account);
+        DiemTimestamp::assert_genesis();
+        Roles::assert_diem_root(lr_account);
         assert(
-            !exists<LibraConfig<Config>>(Signer::address_of(lr_account)),
+            !exists<DiemConfig<Config>>(Signer::address_of(lr_account)),
             Errors::already_published(ELIBRA_CONFIG)
         );
-        move_to(lr_account, LibraConfig { payload });
+        move_to(lr_account, DiemConfig { payload });
         ModifyConfigCapability<Config> {}
     }
     spec fun publish_new_config_and_get_capability {
         pragma opaque;
-        modifies global<LibraConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        modifies global<DiemConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
         include AbortsIfPublished<Config>;
         include SetEnsures<Config>;
     }
     spec schema AbortsIfPublished<Config> {
-        aborts_if exists<LibraConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) with Errors::ALREADY_PUBLISHED;
+        aborts_if exists<DiemConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS()) with Errors::ALREADY_PUBLISHED;
     }
 
-    /// Publish a new config item. Only Libra root can modify such config.
-    /// Publishes the capability to modify this config under the Libra root account.
+    /// Publish a new config item. Only Diem root can modify such config.
+    /// Publishes the capability to modify this config under the Diem root account.
     /// Does not trigger a reconfiguration.
     public fun publish_new_config<Config: copyable>(
         lr_account: &signer,
@@ -207,15 +207,15 @@ module LibraConfig {
     }
     spec fun publish_new_config {
         pragma opaque;
-        modifies global<LibraConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        modifies global<DiemConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         modifies global<ModifyConfigCapability<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS());
         include PublishNewConfigAbortsIf<Config>;
         include PublishNewConfigEnsures<Config>;
     }
     spec schema PublishNewConfigAbortsIf<Config> {
         lr_account: signer;
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
         aborts_if spec_is_published<Config>();
         aborts_if exists<ModifyConfigCapability<Config>>(Signer::spec_address_of(lr_account));
     }
@@ -226,17 +226,17 @@ module LibraConfig {
         ensures exists<ModifyConfigCapability<Config>>(Signer::spec_address_of(lr_account));
     }
 
-    /// Signal validators to start using new configuration. Must be called by Libra root.
+    /// Signal validators to start using new configuration. Must be called by Diem root.
     public fun reconfigure(
         lr_account: &signer,
     ) acquires Configuration {
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
         reconfigure_();
     }
     spec fun reconfigure {
         pragma opaque;
         modifies global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        include Roles::AbortsIfNotLibraRoot{account: lr_account};
+        include Roles::AbortsIfNotDiemRoot{account: lr_account};
         include ReconfigureAbortsIf;
     }
 
@@ -244,19 +244,19 @@ module LibraConfig {
     /// `Configuration` and emits a `NewEpochEvent`
     fun reconfigure_() acquires Configuration {
         // Do not do anything if genesis has not finished.
-        if (LibraTimestamp::is_genesis() || LibraTimestamp::now_microseconds() == 0) {
+        if (DiemTimestamp::is_genesis() || DiemTimestamp::now_microseconds() == 0) {
             return ()
         };
 
         let config_ref = borrow_global_mut<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        let current_time = LibraTimestamp::now_microseconds();
+        let current_time = DiemTimestamp::now_microseconds();
 
         // Do not do anything if a reconfiguration event is already emitted within this transaction.
         //
         // This is OK because:
         // - The time changes in every non-empty block
         // - A block automatically ends after a transaction that emits a reconfiguration event, which is guaranteed by
-        //   LibraVM spec that all transactions comming after a reconfiguration transaction will be returned as Retry
+        //   DiemVM spec that all transactions comming after a reconfiguration transaction will be returned as Retry
         //   status.
         // - Each transaction must emit at most one reconfiguration event
         //
@@ -279,14 +279,14 @@ module LibraConfig {
         );
     }
     spec define spec_reconfigure_omitted(): bool {
-       LibraTimestamp::is_genesis() || LibraTimestamp::spec_now_microseconds() == 0
+       DiemTimestamp::is_genesis() || DiemTimestamp::spec_now_microseconds() == 0
     }
     spec fun reconfigure_ {
         pragma opaque;
         modifies global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
         let config = global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        let now = LibraTimestamp::spec_now_microseconds();
+        let now = DiemTimestamp::spec_now_microseconds();
         let epoch = config.epoch;
 
         include !spec_reconfigure_omitted() || (config.last_reconfiguration_time == now)
@@ -307,7 +307,7 @@ module LibraConfig {
     /// These conditions are unlikely to happen in reality, and excluding them avoids formal noise.
     spec schema InternalReconfigureAbortsIf {
         let config = global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        let current_time = LibraTimestamp::spec_now_microseconds();
+        let current_time = DiemTimestamp::spec_now_microseconds();
         aborts_if [concrete] current_time < config.last_reconfiguration_time with Errors::INVALID_STATE;
         aborts_if [concrete] config.epoch == MAX_U64
             && current_time != config.last_reconfiguration_time with EXECUTION_FAILURE;
@@ -315,9 +315,9 @@ module LibraConfig {
     /// This schema is to be used by callers of `reconfigure`
     spec schema ReconfigureAbortsIf {
         let config = global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
-        let current_time = LibraTimestamp::spec_now_microseconds();
-        aborts_if LibraTimestamp::is_operating()
-            && LibraTimestamp::spec_now_microseconds() > 0
+        let current_time = DiemTimestamp::spec_now_microseconds();
+        aborts_if DiemTimestamp::is_operating()
+            && DiemTimestamp::spec_now_microseconds() > 0
             && config.epoch < MAX_U64
             && current_time < config.last_reconfiguration_time
                 with Errors::INVALID_STATE;
@@ -347,19 +347,19 @@ module LibraConfig {
     /// # Initialization
     spec module {
         /// After genesis, the `Configuration` is published.
-        invariant [global] LibraTimestamp::is_operating() ==> spec_has_config();
+        invariant [global] DiemTimestamp::is_operating() ==> spec_has_config();
     }
 
     /// # Invariants
     spec module {
-        /// Configurations are only stored at the libra root address.
+        /// Configurations are only stored at the diem root address.
         invariant [global]
-            forall config_address: address, config_type: type where exists<LibraConfig<config_type>>(config_address):
+            forall config_address: address, config_type: type where exists<DiemConfig<config_type>>(config_address):
                 config_address == CoreAddresses::LIBRA_ROOT_ADDRESS();
 
         /// After genesis, no new configurations are added.
         invariant update [global]
-            LibraTimestamp::is_operating() ==>
+            DiemTimestamp::is_operating() ==>
                 (forall config_type: type where spec_is_published<config_type>(): old(spec_is_published<config_type>()));
 
         /// Published configurations are persistent.
@@ -374,11 +374,11 @@ module LibraConfig {
         }
 
         define spec_is_published<Config>(): bool {
-            exists<LibraConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS())
+            exists<DiemConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS())
         }
 
         define spec_get_config<Config>(): Config {
-            global<LibraConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS()).payload
+            global<DiemConfig<Config>>(CoreAddresses::LIBRA_ROOT_ADDRESS()).payload
         }
     }
 

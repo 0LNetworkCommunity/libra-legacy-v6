@@ -1,6 +1,6 @@
 ---
-author: Libra Engineering Team
-title: Libra Core Roadmap #3
+author: Diem Engineering Team
+title: Diem Core Roadmap #3
 ---
 
 <script>
@@ -9,7 +9,7 @@ title: Libra Core Roadmap #3
         if (items[i].innerHTML = '<p class="post-meta">February 28, 2020</p>') items[i].innerHTML = '<p class="post-meta">February 28, 2020</p>';
     }
     var slug = location.pathname.slice(location.pathname.lastIndexOf('/')+1);
-    var redirect = 'https://libra.org/en-US/blog/' + slug;
+    var redirect = 'https://diem.org/en-US/blog/' + slug;
     window.location = redirect;    
 </script>
 
@@ -17,7 +17,7 @@ title: Libra Core Roadmap #3
 
 ### Overview
 
-In [Roadmap #2](https://developers.libra.org/blog/2019/12/17/libra-core-roadmap-2), we made solid progress on improvements to Move. We iterated on the design of the Move source language and cleaned up key parts of the VM. Further improvements, including additional VM cleanup, design of the Libra Upgrade protocol, and VM versioning, are still in progress.
+In [Roadmap #2](https://developers.diem.org/blog/2019/12/17/diem-core-roadmap-2), we made solid progress on improvements to Move. We iterated on the design of the Move source language and cleaned up key parts of the VM. Further improvements, including additional VM cleanup, design of the Diem Upgrade protocol, and VM versioning, are still in progress.
 
 We made incremental progress laying the groundwork toward a more open programming model in the Move language.
 
@@ -27,14 +27,14 @@ We made incremental progress laying the groundwork toward a more open programmin
   - Validator reconfiguration: implemented VM and core module support
 - Move VM
   - Completed cleanup of the VM interpreter
-  - Revised the VM architecture to separate Move and Libra protocol layers, and started on the implementation of this change
+  - Revised the VM architecture to separate Move and Diem protocol layers, and started on the implementation of this change
   - Implemented the new borrow-checker algorithm
-  - Continued progress on the design of the Libra Upgrade protocol and VM versioning
+  - Continued progress on the design of the Diem Upgrade protocol and VM versioning
   - Finished incremental changes to Events in response to pub/sub feedback
 - Tooling
   - Updated tooling for formal verification to support new language features
   - Added support for specifications in the Move IR compiler
-  - Pre-released code for [guppy: a library for querying Rust dependency graphs](https://github.com/calibra/cargo-guppy), and cargo-guppy, a command-line frontend for the guppy library
+  - Pre-released code for [guppy: a diemry for querying Rust dependency graphs](https://github.com/cadiem/cargo-guppy), and cargo-guppy, a command-line frontend for the guppy diemry
   - Added support for generic types to automate bytecode test generation
   - Enhanced the functional test framework with significant usability improvements
 - Move language
@@ -60,9 +60,9 @@ Next steps for the Move language include closing and executing on design decisio
 
 **2) Complete custodial modules required for mainnet**
 
-The remaining non-currency modules will support custody of funds — particularly, leveraging the new LibraTime module for withdrawal limitations and transaction time to live (TTL). This work effort includes:
+The remaining non-currency modules will support custody of funds — particularly, leveraging the new DiemTime module for withdrawal limitations and transaction time to live (TTL). This work effort includes:
 
-- LibraTime module
+- DiemTime module
 - Multisig accounts
 - Key rotation capability
 - Cold wallet functionality
@@ -82,12 +82,12 @@ The roadmap includes continuing code cleanup, testing, and operational awareness
 - Complete VM file format cleanup
 - VM versioning implementation
 - Basic debugging support
-- Libra Upgrade protocol
+- Diem Upgrade protocol
 
 **5) Collaborate with documentation engineering team to produce developer content**
 
-To address developer interest in Move and the Libra project, we will share additional content about key considerations for client developers and conceptual overviews of the system. This content focus aligns to our wallet developer effort and content requests we have received from the Libra Developer Community. Topics we will cover include wallets, wallet types, and custody.
+To address developer interest in Move and the Diem project, we will share additional content about key considerations for client developers and conceptual overviews of the system. This content focus aligns to our wallet developer effort and content requests we have received from the Diem Developer Community. Topics we will cover include wallets, wallet types, and custody.
 
 ## Track our progress
 
-Be sure to follow our progress on GitHub, where we've posted a [Kanban board](https://github.com/orgs/libra/projects/1#card-28078342) of roadmap projects.
+Be sure to follow our progress on GitHub, where we've posted a [Kanban board](https://github.com/orgs/diem/projects/1#card-28078342) of roadmap projects.

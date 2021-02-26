@@ -10,7 +10,7 @@
 //! block-time: 2
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     fun main(account: &signer) {
@@ -27,7 +27,7 @@ script {
 //! block-time: 3
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraSystem;
     fun main(account: &signer) {

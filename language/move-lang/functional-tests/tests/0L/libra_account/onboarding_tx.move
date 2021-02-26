@@ -66,7 +66,7 @@ fun main(sender: &signer) {
 // check: EXECUTED
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::MinerState;
 use 0x1::Testnet;

@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
-use libra_config::config::NodeConfig;
+use diem_config::config::NodeConfig;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(about = "Libra Node")]
+#[structopt(about = "Diem Node")]
 struct Args {
     #[structopt(
         short = "f",
@@ -31,10 +31,10 @@ fn main() {
 
     if args.test {
         println!("Entering test mode, this should never be used in production!");
-        libra_node::load_test_environment(args.config, args.random_ports);
+        diem_node::load_test_environment(args.config, args.random_ports);
     } else {
         let config = NodeConfig::load(args.config.unwrap()).expect("Failed to load node config");
         println!("Using node config {:?}", &config);
-        libra_node::start(&config, None);
+        diem_node::start(&config, None);
     };
 }

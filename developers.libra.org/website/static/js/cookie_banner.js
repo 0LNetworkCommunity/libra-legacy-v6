@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function(event) {
-  const cookieKey = 'libra-developer-website.cookies-accepted';
+  const cookieKey = 'diem-developer-website.cookies-accepted';
   const cookiesAccepted = localStorage.getItem(cookieKey);
   const cookieBanner = document.getElementById('cookie-banner');
 

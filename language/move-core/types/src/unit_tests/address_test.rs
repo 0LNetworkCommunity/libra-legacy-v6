@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account_address::AccountAddress;
 use hex::FromHex;
-use libra_crypto::{hash::CryptoHash, HashValue};
+use diem_crypto::{hash::CryptoHash, HashValue};
 use proptest::prelude::*;
 use std::{
     convert::{AsRef, TryFrom},

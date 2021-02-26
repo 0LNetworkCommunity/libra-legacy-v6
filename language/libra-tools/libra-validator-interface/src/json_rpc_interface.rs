@@ -3,8 +3,8 @@
 
 use crate::LibraValidatorInterface;
 use anyhow::{bail, Result};
-use libra_json_rpc_client::{JsonRpcBatch, JsonRpcClient, JsonRpcResponse};
-use libra_types::{
+use diem_json_rpc_client::{JsonRpcBatch, JsonRpcClient, JsonRpcResponse};
+use diem_types::{
     account_address::AccountAddress,
     account_state_blob::AccountStateBlob,
     transaction::{Transaction, Version},

@@ -49,7 +49,7 @@
         -  [Script update_exchange_rate](#@Script_update_exchange_rate_43)
         -  [Script update_minting_ability](#@Script_update_minting_ability_44)
     -  [System Administration](#@System_Administration_45)
-        -  [Script update_libra_version](#@Script_update_libra_version_46)
+        -  [Script update_diem_version](#@Script_update_diem_version_46)
         -  [Script add_to_script_allow_list](#@Script_add_to_script_allow_list_47)
 -  [Transaction Scripts](#@Transaction_Scripts_48)
     -  [Account Creation](#@Account_Creation_49)
@@ -90,7 +90,7 @@
         -  [Script `update_exchange_rate`](#update_exchange_rate)
         -  [Script `update_minting_ability`](#update_minting_ability)
     -  [System Administration](#@System_Administration_224)
-        -  [Script `update_libra_version`](#update_libra_version)
+        -  [Script `update_diem_version`](#update_diem_version)
         -  [Script `add_to_script_allow_list`](#add_to_script_allow_list)
     -  [Index](#@Index_233)
 
@@ -115,7 +115,7 @@ on-chain. These statuses and errors can be categorized into two buckets:
 
 There are also a number of statuses that can be returned at the time of
 submission of the transaction to the system through JSON-RPC, these are detailed in the
-[JSON-RPC specification](https://github.com/libra/libra/blob/master/json-rpc/docs/method_submit.md#errors).
+[JSON-RPC specification](https://github.com/diem/diem/blob/master/json-rpc/docs/method_submit.md#errors).
 
 
 <a name="@Predefined_Statuses_2"></a>
@@ -181,11 +181,11 @@ to these may occur without notice, but changes are not expected to be common.
 The abort conditions detailed in each transaction script are not meant to
 be complete, but the list of error categories are. Additionally, any abort conditions
 raised will have a human readable explanation attached to it (if possible) in the
-[response](https://github.com/libra/libra/blob/master/json-rpc/docs/type_transaction.md#type-moveabortexplanation)
+[response](https://github.com/diem/diem/blob/master/json-rpc/docs/type_transaction.md#type-moveabortexplanation)
 from a
-[JSON-RPC query for a committed transaction](https://github.com/libra/libra/blob/master/json-rpc/json-rpc-spec.md).
+[JSON-RPC query for a committed transaction](https://github.com/diem/diem/blob/master/json-rpc/json-rpc-spec.md).
 These explanations are based off of the human-understandable explanations provided by the
-[Move Explain](https://github.com/libra/libra/tree/master/language/tools/move-explain)
+[Move Explain](https://github.com/diem/diem/tree/master/language/tools/move-explain)
 tool which can also be called on the command-line.
 
 
@@ -726,15 +726,15 @@ Script documentation: <code><a href="transaction_script_documentation.md#update_
 
 ---
 
-<a name="@Script_update_libra_version_46"></a>
+<a name="@Script_update_diem_version_46"></a>
 
-#### Script update_libra_version
+#### Script update_diem_version
 
 
 Updates the Libra major version that is stored on-chain and is used by the VM.  This
 transaction can only be sent from the Libra Root account.
 
-Script documentation: <code><a href="transaction_script_documentation.md#update_libra_version">update_libra_version</a></code>
+Script documentation: <code><a href="transaction_script_documentation.md#update_diem_version">update_diem_version</a></code>
 
 
 ---
@@ -1056,7 +1056,7 @@ Only Libra root may create Validator Operator accounts
 Authentication: ValidatorAccountAbortsIf includes AbortsIfNotLibraRoot.
 Checks that above table includes all error categories.
 The verifier finds an abort that is not documented, and cannot occur in practice:
-* REQUIRES_ROLE comes from <code><a href="../../modules/doc/Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a></code>. However, assert_libra_root checks the literal
+* REQUIRES_ROLE comes from <code><a href="../../modules/doc/Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a></code>. However, assert_diem_root checks the literal
 Libra root address before checking the role, and the role abort is unreachable in practice, since
 only Libra root has the Libra root role.
 
@@ -1199,7 +1199,7 @@ Only Libra root may create Validator accounts
 Authentication: ValidatorAccountAbortsIf includes AbortsIfNotLibraRoot.
 Checks that above table includes all error categories.
 The verifier finds an abort that is not documented, and cannot occur in practice:
-* REQUIRES_ROLE comes from <code><a href="../../modules/doc/Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a></code>. However, assert_libra_root checks the literal
+* REQUIRES_ROLE comes from <code><a href="../../modules/doc/Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a></code>. However, assert_diem_root checks the literal
 Libra root address before checking the role, and the role abort is unreachable in practice, since
 only Libra root has the Libra root role.
 
@@ -2314,7 +2314,7 @@ This rotates the authentication key of <code>account</code> to <code>new_key</co
 Only the Libra Root account can process the admin scripts [[H9]][PERMISSION].
 
 
-<pre><code><b>requires</b> <a href="../../modules/doc/Roles.md#0x1_Roles_has_libra_root_role">Roles::has_libra_root_role</a>(lr_account);
+<pre><code><b>requires</b> <a href="../../modules/doc/Roles.md#0x1_Roles_has_diem_root_role">Roles::has_diem_root_role</a>(lr_account);
 </code></pre>
 
 
@@ -2718,10 +2718,10 @@ Transfers <code>amount</code> coins of type <code>Currency</code> from <code>pay
 <code>metadata</code> and an (optional) <code>metadata_signature</code> on the message
 <code>metadata</code> | <code><a href="../../modules/doc/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer)</code> | <code>amount</code> | <code><a href="../../modules/doc/DualAttestation.md#0x1_DualAttestation_DOMAIN_SEPARATOR">DualAttestation::DOMAIN_SEPARATOR</a></code>.
 The <code>metadata</code> and <code>metadata_signature</code> parameters are only required if <code>amount</code> >=
-<code><a href="../../modules/doc/DualAttestation.md#0x1_DualAttestation_get_cur_microlibra_limit">DualAttestation::get_cur_microlibra_limit</a></code> LBR and <code>payer</code> and <code>payee</code> are distinct VASPs.
+<code><a href="../../modules/doc/DualAttestation.md#0x1_DualAttestation_get_cur_microdiem_limit">DualAttestation::get_cur_microdiem_limit</a></code> LBR and <code>payer</code> and <code>payee</code> are distinct VASPs.
 However, a transaction sender can opt in to dual attestation even when it is not required
 (e.g., a DesignatedDealer -> VASP payment) by providing a non-empty <code>metadata_signature</code>.
-Standardized <code>metadata</code> LCS format can be found in <code>libra_types::transaction::metadata::Metadata</code>.
+Standardized <code>metadata</code> LCS format can be found in <code>diem_types::transaction::metadata::Metadata</code>.
 
 
 <a name="@Events_131"></a>
@@ -3685,7 +3685,7 @@ the system is initiated by this script.
 Only the Libra Root account can process the admin scripts [[H9]][PERMISSION].
 
 
-<pre><code><b>requires</b> <a href="../../modules/doc/Roles.md#0x1_Roles_has_libra_root_role">Roles::has_libra_root_role</a>(lr_account);
+<pre><code><b>requires</b> <a href="../../modules/doc/Roles.md#0x1_Roles_has_diem_root_role">Roles::has_diem_root_role</a>(lr_account);
 </code></pre>
 
 
@@ -4650,7 +4650,7 @@ Updates the <code>micro_lbr_limit</code> field of the <code><a href="../../modul
     new_micro_lbr_limit: u64
 ) {
     <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(tc_account, sliding_nonce);
-    <a href="../../modules/doc/DualAttestation.md#0x1_DualAttestation_set_microlibra_limit">DualAttestation::set_microlibra_limit</a>(tc_account, new_micro_lbr_limit);
+    <a href="../../modules/doc/DualAttestation.md#0x1_DualAttestation_set_microdiem_limit">DualAttestation::set_microdiem_limit</a>(tc_account, new_micro_lbr_limit);
 }
 </code></pre>
 
@@ -4887,9 +4887,9 @@ This transaction needs to be sent by the Treasury Compliance account.
 
 
 
-<a name="update_libra_version"></a>
+<a name="update_diem_version"></a>
 
-#### Script `update_libra_version`
+#### Script `update_diem_version`
 
 
 
@@ -4942,7 +4942,7 @@ preserve backwards compatibility with previous major versions of the VM.
 | <code><a href="../../modules/doc/Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a></code> | <code><a href="../../modules/doc/LibraVersion.md#0x1_LibraVersion_EINVALID_MAJOR_VERSION_NUMBER">LibraVersion::EINVALID_MAJOR_VERSION_NUMBER</a></code> | <code>major</code> is less-than or equal to the current major version stored on-chain.                |
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="transaction_script_documentation.md#update_libra_version">update_libra_version</a>(account: &signer, sliding_nonce: u64, major: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="transaction_script_documentation.md#update_diem_version">update_diem_version</a>(account: &signer, sliding_nonce: u64, major: u64)
 </code></pre>
 
 
@@ -4951,7 +4951,7 @@ preserve backwards compatibility with previous major versions of the VM.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="transaction_script_documentation.md#update_libra_version">update_libra_version</a>(account: &signer, sliding_nonce: u64, major: u64) {
+<pre><code><b>fun</b> <a href="transaction_script_documentation.md#update_diem_version">update_diem_version</a>(account: &signer, sliding_nonce: u64, major: u64) {
     <a href="../../modules/doc/SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(account, sliding_nonce);
     <a href="../../modules/doc/LibraVersion.md#0x1_LibraVersion_set">LibraVersion::set</a>(account, major)
 }
@@ -5149,11 +5149,11 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`unfreeze_account`](transaction_script_documentation.md#unfreeze_account)
 -  [`update_dual_attestation_limit`](transaction_script_documentation.md#update_dual_attestation_limit)
 -  [`update_exchange_rate`](transaction_script_documentation.md#update_exchange_rate)
--  [`update_libra_version`](transaction_script_documentation.md#update_libra_version)
+-  [`update_diem_version`](transaction_script_documentation.md#update_diem_version)
 -  [`update_minting_ability`](transaction_script_documentation.md#update_minting_ability)
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

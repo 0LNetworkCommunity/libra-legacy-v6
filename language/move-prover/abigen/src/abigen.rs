@@ -6,7 +6,7 @@ use log::{debug, info, warn};
 
 use anyhow::bail;
 use heck::SnakeCase;
-use libra_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
+use diem_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
 use move_core_types::language_storage::TypeTag;
 use serde::{Deserialize, Serialize};
 use spec_lang::{

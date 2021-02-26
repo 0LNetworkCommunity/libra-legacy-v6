@@ -7,7 +7,7 @@ use crate::{
     binary_views::FunctionView,
 };
 use borrow_graph::references::RefID;
-use libra_types::vm_status::StatusCode;
+use diem_types::vm_status::StatusCode;
 use mirai_annotations::{checked_postcondition, checked_precondition, checked_verify};
 use std::collections::{BTreeMap, BTreeSet};
 use vm::{

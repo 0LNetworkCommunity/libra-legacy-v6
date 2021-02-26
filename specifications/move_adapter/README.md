@@ -179,7 +179,7 @@ The rest of the validation is performed in Move code, which is run using the Mov
 
 * `Module`: The prologue function is `module_prologue`. In addition to the common checks listed below, it also calls the `is_module_allowed` function in the `LibraTransactionPublishingOption` module to see if publishing is allowed for the transaction sender. If not, validation fails with a `INVALID_MODULE_PUBLISHER` status code.
 
-* `WriteSet`: The prologue function is `writeset_prologue`. In addition to the common checks listed below, it also checks that the sender is the Libra root address and that `Roles::has_libra_root_role(sender)` is true. If any checks fail, the status code is set to `REJECTED_WRITE_SET` (not the code that would be used if the same check was performed for a `Script` or `Module` payload).
+* `WriteSet`: The prologue function is `writeset_prologue`. In addition to the common checks listed below, it also checks that the sender is the Libra root address and that `Roles::has_diem_root_role(sender)` is true. If any checks fail, the status code is set to `REJECTED_WRITE_SET` (not the code that would be used if the same check was performed for a `Script` or `Module` payload).
 
 The following checks are performed by all the prologue functions:
 
@@ -245,11 +245,11 @@ Can administrative accounts (e.g., LibraRoot) be locked out of the system?
 ### Monitoring and Logging
 
 * Monitoring:
-    - `libra_vm_transactions_validated`: Number of transactions processed by the validator, with either "success" or "failure" labels
+    - `diem_vm_transactions_validated`: Number of transactions processed by the validator, with either "success" or "failure" labels
     - FIXME -- add this? certain error type (invariant violation)
     - FIXME -- add this? adapter restarts
-    - `libra_vm_txn_validation_seconds`: Histogram of validation time (in seconds) per transaction
-    - `libra_vm_critical_errors`: Counter for critical internal errors; intended to trigger alerts, not for display on a dashboard
+    - `diem_vm_txn_validation_seconds`: Histogram of validation time (in seconds) per transaction
+    - `diem_vm_critical_errors`: Counter for critical internal errors; intended to trigger alerts, not for display on a dashboard
 
 * Logging on catastrophic events must report enough info to debug.
 
@@ -774,7 +774,7 @@ Modules and Scripts can only enter the VM in binary form, and Modules are saved 
 A Module is logically a collection of functions and data structures. A Script is just an entry point,
 a single function with arguments and no return value.
 
-Modules can be thought as library or shared code, whereas Scripts can only come in input with the Transaction.
+Modules can be thought as diemry or shared code, whereas Scripts can only come in input with the Transaction.
 
 Binaries are composed by a couple of headers and a set of tables.
 Some of those tables are common to both Modules and Scripts, others specific to one or the other.

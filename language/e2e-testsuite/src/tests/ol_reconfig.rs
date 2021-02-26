@@ -5,7 +5,7 @@ use language_e2e_tests::{
   account::{Account, AccountData, AccountRoleSpecifier},
   executor::FakeExecutor,
 };
-use libra_types::{
+use diem_types::{
   account_config::from_currency_code_string,
   vm_status::KeptVMStatus,
 };
@@ -24,24 +24,24 @@ fn reconfig_bulk_update_test () {
   // run with five new validators.
 
   // Create some accounts to be able to call a tx script and be validators
-  let libra_root = Account::new_libra_root();
+  let diem_root = Account::new_diem_root();
   let mut accounts = vec![];
   for _i in 0..5 {
       accounts.push(Account::new());
   }
   println!("created new validator accounts");
 
-  // Register account data for libra root
-  let libra_root_data = AccountData::with_account(
-      libra_root, 1_000_000_000_000,
+  // Register account data for diem root
+  let diem_root_data = AccountData::with_account(
+      diem_root, 1_000_000_000_000,
       from_currency_code_string(LBR_NAME).unwrap(), sequence_number, AccountRoleSpecifier::LibraRoot);
-  executor.add_account_data(&libra_root_data);
+  executor.add_account_data(&diem_root_data);
 
   let names = vec!["alice", "bob", "carol", "sha", "ram"];
   // Create a transaction allowing the accounts to serve as validators
   for i in 0..5 {
       executor.execute_and_apply(
-          libra_root_data.account().transaction()
+          diem_root_data.account().transaction()
               .script(encode_create_validator_account_script(
                   sequence_number,
                   *accounts.get(i).unwrap().address(),
@@ -84,7 +84,7 @@ fn reconfig_bulk_update_test () {
   // Actually register the accounts as validators
   for i in 0..5 {
       executor.execute_and_apply(
-          libra_root_data.account()
+          diem_root_data.account()
               .transaction()
               .script(encode_add_validator_and_reconfigure_script(
                   sequence_number,
@@ -137,7 +137,7 @@ fn reconfig_bulk_update_test () {
   //////////////////////////////////////////////////////////////////////////////////////////////
   // Construct the signed tx script for test setup.
   let output = executor.execute_and_apply(
-    libra_root_data.account()
+    diem_root_data.account()
         .transaction()
         .script(encode_ol_reconfig_bulk_update_setup_script(
             *accounts.get(0).unwrap().address(),

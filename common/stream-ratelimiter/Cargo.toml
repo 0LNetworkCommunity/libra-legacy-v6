@@ -1,10 +1,10 @@
 [package]
 name = "stream-ratelimiter"
 version = "0.1.0"
-authors = ["Libra Association <opensource@libra.org>"]
-description = "Libra futures semaphore"
-repository = "https://github.com/libra/libra"
-homepage = "https://libra.org"
+authors = ["Diem Association <opensource@diem.org>"]
+description = "Diem futures semaphore"
+repository = "https://github.com/diem/diem"
+homepage = "https://diem.org"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -14,7 +14,7 @@ futures = "0.3.6"
 tokio = { version = "0.2.22", features = ["time", "stream"] }
 pin-project = "0.4.26"
 futures-semaphore = { path = "../futures-semaphore" }
-libra-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
+diem-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
 
 [dev-dependencies]
 tokio = { version = "0.2.22", features = ["full"] }

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
 set -e
 
@@ -16,7 +16,7 @@ DOCKERFILE_BUILD_RE='^RUN ./docker/build-common.sh$'
 
 if [ -z "$DOCKERFILE" ] || [ -z "$TAGS" ]
 then
-  echo "Usage libra-build.sh <Docker_file> <Local_tag> <Other_args>"
+  echo "Usage diem-build.sh <Docker_file> <Local_tag> <Other_args>"
 fi
 
 shift 2
@@ -50,7 +50,7 @@ if [ "$1" = "--incremental" ]; then
       echo "${BLUE}Build container does not exist, setting up new one${RESTORE}"
       IMAGE=circleci/rust:${TOOLCHAIN}-buster
       mkdir -p "$OUT_TARGET"
-      docker run -u root -d -t -v "$OUT_TARGET:/out-target" -v "$DIR/..:/libra" -w /libra --name "$CONTAINER" "$IMAGE" sh > /dev/null
+      docker run -u root -d -t -v "$OUT_TARGET:/out-target" -v "$DIR/..:/diem" -w /diem --name "$CONTAINER" "$IMAGE" sh > /dev/null
       docker exec -i -t "$CONTAINER" apt-get update
       docker exec -i -t "$CONTAINER" apt-get install -y cmake curl clang git
       echo "${BLUE}Container is set up, starting build${RESTORE}"
@@ -65,7 +65,7 @@ if [ "$1" = "--incremental" ]; then
   docker exec -i -t "$CONTAINER" sh -c 'find /target/release -maxdepth 1 -executable -type f | xargs -I F cp F /out-target'
   TMP_DOCKERFILE="$DOCKERFILE.tmp"
   trap 'rm -f $TMP_DOCKERFILE' EXIT
-  sed -e "s+$DOCKERFILE_BUILD_RE+RUN mkdir -p /libra/target/release/; cp target-out-docker/* /libra/target/release/+g" \
+  sed -e "s+$DOCKERFILE_BUILD_RE+RUN mkdir -p /diem/target/release/; cp target-out-docker/* /diem/target/release/+g" \
       "$DOCKERFILE" > "$TMP_DOCKERFILE"
   DOCKERFILE=$TMP_DOCKERFILE
   echo "${BLUE}Starting docker build process${RESTORE}"

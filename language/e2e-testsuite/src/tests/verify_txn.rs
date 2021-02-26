@@ -10,8 +10,8 @@ use language_e2e_tests::{
     executor::FakeExecutor,
     gas_costs, transaction_status_eq,
 };
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_types::{
     account_address::AccountAddress,
     account_config,
     chain_id::ChainId,
@@ -411,7 +411,7 @@ pub fn test_arbitrary_script_execution() {
 }
 
 #[test]
-pub fn test_publish_from_libra_root() {
+pub fn test_publish_from_diem_root() {
     // create a FakeExecutor with a genesis from file
     let mut executor =
         FakeExecutor::from_genesis_with_options(VMPublishingOption::custom_scripts());
@@ -572,12 +572,12 @@ fn verify_gas_currency_code() {
 }
 
 #[test]
-pub fn test_no_publishing_libra_root_sender() {
+pub fn test_no_publishing_diem_root_sender() {
     // create a FakeExecutor with a genesis from file
     let executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::custom_scripts());
 
     // create a transaction trying to publish a new module.
-    let sender = Account::new_libra_root();
+    let sender = Account::new_diem_root();
 
     let module = String::from(
         "
@@ -833,7 +833,7 @@ fn test_module_dependency_fails_verification() {
         let m = good_module_uses_bad(*sender.address(), bad_module);
         let mut serialized_module = Vec::<u8>::new();
         m.serialize(&mut serialized_module).unwrap();
-        libra_types::transaction::Module::new(serialized_module)
+        diem_types::transaction::Module::new(serialized_module)
     };
 
     let txn = sender
@@ -994,7 +994,7 @@ fn test_module_transitive_dependency_fails_verification() {
             extra_deps: vec![good_module],
             ..Compiler::default()
         };
-        libra_types::transaction::Module::new(
+        diem_types::transaction::Module::new(
             compiler
                 .into_module_blob("file_name", module_code)
                 .expect("Module compilation failed"),

@@ -3,12 +3,12 @@
 
 use crate::LibraValidatorInterface;
 use anyhow::{anyhow, Result};
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_state_blob::AccountStateBlob,
     transaction::{Transaction, Version},
 };
-use libradb::LibraDB;
+use diemdb::LibraDB;
 use std::{path::Path, sync::Arc};
 use storage_interface::DbReader;
 

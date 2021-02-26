@@ -5,7 +5,7 @@ use language_e2e_tests::{
     account::AccountData, common_transactions::peer_to_peer_txn, data_store::GENESIS_CHANGE_SET,
     executor::FakeExecutor,
 };
-use libra_types::transaction::{Transaction, TransactionStatus, WriteSetPayload};
+use diem_types::transaction::{Transaction, TransactionStatus, WriteSetPayload};
 
 #[test]
 fn no_deletion_in_genesis() {

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
     Event, Filter, Level, LevelFilter, Metadata,
 };
 use chrono::{SecondsFormat, Utc};
-use libra_infallible::RwLock;
+use diem_infallible::RwLock;
 use once_cell::sync::Lazy;
 use serde::Serialize;
 use std::{
@@ -96,7 +96,7 @@ impl LogEntry {
     }
 }
 
-pub struct LibraLoggerBuilder {
+pub struct DiemLoggerBuilder {
     channel_size: usize,
     level: Level,
     remote_level: Level,
@@ -105,7 +105,7 @@ pub struct LibraLoggerBuilder {
     is_async: bool,
 }
 
-impl LibraLoggerBuilder {
+impl DiemLoggerBuilder {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
@@ -159,7 +159,7 @@ impl LibraLoggerBuilder {
         self.build();
     }
 
-    pub fn build(&mut self) -> Arc<LibraLogger> {
+    pub fn build(&mut self) -> Arc<DiemLogger> {
         let filter = {
             let local_filter = {
                 let mut filter_builder = Filter::builder();
@@ -184,7 +184,7 @@ impl LibraLoggerBuilder {
                 filter_builder.build()
             };
 
-            LibraFilter {
+            DiemFilter {
                 local_filter,
                 remote_filter,
             }
@@ -192,7 +192,7 @@ impl LibraLoggerBuilder {
 
         let logger = if self.is_async {
             let (sender, receiver) = mpsc::sync_channel(self.channel_size);
-            let logger = Arc::new(LibraLogger {
+            let logger = Arc::new(DiemLogger {
                 sender: Some(sender),
                 printer: None,
                 filter: RwLock::new(filter),
@@ -207,7 +207,7 @@ impl LibraLoggerBuilder {
             thread::spawn(move || service.run());
             logger
         } else {
-            Arc::new(LibraLogger {
+            Arc::new(DiemLogger {
                 sender: None,
                 printer: self.printer.take(),
                 filter: RwLock::new(filter),
@@ -219,30 +219,30 @@ impl LibraLoggerBuilder {
     }
 }
 
-struct LibraFilter {
+struct DiemFilter {
     local_filter: Filter,
     remote_filter: Filter,
 }
 
-impl LibraFilter {
+impl DiemFilter {
     fn enabled(&self, metadata: &Metadata) -> bool {
         self.local_filter.enabled(metadata) || self.remote_filter.enabled(metadata)
     }
 }
 
-pub struct LibraLogger {
+pub struct DiemLogger {
     sender: Option<SyncSender<LogEntry>>,
     printer: Option<Box<dyn Writer>>,
-    filter: RwLock<LibraFilter>,
+    filter: RwLock<DiemFilter>,
 }
 
-impl LibraLogger {
-    pub fn builder() -> LibraLoggerBuilder {
-        LibraLoggerBuilder::new()
+impl DiemLogger {
+    pub fn builder() -> DiemLoggerBuilder {
+        DiemLoggerBuilder::new()
     }
 
     #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> LibraLoggerBuilder {
+    pub fn new() -> DiemLoggerBuilder {
         Self::builder()
     }
 
@@ -280,7 +280,7 @@ impl LibraLogger {
     }
 }
 
-impl Logger for LibraLogger {
+impl Logger for DiemLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         self.filter.read().enabled(metadata)
     }
@@ -296,7 +296,7 @@ struct LoggerService {
     receiver: Receiver<LogEntry>,
     address: Option<String>,
     printer: Option<Box<dyn Writer>>,
-    facade: Arc<LibraLogger>,
+    facade: Arc<DiemLogger>,
 }
 
 impl LoggerService {
@@ -423,7 +423,7 @@ impl Writer for FileWriter {
 /// Converts a record into a string representation:
 /// UNIX_TIMESTAMP LOG_LEVEL [thread_name] FILE:LINE MESSAGE JSON_DATA
 /// Example:
-/// 2020-03-07 05:03:03 INFO [thread_name] common/libra-logger/src/lib.rs:261 Hello { "world": true }
+/// 2020-03-07 05:03:03 INFO [thread_name] common/diem-logger/src/lib.rs:261 Hello { "world": true }
 fn format(entry: &LogEntry) -> Result<String, fmt::Error> {
     use std::fmt::Write;
 

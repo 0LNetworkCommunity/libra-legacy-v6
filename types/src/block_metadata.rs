@@ -3,11 +3,11 @@
 
 use crate::{
     account_address::AccountAddress,
-    account_config::libra_root_address,
+    account_config::diem_root_address,
     event::{EventHandle, EventKey},
 };
 use anyhow::Result;
-use libra_crypto::HashValue;
+use diem_crypto::HashValue;
 use move_core_types::move_resource::MoveResource;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -73,7 +73,7 @@ impl BlockMetadata {
 }
 
 pub fn new_block_event_key() -> EventKey {
-    EventKey::new_from_address(&libra_root_address(), 12)
+    EventKey::new_from_address(&diem_root_address(), 12)
 }
 
 /// The path to the new block event handle under a LibraBlock::BlockMetadata resource.

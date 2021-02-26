@@ -14,8 +14,8 @@ use crate::{
     transaction::Version,
 };
 use anyhow::{ensure, Error, Result};
-use libra_crypto::hash::CryptoHash;
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use diem_crypto::hash::CryptoHash;
+use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
 use move_core_types::{language_storage::TypeTag, move_resource::MoveResource};
 
 #[cfg(any(test, feature = "fuzzing"))]

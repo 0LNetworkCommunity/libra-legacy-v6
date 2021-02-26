@@ -1,15 +1,15 @@
 /**
- * Copyright (c) The Libra Core Contributors
+ * Copyright (c) The Diem Core Contributors
  * SPDX-License-Identifier: Apache-2.0
  */
 
 const React = require('react');
 
-const CompLibrary = require('../../core/CompLibrary.js');
+const CompDiemry = require('../../core/CompDiemry.js');
 
-const MarkdownBlock = CompLibrary.MarkdownBlock;
-const Container = CompLibrary.Container;
-const GridBlock = CompLibrary.GridBlock;
+const MarkdownBlock = CompDiemry.MarkdownBlock;
+const Container = CompDiemry.Container;
+const GridBlock = CompDiemry.GridBlock;
 
 const bash = (...args) => `~~~bash\n${String.raw(...args)}\n~~~`;
 
@@ -60,12 +60,12 @@ class HomeSplash extends React.Component {
     return (
       <SplashContainer>
         <div className="inner">
-          <Logo img_src={baseUrl + 'img/libra-header-logo-white.png'} />
+          <Logo img_src={baseUrl + 'img/diem-header-logo-white.png'} />
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('welcome-to-libra')}>Welcome to the Developer Site</Button>
-            <Button href={docUrl('the-libra-blockchain-paper.html')}>
-              Libra Blockchain Technical Paper
+            <Button href={docUrl('welcome-to-diem')}>Welcome to the Developer Site</Button>
+            <Button href={docUrl('the-diem-blockchain-paper.html')}>
+              Diem Blockchain Technical Paper
             </Button>
             <Button href={docUrl('move-overview.html')}>Getting Started With Move</Button>
           </PromoSection>
@@ -99,7 +99,7 @@ class Index extends React.Component {
         {[
           {
             content: 'This is another description of how this project is useful',
-            image: `${baseUrl}img/libra_logo_lockup_white.svg`,
+            image: `${baseUrl}img/diem_logo_lockup_white.svg`,
             imageAlign: 'right',
             title: 'Description',
           },
@@ -124,12 +124,12 @@ class Index extends React.Component {
         id="quickstart"
         style={{ textAlign: 'center', marginBottom: '30px' }}
       >
-        <h2>Try Libra</h2>
+        <h2>Try Diem</h2>
         <p>Currently available for macOS and Linux.</p>
         <Container>
-          <h4>1. Clone Libra:</h4>
+          <h4>1. Clone Diem:</h4>
           <div style={{ marginLeft: '30px' }}>
-            <MarkdownBlock>{bash`git clone https://github.com/libra/libra.git && cd libra`}</MarkdownBlock>
+            <MarkdownBlock>{bash`git clone https://github.com/diem/diem.git && cd diem`}</MarkdownBlock>
           </div>
           <h4>2. Checkout the Testnet Branch:</h4>
           <div style={{ marginLeft: '30px' }}>

@@ -1,7 +1,7 @@
 ---
 id: vm-runtime
 title: MoveVM Runtime
-custom_edit_url: https://github.com/libra/libra/edit/master/language/vm/vm-runtime/README.md
+custom_edit_url: https://github.com/diem/diem/edit/master/language/vm/vm-runtime/README.md
 ---
 
 # MoveVM Runtime
@@ -21,7 +21,7 @@ a given version (i.e., block height). At the time of startup, the runtime
 does not have any code or data loaded. It is effectively *“empty”*.
 
 Every transaction executes within the context of a [Libra
-account](../../stdlib/modules/libra_account.mvir)---specifically the transaction
+account](../../stdlib/modules/diem_account.mvir)---specifically the transaction
 submitter's account.  The execution of every transaction consists of three
 parts: the account prologue, the transaction itself, and the account
 epilogue. This is the only transaction flow known to the runtime, and it is
@@ -31,7 +31,7 @@ individual transaction from the block and execute the transaction flow:
 1. ***Transaction Prologue*** - in verification mode the runtime runs the
    bytecode verifier over the transaction script and executes the
    prologue defined in the [Libra account
-   module](../../stdlib/modules/libra_account.mvir). The prologue is responsible
+   module](../../stdlib/modules/diem_account.mvir). The prologue is responsible
    for checking the structure of the transaction and
    rejecting obviously bad transactions. In verification mode, the runtime
    returns a status of either `success` or `failure` depending upon the
@@ -49,7 +49,7 @@ individual transaction from the block and execute the transaction flow:
    blockchain state by the VM---this is the responsibility of the
    [execution module](../../../execution/).
 3. ***Transaction Epilogue*** - in execution mode the epilogue defined in
-   the [Libra account module](../../stdlib/modules/libra_account.mvir) is
+   the [Libra account module](../../stdlib/modules/diem_account.mvir) is
    executed to perform actions based upon the result of the execution of
    the user-submitted transaction. One example of such an action is
    debiting the gas fee for the transaction from the submitting account's
@@ -68,7 +68,7 @@ visible to subsequent transactions within each block.
 
 ## Implementation Details
 
-* The runtime top level structs are in `runtime` and `libra vm` related
+* The runtime top level structs are in `runtime` and `diem vm` related
   code.
 * The transaction flow is implemented in the [`process_txn`](./src/process_txn.rs)
   module.

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use backup_service::start_backup_service;
@@ -7,21 +7,21 @@ use debug_interface::node_debug_service::NodeDebugService;
 use executor::{db_bootstrapper::maybe_bootstrap, Executor};
 use executor_types::ChunkExecutor;
 use futures::{channel::mpsc::channel, executor::block_on};
-use libra_config::{
+use diem_config::{
     config::{NetworkConfig, NodeConfig, RoleType},
     network_id::NodeNetworkId,
     utils::get_genesis_txn,
 };
-use libra_json_rpc::bootstrap_from_config as bootstrap_rpc;
-use libra_logger::{prelude::*, Logger};
-use libra_mempool::gen_mempool_reconfig_subscription;
-use libra_metrics::metric_server;
-use libra_types::{
-    account_config::libra_root_address, account_state::AccountState, chain_id::ChainId,
+use diem_json_rpc::bootstrap_from_config as bootstrap_rpc;
+use diem_logger::{prelude::*, Logger};
+use diem_mempool::gen_mempool_reconfig_subscription;
+use diem_metrics::metric_server;
+use diem_types::{
+    account_config::diem_root_address, account_state::AccountState, chain_id::ChainId,
     move_resource::MoveStorage, PeerId,
 };
-use libra_vm::LibraVM;
-use libradb::LibraDB;
+use diem_vm::DiemVM;
+use diemdb::DiemDB;
 use network_builder::builder::NetworkBuilder;
 use state_synchronizer::StateSynchronizer;
 use std::{
@@ -44,7 +44,7 @@ const AC_SMP_CHANNEL_BUFFER_SIZE: usize = 1_024;
 const INTRA_NODE_CHANNEL_BUFFER_SIZE: usize = 1;
 const MEMPOOL_NETWORK_CHANNEL_BUFFER_SIZE: usize = 1_024;
 
-pub struct LibraHandle {
+pub struct DiemHandle {
     _rpc: Runtime,
     _mempool: Runtime,
     _state_synchronizer: StateSynchronizer,
@@ -54,9 +54,9 @@ pub struct LibraHandle {
     _backup: Runtime,
 }
 
-impl LibraHandle {
+impl DiemHandle {
     pub fn shutdown(&mut self) {
-        // Shutdown network runtimes to avoid panic error log after LibraHandle is dropped:
+        // Shutdown network runtimes to avoid panic error log after DiemHandle is dropped:
         // thread ‘network-’ panicked at ‘SelectNextSome polled after terminated’,...
         // stack backtrace:
         //    ......
@@ -73,7 +73,7 @@ impl LibraHandle {
 pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
     crash_handler::setup_panic_handler();
 
-    let mut logger = libra_logger::Logger::new();
+    let mut logger = diem_logger::Logger::new();
     logger
         .channel_size(config.logger.chan_size)
         .is_async(config.logger.is_async)
@@ -85,7 +85,7 @@ pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
     let logger = Some(logger.build());
 
     // Let's now log some important information, since the logger is set up
-    info!(config = config, "Loaded LibraNode config");
+    info!(config = config, "Loaded DiemNode config");
 
     if config.metrics.enabled {
         for network in &config.full_node_networks {
@@ -118,7 +118,7 @@ pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
 }
 
 fn setup_metrics(peer_id: PeerId, config: &NodeConfig) {
-    libra_metrics::dump_all_metrics_to_file_periodically(
+    diem_metrics::dump_all_metrics_to_file_periodically(
         &config.metrics.dir(),
         &format!("{}.metrics", peer_id),
         config.metrics.collection_interval_ms,
@@ -127,7 +127,7 @@ fn setup_metrics(peer_id: PeerId, config: &NodeConfig) {
 
 pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     // Either allocate a temppath or reuse the passed in path and make sure the directory exists
-    let config_temp_path = libra_temppath::TempPath::new();
+    let config_temp_path = diem_temppath::TempPath::new();
     let config_path = config_path.unwrap_or_else(|| config_temp_path.as_ref().to_path_buf());
     std::fs::DirBuilder::new()
         .recursive(true)
@@ -138,10 +138,10 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     // Build a single validator network
     let template = NodeConfig::default_for_validator();
     let builder =
-        libra_genesis_tool::config_builder::ValidatorBuilder::new(1, template, &config_path)
+        diem_genesis_tool::config_builder::ValidatorBuilder::new(1, template, &config_path)
             .randomize_first_validator_ports(random_ports);
     let test_config =
-        libra_genesis_tool::swarm_config::SwarmConfig::build(&builder, &config_path).unwrap();
+        diem_genesis_tool::swarm_config::SwarmConfig::build(&builder, &config_path).unwrap();
 
     // Prepare log file since we cannot automatically route logs to stderr
     let mut log_file = config_path.clone();
@@ -161,8 +161,8 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     println!("\tLog file: {:?}", log_file);
     println!("\tConfig path: {:?}", test_config.config_files[0]);
     println!(
-        "\tLibra root key path: {:?}",
-        test_config.libra_root_key_path
+        "\tDiem root key path: {:?}",
+        test_config.diem_root_key_path
     );
     println!("\tWaypoint: {}", test_config.waypoint);
     let mut config = NodeConfig::load(&test_config.config_files[0]).unwrap();
@@ -176,7 +176,7 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     );
     println!("\tChainId: {}", ChainId::test());
     println!();
-    println!("Libra is running, press ctrl-c to exit");
+    println!("Diem is running, press ctrl-c to exit");
     println!();
 
     start(&config, Some(log_file))
@@ -187,24 +187,24 @@ fn fetch_chain_id(db: &DbReaderWriter) -> ChainId {
     let blob = db
         .reader
         .get_account_state_with_proof_by_version(
-            libra_root_address(),
+            diem_root_address(),
             (&*db.reader)
                 .fetch_synced_version()
-                .expect("[libra-node] failed fetching synced version."),
+                .expect("[diem-node] failed fetching synced version."),
         )
-        .expect("[libra-node] failed to get Libra root address account state")
+        .expect("[diem-node] failed to get Diem root address account state")
         .0
-        .expect("[libra-node] missing Libra root address account state");
+        .expect("[diem-node] missing Diem root address account state");
     AccountState::try_from(&blob)
-        .expect("[libra-node] failed to convert blob to account state")
+        .expect("[diem-node] failed to convert blob to account state")
         .get_chain_id_resource()
-        .expect("[libra-node] failed to get chain ID resource")
-        .expect("[libra-node] missing chain ID resource")
+        .expect("[diem-node] failed to get chain ID resource")
+        .expect("[diem-node] missing chain ID resource")
         .chain_id()
 }
 
 fn setup_chunk_executor(db: DbReaderWriter) -> Box<dyn ChunkExecutor> {
-    Box::new(Executor::<LibraVM>::new(db))
+    Box::new(Executor::<DiemVM>::new(db))
 }
 
 fn setup_debug_interface(config: &NodeConfig, logger: Option<Arc<Logger>>) -> NodeDebugService {
@@ -217,8 +217,8 @@ fn setup_debug_interface(config: &NodeConfig, logger: Option<Arc<Logger>>) -> No
     .next()
     .unwrap();
 
-    libra_trace::set_libra_trace(&config.debug_interface.libra_trace.sampling)
-        .expect("Failed to set libra trace sampling rate.");
+    diem_trace::set_diem_trace(&config.debug_interface.diem_trace.sampling)
+        .expect("Failed to set diem trace sampling rate.");
 
     NodeDebugService::new(addr, logger)
 }
@@ -263,7 +263,7 @@ async fn periodic_state_dump(node_config: NodeConfig, db: DbReaderWriter) {
     }
 }
 
-pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) -> LibraHandle {
+pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) -> DiemHandle {
     let debug_if = setup_debug_interface(&node_config, logger);
 
     let metrics_port = node_config.debug_interface.metrics_server_port;
@@ -276,8 +276,8 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
     });
 
     let mut instant = Instant::now();
-    let (libra_db, db_rw) = DbReaderWriter::wrap(
-        LibraDB::open(
+    let (diem_db, db_rw) = DbReaderWriter::wrap(
+        DiemDB::open(
             &node_config.storage.dir(),
             false, /* readonly */
             node_config.storage.prune_window,
@@ -285,16 +285,16 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
         .expect("DB should open."),
     );
     let _simple_storage_service =
-        start_storage_service_with_db(&node_config, Arc::clone(&libra_db));
+        start_storage_service_with_db(&node_config, Arc::clone(&diem_db));
     let backup_service = start_backup_service(
         node_config.storage.backup_service_address,
-        Arc::clone(&libra_db),
+        Arc::clone(&diem_db),
     );
 
     let genesis_waypoint = node_config.base.waypoint.genesis_waypoint();
     // if there's genesis txn and waypoint, commit it if the result matches.
     if let Some(genesis) = get_genesis_txn(&node_config) {
-        maybe_bootstrap::<LibraVM>(&db_rw, genesis, genesis_waypoint)
+        maybe_bootstrap::<DiemVM>(&db_rw, genesis, genesis_waypoint)
             .expect("Db-bootstrapper should not fail.");
     }
 
@@ -356,7 +356,7 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
 
         // Create the endpoints to connect the Network to mempool.
         let (mempool_sender, mempool_events) = network_builder.add_protocol_handler(
-            libra_mempool::network::network_endpoint_config(MEMPOOL_NETWORK_CHANNEL_BUFFER_SIZE),
+            diem_mempool::network::network_endpoint_config(MEMPOOL_NETWORK_CHANNEL_BUFFER_SIZE),
         );
         mempool_network_handles.push((
             NodeNetworkId::new(network_id, idx),
@@ -432,13 +432,13 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
     );
     let (mp_client_sender, mp_client_events) = channel(AC_SMP_CHANNEL_BUFFER_SIZE);
 
-    let rpc_runtime = bootstrap_rpc(&node_config, chain_id, libra_db.clone(), mp_client_sender);
+    let rpc_runtime = bootstrap_rpc(&node_config, chain_id, diem_db.clone(), mp_client_sender);
 
     let mut consensus_runtime = None;
     let (consensus_to_mempool_sender, consensus_requests) = channel(INTRA_NODE_CHANNEL_BUFFER_SIZE);
 
     instant = Instant::now();
-    let mempool = libra_mempool::bootstrap(
+    let mempool = diem_mempool::bootstrap(
         node_config,
         Arc::clone(&db_rw.reader),
         mempool_network_handles,
@@ -470,7 +470,7 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
             consensus_network_events,
             state_synchronizer.create_client(),
             consensus_to_mempool_sender,
-            libra_db,
+            diem_db,
             consensus_reconfig_events,
         ));
         debug!("Consensus started in {} ms", instant.elapsed().as_millis());
@@ -482,7 +482,7 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
         .handle()
         .spawn(periodic_state_dump(node_config.to_owned(), db_rw));
 
-    LibraHandle {
+    DiemHandle {
         network_runtimes,
         _rpc: rpc_runtime,
         _mempool: mempool,

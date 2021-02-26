@@ -1,28 +1,28 @@
 use crate::node_keys;
-use libra_wallet::{Mnemonic, key_factory::{
+use diem_wallet::{Mnemonic, key_factory::{
     Seed, KeyFactory, ChildNumber
 }};
-use libra_types::{waypoint::Waypoint};
+use diem_types::{waypoint::Waypoint};
 
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
-use libra_crypto::{
+use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use diem_crypto::{
     test_utils::KeyPair,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
 use anyhow::Error;
-use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
 use std::{io::{stdout, Write}, thread, time};
 
-use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
-use libra_types::{transaction::helpers::*};
+use diem_types::transaction::{Script, TransactionArgument, TransactionPayload};
+use diem_types::{transaction::helpers::*};
 use crate::{
     config::MinerConfig
 };
 use compiled_stdlib::transaction_scripts;
-use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_types::chain_id::ChainId;
+use diem_json_rpc_types::views::{TransactionView, VMStatusView};
+use diem_types::chain_id::ChainId;
 
 fn submit_noop() -> Result<String, Error> {
     let path = PathBuf::from("/root/saved_logs/0/node.yaml");
@@ -60,7 +60,7 @@ fn submit_noop() -> Result<String, Error> {
     // }
 
     // // Create a client object
-    // let mut client = LibraClient::new(
+    // let mut client = DiemClient::new(
     //     Url::parse(format!("http://localhost:{}", config.rpc.address.port()).as_str()).unwrap(),
     //     config.base.waypoint.waypoint_from_config().unwrap().clone()
     // ).unwrap();
@@ -111,7 +111,7 @@ fn submit_noop() -> Result<String, Error> {
     };
 
 
-    // Submit the transaction with libra_client
+    // Submit the transaction with diem_client
     match client.submit_transaction(
         Some(&mut sender_account_data),
         txn

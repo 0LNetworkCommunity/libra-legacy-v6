@@ -21,8 +21,8 @@ fun main(account: &signer) {
 /////////////////////////////////////////
 
 // //! new-transaction
-// // Transfers from libraroot to other accounts is enabled
-// //! sender: libraroot
+// // Transfers from diemroot to other accounts is enabled
+// //! sender: diemroot
 // //! gas-currency: GAS
 // script {
 // use 0x1::Libra;

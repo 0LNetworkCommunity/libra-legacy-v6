@@ -87,7 +87,7 @@ Publishes the LibraVersion config. Must be called during Genesis.
     lr_account: &signer,
 ) {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
     <a href="LibraConfig.md#0x1_LibraConfig_publish_new_config">LibraConfig::publish_new_config</a>&lt;<a href="LibraVersion.md#0x1_LibraVersion">LibraVersion</a>&gt;(
         lr_account,
         <a href="LibraVersion.md#0x1_LibraVersion">LibraVersion</a> { major: 1 },
@@ -135,7 +135,7 @@ Allows Libra root to update the major version to a larger version.
 <pre><code><b>public</b> <b>fun</b> <a href="LibraVersion.md#0x1_LibraVersion_set">set</a>(lr_account: &signer, major: u64) {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
 
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
 
     <b>let</b> old_config = <a href="LibraConfig.md#0x1_LibraConfig_get">LibraConfig::get</a>&lt;<a href="LibraVersion.md#0x1_LibraVersion">LibraVersion</a>&gt;();
 
@@ -240,6 +240,6 @@ Version number never decreases
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

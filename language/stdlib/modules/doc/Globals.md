@@ -17,7 +17,7 @@
 
 
 <pre><code><b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
-<b>use</b> <a href="Libra.md#0x1_Libra">0x1::Libra</a>;
+<b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -279,8 +279,8 @@
 
 <pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
 
-  <b>let</b> coin_scale = 1000000; //<a href="Libra.md#0x1_Libra_scaling_factor">Libra::scaling_factor</a>&lt;GAS::T&gt;();
-  <b>assert</b>(coin_scale == <a href="Libra.md#0x1_Libra_scaling_factor">Libra::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(), 07010110001);
+  <b>let</b> coin_scale = 1000000; //<a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;GAS::T&gt;();
+  <b>assert</b>(coin_scale == <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(), 07010110001);
 
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
@@ -310,7 +310,7 @@
       <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
       max_validator_per_epoch: 300, // max expected for BFT limits.
-      // See <a href="LibraVMConfig.md#0x1_LibraVMConfig">LibraVMConfig</a> for gas constants:
+      // See <a href="DiemVMConfig.md#0x1_DiemVMConfig">DiemVMConfig</a> for gas constants:
       // Target max gas units per transaction 100000000
       // target max block time: 2 secs
       // target transaction per sec max gas: 20
@@ -333,6 +333,6 @@
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

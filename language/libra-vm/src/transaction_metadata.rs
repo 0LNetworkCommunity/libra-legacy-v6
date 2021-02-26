@@ -1,8 +1,8 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_crypto::{ed25519::Ed25519PrivateKey, HashValue, PrivateKey};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, HashValue, PrivateKey};
+use diem_types::{
     account_address::AccountAddress,
     chain_id::ChainId,
     transaction::{

@@ -9,8 +9,8 @@ use crate::{
     transaction::Version,
     validator_verifier::{ValidatorVerifier, VerifyError},
 };
-use libra_crypto::{ed25519::Ed25519Signature, hash::HashValue};
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use diem_crypto::{ed25519::Ed25519Signature, hash::HashValue};
+use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};

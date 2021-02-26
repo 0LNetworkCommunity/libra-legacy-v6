@@ -6,7 +6,7 @@
 
 use std::{net::Ipv4Addr, fs};
 use byteorder::{LittleEndian, WriteBytesExt};
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
@@ -14,7 +14,7 @@ use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
 use ajson;
 use dirs;
-use libra_global_constants::NODE_HOME;
+use diem_global_constants::NODE_HOME;
 use crate::commands::CONFIG_FILE;
 use std::{io::Write};
 
@@ -36,7 +36,7 @@ const CHAIN_ID_BYTES: usize = 64;
 const STATEMENT_BYTES: usize = 1008;
 
 impl MinerConfig {
-    /// Gets the dynamic waypoint from libra node's key_store.json
+    /// Gets the dynamic waypoint from diem node's key_store.json
     pub fn get_waypoint(&self) -> Option<Waypoint> {
         match fs::File::open(self.get_key_store_path()) {
             Ok(file) => {
@@ -211,7 +211,7 @@ impl Default for MinerConfig {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
-    /// home directory of the libra node, may be the same as miner.
+    /// home directory of the diem node, may be the same as miner.
     pub node_home: PathBuf,
 }
 

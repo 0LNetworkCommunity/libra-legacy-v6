@@ -2,7 +2,7 @@
 
 ## Overview
 
-The consensus specification describes the mechanism used by the Libra Payment Network (LPN) validators to agree on both ordering and transaction execution output under byzantine fault-tolerant (BFT) conditions - at most _f_ validators (where _f_ < (_all validators_)/3) are faulty or malicious. Currently, the consensus specification is an implementation of _LibraBFT_, a BFT consensus protocol that ensures liveness and safety under partial synchrony. The [LibraBFT whitepaper](https://developers.libra.org/docs/state-machine-replication-paper) describes a high level overview of the protocol, the liveness and safety proofs, and a rationale on why LibraBFT was adopted for the LPN. This document specifies how to implement the LibraBFT protocol in order to participate as a validating node in the LPN.
+The consensus specification describes the mechanism used by the Libra Payment Network (LPN) validators to agree on both ordering and transaction execution output under byzantine fault-tolerant (BFT) conditions - at most _f_ validators (where _f_ < (_all validators_)/3) are faulty or malicious. Currently, the consensus specification is an implementation of _LibraBFT_, a BFT consensus protocol that ensures liveness and safety under partial synchrony. The [LibraBFT whitepaper](https://developers.diem.org/docs/state-machine-replication-paper) describes a high level overview of the protocol, the liveness and safety proofs, and a rationale on why LibraBFT was adopted for the LPN. This document specifies how to implement the LibraBFT protocol in order to participate as a validating node in the LPN.
 
 This document is organized as follows:
 
@@ -12,7 +12,7 @@ This document is organized as follows:
 4. [Abstracted modules](#Abstracted-modules) - The components this specification depends on.
 5. [Consensus modules](#Consensus-modules) - The components built upon common data structures that are described as a part of this specification.
 
-All network communication occurs over LibraNet and any serialization, deserialization and hashing is determined by [LCS](https://developers.libra.org/docs/rustdocs/libra_canonical_serialization/).
+All network communication occurs over LibraNet and any serialization, deserialization and hashing is determined by [LCS](https://developers.diem.org/docs/rustdocs/diem_canonical_serialization/).
 
 ## Architecture
 

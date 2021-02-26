@@ -6,9 +6,9 @@ use crate::{counters::CRITICAL_ERRORS, create_access_path, logging::AdapterLogSc
 #[allow(unused_imports)]
 use anyhow::format_err;
 use fail::fail_point;
-use libra_logger::prelude::*;
-use libra_state_view::{StateView, StateViewId};
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_state_view::{StateView, StateViewId};
+use diem_types::{
     access_path::AccessPath,
     on_chain_config::ConfigStorage,
     vm_status::StatusCode,

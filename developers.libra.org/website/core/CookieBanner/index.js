@@ -17,7 +17,7 @@ const CookieBanner = () => {
         </svg>
       </div>
       <div className="wrapper">
-        <p>To help us provide relevant content, analyze our traffic, and provide a variety of features, we use cookies. By clicking on or navigating the site, you agree to allow us to collect information on and off the Libra Website through cookies. To learn more, view our Cookie Policy:</p>
+        <p>To help us provide relevant content, analyze our traffic, and provide a variety of features, we use cookies. By clicking on or navigating the site, you agree to allow us to collect information on and off the Diem Website through cookies. To learn more, view our Cookie Policy:</p>
         <div className="buttonWrapper">
           <a className="button" href={'/docs/policies/cookies-policy'} target="_blank">
             Cookies Policy

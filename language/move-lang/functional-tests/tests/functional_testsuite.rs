@@ -6,7 +6,7 @@ use functional_tests::{
     compiler::{Compiler, ScriptOrModule},
     testsuite,
 };
-use libra_types::account_address::AccountAddress as LibraAddress;
+use diem_types::account_address::AccountAddress as LibraAddress;
 use move_lang::{
     compiled_unit::CompiledUnit, move_compile_no_report, shared::Address, test_utils::read_bool_var,
 };

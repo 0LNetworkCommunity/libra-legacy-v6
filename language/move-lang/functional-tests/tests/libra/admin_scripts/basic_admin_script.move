@@ -1,6 +1,6 @@
 //! account: bob, 0, 0, vasp
 
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: bob
 script {
 use 0x1::Signer;

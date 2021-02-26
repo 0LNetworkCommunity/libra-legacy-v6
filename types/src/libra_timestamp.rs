@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LibraTimestampResource {
-    pub libra_timestamp: LibraTimestamp,
+    pub diem_timestamp: LibraTimestamp,
 }
 
 impl MoveResource for LibraTimestampResource {

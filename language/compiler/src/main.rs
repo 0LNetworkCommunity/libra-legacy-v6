@@ -8,7 +8,7 @@ use bytecode_verifier::{verify_module, verify_script, DependencyChecker};
 use compiled_stdlib::{stdlib_modules, StdLibOptions};
 use compiler::{util, Compiler};
 use ir_to_bytecode::parser::{parse_module, parse_script};
-use libra_types::{access_path::AccessPath, account_address::AccountAddress, account_config};
+use diem_types::{access_path::AccessPath, account_address::AccountAddress, account_config};
 use std::{
     convert::TryFrom,
     fs,

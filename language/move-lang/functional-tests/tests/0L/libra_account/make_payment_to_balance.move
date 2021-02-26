@@ -4,7 +4,7 @@
 // Testing that payments cannot be attempted to accounts that do not receive the balance. Can cause network halt otherwise.
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
@@ -26,7 +26,7 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;

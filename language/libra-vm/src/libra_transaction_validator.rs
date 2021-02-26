@@ -5,13 +5,13 @@ use crate::{
     counters::*,
     create_access_path,
     data_cache::StateViewCache,
-    libra_vm::{get_currency_info, LibraVMImpl},
+    diem_vm::{get_currency_info, LibraVMImpl},
     transaction_metadata::TransactionMetadata,
     VMValidator,
 };
-use libra_logger::prelude::*;
-use libra_state_view::StateView;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_state_view::StateView;
+use diem_types::{
     account_address::AccountAddress,
     account_config::{self, RoleId},
     on_chain_config::{LibraVersion, VMConfig, VMPublishingOption},

@@ -4,7 +4,7 @@
 // The data will be initialized and operated all through alice's account
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::Stats;
     use 0x1::Vector;

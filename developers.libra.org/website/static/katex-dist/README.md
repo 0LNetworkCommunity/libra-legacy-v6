@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/Khan/KaTeX](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Khan/KaTeX?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-KaTeX is a fast, easy-to-use JavaScript library for TeX math rendering on the web.
+KaTeX is a fast, easy-to-use JavaScript diemry for TeX math rendering on the web.
 
  * **Fast:** KaTeX renders its math synchronously and doesn't need to reflow the page. See how it compares to a competitor in [this speed test](http://jsperf.com/katex-vs-mathjax/).
  * **Print quality:** KaTeX’s layout is based on Donald Knuth’s TeX, the gold standard for math typesetting.

@@ -1,32 +1,32 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     smoke_test_environment::SmokeTestEnvironment,
     test_utils::{
-        libra_swarm_utils::{
-            get_json_rpc_libra_interface, get_op_tool, load_backend_storage,
-            load_libra_root_storage, load_node_config,
+        diem_swarm_utils::{
+            get_json_rpc_diem_interface, get_op_tool, load_backend_storage,
+            load_diem_root_storage, load_node_config,
         },
         write_key_to_file_hex_format, write_key_to_file_lcs_format,
     },
 };
-use libra_config::config::SecureBackend;
-use libra_crypto::{
+use diem_config::config::SecureBackend;
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     HashValue, PrivateKey, Uniform,
 };
-use libra_global_constants::{
+use diem_global_constants::{
     CONSENSUS_KEY, GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY,
     VALIDATOR_NETWORK_ADDRESS_KEYS, VALIDATOR_NETWORK_KEY, WAYPOINT,
 };
-use libra_key_manager::libra_interface::LibraInterface;
-use libra_management::storage::to_x25519;
-use libra_network_address::NetworkAddress;
-use libra_operational_tool::test_helper::OperationalTool;
-use libra_secure_json_rpc::VMStatusView;
-use libra_secure_storage::{CryptoStorage, KVStorage, Storage};
-use libra_types::{
+use diem_key_manager::diem_interface::DiemInterface;
+use diem_management::storage::to_x25519;
+use diem_network_address::NetworkAddress;
+use diem_operational_tool::test_helper::OperationalTool;
+use diem_secure_json_rpc::VMStatusView;
+use diem_secure_storage::{CryptoStorage, KVStorage, Storage};
+use diem_types::{
     account_address::AccountAddress, block_info::BlockInfo, ledger_info::LedgerInfo,
     transaction::authenticator::AuthenticationKey, waypoint::Waypoint,
 };
@@ -209,13 +209,13 @@ fn test_set_operator_and_add_new_validator() {
         &env,
         write_key_to_file_hex_format,
     );
-    let libra_backend = load_libra_root_storage(&env.validator_swarm, 0);
+    let diem_backend = load_diem_root_storage(&env.validator_swarm, 0);
     let val_human_name = "new_validator";
     let (txn_ctx, _) = op_tool
         .create_validator(
             val_human_name,
             validator_key_path.to_str().unwrap(),
-            &libra_backend,
+            &diem_backend,
             false,
         )
         .unwrap();
@@ -232,7 +232,7 @@ fn test_set_operator_and_add_new_validator() {
         .create_validator_operator(
             op_human_name,
             operator_key_path.to_str().unwrap(),
-            &libra_backend,
+            &diem_backend,
             true,
         )
         .unwrap();
@@ -258,8 +258,8 @@ fn test_set_operator_and_add_new_validator() {
         .unwrap();
 
     // Verify no validator operator
-    let libra_json_rpc = get_json_rpc_libra_interface(&env.validator_swarm, 0);
-    let account_state = libra_json_rpc
+    let diem_json_rpc = get_json_rpc_diem_interface(&env.validator_swarm, 0);
+    let account_state = diem_json_rpc
         .retrieve_account_state(validator_account)
         .unwrap();
     let val_config_resource = account_state
@@ -281,7 +281,7 @@ fn test_set_operator_and_add_new_validator() {
         .unwrap();
 
     // Verify the operator has been set correctly
-    let account_state = libra_json_rpc
+    let account_state = diem_json_rpc
         .retrieve_account_state(validator_account)
         .unwrap();
     let val_config_resource = account_state
@@ -328,7 +328,7 @@ fn test_set_operator_and_add_new_validator() {
 
     // Add the validator to the validator set
     let txn_ctx = op_tool
-        .add_validator(validator_account, &libra_backend, true)
+        .add_validator(validator_account, &diem_backend, true)
         .unwrap();
 
     // Wait for transaction execution
@@ -353,7 +353,7 @@ fn test_set_operator_and_add_new_validator() {
 
     // Try and add the same validator again and watch it fail
     let txn_ctx = op_tool
-        .add_validator(validator_account, &libra_backend, false)
+        .add_validator(validator_account, &diem_backend, false)
         .unwrap();
     assert_ne!(VMStatusView::Executed, txn_ctx.execution_result.unwrap());
 }
@@ -854,8 +854,8 @@ fn create_operator_with_file_writer(file_writer: fn(&Ed25519PublicKey, PathBuf))
     let (operator_key, operator_account) = create_new_test_account();
 
     // Verify the corresponding account doesn't exist on-chain
-    let libra_json_rpc = get_json_rpc_libra_interface(&env.validator_swarm, 0);
-    libra_json_rpc
+    let diem_json_rpc = get_json_rpc_diem_interface(&env.validator_swarm, 0);
+    diem_json_rpc
         .retrieve_account_state(operator_account)
         .unwrap_err();
 
@@ -863,7 +863,7 @@ fn create_operator_with_file_writer(file_writer: fn(&Ed25519PublicKey, PathBuf))
     let key_file_path = write_key_to_file(&operator_key.public_key(), &env, file_writer);
 
     // Create the operator account
-    let backend = load_libra_root_storage(&env.validator_swarm, 0);
+    let backend = load_diem_root_storage(&env.validator_swarm, 0);
     let op_human_name = "new_operator";
     let (txn_ctx, account_address) = op_tool
         .create_validator_operator(
@@ -877,7 +877,7 @@ fn create_operator_with_file_writer(file_writer: fn(&Ed25519PublicKey, PathBuf))
     assert_eq!(VMStatusView::Executed, txn_ctx.execution_result.unwrap());
 
     // Verify the operator account now exists on-chain
-    let account_state = libra_json_rpc
+    let account_state = diem_json_rpc
         .retrieve_account_state(operator_account)
         .unwrap();
     let op_config_resource = account_state
@@ -896,8 +896,8 @@ fn create_validator_with_file_writer(file_writer: fn(&Ed25519PublicKey, PathBuf)
     let (validator_key, validator_account) = create_new_test_account();
 
     // Verify the corresponding account doesn't exist on-chain
-    let libra_json_rpc = get_json_rpc_libra_interface(&env.validator_swarm, 0);
-    libra_json_rpc
+    let diem_json_rpc = get_json_rpc_diem_interface(&env.validator_swarm, 0);
+    diem_json_rpc
         .retrieve_account_state(validator_account)
         .unwrap_err();
 
@@ -905,7 +905,7 @@ fn create_validator_with_file_writer(file_writer: fn(&Ed25519PublicKey, PathBuf)
     let key_file_path = write_key_to_file(&validator_key.public_key(), &env, file_writer);
 
     // Create the validator account
-    let backend = load_libra_root_storage(&env.validator_swarm, 0);
+    let backend = load_diem_root_storage(&env.validator_swarm, 0);
     let val_human_name = "new_validator";
     let (txn_ctx, account_address) = op_tool
         .create_validator(
@@ -931,7 +931,7 @@ fn create_validator_with_file_writer(file_writer: fn(&Ed25519PublicKey, PathBuf)
     assert_eq!(VMStatusView::Executed, txn_ctx.execution_result.unwrap());
 
     // Verify the validator account now exists on-chain
-    let account_state = libra_json_rpc
+    let account_state = diem_json_rpc
         .retrieve_account_state(validator_account)
         .unwrap();
     let val_config_resource = account_state

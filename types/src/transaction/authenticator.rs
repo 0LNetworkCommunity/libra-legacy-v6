@@ -3,14 +3,14 @@
 
 use crate::account_address::AccountAddress;
 use anyhow::{ensure, Error, Result};
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PublicKey, Ed25519Signature},
     hash::CryptoHash,
     multi_ed25519::{MultiEd25519PublicKey, MultiEd25519Signature},
     traits::Signature,
     CryptoMaterialError, HashValue, ValidCryptoMaterial, ValidCryptoMaterialStringExt,
 };
-use libra_crypto_derive::{CryptoHasher, DeserializeKey, SerializeKey};
+use diem_crypto_derive::{CryptoHasher, DeserializeKey, SerializeKey};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use rand::{rngs::OsRng, Rng};

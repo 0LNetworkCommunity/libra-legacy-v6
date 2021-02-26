@@ -26,7 +26,7 @@ impl CreateAccountEvent {
     }
 
     pub fn event_key() -> EventKey {
-        EventKey::new_from_address(&account_config::libra_root_address(), 0)
+        EventKey::new_from_address(&account_config::diem_root_address(), 0)
     }
 }
 

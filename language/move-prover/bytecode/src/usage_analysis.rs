@@ -6,7 +6,7 @@ use crate::{
     function_target_pipeline::{FunctionTargetProcessor, FunctionTargetsHolder},
     stackless_bytecode::{Bytecode, Operation},
 };
-use libra_types::account_config;
+use diem_types::account_config;
 use move_core_types::language_storage::{StructTag, TypeTag};
 use spec_lang::{
     env::{FunctionEnv, GlobalEnv, QualifiedId, StructId},

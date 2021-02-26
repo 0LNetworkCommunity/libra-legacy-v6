@@ -20,15 +20,15 @@ static FRESH_MOVELANG_STDLIB: Lazy<Vec<CompiledModule>> =
     Lazy::new(|| build_stdlib().values().cloned().collect());
 
 // This needs to be a string literal due to restrictions imposed by include_bytes.
-/// The compiled library needs to be included in the Rust binary due to Docker deployment issues.
+/// The compiled diemry needs to be included in the Rust binary due to Docker deployment issues.
 /// This is why we include it here.
 pub const COMPILED_STDLIB_DIR: Dir = include_dir!("stdlib");
 
 pub const ERROR_DESCRIPTIONS: &[u8] =
     std::include_bytes!("../error_descriptions/error_descriptions.errmap");
 
-// The compiled version of the Move standard library.
-// Similarly to genesis, we keep a compiled version of the standard library and scripts around, and
+// The compiled version of the Move standard diemry.
+// Similarly to genesis, we keep a compiled version of the standard diemry and scripts around, and
 // only periodically update these. This has the effect of decoupling the current leading edge of
 // compiler development from the current stdlib used in genesis/scripts.  In particular, changes in
 // the compiler will not affect the script hashes or stdlib until we have tested the changes to our
@@ -66,8 +66,8 @@ pub enum StdLibOptions {
     Fresh,
 }
 
-/// Returns a reference to the standard library. Depending upon the `option` flag passed in
-/// either a compiled version of the standard library will be returned or a new freshly built stdlib
+/// Returns a reference to the standard diemry. Depending upon the `option` flag passed in
+/// either a compiled version of the standard diemry will be returned or a new freshly built stdlib
 /// will be used.
 pub fn stdlib_modules(option: StdLibOptions) -> &'static [CompiledModule] {
     match option {
@@ -76,7 +76,7 @@ pub fn stdlib_modules(option: StdLibOptions) -> &'static [CompiledModule] {
     }
 }
 
-/// Returns a reference to the standard library built by move-lang compiler, compiled with the
+/// Returns a reference to the standard diemry built by move-lang compiler, compiled with the
 /// [default address](account_config::core_code_address).
 ///
 /// The order the modules are presented in is important: later modules depend on earlier ones.

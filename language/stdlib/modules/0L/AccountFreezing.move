@@ -4,7 +4,7 @@ address 0x1 {
 module AccountFreezing {
     use 0x1::Event::{Self, EventHandle};
     use 0x1::Errors;
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::CoreAddresses;
     use 0x1::Roles;
@@ -39,7 +39,7 @@ module AccountFreezing {
     const EFREEZE_EVENTS_HOLDER: u64 = 1;
     /// The `FreezingBit` resource is in an invalid state
     const EFREEZING_BIT: u64 = 2;
-    /// An attempt to freeze the Libra Root account was attempted
+    /// An attempt to freeze the Diem Root account was attempted
     const ECANNOT_FREEZE_LIBRA_ROOT: u64 = 3;
     /// An attempt to freeze the Treasury & Compliance account was attempted
     const ECANNOT_FREEZE_TC: u64 = 4;
@@ -47,8 +47,8 @@ module AccountFreezing {
     const EACCOUNT_FROZEN: u64 = 5;
 
     public fun initialize(lr_account: &signer) {
-        LibraTimestamp::assert_genesis();
-        CoreAddresses::assert_libra_root(lr_account);
+        DiemTimestamp::assert_genesis();
+        CoreAddresses::assert_diem_root(lr_account);
         assert(
             !exists<FreezeEventsHolder>(Signer::address_of(lr_account)),
             Errors::already_published(EFREEZE_EVENTS_HOLDER)
@@ -59,8 +59,8 @@ module AccountFreezing {
         });
     }
     spec fun initialize {
-        include LibraTimestamp::AbortsIfNotGenesis;
-        include CoreAddresses::AbortsIfNotLibraRoot{account: lr_account};
+        include DiemTimestamp::AbortsIfNotGenesis;
+        include CoreAddresses::AbortsIfNotDiemRoot{account: lr_account};
         let addr = Signer::spec_address_of(lr_account);
         aborts_if exists<FreezeEventsHolder>(addr) with Errors::ALREADY_PUBLISHED;
         ensures exists<FreezeEventsHolder>(addr);
@@ -83,9 +83,9 @@ module AccountFreezing {
         frozen_address: address,
     )
     acquires FreezingBit, FreezeEventsHolder {
-        LibraTimestamp::assert_operating();
-        Roles::assert_libra_root(account);
-        // The libra root account and TC cannot be frozen
+        DiemTimestamp::assert_operating();
+        Roles::assert_diem_root(account);
+        // The diem root account and TC cannot be frozen
         assert(frozen_address != CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::invalid_argument(ECANNOT_FREEZE_LIBRA_ROOT));
         assert(frozen_address != CoreAddresses::TREASURY_COMPLIANCE_ADDRESS(), Errors::invalid_argument(ECANNOT_FREEZE_TC));
         assert(exists<FreezingBit>(frozen_address), Errors::not_published(EFREEZING_BIT));
@@ -100,7 +100,7 @@ module AccountFreezing {
         );
     }
     spec fun freeze_account {
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         include Roles::AbortsIfNotTreasuryCompliance;
         aborts_if frozen_address == CoreAddresses::LIBRA_ROOT_ADDRESS() with Errors::INVALID_ARGUMENT;
         aborts_if frozen_address == CoreAddresses::TREASURY_COMPLIANCE_ADDRESS() with Errors::INVALID_ARGUMENT;
@@ -114,8 +114,8 @@ module AccountFreezing {
         unfrozen_address: address,
     )
     acquires FreezingBit, FreezeEventsHolder {
-        LibraTimestamp::assert_operating();
-        Roles::assert_libra_root(account);
+        DiemTimestamp::assert_operating();
+        Roles::assert_diem_root(account);
         assert(exists<FreezingBit>(unfrozen_address), Errors::not_published(EFREEZING_BIT));
         borrow_global_mut<FreezingBit>(unfrozen_address).is_frozen = false;
         let initiator_address = Signer::address_of(account);
@@ -128,7 +128,7 @@ module AccountFreezing {
         );
     }
     spec fun unfreeze_account {
-        include LibraTimestamp::AbortsIfNotOperating;
+        include DiemTimestamp::AbortsIfNotOperating;
         include Roles::AbortsIfNotTreasuryCompliance;
         aborts_if !exists<FreezingBit>(unfrozen_address) with Errors::NOT_PUBLISHED;
         ensures !spec_account_is_frozen(unfrozen_address);
@@ -167,20 +167,20 @@ module AccountFreezing {
     /// # Initialization
     spec module {
         /// `FreezeEventsHolder` always exists after genesis.
-        invariant [global] LibraTimestamp::is_operating() ==>
+        invariant [global] DiemTimestamp::is_operating() ==>
             exists<FreezeEventsHolder>(CoreAddresses::LIBRA_ROOT_ADDRESS());
     }
 
     /// # Access Control
     spec module {
-        /// The account of LibraRoot is not freezable [[F1]][ROLE].
-        /// After genesis, FreezingBit of LibraRoot is always false.
-        invariant [global] LibraTimestamp::is_operating() ==>
+        /// The account of DiemRoot is not freezable [[F1]][ROLE].
+        /// After genesis, FreezingBit of DiemRoot is always false.
+        invariant [global] DiemTimestamp::is_operating() ==>
             spec_account_is_not_frozen(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
         /// The account of TreasuryCompliance is not freezable [[F2]][ROLE].
         /// After genesis, FreezingBit of TreasuryCompliance is always false.
-        invariant [global] LibraTimestamp::is_operating() ==>
+        invariant [global] DiemTimestamp::is_operating() ==>
             spec_account_is_not_frozen(CoreAddresses::TREASURY_COMPLIANCE_ADDRESS());
 
         /// The permission "{Freeze,Unfreeze}Account" is granted to TreasuryCompliance only [[H7]][PERMISSION].

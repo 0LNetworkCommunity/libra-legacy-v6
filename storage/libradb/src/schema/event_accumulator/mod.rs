@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines physical storage schema for the event accumulator.
@@ -13,8 +13,8 @@
 use crate::schema::{ensure_slice_len_eq, EVENT_ACCUMULATOR_CF_NAME};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use libra_crypto::hash::HashValue;
-use libra_types::{proof::position::Position, transaction::Version};
+use diem_crypto::hash::HashValue;
+use diem_types::{proof::position::Position, transaction::Version};
 use schemadb::{
     define_schema,
     schema::{KeyCodec, ValueCodec},

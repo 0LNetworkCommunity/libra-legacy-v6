@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 use vdf::{VDFParams, VDF};
-use libra_types::{
+use diem_types::{
     transaction::authenticator::AuthenticationKey, 
     vm_status::{StatusCode}
 };
@@ -15,7 +15,7 @@ use std::collections::VecDeque;
 use std::convert::TryFrom;
 use vm::errors::{PartialVMError, PartialVMResult};
 // use hex;
-use libra_global_constants::VDF_SECURITY_PARAM;
+use diem_global_constants::VDF_SECURITY_PARAM;
 // const SECURITY_PARAM: u16 = 2048;
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(

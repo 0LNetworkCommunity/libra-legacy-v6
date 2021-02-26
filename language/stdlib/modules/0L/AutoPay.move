@@ -8,12 +8,12 @@ address 0x1{
     use 0x1::Vector;
     use 0x1::Option::{Self,Option};
     use 0x1::Signer;
-    use 0x1::LibraAccount;
+    use 0x1::DiemAccount;
     use 0x1::GAS::GAS;
     use 0x1::FixedPoint32;
     use 0x1::CoreAddresses;
-    use 0x1::LibraConfig;
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemConfig;
+    use 0x1::DiemTimestamp;
     use 0x1::Epoch;
     use 0x1::Globals;
     use 0x1::Errors;
@@ -34,7 +34,7 @@ address 0x1{
     // list as accounts change their Status structs
 
     // It also keeps track of the current epoch for efficiency (to prevent repeated
-    // queries to LibraBlock)
+    // queries to DiemBlock)
     resource struct AccountList {
       accounts: vector<address>,
       current_epoch: u64,
@@ -61,7 +61,7 @@ address 0x1{
       let tick_state = borrow_global_mut<Tick>(Signer::address_of(vm));
 
       if (!tick_state.triggered) {
-        let timer = LibraTimestamp::now_seconds() - Epoch::get_timer_seconds_start(vm);
+        let timer = DiemTimestamp::now_seconds() - Epoch::get_timer_seconds_start(vm);
         let tick_interval = Globals::get_epoch_length();
         if (timer > tick_interval/2) {
           tick_state.triggered = true;
@@ -85,7 +85,7 @@ address 0x1{
     }
 
     // This is the main function for this module. It is called once every epoch
-    // by 0x0::LibraBlock in the block_prologue function.
+    // by 0x0::DiemBlock in the block_prologue function.
     // This function iterates through all autopay-enabled accounts and processes
     // any payments they have due in the current epoch from their list of payments.
     // Note: payments from epoch n are processed at the epoch_length/2
@@ -96,7 +96,7 @@ address 0x1{
       // Only account 0x0 should be triggering this autopayment each block
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 0101064010);
 
-      let epoch = LibraConfig::get_current_epoch();
+      let epoch = DiemConfig::get_current_epoch();
 
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
@@ -109,7 +109,7 @@ address 0x1{
         let account_addr = Vector::borrow<address>(account_list, account_idx);
         
         // Obtain the account balance
-        let account_bal = LibraAccount::balance<GAS>(*account_addr);
+        let account_bal = DiemAccount::balance<GAS>(*account_addr);
         
         // Go through all payments for this account and pay 
         let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
@@ -123,7 +123,7 @@ address 0x1{
             // A payment will happen now
             // Obtain the amount to pay from percentage and balance
             let amount = FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.percentage, 100));
-            LibraAccount::make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+            DiemAccount::make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
           };
           // ToDo: might want to delete inactive instructions to save memory
           payments_idx = payments_idx + 1;
@@ -186,7 +186,7 @@ address 0x1{
       };
       let payments = &mut borrow_global_mut<Data>(addr).payments;
 
-      assert(LibraAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
+      assert(DiemAccount::exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
 
       Vector::push_back<Payment>(payments, Payment {
         // name: name,
@@ -261,7 +261,7 @@ address 0x1{
   }
 }
 
-  //   // This function is only called by LibraBlock anytime the block number is changed
+  //   // This function is only called by DiemBlock anytime the block number is changed
   //   // This architecture avoids a cyclical dependency by using the Observer design pattern
   //   public fun update_block(height: u64) acquires AccountList {
   //     // If 0x0 is updating the block number, update it for the module in AccountList
@@ -281,7 +281,7 @@ address 0x1{
   //   //       payee: payee,
   //   //       end: 5,
   //   //       amount: 1,
-  //   //       currency_code: Libra::currency_code<GAS::T>(),
+  //   //       currency_code: Diem::currency_code<GAS::T>(),
   //   //       from_earmarked_transactions: true,
   //   //       last_block_paid: 0,
   //   //     } 

@@ -3,9 +3,9 @@
 
 use anyhow::Result;
 use handlebars::Handlebars;
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
-    account_config::libra_root_address,
+    account_config::diem_root_address,
     transaction::{Script, Transaction, WriteSetPayload},
 };
 use serde::Serialize;
@@ -48,7 +48,7 @@ pub fn encode_remove_validators_transaction(validators: Vec<AccountAddress>) -> 
 
     Transaction::GenesisTransaction(WriteSetPayload::Script {
         script,
-        execute_as: libra_root_address(),
+        execute_as: diem_root_address(),
     })
 }
 
@@ -67,7 +67,7 @@ pub fn encode_custom_script<T: Serialize>(script_name_in_templates: &str, args: 
 
     Transaction::GenesisTransaction(WriteSetPayload::Script {
         script,
-        execute_as: libra_root_address(),
+        execute_as: diem_root_address(),
     })
 }
 
@@ -81,6 +81,6 @@ pub fn encode_halt_network_transaction() -> Transaction {
             vec![],
             vec![],
         ),
-        execute_as: libra_root_address(),
+        execute_as: diem_root_address(),
     })
 }

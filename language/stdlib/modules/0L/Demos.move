@@ -10,7 +10,7 @@ address 0x1{
         use 0x1::Signer;
         use 0x1::Testnet::is_testnet;
     
-        // In Move the types for data storage are `resource struct`. Here a type State is being defined. Once a type is initialized in the global state, the resource is treated as if in-memory on the heap, the libra database is abstracted. The data is namespaced by an "access path" which includes the module name and user address. No special APIs are necessary for reading from the database, except permissioning each function which accesses a given struct, more below.
+        // In Move the types for data storage are `resource struct`. Here a type State is being defined. Once a type is initialized in the global state, the resource is treated as if in-memory on the heap, the diem database is abstracted. The data is namespaced by an "access path" which includes the module name and user address. No special APIs are necessary for reading from the database, except permissioning each function which accesses a given struct, more below.
         resource struct State{
           hist: vector<u8>,
         }

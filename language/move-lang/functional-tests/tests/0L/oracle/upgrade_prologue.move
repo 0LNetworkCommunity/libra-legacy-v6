@@ -69,7 +69,7 @@ script {
 //! round: 2
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::Upgrade;
   use 0x1::Vector;

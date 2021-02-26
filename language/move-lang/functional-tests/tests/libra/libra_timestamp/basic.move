@@ -20,7 +20,7 @@ script {
 // check: "Keep(ABORTED { code: 1,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::LibraTimestamp;
     fun main(account: &signer) {

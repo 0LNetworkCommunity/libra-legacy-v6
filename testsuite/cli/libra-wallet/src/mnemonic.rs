@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! The following is a slightly modified version of the file with the same name in the
@@ -9,7 +9,7 @@
 use crate::error::WalletError;
 use anyhow::Result;
 #[cfg(test)]
-use libra_temppath::TempPath;
+use diem_temppath::TempPath;
 use mirai_annotations::*;
 #[cfg(test)]
 use rand::rngs::OsRng;
@@ -53,7 +53,7 @@ impl Mnemonic {
         let words: Vec<_> = s.split(' ').collect();
         let len = words.len();
         if len < 12 || len > 24 || len % 3 != 0 {
-            return Err(WalletError::LibraWalletGeneric(
+            return Err(WalletError::DiemWalletGeneric(
                 "Mnemonic must have a word count of the following lengths: 24, 21, 18, 15, 12"
                     .to_string(),
             )
@@ -67,7 +67,7 @@ impl Mnemonic {
                 mnemonic.push(WORDS[idx]);
                 bit_writer.write_u11(idx as u16);
             } else {
-                return Err(WalletError::LibraWalletGeneric(
+                return Err(WalletError::DiemWalletGeneric(
                     "Mnemonic contains an unknown word".to_string(),
                 )
                 .into());
@@ -85,7 +85,7 @@ impl Mnemonic {
         // Checksum validation.
         if *checksum != computed_checksum {
             return Err(
-                WalletError::LibraWalletGeneric("Mnemonic checksum failed".to_string()).into(),
+                WalletError::DiemWalletGeneric("Mnemonic checksum failed".to_string()).into(),
             );
         }
         Ok(Mnemonic(mnemonic))
@@ -95,7 +95,7 @@ impl Mnemonic {
     pub fn mnemonic(entropy: &[u8]) -> Result<Mnemonic> {
         let len = entropy.len();
         if len < 16 || len > 32 || len % 4 != 0 {
-            return Err(WalletError::LibraWalletGeneric(
+            return Err(WalletError::DiemWalletGeneric(
                 "Entropy data for mnemonic must have one of the following byte lengths: \
                  32, 28, 24, 20, 16"
                     .to_string(),
@@ -123,7 +123,7 @@ impl Mnemonic {
     /// Write mnemonic to output_file_path.
     pub fn write(&self, output_file_path: &Path) -> Result<()> {
         if output_file_path.exists() && !output_file_path.is_file() {
-            return Err(WalletError::LibraWalletGeneric(format!(
+            return Err(WalletError::DiemWalletGeneric(format!(
                 "Output file {:?} for mnemonic backup is reserved",
                 output_file_path.to_str(),
             ))
@@ -140,7 +140,7 @@ impl Mnemonic {
             let mnemonic_string: String = fs::read_to_string(input_file_path)?;
             return Self::from(&mnemonic_string[..]);
         }
-        Err(WalletError::LibraWalletGeneric(
+        Err(WalletError::DiemWalletGeneric(
             "Input file for mnemonic backup does not exist".to_string(),
         )
         .into())
@@ -348,7 +348,7 @@ const WORDS: [&str; 2048] = [
     "lamp", "language", "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law",
     "lawn", "lawsuit", "layer", "lazy", "leader", "leaf", "learn", "leave", "lecture", "left",
     "leg", "legal", "legend", "leisure", "lemon", "lend", "length", "lens", "leopard", "lesson",
-    "letter", "level", "liar", "liberty", "library", "license", "life", "lift", "light", "like",
+    "letter", "level", "liar", "liberty", "diemry", "license", "life", "lift", "light", "like",
     "limb", "limit", "link", "lion", "liquid", "list", "little", "live", "lizard", "load", "loan",
     "lobster", "local", "lock", "logic", "lonely", "long", "loop", "lottery", "loud", "lounge",
     "love", "loyal", "lucky", "luggage", "lumber", "lunar", "lunch", "luxury", "lyrics", "machine",

@@ -7,7 +7,7 @@ use language_e2e_tests::{
     gas_costs::TXN_RESERVED,
     transaction_status_eq,
 };
-use libra_types::{
+use diem_types::{
     account_config,
     transaction::TransactionStatus,
     vm_status::{known_locations, KeptVMStatus},

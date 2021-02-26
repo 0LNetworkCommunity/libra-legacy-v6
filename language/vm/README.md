@@ -1,7 +1,7 @@
 ---
 id: vm
 title: Virtual Machine
-custom_edit_url: https://github.com/libra/libra/edit/master/language/vm/README.md
+custom_edit_url: https://github.com/diem/diem/edit/master/language/vm/README.md
 ---
 
 
@@ -14,7 +14,7 @@ metering logical abstraction is also defined there.
 
 The MoveVM is a stack machine with a static type system. The MoveVM honors
 the specification of the Move language through a mix of file format,
-verification (for reference [bytcode verifier README](https://github.com/libra/libra/blob/master/language/bytecode-verifier/README.md))
+verification (for reference [bytcode verifier README](https://github.com/diem/diem/blob/master/language/bytecode-verifier/README.md))
 and runtime constraints. The structure of the file format allows the
 definition of modules, types (resources and unrestricted types), and
 functions. Code is expressed via bytecode instructions, which may have
@@ -29,7 +29,7 @@ are private, and types carry no functions or methods.
 The MoveVM core crate provides the definition of the file format and all
 utilities related to the file format:
 * A simple Rust abstraction over the file format
-  (`libra/language/vm/src/file_format.rs`) and the bytecodes. These Rust
+  (`diem/language/vm/src/file_format.rs`) and the bytecodes. These Rust
   structures are widely used in the code base.
 * Serialization and deserialization of the file format. These define the
   on-chain binary representation of the code.
@@ -37,10 +37,10 @@ utilities related to the file format:
 * A proptest infrastructure for the file format.
 
 The `CompiledModule` and `CompiledScript` definitions in
-`libra/language/vm/src/file_format.rs` are the top-level structs for a Move
+`diem/language/vm/src/file_format.rs` are the top-level structs for a Move
 *Module* or *Transaction Script*, respectively. These structs provide a
 simple abstraction over the file format. Additionally, a set of
-[*Views*](https://github.com/libra/libra/blob/master/language/vm/src/views.rs) are defined to easily navigate and inspect
+[*Views*](https://github.com/diem/diem/blob/master/language/vm/src/views.rs) are defined to easily navigate and inspect
 `CompiledModule`s and `CompiledScript`s.
 
 ## Folder Structure

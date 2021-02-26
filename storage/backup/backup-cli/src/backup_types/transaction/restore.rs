@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -19,13 +19,13 @@ use crate::{
 use anyhow::{anyhow, bail, ensure, Result};
 use executor::Executor;
 use executor_types::TransactionReplayer;
-use libra_logger::prelude::*;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_types::{
     ledger_info::LedgerInfoWithSignatures,
     proof::{TransactionAccumulatorRangeProof, TransactionListProof},
     transaction::{Transaction, TransactionInfo, TransactionListWithProof, Version},
 };
-use libra_vm::LibraVM;
+use diem_vm::DiemVM;
 use std::{
     cmp::{max, min},
     sync::Arc,
@@ -65,7 +65,7 @@ pub struct TransactionRestoreController {
 #[derive(Default)]
 struct State {
     frozen_subtree_confirmed: bool,
-    transaction_replayer: Option<Executor<LibraVM>>,
+    transaction_replayer: Option<Executor<DiemVM>>,
 }
 
 struct LoadedChunk {
@@ -273,11 +273,11 @@ impl TransactionRestoreController {
         Ok(())
     }
 
-    fn transaction_replayer(&mut self, first_version: Version) -> Result<&mut Executor<LibraVM>> {
+    fn transaction_replayer(&mut self, first_version: Version) -> Result<&mut Executor<DiemVM>> {
         if self.state.transaction_replayer.is_none() {
             if let RestoreRunMode::Restore { restore_handler } = self.run_mode.as_ref() {
                 let replayer = Executor::new_on_unbootstrapped_db(
-                    DbReaderWriter::from_arc(Arc::clone(&restore_handler.libradb)),
+                    DbReaderWriter::from_arc(Arc::clone(&restore_handler.diemdb)),
                     restore_handler.get_tree_state(first_version)?,
                 );
                 self.state.transaction_replayer = Some(replayer);

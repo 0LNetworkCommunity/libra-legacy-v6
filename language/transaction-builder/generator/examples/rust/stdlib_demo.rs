@@ -1,9 +1,9 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_canonical_serialization as lcs;
-use libra_stdlib::{encode_peer_to_peer_with_metadata_script, ScriptCall};
-use libra_types::{AccountAddress, Identifier, TypeTag, StructTag};
+use diem_canonical_serialization as lcs;
+use diem_stdlib::{encode_peer_to_peer_with_metadata_script, ScriptCall};
+use diem_types::{AccountAddress, Identifier, TypeTag, StructTag};
 use serde_bytes::ByteBuf as Bytes;
 
 fn main() {

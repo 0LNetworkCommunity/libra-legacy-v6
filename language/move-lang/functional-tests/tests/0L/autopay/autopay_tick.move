@@ -12,7 +12,7 @@
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraTimestamp;
   use 0x1::AutoPay;
@@ -35,7 +35,7 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraTimestamp;
   use 0x1::AutoPay;
@@ -61,7 +61,7 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraTimestamp;
   use 0x1::AutoPay;
@@ -84,7 +84,7 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraTimestamp;
   use 0x1::AutoPay;
@@ -107,7 +107,7 @@ script {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
   use 0x1::LibraTimestamp;
   use 0x1::AutoPay;

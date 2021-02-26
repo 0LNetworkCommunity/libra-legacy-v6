@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{ensure, Error, Result};
-use libra_crypto::{
+use diem_crypto::{
     hash::{CryptoHash, CryptoHasher},
     x25519, HashValue,
 };
-use libra_crypto_derive::CryptoHasher;
+use diem_crypto_derive::CryptoHasher;
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use rand::{rngs::OsRng, Rng};
@@ -83,7 +83,7 @@ impl AccountAddress {
     // from consensus key which is of type Ed25519PublicKey. Since AccountAddress does
     // not mean anything in a setting without remote authentication, we use the network
     // public key to generate a peer_id for the peer.
-    // See this issue for potential improvements: https://github.com/libra/libra/issues/3960
+    // See this issue for potential improvements: https://github.com/diem/diem/issues/3960
     pub fn from_identity_public_key(identity_public_key: x25519::PublicKey) -> Self {
         let mut array = [0u8; Self::LENGTH];
         let pubkey_slice = identity_public_key.as_slice();

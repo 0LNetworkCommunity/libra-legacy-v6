@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use std::{cell::RefCell, cmp::min, os::raw::c_char};
@@ -36,6 +36,6 @@ pub fn clear_error() {
 /// thread that called the API function which got an error. The returned
 /// string pointer is only valid until the next API call. Callers should not
 /// store it or use it past then.
-pub unsafe extern "C" fn libra_strerror() -> *const c_char {
+pub unsafe extern "C" fn diem_strerror() -> *const c_char {
     LAST_ERROR.with(|prev| prev.borrow().as_ptr().cast())
 }

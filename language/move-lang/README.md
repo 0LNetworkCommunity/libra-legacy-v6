@@ -1,7 +1,7 @@
 ---
 id: move-lang
 title: Move Source Language
-custom_edit_url: https://github.com/libra/libra/edit/master/language/move-lang/README.md
+custom_edit_url: https://github.com/diem/diem/edit/master/language/move-lang/README.md
 ---
 
 ## Code under this subtree is experimental. It is out of scope for the Libra Bug Bounty until it is no longer marked experimental.
@@ -76,7 +76,7 @@ FLAGS:
 
 OPTIONS:
     -s, --sender <ADDRESS>                           The sender address for modules and scripts
-    -d, --dependency <PATH_TO_DEPENDENCY_FILE>...    The library files needed as dependencies
+    -d, --dependency <PATH_TO_DEPENDENCY_FILE>...    The diemry files needed as dependencies
 
 ARGS:
     <PATH_TO_SOURCE_FILE>...    The source files to check
@@ -99,7 +99,7 @@ FLAGS:
 
 OPTIONS:
     -s, --sender <ADDRESS>                           The sender address for modules and scripts
-    -d, --dependency <PATH_TO_DEPENDENCY_FILE>...    The library files needed as dependencies
+    -d, --dependency <PATH_TO_DEPENDENCY_FILE>...    The diemry files needed as dependencies
     -o, --out-dir <PATH_TO_OUTPUT_DIRECTORY>         The Move bytecode output directory [default: move_build_output]
 
 ARGS:
@@ -146,7 +146,7 @@ move-lang                                     # Main crate
 │   │   ├── ast.rs                            # The target AST for the CFG-ification
 │   │   ├── mod.rs                            # Module for CFG IR step
 │   │   ├── translate.rs                      # High Level IR ~> CFG IR
-│   │   ├── absint.rs                         # Abstract Interpretation library for control flow sensitive checks
+│   │   ├── absint.rs                         # Abstract Interpretation diemry for control flow sensitive checks
 │   │   ├── cfg.rs                            # Defines the CFG itself (where the AST just labels the blocks)
 │   │   ├── locals                            # Checks proper local usage (no use after move, no resources left in locals)
 │   │   │   ├── mod.rs                        # The module for the check. Includes the transfer functions
@@ -177,7 +177,7 @@ move-lang                                     # Main crate
 │       ├── move-check.rs                     # Defines the move-check command line tool
 │       └── move-build.rs                     # Defines the move-build command line tool
 |
-└── stdlib                                    # Move standard library
+└── stdlib                                    # Move standard diemry
     ├── modules                               # Core modules
     └── transaction_scripts                   # Core transaction scripts
 ```

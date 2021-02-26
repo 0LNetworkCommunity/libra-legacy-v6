@@ -28,7 +28,7 @@ pub const STAGED_EXTENSION: &str = "mv";
 // genesis, and everywhere else across the code-base unless otherwise specified.
 fn main() {
     let cli = App::new("stdlib")
-        .name("Move standard library")
+        .name("Move standard diemry")
         .author("The Libra Core Contributors")
         .arg(
             Arg::with_name("no-doc")
@@ -54,7 +54,7 @@ fn main() {
         .arg(
             Arg::with_name("no-check-linking-layout-compatibility")
                 .long("no-check-linking-layout-compatiblity")
-                .help("do not print information about linking and layout compatibility between the old and new standard library"),
+                .help("do not print information about linking and layout compatibility between the old and new standard diemry"),
         )
         //////// 0L ////////
         // for upgrade oracle

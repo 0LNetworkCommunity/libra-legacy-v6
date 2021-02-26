@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -12,9 +12,9 @@ use crate::{
 };
 use anyhow::{anyhow, ensure, Result};
 use itertools::zip_eq;
-use libra_crypto::hash::HashValue;
-use libra_jellyfish_merkle::iterator::JellyfishMerkleIterator;
-use libra_types::{
+use diem_crypto::hash::HashValue;
+use diem_jellyfish_merkle::iterator::JellyfishMerkleIterator;
+use diem_types::{
     account_state_blob::AccountStateBlob,
     ledger_info::LedgerInfoWithSignatures,
     proof::{SparseMerkleRangeProof, TransactionAccumulatorRangeProof, TransactionInfoWithProof},
@@ -23,7 +23,7 @@ use libra_types::{
 use serde::{export::Formatter, Deserialize, Serialize};
 use std::{fmt::Display, sync::Arc};
 
-/// `BackupHandler` provides functionalities for LibraDB data backup.
+/// `BackupHandler` provides functionalities for DiemDB data backup.
 #[derive(Clone)]
 pub struct BackupHandler {
     ledger_store: Arc<LedgerStore>,

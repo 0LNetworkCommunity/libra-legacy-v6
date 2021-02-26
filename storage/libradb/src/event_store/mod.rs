@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This file defines event store APIs that are related to the event accumulator and events
 //! themselves.
 #![allow(unused)]
 
-use super::LibraDB;
+use super::DiemDB;
 use crate::{
     change_set::ChangeSet,
-    errors::LibraDbError,
+    errors::DiemDbError,
     ledger_counters::LedgerCounter,
     schema::{
         event::EventSchema, event_accumulator::EventAccumulatorSchema,
@@ -17,11 +17,11 @@ use crate::{
 };
 use accumulator::{HashReader, MerkleAccumulator};
 use anyhow::{ensure, format_err, Result};
-use libra_crypto::{
+use diem_crypto::{
     hash::{CryptoHash, EventAccumulatorHasher},
     HashValue,
 };
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     contract_event::ContractEvent,
     event::EventKey,
@@ -70,7 +70,7 @@ impl EventStore {
         let event = self
             .db
             .get::<EventSchema>(&(version, index))?
-            .ok_or_else(|| LibraDbError::NotFound(format!("Event {} of Txn {}", index, version)))?;
+            .ok_or_else(|| DiemDbError::NotFound(format!("Event {} of Txn {}", index, version)))?;
 
         // Get the number of events in total for the transaction at `version`.
         let mut iter = self.db.iter::<EventSchema>(ReadOptions::default())?;

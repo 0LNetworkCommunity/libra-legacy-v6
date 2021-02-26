@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{prelude::*, LintContext};
@@ -226,7 +226,7 @@ impl<'cfg> LintEngine<'cfg> {
             .split(|b| b == &0)
             .filter_map(|s| {
                 // TODO: make global exclusions configurable.
-                if !s.is_empty() && !s.starts_with(b"testsuite/libra-fuzzer/artifacts/") {
+                if !s.is_empty() && !s.starts_with(b"testsuite/diem-fuzzer/artifacts/") {
                     // `OsStr::from_bytes` only works on Unix, since "OS strings" on Windows are
                     // actually UTF-16ish. Would be cool to get it working on Windows at some point
                     // too, but it needs to be done with some care.

@@ -6,8 +6,8 @@ use language_e2e_tests::{
     common_transactions::peer_to_peer_txn,
     executor::FakeExecutor,
 };
-use libra_types::vm_status::{KeptVMStatus, StatusCode, VMStatus};
-use libra_vm::{data_cache::StateViewCache, transaction_metadata::TransactionMetadata, LibraVM};
+use diem_types::vm_status::{KeptVMStatus, StatusCode, VMStatus};
+use diem_vm::{data_cache::StateViewCache, transaction_metadata::TransactionMetadata, LibraVM};
 use move_core_types::gas_schedule::{GasAlgebra, GasPrice, GasUnits};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::zero_cost_schedule;
@@ -19,7 +19,7 @@ fn failed_transaction_cleanup_test() {
     fake_executor.add_account_data(&sender);
 
     let log_context = NoContextLog::new();
-    let libra_vm = LibraVM::new(fake_executor.get_state_view());
+    let diem_vm = LibraVM::new(fake_executor.get_state_view());
     let data_cache = StateViewCache::new(fake_executor.get_state_view());
 
     let mut txn_data = TransactionMetadata::default();
@@ -32,7 +32,7 @@ fn failed_transaction_cleanup_test() {
     let gas_schedule = zero_cost_schedule();
 
     // TYPE_MISMATCH should be kept and charged.
-    let out1 = libra_vm.failed_transaction_cleanup(
+    let out1 = diem_vm.failed_transaction_cleanup(
         VMStatus::Error(StatusCode::TYPE_MISMATCH),
         &gas_schedule,
         gas_left,
@@ -51,7 +51,7 @@ fn failed_transaction_cleanup_test() {
     );
 
     // Invariant violations should be discarded and not charged.
-    let out2 = libra_vm.failed_transaction_cleanup(
+    let out2 = diem_vm.failed_transaction_cleanup(
         VMStatus::Error(StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR),
         &gas_schedule,
         gas_left,

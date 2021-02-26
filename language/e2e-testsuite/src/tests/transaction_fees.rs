@@ -3,8 +3,8 @@
 
 use compiled_stdlib::transaction_scripts::StdlibScript;
 use language_e2e_tests::{account::Account, executor::FakeExecutor};
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_types::{
     account_config::{self, BurnEvent, COIN1_NAME},
     transaction::{authenticator::AuthenticationKey, Script, TransactionArgument},
     vm_status::KeptVMStatus,

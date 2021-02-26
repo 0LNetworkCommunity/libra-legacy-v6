@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module provides a compatibility shim between traits in the `futures` and `tokio` crate.
@@ -10,7 +10,7 @@ use std::{
 };
 
 /// `IoCompat` provides a compatibility shim between the `AsyncRead`/`AsyncWrite` traits provided by
-/// the `futures` library and those provided by the `tokio` library since they are different and
+/// the `futures` diemry and those provided by the `tokio` diemry since they are different and
 /// incompatible with one another.
 #[pin_project]
 #[derive(Copy, Clone, Debug)]

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! This module defines physical storage schema for signed transactions.
@@ -15,7 +15,7 @@
 use crate::schema::{ensure_slice_len_eq, TRANSACTION_CF_NAME};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt};
-use libra_types::transaction::{Transaction, Version};
+use diem_types::transaction::{Transaction, Version};
 use schemadb::{
     define_schema,
     schema::{KeyCodec, ValueCodec},

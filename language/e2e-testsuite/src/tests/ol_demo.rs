@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use language_e2e_tests::{account::AccountData, executor::FakeExecutor};
-use libra_types::{transaction::TransactionStatus, vm_status::KeptVMStatus};
+use diem_types::{transaction::TransactionStatus, vm_status::KeptVMStatus};
 use transaction_builder;
 
 

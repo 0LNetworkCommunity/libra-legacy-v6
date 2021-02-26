@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use crate::LibraDB;
-use libra_temppath::TempPath;
+use crate::DiemDB;
+use diem_temppath::TempPath;
 use proptest::{collection::vec, prelude::*};
 
 fn verify(
@@ -53,7 +53,7 @@ proptest! {
         batch2 in vec(any::<TransactionInfo>(), 1..100),
     ) {
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
         let store = &db.ledger_store;
 
         // insert two batches of transaction infos
@@ -84,7 +84,7 @@ proptest! {
                 })
     ) {
         let tmp_dir = TempPath::new();
-        let db = LibraDB::new_for_test(&tmp_dir);
+        let db = DiemDB::new_for_test(&tmp_dir);
         let store = &db.ledger_store;
         save(store, 0, &infos);
 

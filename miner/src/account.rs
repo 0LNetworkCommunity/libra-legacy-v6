@@ -1,12 +1,12 @@
-//! Formatters for libra account creation
+//! Formatters for diem account creation
 use crate::block::Block;
-use libra_crypto::x25519::PublicKey;
-use libra_types::account_address::AccountAddress;
+use diem_crypto::x25519::PublicKey;
+use diem_types::account_address::AccountAddress;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
-use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
-use libra_genesis_tool::keyscheme::KeyScheme;
+use diem_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
+use diem_genesis_tool::keyscheme::KeyScheme;
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -185,7 +185,7 @@ fn test_parse_init_file() {
 
 #[test]
 fn val_config_ip_address() {
-    use libra_network_address::encrypted::EncNetworkAddress;
+    use diem_network_address::encrypted::EncNetworkAddress;
 
     let block =  Block {
         height: 0u64,

@@ -1,12 +1,12 @@
 ---
 id: key_manager
 title: Key Manager
-custom_edit_url: https://github.com/libra/libra/edit/master/secure/key-manager/README.md
+custom_edit_url: https://github.com/diem/diem/edit/master/secure/key-manager/README.md
 ---
 # Key Manager
 
 The Key Manager is the primary service responsible for managing and rotating cryptographic
-keys used by validator nodes and validator full nodes in the Libra payment network.
+keys used by validator nodes and validator full nodes in the Diem payment network.
 
 ## Overview
 
@@ -18,8 +18,8 @@ structures and error types, refer to the key manager specification:
 
 This crate defines the key manager implementation. Internally, the crate includes:
  - `KeyManager`: the key manager struct containing the logic for the key manager component.
- - `LibraInterface`: the interface the key manager uses to communicate with the Libra blockchain.
- - `JsonRpcLibraInterface`: the `LibraInterface` implementation using the JSON RPC endpoints.
+ - `DiemInterface`: the interface the key manager uses to communicate with the Diem blockchain.
+ - `JsonRpcDiemInterface`: the `DiemInterface` implementation using the JSON RPC endpoints.
 
 
 ## How is this module organized?

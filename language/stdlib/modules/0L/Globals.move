@@ -11,7 +11,7 @@ module Globals {
     use 0x1::Vector;
     use 0x1::Testnet;
     use 0x1::StagingNet;
-    use 0x1::Libra;
+    use 0x1::Diem;
     use 0x1::GAS;
     // Some constants need to changed based on environment; dev, testing, prod.
     struct GlobalConstants {
@@ -26,10 +26,10 @@ module Globals {
       epoch_mining_threshold: u64,
     }
 
-    // // Some global state needs to be accesible to every module. Using Librablock causes
+    // // Some global state needs to be accesible to every module. Using Diemblock causes
     // // cyclic dependency issues.
     // resource struct BlockMetadataGlobal {
-    //   // TODO: This is duplicated with LibraBlockGlobal, but that one causes a cyclic dependency issue because of stats.
+    //   // TODO: This is duplicated with DiemBlockGlobal, but that one causes a cyclic dependency issue because of stats.
     //   height: u64,
     //   round: u64,
     //   previous_block_votes: vector<address>,
@@ -116,8 +116,8 @@ module Globals {
 
     fun get_constants(): GlobalConstants {
       
-      let coin_scale = 1000000; //Libra::scaling_factor<GAS::T>();
-      assert(coin_scale == Libra::scaling_factor<GAS::GAS>(), 07010110001);
+      let coin_scale = 1000000; //Diem::scaling_factor<GAS::T>();
+      assert(coin_scale == Diem::scaling_factor<GAS::GAS>(), 07010110001);
 
       if (Testnet::is_testnet()) {
         return GlobalConstants {
@@ -147,7 +147,7 @@ module Globals {
           return GlobalConstants {
           epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 blocks/sec
           max_validator_per_epoch: 300, // max expected for BFT limits.
-          // See LibraVMConfig for gas constants:
+          // See DiemVMConfig for gas constants:
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs
           // target transaction per sec max gas: 20

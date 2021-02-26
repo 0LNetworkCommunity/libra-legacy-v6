@@ -7,7 +7,7 @@
 //! account: validator, 1000000, 0, validator
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 // Change option to CustomModule
 script {
 use 0x1::LibraTransactionPublishingOption;
@@ -23,7 +23,7 @@ fun main(config: &signer) {
 
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 address 0x1 {
 module COIN {
     use 0x1::FixedPoint32;
@@ -51,7 +51,7 @@ module COIN {
 //! block-time: 4
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: blessed
 script {
 use 0x1::TransactionFee;

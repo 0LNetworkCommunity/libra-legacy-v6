@@ -3,10 +3,10 @@ id: my-first-transaction
 title: My First Transaction
 ---
 
-This document will guide you through executing your first transaction on the Libra Blockchain. Before you follow the steps to execute your first transaction, we recommend that you read the following documents to familiarize yourself with the key aspects of the Libra ecosystem and the Libra protocol:
+This document will guide you through executing your first transaction on the Diem Blockchain. Before you follow the steps to execute your first transaction, we recommend that you read the following documents to familiarize yourself with the key aspects of the Diem ecosystem and the Diem protocol:
 
-* [Welcome](welcome-to-libra.md)
-* [The Libra protocol: Key Concepts](libra-protocol.md)
+* [Welcome](welcome-to-diem.md)
+* [The Diem protocol: Key Concepts](diem-protocol.md)
 
 We provide a command line interface (CLI) client to interact with the blockchain.
 
@@ -22,22 +22,22 @@ All commands in this document assume that:
 
 ## Steps to Submit a Transaction
 
-In this example, we'll download the necessary Libra components and execute a transaction between two users: Alice and Bob.
+In this example, we'll download the necessary Diem components and execute a transaction between two users: Alice and Bob.
 
-Perform the following steps to submit a transaction to a validator node on the Libra testnet:
+Perform the following steps to submit a transaction to a validator node on the Diem testnet:
 
-1. [Clone and build Libra Core](#clone-and-build-libra-core).
-2. [Build the Libra CLI client and connect to the testnet](#build-libra-cli-client-and-connect-to-the-testnet).
+1. [Clone and build Diem Core](#clone-and-build-diem-core).
+2. [Build the Diem CLI client and connect to the testnet](#build-diem-cli-client-and-connect-to-the-testnet).
 3. [Create Alice’s and Bob’s accounts](#create-alice-s-and-bob-s-account).
-4. [Mint coins and add to Alice’s and Bob’s accounts](#add-libra-coins-to-alice-s-and-bob-s-accounts).
+4. [Mint coins and add to Alice’s and Bob’s accounts](#add-diem-coins-to-alice-s-and-bob-s-accounts).
 5. [Submit a transaction](#submit-a-transaction).
 
-## Clone and Build Libra Core
+## Clone and Build Diem Core
 
-### Clone the Libra Core Repository
+### Clone the Diem Core Repository
 
 ```bash
-git clone https://github.com/libra/libra.git && cd libra
+git clone https://github.com/diem/diem.git && cd diem
 ```
 ### Checkout the `testnet` Branch
 
@@ -47,14 +47,14 @@ git checkout testnet
 
 ### Install Dependencies
 
-To setup Libra Core, change to the `libra` directory and run the setup script to install the dependencies, as shown below:
+To setup Diem Core, change to the `diem` directory and run the setup script to install the dependencies, as shown below:
 
 ```
 ./scripts/dev_setup.sh
 ```
 The setup script performs these actions:
 
-* Installs rustup &mdash; rustup is an installer for the Rust programming language, which Libra Core is implemented in.
+* Installs rustup &mdash; rustup is an installer for the Rust programming language, which Diem Core is implemented in.
 * Installs the required versions of the rust-toolchain.
 * Installs CMake &mdash; to manage the build process.
 * Installs protoc &mdash; a compiler for protocol buffers.
@@ -62,9 +62,9 @@ The setup script performs these actions:
 
 If your setup fails, see [Troubleshooting](#setup)
 
-## Build Libra CLI Client and Connect to the Testnet
+## Build Diem CLI Client and Connect to the Testnet
 
-To connect to a validator node running on the Libra testnet, run the client as shown below.
+To connect to a validator node running on the Diem testnet, run the client as shown below.
 
 ```bash
 ./scripts/cli/start_cli_testnet.sh
@@ -84,7 +84,7 @@ account | a
 query | q
   Query operations
 transfer | transferb | t | tb
-  <sender_account_address>|<sender_account_ref_id> <receiver_account_address>|<receiver_account_ref_id> <number_of_coins> <currency_code> [gas_unit_price_in_micro_libras (default=0)] [max_gas_amount_in_micro_libras (default 400_000)] Suffix 'b' is for blocking.
+  <sender_account_address>|<sender_account_ref_id> <receiver_account_address>|<receiver_account_ref_id> <number_of_coins> <currency_code> [gas_unit_price_in_micro_diems (default=0)] [max_gas_amount_in_micro_diems (default 400_000)] Suffix 'b' is for blocking.
   Transfer coins from one account to another.
 info | i
   Print cli config and client internal information
@@ -98,7 +98,7 @@ quit | q!
 
 Please, input commands:
 
-libra%
+diem%
 ```
 
 If you have problems building the client and connecting to the testnet, refer to [Troubleshooting](#client-build-and-run).
@@ -115,10 +115,10 @@ Once your client is connected to the testnet, you can run CLI commands to create
 
 ### Step 1: Check If the CLI Client Is Running on Your System
 
-A **libra%** command line prompt indicates that your Libra CLI client is running. To see the help information for the `account` command enter “account” as shown below:
+A **diem%** command line prompt indicates that your Diem CLI client is running. To see the help information for the `account` command enter “account” as shown below:
 
 ```plaintext
-libra% account
+diem% account
 usage: account <arg>
 
 Use the following args for this command:
@@ -128,9 +128,9 @@ create | c
 list | la
   Print all accounts that were created or loaded
 recover | r <file path>
-  Recover Libra wallet from the file path
+  Recover Diem wallet from the file path
 write | w <file name>
-  Save Libra wallet mnemonic recovery seed to disk
+  Save Diem wallet mnemonic recovery seed to disk
 mint | mintb | m | mb <receiver_account_ref_id>|<receiver_account_address> <number_of_coins> <currency_code> [use_base_units (default=false)]
   Send currency of the given type from the faucet address to the given recipient address. Creates an account at the recipient address if one does not already exist. Suffix 'b' is for blocking
 addc | addcb | ac | acb <account_address> <currency_code>
@@ -144,7 +144,7 @@ Note that creating an account using the CLI does not update the blockchain, it j
 
 To create Alice’s account, enter this command:
 
-`libra% account create`
+`diem% account create`
 
 Sample output on success:
 
@@ -159,7 +159,7 @@ Created/retrieved local account #0 address cc2219df031a68115fad9aee98e051e9
 
 To create Bob’s account, repeat the account creation command:
 
-`libra% account create`
+`diem% account create`
 
 Sample output on success:
 
@@ -175,7 +175,7 @@ For more details on index refer to [Create Alice’s Account.](#step-2-create-al
 
 To list the accounts you have created, enter this command:
 
-`libra% account list`
+`diem% account list`
 
 Sample output on success:
 ```plaintext
@@ -184,19 +184,19 @@ User account index: 1, address: 33138303ce638c8fa469435250f5f1c3, sequence numbe
 ```
 The sequence number for an account indicates the number of transactions that have been sent from that account. It is incremented every time a transaction sent from that account is executed and stored in the blockchain. To know more, refer to [sequence number](reference/glossary.md#sequence-number).
 
-## Add Libra Coins to Alice’s and Bob’s Accounts
+## Add Diem Coins to Alice’s and Bob’s Accounts
 
-Minting and adding coins to accounts on testnet is done via Faucet. Faucet is a service that runs along with the testnet. This service only exists to facilitate minting coins for testnet and will not exist for [mainnet](reference/glossary.md#mainnet). It creates Libra with no real-world value. Assuming you have [created Alice’s and Bob’s account](#create-alice-s-and-bob-s-account), with index 0 and index 1 respectively, you can follow the steps below to add Libra to both accounts.
+Minting and adding coins to accounts on testnet is done via Faucet. Faucet is a service that runs along with the testnet. This service only exists to facilitate minting coins for testnet and will not exist for [mainnet](reference/glossary.md#mainnet). It creates Diem with no real-world value. Assuming you have [created Alice’s and Bob’s account](#create-alice-s-and-bob-s-account), with index 0 and index 1 respectively, you can follow the steps below to add Diem to both accounts.
 
 ### Step 1: Add 110 LBR to Alice’s Account
 
-To mint Libra and add to Alice’s account, enter this command:
+To mint Diem and add to Alice’s account, enter this command:
 
-`libra% account mint 0 110 LBR`
+`diem% account mint 0 110 LBR`
 
 * 0 is the index of Alice’s account.
-* 110  is the amount of Libra to be added to Alice’s account.
-* LBR is the currency code for Libra
+* 110  is the amount of Diem to be added to Alice’s account.
+* LBR is the currency code for Diem
 
 A successful account mint command will also create Alice’s account on the blockchain.
 
@@ -217,13 +217,13 @@ If your account mint command did not submit your request successfully, refer to
 
 ### Step 2: Add 52 LBR to Bob’s Account
 
-To mint Libra and add to Bob’s account, enter this command:
+To mint Diem and add to Bob’s account, enter this command:
 
-`libra% account mint 1 52 LBR`
+`diem% account mint 1 52 LBR`
 
 * 1 is the index of Bob’s account.
-* 52 is the amount of Libra to be added to Bob’s account.
-* LBR is the currency code for Libra
+* 52 is the amount of Diem to be added to Bob’s account.
+* LBR is the currency code for Diem
 * A successful account mint command will also create Bob’s account on the blockchain. Another way to create Bob’s account on the blockchain is to transfer money from Alice’s account to Bob’s account.
 
 Sample output on success:
@@ -243,7 +243,7 @@ If your account mint command did not submit your request successfully, refer to
 
 To check the balance in Alice’s account, enter this command:
 
-`libra% query balance 0`
+`diem% query balance 0`
 
 Sample output on success:
 
@@ -251,7 +251,7 @@ Sample output on success:
 
 To check the balance in Bob’s account, enter this command:
 
-`libra% query balance 1`
+`diem% query balance 1`
 
 Sample output on success:
 
@@ -259,15 +259,15 @@ Sample output on success:
 
 ## Submit a Transaction
 
-Before we submit a transaction to transfer Libra from Alice’s account to Bob’s account, we will query the sequence number of each account. This will help us understand how executing a transaction changes the sequence number of each account.
+Before we submit a transaction to transfer Diem from Alice’s account to Bob’s account, we will query the sequence number of each account. This will help us understand how executing a transaction changes the sequence number of each account.
 
 ### Query the Accounts’ Sequence Numbers
 
 ```plaintext
-libra% query sequence 0
+diem% query sequence 0
 >> Getting current sequence number
 Sequence number is: 0
-libra% query sequence 1
+diem% query sequence 1
 >> Getting current sequence number
 Sequence number is: 0
 ```
@@ -278,12 +278,12 @@ In `query sequence 0`, 0 is the index of Alice’s account. A sequence number of
 
 To submit a transaction to transfer 10 LBR from Alice’s account to Bob’s account, enter this command:
 
-`libra% transfer 0 1 10 LBR`
+`diem% transfer 0 1 10 LBR`
 
 * 0 is the index of Alice’s account.
 * 1 is the index of Bob’s account.
-* 10 is the number of Libra to transfer from Alice’s account to Bob’s account.
-* LBR is the currency code for Libra
+* 10 is the number of Diem to transfer from Alice’s account to Bob’s account.
+* LBR is the currency code for Diem
 
 Sample output on success:
 
@@ -301,17 +301,17 @@ To troubleshoot the transfer command, refer to [Troubleshooting](#the-transfer-c
 
 **The Blocking Transfer Command**: You can use the `transferb` command (as shown below), instead of the `transfer` command. `transferb` will submit the transaction and return to the client prompt only after the transaction has been committed to the blockchain. An example is shown below:
 
-`libra% transferb 0 1 10 LBR`
+`diem% transferb 0 1 10 LBR`
 
 Refer to [Life of a Transaction](life-of-a-transaction.md) for an understanding of the lifecycle of a transaction from submission to execution and storage.
 
 ### Query Sequence Number After Transfer
 
 ```plaintext
-libra% query sequence 0
+diem% query sequence 0
 >> Getting current sequence number
 Sequence number is: 1
-libra% query sequence 1
+diem% query sequence 1
 >> Getting current sequence number
 Sequence number is: 0
 ```
@@ -323,37 +323,37 @@ The sequence number of 1 for Alice’s account (index 0) indicates that one tran
 To check the final balance in both accounts, query the balance again for each account as you did in [this step](#step-3-check-the-balance). If your transaction (transfer) executed successfully, you should see 100 LBR in Alice’s account and 62 LBR in Bob’s account.
 
 ```plaintext
-libra% query balance 0
+diem% query balance 0
 Balance is: 100.000000LBR
-libra% query balance 1
+diem% query balance 1
 Balance is: 62.000000LBR
 ```
 
 ### Congratulations!
 
-You have successfully executed your transaction on the Libra testnet and transferred 10 LBR from Alice’s account to Bob’s account!
+You have successfully executed your transaction on the Diem testnet and transferred 10 LBR from Alice’s account to Bob’s account!
 
 ## Troubleshooting
 
 ### Setup
 
 * Update Rust:
-    * Run `rustup update` from your libra directory.
+    * Run `rustup update` from your diem directory.
 * Update protoc:
     * Update `protoc` to version 3.6.0 or above.
-* Re-run setup script from your libra directory:
+* Re-run setup script from your diem directory:
     * `./scripts/dev_setup.sh`
 
 ### Client Build and Run
 
-If you are experiencing build failures, try to remove the cargo lock file from the libra directory:
+If you are experiencing build failures, try to remove the cargo lock file from the diem directory:
 
 * `rm Cargo.lock`
 
 If your client did not connect to the testnet:
 
 * Check your internet connection.
-* Ensure that you are using the latest version of the client. Pull the latest Libra Core and rerun the client:
+* Ensure that you are using the latest version of the client. Pull the latest Diem Core and rerun the client:
     * `./scripts/cli/start_cli_testnet.sh`
 
 
@@ -362,7 +362,7 @@ If your client did not connect to the testnet:
 * If the validator node you connected to on testnet is unavailable, you will get a “Server unavailable” message as shown below:
 
   ```plaintext
-  libra% account mint 0 110 LBR
+  diem% account mint 0 110 LBR
   ....
   [ERROR] Error transferring coins from faucet: Server unavailable, please retry and/or check **if** host passed to the client is running
   ```
@@ -370,14 +370,14 @@ If your client did not connect to the testnet:
 
 * To check if an account exists, query the account state. For an account with index 0 enter this:
 
-  `libra% query account_state 0`
+  `diem% query account_state 0`
 
 ### The Transfer Command
 
 If the testnet validator node (your client was connected to) is unavailable or your connection to the testnet has timed-out, you will see this error:
 
 ```plaintext
-libra% transfer 0 1 10 LBR
+diem% transfer 0 1 10 LBR
 >> Transferring
 [ERROR] Failed to perform transaction: Server unavailable, please retry and/or check if host passed to the client is running
 ```
@@ -387,7 +387,7 @@ To troubleshoot transfer errors:
 * Query the sender account to make sure it exists. Use the following command for an account with index 0:
     * `query account_state 0`
 * You can try quitting the client using `quit` or `q!`, and rerun the following command to connect to the testnet:
-    * `./scripts/cli/start_cli_testnet.sh` from the libra directory
+    * `./scripts/cli/start_cli_testnet.sh` from the diem directory
 
 ## Sample Outputs of Additional Query Commands
 
@@ -396,7 +396,7 @@ To troubleshoot transfer errors:
 This example will query for a single transaction's details using the account and sequence number.
 
 ```plaintext
-libra% query txn_acc_seq 0 0 true
+diem% query txn_acc_seq 0 0 true
 >> Getting committed transaction by account and sequence number
 Committed transaction: TransactionView {
     version: 2788,
@@ -476,14 +476,14 @@ Committed transaction: TransactionView {
 }
 ```
 
-Note that the transaction amount is shown in microlibra.
+Note that the transaction amount is shown in microdiem.
 
 ### Query Events
 
 In the following example, we will query for “sent” events from the account at reference index 0.  You will notice there is a single event since we sent one transaction from this account.  The proof of the current state is also returned so that verification can be performed that no events are missing - this is done when the query does not return “limit” events.
 
 ```plaintext
-libra% query event 0 sent 0 10
+diem% query event 0 sent 0 10
 >> Getting events by account and event type.
 EventView { key: BytesView("0100000000000000cc2219df031a68115fad9aee98e051e9"), sequence_number: 0, transaction_version: 2788, data: SentPayment { amount: AmountView { amount: 10000000, currency: "LBR" }, receiver: BytesView("33138303ce638c8fa469435250f5f1c3"), sender: BytesView("cc2219df031a68115fad9aee98e051e9"), metadata: BytesView("") } }
 Last event state: AccountView {
@@ -508,7 +508,7 @@ Last event state: AccountView {
     is_frozen: false,
     role: ParentVASP {
         human_name: "testnet",
-        base_url: "https://libra.org",
+        base_url: "https://diem.org",
         expiration_time: 18446744073709551615,
         compliance_key: BytesView(
             "b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde",
@@ -523,7 +523,7 @@ Last event state: AccountView {
 In this example, we will query for the state of a single account.
 
 ```plaintext
-libra% query account_state 0
+diem% query account_state 0
 >> Getting latest account state
 Latest account state is:
  Account: (
@@ -590,7 +590,7 @@ Latest account state is:
         is_frozen: false,
         role: ParentVASP {
             human_name: "testnet",
-            base_url: "https://libra.org",
+            base_url: "https://diem.org",
             expiration_time: 18446744073709551615,
             compliance_key: BytesView(
                 "b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde",
@@ -611,14 +611,14 @@ Begin by [running a local validator network](run-local-network.md).
 Once you have executed your first transaction, you may refer to the document [Life of a Transaction](life-of-a-transaction.md) for:
 
 * A look "under the hood" at the lifecycle of a transaction from submission to execution.
-* An understanding of the interactions between each logical component of a Libra validator as transactions get submitted and executed in the Libra ecosystem.
+* An understanding of the interactions between each logical component of a Diem validator as transactions get submitted and executed in the Diem ecosystem.
 
 ## Reference
 
-* [Welcome page](welcome-to-libra.md).
-* [Libra Protocol: Key Concepts](libra-protocol.md) &mdash; Introduces you to the fundamental concepts of the Libra protocol.
+* [Welcome page](welcome-to-diem.md).
+* [Diem Protocol: Key Concepts](diem-protocol.md) &mdash; Introduces you to the fundamental concepts of the Diem protocol.
 * [Getting Started With Move](move-overview.md) &mdash; Introduces you to a new blockchain programming language called Move.
 * [Life of a Transaction](life-of-a-transaction.md) &mdash; Provides a look at what happens "under the hood" when a transaction is submitted and executed.
-* [Libra Core Overview](libra-core-overview.md) &mdash; Provides the concept and implementation details of the Libra Core components through READMEs.
-* [CLI Guide](reference/libra-cli.md) &mdash; Lists the commands (and their usage) of the Libra CLI client.
-* [Libra Glossary](reference/glossary.md) &mdash; Provides a quick reference to Libra terminology.
+* [Diem Core Overview](diem-core-overview.md) &mdash; Provides the concept and implementation details of the Diem Core components through READMEs.
+* [CLI Guide](reference/diem-cli.md) &mdash; Lists the commands (and their usage) of the Diem CLI client.
+* [Diem Glossary](reference/glossary.md) &mdash; Provides a quick reference to Diem terminology.

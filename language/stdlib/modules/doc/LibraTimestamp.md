@@ -129,7 +129,7 @@ account.
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_set_time_has_started">set_time_has_started</a>(lr_account: &signer) {
     <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">assert_genesis</a>();
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(lr_account);
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(lr_account);
     <b>let</b> timer = <a href="LibraTimestamp.md#0x1_LibraTimestamp_CurrentTimeMicroseconds">CurrentTimeMicroseconds</a> { microseconds: 0 };
     move_to(lr_account, timer);
 }
@@ -500,6 +500,6 @@ to never abort.
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

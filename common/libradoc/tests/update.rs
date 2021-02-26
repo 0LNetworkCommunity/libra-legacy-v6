@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_documentation_tool as libra_doc;
+use diem_documentation_tool as diem_doc;
 use serde::Deserialize;
 use serde_reflection::{Samples, Tracer, TracerConfig};
 
@@ -24,31 +24,31 @@ fn test_doctool() {
     let samples = Samples::new();
     tracer.trace_type::<MyEnum>(&samples).unwrap();
     let registry = tracer.registry().unwrap();
-    let definitions = libra_doc::quote_container_definitions(&registry).unwrap();
+    let definitions = diem_doc::quote_container_definitions(&registry).unwrap();
 
     let input = r#"
-<!-- @begin-libradoc name=Unknown -->
-<!-- @end-libradoc -->
+<!-- @begin-diemdoc name=Unknown -->
+<!-- @end-diemdoc -->
 111111
-<!-- @begin-libradoc name=MyStruct -->
+<!-- @begin-diemdoc name=MyStruct -->
 222222
-<!-- @end-libradoc -->
-<!-- @begin-libradoc name=MyEnum -->
-<!-- @end-libradoc -->
+<!-- @end-diemdoc -->
+<!-- @begin-diemdoc name=MyEnum -->
+<!-- @end-diemdoc -->
 33333333
 "#
     .to_string();
 
     let expected_output = r#"
-<!-- @begin-libradoc name=Unknown -->
-<!-- @end-libradoc -->
+<!-- @begin-diemdoc name=Unknown -->
+<!-- @end-diemdoc -->
 111111
-<!-- @begin-libradoc name=MyStruct -->
+<!-- @begin-diemdoc name=MyStruct -->
 ```rust
 struct MyStruct(u64);
 ```
-<!-- @end-libradoc -->
-<!-- @begin-libradoc name=MyEnum -->
+<!-- @end-diemdoc -->
+<!-- @begin-diemdoc name=MyEnum -->
 ```rust
 enum MyEnum {
     Unit,
@@ -60,14 +60,14 @@ enum MyEnum {
     NewTupleArray([u16; 3]),
 }
 ```
-<!-- @end-libradoc -->
+<!-- @end-diemdoc -->
 33333333
 "#
     .to_string();
 
     let reader = std::io::BufReader::new(input.as_bytes());
     assert_eq!(
-        libra_doc::update_rust_quotes(reader, &definitions).unwrap(),
+        diem_doc::update_rust_quotes(reader, &definitions).unwrap(),
         expected_output
     );
 }

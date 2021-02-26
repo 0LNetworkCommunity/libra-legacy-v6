@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use std::{fs::File, io::BufReader, path::PathBuf};
@@ -153,7 +153,7 @@ fn test_vectors() {
     }
     impl rand::CryptoRng for EphemeralRng {}
 
-    // test vectors are taken from the cacophony library
+    // test vectors are taken from the cacophony diemry
     let mut test_vectors_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_vectors_path.push("test_vectors");
     test_vectors_path.push("noise_cacophony.txt");

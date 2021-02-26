@@ -5,7 +5,7 @@ As a side effect, it is also the only way you can create an onchain account on T
 
 > If you wonder how simple it is, check [server code](./../../docker/mint/server.py).
 
-It's interface is very simple, fire a HTTP POST request to `http://faucet.testnet.libra.org/` with the following parameters:
+It's interface is very simple, fire a HTTP POST request to `http://faucet.testnet.diem.org/` with the following parameters:
 
 | param name    | type   | description                     |
 |---------------|--------|---------------------------------|
@@ -18,7 +18,7 @@ Server will start a sub-process to submit a mint coin transaction to Testnet, an
 For example, you can have something like the followings:
 
 ```Java
-private static String SERVER_URL = "http://faucet.testnet.libra.org/";
+private static String SERVER_URL = "http://faucet.testnet.diem.org/";
 
 public static long mintCoinsAsync(long amount, String authKey, String currencyCode) {
     HttpClient httpClient = HttpClient.newHttpClient();

@@ -12,18 +12,18 @@ use std::env;
 
 use crate::{genesis_context::GenesisStateView, genesis_gas_schedule::INITIAL_GAS_SCHEDULE};
 use compiled_stdlib::{stdlib_modules, transaction_scripts::StdlibScript, StdLibOptions};
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform,
 };
-use libra_types::{account_address, account_config::{
+use diem_types::{account_address, account_config::{
         self,
         events::{CreateAccountEvent},
     }, chain_id::{ChainId}, contract_event::ContractEvent, on_chain_config::VMPublishingOption, transaction::{
         authenticator::AuthenticationKey, ChangeSet, Script, Transaction, TransactionArgument,
         WriteSetPayload,
     }};
-use libra_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
+use diem_vm::{data_cache::StateViewCache, txn_effects_to_writeset_and_events};
 use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::{CostTable, GasAlgebra, GasUnits},
@@ -69,7 +69,7 @@ pub type OperatorAssignment = (Option<Ed25519PublicKey>, Name, Script, GenesisMi
 pub type OperatorRegistration = (Ed25519PublicKey, Name, Script, AccountAddress);
 
 pub fn encode_genesis_transaction(
-    libra_root_key: Option<&Ed25519PublicKey>,
+    diem_root_key: Option<&Ed25519PublicKey>,
     treasury_compliance_key: Option<&Ed25519PublicKey>,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
@@ -77,7 +77,7 @@ pub fn encode_genesis_transaction(
     chain_id: ChainId,
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
-        libra_root_key,
+        diem_root_key,
         treasury_compliance_key,
         operator_assignments,
         operator_registrations,
@@ -99,7 +99,7 @@ fn merge_txn_effects(
 }
 
 pub fn encode_genesis_change_set(
-    libra_root_key: Option<&Ed25519PublicKey>,
+    diem_root_key: Option<&Ed25519PublicKey>,
     treasury_compliance_key: Option<&Ed25519PublicKey>,
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
@@ -129,7 +129,7 @@ pub fn encode_genesis_change_set(
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
-        libra_root_key,
+        diem_root_key,
         treasury_compliance_key,
         vm_publishing_option,
         &lbr_ty,
@@ -252,21 +252,21 @@ fn exec_script(
 fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
-    libra_root_key: Option<&Ed25519PublicKey>,
+    diem_root_key: Option<&Ed25519PublicKey>,
     _treasury_compliance_key: Option<&Ed25519PublicKey>,
     publishing_option: VMPublishingOption,
     lbr_ty: &TypeTag,
     chain_id: ChainId,
 ) {
-    let libra_root_auth_key:AuthenticationKey;
-    if libra_root_key.is_some() {
-        libra_root_auth_key = AuthenticationKey::ed25519(&libra_root_key.unwrap());
+    let diem_root_auth_key:AuthenticationKey;
+    if diem_root_key.is_some() {
+        diem_root_auth_key = AuthenticationKey::ed25519(&diem_root_key.unwrap());
     } else {
-        libra_root_auth_key = AuthenticationKey::new([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+        diem_root_auth_key = AuthenticationKey::new([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
     }
     // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
-    let root_libra_root_address = account_config::libra_root_address();
+    let root_diem_root_address = account_config::diem_root_address();
     // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = Value::constant_vector_generic(
@@ -286,13 +286,13 @@ fn create_and_initialize_main_accounts(
     exec_function(
         session,
         log_context,
-        root_libra_root_address,
+        root_diem_root_address,
         GENESIS_MODULE_NAME,
         "initialize",
         vec![],
         vec![
-            Value::transaction_argument_signer_reference(root_libra_root_address),
-            Value::vector_u8(libra_root_auth_key.to_vec()),
+            Value::transaction_argument_signer_reference(root_diem_root_address),
+            Value::vector_u8(diem_root_auth_key.to_vec()),
             initial_allow_list,
             Value::bool(publishing_option.is_open_module),
             Value::vector_u8(instr_gas_costs),
@@ -308,12 +308,12 @@ fn create_and_initialize_main_accounts(
     exec_function(
         session,
         log_context,
-        root_libra_root_address,
+        root_diem_root_address,
         "LibraAccount",
         "epilogue",
         vec![lbr_ty.clone()],
         vec![
-            Value::transaction_argument_signer_reference(root_libra_root_address),
+            Value::transaction_argument_signer_reference(root_diem_root_address),
             Value::u64(/* txn_sequence_number */ 0),
             Value::u64(/* txn_gas_price */ 0),
             Value::u64(/* txn_max_gas_units */ 0),
@@ -394,7 +394,7 @@ fn create_and_initialize_owners_operators(
     operator_assignments: &[OperatorAssignment],
     operator_registrations: &[OperatorRegistration],
 ) {
-    let libra_root_address = account_config::libra_root_address();
+    let diem_root_address = account_config::diem_root_address();
 
     // Create accounts for each validator owner. The inputs for creating an account are the auth
     // key prefix and account address. Internally move then computes the auth key as auth key
@@ -406,7 +406,7 @@ fn create_and_initialize_owners_operators(
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
         dbg!(owner_address);
-        // let staged_owner_auth_key = libra_config::utils::default_validator_owner_auth_key_from_name(owner_name);
+        // let staged_owner_auth_key = diem_config::utils::default_validator_owner_auth_key_from_name(owner_name);
         //TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();
         let create_owner_script = transaction_builder::encode_create_validator_account_script(
@@ -418,7 +418,7 @@ fn create_and_initialize_owners_operators(
         exec_script(
             session,
             log_context,
-            libra_root_address,
+            diem_root_address,
             &create_owner_script,
         );
 
@@ -444,12 +444,12 @@ fn create_and_initialize_owners_operators(
         exec_function(
             session,
             log_context,
-            libra_root_address,
+            diem_root_address,
             "MinerState",
             "genesis_helper",
             vec![],
             vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(diem_root_address),
                 Value::transaction_argument_signer_reference(owner_address),
                 Value::vector_u8(preimage),
                 Value::vector_u8(proof)
@@ -472,7 +472,7 @@ fn create_and_initialize_owners_operators(
         exec_script(
             session,
             log_context,
-            libra_root_address,
+            diem_root_address,
             &create_operator_script,
         );
     }
@@ -482,7 +482,7 @@ fn create_and_initialize_owners_operators(
 
     // Authorize an operator for a validator/owner
     for (owner_key, _owner_name, op_assignment_script, _genesis_proof) in operator_assignments {
-        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+        // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
 
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
@@ -503,16 +503,16 @@ fn create_and_initialize_owners_operators(
     for (owner_key, _owner_name, _op_assignment, _genesis_proof) in operator_assignments {
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
         let owner_address = staged_owner_auth_key.derived_address();
-        // let owner_address = libra_config::utils::validator_owner_account_from_name(owner_name);
+        // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
             log_context,
-            libra_root_address,
+            diem_root_address,
             "LibraSystem",
             "add_validator",
             vec![],
             vec![
-                Value::transaction_argument_signer_reference(libra_root_address),
+                Value::transaction_argument_signer_reference(diem_root_address),
                 Value::address(owner_address),
             ],
         );
@@ -525,7 +525,7 @@ fn remove_genesis(stdlib_modules: &[CompiledModule]) -> impl Iterator<Item = &Co
         .filter(|module| module.self_id().name().as_str() != GENESIS_MODULE_NAME)
 }
 
-/// Publish the standard library.
+/// Publish the standard diemry.
 fn publish_stdlib(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
@@ -553,7 +553,7 @@ fn reconfigure(session: &mut Session<StateViewCache>, log_context: &impl LogCont
     exec_function(
         session,
         log_context,
-        account_config::libra_root_address(),
+        account_config::diem_root_address(),
         "LibraConfig",
         "emit_genesis_reconfiguration_event",
         vec![],
@@ -564,9 +564,9 @@ fn reconfigure(session: &mut Session<StateViewCache>, log_context: &impl LogCont
 /// Verify the consistency of the genesis `WriteSet`
 fn verify_genesis_write_set(events: &[ContractEvent]) {
     // (1) first event is account creation event for LibraRoot
-    let create_libra_root_event = &events[0];
+    let create_diem_root_event = &events[0];
     assert_eq!(
-        *create_libra_root_event.key(),
+        *create_diem_root_event.key(),
         CreateAccountEvent::event_key(),
     );
 
@@ -706,17 +706,17 @@ fn distribute_genesis_subsidy(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext,
 ) { 
-    let libra_root_address = account_config::libra_root_address();
+    let diem_root_address = account_config::diem_root_address();
 
     exec_function(
         session,
         log_context,
-        libra_root_address,
+        diem_root_address,
         "Subsidy",
         "genesis",
         vec![],
         vec![
-            Value::transaction_argument_signer_reference(libra_root_address)
+            Value::transaction_argument_signer_reference(diem_root_address)
         ]
     )
 }
@@ -773,7 +773,7 @@ fn initialize_testnet(
     session: &mut Session<StateViewCache>,
     log_context: &impl LogContext
 ) {
-    let root_libra_root_address = account_config::libra_root_address();
+    let root_diem_root_address = account_config::diem_root_address();
     let mut module_name = "Testnet";
     if get_env() == "stage" { 
         module_name = "StagingNet";
@@ -781,9 +781,9 @@ fn initialize_testnet(
     exec_function(
         session,
         log_context,
-        root_libra_root_address,
+        root_diem_root_address,
         module_name,
         "initialize",
         vec![],
-        vec![Value::transaction_argument_signer_reference(root_libra_root_address)]);
+        vec![Value::transaction_argument_signer_reference(root_diem_root_address)]);
 }

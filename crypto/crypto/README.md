@@ -1,20 +1,20 @@
 ---
 id: crypto
 title: Crypto
-custom_edit_url: https://github.com/libra/libra/edit/master/crypto/crypto/README.md
+custom_edit_url: https://github.com/diem/diem/edit/master/crypto/crypto/README.md
 ---
 
-The crypto component hosts all the implementations of cryptographic primitives we use in Libra: hashing, signing, and key derivation/generation. The parts of the library using traits.rs contains the crypto API enforcing type safety, verifiable random functions, EdDSA & MultiEdDSA signatures.
+The crypto component hosts all the implementations of cryptographic primitives we use in Diem: hashing, signing, and key derivation/generation. The parts of the diemry using traits.rs contains the crypto API enforcing type safety, verifiable random functions, EdDSA & MultiEdDSA signatures.
 
 ## Overview
 
-Libra makes use of several cryptographic algorithms:
+Diem makes use of several cryptographic algorithms:
 
-* SHA-3 as the main hash function. It is standardized in [FIPS 202](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf). It is based on the [tiny_keccak](https://docs.rs/tiny-keccak/1.4.2/tiny_keccak/) library.
+* SHA-3 as the main hash function. It is standardized in [FIPS 202](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf). It is based on the [tiny_keccak](https://docs.rs/tiny-keccak/1.4.2/tiny_keccak/) diemry.
 * HKDF: HMAC-based Extract-and-Expand Key Derivation Function (HKDF) based on [RFC 5869](https://tools.ietf.org/html/rfc5869). It is used to generate keys from a salt (optional), seed, and application-info (optional).
 * traits.rs introduces new abstractions for the crypto API.
-* Ed25519 performs signatures using the new API design based on [ed25519-dalek](https://docs.rs/ed25519-dalek/1.0.0-pre.1/ed25519_dalek/) library with additional security checks (e.g. for malleability).
-* X25519 to perform key exchanges. It is used to secure communications between validators via the [Noise Protocol Framework](http://www.noiseprotocol.org/noise.html). It is based on the x25519-dalek library.
+* Ed25519 performs signatures using the new API design based on [ed25519-dalek](https://docs.rs/ed25519-dalek/1.0.0-pre.1/ed25519_dalek/) diemry with additional security checks (e.g. for malleability).
+* X25519 to perform key exchanges. It is used to secure communications between validators via the [Noise Protocol Framework](http://www.noiseprotocol.org/noise.html). It is based on the x25519-dalek diemry.
 
 ## How is this module organized?
 ```

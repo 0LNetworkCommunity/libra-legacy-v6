@@ -16,7 +16,7 @@ Secure Storage encapsulates a design paradigm for the secure storage of sensitiv
 ## Design / ecosystem goals
 
 * Work across cloud providers and on-premise
-* Simple interface,ideally a library or REST / JSON-RPC
+* Simple interface,ideally a diemry or REST / JSON-RPC
 * Minimal third-party dependencies
 * Well-reputed, such that, it is auditiable, open-source, widely trusted
 

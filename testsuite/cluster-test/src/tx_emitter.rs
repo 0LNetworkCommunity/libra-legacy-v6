@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -12,13 +12,13 @@ use std::{
 
 use anyhow::{format_err, Result};
 use itertools::zip;
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
     traits::Uniform,
 };
-use libra_logger::*;
-use libra_types::{
+use diem_logger::*;
+use diem_types::{
     account_address::AccountAddress,
     account_config::{self, testnet_dd_account_address, COIN1_NAME},
     chain_id::ChainId,
@@ -35,9 +35,9 @@ use rand::{
 use tokio::runtime::Handle;
 
 use futures::future::{try_join_all, FutureExt};
-use libra_json_rpc_client::{views::AmountView, JsonRpcAsyncClient};
-use libra_types::{
-    account_config::{libra_root_address, treasury_compliance_account_address},
+use diem_json_rpc_client::{views::AmountView, JsonRpcAsyncClient};
+use diem_types::{
+    account_config::{diem_root_address, treasury_compliance_account_address},
     transaction::SignedTransaction,
 };
 use once_cell::sync::Lazy;
@@ -308,11 +308,11 @@ impl TxEmitter {
         })
     }
 
-    pub async fn load_libra_root_account(
+    pub async fn load_diem_root_account(
         &self,
         client: &JsonRpcAsyncClient,
     ) -> Result<AccountData> {
-        self.load_account_with_mint_key(client, libra_root_address())
+        self.load_account_with_mint_key(client, diem_root_address())
             .await
     }
 
@@ -329,7 +329,7 @@ impl TxEmitter {
     pub async fn load_dd_account(&self, client: &JsonRpcAsyncClient) -> Result<AccountData> {
         let mint_key: Ed25519PrivateKey = generate_key::load_key(DD_KEY);
         let mint_key_pair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(mint_key);
-        let address = libra_types::account_address::from_public_key(&mint_key_pair.public_key);
+        let address = diem_types::account_address::from_public_key(&mint_key_pair.public_key);
         let sequence_number = query_sequence_numbers(&client, &[address])
             .await
             .map_err(|e| {
@@ -354,7 +354,7 @@ impl TxEmitter {
         let file = "vasp".to_owned() + index.to_string().as_str() + ".key";
         let mint_key: Ed25519PrivateKey = generate_key::load_key(file);
         let mint_key_pair: KeyPair<Ed25519PrivateKey, Ed25519PublicKey> = KeyPair::from(mint_key);
-        let address = libra_types::account_address::from_public_key(&mint_key_pair.public_key);
+        let address = diem_types::account_address::from_public_key(&mint_key_pair.public_key);
         let sequence_number = query_sequence_numbers(&client, &[address])
             .await
             .map_err(|e| {
@@ -482,7 +482,7 @@ impl TxEmitter {
         info!("Minting additional {} accounts", num_accounts);
 
         let seed_rngs = gen_rng_for_reusable_account(actual_num_seed_accounts);
-        // For each seed account, create a future and transfer libra from that seed account to new accounts
+        // For each seed account, create a future and transfer diem from that seed account to new accounts
         let account_futures = seed_accounts
             .into_iter()
             .enumerate()
@@ -911,7 +911,7 @@ fn gen_mint_txn_request(
 fn gen_random_account(rng: &mut StdRng) -> AccountData {
     let key_pair = KeyPair::generate(rng);
     AccountData {
-        address: libra_types::account_address::from_public_key(&key_pair.public_key),
+        address: diem_types::account_address::from_public_key(&key_pair.public_key),
         key_pair,
         sequence_number: 0,
     }
@@ -944,7 +944,7 @@ async fn gen_reusable_account(
     rng: &mut StdRng,
 ) -> Result<AccountData> {
     let mint_key_pair = KeyPair::generate(rng);
-    let address = libra_types::account_address::from_public_key(&mint_key_pair.public_key);
+    let address = diem_types::account_address::from_public_key(&mint_key_pair.public_key);
     let sequence_number = match query_sequence_numbers(&client, &[address]).await {
         Ok(v) => v[0],
         Err(_) => 0,
@@ -1033,7 +1033,7 @@ pub async fn execute_and_wait_transactions(
         account.address
     );
     for request in txn {
-        libra_retrier::retry_async(libra_retrier::fixed_retry_strategy(5_000, 20), || {
+        diem_retrier::retry_async(diem_retrier::fixed_retry_strategy(5_000, 20), || {
             let request = request.clone();
             let c = client.clone();
             let client_name = format!("{:?}", client);
@@ -1058,12 +1058,12 @@ pub async fn execute_and_wait_transactions(
     r
 }
 
-/// Create `num_new_accounts` by transferring libra from `source_account`. Return Vec of created
+/// Create `num_new_accounts` by transferring diem from `source_account`. Return Vec of created
 /// accounts
 async fn create_new_accounts(
     mut source_account: AccountData,
     num_new_accounts: usize,
-    libra_per_new_account: u64,
+    diem_per_new_account: u64,
     max_num_accounts_per_batch: u64,
     mut client: JsonRpcAsyncClient,
     chain_id: ChainId,
@@ -1086,7 +1086,7 @@ async fn create_new_accounts(
         let requests = gen_create_child_txn_requests(
             &mut source_account,
             &batch,
-            libra_per_new_account,
+            diem_per_new_account,
             chain_id,
         );
         execute_and_wait_transactions(&mut client, &mut source_account, requests).await?;
@@ -1119,11 +1119,11 @@ async fn create_seed_accounts(
     Ok(accounts)
 }
 
-/// Mint `libra_per_new_account` from `minting_account` to each account in `accounts`.
+/// Mint `diem_per_new_account` from `minting_account` to each account in `accounts`.
 async fn mint_to_new_accounts(
     minting_account: &mut AccountData,
     accounts: &[AccountData],
-    libra_per_new_account: u64,
+    diem_per_new_account: u64,
     max_num_accounts_per_batch: u64,
     mut client: JsonRpcAsyncClient,
     chain_id: ChainId,
@@ -1139,7 +1139,7 @@ async fn mint_to_new_accounts(
             );
         let (to_batch, rest) = left.split_at(batch_size + 1);
         let mint_requests =
-            gen_mint_txn_requests(minting_account, to_batch, libra_per_new_account, chain_id);
+            gen_mint_txn_requests(minting_account, to_batch, diem_per_new_account, chain_id);
         execute_and_wait_transactions(&mut client, minting_account, mint_requests).await?;
         i += to_batch.len();
         left = rest;

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -16,11 +16,11 @@ use crate::{
     transport::{Connection, ConnectionId, ConnectionMetadata},
     ProtocolId,
 };
-use channel::{libra_channel, message_queues::QueueStyle};
+use channel::{diem_channel, message_queues::QueueStyle};
 use futures::{channel::oneshot, io::AsyncWriteExt, sink::SinkExt, stream::StreamExt};
-use libra_config::network_id::NetworkContext;
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
+use diem_config::network_id::NetworkContext;
+use diem_network_address::NetworkAddress;
+use diem_types::PeerId;
 use memsocket::MemorySocket;
 use netcore::{
     compat::IoCompat,
@@ -77,17 +77,17 @@ fn build_test_peer_manager(
         BoxedTransport<Connection<MemorySocket>, impl std::error::Error + Sync + Send + 'static>,
         MemorySocket,
     >,
-    libra_channel::Sender<(PeerId, ProtocolId), PeerManagerRequest>,
-    libra_channel::Sender<PeerId, ConnectionRequest>,
-    libra_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
+    diem_channel::Sender<(PeerId, ProtocolId), PeerManagerRequest>,
+    diem_channel::Sender<PeerId, ConnectionRequest>,
+    diem_channel::Receiver<(PeerId, ProtocolId), PeerManagerNotification>,
     conn_notifs_channel::Receiver,
 ) {
     let (peer_manager_request_tx, peer_manager_request_rx) =
-        libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
+        diem_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
     let (connection_reqs_tx, connection_reqs_rx) =
-        libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
+        diem_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
     let (hello_tx, hello_rx) =
-        libra_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
+        diem_channel::new(QueueStyle::FIFO, NonZeroUsize::new(1).unwrap(), None);
     let (conn_status_tx, conn_status_rx) = conn_notifs_channel::new();
 
     let peer_manager = PeerManager::new(
@@ -228,7 +228,7 @@ fn create_connection<TSocket: transport::TSocket>(
 
 #[test]
 fn peer_manager_simultaneous_dial_two_inbound() {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
@@ -276,7 +276,7 @@ fn peer_manager_simultaneous_dial_two_inbound() {
 
 #[test]
 fn peer_manager_simultaneous_dial_inbound_outbound_remote_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
@@ -325,7 +325,7 @@ fn peer_manager_simultaneous_dial_inbound_outbound_remote_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_inbound_outbound_own_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
@@ -374,7 +374,7 @@ fn peer_manager_simultaneous_dial_inbound_outbound_own_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_outbound_inbound_remote_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
@@ -423,7 +423,7 @@ fn peer_manager_simultaneous_dial_outbound_inbound_remote_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_outbound_inbound_own_id_larger() {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
@@ -472,7 +472,7 @@ fn peer_manager_simultaneous_dial_outbound_inbound_own_id_larger() {
 
 #[test]
 fn peer_manager_simultaneous_dial_two_outbound() {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.
@@ -559,7 +559,7 @@ fn peer_manager_simultaneous_dial_disconnect_event() {
 
 #[test]
 fn test_dial_disconnect() {
-    ::libra_logger::Logger::init_for_testing();
+    ::diem_logger::Logger::init_for_testing();
     let mut runtime = ::tokio::runtime::Runtime::new().unwrap();
 
     // Create a list of ordered PeerIds so we can ensure how PeerIds will be compared.

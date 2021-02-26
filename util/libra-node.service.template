@@ -4,7 +4,7 @@ Description=Libra Node Service
 [Service]
 LimitNOFILE=65536
 WorkingDirectory=/root/.0L
-ExecStart=/usr/local/bin/libra-node --config /root/.0L/node.yaml
+ExecStart=/usr/local/bin/diem-node --config /root/.0L/node.yaml
 
 Restart=always
 RestartSec=10s
@@ -15,4 +15,4 @@ StandardError=file:/root/logs/node.log
 
 [Install]
 WantedBy=multi-user.target
-Alias=libra-node.service
+Alias=diem-node.service

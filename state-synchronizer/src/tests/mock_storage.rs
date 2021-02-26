@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::SynchronizerState;
 use anyhow::{bail, Result};
 use executor_types::ExecutedTrees;
-use libra_crypto::HashValue;
+use diem_crypto::HashValue;
 #[cfg(test)]
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
     account_config::coin1_tmp_tag,
     block_info::BlockInfo,
@@ -15,7 +15,7 @@ use libra_types::{
     test_helpers::transaction_test_helpers::get_test_signed_txn,
     transaction::{authenticator::AuthenticationKey, SignedTransaction},
 };
-use libra_types::{
+use diem_types::{
     epoch_state::EpochState, ledger_info::LedgerInfoWithSignatures, transaction::Transaction,
     validator_signer::ValidatorSigner,
 };

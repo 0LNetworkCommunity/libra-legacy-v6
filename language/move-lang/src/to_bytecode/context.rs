@@ -8,7 +8,7 @@ use crate::{
         ConstantName, FunctionName, ModuleIdent, ModuleIdent_, ModuleName, StructName, Var,
     },
 };
-use libra_types::account_address::AccountAddress as LibraAddress;
+use diem_types::account_address::AccountAddress as LibraAddress;
 use move_ir_types::ast as IR;
 use std::{
     clone::Clone,

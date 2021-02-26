@@ -1,15 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
-//! This library implements a schematized DB on top of [RocksDB](https://rocksdb.org/). It makes
+//! This diemry implements a schematized DB on top of [RocksDB](https://rocksdb.org/). It makes
 //! sure all data passed in and out are structured according to predefined schemas and prevents
-//! access to raw keys and values. This library also enforces a set of Libra specific DB options,
+//! access to raw keys and values. This diemry also enforces a set of Diem specific DB options,
 //! like custom comparators and schema-to-column-family mapping.
 //!
 //! It requires that different kinds of key-value pairs be stored in separate column
-//! families.  To use this library to store a kind of key-value pairs, the user needs to use the
+//! families.  To use this diemry to store a kind of key-value pairs, the user needs to use the
 //! [`define_schema!`] macro to define the schema name, the types of key and value, and name of the
 //! column family.
 
@@ -239,7 +239,7 @@ impl DB {
 
     /// Open db as secondary.
     /// This allows to read the DB in another process while it's already opened for read / write in
-    /// one (e.g. a Libra Node)
+    /// one (e.g. a Diem Node)
     /// https://github.com/facebook/rocksdb/blob/493f425e77043cc35ea2d89ee3c4ec0274c700cb/include/rocksdb/db.h#L176-L222
     pub fn open_as_secondary<P: AsRef<Path>>(
         primary_path: P,

@@ -1,19 +1,19 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Error;
-use libra_secure_json_rpc::JsonRpcClient;
-use libra_types::{
+use diem_secure_json_rpc::JsonRpcClient;
+use diem_types::{
     account_address::AccountAddress, account_config, account_state::AccountState,
     on_chain_config::config_address, transaction::Transaction, validator_config::ValidatorConfig,
     validator_info::ValidatorInfo,
 };
 
-/// This defines a generic trait used to interact with the Libra blockchain. In production, this
+/// This defines a generic trait used to interact with the Diem blockchain. In production, this
 /// will be talking to a JSON-RPC service. For tests, this may be an executor and storage directly.
-pub trait LibraInterface {
+pub trait DiemInterface {
     /// Retrieves the current time from the blockchain, this is returned as microseconds.
-    fn libra_timestamp(&self) -> Result<u64, Error>;
+    fn diem_timestamp(&self) -> Result<u64, Error>;
 
     /// Retrieves the last reconfiguration time from the blockchain, this is returned as
     /// microseconds.
@@ -39,7 +39,7 @@ pub trait LibraInterface {
     fn retrieve_account_state(&self, account: AccountAddress) -> Result<AccountState, Error>;
 }
 
-/// This implements the LibraInterface by talking directly to the JSON RPC API.
+/// This implements the DiemInterface by talking directly to the JSON RPC API.
 ///
 /// DISCLAIMER: this implementation assumes that the json rpc client explicitly trusts the json rpc
 /// server that is responding to its requests (e.g., the client assumes the server has already been
@@ -52,11 +52,11 @@ pub trait LibraInterface {
 /// rpc server we're talking to. Although we won't be able to guarantee freshness, it's better than
 /// simply trusting the response for correctness..
 #[derive(Clone)]
-pub struct JsonRpcLibraInterface {
+pub struct JsonRpcDiemInterface {
     client: JsonRpcClient,
 }
 
-impl JsonRpcLibraInterface {
+impl JsonRpcDiemInterface {
     pub fn new(json_rpc_endpoint: String) -> Self {
         Self {
             client: JsonRpcClient::new(json_rpc_endpoint),
@@ -64,19 +64,19 @@ impl JsonRpcLibraInterface {
     }
 }
 
-impl LibraInterface for JsonRpcLibraInterface {
-    fn libra_timestamp(&self) -> Result<u64, Error> {
-        let account = account_config::libra_root_address();
-        let libra_timestamp_resource = self
+impl DiemInterface for JsonRpcDiemInterface {
+    fn diem_timestamp(&self) -> Result<u64, Error> {
+        let account = account_config::diem_root_address();
+        let diem_timestamp_resource = self
             .retrieve_account_state(account)?
-            .get_libra_timestamp_resource();
+            .get_diem_timestamp_resource();
 
-        match libra_timestamp_resource {
+        match diem_timestamp_resource {
             Ok(timestamp_resource) => timestamp_resource
-                .map(|timestamp_resource| timestamp_resource.libra_timestamp.microseconds)
+                .map(|timestamp_resource| timestamp_resource.diem_timestamp.microseconds)
                 .ok_or_else(|| {
                     Error::DataDoesNotExist(format!(
-                        "LibraTimestampResource not found for account: {:?}",
+                        "DiemTimestampResource not found for account: {:?}",
                         account
                     ))
                 }),

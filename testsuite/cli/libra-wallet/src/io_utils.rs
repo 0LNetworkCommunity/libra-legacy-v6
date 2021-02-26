@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! A module to generate, store and load known users accounts.
 //! The concept of known users can be helpful for testing to provide reproducible results.
 
-use crate::{mnemonic::Mnemonic, wallet_library::WalletLibrary};
+use crate::{mnemonic::Mnemonic, wallet_diemry::WalletDiemry};
 use anyhow::Result;
 use std::{
     fs::File,
@@ -16,7 +16,7 @@ use std::{
 pub const DELIMITER: &str = ";";
 
 /// Recover wallet from the path specified.
-pub fn recover<P: AsRef<Path>>(path: &P) -> Result<WalletLibrary> {
+pub fn recover<P: AsRef<Path>>(path: &P) -> Result<WalletDiemry> {
     let input = File::open(path)?;
     let mut buffered = BufReader::new(input);
 
@@ -25,14 +25,14 @@ pub fn recover<P: AsRef<Path>>(path: &P) -> Result<WalletLibrary> {
     let parts: Vec<&str> = line.split(DELIMITER).collect();
     // ensure!(parts.len() == 2, format!("Invalid entry '{}'", line));
     let mnemonic = Mnemonic::from(&parts[0].to_string()[..])?;
-    let mut wallet = WalletLibrary::new_from_mnemonic(mnemonic);
+    let mut wallet = WalletDiemry::new_from_mnemonic(mnemonic);
     wallet.generate_addresses(6)?;
 
     Ok(wallet)
 }
 
 /// Write wallet seed to file.
-pub fn write_recovery<P: AsRef<Path>>(wallet: &WalletLibrary, path: &P) -> Result<()> {
+pub fn write_recovery<P: AsRef<Path>>(wallet: &WalletDiemry, path: &P) -> Result<()> {
     let mut output = File::create(path)?;
     writeln!(
         output,

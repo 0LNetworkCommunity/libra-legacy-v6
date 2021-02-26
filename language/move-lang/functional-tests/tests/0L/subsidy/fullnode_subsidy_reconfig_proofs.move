@@ -3,7 +3,7 @@
 //! account: frank, 100, 0
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
     use 0x1::TransactionFee;
     use 0x1::Libra;
@@ -20,7 +20,7 @@ script {
 
 //! new-transaction
 // Check if genesis subsidies have been distributed
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::Subsidy;
 use 0x1::LibraAccount;

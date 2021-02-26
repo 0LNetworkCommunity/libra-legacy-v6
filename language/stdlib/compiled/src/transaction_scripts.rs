@@ -9,8 +9,8 @@
 
 use anyhow::{anyhow, Error, Result};
 use include_dir::{include_dir, Dir};
-use libra_crypto::HashValue;
-use libra_types::transaction::{ScriptABI, SCRIPT_HASH_LENGTH};
+use diem_crypto::HashValue;
+use diem_types::transaction::{ScriptABI, SCRIPT_HASH_LENGTH};
 use std::{convert::TryFrom, fmt, path::PathBuf};
 
 // This includes the script ABIs as binaries. We must use this hack to work around
@@ -66,7 +66,7 @@ pub enum StdlibScript {
 }
 
 impl StdlibScript {
-    /// Return a vector containing all of the standard library scripts (i.e., all inhabitants of the
+    /// Return a vector containing all of the standard diemry scripts (i.e., all inhabitants of the
     /// StdlibScript enum)
     pub fn all() -> Vec<Self> {
         use StdlibScript::*;
@@ -130,7 +130,7 @@ impl StdlibScript {
         self.to_string()
     }
 
-    /// Return true if `code_bytes` is the bytecode of one of the standard library scripts
+    /// Return true if `code_bytes` is the bytecode of one of the standard diemry scripts
     pub fn is(code_bytes: &[u8]) -> bool {
         Self::try_from(code_bytes).is_ok()
     }
@@ -186,7 +186,7 @@ impl CompiledBytes {
 impl TryFrom<&[u8]> for StdlibScript {
     type Error = Error;
 
-    /// Return `Some(<script_name>)` if  `code_bytes` is the bytecode of one of the standard library
+    /// Return `Some(<script_name>)` if  `code_bytes` is the bytecode of one of the standard diemry
     /// scripts, None otherwise.
     fn try_from(code_bytes: &[u8]) -> Result<Self> {
         let hash = CompiledBytes::hash_bytes(code_bytes);
@@ -194,7 +194,7 @@ impl TryFrom<&[u8]> for StdlibScript {
             .iter()
             .find(|script| script.hash() == hash)
             .cloned()
-            .ok_or_else(|| anyhow!("Could not create standard library script from bytes"))
+            .ok_or_else(|| anyhow!("Could not create standard diemry script from bytes"))
     }
 }
 
@@ -238,7 +238,7 @@ impl fmt::Display for StdlibScript {
                 TieredMint => "tiered_mint",
                 UpdateDualAttestationLimit => "update_dual_attestation_limit",
                 UnfreezeAccount => "unfreeze_account",
-                UpdateLibraVersion => "update_libra_version",
+                UpdateLibraVersion => "update_diem_version",
                 UpdateExchangeRate => "update_exchange_rate",
                 UpdateMintingAbility => "update_minting_ability",
                 // 0L
@@ -279,7 +279,7 @@ mod test {
             if files.len() > scripts.len() {
                 "Did you forget to extend the StdlibScript enum?"
             } else {
-                "Did you forget to rebuild the standard library?"
+                "Did you forget to rebuild the standard diemry?"
             }
         );
     }

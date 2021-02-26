@@ -25,15 +25,15 @@ if include_events is false, the [events](type_event.md) field in the Transaction
 
 ```
 // Request: fetches 10 transactions since version 100000
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_transactions","params":[100000, 10, false],"id":1}' https://testnet.libra.org/v1
+curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_transactions","params":[100000, 10, false],"id":1}' https://testnet.diem.org/v1
 
 // Response
 {
   "id": 1,
   "jsonrpc": "2.0",
-  "libra_chain_id": 2,
-  "libra_ledger_timestampusec": 1596694433936687,
-  "libra_ledger_version": 3308663,
+  "diem_chain_id": 2,
+  "diem_ledger_timestampusec": 1596694433936687,
+  "diem_ledger_version": 3308663,
   "result": [
     {
       "events": [],

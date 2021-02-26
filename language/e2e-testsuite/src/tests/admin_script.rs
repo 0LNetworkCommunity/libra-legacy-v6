@@ -6,15 +6,15 @@ use language_e2e_tests::{
     executor::FakeExecutor,
 };
 
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_types::{
     account_config,
     transaction::{authenticator::AuthenticationKey, Script, TransactionArgument},
     vm_status::StatusCode,
 };
 
 use compiler::Compiler;
-use libra_types::transaction::WriteSetPayload;
+use diem_types::transaction::WriteSetPayload;
 
 #[test]
 fn admin_script_rotate_key_single_signer_no_epoch() {
@@ -49,7 +49,7 @@ main(lr_account: &signer, account: &signer, auth_key_prefix: vector<u8>) {
             .into_script_blob("file_name", code)
             .expect("Failed to compile")
     };
-    let account = Account::new_libra_root();
+    let account = Account::new_diem_root();
     let txn = account
         .transaction()
         .write_set(WriteSetPayload::Script {
@@ -66,7 +66,7 @@ main(lr_account: &signer, account: &signer, auth_key_prefix: vector<u8>) {
     let output = executor.execute_and_apply(txn);
 
     // The transaction should not trigger a reconfiguration.
-    let new_epoch_event_key = libra_types::on_chain_config::new_epoch_event_key();
+    let new_epoch_event_key = diem_types::on_chain_config::new_epoch_event_key();
     assert!(!output
         .events()
         .iter()
@@ -114,7 +114,7 @@ main(lr_account: &signer, account: &signer, auth_key_prefix: vector<u8>) {
             .into_script_blob("file_name", code)
             .expect("Failed to compile")
     };
-    let account = Account::new_libra_root();
+    let account = Account::new_diem_root();
     let txn = account
         .transaction()
         .write_set(WriteSetPayload::Script {
@@ -131,7 +131,7 @@ main(lr_account: &signer, account: &signer, auth_key_prefix: vector<u8>) {
     let output = executor.execute_and_apply(txn);
 
     // The transaction should trigger a reconfiguration.
-    let new_epoch_event_key = libra_types::on_chain_config::new_epoch_event_key();
+    let new_epoch_event_key = diem_types::on_chain_config::new_epoch_event_key();
     assert!(output
         .events()
         .iter()
@@ -177,7 +177,7 @@ main(account: &signer, auth_key_prefix: vector<u8>) {
             .into_script_blob("file_name", code)
             .expect("Failed to compile")
     };
-    let account = Account::new_libra_root();
+    let account = Account::new_diem_root();
     let txn = account
         .transaction()
         .write_set(WriteSetPayload::Script {

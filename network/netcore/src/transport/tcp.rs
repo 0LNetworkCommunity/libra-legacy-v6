@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! TCP Transport
@@ -9,8 +9,8 @@ use futures::{
     ready,
     stream::Stream,
 };
-use libra_network_address::{parse_dns_tcp, parse_ip_tcp, IpFilter, NetworkAddress};
-use libra_types::PeerId;
+use diem_network_address::{parse_dns_tcp, parse_ip_tcp, IpFilter, NetworkAddress};
+use diem_types::PeerId;
 use std::{
     convert::TryFrom,
     fmt::Debug,
@@ -276,7 +276,7 @@ mod test {
         io::{AsyncReadExt, AsyncWriteExt},
         stream::StreamExt,
     };
-    use libra_types::PeerId;
+    use diem_types::PeerId;
     use tokio::runtime::Runtime;
 
     #[tokio::test]

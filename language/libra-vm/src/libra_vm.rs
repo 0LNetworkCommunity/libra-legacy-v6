@@ -13,9 +13,9 @@ use crate::{
     transaction_metadata::TransactionMetadata,
 };
 use fail::fail_point;
-use libra_logger::prelude::*;
-use libra_state_view::StateView;
-use libra_types::{
+use diem_logger::prelude::*;
+use diem_state_view::StateView;
+use diem_types::{
     account_config::{self, CurrencyInfoResource},
     contract_event::ContractEvent,
     event::EventKey,
@@ -117,7 +117,7 @@ impl LibraVMImpl {
             })
     }
 
-    pub fn get_libra_version(&self) -> Result<LibraVersion, VMStatus> {
+    pub fn get_diem_version(&self) -> Result<LibraVersion, VMStatus> {
         self.version.clone().ok_or_else(|| {
             CRITICAL_ERRORS.inc();
             error!("VM Startup Failed. Libra Version Not Found");
@@ -558,8 +558,8 @@ impl<'a> LibraVMInternals<'a> {
     }
 
     /// Returns the version of Move Runtime.
-    pub fn libra_version(self) -> Result<LibraVersion, VMStatus> {
-        self.0.get_libra_version()
+    pub fn diem_version(self) -> Result<LibraVersion, VMStatus> {
+        self.0.get_diem_version()
     }
 
     /// Executes the given code within the context of a transaction.

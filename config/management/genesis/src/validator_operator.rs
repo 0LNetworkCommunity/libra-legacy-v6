@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use libra_global_constants::OPERATOR_KEY;
-use libra_management::{
+use diem_global_constants::OPERATOR_KEY;
+use diem_management::{
     config::ConfigPath, constants, error::Error, secure_backend::SharedBackend,
 };
 use structopt::StructOpt;

@@ -1,7 +1,7 @@
 ---
 id: transaction-builder-generator
 title: Transaction Builder Generator
-custom_edit_url: https://github.com/libra/libra/edit/master/language/transaction-builder-generator/README.md
+custom_edit_url: https://github.com/diem/diem/edit/master/language/transaction-builder-generator/README.md
 ---
 
 # Transaction Builder Generator
@@ -23,8 +23,8 @@ This crate provide a binary tool `generate-transaction-builders` to generate and
 
 The tool will also generate and install type definitions for Libra types such as `TypeTag`, `AccountAddress`, and `Script`.
 
-In practice, hashing and signing Libra transactions additionally requires a runtime library for Libra Canonical Serialization ("LCS").
-Such a library will be installed together with the Libra types.
+In practice, hashing and signing Libra transactions additionally requires a runtime diemry for Libra Canonical Serialization ("LCS").
+Such a diemry will be installed together with the Libra types.
 
 
 ## Supported Languages
@@ -39,7 +39,7 @@ The following languages are currently supported:
 
 * Go >= 1.13
 
-* Rust (NOTE: Code generation of dependency-free Rust is experimental. Consider using the libraries of the Libra repository instead.)
+* Rust (NOTE: Code generation of dependency-free Rust is experimental. Consider using the diemries of the Libra repository instead.)
 
 
 ## Quick Start
@@ -50,12 +50,12 @@ You may browse command line options with `target/debug/generate-transaction-buil
 
 ### Python
 
-To install Python3 modules `serde`, `lcs`, `libra_types`, and `libra_stdlib` into a target directory `$DEST`, run:
+To install Python3 modules `serde`, `lcs`, `diem_types`, and `diem_stdlib` into a target directory `$DEST`, run:
 ```bash
 target/debug/generate-transaction-builders \
     --language python3 \
-    --module-name libra_stdlib \
-    --with-libra-types "testsuite/generate-format/tests/staged/libra.yaml" \
+    --module-name diem_stdlib \
+    --with-diem-types "testsuite/generate-format/tests/staged/diem.yaml" \
     --target-source-dir "$DEST" \
     "language/stdlib/compiled/transaction_scripts/abi"
 ```
@@ -67,30 +67,30 @@ PYTHONPATH="$PYTHONPATH:$DEST" python3 "$DEST/stdlib_demo.py"
 
 ### C++
 
-To install C++ files `serde.hpp`, `lcs.hpp`, `libra_types.hpp`, `libra_stdlib.hpp`, `libra_stdlib.cpp` into a target directory `$DEST`, run:
+To install C++ files `serde.hpp`, `lcs.hpp`, `diem_types.hpp`, `diem_stdlib.hpp`, `diem_stdlib.cpp` into a target directory `$DEST`, run:
 ```bash
 target/debug/generate-transaction-builders \
     --language cpp \
-    --module-name libra_stdlib \
-    --with-libra-types "testsuite/generate-format/tests/staged/libra.yaml" \
+    --module-name diem_stdlib \
+    --with-diem-types "testsuite/generate-format/tests/staged/diem.yaml" \
     --target-source-dir "$DEST" \
     "language/stdlib/compiled/transaction_scripts/abi"
 ```
 Next, you may copy and execute the [C++ demo file](examples/cpp/stdlib_demo.cpp) with:
 ```bash
 cp language/transaction-builder/generator/examples/cpp/stdlib_demo.cpp "$DEST"
-clang++ --std=c++17 -I "$DEST" "$DEST/libra_stdlib.cpp" "$DEST/stdlib_demo.cpp" -o "$DEST/stdlib_demo"
+clang++ --std=c++17 -I "$DEST" "$DEST/diem_stdlib.cpp" "$DEST/stdlib_demo.cpp" -o "$DEST/stdlib_demo"
 "$DEST/stdlib_demo"
 ```
 
 ### Java
 
-To install Java source packages `com.novi.serde`, `com.novi.lcs`, `org.libra.types`, and `org.libra.stdlib` into a target directory `$DEST`, run:
+To install Java source packages `com.novi.serde`, `com.novi.lcs`, `org.diem.types`, and `org.diem.stdlib` into a target directory `$DEST`, run:
 ```bash
 target/debug/generate-transaction-builders \
     --language java \
-    --module-name org.libra.stdlib \
-    --with-libra-types "testsuite/generate-format/tests/staged/libra.yaml" \
+    --module-name org.diem.stdlib \
+    --with-diem-types "testsuite/generate-format/tests/staged/diem.yaml" \
     --target-source-dir "$DEST" \
     "language/stdlib/compiled/transaction_scripts/abi"
 ```
@@ -103,14 +103,14 @@ java -enableassertions -cp "$DEST" StdlibDemo
 
 ### Go
 
-To generate the Go "packages" `testing/libratypes`, and `testing/librastdlib` into a target directory `$DEST`, run:
+To generate the Go "packages" `testing/diemtypes`, and `testing/diemstdlib` into a target directory `$DEST`, run:
 
 ```bash
 target/debug/generate-transaction-builders \
     --language go \
-    --module-name librastdlib \
-    --libra-package-name testing \
-    --with-libra-types "testsuite/generate-format/tests/staged/libra.yaml" \
+    --module-name diemstdlib \
+    --diem-package-name testing \
+    --with-diem-types "testsuite/generate-format/tests/staged/diem.yaml" \
     --target-source-dir "$DEST" \
     "language/stdlib/compiled/transaction_scripts/abi"
 ```
@@ -123,12 +123,12 @@ cp language/transaction-builder/generator/examples/golang/stdlib_demo.go "$DEST"
 
 ### Rust (experimental)
 
-To install dependency-free Rust crates `libra-types` and `libra-stdlib` into a target directory `$DEST`, run:
+To install dependency-free Rust crates `diem-types` and `diem-stdlib` into a target directory `$DEST`, run:
 ```bash
 target/debug/generate-transaction-builders \
     --language rust \
-    --module-name libra-stdlib \
-    --with-libra-types "testsuite/generate-format/tests/staged/libra.yaml" \
+    --module-name diem-stdlib \
+    --with-diem-types "testsuite/generate-format/tests/staged/diem.yaml" \
     --target-source-dir "$DEST" \
     "language/stdlib/compiled/transaction_scripts/abi"
 ```
@@ -139,14 +139,14 @@ Next, you may copy and execute the [Rust demo file](examples/rust/stdlib_demo.rs
 
 Supporting transaction builders in an additional programming language boils down to providing the following items:
 
-1. Code generation for Libra types (Rust library and tool),
+1. Code generation for Libra types (Rust diemry and tool),
 
-2. LCS runtime (library in target language),
+2. LCS runtime (diemry in target language),
 
 3. Code generation for transaction builders (Rust tool).
 
 
-Items (1) and (2) are provided by the Rust library `serde-generate` which is developed in a separate [github repository](https://github.com/novifinancial/serde-reflection).
+Items (1) and (2) are provided by the Rust diemry `serde-generate` which is developed in a separate [github repository](https://github.com/novifinancial/serde-reflection).
 
 Item (3) --- this tool --- is currently developed in the Libra repository.
 

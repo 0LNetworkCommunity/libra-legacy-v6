@@ -1,11 +1,11 @@
-The Libra Developer Docs website was created with [Docusaurus](https://docusaurus.io/).
+The Diem Developer Docs website was created with [Docusaurus](https://docusaurus.io/).
 FontAwesome icons were used under the
 [Creative Commons Attribution 4.0 International](https://fontawesome.com/license).
 
 ## Building
 
 You need [Node](https://nodejs.org/en/) >= 8.x and
-[Yarn](https://yarnpkg.com/en/) >= 1.5 in order to build the libra website.
+[Yarn](https://yarnpkg.com/en/) >= 1.5 in order to build the diem website.
 
 Switch to the `website` dir from the project root and start the server:
 ```bash
@@ -33,20 +33,20 @@ To generate a static build of the website in the `website/build` directory, run
 #### Deploying for wider testing
 
 ```bash
-zip libra.zip -r website/build
+zip diem.zip -r website/build
 scp -r website/build/ user@server:/path
 ```
 
 on server:
 ```bash
-unzip libra.zip
+unzip diem.zip
 ```
 
 ## Publishing
 
-The site is hosted on GitHub pages, via the `gh-pages` branch of the `libra'
-[GitHub repo](https://github.com/libra/libra/developers.libra.org).
+The site is hosted on GitHub pages, via the `gh-pages` branch of the `diem'
+[GitHub repo](https://github.com/diem/diem/developers.diem.org).
 
 The website is automatically built and published from GitHub Actions - see the
-[config file](https://github.com/libra/libra/blob/master/.github/workflows/developer-site-deploy.yml)
+[config file](https://github.com/diem/diem/blob/master/.github/workflows/developer-site-deploy.yml)
 for details.

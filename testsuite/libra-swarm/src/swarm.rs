@@ -1,16 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{Context, Result};
 use debug_interface::NodeDebugClient;
-use libra_config::config::{NodeConfig, RoleType};
-use libra_genesis_tool::{
+use diem_config::config::{NodeConfig, RoleType};
+use diem_genesis_tool::{
     config_builder::{FullnodeBuilder, FullnodeType, ValidatorBuilder},
     swarm_config::SwarmConfig,
 };
-use libra_logger::prelude::*;
-use libra_temppath::TempPath;
-use libra_types::account_address::AccountAddress;
+use diem_logger::prelude::*;
+use diem_temppath::TempPath;
+use diem_types::account_address::AccountAddress;
 use std::{
     collections::HashMap,
     env,
@@ -22,7 +22,7 @@ use std::{
 };
 use thiserror::Error;
 
-pub struct LibraNode {
+pub struct DiemNode {
     node: Child,
     node_id: String,
     validator_peer_id: Option<AccountAddress>,
@@ -32,8 +32,8 @@ pub struct LibraNode {
     pub log: PathBuf,
 }
 
-impl Drop for LibraNode {
-    // When the LibraNode struct goes out of scope we need to kill the child process
+impl Drop for DiemNode {
+    // When the DiemNode struct goes out of scope we need to kill the child process
     fn drop(&mut self) {
         // check if the process has already been terminated
         match self.node.try_wait() {
@@ -43,7 +43,7 @@ impl Drop for LibraNode {
             // The node is still running so we need to attempt to kill it
             _ => {
                 if let Err(e) = self.node.kill() {
-                    panic!("LibraNode process could not be killed: '{}'", e);
+                    panic!("DiemNode process could not be killed: '{}'", e);
                 }
                 self.node.wait().unwrap();
             }
@@ -51,9 +51,9 @@ impl Drop for LibraNode {
     }
 }
 
-impl LibraNode {
+impl DiemNode {
     pub fn launch(
-        libra_node_bin_path: &Path,
+        diem_node_bin_path: &Path,
         node_id: String,
         role: RoleType,
         config_path: &Path,
@@ -66,7 +66,7 @@ impl LibraNode {
             RoleType::Validator => Some(config.validator_network.as_ref().unwrap().peer_id()),
             RoleType::FullNode => None,
         };
-        let mut node_command = Command::new(libra_node_bin_path);
+        let mut node_command = Command::new(diem_node_bin_path);
         node_command.arg("-f").arg(config_path);
         if env::var("RUST_LOG").is_err() {
             // Only set our RUST_LOG if its not present in environment
@@ -78,7 +78,7 @@ impl LibraNode {
         let node = node_command.spawn().with_context(|| {
             format!(
                 "Error launching node process with binary: {:?}",
-                libra_node_bin_path
+                diem_node_bin_path
             )
         })?;
         let debug_client = NodeDebugClient::new(
@@ -131,7 +131,7 @@ impl LibraNode {
 
     pub fn check_connectivity(&mut self, expected_peers: i64) -> bool {
         let connected_peers = format!(
-            "libra_network_peers{{role_type={},state=connected}}",
+            "diem_network_peers{{role_type={},state=connected}}",
             self.role.to_string()
         );
         if let Some(num_connected_peers) = self.get_metric(&connected_peers) {
@@ -189,27 +189,27 @@ pub enum HealthStatus {
 
 /// A wrapper that unifies PathBuf and TempPath.
 #[derive(Debug)]
-pub enum LibraSwarmDir {
+pub enum DiemSwarmDir {
     Persistent(PathBuf),
     Temporary(TempPath),
 }
 
-impl AsRef<Path> for LibraSwarmDir {
+impl AsRef<Path> for DiemSwarmDir {
     fn as_ref(&self) -> &Path {
         match self {
-            LibraSwarmDir::Persistent(path_buf) => path_buf.as_path(),
-            LibraSwarmDir::Temporary(temp_dir) => temp_dir.path(),
+            DiemSwarmDir::Persistent(path_buf) => path_buf.as_path(),
+            DiemSwarmDir::Temporary(temp_dir) => temp_dir.path(),
         }
     }
 }
 
-/// Struct holding instances and information of Libra Swarm
-pub struct LibraSwarm {
-    libra_node_bin_path: PathBuf,
-    // Output log, LibraNodes' config file, libradb etc, into this dir.
-    pub dir: LibraSwarmDir,
-    // Maps the node id of a node to the LibraNode struct
-    pub nodes: HashMap<String, LibraNode>,
+/// Struct holding instances and information of Diem Swarm
+pub struct DiemSwarm {
+    diem_node_bin_path: PathBuf,
+    // Output log, DiemNodes' config file, diemdb etc, into this dir.
+    pub dir: DiemSwarmDir,
+    // Maps the node id of a node to the DiemNode struct
+    pub nodes: HashMap<String, DiemNode>,
     pub config: SwarmConfig,
     pub role: RoleType,
 }
@@ -229,35 +229,35 @@ pub enum SwarmLaunchFailure {
     IoError(#[from] io::Error),
 }
 
-impl LibraSwarm {
+impl DiemSwarm {
     /// Either create a persistent directory for swarm or return a temporary one.
     /// If specified persistent directory already exists,
     /// assumably due to previous launch failure, it will be removed.
     /// The directory for the last failed attempt won't be removed.
-    fn setup_config_dir(config_dir: &Option<String>) -> LibraSwarmDir {
+    fn setup_config_dir(config_dir: &Option<String>) -> DiemSwarmDir {
         if let Some(dir_str) = config_dir {
             let path_buf = PathBuf::from_str(&dir_str).expect("unable to create config dir");
             if path_buf.exists() {
                 std::fs::remove_dir_all(dir_str).expect("unable to delete previous config dir");
             }
             std::fs::create_dir_all(dir_str).expect("unable to create config dir");
-            LibraSwarmDir::Persistent(path_buf)
+            DiemSwarmDir::Persistent(path_buf)
         } else {
             let temp_dir = TempPath::new();
             temp_dir
                 .create_as_dir()
                 .expect("unable to create temporary config dir");
-            LibraSwarmDir::Temporary(temp_dir)
+            DiemSwarmDir::Temporary(temp_dir)
         }
     }
 
     pub fn configure_fn_swarm(
-        libra_node_bin_path: &Path,
+        diem_node_bin_path: &Path,
         config_dir: Option<String>,
         template: Option<NodeConfig>,
         upstream_config: &SwarmConfig,
         fn_type: FullnodeType,
-    ) -> Result<LibraSwarm> {
+    ) -> Result<DiemSwarm> {
         let swarm_config_dir = Self::setup_config_dir(&config_dir);
         info!("logs for {:?} at {:?}", fn_type, swarm_config_dir);
 
@@ -269,14 +269,14 @@ impl LibraSwarm {
         let config_path = &swarm_config_dir.as_ref().to_path_buf();
         let builder = FullnodeBuilder::new(
             upstream_config.config_files.clone(),
-            upstream_config.libra_root_key_path.clone(),
+            upstream_config.diem_root_key_path.clone(),
             node_config,
             fn_type,
         );
         let config = SwarmConfig::build(&builder, config_path)?;
 
         Ok(Self {
-            libra_node_bin_path: libra_node_bin_path.to_path_buf(),
+            diem_node_bin_path: diem_node_bin_path.to_path_buf(),
             dir: swarm_config_dir,
             nodes: HashMap::new(),
             config,
@@ -285,11 +285,11 @@ impl LibraSwarm {
     }
 
     pub fn configure_validator_swarm(
-        libra_node_bin_path: &Path,
+        diem_node_bin_path: &Path,
         num_nodes: usize,
         config_dir: Option<String>,
         template: Option<NodeConfig>,
-    ) -> Result<LibraSwarm> {
+    ) -> Result<DiemSwarm> {
         let swarm_config_dir = Self::setup_config_dir(&config_dir);
         info!("logs for validator at {:?}", swarm_config_dir);
 
@@ -300,7 +300,7 @@ impl LibraSwarm {
         let config = SwarmConfig::build(&builder, config_path)?;
 
         Ok(Self {
-            libra_node_bin_path: libra_node_bin_path.to_path_buf(),
+            diem_node_bin_path: diem_node_bin_path.to_path_buf(),
             dir: swarm_config_dir,
             nodes: HashMap::new(),
             config,
@@ -326,8 +326,8 @@ impl LibraSwarm {
         for (index, path) in self.config.config_files.iter().enumerate() {
             // Use index as node id.
             let node_id = format!("{}", index);
-            let node = LibraNode::launch(
-                &self.libra_node_bin_path,
+            let node = DiemNode::launch(
+                &self.diem_node_bin_path,
                 node_id.clone(),
                 self.role,
                 &path,
@@ -386,7 +386,7 @@ impl LibraSwarm {
                     HealthStatus::RpcFailure(_) => continue,
                     HealthStatus::Crashed(status) => {
                         error!(
-                            "Libra node '{}' has crashed with status '{}'. Log output: '''{}'''",
+                            "Diem node '{}' has crashed with status '{}'. Log output: '''{}'''",
                             node.node_id,
                             status,
                             node.get_log_contents().unwrap()
@@ -413,7 +413,7 @@ impl LibraSwarm {
     /// function are now available at all the nodes.
     pub fn wait_for_all_nodes_to_catchup(&mut self) -> bool {
         let num_attempts = 60;
-        let last_committed_round_str = "libra_consensus_last_committed_round{}";
+        let last_committed_round_str = "diem_consensus_last_committed_round{}";
         let mut done = vec![false; self.nodes.len()];
 
         let mut last_committed_round = 0;
@@ -503,7 +503,7 @@ impl LibraSwarm {
             .collect()
     }
 
-    pub fn get_validator(&self, idx: usize) -> Option<&LibraNode> {
+    pub fn get_validator(&self, idx: usize) -> Option<&DiemNode> {
         let node_id = format!("{}", idx);
         self.nodes.get(&node_id)
     }
@@ -523,8 +523,8 @@ impl LibraSwarm {
             .unwrap_or_else(|| panic!("Node at index {} not found", idx));
         let log_file_path = self.dir.as_ref().join("logs").join(format!("{}.log", idx));
         let node_id = format!("{}", idx);
-        let mut node = LibraNode::launch(
-            &self.libra_node_bin_path,
+        let mut node = DiemNode::launch(
+            &self.diem_node_bin_path,
             node_id.clone(),
             self.role,
             path,
@@ -542,12 +542,12 @@ impl LibraSwarm {
     }
 }
 
-impl Drop for LibraSwarm {
+impl Drop for DiemSwarm {
     fn drop(&mut self) {
         // If panicking, we don't want to gc the swarm directory.
         if std::thread::panicking() {
             // let dir = self.dir;
-            if let LibraSwarmDir::Temporary(temp_dir) = &mut self.dir {
+            if let DiemSwarmDir::Temporary(temp_dir) = &mut self.dir {
                 temp_dir.persist();
                 let log_path = temp_dir.path();
                 println!("logs located at {:?}", log_path);

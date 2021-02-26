@@ -1,6 +1,6 @@
 address 0x1 {
 
-/// The `Genesis` module defines the Move initialization entry point of the Libra framework
+/// The `Genesis` module defines the Move initialization entry point of the Diem framework
 /// when executing from a fresh state.
 ///
 /// > TODO: Currently there are a few additional functions called from Rust during genesis.
@@ -9,16 +9,16 @@ module Genesis {
     use 0x1::AccountFreezing;
     use 0x1::ChainId;
     use 0x1::DualAttestation;
-    use 0x1::Libra;
-    use 0x1::LibraAccount;
-    use 0x1::LibraBlock;
-    use 0x1::LibraConfig;
-    use 0x1::LibraSystem;
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraTransactionPublishingOption;
-    use 0x1::LibraVersion;
+    use 0x1::Diem;
+    use 0x1::DiemAccount;
+    use 0x1::DiemBlock;
+    use 0x1::DiemConfig;
+    use 0x1::DiemSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemTransactionPublishingOption;
+    use 0x1::DiemVersion;
     use 0x1::TransactionFee;
-    use 0x1::LibraVMConfig;
+    use 0x1::DiemVMConfig;
     use 0x1::Stats;
     use 0x1::ValidatorUniverse;
     use 0x1::GAS;
@@ -29,7 +29,7 @@ module Genesis {
     use 0x1::Epoch;
     // use 0x1::FullnodeState;
 
-    /// Initializes the Libra framework.
+    /// Initializes the Diem framework.
     fun initialize(
         lr_account: &signer,
         lr_auth_key: vector<u8>,
@@ -39,15 +39,15 @@ module Genesis {
         native_schedule: vector<u8>,
         chain_id: u8,
     ) {
-        LibraAccount::initialize(lr_account, x"00000000000000000000000000000000");
+        DiemAccount::initialize(lr_account, x"00000000000000000000000000000000");
 
         ChainId::initialize(lr_account, chain_id);
 
         // On-chain config setup
-        LibraConfig::initialize(lr_account);
+        DiemConfig::initialize(lr_account);
 
         // Currency setup
-        Libra::initialize(lr_account);
+        Diem::initialize(lr_account);
 
         // Currency setup
         // Coin1::initialize(lr_account, tc_account);
@@ -60,32 +60,32 @@ module Genesis {
 
         TransactionFee::initialize(lr_account);
 
-        LibraSystem::initialize_validator_set(
+        DiemSystem::initialize_validator_set(
             lr_account,
         );
-        LibraVersion::initialize(
+        DiemVersion::initialize(
             lr_account,
         );
         DualAttestation::initialize(
             lr_account,
         );
-        LibraBlock::initialize_block_metadata(lr_account);
+        DiemBlock::initialize_block_metadata(lr_account);
 
-        // outside of testing, brick the libraroot account.
+        // outside of testing, brick the diemroot account.
         if (chain_id == 1 || chain_id == 7) {
             lr_auth_key = Hash::sha3_256(b"Protests rage across the nation");
         };
-        let lr_rotate_key_cap = LibraAccount::extract_key_rotation_capability(lr_account);
-        LibraAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
-        LibraAccount::restore_key_rotation_capability(lr_rotate_key_cap);
+        let lr_rotate_key_cap = DiemAccount::extract_key_rotation_capability(lr_account);
+        DiemAccount::rotate_authentication_key(&lr_rotate_key_cap, lr_auth_key);
+        DiemAccount::restore_key_rotation_capability(lr_rotate_key_cap);
 
-        LibraTransactionPublishingOption::initialize(
+        DiemTransactionPublishingOption::initialize(
             lr_account,
             initial_script_allow_list,
             is_open_module,
         );
 
-        LibraVMConfig::initialize(
+        DiemVMConfig::initialize(
             lr_account,
             instruction_schedule,
             native_schedule,
@@ -100,9 +100,9 @@ module Genesis {
         Oracle::initialize(lr_account);
         // FullnodeState::global_init(lr_account);
         // After we have called this function, all invariants which are guarded by
-        // `LibraTimestamp::is_operating() ==> ...` will become active and a verification condition.
+        // `DiemTimestamp::is_operating() ==> ...` will become active and a verification condition.
         // See also discussion at function specification.
-        LibraTimestamp::set_time_has_started(lr_account);
+        DiemTimestamp::set_time_has_started(lr_account);
         Epoch::initialize(lr_account);
 
     }
@@ -118,7 +118,7 @@ module Genesis {
     /// > each module.
     spec fun initialize {
         /// Assume that this is called in genesis state (no timestamp).
-        requires LibraTimestamp::is_genesis();
+        requires DiemTimestamp::is_genesis();
     }
 
 }

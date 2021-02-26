@@ -25,11 +25,11 @@ main() {
 
 
 //! new-transaction
-import 0x1.LibraAccount;
+import 0x1.DiemAccount;
 import 0x1.Coin1;
 main() {
     // Alice did less work than bob so she should pay less gas.
-    assert(LibraAccount.balance<Coin1.Coin1>({{bob}}) < LibraAccount.balance<Coin1.Coin1>({{alice}}), 42);
+    assert(DiemAccount.balance<Coin1.Coin1>({{bob}}) < DiemAccount.balance<Coin1.Coin1>({{alice}}), 42);
     return;
 }
 // check: "Keep(EXECUTED)"

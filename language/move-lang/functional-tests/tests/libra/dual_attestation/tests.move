@@ -6,7 +6,7 @@
 script{
     use 0x1::DualAttestation;
     fun main() {
-        DualAttestation::get_cur_microlibra_limit();
+        DualAttestation::get_cur_microdiem_limit();
     }
 }
 // check: "Keep(EXECUTED)"
@@ -15,7 +15,7 @@ script{
 script{
     use 0x1::DualAttestation::{Self};
     fun main(not_blessed: &signer) {
-        DualAttestation::set_microlibra_limit(not_blessed, 99);
+        DualAttestation::set_microdiem_limit(not_blessed, 99);
     }
 }
 // check: "Keep(ABORTED { code: 258,"
@@ -25,7 +25,7 @@ script{
 script{
     use 0x1::DualAttestation::{Self};
     fun main(not_blessed: &signer) {
-        DualAttestation::set_microlibra_limit(not_blessed, 1001);
+        DualAttestation::set_microdiem_limit(not_blessed, 1001);
     }
 }
 // check: "Keep(EXECUTED)"
@@ -130,7 +130,7 @@ script{
 // check: "Keep(ABORTED { code: 1,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: freddymac
 script{
 use 0x1::DualAttestation;

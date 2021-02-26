@@ -2,11 +2,11 @@
 
 This document describes the protocol specifications for the Libra Payment Network (LPN). The intended audience for this document are as follows:
 
-* Virtual Asset Service Providers (VASPs), designated dealers (DDs), and other [ecosystem developers](https://libra.org/en-US/white-paper/) who build software that can interface with the LPN.
+* Virtual Asset Service Providers (VASPs), designated dealers (DDs), and other [ecosystem developers](https://diem.org/en-US/white-paper/) who build software that can interface with the LPN.
 * Developers who work on supporting transaction validation and interface with the validation protocols.
 * Those interested in improving the protocol specifications and/or understanding the LPN in more detail.
 
-The reference implementations for all LPN specifications is [Libra Core](https://github.com/libra/libra). Libra Core is maintained by the open-source developer community on behalf of the [Libra Association](https://libra.org/en-US/association/). After the initial launch of the LPN, all specification changes will be proposed via the Libra Improvement Proposals (LIP) process - which is not yet finalized and public. For expedience prior to the launch of the LPN, changes to the specification will be made directly in the documentation and code.
+The reference implementations for all LPN specifications is [Libra Core](https://github.com/diem/diem). Libra Core is maintained by the open-source developer community on behalf of the [Libra Association](https://diem.org/en-US/association/). After the initial launch of the LPN, all specification changes will be proposed via the Libra Improvement Proposals (LIP) process - which is not yet finalized and public. For expedience prior to the launch of the LPN, changes to the specification will be made directly in the documentation and code.
 
 ## Overview
 
@@ -19,7 +19,7 @@ latency, and an efficient, high-capacity storage system.
 * Highly secure to ensure the safety of funds and financial data.
 * Flexible, so that it can power future innovation in financial services.
 
-The Libra Blockchain is designed from the ground up to holistically address these requirements and builds on the learnings from existing projects and research — a combination of innovative approaches and well-understood techniques. The [Libra whitepaper](https://developers.libra.org/docs/assets/papers/the-libra-blockchain/2019-09-26.pdf) provides much of the rationale behind the overall design.  More details on the Libra Association and its mission are available on [libra.org](https://libra.org)
+The Libra Blockchain is designed from the ground up to holistically address these requirements and builds on the learnings from existing projects and research — a combination of innovative approaches and well-understood techniques. The [Libra whitepaper](https://developers.diem.org/docs/assets/papers/the-diem-blockchain/2019-09-26.pdf) provides much of the rationale behind the overall design.  More details on the Libra Association and its mission are available on [diem.org](https://diem.org)
 
 ## Architecture
 
@@ -36,7 +36,7 @@ Below is a recapicoin1_tmpating diagram of the Libra network. The arrow tail sig
 
 ## The Libra network
 
-![Libra network](images/libra_network.png)
+![Libra network](images/diem_network.png)
 
 While a validator has a public endpoint and a validator endpoint, in order to support additional features and properties, such as the principle of least privilege, key rotation, monitoring, DoS protection, scalability, etc., it can be composed of a number of internal components. Below is an example validator architecture that addresses many of these aspects.
 
@@ -53,7 +53,7 @@ As [depicted](#The-Libra-network), there are 4 network protocol specifications:
 
 In addition, these specifications build on top of a common set of specifications:
 
-* **[Libra canonical serialization (LCS)](https://developers.libra.org/docs/rustdocs/libra_canonical_serialization/)**. This details how data is canonically serialized and deserialized. Hashing and signing of data structures are applied after LCS serialization.
+* **[Libra canonical serialization (LCS)](https://developers.diem.org/docs/rustdocs/diem_canonical_serialization/)**. This details how data is canonically serialized and deserialized. Hashing and signing of data structures are applied after LCS serialization.
 * **[Common data structures](common/data_structures.md)**. These are the data structures that are used across more than one specification.
 * **[LibraNet](network/)**. This describes a handshake and wire protocol for all networking protocols. This relies on the [Noise protocol framework](https://noiseprotocol.org/) for integrity and confidentiality.
 * **[On-chain discovery](network/onchain-discovery.md)**. This defines how clients can safely find the endpoints of the LPN validators.
@@ -66,9 +66,9 @@ The LPN specifications are designed to support upgrades over time via the Libra 
 
 The process for upgrading the LPN specifications is as follows:
 
-1. **Seed an idea**. A Contributor should socialize their idea with the Libra developer community and Maintainers. They might create a [GitHub issue](https://github.com/libra/libra/issues) or use another means of gathering feedback.
+1. **Seed an idea**. A Contributor should socialize their idea with the Libra developer community and Maintainers. They might create a [GitHub issue](https://github.com/diem/diem/issues) or use another means of gathering feedback.
 
-2. **[Standard LIP](https://lip.libra.org/overview)**. A Contributor proposes a new standard LIP that modifies an existing specification(s) or proposes a new specification. If the standard LIP reaches the "Accepted" status, the proposed changes will be set in the new specification version as well as implemented in the Libra Core master branch. Other implementations of the protocol must follow these changes as well.
+2. **[Standard LIP](https://lip.diem.org/overview)**. A Contributor proposes a new standard LIP that modifies an existing specification(s) or proposes a new specification. If the standard LIP reaches the "Accepted" status, the proposed changes will be set in the new specification version as well as implemented in the Libra Core master branch. Other implementations of the protocol must follow these changes as well.
 
 3. **LPN upgrade**. There are two types of specification upgrades: backwards-incompatible (e.g. hard forks) or backwards-compatible (e.g. soft forks). Unlike conventional software systems, backwards-incompatible upgrades are likely to be much more common than backwards-compatible upgrades in LPN. Because the purpose of LPN is to agree on the bit-precise result of executing a computation and most specifications contribute to that result, almost every upgrade will break compatibility with previous versions. Thus, we will assume that proposed upgrades are backwards-incompatible by default and require rigorous justification to handle an upgrade as backwards-compatible. In addition, changes to the following specifications are backwards-incompatible by definition:
 

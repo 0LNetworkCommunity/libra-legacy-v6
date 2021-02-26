@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,7 +9,7 @@ use crate::{
 };
 use consensus_types::{block::Block, common::Round};
 use futures::StreamExt;
-use libra_config::config::ConsensusProposerType::{FixedProposer, RotatingProposer, RoundProposer};
+use diem_config::config::ConsensusProposerType::{FixedProposer, RotatingProposer, RoundProposer};
 use std::collections::HashMap;
 
 #[test]

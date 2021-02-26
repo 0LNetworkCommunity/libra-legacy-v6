@@ -9,28 +9,28 @@ use language_e2e_tests::{
     executor::FakeExecutor,
     transaction_status_eq,
 };
-use libra_crypto::HashValue;
-use libra_types::{
+use diem_crypto::HashValue;
+use diem_types::{
     on_chain_config::LibraVersion,
     transaction::{Script, TransactionArgument, TransactionStatus},
     vm_status::{KeptVMStatus, StatusCode},
 };
-use libra_vm::LibraVM;
+use diem_vm::LibraVM;
 use transaction_builder::{
     encode_add_to_script_allow_list_script, encode_update_dual_attestation_limit_script,
 };
 
 #[test]
-fn initial_libra_version() {
+fn initial_diem_version() {
     let mut executor = FakeExecutor::from_genesis_file();
     let vm = LibraVM::new(executor.get_state_view());
 
     assert_eq!(
-        vm.internals().libra_version().unwrap(),
+        vm.internals().diem_version().unwrap(),
         LibraVersion { major: 1 }
     );
 
-    let account = Account::new_genesis_account(libra_types::on_chain_config::config_address());
+    let account = Account::new_genesis_account(diem_types::on_chain_config::config_address());
     let txn = account
         .transaction()
         .script(Script::new(
@@ -45,7 +45,7 @@ fn initial_libra_version() {
 
     let new_vm = LibraVM::new(executor.get_state_view());
     assert_eq!(
-        new_vm.internals().libra_version().unwrap(),
+        new_vm.internals().diem_version().unwrap(),
         LibraVersion { major: 2 }
     );
 }
@@ -56,11 +56,11 @@ fn drop_txn_after_reconfiguration() {
     let vm = LibraVM::new(executor.get_state_view());
 
     assert_eq!(
-        vm.internals().libra_version().unwrap(),
+        vm.internals().diem_version().unwrap(),
         LibraVersion { major: 1 }
     );
 
-    let account = Account::new_genesis_account(libra_types::on_chain_config::config_address());
+    let account = Account::new_genesis_account(diem_types::on_chain_config::config_address());
     let txn = account
         .transaction()
         .script(Script::new(
@@ -131,7 +131,7 @@ fn updated_limit_allows_txn() {
 fn update_script_allow_list() {
     // create a FakeExecutor with a genesis from file
     let mut executor = FakeExecutor::allowlist_genesis();
-    let lr = Account::new_libra_root();
+    let lr = Account::new_diem_root();
     // create and publish a sender with 5_000_000 coins and a receiver with 0 coins
     let sender = AccountData::new(5_000_000, 10);
     executor.add_account_data(&sender);

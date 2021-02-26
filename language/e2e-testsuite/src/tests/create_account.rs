@@ -6,7 +6,7 @@ use language_e2e_tests::{
     common_transactions::create_account_txn,
     executor::FakeExecutor,
 };
-use libra_types::{account_config, transaction::TransactionStatus, vm_status::KeptVMStatus};
+use diem_types::{account_config, transaction::TransactionStatus, vm_status::KeptVMStatus};
 
 #[test]
 fn create_account() {

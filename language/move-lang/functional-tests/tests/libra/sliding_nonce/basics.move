@@ -61,7 +61,7 @@ script {
 }
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: default
 script {
     use 0x1::SlidingNonce;
@@ -87,7 +87,7 @@ script {
 }
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 //! execute-as: default
 script {
     use 0x1::SlidingNonce;

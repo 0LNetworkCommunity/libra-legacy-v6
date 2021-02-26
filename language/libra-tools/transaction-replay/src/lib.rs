@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{bail, format_err, Result};
-use libra_types::{
+use diem_types::{
     account_address::AccountAddress,
-    account_config::libra_root_address,
+    account_config::diem_root_address,
     account_state::AccountState,
     transaction::{ChangeSet, Transaction, TransactionOutput, Version},
 };
-use libra_validator_interface::{
+use diem_validator_interface::{
     DBDebuggerInterface, DebuggerStateView, JsonRpcDebuggerInterface, LibraValidatorInterface,
 };
-use libra_vm::{
+use diem_vm::{
     data_cache::RemoteStorage, txn_effects_to_writeset_and_events, LibraVM, VMExecutor,
 };
 use move_core_types::gas_schedule::{GasAlgebra, GasUnits};
@@ -177,7 +177,7 @@ impl LibraDebugger {
                     predicate.clone(),
                     vec![],
                     vec![],
-                    vec![libra_root_address(), sender],
+                    vec![diem_root_address(), sender],
                     &mut cost_strategy,
                     &log_context,
                 )
@@ -219,7 +219,7 @@ impl LibraDebugger {
 }
 
 fn is_reconfiguration(vm_output: &TransactionOutput) -> bool {
-    let new_epoch_event_key = libra_types::on_chain_config::new_epoch_event_key();
+    let new_epoch_event_key = diem_types::on_chain_config::new_epoch_event_key();
     vm_output
         .events()
         .iter()

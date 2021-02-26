@@ -7,11 +7,11 @@
 //! block-time: 2
 
 //! new-transaction
-// Reconfiguration can only be invoked by libraroot.
-import 0x1.LibraConfig;
+// Reconfiguration can only be invoked by diemroot.
+import 0x1.DiemConfig;
 
 main(account: &signer) {
-    LibraConfig.reconfigure(copy(account));
+    DiemConfig.reconfigure(copy(account));
     return;
 }
 
@@ -19,12 +19,12 @@ main(account: &signer) {
 // check: 1
 
 //! new-transaction
-//! sender: libraroot
-import 0x1.LibraConfig;
+//! sender: diemroot
+import 0x1.DiemConfig;
 
 main(account: &signer) {
-    LibraConfig.reconfigure(copy(account));
-    LibraConfig.reconfigure(copy(account));
+    DiemConfig.reconfigure(copy(account));
+    DiemConfig.reconfigure(copy(account));
     return;
 }
 
@@ -37,11 +37,11 @@ main(account: &signer) {
 //! block-time: 3
 
 //! new-transaction
-//! sender: libraroot
-import 0x1.LibraConfig;
+//! sender: diemroot
+import 0x1.DiemConfig;
 
 main(account: &signer) {
-    LibraConfig.reconfigure(copy(account));
+    DiemConfig.reconfigure(copy(account));
     return;
 }
 

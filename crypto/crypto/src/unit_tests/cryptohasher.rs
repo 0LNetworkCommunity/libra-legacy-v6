@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Test file for the procedural macros CryptoHasher and LCSCryptoHash.
 
-use crate as libra_crypto;
+use crate as diem_crypto;
 use crate::{
     hash::{CryptoHash, CryptoHasher, LIBRA_HASH_PREFIX},
     HashValue,
 };
-use libra_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
 use serde::{Deserialize, Serialize};
 use tiny_keccak::{Hasher, Sha3};
 

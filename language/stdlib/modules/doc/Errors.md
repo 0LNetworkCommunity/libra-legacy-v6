@@ -8,7 +8,7 @@ Module defining error codes used in Move aborts throughout the framework.
 A <code>u64</code> error code is constructed from two values:
 
 1. The *error category* which is encoded in the lower 8 bits of the code. Error categories are
-declared in this module and are globally unique across the Libra framework. There is a limited
+declared in this module and are globally unique across the Diem framework. There is a limited
 fixed set of predefined categories, and the framework is guaranteed to use those consistently.
 
 2. The *error reason* which is encoded in the remaining 56 bits of the code. The reason is a unique
@@ -549,6 +549,6 @@ A function to create an error from from a category and a reason.
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use once_cell::sync::Lazy;
@@ -68,7 +68,7 @@ where
 }
 
 static BEGIN_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"<!-- @begin-libradoc name=([^ ]*) -->").unwrap());
+    Lazy::new(|| Regex::new(r"<!-- @begin-diemdoc name=([^ ]*) -->").unwrap());
 
 fn match_begin_command(line: &str) -> Option<String> {
     match BEGIN_RE.captures(line) {
@@ -78,5 +78,5 @@ fn match_begin_command(line: &str) -> Option<String> {
 }
 
 fn match_end_command(line: &str) -> bool {
-    line.contains("<!-- @end-libradoc -->")
+    line.contains("<!-- @end-diemdoc -->")
 }

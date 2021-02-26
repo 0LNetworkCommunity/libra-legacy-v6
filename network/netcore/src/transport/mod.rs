@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Low-level module for establishing connections with peers
@@ -12,8 +12,8 @@
 //! [`TransportExt`]: crate::transport::TransportExt
 
 use futures::{future::Future, stream::Stream};
-use libra_network_address::NetworkAddress;
-use libra_types::PeerId;
+use diem_network_address::NetworkAddress;
+use diem_types::PeerId;
 use serde::{export::Formatter, Serialize};
 use std::fmt;
 

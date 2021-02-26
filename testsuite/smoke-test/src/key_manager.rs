@@ -1,18 +1,18 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     smoke_test_environment::SmokeTestEnvironment,
-    test_utils::libra_swarm_utils::{get_json_rpc_libra_interface, load_node_config},
+    test_utils::diem_swarm_utils::{get_json_rpc_diem_interface, load_node_config},
     workspace_builder,
 };
-use libra_config::config::{Identity, KeyManagerConfig};
-use libra_global_constants::CONSENSUS_KEY;
-use libra_key_manager::libra_interface::LibraInterface;
-use libra_secure_storage::{CryptoStorage, Storage};
+use diem_config::config::{Identity, KeyManagerConfig};
+use diem_global_constants::CONSENSUS_KEY;
+use diem_key_manager::diem_interface::DiemInterface;
+use diem_secure_storage::{CryptoStorage, Storage};
 use std::{convert::TryInto, process::Command, thread::sleep, time::Duration};
 
-const KEY_MANAGER_BIN: &str = "libra-key-manager";
+const KEY_MANAGER_BIN: &str = "diem-key-manager";
 
 #[test]
 #[ignore]
@@ -44,10 +44,10 @@ fn test_key_manager_consensus_rotation() {
     key_manager_config.save(&key_manager_config_path).unwrap();
 
     // Create a json-rpc connection to the blockchain and verify storage matches the on-chain state.
-    let libra_interface = get_json_rpc_libra_interface(&env.validator_swarm, 0);
+    let diem_interface = get_json_rpc_diem_interface(&env.validator_swarm, 0);
     let account = node_config.validator_network.unwrap().peer_id();
     let current_consensus = storage.get_public_key(CONSENSUS_KEY).unwrap().public_key;
-    let validator_info = libra_interface.retrieve_validator_info(account).unwrap();
+    let validator_info = diem_interface.retrieve_validator_info(account).unwrap();
     assert_eq!(&current_consensus, validator_info.consensus_public_key());
 
     // Spawn the key manager and sleep until a rotation occurs.
@@ -61,7 +61,7 @@ fn test_key_manager_consensus_rotation() {
 
     // Verify the consensus key has been rotated in secure storage and on-chain.
     let rotated_consensus = storage.get_public_key(CONSENSUS_KEY).unwrap().public_key;
-    let validator_info = libra_interface.retrieve_validator_info(account).unwrap();
+    let validator_info = diem_interface.retrieve_validator_info(account).unwrap();
     assert_eq!(&rotated_consensus, validator_info.consensus_public_key());
     assert_ne!(current_consensus, rotated_consensus);
 

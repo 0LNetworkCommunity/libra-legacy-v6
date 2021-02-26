@@ -27,13 +27,13 @@ use crate::{
     vm_status::{KeptVMStatus, VMStatus},
     write_set::{WriteOp, WriteSet, WriteSetMut},
 };
-use libra_crypto::{
+use diem_crypto::{
     ed25519::{self, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
     traits::*,
     HashValue,
 };
-use libra_proptest_helpers::Index;
+use diem_proptest_helpers::Index;
 use move_core_types::language_storage::TypeTag;
 use proptest::{
     collection::{vec, SizeRange},

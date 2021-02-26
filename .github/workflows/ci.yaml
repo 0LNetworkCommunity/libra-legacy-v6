@@ -92,7 +92,7 @@ jobs:
   #           target
   #         key: ${{ runner.os }}-test-genesis-smoke-${{ hashFiles('**/Cargo.lock') }}
   #     - name: Run smoke test
-  #       run: cargo xtest -p libra-management smoke_test
+  #       run: cargo xtest -p diem-management smoke_test
 #   swarm_acceptance:
 #     name: Swarm Acceptance Test
 #     runs-on: ubuntu-latest

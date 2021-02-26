@@ -292,7 +292,7 @@ This is required before other functions in this module can be called for `accoun
 ## Function `publish_nonce_resource`
 
 Publishes nonce resource into specific account
-Only the Libra root account can create this resource for different accounts
+Only the Diem root account can create this resource for different accounts
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="SlidingNonce.md#0x1_SlidingNonce_publish_nonce_resource">publish_nonce_resource</a>(lr_account: &signer, account: &signer)
@@ -308,7 +308,7 @@ Only the Libra root account can create this resource for different accounts
     lr_account: &signer,
     account: &signer
 ) {
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
     <b>let</b> new_resource = <a href="SlidingNonce.md#0x1_SlidingNonce">SlidingNonce</a> {
         min_nonce: 0,
         nonce_mask: 0,
@@ -325,6 +325,6 @@ Only the Libra root account can create this resource for different accounts
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions

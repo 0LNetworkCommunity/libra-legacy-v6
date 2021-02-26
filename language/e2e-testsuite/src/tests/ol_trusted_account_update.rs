@@ -5,7 +5,7 @@ use language_e2e_tests::{
     account::{Account},
     executor::FakeExecutor
 };
-use libra_types::{transaction::TransactionStatus, vm_status::KeptVMStatus};
+use diem_types::{transaction::TransactionStatus, vm_status::KeptVMStatus};
 use transaction_builder;
 
 
@@ -13,7 +13,7 @@ use transaction_builder;
 fn demo() {
     let mut executor = FakeExecutor::from_genesis_file();
     // use system account
-    let sender = Account::new_libra_root();
+    let sender = Account::new_diem_root();
     let hello_world= 100u64;
     let seq_num = 1;
     let script = transaction_builder::encode_trusted_account_update_tx_script(hello_world);

@@ -40,7 +40,7 @@ const formFields = [{
     required: true
   },{
     id: 'comments',
-    label: 'Describe your goals in working with the Libra project (1000 characters max)',
+    label: 'Describe your goals in working with the Diem project (1000 characters max)',
     type: 'textarea',
     maxLength: '1000',
     rows: '5',

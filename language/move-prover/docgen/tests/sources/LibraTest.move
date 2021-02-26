@@ -103,7 +103,7 @@ module LibraTest {
         currency_code: vector<u8>,
         /// The new on-chain to-LBR exchange rate between the
         /// `currency_code` currency and LBR. Represented in conversion
-        /// between the (on-chain) base-units for the currency and microlibra.
+        /// between the (on-chain) base-units for the currency and microdiem.
         new_to_lbr_exchange_rate: u64,
     }
 
@@ -659,7 +659,7 @@ module LibraTest {
         currency_code: vector<u8>,
     ): (MintCapability<CoinType>, BurnCapability<CoinType>)
     {
-        Roles::assert_libra_root(lr_account);
+        Roles::assert_diem_root(lr_account);
         // Operational constraint that it must be stored under a specific address.
         assert(
             Signer::address_of(lr_account) == CoreAddresses::CURRENCY_INFO_ADDRESS(),
@@ -688,7 +688,7 @@ module LibraTest {
         (MintCapability<CoinType>{}, BurnCapability<CoinType>{})
     }
     spec fun register_currency {
-        aborts_if !Roles::spec_has_libra_root_role_addr(Signer::spec_address_of(lr_account));
+        aborts_if !Roles::spec_has_diem_root_role_addr(Signer::spec_address_of(lr_account));
         aborts_if Signer::spec_address_of(lr_account) != CoreAddresses::CURRENCY_INFO_ADDRESS();
         aborts_if exists<CurrencyInfo<CoinType>>(Signer::spec_address_of(lr_account));
         aborts_if spec_is_currency<CoinType>();

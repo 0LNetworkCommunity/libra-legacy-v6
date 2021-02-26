@@ -8,7 +8,7 @@ use crate::{
     resources::ResourceTransitiveChecker, signature::SignatureChecker,
     struct_defs::RecursiveStructDefChecker,
 };
-use libra_types::vm_status::StatusCode;
+use diem_types::vm_status::StatusCode;
 use vm::{
     access::ScriptAccess,
     errors::{Location, PartialVMError, PartialVMResult, VMResult},

@@ -4,7 +4,7 @@
 #![forbid(unsafe_code)]
 
 use anyhow::{format_err, Result};
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use move_core_types::identifier::{IdentStr, Identifier};
 use serde::{Deserialize, Serialize};
 use std::{

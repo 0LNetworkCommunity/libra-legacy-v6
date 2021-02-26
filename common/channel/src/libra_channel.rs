@@ -1,8 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! libra_channel provides an mpsc channel which has two ends `libra_channel::Receiver`
-//! and `libra_channel::Sender` similar to existing mpsc data structures.
+//! diem_channel provides an mpsc channel which has two ends `diem_channel::Receiver`
+//! and `diem_channel::Sender` similar to existing mpsc data structures.
 //! What makes it different from existing mpsc channels is that we have full control
 //! over how the internal queueing in the channel happens and how we schedule messages
 //! to be sent out from this channel.
@@ -13,8 +13,8 @@ use futures::{
     channel::oneshot,
     stream::{FusedStream, Stream},
 };
-use libra_infallible::Mutex;
-use libra_metrics::IntCounterVec;
+use diem_infallible::Mutex;
+use diem_metrics::IntCounterVec;
 use std::{
     fmt::{Debug, Formatter},
     hash::Hash,
@@ -47,13 +47,13 @@ struct SharedState<K: Eq + Hash + Clone, M> {
     stream_terminated: bool,
 }
 
-/// The sending end of the libra_channel.
+/// The sending end of the diem_channel.
 #[derive(Debug)]
 pub struct Sender<K: Eq + Hash + Clone, M> {
     shared_state: Arc<Mutex<SharedState<K, M>>>,
 }
 
-/// The status of an element inserted into a libra_channel. If the element is successfully
+/// The status of an element inserted into a diem_channel. If the element is successfully
 /// dequeued, ElementStatus::Dequeued is sent to the sender. If it is dropped
 /// ElementStatus::Dropped is sent to the sender along with the dropped element.
 pub enum ElementStatus<M> {
@@ -140,7 +140,7 @@ impl<K: Eq + Hash + Clone, M> Drop for Sender<K, M> {
     }
 }
 
-/// The receiving end of the libra_channel.
+/// The receiving end of the diem_channel.
 pub struct Receiver<K: Eq + Hash + Clone, M> {
     shared_state: Arc<Mutex<SharedState<K, M>>>,
 }
@@ -191,7 +191,7 @@ impl<K: Eq + Hash + Clone, M> FusedStream for Receiver<K, M> {
     }
 }
 
-/// Create a new Libra Channel and returns the two ends of the channel.
+/// Create a new Diem Channel and returns the two ends of the channel.
 pub fn new<K: Eq + Hash + Clone, M>(
     queue_style: QueueStyle,
     max_queue_size_per_key: NonZeroUsize,

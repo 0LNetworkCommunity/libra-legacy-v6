@@ -12,7 +12,7 @@ use codespan_reporting::{
     },
 };
 use ir_to_bytecode_syntax::syntax::{self, ParseError};
-use libra_types::account_address::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use move_ir_types::{ast, location::*};
 
 /// Determine if a character is an allowed eye-visible (printable) character.

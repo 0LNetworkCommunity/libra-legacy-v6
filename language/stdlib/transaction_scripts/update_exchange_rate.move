@@ -1,5 +1,5 @@
 script {
-use 0x1::Libra;
+use 0x1::Diem;
 use 0x1::FixedPoint32;
 use 0x1::SlidingNonce;
 
@@ -50,14 +50,14 @@ fun update_exchange_rate<Currency>(
         new_exchange_rate_numerator,
         new_exchange_rate_denominator,
     );
-    Libra::update_lbr_exchange_rate<Currency>(lr_account, rate);
+    Diem::update_lbr_exchange_rate<Currency>(lr_account, rate);
 }
 spec fun update_exchange_rate {
     use 0x1::Errors;
-    use 0x1::LibraAccount;
+    use 0x1::DiemAccount;
     use 0x1::Roles;
 
-    include LibraAccount::TransactionChecks{sender: lr_account}; // properties checked by the prologue.
+    include DiemAccount::TransactionChecks{sender: lr_account}; // properties checked by the prologue.
     include SlidingNonce::RecordNonceAbortsIf{ account: lr_account, seq_nonce: sliding_nonce };
     include FixedPoint32::CreateFromRationalAbortsIf{
         numerator: new_exchange_rate_numerator,
@@ -67,7 +67,7 @@ spec fun update_exchange_rate {
         new_exchange_rate_numerator,
         new_exchange_rate_denominator
     );
-    include Libra::UpdateLBRExchangeRateAbortsIf<Currency>;
+    include Diem::UpdateLBRExchangeRateAbortsIf<Currency>;
 
     aborts_with [check]
         Errors::INVALID_ARGUMENT,

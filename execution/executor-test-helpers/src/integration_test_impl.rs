@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -7,8 +7,8 @@ use crate::{
 use anyhow::{anyhow, ensure, Result};
 use executor::Executor;
 use executor_types::BlockExecutor;
-use libra_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
-use libra_types::{
+use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
+use diem_types::{
     account_config::{
         coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
         treasury_compliance_account_address, COIN1_NAME,
@@ -23,8 +23,8 @@ use libra_types::{
     trusted_state::{TrustedState, TrustedStateChange},
     waypoint::Waypoint,
 };
-use libra_vm::LibraVM;
-use libradb::LibraDB;
+use diem_vm::DiemVM;
+use diemdb::DiemDB;
 use rand::SeedableRng;
 use std::{convert::TryFrom, sync::Arc};
 use storage_interface::{DbReaderWriter, Order};
@@ -32,17 +32,17 @@ use transaction_builder::{
     encode_create_parent_vasp_account_script, encode_peer_to_peer_with_metadata_script,
 };
 
-pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
+pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
     let (genesis, validators) = vm_genesis::test_genesis_change_set_and_validators(Some(1));
     let genesis_txn = Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis));
     let genesis_key = &vm_genesis::GENESIS_KEYPAIR.0;
 
-    let path = libra_temppath::TempPath::new();
+    let path = diem_temppath::TempPath::new();
     path.create_as_dir().unwrap();
-    let (libra_db, db, mut executor, waypoint) = create_db_and_executor(path.path(), &genesis_txn);
+    let (diem_db, db, mut executor, waypoint) = create_db_and_executor(path.path(), &genesis_txn);
 
     let parent_block_id = executor.committed_block_id();
-    let signer = libra_types::validator_signer::ValidatorSigner::new(
+    let signer = diem_types::validator_signer::ValidatorSigner::new(
         validators[0].owner_address,
         validators[0].key.clone(),
     );
@@ -506,16 +506,16 @@ pub fn test_execution_with_storage_impl() -> Arc<LibraDB> {
     assert_eq!(account3_received_events_batch2.len(), 7);
     assert_eq!(account3_received_events_batch2[0].1.sequence_number(), 6);
 
-    libra_db
+    diem_db
 }
 
 pub fn create_db_and_executor<P: AsRef<std::path::Path>>(
     path: P,
     genesis: &Transaction,
-) -> (Arc<LibraDB>, DbReaderWriter, Executor<LibraVM>, Waypoint) {
-    let (db, dbrw) = DbReaderWriter::wrap(LibraDB::new_for_test(&path));
-    let waypoint = bootstrap_genesis::<LibraVM>(&dbrw, genesis).unwrap();
-    let executor = Executor::<LibraVM>::new(dbrw.clone());
+) -> (Arc<DiemDB>, DbReaderWriter, Executor<DiemVM>, Waypoint) {
+    let (db, dbrw) = DbReaderWriter::wrap(DiemDB::new_for_test(&path));
+    let waypoint = bootstrap_genesis::<DiemVM>(&dbrw, genesis).unwrap();
+    let executor = Executor::<DiemVM>::new(dbrw.clone());
 
     (db, dbrw, executor, waypoint)
 }

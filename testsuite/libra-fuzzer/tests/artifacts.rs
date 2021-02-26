@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Test artifacts: examples known to have crashed in the past.
 
-use libra_fuzzer::FuzzTarget;
+use diem_fuzzer::FuzzTarget;
 use rusty_fork::{fork, rusty_fork_id};
 use stats_alloc::{Region, StatsAlloc, INSTRUMENTED_SYSTEM};
 use std::{alloc::System, env, fs, path::Path};

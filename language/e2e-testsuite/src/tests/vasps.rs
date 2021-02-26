@@ -4,7 +4,7 @@
 #![forbid(unsafe_code)]
 
 use language_e2e_tests::{account::Account, executor::FakeExecutor};
-use libra_types::{account_config, vm_status::KeptVMStatus};
+use diem_types::{account_config, vm_status::KeptVMStatus};
 use move_core_types::vm_status::VMStatus;
 use move_vm_types::values::Value;
 use transaction_builder::*;

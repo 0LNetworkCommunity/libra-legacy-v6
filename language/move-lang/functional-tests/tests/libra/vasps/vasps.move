@@ -103,7 +103,7 @@ fun main(account: &signer) {
 // check: "Keep(ABORTED { code: 771,"
 
 //! new-transaction
-//! sender: libraroot
+//! sender: diemroot
 script {
 use 0x1::VASP;
 fun main(account: &signer) {

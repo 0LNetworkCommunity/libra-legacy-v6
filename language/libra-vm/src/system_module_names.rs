@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 //! Names of modules, functions, and types used by Libra System.
 
-use libra_types::account_config;
+use diem_types::account_config;
 use move_core_types::{identifier::Identifier, language_storage::ModuleId};
 use once_cell::sync::Lazy;
 
 // Data to resolve basic account and transaction flow functions and structs
-/// The ModuleId for the libra writeset manager module
-/// The ModuleId for the libra block module
+/// The ModuleId for the diem writeset manager module
+/// The ModuleId for the diem block module
 pub static LIBRA_BLOCK_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     ModuleId::new(
         account_config::CORE_CODE_ADDRESS,

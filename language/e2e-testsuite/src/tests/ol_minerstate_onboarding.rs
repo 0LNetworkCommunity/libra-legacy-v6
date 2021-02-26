@@ -5,7 +5,7 @@ use language_e2e_tests::{
     // account::{Account},
     executor::FakeExecutor
 };
-use libra_types::{transaction::TransactionStatus, vm_status::KeptVMStatus, PeerId};
+use diem_types::{transaction::TransactionStatus, vm_status::KeptVMStatus, PeerId};
 use transaction_builder;
 use hex;
 use language_e2e_tests::account::AccountData;

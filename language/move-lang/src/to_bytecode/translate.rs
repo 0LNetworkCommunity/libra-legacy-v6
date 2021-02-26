@@ -19,7 +19,7 @@ use crate::{
     shared::{unique_map::UniqueMap, *},
 };
 use bytecode_source_map::source_map::SourceMap;
-use libra_types::account_address::AccountAddress as LibraAddress;
+use diem_types::account_address::AccountAddress as LibraAddress;
 use move_ir_types::{ast as IR, location::*};
 use move_vm::file_format as F;
 use std::collections::{BTreeMap, BTreeSet, HashMap};

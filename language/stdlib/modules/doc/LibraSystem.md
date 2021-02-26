@@ -1,7 +1,7 @@
 
-<a name="0x1_LibraSystem"></a>
+<a name="0x1_DiemSystem"></a>
 
-# Module `0x1::LibraSystem`
+# Module `0x1::DiemSystem`
 
 Maintains information about the set of validators used during consensus.
 Provides functions to add, remove, and update validators in the
@@ -11,27 +11,27 @@ validator set.
 and "configuration" are used for several distinct concepts.
 
 
--  [Struct `ValidatorInfo`](#0x1_LibraSystem_ValidatorInfo)
--  [Resource `CapabilityHolder`](#0x1_LibraSystem_CapabilityHolder)
--  [Struct `LibraSystem`](#0x1_LibraSystem_LibraSystem)
+-  [Struct `ValidatorInfo`](#0x1_DiemSystem_ValidatorInfo)
+-  [Resource `CapabilityHolder`](#0x1_DiemSystem_CapabilityHolder)
+-  [Struct `DiemSystem`](#0x1_DiemSystem_DiemSystem)
 -  [Constants](#@Constants_0)
--  [Function `initialize_validator_set`](#0x1_LibraSystem_initialize_validator_set)
--  [Function `set_libra_system_config`](#0x1_LibraSystem_set_libra_system_config)
--  [Function `add_validator`](#0x1_LibraSystem_add_validator)
--  [Function `remove_validator`](#0x1_LibraSystem_remove_validator)
--  [Function `update_config_and_reconfigure`](#0x1_LibraSystem_update_config_and_reconfigure)
--  [Function `get_libra_system_config`](#0x1_LibraSystem_get_libra_system_config)
--  [Function `is_validator`](#0x1_LibraSystem_is_validator)
--  [Function `get_validator_config`](#0x1_LibraSystem_get_validator_config)
--  [Function `validator_set_size`](#0x1_LibraSystem_validator_set_size)
--  [Function `get_ith_validator_address`](#0x1_LibraSystem_get_ith_validator_address)
--  [Function `get_validator_index_`](#0x1_LibraSystem_get_validator_index_)
--  [Function `update_ith_validator_info_`](#0x1_LibraSystem_update_ith_validator_info_)
--  [Function `is_validator_`](#0x1_LibraSystem_is_validator_)
--  [Function `bulk_update_validators`](#0x1_LibraSystem_bulk_update_validators)
--  [Function `get_fee_ratio`](#0x1_LibraSystem_get_fee_ratio)
--  [Function `get_jailed_set`](#0x1_LibraSystem_get_jailed_set)
--  [Function `get_val_set_addr`](#0x1_LibraSystem_get_val_set_addr)
+-  [Function `initialize_validator_set`](#0x1_DiemSystem_initialize_validator_set)
+-  [Function `set_diem_system_config`](#0x1_DiemSystem_set_diem_system_config)
+-  [Function `add_validator`](#0x1_DiemSystem_add_validator)
+-  [Function `remove_validator`](#0x1_DiemSystem_remove_validator)
+-  [Function `update_config_and_reconfigure`](#0x1_DiemSystem_update_config_and_reconfigure)
+-  [Function `get_diem_system_config`](#0x1_DiemSystem_get_diem_system_config)
+-  [Function `is_validator`](#0x1_DiemSystem_is_validator)
+-  [Function `get_validator_config`](#0x1_DiemSystem_get_validator_config)
+-  [Function `validator_set_size`](#0x1_DiemSystem_validator_set_size)
+-  [Function `get_ith_validator_address`](#0x1_DiemSystem_get_ith_validator_address)
+-  [Function `get_validator_index_`](#0x1_DiemSystem_get_validator_index_)
+-  [Function `update_ith_validator_info_`](#0x1_DiemSystem_update_ith_validator_info_)
+-  [Function `is_validator_`](#0x1_DiemSystem_is_validator_)
+-  [Function `bulk_update_validators`](#0x1_DiemSystem_bulk_update_validators)
+-  [Function `get_fee_ratio`](#0x1_DiemSystem_get_fee_ratio)
+-  [Function `get_jailed_set`](#0x1_DiemSystem_get_jailed_set)
+-  [Function `get_val_set_addr`](#0x1_DiemSystem_get_val_set_addr)
 -  [Module Specification](#@Module_Specification_1)
     -  [Initialization](#@Initialization_2)
     -  [Access Control](#@Access_Control_3)
@@ -42,8 +42,8 @@ and "configuration" are used for several distinct concepts.
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
-<b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
-<b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
+<b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
+<b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
@@ -55,14 +55,14 @@ and "configuration" are used for several distinct concepts.
 
 
 
-<a name="0x1_LibraSystem_ValidatorInfo"></a>
+<a name="0x1_DiemSystem_ValidatorInfo"></a>
 
 ## Struct `ValidatorInfo`
 
 Information about a Validator Owner.
 
 
-<pre><code><b>struct</b> <a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a>
+<pre><code><b>struct</b> <a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a>
 </code></pre>
 
 
@@ -104,20 +104,20 @@ Information about a Validator Owner.
 
 </details>
 
-<a name="0x1_LibraSystem_CapabilityHolder"></a>
+<a name="0x1_DiemSystem_CapabilityHolder"></a>
 
 ## Resource `CapabilityHolder`
 
-Enables a scheme that restricts the LibraSystem config
-in LibraConfig from being modified by any other module.  Only
-code in this module can get a reference to the ModifyConfigCapability<LibraSystem>,
-which is required by <code><a href="LibraConfig.md#0x1_LibraConfig_set_with_capability_and_reconfigure">LibraConfig::set_with_capability_and_reconfigure</a></code> to
-modify the LibraSystem config. This is only needed by <code>update_config_and_reconfigure</code>.
-Only Libra root can add or remove a validator from the validator set, so the
+Enables a scheme that restricts the DiemSystem config
+in DiemConfig from being modified by any other module.  Only
+code in this module can get a reference to the ModifyConfigCapability<DiemSystem>,
+which is required by <code><a href="DiemConfig.md#0x1_DiemConfig_set_with_capability_and_reconfigure">DiemConfig::set_with_capability_and_reconfigure</a></code> to
+modify the DiemSystem config. This is only needed by <code>update_config_and_reconfigure</code>.
+Only Diem root can add or remove a validator from the validator set, so the
 capability is not needed for access control in those functions.
 
 
-<pre><code><b>resource</b> <b>struct</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a>
+<pre><code><b>resource</b> <b>struct</b> <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a>
 </code></pre>
 
 
@@ -128,10 +128,10 @@ capability is not needed for access control in those functions.
 
 <dl>
 <dt>
-<code>cap: <a href="LibraConfig.md#0x1_LibraConfig_ModifyConfigCapability">LibraConfig::ModifyConfigCapability</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem_LibraSystem">LibraSystem::LibraSystem</a>&gt;</code>
+<code>cap: <a href="DiemConfig.md#0x1_DiemConfig_ModifyConfigCapability">DiemConfig::ModifyConfigCapability</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem_DiemSystem">DiemSystem::DiemSystem</a>&gt;</code>
 </dt>
 <dd>
- Holds a capability returned by <code><a href="LibraConfig.md#0x1_LibraConfig_publish_new_config_and_get_capability">LibraConfig::publish_new_config_and_get_capability</a></code>
+ Holds a capability returned by <code><a href="DiemConfig.md#0x1_DiemConfig_publish_new_config_and_get_capability">DiemConfig::publish_new_config_and_get_capability</a></code>
  which is called in <code>initialize_validator_set</code>.
 </dd>
 </dl>
@@ -139,16 +139,16 @@ capability is not needed for access control in those functions.
 
 </details>
 
-<a name="0x1_LibraSystem_LibraSystem"></a>
+<a name="0x1_DiemSystem_DiemSystem"></a>
 
-## Struct `LibraSystem`
+## Struct `DiemSystem`
 
-The LibraSystem struct stores the validator set and crypto scheme in
-LibraConfig. The LibraSystem struct is stored by LibraConfig, which publishes a
-LibraConfig<LibraSystem> resource.
+The DiemSystem struct stores the validator set and crypto scheme in
+DiemConfig. The DiemSystem struct is stored by DiemConfig, which publishes a
+DiemConfig<DiemSystem> resource.
 
 
-<pre><code><b>struct</b> <a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>
+<pre><code><b>struct</b> <a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>
 </code></pre>
 
 
@@ -165,7 +165,7 @@ LibraConfig<LibraSystem> resource.
  The current consensus crypto scheme.
 </dd>
 <dt>
-<code>validators: vector&lt;<a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">LibraSystem::ValidatorInfo</a>&gt;</code>
+<code>validators: vector&lt;<a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">DiemSystem::ValidatorInfo</a>&gt;</code>
 </dt>
 <dd>
  The current validator set.
@@ -196,98 +196,98 @@ Members of <code>validators</code> vector (the validator set) have unique addres
 ## Constants
 
 
-<a name="0x1_LibraSystem_EINVALID_TRANSACTION_SENDER"></a>
+<a name="0x1_DiemSystem_EINVALID_TRANSACTION_SENDER"></a>
 
 The validator operator is not the operator for the specified validator
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 4;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>: u64 = 4;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_EALREADY_A_VALIDATOR"></a>
+<a name="0x1_DiemSystem_EALREADY_A_VALIDATOR"></a>
 
 Tried to add a validator to the validator set that was already in it
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>: u64 = 2;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>: u64 = 2;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_ECAPABILITY_HOLDER"></a>
+<a name="0x1_DiemSystem_ECAPABILITY_HOLDER"></a>
 
-The <code><a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a></code> resource was not in the required state
+The <code><a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a></code> resource was not in the required state
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>: u64 = 0;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>: u64 = 0;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_ECONFIG_UPDATE_RATE_LIMITED"></a>
+<a name="0x1_DiemSystem_ECONFIG_UPDATE_RATE_LIMITED"></a>
 
 Rate limited when trying to update config
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>: u64 = 6;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>: u64 = 6;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_EINVALID_PROSPECTIVE_VALIDATOR"></a>
+<a name="0x1_DiemSystem_EINVALID_PROSPECTIVE_VALIDATOR"></a>
 
 Tried to add a validator with an invalid state to the validator set
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>: u64 = 1;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>: u64 = 1;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_ENOT_AN_ACTIVE_VALIDATOR"></a>
+<a name="0x1_DiemSystem_ENOT_AN_ACTIVE_VALIDATOR"></a>
 
 An operation was attempted on an address not in the vaidator set
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>: u64 = 3;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>: u64 = 3;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_EVALIDATOR_INDEX"></a>
+<a name="0x1_DiemSystem_EVALIDATOR_INDEX"></a>
 
 An out of bounds index for the validator set was encountered
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>: u64 = 5;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>: u64 = 5;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_FIVE_MINUTES"></a>
+<a name="0x1_DiemSystem_FIVE_MINUTES"></a>
 
 Number of microseconds in 5 minutes
 
 
-<pre><code><b>const</b> <a href="LibraSystem.md#0x1_LibraSystem_FIVE_MINUTES">FIVE_MINUTES</a>: u64 = 300000000;
+<pre><code><b>const</b> <a href="DiemSystem.md#0x1_DiemSystem_FIVE_MINUTES">FIVE_MINUTES</a>: u64 = 300000000;
 </code></pre>
 
 
 
-<a name="0x1_LibraSystem_initialize_validator_set"></a>
+<a name="0x1_DiemSystem_initialize_validator_set"></a>
 
 ## Function `initialize_validator_set`
 
-Publishes the LibraConfig for the LibraSystem struct, which contains the current
-validator set. Also publishes the <code><a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a></code> with the
-ModifyConfigCapability<LibraSystem> returned by the publish function, which allows
-code in this module to change LibraSystem config (including the validator set).
-Must be invoked by the Libra root a single time in Genesis.
+Publishes the DiemConfig for the DiemSystem struct, which contains the current
+validator set. Also publishes the <code><a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a></code> with the
+ModifyConfigCapability<DiemSystem> returned by the publish function, which allows
+code in this module to change DiemSystem config (including the validator set).
+Must be invoked by the Diem root a single time in Genesis.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_initialize_validator_set">initialize_validator_set</a>(lr_account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_initialize_validator_set">initialize_validator_set</a>(lr_account: &signer)
 </code></pre>
 
 
@@ -296,24 +296,24 @@ Must be invoked by the Libra root a single time in Genesis.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_initialize_validator_set">initialize_validator_set</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_initialize_validator_set">initialize_validator_set</a>(
     lr_account: &signer,
 ) {
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_genesis">LibraTimestamp::assert_genesis</a>();
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_genesis">DiemTimestamp::assert_genesis</a>();
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
 
-    <b>let</b> cap = <a href="LibraConfig.md#0x1_LibraConfig_publish_new_config_and_get_capability">LibraConfig::publish_new_config_and_get_capability</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;(
+    <b>let</b> cap = <a href="DiemConfig.md#0x1_DiemConfig_publish_new_config_and_get_capability">DiemConfig::publish_new_config_and_get_capability</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;(
         lr_account,
-        <a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a> {
+        <a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a> {
             scheme: 0,
             validators: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>(),
         },
     );
     <b>assert</b>(
-        !<b>exists</b>&lt;<a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()),
-        <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="LibraSystem.md#0x1_LibraSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>)
+        !<b>exists</b>&lt;<a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()),
+        <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="DiemSystem.md#0x1_DiemSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>)
     );
-    move_to(lr_account, <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> { cap })
+    move_to(lr_account, <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a> { cap })
 }
 </code></pre>
 
@@ -326,31 +326,31 @@ Must be invoked by the Libra root a single time in Genesis.
 
 
 
-<pre><code><b>modifies</b> <b>global</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_LibraConfig">LibraConfig::LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-<b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotGenesis">LibraTimestamp::AbortsIfNotGenesis</a>;
-<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotLibraRoot">Roles::AbortsIfNotLibraRoot</a>{account: lr_account};
-<a name="0x1_LibraSystem_lr_addr$23"></a>
+<pre><code><b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+<b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotGenesis">DiemTimestamp::AbortsIfNotGenesis</a>;
+<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: lr_account};
+<a name="0x1_DiemSystem_lr_addr$23"></a>
 <b>let</b> lr_addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(lr_account);
-<b>aborts_if</b> <a href="LibraConfig.md#0x1_LibraConfig_spec_is_published">LibraConfig::spec_is_published</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;() <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
-<b>aborts_if</b> <b>exists</b>&lt;<a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a>&gt;(lr_addr) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
-<b>ensures</b> <b>exists</b>&lt;<a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a>&gt;(lr_addr);
-<b>ensures</b> <a href="LibraConfig.md#0x1_LibraConfig_spec_is_published">LibraConfig::spec_is_published</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;();
-<b>ensures</b> len(<a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()) == 0;
+<b>aborts_if</b> <a href="DiemConfig.md#0x1_DiemConfig_spec_is_published">DiemConfig::spec_is_published</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;() <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
+<b>aborts_if</b> <b>exists</b>&lt;<a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a>&gt;(lr_addr) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
+<b>ensures</b> <b>exists</b>&lt;<a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a>&gt;(lr_addr);
+<b>ensures</b> <a href="DiemConfig.md#0x1_DiemConfig_spec_is_published">DiemConfig::spec_is_published</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;();
+<b>ensures</b> len(<a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>()) == 0;
 </code></pre>
 
 
 
 </details>
 
-<a name="0x1_LibraSystem_set_libra_system_config"></a>
+<a name="0x1_DiemSystem_set_diem_system_config"></a>
 
-## Function `set_libra_system_config`
+## Function `set_diem_system_config`
 
-Copies a LibraSystem struct into the LibraConfig<LibraSystem> resource
+Copies a DiemSystem struct into the DiemConfig<DiemSystem> resource
 Called by the add, remove, and update functions.
 
 
-<pre><code><b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_set_libra_system_config">set_libra_system_config</a>(value: <a href="LibraSystem.md#0x1_LibraSystem_LibraSystem">LibraSystem::LibraSystem</a>)
+<pre><code><b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_set_diem_system_config">set_diem_system_config</a>(value: <a href="DiemSystem.md#0x1_DiemSystem_DiemSystem">DiemSystem::DiemSystem</a>)
 </code></pre>
 
 
@@ -359,15 +359,15 @@ Called by the add, remove, and update functions.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_set_libra_system_config">set_libra_system_config</a>(value: <a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>) <b>acquires</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
+<pre><code><b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_set_diem_system_config">set_diem_system_config</a>(value: <a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>) <b>acquires</b> <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a> {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
     <b>assert</b>(
-        <b>exists</b>&lt;<a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()),
-        <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraSystem.md#0x1_LibraSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>)
+        <b>exists</b>&lt;<a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()),
+        <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemSystem.md#0x1_DiemSystem_ECAPABILITY_HOLDER">ECAPABILITY_HOLDER</a>)
     );
-    // Updates the <a href="LibraConfig.md#0x1_LibraConfig">LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt; and emits a reconfigure event.
-    <a href="LibraConfig.md#0x1_LibraConfig_set_with_capability_and_reconfigure">LibraConfig::set_with_capability_and_reconfigure</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;(
-        &borrow_global&lt;<a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).cap,
+    // Updates the <a href="DiemConfig.md#0x1_DiemConfig">DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt; and emits a reconfigure event.
+    <a href="DiemConfig.md#0x1_DiemConfig_set_with_capability_and_reconfigure">DiemConfig::set_with_capability_and_reconfigure</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;(
+        &borrow_global&lt;<a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).cap,
         value
     )
 }
@@ -383,31 +383,31 @@ Called by the add, remove, and update functions.
 
 
 <pre><code><b>pragma</b> opaque;
-<b>modifies</b> <b>global</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_LibraConfig">LibraConfig::LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-<b>modifies</b> <b>global</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_Configuration">LibraConfig::Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-<b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotOperating">LibraTimestamp::AbortsIfNotOperating</a>;
-<b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_ReconfigureAbortsIf">LibraConfig::ReconfigureAbortsIf</a>;
+<b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+<b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">DiemConfig::Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+<b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
+<b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_ReconfigureAbortsIf">DiemConfig::ReconfigureAbortsIf</a>;
 </code></pre>
 
 
-<code>payload</code> is the only field of LibraConfig, so next completely specifies it.
+<code>payload</code> is the only field of DiemConfig, so next completely specifies it.
 
 
-<pre><code><b>ensures</b> <b>global</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_LibraConfig">LibraConfig::LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).payload == value;
+<pre><code><b>ensures</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).payload == value;
 </code></pre>
 
 
 
 </details>
 
-<a name="0x1_LibraSystem_add_validator"></a>
+<a name="0x1_DiemSystem_add_validator"></a>
 
 ## Function `add_validator`
 
 Adds a new validator to the validator set.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_add_validator">add_validator</a>(lr_account: &signer, validator_addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_add_validator">add_validator</a>(lr_account: &signer, validator_addr: address)
 </code></pre>
 
 
@@ -416,33 +416,33 @@ Adds a new validator to the validator set.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_add_validator">add_validator</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_add_validator">add_validator</a>(
     lr_account: &signer,
     validator_addr: address
-) <b>acquires</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
+) <b>acquires</b> <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a> {
 
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
     // A prospective validator must have a validator config <b>resource</b>
-    <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>));
+    <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_EINVALID_PROSPECTIVE_VALIDATOR">EINVALID_PROSPECTIVE_VALIDATOR</a>));
 
-    <b>let</b> libra_system_config = <a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>();
+    <b>let</b> diem_system_config = <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>();
 
     // Ensure that this address is not already a validator
     <b>assert</b>(
-        !<a href="LibraSystem.md#0x1_LibraSystem_is_validator_">is_validator_</a>(validator_addr, &libra_system_config.validators),
-        <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>)
+        !<a href="DiemSystem.md#0x1_DiemSystem_is_validator_">is_validator_</a>(validator_addr, &diem_system_config.validators),
+        <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_EALREADY_A_VALIDATOR">EALREADY_A_VALIDATOR</a>)
     );
     // it is guaranteed that the config is non-empty
     <b>let</b> config = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_config">ValidatorConfig::get_config</a>(validator_addr);
-    <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> libra_system_config.validators, <a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a> {
+    <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> diem_system_config.validators, <a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a> {
         addr: validator_addr,
         config, // <b>copy</b> the config over <b>to</b> ValidatorSet
         consensus_voting_power: 1,
-        last_config_update_time: <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_microseconds">LibraTimestamp::now_microseconds</a>(),
+        last_config_update_time: <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_microseconds">DiemTimestamp::now_microseconds</a>(),
     });
 
-    <a href="LibraSystem.md#0x1_LibraSystem_set_libra_system_config">set_libra_system_config</a>(libra_system_config);
+    <a href="DiemSystem.md#0x1_DiemSystem_set_diem_system_config">set_diem_system_config</a>(diem_system_config);
 }
 </code></pre>
 
@@ -455,35 +455,35 @@ Adds a new validator to the validator set.
 
 
 
-<pre><code><b>modifies</b> <b>global</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_LibraConfig">LibraConfig::LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-<b>include</b> <a href="LibraSystem.md#0x1_LibraSystem_AddValidatorAbortsIf">AddValidatorAbortsIf</a>;
-<b>include</b> <a href="LibraSystem.md#0x1_LibraSystem_AddValidatorEnsures">AddValidatorEnsures</a>;
+<pre><code><b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+<b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_AddValidatorAbortsIf">AddValidatorAbortsIf</a>;
+<b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_AddValidatorEnsures">AddValidatorEnsures</a>;
 </code></pre>
 
 
 
 
-<a name="0x1_LibraSystem_AddValidatorAbortsIf"></a>
+<a name="0x1_DiemSystem_AddValidatorAbortsIf"></a>
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_AddValidatorAbortsIf">AddValidatorAbortsIf</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_AddValidatorAbortsIf">AddValidatorAbortsIf</a> {
     lr_account: signer;
     validator_addr: address;
-    <b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotOperating">LibraTimestamp::AbortsIfNotOperating</a>;
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotLibraRoot">Roles::AbortsIfNotLibraRoot</a>{account: lr_account};
-    <b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_ReconfigureAbortsIf">LibraConfig::ReconfigureAbortsIf</a>;
+    <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: lr_account};
+    <b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_ReconfigureAbortsIf">DiemConfig::ReconfigureAbortsIf</a>;
     <b>aborts_if</b> !<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-    <b>aborts_if</b> <a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(validator_addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+    <b>aborts_if</b> <a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(validator_addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
 }
 </code></pre>
 
 
 
 
-<a name="0x1_LibraSystem_AddValidatorEnsures"></a>
+<a name="0x1_DiemSystem_AddValidatorEnsures"></a>
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_AddValidatorEnsures">AddValidatorEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_AddValidatorEnsures">AddValidatorEnsures</a> {
     validator_addr: address;
 }
 </code></pre>
@@ -495,19 +495,19 @@ is an invariant (in ValidatorConfig) that a an address with a published Validato
 a ValidatorRole
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_AddValidatorEnsures">AddValidatorEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_AddValidatorEnsures">AddValidatorEnsures</a> {
     <b>ensures</b> <a href="Roles.md#0x1_Roles_spec_has_validator_role_addr">Roles::spec_has_validator_role_addr</a>(validator_addr);
     <b>ensures</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr);
-    <b>ensures</b> <a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(validator_addr);
-    <a name="0x1_LibraSystem_vs$19"></a>
-    <b>let</b> vs = <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>();
+    <b>ensures</b> <a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(validator_addr);
+    <a name="0x1_DiemSystem_vs$19"></a>
+    <b>let</b> vs = <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>();
     <b>ensures</b> <a href="Vector.md#0x1_Vector_eq_push_back">Vector::eq_push_back</a>(vs,
                                  <b>old</b>(vs),
-                                 <a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a> {
+                                 <a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a> {
                                      addr: validator_addr,
                                      config: <a href="ValidatorConfig.md#0x1_ValidatorConfig_spec_get_config">ValidatorConfig::spec_get_config</a>(validator_addr),
                                      consensus_voting_power: 1,
-                                     last_config_update_time: <a href="LibraTimestamp.md#0x1_LibraTimestamp_spec_now_microseconds">LibraTimestamp::spec_now_microseconds</a>(),
+                                     last_config_update_time: <a href="DiemTimestamp.md#0x1_DiemTimestamp_spec_now_microseconds">DiemTimestamp::spec_now_microseconds</a>(),
                                   }
                                );
 }
@@ -517,14 +517,14 @@ a ValidatorRole
 
 </details>
 
-<a name="0x1_LibraSystem_remove_validator"></a>
+<a name="0x1_DiemSystem_remove_validator"></a>
 
 ## Function `remove_validator`
 
-Removes a validator, aborts unless called by libra root account
+Removes a validator, aborts unless called by diem root account
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_remove_validator">remove_validator</a>(lr_account: &signer, validator_addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_remove_validator">remove_validator</a>(lr_account: &signer, validator_addr: address)
 </code></pre>
 
 
@@ -533,21 +533,21 @@ Removes a validator, aborts unless called by libra root account
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_remove_validator">remove_validator</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_remove_validator">remove_validator</a>(
     lr_account: &signer,
     validator_addr: address
-) <b>acquires</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
-    <a href="Roles.md#0x1_Roles_assert_libra_root">Roles::assert_libra_root</a>(lr_account);
-    <b>let</b> libra_system_config = <a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>();
+) <b>acquires</b> <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a> {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
+    <b>let</b> diem_system_config = <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>();
     // Ensure that this address is an active validator
-    <b>let</b> to_remove_index_vec = <a href="LibraSystem.md#0x1_LibraSystem_get_validator_index_">get_validator_index_</a>(&libra_system_config.validators, validator_addr);
-    <b>assert</b>(<a href="Option.md#0x1_Option_is_some">Option::is_some</a>(&to_remove_index_vec), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>));
+    <b>let</b> to_remove_index_vec = <a href="DiemSystem.md#0x1_DiemSystem_get_validator_index_">get_validator_index_</a>(&diem_system_config.validators, validator_addr);
+    <b>assert</b>(<a href="Option.md#0x1_Option_is_some">Option::is_some</a>(&to_remove_index_vec), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>));
     <b>let</b> to_remove_index = *<a href="Option.md#0x1_Option_borrow">Option::borrow</a>(&to_remove_index_vec);
-    // Remove corresponding <a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a> from the validator set
-    _  = <a href="Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> libra_system_config.validators, to_remove_index);
+    // Remove corresponding <a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a> from the validator set
+    _  = <a href="Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> diem_system_config.validators, to_remove_index);
 
-    <a href="LibraSystem.md#0x1_LibraSystem_set_libra_system_config">set_libra_system_config</a>(libra_system_config);
+    <a href="DiemSystem.md#0x1_DiemSystem_set_diem_system_config">set_diem_system_config</a>(diem_system_config);
 }
 </code></pre>
 
@@ -560,37 +560,37 @@ Removes a validator, aborts unless called by libra root account
 
 
 
-<pre><code><b>modifies</b> <b>global</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_LibraConfig">LibraConfig::LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-<b>include</b> <a href="LibraSystem.md#0x1_LibraSystem_RemoveValidatorAbortsIf">RemoveValidatorAbortsIf</a>;
-<b>include</b> <a href="LibraSystem.md#0x1_LibraSystem_RemoveValidatorEnsures">RemoveValidatorEnsures</a>;
+<pre><code><b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+<b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_RemoveValidatorAbortsIf">RemoveValidatorAbortsIf</a>;
+<b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_RemoveValidatorEnsures">RemoveValidatorEnsures</a>;
 </code></pre>
 
 
 
 
-<a name="0x1_LibraSystem_RemoveValidatorAbortsIf"></a>
+<a name="0x1_DiemSystem_RemoveValidatorAbortsIf"></a>
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_RemoveValidatorAbortsIf">RemoveValidatorAbortsIf</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_RemoveValidatorAbortsIf">RemoveValidatorAbortsIf</a> {
     lr_account: signer;
     validator_addr: address;
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotLibraRoot">Roles::AbortsIfNotLibraRoot</a>{account: lr_account};
-    <b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotOperating">LibraTimestamp::AbortsIfNotOperating</a>;
-    <b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_ReconfigureAbortsIf">LibraConfig::ReconfigureAbortsIf</a>;
-    <b>aborts_if</b> !<a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(validator_addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: lr_account};
+    <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
+    <b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_ReconfigureAbortsIf">DiemConfig::ReconfigureAbortsIf</a>;
+    <b>aborts_if</b> !<a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(validator_addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
 }
 </code></pre>
 
 
 
 
-<a name="0x1_LibraSystem_RemoveValidatorEnsures"></a>
+<a name="0x1_DiemSystem_RemoveValidatorEnsures"></a>
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_RemoveValidatorEnsures">RemoveValidatorEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_RemoveValidatorEnsures">RemoveValidatorEnsures</a> {
     validator_addr: address;
-    <a name="0x1_LibraSystem_vs$20"></a>
-    <b>let</b> vs = <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>();
+    <a name="0x1_DiemSystem_vs$20"></a>
+    <b>let</b> vs = <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>();
     <b>ensures</b> <b>forall</b> vi in vs <b>where</b> vi.addr != validator_addr: <b>exists</b> ovi in <b>old</b>(vs): vi == ovi;
 }
 </code></pre>
@@ -600,8 +600,8 @@ Removed validator is no longer a validator.  Depends on no other entries for sam
 in validator_set
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_RemoveValidatorEnsures">RemoveValidatorEnsures</a> {
-    <b>ensures</b> !<a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(validator_addr);
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_RemoveValidatorEnsures">RemoveValidatorEnsures</a> {
+    <b>ensures</b> !<a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(validator_addr);
 }
 </code></pre>
 
@@ -609,17 +609,17 @@ in validator_set
 
 </details>
 
-<a name="0x1_LibraSystem_update_config_and_reconfigure"></a>
+<a name="0x1_DiemSystem_update_config_and_reconfigure"></a>
 
 ## Function `update_config_and_reconfigure`
 
 Copy the information from ValidatorConfig into the validator set.
 This function makes no changes to the size or the members of the set.
-If the config in the ValidatorSet changes, it stores the new LibraSystem
+If the config in the ValidatorSet changes, it stores the new DiemSystem
 and emits a reconfigurationevent.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_update_config_and_reconfigure">update_config_and_reconfigure</a>(validator_operator_account: &signer, validator_addr: address)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_update_config_and_reconfigure">update_config_and_reconfigure</a>(validator_operator_account: &signer, validator_addr: address)
 </code></pre>
 
 
@@ -628,28 +628,28 @@ and emits a reconfigurationevent.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_update_config_and_reconfigure">update_config_and_reconfigure</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_update_config_and_reconfigure">update_config_and_reconfigure</a>(
     validator_operator_account: &signer,
     validator_addr: address,
-) <b>acquires</b> <a href="LibraSystem.md#0x1_LibraSystem_CapabilityHolder">CapabilityHolder</a> {
-    <a href="LibraTimestamp.md#0x1_LibraTimestamp_assert_operating">LibraTimestamp::assert_operating</a>();
+) <b>acquires</b> <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a> {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
     <a href="Roles.md#0x1_Roles_assert_validator_operator">Roles::assert_validator_operator</a>(validator_operator_account);
     <b>assert</b>(
         <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(validator_addr) == <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account),
-        <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>)
+        <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_EINVALID_TRANSACTION_SENDER">EINVALID_TRANSACTION_SENDER</a>)
     );
-    <b>let</b> libra_system_config = <a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>();
-    <b>let</b> to_update_index_vec = <a href="LibraSystem.md#0x1_LibraSystem_get_validator_index_">get_validator_index_</a>(&libra_system_config.validators, validator_addr);
-    <b>assert</b>(<a href="Option.md#0x1_Option_is_some">Option::is_some</a>(&to_update_index_vec), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>));
+    <b>let</b> diem_system_config = <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>();
+    <b>let</b> to_update_index_vec = <a href="DiemSystem.md#0x1_DiemSystem_get_validator_index_">get_validator_index_</a>(&diem_system_config.validators, validator_addr);
+    <b>assert</b>(<a href="Option.md#0x1_Option_is_some">Option::is_some</a>(&to_update_index_vec), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>));
     <b>let</b> to_update_index = *<a href="Option.md#0x1_Option_borrow">Option::borrow</a>(&to_update_index_vec);
-    <b>let</b> is_validator_info_updated = <a href="LibraSystem.md#0x1_LibraSystem_update_ith_validator_info_">update_ith_validator_info_</a>(&<b>mut</b> libra_system_config.validators, to_update_index);
+    <b>let</b> is_validator_info_updated = <a href="DiemSystem.md#0x1_DiemSystem_update_ith_validator_info_">update_ith_validator_info_</a>(&<b>mut</b> diem_system_config.validators, to_update_index);
     <b>if</b> (is_validator_info_updated) {
-        <b>let</b> validator_info = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> libra_system_config.validators, to_update_index);
-        <b>assert</b>(<a href="LibraTimestamp.md#0x1_LibraTimestamp_now_microseconds">LibraTimestamp::now_microseconds</a>() &gt;
-               validator_info.last_config_update_time + <a href="LibraSystem.md#0x1_LibraSystem_FIVE_MINUTES">FIVE_MINUTES</a>,
-               <a href="LibraSystem.md#0x1_LibraSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>);
-        validator_info.last_config_update_time = <a href="LibraTimestamp.md#0x1_LibraTimestamp_now_microseconds">LibraTimestamp::now_microseconds</a>();
-        <a href="LibraSystem.md#0x1_LibraSystem_set_libra_system_config">set_libra_system_config</a>(libra_system_config);
+        <b>let</b> validator_info = <a href="Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> diem_system_config.validators, to_update_index);
+        <b>assert</b>(<a href="DiemTimestamp.md#0x1_DiemTimestamp_now_microseconds">DiemTimestamp::now_microseconds</a>() &gt;
+               validator_info.last_config_update_time + <a href="DiemSystem.md#0x1_DiemSystem_FIVE_MINUTES">FIVE_MINUTES</a>,
+               <a href="DiemSystem.md#0x1_DiemSystem_ECONFIG_UPDATE_RATE_LIMITED">ECONFIG_UPDATE_RATE_LIMITED</a>);
+        validator_info.last_config_update_time = <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_microseconds">DiemTimestamp::now_microseconds</a>();
+        <a href="DiemSystem.md#0x1_DiemSystem_set_diem_system_config">set_diem_system_config</a>(diem_system_config);
     }
 }
 </code></pre>
@@ -665,30 +665,30 @@ and emits a reconfigurationevent.
 
 <pre><code><b>pragma</b> opaque;
 <b>pragma</b> verify_duration_estimate = 100;
-<b>modifies</b> <b>global</b>&lt;<a href="LibraConfig.md#0x1_LibraConfig_LibraConfig">LibraConfig::LibraConfig</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
-<b>include</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a>;
-<b>include</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a>;
-<a name="0x1_LibraSystem_is_validator_info_updated$24"></a>
+<b>modifies</b> <b>global</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_DiemConfig">DiemConfig::DiemConfig</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
+<b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a>;
+<b>include</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a>;
+<a name="0x1_DiemSystem_is_validator_info_updated$24"></a>
 <b>let</b> is_validator_info_updated =
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(validator_addr) &&
-    (<b>exists</b> v_info in <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>():
+    (<b>exists</b> v_info in <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>():
         v_info.addr == validator_addr
         && v_info.config != <a href="ValidatorConfig.md#0x1_ValidatorConfig_spec_get_config">ValidatorConfig::spec_get_config</a>(validator_addr));
-<b>include</b> is_validator_info_updated ==&gt; <a href="LibraConfig.md#0x1_LibraConfig_ReconfigureAbortsIf">LibraConfig::ReconfigureAbortsIf</a>;
+<b>include</b> is_validator_info_updated ==&gt; <a href="DiemConfig.md#0x1_DiemConfig_ReconfigureAbortsIf">DiemConfig::ReconfigureAbortsIf</a>;
 </code></pre>
 
 
 
 
-<a name="0x1_LibraSystem_UpdateConfigAndReconfigureAbortsIf"></a>
+<a name="0x1_DiemSystem_UpdateConfigAndReconfigureAbortsIf"></a>
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a> {
     validator_addr: address;
     validator_operator_account: signer;
-    <a name="0x1_LibraSystem_validator_operator_addr$21"></a>
+    <a name="0x1_DiemSystem_validator_operator_addr$21"></a>
     <b>let</b> validator_operator_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account);
-    <b>include</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp_AbortsIfNotOperating">LibraTimestamp::AbortsIfNotOperating</a>;
+    <b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotOperating">DiemTimestamp::AbortsIfNotOperating</a>;
 }
 </code></pre>
 
@@ -696,12 +696,12 @@ and emits a reconfigurationevent.
 Must abort if the signer does not have the ValidatorOperator role [[H14]][PERMISSION].
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureAbortsIf">UpdateConfigAndReconfigureAbortsIf</a> {
     <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidatorOperator">Roles::AbortsIfNotValidatorOperator</a>{validator_operator_addr: validator_operator_addr};
     <b>include</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_AbortsIfNoValidatorConfig">ValidatorConfig::AbortsIfNoValidatorConfig</a>{addr: validator_addr};
     <b>aborts_if</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(validator_addr) != validator_operator_addr
         <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-    <b>aborts_if</b> !<a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(validator_addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+    <b>aborts_if</b> !<a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(validator_addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
 }
 </code></pre>
 
@@ -710,13 +710,13 @@ Does not change the length of the validator set, only changes ValidatorInfo
 for validator_addr, and doesn't change any addresses.
 
 
-<a name="0x1_LibraSystem_UpdateConfigAndReconfigureEnsures"></a>
+<a name="0x1_DiemSystem_UpdateConfigAndReconfigureEnsures"></a>
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
     validator_addr: address;
-    <a name="0x1_LibraSystem_vs$22"></a>
-    <b>let</b> vs = <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>();
+    <a name="0x1_DiemSystem_vs$22"></a>
+    <b>let</b> vs = <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>();
     <b>ensures</b> len(vs) == len(<b>old</b>(vs));
 }
 </code></pre>
@@ -725,16 +725,16 @@ for validator_addr, and doesn't change any addresses.
 No addresses change in the validator set
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
     <b>ensures</b> <b>forall</b> i in 0..len(vs): vs[i].addr == <b>old</b>(vs)[i].addr;
 }
 </code></pre>
 
 
-If the <code><a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a></code> address is not the one we're changing, the info does not change.
+If the <code><a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a></code> address is not the one we're changing, the info does not change.
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
     <b>ensures</b> <b>forall</b> i in 0..len(vs) <b>where</b> <b>old</b>(vs)[i].addr != validator_addr:
                      vs[i] == <b>old</b>(vs)[i];
 }
@@ -744,7 +744,7 @@ If the <code><a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInf
 It updates the correct entry in the correct way
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
     <b>ensures</b> <b>forall</b> i in 0..len(vs): vs[i].config == <b>old</b>(vs[i].config) ||
                 (<b>old</b>(vs)[i].addr == validator_addr &&
                 vs[i].config == <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_config">ValidatorConfig::get_config</a>(validator_addr));
@@ -755,7 +755,7 @@ It updates the correct entry in the correct way
 LIP-6 property
 
 
-<pre><code><b>schema</b> <a href="LibraSystem.md#0x1_LibraSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
+<pre><code><b>schema</b> <a href="DiemSystem.md#0x1_DiemSystem_UpdateConfigAndReconfigureEnsures">UpdateConfigAndReconfigureEnsures</a> {
     <b>ensures</b> <a href="Roles.md#0x1_Roles_spec_has_validator_role_addr">Roles::spec_has_validator_role_addr</a>(validator_addr);
 }
 </code></pre>
@@ -764,14 +764,14 @@ LIP-6 property
 
 </details>
 
-<a name="0x1_LibraSystem_get_libra_system_config"></a>
+<a name="0x1_DiemSystem_get_diem_system_config"></a>
 
-## Function `get_libra_system_config`
+## Function `get_diem_system_config`
 
-Get the LibraSystem configuration from LibraConfig
+Get the DiemSystem configuration from DiemConfig
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>(): <a href="LibraSystem.md#0x1_LibraSystem_LibraSystem">LibraSystem::LibraSystem</a>
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>(): <a href="DiemSystem.md#0x1_DiemSystem_DiemSystem">DiemSystem::DiemSystem</a>
 </code></pre>
 
 
@@ -780,8 +780,8 @@ Get the LibraSystem configuration from LibraConfig
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>(): <a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a> {
-    <a href="LibraConfig.md#0x1_LibraConfig_get">LibraConfig::get</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;()
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>(): <a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a> {
+    <a href="DiemConfig.md#0x1_DiemConfig_get">DiemConfig::get</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;()
 }
 </code></pre>
 
@@ -795,22 +795,22 @@ Get the LibraSystem configuration from LibraConfig
 
 
 <pre><code><b>pragma</b> opaque;
-<b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_AbortsIfNotPublished">LibraConfig::AbortsIfNotPublished</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;;
-<b>ensures</b> result == <a href="LibraConfig.md#0x1_LibraConfig_get">LibraConfig::get</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;();
+<b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_AbortsIfNotPublished">DiemConfig::AbortsIfNotPublished</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;;
+<b>ensures</b> result == <a href="DiemConfig.md#0x1_DiemConfig_get">DiemConfig::get</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;();
 </code></pre>
 
 
 
 </details>
 
-<a name="0x1_LibraSystem_is_validator"></a>
+<a name="0x1_DiemSystem_is_validator"></a>
 
 ## Function `is_validator`
 
 Return true if <code>addr</code> is in the current validator set
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_is_validator">is_validator</a>(addr: address): bool
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_is_validator">is_validator</a>(addr: address): bool
 </code></pre>
 
 
@@ -819,8 +819,8 @@ Return true if <code>addr</code> is in the current validator set
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_is_validator">is_validator</a>(addr: address): bool {
-    <a href="LibraSystem.md#0x1_LibraSystem_is_validator_">is_validator_</a>(addr, &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_is_validator">is_validator</a>(addr: address): bool {
+    <a href="DiemSystem.md#0x1_DiemSystem_is_validator_">is_validator_</a>(addr, &<a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>().validators)
 }
 </code></pre>
 
@@ -834,18 +834,18 @@ Return true if <code>addr</code> is in the current validator set
 
 
 <pre><code><b>pragma</b> opaque;
-<b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_AbortsIfNotPublished">LibraConfig::AbortsIfNotPublished</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;;
-<b>ensures</b> result == <a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(addr);
+<b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_AbortsIfNotPublished">DiemConfig::AbortsIfNotPublished</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;;
+<b>ensures</b> result == <a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(addr);
 </code></pre>
 
 
 
 
-<a name="0x1_LibraSystem_spec_is_validator"></a>
+<a name="0x1_DiemSystem_spec_is_validator"></a>
 
 
-<pre><code><b>define</b> <a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(addr: address): bool {
-   <b>exists</b> v in <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>(): v.addr == addr
+<pre><code><b>define</b> <a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(addr: address): bool {
+   <b>exists</b> v in <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>(): v.addr == addr
 }
 </code></pre>
 
@@ -853,14 +853,14 @@ Return true if <code>addr</code> is in the current validator set
 
 </details>
 
-<a name="0x1_LibraSystem_get_validator_config"></a>
+<a name="0x1_DiemSystem_get_validator_config"></a>
 
 ## Function `get_validator_config`
 
 Returns validator config. Aborts if <code>addr</code> is not in the validator set.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_validator_config">get_validator_config</a>(addr: address): <a href="ValidatorConfig.md#0x1_ValidatorConfig_Config">ValidatorConfig::Config</a>
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_validator_config">get_validator_config</a>(addr: address): <a href="ValidatorConfig.md#0x1_ValidatorConfig_Config">ValidatorConfig::Config</a>
 </code></pre>
 
 
@@ -869,11 +869,11 @@ Returns validator config. Aborts if <code>addr</code> is not in the validator se
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_validator_config">get_validator_config</a>(addr: address): <a href="ValidatorConfig.md#0x1_ValidatorConfig_Config">ValidatorConfig::Config</a> {
-    <b>let</b> libra_system_config = <a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>();
-    <b>let</b> validator_index_vec = <a href="LibraSystem.md#0x1_LibraSystem_get_validator_index_">get_validator_index_</a>(&libra_system_config.validators, addr);
-    <b>assert</b>(<a href="Option.md#0x1_Option_is_some">Option::is_some</a>(&validator_index_vec), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>));
-    *&(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&libra_system_config.validators, *<a href="Option.md#0x1_Option_borrow">Option::borrow</a>(&validator_index_vec))).config
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_validator_config">get_validator_config</a>(addr: address): <a href="ValidatorConfig.md#0x1_ValidatorConfig_Config">ValidatorConfig::Config</a> {
+    <b>let</b> diem_system_config = <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>();
+    <b>let</b> validator_index_vec = <a href="DiemSystem.md#0x1_DiemSystem_get_validator_index_">get_validator_index_</a>(&diem_system_config.validators, addr);
+    <b>assert</b>(<a href="Option.md#0x1_Option_is_some">Option::is_some</a>(&validator_index_vec), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>));
+    *&(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&diem_system_config.validators, *<a href="Option.md#0x1_Option_borrow">Option::borrow</a>(&validator_index_vec))).config
 }
 </code></pre>
 
@@ -887,10 +887,10 @@ Returns validator config. Aborts if <code>addr</code> is not in the validator se
 
 
 <pre><code><b>pragma</b> opaque;
-<b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_AbortsIfNotPublished">LibraConfig::AbortsIfNotPublished</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;;
-<b>aborts_if</b> !<a href="LibraSystem.md#0x1_LibraSystem_spec_is_validator">spec_is_validator</a>(addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+<b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_AbortsIfNotPublished">DiemConfig::AbortsIfNotPublished</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;;
+<b>aborts_if</b> !<a href="DiemSystem.md#0x1_DiemSystem_spec_is_validator">spec_is_validator</a>(addr) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
 <b>ensures</b>
-    <b>exists</b> info in <a href="LibraConfig.md#0x1_LibraConfig_get">LibraConfig::get</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;().validators <b>where</b> info.addr == addr:
+    <b>exists</b> info in <a href="DiemConfig.md#0x1_DiemConfig_get">DiemConfig::get</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;().validators <b>where</b> info.addr == addr:
         result == info.config;
 </code></pre>
 
@@ -898,14 +898,14 @@ Returns validator config. Aborts if <code>addr</code> is not in the validator se
 
 </details>
 
-<a name="0x1_LibraSystem_validator_set_size"></a>
+<a name="0x1_DiemSystem_validator_set_size"></a>
 
 ## Function `validator_set_size`
 
 Return the size of the current validator set
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_validator_set_size">validator_set_size</a>(): u64
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_validator_set_size">validator_set_size</a>(): u64
 </code></pre>
 
 
@@ -914,8 +914,8 @@ Return the size of the current validator set
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_validator_set_size">validator_set_size</a>(): u64 {
-    <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_validator_set_size">validator_set_size</a>(): u64 {
+    <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&<a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>().validators)
 }
 </code></pre>
 
@@ -929,22 +929,22 @@ Return the size of the current validator set
 
 
 <pre><code><b>pragma</b> opaque;
-<b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_AbortsIfNotPublished">LibraConfig::AbortsIfNotPublished</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;;
-<b>ensures</b> result == len(<a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>());
+<b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_AbortsIfNotPublished">DiemConfig::AbortsIfNotPublished</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;;
+<b>ensures</b> result == len(<a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>());
 </code></pre>
 
 
 
 </details>
 
-<a name="0x1_LibraSystem_get_ith_validator_address"></a>
+<a name="0x1_DiemSystem_get_ith_validator_address"></a>
 
 ## Function `get_ith_validator_address`
 
 Used in <code>transaction_fee.<b>move</b></code> to distribute transaction fees among validators
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_ith_validator_address">get_ith_validator_address</a>(i: u64): address
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_ith_validator_address">get_ith_validator_address</a>(i: u64): address
 </code></pre>
 
 
@@ -953,9 +953,9 @@ Used in <code>transaction_fee.<b>move</b></code> to distribute transaction fees 
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_ith_validator_address">get_ith_validator_address</a>(i: u64): address {
-    <b>assert</b>(i &lt; <a href="LibraSystem.md#0x1_LibraSystem_validator_set_size">validator_set_size</a>(), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="LibraSystem.md#0x1_LibraSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>));
-    <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators, i).addr
+<pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_ith_validator_address">get_ith_validator_address</a>(i: u64): address {
+    <b>assert</b>(i &lt; <a href="DiemSystem.md#0x1_DiemSystem_validator_set_size">validator_set_size</a>(), <a href="Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemSystem.md#0x1_DiemSystem_EVALIDATOR_INDEX">EVALIDATOR_INDEX</a>));
+    <a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&<a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>().validators, i).addr
 }
 </code></pre>
 
@@ -969,16 +969,16 @@ Used in <code>transaction_fee.<b>move</b></code> to distribute transaction fees 
 
 
 <pre><code><b>pragma</b> opaque;
-<b>include</b> <a href="LibraConfig.md#0x1_LibraConfig_AbortsIfNotPublished">LibraConfig::AbortsIfNotPublished</a>&lt;<a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a>&gt;;
-<b>aborts_if</b> i &gt;= len(<a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
-<b>ensures</b> result == <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()[i].addr;
+<b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_AbortsIfNotPublished">DiemConfig::AbortsIfNotPublished</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;;
+<b>aborts_if</b> i &gt;= len(<a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>()) <b>with</b> <a href="Errors.md#0x1_Errors_INVALID_ARGUMENT">Errors::INVALID_ARGUMENT</a>;
+<b>ensures</b> result == <a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>()[i].addr;
 </code></pre>
 
 
 
 </details>
 
-<a name="0x1_LibraSystem_get_validator_index_"></a>
+<a name="0x1_DiemSystem_get_validator_index_"></a>
 
 ## Function `get_validator_index_`
 
@@ -986,7 +986,7 @@ Get the index of the validator by address in the <code>validators</code> vector
 It has a loop, so there are spec blocks in the code to assert loop invariants.
 
 
-<pre><code><b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_validator_index_">get_validator_index_</a>(validators: &vector&lt;<a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">LibraSystem::ValidatorInfo</a>&gt;, addr: address): <a href="Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;
+<pre><code><b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_validator_index_">get_validator_index_</a>(validators: &vector&lt;<a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">DiemSystem::ValidatorInfo</a>&gt;, addr: address): <a href="Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;
 </code></pre>
 
 
@@ -995,7 +995,7 @@ It has a loop, so there are spec blocks in the code to assert loop invariants.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_validator_index_">get_validator_index_</a>(validators: &vector&lt;<a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a>&gt;, addr: address): <a href="Option.md#0x1_Option">Option</a>&lt;u64&gt; {
+<pre><code><b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_validator_index_">get_validator_index_</a>(validators: &vector&lt;<a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a>&gt;, addr: address): <a href="Option.md#0x1_Option">Option</a>&lt;u64&gt; {
     <b>let</b> size = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators);
     <b>let</b> i = 0;
     <b>while</b> ({
@@ -1034,7 +1034,7 @@ It has a loop, so there are spec blocks in the code to assert loop invariants.
 
 <pre><code><b>pragma</b> opaque;
 <b>aborts_if</b> <b>false</b>;
-<a name="0x1_LibraSystem_size$25"></a>
+<a name="0x1_DiemSystem_size$25"></a>
 <b>let</b> size = len(validators);
 </code></pre>
 
@@ -1047,7 +1047,7 @@ If <code>addr</code> is not in validator set, returns none.
 
 
 If <code>addr</code> is in validator set, return the least index of an entry with that address.
-The data invariant associated with the LibraSystem.validators that implies
+The data invariant associated with the DiemSystem.validators that implies
 that there is exactly one such address.
 
 
@@ -1064,7 +1064,7 @@ that there is exactly one such address.
 
 </details>
 
-<a name="0x1_LibraSystem_update_ith_validator_info_"></a>
+<a name="0x1_DiemSystem_update_ith_validator_info_"></a>
 
 ## Function `update_ith_validator_info_`
 
@@ -1072,7 +1072,7 @@ Updates *i*th validator info, if nothing changed, return false.
 This function never aborts.
 
 
-<pre><code><b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_update_ith_validator_info_">update_ith_validator_info_</a>(validators: &<b>mut</b> vector&lt;<a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">LibraSystem::ValidatorInfo</a>&gt;, i: u64): bool
+<pre><code><b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_update_ith_validator_info_">update_ith_validator_info_</a>(validators: &<b>mut</b> vector&lt;<a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">DiemSystem::ValidatorInfo</a>&gt;, i: u64): bool
 </code></pre>
 
 
@@ -1081,7 +1081,7 @@ This function never aborts.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_update_ith_validator_info_">update_ith_validator_info_</a>(validators: &<b>mut</b> vector&lt;<a href="LibraSystem.md#0x1_LibraSystem_ValidatorInfo">ValidatorInfo</a>&gt;, i: u64): bool {
+<pre><code><b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_update_ith_validator_info_">update_ith_validator_info_</a>(validators: &<b>mut</b> vector&lt;<a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a>&gt;, i: u64): bool {
     <b>let</b> size = <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators);
     // This provably cannot happen, but left it here for safety.
     <b>if</b> (i &gt;= size) {
@@ -1116,7 +1116,7 @@ This function never aborts.
 
 <pre><code><b>pragma</b> opaque;
 <b>aborts_if</b> <b>false</b>;
-<a name="0x1_LibraSystem_new_validator_config$26"></a>
+<a name="0x1_DiemSystem_new_validator_config$26"></a>
 <b>let</b> new_validator_config = <a href="ValidatorConfig.md#0x1_ValidatorConfig_spec_get_config">ValidatorConfig::spec_get_config</a>(validators[i].addr);
 </code></pre>
 
@@ -1172,8 +1172,8 @@ Needed these assertions to make "consensus voting power is always 1" invariant
 prove (not sure why).
 
 
-<pre><code><b>requires</b> <b>forall</b> i1 in 0..len(<a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()):
-   <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()[i1].consensus_voting_power == 1;
+<pre><code><b>requires</b> <b>forall</b> i1 in 0..len(<a href="DiemSystem.md#0x1_DiemSystem_spec_get_validators">spec_get_validators</a>()):
+   <a href="DiemSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()[i1].consensus_voting_power == 1;
 <b>ensures</b> <b>forall</b> i1 in 0..len(<a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()):
    <a href="LibraSystem.md#0x1_LibraSystem_spec_get_validators">spec_get_validators</a>()[i1].consensus_voting_power == 1;
 </code></pre>
@@ -1282,7 +1282,7 @@ Private function checks for membership of <code>addr</code> in validator set.
 
     // We have vector of validators - updated!
     // Next, <b>let</b> us get the current validator set for the current parameters
-    <b>let</b> outgoing_validator_set = <a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>();
+    <b>let</b> outgoing_validator_set = <a href="LibraSystem.md#0x1_LibraSystem_get_diem_system_config">get_diem_system_config</a>();
 
     // We create a new Validator set using scheme from outgoingValidatorset and <b>update</b> the validator set.
     <b>let</b> updated_validator_set = <a href="LibraSystem.md#0x1_LibraSystem">LibraSystem</a> {
@@ -1291,7 +1291,7 @@ Private function checks for membership of <code>addr</code> in validator set.
     };
 
     // Updated the configuration using updated validator set. Now, start new epoch
-    <a href="LibraSystem.md#0x1_LibraSystem_set_libra_system_config">set_libra_system_config</a>(updated_validator_set);
+    <a href="LibraSystem.md#0x1_LibraSystem_set_diem_system_config">set_diem_system_config</a>(updated_validator_set);
 }
 </code></pre>
 
@@ -1315,7 +1315,7 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;address&gt;, vector&lt;<a href="FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;) {
-    <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
+    <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_diem_system_config">get_diem_system_config</a>().validators;
 
     <b>let</b> compliant_nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
     <b>let</b> count_compliant_votes = 0;
@@ -1404,7 +1404,7 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="LibraSystem.md#0x1_LibraSystem_get_val_set_addr">get_val_set_addr</a>(): vector&lt;address&gt; {
-    <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_libra_system_config">get_libra_system_config</a>().validators;
+    <b>let</b> validators = &<a href="LibraSystem.md#0x1_LibraSystem_get_diem_system_config">get_diem_system_config</a>().validators;
     <b>let</b> nodes = <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
@@ -1474,14 +1474,14 @@ The permission "{Add, Remove} Validator" is granted to LibraRoot [[H13]][PERMISS
 
 Only {add, remove} validator [[H13]][PERMISSION] and update_config_and_reconfigure
 [[H14]][PERMISSION] may change the set of validators in the configuration.
-<code>set_libra_system_config</code> is a private function which is only called by other
+<code>set_diem_system_config</code> is a private function which is only called by other
 functions in the "except" list. <code>initialize_validator_set</code> is only called in
 Genesis.
 
 
 <pre><code><b>apply</b> <a href="LibraSystem.md#0x1_LibraSystem_ValidatorSetConfigRemainsSame">ValidatorSetConfigRemainsSame</a> <b>to</b> *, *&lt;T&gt;
    <b>except</b> add_validator, remove_validator, update_config_and_reconfigure,
-       initialize_validator_set, set_libra_system_config;
+       initialize_validator_set, set_diem_system_config;
 </code></pre>
 
 
@@ -1544,6 +1544,6 @@ of LibraBFT.
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/libra/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/libra/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/libra/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
+[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
+[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions
