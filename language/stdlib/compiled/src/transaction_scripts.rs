@@ -64,6 +64,7 @@ pub enum StdlibScript {
     CreateUserAccount,
     Join,
     Demo,
+    Remove,
     // ...add new scripts here
 }
 
@@ -116,6 +117,7 @@ impl StdlibScript {
             CreateUserAccount,
             Join,
             Demo,
+            Remove,
             // ...add new scripts here
         ]
     }
@@ -253,6 +255,8 @@ impl fmt::Display for StdlibScript {
                 CreateUserAccount => "ol_create_user_account",
                 Join => "ol_join_validator_set",
                 Demo => "ol_demo_e2e",
+                Remove => "ol_remove_self_validator_universe",
+
             }
         )
     }
