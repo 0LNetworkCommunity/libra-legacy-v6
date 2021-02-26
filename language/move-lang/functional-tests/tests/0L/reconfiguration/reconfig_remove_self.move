@@ -1,10 +1,8 @@
-// Testing if EVE a CASE 3 Validator gets dropped.
+// Testing if CAROL can successfully remove herself as a validator
 
-// ALICE is CASE 1
 //! account: alice, 1000000, 0, validator
-// BOB is CASE 2
 //! account: bob, 1000000, 0, validator
-// CAROL is CASE 2
+// CAROL will remove herself as a validator
 //! account: carol, 1000000, 0, validator
 
 //! block-prologue
@@ -12,25 +10,7 @@
 //! block-time: 1
 //! NewBlockEvent
 
-// //! new-transaction
-// //! sender: carol
-// stdlib_script::ol_remove_self_validator_universe
-// // check: "Keep(EXECUTED)"
-
-// //! new-transaction
-// //! sender: carol
-// script {
-//    use 0x1::ValidatorUniverse;
-//    use 0x1::Signer;
-//    fun remove_self(validator: &signer) {
-//        let addr = Signer::address_of(validator);
-//        if (ValidatorUniverse::is_in_universe(addr)) {
-//            ValidatorUniverse::remove_self(validator);
-//        };
-//    }
-// }
-// //check: EXECUTED
-
+// Carol removes herself as a validator
 //! new-transaction
 //! sender: carol
 stdlib_script::ol_remove_self_validator_universe
@@ -90,7 +70,7 @@ script {
     fun main(_account: &signer) {
         // We are in a new epoch.
         assert(LibraConfig::get_current_epoch() == 2, 7357180105011000);
-        // Tests on initial size of validators 
+        // Tests to ensure validator set size has indeed dropped
         assert(LibraSystem::validator_set_size() == 2, 7357180105021000);
         // Carol is no longer a validator because she removed herself the previous epoch
         assert(LibraSystem::is_validator({{carol}}) == false, 7357180105031000);
