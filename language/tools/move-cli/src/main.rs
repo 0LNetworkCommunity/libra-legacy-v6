@@ -1,49 +1,65 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use errmapgen::ErrorMapping;
 
-use move_cli::*;
+use move_cli::{
+    package::{parse_mode_from_string, Mode},
+    *,
+};
 use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::{GasAlgebra, GasUnits},
-    language_storage::TypeTag,
+    identifier::Identifier,
+    language_storage::{ModuleId, TypeTag},
     parser,
     transaction_argument::TransactionArgument,
     vm_status::{AbortLocation, StatusCode, VMStatus},
 };
-use move_lang::{self, compiled_unit::CompiledUnit, MOVE_COMPILED_INTERFACES_DIR};
+use move_lang::{
+    self, compiled_unit::CompiledUnit, Pass as MovePass, PassResult as MovePassResult,
+    MOVE_COMPILED_INTERFACES_DIR,
+};
 use move_vm_runtime::{data_cache::TransactionEffects, logging::NoContextLog, move_vm::MoveVM};
 use move_vm_types::{gas_schedule, values::Value};
 use vm::{
     access::ScriptAccess,
     errors::VMError,
-    file_format::{CompiledScript, SignatureToken},
+    file_format::{CompiledModule, CompiledScript, SignatureToken},
 };
 
 use anyhow::{bail, Result};
 use std::{
+    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
-#[structopt(name = "Move", about = "CLI frontend for Move compiler and VM")]
+#[structopt(
+    name = "move",
+    about = "CLI frontend for Move compiler and VM",
+    rename_all = "kebab-case"
+)]
 struct Move {
     /// Directory storing Move resources, events, and module bytecodes produced by script execution.
-    #[structopt(name = "move-data", long = "move-data", default_value = MOVE_DATA, global = true)]
-    move_data: String,
+    #[structopt(long, default_value = DEFAULT_STORAGE_DIR, global = true)]
+    storage_dir: String,
     /// Directory storing Move resources, events, and module bytecodes produced by script execution.
+    #[structopt(long, default_value = DEFAULT_BUILD_DIR, global = true)]
+    build_dir: String,
+    /// Dependency inclusion mode
     #[structopt(
-        name = "move-build-output",
-        long = "build-output",
-        default_value = DEFAULT_BUILD_OUTPUT_DIR,
+        long,
+        default_value = DEFAULT_DEP_MODE,
         global = true,
+        parse(try_from_str = parse_mode_from_string),
     )]
-    build_output: String,
+    mode: Mode,
     /// Print additional diagnostics
-    #[structopt(name = "verbose", short = "v", global = true)]
+    #[structopt(short = "v", global = true)]
     verbose: bool,
     #[structopt(subcommand)]
     cmd: Command,
@@ -51,31 +67,37 @@ struct Move {
 
 #[derive(StructOpt)]
 enum Command {
-    /// Type check and verify the specified script and modules against the modules in `move_data`
+    /// Type check and verify the specified script and modules against the modules in `storage`
     #[structopt(name = "check")]
     Check {
         /// The source files to check
         #[structopt(
             name = "PATH_TO_SOURCE_FILE",
-            default_value = MOVE_SRC,
+            default_value = DEFAULT_SOURCE_DIR,
         )]
         source_files: Vec<String>,
+        /// If set, modules will not override existing ones in storage
+        #[structopt(long = "no-republish")]
+        no_republish: bool,
     },
     #[structopt(name = "publish")]
     Publish {
         /// The source files containing modules to publish
         #[structopt(
             name = "PATH_TO_SOURCE_FILE",
-            default_value = MOVE_SRC,
+            default_value = DEFAULT_SOURCE_DIR,
         )]
         source_files: Vec<String>,
+        /// If set, modules will not override existing ones in storage
+        #[structopt(long = "no-republish")]
+        no_republish: bool,
         /// If set, the effects of executing `script_file` (i.e., published, updated, and
         /// deleted resources) will NOT be committed to disk.
         #[structopt(long = "dry-run", short = "n")]
         dry_run: bool,
     },
-    /// Compile/run a Move script that reads/writes resources stored on disk in `move_data`.
-    /// This command compiles each each module stored in `move_src` and loads it into the VM
+    /// Compile/run a Move script that reads/writes resources stored on disk in `storage`.
+    /// This command compiles each each module stored in `src` and loads it into the VM
     /// before running the script.
     #[structopt(name = "run")]
     Run {
@@ -111,6 +133,10 @@ enum Command {
         /// a directory path in which all the tests will be executed
         #[structopt(name = "path")]
         path: String,
+        /// Show coverage information after tests are done.
+        /// By default, coverage will not be tracked nor shown.
+        #[structopt(long = "track-cov")]
+        track_cov: bool,
     },
     /// View Move resources, events files, and modules stored on disk
     #[structopt(name = "view")]
@@ -119,9 +145,42 @@ enum Command {
         #[structopt(name = "file")]
         file: String,
     },
-    /// Delete all resources, events, and modules stored on disk under `move_data`.
-    /// Does *not* delete anything in `move_src`.
+    /// Delete all resources, events, and modules stored on disk under `storage`.
+    /// Does *not* delete anything in `src`.
     Clean {},
+}
+
+impl Move {
+    fn get_package_dir(&self) -> PathBuf {
+        Path::new(&self.build_dir).join(DEFAULT_PACKAGE_DIR)
+    }
+
+    /// Prepare the library dependencies, need to run it before every related command,
+    /// i.e., check, publish, and run.
+    ///
+    /// If `source_only` is true, only the source files will be populated. The modules will
+    /// not be compiled nor loaded.
+    ///
+    /// Currently, `source_only` is set to true for "check" and "publish" and false for "run"
+    fn prepare_mode(&self, source_only: bool) -> Result<()> {
+        self.mode.prepare(&self.get_package_dir(), source_only)
+    }
+
+    /// This collect the dependencies for compiling a script or module. The dependencies
+    /// include not only the loaded libraries, but also the interface files generated from
+    /// prior "publish" commands.
+    fn get_compilation_deps(&self) -> Result<Vec<String>> {
+        let mut src_dirs = self.mode.source_files(&self.get_package_dir())?;
+        src_dirs.push(interface_files_dir(&self.build_dir)?);
+        Ok(src_dirs)
+    }
+
+    /// This collects only the compiled modules from dependent libraries. The modules
+    /// created via the "publish" command should already sit in the storage based on
+    /// current implementation.
+    fn get_library_modules(&self) -> Result<Vec<CompiledModule>> {
+        self.mode.compiled_modules(&self.get_package_dir())
+    }
 }
 
 /// Create a directory at ./`dir_name` if one does not already exist
@@ -136,8 +195,8 @@ fn maybe_create_dir(dir_name: &str) -> Result<&Path> {
 /// Generate interface files for published files
 fn generate_interface_files(args: &Move) -> Result<()> {
     move_lang::generate_interface_files(
-        &[args.move_data.clone()],
-        Some(args.build_output.clone()),
+        &[args.storage_dir.clone()],
+        Some(args.build_dir.clone()),
         false,
     )?;
     Ok(())
@@ -151,25 +210,109 @@ fn interface_files_dir(build_dir: &str) -> Result<String> {
     Ok(dir)
 }
 
-/// Compile the user modules in `move_src` and the script in `script_file`
-fn check(args: &Move, files: &[String]) -> Result<()> {
+fn shadow_storage(
+    args: &Move,
+    pprog: move_lang::parser::ast::Program,
+) -> Result<move_lang::parser::ast::Program> {
+    fn convert_module_id(
+        address: &move_lang::shared::Address,
+        name: &move_lang::parser::ast::ModuleName,
+    ) -> ModuleId {
+        use move_lang::shared::Identifier as MoveIdentifier;
+        ModuleId::new(
+            AccountAddress::new(address.to_u8()),
+            Identifier::new(name.value().to_string()).unwrap(),
+        )
+    }
+    use move_lang::parser::ast::{Definition, Program};
+    let Program {
+        source_definitions,
+        lib_definitions,
+    } = pprog;
+    let mut interface_modules_to_remove = BTreeSet::new();
+    for def in &source_definitions {
+        match def {
+            Definition::Address(_, addr, modules) => {
+                for module in modules {
+                    interface_modules_to_remove.insert(convert_module_id(addr, &module.name));
+                }
+            }
+            Definition::Module(_) | Definition::Script(_) => (),
+        }
+    }
+
+    let interface_dir = interface_files_dir(&args.build_dir)?;
+    let interface_files_to_ignore = move_lang::find_filenames(&[interface_dir], |path| {
+        let module_str = path.file_stem().unwrap().to_str().unwrap();
+        let module = Identifier::new(module_str.to_string()).unwrap();
+
+        let mut comps = path.components().rev();
+        let _file = comps.next().unwrap();
+        let addr_str = comps.next().unwrap().as_os_str().to_str().unwrap();
+        let addr = AccountAddress::from_str(addr_str).unwrap();
+
+        let id = ModuleId::new(addr, module);
+        interface_modules_to_remove.contains(&id)
+    })?
+    .into_iter()
+    .collect::<BTreeSet<_>>();
+    let lib_definitions = lib_definitions
+        .into_iter()
+        .filter(|def| !interface_files_to_ignore.contains(def.file()))
+        .collect();
+    Ok(Program {
+        source_definitions,
+        lib_definitions,
+    })
+}
+
+fn move_compile_to_and_shadow(
+    args: &Move,
+    files: &[String],
+    republish: bool,
+    until: MovePass,
+) -> Result<(
+    move_lang::errors::FilesSourceText,
+    std::result::Result<MovePassResult, move_lang::errors::Errors>,
+)> {
+    let (files, pprog_and_comments_res) =
+        move_lang::move_parse(files, &args.get_compilation_deps()?, None, None)?;
+    let (_comments, sender_opt, mut pprog) = match pprog_and_comments_res {
+        Err(errors) => return Ok((files, Err(errors))),
+        Ok(res) => res,
+    };
+    assert!(sender_opt.is_none());
+    if republish {
+        pprog = shadow_storage(args, pprog)?;
+    }
+    Ok((
+        files,
+        move_lang::move_continue_up_to(MovePassResult::Parser(None, pprog), until),
+    ))
+}
+
+/// Compile the user modules in `src` and the script in `script_file`
+fn check(args: &Move, republish: bool, files: &[String]) -> Result<()> {
     if args.verbose {
         println!("Checking Move files...");
     }
-    let interface_dir = interface_files_dir(&args.build_output)?;
-    move_lang::move_check(files, &[interface_dir], None, None)?;
+    let (files, result) = move_compile_to_and_shadow(args, files, republish, MovePass::CFGIR)?;
+    move_lang::unwrap_or_report_errors!(files, result);
     Ok(())
 }
 
-fn publish(args: &Move, files: &[String]) -> Result<OnDiskStateView> {
-    let move_data = maybe_create_dir(&args.move_data)?;
+fn publish(args: &Move, republish: bool, files: &[String]) -> Result<OnDiskStateView> {
+    let storage_dir = maybe_create_dir(&args.storage_dir)?;
 
     if args.verbose {
         println!("Compiling Move modules...")
     }
-    let interface_dir = interface_files_dir(&args.build_output)?;
-    let (_, compiled_units) = move_lang::move_compile(files, &[interface_dir], None, None)?;
-
+    let (files, result) =
+        move_compile_to_and_shadow(args, files, republish, MovePass::Compilation)?;
+    let compiled_units = match move_lang::unwrap_or_report_errors!(files, result) {
+        MovePassResult::Compilation(units) => units,
+        _ => unreachable!(),
+    };
     let num_modules = compiled_units
         .iter()
         .filter(|u| matches!(u,  CompiledUnit::Module {..}))
@@ -184,8 +327,8 @@ fn publish(args: &Move, files: &[String]) -> Result<OnDiskStateView> {
             CompiledUnit::Script { loc, .. } => {
                 if args.verbose {
                     println!(
-                        "Warning: Found script in specified files for publishing. But scripts cannot \
-                         be published. Script found in: {}",
+                        "Warning: Found script in specified files for publishing. But scripts \
+                         cannot be published. Script found in: {}",
                         loc.file()
                     )
                 }
@@ -193,7 +336,10 @@ fn publish(args: &Move, files: &[String]) -> Result<OnDiskStateView> {
             CompiledUnit::Module { module, .. } => modules.push(module),
         }
     }
-    Ok(OnDiskStateView::create(move_data.to_path_buf(), &modules)?)
+    Ok(OnDiskStateView::create(
+        storage_dir.to_path_buf(),
+        &modules,
+    )?)
 }
 
 fn run(
@@ -209,17 +355,16 @@ fn run(
         args: &Move,
         script_file: &str,
     ) -> Result<(OnDiskStateView, Option<CompiledScript>)> {
-        let move_data = maybe_create_dir(&args.move_data)?;
+        let storage_dir = maybe_create_dir(&args.storage_dir)?;
 
         if args.verbose {
             println!("Compiling transaction script...")
         }
-        let interface_dir = interface_files_dir(&args.build_output)?;
-        let (_, compiled_units) = move_lang::move_compile(
+        let (_files, compiled_units) = move_lang::move_compile_and_report(
             &[script_file.to_string()],
-            &[interface_dir.clone()],
+            &args.get_compilation_deps()?,
             None,
-            Some(interface_dir),
+            None,
         )?;
 
         let mut script_opt = None;
@@ -234,16 +379,21 @@ fn run(
                 CompiledUnit::Module { ident, .. } => {
                     if args.verbose {
                         println!(
-                    "Warning: Found module '{}' in file specified for the script. This module \
-                     will not be published.",
-                    ident
-                    )
+                            "Warning: Found module '{}' in file specified for the script. This \
+                             module will not be published.",
+                            ident
+                        )
                     }
                 }
             }
         }
+
+        // preload the modules to the storage
+        let state =
+            OnDiskStateView::create(storage_dir.to_path_buf(), &args.get_library_modules()?)?;
+        state.save_modules()?;
         Ok((
-            OnDiskStateView::create(move_data.to_path_buf(), &[])?,
+            OnDiskStateView::create(storage_dir.to_path_buf(), &[])?,
             script_opt,
         ))
     }
@@ -283,7 +433,6 @@ fn run(
             TransactionArgument::Address(a) => Value::address(*a),
             TransactionArgument::Bool(b) => Value::bool(*b),
             TransactionArgument::U8Vector(v) => Value::vector_u8(v.clone()),
-            TransactionArgument::AddressVector(v) => Value::vector_address(v.clone())
         })
         .collect();
 
@@ -467,10 +616,10 @@ fn explain_error(
     match error.into_vm_status() {
         VMStatus::MoveAbort(AbortLocation::Module(id), abort_code) => {
             // try to use move-explain to explain the abort
-            // TODO: this will only work for errors in the stdlib or Libra Framework. We should
+            // TODO: this will only work for errors in the stdlib or Diem Framework. We should
             // add code to build an ErrorMapping for modules in move_lib as well
             let error_descriptions: ErrorMapping =
-                lcs::from_bytes(compiled_stdlib::ERROR_DESCRIPTIONS)?;
+                bcs::from_bytes(compiled_stdlib::ERROR_DESCRIPTIONS)?;
             print!(
                 "Execution aborted with code {} in module {}.",
                 abort_code, id
@@ -503,14 +652,22 @@ fn explain_error(
             code_offset,
         } => {
             let status_explanation = match status_code {
-                    RESOURCE_ALREADY_EXISTS => "a RESOURCE_ALREADY_EXISTS error (i.e., `move_to<T>(account)` when there is already a resource of type `T` under `account`)".to_string(),
-                    MISSING_DATA => "a RESOURCE_DOES_NOT_EXIST error (i.e., `move_from<T>(a)`, `borrow_global<T>(a)`, or `borrow_global_mut<T>(a)` when there is no resource of type `T` at address `a`)".to_string(),
-                    ARITHMETIC_ERROR => "an arithmetic error (i.e., integer overflow/underflow, div/mod by zero, or invalid shift)".to_string(),
-                    EXECUTION_STACK_OVERFLOW => "an execution stack overflow".to_string(),
-                    CALL_STACK_OVERFLOW => "a call stack overflow".to_string(),
-                    OUT_OF_GAS => "an out of gas error".to_string(),
-                    _ => format!("a {} error", status_code.status_type()),
-                };
+                RESOURCE_ALREADY_EXISTS => "a RESOURCE_ALREADY_EXISTS error (i.e., \
+                                            `move_to<T>(account)` when there is already a \
+                                            resource of type `T` under `account`)"
+                    .to_string(),
+                MISSING_DATA => "a RESOURCE_DOES_NOT_EXIST error (i.e., `move_from<T>(a)`, \
+                                 `borrow_global<T>(a)`, or `borrow_global_mut<T>(a)` when there \
+                                 is no resource of type `T` at address `a`)"
+                    .to_string(),
+                ARITHMETIC_ERROR => "an arithmetic error (i.e., integer overflow/underflow, \
+                                     div/mod by zero, or invalid shift)"
+                    .to_string(),
+                EXECUTION_STACK_OVERFLOW => "an execution stack overflow".to_string(),
+                CALL_STACK_OVERFLOW => "a call stack overflow".to_string(),
+                OUT_OF_GAS => "an out of gas error".to_string(),
+                _ => format!("a {} error", status_code.status_type()),
+            };
             // TODO: map to source code location
             let location_explanation = match location {
                 AbortLocation::Module(id) => {
@@ -532,7 +689,7 @@ fn explain_error(
         VMStatus::Error(TYPE_MISMATCH) => explain_type_error(script, signers, txn_args),
         VMStatus::Error(LINKER_ERROR) => {
             // TODO: is this the only reason we can see LINKER_ERROR?
-            // Can we also see it if someone manually deletes modules in move_data?
+            // Can we also see it if someone manually deletes modules in storage?
             println!(
                 "Execution failed due to unresolved type argument(s) (i.e., `--type-args \
                  0x1::M:T` when there is no module named M at 0x1 or no type named T in module \
@@ -549,9 +706,9 @@ fn explain_error(
 
 /// Print a module or resource stored in `file`
 fn view(args: &Move, file: &str) -> Result<()> {
-    let move_data = maybe_create_dir(&args.move_data)?.canonicalize()?;
+    let storage_dir = maybe_create_dir(&args.storage_dir)?.canonicalize()?;
     let stdlib_modules = vec![]; // ok to use empty dir here since we're not compiling
-    let state = OnDiskStateView::create(move_data, &stdlib_modules)?;
+    let state = OnDiskStateView::create(storage_dir, &stdlib_modules)?;
 
     let path = Path::new(&file);
     if state.is_resource_path(path) {
@@ -574,7 +731,7 @@ fn view(args: &Move, file: &str) -> Result<()> {
             None => println!("Module not found."),
         }
     } else {
-        bail!("`move view <file>` must point to a valid file under move_data")
+        bail!("`move view <file>` must point to a valid file under storage")
     }
     Ok(())
 }
@@ -583,13 +740,21 @@ fn main() -> Result<()> {
     let move_args = Move::from_args();
 
     match &move_args.cmd {
-        Command::Check { source_files } => check(&move_args, &source_files),
+        Command::Check {
+            source_files,
+            no_republish,
+        } => {
+            move_args.prepare_mode(true)?;
+            check(&move_args, !*no_republish, &source_files)
+        }
         Command::Publish {
             source_files,
+            no_republish,
             dry_run,
         } => {
-            let state = publish(&move_args, source_files)?;
-            maybe_commit_effects(&move_args, !dry_run, None, &state)
+            move_args.prepare_mode(true)?;
+            let state = publish(&move_args, !*no_republish, source_files)?;
+            maybe_commit_effects(&move_args, !*dry_run, None, &state)
         }
         Command::Run {
             script_file,
@@ -598,28 +763,35 @@ fn main() -> Result<()> {
             type_args,
             gas_budget,
             dry_run,
-        } => run(
-            &move_args,
-            script_file,
-            signers,
-            args,
-            type_args.to_vec(),
-            *gas_budget,
-            *dry_run,
+        } => {
+            move_args.prepare_mode(false)?;
+            run(
+                &move_args,
+                script_file,
+                signers,
+                args,
+                type_args.to_vec(),
+                *gas_budget,
+                *dry_run,
+            )
+        }
+        Command::Test { path, track_cov } => test::run_all(
+            path,
+            &std::env::current_exe()?.to_string_lossy(),
+            *track_cov,
         ),
-        Command::Test { path } => test::run_all(path, &std::env::current_exe()?.to_string_lossy()),
         Command::View { file } => view(&move_args, file),
         Command::Clean {} => {
-            // delete move_data
-            let move_data = Path::new(&move_args.move_data);
-            if move_data.exists() {
-                fs::remove_dir_all(&move_data)?;
+            // delete storage
+            let storage_dir = Path::new(&move_args.storage_dir);
+            if storage_dir.exists() {
+                fs::remove_dir_all(&storage_dir)?;
             }
 
-            // delete build_output
-            let build_output = Path::new(&move_args.build_output);
-            if build_output.exists() {
-                fs::remove_dir_all(&build_output)?;
+            // delete build
+            let build_dir = Path::new(&move_args.build_dir);
+            if build_dir.exists() {
+                fs::remove_dir_all(&build_dir)?;
             }
             Ok(())
         }

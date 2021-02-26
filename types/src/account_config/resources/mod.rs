@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod account;
@@ -14,8 +14,6 @@ pub mod role;
 pub mod role_id;
 pub mod vasp;
 pub mod withdraw_capability;
-pub mod miner_state;
-pub mod oracle_upgrade;
 
 pub use account::*;
 pub use balance::*;

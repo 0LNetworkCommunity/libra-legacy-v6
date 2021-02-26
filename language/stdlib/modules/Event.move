@@ -5,7 +5,8 @@ address 0x1 {
 /// of `EventHandle`s it generates. An `EventHandle` is used to count the number of
 /// events emitted to a handle and emit events to the event store.
 module Event {
-    use 0x1::LCS;
+    use 0x1::Errors;
+    use 0x1::BCS;
     use 0x1::Signer;
     use 0x1::Vector;
 
@@ -27,9 +28,14 @@ module Event {
         guid: vector<u8>,
     }
 
+    /// The event generator resource was in an invalid state
+    const EEVENT_GENERATOR: u64 = 0;
+
     /// Publishs a new event handle generator.
     public fun publish_generator(account: &signer) {
-        move_to(account, EventHandleGenerator{ counter: 0, addr: Signer::address_of(account) })
+        let addr = Signer::address_of(account);
+        assert(!exists<EventHandleGenerator>(addr), Errors::already_published(EEVENT_GENERATOR));
+        move_to(account, EventHandleGenerator{ counter: 0, addr })
     }
 
     /// Derive a fresh unique id by using sender's EventHandleGenerator. The generated vector<u8> is indeed unique because it
@@ -38,8 +44,8 @@ module Event {
     /// such counter is going to give distinct value for each of the new event stream under each sender. And since we
     /// hash it with the sender's address, the result is guaranteed to be globally unique.
     fun fresh_guid(counter: &mut EventHandleGenerator): vector<u8> {
-        let sender_bytes = LCS::to_bytes(&counter.addr);
-        let count_bytes = LCS::to_bytes(&counter.counter);
+        let sender_bytes = BCS::to_bytes(&counter.addr);
+        let count_bytes = BCS::to_bytes(&counter.counter);
         counter.counter = counter.counter + 1;
 
         // EventHandleGenerator goes first just in case we want to extend address in the future.
@@ -51,14 +57,15 @@ module Event {
     /// Use EventHandleGenerator to generate a unique event handle for `sig`
     public fun new_event_handle<T: copyable>(account: &signer): EventHandle<T>
     acquires EventHandleGenerator {
+        let addr = Signer::address_of(account);
+        assert(exists<EventHandleGenerator>(addr), Errors::not_published(EEVENT_GENERATOR));
         EventHandle<T> {
             counter: 0,
-            guid: fresh_guid(borrow_global_mut<EventHandleGenerator>(Signer::address_of(account)))
+            guid: fresh_guid(borrow_global_mut<EventHandleGenerator>(addr))
         }
     }
 
-    /// Emit an event with payload `msg` by using handle's key and counter. Will change the payload from vector<u8> to a
-    /// generic type parameter once we have generics.
+    /// Emit an event with payload `msg` by using `handle_ref`'s key and counter.
     public fun emit_event<T: copyable>(handle_ref: &mut EventHandle<T>, msg: T) {
         let guid = *&handle_ref.guid;
 
@@ -80,7 +87,7 @@ module Event {
 
     spec module {
         /// > NOTE: specification and verification of event related functionality is currently not happening.
-        /// > Since events cannot be observed from Move programs, this does not effect the verification of
+        /// > Since events cannot be observed from Move programs, this does not affect the verification of
         /// > other functionality; however, this should be completed at a later point to ensure the framework
         /// > generates events as expected.
         ///

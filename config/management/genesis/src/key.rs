@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use diem_crypto::ed25519::Ed25519PublicKey;
-use diem_global_constants::{OPERATOR_ACCOUNT, OWNER_ACCOUNT};
-use diem_management::{config:: ConfigPath, error::Error, secure_backend::{SecureBackend, SharedBackend}};
-use diem_secure_storage::OnDiskStorageInternal;
-use diem_types::transaction::authenticator::AuthenticationKey;
+use diem_management::{
+    config::ConfigPath,
+    error::Error,
+    secure_backend::{SecureBackend, SharedBackend},
+};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use diem_secure_storage::CryptoStorage;
-use diem_secure_storage::KVStorage;
 
 diem_management::secure_backend!(
     ValidatorBackend,
@@ -26,7 +25,7 @@ struct Key {
     shared_backend: SharedBackend,
     #[structopt(flatten)]
     validator_backend: ValidatorBackend,
-    #[structopt(long, help = "ed25519 public key in lcs or hex format")]
+    #[structopt(long, help = "ed25519 public key in bcs or hex format")]
     path_to_key: Option<PathBuf>,
 }
 
@@ -63,24 +62,6 @@ impl Key {
     }
 }
 
-pub fn set_operator_key(path: &PathBuf, namespace: &str) {
-    let mut storage = diem_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
-    // TODO: Remove hard coded field
-    let field = format!("{}-oper/operator", namespace);
-    let key = storage.get_public_key(&field).unwrap().public_key;
-    let peer_id = diem_types::account_address::from_public_key(&key);
-    storage.set(OPERATOR_ACCOUNT, peer_id).unwrap();
-    // storage.set(&format!("{}-oper/{}", namespace, OPERATOR_ACCOUNT), peer_id).unwrap();
-
-}
-
-pub fn set_owner_key(path: &PathBuf, namespace: &str) {
-    let mut storage = diem_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(path.join("key_store.json").to_owned()));
-    let authkey: AuthenticationKey = namespace.parse().unwrap();
-    let account = authkey.derived_address();
-    storage.set(&format!("{}-oper/{}", namespace, OWNER_ACCOUNT), account).unwrap();
-}
-
 #[derive(Debug, StructOpt)]
 pub struct DiemRootKey {
     #[structopt(flatten)]
@@ -90,7 +71,7 @@ pub struct DiemRootKey {
 impl DiemRootKey {
     pub fn execute(self) -> Result<Ed25519PublicKey, Error> {
         self.key
-            .submit_key(diem_global_constants::LIBRA_ROOT_KEY, None)
+            .submit_key(diem_global_constants::DIEM_ROOT_KEY, None)
     }
 }
 

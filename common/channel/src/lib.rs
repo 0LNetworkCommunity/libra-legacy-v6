@@ -13,13 +13,13 @@
 //! with backpressure (senders will block if the queue is full instead of evicting
 //! another item in the queue) that only implements FIFO (vs. LIFO or KLAST).
 
+use diem_metrics::IntGauge;
 use futures::{
     channel::mpsc,
     sink::Sink,
     stream::{FusedStream, Stream},
     task::{Context, Poll},
 };
-use diem_metrics::IntGauge;
 use std::pin::Pin;
 
 #[cfg(test)]

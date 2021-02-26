@@ -22,7 +22,7 @@ script {
 script {
     use 0x1::RegisteredCurrencies;
     fun main(account: &signer) {
-        RegisteredCurrencies::add_currency_code(account, b"LBR");
+        RegisteredCurrencies::add_currency_code(account, b"XDX");
     }
 }
 // check: "Keep(ABORTED { code: 7,"

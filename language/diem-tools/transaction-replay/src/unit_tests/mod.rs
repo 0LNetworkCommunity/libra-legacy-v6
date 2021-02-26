@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 mod bisection_tests;
 
-use crate::LibraValidatorInterface;
+use crate::DiemValidatorInterface;
 use anyhow::{bail, Result};
 use compiled_stdlib::StdLibOptions;
 use diem_types::{
@@ -69,7 +69,7 @@ impl TestInterface {
     }
 }
 
-impl LibraValidatorInterface for TestInterface {
+impl DiemValidatorInterface for TestInterface {
     fn get_account_state_by_version(
         &self,
         account: AccountAddress,

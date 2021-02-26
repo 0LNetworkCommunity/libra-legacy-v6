@@ -5,13 +5,13 @@
 
 Module providing well-known addresses and related logic.
 
-> Note: this module currently defines zero-argument functions like <code><a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">Self::LIBRA_ROOT_ADDRESS</a>()</code> using capitalization
+> Note: this module currently defines zero-argument functions like <code><a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">Self::DIEM_ROOT_ADDRESS</a>()</code> using capitalization
 > in the name, following the convention for constants. Eventually, those functions are planned to become actual
 > global constants, once the Move language supports this feature.
 
 
 -  [Constants](#@Constants_0)
--  [Function `LIBRA_ROOT_ADDRESS`](#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS)
+-  [Function `DIEM_ROOT_ADDRESS`](#0x1_CoreAddresses_DIEM_ROOT_ADDRESS)
 -  [Function `CURRENCY_INFO_ADDRESS`](#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS)
 -  [Function `TREASURY_COMPLIANCE_ADDRESS`](#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS)
 -  [Function `VM_RESERVED_ADDRESS`](#0x1_CoreAddresses_VM_RESERVED_ADDRESS)
@@ -38,17 +38,17 @@ Module providing well-known addresses and related logic.
 The operation can only be performed by the account where currencies are registered
 
 
-<pre><code><b>const</b> <a href="CoreAddresses.md#0x1_CoreAddresses_ECURRENCY_INFO">ECURRENCY_INFO</a>: u64 = 4;
+<pre><code><b>const</b> <a href="CoreAddresses.md#0x1_CoreAddresses_ECURRENCY_INFO">ECURRENCY_INFO</a>: u64 = 3;
 </code></pre>
 
 
 
-<a name="0x1_CoreAddresses_ELIBRA_ROOT"></a>
+<a name="0x1_CoreAddresses_EDIEM_ROOT"></a>
 
 The operation can only be performed by the account at 0xA550C18 (Diem Root)
 
 
-<pre><code><b>const</b> <a href="CoreAddresses.md#0x1_CoreAddresses_ELIBRA_ROOT">ELIBRA_ROOT</a>: u64 = 0;
+<pre><code><b>const</b> <a href="CoreAddresses.md#0x1_CoreAddresses_EDIEM_ROOT">EDIEM_ROOT</a>: u64 = 0;
 </code></pre>
 
 
@@ -73,9 +73,9 @@ The operation can only be performed by the VM
 
 
 
-<a name="0x1_CoreAddresses_LIBRA_ROOT_ADDRESS"></a>
+<a name="0x1_CoreAddresses_DIEM_ROOT_ADDRESS"></a>
 
-## Function `LIBRA_ROOT_ADDRESS`
+## Function `DIEM_ROOT_ADDRESS`
 
 The address of the Diem root account. This account is
 created in genesis, and cannot be changed. This address has
@@ -83,7 +83,7 @@ ultimate authority over the permissions granted (or removed) from
 accounts on-chain.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">LIBRA_ROOT_ADDRESS</a>(): address
+<pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">DIEM_ROOT_ADDRESS</a>(): address
 </code></pre>
 
 
@@ -92,8 +92,8 @@ accounts on-chain.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">LIBRA_ROOT_ADDRESS</a>(): address {
-    0x0
+<pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">DIEM_ROOT_ADDRESS</a>(): address {
+    0xA550C18
 }
 </code></pre>
 
@@ -107,7 +107,7 @@ accounts on-chain.
 
 The (singleton) address under which the <code><a href="Diem.md#0x1_Diem_CurrencyInfo">0x1::Diem::CurrencyInfo</a></code> resource for
 every registered currency is published. This is the same as the
-<code>LIBRA_ROOT_ADDRESS</code> but there is no requirement that it must
+<code>DIEM_ROOT_ADDRESS</code> but there is no requirement that it must
 be this from an operational viewpoint, so this is why this is separated out.
 
 
@@ -121,7 +121,7 @@ be this from an operational viewpoint, so this is why this is separated out.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_CURRENCY_INFO_ADDRESS">CURRENCY_INFO_ADDRESS</a>(): address {
-    0x0
+    0xA550C18
 }
 </code></pre>
 
@@ -148,7 +148,7 @@ operations. The account at this address is created in genesis.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_TREASURY_COMPLIANCE_ADDRESS">TREASURY_COMPLIANCE_ADDRESS</a>(): address {
-    0x0
+    0xB1E55ED
 }
 </code></pre>
 
@@ -227,7 +227,7 @@ Assert that the account is the Diem root address.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">assert_diem_root</a>(account: &signer) {
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(<a href="CoreAddresses.md#0x1_CoreAddresses_ELIBRA_ROOT">ELIBRA_ROOT</a>))
+    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">DIEM_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_requires_address">Errors::requires_address</a>(<a href="CoreAddresses.md#0x1_CoreAddresses_EDIEM_ROOT">EDIEM_ROOT</a>))
 }
 </code></pre>
 
@@ -253,7 +253,7 @@ Specifies that a function aborts if the account does not have the Diem root addr
 
 <pre><code><b>schema</b> <a href="CoreAddresses.md#0x1_CoreAddresses_AbortsIfNotDiemRoot">AbortsIfNotDiemRoot</a> {
     account: signer;
-    <b>aborts_if</b> <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account) != <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">LIBRA_ROOT_ADDRESS</a>()
+    <b>aborts_if</b> <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(account) != <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">DIEM_ROOT_ADDRESS</a>()
         <b>with</b> <a href="Errors.md#0x1_Errors_REQUIRES_ADDRESS">Errors::REQUIRES_ADDRESS</a>;
 }
 </code></pre>
@@ -423,6 +423,6 @@ Specifies that a function aborts if the account has not the currency info addres
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/dip/blob/master/dips/dip-2.md
+[ROLE]: https://github.com/diem/dip/blob/master/dips/dip-2.md#roles
+[PERMISSION]: https://github.com/diem/dip/blob/master/dips/dip-2.md#permissions

@@ -9,10 +9,10 @@
 //! new-transaction
 // Reconfiguration can only be invoked by the diem root.
 script {
-use 0x1::LibraConfig;
+use 0x1::DiemConfig;
 
 fun main(account: &signer) {
-    LibraConfig::reconfigure(account);
+    DiemConfig::reconfigure(account);
 }
 }
 
@@ -21,11 +21,11 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraConfig;
+use 0x1::DiemConfig;
 
 fun main(account: &signer) {
-    LibraConfig::reconfigure(account);
-    LibraConfig::reconfigure(account);
+    DiemConfig::reconfigure(account);
+    DiemConfig::reconfigure(account);
 }
 }
 // check: NewEpochEvent
@@ -40,10 +40,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraConfig;
+use 0x1::DiemConfig;
 
 fun main(account: &signer) {
-    LibraConfig::reconfigure(account);
+    DiemConfig::reconfigure(account);
 }
 }
 // check: NewEpochEvent

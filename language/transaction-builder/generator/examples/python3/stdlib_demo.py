@@ -1,4 +1,4 @@
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
 
 # pyre-strict
@@ -12,8 +12,8 @@ def main() -> None:
     token = diem.TypeTag__Struct(
         value=diem.StructTag(
             address=diem.AccountAddress.from_bytes(b"\x00" * 15 + b"\x01"),
-            module=diem.Identifier("LBR"),
-            name=diem.Identifier("LBR"),
+            module=diem.Identifier("XDX"),
+            name=diem.Identifier("XDX"),
             type_params=[],
         )
     )
@@ -26,7 +26,7 @@ def main() -> None:
     assert call.amount == amount;
     assert call.payee == payee;
 
-    for b in script.lcs_serialize():
+    for b in script.bcs_serialize():
         print("%d " % b, end='')
     print()
 

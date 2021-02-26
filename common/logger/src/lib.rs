@@ -8,7 +8,7 @@
 //! A set of logging macros (`info!`, `error!`, `warn!`, `debug!`, and `trace!`) is provided for
 //! emitting logs at different levels. All of these macros support the addition of providing
 //! structured data along with a formatted text message.  For guidelines on which level to use,
-//! see the [coding guidelines](https://developers.diem.org/docs/community/coding-guidelines#logging).
+//! see the [coding guidelines](https://developers.diem.com/docs/community/coding-guidelines#logging).
 //!
 //! The below examples do no type checking for structured log fields, and instead just serialize
 //! whatever is given.
@@ -135,9 +135,9 @@
 
 pub mod prelude {
     pub use crate::{
-        debug, error, event, info,
+        debug,
         diem_logger::FileWriter,
-        sample,
+        error, event, info, sample,
         sample::{SampleRate, Sampling},
         security::SecurityEvent,
         trace, warn,
@@ -145,10 +145,10 @@ pub mod prelude {
 }
 pub mod json_log;
 
+mod diem_logger;
 mod event;
 mod filter;
 mod kv;
-mod diem_logger;
 mod logger;
 mod macros;
 mod metadata;
@@ -164,8 +164,8 @@ pub use event::Event;
 pub use filter::{Filter, LevelFilter};
 pub use metadata::{Level, Metadata};
 
-pub use kv::{Key, KeyValue, Schema, Value, Visitor};
 pub use diem_log_derive::Schema;
+pub use kv::{Key, KeyValue, Schema, Value, Visitor};
 pub use security::SecurityEvent;
 
 mod counters;

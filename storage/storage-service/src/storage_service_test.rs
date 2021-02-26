@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use itertools::zip_eq;
 use diem_config::{config::NodeConfig, utils};
 use diem_crypto::hash::CryptoHash;
 #[cfg(test)]
 use diemdb::test_helper::arb_blocks_to_commit;
+use itertools::zip_eq;
 use proptest::prelude::*;
 use std::{
     collections::{BTreeMap, HashMap},

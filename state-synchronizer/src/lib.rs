@@ -7,8 +7,8 @@
 //! Used for node restarts, network partitions, full node syncs
 #![recursion_limit = "1024"]
 
-use executor_types::ExecutedTrees;
 use diem_types::{epoch_state::EpochState, ledger_info::LedgerInfoWithSignatures};
+use executor_types::ExecutedTrees;
 pub use synchronizer::{StateSyncClient, StateSynchronizer};
 
 pub mod chunk_request;

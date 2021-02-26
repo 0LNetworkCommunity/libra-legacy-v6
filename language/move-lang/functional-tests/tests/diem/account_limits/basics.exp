@@ -2,8 +2,8 @@
 [1] Move VM Status: EXECUTED
 [2] Transaction Status: Keep(EXECUTED)
 [3] Transaction(1)
-[4] Move VM Status: ABORTED { code: 1, location: 00000000000000000000000000000001::LibraTimestamp }
-[5] Transaction Status: Keep(ABORTED { code: 1, location: 00000000000000000000000000000001::LibraTimestamp })
+[4] Move VM Status: ABORTED { code: 1, location: 00000000000000000000000000000001::DiemTimestamp }
+[5] Transaction Status: Keep(ABORTED { code: 1, location: 00000000000000000000000000000001::DiemTimestamp })
 [6] Transaction(2)
 [7] Move VM Status: EXECUTED
 [8] Transaction Status: Keep(EXECUTED)

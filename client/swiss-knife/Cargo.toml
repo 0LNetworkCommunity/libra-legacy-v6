@@ -1,22 +1,22 @@
 [package]
 name = "swiss-knife"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Tool for generating, serializing (LCS), hashing and signing Diem transactions. Additionally, contains tools for testing"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-structopt = "0.3.18"
+structopt = "0.3.21"
 rand = "0.7.3"
 hex = "0.4.2"
-serde_json = "1.0.58"
-serde = { version = "1.0.116", features = ["derive"] }
+serde_json = "1.0.60"
+serde = { version = "1.0.117", features = ["derive"] }
 
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-types = { path = "../../types", version = "0.1.0" }
 diem-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
 diem-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }

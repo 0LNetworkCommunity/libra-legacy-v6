@@ -1,7 +1,7 @@
 [package]
 name = "borrow-graph"
 version = "0.0.1"
-authors = ["Libra Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 publish = false
 edition = "2018"
 license = "Apache-2.0"

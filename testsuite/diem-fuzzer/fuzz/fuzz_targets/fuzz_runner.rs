@@ -3,8 +3,8 @@
 
 #![no_main]
 
-use libfuzzer_sys::fuzz_target;
 use diem_fuzzer::FuzzTarget;
+use libfuzzer_sys::fuzz_target;
 use once_cell::sync::Lazy;
 use std::process;
 

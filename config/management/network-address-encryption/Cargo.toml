@@ -1,20 +1,20 @@
 [package]
 name = "diem-network-address-encryption"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
-description = "Encryption diemry for network addresses"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Encryption library for network addresses"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
 base64 = "0.13.0"
-serde = { version = "1.0.116", features = ["rc"], default-features = false }
-thiserror = "1.0.21"
+serde = { version = "1.0.117", features = ["rc"], default-features = false }
+thiserror = "1.0.22"
 
-lcs = { path = "../../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-global-constants = { path = "../../../config/global-constants", version = "0.1.0"}
 diem-infallible = { path = "../../../common/infallible", version = "0.1.0" }
 diem-logger = { path = "../../../common/logger", version = "0.1.0" }

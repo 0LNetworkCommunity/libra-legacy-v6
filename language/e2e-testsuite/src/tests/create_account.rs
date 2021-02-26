@@ -1,19 +1,21 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use diem_types::{account_config, transaction::TransactionStatus, vm_status::KeptVMStatus};
 use language_e2e_tests::{
     account::{self, Account},
     common_transactions::create_account_txn,
+    current_function_name,
     executor::FakeExecutor,
 };
-use diem_types::{account_config, transaction::TransactionStatus, vm_status::KeptVMStatus};
 
 #[test]
 fn create_account() {
     let mut executor = FakeExecutor::from_genesis_file();
+    executor.set_golden_file(current_function_name!());
     // create and publish a sender with 1_000_000 coins
     let sender = Account::new_blessed_tc();
-    let new_account = Account::new();
+    let new_account = executor.create_raw_account();
 
     // define the arguments to the create account transaction
     let initial_amount = 0;
@@ -22,7 +24,7 @@ fn create_account() {
         &new_account,
         0,
         initial_amount,
-        account_config::coin1_tmp_tag(),
+        account_config::xus_tag(),
     );
 
     // execute transaction
@@ -39,7 +41,7 @@ fn create_account() {
         .expect("sender must exist");
 
     let updated_receiver_balance = executor
-        .read_balance_resource(&new_account, account::coin1_tmp_currency_code())
+        .read_balance_resource(&new_account, account::xus_currency_code())
         .expect("receiver balance must exist");
     assert_eq!(initial_amount, updated_receiver_balance.coin());
     assert_eq!(1, updated_sender.sequence_number());

@@ -12,10 +12,10 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::remove_validator(account, {{alice}});
-        LibraSystem::remove_validator(account, {{bob}});
+        DiemSystem::remove_validator(account, {{alice}});
+        DiemSystem::remove_validator(account, {{bob}});
     }
 }
 
@@ -29,9 +29,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::remove_validator(account, {{bob}});
+        DiemSystem::remove_validator(account, {{bob}});
     }
 }
 

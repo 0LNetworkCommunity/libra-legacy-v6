@@ -1,5 +1,5 @@
-//! account: bob, 100000000Coin1, 0
-//! account: alice, 100000000Coin1, 0
+//! account: bob, 100000000XUS, 0
+//! account: alice, 100000000XUS, 0
 
 //! new-transaction
 module Holder {
@@ -26,10 +26,10 @@ fun main(account: &signer) {
 //! execute-as: bob
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
-fun main(lr: &signer, bob_account: &signer) {
-    AccountLimits::publish_unrestricted_limits<Coin1>(bob_account);
-    AccountLimits::publish_window<Coin1>(lr, bob_account, {{bob}});
+use 0x1::XUS::XUS;
+fun main(dr: &signer, bob_account: &signer) {
+    AccountLimits::publish_unrestricted_limits<XUS>(bob_account);
+    AccountLimits::publish_window<XUS>(dr, bob_account, {{bob}});
 }
 }
 
@@ -38,9 +38,9 @@ fun main(lr: &signer, bob_account: &signer) {
 //! execute-as: bob
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
-fun main(lr: &signer, bob_account: &signer) {
-    AccountLimits::publish_window<Coin1>(lr, bob_account, {{bob}});
+use 0x1::XUS::XUS;
+fun main(dr: &signer, bob_account: &signer) {
+    AccountLimits::publish_window<XUS>(dr, bob_account, {{bob}});
 }
 }
 
@@ -48,9 +48,9 @@ fun main(lr: &signer, bob_account: &signer) {
 //! sender: bob
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(bob_account: &signer) {
-    AccountLimits::publish_window<Coin1>(bob_account, bob_account, {{bob}});
+    AccountLimits::publish_window<XUS>(bob_account, bob_account, {{bob}});
 }
 }
 
@@ -58,9 +58,9 @@ fun main(bob_account: &signer) {
 //! sender: bob
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(bob_account: &signer) {
-    AccountLimits::publish_unrestricted_limits<Coin1>(bob_account);
+    AccountLimits::publish_unrestricted_limits<XUS>(bob_account);
 }
 }
 
@@ -68,9 +68,9 @@ fun main(bob_account: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_limits_definition<Coin1>(
+    AccountLimits::update_limits_definition<XUS>(
         tc,
         {{bob}},
         100, /* new_max_inflow */
@@ -85,9 +85,9 @@ fun main(tc: &signer) {
 //! sender: diemroot
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_limits_definition<Coin1>(
+    AccountLimits::update_limits_definition<XUS>(
         tc,
         {{bob}},
         100, /* new_max_inflow */
@@ -102,9 +102,9 @@ fun main(tc: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_limits_definition<Coin1>(
+    AccountLimits::update_limits_definition<XUS>(
         tc,
         {{bob}},
         0, /* new_max_inflow */
@@ -119,9 +119,9 @@ fun main(tc: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_limits_definition<Coin1>(
+    AccountLimits::update_limits_definition<XUS>(
         tc,
         {{default}},
         0, /* new_max_inflow */
@@ -136,9 +136,9 @@ fun main(tc: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_limits_definition<Coin1>(
+    AccountLimits::update_limits_definition<XUS>(
         tc,
         {{bob}},
         0, /* new_max_inflow */
@@ -153,9 +153,9 @@ fun main(tc: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_window_info<Coin1>(
+    AccountLimits::update_window_info<XUS>(
         tc,
         {{bob}},
         120,
@@ -168,9 +168,9 @@ fun main(tc: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_window_info<Coin1>(
+    AccountLimits::update_window_info<XUS>(
         tc,
         {{bob}},
         0,
@@ -183,9 +183,9 @@ fun main(tc: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(tc: &signer) {
-    AccountLimits::update_window_info<Coin1>(
+    AccountLimits::update_window_info<XUS>(
         tc,
         {{bob}},
         120,
@@ -198,10 +198,10 @@ fun main(tc: &signer) {
 //! sender: diemroot
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
-fun main(lr: &signer) {
-    AccountLimits::update_window_info<Coin1>(
-        lr,
+use 0x1::XUS::XUS;
+fun main(dr: &signer) {
+    AccountLimits::update_window_info<XUS>(
+        dr,
         {{bob}},
         120,
         {{bob}},
@@ -213,9 +213,9 @@ fun main(lr: &signer) {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main() {
-    assert(AccountLimits::limits_definition_address<Coin1>({{bob}}) == {{bob}}, 0);
+    assert(AccountLimits::limits_definition_address<XUS>({{bob}}) == {{bob}}, 0);
 }
 }
 
@@ -223,11 +223,11 @@ fun main() {
 //! sender: blessed
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main() {
-    assert(AccountLimits::has_limits_published<Coin1>({{bob}}), 1);
+    assert(AccountLimits::has_limits_published<XUS>({{bob}}), 1);
 
-    assert(!AccountLimits::has_limits_published<Coin1>({{alice}}), 3);
+    assert(!AccountLimits::has_limits_published<XUS>({{alice}}), 3);
 }
 }
 
@@ -236,8 +236,8 @@ fun main() {
 //! execute-as: bob
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1::Coin1;
-fun main(lr: &signer, bob_account: &signer) {
-    AccountLimits::publish_window<Coin1>(lr, bob_account, {{default}});
+use 0x1::XUS::XUS;
+fun main(dr: &signer, bob_account: &signer) {
+    AccountLimits::publish_window<XUS>(dr, bob_account, {{default}});
 }
 }

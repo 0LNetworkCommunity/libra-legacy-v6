@@ -3,17 +3,17 @@
 
 #![forbid(unsafe_code)]
 
+use diem_config::network_id::NetworkContext;
+use diem_crypto::{test_utils::TEST_SEED, x25519, Uniform as _};
+use diem_logger::prelude::*;
+use diem_network_address::NetworkAddress;
+use diem_types::PeerId;
 use futures::{
     future::Future,
     io::{AsyncRead, AsyncWrite},
     sink::SinkExt,
     stream::{Stream, StreamExt},
 };
-use diem_config::network_id::NetworkContext;
-use diem_crypto::{test_utils::TEST_SEED, x25519, Uniform as _};
-use diem_logger::prelude::*;
-use diem_network_address::NetworkAddress;
-use diem_types::PeerId;
 use memsocket::MemorySocket;
 use netcore::{
     compat::IoCompat,
@@ -23,11 +23,15 @@ use netcore::{
         Transport, TransportExt,
     },
 };
-use network::noise::{stream::NoiseStream, HandshakeAuthMode, NoiseUpgrader};
+use network::{
+    constants,
+    noise::{stream::NoiseStream, HandshakeAuthMode, NoiseUpgrader},
+    protocols::wire::messaging::v1::network_message_frame_codec,
+};
 use rand::prelude::*;
 use std::{env, ffi::OsString, io, sync::Arc};
 use tokio::runtime::Handle;
-use tokio_util::codec::{Framed, LengthDelimitedCodec};
+use tokio_util::codec::Framed;
 
 #[derive(Debug)]
 pub struct Args {
@@ -136,8 +140,8 @@ where
                 Ok((f_stream, _)) => {
                     match f_stream.await {
                         Ok(stream) => {
-                            let mut stream =
-                                Framed::new(IoCompat::new(stream), LengthDelimitedCodec::new());
+                            let codec = network_message_frame_codec(constants::MAX_FRAME_SIZE);
+                            let mut stream = Framed::new(IoCompat::new(stream), codec);
 
                             tokio::task::spawn(async move {
                                 // Drain all messages from the client.

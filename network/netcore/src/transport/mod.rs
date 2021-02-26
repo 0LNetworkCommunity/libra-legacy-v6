@@ -11,9 +11,9 @@
 //! [`Transport`]: crate::transport::Transport
 //! [`TransportExt`]: crate::transport::TransportExt
 
-use futures::{future::Future, stream::Stream};
 use diem_network_address::NetworkAddress;
 use diem_types::PeerId;
+use futures::{future::Future, stream::Stream};
 use serde::{export::Formatter, Serialize};
 use std::fmt;
 

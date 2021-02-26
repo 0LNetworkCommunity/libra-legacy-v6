@@ -17,7 +17,7 @@ As mentioned above, some transactions between VASPs must use off-chain protocols
 
 ### Currencies
 
-There are two currencies in testnet: `Coin1` (stablecoin), and `LBR` (synthetic currency that is currently a stub and will be updated once the final composition is determined). At the Move level, these are different generic instantiation of the same `Diem` type (i.e.`Diem<Coin1>`, `Diem<LBR>`).
+There are two currencies in testnet: `XUS` (stablecoin), and `XDX` (synthetic currency that is currently a stub and will be updated once the final composition is determined). At the Move level, these are different generic instantiation of the same `Diem` type (i.e.`Diem<XUS>`, `Diem<XDX>`).
 
 ### Addresses, Authentication Keys, and Cryptographic Keys
 
@@ -52,7 +52,7 @@ Transactions are mostly unchanged from the original design. Two notable differen
 
 Payments can be sent using [this](https://github.com/diem/diem/blob/master/language/stdlib/transaction_scripts/peer_to_peer_with_metadata.move) transaction script. There are a few changes:
 
-* The script requires a generic type parameter `Token` specifying the currency to be transferred. The sending and receiving account must both have a balance in this currency. A transaction that attempts to send (e.g.) `LBR` to an account that doesn’t have an `LBR` balance will abort.
+* The script requires a generic type parameter `Token` specifying the currency to be transferred. The sending and receiving account must both have a balance in this currency. A transaction that attempts to send (e.g.) `XDX` to an account that doesn’t have an `XDX` balance will abort.
 * The script has a `metadata` parameter that accepts arbitrary binary data. For most transactions, the metadata should be the subaddress of the VASP customer receiving the payment. The contents of `metadata` are emitted in payment events, but are not otherwise inspected on-chain (so using empty or dummy `metadata` is just fine for testing).
 * The script has a `metadata_signature` parameter used for dual attestation in the travel rule protocol (see below).
 * Sending a payment to an address that does not exist will abort (*not* create a new account at that address).
@@ -67,7 +67,7 @@ Each newly created account accepts at least one currency, which as specified as 
 
 ### Dual Attestation/Travel Rule Protocol
 
-In Diem mainnet every payment transaction between two **distinct **VASP accounts (parent <-> child and child <-> child within the same VASP are exempt) over a certain threshold (1000 LBR, for now) must perform dual attestation in order to comply with the travel rule. "Dual attestation" is a fancy way of saying:
+In Diem mainnet every payment transaction between two **distinct **VASP accounts (parent <-> child and child <-> child within the same VASP are exempt) over a certain threshold (1000 XDX, for now) must perform dual attestation in order to comply with the travel rule. "Dual attestation" is a fancy way of saying:
 
 * The payer must send the payee some data
 * The payee must sign the data with its `compliance_public_key`
@@ -78,10 +78,10 @@ Details of doing this exchange in production will be published soon, but we will
 Every parent VASP created by the faucet has a dummy `base_url` and  `compliance_public_key`. However, you can use [these](https://github.com/diem/diem/blob/master/language/stdlib/transaction_scripts/rotate_base_url.move) [scripts](https://github.com/diem/diem/blob/master/language/stdlib/transaction_scripts/rotate_compliance_public_key.move) to send a transaction from the parent VASP that sets the URL/key to meaningful values. Once this is done, you can construct the message to be signed and craft a dual attestation transaction with the following ingredients:
 
 * `payer_vasp_address`: the address of the payer (can be either a parent or child VASP)
-* `payee_vasp_address`: the address of the payee (can be either a parent or child VASP). Encoding: LCS `[u8; 16]`
-* `amount`: number of coins to send. Encoding: LCS `u64`
-* `reference_id`: an identifier for the payment in the off-chain protocol. This is not inspected on-chain, so dummy value suffices for testing.  Encoding: LCS `[u8;12]`
+* `payee_vasp_address`: the address of the payee (can be either a parent or child VASP). Encoding: BCS `[u8; 16]`
+* `amount`: number of coins to send. Encoding: BCS `u64`
+* `reference_id`: an identifier for the payment in the off-chain protocol. This is not inspected on-chain, so dummy value suffices for testing.  Encoding: BCS `[u8;12]`
 
-The payee VASP should sign the [LCS](https://developers.diem.org/docs/rustdocs/diem_canonical_serialization/index.html)-encoded (see types above) message `reference_id | payer_vasp_address | amount | @@$$LIBRA_ATTEST$$@@`. to produce a `payee_signature`. The `@@$$LIBRA_ATTEST$$@@` part is a domain separator intended to  prevent misusing a  different signature from the same key (e.g., interpreting a KYC signature as a travel rule signature).
+The payee VASP should sign the [BCS](https://docs.rs/bcs/)-encoded (see types above) message `reference_id | payer_vasp_address | amount | @@$$DIEM_ATTEST$$@@`. to produce a `payee_signature`. The `@@$$DIEM_ATTEST$$@@` part is a domain separator intended to  prevent misusing a  different signature from the same key (e.g., interpreting a KYC signature as a travel rule signature).
 
 Finally, send a transaction from payer_vasp_address using the payment [script](https://github.com/diem/diem/blob/master/language/stdlib/transaction_scripts/peer_to_peer_with_metadata.move) mentioned above with `payee = payee_vasp_address, amount = amount, metadata = reference_id, metadata_signature = payee_signature`.

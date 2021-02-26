@@ -5,18 +5,18 @@
 // Noise Fuzzing
 // =============
 //
-// This fuzzes the wrappers we have around our Noise diemry.
+// This fuzzes the wrappers we have around our Noise library.
 //
 
 use crate::{
     noise::{stream::NoiseStream, AntiReplayTimestamps, HandshakeAuthMode, NoiseUpgrader},
     testutils::fake_socket::{ReadOnlyTestSocket, ReadWriteTestSocket},
 };
-use futures::{executor::block_on, future::join};
-use futures_util::io::AsyncReadExt;
 use diem_config::network_id::NetworkContext;
 use diem_crypto::{noise::NoiseSession, test_utils::TEST_SEED, x25519, Uniform as _};
 use diem_types::PeerId;
+use futures::{executor::block_on, future::join};
+use futures_util::io::AsyncReadExt;
 use once_cell::sync::Lazy;
 use rand_core::SeedableRng;
 

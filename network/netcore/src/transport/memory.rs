@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::transport::Transport;
-use futures::{future, stream::Stream};
 use diem_network_address::{parse_memory, NetworkAddress, Protocol};
 use diem_types::PeerId;
+use futures::{future, stream::Stream};
 use memsocket::{MemoryListener, MemorySocket};
 use std::{
     io,
@@ -99,13 +99,13 @@ impl Stream for Listener {
 #[cfg(test)]
 mod test {
     use crate::transport::{memory::MemoryTransport, Transport};
+    use diem_types::PeerId;
     use futures::{
         executor::block_on,
         future::join,
         io::{AsyncReadExt, AsyncWriteExt},
         stream::StreamExt,
     };
-    use diem_types::PeerId;
 
     #[test]
     fn simple_listen_and_dial() -> Result<(), ::std::io::Error> {

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 use anyhow::{ensure, format_err, Error, Result};
 use serde::{de::Visitor, export::fmt::Debug, Deserialize, Deserializer, Serialize};
@@ -17,7 +17,7 @@ use std::{
 pub enum NamedChain {
     /// Users might accidentally initialize the ChainId field to 0, hence reserving ChainId 0 for accidental
     /// initialization.
-    /// MAINNET is the Libra mainnet production chain and is reserved for 1
+    /// MAINNET is the Diem mainnet production chain and is reserved for 1
     MAINNET = 1,
     // Even though these CHAIN IDs do not correspond to MAINNET, changing them should be avoided since they
     // can break test environments for various organisations.
@@ -25,7 +25,6 @@ pub enum NamedChain {
     DEVNET = 3,
     TESTING = 4,
     PREMAINNET = 5,
-    EXPERIMENTAL = 7,
 }
 
 impl NamedChain {
@@ -37,7 +36,6 @@ impl NamedChain {
             "DEVNET" => NamedChain::DEVNET,
             "TESTING" => NamedChain::TESTING,
             "PREMAINNET" => NamedChain::PREMAINNET,
-            "EXPERIMENTAL" => NamedChain::EXPERIMENTAL,
             _ => {
                 return Err(format_err!("Not a reserved chain: {:?}", s));
             }
@@ -56,7 +54,6 @@ impl NamedChain {
             3 => Ok(NamedChain::DEVNET),
             4 => Ok(NamedChain::TESTING),
             5 => Ok(NamedChain::PREMAINNET),
-            7 => Ok(NamedChain::EXPERIMENTAL),
             _ => Err(String::from("Not a named chain")),
         }
     }
@@ -130,7 +127,6 @@ impl Display for NamedChain {
                 NamedChain::MAINNET => "MAINNET",
                 NamedChain::TESTING => "TESTING",
                 NamedChain::PREMAINNET => "PREMAINNET",
-                NamedChain::EXPERIMENTAL => "EXPERIMENTAL",
             }
         )
     }

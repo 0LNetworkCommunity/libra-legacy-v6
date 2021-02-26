@@ -17,7 +17,7 @@ pub mod prelude {
     };
 }
 
-pub use trace::{is_selected, diem_trace_set, set_diem_trace};
+pub use trace::{diem_trace_set, is_selected, set_diem_trace};
 
 const TRACE_EVENT: &str = "trace_event";
 const TRACE_EDGE: &str = "trace_edge";

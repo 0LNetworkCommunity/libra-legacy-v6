@@ -13,11 +13,11 @@ use ::{
         env,
         fs::{File, OpenOptions},
         io::Write,
+        process, thread,
     },
     vm::file_format::Bytecode,
 };
 
-#[cfg(debug_assertions)]
 use crate::{
     interpreter::Interpreter,
     loader::{Function, Loader},
@@ -69,7 +69,16 @@ pub(crate) fn trace<L: LogContext>(
 ) {
     if *TRACING_ENABLED {
         let f = &mut *LOGGING_FILE.lock();
-        writeln!(f, "{},{},{:?}", function_desc.pretty_string(), pc, instr).unwrap();
+        writeln!(
+            f,
+            "{}-{:?},{},{},{:?}",
+            process::id(),
+            thread::current().id(),
+            function_desc.pretty_string(),
+            pc,
+            instr,
+        )
+        .unwrap();
     }
     if *DEBUGGING_ENABLED {
         DEBUG_CONTEXT

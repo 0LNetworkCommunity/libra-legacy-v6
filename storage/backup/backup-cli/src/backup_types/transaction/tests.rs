@@ -10,9 +10,10 @@ use crate::{
     utils::{
         backup_service_client::BackupServiceClient,
         test_utils::{start_local_backup_service, tmp_db_with_random_content},
-        GlobalBackupOpt, GlobalRestoreOpt,
+        GlobalBackupOpt, GlobalRestoreOpt, RocksdbOpt,
     },
 };
+use diem_config::config::RocksdbConfig;
 use diem_temppath::TempPath;
 use diem_types::transaction::Version;
 use diemdb::DiemDB;
@@ -46,7 +47,7 @@ fn end_to_end() {
         .collect::<Vec<_>>();
     let max_chunk_size = txns
         .iter()
-        .map(|t| lcs::to_bytes(t).unwrap().len())
+        .map(|t| bcs::to_bytes(t).unwrap().len())
         .max()
         .unwrap() // biggest txn
         + 115 // size of a serialized TransactionInfo
@@ -81,6 +82,7 @@ fn end_to_end() {
                 dry_run: false,
                 db_dir: Some(tgt_db_dir.path().to_path_buf()),
                 target_version: Some(target_version),
+                rocksdb_opt: RocksdbOpt::default(),
             }
             .try_into()
             .unwrap(),
@@ -98,6 +100,7 @@ fn end_to_end() {
         &tgt_db_dir,
         true, /* read_only */
         None, /* pruner */
+        RocksdbConfig::default(),
     )
     .unwrap();
     assert_eq!(
@@ -113,17 +116,30 @@ fn end_to_end() {
             first_ver_to_backup,
             num_txns_to_restore as u64,
             target_version,
-            false,
+            true, /* fetch_events */
         )
-        .unwrap()
-        .transactions;
+        .unwrap();
 
     assert_eq!(
-        recovered_transactions,
+        recovered_transactions.transactions,
         txns.into_iter()
             .skip(first_ver_to_backup as usize)
             .take(num_txns_to_restore)
             .cloned()
+            .collect::<Vec<_>>()
+    );
+
+    assert_eq!(
+        recovered_transactions.events.unwrap(),
+        blocks
+            .iter()
+            .map(|(txns, _li)| {
+                txns.iter()
+                    .map(|txn_to_commit| txn_to_commit.events().to_vec())
+            })
+            .flatten()
+            .skip(first_ver_to_backup as usize)
+            .take(num_txns_to_restore)
             .collect::<Vec<_>>()
     );
 

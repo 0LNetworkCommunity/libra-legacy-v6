@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! # Code generator for Move script builders
@@ -30,7 +30,7 @@ enum Language {
     about = "Generate code for Move script builders"
 )]
 struct Options {
-    /// Path to the directory containing ABI files in LCS encoding.
+    /// Path to the directory containing ABI files in BCS encoding.
     abi_directory: PathBuf,
 
     /// Language for code generation.
@@ -41,7 +41,7 @@ struct Options {
     #[structopt(long)]
     target_source_dir: Option<PathBuf>,
 
-    /// Also install the diem types described by the given YAML file, along with the LCS runtime.
+    /// Also install the diem types described by the given YAML file, along with the BCS runtime.
     #[structopt(long)]
     with_diem_types: Option<PathBuf>,
 
@@ -53,7 +53,7 @@ struct Options {
     #[structopt(long)]
     module_name: Option<String>,
 
-    /// Optional package name (Python) or module path (Go) of the Serde and LCS runtime dependencies.
+    /// Optional package name (Python) or module path (Go) of the Serde and BCS runtime dependencies.
     #[structopt(long)]
     serde_package_name: Option<String>,
 
@@ -65,6 +65,11 @@ struct Options {
     /// Optional package name (Python) or module path (Go) of the `diem_types` dependency.
     #[structopt(long)]
     diem_package_name: Option<String>,
+
+    /// Read custom code for Diem containers from the given file paths. Containers will be matched with file stems.
+    /// (e.g. `AddressAccount` <- `path/to/AddressAccount.py`)
+    #[structopt(long)]
+    with_custom_diem_code: Vec<PathBuf>,
 }
 
 fn main() {
@@ -109,7 +114,7 @@ fn main() {
         Some(dir) => dir,
     };
 
-    // Libra types
+    // Diem types
     if let Some(registry_file) = options.with_diem_types {
         let installer: Box<dyn serdegen::SourceInstaller<Error = Box<dyn std::error::Error>>> =
             match options.language {
@@ -131,38 +136,32 @@ fn main() {
             Language::Rust | Language::Go => (),
             _ => {
                 installer.install_serde_runtime().unwrap();
-                installer.install_lcs_runtime().unwrap();
+                installer.install_bcs_runtime().unwrap();
             }
         }
         let content =
             std::fs::read_to_string(registry_file).expect("registry file must be readable");
         let registry = serde_yaml::from_str::<Registry>(content.as_str()).unwrap();
-        let diem_package_name = match options.language {
-            Language::Rust => {
+        let (diem_package_name, diem_package_path) = match options.language {
+            Language::Rust => (
                 if options.diem_version_number == "0.1.0" {
                     "diem-types".to_string()
                 } else {
                     format!("diem-types:{}", options.diem_version_number)
-                }
-            }
-            Language::Java => "org.diem.types".to_string(),
-            Language::Go => "diemtypes".to_string(),
-            _ => "diem_types".to_string(),
+                },
+                vec!["diem-types"],
+            ),
+            Language::Java => ("com.diem.types".to_string(), vec!["com", "diem", "types"]),
+            Language::Go => ("diemtypes".to_string(), vec!["diemtypes"]),
+            _ => ("diem_types".to_string(), vec!["diem_types"]),
         };
-        let mut config = serdegen::CodeGeneratorConfig::new(diem_package_name.clone())
-            .with_encodings(vec![serdegen::Encoding::Lcs]);
-        match options.language {
-            Language::Python3 => {
-                config = config.with_custom_code(buildgen::python3::get_custom_diem_code(
-                    &diem_package_name,
-                ));
-            }
-            Language::Java => {
-                let package: Vec<_> = diem_package_name.split('.').map(String::from).collect();
-                config = config.with_custom_code(buildgen::java::get_custom_diem_code(&package));
-            }
-            _ => (),
-        }
+        let custom_diem_code = buildgen::read_custom_code_from_paths(
+            &diem_package_path,
+            options.with_custom_diem_code.into_iter(),
+        );
+        let config = serdegen::CodeGeneratorConfig::new(diem_package_name)
+            .with_encodings(vec![serdegen::Encoding::Bcs])
+            .with_custom_code(custom_diem_code);
         installer.install_module(&config, &registry).unwrap();
     }
 

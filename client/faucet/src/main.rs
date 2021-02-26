@@ -21,7 +21,7 @@ struct Args {
     #[structopt(short = "p", long, default_value = "80")]
     pub port: u16,
     /// Diem fullnode/validator server URL
-    #[structopt(short = "s", long, default_value = "https://testnet.diem.org/v1")]
+    #[structopt(short = "s", long, default_value = "https://testnet.diem.com/v1")]
     pub server_url: String,
     /// Path to the private key for creating test account and minting coins.
     /// To keep Testnet simple, we used one private key for both treasury compliance account and testnet
@@ -82,7 +82,8 @@ fn routes(
                 OptFmt(info.user_agent()),
                 info.elapsed(),
             )
-        }));
+        }))
+        .with(warp::cors().allow_any_origin().allow_methods(vec!["POST"]));
 
     // POST /?amount=25&auth_key=xxx&currency_code=XXX
     let route_root = warp::path::end().and(mint.clone());
@@ -189,7 +190,7 @@ mod tests {
                 .method("POST")
                 .path(
                     format!(
-                        "{}?auth_key={}&amount={}&currency_code=LBR",
+                        "{}?auth_key={}&amount={}&currency_code=XDX",
                         path, auth_key, amount
                     )
                     .as_str(),
@@ -217,7 +218,7 @@ mod tests {
             .method("POST")
             .path(
                 format!(
-                    "/mint?auth_key={}&amount={}&currency_code=LBR&return_txns=true",
+                    "/mint?auth_key={}&amount={}&currency_code=XDX&return_txns=true",
                     auth_key, amount
                 )
                 .as_str(),
@@ -226,13 +227,45 @@ mod tests {
             .await;
         let body = resp.body();
         let txns: Vec<diem_types::transaction::SignedTransaction> =
-            lcs::from_bytes(&hex::decode(body).expect("hex encoded response body"))
-                .expect("valid lcs vec");
+            bcs::from_bytes(&hex::decode(body).expect("hex encoded response body"))
+                .expect("valid bcs vec");
         assert_eq!(txns.len(), 2);
         let reader = accounts.read();
         let addr = AccountAddress::try_from("a74fd7c46952c497e75afb0a7932586d".to_owned()).unwrap();
         let account = reader.get(&addr).expect("account should be created");
         assert_eq!(account["balances"][0]["amount"], amount);
+        assert_eq!(account["role"]["type"], "parent_vasp");
+    }
+
+    #[tokio::test]
+    async fn test_mint_dd_account_with_txns_response() {
+        let accounts = genesis_accounts();
+        let service = setup(accounts.clone());
+        let filter = routes(service);
+
+        let auth_key = "44b8f03f203ec45dbd7484e433752efe54aa533116e934f8a50c28bece06d3ac";
+        let amount = 13345;
+        let resp = warp::test::request()
+            .method("POST")
+            .path(
+                format!(
+                    "/mint?auth_key={}&amount={}&currency_code=XDX&return_txns=true&is_designated_dealer=true",
+                    auth_key, amount
+                )
+                .as_str(),
+            )
+            .reply(&filter)
+            .await;
+        let body = resp.body();
+        let txns: Vec<diem_types::transaction::SignedTransaction> =
+            bcs::from_bytes(&hex::decode(body).expect("hex encoded response body"))
+                .expect("valid bcs vec");
+        assert_eq!(txns.len(), 2);
+        let reader = accounts.read();
+        let addr = AccountAddress::try_from("54aa533116e934f8a50c28bece06d3ac".to_owned()).unwrap();
+        let account = reader.get(&addr).expect("account should be created");
+        assert_eq!(account["balances"][0]["amount"], amount);
+        assert_eq!(account["role"]["type"], "designated_dealer");
     }
 
     #[tokio::test]
@@ -246,7 +279,7 @@ mod tests {
             .method("POST")
             .path(
                 format!(
-                    "/mint?auth_key={}&amount=1000000&currency_code=LBR",
+                    "/mint?auth_key={}&amount=1000000&currency_code=XDX",
                     auth_key
                 )
                 .as_str(),
@@ -267,7 +300,7 @@ mod tests {
             .method("POST")
             .path(
                 format!(
-                    "/mint?auth_key={}&amount=1000000&currency_code=LBR",
+                    "/mint?auth_key={}&amount=1000000&currency_code=XDX",
                     auth_key
                 )
                 .as_str(),
@@ -295,7 +328,7 @@ mod tests {
             Some("submit") => {
                 let raw: &str = req["params"][0].as_str().unwrap();
                 let txn: diem_types::transaction::SignedTransaction =
-                    lcs::from_bytes(&hex::decode(raw).unwrap()).unwrap();
+                    bcs::from_bytes(&hex::decode(raw).unwrap()).unwrap();
                 assert_eq!(txn.chain_id(), chain_id);
                 if let Script(script) = txn.payload() {
                     match ScriptCall::decode(script) {
@@ -308,11 +341,17 @@ mod tests {
                                 .insert(address, create_vasp_account(&address.to_string(), 0));
                             assert!(previous.is_none(), "should not create account twice");
                         }
+                        Some(ScriptCall::CreateDesignatedDealer { addr: address, .. }) => {
+                            let mut writer = accounts.write();
+                            let previous =
+                                writer.insert(address, create_dd_account(&address.to_string(), 0));
+                            assert!(previous.is_none(), "should not create account twice");
+                        }
                         Some(ScriptCall::PeerToPeerWithMetadata { payee, amount, .. }) => {
                             let mut writer = accounts.write();
                             let account =
                                 writer.get_mut(&payee).expect("account should be created");
-                            *account = create_vasp_account(payee.to_string().as_str(), amount);
+                            account["balances"][0]["amount"] = serde_json::json!(amount);
                         }
                         _ => panic!("unexpected type of script"),
                     }
@@ -362,7 +401,7 @@ mod tests {
         let dd = "000000000000000000000000000000dd";
         accounts.insert(
             AccountAddress::try_from(dd.to_owned()).unwrap(),
-            create_dd_account(dd),
+            create_dd_account(dd, 4611685774556657903u64),
         );
         Arc::new(RwLock::new(accounts))
     }
@@ -372,11 +411,11 @@ mod tests {
             address,
             serde_json::json!([{
                 "amount": amount,
-                "currency": "LBR"
+                "currency": "XDX"
             }]),
             serde_json::json!({
                 "type": "parent_vasp",
-                "human_name": "No. 0",
+                "human_name": "No. 0 VASP",
                 "base_url": "",
                 "expiration_time": 18446744073709551615u64,
                 "compliance_key": "",
@@ -387,12 +426,12 @@ mod tests {
         )
     }
 
-    fn create_dd_account(address: &str) -> serde_json::Value {
+    fn create_dd_account(address: &str, amount: u64) -> serde_json::Value {
         create_account(
             address,
             serde_json::json!([{
-                "amount": 4611685774556657903u64,
-                "currency": "LBR",
+                "amount": amount,
+                "currency": "XDX",
             }]),
             serde_json::json!({
                 "base_url": "",
@@ -401,7 +440,7 @@ mod tests {
                 "human_name": "moneybags",
                 "preburn_balances": [{
                     "amount": 0,
-                    "currency": "LBR"
+                    "currency": "XDX"
                 }],
                 "type": "designated_dealer",
                 "compliance_key_rotation_events_key": format!("0200000000000000{}", address),

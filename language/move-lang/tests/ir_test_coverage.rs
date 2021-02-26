@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use move_lang::test_utils::*;
+use move_lang_test_utils::*;
 use std::{collections::HashSet, path::Path};
 
 #[test]
@@ -45,7 +45,9 @@ fn test_ir_test_coverage() {
             MOVE_EXTENSION, TODO_EXTENSION
         ));
         msg.push_str("Running the following tool may help with the migration:\n");
-        msg.push_str("  cargo run -p move-lang --bin ir-test-translation -- -d <dir_name>\n\n");
+        msg.push_str(
+            "  cargo run -p move-lang-ir-utils --bin ir-test-translation -- -d <dir_name>\n\n",
+        );
         panic!(msg)
     }
 }

@@ -6,7 +6,7 @@ custom_edit_url: https://github.com/diem/diem/edit/master/language/transaction-b
 
 # Transaction Builder Generator
 
-A *transaction builder* is a helper function that converts its arguments into the payload of a Libra transaction calling a particular Move script.
+A *transaction builder* is a helper function that converts its arguments into the payload of a Diem transaction calling a particular Move script.
 
 In Rust, the signature of such a function typically looks like this:
 ```rust
@@ -21,10 +21,10 @@ pub fn encode_peer_to_peer_with_metadata_script(
 
 This crate provide a binary tool `generate-transaction-builders` to generate and install transaction builders in several programming languages.
 
-The tool will also generate and install type definitions for Libra types such as `TypeTag`, `AccountAddress`, and `Script`.
+The tool will also generate and install type definitions for Diem types such as `TypeTag`, `AccountAddress`, and `Script`.
 
-In practice, hashing and signing Libra transactions additionally requires a runtime diemry for Libra Canonical Serialization ("LCS").
-Such a diemry will be installed together with the Libra types.
+In practice, hashing and signing Diem transactions additionally requires a runtime library for Binary Canonical Serialization ("BCS").
+Such a library will be installed together with the Diem types.
 
 
 ## Supported Languages
@@ -39,24 +39,25 @@ The following languages are currently supported:
 
 * Go >= 1.13
 
-* Rust (NOTE: Code generation of dependency-free Rust is experimental. Consider using the diemries of the Libra repository instead.)
+* Rust (NOTE: Code generation of dependency-free Rust is experimental. Consider using the libraries of the Diem repository instead.)
 
 
 ## Quick Start
 
-From the root of the Libra repository, run `cargo build -p transaction-builder-generator`.
+From the root of the Diem repository, run `cargo build -p transaction-builder-generator`.
 
 You may browse command line options with `target/debug/generate-transaction-builders --help`.
 
 ### Python
 
-To install Python3 modules `serde`, `lcs`, `diem_types`, and `diem_stdlib` into a target directory `$DEST`, run:
+To install Python3 modules `serde`, `bcs`, `diem_types`, and `diem_stdlib` into a target directory `$DEST`, run:
 ```bash
 target/debug/generate-transaction-builders \
     --language python3 \
     --module-name diem_stdlib \
     --with-diem-types "testsuite/generate-format/tests/staged/diem.yaml" \
     --target-source-dir "$DEST" \
+    --with-custom-diem-code language/transaction-builder/generator/examples/python3/custom_diem_code/*.py -- \
     "language/stdlib/compiled/transaction_scripts/abi"
 ```
 Next, you may copy and execute the [Python demo file](examples/python3/stdlib_demo.py) with:
@@ -67,7 +68,7 @@ PYTHONPATH="$PYTHONPATH:$DEST" python3 "$DEST/stdlib_demo.py"
 
 ### C++
 
-To install C++ files `serde.hpp`, `lcs.hpp`, `diem_types.hpp`, `diem_stdlib.hpp`, `diem_stdlib.cpp` into a target directory `$DEST`, run:
+To install C++ files `serde.hpp`, `bcs.hpp`, `diem_types.hpp`, `diem_stdlib.hpp`, `diem_stdlib.cpp` into a target directory `$DEST`, run:
 ```bash
 target/debug/generate-transaction-builders \
     --language cpp \
@@ -85,13 +86,14 @@ clang++ --std=c++17 -I "$DEST" "$DEST/diem_stdlib.cpp" "$DEST/stdlib_demo.cpp" -
 
 ### Java
 
-To install Java source packages `com.novi.serde`, `com.novi.lcs`, `org.diem.types`, and `org.diem.stdlib` into a target directory `$DEST`, run:
+To install Java source packages `com.novi.serde`, `com.novi.bcs`, `com.diem.types`, and `com.diem.stdlib` into a target directory `$DEST`, run:
 ```bash
 target/debug/generate-transaction-builders \
     --language java \
-    --module-name org.diem.stdlib \
+    --module-name com.diem.stdlib \
     --with-diem-types "testsuite/generate-format/tests/staged/diem.yaml" \
     --target-source-dir "$DEST" \
+    --with-custom-diem-code language/transaction-builder/generator/examples/java/custom_diem_code/*.java -- \
     "language/stdlib/compiled/transaction_scripts/abi"
 ```
 Next, you may copy and execute the [Java demo file](examples/java/StdlibDemo.java) with:
@@ -139,18 +141,18 @@ Next, you may copy and execute the [Rust demo file](examples/rust/stdlib_demo.rs
 
 Supporting transaction builders in an additional programming language boils down to providing the following items:
 
-1. Code generation for Libra types (Rust diemry and tool),
+1. Code generation for Diem types (Rust library and tool),
 
-2. LCS runtime (diemry in target language),
+2. BCS runtime (library in target language),
 
 3. Code generation for transaction builders (Rust tool).
 
 
-Items (1) and (2) are provided by the Rust diemry `serde-generate` which is developed in a separate [github repository](https://github.com/novifinancial/serde-reflection).
+Items (1) and (2) are provided by the Rust library `serde-generate` which is developed in a separate [github repository](https://github.com/novifinancial/serde-reflection).
 
-Item (3) --- this tool --- is currently developed in the Libra repository.
+Item (3) --- this tool --- is currently developed in the Diem repository.
 
-Items (2) and (3) are mostly independent. Both crucially depend on (1) to be sufficiently stable, therefore our suggestion for adding a new language is first to open a new github issue in `serde-generate` and contact the Libra maintainers.
+Items (2) and (3) are mostly independent. Both crucially depend on (1) to be sufficiently stable, therefore our suggestion for adding a new language is first to open a new github issue in `serde-generate` and contact the Diem maintainers.
 
 
 The new issue created on `serde-generate` should include:

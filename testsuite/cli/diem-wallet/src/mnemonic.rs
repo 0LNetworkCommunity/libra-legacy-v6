@@ -348,7 +348,7 @@ const WORDS: [&str; 2048] = [
     "lamp", "language", "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law",
     "lawn", "lawsuit", "layer", "lazy", "leader", "leaf", "learn", "leave", "lecture", "left",
     "leg", "legal", "legend", "leisure", "lemon", "lend", "length", "lens", "leopard", "lesson",
-    "letter", "level", "liar", "liberty", "diemry", "license", "life", "lift", "light", "like",
+    "letter", "level", "liar", "liberty", "library", "license", "life", "lift", "light", "like",
     "limb", "limit", "link", "lion", "liquid", "list", "little", "live", "lizard", "load", "loan",
     "lobster", "local", "lock", "logic", "lonely", "long", "loop", "lottery", "loud", "lounge",
     "love", "loyal", "lucky", "luggage", "lumber", "lunar", "lunch", "luxury", "lyrics", "machine",

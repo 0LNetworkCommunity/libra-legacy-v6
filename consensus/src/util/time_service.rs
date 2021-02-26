@@ -1,8 +1,8 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use futures::{Future, FutureExt, SinkExt};
 use diem_logger::prelude::*;
+use futures::{Future, FutureExt, SinkExt};
 use std::{pin::Pin, thread, time::Duration};
 
 use crate::counters;

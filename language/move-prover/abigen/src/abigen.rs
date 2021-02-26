@@ -1,12 +1,12 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #[allow(unused_imports)]
 use log::{debug, info, warn};
 
 use anyhow::bail;
-use heck::SnakeCase;
 use diem_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
+use heck::SnakeCase;
 use move_core_types::language_storage::TypeTag;
 use serde::{Deserialize, Serialize};
 use spec_lang::{
@@ -60,7 +60,7 @@ impl<'env> Abigen<'env> {
         std::mem::take(&mut self.output)
             .into_iter()
             .map(|(path, abi)| {
-                let content = lcs::to_bytes(&abi).expect("ABI serialization should not fail");
+                let content = bcs::to_bytes(&abi).expect("ABI serialization should not fail");
                 (path, content)
             })
             .collect()

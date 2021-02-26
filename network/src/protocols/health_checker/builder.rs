@@ -4,9 +4,9 @@
 use crate::protocols::health_checker::{
     HealthChecker, HealthCheckerNetworkEvents, HealthCheckerNetworkSender,
 };
+use diem_config::network_id::NetworkContext;
 use futures::stream::StreamExt;
 use futures_util::stream::Fuse;
-use diem_config::network_id::NetworkContext;
 use std::{sync::Arc, time::Duration};
 use tokio::{
     runtime::Handle,

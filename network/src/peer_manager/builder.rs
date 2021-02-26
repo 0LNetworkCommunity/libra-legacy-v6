@@ -9,7 +9,7 @@ use crate::{
         PeerManagerNotification, PeerManagerRequest, PeerManagerRequestSender,
     },
     protocols::wire::handshake::v1::SupportedProtocols,
-    transport::{self, Connection, DiemNetTransport, LIBRA_TCP_TRANSPORT},
+    transport::{self, Connection, DiemNetTransport, DIEM_TCP_TRANSPORT},
     ProtocolId,
 };
 use channel::{self, diem_channel, message_queues::QueueStyle};
@@ -109,6 +109,7 @@ struct PeerManagerContext {
     max_concurrent_network_reqs: usize,
     max_concurrent_network_notifs: usize,
     channel_size: usize,
+    inbound_connection_limit: usize,
 }
 
 impl PeerManagerContext {
@@ -127,6 +128,7 @@ impl PeerManagerContext {
         max_concurrent_network_reqs: usize,
         max_concurrent_network_notifs: usize,
         channel_size: usize,
+        inbound_connection_limit: usize,
     ) -> Self {
         Self {
             pm_reqs_tx,
@@ -140,6 +142,7 @@ impl PeerManagerContext {
             max_concurrent_network_reqs,
             max_concurrent_network_notifs,
             channel_size,
+            inbound_connection_limit,
         }
     }
 
@@ -200,6 +203,7 @@ impl PeerManagerBuilder {
         max_concurrent_network_notifs: usize,
         max_frame_size: usize,
         enable_proxy_protocol: bool,
+        inbound_connection_limit: usize,
     ) -> Self {
         // Setup channel to send requests to peer manager.
         let (pm_reqs_tx, pm_reqs_rx) = diem_channel::new(
@@ -233,6 +237,7 @@ impl PeerManagerBuilder {
                 max_concurrent_network_reqs,
                 max_concurrent_network_notifs,
                 channel_size,
+                inbound_connection_limit,
             )),
             #[cfg(any(test, feature = "testing", feature = "fuzzing"))]
             memory_peer_manager: None,
@@ -287,7 +292,7 @@ impl PeerManagerBuilder {
             [Ip4(_), Tcp(_)] | [Ip6(_), Tcp(_)] => {
                 self.tcp_peer_manager = Some(self.build_with_transport(
                     DiemNetTransport::new(
-                        LIBRA_TCP_TRANSPORT.clone(),
+                        DIEM_TCP_TRANSPORT.clone(),
                         self.network_context.clone(),
                         key,
                         maybe_trusted_peers,
@@ -356,6 +361,7 @@ impl PeerManagerBuilder {
             pm_context.max_concurrent_network_notifs,
             pm_context.channel_size,
             self.max_frame_size,
+            pm_context.inbound_connection_limit,
         );
 
         // PeerManager constructor appends a public key to the listen_address.

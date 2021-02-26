@@ -9,11 +9,11 @@ use crate::{
     storage::{local_fs::LocalFs, BackupStorage},
     utils::{
         backup_service_client::BackupServiceClient, test_utils::tmp_db_with_random_content,
-        GlobalBackupOpt, GlobalRestoreOpt,
+        GlobalBackupOpt, GlobalRestoreOpt, RocksdbOpt,
     },
 };
 use backup_service::start_backup_service;
-use diem_config::utils::get_available_port;
+use diem_config::{config::RocksdbConfig, utils::get_available_port};
 use diem_temppath::TempPath;
 use diemdb::DiemDB;
 use std::{
@@ -70,13 +70,13 @@ fn end_to_end() {
                 db_dir: Some(tgt_db_dir.path().to_path_buf()),
                 dry_run: false,
                 target_version: Some(target_version),
+                rocksdb_opt: RocksdbOpt::default(),
             }
             .try_into()
             .unwrap(),
             store,
-            None,
         )
-        .run(),
+        .run(None),
     )
     .unwrap();
 
@@ -94,6 +94,7 @@ fn end_to_end() {
         &tgt_db_dir,
         true, /* read_only */
         None, /* pruner */
+        RocksdbConfig::default(),
     )
     .unwrap();
     assert_eq!(

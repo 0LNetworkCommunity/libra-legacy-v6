@@ -1,5 +1,5 @@
 base:
-    # This is the location Libra will store its database. It is backed by a dedicated docker volume
+    # This is the location Diem will store its database. It is backed by a dedicated docker volume
     # for persistence.
     data_dir: "/opt/diem/data"
     role: "full_node"
@@ -22,7 +22,7 @@ full_node_networks:
       # Testnet does not have the right discovery entry points on-chain so this is used instead
       seed_addrs:
           4223dd0eeb0b0d78720a8990700955e1:
-              - "/dns4/fn.testnet.diem.org/tcp/6182/ln-noise-ik/b6fd31624af370085cc3f872437bb4d9384b31a11b33b9591ddfaaed5a28b613/ln-handshake/0"
+              - "/dns4/fn.testnet.diem.com/tcp/6182/ln-noise-ik/b6fd31624af370085cc3f872437bb4d9384b31a11b33b9591ddfaaed5a28b613/ln-handshake/0"
 
 json_rpc:
     # This specifies your JSON-RPC endpoint. Intentionally on public so that Docker can export it.

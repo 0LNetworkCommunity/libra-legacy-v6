@@ -10,11 +10,11 @@
 //! provides a simpler and (hopefully) more secure implementation with fewer dependencies.
 #![forbid(unsafe_code)]
 
-use hex::FromHexError;
 use diem_types::{
     account_address::AccountAddress, account_state::AccountState,
     account_state_blob::AccountStateBlob, transaction::SignedTransaction,
 };
+use hex::FromHexError;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{convert::TryFrom, env, io};
@@ -45,8 +45,8 @@ impl From<io::Error> for Error {
     }
 }
 
-impl From<lcs::Error> for Error {
-    fn from(error: lcs::Error) -> Self {
+impl From<bcs::Error> for Error {
+    fn from(error: bcs::Error) -> Self {
         Self::SerializationError(format!("{}", error))
     }
 }
@@ -78,7 +78,7 @@ impl JsonRpcClient {
     /// request to the JSON RPC server using the given transaction.
     pub fn submit_transaction(&self, signed_transaction: SignedTransaction) -> Result<(), Error> {
         let method = "submit".into();
-        let params = vec![Value::String(hex::encode(lcs::to_bytes(
+        let params = vec![Value::String(hex::encode(bcs::to_bytes(
             &signed_transaction,
         )?))];
         let response = self.execute_request(method, params);
@@ -191,7 +191,7 @@ pub fn process_account_state_response(response: Response) -> Result<AccountState
                     .blob
             {
                 let account_state_blob =
-                    AccountStateBlob::from(lcs::from_bytes::<Vec<u8>>(&*blob_bytes.into_bytes()?)?);
+                    AccountStateBlob::from(bcs::from_bytes::<Vec<u8>>(&*blob_bytes.into_bytes()?)?);
                 if let Ok(account_state) = AccountState::try_from(&account_state_blob) {
                     Ok(account_state)
                 } else {
@@ -385,7 +385,6 @@ impl From<&Vec<u8>> for Bytes {
 mod test {
     use super::*;
     use anyhow::Result;
-    use futures::{channel::mpsc::channel, StreamExt};
     use diem_config::utils;
     use diem_crypto::HashValue;
     use diem_json_rpc::test_bootstrap;
@@ -402,6 +401,7 @@ mod test {
         transaction::{TransactionListWithProof, TransactionWithProof, Version},
     };
     use diemdb::errors::DiemDbError::NotFound;
+    use futures::{channel::mpsc::channel, StreamExt};
     use std::{collections::BTreeMap, sync::Arc};
     use storage_interface::{DbReader, Order, StartupInfo, TreeState};
     use tokio::runtime::Runtime;
@@ -733,7 +733,7 @@ pub mod fuzzing {
             account_state_blob_gen in any::<AccountStateBlobGen>(),
         ) -> Response {
             let account_state_blob = account_state_blob_gen.materialize(index, &universe);
-            let encoded_blob = Bytes::from(&lcs::to_bytes(&account_state_blob).unwrap());
+            let encoded_blob = Bytes::from(&bcs::to_bytes(&account_state_blob).unwrap());
 
             let response_body = AccountStateWithProofResponse {
                 id,

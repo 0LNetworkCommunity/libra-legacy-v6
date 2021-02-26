@@ -4,11 +4,11 @@
 use crate::{
     execution_correctness::ExecutionCorrectness, tests::suite, ExecutionCorrectnessManager,
 };
-use executor_test_helpers::start_storage_service;
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     Uniform,
 };
+use executor_test_helpers::start_storage_service;
 
 #[test]
 fn test() {

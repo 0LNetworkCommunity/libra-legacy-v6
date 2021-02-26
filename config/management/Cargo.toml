@@ -1,42 +1,35 @@
 [package]
 name = "diem-management"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem Management is a tool used to manage the configuration of a Diem Node"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 hex = "0.4.2"
-serde = { version = "1.0.116", features = ["rc"], default-features = false }
-serde_yaml = "0.8.13"
-structopt = "0.3.18"
-thiserror = "1.0.21"
-toml = { version = "0.5.6", default-features = false }
+serde = { version = "1.0.117", features = ["rc"], default-features = false }
+serde_yaml = "0.8.14"
+structopt = "0.3.21"
+thiserror = "1.0.22"
+toml = { version = "0.5.7", default-features = false }
 
-executor = { path = "../../execution/executor", version = "0.1.0" }
-generate-key = { path = "../../config/generate-key", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-config = { path = "..", version = "0.1.0"}
 diem-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
 diem-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
 diem-network-address = { path = "../../network/network-address", version = "0.1.0" }
 diem-network-address-encryption = {path = "network-address-encryption", version = "0.1.0"}
-diem-secure-json-rpc = { path = "../../secure/json-rpc", version = "0.1.0" }
 diem-secure-storage = { path = "../../secure/storage", version = "0.1.0" }
 diem-secure-time = { path = "../../secure/time", version = "0.1.0" }
 diem-types = { path = "../../types", version = "0.1.0" }
 diem-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
 diem-temppath = { path = "../../common/temppath", version = "0.1.0" }
-diem-vm = { path = "../../language/diem-vm", version = "0.1.0" }
-diemdb = { path = "../../storage/diemdb", version = "0.1.0" }
-storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
 transaction-builder = { path = "../../language/transaction-builder", version = "0.1.0" }
-vm-genesis = { path = "../../language/tools/vm-genesis", version = "0.1.0" }
 
 [dev-dependencies]
 diem-config = { path = "..", version = "0.1.0", features = ["fuzzing"] }

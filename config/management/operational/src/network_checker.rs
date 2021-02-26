@@ -100,7 +100,7 @@ pub mod tests {
         op_tool.check_endpoint(addr).unwrap_err();
 
         // Check bad port
-        let addr = NetworkAddress::from_str("/dns4/diem.org/tcp/6180").unwrap();
+        let addr = NetworkAddress::from_str("/dns4/diem.com/tcp/6180").unwrap();
         op_tool.check_endpoint(addr).unwrap_err();
     }
 }

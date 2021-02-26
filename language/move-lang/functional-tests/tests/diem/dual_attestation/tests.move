@@ -52,7 +52,7 @@ script{
 
 //! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 //! args: 0, {{bob}}, {{bob::auth_key}}, b"bob", true
 stdlib_script::create_parent_vasp_account
 // check: "Keep(EXECUTED)"
@@ -134,9 +134,9 @@ script{
 //! execute-as: freddymac
 script{
 use 0x1::DualAttestation;
-fun main(lr_account: &signer, freddy: &signer) {
-    DualAttestation::publish_credential(freddy, lr_account, b"freddy");
-    DualAttestation::publish_credential(freddy, lr_account, b"freddy");
+fun main(dr_account: &signer, freddy: &signer) {
+    DualAttestation::publish_credential(freddy, dr_account, b"freddy");
+    DualAttestation::publish_credential(freddy, dr_account, b"freddy");
 }
 }
 // check: "Discard(INVALID_WRITE_SET)"

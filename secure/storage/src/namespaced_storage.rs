@@ -7,7 +7,7 @@ use serde::{de::DeserializeOwned, Serialize};
 /// This provides a light wrapper around KV storages to support a namespace. That namespace is
 /// effectively prefixing all keys with then namespace value and "/" so a namespace of foo and a
 /// key of bar becomes "foo/bar". Without a namespace, the key would just be "bar". This matches
-/// how this diemry implements namespaces for Vault.
+/// how this library implements namespaces for Vault.
 pub struct NamespacedStorage {
     namespace: String,
     inner: Box<Storage>,

@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{corpus_from_strategy, fuzz_data_to_value, FuzzTargetImpl};
-use executor::fuzzing::{fuzz_execute_and_commit_blocks, fuzz_execute_and_commit_chunk};
 use diem_crypto::HashValue;
 use diem_proptest_helpers::ValueGenerator;
 use diem_types::{
     ledger_info::LedgerInfoWithSignatures,
     transaction::{Transaction, TransactionListWithProof},
 };
+use executor::fuzzing::{fuzz_execute_and_commit_blocks, fuzz_execute_and_commit_chunk};
 use proptest::{collection::vec, prelude::*};
 
 #[derive(Clone, Debug, Default)]

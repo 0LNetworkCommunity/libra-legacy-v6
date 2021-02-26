@@ -9,7 +9,6 @@ use crate::{
 };
 use anyhow::{format_err, Result};
 use channel::{self, diem_channel, message_queues::QueueStyle};
-use futures::channel::{mpsc, oneshot};
 use diem_config::{
     config::{NetworkConfig, NodeConfig},
     network_id::{NetworkId, NodeNetworkId},
@@ -19,6 +18,7 @@ use diem_types::{
     mempool_status::MempoolStatusCode,
     transaction::{GovernanceRole, SignedTransaction},
 };
+use futures::channel::{mpsc, oneshot};
 use network::{
     peer_manager::{conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender},
     protocols::network::{NewNetworkEvents, NewNetworkSender},

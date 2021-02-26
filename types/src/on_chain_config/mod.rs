@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -23,7 +23,7 @@ mod vm_config;
 mod vm_publishing_option;
 
 pub use self::{
-    diem_version::LibraVersion, registered_currencies::RegisteredCurrencies,
+    diem_version::DiemVersion, registered_currencies::RegisteredCurrencies,
     validator_set::ValidatorSet, vm_config::VMConfig, vm_publishing_option::VMPublishingOption,
 };
 
@@ -34,7 +34,7 @@ pub use self::{
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ConfigID(&'static str, &'static str);
 
-const CONFIG_ADDRESS_STR: &str = "0x0";
+const CONFIG_ADDRESS_STR: &str = "0xA550C18";
 
 pub fn config_address() -> AccountAddress {
     AccountAddress::from_hex_literal(CONFIG_ADDRESS_STR).expect("failed to get address")
@@ -63,7 +63,7 @@ impl fmt::Display for ConfigID {
 pub const ON_CHAIN_CONFIG_REGISTRY: &[ConfigID] = &[
     VMConfig::CONFIG_ID,
     VMPublishingOption::CONFIG_ID,
-    LibraVersion::CONFIG_ID,
+    DiemVersion::CONFIG_ID,
     ValidatorSet::CONFIG_ID,
     RegisteredCurrencies::CONFIG_ID,
 ];
@@ -123,7 +123,7 @@ pub trait OnChainConfig: Send + Sync + DeserializeOwned {
     const IDENTIFIER: &'static str;
     const CONFIG_ID: ConfigID = ConfigID(Self::ADDRESS, Self::IDENTIFIER);
 
-    // Single-round LCS deserialization from bytes to `Self`
+    // Single-round BCS deserialization from bytes to `Self`
     // This is the expected deserialization pattern for most Rust representations,
     // but sometimes `deserialize_into_config` may need an extra customized round of deserialization
     // (e.g. enums like `VMPublishingOption`)
@@ -131,12 +131,12 @@ pub trait OnChainConfig: Send + Sync + DeserializeOwned {
     // Note: we cannot directly call the default `deserialize_into_config` implementation
     // in its override - this will just refer to the override implementation itself
     fn deserialize_default_impl(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes::<Self>(&bytes)
+        bcs::from_bytes::<Self>(&bytes)
             .map_err(|e| format_err!("[on-chain config] Failed to deserialize into config: {}", e))
     }
 
     // Function for deserializing bytes to `Self`
-    // It will by default try one round of LCS deserialization directly to `Self`
+    // It will by default try one round of BCS deserialization directly to `Self`
     // The implementation for the concrete type should override this function if this
     // logic needs to be customized
     fn deserialize_into_config(bytes: &[u8]) -> Result<Self> {
@@ -160,10 +160,10 @@ pub fn new_epoch_event_key() -> EventKey {
 pub fn access_path_for_config(address: AccountAddress, config_name: Identifier) -> AccessPath {
     AccessPath::new(
         address,
-        AccessPath::resource_access_vec(&StructTag {
+        AccessPath::resource_access_vec(StructTag {
             address: CORE_CODE_ADDRESS,
-            module: Identifier::new("LibraConfig").unwrap(),
-            name: Identifier::new("LibraConfig").unwrap(),
+            module: Identifier::new("DiemConfig").unwrap(),
+            name: Identifier::new("DiemConfig").unwrap(),
             type_params: vec![TypeTag::Struct(StructTag {
                 address: CORE_CODE_ADDRESS,
                 module: config_name.clone(),
@@ -221,6 +221,6 @@ impl Default for ConfigurationResource {
 }
 
 impl MoveResource for ConfigurationResource {
-    const MODULE_NAME: &'static str = "LibraConfig";
+    const MODULE_NAME: &'static str = "DiemConfig";
     const STRUCT_NAME: &'static str = "Configuration";
 }

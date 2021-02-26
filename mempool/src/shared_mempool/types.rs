@@ -9,11 +9,6 @@ use crate::{
 };
 use anyhow::Result;
 use channel::diem_channel::Receiver;
-use futures::{
-    channel::{mpsc, mpsc::UnboundedSender, oneshot},
-    future::Future,
-    task::{Context, Poll},
-};
 use diem_config::{
     config::{MempoolConfig, PeerNetworkId},
     network_id::NodeNetworkId,
@@ -25,6 +20,11 @@ use diem_types::{
     on_chain_config::{ConfigID, DiemVersion, OnChainConfig, OnChainConfigPayload, VMConfig},
     transaction::SignedTransaction,
     vm_status::DiscardedVMStatus,
+};
+use futures::{
+    channel::{mpsc, mpsc::UnboundedSender, oneshot},
+    future::Future,
+    task::{Context, Poll},
 };
 use std::{collections::HashMap, fmt, pin::Pin, sync::Arc, task::Waker, time::Instant};
 use storage_interface::DbReader;

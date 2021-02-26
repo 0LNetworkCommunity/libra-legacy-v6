@@ -12,9 +12,9 @@
 
 //! new-transaction
 script {
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     fun main(account: &signer) {
-        LibraTimestamp::set_time_has_started(account);
+        DiemTimestamp::set_time_has_started(account);
     }
 }
 // check: "Keep(ABORTED { code: 1,"
@@ -22,9 +22,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     fun main(account: &signer) {
-        LibraTimestamp::set_time_has_started(account);
+        DiemTimestamp::set_time_has_started(account);
     }
 }
 // check: "Keep(ABORTED { code: 1,"

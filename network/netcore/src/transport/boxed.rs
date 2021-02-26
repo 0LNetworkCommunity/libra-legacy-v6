@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::transport::Transport;
+use diem_network_address::NetworkAddress;
+use diem_types::PeerId;
 use futures::{
     future::{Future, FutureExt},
     stream::{Stream, StreamExt},
 };
-use diem_network_address::NetworkAddress;
-use diem_types::PeerId;
 use std::pin::Pin;
 
 pub type Listener<O, E> =

@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{account_address::AccountAddress, account_config::LIBRA_MODULE_NAME};
+use crate::{account_address::AccountAddress, account_config::DIEM_MODULE_NAME};
 use anyhow::Result;
 use move_core_types::{
     identifier::{IdentStr, Identifier},
@@ -34,11 +34,11 @@ impl PreburnEvent {
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
+        bcs::from_bytes(bytes).map_err(Into::into)
     }
 }
 
 impl MoveResource for PreburnEvent {
-    const MODULE_NAME: &'static str = LIBRA_MODULE_NAME;
+    const MODULE_NAME: &'static str = DIEM_MODULE_NAME;
     const STRUCT_NAME: &'static str = "PreburnEvent";
 }

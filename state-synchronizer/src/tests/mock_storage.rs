@@ -3,12 +3,11 @@
 
 use crate::SynchronizerState;
 use anyhow::{bail, Result};
-use executor_types::ExecutedTrees;
 use diem_crypto::HashValue;
 #[cfg(test)]
 use diem_types::{
     account_address::AccountAddress,
-    account_config::coin1_tmp_tag,
+    account_config::xus_tag,
     block_info::BlockInfo,
     ledger_info::LedgerInfo,
     on_chain_config::ValidatorSet,
@@ -19,6 +18,7 @@ use diem_types::{
     epoch_state::EpochState, ledger_info::LedgerInfoWithSignatures, transaction::Transaction,
     validator_signer::ValidatorSigner,
 };
+use executor_types::ExecutedTrees;
 #[cfg(test)]
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -179,7 +179,7 @@ impl MockStorage {
         let sender = AccountAddress::random();
         let receiver = AuthenticationKey::random();
         let program = encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             receiver.derived_address(),
             1,
             vec![],

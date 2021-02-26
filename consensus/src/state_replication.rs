@@ -4,9 +4,9 @@
 use crate::error::{MempoolError, StateSyncError};
 use anyhow::Result;
 use consensus_types::{block::Block, common::Payload};
-use executor_types::{Error as ExecutionError, StateComputeResult};
 use diem_crypto::HashValue;
 use diem_types::ledger_info::LedgerInfoWithSignatures;
+use executor_types::{Error as ExecutionError, StateComputeResult};
 
 /// Retrieves and updates the status of transactions on demand (e.g., via talking with Mempool)
 #[async_trait::async_trait]

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::event::EventKey;
@@ -18,7 +18,7 @@ impl NewEpochEvent {
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
+        bcs::from_bytes(bytes).map_err(Into::into)
     }
 
     pub fn event_key() -> EventKey {
@@ -27,6 +27,6 @@ impl NewEpochEvent {
 }
 
 impl MoveResource for NewEpochEvent {
-    const MODULE_NAME: &'static str = "LibraConfig";
+    const MODULE_NAME: &'static str = "DiemConfig";
     const STRUCT_NAME: &'static str = "NewEpochEvent";
 }

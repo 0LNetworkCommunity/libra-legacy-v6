@@ -1,10 +1,10 @@
 [package]
 name = "move-vm-runtime"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Core Move execution logic"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -20,7 +20,6 @@ bytecode-verifier = { path = "../../bytecode-verifier", version = "0.1.0" }
 diem-crypto = { path = "../../../crypto/crypto", version = "0.1.0" }
 diem-logger = { path = "../../../common/logger", version = "0.1.0" }
 diem-infallible = { path = "../../../common/infallible", version = "0.1.0" }
-diem-types = { path = "../../../types", version = "0.1.0" }
 diem-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
 move-core-types = { path = "../../move-core/types", version = "0.1.0" }
 move-vm-natives = { path = "../natives", version = "0.1.0" }
@@ -28,7 +27,7 @@ move-vm-types = { path = "../types", version = "0.1.0" }
 vm = { path = "../../vm", version = "0.1.0" }
 
 [dev-dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 hex = "0.4.2"
 proptest = "0.10.1"
 

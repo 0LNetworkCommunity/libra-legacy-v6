@@ -8,6 +8,7 @@ use std::{collections::HashMap, env, sync::Arc};
 use anyhow::{bail, format_err, Result};
 use async_trait::async_trait;
 
+use diem_logger::*;
 use futures::{future::try_join_all, lock::Mutex, Future, TryFuture};
 use k8s_openapi::api::core::v1::{ConfigMap, Node, Pod, Service};
 use kube::{
@@ -15,7 +16,6 @@ use kube::{
     client::Client,
     Config,
 };
-use diem_logger::*;
 
 use crate::{cluster_swarm::ClusterSwarm, instance::Instance};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
@@ -24,9 +24,9 @@ use crate::instance::{
     ApplicationConfig::{Fullnode, Validator, Vault, LSR},
     InstanceConfig,
 };
+use diem_config::config::DEFAULT_JSON_RPC_PORT;
 use k8s_openapi::api::batch::v1::Job;
 use kube::api::ListParams;
-use diem_config::config::DEFAULT_JSON_RPC_PORT;
 use reqwest::Client as HttpClient;
 use rusoto_core::Region;
 use rusoto_s3::{PutObjectRequest, S3Client, S3};
@@ -82,12 +82,12 @@ macro_rules! JOB_TEMPLATE {
         "templates/job_template.yaml"
     };
 }
-macro_rules! LIBRA_NODE_SERVICE_TEMPLATE {
+macro_rules! DIEM_NODE_SERVICE_TEMPLATE {
     () => {
         "templates/diem_node_service_template.yaml"
     };
 }
-macro_rules! LIBRA_NODE_SPEC_TEMPLATE {
+macro_rules! DIEM_NODE_SPEC_TEMPLATE {
     () => {
         "templates/diem_node_spec_template.yaml"
     };
@@ -154,7 +154,7 @@ impl ClusterSwarmKube {
 
     fn service_spec(&self, peer_id: String) -> Result<Service> {
         let service_yaml = format!(
-            include_str!(LIBRA_NODE_SERVICE_TEMPLATE!()),
+            include_str!(DIEM_NODE_SERVICE_TEMPLATE!()),
             peer_id = &peer_id
         );
         get_spec_instance_from_template(service_yaml)
@@ -200,7 +200,7 @@ impl ClusterSwarmKube {
         image_tag: &str,
     ) -> Result<Pod> {
         let pod_yaml = format!(
-            include_str!(LIBRA_NODE_SPEC_TEMPLATE!()),
+            include_str!(DIEM_NODE_SPEC_TEMPLATE!()),
             pod_app = pod_app,
             pod_name = pod_name,
             image_tag = image_tag,

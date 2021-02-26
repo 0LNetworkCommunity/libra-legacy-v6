@@ -7,8 +7,8 @@ use diem_json_rpc_types::response::JsonRpcResponse;
 use diem_types::{
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, diem_root_address, testnet_dd_account_address,
-        treasury_compliance_account_address, COIN1_NAME,
+        diem_root_address, testnet_dd_account_address, treasury_compliance_account_address,
+        xus_tag, XUS_NAME,
     },
     chain_id::ChainId,
     transaction::SignedTransaction,
@@ -69,7 +69,7 @@ impl Env {
         let vasp = Account::gen();
         let script =
             transaction_builder_generated::stdlib::encode_create_parent_vasp_account_script(
-                coin1_tmp_tag(),
+                xus_tag(),
                 0, // sliding nonce
                 vasp.address,
                 vasp.auth_key().prefix().to_vec(),
@@ -84,7 +84,7 @@ impl Env {
     pub fn create_child_vasp(&mut self, parent_vasp_index: usize, amount: u64) {
         let child = Account::gen();
         let script = transaction_builder_generated::stdlib::encode_create_child_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             child.address,
             child.auth_key().prefix().to_vec(),
             false, /* add all currencies */
@@ -98,7 +98,7 @@ impl Env {
     pub fn transfer_coins_to_vasp(&mut self, index: usize, amount: u64) {
         let script =
             transaction_builder_generated::stdlib::encode_peer_to_peer_with_metadata_script(
-                coin1_tmp_tag(),
+                xus_tag(),
                 self.vasps[index].address,
                 amount,
                 vec![],
@@ -129,7 +129,7 @@ impl Env {
         let receiver_address = self.vasps[rid].children[rcid].address;
         let script =
             transaction_builder_generated::stdlib::encode_peer_to_peer_with_metadata_script(
-                coin1_tmp_tag(),
+                xus_tag(),
                 receiver_address,
                 amount,
                 // todo: add metadata
@@ -175,7 +175,7 @@ impl Env {
             seq,
             1_000_000,
             0,
-            COIN1_NAME.to_owned(),
+            XUS_NAME.to_owned(),
             30,
             ChainId::test(),
         )
@@ -195,7 +195,7 @@ impl Env {
     }
 
     pub fn submit(&self, txn: &SignedTransaction) -> JsonRpcResponse {
-        let txn_hex = hex::encode(lcs::to_bytes(txn).expect("lcs txn failed"));
+        let txn_hex = hex::encode(bcs::to_bytes(txn).expect("bcs txn failed"));
         self.send("submit", json!([txn_hex]))
     }
 
@@ -240,12 +240,46 @@ impl Env {
             .send()
             .expect("request success");
         assert_eq!(resp.status(), 200);
-
+        let headers = resp.headers().clone();
         let json: serde_json::Value = resp.json().unwrap();
         if !self.allow_execution_failures {
             assert_eq!(json.get("error"), None);
         }
-        serde_json::from_value(json).expect("should be valid JsonRpcResponse")
+        let rpc_resp: JsonRpcResponse =
+            serde_json::from_value(json).expect("should be valid JsonRpcResponse");
+        assert_eq!(
+            headers.get("X-Diem-Chain-Id").unwrap().to_str().unwrap(),
+            rpc_resp.diem_chain_id.to_string()
+        );
+        assert_eq!(
+            headers
+                .get("X-Diem-Ledger-Version")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            rpc_resp.diem_ledger_version.to_string()
+        );
+        assert_eq!(
+            headers
+                .get("X-Diem-Ledger-TimestampUsec")
+                .unwrap()
+                .to_str()
+                .unwrap(),
+            rpc_resp.diem_ledger_timestampusec.to_string()
+        );
+        rpc_resp
+    }
+
+    pub fn send_request(&self, request: Value) -> Value {
+        let resp = self
+            .client
+            .post(self.url.as_str())
+            .json(&request)
+            .send()
+            .expect("request success");
+        assert_eq!(resp.status(), 200);
+
+        resp.json().unwrap()
     }
 
     pub fn get_account(&self, vasp_id: usize, child_id: usize) -> &Account {

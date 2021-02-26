@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{account_address::AccountAddress, validator_config::ValidatorConfig};
@@ -36,7 +36,11 @@ pub struct ValidatorInfo {
 
 impl fmt::Display for ValidatorInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
-        write!(f, "account_address: {}", self.account_address.short_str())
+        write!(
+            f,
+            "account_address: {}",
+            self.account_address.short_str_lossless()
+        )
     }
 }
 
@@ -70,8 +74,8 @@ impl ValidatorInfo {
         );
         let config = ValidatorConfig::new(
             consensus_public_key,
-            lcs::to_bytes(&vec![enc_addr.unwrap()]).unwrap(),
-            lcs::to_bytes(&vec![addr]).unwrap(),
+            bcs::to_bytes(&vec![enc_addr.unwrap()]).unwrap(),
+            bcs::to_bytes(&vec![addr]).unwrap(),
         );
 
         Self {

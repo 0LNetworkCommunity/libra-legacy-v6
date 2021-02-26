@@ -10,7 +10,7 @@ use std::{
 };
 
 /// `IoCompat` provides a compatibility shim between the `AsyncRead`/`AsyncWrite` traits provided by
-/// the `futures` diemry and those provided by the `tokio` diemry since they are different and
+/// the `futures` library and those provided by the `tokio` library since they are different and
 /// incompatible with one another.
 #[pin_project]
 #[derive(Copy, Clone, Debug)]

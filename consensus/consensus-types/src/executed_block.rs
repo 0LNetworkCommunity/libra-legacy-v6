@@ -7,9 +7,9 @@ use crate::{
     quorum_cert::QuorumCert,
     vote_proposal::{MaybeSignedVoteProposal, VoteProposal},
 };
-use executor_types::StateComputeResult;
 use diem_crypto::hash::HashValue;
 use diem_types::block_info::BlockInfo;
+use executor_types::StateComputeResult;
 use std::fmt::{Debug, Display, Formatter};
 
 /// ExecutedBlocks are managed in a speculative tree, the committed blocks form a chain. Besides

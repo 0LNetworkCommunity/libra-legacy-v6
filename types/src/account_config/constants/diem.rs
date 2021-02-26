@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account_config::constants::CORE_CODE_ADDRESS;
@@ -9,8 +9,8 @@ use move_core_types::{
 };
 use once_cell::sync::Lazy;
 
-pub const LIBRA_MODULE_NAME: &str = "Libra";
-static COIN_MODULE_NAME: Lazy<Identifier> = Lazy::new(|| Identifier::new("Libra").unwrap());
+pub const DIEM_MODULE_NAME: &str = "Diem";
+static COIN_MODULE_NAME: Lazy<Identifier> = Lazy::new(|| Identifier::new("Diem").unwrap());
 pub static COIN_MODULE: Lazy<ModuleId> =
     Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, COIN_MODULE_NAME.clone()));
 
@@ -31,7 +31,7 @@ pub fn type_tag_for_currency_code(currency_code: Identifier) -> TypeTag {
 pub fn from_currency_code_string(currency_code_string: &str) -> Result<Identifier> {
     // In addition to the constraints for valid Move identifiers, currency codes
     // should consist entirely of alphanumeric characters (e.g., no underscores).
-    // TODO: After Coin1 is renamed , this should require uppercase as well.
+    // TODO: After XUS is renamed , this should require uppercase as well.
     if !currency_code_string.chars().all(char::is_alphanumeric) {
         bail!("Invalid currency code '{}'", currency_code_string)
     }

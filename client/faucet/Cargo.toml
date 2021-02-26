@@ -1,26 +1,26 @@
 [package]
 name = "diem-faucet"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem Testnet utility services"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 hex = "0.4.2"
-reqwest = { version = "0.10.8", features = ["blocking"], default-features = false }
-serde = "1.0.116"
-serde_derive = "1.0.115"
-structopt = "0.3.18"
+reqwest = { version = "0.10.9", features = ["blocking"], default-features = false }
+serde = "1.0.117"
+serde_derive = "1.0.117"
+structopt = "0.3.21"
 tokio = { version = "0.2.22", features = ["full"] }
 warp = "0.2.5"
 
 generate-key = { path = "../../config/generate-key", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-crypto = { path = "../../crypto/crypto/", version = "0.1.0" }
 diem-infallible = { path = "../../common/infallible", version = "0.1.0" }
 diem-json-rpc-client = { path = "../json-rpc", version = "0.1.0" }
@@ -31,7 +31,7 @@ move-core-types = { path = "../../language/move-core/types", version = "0.1.0" }
 transaction-builder-generated = { path = "../transaction-builder", version = "0.1.0" }
 
 [dev-dependencies]
-serde_json = "1.0.58"
+serde_json = "1.0.60"
 tempfile = "3.1.0"
 
 diem-config = { path = "../../config", version = "0.1.0" }

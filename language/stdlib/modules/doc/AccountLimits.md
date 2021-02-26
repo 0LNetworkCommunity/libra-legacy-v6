@@ -19,8 +19,8 @@ a given time period.
 -  [Function `update_limits_definition`](#0x1_AccountLimits_update_limits_definition)
 -  [Function `update_window_info`](#0x1_AccountLimits_update_window_info)
 -  [Function `reset_window`](#0x1_AccountLimits_reset_window)
--  [Function `can_receive`](#0x1_AccountLimits_can_receive)
--  [Function `can_withdraw`](#0x1_AccountLimits_can_withdraw)
+-  [Function `can_receive_and_update_window`](#0x1_AccountLimits_can_receive_and_update_window)
+-  [Function `can_withdraw_and_update_window`](#0x1_AccountLimits_can_withdraw_and_update_window)
 -  [Function `is_unrestricted`](#0x1_AccountLimits_is_unrestricted)
 -  [Function `limits_definition_address`](#0x1_AccountLimits_limits_definition_address)
 -  [Function `has_limits_published`](#0x1_AccountLimits_has_limits_published)
@@ -29,8 +29,8 @@ a given time period.
 -  [Module Specification](#@Module_Specification_1)
 
 
-<pre><code><b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
-<b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
+<pre><code><b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
+<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
@@ -72,7 +72,7 @@ the operations can mutate account states.
 
 A resource specifying the account limits per-currency. There is a default
 "unlimited" <code><a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a></code> resource for accounts published at
-<code><a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()</code>, but other accounts may have
+<code><a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()</code>, but other accounts may have
 different account limit definitons. In such cases, they will have a
 <code><a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a></code> published under their (root) account.
 
@@ -237,7 +237,7 @@ Grant a capability to call this module. This does not necessarily
 need to be a unique capability.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_grant_mutation_capability">grant_mutation_capability</a>(lr_account: &signer): <a href="AccountLimits.md#0x1_AccountLimits_AccountLimitMutationCapability">AccountLimits::AccountLimitMutationCapability</a>
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_grant_mutation_capability">grant_mutation_capability</a>(dr_account: &signer): <a href="AccountLimits.md#0x1_AccountLimits_AccountLimitMutationCapability">AccountLimits::AccountLimitMutationCapability</a>
 </code></pre>
 
 
@@ -246,9 +246,9 @@ need to be a unique capability.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_grant_mutation_capability">grant_mutation_capability</a>(lr_account: &signer): <a href="AccountLimits.md#0x1_AccountLimits_AccountLimitMutationCapability">AccountLimitMutationCapability</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_grant_mutation_capability">grant_mutation_capability</a>(dr_account: &signer): <a href="AccountLimits.md#0x1_AccountLimits_AccountLimitMutationCapability">AccountLimitMutationCapability</a> {
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_genesis">DiemTimestamp::assert_genesis</a>();
-    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(dr_account);
     <a href="AccountLimits.md#0x1_AccountLimits_AccountLimitMutationCapability">AccountLimitMutationCapability</a>{}
 }
 </code></pre>
@@ -263,7 +263,7 @@ need to be a unique capability.
 
 
 <pre><code><b>include</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp_AbortsIfNotGenesis">DiemTimestamp::AbortsIfNotGenesis</a>;
-<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: lr_account};
+<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: dr_account};
 </code></pre>
 
 
@@ -294,7 +294,7 @@ Returns false if this deposit violates the account limits.
     _cap: &<a href="AccountLimits.md#0x1_AccountLimits_AccountLimitMutationCapability">AccountLimitMutationCapability</a>,
 ): bool <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>, <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a> {
     <b>assert</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_EWINDOW">EWINDOW</a>));
-    <a href="AccountLimits.md#0x1_AccountLimits_can_receive">can_receive</a>&lt;CoinType&gt;(
+    <a href="AccountLimits.md#0x1_AccountLimits_can_receive_and_update_window">can_receive_and_update_window</a>&lt;CoinType&gt;(
         amount,
         borrow_global_mut&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr),
     )
@@ -381,7 +381,7 @@ Returns <code><b>false</b></code> if this withdrawal violates account limits.
     _cap: &<a href="AccountLimits.md#0x1_AccountLimits_AccountLimitMutationCapability">AccountLimitMutationCapability</a>,
 ): bool <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>, <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a> {
     <b>assert</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_EWINDOW">EWINDOW</a>));
-    <a href="AccountLimits.md#0x1_AccountLimits_can_withdraw">can_withdraw</a>&lt;CoinType&gt;(
+    <a href="AccountLimits.md#0x1_AccountLimits_can_withdraw_and_update_window">can_withdraw_and_update_window</a>&lt;CoinType&gt;(
         amount,
         borrow_global_mut&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr),
     )
@@ -442,7 +442,7 @@ Root accounts for multi-account entities will hold this resource at
 their root/parent account.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_window">publish_window</a>&lt;CoinType&gt;(lr_account: &signer, to_limit: &signer, limit_address: address)
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_window">publish_window</a>&lt;CoinType&gt;(dr_account: &signer, to_limit: &signer, limit_address: address)
 </code></pre>
 
 
@@ -452,11 +452,11 @@ their root/parent account.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_window">publish_window</a>&lt;CoinType&gt;(
-    lr_account: &signer,
+    dr_account: &signer,
     to_limit: &signer,
     limit_address: address,
 ) {
-    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(lr_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(dr_account);
     <b>assert</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(limit_address), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>));
     <a href="Roles.md#0x1_Roles_assert_parent_vasp_or_child_vasp">Roles::assert_parent_vasp_or_child_vasp</a>(to_limit);
     <b>assert</b>(
@@ -495,7 +495,7 @@ their root/parent account.
 
 
 <pre><code><b>schema</b> <a href="AccountLimits.md#0x1_AccountLimits_PublishWindowAbortsIf">PublishWindowAbortsIf</a>&lt;CoinType&gt; {
-    lr_account: signer;
+    dr_account: signer;
     to_limit: signer;
     limit_address: address;
 }
@@ -507,7 +507,7 @@ Only ParentVASP and ChildVASP can have the account limits [[E1]][ROLE][[E2]][ROL
 
 <pre><code><b>schema</b> <a href="AccountLimits.md#0x1_AccountLimits_PublishWindowAbortsIf">PublishWindowAbortsIf</a>&lt;CoinType&gt; {
     <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotParentVaspOrChildVasp">Roles::AbortsIfNotParentVaspOrChildVasp</a>{account: to_limit};
-    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: lr_account};
+    <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">Roles::AbortsIfNotDiemRoot</a>{account: dr_account};
     <b>aborts_if</b> !<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(limit_address) <b>with</b> <a href="Errors.md#0x1_Errors_NOT_PUBLISHED">Errors::NOT_PUBLISHED</a>;
     <b>aborts_if</b> <b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(to_limit)) <b>with</b> <a href="Errors.md#0x1_Errors_ALREADY_PUBLISHED">Errors::ALREADY_PUBLISHED</a>;
 }
@@ -623,7 +623,7 @@ TODO: This should be specified.
     new_max_holding_balance: u64,
     new_time_period: u64,
 ) <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a> {
-    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
     // As we don't have Optionals for txn scripts, in update_account_limit_definition.<b>move</b>
     // we <b>use</b> 0 value <b>to</b> represent a None (ie no <b>update</b> <b>to</b> that variable)
     <b>assert</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(limit_address), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>));
@@ -646,7 +646,7 @@ TODO: This should be specified.
 Update either the <code>tracked_balance</code> or <code>limit_address</code> fields of the
 <code><a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;</code> stored under <code>window_address</code>.
 * Since we don't track balances of accounts before they are limited, once
-they do become limited the approximate balance in <code>CointType</code> held by
+they do become limited the approximate balance in <code>CoinType</code> held by
 the entity across all of its accounts will need to be set by the association.
 if <code>aggregate_balance</code> is set to zero the field is not updated.
 * This updates the <code>limit_address</code> in the window resource to a new limits definition at
@@ -671,7 +671,7 @@ TODO(wrwg): specify
     aggregate_balance: u64,
     new_limit_address: address,
 ) <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a> {
-    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
     <b>let</b> window = borrow_global_mut&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(window_address);
     <b>if</b> (aggregate_balance != 0)  { window.tracked_balance = aggregate_balance };
     <b>assert</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(new_limit_address), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>));
@@ -788,16 +788,18 @@ the inflow and outflow records.
 
 </details>
 
-<a name="0x1_AccountLimits_can_receive"></a>
+<a name="0x1_AccountLimits_can_receive_and_update_window"></a>
 
-## Function `can_receive`
+## Function `can_receive_and_update_window`
 
 Verify that the receiving account tracked by the <code>receiving</code> window
 can receive <code>amount</code> funds without violating requirements
 specified the <code>limits_definition</code> passed in.
+If the receipt of <code>amount</code> doesn't violate the limits <code>amount</code> of
+<code>CoinType</code> is recorded as received in the given <code>receiving</code> window.
 
 
-<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_receive">can_receive</a>&lt;CoinType&gt;(amount: u64, receiving: &<b>mut</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">AccountLimits::Window</a>&lt;CoinType&gt;): bool
+<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_receive_and_update_window">can_receive_and_update_window</a>&lt;CoinType&gt;(amount: u64, receiving: &<b>mut</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">AccountLimits::Window</a>&lt;CoinType&gt;): bool
 </code></pre>
 
 
@@ -806,7 +808,7 @@ specified the <code>limits_definition</code> passed in.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_receive">can_receive</a>&lt;CoinType&gt;(
+<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_receive_and_update_window">can_receive_and_update_window</a>&lt;CoinType&gt;(
     amount: u64,
     receiving: &<b>mut</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;,
 ): bool <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a> {
@@ -966,16 +968,18 @@ Checks whether receiving limits are satisfied.
 
 </details>
 
-<a name="0x1_AccountLimits_can_withdraw"></a>
+<a name="0x1_AccountLimits_can_withdraw_and_update_window"></a>
 
-## Function `can_withdraw`
+## Function `can_withdraw_and_update_window`
 
 Verify that <code>amount</code> can be withdrawn from the account tracked
 by the <code>sending</code> window without violating any limits specified
 in its <code>limits_definition</code>.
+If the withdrawal of <code>amount</code> doesn't violate the limits <code>amount</code> of
+<code>CoinType</code> is recorded as withdrawn in the given <code>sending</code> window.
 
 
-<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_withdraw">can_withdraw</a>&lt;CoinType&gt;(amount: u64, sending: &<b>mut</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">AccountLimits::Window</a>&lt;CoinType&gt;): bool
+<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_withdraw_and_update_window">can_withdraw_and_update_window</a>&lt;CoinType&gt;(amount: u64, sending: &<b>mut</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">AccountLimits::Window</a>&lt;CoinType&gt;): bool
 </code></pre>
 
 
@@ -984,7 +988,7 @@ in its <code>limits_definition</code>.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_withdraw">can_withdraw</a>&lt;CoinType&gt;(
+<pre><code><b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_can_withdraw_and_update_window">can_withdraw_and_update_window</a>&lt;CoinType&gt;(
     amount: u64,
     sending: &<b>mut</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;,
 ): bool <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a> {
@@ -1285,6 +1289,25 @@ Checks whether the limits definition is unrestricted.
 ## Module Specification
 
 
+
+<code><a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;</code> persists after publication.
+
+
+<pre><code><b>invariant</b> <b>update</b> [<b>global</b>]
+    <b>forall</b> addr: address, coin_type: type <b>where</b> <b>old</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;coin_type&gt;&gt;(addr)):
+        <b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;coin_type&gt;&gt;(addr);
+</code></pre>
+
+
+<code><a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;</code> persists after publication
+
+
+<pre><code><b>invariant</b> <b>update</b> [<b>global</b>]
+    <b>forall</b> window_addr: address, coin_type: type <b>where</b> <b>old</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;coin_type&gt;&gt;(window_addr)):
+        <b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;coin_type&gt;&gt;(window_addr);
+</code></pre>
+
+
 Invariant that <code><a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a></code> exists if a <code><a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a></code> exists.
 
 
@@ -1295,6 +1318,6 @@ Invariant that <code><a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinitio
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/dip/blob/master/dips/dip-2.md
+[ROLE]: https://github.com/diem/dip/blob/master/dips/dip-2.md#roles
+[PERMISSION]: https://github.com/diem/dip/blob/master/dips/dip-2.md#permissions

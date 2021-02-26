@@ -1,14 +1,33 @@
-tools = [
-   ["sccache", "0.2.13"],
-   ["grcov", "0.5.15"],
-]
+[grcov.installer]
+version = "0.5.15"
 
 [system-tests]
 smoke-test = { path = "smoke-test" }
 
 [cargo]
-toolchain = "nightly-2020-07-08"
+toolchain = "nightly-2020-10-09"
 flags = "-Zfeatures=all"
+
+[cargo.sccache]
+bucket = "ci-artifacts.diem.com"
+prefix = "sccache/diem/"
+public = true
+region = "us-west-2"
+endpoint = "https://s3-us-west-2.amazonaws.com"
+required-cargo-home = "/opt/cargo"
+required-git-home = "/opt/git/diem"
+envs = [
+   #To debug sccache uncomment the two lines below.
+   #["SCCACHE_ERROR_LOG","/tmp/sccache_log"],
+   #["SCCACHE_LOG", "sccache::compiler::compiler=trace,rusoto_core::request=trace"],
+]
+
+[cargo.sccache.installer]
+version = "0.2.14-alpha.0"
+git = "https://github.com/rexhoffman/sccache.git"
+git-rev = "549babdd3866aa60dae01668c42ee00bf1e8c763"
+features = [ "s3" ]
+
 
 [fix]
 
@@ -20,6 +39,7 @@ allowed = [
     "clippy::mutable_key_type",
     "clippy::eval-order-dependence",
     "clippy::new-without-default",
+    "clippy::rc_buffer",
 ]
 warn = [
     "clippy::wildcard_dependencies",
@@ -50,8 +70,21 @@ include-dev = true
 proc-macros-on-target = false
 # Don't set target or host platforms, or omitted packages, for the full set.
 
+[workspace]
+
+# Regex for allowed characters in paths. Regex must have ^ and $ anchors.
+allowed-paths = "^([a-zA-Z0-9._\\-/@:]|-)+$"
+
+whitespace-exceptions = [
+    ".github/actions/*/dist/*",
+    # TODO: reevaluate skipping whitespace checks in .md files for the website
+    "developers.diem.com/**/*.md",
+    "**/*.exp",
+    "**/*.errmap",
+]
+
 [workspace.enforced-attributes]
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 license = "Apache-2.0"
 
 [workspace.banned-deps.direct]
@@ -78,38 +111,47 @@ features = ["fuzzing"]
 # For more, see the "Conditional compilation for tests" section in documentation/coding_guidelines.md.
 [workspace.test-only]
 members = [
-    "common/channel/many-keys-stress-test",
-    "common/diemdoc",
-    "common/proptest-helpers",
-    "common/retrier",
-    "devtools/x",
-    "devtools/x-core",
-    "devtools/x-lint",
-    "execution/executor-benchmark",
-    "execution/executor-test-helpers",
-    "language/benchmarks",
-    "language/bytecode-verifier/bytecode-verifier-tests",
-    "language/bytecode-verifier/invalid-mutations",
-    "language/e2e-testsuite",
-    "language/testing-infra/e2e-tests",
-    "language/testing-infra/functional-tests",
-    "language/testing-infra/test-generation",
-    "language/testing-infra/module-generation",
-    "language/ir-testsuite",
-    "language/move-lang/functional-tests",
-    "language/move-prover/test-utils",
-    "language/move-vm/integration-tests",
-    "language/vm/serializer-tests",
-    "network/memsocket",
-    "network/socket-bench-server",
-    "testsuite/cli",
-    "testsuite/cli/diem-wallet",
-    "testsuite/cluster-test",
-    "testsuite/generate-format",
-    "testsuite/diem-fuzzer",
-    "testsuite/diem-fuzzer/fuzz",
-    "testsuite/diem-swarm",
-    "testsuite/smoke-test",
+    # Please keep this list in alphabetical order!
+
+    "bytecode-verifier-tests",
+    "cli",
+    "cluster-test",
+    "datatest-stable",
+    "diem-documentation-tool",
+    "diem-fuzz",
+    "diem-fuzzer",
+    "diem-proptest-helpers",
+    "diem-retrier",
+    "diem-smoke-test-attribute",
+    "diem-swarm",
+    "diem-transaction-replay",
+    "diem-wallet",
+    "executor-benchmark",
+    "executor-test-helpers",
+    "functional-tests",
+    "generate-format",
+    "invalid-mutations",
+    "ir-testsuite",
+    "language-benchmarks",
+    "language-e2e-tests",
+    "language-e2e-testsuite",
+    "many-keys-stress-test",
+    "memsocket",
+    "module-generation",
+    "move-lang-functional-tests",
+    "move-lang-ir-utils",
+    "move-lang-test-utils",
+    "move-prover-test-utils",
+    "move-vm-integration-tests",
+    "serializer-tests",
+    "smoke-test",
+    "socket-bench-server",
+    "test-generation",
+    "x",
+    "x-core",
+    "x-lint",
+
+    # Please keep this list in alphabetical order!
 ]
 
 # Interesting subsets of the workspace, These are used for generating and
@@ -118,22 +160,53 @@ members = [
 [workspace.subsets.lsr]
 # The Diem safety rules TCB.
 members = [
-    "consensus/safety-rules",
+    "safety-rules",
 ]
 
 [workspace.subsets.lec]
 # The Diem execution correctness TCB.
 members = [
-    "execution/execution-correctness",
+    "execution-correctness",
 ]
 
 [workspace.subsets.release]
 # The Diem release binaries
 members = [
-    "config/management/genesis",
-    "consensus/safety-rules",
-    "execution/db-bootstrapper",
+    "backup-cli",
+    "db-bootstrapper",
+    "diem-genesis-tool",
+    "diem-key-manager",
     "diem-node",
-    "secure/key-manager",
-    "storage/backup/backup-cli",
+    "diem-operational-tool",
+    "execution-correctness",
+    "safety-rules",
 ]
+
+# ---
+# Determinator rules
+# ---
+
+# CI-related files. TODO: maybe have separate rules for local and CI?
+[[determinator.path-rule]]
+globs = [".github/**/*", ".circleci/**/*", "codecov.yml"]
+mark-changed = "all"
+
+# Core devtools files.
+[[determinator.path-rule]]
+globs = ["cargo-toolchain", "cargo-flags", "scripts/dev_setup.sh", "x.toml"]
+mark-changed = "all"
+
+[[determinator.path-rule]]
+# Ignore website and other ancillary files, and scripts not listed above.
+globs = ["developers.diem.com/**/*", "documentation/**/*", "docker/**/*", "specifications/**/*", "scripts/**/*"]
+mark-changed = []
+
+[[determinator.path-rule]]
+# A bunch of images that should be ignored, I guess.
+globs = ["diem.png", ".assets/diem.png", "storage/data.png"]
+mark-changed = []
+
+[[determinator.package-rule]]
+# x controls the build process, so if it changes, build everything.
+on-affected = ["x"]
+mark-changed = "all"

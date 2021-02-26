@@ -1,14 +1,15 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::LibraValidatorInterface;
+use crate::DiemValidatorInterface;
 use anyhow::{anyhow, Result};
+use diem_config::config::RocksdbConfig;
 use diem_types::{
     account_address::AccountAddress,
     account_state_blob::AccountStateBlob,
     transaction::{Transaction, Version},
 };
-use diemdb::LibraDB;
+use diemdb::DiemDB;
 use std::{path::Path, sync::Arc};
 use storage_interface::DbReader;
 
@@ -16,11 +17,16 @@ pub struct DBDebuggerInterface(Arc<dyn DbReader>);
 
 impl DBDebuggerInterface {
     pub fn open<P: AsRef<Path> + Clone>(db_root_path: P) -> Result<Self> {
-        Ok(Self(Arc::new(LibraDB::open(db_root_path, true, None)?)))
+        Ok(Self(Arc::new(DiemDB::open(
+            db_root_path,
+            true,
+            None,
+            RocksdbConfig::default(),
+        )?)))
     }
 }
 
-impl LibraValidatorInterface for DBDebuggerInterface {
+impl DiemValidatorInterface for DBDebuggerInterface {
     fn get_account_state_by_version(
         &self,
         account: AccountAddress,

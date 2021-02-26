@@ -4,12 +4,11 @@
 use crate::{
     error::*,
     interface::{
-        DiemP2PTransferTransactionArgument, DiemRawTransaction, DiemSignedTransaction,
-        DiemStatus, DiemTransactionPayload, TransactionType, LIBRA_PUBKEY_SIZE,
-        LIBRA_SIGNATURE_SIZE,
+        DiemP2PTransferTransactionArgument, DiemRawTransaction, DiemSignedTransaction, DiemStatus,
+        DiemTransactionPayload, TransactionType, DIEM_PUBKEY_SIZE, DIEM_SIGNATURE_SIZE,
     },
 };
-use lcs::{from_bytes, to_bytes};
+use bcs::{from_bytes, to_bytes};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature, ED25519_PUBLIC_KEY_LENGTH},
     test_utils::KeyPair,
@@ -17,9 +16,7 @@ use diem_crypto::{
 };
 use diem_types::{
     account_address::{self, AccountAddress},
-    account_config::{
-        coin1_tmp_tag, from_currency_code_string, type_tag_for_currency_code, COIN1_NAME,
-    },
+    account_config::{from_currency_code_string, type_tag_for_currency_code, xus_tag, XUS_NAME},
     chain_id::ChainId,
     transaction::{
         authenticator::AuthenticationKey, helpers::TransactionSigner, RawTransaction, Script,
@@ -364,7 +361,7 @@ pub unsafe extern "C" fn diem_RawTransactionBytes_from(
     };
 
     let program = encode_peer_to_peer_with_metadata_script(
-        coin1_tmp_tag(),
+        xus_tag(),
         receiver_address,
         num_coins,
         metadata,
@@ -377,7 +374,7 @@ pub unsafe extern "C" fn diem_RawTransactionBytes_from(
         payload,
         max_gas_amount,
         gas_unit_price,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         expiration_timestamp_secs,
         ChainId::new(chain_id),
     );
@@ -419,7 +416,7 @@ pub unsafe extern "C" fn diem_RawTransaction_sign(
         return DiemStatus::InvalidArgument;
     }
     let raw_txn_bytes: &[u8] = slice::from_raw_parts(buf_raw_txn, len_raw_txn);
-    let raw_txn: RawTransaction = match lcs::from_bytes(&raw_txn_bytes) {
+    let raw_txn: RawTransaction = match bcs::from_bytes(&raw_txn_bytes) {
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!(
@@ -489,7 +486,7 @@ pub unsafe extern "C" fn diem_DiemSignedTransaction_from(
         return DiemStatus::InvalidArgument;
     }
     let buffer = slice::from_raw_parts(buf, len);
-    let signed_txn: SignedTransaction = match lcs::from_bytes(buffer) {
+    let signed_txn: SignedTransaction = match bcs::from_bytes(buffer) {
         Ok(result) => result,
         Err(e) => {
             update_last_error(format!("Error deserializing signed transaction, invalid signed transaction bytes or length: {}", e.to_string()));
@@ -510,8 +507,8 @@ pub unsafe extern "C" fn diem_DiemSignedTransaction_from(
     // authenticators
     let public_key_bytes = signed_txn.authenticator().public_key_bytes();
     let signature_bytes = signed_txn.authenticator().signature_bytes();
-    let mut public_key = [0; LIBRA_PUBKEY_SIZE as usize];
-    let mut signature = [0; LIBRA_SIGNATURE_SIZE as usize];
+    let mut public_key = [0; DIEM_PUBKEY_SIZE as usize];
+    let mut signature = [0; DIEM_SIGNATURE_SIZE as usize];
 
     let public_key_bytes = &public_key_bytes[..public_key.len()];
     public_key.copy_from_slice(public_key_bytes);
@@ -623,10 +620,10 @@ pub unsafe extern "C" fn diem_DiemSignedTransaction_from(
 #[cfg(test)]
 mod test {
     use super::*;
-    use lcs::from_bytes;
+    use bcs::from_bytes;
     use diem_crypto::{PrivateKey, SigningKey, Uniform};
     use diem_types::{
-        account_config::COIN1_NAME,
+        account_config::XUS_NAME,
         transaction::{SignedTransaction, TransactionArgument},
     };
     use move_core_types::language_storage::TypeTag;
@@ -634,7 +631,7 @@ mod test {
 
     /// Generate a Signed Transaction and deserialize
     #[test]
-    fn test_lcs_signed_transaction() {
+    fn test_bcs_signed_transaction() {
         // generate key pair
         let private_key = Ed25519PrivateKey::generate_for_testing();
         let public_key = private_key.public_key();
@@ -650,7 +647,7 @@ mod test {
         let expiration_timestamp_secs = 0;
         let metadata = vec![1, 2, 3];
         let metadata_signature = [0x1; 64].to_vec();
-        let coin_ident = std::ffi::CString::new(COIN1_NAME).expect("Invalid ident");
+        let coin_ident = std::ffi::CString::new(XUS_NAME).expect("Invalid ident");
 
         let mut script_buf: *mut u8 = std::ptr::null_mut();
         let script_buf_ptr = &mut script_buf;
@@ -673,7 +670,7 @@ mod test {
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let _deserialized_script: Script =
-            from_bytes(script_bytes).expect("LCS deserialization failed for Script");
+            from_bytes(script_bytes).expect("BCS deserialization failed for Script");
 
         let mut buf: *mut u8 = std::ptr::null_mut();
         let buf_ptr = &mut buf;
@@ -699,7 +696,7 @@ mod test {
 
         let signed_txn_bytes_buf: &[u8] = unsafe { slice::from_raw_parts(buf, len) };
         let deserialized_signed_txn: SignedTransaction =
-            from_bytes(signed_txn_bytes_buf).expect("LCS deserialization failed");
+            from_bytes(signed_txn_bytes_buf).expect("BCS deserialization failed");
 
         if let TransactionPayload::Script(program) = deserialized_signed_txn.payload() {
             match program.args()[1] {
@@ -728,7 +725,7 @@ mod test {
         let mut buf2: *mut u8 = std::ptr::null_mut();
         let buf_ptr2 = &mut buf2;
         let mut len2: usize = 0;
-        let coin_idnet = std::ffi::CString::new(COIN1_NAME).expect("Invalid ident");
+        let coin_idnet = std::ffi::CString::new(XUS_NAME).expect("Invalid ident");
         let result2 = unsafe {
             diem_SignedTransactionBytes_from(
                 private_key_bytes.as_ptr(),
@@ -755,7 +752,7 @@ mod test {
         }
 
         // Test creating add currency to account transaction
-        let coin_ident_2 = std::ffi::CString::new(COIN1_NAME).expect("Invalid ident");
+        let coin_ident_2 = std::ffi::CString::new(XUS_NAME).expect("Invalid ident");
 
         let mut script_buf: *mut u8 = std::ptr::null_mut();
         let script_buf_ptr = &mut script_buf;
@@ -772,7 +769,7 @@ mod test {
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let _deserialized_script: Script =
-            from_bytes(script_bytes).expect("LCS deserialization failed for Script");
+            from_bytes(script_bytes).expect("BCS deserialization failed for Script");
 
         let mut buf: *mut u8 = std::ptr::null_mut();
         let buf_ptr = &mut buf;
@@ -798,7 +795,7 @@ mod test {
 
         let signed_txn_bytes_buf: &[u8] = unsafe { slice::from_raw_parts(buf, len) };
         let deserialized_signed_txn: SignedTransaction =
-            from_bytes(signed_txn_bytes_buf).expect("LCS deserialization failed");
+            from_bytes(signed_txn_bytes_buf).expect("BCS deserialization failed");
 
         let identifier = from_currency_code_string(
             coin_ident_2
@@ -833,13 +830,13 @@ mod test {
 
     /// Generate a P2P Transaction Script and deserialize
     #[test]
-    fn test_lcs_p2p_transaction_script() {
+    fn test_bcs_p2p_transaction_script() {
         // create transfer parameters
         let receiver_address = AccountAddress::random();
         let amount = 100_000_000;
         let metadata = vec![1, 2, 3];
         let metadata_signature = [0x1; 64].to_vec();
-        let coin_ident = std::ffi::CString::new(COIN1_NAME).expect("Invalid ident");
+        let coin_ident = std::ffi::CString::new(XUS_NAME).expect("Invalid ident");
 
         let mut script_buf: *mut u8 = std::ptr::null_mut();
         let script_buf_ptr = &mut script_buf;
@@ -863,7 +860,7 @@ mod test {
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let deserialized_script: Script =
-            from_bytes(script_bytes).expect("LCS deserialization failed for Script");
+            from_bytes(script_bytes).expect("BCS deserialization failed for Script");
 
         if let TransactionArgument::Address(val) = deserialized_script.args()[0] {
             assert_eq!(val, receiver_address);
@@ -893,8 +890,8 @@ mod test {
 
     /// Generate a add currency to account script and deserialize
     #[test]
-    fn test_lcs_add_currency_to_account_transaction_script() {
-        let coin_ident = std::ffi::CString::new(COIN1_NAME).expect("Invalid ident");
+    fn test_bcs_add_currency_to_account_transaction_script() {
+        let coin_ident = std::ffi::CString::new(XUS_NAME).expect("Invalid ident");
 
         let mut script_buf: *mut u8 = std::ptr::null_mut();
         let script_buf_ptr = &mut script_buf;
@@ -912,7 +909,7 @@ mod test {
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let deserialized_script: Script =
-            from_bytes(script_bytes).expect("LCS deserialization failed for Script");
+            from_bytes(script_bytes).expect("BCS deserialization failed for Script");
         let identifier = from_currency_code_string(
             coin_ident
                 .as_c_str()
@@ -935,7 +932,7 @@ mod test {
 
     /// Generate a RotateDualAttestationInfo Script and deserialize
     #[test]
-    fn test_lcs_rotate_dual_attestationInfo_transaction_script() {
+    fn test_bcs_rotate_dual_attestationInfo_transaction_script() {
         let new_url = b"new_name".to_vec();
         let private_key = Ed25519PrivateKey::generate_for_testing();
         let new_compliance_public_key = private_key.public_key();
@@ -958,7 +955,7 @@ mod test {
 
         let script_bytes: &[u8] = unsafe { slice::from_raw_parts(script_buf, script_len) };
         let deserialized_script: Script = from_bytes(script_bytes)
-            .expect("LCS deserialization failed for rotate base URL Script");
+            .expect("BCS deserialization failed for rotate base URL Script");
 
         if let TransactionArgument::U8Vector(val) = deserialized_script.args()[0].clone() {
             assert_eq!(val, new_url);
@@ -1017,7 +1014,7 @@ mod test {
         // deserialize raw txn and sign
         let raw_txn_bytes: &[u8] = unsafe { slice::from_raw_parts(buf_ptr, len) };
         let deserialized_raw_txn: RawTransaction =
-            from_bytes(raw_txn_bytes).expect("LCS deserialization failed for raw transaction");
+            from_bytes(raw_txn_bytes).expect("BCS deserialization failed for raw transaction");
         let signature = private_key.sign(&deserialized_raw_txn);
 
         // get signed transaction by signing raw transaction
@@ -1040,7 +1037,7 @@ mod test {
         let signed_txn_bytes: &[u8] =
             unsafe { slice::from_raw_parts(signed_txn_buf_ptr, signed_txn_len) };
         let deserialized_signed_txn: SignedTransaction = from_bytes(signed_txn_bytes)
-            .expect("LCS deserialization failed for signed transaction");
+            .expect("BCS deserialization failed for signed transaction");
 
         // test values equal
         if let TransactionPayload::Script(program) = deserialized_signed_txn.payload() {
@@ -1080,7 +1077,7 @@ mod test {
         let signature = Ed25519Signature::try_from(&[1u8; Ed25519Signature::LENGTH][..]).unwrap();
 
         let program = encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             receiver,
             amount,
             metadata.clone(),
@@ -1093,14 +1090,14 @@ mod test {
                 program,
                 max_gas_amount,
                 gas_unit_price,
-                COIN1_NAME.to_owned(),
+                XUS_NAME.to_owned(),
                 expiration_timestamp_secs,
                 ChainId::test(),
             ),
             public_key.clone(),
             signature.clone(),
         );
-        let txn_bytes = lcs::to_bytes(&signed_txn).expect("Unable to serialize SignedTransaction");
+        let txn_bytes = bcs::to_bytes(&signed_txn).expect("Unable to serialize SignedTransaction");
 
         let mut diem_signed_txn = DiemSignedTransaction::default();
         let result = unsafe {

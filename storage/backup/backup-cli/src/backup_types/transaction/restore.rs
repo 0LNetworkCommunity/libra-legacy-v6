@@ -12,26 +12,29 @@ use crate::{
     },
     storage::{BackupStorage, FileHandle},
     utils::{
-        read_record_bytes::ReadRecordBytes, storage_ext::BackupStorageExt, GlobalRestoreOptions,
-        RestoreRunMode,
+        read_record_bytes::ReadRecordBytes, storage_ext::BackupStorageExt, stream::StreamX,
+        GlobalRestoreOptions, RestoreRunMode,
     },
 };
 use anyhow::{anyhow, bail, ensure, Result};
-use executor::Executor;
-use executor_types::TransactionReplayer;
 use diem_logger::prelude::*;
 use diem_types::{
+    contract_event::ContractEvent,
     ledger_info::LedgerInfoWithSignatures,
     proof::{TransactionAccumulatorRangeProof, TransactionListProof},
     transaction::{Transaction, TransactionInfo, TransactionListWithProof, Version},
 };
 use diem_vm::DiemVM;
+use executor::Executor;
+use executor_types::TransactionReplayer;
+use futures::StreamExt;
 use std::{
     cmp::{max, min},
     sync::Arc,
 };
 use storage_interface::DbReaderWriter;
 use structopt::StructOpt;
+use tokio::io::BufReader;
 
 #[derive(StructOpt)]
 pub struct TransactionRestoreOpt {
@@ -62,16 +65,11 @@ pub struct TransactionRestoreController {
     state: State,
 }
 
-#[derive(Default)]
-struct State {
-    frozen_subtree_confirmed: bool,
-    transaction_replayer: Option<Executor<DiemVM>>,
-}
-
 struct LoadedChunk {
     pub manifest: TransactionChunk,
     pub txns: Vec<Transaction>,
     pub txn_infos: Vec<TransactionInfo>,
+    pub event_vecs: Vec<Vec<ContractEvent>>,
     pub range_proof: TransactionAccumulatorRangeProof,
     pub ledger_info: LedgerInfoWithSignatures,
 }
@@ -82,14 +80,16 @@ impl LoadedChunk {
         storage: &Arc<dyn BackupStorage>,
         epoch_history: Option<&Arc<EpochHistory>>,
     ) -> Result<Self> {
-        let mut file = storage.open_for_read(&manifest.transactions).await?;
+        let mut file = BufReader::new(storage.open_for_read(&manifest.transactions).await?);
         let mut txns = Vec::new();
         let mut txn_infos = Vec::new();
+        let mut event_vecs = Vec::new();
 
         while let Some(record_bytes) = file.read_record_bytes().await? {
-            let (txn, txn_info) = lcs::from_bytes(&record_bytes)?;
+            let (txn, txn_info, events) = bcs::from_bytes(&record_bytes)?;
             txns.push(txn);
             txn_infos.push(txn_info);
+            event_vecs.push(events);
         }
 
         ensure!(
@@ -101,7 +101,7 @@ impl LoadedChunk {
         );
 
         let (range_proof, ledger_info) = storage
-            .load_lcs_file::<(TransactionAccumulatorRangeProof, LedgerInfoWithSignatures)>(
+            .load_bcs_file::<(TransactionAccumulatorRangeProof, LedgerInfoWithSignatures)>(
                 &manifest.proof,
             )
             .await?;
@@ -112,7 +112,7 @@ impl LoadedChunk {
         // make a `TransactionListWithProof` to reuse its verification code.
         let txn_list_with_proof = TransactionListWithProof::new(
             txns,
-            None, /* events */
+            Some(event_vecs),
             Some(manifest.first_version),
             TransactionListProof::new(range_proof, txn_infos),
         );
@@ -120,11 +120,13 @@ impl LoadedChunk {
         // and disassemble it to get things back.
         let txns = txn_list_with_proof.transactions;
         let (range_proof, txn_infos) = txn_list_with_proof.proof.unpack();
+        let event_vecs = txn_list_with_proof.events.expect("unknown to be Some.");
 
         Ok(Self {
             manifest,
             txns,
             txn_infos,
+            event_vecs,
             range_proof,
             ledger_info,
         })
@@ -149,14 +151,15 @@ impl TransactionRestoreController {
         }
     }
 
+    pub async fn preheat(mut self) -> PreheatedTransactionRestore {
+        PreheatedTransactionRestore {
+            preheat_result: self.preheat_impl().await,
+            controller: self,
+        }
+    }
+
     pub async fn run(self) -> Result<()> {
-        let name = self.name();
-        info!("{} started. Manifest: {}", name, self.manifest_handle);
-        self.run_impl()
-            .await
-            .map_err(|e| anyhow!("{} failed: {}", name, e))?;
-        info!("{} succeeded.", name);
-        Ok(())
+        self.preheat().await.run().await
     }
 }
 
@@ -165,42 +168,31 @@ impl TransactionRestoreController {
         format!("transaction {}", self.run_mode.name())
     }
 
-    async fn run_impl(mut self) -> Result<()> {
+    async fn preheat_impl(&mut self) -> Result<TransactionRestorePreheatData> {
         let manifest: TransactionBackup =
             self.storage.load_json_file(&self.manifest_handle).await?;
         manifest.verify()?;
-        if self.target_version < manifest.first_version {
-            warn!(
-                "Manifest {} skipped since its entirety is newer than target version {}.",
-                self.manifest_handle, self.target_version,
-            );
-            return Ok(());
-        }
 
-        for chunk_manifest in manifest.chunks {
+        let mut loaded_chunks = Vec::new();
+        for chunk_manifest in &manifest.chunks {
             if chunk_manifest.first_version > self.target_version {
                 break;
             }
 
-            let chunk =
-                LoadedChunk::load(chunk_manifest, &self.storage, self.epoch_history.as_ref())
-                    .await?;
-            self.maybe_save_frozen_subtrees(&chunk)?;
-
-            let last = min(self.target_version, chunk.manifest.last_version);
-            let first_to_replay = max(chunk.manifest.first_version, self.replay_from_version);
-
-            self.maybe_restore_transactions(chunk, last, first_to_replay)?;
-        }
-
-        if self.target_version < manifest.last_version {
-            warn!(
-                "Transactions newer than target version {} ignored.",
-                self.target_version,
+            loaded_chunks.push(
+                LoadedChunk::load(
+                    chunk_manifest.clone(),
+                    &self.storage,
+                    self.epoch_history.as_ref(),
+                )
+                .await?,
             )
         }
 
-        Ok(())
+        Ok(TransactionRestorePreheatData {
+            manifest,
+            loaded_chunks,
+        })
     }
 
     fn maybe_restore_transactions(
@@ -218,9 +210,11 @@ impl TransactionRestoreController {
                     chunk.manifest.first_version,
                     &chunk.txns[..num_txns_to_save],
                     &chunk.txn_infos[..num_txns_to_save],
+                    &chunk.event_vecs[..num_txns_to_save],
                 )?;
                 chunk.txns.drain(0..num_txns_to_save);
                 chunk.txn_infos.drain(0..num_txns_to_save);
+                chunk.event_vecs.drain(0..num_txns_to_save);
                 TRANSACTION_SAVE_VERSION.set(last_to_save as i64);
             }
             // Those to replay:
@@ -296,5 +290,150 @@ impl TransactionRestoreController {
         }
 
         Ok(self.state.transaction_replayer.as_mut().unwrap())
+    }
+}
+
+#[derive(Default)]
+struct State {
+    frozen_subtree_confirmed: bool,
+    transaction_replayer: Option<Executor<DiemVM>>,
+}
+
+struct TransactionRestorePreheatData {
+    manifest: TransactionBackup,
+    loaded_chunks: Vec<LoadedChunk>,
+}
+
+pub struct PreheatedTransactionRestore {
+    controller: TransactionRestoreController,
+    preheat_result: Result<TransactionRestorePreheatData>,
+}
+
+impl PreheatedTransactionRestore {
+    pub async fn run(self) -> Result<()> {
+        let name = self.controller.name();
+        info!(
+            "{} started. Manifest: {}",
+            name, self.controller.manifest_handle
+        );
+        let res = self
+            .run_impl()
+            .await
+            .map_err(|e| anyhow!("{} failed: {}", name, e))?;
+        info!("{} succeeded.", name);
+        Ok(res)
+    }
+
+    pub fn get_last_version(&self) -> Result<Version> {
+        Ok(min(
+            self.preheat_result
+                .as_ref()
+                .map_err(|e| anyhow!("Preheat failed: {}", e))?
+                .manifest
+                .last_version,
+            self.controller.target_version,
+        ))
+    }
+}
+
+impl PreheatedTransactionRestore {
+    async fn run_impl(mut self) -> Result<()> {
+        let preheat_data = self
+            .preheat_result
+            .map_err(|e| anyhow!("Preheat failed: {}", e))?;
+
+        for chunk in preheat_data.loaded_chunks {
+            self.controller.maybe_save_frozen_subtrees(&chunk)?;
+
+            let last = min(self.controller.target_version, chunk.manifest.last_version);
+            let first_to_replay = max(
+                chunk.manifest.first_version,
+                self.controller.replay_from_version,
+            );
+
+            self.controller
+                .maybe_restore_transactions(chunk, last, first_to_replay)?;
+        }
+
+        if self.controller.target_version < preheat_data.manifest.last_version {
+            warn!(
+                "Transactions newer than target version {} ignored.",
+                self.controller.target_version,
+            )
+        }
+
+        Ok(())
+    }
+}
+
+/// Takes a series of transaction backup manifests, preheat in parallel, then execute in order.
+pub struct TransactionRestoreBatchController {
+    global_opt: GlobalRestoreOptions,
+    storage: Arc<dyn BackupStorage>,
+    manifest_handles: Vec<FileHandle>,
+    replay_from_version: Option<Version>,
+    epoch_history: Option<Arc<EpochHistory>>,
+}
+
+impl TransactionRestoreBatchController {
+    pub fn new(
+        global_opt: GlobalRestoreOptions,
+        storage: Arc<dyn BackupStorage>,
+        manifest_handles: Vec<FileHandle>,
+        replay_from_version: Option<Version>,
+        epoch_history: Option<Arc<EpochHistory>>,
+    ) -> Self {
+        Self {
+            global_opt,
+            storage,
+            manifest_handles,
+            replay_from_version,
+            epoch_history,
+        }
+    }
+
+    pub async fn run(self) -> Result<()> {
+        let timer = std::time::Instant::now();
+
+        let futs_iter = self.manifest_handles.clone().into_iter().map(|hdl| {
+            let _global_opt = self.global_opt.clone();
+            let _epoch_history = self.epoch_history.clone();
+            let _storage = self.storage.clone();
+            let _replay_from_version = self.replay_from_version;
+            async move {
+                // Use `spawn()` so it's (most likely) off the main thread.
+                // There's a lot of deserialization / verification happening that's CPU
+                // intensive, hence the `spawn()`
+                tokio::spawn(
+                    TransactionRestoreController::new(
+                        TransactionRestoreOpt {
+                            manifest_handle: hdl,
+                            replay_from_version: _replay_from_version,
+                        },
+                        _global_opt,
+                        _storage,
+                        _epoch_history,
+                    )
+                    .preheat(),
+                )
+                .await
+                .expect("Failed to spawn task.")
+            }
+        });
+
+        let mut futs_stream = futures::stream::iter(futs_iter).buffered_x(
+            num_cpus::get() * 3, /* more buffer here because the preheat of txns is heavy and variates more in execution time. */
+            num_cpus::get(), /* concurrency */
+        );
+        while let Some(preheated_txn_restore) = futs_stream.next().await {
+            let v = preheated_txn_restore.get_last_version();
+            preheated_txn_restore.run().await?;
+            debug!(
+                "Accumulative TPS: {:.0}",
+                (v? + 1) as f64 / timer.elapsed().as_secs_f64()
+            );
+        }
+
+        Ok(())
     }
 }

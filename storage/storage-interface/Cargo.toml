@@ -1,21 +1,21 @@
 [package]
 name = "storage-interface"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem storage interface"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 itertools = "0.9.0"
-serde = { version = "1.0.116", default-features = false }
-thiserror = "1.0.21"
+serde = { version = "1.0.117", default-features = false }
+thiserror = "1.0.22"
 
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
 diem-secure-net = { path = "../../secure/net", version = "0.1.0" }
 diem-state-view = { path = "../../storage/state-view", version = "0.1.0" }

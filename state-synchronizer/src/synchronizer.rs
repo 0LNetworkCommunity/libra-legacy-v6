@@ -8,12 +8,6 @@ use crate::{
     SynchronizerState,
 };
 use anyhow::{format_err, Result};
-use executor_types::ChunkExecutor;
-use futures::{
-    channel::{mpsc, oneshot},
-    future::Future,
-    SinkExt,
-};
 use diem_config::{
     config::{NodeConfig, RoleType, StateSyncConfig, UpstreamConfig},
     network_id::NodeNetworkId,
@@ -22,6 +16,12 @@ use diem_mempool::{CommitNotification, CommitResponse};
 use diem_types::{
     contract_event::ContractEvent, ledger_info::LedgerInfoWithSignatures, transaction::Transaction,
     waypoint::Waypoint,
+};
+use executor_types::ChunkExecutor;
+use futures::{
+    channel::{mpsc, oneshot},
+    future::Future,
+    SinkExt,
 };
 use std::{
     boxed::Box,

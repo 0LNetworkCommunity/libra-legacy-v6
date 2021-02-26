@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use codespan::{ByteIndex, Span};
@@ -569,7 +569,7 @@ fn parse_sequence<'input>(tokens: &mut Lexer<'input>) -> Result<Sequence, Error>
                     value: e.value,
                 });
             } else {
-                seq.push(item);
+                return Err(unexpected_token_error(tokens, "';'"));
             }
             break;
         }

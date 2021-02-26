@@ -10,9 +10,7 @@ use cli::client_proxy::ClientProxy;
 use debug_interface::NodeDebugClient;
 use diem_trace::trace::trace_node;
 use diem_types::{
-    account_config::{diem_root_address, testnet_dd_account_address},
-    ledger_info::LedgerInfo,
-    waypoint::Waypoint,
+    account_config::testnet_dd_account_address, ledger_info::LedgerInfo, waypoint::Waypoint,
 };
 
 #[test]
@@ -24,10 +22,9 @@ fn test_create_mint_transfer_block_metadata() {
 
     // Test if we commit not only user transactions but also block metadata transactions,
     // assert committed version > # of user transactions
-    let (_account, version) = env
-        .get_validator_client(0, None)
-        .get_latest_account(&["q", &diem_root_address().to_string()])
-        .unwrap();
+    let mut vclient = env.get_validator_client(0, None);
+    vclient.test_trusted_connection().expect("success");
+    let version = vclient.get_latest_version();
     assert!(
         version > 4,
         "BlockMetadata txn not produced, current version: {}",
@@ -49,21 +46,17 @@ fn test_basic_restartability() {
 
     client.create_next_account(false).unwrap();
     client.create_next_account(false).unwrap();
+    client.mint_coins(&["mb", "0", "100", "XUS"], true).unwrap();
+    client.mint_coins(&["mb", "1", "10", "XUS"], true).unwrap();
     client
-        .mint_coins(&["mb", "0", "100", "Coin1"], true)
-        .unwrap();
-    client
-        .mint_coins(&["mb", "1", "10", "Coin1"], true)
-        .unwrap();
-    client
-        .transfer_coins(&["tb", "0", "1", "10", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(90.0, "Coin1".to_string())],
+        vec![(90.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(20.0, "Coin1".to_string())],
+        vec![(20.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
@@ -72,23 +65,23 @@ fn test_basic_restartability() {
 
     assert!(env.validator_swarm.add_node(peer_to_restart).is_ok());
     assert!(compare_balances(
-        vec![(90.0, "Coin1".to_string())],
+        vec![(90.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(20.0, "Coin1".to_string())],
+        vec![(20.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
     client
-        .transfer_coins(&["tb", "0", "1", "10", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(80.0, "Coin1".to_string())],
+        vec![(80.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(30.0, "Coin1".to_string())],
+        vec![(30.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 }
@@ -99,7 +92,7 @@ fn test_client_waypoints() {
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "10", "XUS"], true)
         .unwrap();
 
     // Create the waypoint for the initial epoch
@@ -129,10 +122,10 @@ fn test_client_waypoints() {
         .unwrap();
 
     client
-        .mint_coins(&["mintb", "0", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(20.0, "Coin1".to_string())],
+        vec![(20.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     let epoch_1_li = client
@@ -164,29 +157,29 @@ fn test_concurrent_transfers_single_node() {
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "100", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "100", "XUS"], true)
         .unwrap();
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "1", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "10", "XUS"], true)
         .unwrap();
 
     for _ in 0..20 {
         client
-            .transfer_coins(&["t", "0", "1", "1", "Coin1"], false)
+            .transfer_coins(&["t", "0", "1", "1", "XUS"], false)
             .unwrap();
     }
     client
-        .transfer_coins(&["tb", "0", "1", "1", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "1", "XUS"], true)
         .unwrap();
 
     assert!(compare_balances(
-        vec![(79.0, "Coin1".to_string())],
+        vec![(79.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(31.0, "Coin1".to_string())],
+        vec![(31.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 }
@@ -200,15 +193,15 @@ fn test_trace() {
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "100", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "100", "XUS"], true)
         .unwrap();
 
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "1", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "10", "XUS"], true)
         .unwrap();
     client
-        .transfer_coins(&["t", "0", "1", "1", "Coin1"], false)
+        .transfer_coins(&["t", "0", "1", "1", "XUS"], false)
         .unwrap();
 
     let events = debug_client.get_events().expect("Failed to get events");
@@ -224,37 +217,37 @@ fn check_create_mint_transfer(mut client: ClientProxy) {
     // Create account 0, mint 10 coins and check balance
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "10", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(10.0, "Coin1".to_string())],
+        vec![(10.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
 
     // Create account 1, mint 1 coin, transfer 3 coins from account 0 to 1, check balances
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "1", "1", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "1", "XUS"], true)
         .unwrap();
     client
-        .transfer_coins(&["tb", "0", "1", "3", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "3", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(7.0, "Coin1".to_string())],
+        vec![(7.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(4.0, "Coin1".to_string())],
+        vec![(4.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
     // Create account 2, mint 15 coins and check balance
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "2", "15", "Coin1"], true)
+        .mint_coins(&["mintb", "2", "15", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(15.0, "Coin1".to_string())],
+        vec![(15.0, "XUS".to_string())],
         client.get_balances(&["b", "2"]).unwrap(),
     ));
 }

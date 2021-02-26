@@ -1,11 +1,11 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
 
 use bytecode_verifier::{verify_module, DependencyChecker};
 use log::LevelFilter;
-use move_lang::{compiled_unit::CompiledUnit, move_compile, shared::Address};
+use move_lang::{compiled_unit::CompiledUnit, move_compile_and_report, shared::Address};
 use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeMap,
@@ -14,6 +14,8 @@ use std::{
     path::{Path, PathBuf},
 };
 use vm::{normalized::Module, CompiledModule};
+
+pub mod utils;
 
 pub const STD_LIB_DIR: &str = "modules";
 pub const MOVE_EXTENSION: &str = "move";
@@ -92,7 +94,7 @@ where
 
 pub fn stdlib_files() -> Vec<String> {
     let path = path_in_crate(STD_LIB_DIR);
-    let dirfiles = datatest_stable::utils::iterate_directory(&path);
+    let dirfiles = utils::iterate_directory(&path);
     filter_move_files(dirfiles)
         .flat_map(|path| path.into_os_string().into_string())
         .collect()
@@ -101,7 +103,7 @@ pub fn stdlib_files() -> Vec<String> {
 pub fn stdlib_bytecode_files() -> Vec<String> {
     let path = path_in_crate(COMPILED_OUTPUT_PATH);
     let names = stdlib_files();
-    let dirfiles = datatest_stable::utils::iterate_directory(&path);
+    let dirfiles = utils::iterate_directory(&path);
     let res: Vec<String> = filter_move_bytecode_files(dirfiles)
         .filter(|path| {
             for name in &names {
@@ -134,15 +136,15 @@ pub fn stdlib_bytecode_files() -> Vec<String> {
 
 pub fn script_files() -> Vec<String> {
     let path = path_in_crate(TRANSACTION_SCRIPTS);
-    let dirfiles = datatest_stable::utils::iterate_directory(&path);
+    let dirfiles = utils::iterate_directory(&path);
     filter_move_files(dirfiles)
         .flat_map(|path| path.into_os_string().into_string())
         .collect()
 }
 
 pub fn build_stdlib() -> BTreeMap<String, CompiledModule> {
-    let (_, compiled_units) =
-        move_compile(&stdlib_files(), &[], Some(Address::LIBRA_CORE), None).unwrap();
+    let (_files, compiled_units) =
+        move_compile_and_report(&stdlib_files(), &[], Some(Address::DIEM_CORE), None).unwrap();
     let mut modules = BTreeMap::new();
     for (i, compiled_unit) in compiled_units.into_iter().enumerate() {
         let name = compiled_unit.name();
@@ -161,30 +163,11 @@ pub fn build_stdlib() -> BTreeMap<String, CompiledModule> {
     modules
 }
 
-// Update stdlib with a byte string, used as part of the upgrade oracle
-pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Vec<CompiledModule> {
-    let modules : Vec<CompiledModule> = lcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)
-        .unwrap_or(vec![]) // set as empty array if err occurred
-        .into_iter()
-        .map(|bytes| CompiledModule::deserialize(&bytes).unwrap())
-        .collect();
-
-    // verify the compiled module
-    let mut verified_modules = vec![];
-    for module in modules {
-        verify_module(&module).expect("stdlib module failed to verify");
-        DependencyChecker::verify_module(&module, &verified_modules)
-            .expect("stdlib module dependency failed to verify");
-        verified_modules.push(module)
-    }
-    verified_modules
-}
-
 pub fn compile_script(source_file_str: String) -> Vec<u8> {
-    let (_, mut compiled_program) = move_compile(
+    let (_files, mut compiled_program) = move_compile_and_report(
         &[source_file_str],
         &stdlib_files(),
-        Some(Address::LIBRA_CORE),
+        Some(Address::DIEM_CORE),
         None,
     )
     .unwrap();
@@ -209,7 +192,7 @@ pub fn save_binary(path: &Path, binary: &[u8]) -> bool {
     true
 }
 
-pub fn build_stdlib_doc() {
+pub fn build_stdlib_doc(with_diagram: bool) {
     build_doc(
         STD_LIB_DOC_DIR,
         "",
@@ -223,10 +206,11 @@ pub fn build_stdlib_doc() {
         ),
         stdlib_files().as_slice(),
         "",
+        with_diagram,
     )
 }
 
-pub fn build_transaction_script_doc(script_files: &[String]) {
+pub fn build_transaction_script_doc(script_files: &[String], with_diagram: bool) {
     build_doc(
         TRANSACTION_SCRIPTS_DOC_DIR,
         STD_LIB_DOC_DIR,
@@ -245,6 +229,7 @@ pub fn build_transaction_script_doc(script_files: &[String]) {
         ),
         script_files,
         STD_LIB_DIR,
+        with_diagram,
     )
 }
 
@@ -273,6 +258,7 @@ fn build_doc(
     references_file: Option<String>,
     sources: &[String],
     dep_path: &str,
+    with_diagram: bool,
 ) {
     let mut options = move_prover::cli::Options::default();
     options.move_sources = sources.to_vec();
@@ -292,6 +278,8 @@ fn build_doc(
     }
     options.docgen.output_directory = output_path.to_string();
     options.setup_logging_for_test();
+    options.docgen.include_dep_diagrams = with_diagram;
+    options.docgen.include_call_diagrams = with_diagram;
     move_prover::run_move_prover_errors_to_stderr(options).unwrap();
 }
 
@@ -353,7 +341,7 @@ pub fn generate_rust_transaction_builders() {
         let mut file = std::fs::File::create(TRANSACTION_BUILDERS_GENERATED_SOURCE_PATH)
             .expect("Failed to open file for Rust script build generation");
         transaction_builder_generator::rust::output(&mut file, &abis, /* local types */ true)
-            .expect("Failed to generate Rust builders for Libra");
+            .expect("Failed to generate Rust builders for Diem");
     }
 
     std::process::Command::new("rustfmt")
@@ -469,7 +457,7 @@ impl Compatibility {
         // (1) Verify new_module (TODO)
         // (2) Link new_module against new_module dependencies. (TODO)
         //     Note: this will *NOT* prevent cylic deps. We need to think about a different scheme
-        //     if we care about this (wich we almost certainly do). One (probably too restrictive)
+        //     if we care about this (which we almost certainly do). One (probably too restrictive)
         //     solution would be: insist that deps(new_module) are a subset of deps(old_module).
         //     That would not only prevent cyclic deps, but also preclude the need for linking
         //     entirely.

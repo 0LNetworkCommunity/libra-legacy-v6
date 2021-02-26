@@ -1,8 +1,11 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use executor::db_bootstrapper;
-use diem_global_constants::{CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY, SAFETY_DATA, VALIDATOR_NETWORK_KEY, WAYPOINT};
+use diem_config::config::RocksdbConfig;
+use diem_global_constants::{
+    CONSENSUS_KEY, FULLNODE_NETWORK_KEY, OPERATOR_ACCOUNT, OPERATOR_KEY, OWNER_ACCOUNT, OWNER_KEY,
+    SAFETY_DATA, VALIDATOR_NETWORK_KEY, WAYPOINT,
+};
 use diem_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
     storage::StorageWrapper as Storage,
@@ -15,6 +18,7 @@ use diem_types::{
 };
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
+use executor::db_bootstrapper;
 use std::{
     convert::TryFrom,
     fmt::Write,
@@ -67,7 +71,6 @@ impl Verify {
 
         write_string(&validator_storage, &mut buffer, OPERATOR_ACCOUNT);
         write_string(&validator_storage, &mut buffer, OWNER_ACCOUNT);
-
         write_safety_data(&validator_storage, &mut buffer, SAFETY_DATA);
         write_waypoint(&validator_storage, &mut buffer, WAYPOINT);
 
@@ -101,12 +104,13 @@ fn write_ed25519_key(storage: &Storage, buffer: &mut String, key: &'static str) 
         .unwrap_or_else(|e| e.to_string());
     writeln!(buffer, "{} - {}", key, value).unwrap();
 }
+
 fn write_x25519_key(storage: &Storage, buffer: &mut String, key: &'static str) {
     let value = storage
         .x25519_public_from_private(key)
         .map(|v| v.to_string())
         .unwrap_or_else(|e| e.to_string());
-    writeln!(buffer, "{} x25519 - {}", key, value).unwrap();
+    writeln!(buffer, "{} - {}", key, value).unwrap();
 }
 
 fn write_string(storage: &Storage, buffer: &mut String, key: &'static str) {
@@ -198,12 +202,12 @@ fn compare_genesis(
 
 /// Compute the ledger given a genesis writeset transaction and return access to that ledger and
 /// the waypoint for that state.
-pub fn compute_genesis(
+fn compute_genesis(
     genesis_path: &PathBuf,
     db_path: &Path,
 ) -> Result<(DbReaderWriter, Waypoint), Error> {
-    let diemdb =
-        DiemDB::open(db_path, false, None).map_err(|e| Error::UnexpectedError(e.to_string()))?;
+    let diemdb = DiemDB::open(db_path, false, None, RocksdbConfig::default())
+        .map_err(|e| Error::UnexpectedError(e.to_string()))?;
     let db_rw = DbReaderWriter::new(diemdb);
 
     let mut file = File::open(genesis_path)
@@ -211,7 +215,7 @@ pub fn compute_genesis(
     let mut buffer = vec![];
     file.read_to_end(&mut buffer)
         .map_err(|e| Error::UnexpectedError(format!("Unable to read genesis: {}", e)))?;
-    let genesis = lcs::from_bytes(&buffer)
+    let genesis = bcs::from_bytes(&buffer)
         .map_err(|e| Error::UnexpectedError(format!("Unable to parse genesis: {}", e)))?;
 
     let waypoint = db_bootstrapper::generate_waypoint::<DiemVM>(&db_rw, &genesis)

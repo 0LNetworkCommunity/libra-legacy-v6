@@ -1,7 +1,6 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use language_e2e_tests::{account, account::AccountData, executor::FakeExecutor};
 use diem_types::{
     account_address::AccountAddress,
     account_config,
@@ -9,6 +8,7 @@ use diem_types::{
     transaction::{Script, TransactionStatus},
     vm_status::KeptVMStatus,
 };
+use language_e2e_tests::{account, current_function_name, executor::FakeExecutor};
 use move_core_types::{
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
@@ -21,8 +21,10 @@ use vm::file_format::{
 #[test]
 fn script_code_unverifiable() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
+
     // create and publish sender
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // create a bogus script
@@ -58,7 +60,7 @@ fn script_code_unverifiable() {
         .read_account_resource(sender.account())
         .expect("sender must exist");
     let updated_sender_balance = executor
-        .read_balance_resource(sender.account(), account::coin1_tmp_currency_code())
+        .read_balance_resource(sender.account(), account::xus_currency_code())
         .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
@@ -67,8 +69,10 @@ fn script_code_unverifiable() {
 #[test]
 fn script_none_existing_module_dep() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
+
     // create and publish sender
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // create a bogus script
@@ -132,7 +136,7 @@ fn script_none_existing_module_dep() {
         .read_account_resource(sender.account())
         .expect("sender must exist");
     let updated_sender_balance = executor
-        .read_balance_resource(sender.account(), account::coin1_tmp_currency_code())
+        .read_balance_resource(sender.account(), account::xus_currency_code())
         .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
@@ -141,24 +145,26 @@ fn script_none_existing_module_dep() {
 #[test]
 fn script_non_existing_function_dep() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
+
     // create and publish sender
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // create a bogus script
     let mut script = empty_script();
 
-    // LCS module
+    // BCS module
     script
         .address_identifiers
         .push(account_config::CORE_CODE_ADDRESS);
-    script.identifiers.push(Identifier::new("LCS").unwrap());
+    script.identifiers.push(Identifier::new("BCS").unwrap());
     let module_handle = ModuleHandle {
         address: AddressIdentifierIndex((script.address_identifiers.len() - 1) as u16),
         name: IdentifierIndex((script.identifiers.len() - 1) as u16),
     };
     script.module_handles.push(module_handle);
-    // make a non existent function on LCS
+    // make a non existent function on BCS
     script.identifiers.push(Identifier::new("foo").unwrap());
     let fun_handle = FunctionHandle {
         module: ModuleHandleIndex((script.module_handles.len() - 1) as u16),
@@ -206,7 +212,7 @@ fn script_non_existing_function_dep() {
         .read_account_resource(sender.account())
         .expect("sender must exist");
     let updated_sender_balance = executor
-        .read_balance_resource(sender.account(), account::coin1_tmp_currency_code())
+        .read_balance_resource(sender.account(), account::xus_currency_code())
         .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
@@ -215,24 +221,26 @@ fn script_non_existing_function_dep() {
 #[test]
 fn script_bad_sig_function_dep() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
+
     // create and publish sender
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // create a bogus script
     let mut script = empty_script();
 
-    // LCS module
+    // BCS module
     script
         .address_identifiers
         .push(account_config::CORE_CODE_ADDRESS);
-    script.identifiers.push(Identifier::new("LCS").unwrap());
+    script.identifiers.push(Identifier::new("BCS").unwrap());
     let module_handle = ModuleHandle {
         address: AddressIdentifierIndex((script.address_identifiers.len() - 1) as u16),
         name: IdentifierIndex((script.identifiers.len() - 1) as u16),
     };
     script.module_handles.push(module_handle);
-    // LCS::to_bytes with bad sig
+    // BCS::to_bytes with bad sig
     script
         .identifiers
         .push(Identifier::new("to_bytes").unwrap());
@@ -281,7 +289,7 @@ fn script_bad_sig_function_dep() {
         .read_account_resource(sender.account())
         .expect("sender must exist");
     let updated_sender_balance = executor
-        .read_balance_resource(sender.account(), account::coin1_tmp_currency_code())
+        .read_balance_resource(sender.account(), account::xus_currency_code())
         .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
@@ -290,8 +298,10 @@ fn script_bad_sig_function_dep() {
 #[test]
 fn script_type_argument_module_does_not_exist() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
+
     // create and publish sender
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // create a bogus script
@@ -344,7 +354,7 @@ fn script_type_argument_module_does_not_exist() {
         .read_account_resource(sender.account())
         .expect("sender must exist");
     let updated_sender_balance = executor
-        .read_balance_resource(sender.account(), account::coin1_tmp_currency_code())
+        .read_balance_resource(sender.account(), account::xus_currency_code())
         .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());
@@ -353,8 +363,10 @@ fn script_type_argument_module_does_not_exist() {
 #[test]
 fn script_nested_type_argument_module_does_not_exist() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
+
     // create and publish sender
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // create a bogus script
@@ -407,7 +419,7 @@ fn script_nested_type_argument_module_does_not_exist() {
         .read_account_resource(sender.account())
         .expect("sender must exist");
     let updated_sender_balance = executor
-        .read_balance_resource(sender.account(), account::coin1_tmp_currency_code())
+        .read_balance_resource(sender.account(), account::xus_currency_code())
         .expect("sender balance must exist");
     assert_eq!(balance, updated_sender_balance.coin());
     assert_eq!(11, updated_sender.sequence_number());

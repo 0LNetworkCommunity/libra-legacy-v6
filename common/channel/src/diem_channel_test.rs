@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{diem_channel, diem_channel::ElementStatus, message_queues::QueueStyle};
+use diem_types::account_address::AccountAddress;
 use futures::{
     channel::oneshot,
     executor::block_on,
     future::{join, FutureExt},
     stream::{FusedStream, StreamExt},
 };
-use diem_types::account_address::AccountAddress;
 use std::{num::NonZeroUsize, time::Duration};
 use tokio::{runtime::Runtime, time::delay_for};
 

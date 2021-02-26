@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
 use bytecode_verifier::{verify_module, verify_script};
 use compiled_stdlib::{stdlib_modules, StdLibOptions};
+use diem_types::account_address::AccountAddress;
 use ir_to_bytecode::{
     compiler::{compile_module, compile_script},
     parser::{parse_module, parse_script},
 };
-use diem_types::account_address::AccountAddress;
 use vm::{
     access::ScriptAccess,
     errors::{Location, VMError},
@@ -23,10 +23,7 @@ macro_rules! instr_count {
             .code
             .code
             .iter()
-            .filter(|ins| match ins {
-                $instr => true,
-                _ => false,
-            })
+            .filter(|ins| matches!(ins, $instr))
             .count();
     };
 }

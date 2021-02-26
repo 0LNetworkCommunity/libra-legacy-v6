@@ -1,10 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_global_constants::{OWNER_ACCOUNT, OWNER_KEY};
+use diem_global_constants::OWNER_ACCOUNT;
 use diem_management::{constants, error::Error, secure_backend::SharedBackend};
 use diem_network_address::NetworkAddress;
-use diem_types::transaction::{authenticator::AuthenticationKey, Transaction};
+use diem_types::transaction::Transaction;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -31,15 +31,8 @@ impl ValidatorConfig {
             .override_shared_backend(&self.shared_backend.shared_backend)?;
 
         // Retrieve and set owner account
-        // let owner_account =
-        //     diem_config::utils::validator_owner_account_from_name(self.owner_name.as_bytes());
-        let remote_storage = config.shared_backend_with_namespace(self.owner_name.into());
-        let owner_key = remote_storage.ed25519_key(OWNER_KEY)?;
-        let staged_owner_auth_key = AuthenticationKey::ed25519(&owner_key);
-        let owner_account = staged_owner_auth_key.derived_address();
-
-
-        // This means Operators can only have 1 owner, at least at genesis.
+        let owner_account =
+            diem_config::utils::validator_owner_account_from_name(self.owner_name.as_bytes());
         let mut validator_storage = config.validator_backend();
         validator_storage.set(OWNER_ACCOUNT, owner_account)?;
 

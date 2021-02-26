@@ -77,7 +77,6 @@ impl<'a> CostStrategy<'a> {
         if !self.charge {
             return Ok(());
         }
-        debug_assert!(amount.get() > 0);
         if self
             .gas_left
             .app(&amount, |curr_gas, gas_amt| curr_gas >= gas_amt)
@@ -301,7 +300,7 @@ pub enum NativeCostIndex {
     SHA3_256 = 1,
     ED25519_VERIFY = 2,
     ED25519_THRESHOLD_VERIFY = 3,
-    LCS_TO_BYTES = 4,
+    BCS_TO_BYTES = 4,
     LENGTH = 5,
     EMPTY = 6,
     BORROW = 7,
@@ -315,7 +314,4 @@ pub enum NativeCostIndex {
     CREATE_SIGNER = 15,
     DESTROY_SIGNER = 16,
     EMIT_EVENT = 17,
-    //////// 0L ////////
-    VDF_VERIFY = 18,
-    VDF_PARSE = 19,
 }

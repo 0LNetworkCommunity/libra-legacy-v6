@@ -3,13 +3,13 @@
 
 #![forbid(unsafe_code)]
 
-//! This diemry implements a schematized DB on top of [RocksDB](https://rocksdb.org/). It makes
+//! This library implements a schematized DB on top of [RocksDB](https://rocksdb.org/). It makes
 //! sure all data passed in and out are structured according to predefined schemas and prevents
-//! access to raw keys and values. This diemry also enforces a set of Diem specific DB options,
+//! access to raw keys and values. This library also enforces a set of Diem specific DB options,
 //! like custom comparators and schema-to-column-family mapping.
 //!
 //! It requires that different kinds of key-value pairs be stored in separate column
-//! families.  To use this diemry to store a kind of key-value pairs, the user needs to use the
+//! families.  To use this library to store a kind of key-value pairs, the user needs to use the
 //! [`define_schema!`] macro to define the schema name, the types of key and value, and name of the
 //! column family.
 
@@ -19,9 +19,9 @@ pub mod schema;
 
 use crate::{
     metrics::{
-        LIBRA_SCHEMADB_BATCH_COMMIT_BYTES, LIBRA_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS,
-        LIBRA_SCHEMADB_DELETES, LIBRA_SCHEMADB_GET_BYTES, LIBRA_SCHEMADB_GET_LATENCY_SECONDS,
-        LIBRA_SCHEMADB_ITER_BYTES, LIBRA_SCHEMADB_ITER_LATENCY_SECONDS, LIBRA_SCHEMADB_PUT_BYTES,
+        DIEM_SCHEMADB_BATCH_COMMIT_BYTES, DIEM_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS,
+        DIEM_SCHEMADB_DELETES, DIEM_SCHEMADB_GET_BYTES, DIEM_SCHEMADB_GET_LATENCY_SECONDS,
+        DIEM_SCHEMADB_ITER_BYTES, DIEM_SCHEMADB_ITER_LATENCY_SECONDS, DIEM_SCHEMADB_PUT_BYTES,
     },
     schema::{KeyCodec, Schema, SeekKeyCodec, ValueCodec},
 };
@@ -35,6 +35,9 @@ use std::{
 
 /// Type alias to `rocksdb::ReadOptions`. See [`rocksdb doc`](https://github.com/pingcap/rust-rocksdb/blob/master/src/rocksdb_options.rs)
 pub type ReadOptions = rocksdb::ReadOptions;
+
+/// Type alias to `rocksdb::Options`.
+pub type Options = rocksdb::Options;
 
 /// Type alias to improve readability.
 pub type ColumnFamilyName = &'static str;
@@ -146,7 +149,7 @@ where
     }
 
     fn next_impl(&mut self) -> Result<Option<(S::Key, S::Value)>> {
-        let _timer = LIBRA_SCHEMADB_ITER_LATENCY_SECONDS
+        let _timer = DIEM_SCHEMADB_ITER_LATENCY_SECONDS
             .with_label_values(&[S::COLUMN_FAMILY_NAME])
             .start_timer();
 
@@ -157,7 +160,7 @@ where
 
         let raw_key = self.db_iter.key().expect("Iterator must be valid.");
         let raw_value = self.db_iter.value().expect("Iterator must be valid.");
-        LIBRA_SCHEMADB_ITER_BYTES
+        DIEM_SCHEMADB_ITER_BYTES
             .with_label_values(&[S::COLUMN_FAMILY_NAME])
             .observe((raw_key.len() + raw_value.len()) as f64);
 
@@ -200,6 +203,7 @@ impl DB {
         path: impl AsRef<Path>,
         name: &'static str,
         column_families: Vec<ColumnFamilyName>,
+        db_opts: &rocksdb::Options,
     ) -> Result<Self> {
         {
             let cfs_set: HashSet<_> = column_families.iter().collect();
@@ -213,15 +217,7 @@ impl DB {
             );
         }
 
-        let mut db_opts = rocksdb::Options::default();
-        db_opts.create_if_missing(true);
-        db_opts.create_missing_column_families(true);
-
-        // For now we set the max total WAL size to be 1G. This config can be useful when column
-        // families are updated at non-uniform frequencies.
-        db_opts.set_max_total_wal_size(1 << 30);
-
-        let db = DB::open_cf(&db_opts, path, name, column_families)?;
+        let db = DB::open_cf(db_opts, path, name, column_families)?;
         Ok(db)
     }
 
@@ -232,9 +228,9 @@ impl DB {
         path: impl AsRef<Path>,
         name: &'static str,
         column_families: Vec<ColumnFamilyName>,
+        db_opts: &rocksdb::Options,
     ) -> Result<Self> {
-        let db_opts = rocksdb::Options::default();
-        DB::open_cf_readonly(&db_opts, path, name, column_families)
+        DB::open_cf_readonly(db_opts, path, name, column_families)
     }
 
     /// Open db as secondary.
@@ -246,25 +242,19 @@ impl DB {
         secondary_path: P,
         name: &'static str,
         column_families: Vec<ColumnFamilyName>,
+        db_opts: &rocksdb::Options,
     ) -> Result<Self> {
-        let db_opts = rocksdb::Options::default();
-        DB::open_cf_as_secondary(
-            &db_opts,
-            primary_path,
-            secondary_path,
-            name,
-            column_families,
-        )
+        DB::open_cf_as_secondary(db_opts, primary_path, secondary_path, name, column_families)
     }
 
     fn open_cf(
-        opts: &rocksdb::Options,
+        db_opts: &rocksdb::Options,
         path: impl AsRef<Path>,
         name: &'static str,
         column_families: Vec<ColumnFamilyName>,
     ) -> Result<DB> {
         let inner = rocksdb::DB::open_cf_descriptors(
-            opts,
+            db_opts,
             path,
             column_families.iter().map(|cf_name| {
                 let mut cf_opts = rocksdb::Options::default();
@@ -323,7 +313,7 @@ impl DB {
 
     /// Reads single record by key.
     pub fn get<S: Schema>(&self, schema_key: &S::Key) -> Result<Option<S::Value>> {
-        let _timer = LIBRA_SCHEMADB_GET_LATENCY_SECONDS
+        let _timer = DIEM_SCHEMADB_GET_LATENCY_SECONDS
             .with_label_values(&[S::COLUMN_FAMILY_NAME])
             .start_timer();
 
@@ -331,7 +321,7 @@ impl DB {
         let cf_handle = self.get_cf_handle(S::COLUMN_FAMILY_NAME)?;
 
         let result = self.inner.get_cf(cf_handle, &k)?;
-        LIBRA_SCHEMADB_GET_BYTES
+        DIEM_SCHEMADB_GET_BYTES
             .with_label_values(&[S::COLUMN_FAMILY_NAME])
             .observe(result.as_ref().map_or(0.0, |v| v.len() as f64));
 
@@ -391,7 +381,7 @@ impl DB {
 
     /// Writes a group of records wrapped in a [`SchemaBatch`].
     pub fn write_schemas(&self, batch: SchemaBatch) -> Result<()> {
-        let _timer = LIBRA_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS
+        let _timer = DIEM_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS
             .with_label_values(&[self.name])
             .start_timer();
 
@@ -414,17 +404,17 @@ impl DB {
             for (key, write_op) in rows {
                 match write_op {
                     WriteOp::Value(value) => {
-                        LIBRA_SCHEMADB_PUT_BYTES
+                        DIEM_SCHEMADB_PUT_BYTES
                             .with_label_values(&[cf_name])
                             .observe((key.len() + value.len()) as f64);
                     }
                     WriteOp::Deletion => {
-                        LIBRA_SCHEMADB_DELETES.with_label_values(&[cf_name]).inc();
+                        DIEM_SCHEMADB_DELETES.with_label_values(&[cf_name]).inc();
                     }
                 }
             }
         }
-        LIBRA_SCHEMADB_BATCH_COMMIT_BYTES
+        DIEM_SCHEMADB_BATCH_COMMIT_BYTES
             .with_label_values(&[self.name])
             .observe(serialized_size as f64);
 

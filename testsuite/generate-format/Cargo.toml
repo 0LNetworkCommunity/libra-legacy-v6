@@ -1,24 +1,24 @@
 [package]
 name = "generate-format"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem types"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
 rand = "0.7.3"
-serde = { version = "1.0.116", features = ["derive"] }
+serde = { version = "1.0.117", features = ["derive"] }
 serde-reflection = "0.3.2"
-serde_yaml = "0.8.13"
-structopt = "0.3.18"
+serde_yaml = "0.8.14"
+structopt = "0.3.21"
 
 consensus = { path = "../../consensus", version = "0.1.0", features=["fuzzing"] }
 consensus-types = { path = "../../consensus/consensus-types", version = "0.1.0", features=["fuzzing"] }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-config = { path = "../../config", version = "0.1.0" }
 diem-crypto = { path = "../../crypto/crypto", version = "0.1.0", features=["fuzzing"] }
 diem-crypto-derive = { path = "../../crypto/crypto-derive", version = "0.1.0"}

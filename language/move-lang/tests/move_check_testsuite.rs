@@ -1,10 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use move_lang::{move_compile_no_report, shared::Address};
+use move_lang::{command_line::read_bool_env_var, move_compile, shared::Address};
+use move_lang_test_utils::*;
 use std::{fs, path::Path};
-
-use move_lang::test_utils::*;
 
 const OUT_EXT: &str = "out";
 const EXP_EXT: &str = "exp";
@@ -24,19 +23,19 @@ fn format_diff(expected: String, actual: String) -> String {
         match &seq {
             Difference::Same(x) => {
                 ret.push_str(x);
-                ret.push_str("\n");
+                ret.push('\n');
             }
             Difference::Add(x) => {
                 ret.push_str("\x1B[92m");
                 ret.push_str(x);
                 ret.push_str("\x1B[0m");
-                ret.push_str("\n");
+                ret.push('\n');
             }
             Difference::Rem(x) => {
                 ret.push_str("\x1B[91m");
                 ret.push_str(x);
                 ret.push_str("\x1B[0m");
-                ret.push_str("\n");
+                ret.push('\n');
             }
         }
     }
@@ -52,7 +51,7 @@ fn move_check_testsuite(path: &Path) -> datatest_stable::Result<()> {
     let exp_path = path.with_extension(EXP_EXT);
     let out_path = path.with_extension(OUT_EXT);
 
-    let (files, units_or_errors) = move_compile_no_report(&targets, &deps, sender, None)?;
+    let (files, units_or_errors) = move_compile(&targets, &deps, sender, None)?;
     let errors = match units_or_errors {
         Err(errors) => errors,
         Ok(units) => move_lang::compiled_unit::verify_units(units).1,
@@ -64,8 +63,8 @@ fn move_check_testsuite(path: &Path) -> datatest_stable::Result<()> {
         vec![]
     };
 
-    let save_errors = read_bool_var(KEEP_TMP);
-    let update_baseline = read_bool_var(UPDATE_BASELINE) || read_bool_var(UB);
+    let save_errors = read_bool_env_var(KEEP_TMP);
+    let update_baseline = read_bool_env_var(UPDATE_BASELINE) || read_bool_env_var(UB);
 
     fs::write(out_path.clone(), error_buffer)?;
     let rendered_errors = fs::read_to_string(out_path.clone())?;

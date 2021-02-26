@@ -3,8 +3,6 @@
 
 pub mod integration_test_impl;
 
-use executor::db_bootstrapper::{generate_waypoint, maybe_bootstrap};
-use executor_types::StateComputeResult;
 use diem_config::{config::NodeConfig, utils};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
@@ -22,6 +20,8 @@ use diem_types::{
 };
 use diem_vm::{DiemVM, VMExecutor};
 use diemdb::DiemDB;
+use executor::db_bootstrapper::{generate_waypoint, maybe_bootstrap};
+use executor_types::StateComputeResult;
 use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     sync::Arc,

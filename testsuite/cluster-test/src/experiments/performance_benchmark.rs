@@ -12,13 +12,13 @@ use crate::{
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use futures::{future::try_join_all, join, FutureExt};
 use diem_infallible::duration_since_epoch;
 use diem_logger::{info, warn};
 use diem_trace::{
     trace::{find_peer_with_stage, random_node, trace_node},
     DiemTraceClient,
 };
+use futures::{future::try_join_all, join, FutureExt};
 use rand::{rngs::ThreadRng, seq::SliceRandom};
 use serde_json::Value;
 use std::{

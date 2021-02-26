@@ -18,7 +18,6 @@ use crate::{
 };
 use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::proposal_msg::ProposalMsg;
-use futures::{channel::mpsc, executor::block_on};
 use diem_types::{
     epoch_change::EpochChangeProof,
     epoch_state::EpochState,
@@ -28,6 +27,7 @@ use diem_types::{
     validator_signer::ValidatorSigner,
     validator_verifier::ValidatorVerifier,
 };
+use futures::{channel::mpsc, executor::block_on};
 use network::{
     peer_manager::{ConnectionRequestSender, PeerManagerRequestSender},
     protocols::network::NewNetworkSender,
@@ -49,7 +49,7 @@ pub fn generate_corpus_proposal() -> Vec<u8> {
             })
             .await;
         // serialize and return proposal
-        lcs::to_bytes(&proposal.unwrap()).unwrap()
+        bcs::to_bytes(&proposal.unwrap()).unwrap()
     })
 }
 
@@ -106,7 +106,7 @@ fn create_node_for_fuzzing() -> RoundManager {
 
     // TODO: remove
     let proof = make_initial_epoch_change_proof(&signer);
-    let mut safety_rules = SafetyRules::new(test_utils::test_storage(&signer), false);
+    let mut safety_rules = SafetyRules::new(test_utils::test_storage(&signer), false, false);
     safety_rules.initialize(&proof).unwrap();
 
     // TODO: mock channels
@@ -173,7 +173,7 @@ pub fn fuzz_proposal(data: &[u8]) {
     // create node
     let mut round_manager = create_node_for_fuzzing();
 
-    let proposal: ProposalMsg = match lcs::from_bytes(data) {
+    let proposal: ProposalMsg = match bcs::from_bytes(data) {
         Ok(xx) => xx,
         Err(_) => {
             if cfg!(test) {

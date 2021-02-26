@@ -5,28 +5,28 @@
 
 //! new-transaction
 script {
-use 0x1::LibraSystem;
+use 0x1::DiemSystem;
 fun main(account: &signer) {
-    LibraSystem::initialize_validator_set(account);
+    DiemSystem::initialize_validator_set(account);
 }
 }
 // check: "Keep(ABORTED { code: 1,"
 
 //! new-transaction
 script {
-use 0x1::LibraSystem;
+use 0x1::DiemSystem;
 fun main() {
-    let len = LibraSystem::validator_set_size();
-    LibraSystem::get_ith_validator_address(len);
+    let len = DiemSystem::validator_set_size();
+    DiemSystem::get_ith_validator_address(len);
 }
 }
 // check: "Keep(ABORTED { code: 1287,"
 
 //! new-transaction
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 // check: "Keep(ABORTED { code: 2051,"
@@ -139,7 +139,7 @@ script {
         ValidatorConfig::set_config(account, {{bob}}, x"0000000000000000000000000000000000000000000000000000000000000000", x"", x"");
     }
 }
-// check: "Keep(ABORTED { code: 519"
+// check: "Keep(ABORTED { code: 7"
 
 //! new-transaction
 //! sender: bob
@@ -173,8 +173,8 @@ stdlib_script::create_validator_operator_account
 //! execute-as: alex
 script {
 use 0x1::ValidatorOperatorConfig;
-fun main(lr_account: &signer, alex_signer: &signer) {
-    ValidatorOperatorConfig::publish(alex_signer, lr_account, b"alex");
+fun main(dr_account: &signer, alex_signer: &signer) {
+    ValidatorOperatorConfig::publish(alex_signer, dr_account, b"alex");
 }
 }
 // check: "Discard(INVALID_WRITE_SET)"

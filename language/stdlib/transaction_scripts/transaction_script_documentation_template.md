@@ -30,7 +30,7 @@ result of executing any transaction script is given by the following table:
 | ----                     | ---                                                                                                      |
 | `Executed`               | The transaction was executed successfully.                                                               |
 | `OutOfGas`               | The transaction ran out of gas during execution.                                                         |
-| `MiscellaneousError`     | The transaction was malformed, e.g., an argument was not in LCS format. Possible, but unlikely to occur. |
+| `MiscellaneousError`     | The transaction was malformed, e.g., an argument was not in BCS format. Possible, but unlikely to occur. |
 | `ExecutionFailure{ ...}` | The transaction encountered an uncaught error. Possible, but unlikely to occur.                          |
 
 **This set of statuses is considered stable**, and they should not be expected to
@@ -239,29 +239,6 @@ any account that has previously published a shared ed25519 public key using
 
 Script documentation: `rotate_shared_ed25519_public_key`
 
-
----
-#### Script mint_lbr
-
-Mints LBR from the sending account's constituent coins by depositing in the
-on-chain LBR reserve. Deposits the newly-minted LBR into the sending
-account. Can be sent by any account that can hold balances for the constituent
-currencies for LBR and LBR.
-
-Script documentation: `mint_lbr`
-
-
----
-#### Script unmint_lbr
-
-Withdraws a specified amount of LBR from the transaction sender's account, and unstaples the
-withdrawn LBR into its constituent coins. Deposits each of the constituent coins to the
-transaction sender's balances. Any account that can hold balances that has the correct balances
-may send this transaction.
-
-Script documentation: `unmint_lbr`
-
-
 ### Payments
 
 ---
@@ -422,7 +399,7 @@ Script documentation: `unfreeze_account`
 ---
 #### Script update_dual_attestation_limit
 
-Update the dual attestation limit on-chain. Defined in terms of micro-LBR.  The transaction can
+Update the dual attestation limit on-chain. Defined in terms of micro-XDX.  The transaction can
 only be sent by the Treasury Compliance account.  After this transaction all inter-VASP
 payments over this limit must be checked for dual attestation.
 
@@ -432,8 +409,8 @@ Script documentation: `update_dual_attestation_limit`
 ---
 #### Script update_exchange_rate
 
-Update the rough on-chain exchange rate between a specified currency and LBR (as a conversion
-to micro-LBR). The transaction can only be sent by the Treasury Compliance account. After this
+Update the rough on-chain exchange rate between a specified currency and XDX (as a conversion
+to micro-XDX). The transaction can only be sent by the Treasury Compliance account. After this
 transaction the updated exchange rate will be used for normalization of gas prices, and for
 dual attestation checking.
 
@@ -510,10 +487,6 @@ Script documentation: `add_to_script_allow_list`
 > {{move-include rotate_dual_attestation_info}}
 ---
 > {{move-include rotate_shared_ed25519_public_key}}
----
-> {{move-include mint_lbr}}
----
-> {{move-include unmint_lbr}}
 
 ---
 ### Payments

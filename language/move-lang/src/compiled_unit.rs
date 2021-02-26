@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -81,8 +81,8 @@ impl CompiledUnit {
 
     pub fn serialize_source_map(&self) -> Vec<u8> {
         match self {
-            CompiledUnit::Module { source_map, .. } => lcs::to_bytes(source_map).unwrap(),
-            CompiledUnit::Script { source_map, .. } => lcs::to_bytes(source_map).unwrap(),
+            CompiledUnit::Module { source_map, .. } => bcs::to_bytes(source_map).unwrap(),
+            CompiledUnit::Script { source_map, .. } => bcs::to_bytes(source_map).unwrap(),
         }
     }
 

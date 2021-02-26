@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use std::collections::{BTreeMap, Bound};
@@ -170,13 +170,13 @@ impl CodeWriter {
                 first = false
             } else {
                 Self::trim_trailing_whitespace(&mut self.0.borrow_mut().output);
-                self.0.borrow_mut().output.push_str("\n");
+                self.0.borrow_mut().output.push('\n');
             }
             self.emit_str(l)
         }
         if end_newl {
             Self::trim_trailing_whitespace(&mut self.0.borrow_mut().output);
-            self.0.borrow_mut().output.push_str("\n");
+            self.0.borrow_mut().output.push('\n');
         }
     }
 

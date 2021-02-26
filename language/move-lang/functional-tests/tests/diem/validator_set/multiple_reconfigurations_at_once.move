@@ -47,17 +47,17 @@ script {
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     // Decertify two validators to make sure we can remove both
     // from the set and trigger reconfiguration
     fun main(account: &signer) {
-        assert(LibraSystem::is_validator({{alice}}) == true, 98);
-        assert(LibraSystem::is_validator({{vivian}}) == true, 99);
-        assert(LibraSystem::is_validator({{viola}}) == true, 100);
-        LibraSystem::remove_validator(account, {{vivian}});
-        assert(LibraSystem::is_validator({{alice}}) == true, 101);
-        assert(LibraSystem::is_validator({{vivian}}) == false, 102);
-        assert(LibraSystem::is_validator({{viola}}) == true, 103);
+        assert(DiemSystem::is_validator({{alice}}) == true, 98);
+        assert(DiemSystem::is_validator({{vivian}}) == true, 99);
+        assert(DiemSystem::is_validator({{viola}}) == true, 100);
+        DiemSystem::remove_validator(account, {{vivian}});
+        assert(DiemSystem::is_validator({{alice}}) == true, 101);
+        assert(DiemSystem::is_validator({{vivian}}) == false, 102);
+        assert(DiemSystem::is_validator({{viola}}) == true, 103);
     }
 }
 
@@ -73,24 +73,24 @@ script{
 //! new-transaction
 //! sender: dave
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::ValidatorConfig;
     // Two reconfigurations cannot happen in the same block
     fun main(account: &signer) {
         // the local validator's key was the same as the key in the validator set
-        assert(ValidatorConfig::get_consensus_pubkey(&LibraSystem::get_validator_config({{viola}})) ==
+        assert(ValidatorConfig::get_consensus_pubkey(&DiemSystem::get_validator_config({{viola}})) ==
                ValidatorConfig::get_consensus_pubkey(&ValidatorConfig::get_config({{viola}})), 99);
         ValidatorConfig::set_config(account, {{viola}},
                                     x"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
                                     x"", x"");
         // the local validator's key is now different from the one in the validator set
-        assert(ValidatorConfig::get_consensus_pubkey(&LibraSystem::get_validator_config({{viola}})) !=
+        assert(ValidatorConfig::get_consensus_pubkey(&DiemSystem::get_validator_config({{viola}})) !=
                ValidatorConfig::get_consensus_pubkey(&ValidatorConfig::get_config({{viola}})), 99);
-        let old_num_validators = LibraSystem::validator_set_size();
-        LibraSystem::update_config_and_reconfigure(account, {{viola}});
-        assert(old_num_validators == LibraSystem::validator_set_size(), 98);
+        let old_num_validators = DiemSystem::validator_set_size();
+        DiemSystem::update_config_and_reconfigure(account, {{viola}});
+        assert(old_num_validators == DiemSystem::validator_set_size(), 98);
         // the local validator's key is now the same as the key in the validator set
-        assert(ValidatorConfig::get_consensus_pubkey(&LibraSystem::get_validator_config({{viola}})) ==
+        assert(ValidatorConfig::get_consensus_pubkey(&DiemSystem::get_validator_config({{viola}})) ==
                ValidatorConfig::get_consensus_pubkey(&ValidatorConfig::get_config({{viola}})), 99);
     }
 }
@@ -101,9 +101,9 @@ script{
 //! new-transaction
 //! sender: bob
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::update_config_and_reconfigure(account, {{viola}});
+        DiemSystem::update_config_and_reconfigure(account, {{viola}});
     }
 }
 
@@ -113,13 +113,13 @@ script{
 //! sender: blessed
 // freezing does not cause changes to the set
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::AccountFreezing;
     fun main(tc_account: &signer) {
-        assert(LibraSystem::is_validator({{alice}}) == true, 101);
+        assert(DiemSystem::is_validator({{alice}}) == true, 101);
         AccountFreezing::freeze_account(tc_account, {{alice}});
         assert(AccountFreezing::account_is_frozen({{alice}}), 1);
-        assert(LibraSystem::is_validator({{alice}}) == true, 102);
+        assert(DiemSystem::is_validator({{alice}}) == true, 102);
     }
 }
 // check: "Keep(EXECUTED)"

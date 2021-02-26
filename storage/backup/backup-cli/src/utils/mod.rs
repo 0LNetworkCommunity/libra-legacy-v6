@@ -4,16 +4,18 @@
 pub mod backup_service_client;
 pub mod read_record_bytes;
 pub mod storage_ext;
+pub(crate) mod stream;
 
 #[cfg(test)]
 pub mod test_utils;
 
 use anyhow::{anyhow, Result};
+use diem_config::config::RocksdbConfig;
 use diem_crypto::HashValue;
 use diem_infallible::duration_since_epoch;
 use diem_jellyfish_merkle::{restore::JellyfishMerkleRestore, NodeBatch, TreeWriter};
 use diem_types::transaction::Version;
-use diemdb::{backup::restore_handler::RestoreHandler, GetRestoreHandler, DiemDB};
+use diemdb::{backup::restore_handler::RestoreHandler, DiemDB, GetRestoreHandler};
 use std::{
     convert::TryFrom,
     mem::size_of,
@@ -35,9 +37,36 @@ pub struct GlobalBackupOpt {
 }
 
 #[derive(Clone, StructOpt)]
+pub struct RocksdbOpt {
+    // using a smaller value than a node since we don't care much about reading performance
+    // in this tool.
+    #[structopt(long, default_value = "1000")]
+    max_open_files: i32,
+    // using the same default with a node (1GB).
+    #[structopt(long, default_value = "1073741824")]
+    max_total_wal_size: u64,
+}
+
+impl From<RocksdbOpt> for RocksdbConfig {
+    fn from(opt: RocksdbOpt) -> Self {
+        Self {
+            max_open_files: opt.max_open_files,
+            max_total_wal_size: opt.max_total_wal_size,
+        }
+    }
+}
+
+impl Default for RocksdbOpt {
+    fn default() -> Self {
+        Self::from_iter(vec!["exe"])
+    }
+}
+
+#[derive(Clone, StructOpt)]
 pub struct GlobalRestoreOpt {
     #[structopt(long, help = "Dry run without writing data to DB.")]
     pub dry_run: bool,
+
     #[structopt(
         long = "target-db-dir",
         parse(from_os_str),
@@ -45,12 +74,16 @@ pub struct GlobalRestoreOpt {
         required_unless = "dry-run"
     )]
     pub db_dir: Option<PathBuf>,
+
     #[structopt(
         long,
         help = "Content newer than this version will not be recovered to DB, \
         defaulting to the largest version possible, meaning recover everything in the backups."
     )]
     pub target_version: Option<Version>,
+
+    #[structopt(flatten)]
+    pub rocksdb_opt: RocksdbOpt,
 }
 
 pub enum RestoreRunMode {
@@ -112,8 +145,10 @@ impl TryFrom<GlobalRestoreOpt> for GlobalRestoreOptions {
         let target_version = opt.target_version.unwrap_or(Version::max_value());
         let run_mode = if let Some(db_dir) = &opt.db_dir {
             let restore_handler = Arc::new(DiemDB::open(
-                db_dir, false, /* read_only */
+                db_dir,
+                false, /* read_only */
                 None,  /* pruner */
+                opt.rocksdb_opt.into(),
             )?)
             .get_restore_handler();
             RestoreRunMode::Restore { restore_handler }

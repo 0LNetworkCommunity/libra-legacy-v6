@@ -26,9 +26,9 @@ script {
 //! sender: diemroot
 // remove_validator cannot be called on a non-validator
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::remove_validator(account, {{bob}});
+        DiemSystem::remove_validator(account, {{bob}});
     }
 }
 // check: "Keep(EXECUTED)"
@@ -43,9 +43,9 @@ script{
 //! sender: alice
 //! expiration-time: 3
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 // check: "ABORTED { code: 775,"

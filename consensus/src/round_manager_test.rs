@@ -35,12 +35,6 @@ use consensus_types::{
     timeout_certificate::TimeoutCertificate,
     vote_msg::VoteMsg,
 };
-use futures::{
-    channel::{mpsc, oneshot},
-    executor::block_on,
-    stream::select,
-    Stream, StreamExt,
-};
 use diem_crypto::{ed25519::Ed25519PrivateKey, HashValue, Uniform};
 use diem_secure_storage::Storage;
 use diem_types::{
@@ -49,6 +43,12 @@ use diem_types::{
     validator_signer::ValidatorSigner,
     validator_verifier::random_validator_verifier,
     waypoint::Waypoint,
+};
+use futures::{
+    channel::{mpsc, oneshot},
+    executor::block_on,
+    stream::select,
+    Stream, StreamExt,
 };
 use network::{
     peer_manager::{conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender},
@@ -107,7 +107,7 @@ impl NodeSetup {
                 waypoint,
                 true,
             );
-            let safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false);
+            let safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false, false);
 
             nodes.push(Self::new(
                 playground,
@@ -563,7 +563,7 @@ fn response_on_block_retrieval() {
             .unwrap();
         match rx1.await {
             Ok(Ok(bytes)) => {
-                let response = match lcs::from_bytes(&bytes) {
+                let response = match bcs::from_bytes(&bytes) {
                     Ok(ConsensusMsg::BlockRetrievalResponse(resp)) => *resp,
                     _ => panic!("block retrieval failure"),
                 };
@@ -586,7 +586,7 @@ fn response_on_block_retrieval() {
             .unwrap();
         match rx2.await {
             Ok(Ok(bytes)) => {
-                let response = match lcs::from_bytes(&bytes) {
+                let response = match bcs::from_bytes(&bytes) {
                     Ok(ConsensusMsg::BlockRetrievalResponse(resp)) => *resp,
                     _ => panic!("block retrieval failure"),
                 };
@@ -608,7 +608,7 @@ fn response_on_block_retrieval() {
             .unwrap();
         match rx3.await {
             Ok(Ok(bytes)) => {
-                let response = match lcs::from_bytes(&bytes) {
+                let response = match bcs::from_bytes(&bytes) {
                     Ok(ConsensusMsg::BlockRetrievalResponse(resp)) => *resp,
                     _ => panic!("block retrieval failure"),
                 };
@@ -871,7 +871,7 @@ fn safety_rules_crash() {
             true,
         );
 
-        node.safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false);
+        node.safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false, false);
         let safety_rules =
             MetricsSafetyRules::new(node.safety_rules_manager.client(), node.storage.clone());
         node.round_manager.set_safety_rules(safety_rules);

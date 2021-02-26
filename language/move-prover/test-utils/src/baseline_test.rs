@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! A module supporting baseline (golden) tests.
@@ -50,10 +50,10 @@ fn clean_for_baseline(content: &str) -> String {
         let line = line.trim_end();
         let line = rex.replace_all(line, "$basename");
         res.push_str(line.to_string().as_str());
-        res.push_str("\n");
+        res.push('\n');
     }
     res = res.trim_end().to_string(); // removes empty lines at end
-    res.push_str("\n"); // adds back a single newline
+    res.push('\n'); // adds back a single newline
     res
 }
 

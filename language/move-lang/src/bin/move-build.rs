@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -16,7 +16,7 @@ pub struct Options {
     #[structopt(name = "PATH_TO_SOURCE_FILE")]
     pub source_files: Vec<String>,
 
-    /// The diemry files needed as dependencies
+    /// The library files needed as dependencies
     #[structopt(
         name = "PATH_TO_DEPENDENCY_FILE",
         short = cli::DEPENDENCY_SHORT,
@@ -61,7 +61,7 @@ pub fn main() -> anyhow::Result<()> {
     } = Options::from_args();
 
     let interface_files_dir = format!("{}/generated_interface_files", out_dir);
-    let (files, compiled_units) = move_lang::move_compile(
+    let (files, compiled_units) = move_lang::move_compile_and_report(
         &source_files,
         &dependencies,
         sender,

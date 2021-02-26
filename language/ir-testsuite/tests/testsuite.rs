@@ -3,6 +3,7 @@
 
 use anyhow::Result;
 use compiled_stdlib::{stdlib_modules, StdLibOptions};
+use diem_types::account_address::AccountAddress;
 use functional_tests::{
     compiler::{Compiler, ScriptOrModule},
     testsuite,
@@ -11,7 +12,6 @@ use ir_to_bytecode::{
     compiler::{compile_module, compile_script},
     parser::parse_script_or_module,
 };
-use diem_types::account_address::AccountAddress;
 use move_ir_types::ast;
 use std::path::Path;
 use vm::CompiledModule;

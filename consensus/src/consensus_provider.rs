@@ -12,12 +12,12 @@ use crate::{
     util::time_service::ClockTimeService,
 };
 use channel::diem_channel;
-use execution_correctness::ExecutionCorrectnessManager;
-use futures::channel::mpsc;
 use diem_config::config::NodeConfig;
 use diem_logger::prelude::*;
 use diem_mempool::ConsensusRequest;
 use diem_types::on_chain_config::OnChainConfigPayload;
+use execution_correctness::ExecutionCorrectnessManager;
+use futures::channel::mpsc;
 use state_synchronizer::StateSyncClient;
 use std::sync::Arc;
 use storage_interface::DbReader;

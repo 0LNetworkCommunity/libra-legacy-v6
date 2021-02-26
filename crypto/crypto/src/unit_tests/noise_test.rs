@@ -153,7 +153,7 @@ fn test_vectors() {
     }
     impl rand::CryptoRng for EphemeralRng {}
 
-    // test vectors are taken from the cacophony diemry
+    // test vectors are taken from the cacophony library
     let mut test_vectors_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     test_vectors_path.push("test_vectors");
     test_vectors_path.push("noise_cacophony.txt");

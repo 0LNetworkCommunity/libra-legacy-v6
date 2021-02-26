@@ -1,12 +1,12 @@
 //! account: bob, 0,0, address
-//! account: validatorvivian, 10000000Coin1, 0, validator
+//! account: validatorvivian, 10000000XUS, 0, validator
 
 //! new-transaction
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    DesignatedDealer::publish_designated_dealer_credential<Coin1>(
+    DesignatedDealer::publish_designated_dealer_credential<XUS>(
         account, account, false
     );
 }
@@ -17,9 +17,9 @@ fun main(account: &signer) {
 //! sender: blessed
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    DesignatedDealer::publish_designated_dealer_credential<Coin1>(
+    DesignatedDealer::publish_designated_dealer_credential<XUS>(
         account, account, false
     );
 }
@@ -29,9 +29,9 @@ fun main(account: &signer) {
 //! new-transaction
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    DesignatedDealer::add_currency<Coin1>(account, account);
+    DesignatedDealer::add_currency<XUS>(account, account);
 }
 }
 // check: "Keep(ABORTED { code: 258,"
@@ -40,26 +40,16 @@ fun main(account: &signer) {
 //! sender: blessed
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    DesignatedDealer::add_currency<Coin1>(account, account);
+    DesignatedDealer::add_currency<XUS>(account, account);
 }
 }
 // check: "Keep(ABORTED { code: 5,"
 
 //! new-transaction
-script {
-use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
-fun main(account: &signer) {
-    DesignatedDealer::add_tier<Coin1>(account, {{bob}}, 0);
-}
-}
-// check: "Keep(ABORTED { code: 258,"
-
-//! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 //! args: 0, {{bob}}, {{bob::auth_key}}, x"", false
 
 stdlib_script::create_designated_dealer
@@ -67,22 +57,11 @@ stdlib_script::create_designated_dealer
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
-//! sender: blessed
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    DesignatedDealer::add_tier<Coin1>(account, {{bob}}, 1000000000000);
-}
-}
-// check: "Keep(ABORTED { code: 263,"
-
-//! new-transaction
-script {
-use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
-fun main(account: &signer) {
-    DesignatedDealer::update_tier<Coin1>(account, {{bob}}, 10, 1000000000000);
+    DesignatedDealer::update_tier<XUS>(account, {{bob}}, 10, 1000000000000);
 }
 }
 // check: "Keep(ABORTED { code: 258,"
@@ -91,10 +70,10 @@ fun main(account: &signer) {
 //! sender: blessed
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
-use 0x1::Libra;
+use 0x1::XUS::XUS;
+use 0x1::Diem;
 fun main(account: &signer) {
-    DesignatedDealer::update_tier<Coin1>(account, {{bob}}, 0, 500000 * Libra::scaling_factor<Coin1>());
+    DesignatedDealer::update_tier<XUS>(account, {{bob}}, 0, 500000 * Diem::scaling_factor<XUS>());
 }
 }
 // check: "Keep(EXECUTED)"
@@ -103,10 +82,10 @@ fun main(account: &signer) {
 //! sender: blessed
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
-use 0x1::Libra;
+use 0x1::XUS::XUS;
+use 0x1::Diem;
 fun main(account: &signer) {
-    DesignatedDealer::update_tier<Coin1>(account, {{bob}}, 0, 5000000 * Libra::scaling_factor<Coin1>());
+    DesignatedDealer::update_tier<XUS>(account, {{bob}}, 0, 5000000 * Diem::scaling_factor<XUS>());
 }
 }
 // check: "Keep(ABORTED { code: 519,"
@@ -115,10 +94,10 @@ fun main(account: &signer) {
 //! sender: blessed
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
-use 0x1::Libra;
+use 0x1::XUS::XUS;
+use 0x1::Diem;
 fun main(account: &signer) {
-    DesignatedDealer::update_tier<Coin1>(account, {{bob}}, 2, 5000000 * Libra::scaling_factor<Coin1>());
+    DesignatedDealer::update_tier<XUS>(account, {{bob}}, 2, 5000000 * Diem::scaling_factor<XUS>());
 }
 }
 // check: "Keep(ABORTED { code: 519,"
@@ -127,11 +106,11 @@ fun main(account: &signer) {
 //! sender: blessed
 script {
 use 0x1::DesignatedDealer;
-use 0x1::Coin1::Coin1;
-use 0x1::Libra;
+use 0x1::XUS::XUS;
+use 0x1::Diem;
 fun main(account: &signer) {
-    Libra::destroy_zero(
-        DesignatedDealer::tiered_mint<Coin1>(account, 0, {{bob}}, 0)
+    Diem::destroy_zero(
+        DesignatedDealer::tiered_mint<XUS>(account, 0, {{bob}}, 0)
     );
 }
 }
@@ -140,12 +119,12 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: blessed
 script {
-    use 0x1::LibraAccount;
-    use 0x1::Coin1::Coin1;
-    use 0x1::Libra;
+    use 0x1::DiemAccount;
+    use 0x1::XUS::XUS;
+    use 0x1::Diem;
     fun main(tc_account: &signer) {
-        LibraAccount::tiered_mint<Coin1>(
-            tc_account, {{bob}},  500000 * Libra::scaling_factor<Coin1>() - 1, 0
+        DiemAccount::tiered_mint<XUS>(
+            tc_account, {{bob}},  500000 * Diem::scaling_factor<XUS>() - 1, 0
         );
     }
 }
@@ -156,10 +135,10 @@ script {
 //! new-transaction
 //! sender: blessed
 script {
-    use 0x1::LibraAccount;
-    use 0x1::Coin1::Coin1;
+    use 0x1::DiemAccount;
+    use 0x1::XUS::XUS;
     fun main(tc_account: &signer) {
-        LibraAccount::tiered_mint<Coin1>(
+        DiemAccount::tiered_mint<XUS>(
             tc_account, {{bob}},  2, 0
         );
     }
@@ -174,12 +153,12 @@ script {
 //! sender: blessed
 //! expiration-time: 95000000001
 script {
-    use 0x1::LibraAccount;
-    use 0x1::Coin1::Coin1;
-    use 0x1::Libra;
+    use 0x1::DiemAccount;
+    use 0x1::XUS::XUS;
+    use 0x1::Diem;
     fun main(tc_account: &signer) {
-        LibraAccount::tiered_mint<Coin1>(
-            tc_account, {{bob}},  500000 * Libra::scaling_factor<Coin1>() - 1, 0
+        DiemAccount::tiered_mint<XUS>(
+            tc_account, {{bob}},  500000 * Diem::scaling_factor<XUS>() - 1, 0
         );
     }
 }

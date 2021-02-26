@@ -11,7 +11,7 @@ use diem_types::{
     account_address::AccountAddress,
     account_config::{
         self, from_currency_code_string, type_tag_for_currency_code, AccountResource,
-        BalanceResource, RoleId, COIN1_NAME,
+        BalanceResource, RoleId, XUS_NAME,
     },
     chain_id::ChainId,
     event::EventHandle,
@@ -34,8 +34,8 @@ use vm_genesis::GENESIS_KEYPAIR;
 // TTL is 86400s. Initial time was set to 0.
 pub const DEFAULT_EXPIRATION_TIME: u64 = 40_000;
 
-pub fn coin1_tmp_currency_code() -> Identifier {
-    from_currency_code_string(COIN1_NAME).unwrap()
+pub fn xus_currency_code() -> Identifier {
+    from_currency_code_string(XUS_NAME).unwrap()
 }
 
 pub fn currency_code(code: &str) -> Identifier {
@@ -65,6 +65,12 @@ impl Account {
     /// This function returns distinct values upon every call.
     pub fn new() -> Self {
         let (privkey, pubkey) = KeyGen::from_os_rng().generate_keypair();
+        Self::with_keypair(privkey, pubkey)
+    }
+
+    /// Creates a new account in memory given a random seed.
+    pub fn new_from_seed(seed: &mut KeyGen) -> Self {
+        let (privkey, pubkey) = seed.generate_keypair();
         Self::with_keypair(privkey, pubkey)
     }
 
@@ -158,7 +164,7 @@ impl Account {
     pub fn make_access_path(&self, tag: StructTag) -> AccessPath {
         // TODO: we need a way to get the type (FatStructType) of the Account in place
         let resource_tag = ResourceKey::new(self.addr, tag);
-        AccessPath::resource_access_path(&resource_tag)
+        AccessPath::resource_access_path(resource_tag)
     }
 
     /// Changes the keys for this account to the provided ones.
@@ -265,12 +271,11 @@ impl TransactionBuilder {
             *self.sender.address(),
             self.sequence_number.expect("sequence number not set"),
             self.program.expect("transaction payload not set"),
-            self.max_gas_amount
-                .unwrap_or_else(|| gas_costs::TXN_RESERVED),
+            self.max_gas_amount.unwrap_or(gas_costs::TXN_RESERVED),
             self.gas_unit_price.unwrap_or(0),
             self.gas_currency_code
-                .unwrap_or_else(|| COIN1_NAME.to_owned()),
-            self.ttl.unwrap_or_else(|| DEFAULT_EXPIRATION_TIME),
+                .unwrap_or_else(|| XUS_NAME.to_owned()),
+            self.ttl.unwrap_or(DEFAULT_EXPIRATION_TIME),
             ChainId::test(),
         )
     }
@@ -280,12 +285,11 @@ impl TransactionBuilder {
             *self.sender.address(),
             self.sequence_number.expect("sequence number not set"),
             self.program.expect("transaction payload not set"),
-            self.max_gas_amount
-                .unwrap_or_else(|| gas_costs::TXN_RESERVED),
+            self.max_gas_amount.unwrap_or(gas_costs::TXN_RESERVED),
             self.gas_unit_price.unwrap_or(0),
             self.gas_currency_code
-                .unwrap_or_else(|| COIN1_NAME.to_owned()),
-            self.ttl.unwrap_or_else(|| DEFAULT_EXPIRATION_TIME),
+                .unwrap_or_else(|| XUS_NAME.to_owned()),
+            self.ttl.unwrap_or(DEFAULT_EXPIRATION_TIME),
             self.chain_id.unwrap_or_else(ChainId::test),
         )
         .sign(&self.sender.privkey, self.sender.pubkey)
@@ -475,24 +479,27 @@ fn new_event_handle(count: u64, address: AccountAddress) -> EventHandle {
 impl AccountData {
     /// Creates a new `AccountData` with a new account.
     ///
-    /// Most tests will want to use this constructor.
+    /// This constructor is non-deterministic and should not be used against golden file.
     pub fn new(balance: u64, sequence_number: u64) -> Self {
         Self::with_account(
             Account::new(),
             balance,
-            coin1_tmp_currency_code(),
+            xus_currency_code(),
             sequence_number,
             AccountRoleSpecifier::ParentVASP,
         )
     }
 
-    pub fn new_diem_root() -> Self {
+    /// Creates a new `AccountData` with a new account.
+    ///
+    /// Most tests will want to use this constructor.
+    pub fn new_from_seed(seed: &mut KeyGen, balance: u64, sequence_number: u64) -> Self {
         Self::with_account(
-            Account::new(),
-            0,
-            coin1_tmp_currency_code(),
-            0,
-            AccountRoleSpecifier::DiemRoot,
+            Account::new_from_seed(seed),
+            balance,
+            xus_currency_code(),
+            sequence_number,
+            AccountRoleSpecifier::ParentVASP,
         )
     }
 

@@ -6,7 +6,7 @@ use crate::{
     counters,
     error::{error_kind, DbError},
     liveness::{
-        leader_reputation::{ActiveInactiveHeuristic, LeaderReputation, DiemDBBackend},
+        leader_reputation::{ActiveInactiveHeuristic, DiemDBBackend, LeaderReputation},
         proposal_generator::ProposalGenerator,
         proposer_election::ProposerElection,
         rotating_proposer_election::{choose_leader, RotatingProposer},
@@ -28,7 +28,6 @@ use consensus_types::{
     common::{Author, Round},
     epoch_retrieval::EpochRetrievalRequest,
 };
-use futures::{select, StreamExt};
 use diem_config::config::{ConsensusConfig, ConsensusProposerType, NodeConfig};
 use diem_infallible::duration_since_epoch;
 use diem_logger::prelude::*;
@@ -39,6 +38,7 @@ use diem_types::{
     epoch_state::EpochState,
     on_chain_config::{OnChainConfigPayload, ValidatorSet},
 };
+use futures::{select, StreamExt};
 use network::protocols::network::Event;
 use safety_rules::SafetyRulesManager;
 use std::{cmp::Ordering, sync::Arc, time::Duration};
@@ -169,10 +169,7 @@ impl EpochManager {
                 ))
             }
             ConsensusProposerType::LeaderReputation(heuristic_config) => {
-                let backend = Box::new(DiemDBBackend::new(
-                    proposers.len(),
-                    self.storage.diem_db(),
-                ));
+                let backend = Box::new(DiemDBBackend::new(proposers.len(), self.storage.diem_db()));
                 let heuristic = Box::new(ActiveInactiveHeuristic::new(
                     heuristic_config.active_weights,
                     heuristic_config.inactive_weights,

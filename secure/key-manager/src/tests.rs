@@ -2,13 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    diem_interface::JsonRpcDiemInterface, Action, Error, KeyManager, DiemInterface,
-    GAS_UNIT_PRICE, MAX_GAS_AMOUNT,
+    diem_interface::JsonRpcDiemInterface, Action, DiemInterface, Error, KeyManager, GAS_UNIT_PRICE,
+    MAX_GAS_AMOUNT,
 };
 use anyhow::Result;
-use executor::Executor;
-use executor_types::BlockExecutor;
-use futures::{channel::mpsc::channel, StreamExt};
 use diem_config::{
     config::{KeyManagerConfig, NodeConfig},
     utils,
@@ -23,7 +20,7 @@ use diem_secure_time::{MockTimeService, TimeService};
 use diem_types::{
     account_address::AccountAddress,
     account_config,
-    account_config::LBR_NAME,
+    account_config::XDX_NAME,
     account_state::AccountState,
     block_info::BlockInfo,
     block_metadata::{BlockMetadata, DiemBlockResource},
@@ -36,6 +33,9 @@ use diem_types::{
 };
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
+use executor::Executor;
+use executor_types::BlockExecutor;
+use futures::{channel::mpsc::channel, StreamExt};
 use rand::{rngs::StdRng, SeedableRng};
 use std::{cell::RefCell, collections::BTreeMap, convert::TryFrom, sync::Arc};
 use storage_interface::{DbReader, DbReaderWriter};
@@ -399,8 +399,7 @@ fn setup_secure_storage(
         .set(OPERATOR_KEY, operator_key.private_key())
         .unwrap();
 
-    let operator_account =
-        diem_types::account_address::from_public_key(&operator_key.public_key());
+    let operator_account = diem_types::account_address::from_public_key(&operator_key.public_key());
     sec_storage.set(OPERATOR_ACCOUNT, operator_account).unwrap();
 
     // Initialize the consensus key in storage
@@ -417,9 +416,7 @@ fn setup_secure_storage(
 // based interface using the lightweight JSON client internally, and the server is a JSON server
 // that serves the JSON RPC requests. The server communicates with the given database reader/writer
 // to handle each JSON RPC request.
-fn setup_diem_interface_and_json_server(
-    db_rw: DbReaderWriter,
-) -> (JsonRpcDiemInterface, Runtime) {
+fn setup_diem_interface_and_json_server(db_rw: DbReaderWriter) -> (JsonRpcDiemInterface, Runtime) {
     let address = "0.0.0.0";
     let port = utils::get_available_port();
     let host = format!("{}:{}", address, port);
@@ -760,7 +757,7 @@ fn verify_validator_config_info_mismatch<T: DiemInterface>(mut node: Node<T>) {
         script,
         MAX_GAS_AMOUNT,
         GAS_UNIT_PRICE,
-        LBR_NAME.to_owned(),
+        XDX_NAME.to_owned(),
         node.time.now() + TXN_EXPIRATION_SECS,
         diem_types::chain_id::ChainId::test(),
     );

@@ -9,12 +9,12 @@
 //! Internally, it uses the `PerKeyQueue` to store messages
 use crate::message_queues::{PerKeyQueue, QueueStyle};
 use anyhow::{ensure, Result};
+use diem_infallible::Mutex;
+use diem_metrics::IntCounterVec;
 use futures::{
     channel::oneshot,
     stream::{FusedStream, Stream},
 };
-use diem_infallible::Mutex;
-use diem_metrics::IntCounterVec;
 use std::{
     fmt::{Debug, Formatter},
     hash::Hash,

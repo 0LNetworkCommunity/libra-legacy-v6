@@ -1,9 +1,9 @@
-//! account: bob, 10000Coin1
+//! account: bob, 10000XUS
 
 //! new-transaction
 //! sender: bob
 //! gas-price: 0
-//! gas-currency: Coin1
+//! gas-currency: XUS
 script {
 fun main() {
 }

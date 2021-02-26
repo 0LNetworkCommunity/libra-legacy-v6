@@ -12,7 +12,6 @@ use crate::{
     },
 };
 use channel::{diem_channel, message_queues::QueueStyle};
-use futures::channel::mpsc;
 use diem_config::{
     config::{NodeConfig, PeerNetworkId, RoleType},
     network_id::{NetworkId, NodeNetworkId},
@@ -22,6 +21,7 @@ use diem_types::{
     ledger_info::LedgerInfoWithSignatures, transaction::TransactionListWithProof,
     waypoint::Waypoint, PeerId,
 };
+use futures::channel::mpsc;
 use network::{
     peer_manager::{ConnectionRequestSender, PeerManagerRequestSender},
     protocols::network::NewNetworkSender,

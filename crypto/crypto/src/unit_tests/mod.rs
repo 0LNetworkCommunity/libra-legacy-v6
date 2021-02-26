@@ -1,6 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+mod bcs_test;
 mod compat_test;
 mod cross_test;
 mod cryptohasher;

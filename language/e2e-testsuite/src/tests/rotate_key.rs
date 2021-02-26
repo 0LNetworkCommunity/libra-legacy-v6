@@ -1,12 +1,6 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use language_e2e_tests::{
-    account::{self, AccountData},
-    common_transactions::{raw_rotate_key_txn, rotate_key_txn},
-    executor::FakeExecutor,
-    keygen::KeyGen,
-};
 use diem_crypto::{
     ed25519::Ed25519PrivateKey,
     multi_ed25519::{MultiEd25519PublicKey, MultiEd25519Signature},
@@ -16,13 +10,22 @@ use diem_types::{
     transaction::{authenticator::AuthenticationKey, SignedTransaction, TransactionStatus},
     vm_status::{KeptVMStatus, StatusCode},
 };
+use language_e2e_tests::{
+    account,
+    common_transactions::{raw_rotate_key_txn, rotate_key_txn},
+    current_function_name,
+    executor::FakeExecutor,
+    keygen::KeyGen,
+};
 
 #[test]
 fn rotate_ed25519_key() {
     let balance = 1_000_000;
     let mut executor = FakeExecutor::from_genesis_file();
+    executor.set_golden_file(current_function_name!());
+
     // create and publish sender
-    let mut sender = AccountData::new(balance, 10);
+    let mut sender = executor.create_raw_account_data(balance, 10);
     executor.add_account_data(&sender);
 
     let privkey = Ed25519PrivateKey::generate_for_testing();
@@ -43,7 +46,7 @@ fn rotate_ed25519_key() {
         .read_account_resource(sender.account())
         .expect("sender must exist");
     let updated_sender_balance = executor
-        .read_balance_resource(sender.account(), account::coin1_tmp_currency_code())
+        .read_balance_resource(sender.account(), account::xus_currency_code())
         .expect("sender balance must exist");
     assert_eq!(new_key_hash, updated_sender.authentication_key().to_vec());
     assert_eq!(balance, updated_sender_balance.coin());
@@ -70,9 +73,11 @@ fn rotate_ed25519_key() {
 #[test]
 fn rotate_ed25519_multisig_key() {
     let mut executor = FakeExecutor::from_genesis_file();
+    executor.set_golden_file(current_function_name!());
+
     let mut seq_number = 10;
     // create and publish sender
-    let sender = AccountData::new(1_000_000, seq_number);
+    let sender = executor.create_raw_account_data(1_000_000, seq_number);
     executor.add_account_data(&sender);
     let _sender_address = sender.address();
 

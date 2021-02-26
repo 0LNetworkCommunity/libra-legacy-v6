@@ -13,13 +13,13 @@ use criterion::{
     criterion_group, criterion_main, AxisScale, Bencher, Criterion, ParameterizedBenchmark,
     PlotConfiguration, Throughput,
 };
+use diem_types::PeerId;
 use futures::{
     channel::mpsc,
     executor::block_on,
     sink::SinkExt,
     stream::{FuturesUnordered, StreamExt},
 };
-use diem_types::PeerId;
 use network::protocols::{network::Event, rpc::error::RpcError};
 use network_builder::dummy::{setup_network, DummyMsg, DummyNetworkSender};
 use std::time::Duration;
@@ -78,7 +78,7 @@ fn rpc_bench(b: &mut Bencher, msg_len: &usize) {
     // Compose RequestBlock message and RespondBlock message with `msg_len` bytes payload
     let req = DummyMsg(vec![]);
     let res = DummyMsg(vec![0u8; *msg_len]);
-    let res: Bytes = lcs::to_bytes(&res)
+    let res: Bytes = bcs::to_bytes(&res)
         .expect("failed to serialize message")
         .into();
 

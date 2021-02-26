@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Test module.
@@ -32,13 +32,4 @@ mod validator_set_management;
 mod vasps;
 mod verify_txn;
 mod write_set;
-
-//////// 0L ////////
-mod ol_reconfig;
-mod ol_upgrade_oracle;
-mod ol_minerstate_commit;
-mod ol_minerstate_onboarding;
-mod ol_demo;
-mod ol_autopay_enable;
-mod ol_autopay_create;
-mod ol_trusted_account_update;
+mod writeset_builder;

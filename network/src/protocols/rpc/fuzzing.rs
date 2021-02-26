@@ -2,25 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    constants,
     peer::{PeerHandle, PeerRequest},
     protocols::{
         rpc::{self, RpcNotification},
-        wire::messaging::v1::{NetworkMessage, RpcRequest, RpcResponse},
+        wire::messaging::v1::{
+            network_message_frame_codec, NetworkMessage, RpcRequest, RpcResponse,
+        },
     },
     transport::ConnectionMetadata,
     ProtocolId,
 };
+use bytes::{Bytes, BytesMut};
+use diem_config::network_id::NetworkContext;
+use diem_proptest_helpers::ValueGenerator;
+use diem_types::PeerId;
 use futures::{
     future::{self, FutureExt},
     stream::StreamExt,
 };
-use diem_config::network_id::NetworkContext;
-use diem_proptest_helpers::ValueGenerator;
-use diem_types::PeerId;
 use proptest::{arbitrary::any, collection::vec, prop_oneof, strategy::Strategy};
 use std::io;
 use tokio::runtime;
-use tokio_util::codec::{Encoder, LengthDelimitedCodec};
+use tokio_util::codec::Encoder;
 
 // Length of unsigned varint prefix in bytes for a u128-sized length
 const MAX_UVI_PREFIX_BYTES: usize = 19;
@@ -29,7 +33,8 @@ const MAX_UVI_PREFIX_BYTES: usize = 19;
 const MAX_SMALL_MSG_BYTES: usize = 32;
 const MAX_MEDIUM_MSG_BYTES: usize = 280;
 
-const MOCK_PEER_ID: PeerId = PeerId::ZERO;
+const MOCK_PEER_ID_1: PeerId = PeerId::new([1u8; PeerId::LENGTH]);
+const MOCK_PEER_ID_2: PeerId = PeerId::new([2u8; PeerId::LENGTH]);
 const MOCK_PROTOCOL_ID: ProtocolId = ProtocolId::ConsensusRpc;
 
 #[test]
@@ -50,10 +55,10 @@ pub fn generate_corpus(gen: &mut ValueGenerator) -> Vec<u8> {
 
     let length_prefixed_data_strat = data_strat.prop_map(|data| {
         let max_len = data.len() + MAX_UVI_PREFIX_BYTES;
-        let mut buf = bytes::BytesMut::with_capacity(max_len);
-        let mut codec = LengthDelimitedCodec::new();
+        let mut buf = BytesMut::with_capacity(max_len);
+        let mut codec = network_message_frame_codec(constants::MAX_FRAME_SIZE);
         codec
-            .encode(bytes::Bytes::from(data), &mut buf)
+            .encode(Bytes::from(data), &mut buf)
             .expect("Failed to create uvi-prefixed data for corpus");
         buf.freeze().to_vec()
     });
@@ -63,8 +68,8 @@ pub fn generate_corpus(gen: &mut ValueGenerator) -> Vec<u8> {
 
 // Fuzz the inbound rpc protocol.
 pub fn fuzzer(data: &[u8]) {
-    let network_context = NetworkContext::mock();
-    let connection_metadata = ConnectionMetadata::mock(MOCK_PEER_ID);
+    let network_context = NetworkContext::mock_with_peer_id(MOCK_PEER_ID_1);
+    let connection_metadata = ConnectionMetadata::mock(MOCK_PEER_ID_2);
     let (notification_tx, mut notification_rx) = channel::new_test(8);
     let (peer_reqs_tx, mut peer_reqs_rx) = channel::new_test(8);
     let raw_request = Vec::from(data);

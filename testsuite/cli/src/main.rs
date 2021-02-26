@@ -13,7 +13,10 @@ use cli::{
 };
 use diem_types::{chain_id::ChainId, waypoint::Waypoint};
 use rustyline::{config::CompletionType, error::ReadlineError, Config, Editor};
-use std::{env, str::FromStr, time::{Duration, UNIX_EPOCH}};
+use std::{
+    str::FromStr,
+    time::{Duration, UNIX_EPOCH},
+};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -55,7 +58,6 @@ struct Args {
     #[structopt(short = "n", long)]
     pub mnemonic_file: Option<String>,
     /// If set, client will sync with validator during wallet recovery.
-    /// 0L Deprecated, always syncs on recovery.
     #[structopt(short = "r", long = "sync")]
     pub sync: bool,
     /// If set, a client uses the waypoint parameter for its initial LedgerInfo verification.
@@ -80,27 +82,6 @@ struct Args {
 
 fn main() {
     let args = Args::from_args();
-    // TODO: Duplicated with 0L miner.
-    println!("Enter your 0L mnemonic:");
-    let mut entered_mnem = false;
-    let mnemonic_string = match env::var("NODE_ENV") {
-        Ok(val) => {
-           match val.as_str() {
-            "prod" => rpassword::read_password_from_tty(Some("\u{1F511}")),
-            // for test and stage environments, so mnemonics can be inputted.
-             _ => {
-               println!("(unsafe STDIN input for testing) \u{1F511}");
-               rpassword::read_password()
-             }
-           }          
-        },
-        // if not set assume prod
-        _ => rpassword::read_password_from_tty(Some("\u{1F511}"))
-    };
-    if mnemonic_string.is_ok() { 
-        entered_mnem = true;
-    }
-
 
     let mut logger = ::diem_logger::Logger::new();
     if !args.verbose {
@@ -109,7 +90,7 @@ fn main() {
     logger.init();
     crash_handler::setup_panic_handler();
 
-    let (commands, alias_to_cmd) = get_commands(true);
+    let (commands, alias_to_cmd) = get_commands(args.faucet_account_file.is_some());
 
     let faucet_account_file = args
         .faucet_account_file
@@ -132,21 +113,20 @@ fn main() {
             })
             .unwrap()
     });
-
     let mut client_proxy = ClientProxy::new(
         args.chain_id,
         &args.url,
         &faucet_account_file,
         &treasury_compliance_account_file,
         &dd_account_file,
-        true, // 0L change
+        args.sync,
         args.faucet_url.clone(),
         mnemonic_file,
-        Some(mnemonic_string.unwrap().trim().to_owned()), // 0L change
         waypoint,
+        false,
     )
     .expect("Failed to construct client.");
-    
+
     // Test connection to validator
     let block_metadata = client_proxy
         .test_validator_connection()
@@ -165,9 +145,7 @@ fn main() {
         "Connected to validator at: {}, {}",
         args.url, ledger_info_str
     );
-    // if args.mnemonic_file.is_some() {
-    
-    if entered_mnem || args.mnemonic_file.is_some() {
+    if args.mnemonic_file.is_some() {
         match client_proxy.recover_accounts_in_wallet() {
             Ok(account_data) => {
                 println!(

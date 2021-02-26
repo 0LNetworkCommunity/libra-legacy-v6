@@ -115,26 +115,9 @@ impl<'r, 'l, R: RemoteCache> Session<'r, 'l, R> {
             log_context,
         )
     }
-    
-    // 0L: currently only used by upgrade oracle
-    pub fn revise_module(
-        &mut self,
-        module: Vec<u8>,
-        sender: AccountAddress,
-        cost_strategy: &mut CostStrategy,
-        log_context: &impl LogContext,
-    ) -> VMResult<()> {
-        self.runtime.revise_module(
-            module,
-            sender,
-            &mut self.data_cache,
-            cost_strategy,
-            log_context,
-        )
-    }
 
-    pub fn num_mutated_accounts(&self) -> u64 {
-        self.data_cache.num_mutated_accounts()
+    pub fn num_mutated_accounts(&self, sender: &AccountAddress) -> u64 {
+        self.data_cache.num_mutated_accounts(sender)
     }
 
     /// Finish up the session and produce the side effects.

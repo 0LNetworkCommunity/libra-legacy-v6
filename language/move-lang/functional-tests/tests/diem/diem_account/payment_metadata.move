@@ -3,13 +3,13 @@
 
 //! sender: alice
 script {
-use 0x1::Coin1::Coin1;
-use 0x1::LibraAccount;
+use 0x1::XUS::XUS;
+use 0x1::DiemAccount;
 // send a transaction with metadata and make sure we see it in the PaymentReceivedEvent
 fun main(account: &signer) {
-    let with_cap = LibraAccount::extract_withdraw_capability(account);
-    LibraAccount::pay_from<Coin1>(&with_cap, {{bob}}, 1000, x"deadbeef", x"");
-    LibraAccount::restore_withdraw_capability(with_cap);
+    let with_cap = DiemAccount::extract_withdraw_capability(account);
+    DiemAccount::pay_from<XUS>(&with_cap, {{bob}}, 1000, x"deadbeef", x"");
+    DiemAccount::restore_withdraw_capability(with_cap);
 }
 }
 
@@ -22,19 +22,19 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 // same thing, but using "deposit_with_metadata" API
 fun main(account: &signer) {
-    let with_cap = LibraAccount::extract_withdraw_capability(account);
-    LibraAccount::pay_from<Coin1>(
+    let with_cap = DiemAccount::extract_withdraw_capability(account);
+    DiemAccount::pay_from<XUS>(
         &with_cap,
         {{bob}},
         100,
         x"deadbeef",
         x""
     );
-    LibraAccount::restore_withdraw_capability(with_cap);
+    DiemAccount::restore_withdraw_capability(with_cap);
 }
 }
 

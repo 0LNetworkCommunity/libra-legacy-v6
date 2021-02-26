@@ -15,13 +15,13 @@ use consensus_types::{
     sync_info::SyncInfo,
     vote_msg::VoteMsg,
 };
-use futures::{channel::oneshot, stream::select, SinkExt, Stream, StreamExt};
 use diem_logger::prelude::*;
 use diem_metrics::monitor;
 use diem_types::{
     account_address::AccountAddress, epoch_change::EpochChangeProof,
     validator_verifier::ValidatorVerifier,
 };
+use futures::{channel::oneshot, stream::select, SinkExt, Stream, StreamExt};
 use network::protocols::{network::Event, rpc::error::RpcError};
 use std::{
     mem::{discriminant, Discriminant},

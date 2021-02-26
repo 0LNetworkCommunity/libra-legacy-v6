@@ -20,7 +20,7 @@ A transaction on the blockchain.
 
 Note:
 * For the gas_used, internally within the VM we scale the gas units down by 1000 in order to allow granularity of costing for instruction, but without having to use floating point numbers, but we do round-up the gas used to the nearest "1" when we convert back out.
-* Formula to create hash for a signed transaction before it is executed: hex-encode(sha3-256([]byte("LIBRA::Transaction")) + []byte(0) + signed transaction bytes) ([implementation example](https://github.com/diem/diem-client-sdk-go/blob/master/diemtypes/hash.go#L27))
+* Formula to create hash for a signed transaction before it is executed: hex-encode(sha3-256([]byte("DIEM::Transaction")) + []byte(0) + signed transaction bytes) ([implementation example](https://github.com/diem/client-sdk-go/blob/master/diemtypes/hash.go#L27))
 
 
 ### Example
@@ -83,18 +83,18 @@ User submitted transaction.
 | gas_currency              | string                 | Gas price currency code                                               |
 | expiration_timestamp_secs | unsigned int64         | The expiration time (Unix Epoch in seconds) for this transaction      |
 | script_hash               | string                 | Hex-encoded sha3 256 hash of the script binary code bytes used in this transaction |
-| script_bytes              | string                 | Hex-encoded string of LCS bytes of the script, decode it to get back transaction script arguments |
-| script                    | [Script](#type-script) | The transaction script and arguments of this transaction, you can decode `script_bytes` by LCS to get same data. |
+| script_bytes              | string                 | Hex-encoded string of BCS bytes of the script, decode it to get back transaction script arguments |
+| script                    | [Script](#type-script) | The transaction script and arguments of this transaction, you can decode `script_bytes` by BCS to get same data. |
 
 Note: script_hash is not hash of the script_bytes, it's hash of the script binary code bytes. More specifically, you can get same hash string by the following steps:
 
-    1. Decode script_bytes into script call [struct](https://developers.diem.org/docs/rustdocs/diem_types/transaction/struct.Script.html).
+    1. Decode script_bytes into script call [struct](https://developers.diem.com/docs/rustdocs/diem_types/transaction/struct.Script.html).
     2. Sha3 256 hash of the code binary bytes in the script call struct.
     3. Hex-encode the hash result bytes.
 
-* You can decode transaction script call ([struct](https://developers.diem.org/docs/rustdocs/diem_types/transaction/struct.Script.html)) from script_bytes by LCS deserializer.
-* If script_bytes is empty, it means transaction is not a [TransactionPayload#Script](https://developers.diem.org/docs/rustdocs/diem_types/transaction/enum.TransactionPayload.html#variant.Script).
-You may decode Transaction#bytes by LCS deserializer for more details.
+* You can decode transaction script call ([struct](https://developers.diem.com/docs/rustdocs/diem_types/transaction/struct.Script.html)) from script_bytes by BCS deserializer.
+* If script_bytes is empty, it means transaction is not a [TransactionPayload#Script](https://developers.diem.com/docs/rustdocs/diem_types/transaction/enum.TransactionPayload.html#variant.Script).
+You may decode Transaction#bytes by BCS deserializer for more details.
 
 
 #### unknown
@@ -131,7 +131,7 @@ The transaction script and arguments of the script call.
 Transaction script is unknown.
 
 * When script code can't be recognized, type will be set to `unknown`, code, arguments and type_arguments will still be provided.
-* When transaction payload is not a script (see [TransactionPayload](https://developers.diem.org/docs/rustdocs/diem_types/transaction/enum.TransactionPayload.html)),
+* When transaction payload is not a script (see [TransactionPayload](https://developers.diem.com/docs/rustdocs/diem_types/transaction/enum.TransactionPayload.html)),
 type will be set to `unknown`, code, arguments and type_arguments will not be provided.
 
 | Name                      | Type           | Description                  |
@@ -149,10 +149,10 @@ This is the only type we decoded script arguments and type_arguments as named fi
 | receiver                  | string         | Hex-encoded account address of the receiver                         |
 | amount                    | unsigned int64 | Amount transfered.                                                  |
 | currency                  | string         | Currency code.                                                      |
-| metadata                  | string         | Metadata of the transaction, LCS serialized hex-encoded string.     |
+| metadata                  | string         | Metadata of the transaction, BCS serialized hex-encoded string.     |
 | metadata_signature        | string         | Hex-encoded metadata signature, use this to validate metadata       |
 
-Note: for metadata and metadata_signature, see [LIP-4](https://lip.diem.org/lip-4/) for more details.
+Note: for metadata and metadata_signature, see [DIP-4](https://dip.diem.com/dip-4/) for more details.
 
 ### Type VMStatus
 
@@ -245,7 +245,7 @@ error reason for the error e.g., `EPAYEE_CANT_ACCEPT_CURRENCY_TYPE`. Both the ca
       "category":"INVALID_ARGUMENT",
       "category_description":" An argument provided to an operation is invalid. Example: a signing key has the wrong format.",
       "reason":"EPAYEE_CANT_ACCEPT_CURRENCY_TYPE",
-      "reason_description":" Attempted to send funds in a currency that the receiving account does not hold.\n e.g., `Diem<LBR> to an account that exists, but does not have a `Balance<LBR>` resource"
+      "reason_description":" Attempted to send funds in a currency that the receiving account does not hold.\n e.g., `Diem<XDX> to an account that exists, but does not have a `Balance<XDX>` resource"
    }
 ```
 

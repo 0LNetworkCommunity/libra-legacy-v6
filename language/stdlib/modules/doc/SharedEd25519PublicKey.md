@@ -15,11 +15,13 @@ that the two keys always stay in sync.
 -  [Function `rotate_key`](#0x1_SharedEd25519PublicKey_rotate_key)
 -  [Function `key`](#0x1_SharedEd25519PublicKey_key)
 -  [Function `exists_at`](#0x1_SharedEd25519PublicKey_exists_at)
+-  [Module Specification](#@Module_Specification_1)
+    -  [Persistence](#@Persistence_2)
 
 
 <pre><code><b>use</b> <a href="Authenticator.md#0x1_Authenticator">0x1::Authenticator</a>;
-<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Signature.md#0x1_Signature">0x1::Signature</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
@@ -377,8 +379,24 @@ Returns true if <code>addr</code> holds a <code><a href="SharedEd25519PublicKey.
 
 </details>
 
+<a name="@Module_Specification_1"></a>
+
+## Module Specification
+
+
+
+<a name="@Persistence_2"></a>
+
+### Persistence
+
+
+
+<pre><code><b>invariant</b> <b>update</b> [<b>global</b>] <b>forall</b> addr: address <b>where</b> <b>old</b>(<b>exists</b>&lt;<a href="SharedEd25519PublicKey.md#0x1_SharedEd25519PublicKey">SharedEd25519PublicKey</a>&gt;(addr)):
+    <b>exists</b>&lt;<a href="SharedEd25519PublicKey.md#0x1_SharedEd25519PublicKey">SharedEd25519PublicKey</a>&gt;(addr);
+</code></pre>
+
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/dip/blob/master/dips/dip-2.md
+[ROLE]: https://github.com/diem/dip/blob/master/dips/dip-2.md#roles
+[PERMISSION]: https://github.com/diem/dip/blob/master/dips/dip-2.md#permissions

@@ -3,7 +3,7 @@
 
 //! Support for encoding transactions for common situations.
 
-use crate::{account::Account, gas_costs};
+use crate::account::Account;
 use compiled_stdlib::transaction_scripts::StdlibScript;
 use compiler::Compiler;
 use diem_types::{
@@ -12,7 +12,6 @@ use diem_types::{
 };
 use move_core_types::language_storage::TypeTag;
 use once_cell::sync::Lazy;
-
 
 pub static CREATE_ACCOUNT_SCRIPT: Lazy<Vec<u8>> = Lazy::new(|| {
     let code = "
@@ -114,44 +113,6 @@ pub fn create_account_txn(
         .sign()
 }
 
-/// Returns a transaction to create a validator account with the given arguments.
-pub fn create_validator_account_txn(
-    sender: &Account,
-    new_account: &Account,
-    seq_num: u64,
-    name: Vec<u8>
-) -> SignedTransaction {
-    let mut args: Vec<TransactionArgument> = Vec::new();
-    args.push(TransactionArgument::U64(seq_num.clone()));
-    args.push(TransactionArgument::Address(*new_account.address()));
-    args.push(TransactionArgument::U8Vector(new_account.auth_key_prefix()));
-    args.push(TransactionArgument::U8Vector(name));
-
-    // sender.create_signed_txn_with_args(
-    //     StdlibScript::CreateValidatorAccount
-    //         .compiled_bytes()
-    //         .into_vec(),
-    //     vec![lbr_type_tag()],
-    //     args,
-    //     seq_num,
-    //     gas_costs::TXN_RESERVED * 3,
-    //     0,
-    //     LBR_NAME.to_owned(),
-    // )
-    sender
-        .transaction()
-        .script(Script::new(
-             StdlibScript::CreateValidatorAccount
-                .compiled_bytes()
-                .into_vec(),
-            vec![account_config::lbr_type_tag()],
-            args,
-        ))
-        .sequence_number(seq_num)
-        .max_gas_amount(gas_costs::TXN_RESERVED * 3)
-        .sign()
-}
-
 /// Returns a transaction to transfer coin from one account to another (possibly new) one, with the
 /// given arguments.
 pub fn peer_to_peer_txn(
@@ -173,52 +134,12 @@ pub fn peer_to_peer_txn(
             StdlibScript::PeerToPeerWithMetadata
                 .compiled_bytes()
                 .into_vec(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args,
         ))
         .sequence_number(seq_num)
         .sign()
 }
-
-// /// Returns a transaction to register the sender as a candidate validator
-// pub fn register_validator_txn(
-//     sender: &Account,
-//     consensus_pubkey: Vec<u8>,
-//     validator_network_identity_pubkey: Vec<u8>,
-//     validator_network_address: Vec<u8>,
-//     fullnodes_network_identity_pubkey: Vec<u8>,
-//     fullnodes_network_address: Vec<u8>,
-//     seq_num: u64,
-// ) -> SignedTransaction {
-//     let args = vec![
-//         TransactionArgument::U8Vector(consensus_pubkey),
-//         TransactionArgument::U8Vector(validator_network_identity_pubkey),
-//         TransactionArgument::U8Vector(validator_network_address),
-//         TransactionArgument::U8Vector(fullnodes_network_identity_pubkey),
-//         TransactionArgument::U8Vector(fullnodes_network_address),
-//     ];
-//     // sender.create_signed_txn_with_args(
-//     //     StdlibScript::RegisterValidator.compiled_bytes().into_vec(),
-//     //     vec![],
-//     //     args,
-//     //     seq_num,
-//     //     gas_costs::TXN_RESERVED * 3,
-//     //     0,
-//     //     LBR_NAME.to_owned(),
-//     // )
-//     sender
-//         .transaction()
-//         .script(Script::new(
-//              StdlibScript::RegisterValidator
-//                 .compiled_bytes()
-//                 .into_vec(),
-//             vec![],
-//             args,
-//         ))
-//         .sequence_number(seq_num)
-//         .max_gas_amount(gas_costs::TXN_RESERVED * 3)
-//         .sign()
-// }
 
 /// Returns a transaction to change the keys for the given account.
 pub fn rotate_key_txn(sender: &Account, new_key_hash: Vec<u8>, seq_num: u64) -> SignedTransaction {

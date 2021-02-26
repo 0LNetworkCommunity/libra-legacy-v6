@@ -21,11 +21,11 @@ module RegisteredCurrencies {
 
     /// Initializes this module. Can only be called from genesis, with
     /// a Diem root signer.
-    public fun initialize(lr_account: &signer) {
+    public fun initialize(dr_account: &signer) {
         DiemTimestamp::assert_genesis();
-        Roles::assert_diem_root(lr_account);
+        Roles::assert_diem_root(dr_account);
         DiemConfig::publish_new_config(
-            lr_account,
+            dr_account,
             RegisteredCurrencies { currency_codes: Vector::empty() }
         );
     }
@@ -35,9 +35,9 @@ module RegisteredCurrencies {
     }
 
     spec schema InitializeAbortsIf {
-        lr_account: signer;
+        dr_account: signer;
         include DiemTimestamp::AbortsIfNotGenesis;
-        include Roles::AbortsIfNotDiemRoot{account: lr_account};
+        include Roles::AbortsIfNotDiemRoot{account: dr_account};
         include DiemConfig::PublishNewConfigAbortsIf<RegisteredCurrencies>;
     }
     spec schema InitializeEnsures {
@@ -49,7 +49,7 @@ module RegisteredCurrencies {
 
     /// Adds a new currency code. The currency code must not yet exist.
     public fun add_currency_code(
-        lr_account: &signer,
+        dr_account: &signer,
         currency_code: vector<u8>,
     ) {
         let config = DiemConfig::get<RegisteredCurrencies>();
@@ -58,16 +58,16 @@ module RegisteredCurrencies {
             Errors::invalid_argument(ECURRENCY_CODE_ALREADY_TAKEN)
         );
         Vector::push_back(&mut config.currency_codes, currency_code);
-        DiemConfig::set(lr_account, config);
+        DiemConfig::set(dr_account, config);
     }
     spec fun add_currency_code {
         include AddCurrencyCodeAbortsIf;
         include AddCurrencyCodeEnsures;
     }
     spec schema AddCurrencyCodeAbortsIf {
-        lr_account: &signer;
+        dr_account: &signer;
         currency_code: vector<u8>;
-        include DiemConfig::SetAbortsIf<RegisteredCurrencies>{ account: lr_account };
+        include DiemConfig::SetAbortsIf<RegisteredCurrencies>{ account: dr_account };
         /// The same currency code can be only added once.
         aborts_if Vector::spec_contains(
             DiemConfig::get<RegisteredCurrencies>().currency_codes,

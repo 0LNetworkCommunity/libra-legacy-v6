@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use diem_types::transaction::ScriptABI;
@@ -21,9 +21,9 @@ fn get_stdlib_script_abis() -> Vec<ScriptABI> {
     buildgen::read_abis(path).expect("reading ABI files should not fail")
 }
 
-const EXPECTED_OUTPUT : &str = "225 1 161 28 235 11 1 0 0 0 7 1 0 2 2 2 4 3 6 16 4 22 2 5 24 29 7 53 97 8 150 1 16 0 0 0 1 1 0 0 2 0 1 0 0 3 2 3 1 1 0 4 1 3 0 1 5 1 6 12 1 8 0 5 6 8 0 5 3 10 2 10 2 0 5 6 12 5 3 10 2 10 2 1 9 0 12 76 105 98 114 97 65 99 99 111 117 110 116 18 87 105 116 104 100 114 97 119 67 97 112 97 98 105 108 105 116 121 27 101 120 116 114 97 99 116 95 119 105 116 104 100 114 97 119 95 99 97 112 97 98 105 108 105 116 121 8 112 97 121 95 102 114 111 109 27 114 101 115 116 111 114 101 95 119 105 116 104 100 114 97 119 95 99 97 112 97 98 105 108 105 116 121 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 4 1 12 11 0 17 0 12 5 14 5 10 1 10 2 11 3 11 4 56 0 11 5 17 2 2 1 7 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 76 66 82 3 76 66 82 0 4 3 34 34 34 34 34 34 34 34 34 34 34 34 34 34 34 34 1 135 214 18 0 0 0 0 0 4 0 4 0 \n";
+const EXPECTED_OUTPUT: &str = "224 1 161 28 235 11 1 0 0 0 7 1 0 2 2 2 4 3 6 16 4 22 2 5 24 29 7 53 96 8 149 1 16 0 0 0 1 1 0 0 2 0 1 0 0 3 2 3 1 1 0 4 1 3 0 1 5 1 6 12 1 8 0 5 6 8 0 5 3 10 2 10 2 0 5 6 12 5 3 10 2 10 2 1 9 0 11 68 105 101 109 65 99 99 111 117 110 116 18 87 105 116 104 100 114 97 119 67 97 112 97 98 105 108 105 116 121 27 101 120 116 114 97 99 116 95 119 105 116 104 100 114 97 119 95 99 97 112 97 98 105 108 105 116 121 8 112 97 121 95 102 114 111 109 27 114 101 115 116 111 114 101 95 119 105 116 104 100 114 97 119 95 99 97 112 97 98 105 108 105 116 121 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 4 1 12 11 0 17 0 12 5 14 5 10 1 10 2 11 3 11 4 56 0 11 5 17 2 2 1 7 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 3 88 68 88 3 88 68 88 0 4 3 34 34 34 34 34 34 34 34 34 34 34 34 34 34 34 34 1 135 214 18 0 0 0 0 0 4 0 4 0 \n";
 
-// Cannot run this test in the CI of Libra.
+// Cannot run this test in the CI of Diem.
 #[test]
 #[ignore]
 fn test_that_python_code_parses_and_passes_pyre_check() {
@@ -34,12 +34,18 @@ fn test_that_python_code_parses_and_passes_pyre_check() {
     let src_dir_path = dir.path().join("src");
     let installer =
         serdegen::python3::Installer::new(src_dir_path.clone(), /* package */ None);
+    let paths = std::fs::read_dir("examples/python3/custom_diem_code")
+        .unwrap()
+        .map(|e| e.unwrap().path());
     let config = serdegen::CodeGeneratorConfig::new("diem_types".to_string())
-        .with_encodings(vec![serdegen::Encoding::Lcs])
-        .with_custom_code(buildgen::python3::get_custom_diem_code("diem_types"));
+        .with_encodings(vec![serdegen::Encoding::Bcs])
+        .with_custom_code(buildgen::read_custom_code_from_paths(
+            &["diem_types"],
+            paths,
+        ));
     installer.install_module(&config, &registry).unwrap();
     installer.install_serde_runtime().unwrap();
-    installer.install_lcs_runtime().unwrap();
+    installer.install_bcs_runtime().unwrap();
 
     let stdlib_dir_path = src_dir_path.join("diem_stdlib");
     std::fs::create_dir_all(stdlib_dir_path.clone()).unwrap();
@@ -138,18 +144,14 @@ edition = "2018"
 diem-types = {{ path = "../diem-types", version = "0.1.0" }}
 serde_bytes = "0.11"
 serde = {{ version = "1.0.114", features = ["derive"] }}
-diem-canonical-serialization = {{ path = "{}", version = "0.1.0" }}
+bcs = "0.1.1"
 once_cell = "1.4.0"
 
 [[bin]]
 name = "stdlib_demo"
 path = "src/stdlib_demo.rs"
 test = false
-"#,
-        std::env::current_dir()
-            .unwrap()
-            .join("../../../common/lcs")
-            .to_string_lossy()
+"#
     )
     .unwrap();
     std::fs::create_dir(stdlib_dir_path.join("src")).unwrap();
@@ -192,11 +194,11 @@ fn test_that_cpp_code_compiles_and_demo_runs() {
     let dir = tempdir().unwrap();
 
     let config = serdegen::CodeGeneratorConfig::new("diem_types".to_string())
-        .with_encodings(vec![serdegen::Encoding::Lcs]);
-    let lcs_installer = serdegen::cpp::Installer::new(dir.path().to_path_buf());
-    lcs_installer.install_module(&config, &registry).unwrap();
-    lcs_installer.install_serde_runtime().unwrap();
-    lcs_installer.install_lcs_runtime().unwrap();
+        .with_encodings(vec![serdegen::Encoding::Bcs]);
+    let bcs_installer = serdegen::cpp::Installer::new(dir.path().to_path_buf());
+    bcs_installer.install_module(&config, &registry).unwrap();
+    bcs_installer.install_serde_runtime().unwrap();
+    bcs_installer.install_bcs_runtime().unwrap();
 
     let abi_installer = buildgen::cpp::Installer::new(dir.path().to_path_buf());
     abi_installer
@@ -237,22 +239,23 @@ fn test_that_java_code_compiles_and_demo_runs() {
     let abis = get_stdlib_script_abis();
     let dir = tempdir().unwrap();
 
-    let config = serdegen::CodeGeneratorConfig::new("org.diem.types".to_string())
-        .with_encodings(vec![serdegen::Encoding::Lcs])
-        .with_custom_code(buildgen::java::get_custom_diem_code(
-            &"org.diem.types"
-                .split('.')
-                .map(String::from)
-                .collect::<Vec<_>>(),
+    let paths = std::fs::read_dir("examples/java/custom_diem_code")
+        .unwrap()
+        .map(|e| e.unwrap().path());
+    let config = serdegen::CodeGeneratorConfig::new("com.diem.types".to_string())
+        .with_encodings(vec![serdegen::Encoding::Bcs])
+        .with_custom_code(buildgen::read_custom_code_from_paths(
+            &["com", "diem", "types"],
+            paths,
         ));
-    let lcs_installer = serdegen::java::Installer::new(dir.path().to_path_buf());
-    lcs_installer.install_module(&config, &registry).unwrap();
-    lcs_installer.install_serde_runtime().unwrap();
-    lcs_installer.install_lcs_runtime().unwrap();
+    let bcs_installer = serdegen::java::Installer::new(dir.path().to_path_buf());
+    bcs_installer.install_module(&config, &registry).unwrap();
+    bcs_installer.install_serde_runtime().unwrap();
+    bcs_installer.install_bcs_runtime().unwrap();
 
     let abi_installer = buildgen::java::Installer::new(dir.path().to_path_buf());
     abi_installer
-        .install_transaction_builders("org.diem.stdlib", &abis)
+        .install_transaction_builders("com.diem.stdlib", &abis)
         .unwrap();
 
     std::fs::copy(
@@ -264,9 +267,9 @@ fn test_that_java_code_compiles_and_demo_runs() {
     let paths = || {
         std::iter::empty()
             .chain(std::fs::read_dir(dir.path().join("com/novi/serde")).unwrap())
-            .chain(std::fs::read_dir(dir.path().join("com/novi/lcs")).unwrap())
-            .chain(std::fs::read_dir(dir.path().join("org/diem/types")).unwrap())
-            .chain(std::fs::read_dir(dir.path().join("org/diem/stdlib")).unwrap())
+            .chain(std::fs::read_dir(dir.path().join("com/novi/bcs")).unwrap())
+            .chain(std::fs::read_dir(dir.path().join("com/diem/types")).unwrap())
+            .chain(std::fs::read_dir(dir.path().join("com/diem/stdlib")).unwrap())
             .map(|e| e.unwrap().path())
             .chain(std::iter::once(dir.path().join("StdlibDemo.java")))
     };
@@ -314,12 +317,12 @@ fn test_that_golang_code_compiles_and_demo_runs() {
     let dir = tempdir().unwrap();
 
     let config = serdegen::CodeGeneratorConfig::new("diemtypes".to_string())
-        .with_encodings(vec![serdegen::Encoding::Lcs]);
-    let lcs_installer = serdegen::golang::Installer::new(
+        .with_encodings(vec![serdegen::Encoding::Bcs]);
+    let bcs_installer = serdegen::golang::Installer::new(
         dir.path().to_path_buf(),
         /* default Serde module */ None,
     );
-    lcs_installer.install_module(&config, &registry).unwrap();
+    bcs_installer.install_module(&config, &registry).unwrap();
 
     let abi_installer = buildgen::golang::Installer::new(
         dir.path().to_path_buf(),

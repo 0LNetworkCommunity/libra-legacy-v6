@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account_address::AccountAddress;
@@ -29,11 +29,11 @@ impl NewBlockEvent {
     }
 
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
-        lcs::from_bytes(bytes).map_err(Into::into)
+        bcs::from_bytes(bytes).map_err(Into::into)
     }
 }
 
 impl MoveResource for NewBlockEvent {
-    const MODULE_NAME: &'static str = "LibraBlock";
+    const MODULE_NAME: &'static str = "DiemBlock";
     const STRUCT_NAME: &'static str = "NewBlockEvent";
 }

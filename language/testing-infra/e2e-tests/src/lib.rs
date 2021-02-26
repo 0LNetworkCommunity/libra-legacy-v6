@@ -18,11 +18,9 @@ pub mod data_store;
 pub mod execution_strategies;
 pub mod executor;
 pub mod gas_costs;
+mod golden_outputs;
 pub mod keygen;
 mod proptest_types;
-
-// 0L Changes
-pub mod oracle_setup;
 
 pub fn assert_status_eq(s1: &KeptVMStatus, s2: &KeptVMStatus) -> bool {
     assert_eq!(s1, s2);
@@ -57,4 +55,18 @@ macro_rules! assert_prologue_disparity {
         assert_eq!($e1, $e2);
         assert!(transaction_status_eq($e3, &$e4));
     };
+}
+
+/// Returns the name of the current function. This macro is used to derive the name for the golden
+/// file of each test case.
+#[macro_export]
+macro_rules! current_function_name {
+    () => {{
+        fn f() {}
+        fn type_name_of<T>(_: T) -> &'static str {
+            std::any::type_name::<T>()
+        }
+        let name = type_name_of(f);
+        &name[..name.len() - 3]
+    }};
 }

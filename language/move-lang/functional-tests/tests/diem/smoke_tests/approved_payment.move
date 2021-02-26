@@ -7,7 +7,7 @@
 // a hurdle that must be cleared for all payments to the payee. In addition, approved payments do
 // not have replay protection.
 module ApprovedPayment {
-    use 0x1::Libra::{Self, Libra};
+    use 0x1::Diem::{Self, Diem};
     use 0x1::Signature;
     use 0x1::Signer;
     use 0x1::Vector;
@@ -16,7 +16,7 @@ module ApprovedPayment {
     resource struct T {
         // 32 byte single Ed25519 public key whose counterpart must be used to sign the payment
         // metadata. Note that this is different (and simpler) than the `authentication_key` used in
-        // LibraAccount, which is a hash of a public key + signature scheme identifier.
+        // DiemAccount, which is a hash of a public key + signature scheme identifier.
         public_key: vector<u8>,
         // TODO: events?
     }
@@ -27,7 +27,7 @@ module ApprovedPayment {
         _payer: &signer,
         approved_payment: &T,
         _payee: address,
-        coin: Libra<Token>,
+        coin: Diem<Token>,
         metadata: vector<u8>,
         signature: vector<u8>
     ) {
@@ -42,9 +42,9 @@ module ApprovedPayment {
             ),
             9002, // TODO: proper error code
         );
-        //LibraAccount::deposit_with_metadata<Token>(payer, payee, coin, metadata, x"")
-        // TODO: LibraAccount APIs no longer support depositing a coin stored in a local
-        Libra::destroy_zero(coin);
+        //DiemAccount::deposit_with_metadata<Token>(payer, payee, coin, metadata, x"")
+        // TODO: DiemAccount APIs no longer support depositing a coin stored in a local
+        Diem::destroy_zero(coin);
     }
 
     // Wrapper of `deposit` that withdraw's from the sender's balance and uses the top-level
@@ -60,9 +60,9 @@ module ApprovedPayment {
             payer,
             borrow_global<T>(payee),
             payee,
-            // TODO: LibraAccount APIs no longer support withdrawing a coin into a local
-            //LibraAccount::withdraw_from<Token>(&with_cap, amount),
-            Libra::zero<Token>(),
+            // TODO: DiemAccount APIs no longer support withdrawing a coin into a local
+            //DiemAccount::withdraw_from<Token>(&with_cap, amount),
+            Diem::zero<Token>(),
             metadata,
             signature
         );
@@ -103,7 +103,7 @@ module ApprovedPayment {
 
     // Remove and destroy the ApprovedPayment resource under the sender's account
     public fun unpublish_from_sender(sender: &signer) acquires T {
-        let T { public_key: _ } = move_from<T>(Signer::address_of(sender))
+        let T { public_key: _ } = move_from<T>(Signer::address_of(sender));
     }
 
     // Return true if an ApprovedPayment resource exists under `addr`
@@ -206,11 +206,11 @@ fun main(account: &signer) {
 //! sender: bob2
 script {
 use {{default}}::ApprovedPayment;
-use 0x1::LBR::LBR;
+use 0x1::XDX::XDX;
 fun main(account: &signer) {
     let payment_id = x"0000000000000000000000000000000000000000000000000000000000000000";
     let signature = x"62d6be393b8ec77fb2c12ff44ca8b5bd8bba83b805171bc99f0af3bdc619b20b8bd529452fe62dac022c80752af2af02fb610c20f01fb67a4d72789db2b8b703";
-    ApprovedPayment::deposit_to_payee<LBR>(account, {{alice2}}, 1000, payment_id, signature);
+    ApprovedPayment::deposit_to_payee<XDX>(account, {{alice2}}, 1000, payment_id, signature);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -261,11 +261,11 @@ fun main(account: &signer) {
 //! sender: bob3
 script {
 use {{default}}::ApprovedPayment;
-use 0x1::LBR::LBR;
+use 0x1::XDX::XDX;
 fun main(account: &signer) {
     let payment_id = x"0000000000000000000000000000000000000000000000000000000000000000";
     let signature = x"62d6be393b8ec77fb2c12ff44ca8b5bd8bba83b805171bc99f0af3bdc619b20b8bd529452fe62dac022c80752af2af02fb610c20f01fb67a4d72789db2b8b703";
-    ApprovedPayment::deposit_to_payee<LBR>(account, {{alice3}}, 1000, payment_id, signature);
+    ApprovedPayment::deposit_to_payee<XDX>(account, {{alice3}}, 1000, payment_id, signature);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -276,11 +276,11 @@ fun main(account: &signer) {
 //! sender: bob3
 script {
 use {{default}}::ApprovedPayment;
-use 0x1::LBR::LBR;
+use 0x1::XDX::XDX;
 fun main(account: &signer) {
     let payment_id = x"0000000000000000000000000000000000000000000000000000000000000000";
     let signature = x"";
-    ApprovedPayment::deposit_to_payee<LBR>(account, {{alice}}, 1000, payment_id, signature);
+    ApprovedPayment::deposit_to_payee<XDX>(account, {{alice}}, 1000, payment_id, signature);
 }
 }
 
@@ -292,11 +292,11 @@ fun main(account: &signer) {
 //! sender: bob3
 script {
 use {{default}}::ApprovedPayment;
-use 0x1::LBR::LBR;
+use 0x1::XDX::XDX;
 fun main(account: &signer) {
     let payment_id = x"7";
     let signature = x"62d6be393b8ec77fb2c12ff44ca8b5bd8bba83b805171bc99f0af3bdc619b20b8bd529452fe62dac022c80752af2af02fb610c20f01fb67a4d72789db2b8b703";
-    ApprovedPayment::deposit_to_payee<LBR>(account, {{alice3}}, 1000, payment_id, signature);
+    ApprovedPayment::deposit_to_payee<XDX>(account, {{alice3}}, 1000, payment_id, signature);
 }
 }
 // check: "Keep(ABORTED { code: 9002,"

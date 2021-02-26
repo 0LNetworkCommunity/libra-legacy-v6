@@ -65,19 +65,19 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::ValidatorConfig;
     fun main(account: &signer) {
         ValidatorConfig::set_config(account, {{bob}}, x"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a", x"", x"");
         // the local validator's key is now different from the one in the validator set
-        assert(ValidatorConfig::get_consensus_pubkey(&LibraSystem::get_validator_config({{bob}})) !=
+        assert(ValidatorConfig::get_consensus_pubkey(&DiemSystem::get_validator_config({{bob}})) !=
                ValidatorConfig::get_consensus_pubkey(&ValidatorConfig::get_config({{bob}})), 99);
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
         // the local validator's key is now the same as the key in the validator set
-        assert(ValidatorConfig::get_consensus_pubkey(&LibraSystem::get_validator_config({{bob}})) ==
+        assert(ValidatorConfig::get_consensus_pubkey(&DiemSystem::get_validator_config({{bob}})) ==
                ValidatorConfig::get_consensus_pubkey(&ValidatorConfig::get_config({{bob}})), 99);
         // check bob's public key is updated
-        let validator_config = LibraSystem::get_validator_config({{bob}});
+        let validator_config = DiemSystem::get_validator_config({{bob}});
         assert(*ValidatorConfig::get_consensus_pubkey(&validator_config) == x"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a", 99);
     }
 }

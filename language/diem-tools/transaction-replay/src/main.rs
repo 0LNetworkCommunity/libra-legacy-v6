@@ -1,10 +1,10 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
-use difference::Changeset;
-use diem_transaction_replay::LibraDebugger;
+use diem_transaction_replay::DiemDebugger;
 use diem_types::{account_address::AccountAddress, transaction::Version};
+use difference::Changeset;
 use move_vm_test_utils::ChangeSet;
 use std::path::PathBuf;
 use stdlib::build_stdlib;
@@ -12,7 +12,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
-    /// Path to the local LibraDB file
+    /// Path to the local DiemDB file
     #[structopt(long, parse(from_os_str))]
     db: Option<PathBuf>,
     /// Full URL address to connect to - should include port number, if applicable
@@ -63,9 +63,9 @@ enum Command {
 fn main() -> Result<()> {
     let opt = Opt::from_args();
     let debugger = if let Some(p) = opt.db {
-        LibraDebugger::db(p)?
+        DiemDebugger::db(p)?
     } else if let Some(url) = opt.url {
-        LibraDebugger::json_rpc(url.as_str())?
+        DiemDebugger::json_rpc(url.as_str())?
     } else {
         panic!("No debugger attached")
     };

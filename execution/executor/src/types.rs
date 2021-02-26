@@ -3,7 +3,6 @@
 
 #![forbid(unsafe_code)]
 
-use executor_types::{ExecutedTrees, StateComputeResult};
 use diem_crypto::{hash::EventAccumulatorHasher, HashValue};
 use diem_types::{
     account_address::AccountAddress,
@@ -13,6 +12,7 @@ use diem_types::{
     proof::accumulator::InMemoryAccumulator,
     transaction::{TransactionStatus, Version},
 };
+use executor_types::{ExecutedTrees, StateComputeResult};
 use scratchpad::SparseMerkleTree;
 use std::{collections::HashMap, sync::Arc};
 

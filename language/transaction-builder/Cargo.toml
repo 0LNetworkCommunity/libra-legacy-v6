@@ -1,10 +1,10 @@
 [package]
 name = "transaction-builder"
 version = "0.1.0"
-authors = ["Libra Association <opensource@diem.org>"]
-description = "Libra transaction-builder"
+authors = ["Diem Association <opensource@diem.com>"]
+description = "Diem transaction-builder"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 edition = "2018"
 

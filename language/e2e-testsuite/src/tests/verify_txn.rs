@@ -1,15 +1,8 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use compiled_stdlib::transaction_scripts::StdlibScript;
 use compiler::Compiler;
-use language_e2e_tests::{
-    account::{Account, AccountData},
-    assert_prologue_disparity, assert_prologue_parity,
-    compile::compile_module_with_address,
-    executor::FakeExecutor,
-    gas_costs, transaction_status_eq,
-};
 use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use diem_types::{
     account_address::AccountAddress,
@@ -17,26 +10,33 @@ use diem_types::{
     chain_id::ChainId,
     on_chain_config::VMPublishingOption,
     test_helpers::transaction_test_helpers,
-    transaction::{Script, TransactionArgument, TransactionStatus},
+    transaction::{Script, TransactionArgument, TransactionStatus, WriteSetPayload},
     vm_status::{KeptVMStatus, StatusCode},
+};
+use language_e2e_tests::{
+    account::Account, assert_prologue_disparity, assert_prologue_parity,
+    compile::compile_module_with_address, current_function_name, executor::FakeExecutor, gas_costs,
+    keygen::KeyGen, transaction_status_eq,
 };
 use move_core_types::{
     gas_schedule::{GasAlgebra, GasConstants, MAX_TRANSACTION_SIZE_IN_BYTES},
     identifier::Identifier,
     language_storage::{StructTag, TypeTag},
 };
+use move_vm_types::values::Value;
 use transaction_builder::encode_peer_to_peer_with_metadata_script;
 use vm::file_format::CompiledModule;
 
 #[test]
 fn verify_signature() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(900_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(900_000, 10);
     executor.add_account_data(&sender);
     // Generate a new key pair to try and sign things with.
     let private_key = Ed25519PrivateKey::generate_for_testing();
     let program = encode_peer_to_peer_with_metadata_script(
-        account_config::coin1_tmp_tag(),
+        account_config::xus_tag(),
         *sender.address(),
         100,
         vec![],
@@ -60,12 +60,13 @@ fn verify_signature() {
 #[test]
 fn verify_reserved_sender() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(900_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(900_000, 10);
     executor.add_account_data(&sender);
     // Generate a new key pair to try and sign things with.
     let private_key = Ed25519PrivateKey::generate_for_testing();
     let program = encode_peer_to_peer_with_metadata_script(
-        account_config::coin1_tmp_tag(),
+        account_config::xus_tag(),
         *sender.address(),
         100,
         vec![],
@@ -90,9 +91,10 @@ fn verify_reserved_sender() {
 fn verify_simple_payment() {
     // create a FakeExecutor with a genesis from file
     let mut executor = FakeExecutor::from_genesis_file();
+    executor.set_golden_file(current_function_name!());
     // create and publish a sender with 1_000_000 coins and a receiver with 100_000 coins
-    let sender = AccountData::new(900_000, 10);
-    let receiver = AccountData::new(100_000, 10);
+    let sender = executor.create_raw_account_data(900_000, 10);
+    let receiver = executor.create_raw_account_data(100_000, 10);
     executor.add_account_data(&sender);
     executor.add_account_data(&receiver);
 
@@ -114,7 +116,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(10)
@@ -127,7 +129,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(10)
@@ -150,7 +152,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(1)
@@ -167,7 +169,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(11)
@@ -184,7 +186,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(10)
@@ -198,13 +200,13 @@ fn verify_simple_payment() {
     );
 
     // Create a new transaction from a bogus account that doesn't exist
-    let bogus_account = AccountData::new(100_000, 10);
+    let bogus_account = executor.create_raw_account_data(100_000, 10);
     let txn = bogus_account
         .account()
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(10)
@@ -226,7 +228,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(10)
@@ -244,7 +246,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(10)
@@ -262,7 +264,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args.clone(),
         ))
         .sequence_number(10)
@@ -280,7 +282,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args,
         ))
         .sequence_number(10)
@@ -298,7 +300,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             vec![TransactionArgument::U64(42); MAX_TRANSACTION_SIZE_IN_BYTES as usize],
         ))
         .sequence_number(10)
@@ -321,7 +323,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script.clone(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             args,
         ))
         .sequence_number(10)
@@ -340,7 +342,7 @@ fn verify_simple_payment() {
         .transaction()
         .script(Script::new(
             p2p_script,
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             vec![],
         ))
         .sequence_number(10)
@@ -358,8 +360,9 @@ fn verify_simple_payment() {
 pub fn test_allowlist() {
     // create a FakeExecutor with a genesis from file
     let mut executor = FakeExecutor::allowlist_genesis();
+    executor.set_golden_file(current_function_name!());
     // create an empty transaction
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // When CustomScripts is off, a garbage script should be rejected with Keep(UnknownScript)
@@ -384,9 +387,10 @@ pub fn test_arbitrary_script_execution() {
     // create a FakeExecutor with a genesis from file
     let mut executor =
         FakeExecutor::from_genesis_with_options(VMPublishingOption::custom_scripts());
+    executor.set_golden_file(current_function_name!());
 
     // create an empty transaction
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // If CustomScripts is on, result should be Keep(DeserializationError). If it's off, the
@@ -415,9 +419,10 @@ pub fn test_publish_from_diem_root() {
     // create a FakeExecutor with a genesis from file
     let mut executor =
         FakeExecutor::from_genesis_with_options(VMPublishingOption::custom_scripts());
+    executor.set_golden_file(current_function_name!());
 
     // create a transaction trying to publish a new module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     let module = String::from(
@@ -460,7 +465,8 @@ pub fn test_publish_from_diem_root() {
 #[test]
 fn verify_expiration_time() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(900_000, 0);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(900_000, 0);
     executor.add_account_data(&sender);
     let private_key = &sender.account().privkey;
     let txn = transaction_test_helpers::get_test_signed_transaction(
@@ -471,7 +477,7 @@ fn verify_expiration_time() {
         None, /* script */
         0,    /* expiration_time */
         0,    /* gas_unit_price */
-        account_config::COIN1_NAME.to_owned(),
+        account_config::XUS_NAME.to_owned(),
         None, /* max_gas_amount */
     );
     assert_prologue_parity!(
@@ -490,7 +496,7 @@ fn verify_expiration_time() {
         None, /* script */
         0,    /* expiration_time */
         0,    /* gas_unit_price */
-        account_config::COIN1_NAME.to_owned(),
+        account_config::XUS_NAME.to_owned(),
         None, /* max_gas_amount */
     );
     assert_prologue_parity!(
@@ -503,7 +509,8 @@ fn verify_expiration_time() {
 #[test]
 fn verify_chain_id() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(900_000, 0);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(900_000, 0);
     executor.add_account_data(&sender);
     let private_key = Ed25519PrivateKey::generate_for_testing();
     let txn = transaction_test_helpers::get_test_txn_with_chain_id(
@@ -524,7 +531,8 @@ fn verify_chain_id() {
 #[test]
 fn verify_gas_currency_with_bad_identifier() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(900_000, 0);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(900_000, 0);
     executor.add_account_data(&sender);
     let private_key = &sender.account().privkey;
     let txn = transaction_test_helpers::get_test_signed_transaction(
@@ -550,7 +558,8 @@ fn verify_gas_currency_with_bad_identifier() {
 #[test]
 fn verify_gas_currency_code() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(900_000, 0);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(900_000, 0);
     executor.add_account_data(&sender);
     let private_key = &sender.account().privkey;
     let txn = transaction_test_helpers::get_test_signed_transaction(
@@ -572,9 +581,36 @@ fn verify_gas_currency_code() {
 }
 
 #[test]
+fn verify_max_sequence_number() {
+    let mut executor = FakeExecutor::from_genesis_file();
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(900_000, std::u64::MAX);
+    executor.add_account_data(&sender);
+    let private_key = &sender.account().privkey;
+    let txn = transaction_test_helpers::get_test_signed_transaction(
+        *sender.address(),
+        std::u64::MAX, /* sequence_number */
+        private_key,
+        private_key.public_key(),
+        None,     /* script */
+        u64::MAX, /* expiration_time */
+        0,        /* gas_unit_price */
+        "XUS".to_string(),
+        None, /* max_gas_amount */
+    );
+    assert_prologue_parity!(
+        executor.verify_transaction(txn.clone()).status(),
+        executor.execute_transaction(txn).status(),
+        StatusCode::SEQUENCE_NUMBER_TOO_BIG
+    );
+}
+
+#[test]
 pub fn test_no_publishing_diem_root_sender() {
     // create a FakeExecutor with a genesis from file
-    let executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::custom_scripts());
+    let mut executor =
+        FakeExecutor::from_genesis_with_options(VMPublishingOption::custom_scripts());
+    executor.set_golden_file(current_function_name!());
 
     // create a transaction trying to publish a new module.
     let sender = Account::new_diem_root();
@@ -619,10 +655,11 @@ pub fn test_no_publishing_diem_root_sender() {
 pub fn test_open_publishing_invalid_address() {
     // create a FakeExecutor with a genesis from file
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // create a transaction trying to publish a new module.
-    let sender = AccountData::new(1_000_000, 10);
-    let receiver = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
+    let receiver = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
     executor.add_account_data(&receiver);
 
@@ -678,9 +715,10 @@ pub fn test_open_publishing_invalid_address() {
 pub fn test_open_publishing() {
     // create a FakeExecutor with a genesis from file
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // create a transaction trying to publish a new module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     let program = String::from(
@@ -771,13 +809,14 @@ fn good_module_uses_bad(address: AccountAddress, bad_dep: CompiledModule) -> Com
 #[test]
 fn test_script_dependency_fails_verification() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // Get a module that fails verification into the store.
     let module = bad_module();
     executor.add_module(&module.self_id(), &module);
 
     // Create a module that tries to use that module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     let code = "
@@ -821,13 +860,14 @@ fn test_script_dependency_fails_verification() {
 #[test]
 fn test_module_dependency_fails_verification() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // Get a module that fails verification into the store.
     let bad_module = bad_module();
     executor.add_module(&bad_module.self_id(), &bad_module);
 
     // Create a transaction that tries to use that module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
     let good_module = {
         let m = good_module_uses_bad(*sender.address(), bad_module);
@@ -858,13 +898,14 @@ fn test_module_dependency_fails_verification() {
 #[test]
 fn test_type_tag_dependency_fails_verification() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // Get a module that fails verification into the store.
     let module = bad_module();
     executor.add_module(&module.self_id(), &module);
 
     // Create a transaction that tries to use that module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     let code = "
@@ -913,6 +954,7 @@ fn test_type_tag_dependency_fails_verification() {
 #[test]
 fn test_script_transitive_dependency_fails_verification() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // Get a module that fails verification into the store.
     let bad_module = bad_module();
@@ -923,7 +965,7 @@ fn test_script_transitive_dependency_fails_verification() {
     executor.add_module(&good_module.self_id(), &good_module);
 
     // Create a transaction that tries to use that module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     let code = "
@@ -966,6 +1008,7 @@ fn test_script_transitive_dependency_fails_verification() {
 #[test]
 fn test_module_transitive_dependency_fails_verification() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // Get a module that fails verification into the store.
     let bad_module = bad_module();
@@ -976,7 +1019,7 @@ fn test_module_transitive_dependency_fails_verification() {
     executor.add_module(&good_module.self_id(), &good_module);
 
     // Create a transaction that tries to use that module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     let module_code = "
@@ -1023,6 +1066,7 @@ fn test_module_transitive_dependency_fails_verification() {
 #[test]
 fn test_type_tag_transitive_dependency_fails_verification() {
     let mut executor = FakeExecutor::from_genesis_with_options(VMPublishingOption::open());
+    executor.set_golden_file(current_function_name!());
 
     // Get a module that fails verification into the store.
     let bad_module = bad_module();
@@ -1033,7 +1077,7 @@ fn test_type_tag_transitive_dependency_fails_verification() {
     executor.add_module(&good_module.self_id(), &good_module);
 
     // Create a transaction that tries to use that module.
-    let sender = AccountData::new(1_000_000, 10);
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     let code = "
@@ -1081,9 +1125,10 @@ fn test_type_tag_transitive_dependency_fails_verification() {
 
 #[test]
 fn charge_gas_invalid_args() {
-    let mut fake_executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(1_000_000, 0);
-    fake_executor.add_account_data(&sender);
+    let mut executor = FakeExecutor::from_genesis_file();
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(1_000_000, 0);
+    executor.add_account_data(&sender);
 
     // get a SignedTransaction
     let txn = sender
@@ -1093,7 +1138,7 @@ fn charge_gas_invalid_args() {
             StdlibScript::PeerToPeerWithMetadata
                 .compiled_bytes()
                 .into_vec(),
-            vec![account_config::coin1_tmp_tag()],
+            vec![account_config::xus_tag()],
             // Don't pass any arguments
             vec![],
         ))
@@ -1101,7 +1146,165 @@ fn charge_gas_invalid_args() {
         .max_gas_amount(gas_costs::TXN_RESERVED)
         .sign();
 
-    let output = fake_executor.execute_transaction(txn);
+    let output = executor.execute_transaction(txn);
     assert!(!output.status().is_discarded());
     assert!(output.gas_used() > 0);
+}
+
+#[test]
+pub fn publish_and_register_new_currency() {
+    // create a FakeExecutor with a genesis from file
+    let mut executor = FakeExecutor::allowlist_genesis();
+    executor.set_golden_file(current_function_name!());
+
+    // create a transaction trying to publish a new module.
+    let sender = Account::new_diem_root();
+    let tc_account = Account::new_blessed_tc();
+
+    let module = r#"
+        module COIN {
+            import 0x1.FixedPoint32;
+            import 0x1.Diem;
+            struct COIN { x: bool }
+            public initialize(dr_account: &signer, tc_account: &signer) {
+                Diem.register_SCS_currency<Self.COIN>(
+                    move(dr_account),
+                    move(tc_account),
+                    FixedPoint32.create_from_rational(1,2),
+                    100000,
+                    100,
+                    h"434f494e",
+                );
+                return;
+            }
+        }
+    "#;
+
+    let (compiled_module, module) =
+        compile_module_with_address(&account_config::CORE_CODE_ADDRESS, "file_name", &module);
+    let txn = sender
+        .transaction()
+        .module(module)
+        .sequence_number(1)
+        .sign();
+    assert_eq!(executor.verify_transaction(txn.clone()).status(), None);
+    assert_eq!(
+        executor.execute_and_apply(txn).status(),
+        &TransactionStatus::Keep(KeptVMStatus::Executed)
+    );
+    let coin_tag = account_config::type_tag_for_currency_code(Identifier::new("COIN").unwrap());
+
+    {
+        let program = {
+            let code = r#"
+            import 0x1.COIN;
+            main(lr_account: &signer, tc_account: &signer) {
+                COIN.initialize(move(lr_account), move(tc_account));
+                return;
+            }
+            "#;
+            let compiler = Compiler {
+                address: account_config::CORE_CODE_ADDRESS,
+                extra_deps: vec![compiled_module],
+                ..Compiler::default()
+            };
+            compiler
+                .into_script_blob("file_name", code)
+                .expect("Failed to compile")
+        };
+        let txn = sender
+            .transaction()
+            .write_set(WriteSetPayload::Script {
+                script: Script::new(program, vec![], vec![]),
+                execute_as: *tc_account.address(),
+            })
+            .sequence_number(2)
+            .sign();
+        executor.new_block();
+        executor.execute_and_apply(txn);
+    }
+
+    let dd = Account::new_from_seed(&mut KeyGen::from_seed([0; 32]));
+
+    let txn = tc_account
+        .transaction()
+        .script(transaction_builder::encode_create_designated_dealer_script(
+            coin_tag.clone(),
+            0,
+            *dd.address(),
+            dd.auth_key_prefix(),
+            b"".to_vec(),
+            true,
+        ))
+        .sequence_number(0)
+        .sign();
+
+    executor.execute_and_apply(txn);
+
+    executor.exec(
+        "DesignatedDealer",
+        "add_currency",
+        vec![coin_tag.clone()],
+        vec![
+            Value::transaction_argument_signer_reference(*dd.address()),
+            Value::transaction_argument_signer_reference(*tc_account.address()),
+        ],
+        tc_account.address(),
+    );
+
+    let txn = tc_account
+        .transaction()
+        .script(transaction_builder::encode_tiered_mint_script(
+            coin_tag.clone(),
+            0,
+            *dd.address(),
+            50000,
+            1,
+        ))
+        .sequence_number(1)
+        .sign();
+
+    executor.execute_and_apply(txn);
+
+    let txn = dd
+        .transaction()
+        .script(
+            transaction_builder::encode_peer_to_peer_with_metadata_script(
+                coin_tag.clone(),
+                *dd.address(),
+                1,
+                b"".to_vec(),
+                b"".to_vec(),
+            ),
+        )
+        .gas_unit_price(1)
+        .max_gas_amount(800)
+        .gas_currency_code("COIN")
+        .sequence_number(0)
+        .sign();
+
+    let balance = executor.read_balance_resource(&dd, Identifier::new("COIN").unwrap());
+    assert!(balance.unwrap().coin() > 800);
+
+    assert_prologue_parity!(
+        executor.verify_transaction(txn.clone()).status(),
+        executor.execute_transaction(txn.clone()).status(),
+        StatusCode::INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE
+    );
+
+    executor.exec(
+        "TransactionFee",
+        "add_txn_fee_currency",
+        vec![coin_tag],
+        vec![Value::transaction_argument_signer_reference(
+            *tc_account.address(),
+        )],
+        tc_account.address(),
+    );
+
+    assert_eq!(executor.verify_transaction(txn.clone()).status(), None);
+    assert_eq!(
+        executor.execute_transaction(txn).status(),
+        &TransactionStatus::Keep(KeptVMStatus::Executed)
+    );
 }

@@ -1,5 +1,5 @@
-#ifndef LIBRA_DEV_H
-#define LIBRA_DEV_H
+#ifndef DIEM_DEV_H
+#define DIEM_DEV_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,11 +10,11 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 
-#define LIBRA_PUBKEY_SIZE 32
-#define LIBRA_PRIVKEY_SIZE 32
-#define LIBRA_AUTHKEY_SIZE 32
-#define LIBRA_SIGNATURE_SIZE 64
-#define LIBRA_ADDRESS_SIZE 16
+#define DIEM_PUBKEY_SIZE 32
+#define DIEM_PRIVKEY_SIZE 32
+#define DIEM_AUTHKEY_SIZE 32
+#define DIEM_SIGNATURE_SIZE 64
+#define DIEM_ADDRESS_SIZE 16
 
 enum DiemStatus {
     Ok = 0,
@@ -24,7 +24,7 @@ enum DiemStatus {
 
 struct DiemP2PTransferTransactionArgument {
     uint64_t value;
-    uint8_t address[LIBRA_ADDRESS_SIZE];
+    uint8_t address[DIEM_ADDRESS_SIZE];
     const uint8_t* metadata_bytes;
     size_t metadata_len;
     const uint8_t* metadata_signature_bytes;
@@ -43,7 +43,7 @@ struct DiemTransactionPayload {
 };
 
 struct DiemRawTransaction {
-    uint8_t sender[LIBRA_ADDRESS_SIZE];
+    uint8_t sender[DIEM_ADDRESS_SIZE];
     uint64_t sequence_number;
     struct DiemTransactionPayload payload;
     uint64_t max_gas_amount;
@@ -54,14 +54,14 @@ struct DiemRawTransaction {
 
 struct DiemSignedTransaction {
     struct DiemRawTransaction raw_txn;
-    uint8_t public_key[LIBRA_PUBKEY_SIZE];
-    uint8_t signature[LIBRA_SIGNATURE_SIZE];
+    uint8_t public_key[DIEM_PUBKEY_SIZE];
+    uint8_t signature[DIEM_SIGNATURE_SIZE];
 };
 
 struct DiemAccountKey {
-    uint8_t address[LIBRA_ADDRESS_SIZE];
-    uint8_t private_key[LIBRA_PRIVKEY_SIZE];
-    uint8_t public_key[LIBRA_PUBKEY_SIZE];
+    uint8_t address[DIEM_ADDRESS_SIZE];
+    uint8_t private_key[DIEM_PRIVKEY_SIZE];
+    uint8_t public_key[DIEM_PUBKEY_SIZE];
 };
 
 /*!
@@ -81,7 +81,7 @@ struct DiemAccountKey {
  * @param[out] ptr_buf is the pointer that will be filled with the memory address of the transaction allocated in rust. User takes ownership of pointer returned by *buf, which needs to be freed using diem_free_bytes_buffer
  * @param[out] ptr_len is the length of the signed transaction memory buffer.
 */
-enum DiemStatus diem_SignedTransactionBytes_from(const uint8_t sender_private_key[LIBRA_PRIVKEY_SIZE], uint64_t sequence, uint64_t max_gas_amount, uint64_t gas_unit_price, const char* gas_identifier, uint64_t expiration_time_secs, uint8_t chain_id, const uint8_t *script_bytes, size_t script_len, uint8_t **ptr_buf, size_t *ptr_len);
+enum DiemStatus diem_SignedTransactionBytes_from(const uint8_t sender_private_key[DIEM_PRIVKEY_SIZE], uint64_t sequence, uint64_t max_gas_amount, uint64_t gas_unit_price, const char* gas_identifier, uint64_t expiration_time_secs, uint8_t chain_id, const uint8_t *script_bytes, size_t script_len, uint8_t **ptr_buf, size_t *ptr_len);
 
 /*!
  *  Get script bytes for a P2P transaction
@@ -98,7 +98,7 @@ enum DiemStatus diem_SignedTransactionBytes_from(const uint8_t sender_private_ke
  * @param[out] ptr_buf is the pointer that will be filled with the memory address of the script allocated in rust. User takes ownership of pointer returned by *buf, which needs to be freed using diem_free_bytes_buffer
  * @param[out] ptr_len is the length of the script memory buffer.
 */
-enum DiemStatus diem_TransactionP2PScript_from(const uint8_t receiver[LIBRA_ADDRESS_SIZE], const char* identifier, uint64_t num_coins, const uint8_t* metadata_bytes, size_t metadata_len, const uint8_t* metadata_signature_bytes, size_t metadata_signature_len, uint8_t **ptr_buf, size_t *ptr_len);
+enum DiemStatus diem_TransactionP2PScript_from(const uint8_t receiver[DIEM_ADDRESS_SIZE], const char* identifier, uint64_t num_coins, const uint8_t* metadata_bytes, size_t metadata_len, const uint8_t* metadata_signature_bytes, size_t metadata_signature_len, uint8_t **ptr_buf, size_t *ptr_len);
 
 /*!
  *  Get script bytes for add currency to account transaction
@@ -123,7 +123,7 @@ enum DiemStatus diem_TransactionAddCurrencyScript_from(const char* identifier, u
  * @param[out] ptr_buf is the pointer that will be filled with the memory address of the script allocated in rust. User takes ownership of pointer returned by *buf, which needs to be freed using diem_free_bytes_buffer
  * @param[out] ptr_len is the length of the script memory buffer.
 */
-enum DiemStatus diem_TransactionRotateDualAttestationInfoScript_from(const uint8_t* new_url_bytes, size_t new_url_len, const uint8_t new_key_bytes[LIBRA_PUBKEY_SIZE], uint8_t **ptr_buf, size_t *ptr_len);
+enum DiemStatus diem_TransactionRotateDualAttestationInfoScript_from(const uint8_t* new_url_bytes, size_t new_url_len, const uint8_t new_key_bytes[DIEM_PUBKEY_SIZE], uint8_t **ptr_buf, size_t *ptr_len);
 
 /*!
  * Function to free the allocation memory in rust for bytes
@@ -160,14 +160,14 @@ enum DiemStatus diem_DiemSignedTransaction_from(const uint8_t *buf, size_t len, 
  * @param[out] buf is the pointer that will be filled with the memory address of the transaction allocated in rust. User takes ownership of pointer returned by *buf, which needs to be freed using diem_free_bytes_buffer
  * @param[out] len is the length of the raw transaction memory buffer.
 */
-enum DiemStatus diem_RawTransactionBytes_from(const uint8_t sender[LIBRA_ADDRESS_SIZE], const uint8_t receiver[LIBRA_ADDRESS_SIZE], uint64_t sequence, uint64_t num_coins, uint64_t max_gas_amount, uint64_t gas_unit_price, uint64_t expiration_time_secs, uint8_t chain_id, const uint8_t* metadata_bytes, size_t metadata_len, const uint8_t* metadata_signature_bytes, size_t metadata_signature_len, uint8_t **buf, size_t *len);
+enum DiemStatus diem_RawTransactionBytes_from(const uint8_t sender[DIEM_ADDRESS_SIZE], const uint8_t receiver[DIEM_ADDRESS_SIZE], uint64_t sequence, uint64_t num_coins, uint64_t max_gas_amount, uint64_t gas_unit_price, uint64_t expiration_time_secs, uint8_t chain_id, const uint8_t* metadata_bytes, size_t metadata_len, const uint8_t* metadata_signature_bytes, size_t metadata_signature_len, uint8_t **buf, size_t *len);
 
 /*!
  * This function takes in private key in bytes and return the associated public key and address
  * @param[in] private_key_bytes is private key in bytes
  * @param[out] out is a pointer to DiemAccountKey struct client passed in by initializing an empty DiemAccountKey struct
 */
-enum DiemStatus diem_DiemAccountKey_from(const uint8_t private_key_bytes[LIBRA_PRIVKEY_SIZE], struct DiemAccountKey *out);
+enum DiemStatus diem_DiemAccountKey_from(const uint8_t private_key_bytes[DIEM_PRIVKEY_SIZE], struct DiemAccountKey *out);
 
 /*!
  * This function returns the string message of the most recent error in Rust.
@@ -180,4 +180,4 @@ const char *diem_strerror();
 };
 #endif
 
-#endif // LIBRA_DEV_H
+#endif // DIEM_DEV_H

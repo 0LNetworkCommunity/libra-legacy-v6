@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::NodeConfig;
-use get_if_addrs::get_if_addrs;
 use diem_network_address::{NetworkAddress, Protocol};
 use diem_types::{
     account_address::AccountAddress,
     transaction::{authenticator::AuthenticationKey, Transaction},
 };
+use get_if_addrs::get_if_addrs;
 use std::net::{TcpListener, TcpStream};
 
 pub fn default_validator_owner_auth_key_from_name(name: &[u8]) -> AuthenticationKey {

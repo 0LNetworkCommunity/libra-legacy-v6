@@ -2,7 +2,7 @@
 
 //! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 //! args: 0, {{alice}}, {{alice::auth_key}}, b"alice", false
 stdlib_script::create_parent_vasp_account
 // check: "Keep(EXECUTED)"
@@ -12,12 +12,12 @@ stdlib_script::create_parent_vasp_account
 //! execute-as: alice
 script {
 use 0x1::AccountLimits;
-use 0x1::Coin1;
+use 0x1::XUS;
 use 0x1::Signer;
-fun main(lr_account: &signer, vasp: &signer) {
-    AccountLimits::publish_unrestricted_limits<Coin1::Coin1>(vasp);
-    AccountLimits::publish_window<Coin1::Coin1>(
-        lr_account,
+fun main(dr_account: &signer, vasp: &signer) {
+    AccountLimits::publish_unrestricted_limits<XUS::XUS>(vasp);
+    AccountLimits::publish_window<XUS::XUS>(
+        dr_account,
         vasp,
         Signer::address_of(vasp)
     );
@@ -27,7 +27,7 @@ fun main(lr_account: &signer, vasp: &signer) {
 
 //! new-transaction
 //! sender: testnetdd
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 //! args: {{alice}}, 1000000, b"", b""
 stdlib_script::peer_to_peer_with_metadata
 // check: "Keep(EXECUTED)"
@@ -37,7 +37,7 @@ stdlib_script::peer_to_peer_with_metadata
 //! sender: alice
 //! gas-price: 1
 //! max-gas: 1000
-//! gas-currency: LBR
+//! gas-currency: XDX
 script {
     fun main() {
     }

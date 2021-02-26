@@ -35,7 +35,7 @@ use diem_secure_storage::{CryptoStorage, KVStorage};
 use diem_secure_time::TimeService;
 use diem_types::{
     account_address::AccountAddress,
-    account_config::COIN1_NAME,
+    account_config::XUS_NAME,
     chain_id::ChainId,
     transaction::{RawTransaction, SignedTransaction, Transaction},
 };
@@ -399,7 +399,7 @@ pub fn build_rotation_transaction(
         script,
         MAX_GAS_AMOUNT,
         GAS_UNIT_PRICE,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         expiration_timestamp_secs,
         chain_id,
     )

@@ -21,12 +21,12 @@ use diem_crypto::{
     hash::{CryptoHash, SPARSE_MERKLE_PLACEHOLDER_HASH},
     HashValue,
 };
-use diem_infallible::RwLock;
+use diem_infallible::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use diem_types::{
     account_state_blob::AccountStateBlob,
     proof::{SparseMerkleInternalNode, SparseMerkleLeafNode},
 };
-use std::sync::{Arc, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::Arc;
 
 /// We wrap the node in `RwLock`. The only case when we will update the node is when we
 /// drop a subtree originated from this node and commit things to storage. In that case we will
@@ -110,20 +110,12 @@ impl Node {
 
     #[cfg(test)]
     pub fn is_subtree(&self) -> bool {
-        if let Node::Subtree(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Node::Subtree(_))
     }
 
     #[cfg(test)]
     pub fn is_empty(&self) -> bool {
-        if let Node::Empty = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Node::Empty)
     }
 
     pub fn hash(&self) -> HashValue {

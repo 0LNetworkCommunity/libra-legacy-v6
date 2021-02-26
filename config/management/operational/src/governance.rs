@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{auto_validate::AutoValidate, json_rpc::JsonRpcClientWrapper, TransactionContext};
-use diem_global_constants::LIBRA_ROOT_KEY;
+use diem_global_constants::DIEM_ROOT_KEY;
 use diem_management::{
     config::{Config, ConfigPath},
     error::Error,
@@ -213,7 +213,7 @@ fn build_and_submit_diem_root_transaction(
     let txn = build_raw_transaction(config.chain_id, diem_root_address(), seq_num, script);
 
     let mut storage = config.validator_backend();
-    let signed_txn = storage.sign(LIBRA_ROOT_KEY, action, txn)?;
+    let signed_txn = storage.sign(DIEM_ROOT_KEY, action, txn)?;
 
     let client = JsonRpcClientWrapper::new(config.json_server.clone());
     client.submit_transaction(signed_txn)

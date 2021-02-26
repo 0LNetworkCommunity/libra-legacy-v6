@@ -1,12 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_metrics::{
-    register_histogram_vec, register_int_counter_vec, HistogramVec, IntCounterVec,
-};
+use diem_metrics::{register_histogram_vec, register_int_counter_vec, HistogramVec, IntCounterVec};
 use once_cell::sync::Lazy;
 
-pub static LIBRA_SCHEMADB_ITER_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_ITER_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_schemadb_iter_latency_seconds",
@@ -18,7 +16,7 @@ pub static LIBRA_SCHEMADB_ITER_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|
     .unwrap()
 });
 
-pub static LIBRA_SCHEMADB_ITER_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_ITER_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_schemadb_iter_bytes",
@@ -30,7 +28,7 @@ pub static LIBRA_SCHEMADB_ITER_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_SCHEMADB_GET_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_GET_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_schemadb_get_latency_seconds",
@@ -42,7 +40,7 @@ pub static LIBRA_SCHEMADB_GET_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(||
     .unwrap()
 });
 
-pub static LIBRA_SCHEMADB_GET_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_GET_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_schemadb_get_bytes",
@@ -54,7 +52,7 @@ pub static LIBRA_SCHEMADB_GET_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_schemadb_batch_commit_latency_seconds",
@@ -66,7 +64,7 @@ pub static LIBRA_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS: Lazy<HistogramVec> = Laz
     .unwrap()
 });
 
-pub static LIBRA_SCHEMADB_BATCH_COMMIT_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_BATCH_COMMIT_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_schemadb_batch_commit_bytes",
@@ -78,7 +76,7 @@ pub static LIBRA_SCHEMADB_BATCH_COMMIT_BYTES: Lazy<HistogramVec> = Lazy::new(|| 
     .unwrap()
 });
 
-pub static LIBRA_SCHEMADB_PUT_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_PUT_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_schemadb_put_bytes",
@@ -90,7 +88,7 @@ pub static LIBRA_SCHEMADB_PUT_BYTES: Lazy<HistogramVec> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_SCHEMADB_DELETES: Lazy<IntCounterVec> = Lazy::new(|| {
+pub static DIEM_SCHEMADB_DELETES: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
         "diem_storage_deletes",
         "Diem storage delete calls",

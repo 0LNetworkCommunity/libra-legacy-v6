@@ -3,12 +3,12 @@
 
 use crate::{execution_correctness::ExecutionCorrectness, id_and_transactions_from_block};
 use consensus_types::{block::Block, vote_proposal::VoteProposal};
-use executor_types::{BlockExecutor, Error, StateComputeResult};
 use diem_crypto::{ed25519::Ed25519PrivateKey, traits::SigningKey, HashValue};
 use diem_infallible::Mutex;
 use diem_types::{
     contract_event::ContractEvent, ledger_info::LedgerInfoWithSignatures, transaction::Transaction,
 };
+use executor_types::{BlockExecutor, Error, StateComputeResult};
 use std::{boxed::Box, sync::Arc};
 
 pub struct LocalService {

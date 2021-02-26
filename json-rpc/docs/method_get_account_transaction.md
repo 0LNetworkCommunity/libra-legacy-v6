@@ -25,7 +25,7 @@ Null - If transaction does not exist
 
 ```
 // Request: fetches transaction for account address "1668f6be25668c1a17cd8caf6b8d2f25" and sequence number 0, with including events associated with this transaction
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_account_transaction","params":["1668f6be25668c1a17cd8caf6b8d2f25", 0, true],"id":1}' https://testnet.diem.org/v1
+curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_account_transaction","params":["1668f6be25668c1a17cd8caf6b8d2f25", 0, true],"id":1}' https://testnet.diem.com/v1
 
 // Response
 {
@@ -40,7 +40,7 @@ curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","metho
         "data": {
           "amount": {
             "amount": 1000000,
-            "currency": "LBR"
+            "currency": "XDX"
           },
           "metadata": "",
           "receiver": "262e691ec8c7e3e23470d8c3ee26e1a7",
@@ -55,7 +55,7 @@ curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","metho
         "data": {
           "amount": {
             "amount": 1000000,
-            "currency": "LBR"
+            "currency": "XDX"
           },
           "metadata": "",
           "receiver": "262e691ec8c7e3e23470d8c3ee26e1a7",
@@ -72,13 +72,13 @@ curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","metho
     "transaction": {
       "chain_id": 2,
       "expiration_timestamp_secs": 100000000000,
-      "gas_currency": "LBR",
+      "gas_currency": "XDX",
       "gas_unit_price": 0,
       "max_gas_amount": 1000000,
       "public_key": "f549a91fb9989883fb4d38b463308f3ea82074fb39ea74dae61f62e11bf55d25",
       "script": {
         "amount": 1000000,
-        "currency": "LBR",
+        "currency": "XDX",
         "metadata": "",
         "metadata_signature": "",
         "receiver": "262e691ec8c7e3e23470d8c3ee26e1a7",

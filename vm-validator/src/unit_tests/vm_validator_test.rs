@@ -5,7 +5,7 @@ use crate::vm_validator::{TransactionValidation, VMValidator};
 use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use diem_types::{
     account_address, account_config,
-    account_config::{coin1_tmp_tag, COIN1_NAME},
+    account_config::{xus_tag, XUS_NAME},
     chain_id::ChainId,
     test_helpers::transaction_test_helpers,
     transaction::{Module, Script, TransactionArgument},
@@ -78,8 +78,7 @@ fn test_validate_transaction() {
     let vm_validator = TestValidator::new();
 
     let address = account_config::diem_root_address();
-    let program =
-        encode_peer_to_peer_with_metadata_script(coin1_tmp_tag(), address, 100, vec![], vec![]);
+    let program = encode_peer_to_peer_with_metadata_script(xus_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
         address,
         1,
@@ -100,8 +99,7 @@ fn test_validate_invalid_signature() {
     // Submit with an account using an different private/public keypair
 
     let address = account_config::diem_root_address();
-    let program =
-        encode_peer_to_peer_with_metadata_script(coin1_tmp_tag(), address, 100, vec![], vec![]);
+    let program = encode_peer_to_peer_with_metadata_script(xus_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_unchecked_txn(
         address,
         1,
@@ -132,8 +130,8 @@ fn test_validate_known_script_too_large_args() {
              * longer than the
              * max size */
         0,
-        0,                     /* max gas price */
-        COIN1_NAME.to_owned(), /* gas currency code */
+        0,                   /* max gas price */
+        XUS_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -155,9 +153,9 @@ fn test_validate_max_gas_units_above_max() {
         vm_genesis::GENESIS_KEYPAIR.1.clone(),
         None,
         0,
-        0,                     /* max gas price */
-        COIN1_NAME.to_owned(), /* gas currency code */
-        Some(u64::MAX),        // Max gas units
+        0,                   /* max gas price */
+        XUS_NAME.to_owned(), /* gas currency code */
+        Some(u64::MAX),      // Max gas units
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
     assert_eq!(
@@ -178,9 +176,9 @@ fn test_validate_max_gas_units_below_min() {
         vm_genesis::GENESIS_KEYPAIR.1.clone(),
         None,
         0,
-        0,                     /* max gas price */
-        COIN1_NAME.to_owned(), /* gas currency code */
-        Some(1),               // Max gas units
+        0,                   /* max gas price */
+        XUS_NAME.to_owned(), /* gas currency code */
+        Some(1),             // Max gas units
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
     assert_eq!(
@@ -201,8 +199,8 @@ fn test_validate_max_gas_price_above_bounds() {
         vm_genesis::GENESIS_KEYPAIR.1.clone(),
         None,
         0,
-        u64::MAX,              /* max gas price */
-        COIN1_NAME.to_owned(), /* gas currency code */
+        u64::MAX,            /* max gas price */
+        XUS_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -220,8 +218,7 @@ fn test_validate_max_gas_price_below_bounds() {
     let vm_validator = TestValidator::new();
 
     let address = account_config::diem_root_address();
-    let program =
-        encode_peer_to_peer_with_metadata_script(coin1_tmp_tag(), address, 100, vec![], vec![]);
+    let program = encode_peer_to_peer_with_metadata_script(xus_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_transaction(
         address,
         1,
@@ -230,8 +227,8 @@ fn test_validate_max_gas_price_below_bounds() {
         Some(program),
         // Initial Time was set to 0 with a TTL 86400 secs.
         40000,
-        0,                     /* max gas price */
-        COIN1_NAME.to_owned(), /* gas currency code */
+        0,                   /* max gas price */
+        XUS_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -302,8 +299,7 @@ fn test_validate_invalid_auth_key() {
     // Submit with an account using an different private/public keypair
 
     let address = account_config::diem_root_address();
-    let program =
-        encode_peer_to_peer_with_metadata_script(coin1_tmp_tag(), address, 100, vec![], vec![]);
+    let program = encode_peer_to_peer_with_metadata_script(xus_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
         address,
         1,
@@ -321,8 +317,7 @@ fn test_validate_account_doesnt_exist() {
 
     let address = account_config::diem_root_address();
     let random_account_addr = account_address::AccountAddress::random();
-    let program =
-        encode_peer_to_peer_with_metadata_script(coin1_tmp_tag(), address, 100, vec![], vec![]);
+    let program = encode_peer_to_peer_with_metadata_script(xus_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_transaction(
         random_account_addr,
         1,
@@ -330,8 +325,8 @@ fn test_validate_account_doesnt_exist() {
         vm_genesis::GENESIS_KEYPAIR.1.clone(),
         Some(program),
         0,
-        1,                     /* max gas price */
-        COIN1_NAME.to_owned(), /* gas currency code */
+        1,                   /* max gas price */
+        XUS_NAME.to_owned(), /* gas currency code */
         None,
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();
@@ -346,8 +341,7 @@ fn test_validate_sequence_number_too_new() {
     let vm_validator = TestValidator::new();
 
     let address = account_config::diem_root_address();
-    let program =
-        encode_peer_to_peer_with_metadata_script(coin1_tmp_tag(), address, 100, vec![], vec![]);
+    let program = encode_peer_to_peer_with_metadata_script(xus_tag(), address, 100, vec![], vec![]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
         address,
         1,
@@ -365,7 +359,7 @@ fn test_validate_invalid_arguments() {
 
     let address = account_config::diem_root_address();
     let (program_script, _) =
-        encode_peer_to_peer_with_metadata_script(coin1_tmp_tag(), address, 100, vec![], vec![])
+        encode_peer_to_peer_with_metadata_script(xus_tag(), address, 100, vec![], vec![])
             .into_inner();
     let program = Script::new(program_script, vec![], vec![TransactionArgument::U64(42)]);
     let transaction = transaction_test_helpers::get_test_signed_txn(
@@ -384,16 +378,29 @@ fn test_validate_invalid_arguments() {
 fn test_validate_non_genesis_write_set() {
     let vm_validator = TestValidator::new();
 
+    // Confirm that a correct transaction is validated successfully.
     let address = account_config::diem_root_address();
     let transaction = transaction_test_helpers::get_write_set_txn(
         address,
-        2,
+        1,
         &vm_genesis::GENESIS_KEYPAIR.0,
         vm_genesis::GENESIS_KEYPAIR.1.clone(),
         None,
     )
     .into_inner();
     let ret = vm_validator.validate_transaction(transaction).unwrap();
+    assert!(ret.status().is_none());
+
+    // A WriteSet txn is only valid when sent from the Diem root account.
+    let bad_transaction = transaction_test_helpers::get_write_set_txn(
+        account_config::treasury_compliance_account_address(),
+        1,
+        &vm_genesis::GENESIS_KEYPAIR.0,
+        vm_genesis::GENESIS_KEYPAIR.1.clone(),
+        None,
+    )
+    .into_inner();
+    let ret = vm_validator.validate_transaction(bad_transaction).unwrap();
     assert_eq!(ret.status().unwrap(), StatusCode::REJECTED_WRITE_SET);
 }
 
@@ -410,7 +417,7 @@ fn test_validate_expiration_time() {
         None, /* script */
         0,    /* expiration_time */
         0,    /* gas_unit_price */
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         None, /* max_gas_amount */
     );
     let ret = vm_validator.validate_transaction(transaction).unwrap();

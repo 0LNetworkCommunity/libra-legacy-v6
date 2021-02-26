@@ -8,12 +8,12 @@ use crate::{
     network::{StateSynchronizerMsg, StateSynchronizerSender},
 };
 use anyhow::{bail, Result};
-use itertools::Itertools;
 use diem_config::{
     config::{PeerNetworkId, UpstreamConfig},
     network_id::{NetworkId, NodeNetworkId},
 };
 use diem_logger::prelude::*;
+use itertools::Itertools;
 use netcore::transport::ConnectionOrigin;
 use rand::{
     distributions::{Distribution, WeightedIndex},
@@ -286,10 +286,9 @@ impl RequestManager {
             .event(LogEvent::ChunkRequestInfo)
             .chunk_req_info(&req_info));
 
-        // actually execute network send
-        let target_version = req.target().version();
         let msg = StateSynchronizerMsg::GetChunkRequest(Box::new(req));
         let mut failed_peer_sends = vec![];
+
         for peer in peers {
             let sender = self
                 .network_senders
@@ -315,13 +314,7 @@ impl RequestManager {
                 .inc();
         }
 
-        // TODO set target version of chunk request in counter
         if failed_peer_sends.is_empty() {
-            if let Some(version) = target_version {
-                counters::VERSION
-                    .with_label_values(&[counters::TARGET_VERSION_LABEL])
-                    .set(version as i64);
-            }
             Ok(())
         } else {
             bail!("Failed to send chunk request to: {:?}", failed_peer_sends)

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use disassembler::disassembler::Disassembler;
@@ -30,19 +30,26 @@ use std::{
     path::{Path, PathBuf},
 };
 
+pub mod package;
 pub mod test;
 
 /// Default directory where saved Move resources live
-pub const MOVE_DATA: &str = "move_data";
+pub const DEFAULT_STORAGE_DIR: &str = "storage";
 
 /// Default directory where Move modules live
-pub const MOVE_SRC: &str = "move_src";
+pub const DEFAULT_SOURCE_DIR: &str = "src";
+
+/// Default directory where Move packages live under build_dir
+pub const DEFAULT_PACKAGE_DIR: &str = "package";
+
+/// Default dependency inclusion mode
+pub const DEFAULT_DEP_MODE: &str = "stdlib";
 
 /// Default directory for build output
-pub use move_lang::command_line::DEFAULT_OUTPUT_DIR as DEFAULT_BUILD_OUTPUT_DIR;
+pub use move_lang::command_line::DEFAULT_OUTPUT_DIR as DEFAULT_BUILD_DIR;
 
-/// Extension for resource and event files, which are in LCS format
-const LCS_EXTENSION: &str = "lcs";
+/// Extension for resource and event files, which are in BCS format
+const BCS_EXTENSION: &str = "bcs";
 
 /// subdirectory of `MOVE_DATA`/<addr> where resources are stored
 const RESOURCES_DIR: &str = "resources";
@@ -55,17 +62,17 @@ const EVENTS_DIR: &str = "events";
 pub struct OnDiskStateView {
     modules: HashMap<ModuleId, Vec<u8>>,
     resources: HashMap<(AccountAddress, StructTag), Vec<u8>>,
-    move_data_dir: PathBuf,
+    storage_dir: PathBuf,
 }
 
 impl OnDiskStateView {
-    /// Create an `OnDiskStateView` that reads/writes resource data in `move_data_dir` and can
+    /// Create an `OnDiskStateView` that reads/writes resource data in `storage_dir` and can
     /// execute code in `compiled_modules`.
-    pub fn create(move_data_dir: PathBuf, compiled_modules: &[CompiledModule]) -> Result<Self> {
-        if !move_data_dir.exists() || !move_data_dir.is_dir() {
+    pub fn create(storage_dir: PathBuf, compiled_modules: &[CompiledModule]) -> Result<Self> {
+        if !storage_dir.exists() || !storage_dir.is_dir() {
             bail!(
                 "Attempting to create OnDiskStateView from bad data directory {:?}",
-                move_data_dir
+                storage_dir
             )
         }
 
@@ -79,7 +86,7 @@ impl OnDiskStateView {
         Ok(Self {
             modules,
             resources,
-            move_data_dir,
+            storage_dir,
         })
     }
 
@@ -88,7 +95,7 @@ impl OnDiskStateView {
             return false;
         }
         let p = p.canonicalize().unwrap();
-        p.starts_with(&self.move_data_dir)
+        p.starts_with(&self.storage_dir)
             && match p.parent() {
                 Some(parent) => parent.ends_with(parent_dir),
                 None => false,
@@ -108,7 +115,7 @@ impl OnDiskStateView {
     }
 
     fn get_addr_path(&self, addr: &AccountAddress) -> PathBuf {
-        let mut path = self.move_data_dir.clone();
+        let mut path = self.storage_dir.clone();
         path.push(format!("0x{}", addr.to_string()));
         path
     }
@@ -117,7 +124,7 @@ impl OnDiskStateView {
         let mut path = self.get_addr_path(&addr);
         path.push(RESOURCES_DIR);
         path.push(StructID(tag).to_string());
-        path.with_extension(LCS_EXTENSION)
+        path.with_extension(BCS_EXTENSION)
     }
 
     // Events are stored under address/handle creation number
@@ -125,7 +132,7 @@ impl OnDiskStateView {
         let mut path = self.get_addr_path(&key.get_creator_address());
         path.push(EVENTS_DIR);
         path.push(key.get_creation_number().to_string());
-        path.with_extension(LCS_EXTENSION)
+        path.with_extension(BCS_EXTENSION)
     }
 
     fn get_module_path(&self, module_id: &ModuleId) -> PathBuf {
@@ -208,7 +215,7 @@ impl OnDiskStateView {
     fn get_events(&self, events_path: &Path) -> Result<Vec<ContractEvent>> {
         Ok(if events_path.exists() {
             match Self::get_bytes(events_path)? {
-                Some(events_data) => lcs::from_bytes::<Vec<ContractEvent>>(&events_data)?,
+                Some(events_data) => bcs::from_bytes::<Vec<ContractEvent>>(&events_data)?,
                 None => vec![],
             }
         } else {
@@ -269,10 +276,10 @@ impl OnDiskStateView {
         if !path.exists() {
             fs::create_dir_all(path.parent().unwrap())?;
         }
-        let lcs = resource
+        let bcs = resource
             .simple_serialize(&layout)
             .ok_or_else(|| anyhow!("Failed to serialize resource"))?;
-        Ok(fs::write(path, &lcs)?)
+        Ok(fs::write(path, &bcs)?)
     }
 
     pub fn save_event(
@@ -297,7 +304,7 @@ impl OnDiskStateView {
         // grab the old event log (if any) and append this event to it
         let mut event_log = self.get_events(&path)?;
         event_log.push(event);
-        Ok(fs::write(path, &lcs::to_bytes(&event_log)?)?)
+        Ok(fs::write(path, &bcs::to_bytes(&event_log)?)?)
     }
 
     /// Save `module` on disk under the path `module.address()`/`module.name()`

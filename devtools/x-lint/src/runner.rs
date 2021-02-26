@@ -2,12 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{prelude::*, LintContext};
-use once_cell::sync::OnceCell;
-use std::{
-    ffi::OsStr,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::path::Path;
 use x_core::XCoreContext;
 
 /// Configuration for the lint engine.
@@ -16,6 +11,7 @@ pub struct LintEngineConfig<'cfg> {
     core: &'cfg XCoreContext,
     project_linters: &'cfg [&'cfg dyn ProjectLinter],
     package_linters: &'cfg [&'cfg dyn PackageLinter],
+    file_path_linters: &'cfg [&'cfg dyn FilePathLinter],
     content_linters: &'cfg [&'cfg dyn ContentLinter],
     fail_fast: bool,
 }
@@ -26,6 +22,7 @@ impl<'cfg> LintEngineConfig<'cfg> {
             core,
             project_linters: &[],
             package_linters: &[],
+            file_path_linters: &[],
             content_linters: &[],
             fail_fast: false,
         }
@@ -44,6 +41,14 @@ impl<'cfg> LintEngineConfig<'cfg> {
         package_linters: &'cfg [&'cfg dyn PackageLinter],
     ) -> &mut Self {
         self.package_linters = package_linters;
+        self
+    }
+
+    pub fn with_file_path_linters(
+        &mut self,
+        file_path_linters: &'cfg [&'cfg dyn FilePathLinter],
+    ) -> &mut Self {
+        self.file_path_linters = file_path_linters;
         self
     }
 
@@ -70,8 +75,6 @@ impl<'cfg> LintEngineConfig<'cfg> {
 pub struct LintEngine<'cfg> {
     config: LintEngineConfig<'cfg>,
     project_ctx: ProjectContext<'cfg>,
-    // Caches to allow results to live as long as the engine itself.
-    files_stdout: OnceCell<Vec<u8>>,
 }
 
 impl<'cfg> LintEngine<'cfg> {
@@ -80,7 +83,6 @@ impl<'cfg> LintEngine<'cfg> {
         Self {
             config,
             project_ctx,
-            files_stdout: OnceCell::new(),
         }
     }
 
@@ -142,15 +144,40 @@ impl<'cfg> LintEngine<'cfg> {
             }
         }
 
+        // Run file path linters.
+        if !self.config.file_path_linters.is_empty() {
+            let file_list = self.file_list()?;
+
+            let file_ctxs = file_list.map(|path| FilePathContext::new(&self.project_ctx, path));
+
+            for file_ctx in file_ctxs {
+                for linter in self.config.file_path_linters {
+                    let source = file_ctx.source(linter.name());
+                    let mut formatter = LintFormatter::new(source, &mut messages);
+                    match linter.run(&file_ctx, &mut formatter)? {
+                        RunStatus::Executed => {
+                            // Lint ran successfully.
+                        }
+                        RunStatus::Skipped(reason) => {
+                            skipped.push((source, reason));
+                        }
+                    }
+
+                    if self.config.fail_fast && !messages.is_empty() {
+                        // At least one issue was found.
+                        return Ok(LintResults { skipped, messages });
+                    }
+                }
+            }
+        }
+
         // Run content linters.
         if !self.config.content_linters.is_empty() {
-            let file_list = self.get_file_list()?;
+            let file_list = self.file_list()?;
 
             // TODO: This should probably be a worker queue with a thread pool or something.
 
-            let file_ctxs = file_list
-                .iter()
-                .map(|path| FileContext::new(&self.project_ctx, path));
+            let file_ctxs = file_list.map(|path| FilePathContext::new(&self.project_ctx, path));
 
             for file_ctx in file_ctxs {
                 let linters_to_run = self
@@ -211,61 +238,12 @@ impl<'cfg> LintEngine<'cfg> {
     // Helper methods
     // ---
 
-    fn get_file_list(&self) -> Result<Vec<&Path>> {
-        // TODO: It'd be pretty cool to be able to cache the `&Path` instances as well. The options
-        // are:
-        // 1. Cache them as `PathBuf` instances. That would involve lots of allocations.
-        // 2. Store the `&Path` instances alongside `files_stdout`. That would be a self-referential
-        //    struct (so would require the use of something like
-        //    [`rental`](https://docs.rs/rental/).
-        // 3. Reorganize the code to use some sort of arena allocator which is passed into the lint
-        //    context (and/or stored alongside with `rental`.)
-        let stdout = self.files_stdout()?;
-
-        Ok(stdout
-            .split(|b| b == &0)
-            .filter_map(|s| {
-                // TODO: make global exclusions configurable.
-                if !s.is_empty() && !s.starts_with(b"testsuite/diem-fuzzer/artifacts/") {
-                    // `OsStr::from_bytes` only works on Unix, since "OS strings" on Windows are
-                    // actually UTF-16ish. Would be cool to get it working on Windows at some point
-                    // too, but it needs to be done with some care.
-                    //
-                    // For more, see:
-                    // * https://doc.rust-lang.org/std/ffi/index.html#conversions
-                    // * https://www.mercurial-scm.org/wiki/EncodingStrategy and
-                    // * https://en.wikipedia.org/wiki/Mojibake.
-                    use std::os::unix::ffi::OsStrExt;
-
-                    let s = OsStr::from_bytes(s);
-                    Some(Path::new(s))
-                } else {
-                    None
-                }
-            })
-            .collect())
-    }
-
-    fn files_stdout(&self) -> Result<&[u8]> {
-        self.files_stdout
-            .get_or_try_init(|| {
-                // TODO: abstract out SCM and command-running functionality.
-                let output = Command::new("git")
-                    .current_dir(self.config.core.project_root())
-                    // The -z causes files to not be quoted, and to be separated by \0.
-                    .args(&["ls-files", "-z"])
-                    .stderr(Stdio::inherit())
-                    .output()
-                    .map_err(|err| SystemError::io("running git ls-files", err))?;
-                if !output.status.success() {
-                    return Err(SystemError::Exec {
-                        cmd: "git ls-files",
-                        status: output.status,
-                    });
-                }
-                Ok(output.stdout)
-            })
-            .map(|stdout| stdout.as_slice())
+    fn file_list(&self) -> Result<impl Iterator<Item = &'cfg Path> + 'cfg> {
+        let tracked_files = self.config.core.git_cli().tracked_files()?;
+        // TODO: make global exclusions configurable
+        Ok(tracked_files
+            .iter()
+            .filter(|f| !f.starts_with("testsuite/diem-fuzzer/artifacts/")))
     }
 }
 

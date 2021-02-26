@@ -21,17 +21,17 @@
 //!    same input to the hash function and therefore the same hash. This
 //!    creates a collision.
 //!
-//! Regarding (1), this diemry makes it easy for Diem developers to create as
+//! Regarding (1), this library makes it easy for Diem developers to create as
 //! many new "hashable" Rust types as needed so that each Rust type hashed and signed
 //! in Diem has a unique meaning, that is, unambiguously captures the intent of a signer.
 //!
-//! Regarding (2), this diemry provides the `CryptoHasher` abstraction to easily manage
+//! Regarding (2), this library provides the `CryptoHasher` abstraction to easily manage
 //! cryptographic seeds for hashing. Hashing seeds aim to ensure that
 //! the hashes of values of a given type `MyNewStruct` never collide with hashes of values
 //! from another type.
 //!
 //! Finally, to prevent format ambiguity within a same type `MyNewStruct` and facilitate protocol
-//! specifications, we use [Diem Canonical Serialization (LCS)](../../diem_canonical_serialization/index.html)
+//! specifications, we use [Binary Canonical Serialization (BCS)](https://docs.rs/bcs/)
 //! as the recommended solution to write Rust values into a hasher.
 //!
 //! # Quick Start
@@ -40,9 +40,9 @@
 //! use the derive macros of `serde` and `diem_crypto_derive` as follows:
 //! ```
 //! use diem_crypto::hash::CryptoHash;
-//! use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
+//! use diem_crypto_derive::{CryptoHasher, BCSCryptoHash};
 //! use serde::{Deserialize, Serialize};
-//! #[derive(Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+//! #[derive(Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 //! struct MyNewStruct { /*...*/ }
 //!
 //! let value = MyNewStruct { /*...*/ };
@@ -50,7 +50,7 @@
 //! ```
 //!
 //! Under the hood, this will generate a new implementation `MyNewStructHasher` for the trait
-//! `CryptoHasher` and implement the trait `CryptoHash` for `MyNewStruct` using LCS.
+//! `CryptoHasher` and implement the trait `CryptoHash` for `MyNewStruct` using BCS.
 //!
 //! # Implementing New Hashers
 //!
@@ -71,7 +71,7 @@
 //! ```
 //!
 //! The macro `CryptoHasher` will define a hasher automatically called `MyNewStructHasher`, and derive a salt
-//! using the name of the type as seen by the Serde diemry. In the example above, this name
+//! using the name of the type as seen by the Serde library. In the example above, this name
 //! was changed using the Serde parameter `rename`: the salt will be based on the value `OptionalCustomSerdeName`
 //! instead of the default name `MyNewStruct`.
 //!
@@ -79,7 +79,7 @@
 //!
 //! **IMPORTANT:** Do NOT use this for new code unless you know what you are doing.
 //!
-//! This diemry also provides a few customized hashers defined in the code as follows:
+//! This library also provides a few customized hashers defined in the code as follows:
 //!
 //! ```
 //! # // To get around that there's no way to doc-test a non-exported macro:
@@ -116,7 +116,7 @@ use tiny_keccak::{Hasher, Sha3};
 /// A prefix used to begin the salt of every diem hashable structure. The salt
 /// consists in this global prefix, concatenated with the specified
 /// serialization name of the struct.
-pub(crate) const LIBRA_HASH_PREFIX: &[u8] = b"LIBRA::";
+pub(crate) const DIEM_HASH_PREFIX: &[u8] = b"DIEM::";
 
 /// Output value of our hash function. Intentionally opaque for safety and modularity.
 #[derive(Clone, Copy, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -437,7 +437,7 @@ impl<'a> std::iter::ExactSizeIterator for HashValueBitIterator<'a> {}
 /// A type that can be cryptographically hashed to produce a `HashValue`.
 ///
 /// In most cases, this trait should not be implemented manually but rather derived using
-/// the macros `serde::Serialize`, `CryptoHasher`, and `LCSCryptoHash`.
+/// the macros `serde::Serialize`, `CryptoHasher`, and `BCSCryptoHash`.
 pub trait CryptoHash {
     /// The associated `Hasher` type which comes with a unique salt for this type.
     type Hasher: CryptoHasher;
@@ -469,11 +469,11 @@ impl DefaultHasher {
     #[doc(hidden)]
     /// This function does not return a HashValue in the sense of our usual
     /// hashes, but a construction of initial bytes that are fed into any hash
-    /// provided we're passed  a (lcs) serialization name as argument.
+    /// provided we're passed  a (bcs) serialization name as argument.
     pub fn prefixed_hash(buffer: &[u8]) -> [u8; HashValue::LENGTH] {
         // The salt is initial material we prefix to actual value bytes for
         // domain separation. Its length is variable.
-        let salt: Vec<u8> = [LIBRA_HASH_PREFIX, buffer].concat();
+        let salt: Vec<u8> = [DIEM_HASH_PREFIX, buffer].concat();
         // The seed is a fixed-length hash of the salt, thereby preventing
         // suffix attacks on the domain separation bytes.
         HashValue::sha3_256_of(&salt[..]).hash
@@ -651,7 +651,7 @@ pub trait TestOnlyHash {
 
 impl<T: ser::Serialize + ?Sized> TestOnlyHash for T {
     fn test_only_hash(&self) -> HashValue {
-        let bytes = lcs::to_bytes(self).expect("serialize failed during hash.");
+        let bytes = bcs::to_bytes(self).expect("serialize failed during hash.");
         let mut hasher = TestOnlyHasher::default();
         hasher.update(&bytes);
         hasher.finish()

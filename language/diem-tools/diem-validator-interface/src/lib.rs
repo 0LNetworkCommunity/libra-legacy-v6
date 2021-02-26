@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 mod json_rpc_interface;
@@ -18,7 +18,7 @@ use diem_types::{
 };
 use std::convert::TryFrom;
 
-pub trait LibraValidatorInterface {
+pub trait DiemValidatorInterface {
     fn get_account_state_by_version(
         &self,
         account: AccountAddress,
@@ -34,12 +34,12 @@ pub trait LibraValidatorInterface {
 }
 
 pub struct DebuggerStateView<'a> {
-    db: &'a dyn LibraValidatorInterface,
+    db: &'a dyn DiemValidatorInterface,
     version: Version,
 }
 
 impl<'a> DebuggerStateView<'a> {
-    pub fn new(db: &'a dyn LibraValidatorInterface, version: Version) -> Self {
+    pub fn new(db: &'a dyn DiemValidatorInterface, version: Version) -> Self {
         Self { db, version }
     }
 }

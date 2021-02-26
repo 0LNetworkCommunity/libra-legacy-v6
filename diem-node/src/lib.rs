@@ -4,9 +4,6 @@
 use backup_service::start_backup_service;
 use consensus::{consensus_provider::start_consensus, gen_consensus_reconfig_subscription};
 use debug_interface::node_debug_service::NodeDebugService;
-use executor::{db_bootstrapper::maybe_bootstrap, Executor};
-use executor_types::ChunkExecutor;
-use futures::{channel::mpsc::channel, executor::block_on};
 use diem_config::{
     config::{NetworkConfig, NodeConfig, RoleType},
     network_id::NodeNetworkId,
@@ -22,6 +19,9 @@ use diem_types::{
 };
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
+use executor::{db_bootstrapper::maybe_bootstrap, Executor};
+use executor_types::ChunkExecutor;
+use futures::{channel::mpsc::channel, executor::block_on};
 use network_builder::builder::NetworkBuilder;
 use state_synchronizer::StateSynchronizer;
 use std::{
@@ -160,10 +160,7 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     println!("Completed generating configuration:");
     println!("\tLog file: {:?}", log_file);
     println!("\tConfig path: {:?}", test_config.config_files[0]);
-    println!(
-        "\tDiem root key path: {:?}",
-        test_config.diem_root_key_path
-    );
+    println!("\tDiem root key path: {:?}", test_config.diem_root_key_path);
     println!("\tWaypoint: {}", test_config.waypoint);
     let mut config = NodeConfig::load(&test_config.config_files[0]).unwrap();
     config.json_rpc.address = format!("0.0.0.0:{}", config.json_rpc.address.port())
@@ -281,11 +278,11 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
             &node_config.storage.dir(),
             false, /* readonly */
             node_config.storage.prune_window,
+            node_config.storage.rocksdb_config,
         )
         .expect("DB should open."),
     );
-    let _simple_storage_service =
-        start_storage_service_with_db(&node_config, Arc::clone(&diem_db));
+    let _simple_storage_service = start_storage_service_with_db(&node_config, Arc::clone(&diem_db));
     let backup_service = start_backup_service(
         node_config.storage.backup_service_address,
         Arc::clone(&diem_db),

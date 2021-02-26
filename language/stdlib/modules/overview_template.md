@@ -17,8 +17,8 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 * `DesignatedDealer`
 * `DualAttestation`
 
-* `Coin1` (Note: name will be updated once final name has been determined)
-* `GAS` (Note: will be updated once the GAS makeup has been determined)
+* `XUS` (Note: name will be updated once final name has been determined)
+* `XDX` (Note: will be updated once the XDX makeup has been determined)
 * `Diem`
 * `RegisteredCurrencies`
 
@@ -53,7 +53,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 * `Event`
 * `FixedPoint32`
 * `Hash`
-* `LCS`
+* `BCS`
 * `Offer`
 * `Option`
 * `SlidingNonce`

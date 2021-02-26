@@ -18,18 +18,18 @@ module FooConfig {
 
 //! new-transaction
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(account: &signer) {
-    assert(LibraTransactionPublishingOption::is_script_allowed(account, &x""), 0);
+    assert(DiemTransactionPublishingOption::is_script_allowed(account, &x""), 0);
 }
 }
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(account: &signer) {
-    LibraTransactionPublishingOption::set_open_script(account)
+    DiemTransactionPublishingOption::set_open_script(account)
 }
 }
 // check: "Keep(ABORTED { code: 2,"
@@ -37,9 +37,9 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(account: &signer) {
-    LibraTransactionPublishingOption::set_open_script(account)
+    DiemTransactionPublishingOption::set_open_script(account)
 }
 }
 // check: "Keep(EXECUTED)"
@@ -47,10 +47,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(account: &signer) {
     let x = x"0000000000000000000000000000000000000000000000000000000000000001";
-    LibraTransactionPublishingOption::add_to_script_allow_list(account, x);
+    DiemTransactionPublishingOption::add_to_script_allow_list(account, x);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -65,9 +65,9 @@ fun main() {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(account: &signer) {
-    LibraTransactionPublishingOption::set_open_script(account)
+    DiemTransactionPublishingOption::set_open_script(account)
 }
 }
 // check: "Keep(EXECUTED)"
@@ -75,11 +75,11 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(account: &signer) {
     let x = x"0000000000000000000000000000000000000000000000000000000000000001";
-    LibraTransactionPublishingOption::add_to_script_allow_list(account, *&x);
-    LibraTransactionPublishingOption::add_to_script_allow_list(account, x);
+    DiemTransactionPublishingOption::add_to_script_allow_list(account, *&x);
+    DiemTransactionPublishingOption::add_to_script_allow_list(account, x);
 }
 }
 // check: "Keep(ABORTED { code: 263,"
@@ -87,9 +87,9 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(account: &signer) {
-    LibraTransactionPublishingOption::add_to_script_allow_list(account, x"");
+    DiemTransactionPublishingOption::add_to_script_allow_list(account, x"");
 }
 }
 // check: "Keep(ABORTED { code: 7,"
@@ -102,10 +102,10 @@ fun main(account: &signer) {
 //! sender: diemroot
 // Step 2: Change option to CustomModule
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 
 fun main(config: &signer) {
-    LibraTransactionPublishingOption::set_open_module(config, false)
+    DiemTransactionPublishingOption::set_open_module(config, false)
 }
 }
 

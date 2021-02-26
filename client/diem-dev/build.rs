@@ -27,11 +27,11 @@ fn main() {
         .whitelist_type("DiemSignedTransaction")
         .whitelist_type("TransactionType")
         .whitelist_type("DiemAccountKey")
-        .whitelist_var("LIBRA_PUBKEY_SIZE")
-        .whitelist_var("LIBRA_PRIVKEY_SIZE")
-        .whitelist_var("LIBRA_AUTHKEY_SIZE")
-        .whitelist_var("LIBRA_ADDRESS_SIZE")
-        .whitelist_var("LIBRA_SIGNATURE_SIZE")
+        .whitelist_var("DIEM_PUBKEY_SIZE")
+        .whitelist_var("DIEM_PRIVKEY_SIZE")
+        .whitelist_var("DIEM_AUTHKEY_SIZE")
+        .whitelist_var("DIEM_ADDRESS_SIZE")
+        .whitelist_var("DIEM_SIGNATURE_SIZE")
         .generate()
         // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings.");

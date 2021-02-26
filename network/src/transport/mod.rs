@@ -9,11 +9,6 @@ use crate::{
         wire::handshake::v1::{HandshakeMsg, MessagingProtocolVersion, SupportedProtocols},
     },
 };
-use futures::{
-    future::{Future, FutureExt},
-    io::{AsyncRead, AsyncWrite},
-    stream::{Stream, StreamExt, TryStreamExt},
-};
 use diem_config::{
     config::HANDSHAKE_VERSION,
     network_id::{NetworkContext, NetworkId},
@@ -23,6 +18,11 @@ use diem_infallible::RwLock;
 use diem_logger::prelude::*;
 use diem_network_address::{parse_dns_tcp, parse_ip_tcp, parse_memory, NetworkAddress};
 use diem_types::{chain_id::ChainId, PeerId};
+use futures::{
+    future::{Future, FutureExt},
+    io::{AsyncRead, AsyncWrite},
+    stream::{Stream, StreamExt, TryStreamExt},
+};
 use netcore::transport::{proxy_protocol, tcp, ConnectionOrigin, Transport};
 use serde::{export::Formatter, Serialize};
 use std::{
@@ -53,7 +53,7 @@ pub const SUPPORTED_MESSAGING_PROTOCOL: MessagingProtocolVersion = MessagingProt
 static CONNECTION_ID_GENERATOR: ConnectionIdGenerator = ConnectionIdGenerator::new();
 
 /// tcp::Transport with Diem-specific configuration applied.
-pub const LIBRA_TCP_TRANSPORT: tcp::TcpTransport = tcp::TcpTransport {
+pub const DIEM_TCP_TRANSPORT: tcp::TcpTransport = tcp::TcpTransport {
     // Use default options.
     recv_buffer_size: None,
     send_buffer_size: None,
@@ -97,7 +97,7 @@ impl ConnectionIdGenerator {
 }
 
 /// Metadata associated with an established and fully upgraded connection.
-#[derive(Clone, Serialize)]
+#[derive(Clone, PartialEq, Serialize)]
 pub struct ConnectionMetadata {
     pub remote_peer_id: PeerId,
     pub connection_id: ConnectionId,

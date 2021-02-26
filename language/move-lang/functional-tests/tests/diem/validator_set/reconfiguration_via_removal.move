@@ -12,9 +12,9 @@
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::remove_validator(account, {{vivian}});
+        DiemSystem::remove_validator(account, {{vivian}});
     }
 }
 
@@ -29,11 +29,11 @@ script{
 // check that Vivian is no longer a validator, Alice is not, but Viola is still a
 // validator
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main() {
-        assert(!LibraSystem::is_validator({{vivian}}), 70);
-        assert(!LibraSystem::is_validator({{alice}}), 71);
-        assert(LibraSystem::is_validator({{viola}}), 72);
+        assert(!DiemSystem::is_validator({{vivian}}), 70);
+        assert(!DiemSystem::is_validator({{alice}}), 71);
+        assert(DiemSystem::is_validator({{viola}}), 72);
     }
 }
 

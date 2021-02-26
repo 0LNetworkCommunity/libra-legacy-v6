@@ -11,7 +11,6 @@ use std::{
 };
 
 use anyhow::{format_err, Result};
-use itertools::zip;
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
@@ -20,12 +19,13 @@ use diem_crypto::{
 use diem_logger::*;
 use diem_types::{
     account_address::AccountAddress,
-    account_config::{self, testnet_dd_account_address, COIN1_NAME},
+    account_config::{self, testnet_dd_account_address, XUS_NAME},
     chain_id::ChainId,
     transaction::{
         authenticator::AuthenticationKey, helpers::create_user_txn, Script, TransactionPayload,
     },
 };
+use itertools::zip;
 use rand::{
     prelude::ThreadRng,
     rngs::{OsRng, StdRng},
@@ -34,12 +34,12 @@ use rand::{
 };
 use tokio::runtime::Handle;
 
-use futures::future::{try_join_all, FutureExt};
 use diem_json_rpc_client::{views::AmountView, JsonRpcAsyncClient};
 use diem_types::{
     account_config::{diem_root_address, treasury_compliance_account_address},
     transaction::SignedTransaction,
 };
+use futures::future::{try_join_all, FutureExt};
 use once_cell::sync::Lazy;
 use std::{
     cmp::{max, min},
@@ -308,10 +308,7 @@ impl TxEmitter {
         })
     }
 
-    pub async fn load_diem_root_account(
-        &self,
-        client: &JsonRpcAsyncClient,
-    ) -> Result<AccountData> {
+    pub async fn load_diem_root_account(&self, client: &JsonRpcAsyncClient) -> Result<AccountData> {
         self.load_account_with_mint_key(client, diem_root_address())
             .await
     }
@@ -395,7 +392,7 @@ impl TxEmitter {
         };
         let balance = retrieve_account_balance(&client, faucet_account.address).await?;
         for b in balance {
-            if b.currency.eq(COIN1_NAME) {
+            if b.currency.eq(XUS_NAME) {
                 info!(
                     "DD account current balances are {}, requested {} coins",
                     b.amount, coins_total
@@ -762,7 +759,7 @@ async fn query_sequence_numbers(
 }
 
 const MAX_GAS_AMOUNT: u64 = 1_000_000;
-const GAS_CURRENCY_CODE: &str = COIN1_NAME;
+const GAS_CURRENCY_CODE: &str = XUS_NAME;
 const TXN_EXPIRATION_SECONDS: i64 = 50;
 const TXN_MAX_WAIT: Duration = Duration::from_secs(TXN_EXPIRATION_SECONDS as u64 + 30);
 const MAX_TXNS: u64 = 1_000_000;
@@ -812,7 +809,7 @@ fn gen_mint_request(
     let receiver = faucet_account.address;
     gen_submit_transaction_request(
         transaction_builder::encode_peer_to_peer_with_metadata_script(
-            account_config::coin1_tmp_tag(),
+            account_config::xus_tag(),
             receiver,
             num_coins,
             vec![],
@@ -824,7 +821,7 @@ fn gen_mint_request(
     )
 }
 
-fn gen_transfer_txn_request(
+pub fn gen_transfer_txn_request(
     sender: &mut AccountData,
     receiver: &AccountAddress,
     num_coins: u64,
@@ -833,7 +830,7 @@ fn gen_transfer_txn_request(
 ) -> SignedTransaction {
     gen_submit_transaction_request(
         transaction_builder::encode_peer_to_peer_with_metadata_script(
-            account_config::coin1_tmp_tag(),
+            account_config::xus_tag(),
             *receiver,
             num_coins,
             vec![],
@@ -855,7 +852,7 @@ fn gen_create_child_txn_request(
     let add_all_currencies = false;
     gen_submit_transaction_request(
         transaction_builder::encode_create_child_vasp_account_script(
-            account_config::coin1_tmp_tag(),
+            account_config::xus_tag(),
             *receiver,
             receiver_auth_key_prefix,
             add_all_currencies,
@@ -875,7 +872,7 @@ fn gen_create_account_txn_request(
 ) -> SignedTransaction {
     gen_submit_transaction_request(
         transaction_builder::encode_create_parent_vasp_account_script(
-            account_config::coin1_tmp_tag(),
+            account_config::xus_tag(),
             0,
             *receiver,
             auth_key_prefix,
@@ -896,7 +893,7 @@ fn gen_mint_txn_request(
 ) -> SignedTransaction {
     gen_submit_transaction_request(
         transaction_builder::encode_peer_to_peer_with_metadata_script(
-            account_config::coin1_tmp_tag(),
+            account_config::xus_tag(),
             *receiver,
             num_coins,
             vec![],

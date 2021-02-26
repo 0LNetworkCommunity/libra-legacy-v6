@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::TestOnlyConfig;
-use guppy::graph::{BuildTargetId, BuildTargetKind};
+use anyhow::Context;
+use guppy::graph::{BuildTargetId, BuildTargetKind, PackageGraph, PackageSet};
 use indoc::indoc;
 use x_core::WorkspaceStatus;
 use x_lint::prelude::*;
@@ -10,12 +11,15 @@ use x_lint::prelude::*;
 /// Ensure that every package in the workspace is classified as either a default member or test-only.
 #[derive(Debug)]
 pub struct DefaultOrTestOnly<'cfg> {
-    config: &'cfg TestOnlyConfig,
+    test_only: PackageSet<'cfg>,
 }
 
 impl<'cfg> DefaultOrTestOnly<'cfg> {
-    pub fn new(config: &'cfg TestOnlyConfig) -> Self {
-        Self { config }
+    pub fn new(package_graph: &'cfg PackageGraph, config: &TestOnlyConfig) -> crate::Result<Self> {
+        let test_only = package_graph
+            .resolve_workspace_names(&config.members)
+            .with_context(|| "error while initializing default-or-test-only lint")?;
+        Ok(Self { test_only })
     }
 }
 
@@ -40,14 +44,14 @@ impl<'cfg> PackageLinter for DefaultOrTestOnly<'cfg> {
                 if matches!(target.id(), BuildTargetId::Binary(_)) {
                     return Some("binary");
                 }
-                // If this is the diemry target, then look for the first binary-equivalent-kind
-                if let (BuildTargetId::Diemry, BuildTargetKind::DiemryOrExample(crate_types)) =
+                // If this is the library target, then look for the first binary-equivalent-kind
+                if let (BuildTargetId::Library, BuildTargetKind::LibraryOrExample(crate_types)) =
                     (target.id(), target.kind())
                 {
                     return crate_types
                         .iter()
                         .filter_map(|crate_type| {
-                            // These diemry types are equivalent to binaries.
+                            // These library types are equivalent to binaries.
                             if crate_type == "cdylib"
                                 || crate_type == "dylib"
                                 || crate_type == "staticlib"
@@ -64,46 +68,71 @@ impl<'cfg> PackageLinter for DefaultOrTestOnly<'cfg> {
             .next();
 
         let status = default_members.status_of(package.id());
-        let test_only = self.config.members.contains(ctx.workspace_path());
+        let test_only = self
+            .test_only
+            .contains(package.id())
+            .expect("package is known");
 
         match (binary_kind, status, test_only) {
             (None, WorkspaceStatus::Absent, false) => {
-                // Diemry, not reachable from default members and not marked test-only.
+                // Library, not reachable from default members and not marked test-only.
                 let msg = indoc!(
-                    "diemry package, not a dependency of default-members:
+                    "library package, not a dependency of default-members:
                      * if test-only, add to test-only in x.toml
                      * otherwise, make it a dependency of a default member (listed in root Cargo.toml)"
                 );
                 out.write(LintLevel::Error, msg);
             }
             (None, WorkspaceStatus::Absent, true) => {
-                // Test-only diemry package. This is fine.
+                // Test-only library package. This is fine.
             }
             (None, WorkspaceStatus::Dependency, false) => {
-                // Diemry, dependency of default members. This is fine.
+                // Library, dependency of default members. This is fine.
             }
             (None, WorkspaceStatus::Dependency, true) => {
-                // Diemry, dependency of default members and listed in test-only.
-                let msg = indoc!(
-                    "diemry package, dependency of default members and test-only:
-                    * remove from test-only if production code
-                    * otherwise, ensure it is not a dependency of default members"
+                // Library, dependency of default members and listed in test-only.
+
+                // For a better error message, look at what immediately depends on the package and
+                // is in default members.
+                let mut reverse_deps = package
+                    .reverse_direct_links()
+                    .filter_map(|link| {
+                        if !link.dev_only()
+                            && default_members.status_of(link.from().id())
+                                != WorkspaceStatus::Absent
+                        {
+                            Some(link.from().name())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                reverse_deps.sort_unstable();
+                let reverse_str = reverse_deps.join(", ");
+                let msg = format!(
+                    "{} {}",
+                    indoc!(
+                        "library package, dependency of default members and test-only:
+                        * remove from test-only if production code
+                        * otherwise, ensure it is not a dependency of default members:",
+                    ),
+                    reverse_str,
                 );
                 out.write(LintLevel::Error, msg);
             }
             (None, WorkspaceStatus::RootMember, false) => {
-                // Diemry, listed in default members. It shouldn't be.
+                // Library, listed in default members. It shouldn't be.
                 let msg = indoc!(
-                    "diemry package, listed in default-members:
+                    "library package, listed in default-members:
                      * if test-only, add to test-only in x.toml instead
                      * otherwise, remove it from default-members and make it a dependency of a binary"
                 );
                 out.write(LintLevel::Error, msg);
             }
             (None, WorkspaceStatus::RootMember, true) => {
-                // Diemry, listed in default members and in test-only. It shouldn't be.
+                // Library, listed in default members and in test-only. It shouldn't be.
                 let msg = indoc!(
-                    "diemry package, listed in default-members and test-only:
+                    "library package, listed in default-members and test-only:
                      * if test-only, add to test-only in x.toml and remove from default-members
                      * otherwise, remove it from both and make it a dependency of a default-member"
                 );

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The consensus specification describes the mechanism used by the Libra Payment Network (LPN) validators to agree on both ordering and transaction execution output under byzantine fault-tolerant (BFT) conditions - at most _f_ validators (where _f_ < (_all validators_)/3) are faulty or malicious. Currently, the consensus specification is an implementation of _LibraBFT_, a BFT consensus protocol that ensures liveness and safety under partial synchrony. The [LibraBFT whitepaper](https://developers.diem.org/docs/state-machine-replication-paper) describes a high level overview of the protocol, the liveness and safety proofs, and a rationale on why LibraBFT was adopted for the LPN. This document specifies how to implement the LibraBFT protocol in order to participate as a validating node in the LPN.
+The consensus specification describes the mechanism used by the Diem Payment Network (LPN) validators to agree on both ordering and transaction execution output under byzantine fault-tolerant (BFT) conditions - at most _f_ validators (where _f_ < (_all validators_)/3) are faulty or malicious. Currently, the consensus specification is an implementation of _DiemBFT_, a BFT consensus protocol that ensures liveness and safety under partial synchrony. The [DiemBFT whitepaper](https://developers.diem.com/docs/state-machine-replication-paper) describes a high level overview of the protocol, the liveness and safety proofs, and a rationale on why DiemBFT was adopted for the LPN. This document specifies how to implement the DiemBFT protocol in order to participate as a validating node in the LPN.
 
 This document is organized as follows:
 
@@ -12,7 +12,7 @@ This document is organized as follows:
 4. [Abstracted modules](#Abstracted-modules) - The components this specification depends on.
 5. [Consensus modules](#Consensus-modules) - The components built upon common data structures that are described as a part of this specification.
 
-All network communication occurs over LibraNet and any serialization, deserialization and hashing is determined by [LCS](https://developers.diem.org/docs/rustdocs/diem_canonical_serialization/).
+All network communication occurs over DiemNet and any serialization, deserialization and hashing is determined by [BCS](https://docs.rs/bcs/).
 
 ## Architecture
 
@@ -44,7 +44,7 @@ struct Block {
 
 Fields:
 
-* `id` is the unique identifier of this block. It is calculated with the LCS serialized hash of `block_data`. This field is not serialized but calculated whenever deserialized.
+* `id` is the unique identifier of this block. It is calculated with the BCS serialized hash of `block_data`. This field is not serialized but calculated whenever deserialized.
 * `block_data` is the container of the block with zero or more transactions
 * `signature` is populated if this block was proposed by a validator. If this block is a genesis or NIL block, it is `None`.
 
@@ -55,7 +55,7 @@ Verification
 
 ### BlockData
 
-Block data is all the information necessary to vote on a block of transactions. `Block` wraps this structure as a convenient way storage of its LCS serialized hash and a signature (if this is proposed by a validator).
+Block data is all the information necessary to vote on a block of transactions. `Block` wraps this structure as a convenient way storage of its BCS serialized hash and a signature (if this is proposed by a validator).
 
 ```rust
 struct BlockData {
@@ -130,7 +130,7 @@ Verification
 
 ### VoteData
 
-This structure maintains information about a block and its parent block as a helper for `QuorumCert`. Its LCS-generated hash is used for the `consensus_data_hash` field in `LedgerInfo`.
+This structure maintains information about a block and its parent block as a helper for `QuorumCert`. Its BCS-generated hash is used for the `consensus_data_hash` field in `LedgerInfo`.
 
 ```rust
 pub struct VoteData {
@@ -167,7 +167,7 @@ struct Vote {
 
 Fields:
 
-* `vote_data` is the proposed and previous block and also contains the round information being voted on. The LCS-serialized hash of `vote_data` must be the same as `ledger_info.consensus_data_hash`
+* `vote_data` is the proposed and previous block and also contains the round information being voted on. The BCS-serialized hash of `vote_data` must be the same as `ledger_info.consensus_data_hash`
 * `author` is the identify of the voter with respect to its account address
 * `ledger_info` contains the ledger state of the block that will be committed if >2f unique `signatures` are gathered
 * `signature` is the signature from the `author` on `ledger_info` that attests to the vote of the `vote_data.proposed` block, its parent and the `ledger_info`
@@ -193,7 +193,7 @@ struct QuorumCert {
 
 Fields:
 
-* `vote_data` is a helper structure that includes block information about a proposed block and its parent block. The LCS hash of `vote_data` must be equal to the `signed_ledger_info`.ledger_info.consensus_data_hash as a part of verification
+* `vote_data` is a helper structure that includes block information about a proposed block and its parent block. The BCS hash of `vote_data` must be equal to the `signed_ledger_info`.ledger_info.consensus_data_hash as a part of verification
 * `signed_ledger_info` contains the [ledger state](../common/data_structures.md#LedgerInfoWithSignatures) of the committed block. Since a signature agrees on the hash of `vote_data`, it certifies the proposed block and its parent from `vote_data` as well as the highest committed state on this blockchain branch.
 
 Derived Fields
@@ -249,7 +249,7 @@ pub struct TimeoutCertificate {
 Fields
 
 * `timeout` is the `Timeout` being signed.
-* `signatures` contains >2f signatures signed on the LCS-serialized `timeout`.
+* `signatures` contains >2f signatures signed on the BCS-serialized `timeout`.
 
 Verification
 
@@ -764,7 +764,7 @@ let commit_info = if commit_rule() {
 }
 ```
 
-Generate a LedgerInfo with lcs seiralize hash of vote_data and sign the lcs seriealize hash to generate a vote signature which captures both vote and commit.
+Generate a LedgerInfo with bcs seiralize hash of vote_data and sign the bcs seriealize hash to generate a vote signature which captures both vote and commit.
 
 ```rust
 let ledger_info = LedgerInfo {
@@ -830,7 +830,7 @@ fn generate_proposal(round: Round) -> Block;
 * otherwise
     - pull transactions from mempool to form a `payload`, excluding pending transactions already used (by calling `block_store.path_from_root(hqc.certified_block().id())`)
     - use the current UNIX time in microseconds as a `timestamp`
-* construct a BlockData as following, and sign the lcs serialized hash with consensus key to construct a Block
+* construct a BlockData as following, and sign the bcs serialized hash with consensus key to construct a Block
 
   ```rust
   BlockData {
@@ -941,7 +941,7 @@ Fields
 * `block_store`: the current block store we have, specified in [block store](#blockstore).
 * `proposer_election`: decides the proposer of each round, specified in [proposer election](#proposer-election).
 * `proposal_generator`: decide how to propose a block of transactions, specified in [proposal generator](#proposal-generator).
-* `safety_rules`: the voting and commit rule of LibraBFT, specified in [safety rules](#safety-rules).
+* `safety_rules`: the voting and commit rule of DiemBFT, specified in [safety rules](#safety-rules).
 
 The initial state is constructed with an initial `LedgerInfo` on a genesis transaction following the reconfiguration state transition.
 
@@ -1030,7 +1030,7 @@ fn certificate_for_genesis(ledger_info: LedgerInfoWithSignatures) -> QuorumCert 
 
 * a validator is free to prune any data from the previous epoch in PersistentStorage after the transition to a new epoch.
 * genesis block and its quorum cert/commit cert are locally generated from previous end-epoch LedgerInfoWithSignatures's **deterministic** fields
-* the Libra network is bootstrapped with a genesis transaction (note the different from genesis block) and a ledger_info commits it with next_epoch_state set.
+* the Diem network is bootstrapped with a genesis transaction (note the different from genesis block) and a ledger_info commits it with next_epoch_state set.
 
 #### ConsensusMsg
 
@@ -1288,7 +1288,7 @@ A `round` number is received when the timer setup in the constructor of `RoundSt
       }
       ```
 
-    * obtain a `digest` of the `timeout` by calling `SHA-3-256(lcs.serialize(timeout))`
+    * obtain a `digest` of the `timeout` by calling `SHA-3-256(bcs.serialize(timeout))`
     * obtain a `signature` over the digest by calling `ed25519_sign(private_key, digest)`
     * set the `round_state.vote.timeout_signature` to the `signature`.
     * cache the vote in `round_state.vote_sent`

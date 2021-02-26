@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common;
@@ -60,7 +60,7 @@ struct GoEmitter<T> {
     /// Go module path for Serde runtime packages
     /// `None` to use the default path.
     serde_module_path: Option<String>,
-    /// Go module path for Libra types.
+    /// Go module path for Diem types.
     /// `None` to use an empty path.
     diem_module_path: Option<String>,
     /// Name of the package owning the generated definitions (e.g. "my_package")
@@ -76,8 +76,7 @@ where
             Some(path) => format!("{}/diemtypes", path),
             None => "diemtypes".into(),
         };
-        let mut external_definitions =
-            crate::common::get_external_definitions(&diem_types_package);
+        let mut external_definitions = crate::common::get_external_definitions(&diem_types_package);
         // Add standard imports
         external_definitions.insert("fmt".to_string(), Vec::new());
 
@@ -122,7 +121,7 @@ where
         writeln!(
             self.out,
             r#"
-// Build a Libra `Script` from a structured object `ScriptCall`.
+// Build a Diem `Script` from a structured object `ScriptCall`.
 func EncodeScript(call ScriptCall) diemtypes.Script {{"#
         )?;
         self.out.indent();
@@ -152,7 +151,7 @@ func EncodeScript(call ScriptCall) diemtypes.Script {{"#
         writeln!(
             self.out,
             r#"
-// Try to recognize a Libra `Script` and convert it into a structured object `ScriptCall`.
+// Try to recognize a Diem `Script` and convert it into a structured object `ScriptCall`.
 func DecodeScript(script *diemtypes.Script) (ScriptCall, error) {{
 	if helper := script_decoder_map[string(script.Code)]; helper != nil {{
 		val, err := helper(script)

@@ -6,12 +6,12 @@ use crate::{
     transport::*,
 };
 use bytes::{Bytes, BytesMut};
-use futures::{future, io::AsyncWriteExt, stream::StreamExt};
 use diem_config::{config::HANDSHAKE_VERSION, network_id::NetworkContext};
 use diem_crypto::{test_utils::TEST_SEED, traits::Uniform, x25519};
 use diem_infallible::RwLock;
 use diem_network_address::{NetworkAddress, Protocol::*};
 use diem_types::{chain_id::ChainId, PeerId};
+use futures::{future, io::AsyncWriteExt, stream::StreamExt};
 use netcore::{
     framing::{read_u16frame, write_u16frame},
     transport::{memory, ConnectionOrigin, Transport},
@@ -333,7 +333,7 @@ fn test_memory_transport_rejects_unauthed_dialer() {
 #[test]
 fn test_tcp_transport_mutual_auth() {
     test_transport_success(
-        LIBRA_TCP_TRANSPORT.clone(),
+        DIEM_TCP_TRANSPORT.clone(),
         Auth::Mutual,
         "/ip4/127.0.0.1/tcp/0",
         expect_ip4_tcp_noise_addr,
@@ -343,7 +343,7 @@ fn test_tcp_transport_mutual_auth() {
 #[test]
 fn test_tcp_transport_server_only_auth() {
     test_transport_success(
-        LIBRA_TCP_TRANSPORT.clone(),
+        DIEM_TCP_TRANSPORT.clone(),
         Auth::ServerOnly,
         "/ip4/127.0.0.1/tcp/0",
         expect_ip4_tcp_noise_addr,
@@ -353,7 +353,7 @@ fn test_tcp_transport_server_only_auth() {
 #[test]
 fn test_tcp_transport_rejects_unauthed_dialer() {
     test_transport_rejects_unauthed_dialer(
-        LIBRA_TCP_TRANSPORT.clone(),
+        DIEM_TCP_TRANSPORT.clone(),
         "/ip4/127.0.0.1/tcp/0",
         expect_ip4_tcp_noise_addr,
     );

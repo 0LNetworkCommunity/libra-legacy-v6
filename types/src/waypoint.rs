@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -9,7 +9,7 @@ use crate::{
 };
 use anyhow::{ensure, format_err, Error, Result};
 use diem_crypto::hash::{CryptoHash, HashValue};
-use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 use std::{
     fmt::{Display, Formatter},
@@ -123,7 +123,7 @@ impl FromStr for Waypoint {
 /// Keeps the fields of LedgerInfo that are hashed for generating a waypoint.
 /// Note that not all the fields of LedgerInfo are included: some consensus-related fields
 /// might not be the same for all the participants.
-#[derive(Deserialize, Serialize, CryptoHasher, LCSCryptoHash)]
+#[derive(Deserialize, Serialize, CryptoHasher, BCSCryptoHash)]
 struct Ledger2WaypointConverter {
     epoch: u64,
     root_hash: HashValue,

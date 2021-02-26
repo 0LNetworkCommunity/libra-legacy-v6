@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -7,8 +7,8 @@ use anyhow::Context;
 use bytecode_verifier::{verify_module, verify_script, DependencyChecker};
 use compiled_stdlib::{stdlib_modules, StdLibOptions};
 use compiler::{util, Compiler};
-use ir_to_bytecode::parser::{parse_module, parse_script};
 use diem_types::{access_path::AccessPath, account_address::AccountAddress, account_config};
+use ir_to_bytecode::parser::{parse_module, parse_script};
 use std::{
     convert::TryFrom,
     fs,
@@ -104,7 +104,7 @@ fn main() {
             script.get_external_deps()
         }
         .into_iter()
-        .map(|m| AccessPath::code_access_path(&m))
+        .map(AccessPath::code_access_path)
         .collect();
         println!(
             "{}",
@@ -150,7 +150,7 @@ fn main() {
 
         if args.output_source_maps {
             let source_map_bytes =
-                lcs::to_bytes(&source_map).expect("Unable to serialize source maps for script");
+                bcs::to_bytes(&source_map).expect("Unable to serialize source maps for script");
             write_output(
                 &source_path.with_extension(source_map_extension),
                 &source_map_bytes,
@@ -173,7 +173,7 @@ fn main() {
 
         if args.output_source_maps {
             let source_map_bytes =
-                lcs::to_bytes(&source_map).expect("Unable to serialize source maps for module");
+                bcs::to_bytes(&source_map).expect("Unable to serialize source maps for module");
             write_output(
                 &source_path.with_extension(source_map_extension),
                 &source_map_bytes,

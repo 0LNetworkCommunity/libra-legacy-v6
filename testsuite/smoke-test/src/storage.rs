@@ -41,20 +41,20 @@ fn test_db_restore() {
     client.create_next_account(false).unwrap();
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mb", "0", "1000000", "Coin1"], true)
+        .mint_coins(&["mb", "0", "1000000", "XUS"], true)
         .unwrap();
     client
-        .mint_coins(&["mb", "1", "1000000", "Coin1"], true)
+        .mint_coins(&["mb", "1", "1000000", "XUS"], true)
         .unwrap();
     client
-        .transfer_coins(&["tb", "0", "1", "1", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "1", "XUS"], true)
         .unwrap();
     assert!(compare_balances(
-        vec![(999999.0, "Coin1".to_string())],
+        vec![(999999.0, "XUS".to_string())],
         client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(1000001.0, "Coin1".to_string())],
+        vec![(1000001.0, "XUS".to_string())],
         client.get_balances(&["b", "1"]).unwrap(),
     ));
 
@@ -98,7 +98,7 @@ fn test_db_restore() {
     let mut client0 = env.get_validator_client(0, None);
     client0.set_accounts(accounts);
     assert!(compare_balances(
-        vec![(999999.0 - transferred, "Coin1".to_string())],
+        vec![(999999.0 - transferred, "XUS".to_string())],
         client0.get_balances(&["b", "0"]).unwrap(),
     ));
 }
@@ -192,7 +192,7 @@ fn db_backup(backup_service_port: u16, target_epoch: u64, target_version: Versio
             "--transaction-batch-size",
             "20",
             "--state-snapshot-interval",
-            "50",
+            "40",
             "--metadata-cache-dir",
             metadata_cache_path1.path().to_str().unwrap(),
             "local-fs",
@@ -256,24 +256,22 @@ fn transfer_and_reconfig(
             println!(
                 "Changing diem version to {}: {:?}",
                 transferred,
-                client.change_diem_version(
-                    &["change_diem_version", &transferred.to_string()],
-                    true
-                )
+                client
+                    .change_diem_version(&["change_diem_version", &transferred.to_string()], true)
             );
         }
 
         client
-            .transfer_coins(&["tb", "0", "1", "1", "Coin1"], true)
+            .transfer_coins(&["tb", "0", "1", "1", "XUS"], true)
             .unwrap();
         transferred += 1.0;
 
         assert!(compare_balances(
-            vec![(balance0 - transferred, "Coin1".to_string())],
+            vec![(balance0 - transferred, "XUS".to_string())],
             client.get_balances(&["b", "0"]).unwrap(),
         ));
         assert!(compare_balances(
-            vec![(balance1 + transferred, "Coin1".to_string())],
+            vec![(balance1 + transferred, "XUS".to_string())],
             client.get_balances(&["b", "1"]).unwrap(),
         ));
     }

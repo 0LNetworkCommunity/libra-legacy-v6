@@ -21,14 +21,15 @@ This module provides functions to manage VASP accounts.
 -  [Function `is_same_vasp`](#0x1_VASP_is_same_vasp)
 -  [Function `num_children`](#0x1_VASP_num_children)
 -  [Module Specification](#@Module_Specification_1)
-    -  [Existence of Parents](#@Existence_of_Parents_2)
-    -  [Creation of Child VASPs](#@Creation_of_Child_VASPs_3)
-    -  [Immutability of Parent Address](#@Immutability_of_Parent_Address_4)
+    -  [Persistence of parent and child VASPs](#@Persistence_of_parent_and_child_VASPs_2)
+    -  [Existence of Parents](#@Existence_of_Parents_3)
+    -  [Creation of Child VASPs](#@Creation_of_Child_VASPs_4)
+    -  [Immutability of Parent Address](#@Immutability_of_Parent_Address_5)
 
 
 <pre><code><b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
-<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
+<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
@@ -153,7 +154,7 @@ Maximum number of child accounts that can be created by a single ParentVASP
 ## Function `publish_parent_vasp_credential`
 
 Create a new <code><a href="VASP.md#0x1_VASP_ParentVASP">ParentVASP</a></code> resource under <code>vasp</code>
-Aborts if <code>lr_account</code> is not the diem root account,
+Aborts if <code>dr_account</code> is not the diem root account,
 or if there is already a VASP (child or parent) at this account.
 
 
@@ -168,7 +169,7 @@ or if there is already a VASP (child or parent) at this account.
 
 <pre><code><b>public</b> <b>fun</b> <a href="VASP.md#0x1_VASP_publish_parent_vasp_credential">publish_parent_vasp_credential</a>(vasp: &signer, tc_account: &signer) {
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
-    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
     <a href="Roles.md#0x1_Roles_assert_parent_vasp_role">Roles::assert_parent_vasp_role</a>(vasp);
     <b>let</b> vasp_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vasp);
     <b>assert</b>(!<a href="VASP.md#0x1_VASP_is_vasp">is_vasp</a>(vasp_addr), <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="VASP.md#0x1_VASP_EPARENT_OR_CHILD_VASP">EPARENT_OR_CHILD_VASP</a>));
@@ -233,6 +234,7 @@ Aborts if <code>parent</code> is not a ParentVASP
     child: &signer,
 ) <b>acquires</b> <a href="VASP.md#0x1_VASP_ParentVASP">ParentVASP</a> {
     <a href="Roles.md#0x1_Roles_assert_parent_vasp_role">Roles::assert_parent_vasp_role</a>(parent);
+    <a href="Roles.md#0x1_Roles_assert_child_vasp_role">Roles::assert_child_vasp_role</a>(child);
     <b>let</b> child_vasp_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(child);
     <b>assert</b>(!<a href="VASP.md#0x1_VASP_is_vasp">is_vasp</a>(child_vasp_addr), <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="VASP.md#0x1_VASP_EPARENT_OR_CHILD_VASP">EPARENT_OR_CHILD_VASP</a>));
     <b>let</b> parent_vasp_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(parent);
@@ -258,7 +260,8 @@ Aborts if <code>parent</code> is not a ParentVASP
 
 
 <pre><code><b>let</b> child_addr = <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(child);
-<b>include</b> <a href="VASP.md#0x1_VASP_PublishChildVASPAbortsIf">PublishChildVASPAbortsIf</a>{child_addr: child_addr};
+<b>include</b> <a href="VASP.md#0x1_VASP_PublishChildVASPAbortsIf">PublishChildVASPAbortsIf</a>{child_addr};
+<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotChildVasp">Roles::AbortsIfNotChildVasp</a>{account: child_addr};
 <b>include</b> <a href="VASP.md#0x1_VASP_PublishChildVASPEnsures">PublishChildVASPEnsures</a>{parent_addr: <a href="Signer.md#0x1_Signer_spec_address_of">Signer::spec_address_of</a>(parent), child_addr: child_addr};
 </code></pre>
 
@@ -577,7 +580,8 @@ Spec version of <code><a href="VASP.md#0x1_VASP_is_same_vasp">Self::is_same_vasp
 
 ## Function `num_children`
 
-Return the number of child accounts for this VASP.
+If <code>addr</code> is the address of a <code><a href="VASP.md#0x1_VASP_ParentVASP">ParentVASP</a></code>, return the number of children.
+If it is the address of a ChildVASP, return the number of children of the parent.
 The total number of accounts for this VASP is num_children() + 1
 Aborts if <code>addr</code> is not a ParentVASP or ChildVASP account
 
@@ -631,7 +635,21 @@ Spec version of <code><a href="VASP.md#0x1_VASP_num_children">Self::num_children
 
 
 
-<a name="@Existence_of_Parents_2"></a>
+<a name="@Persistence_of_parent_and_child_VASPs_2"></a>
+
+### Persistence of parent and child VASPs
+
+
+
+<pre><code><b>invariant</b> <b>update</b> [<b>global</b>] <b>forall</b> addr: address <b>where</b> <b>old</b>(<a href="VASP.md#0x1_VASP_is_parent">is_parent</a>(addr)):
+    <a href="VASP.md#0x1_VASP_is_parent">is_parent</a>(addr);
+<b>invariant</b> <b>update</b> [<b>global</b>] <b>forall</b> addr: address <b>where</b> <b>old</b>(<a href="VASP.md#0x1_VASP_is_child">is_child</a>(addr)):
+    <a href="VASP.md#0x1_VASP_is_child">is_child</a>(addr);
+</code></pre>
+
+
+
+<a name="@Existence_of_Parents_3"></a>
 
 ### Existence of Parents
 
@@ -644,12 +662,12 @@ Spec version of <code><a href="VASP.md#0x1_VASP_num_children">Self::num_children
 
 
 
-<a name="@Creation_of_Child_VASPs_3"></a>
+<a name="@Creation_of_Child_VASPs_4"></a>
 
 ### Creation of Child VASPs
 
 
-Only a parent VASP calling <code>Self::publish_child_vast_credential</code> can create
+Only a parent VASP calling <code><a href="VASP.md#0x1_VASP_publish_child_vasp_credential">Self::publish_child_vasp_credential</a></code> can create
 child VASPs.
 
 
@@ -693,7 +711,7 @@ previous state.
 
 
 
-<a name="@Immutability_of_Parent_Address_4"></a>
+<a name="@Immutability_of_Parent_Address_5"></a>
 
 ### Immutability of Parent Address
 
@@ -707,6 +725,6 @@ The parent address stored at ChildVASP resource never changes.
 
 
 [//]: # ("File containing references which can be used from documentation")
-[ACCESS_CONTROL]: https://github.com/diem/lip/blob/master/lips/lip-2.md
-[ROLE]: https://github.com/diem/lip/blob/master/lips/lip-2.md#roles
-[PERMISSION]: https://github.com/diem/lip/blob/master/lips/lip-2.md#permissions
+[ACCESS_CONTROL]: https://github.com/diem/dip/blob/master/dips/dip-2.md
+[ROLE]: https://github.com/diem/dip/blob/master/dips/dip-2.md#roles
+[PERMISSION]: https://github.com/diem/dip/blob/master/dips/dip-2.md#permissions

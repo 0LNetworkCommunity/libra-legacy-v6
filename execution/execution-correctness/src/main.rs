@@ -5,8 +5,8 @@
 
 #![forbid(unsafe_code)]
 
-use execution_correctness::Process;
 use diem_config::config::NodeConfig;
+use execution_correctness::Process;
 use std::{env, process};
 
 fn main() {

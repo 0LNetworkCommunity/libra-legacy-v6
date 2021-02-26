@@ -7,7 +7,6 @@ address 0x1 {
 /// When nonce X is recorded, all transactions with nonces lower then X-128 will abort.
 module SlidingNonce {
     use 0x1::Signer;
-    use 0x1::Roles;
     use 0x1::Errors;
 
     resource struct SlidingNonce {
@@ -100,25 +99,37 @@ module SlidingNonce {
     /// Publishes nonce resource for `account`
     /// This is required before other functions in this module can be called for `account
     public fun publish(account: &signer) {
-        assert(!exists<SlidingNonce>(Signer::address_of(account)), Errors::invalid_argument(ENONCE_ALREADY_PUBLISHED));
+        assert(!exists<SlidingNonce>(Signer::address_of(account)), Errors::already_published(ENONCE_ALREADY_PUBLISHED));
         move_to(account, SlidingNonce {  min_nonce: 0, nonce_mask: 0 });
     }
-
-    /// Publishes nonce resource into specific account
-    /// Only the Diem root account can create this resource for different accounts
-    public fun publish_nonce_resource(
-        lr_account: &signer,
-        account: &signer
-    ) {
-        Roles::assert_diem_root(lr_account);
-        let new_resource = SlidingNonce {
-            min_nonce: 0,
-            nonce_mask: 0,
-        };
-        assert(!exists<SlidingNonce>(Signer::address_of(account)),
-                Errors::invalid_argument(ENONCE_ALREADY_PUBLISHED));
-        move_to(account, new_resource);
+    spec fun publish {
+        pragma opaque;
+        modifies global<SlidingNonce>(Signer::spec_address_of(account));
+        aborts_if exists<SlidingNonce>(Signer::spec_address_of(account)) with Errors::ALREADY_PUBLISHED;
+        ensures exists<SlidingNonce>(Signer::spec_address_of(account));
     }
 
+    // =================================================================
+    // Module Specification
+
+    spec module {} // Switch to module documentation context
+
+    spec module {
+        use 0x1::CoreAddresses;
+        use 0x1::DiemTimestamp;
+
+        /// Sliding nonces are initialized at Diem root and treasury compliance addresses
+        invariant [global] DiemTimestamp::is_operating()
+            ==> exists<SlidingNonce>(CoreAddresses::DIEM_ROOT_ADDRESS());
+
+        invariant [global] DiemTimestamp::is_operating()
+            ==> exists<SlidingNonce>(CoreAddresses::TREASURY_COMPLIANCE_ADDRESS());
+
+        // In the current code, only Diem root and Treasury compliance have sliding nonces.
+        // That is a difficult cross-module invariant to prove (it depends on Genesis and
+        // DiemAccount). Additional modules could be added that call the publish functions
+        // in this module to publish sliding nonces on other accounts.  Anyway, this property
+        // is probably not very important.
+    }
 }
 }

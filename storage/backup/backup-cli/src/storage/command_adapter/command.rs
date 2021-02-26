@@ -3,12 +3,12 @@
 
 use crate::storage::command_adapter::config::EnvVar;
 use anyhow::{bail, ensure, Result};
+use diem_logger::prelude::*;
 use futures::{
     future::BoxFuture,
     task::{Context, Poll},
     Future, FutureExt,
 };
-use diem_logger::prelude::*;
 use std::{
     fmt::{Debug, Formatter},
     process::Stdio,

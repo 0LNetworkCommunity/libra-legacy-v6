@@ -40,19 +40,19 @@ pub const TEST_SHARED_VAL_NETADDR_KEY_VERSION: KeyVersion = 0;
 /// Note: modifying this salt is a backwards-incompatible protocol change.
 ///
 /// For readers, the HKDF salt is equal to the following hex string:
-/// `"dfc8ffcc7f62ea4e5b9bc41ee7969b44275419ebaad1db27d2a191b6d1db6d13"` which is
-/// also equal to the hash value `SHA3-256(b"LIBRA_ENCRYPTED_NETWORK_ADDRESS_SALT")`.
+/// `"7ffda2ae982a2ebfab2a4da62f76fe33592c85e02445b875f02ded51a520ba2a"` which is
+/// also equal to the hash value `SHA3-256(b"DIEM_ENCRYPTED_NETWORK_ADDRESS_SALT")`.
 ///
 /// ```
 /// use diem_network_address::encrypted::HKDF_SALT;
 /// use diem_crypto::hash::HashValue;
 ///
-/// let derived_salt = HashValue::sha3_256_of(b"LIBRA_ENCRYPTED_NETWORK_ADDRESS_SALT");
+/// let derived_salt = HashValue::sha3_256_of(b"DIEM_ENCRYPTED_NETWORK_ADDRESS_SALT");
 /// assert_eq!(HKDF_SALT.as_ref(), derived_salt.as_ref());
 /// ```
 pub const HKDF_SALT: [u8; 32] = [
-    0xdf, 0xc8, 0xff, 0xcc, 0x7f, 0x62, 0xea, 0x4e, 0x5b, 0x9b, 0xc4, 0x1e, 0xe7, 0x96, 0x9b, 0x44,
-    0x27, 0x54, 0x19, 0xeb, 0xaa, 0xd1, 0xdb, 0x27, 0xd2, 0xa1, 0x91, 0xb6, 0xd1, 0xdb, 0x6d, 0x13,
+    0x7f, 0xfd, 0xa2, 0xae, 0x98, 0x2a, 0x2e, 0xbf, 0xab, 0x2a, 0x4d, 0xa6, 0x2f, 0x76, 0xfe, 0x33,
+    0x59, 0x2c, 0x85, 0xe0, 0x24, 0x45, 0xb8, 0x75, 0xf0, 0x2d, 0xed, 0x51, 0xa5, 0x20, 0xba, 0x2a,
 ];
 
 /// An encrypted `NetworkAddress`.
@@ -153,7 +153,7 @@ impl EncNetworkAddress {
         addr_idx: u32,
     ) -> Result<Self, ParseError> {
         // unpack the NetworkAddress into its base Vec<u8>
-        let mut addr_vec: Vec<u8> = lcs::to_bytes(&addr)?;
+        let mut addr_vec: Vec<u8> = bcs::to_bytes(&addr)?;
 
         let derived_key = Self::derive_key(shared_val_netaddr_key, account);
         let aead = Aes256Gcm::new(GenericArray::from_slice(&derived_key));
@@ -237,7 +237,7 @@ impl EncNetworkAddress {
         // remove the auth tag suffix, leaving just the decrypted network address
         enc_addr.truncate(auth_tag_offset);
 
-        lcs::from_bytes(&enc_addr).map_err(|e| e.into())
+        bcs::from_bytes(&enc_addr).map_err(|e| e.into())
     }
 
     /// Given the shared `shared_val_netaddr_key`, derive the per-validator

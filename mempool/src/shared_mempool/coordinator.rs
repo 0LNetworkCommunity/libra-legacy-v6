@@ -18,16 +18,16 @@ use ::network::protocols::network::Event;
 use anyhow::Result;
 use bounded_executor::BoundedExecutor;
 use channel::diem_channel;
-use futures::{
-    channel::{mpsc, oneshot},
-    stream::{select_all, FuturesUnordered},
-    StreamExt,
-};
 use diem_config::{config::PeerNetworkId, network_id::NodeNetworkId};
 use diem_infallible::Mutex;
 use diem_logger::prelude::*;
 use diem_trace::prelude::*;
 use diem_types::{on_chain_config::OnChainConfigPayload, transaction::SignedTransaction};
+use futures::{
+    channel::{mpsc, oneshot},
+    stream::{select_all, FuturesUnordered},
+    StreamExt,
+};
 use std::{
     ops::Deref,
     sync::Arc,
@@ -71,8 +71,9 @@ pub(crate) async fn coordinator<V>(
     let bounded_executor = BoundedExecutor::new(workers_available, executor.clone());
 
     loop {
+        let _timer = counters::MAIN_LOOP.start_timer();
         ::futures::select! {
-            (mut msg, callback) = client_events.select_next_some() => {
+            (msg, callback) = client_events.select_next_some() => {
                 trace_event!("mempool::client_event", {"txn", msg.sender(), msg.sequence_number()});
                 // this timer measures how long it took for the bounded executor to *schedule* the
                 // task
@@ -181,7 +182,7 @@ pub(crate) async fn coordinator<V>(
                             }
                         }
                     }
-                    Event::RpcRequest(peer_id, msg, res_tx) => {
+                    Event::RpcRequest(peer_id, _msg, _res_tx) => {
                         counters::UNEXPECTED_NETWORK_MSG_COUNT
                             .with_label_values(&[&network_id.network_id().to_string(), &peer_id.to_string()])
                             .inc();

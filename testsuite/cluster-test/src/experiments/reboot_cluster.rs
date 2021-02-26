@@ -12,8 +12,8 @@ use crate::{
     instance::Instance,
 };
 use async_trait::async_trait;
-use futures::future::try_join_all;
 use diem_logger::info;
+use futures::future::try_join_all;
 use std::{
     collections::HashSet,
     fmt::{Error, Formatter},

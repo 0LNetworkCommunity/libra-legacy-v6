@@ -5,13 +5,13 @@ use crate::{
     counters,
     errors::{is_internal_error, JsonRpcError},
     methods::{build_registry, JsonRpcRequest, JsonRpcService, RpcRegistry},
-    response::JsonRpcResponse,
+    response::{JsonRpcResponse, X_DIEM_CHAIN_ID, X_DIEM_TIMESTAMP_USEC_ID, X_DIEM_VERSION_ID},
 };
-use futures::future::join_all;
 use diem_config::config::{NodeConfig, RoleType};
 use diem_logger::{debug, Level, Schema};
 use diem_mempool::MempoolClientSender;
 use diem_types::{chain_id::ChainId, ledger_info::LedgerInfoWithSignatures};
+use futures::future::join_all;
 use rand::{rngs::OsRng, RngCore};
 use serde_json::{map::Map, Value};
 use std::{net::SocketAddr, sync::Arc};
@@ -20,7 +20,7 @@ use tokio::runtime::{Builder, Runtime};
 use warp::{
     http::header,
     reject::{self, Reject},
-    Filter,
+    Filter, Reply,
 };
 
 // Counter labels for runtime metrics
@@ -45,13 +45,13 @@ struct HttpRequestLog<'a> {
 
 #[derive(Schema)]
 struct RpcRequestLog {
-    trace_id: u64,
+    trace_id: String,
     request: Value,
 }
 
 #[derive(Schema)]
 struct RpcResponseLog<'a> {
-    trace_id: u64,
+    trace_id: String,
     is_batch: bool,
     response_error: bool,
     response: &'a JsonRpcResponse,
@@ -130,6 +130,10 @@ pub fn bootstrap(
                     .and_then(|v| v.to_str().ok())
             })
         }))
+        // CORS is required for full node server to accept requests from different domain web pages.
+        // It needs to be configured for the json-rpc request accepting method and headers.
+        // Technically it's fine for any headers, but for simplicity we only set must have header
+        // content-type.
         .with(
             warp::cors()
                 .allow_any_origin()
@@ -188,7 +192,7 @@ pub(crate) async fn rpc_endpoint(
     data: Value,
     service: JsonRpcService,
     registry: Arc<RpcRegistry>,
-) -> Result<Box<dyn warp::Reply>, warp::Rejection> {
+) -> Result<warp::reply::Response, warp::Rejection> {
     let label = match data {
         Value::Array(_) => LABEL_BATCH,
         _ => LABEL_SINGLE,
@@ -206,18 +210,21 @@ async fn rpc_endpoint_without_metrics(
     data: Value,
     service: JsonRpcService,
     registry: Arc<RpcRegistry>,
-) -> Result<Box<dyn warp::Reply>, warp::Rejection> {
+) -> Result<warp::reply::Response, warp::Rejection> {
     // take snapshot of latest version of DB to be used across all requests, especially for batched requests
     let ledger_info = service
         .get_latest_ledger_info()
         .map_err(|_| reject::custom(DatabaseError))?;
 
     let mut rng = OsRng;
-    let trace_id = rng.next_u64();
+    let trace_id = format!("{:x}", rng.next_u64());
     debug!(RpcRequestLog {
-        trace_id,
+        trace_id: trace_id.clone(),
         request: data.clone(),
     });
+    let chain_id = service.chain_id();
+    let latest_ledger_version = ledger_info.ledger_info().version();
+    let latest_ledger_timestamp_usecs = ledger_info.ledger_info().timestamp_usecs();
 
     let resp = Ok(if let Value::Array(requests) = data {
         match service.validate_batch_size_limit(requests.len()) {
@@ -230,37 +237,60 @@ async fn rpc_endpoint_without_metrics(
                         Arc::clone(&registry),
                         ledger_info.clone(),
                         LABEL_BATCH,
-                        trace_id,
+                        trace_id.clone(),
                     )
                 });
                 let responses = join_all(futures).await;
                 for resp in &responses {
-                    log_response!(trace_id, &resp, true);
+                    log_response!(trace_id.clone(), &resp, true);
                 }
                 warp::reply::json(&responses)
             }
             Err(err) => {
                 let mut resp = JsonRpcResponse::new(
-                    service.chain_id(),
-                    ledger_info.ledger_info().version(),
-                    ledger_info.ledger_info().timestamp_usecs(),
+                    chain_id,
+                    latest_ledger_version,
+                    latest_ledger_timestamp_usecs,
                 );
                 set_response_error(&mut resp, err, LABEL_BATCH, "unknown");
-                log_response!(trace_id, &resp, true);
+                log_response!(trace_id.clone(), &resp, true);
 
                 warp::reply::json(&resp)
             }
         }
     } else {
         // single API call
-        let resp =
-            rpc_request_handler(data, service, registry, ledger_info, LABEL_SINGLE, trace_id).await;
+        let resp = rpc_request_handler(
+            data,
+            service,
+            registry,
+            ledger_info,
+            LABEL_SINGLE,
+            trace_id.clone(),
+        )
+        .await;
         log_response!(trace_id, &resp, false);
 
         warp::reply::json(&resp)
     });
 
-    Ok(Box::new(resp) as Box<dyn warp::Reply>)
+    let mut http_response = resp.into_response();
+    let headers = http_response.headers_mut();
+
+    headers.insert(
+        X_DIEM_CHAIN_ID,
+        header::HeaderValue::from_str(&chain_id.id().to_string()).unwrap(),
+    );
+    headers.insert(
+        X_DIEM_VERSION_ID,
+        header::HeaderValue::from_str(&latest_ledger_version.to_string()).unwrap(),
+    );
+    headers.insert(
+        X_DIEM_TIMESTAMP_USEC_ID,
+        header::HeaderValue::from_str(&latest_ledger_timestamp_usecs.to_string()).unwrap(),
+    );
+
+    Ok(http_response)
 }
 
 /// Handler of single RPC request
@@ -271,7 +301,7 @@ async fn rpc_request_handler(
     registry: Arc<RpcRegistry>,
     ledger_info: LedgerInfoWithSignatures,
     request_type_label: &str,
-    trace_id: u64,
+    trace_id: String,
 ) -> JsonRpcResponse {
     let request: Map<String, Value>;
     let mut response = JsonRpcResponse::new(

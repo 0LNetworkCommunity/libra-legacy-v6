@@ -552,9 +552,9 @@ impl Drop for DiemSwarm {
                 let log_path = temp_dir.path();
                 println!("logs located at {:?}", log_path);
 
-                // Dump logs for each validator to stdout when `LIBRA_DUMP_LOGS`
+                // Dump logs for each validator to stdout when `DIEM_DUMP_LOGS`
                 // environment variable is set
-                if env::var_os("LIBRA_DUMP_LOGS").is_some() {
+                if env::var_os("DIEM_DUMP_LOGS").is_some() {
                     for (peer_id, node) in &mut self.nodes {
                         // Skip dumping logs for healthy nodes
                         if let HealthStatus::Healthy = node.health_check() {

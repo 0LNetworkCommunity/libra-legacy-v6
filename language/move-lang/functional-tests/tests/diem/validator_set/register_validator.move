@@ -4,19 +4,19 @@
 
 // check that the validator account config works
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::Signer;
 
     fun main(account: &signer) {
         let sender = Signer::address_of(account);
-        assert(!LibraSystem::is_validator(sender), 1);
-        assert(!LibraSystem::is_validator({{alice}}), 2);
-        assert(LibraSystem::is_validator({{vivian}}), 3);
-        assert(LibraSystem::is_validator({{viola}}), 4);
+        assert(!DiemSystem::is_validator(sender), 1);
+        assert(!DiemSystem::is_validator({{alice}}), 2);
+        assert(DiemSystem::is_validator({{vivian}}), 3);
+        assert(DiemSystem::is_validator({{viola}}), 4);
         // number of validators should equal the number we declared
-        assert(LibraSystem::validator_set_size() == 2, 5);
-        assert(LibraSystem::get_ith_validator_address(1) == {{vivian}}, 6);
-        assert(LibraSystem::get_ith_validator_address(0) == {{viola}}, 7);
+        assert(DiemSystem::validator_set_size() == 2, 5);
+        assert(DiemSystem::get_ith_validator_address(1) == {{vivian}}, 6);
+        assert(DiemSystem::get_ith_validator_address(0) == {{viola}}, 7);
     }
 }
 
@@ -25,13 +25,13 @@ script{
 //! new-transaction
 //! sender: vivian
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     use 0x1::Signer;
 
     // check that sending from validator accounts works
     fun main(account: &signer) {
         let sender = Signer::address_of(account);
-        assert(LibraSystem::is_validator(sender), 8);
+        assert(DiemSystem::is_validator(sender), 8);
     }
 }
 
@@ -40,11 +40,11 @@ script{
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraAccount;
+    use 0x1::DiemAccount;
 
     // register Alice as a validator candidate
     fun main(creator: &signer) {
-        LibraAccount::create_validator_account(
+        DiemAccount::create_validator_account(
             creator, 0xAA, x"00000000000000000000000000000000", b"owner_name"
         );
     }

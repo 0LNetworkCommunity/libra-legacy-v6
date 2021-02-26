@@ -12,12 +12,6 @@ use crate::{
     SynchronizerState,
 };
 use anyhow::{bail, ensure, format_err, Result};
-use fail::fail_point;
-use futures::{
-    channel::{mpsc, oneshot},
-    stream::select_all,
-    StreamExt,
-};
 use diem_config::{
     config::{PeerNetworkId, RoleType, StateSyncConfig, UpstreamConfig},
     network_id::NodeNetworkId,
@@ -30,6 +24,12 @@ use diem_types::{
     ledger_info::LedgerInfoWithSignatures,
     transaction::{Transaction, TransactionListWithProof, Version},
     waypoint::Waypoint,
+};
+use fail::fail_point;
+use futures::{
+    channel::{mpsc, oneshot},
+    stream::select_all,
+    StreamExt,
 };
 use network::protocols::network::Event;
 use std::{
@@ -144,6 +144,10 @@ impl PendingLedgerInfos {
     fn target_li(&self) -> Option<LedgerInfoWithSignatures> {
         self.target_li.clone()
     }
+
+    fn highest_version(&self) -> Option<Version> {
+        self.pending_li_queue.keys().last().cloned()
+    }
 }
 
 /// Coordination of synchronization process is driven by SyncCoordinator, which `start()` function
@@ -248,6 +252,7 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         let mut network_events = select_all(events).fuse();
 
         loop {
+            let _timer = counters::MAIN_LOOP.start_timer();
             ::futures::select! {
                 msg = self.client_events.select_next_some() => {
                     match msg {
@@ -454,12 +459,21 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
         let synced_version = self.local_state.highest_version_in_local_storage();
         let committed_version = self.local_state.highest_local_li.ledger_info().version();
         let local_epoch = self.local_state.epoch();
-        counters::VERSION
-            .with_label_values(&[counters::SYNCED_VERSION_LABEL])
-            .set(synced_version as i64);
-        counters::VERSION
-            .with_label_values(&[counters::COMMITTED_VERSION_LABEL])
-            .set(committed_version as i64);
+        counters::set_version(counters::VersionType::Synced, synced_version);
+        counters::set_version(counters::VersionType::Committed, committed_version);
+        counters::set_timestamp(
+            counters::TimestampType::Synced,
+            self.executor_proxy.get_version_timestamp(synced_version)?,
+        );
+        counters::set_timestamp(
+            counters::TimestampType::Committed,
+            self.executor_proxy
+                .get_version_timestamp(committed_version)?,
+        );
+        counters::set_timestamp(
+            counters::TimestampType::Real,
+            diem_infallible::duration_since_epoch().as_micros() as u64,
+        );
         counters::EPOCH.set(local_epoch as i64);
         debug!(LogSchema::new(LogEntry::LocalState)
             .local_li_version(committed_version)
@@ -1220,6 +1234,15 @@ impl<T: ExecutorProxyTrait> SyncCoordinator<T> {
             }
         };
 
+        let target_version = target
+            .version()
+            .unwrap_or_else(|| known_version.wrapping_add(1));
+        counters::set_version(counters::VersionType::Target, target_version);
+        let highest_version = self
+            .pending_ledger_infos
+            .highest_version()
+            .unwrap_or(target_version);
+        counters::set_version(counters::VersionType::Highest, highest_version);
         let req = GetChunkRequest::new(known_version, known_epoch, self.config.chunk_limit, target);
         self.request_manager.send_chunk_request(req)
     }

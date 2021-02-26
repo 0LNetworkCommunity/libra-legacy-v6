@@ -4,22 +4,14 @@
 #![forbid(unsafe_code)]
 
 use anyhow::Result;
-use executor::{
-    db_bootstrapper::{generate_waypoint, maybe_bootstrap},
-    Executor,
-};
-use executor_test_helpers::{
-    bootstrap_genesis, gen_ledger_info_with_sigs, get_test_signed_transaction,
-};
-use executor_types::BlockExecutor;
 use diem_crypto::{ed25519::Ed25519PrivateKey, HashValue, PrivateKey, Uniform};
 use diem_temppath::TempPath;
 use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
-        treasury_compliance_account_address, BalanceResource, COIN1_NAME,
+        from_currency_code_string, testnet_dd_account_address, treasury_compliance_account_address,
+        xus_tag, BalanceResource, XUS_NAME,
     },
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
@@ -37,7 +29,15 @@ use diem_types::{
     write_set::{WriteOp, WriteSetMut},
 };
 use diem_vm::DiemVM;
-use diemdb::{GetRestoreHandler, DiemDB};
+use diemdb::{DiemDB, GetRestoreHandler};
+use executor::{
+    db_bootstrapper::{generate_waypoint, maybe_bootstrap},
+    Executor,
+};
+use executor_test_helpers::{
+    bootstrap_genesis, gen_ledger_info_with_sigs, get_test_signed_transaction,
+};
+use executor_types::BlockExecutor;
 use move_core_types::move_resource::MoveResource;
 use rand::SeedableRng;
 use std::{convert::TryFrom, sync::Arc};
@@ -130,7 +130,7 @@ fn get_mint_transaction(
         diem_root_key.clone(),
         diem_root_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             *account,
             amount,
             vec![],
@@ -152,7 +152,7 @@ fn get_account_transaction(
         diem_root_key.clone(),
         diem_root_key.public_key(),
         Some(encode_create_parent_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             0,
             *account,
             account_auth_key.prefix().to_vec(),
@@ -175,7 +175,7 @@ fn get_transfer_transaction(
         sender_key.clone(),
         sender_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             recipient,
             amount,
             vec![],
@@ -192,9 +192,9 @@ fn get_balance(account: &AccountAddress, db: &DbReaderWriter) -> u64 {
         .unwrap();
     let account_state = AccountState::try_from(&account_state_blob).unwrap();
     account_state
-        .get_balance_resources(&[from_currency_code_string(COIN1_NAME).unwrap()])
+        .get_balance_resources(&[from_currency_code_string(XUS_NAME).unwrap()])
         .unwrap()
-        .get(&from_currency_code_string(COIN1_NAME).unwrap())
+        .get(&from_currency_code_string(XUS_NAME).unwrap())
         .unwrap()
         .coin()
 }
@@ -284,11 +284,11 @@ fn test_pre_genesis() {
         WriteSetMut::new(vec![
             (
                 ValidatorSet::CONFIG_ID.access_path(),
-                WriteOp::Value(lcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
+                WriteOp::Value(bcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
             ),
             (
-                AccessPath::new(account1, BalanceResource::access_path_for(coin1_tmp_tag())),
-                WriteOp::Value(lcs::to_bytes(&BalanceResource::new(1000)).unwrap()),
+                AccessPath::new(account1, BalanceResource::access_path_for(xus_tag())),
+                WriteOp::Value(bcs::to_bytes(&BalanceResource::new(1000)).unwrap()),
             ),
         ])
         .freeze()
@@ -296,7 +296,7 @@ fn test_pre_genesis() {
         vec![ContractEvent::new(
             on_chain_config::new_epoch_event_key(),
             0,
-            coin1_tmp_tag(),
+            xus_tag(),
             vec![],
         )],
     )));
@@ -348,15 +348,15 @@ fn test_new_genesis() {
         WriteSetMut::new(vec![
             (
                 ValidatorSet::CONFIG_ID.access_path(),
-                WriteOp::Value(lcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
+                WriteOp::Value(bcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
             ),
             (
                 AccessPath::new(config_address(), ConfigurationResource::resource_path()),
-                WriteOp::Value(lcs::to_bytes(&configuration.bump_epoch_for_test()).unwrap()),
+                WriteOp::Value(bcs::to_bytes(&configuration.bump_epoch_for_test()).unwrap()),
             ),
             (
-                AccessPath::new(account1, BalanceResource::access_path_for(coin1_tmp_tag())),
-                WriteOp::Value(lcs::to_bytes(&BalanceResource::new(1_000_000)).unwrap()),
+                AccessPath::new(account1, BalanceResource::access_path_for(xus_tag())),
+                WriteOp::Value(bcs::to_bytes(&BalanceResource::new(1_000_000)).unwrap()),
             ),
         ])
         .freeze()
@@ -364,7 +364,7 @@ fn test_new_genesis() {
         vec![ContractEvent::new(
             *configuration.events().key(),
             0,
-            coin1_tmp_tag(),
+            xus_tag(),
             vec![],
         )],
     )));

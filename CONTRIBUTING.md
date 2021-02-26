@@ -32,17 +32,17 @@ cargo xtest
 #### Code Style, Hints, and Testing
 
 Refer to our [Coding
-Guidelines](https://developers.diem.org/docs/community/coding-guidelines) for
+Guidelines](https://developers.diem.com/docs/community/coding-guidelines) for
 detailed guidance about how to contribute to the project.
 
 #### Documentation
 
 Diem's developer website is also open source (the code can be found in this
-[repository](https://github.com/diem/diem/developers.diem.org/website/)).  It is built using
+[repository](https://github.com/diem/diem/developers.diem.com/website/)).  It is built using
 [Docusaurus](https://docusaurus.io/):
 
 If you know Markdown, you can already contribute! How to contribute can be found in the [website
-repo](https://github.com/diem/developers.diem.org/website/CONTRIBUTING.md).
+repo](https://github.com/diem/developers.diem.com/website/CONTRIBUTING.md).
 
 ## Developer Workflow
 

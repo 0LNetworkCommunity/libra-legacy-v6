@@ -7,7 +7,7 @@ use std::time::Instant;
 
 pub const TRACE_EVENT: &str = "trace_event";
 pub const TRACE_EDGE: &str = "trace_edge";
-pub const LIBRA_TRACE: &str = "diem_trace";
+pub const DIEM_TRACE: &str = "diem_trace";
 
 use std::{
     collections::HashMap,
@@ -18,7 +18,7 @@ use std::{
 // It have few unsafe lines, but does not require extra dependency
 // Sampling rate is the form of (nominator, denominator)
 static mut SAMPLING_CONFIG: Option<Sampling> = None;
-static LIBRA_TRACE_STATE: AtomicUsize = AtomicUsize::new(UNINITIALIZED);
+static DIEM_TRACE_STATE: AtomicUsize = AtomicUsize::new(UNINITIALIZED);
 const UNINITIALIZED: usize = 0;
 const INITIALIZING: usize = 1;
 const INITIALIZED: usize = 2;
@@ -383,8 +383,8 @@ fn crate_name(path: &str) -> &str {
         Some(pos) => &path[0..pos],
         None => path,
     };
-    let name = if name.starts_with("diem_") {
-        &name["diem_".len()..]
+    let name = if let Some(stripped) = name.strip_prefix("diem_") {
+        stripped
     } else {
         name
     };
@@ -403,18 +403,17 @@ fn abbreviate_crate(name: &str) -> &str {
 pub fn set_diem_trace(config: &HashMap<String, String>) -> Result<()> {
     match parse_sampling_config(config) {
         Ok(sampling) => unsafe {
-            match LIBRA_TRACE_STATE.compare_and_swap(UNINITIALIZED, INITIALIZING, Ordering::SeqCst)
-            {
+            match DIEM_TRACE_STATE.compare_and_swap(UNINITIALIZED, INITIALIZING, Ordering::SeqCst) {
                 UNINITIALIZED => {
                     SAMPLING_CONFIG = Some(sampling);
-                    LIBRA_TRACE_STATE.store(INITIALIZED, Ordering::SeqCst);
+                    DIEM_TRACE_STATE.store(INITIALIZED, Ordering::SeqCst);
                     Ok(())
                 }
                 INITIALIZING => {
-                    while LIBRA_TRACE_STATE.load(Ordering::SeqCst) == INITIALIZING {}
-                    bail!("Failed to initialize LIBRA_TRACE_STATE");
+                    while DIEM_TRACE_STATE.load(Ordering::SeqCst) == INITIALIZING {}
+                    bail!("Failed to initialize DIEM_TRACE_STATE");
                 }
-                _ => bail!("Failed to initialize LIBRA_TRACE_STATE"),
+                _ => bail!("Failed to initialize DIEM_TRACE_STATE"),
             }
         },
         Err(s) => bail!("Failed to parse sampling config: {}", s),
@@ -442,7 +441,7 @@ fn parse_sampling_config(config: &HashMap<String, String>) -> Result<Sampling> {
 
 /// Checks if diem trace is enabled
 pub fn diem_trace_set() -> bool {
-    LIBRA_TRACE_STATE.load(Ordering::SeqCst) == INITIALIZED
+    DIEM_TRACE_STATE.load(Ordering::SeqCst) == INITIALIZED
 }
 
 pub fn is_selected(node: (&'static str, u64)) -> bool {

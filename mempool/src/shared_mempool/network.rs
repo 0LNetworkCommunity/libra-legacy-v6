@@ -5,9 +5,9 @@
 
 use crate::counters;
 use channel::message_queues::QueueStyle;
-use fail::fail_point;
 use diem_metrics::IntCounterVec;
 use diem_types::{transaction::SignedTransaction, PeerId};
+use fail::fail_point;
 use network::{
     error::NetworkError,
     peer_manager::{ConnectionRequestSender, PeerManagerRequestSender},

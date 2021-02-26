@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common;
@@ -11,7 +11,7 @@ use std::{
     path::PathBuf,
 };
 
-/// Output a header-only diemry providing C++ transaction builders for the given ABIs.
+/// Output a header-only library providing C++ transaction builders for the given ABIs.
 pub fn output(out: &mut dyn Write, abis: &[ScriptABI], namespace: Option<&str>) -> Result<()> {
     let mut emitter = CppEmitter {
         out: IndentedWriter::new(out, IndentConfig::Space(4)),
@@ -27,8 +27,8 @@ pub fn output(out: &mut dyn Write, abis: &[ScriptABI], namespace: Option<&str>) 
     emitter.output_close_namespace()
 }
 
-/// Output the headers of a diemry providing C++ transaction builders for the given ABIs.
-pub fn output_diemry_header(
+/// Output the headers of a library providing C++ transaction builders for the given ABIs.
+pub fn output_library_header(
     out: &mut dyn Write,
     abis: &[ScriptABI],
     namespace: Option<&str>,
@@ -47,11 +47,11 @@ pub fn output_diemry_header(
     emitter.output_close_namespace()
 }
 
-/// Output the function definitions of a diemry providing C++ transaction builders for the given ABIs.
-pub fn output_diemry_body(
+/// Output the function definitions of a library providing C++ transaction builders for the given ABIs.
+pub fn output_library_body(
     out: &mut dyn Write,
     abis: &[ScriptABI],
-    diemry_name: &str,
+    library_name: &str,
     namespace: Option<&str>,
 ) -> Result<()> {
     let mut emitter = CppEmitter {
@@ -59,7 +59,7 @@ pub fn output_diemry_body(
         namespace,
         inlined_definitions: false,
     };
-    writeln!(emitter.out, "#include \"{}.hpp\"\n", diemry_name)?;
+    writeln!(emitter.out, "#include \"{}.hpp\"\n", library_name)?;
     emitter.output_open_namespace()?;
     emitter.output_using_namespaces()?;
     for abi in abis {
@@ -267,10 +267,10 @@ impl crate::SourceInstaller for Installer {
         std::fs::create_dir_all(dir_path)?;
         let header_path = dir_path.join(name.to_string() + ".hpp");
         let mut header = std::fs::File::create(&header_path)?;
-        output_diemry_header(&mut header, abis, Some(name))?;
+        output_library_header(&mut header, abis, Some(name))?;
         let body_path = dir_path.join(name.to_string() + ".cpp");
         let mut body = std::fs::File::create(&body_path)?;
-        output_diemry_body(&mut body, abis, name, Some(name))?;
+        output_library_body(&mut body, abis, name, Some(name))?;
         Ok(())
     }
 }

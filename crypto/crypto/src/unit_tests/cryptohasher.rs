@@ -1,19 +1,19 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! Test file for the procedural macros CryptoHasher and LCSCryptoHash.
+//! Test file for the procedural macros CryptoHasher and BCSCryptoHash.
 
 use crate as diem_crypto;
 use crate::{
-    hash::{CryptoHash, CryptoHasher, LIBRA_HASH_PREFIX},
+    hash::{CryptoHash, CryptoHasher, DIEM_HASH_PREFIX},
     HashValue,
 };
-use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
 use serde::{Deserialize, Serialize};
 use tiny_keccak::{Hasher, Sha3};
 
 // The expected use case.
-#[derive(Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+#[derive(Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 pub struct Foo {
     a: u64,
     b: u32,
@@ -23,7 +23,7 @@ pub struct Foo {
 pub struct Bar {}
 
 // Complex example with generics and serde-rename.
-#[derive(Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+#[derive(Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 #[serde(rename = "Foo")]
 pub struct Baz<T> {
     a: T,
@@ -41,7 +41,7 @@ impl CryptoHash for Bar {
 
 #[test]
 fn test_cryptohasher_name() {
-    let mut salt = LIBRA_HASH_PREFIX.to_vec();
+    let mut salt = DIEM_HASH_PREFIX.to_vec();
     salt.extend_from_slice(b"Foo");
 
     let value = Bar {};
@@ -57,15 +57,15 @@ fn test_cryptohasher_name() {
 }
 
 #[test]
-fn test_lcs_cryptohash() {
-    let mut salt = LIBRA_HASH_PREFIX.to_vec();
+fn test_bcs_cryptohash() {
+    let mut salt = DIEM_HASH_PREFIX.to_vec();
     salt.extend_from_slice(b"Foo");
 
     let value = Foo { a: 5, b: 1025 };
     let expected = {
         let mut digest = Sha3::v256();
         digest.update(HashValue::sha3_256_of(&salt[..]).as_ref());
-        digest.update(&lcs::to_bytes(&value).unwrap());
+        digest.update(&bcs::to_bytes(&value).unwrap());
         let mut hasher_bytes = [0u8; 32];
         digest.finalize(&mut hasher_bytes);
         hasher_bytes
@@ -75,7 +75,7 @@ fn test_lcs_cryptohash() {
 }
 
 #[test]
-fn test_lcs_cryptohash_with_generics() {
+fn test_bcs_cryptohash_with_generics() {
     let value = Baz { a: 5u64, b: 1025 };
     let expected = CryptoHash::hash(&Foo { a: 5, b: 1025 });
     let actual = CryptoHash::hash(&value);
@@ -84,7 +84,7 @@ fn test_lcs_cryptohash_with_generics() {
 
 fn prefixed_sha3(input: &[u8]) -> [u8; 32] {
     let mut sha3 = ::tiny_keccak::Sha3::v256();
-    let salt: Vec<u8> = [LIBRA_HASH_PREFIX, input].concat();
+    let salt: Vec<u8> = [DIEM_HASH_PREFIX, input].concat();
     sha3.update(&salt);
     let mut output = [0u8; 32];
     sha3.finalize(&mut output);

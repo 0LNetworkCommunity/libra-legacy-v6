@@ -16,7 +16,6 @@ use crate::{
 use accumulator::{HashReader, MerkleAccumulator};
 use anyhow::{ensure, format_err, Result};
 use arc_swap::ArcSwap;
-use itertools::Itertools;
 use diem_crypto::{
     hash::{CryptoHash, TransactionAccumulatorHasher},
     HashValue,
@@ -30,6 +29,7 @@ use diem_types::{
     },
     transaction::{TransactionInfo, Version},
 };
+use itertools::Itertools;
 use schemadb::{ReadOptions, SchemaIterator, DB};
 use std::{ops::Deref, sync::Arc};
 use storage_interface::{StartupInfo, TreeState};

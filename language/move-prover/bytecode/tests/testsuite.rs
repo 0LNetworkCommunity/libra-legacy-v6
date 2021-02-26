@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::anyhow;
@@ -17,8 +17,8 @@ use bytecode::{
     print_targets_for_test,
     reaching_def_analysis::ReachingDefProcessor,
 };
+use move_prover_test_utils::{baseline_test::verify_or_update_baseline, extract_test_directives};
 use spec_lang::{env::GlobalEnv, run_spec_lang_compiler};
-use test_utils::{baseline_test::verify_or_update_baseline, extract_test_directives};
 
 fn get_tested_transformation_pipeline(
     dir_name: &str,

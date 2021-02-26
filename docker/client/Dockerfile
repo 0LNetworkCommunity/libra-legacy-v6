@@ -1,4 +1,4 @@
-FROM debian:buster-20200803@sha256:a44ab0cca6cd9411032d180bc396f19bc98f71972d2398d50460145cab81c5ab AS toolchain
+FROM debian:buster-20201117@sha256:f520e4a80b736389c3de162b8f60608d11c9fa3b2ec619bd40aabfd7e70d3455 AS toolchain
 
 # To use http/https proxy while building, use:
 # docker build --build-arg https_proxy=http://fwdproxy:8080 --build-arg http_proxy=http://fwdproxy:8080
@@ -31,7 +31,7 @@ RUN mkdir -p /opt/diem/bin /opt/diem/etc
 COPY --from=builder /diem/target/release/cli /opt/diem/bin/diem_client
 
 ENTRYPOINT ["/opt/diem/bin/diem_client"]
-CMD ["--url", "https://testnet.diem.org/v1", "--waypoint_url",  "https://testnet.diem.org/waypoint.txt", "--chain-id", "TESTNET"]
+CMD ["--url", "https://testnet.diem.com/v1", "--waypoint_url",  "https://testnet.diem.com/waypoint.txt", "--chain-id", "TESTNET"]
 
 ARG BUILD_DATE
 ARG GIT_REV

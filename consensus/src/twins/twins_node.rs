@@ -12,7 +12,6 @@ use crate::{
 };
 use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::common::{Author, Payload, Round};
-use futures::channel::mpsc;
 use diem_config::{
     config::{
         ConsensusProposerType::{self, RoundProposer},
@@ -27,6 +26,7 @@ use diem_types::{
     validator_info::ValidatorInfo,
     waypoint::Waypoint,
 };
+use futures::channel::mpsc;
 use network::{
     peer_manager::{conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender},
     protocols::network::{NewNetworkEvents, NewNetworkSender},
@@ -88,7 +88,7 @@ impl SMRNode {
         let mut configs = HashMap::new();
         configs.insert(
             ValidatorSet::CONFIG_ID,
-            lcs::to_bytes(storage.get_validator_set()).unwrap(),
+            bcs::to_bytes(storage.get_validator_set()).unwrap(),
         );
         let payload = OnChainConfigPayload::new(1, Arc::new(configs));
         reconfig_sender.push((), payload).unwrap();

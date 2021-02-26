@@ -3,7 +3,6 @@
 
 use crate::Executor;
 use anyhow::Result;
-use executor_types::{BlockExecutor, ChunkExecutor};
 use diem_crypto::{hash::SPARSE_MERKLE_PLACEHOLDER_HASH, HashValue};
 use diem_state_view::StateView;
 use diem_types::{
@@ -21,6 +20,7 @@ use diem_types::{
     vm_status::VMStatus,
 };
 use diem_vm::VMExecutor;
+use executor_types::{BlockExecutor, ChunkExecutor};
 use storage_interface::{DbReader, DbReaderWriter, DbWriter, Order, StartupInfo, TreeState};
 
 fn create_test_executor() -> Executor<FakeVM> {

@@ -11,11 +11,11 @@
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::remove_validator(account, {{alice}});
-        assert(!LibraSystem::is_validator({{alice}}), 77);
-        assert(LibraSystem::is_validator({{bob}}), 78);
+        DiemSystem::remove_validator(account, {{alice}});
+        assert(!DiemSystem::is_validator({{alice}}), 77);
+        assert(DiemSystem::is_validator({{bob}}), 78);
     }
 }
 // check: NewEpochEvent
@@ -31,9 +31,9 @@ script{
 //! sender: bob
 // bob cannot remove itself, only the diem root account can remove validators from the set
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::remove_validator(account, {{bob}});
+        DiemSystem::remove_validator(account, {{bob}});
     }
 }
 // check: "ABORTED { code: 2"
@@ -46,9 +46,9 @@ script{
 
 //! new-transaction
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::add_validator(account, {{alice}});
+        DiemSystem::add_validator(account, {{alice}});
     }
 }
 // check: "ABORTED { code: 2,"
@@ -56,9 +56,9 @@ script{
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::add_validator(account, {{invalidvalidator}});
+        DiemSystem::add_validator(account, {{invalidvalidator}});
     }
 }
 // check: "ABORTED { code: 263,"
@@ -66,12 +66,12 @@ script{
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::add_validator(account, {{alice}});
+        DiemSystem::add_validator(account, {{alice}});
 
-        assert(LibraSystem::is_validator({{alice}}), 77);
-        assert(LibraSystem::is_validator({{bob}}), 78);
+        assert(DiemSystem::is_validator({{alice}}), 77);
+        assert(DiemSystem::is_validator({{bob}}), 78);
     }
 }
 // check: NewEpochEvent
@@ -80,9 +80,9 @@ script{
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::add_validator(account, {{alice}});
+        DiemSystem::add_validator(account, {{alice}});
     }
 }
 // check: "ABORTED { code: 519,"

@@ -21,7 +21,7 @@ Note: fields `script_hash_allow_list`, `module_publishing_allowed` and `diem_ver
 
 ```
 // Request: fetches current block metadata
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_metadata","params":[],"id":1}' https://testnet.diem.org/v1
+curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_metadata","params":[],"id":1}' https://testnet.diem.com/v1
 
 // Response
 {

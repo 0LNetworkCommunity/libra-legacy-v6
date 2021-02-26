@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) The Libra Core Contributors
+# Copyright (c) The Diem Core Contributors
 # SPDX-License-Identifier: Apache-2.0
 
 function usage {
@@ -66,9 +66,9 @@ fi
 tag_name=${INPUT_NAME//-/_}
 
 #The name of the docker image built in the "auto" branch
-PRE_NAME=diem/${tag_name}:pre_${BRANCH}_${GIT_REV}
+PRE_NAME=libra/${tag_name}:pre_${BRANCH}_${GIT_REV}
 #the name of the docker image build in the release branch
-PUB_NAME=diem/${tag_name}:${BRANCH}_${GIT_REV}
+PUB_NAME=libra/${tag_name}:${BRANCH}_${GIT_REV}
 
 #If not a prebuild *attempt* to pull the previously built image.
 if [ $PREBUILD != "true" ]; then

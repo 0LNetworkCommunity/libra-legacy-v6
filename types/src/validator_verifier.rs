@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{account_address::AccountAddress, on_chain_config::ValidatorSet};
@@ -292,7 +292,7 @@ impl fmt::Display for ValidatorVerifier {
     fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
         write!(f, "ValidatorSet: [")?;
         for (addr, info) in &self.address_to_validator_info {
-            write!(f, "{}: {}, ", addr.short_str(), info.voting_power)?;
+            write!(f, "{}: {}, ", addr.short_str_lossless(), info.voting_power)?;
         }
         write!(f, "]")
     }
@@ -377,7 +377,7 @@ pub fn random_validator_verifier(
 mod tests {
     use super::*;
     use crate::validator_signer::ValidatorSigner;
-    use diem_crypto::test_utils::{TestLibraCrypto, TEST_SEED};
+    use diem_crypto::test_utils::{TestDiemCrypto, TEST_SEED};
     use std::collections::BTreeMap;
 
     #[test]
@@ -395,7 +395,7 @@ mod tests {
             }
         );
 
-        let dummy_struct = TestLibraCrypto("Hello, World".to_string());
+        let dummy_struct = TestDiemCrypto("Hello, World".to_string());
         for validator in validator_signers.iter() {
             author_to_signature_map.insert(validator.author(), validator.sign(&dummy_struct));
         }
@@ -409,7 +409,7 @@ mod tests {
     #[test]
     fn test_validator() {
         let validator_signer = ValidatorSigner::random(TEST_SEED);
-        let dummy_struct = TestLibraCrypto("Hello, World".to_string());
+        let dummy_struct = TestDiemCrypto("Hello, World".to_string());
         let signature = validator_signer.sign(&dummy_struct);
         let validator =
             ValidatorVerifier::new_single(validator_signer.author(), validator_signer.public_key());
@@ -440,7 +440,7 @@ mod tests {
         let validator_signers: Vec<ValidatorSigner> = (0..NUM_SIGNERS)
             .map(|i| ValidatorSigner::random([i; 32]))
             .collect();
-        let dummy_struct = TestLibraCrypto("Hello, World".to_string());
+        let dummy_struct = TestDiemCrypto("Hello, World".to_string());
 
         // Create a map from authors to public keys with equal voting power.
         let mut author_to_public_key_map = BTreeMap::new();
@@ -536,7 +536,7 @@ mod tests {
         let validator_signers: Vec<ValidatorSigner> = (0..NUM_SIGNERS)
             .map(|i| ValidatorSigner::random([i; 32]))
             .collect();
-        let dummy_struct = TestLibraCrypto("Hello, World".to_string());
+        let dummy_struct = TestDiemCrypto("Hello, World".to_string());
 
         // Create a map from authors to public keys with increasing weights (0, 1, 2, 3) and
         // a map of author to signature.
@@ -568,7 +568,7 @@ mod tests {
         let validator_signers: Vec<ValidatorSigner> = (0..NUM_SIGNERS)
             .map(|i| ValidatorSigner::random([i; 32]))
             .collect();
-        let dummy_struct = TestLibraCrypto("Hello, World".to_string());
+        let dummy_struct = TestDiemCrypto("Hello, World".to_string());
 
         // Create a map from authors to public keys with increasing weights (0, 1, 2, 3) and
         // a map of author to signature.

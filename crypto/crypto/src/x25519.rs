@@ -49,7 +49,7 @@ use proptest_derive::Arbitrary;
 // Underlying Implementation
 // =========================
 //
-// We re-export the dalek-x25519 diemry,
+// We re-export the dalek-x25519 library,
 // This makes it easier to uniformalize build dalek-x25519 in diem-core.
 //
 

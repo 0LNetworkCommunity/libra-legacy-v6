@@ -16,10 +16,10 @@ stdlib_script::create_validator_operator_account
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::LibraTimestamp;
+    use 0x1::DiemTimestamp;
     use 0x1::ValidatorConfig;
     fun main(account: &signer) {
-        assert(LibraTimestamp::now_microseconds() == 0, 999);
+        assert(DiemTimestamp::now_microseconds() == 0, 999);
         // register alice as bob's delegate
         ValidatorConfig::set_operator(account, {{alice}});
     }
@@ -44,10 +44,10 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // update is too soon, will fail
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 
@@ -62,12 +62,12 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // update is too soon, will not trigger the reconfiguration
-        assert(LibraTimestamp::now_microseconds() == 300000000, 999);
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        assert(DiemTimestamp::now_microseconds() == 300000000, 999);
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 
@@ -82,12 +82,12 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // update is in exactly 5 minutes and 1 microsecond, so will succeed
-        assert(LibraTimestamp::now_microseconds() == 300000001, 999);
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        assert(DiemTimestamp::now_microseconds() == 300000001, 999);
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 
@@ -103,12 +103,12 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // too soon to reconfig, but validator have not changed, should succeed but not reconfigure
-        assert(LibraTimestamp::now_microseconds() == 600000000, 999);
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        assert(DiemTimestamp::now_microseconds() == 600000000, 999);
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 
@@ -124,16 +124,16 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemSystem;
     use 0x1::ValidatorConfig;
     fun main(account: &signer) {
         // good to reconfig
-        assert(LibraTimestamp::now_microseconds() == 600000002, 999);
+        assert(DiemTimestamp::now_microseconds() == 600000002, 999);
         ValidatorConfig::set_config(account, {{bob}},
                                     x"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
                                     x"", x"");
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 
@@ -149,11 +149,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
-        LibraSystem::remove_validator(account, {{bob}});
-        assert(!LibraSystem::is_validator({{bob}}), 77);
-        assert(LibraSystem::is_validator({{carrol}}), 78);
+        DiemSystem::remove_validator(account, {{bob}});
+        assert(!DiemSystem::is_validator({{bob}}), 77);
+        assert(DiemSystem::is_validator({{carrol}}), 78);
     }
 }
 
@@ -169,14 +169,14 @@ script{
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // add validator back
-        assert(LibraTimestamp::now_microseconds() == 600000004, 999);
-        LibraSystem::add_validator(account, {{bob}});
-        assert(LibraSystem::is_validator({{bob}}), 79);
-        assert(LibraSystem::is_validator({{carrol}}), 80);
+        assert(DiemTimestamp::now_microseconds() == 600000004, 999);
+        DiemSystem::add_validator(account, {{bob}});
+        assert(DiemSystem::is_validator({{bob}}), 79);
+        assert(DiemSystem::is_validator({{carrol}}), 80);
     }
 }
 // check: NewEpochEvent
@@ -191,16 +191,16 @@ script{
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemSystem;
     use 0x1::ValidatorConfig;
     fun main(account: &signer) {
         // update too soon
-        assert(LibraTimestamp::now_microseconds() == 900000004, 999);
+        assert(DiemTimestamp::now_microseconds() == 900000004, 999);
         ValidatorConfig::set_config(account, {{bob}},
                                     x"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c",
                                     x"", x"");
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 
@@ -215,16 +215,16 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraTimestamp;
-    use 0x1::LibraSystem;
+    use 0x1::DiemTimestamp;
+    use 0x1::DiemSystem;
     use 0x1::ValidatorConfig;
     fun main(account: &signer) {
         // good to reconfigure
-        assert(LibraTimestamp::now_microseconds() == 900000005, 999);
+        assert(DiemTimestamp::now_microseconds() == 900000005, 999);
         ValidatorConfig::set_config(account, {{bob}},
                                     x"3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c",
                                     x"", x"");
-        LibraSystem::update_config_and_reconfigure(account, {{bob}});
+        DiemSystem::update_config_and_reconfigure(account, {{bob}});
     }
 }
 

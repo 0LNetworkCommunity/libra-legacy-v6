@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{format_err, Result};
@@ -11,7 +11,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
-    /// Path to the local LibraDB file
+    /// Path to the local DiemDB file
     #[structopt(long, short, parse(from_os_str))]
     output: PathBuf,
     #[structopt(subcommand)] // Note that we mark a field as a subcommand
@@ -32,7 +32,7 @@ enum Command {
 }
 
 fn save_transaction(txn: Transaction, path: PathBuf) -> Result<()> {
-    let bytes = lcs::to_bytes(&txn).map_err(|_| format_err!("Transaction Serialize Error"))?;
+    let bytes = bcs::to_bytes(&txn).map_err(|_| format_err!("Transaction Serialize Error"))?;
     std::fs::write(path.as_path(), bytes.as_slice())
         .map_err(|_| format_err!("Unable to write to path"))
 }

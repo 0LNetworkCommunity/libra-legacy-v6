@@ -8,11 +8,11 @@ use crate::{
 };
 use channel::{diem_channel, message_queues::QueueStyle};
 use core::str::FromStr;
-use futures::SinkExt;
 use diem_config::{config::RoleType, network_id::NetworkId};
 use diem_crypto::{test_utils::TEST_SEED, x25519, Uniform};
 use diem_logger::info;
 use diem_network_address::NetworkAddress;
+use futures::SinkExt;
 use netcore::transport::ConnectionOrigin;
 use rand::rngs::StdRng;
 use std::{io, num::NonZeroUsize};

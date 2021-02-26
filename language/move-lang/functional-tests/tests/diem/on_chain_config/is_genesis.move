@@ -6,9 +6,9 @@
 
 //! new-transaction
 script {
-use 0x1::LibraTimestamp;
+use 0x1::DiemTimestamp;
 
 fun main() {
-    assert(!LibraTimestamp::is_genesis(), 10)
+    assert(!DiemTimestamp::is_genesis(), 10)
 }
 }

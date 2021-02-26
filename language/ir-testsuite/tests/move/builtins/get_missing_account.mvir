@@ -1,5 +1,5 @@
 import 0x1.DiemAccount;
-import 0x1.Coin1;
+import 0x1.XUS;
 
 main() {
     let addr: address;
@@ -8,7 +8,7 @@ main() {
 
     addr = 0x011111111111111110;
     account_exists = DiemAccount.exists_at(copy(addr));
-    account_balance = DiemAccount.balance<Coin1.Coin1>(move(addr));
+    account_balance = DiemAccount.balance<XUS.XUS>(move(addr));
     return;
 }
 // check: "Keep(ABORTED { code: 4869,"

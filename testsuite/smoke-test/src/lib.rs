@@ -8,6 +8,9 @@ mod client;
 mod consensus;
 
 #[cfg(test)]
+mod event_fetcher;
+
+#[cfg(test)]
 mod full_nodes;
 
 #[cfg(test)]

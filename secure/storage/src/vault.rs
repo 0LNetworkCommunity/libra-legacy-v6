@@ -21,7 +21,7 @@ use std::{
 #[cfg(any(test, feature = "testing"))]
 use diem_vault_client::ReadResponse;
 
-const LIBRA_DEFAULT: &str = "diem_default";
+const DIEM_DEFAULT: &str = "diem_default";
 
 /// VaultStorage utilizes Vault for maintaining encrypted, authenticated data for Diem. This
 /// version currently matches the behavior of OnDiskStorage and InMemoryStorage. In the future,
@@ -138,7 +138,7 @@ impl VaultStorage {
 
     /// Creates a token but uses the namespace for policies
     pub fn create_token(&self, mut policies: Vec<&str>) -> Result<String, Error> {
-        policies.push(LIBRA_DEFAULT);
+        policies.push(DIEM_DEFAULT);
         let result = if let Some(ns) = &self.namespace {
             let policies: Vec<_> = policies.iter().map(|p| format!("{}/{}", ns, p)).collect();
             self.client()
@@ -209,7 +209,7 @@ impl VaultStorage {
             match &perm.id {
                 Identity::User(id) => self.set_policy(id, engine, name, &perm.capabilities)?,
                 Identity::Anyone => {
-                    self.set_policy(LIBRA_DEFAULT, engine, name, &perm.capabilities)?
+                    self.set_policy(DIEM_DEFAULT, engine, name, &perm.capabilities)?
                 }
                 Identity::NoOne => (),
             };
@@ -323,7 +323,7 @@ impl CryptoStorage for VaultStorage {
     fn get_public_key(&self, name: &str) -> Result<PublicKeyResponse, Error> {
         let name = self.crypto_name(name);
         let resp = self.client().read_ed25519_key(&name)?;
-        let mut last_key = resp.first().ok_or_else(|| Error::KeyNotSet(name))?;
+        let mut last_key = resp.first().ok_or(Error::KeyNotSet(name))?;
         for key in &resp {
             last_key = if last_key.version > key.version {
                 last_key
@@ -361,13 +361,13 @@ impl CryptoStorage for VaultStorage {
     }
 
     fn sign<T: CryptoHash + Serialize>(
-        &mut self,
+        &self,
         name: &str,
         message: &T,
     ) -> Result<Ed25519Signature, Error> {
         let name = self.crypto_name(name);
         let mut bytes = <T::Hasher as diem_crypto::hash::CryptoHasher>::seed().to_vec();
-        lcs::serialize_into(&mut bytes, &message).map_err(|e| {
+        bcs::serialize_into(&mut bytes, &message).map_err(|e| {
             Error::InternalError(format!(
                 "Serialization of signable material should not fail, yet returned Error:{}",
                 e
@@ -377,7 +377,7 @@ impl CryptoStorage for VaultStorage {
     }
 
     fn sign_using_version<T: CryptoHash + Serialize>(
-        &mut self,
+        &self,
         name: &str,
         version: Ed25519PublicKey,
         message: &T,
@@ -385,7 +385,7 @@ impl CryptoStorage for VaultStorage {
         let name = self.crypto_name(name);
         let vers = self.key_version(&name, &version)?;
         let mut bytes = <T::Hasher as diem_crypto::hash::CryptoHasher>::seed().to_vec();
-        lcs::serialize_into(&mut bytes, &message).map_err(|e| {
+        bcs::serialize_into(&mut bytes, &message).map_err(|e| {
             Error::InternalError(format!(
                 "Serialization of signable material should not fail, yet returned Error:{}",
                 e

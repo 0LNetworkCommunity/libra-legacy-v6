@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-//! The following is a minimalist version of a hierarchical key derivation diemry for the
+//! The following is a minimalist version of a hierarchical key derivation library for the
 //! DiemWallet.
 //!
 //! Note that the Diem Blockchain makes use of ed25519 Edwards Digital Signature Algorithm
@@ -18,7 +18,6 @@
 use crate::mnemonic::Mnemonic;
 use anyhow::{anyhow, Result};
 use byteorder::{ByteOrder, LittleEndian};
-use hmac::Hmac;
 use diem_crypto::{
     compat::Sha3_256,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
@@ -27,6 +26,7 @@ use diem_crypto::{
     traits::SigningKey,
 };
 use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use hmac::Hmac;
 use mirai_annotations::*;
 use pbkdf2::pbkdf2;
 use serde::{Deserialize, Serialize};
@@ -119,10 +119,10 @@ impl ExtendedPrivKey {
     ///
     /// NOTE: In Diem, we do not sign the raw bytes of a transaction, but
     /// those raw bytes prefixed by a domain separation hash.
-    /// Informally signed_bytes = sha3(domain_separator) || lcs_serialization_bytes
+    /// Informally signed_bytes = sha3(domain_separator) || bcs_serialization_bytes
     ///
     /// The domain separator hash is derived automatically from a `#[derive(CryptoHasher,
-    /// LCSCryptoHash)]` annotation, or can be declared manually in a process
+    /// BCSCryptoHash)]` annotation, or can be declared manually in a process
     /// described in `diem_crypto::hash`.
     ///
     pub fn sign<T: CryptoHash + Serialize>(&self, msg: &T) -> Ed25519Signature {
@@ -136,10 +136,9 @@ pub struct KeyFactory {
 }
 
 impl KeyFactory {
-    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"0L WALLET: UNREST, FIRES, AND VIOLENCE AS PROTESTS RAGE ACROSS US: mnemonic salt prefix$"; // https://markets.businessinsider.com/news/stocks/why-stock-market-rising-amid-nationwide-police-brutality-protests-2020-6-1029273996
-    const MAIN_KEY_SALT: &'static [u8] = b"0L WALLET: 30 MILLION AMERICANS HAVE FILED INITIAL UNEMPLOYMENT CLAIMS: master key salt$"; // https://www.cnn.com/2020/04/30/economy/unemployment-benefits-coronavirus/index.html
-    const INFO_PREFIX: &'static [u8] = b"0L WALLET: US DEATHS NEAR 100,000, AN INCALCULABLE LOSS: derived key$"; // https://www.nytimes.com/interactive/2020/05/24/us/us-coronavirus-deaths-100000.html
-
+    const MNEMONIC_SALT_PREFIX: &'static [u8] = b"DIEM WALLET: mnemonic salt prefix$";
+    const MAIN_KEY_SALT: &'static [u8] = b"DIEM WALLET: main key salt$";
+    const INFO_PREFIX: &'static [u8] = b"DIEM WALLET: derived key$";
     /// Instantiate a new KeyFactor from a Seed, where the [u8; 64] raw bytes of the Seed are used
     /// to derive both the Main and its child keys
     pub fn new(seed: &Seed) -> Result<Self> {
@@ -181,7 +180,7 @@ pub struct Seed([u8; 32]);
 
 impl Seed {
     /// This constructor implements the one-way function that allows to generate a Seed from a
-    /// particular Mnemonic and salt. WalletDiemry implements a fixed salt, but a user could
+    /// particular Mnemonic and salt. WalletLibrary implements a fixed salt, but a user could
     /// choose a user-defined salt instead of the hardcoded one.
     pub fn new(mnemonic: &Mnemonic, salt: &str) -> Seed {
         let mut output = [0u8; 32];
@@ -209,18 +208,18 @@ fn test_key_derivation() {
         mnemonic.to_string(),
         Mnemonic::mnemonic(&data).unwrap().to_string()
     );
-    let seed = Seed::new(&mnemonic, "LIBRA");
+    let seed = Seed::new(&mnemonic, "DIEM");
 
     let key_factory = KeyFactory::new(&seed).unwrap();
     assert_eq!(
-        "f3573b6dfee9718f6344971a7eb6c3521448b12fb893b77bdb7e8f99e3f7013f",
+        "66ae6b767defe3ea0c646f10bf31ad3b36f822064d3923adada7676703a350c0",
         hex::encode(&key_factory.main())
     );
 
     // Check child_0 key derivation.
     let child_private_0 = key_factory.private_child(ChildNumber(0)).unwrap();
     assert_eq!(
-        "e6400d102987959a5165867583fdb1b4ae0ef6679a655d5a671483edee10f3f2",
+        "732bc883893c716f320c01864709ca9f16f8f30342a1de42144bfcc2ddb7af10",
         hex::encode(&child_private_0.private_key.to_bytes()[..])
     );
 
@@ -234,7 +233,7 @@ fn test_key_derivation() {
     // Check child_1 key derivation.
     let child_private_1 = key_factory.private_child(ChildNumber(1)).unwrap();
     assert_eq!(
-        "ea0d01cd35dada45246208dfea0be4a32a9fc63dffcacbf277b321dd2c9a4828",
+        "f6b472bd0941e315d3c34c3ac679d610d2b9e1abe85128752d04bb0f042f3391",
         hex::encode(&child_private_1.private_key.to_bytes()[..])
     );
 
@@ -245,7 +244,7 @@ fn test_key_derivation() {
     // Check determinism, regenerate child_1, but by incrementing ChildNumber(0).
     let child_private_1_from_increment = key_factory.private_child(child_1_again).unwrap();
     assert_eq!(
-        "ea0d01cd35dada45246208dfea0be4a32a9fc63dffcacbf277b321dd2c9a4828",
+        "f6b472bd0941e315d3c34c3ac679d610d2b9e1abe85128752d04bb0f042f3391",
         hex::encode(&child_private_1_from_increment.private_key.to_bytes()[..])
     );
 }

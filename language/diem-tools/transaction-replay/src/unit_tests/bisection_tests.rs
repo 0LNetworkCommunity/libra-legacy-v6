@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{unit_tests::TestInterface, LibraDebugger};
+use crate::{unit_tests::TestInterface, DiemDebugger};
 use anyhow::bail;
 use diem_types::{
     account_address::AccountAddress,
@@ -14,7 +14,7 @@ use std::path::PathBuf;
 
 #[test]
 fn test_bisection() {
-    let debugger = LibraDebugger::new(Box::new(TestInterface::empty(100)));
+    let debugger = DiemDebugger::new(Box::new(TestInterface::empty(100)));
     let check = |v: Vec<bool>, result| {
         assert_eq!(
             debugger
@@ -41,14 +41,14 @@ fn test_bisection() {
 
 #[test]
 fn test_changeset_override() {
-    let debugger = LibraDebugger::new(Box::new(TestInterface::genesis()));
+    let debugger = DiemDebugger::new(Box::new(TestInterface::genesis()));
     let address = AccountAddress::random();
     let mut override_changeset = ChangeSet::new();
     override_changeset
         .publish_resource(
             address,
             AccountResource::struct_tag(),
-            lcs::to_bytes(&AccountResource::new(
+            bcs::to_bytes(&AccountResource::new(
                 0,
                 vec![],
                 None,

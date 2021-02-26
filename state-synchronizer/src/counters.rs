@@ -18,10 +18,58 @@ pub const COMMIT_MSG_LABEL: &str = "commit";
 pub const CHUNK_REQUEST_MSG_LABEL: &str = "chunk_request";
 pub const CHUNK_RESPONSE_MSG_LABEL: &str = "chunk_response";
 
-// version type labels
-pub const COMMITTED_VERSION_LABEL: &str = "committed"; // Version of latest ledger info committed.
-pub const SYNCED_VERSION_LABEL: &str = "synced"; // Version of most recent txn that was synced (even if it is not backed by an LI)
-pub const TARGET_VERSION_LABEL: &str = "target"; // Version a node is trying to catch up to
+pub fn set_timestamp(timestamp_type: TimestampType, time_as_usecs: u64) {
+    TIMESTAMP
+        .with_label_values(&[timestamp_type.as_str()])
+        .set((time_as_usecs / 1000) as i64)
+}
+
+pub enum TimestampType {
+    /// Current ledger committed timestamp
+    Committed,
+    /// Current computers clock
+    Real,
+    /// Current ledger synced timestamp
+    Synced,
+}
+
+impl TimestampType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TimestampType::Committed => "committed",
+            TimestampType::Real => "real",
+            TimestampType::Synced => "synced",
+        }
+    }
+}
+
+pub fn set_version(version_type: VersionType, version: u64) {
+    VERSION
+        .with_label_values(&[version_type.as_str()])
+        .set(version as i64)
+}
+
+pub enum VersionType {
+    /// Version of latest ledger info committed.
+    Committed,
+    /// Highest known version or version proceeding it
+    Highest,
+    /// Version of most recent txn that was synced (even if it is not backed by an LI)
+    Synced,
+    /// Current version a node is trying to catch up to usually within the current epoch
+    Target,
+}
+
+impl VersionType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            VersionType::Committed => "committed",
+            VersionType::Highest => "highest",
+            VersionType::Synced => "synced",
+            VersionType::Target => "target",
+        }
+    }
+}
 
 // failed channel send type labels
 pub const CONSENSUS_SYNC_REQ_CALLBACK: &str = "consensus_sync_req_callback";
@@ -130,6 +178,15 @@ pub static MULTICAST_LEVEL: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!(
         "diem_state_sync_multicast_level",
         "Max network preference of the networks state sync is sending chunk requests to"
+    )
+    .unwrap()
+});
+
+pub static TIMESTAMP: Lazy<IntGaugeVec> = Lazy::new(|| {
+    register_int_gauge_vec!(
+        "diem_state_sync_timestamp",
+        "Timestamp involved in state sync progress",
+        &["type"] // see TimestampType above
     )
     .unwrap()
 });
@@ -270,4 +327,15 @@ pub static NETWORK_ERROR_COUNT: Lazy<IntCounter> = Lazy::new(|| {
         "Number of network errors encountered in state sync"
     )
     .unwrap()
+});
+
+/// Duration of each run of the event loop.
+pub static MAIN_LOOP: Lazy<DurationHistogram> = Lazy::new(|| {
+    DurationHistogram::new(
+        register_histogram!(
+            "diem_state_sync_main_loop",
+            "Duration of the each run of the event loop"
+        )
+        .unwrap(),
+    )
 });

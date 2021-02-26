@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::Error;
-use enum_dispatch::enum_dispatch;
 use diem_crypto::ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
+use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 
 /// CryptoStorage provides an abstraction for secure generation and handling of cryptographic keys.
@@ -48,7 +48,7 @@ pub trait CryptoStorage {
     /// key.
     // The FQDNs on the next line help macros don't remove them
     fn sign<T: diem_crypto::hash::CryptoHash + serde::Serialize>(
-        &mut self,
+        &self,
         name: &str,
         message: &T,
     ) -> Result<Ed25519Signature, Error>;
@@ -57,7 +57,7 @@ pub trait CryptoStorage {
     /// even if the 'named' key exists but the version is not present.
     // The FQDNs on the next line help macros, don't remove them
     fn sign_using_version<T: diem_crypto::hash::CryptoHash + serde::Serialize>(
-        &mut self,
+        &self,
         name: &str,
         version: Ed25519PublicKey,
         message: &T,

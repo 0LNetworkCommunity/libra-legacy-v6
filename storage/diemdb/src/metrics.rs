@@ -7,7 +7,7 @@ use diem_metrics::{
 };
 use once_cell::sync::Lazy;
 
-pub static LIBRA_STORAGE_LEDGER: Lazy<IntGaugeVec> = Lazy::new(|| {
+pub static DIEM_STORAGE_LEDGER: Lazy<IntGaugeVec> = Lazy::new(|| {
     register_int_gauge_vec!(
         // metric name
         "diem_storage_ledger",
@@ -19,7 +19,7 @@ pub static LIBRA_STORAGE_LEDGER: Lazy<IntGaugeVec> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_CF_SIZE_BYTES: Lazy<IntGaugeVec> = Lazy::new(|| {
+pub static DIEM_STORAGE_CF_SIZE_BYTES: Lazy<IntGaugeVec> = Lazy::new(|| {
     register_int_gauge_vec!(
         // metric name
         "diem_storage_cf_size_bytes",
@@ -31,7 +31,7 @@ pub static LIBRA_STORAGE_CF_SIZE_BYTES: Lazy<IntGaugeVec> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_COMMITTED_TXNS: Lazy<IntCounter> = Lazy::new(|| {
+pub static DIEM_STORAGE_COMMITTED_TXNS: Lazy<IntCounter> = Lazy::new(|| {
     register_int_counter!(
         "diem_storage_committed_txns",
         "Diem storage committed transactions"
@@ -39,7 +39,7 @@ pub static LIBRA_STORAGE_COMMITTED_TXNS: Lazy<IntCounter> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_LATEST_TXN_VERSION: Lazy<IntGauge> = Lazy::new(|| {
+pub static DIEM_STORAGE_LATEST_TXN_VERSION: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!(
         "diem_storage_latest_transaction_version",
         "Diem storage latest transaction version"
@@ -47,7 +47,7 @@ pub static LIBRA_STORAGE_LATEST_TXN_VERSION: Lazy<IntGauge> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_LEDGER_VERSION: Lazy<IntGauge> = Lazy::new(|| {
+pub static DIEM_STORAGE_LEDGER_VERSION: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!(
         "diem_storage_ledger_version",
         "Version in the latest saved ledger info."
@@ -55,7 +55,7 @@ pub static LIBRA_STORAGE_LEDGER_VERSION: Lazy<IntGauge> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_NEXT_BLOCK_EPOCH: Lazy<IntGauge> = Lazy::new(|| {
+pub static DIEM_STORAGE_NEXT_BLOCK_EPOCH: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!(
         "diem_storage_next_block_epoch",
         "ledger_info.next_block_epoch() for the latest saved ledger info."
@@ -63,11 +63,11 @@ pub static LIBRA_STORAGE_NEXT_BLOCK_EPOCH: Lazy<IntGauge> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_PRUNE_WINDOW: Lazy<IntGauge> = Lazy::new(|| {
+pub static DIEM_STORAGE_PRUNE_WINDOW: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!("diem_storage_prune_window", "Diem storage prune window").unwrap()
 });
 
-pub static LIBRA_STORAGE_PRUNER_LEAST_READABLE_STATE_VERSION: Lazy<IntGauge> = Lazy::new(|| {
+pub static DIEM_STORAGE_PRUNER_LEAST_READABLE_STATE_VERSION: Lazy<IntGauge> = Lazy::new(|| {
     register_int_gauge!(
         "diem_storage_pruner_least_readable_state_version",
         "Diem storage pruner least readable state version"
@@ -75,7 +75,7 @@ pub static LIBRA_STORAGE_PRUNER_LEAST_READABLE_STATE_VERSION: Lazy<IntGauge> = L
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_API_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_STORAGE_API_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_storage_api_latency_seconds",
@@ -87,7 +87,7 @@ pub static LIBRA_STORAGE_API_LATENCY_SECONDS: Lazy<HistogramVec> = Lazy::new(|| 
     .unwrap()
 });
 
-pub static LIBRA_STORAGE_OTHER_TIMERS_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
+pub static DIEM_STORAGE_OTHER_TIMERS_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         // metric name
         "diem_storage_other_timers_seconds",

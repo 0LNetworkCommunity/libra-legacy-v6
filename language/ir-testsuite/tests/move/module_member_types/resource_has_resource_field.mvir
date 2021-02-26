@@ -1,5 +1,5 @@
 module Test {
-    import 0x1.Coin1;
+    import 0x1.XUS;
     import 0x1.Diem;
-    resource T{fint: Diem.Diem<Coin1.Coin1>}
+    resource T{fint: Diem.Diem<XUS.XUS>}
 }

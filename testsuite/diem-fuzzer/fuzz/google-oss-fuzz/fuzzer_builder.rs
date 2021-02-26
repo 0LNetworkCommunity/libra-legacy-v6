@@ -3,8 +3,8 @@
 
 #![no_main]
 
-use libfuzzer_sys::fuzz_target;
 use diem_fuzzer::FuzzTarget;
+use libfuzzer_sys::fuzz_target;
 
 // contains FUZZ_TARGET
 include!(concat!(env!("OUT_DIR"), "/fuzzer.rs"));

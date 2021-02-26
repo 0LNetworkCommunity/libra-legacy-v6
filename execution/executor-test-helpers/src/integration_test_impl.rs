@@ -5,13 +5,11 @@ use crate::{
     bootstrap_genesis, gen_block_id, gen_ledger_info_with_sigs, get_test_signed_transaction,
 };
 use anyhow::{anyhow, ensure, Result};
-use executor::Executor;
-use executor_types::BlockExecutor;
 use diem_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, Uniform};
 use diem_types::{
     account_config::{
-        coin1_tmp_tag, from_currency_code_string, testnet_dd_account_address,
-        treasury_compliance_account_address, COIN1_NAME,
+        from_currency_code_string, testnet_dd_account_address, treasury_compliance_account_address,
+        xus_tag, XUS_NAME,
     },
     account_state::AccountState,
     account_state_blob::AccountStateWithProof,
@@ -25,6 +23,8 @@ use diem_types::{
 };
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
+use executor::Executor;
+use executor_types::BlockExecutor;
 use rand::SeedableRng;
 use std::{convert::TryFrom, sync::Arc};
 use storage_interface::{DbReaderWriter, Order};
@@ -77,7 +77,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_create_parent_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             0,
             account1,
             account1_auth_key.prefix().to_vec(),
@@ -92,7 +92,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_create_parent_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             0,
             account2,
             account2_auth_key.prefix().to_vec(),
@@ -107,7 +107,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_create_parent_vasp_account_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             0,
             account3,
             account3_auth_key.prefix().to_vec(),
@@ -123,7 +123,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account1,
             2_000_000,
             vec![],
@@ -138,7 +138,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account2,
             1_200_000,
             vec![],
@@ -153,7 +153,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account3,
             1_000_000,
             vec![],
@@ -169,7 +169,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         privkey1.clone(),
         pubkey1.clone(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account2,
             20_000,
             vec![],
@@ -185,7 +185,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         privkey2,
         pubkey2,
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account3,
             10_000,
             vec![],
@@ -201,7 +201,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
         privkey1.clone(),
         pubkey1.clone(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account3,
             70_000,
             vec![],
@@ -223,7 +223,7 @@ pub fn test_execution_with_storage_impl() -> Arc<DiemDB> {
             privkey1.clone(),
             pubkey1.clone(),
             Some(encode_peer_to_peer_with_metadata_script(
-                coin1_tmp_tag(),
+                xus_tag(),
                 account3,
                 10_000,
                 vec![],
@@ -529,8 +529,8 @@ where
 {
     let balance = if let Some(blob) = &account_state_with_proof.blob {
         AccountState::try_from(blob)?
-            .get_balance_resources(&[from_currency_code_string(COIN1_NAME).unwrap()])?
-            .get(&from_currency_code_string(COIN1_NAME).unwrap())
+            .get_balance_resources(&[from_currency_code_string(XUS_NAME).unwrap()])?
+            .get(&from_currency_code_string(XUS_NAME).unwrap())
             .map(|b| b.coin())
             .unwrap_or(0)
     } else {

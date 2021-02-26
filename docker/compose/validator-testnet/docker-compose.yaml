@@ -7,10 +7,10 @@
 # * chain_id of 4 / TESTING
 #
 # Additional information:
-# * If you use this compose for different Libra Networks, you will need remove the db volume first.
+# * If you use this compose for different Diem Networks, you will need remove the db volume first.
 # * If you move this compose, you must recreate the empty waypoint.txt and genesis.blob otherwise
 # the container will fail to start.
-# * If you would like to use the current Libra version within this repository, execute the
+# * If you would like to use the current Diem version within this repository, execute the
 # `build.sh` in `docker/validator` and change the image tag below to diem_e2e:latest
 # * Images can be found at https://hub.docker.com/r/diem/validator/tags, obtain the latest tag and
 # update below.
@@ -19,7 +19,7 @@ services:
     validator:
         # Note this image currently does not support this, will update to the appropriate minimum
         # version shortly
-        image: diem/validator:master_f53da21f
+        image: libra/validator:master_f53da21f
         networks:
             shared:
                 ipv4_address: 172.16.1.3

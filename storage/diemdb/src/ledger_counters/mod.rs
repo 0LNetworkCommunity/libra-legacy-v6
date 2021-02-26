@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::metrics::LIBRA_STORAGE_LEDGER;
+use crate::metrics::DIEM_STORAGE_LEDGER;
 use num_derive::ToPrimitive;
 use num_traits::ToPrimitive;
 use num_variants::NumVariants;
@@ -114,7 +114,7 @@ impl LedgerCounterBumps {
     ///
     /// Defaults to 0.
     #[cfg(test)]
-    pub fn get(&mut self, counter: LedgerCounter) -> usize {
+    pub fn get(&self, counter: LedgerCounter) -> usize {
         self.bumps.get(counter)
     }
 }
@@ -134,9 +134,9 @@ impl LedgerCounters {
     }
 
     /// Bump each counter in `bumps` with the value in `bumps`.
-    pub fn bump(&mut self, bumps: LedgerCounterBumps) -> &mut Self {
-        for (key, value) in bumps.bumps.counters.into_iter() {
-            self.counters.raw_inc(key, value);
+    pub fn bump(&mut self, bumps: &LedgerCounterBumps) -> &mut Self {
+        for (key, value) in bumps.bumps.counters.iter() {
+            self.counters.raw_inc(*key, *value);
         }
 
         self
@@ -145,7 +145,7 @@ impl LedgerCounters {
     /// Bump Prometheus counters.
     pub fn bump_op_counters(&self) {
         for counter in &LedgerCounter::VARIANTS {
-            LIBRA_STORAGE_LEDGER
+            DIEM_STORAGE_LEDGER
                 .with_label_values(&[counter.name()])
                 .set(self.get(*counter) as i64);
         }

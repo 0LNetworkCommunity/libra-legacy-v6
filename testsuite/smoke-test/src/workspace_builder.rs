@@ -96,7 +96,7 @@ pub fn get_bin<S: AsRef<str>>(bin_name: S) -> PathBuf {
     bin_path
 }
 
-static LIBRA_NODE: Lazy<bool> = Lazy::new(|| {
+static DIEM_NODE: Lazy<bool> = Lazy::new(|| {
     let args = vec!["build", "--features", "failpoints"];
     let mut path = workspace_root();
     path.push("diem-node/");
@@ -116,7 +116,7 @@ static LIBRA_NODE: Lazy<bool> = Lazy::new(|| {
 });
 
 pub fn get_diem_node_with_failpoints() -> PathBuf {
-    if !*LIBRA_NODE {
+    if !*DIEM_NODE {
         panic!("Failed to build diem node with failpoints");
     }
     let bin_path = build_dir().join(format!("{}{}", "diem-node", env::consts::EXE_SUFFIX));

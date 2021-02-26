@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_address::AccountAddress,
-    account_config::COIN1_NAME,
+    account_config::XUS_NAME,
     chain_id::ChainId,
     transaction::{Module, RawTransaction, Script, SignatureCheckedTransaction, SignedTransaction},
     write_set::WriteSet,
@@ -30,7 +30,7 @@ pub fn get_test_signed_module_publishing_transaction(
         module,
         MAX_GAS_AMOUNT,
         TEST_GAS_PRICE,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         expiration_time,
         ChainId::test(),
     );
@@ -141,7 +141,7 @@ pub fn get_test_signed_txn(
         script,
         expiration_time,
         TEST_GAS_PRICE,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         None,
     )
 }
@@ -162,7 +162,7 @@ pub fn get_test_unchecked_txn(
         script,
         expiration_time,
         TEST_GAS_PRICE,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         None,
     )
 }
@@ -183,7 +183,7 @@ pub fn get_test_txn_with_chain_id(
         None,
         expiration_time,
         TEST_GAS_PRICE,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         None,
         chain_id,
     )

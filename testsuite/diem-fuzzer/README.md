@@ -22,7 +22,7 @@ a corpus with `cargo run --bin diem-fuzzer generate <target>`.
 Once a corpus has been generated, the fuzzer is ready to use, simply run:
 
 ```
-RUSTC_BOOTSTRAP=1 cargo run --bin diem-fuzzer fuzz <target> -- --release --debug-assertions
+RUSTC_BOOTSTRAP=1 cargo run --bin diem-fuzzer --release fuzz <target>
 ```
 
 For more options, run `cargo run --bin diem-fuzzer -- --help`. Note that `RUSTC_BOOTSTRAP=1` is
@@ -99,32 +99,58 @@ To test coverage of our fuzzers you can run the following command with [grcov](h
 RUSTFLAGS='--cfg feature="fuzzing"' CORPUS_PATH=fuzz/corpus cargo xtest --html-cov-dir <some path for html output> -p diem-fuzzer -- coverage
 ```
 
-### Google OSS-Fuzz Integration
+### Building a single fuzzer
 
 To integrate our fuzzers with [Google OSS-Fuzz](https://github.com/google/oss-fuzz) project,
 we need to have one binary per fuzzer.
+This can also be handy when you want to analyze a fuzzer with tools like Instruments.
 For this, build.rs can create a fuzzer binary based on an environement variable.
 Use it as such:
 
 ```sh
-SINGLE_FUZZ_TARGET="consensus_proposal" cargo build --manifest-path fuzz/Cargo.toml --bin fuzzer_builder
-```
-
-Note that you might want to add more flags [[1]](https://github.com/rust-fuzz/cargo-fuzz/blob/2243de096b15b79b719ce7489f014d7d8ce197ee/src/project.rs#L153)[[2]](https://github.com/rust-fuzz/cargo-fuzz/blob/2243de096b15b79b719ce7489f014d7d8ce197ee/src/project.rs#L174).
-
-For example for MacOS:
-
-```sh
-cd fuzz
-SINGLE_FUZZ_TARGET="consensus_proposal" RUSTC_BOOTSTRAP=1 RUSTFLAGS="--cfg fuzzing -Cpasses=sancov -Cllvm-args=-sanitizer-coverage-level=4 -Cllvm-args=-sanitizer-coverage-trace-compares -Cllvm-args=-sanitizer-coverage-inline-8bit-counters -Cllvm-args=-sanitizer-coverage-trace-geps -Cllvm-args=-sanitizer-coverage-prune-blocks=0 -Cllvm-args=-sanitizer-coverage-pc-table -Clink-dead-code -Zsanitizer=address -Cdebug-assertions" FUZZ_TARGET="vm_value" cargo build --verbose --target x86_64-apple-darwin --bin fuzzer_builder
+cd diem/testsuite/diem-fuzzer
+fuzz/google-oss-fuzz/build_fuzzer.sh ConsensusProposal .
+./ConsensusProposal
 ```
 
 ### Troubleshooting
 
-#### linking with CC failed
-
-Are you on MacOS? Have you checked that Xcode is up-to-date?
-
 #### My backtrace does not contain file names and line numbers
 
-You need to use llvm-symbolizer, see https://github.com/rust-fuzz/cargo-fuzz/issues/160
+You need to use `llvm-symbolizer`, see https://github.com/rust-fuzz/cargo-fuzz/issues/160
+
+#### macOS: Linking with `cc` failed
+
+Make sure Xcode is updated to the latest version. Remeber to actually
+`xcode-select` the new app folder and `cargo clean` before rebuilding again.
+
+```sh
+sudo xcode-select -s /Applications/Xcode_X.Y.Z.app
+```
+
+If you get a linker error like
+
+```sh
+$ RUSTC_BOOTSTRAP=1 cargo run --bin diem-fuzzer --release fuzz <target>
+# ...
+error: linking with `cc` failed: exit code: 1
+  |
+  = note: "cc" "-m64" "-L" "/Users/philiphayes/.rustup/toolchains/nightly-x86_64-apple-darwin/lib/rustlib/x86_64-apple-darwin/lib" # ...
+  = note: Undefined symbols for architecture x86_64:
+            "_CFMutableAttributedStringGetTypeID", referenced from:
+                _$LT$core_foundation..attributed_string..CFMutableAttributedString$u20$as$u20$core_foundation..base..TCFType$GT$::type_id::h9f6f71bdd347aca0 # ...
+          ld: symbol(s) not found for architecture x86_64
+          clang: error: linker command failed with exit code 1 (use -v to see invocation)
+
+error: aborting due to previous error
+```
+
+This is probably due to an issue in core-foundation-rs (https://github.com/servo/core-foundation-rs/pull/357)
+that was fixed in the latest version, but one of our transitive dependencies
+`native-tls` only has the update in its `master` branch. To fix this problem, add
+the following to the end of `diem/Cargo.toml`:
+
+```toml
+[patch.crates-io]
+native-tls = { git = "https://github.com/sfackler/rust-native-tls" }
+```

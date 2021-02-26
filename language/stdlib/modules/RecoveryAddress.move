@@ -155,7 +155,7 @@ module RecoveryAddress {
         // Only accept the rotation capability if both accounts belong to the same VASP
         let to_recover_address = *DiemAccount::key_rotation_capability_address(&to_recover);
         assert(
-            VASP::parent_address(recovery_address) == VASP::parent_address(to_recover_address),
+            VASP::is_same_vasp(recovery_address, to_recover_address),
             Errors::invalid_argument(EINVALID_KEY_ROTATION_DELEGATION)
         );
 
@@ -207,6 +207,10 @@ module RecoveryAddress {
     /// # Persistence of KeyRotationCapability
 
     spec module {
+        /// `RecoveryAddress` persists
+        invariant update [global] forall addr: address where old(exists<RecoveryAddress>(addr)):
+            exists<RecoveryAddress>(addr);
+
         /// If `recovery_addr` holds the `KeyRotationCapability` of `to_recovery_addr`
         /// in the previous state, then it continues to hold the capability after the update.
         invariant update [global]

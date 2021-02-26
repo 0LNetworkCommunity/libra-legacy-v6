@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    cargo::{CargoArgs, CargoCommand},
+    cargo::{CargoArgs, CargoCommand, SelectedPackageArgs},
     context::XContext,
-    utils,
     utils::project_root,
     Result,
 };
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 use log::info;
 use std::{
     ffi::OsString,
@@ -20,14 +19,13 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct Args {
-    #[structopt(long, short, number_of_values = 1)]
-    /// Run test on the provided packages
-    package: Vec<String>,
+    #[structopt(flatten)]
+    pub(crate) package_args: SelectedPackageArgs,
     #[structopt(long, short)]
     /// Skip running expensive diem testsuite integration tests
     unit: bool,
     #[structopt(long)]
-    /// Test only this package's diemry unit tests, skipping doctests
+    /// Test only this package's library unit tests, skipping doctests
     lib: bool,
     #[structopt(long)]
     /// Do not fast fail the run if tests (or test executables) fail
@@ -52,28 +50,37 @@ pub struct Args {
 }
 
 pub fn run(mut args: Args, xctx: XContext) -> Result<()> {
-    args.args.extend(args.testname.clone());
     let config = xctx.config();
+
+    let mut packages = args.package_args.to_selected_packages(&xctx)?;
+    if args.unit {
+        packages.add_excludes(config.system_tests().iter().map(|(p, _)| p.as_str()));
+    }
+
+    args.args.extend(args.testname.clone());
 
     let generate_coverage = args.html_cov_dir.is_some() || args.html_lcov_dir.is_some();
 
-    let env_vars: &[(&str, &str)] = if generate_coverage {
+    let env_vars: &[(&str, Option<&str>)] = if generate_coverage {
+        if !xctx.installer().install_if_needed("grcov") {
+            return Err(anyhow!("Could not install grcov"));
+        }
         info!("Running \"cargo clean\" before collecting coverage");
         let mut clean_cmd = Command::new("cargo");
         clean_cmd.arg("clean");
         clean_cmd.output()?;
         &[
             // A way to use -Z (unstable) flags with the stable compiler. See below.
-            ("RUSTC_BOOTSTRAP", "1"),
+            ("RUSTC_BOOTSTRAP", Some("1")),
             // Recommend setting for grcov, avoids using the cargo cache.
-            ("CARGO_INCREMENTAL", "0"),
+            ("CARGO_INCREMENTAL", Some("0")),
             // language/ir-testsuite's tests will stack overflow without this setting.
-            ("RUST_MIN_STACK", "8388608"),
+            ("RUST_MIN_STACK", Some("8388608")),
             // Recommend flags for use with grcov, with these flags removed: -Copt-level=0, -Clink-dead-code.
             // for more info see:  https://github.com/mozilla/grcov#example-how-to-generate-gcda-fiels-for-a-rust-project
             (
                 "RUSTFLAGS",
-                "-Zprofile -Ccodegen-units=1 -Coverflow-checks=off",
+                Some("-Zprofile -Ccodegen-units=1 -Coverflow-checks=off"),
             ),
         ]
     } else {
@@ -103,20 +110,7 @@ pub fn run(mut args: Args, xctx: XContext) -> Result<()> {
         env: &env_vars,
     };
 
-    let cmd_result = if args.unit {
-        cmd.run_with_exclusions(
-            config.system_tests().iter().map(|(p, _)| p),
-            &CargoArgs::default(),
-        )
-    } else if !args.package.is_empty() {
-        cmd.run_on_packages(args.package.iter(), &CargoArgs::default())
-    } else if utils::project_is_root(&xctx)? {
-        // TODO Maybe only run a subest of tests if we're not inside
-        // a package but not at the project root (e.g. language)
-        cmd.run_on_all_packages(&CargoArgs::default())
-    } else {
-        cmd.run_on_local_package(&CargoArgs::default())
-    };
+    let cmd_result = cmd.run_on_packages(&packages, &CargoArgs::default());
 
     if !args.no_fail_fast && cmd_result.is_err() {
         return cmd_result;

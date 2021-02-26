@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use channel::diem_channel::{self, Receiver};
-use futures::{sink::SinkExt, StreamExt};
 use diem_config::{config::RoleType, network_id::NetworkContext};
 use diem_crypto::x25519;
 use diem_logger::prelude::*;
@@ -12,6 +11,7 @@ use diem_metrics::{
 use diem_network_address::NetworkAddress;
 use diem_network_address_encryption::{Encryptor, Error as EncryptorError};
 use diem_types::on_chain_config::{OnChainConfigPayload, ValidatorSet, ON_CHAIN_CONFIG_REGISTRY};
+use futures::{sink::SinkExt, StreamExt};
 use network::{
     connectivity_manager::{ConnectivityRequest, DiscoverySource},
     counters::inc_by_with_context,
@@ -165,7 +165,7 @@ impl ConfigurationChangeListener {
             &DISCOVERY_COUNTS,
             &self.network_context,
             "new_nodes",
-            updates.len() as i64,
+            updates.len() as u64,
         );
         info!(
             NetworkSchema::new(&self.network_context),

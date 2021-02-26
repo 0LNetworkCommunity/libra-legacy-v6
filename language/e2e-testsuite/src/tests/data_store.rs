@@ -1,21 +1,23 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use bytecode_verifier::verify_module;
 use compiler::Compiler;
-use language_e2e_tests::{
-    account::AccountData, compile::compile_script_with_address, executor::FakeExecutor,
-};
 use diem_types::{
     transaction::{Module, SignedTransaction, Transaction, TransactionStatus},
     vm_status::KeptVMStatus,
+};
+use language_e2e_tests::{
+    account::AccountData, compile::compile_script_with_address, current_function_name,
+    executor::FakeExecutor,
 };
 use vm::CompiledModule;
 
 #[test]
 fn move_from_across_blocks() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(1_000_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // publish module with add and remove resource
@@ -93,7 +95,8 @@ fn move_from_across_blocks() {
 #[test]
 fn borrow_after_move() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(1_000_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // publish module with add and remove resource
@@ -143,7 +146,8 @@ fn borrow_after_move() {
 #[test]
 fn change_after_move() {
     let mut executor = FakeExecutor::from_genesis_file();
-    let sender = AccountData::new(1_000_000, 10);
+    executor.set_golden_file(current_function_name!());
+    let sender = executor.create_raw_account_data(1_000_000, 10);
     executor.add_account_data(&sender);
 
     // publish module with add and remove resource

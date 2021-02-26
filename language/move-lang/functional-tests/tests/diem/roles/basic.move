@@ -45,10 +45,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    LibraAccount::create_designated_dealer<Coin1>(
+    DiemAccount::create_designated_dealer<XUS>(
         account,
         {{bob}},
         {{bob::auth_key}},
@@ -62,9 +62,9 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: blessed
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    LibraAccount::create_validator_account(
+    DiemAccount::create_validator_account(
         account,
         {{bob}},
         {{bob::auth_key}},
@@ -87,9 +87,9 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: blessed
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    LibraAccount::create_validator_operator_account(
+    DiemAccount::create_validator_operator_account(
         account,
         {{bob}},
         {{bob::auth_key}},
@@ -112,10 +112,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    LibraAccount::create_parent_vasp_account<Coin1>(
+    DiemAccount::create_parent_vasp_account<XUS>(
         account,
         {{bob}},
         {{bob::auth_key}},
@@ -139,10 +139,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: blessed
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    LibraAccount::create_child_vasp_account<Coin1>(
+    DiemAccount::create_child_vasp_account<XUS>(
         account,
         {{bob}},
         {{bob::auth_key}},
@@ -154,7 +154,7 @@ fun main(account: &signer) {
 
 //! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 //! args: 0, {{vasp}}, {{vasp::auth_key}}, b"vasp", true
 stdlib_script::create_parent_vasp_account
 // check: "Keep(EXECUTED)"

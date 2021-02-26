@@ -23,7 +23,7 @@ Null - If account does not exist
 
 ```
 // Request: fetches account for account address "1668f6be25668c1a17cd8caf6b8d2f25"
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_account","params":["1668f6be25668c1a17cd8caf6b8d2f25"],"id":1}' https://testnet.diem.org/v1
+curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_account","params":["1668f6be25668c1a17cd8caf6b8d2f25"],"id":1}' https://testnet.diem.com/v1
 
 // Response
 {
@@ -37,7 +37,7 @@ curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","metho
       "balances" : [
          {
             "amount" : 2194000000,
-            "currency" : "LBR"
+            "currency" : "XDX"
          }
       ],
       "sequence_number" : 11,
@@ -47,7 +47,7 @@ curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","metho
       "role" : {
         "type": parent_vasp",
         "num_children" : 0,
-        "base_url" : "https://diem.org",
+        "base_url" : "https://diem.com",
         "human_name" : "testnet",
         "compliance_key" : "b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde",
         "expiration_time" : 18446744073709551615

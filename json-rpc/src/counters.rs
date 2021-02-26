@@ -1,9 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_metrics::{
-    register_histogram_vec, register_int_counter_vec, HistogramVec, IntCounterVec,
-};
+use diem_metrics::{register_histogram_vec, register_int_counter_vec, HistogramVec, IntCounterVec};
 use once_cell::sync::Lazy;
 
 /// Cumulative number of rpc requests that the JSON RPC service receives

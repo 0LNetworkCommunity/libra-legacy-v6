@@ -4,10 +4,10 @@
 set -e
 
 DOCKERFILE=$1
-if [ -z "$LIBRA_BUILD_TAG" ]; then
+if [ -z "$DIEM_BUILD_TAG" ]; then
   TAGS="--tag $2"
 else
-  TAGS="--tag $2 --tag $LIBRA_BUILD_TAG"
+  TAGS="--tag $2 --tag $DIEM_BUILD_TAG"
 fi
 
 RESTORE='\001\033[0m\002'

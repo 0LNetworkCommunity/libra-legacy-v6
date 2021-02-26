@@ -29,12 +29,12 @@ use cluster_test::{
     suite::ExperimentSuite,
     tx_emitter::{AccountData, EmitJobRequest, EmitThreadParams, TxEmitter},
 };
+use diem_config::config::DEFAULT_JSON_RPC_PORT;
 use futures::{
     future::{join_all, FutureExt},
     select,
 };
 use itertools::zip;
-use diem_config::config::DEFAULT_JSON_RPC_PORT;
 use std::cmp::min;
 use tokio::time::{delay_for, delay_until, Instant as TokioInstant};
 
@@ -46,10 +46,7 @@ struct Args {
     #[structopt(short = "p", long, use_delimiter = true, requires = "swarm")]
     peers: Vec<String>,
 
-    #[structopt(
-        long,
-        help = "If set, tries to connect to a diem-swarm instead of aws"
-    )]
+    #[structopt(long, help = "If set, tries to connect to a diem-swarm instead of aws")]
     swarm: bool,
     #[structopt(
         long,
@@ -720,13 +717,13 @@ impl ClusterTestRunner {
         let mut run_future = experiment.run(&mut context).fuse();
         loop {
             select! {
-                delay = deadline_future => {
+                _delay = deadline_future => {
                     bail!("Experiment deadline reached");
                 }
                 result = run_future => {
                     return result.map_err(|e|format_err!("Failed to run experiment: {}", e));
                 }
-                delay = delay_for(HEALTH_POLL_INTERVAL).fuse() => {
+                _delay = delay_for(HEALTH_POLL_INTERVAL).fuse() => {
                     let events = self.logs.recv_all();
                     if let Err(s) = self.health_check_runner.run(
                         &events,

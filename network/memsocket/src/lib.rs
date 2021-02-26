@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use bytes::{buf::BufExt, Buf, Bytes};
+use diem_infallible::Mutex;
 use futures::{
     channel::mpsc::{self, UnboundedReceiver, UnboundedSender},
     io::{AsyncRead, AsyncWrite, Error, ErrorKind, Result},
@@ -9,7 +10,6 @@ use futures::{
     stream::{FusedStream, Stream},
     task::{Context, Poll},
 };
-use diem_infallible::Mutex;
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, num::NonZeroU16, pin::Pin};
 
@@ -293,12 +293,12 @@ impl MemorySocket {
         let mut switchboard = (&*SWITCHBOARD).lock();
 
         // Find port to connect to
-        let port = NonZeroU16::new(port).ok_or_else(|| ErrorKind::AddrNotAvailable)?;
+        let port = NonZeroU16::new(port).ok_or(ErrorKind::AddrNotAvailable)?;
 
         let sender = switchboard
             .0
             .get_mut(&port)
-            .ok_or_else(|| ErrorKind::AddrNotAvailable)?;
+            .ok_or(ErrorKind::AddrNotAvailable)?;
 
         let (socket_a, socket_b) = Self::new_pair();
         // Send the socket to the listener

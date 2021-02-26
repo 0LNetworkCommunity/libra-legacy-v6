@@ -15,7 +15,7 @@ use 0x1::SlidingNonce;
 /// # Parameters
 /// | Name                  | Type         | Description                                                                                     |
 /// | ------                | ------       | -------------                                                                                   |
-/// | `lr_account`          | `&signer`    | The signer reference of the sending account of this transaction. Must be the Diem Root signer. |
+/// | `dr_account`          | `&signer`    | The signer reference of the sending account of this transaction. Must be the Diem Root signer. |
 /// | `sliding_nonce`       | `u64`        | The `sliding_nonce` (see: `SlidingNonce`) to be used for this transaction.                      |
 /// | `new_account_address` | `address`    | Address of the to-be-created Validator account.                                                 |
 /// | `auth_key_prefix`     | `vector<u8>` | The authentication key prefix that will be used initially for the newly created account.        |
@@ -24,12 +24,12 @@ use 0x1::SlidingNonce;
 /// # Common Abort Conditions
 /// | Error Category              | Error Reason                            | Description                                                                                |
 /// | ----------------            | --------------                          | -------------                                                                              |
-/// | `Errors::NOT_PUBLISHED`     | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `lr_account`.                             |
+/// | `Errors::NOT_PUBLISHED`     | `SlidingNonce::ESLIDING_NONCE`          | A `SlidingNonce` resource is not published under `dr_account`.                             |
 /// | `Errors::INVALID_ARGUMENT`  | `SlidingNonce::ENONCE_TOO_OLD`          | The `sliding_nonce` is too old and it's impossible to determine if it's duplicated or not. |
 /// | `Errors::INVALID_ARGUMENT`  | `SlidingNonce::ENONCE_TOO_NEW`          | The `sliding_nonce` is too far in the future.                                              |
 /// | `Errors::INVALID_ARGUMENT`  | `SlidingNonce::ENONCE_ALREADY_RECORDED` | The `sliding_nonce` has been previously recorded.                                          |
-/// | `Errors::REQUIRES_ADDRESS`  | `CoreAddresses::ELIBRA_ROOT`            | The sending account is not the Diem Root account.                                         |
-/// | `Errors::REQUIRES_ROLE`     | `Roles::ELIBRA_ROOT`                    | The sending account is not the Diem Root account.                                         |
+/// | `Errors::REQUIRES_ADDRESS`  | `CoreAddresses::EDIEM_ROOT`            | The sending account is not the Diem Root account.                                         |
+/// | `Errors::REQUIRES_ROLE`     | `Roles::EDIEM_ROOT`                    | The sending account is not the Diem Root account.                                         |
 /// | `Errors::ALREADY_PUBLISHED` | `Roles::EROLE_ID`                       | The `new_account_address` address is already taken.                                        |
 ///
 /// # Related Scripts
@@ -42,15 +42,15 @@ use 0x1::SlidingNonce;
 /// * `Script::set_validator_config_and_reconfigure`
 
 fun create_validator_operator_account(
-    lr_account: &signer,
+    dr_account: &signer,
     sliding_nonce: u64,
     new_account_address: address,
     auth_key_prefix: vector<u8>,
     human_name: vector<u8>
 ) {
-    SlidingNonce::record_nonce_or_abort(lr_account, sliding_nonce);
+    SlidingNonce::record_nonce_or_abort(dr_account, sliding_nonce);
     DiemAccount::create_validator_operator_account(
-        lr_account,
+        dr_account,
         new_account_address,
         auth_key_prefix,
         human_name,
@@ -68,8 +68,8 @@ spec fun create_validator_operator_account {
     use 0x1::Errors;
     use 0x1::Roles;
 
-    include DiemAccount::TransactionChecks{sender: lr_account}; // properties checked by the prologue.
-    include SlidingNonce::RecordNonceAbortsIf{seq_nonce: sliding_nonce, account: lr_account};
+    include DiemAccount::TransactionChecks{sender: dr_account}; // properties checked by the prologue.
+    include SlidingNonce::RecordNonceAbortsIf{seq_nonce: sliding_nonce, account: dr_account};
     include DiemAccount::CreateValidatorOperatorAccountAbortsIf;
     include DiemAccount::CreateValidatorOperatorAccountEnsures;
 
@@ -82,6 +82,6 @@ spec fun create_validator_operator_account {
 
     /// **Access Control:**
     /// Only the Diem Root account can create Validator Operator accounts [[A4]][ROLE].
-    include Roles::AbortsIfNotDiemRoot{account: lr_account};
+    include Roles::AbortsIfNotDiemRoot{account: dr_account};
 }
 }

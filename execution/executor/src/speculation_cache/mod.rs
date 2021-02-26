@@ -23,13 +23,13 @@ use crate::{
 };
 use anyhow::{format_err, Result};
 use consensus_types::block::Block;
-use executor_types::{Error, ExecutedTrees};
 use diem_crypto::{hash::PRE_GENESIS_BLOCK_ID, HashValue};
 use diem_infallible::Mutex;
 use diem_logger::prelude::*;
 use diem_types::{
     contract_event::ContractEvent, ledger_info::LedgerInfo, transaction::Transaction,
 };
+use executor_types::{Error, ExecutedTrees};
 use std::{
     collections::HashMap,
     sync::{Arc, Weak},

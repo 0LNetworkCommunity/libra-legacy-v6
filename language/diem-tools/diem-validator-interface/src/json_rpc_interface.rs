@@ -1,7 +1,7 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::LibraValidatorInterface;
+use crate::DiemValidatorInterface;
 use anyhow::{bail, Result};
 use diem_json_rpc_client::{JsonRpcBatch, JsonRpcClient, JsonRpcResponse};
 use diem_types::{
@@ -32,7 +32,7 @@ impl JsonRpcDebuggerInterface {
     }
 }
 
-impl LibraValidatorInterface for JsonRpcDebuggerInterface {
+impl DiemValidatorInterface for JsonRpcDebuggerInterface {
     fn get_account_state_by_version(
         &self,
         account: AccountAddress,
@@ -44,7 +44,7 @@ impl LibraValidatorInterface for JsonRpcDebuggerInterface {
         let resp = self.execute_single_command(batch)?;
         if let JsonRpcResponse::AccountStateWithProofResponse(account_state) = resp {
             Ok(match account_state.blob {
-                Some(bytes) => Some(lcs::from_bytes(&bytes.into_bytes()?)?),
+                Some(bytes) => Some(bcs::from_bytes(&bytes.into_bytes()?)?),
                 None => None,
             })
         } else {
@@ -61,7 +61,7 @@ impl LibraValidatorInterface for JsonRpcDebuggerInterface {
             let mut output = vec![];
             for txn in txns.into_iter() {
                 let raw_bytes = txn.bytes.into_bytes()?;
-                output.push(lcs::from_bytes(&raw_bytes)?);
+                output.push(bcs::from_bytes(&raw_bytes)?);
             }
             Ok(output)
         } else {

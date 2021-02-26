@@ -19,12 +19,12 @@ use crate::config::{Args, EXECUTE_UNVERIFIED_MODULE, RUN_ON_VM};
 use bytecode_generator::BytecodeGenerator;
 use bytecode_verifier::verify_module;
 use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
-use getrandom::getrandom;
-use language_e2e_tests::executor::FakeExecutor;
 use diem_logger::{debug, error, info};
 use diem_state_view::StateView;
 use diem_types::{account_address::AccountAddress, vm_status::StatusCode};
 use diem_vm::DiemVM;
+use getrandom::getrandom;
+use language_e2e_tests::executor::FakeExecutor;
 use module_generation::generate_module;
 use move_core_types::{
     gas_schedule::{GasAlgebra, GasUnits},

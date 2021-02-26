@@ -1,7 +1,7 @@
 [package]
 name = "abigen"
 version = "0.1.0"
-authors = ["Libra Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 publish = false
 edition = "2018"
 license = "Apache-2.0"
@@ -12,19 +12,19 @@ spec-lang = { path = "../spec-lang", version = "0.1.0" }
 diem-workspace-hack = { path = "../../../common/workspace-hack", version = "0.1.0" }
 diem-types = { path = "../../../types", version = "0.1.0" }
 move-core-types = { path = "../../move-core/types", version = "0.1.0" }
-lcs = { path = "../../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 
 # external dependencies
 log = "0.4.11"
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 heck = "0.3.1"
-serde = { version = "1.0.116", features = ["derive"] }
+serde = { version = "1.0.117", features = ["derive"] }
 
 [dev-dependencies]
 codespan-reporting = "0.8.0"
 move-prover = { path = "..", version = "0.1.0" }
 datatest-stable = { path = "../../../common/datatest-stable", version = "0.1.0" }
-test-utils = { path = "../test-utils", version = "0.1.0" }
+move-prover-test-utils = { path = "../test-utils", version = "0.1.0" }
 diem-temppath = { path = "../../../common/temppath", version = "0.1.0" }
 
 [[test]]

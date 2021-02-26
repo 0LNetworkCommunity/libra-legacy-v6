@@ -11,12 +11,12 @@
 //! [stream]: network::noise::stream
 
 use crate::noise::{error::NoiseHandshakeError, stream::NoiseStream};
-use futures::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use diem_config::network_id::NetworkContext;
 use diem_crypto::{noise, x25519};
 use diem_infallible::{duration_since_epoch, RwLock};
 use diem_logger::trace;
 use diem_types::PeerId;
+use futures::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use netcore::transport::ConnectionOrigin;
 use std::{
     collections::{HashMap, HashSet},
@@ -372,7 +372,6 @@ impl NoiseUpgrader {
                     remote_peer_short,
                     remote_peer_id,
                     derived_remote_peer_id,
-                    remote_public_key
                 ));
             }
         }
@@ -444,8 +443,8 @@ impl NoiseUpgrader {
 mod test {
     use super::*;
     use crate::testutils::fake_socket::ReadWriteTestSocket;
-    use futures::{executor::block_on, future::join};
     use diem_crypto::{test_utils::TEST_SEED, traits::Uniform as _};
+    use futures::{executor::block_on, future::join};
     use memsocket::MemorySocket;
     use rand::SeedableRng as _;
 

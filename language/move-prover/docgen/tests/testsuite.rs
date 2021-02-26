@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use std::path::Path;
@@ -7,8 +7,8 @@ use codespan_reporting::term::termcolor::Buffer;
 
 use diem_temppath::TempPath;
 use move_prover::{cli::Options, run_move_prover};
+use move_prover_test_utils::baseline_test::verify_or_update_baseline;
 use std::path::PathBuf;
-use test_utils::baseline_test::verify_or_update_baseline;
 
 use itertools::Itertools;
 #[allow(unused_imports)]

@@ -1,16 +1,16 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_address::AccountAddress,
-    account_config::COIN1_NAME,
+    account_config::XUS_NAME,
     chain_id::ChainId,
     transaction::{
         GovernanceRole, RawTransaction, Script, SignedTransaction, Transaction, TransactionInfo,
         TransactionListWithProof, TransactionPayload, TransactionWithProof,
     },
 };
-use lcs::test_helpers::assert_canonical_encode_decode;
+use bcs::test_helpers::assert_canonical_encode_decode;
 use diem_crypto::{
     ed25519::{self, Ed25519PrivateKey, Ed25519Signature},
     PrivateKey, Uniform,
@@ -27,7 +27,7 @@ fn test_invalid_signature() {
             Script::new(vec![], vec![], vec![]),
             0,
             0,
-            COIN1_NAME.to_owned(),
+            XUS_NAME.to_owned(),
             0,
             ChainId::test(),
         ),
@@ -41,10 +41,10 @@ fn test_invalid_signature() {
 #[test]
 fn test_role_ordering() {
     use GovernanceRole::*;
-    assert!(LibraRoot.priority() > TreasuryCompliance.priority());
-    assert!(LibraRoot.priority() > Validator.priority());
-    assert!(LibraRoot.priority() > ValidatorOperator.priority());
-    assert!(LibraRoot.priority() > DesignatedDealer.priority());
+    assert!(DiemRoot.priority() > TreasuryCompliance.priority());
+    assert!(DiemRoot.priority() > Validator.priority());
+    assert!(DiemRoot.priority() > ValidatorOperator.priority());
+    assert!(DiemRoot.priority() > DesignatedDealer.priority());
 
     assert!(TreasuryCompliance.priority() > Validator.priority());
     assert!(TreasuryCompliance.priority() > ValidatorOperator.priority());
@@ -63,22 +63,22 @@ proptest! {
     }
 
     #[test]
-    fn transaction_payload_lcs_roundtrip(txn_payload in any::<TransactionPayload>()) {
+    fn transaction_payload_bcs_roundtrip(txn_payload in any::<TransactionPayload>()) {
         assert_canonical_encode_decode(txn_payload);
     }
 
     #[test]
-    fn raw_transaction_lcs_roundtrip(raw_txn in any::<RawTransaction>()) {
+    fn raw_transaction_bcs_roundtrip(raw_txn in any::<RawTransaction>()) {
         assert_canonical_encode_decode(raw_txn);
     }
 
     #[test]
-    fn signed_transaction_lcs_roundtrip(signed_txn in any::<SignedTransaction>()) {
+    fn signed_transaction_bcs_roundtrip(signed_txn in any::<SignedTransaction>()) {
         assert_canonical_encode_decode(signed_txn);
     }
 
     #[test]
-    fn transaction_info_lcs_roundtrip(txn_info in any::<TransactionInfo>()) {
+    fn transaction_info_bcs_roundtrip(txn_info in any::<TransactionInfo>()) {
         assert_canonical_encode_decode(txn_info);
     }
 }
@@ -87,19 +87,19 @@ proptest! {
 #![proptest_config(ProptestConfig::with_cases(10))]
 
 #[test]
-fn transaction_list_with_proof_lcs_roundtrip(txn_list in any::<TransactionListWithProof>()) {
+fn transaction_list_with_proof_bcs_roundtrip(txn_list in any::<TransactionListWithProof>()) {
     assert_canonical_encode_decode(txn_list);
 }
 
 
 #[test]
-fn transaction_lcs_roundtrip(txn in any::<Transaction>()) {
+fn transaction_bcs_roundtrip(txn in any::<Transaction>()) {
     assert_canonical_encode_decode(txn);
 }
 
 
 #[test]
-fn transaction_with_proof_lcs_roundtrip(txn_with_proof in any::<TransactionWithProof>()) {
+fn transaction_with_proof_bcs_roundtrip(txn_with_proof in any::<TransactionWithProof>()) {
     assert_canonical_encode_decode(txn_with_proof);
 }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::account_address::AccountAddress;
@@ -6,7 +6,7 @@ use crate::account_address::AccountAddress;
 pub use move_core_types::language_storage::CORE_CODE_ADDRESS;
 
 pub fn diem_root_address() -> AccountAddress {
-    AccountAddress::from_hex_literal("0x0")
+    AccountAddress::from_hex_literal("0xA550C18")
         .expect("Parsing valid hex literal should always succeed")
 }
 
@@ -15,7 +15,7 @@ pub fn validator_set_address() -> AccountAddress {
 }
 
 pub fn treasury_compliance_account_address() -> AccountAddress {
-    AccountAddress::from_hex_literal("0x0")
+    AccountAddress::from_hex_literal("0xB1E55ED")
         .expect("Parsing valid hex literal should always succeed")
 }
 

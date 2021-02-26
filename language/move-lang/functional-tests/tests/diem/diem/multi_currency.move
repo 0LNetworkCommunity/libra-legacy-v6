@@ -1,6 +1,6 @@
 //! account: alice, 0, 0, address
 //! account: bob, 0, 0, address
-//! account: richie, 10Coin1
+//! account: richie, 10XUS
 //! account: sally, 0, 0, address
 
 // BEGIN: registration of a currency
@@ -10,9 +10,9 @@
 //! sender: diemroot
 // Change option to CustomModule
 script {
-use 0x1::LibraTransactionPublishingOption;
+use 0x1::DiemTransactionPublishingOption;
 fun main(config: &signer) {
-    LibraTransactionPublishingOption::set_open_module(config, false)
+    DiemTransactionPublishingOption::set_open_module(config, false)
 }
 }
 // check: "Keep(EXECUTED)"
@@ -27,16 +27,16 @@ fun main(config: &signer) {
 address 0x1 {
 module COIN {
     use 0x1::FixedPoint32;
-    use 0x1::Libra;
+    use 0x1::Diem;
 
     struct COIN { }
 
-    public fun initialize(lr_account: &signer, tc_account: &signer) {
+    public fun initialize(dr_account: &signer, tc_account: &signer) {
         // Register the COIN currency.
-        Libra::register_SCS_currency<COIN>(
-            lr_account,
+        Diem::register_SCS_currency<COIN>(
+            dr_account,
             tc_account,
-            FixedPoint32::create_from_rational(1, 2), // exchange rate to LBR
+            FixedPoint32::create_from_rational(1, 2), // exchange rate to XDX
             1000000, // scaling_factor = 10^6
             100,     // fractional_part = 10^2
             b"COIN",
@@ -56,8 +56,8 @@ module COIN {
 script {
 use 0x1::TransactionFee;
 use 0x1::COIN::{Self, COIN};
-fun main(lr_account: &signer, tc_account: &signer) {
-    COIN::initialize(lr_account, tc_account);
+fun main(dr_account: &signer, tc_account: &signer) {
+    COIN::initialize(dr_account, tc_account);
     TransactionFee::add_txn_fee_currency<COIN>(tc_account);
 }
 }
@@ -76,9 +76,9 @@ stdlib_script::create_designated_dealer
 //! sender: blessed
 script {
 use 0x1::COIN::COIN;
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    LibraAccount::tiered_mint<COIN>(account, {{sally}}, 10, 3);
+    DiemAccount::tiered_mint<COIN>(account, {{sally}}, 10, 3);
 }
 }
 
@@ -86,13 +86,13 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: blessed
 script {
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 use 0x1::COIN::COIN;
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(tc_account: &signer) {
     let add_all_currencies = false;
 
-    LibraAccount::create_parent_vasp_account<Coin1>(
+    DiemAccount::create_parent_vasp_account<XUS>(
         tc_account,
         {{alice}},
         {{alice::auth_key}},
@@ -100,7 +100,7 @@ fun main(tc_account: &signer) {
         add_all_currencies,
     );
 
-    LibraAccount::create_parent_vasp_account<COIN>(
+    DiemAccount::create_parent_vasp_account<COIN>(
         tc_account,
         {{bob}},
         {{bob::auth_key}},
@@ -115,12 +115,12 @@ fun main(tc_account: &signer) {
 //! new-transaction
 //! sender: richie
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    let with_cap = LibraAccount::extract_withdraw_capability(account);
-    LibraAccount::pay_from<Coin1>(&with_cap, {{alice}}, 10, x"", x"");
-    LibraAccount::restore_withdraw_capability(with_cap);
+    let with_cap = DiemAccount::extract_withdraw_capability(account);
+    DiemAccount::pay_from<XUS>(&with_cap, {{alice}}, 10, x"", x"");
+    DiemAccount::restore_withdraw_capability(with_cap);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -129,12 +129,12 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: sally
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 use 0x1::COIN::COIN;
 fun main(account: &signer) {
-    let with_cap = LibraAccount::extract_withdraw_capability(account);
-    LibraAccount::pay_from<COIN>(&with_cap, {{bob}}, 10, x"", x"");
-    LibraAccount::restore_withdraw_capability(with_cap);
+    let with_cap = DiemAccount::extract_withdraw_capability(account);
+    DiemAccount::pay_from<COIN>(&with_cap, {{bob}}, 10, x"", x"");
+    DiemAccount::restore_withdraw_capability(with_cap);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -142,10 +142,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 use 0x1::COIN::COIN;
 fun main(account: &signer) {
-    LibraAccount::add_currency<COIN>(account);
+    DiemAccount::add_currency<COIN>(account);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -153,10 +153,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: bob
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    LibraAccount::add_currency<Coin1>(account);
+    DiemAccount::add_currency<XUS>(account);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -165,21 +165,21 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    LibraAccount::add_currency<u64>(account);
+    DiemAccount::add_currency<u64>(account);
 }
 }
 // check: "Keep(ABORTED { code: 261,"
 
-// Adding Coin1 a second time should fail with ADD_EXISTING_CURRENCY
+// Adding XUS a second time should fail with ADD_EXISTING_CURRENCY
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    LibraAccount::add_currency<Coin1>(account);
+    DiemAccount::add_currency<XUS>(account);
 }
 }
 // check: "Keep(ABORTED { code: 3846,"
@@ -187,14 +187,14 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::LibraAccount;
-use 0x1::Coin1::Coin1;
+use 0x1::DiemAccount;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    let with_cap = LibraAccount::extract_withdraw_capability(account);
-    LibraAccount::pay_from<Coin1>(&with_cap, {{bob}}, 10, x"", x"");
-    LibraAccount::restore_withdraw_capability(with_cap);
-    assert(LibraAccount::balance<Coin1>({{alice}}) == 0, 0);
-    assert(LibraAccount::balance<Coin1>({{bob}}) == 10, 1);
+    let with_cap = DiemAccount::extract_withdraw_capability(account);
+    DiemAccount::pay_from<XUS>(&with_cap, {{bob}}, 10, x"", x"");
+    DiemAccount::restore_withdraw_capability(with_cap);
+    assert(DiemAccount::balance<XUS>({{alice}}) == 0, 0);
+    assert(DiemAccount::balance<XUS>({{bob}}) == 10, 1);
 }
 }
 // check: "Keep(EXECUTED)"
@@ -202,18 +202,18 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: bob
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 use 0x1::COIN::COIN;
-use 0x1::Coin1::Coin1;
+use 0x1::XUS::XUS;
 fun main(account: &signer) {
-    let with_cap = LibraAccount::extract_withdraw_capability(account);
-    LibraAccount::pay_from<COIN>(&with_cap, {{alice}}, 10, x"", x"");
-    LibraAccount::pay_from<Coin1>(&with_cap, {{alice}}, 10, x"", x"");
-    LibraAccount::restore_withdraw_capability(with_cap);
-    assert(LibraAccount::balance<Coin1>({{bob}}) == 0, 2);
-    assert(LibraAccount::balance<COIN>({{bob}}) == 0, 3);
-    assert(LibraAccount::balance<Coin1>({{alice}}) == 10, 4);
-    assert(LibraAccount::balance<COIN>({{alice}}) == 10, 5);
+    let with_cap = DiemAccount::extract_withdraw_capability(account);
+    DiemAccount::pay_from<COIN>(&with_cap, {{alice}}, 10, x"", x"");
+    DiemAccount::pay_from<XUS>(&with_cap, {{alice}}, 10, x"", x"");
+    DiemAccount::restore_withdraw_capability(with_cap);
+    assert(DiemAccount::balance<XUS>({{bob}}) == 0, 2);
+    assert(DiemAccount::balance<COIN>({{bob}}) == 0, 3);
+    assert(DiemAccount::balance<XUS>({{alice}}) == 10, 4);
+    assert(DiemAccount::balance<COIN>({{alice}}) == 10, 5);
 }
 }
 // check: "Keep(EXECUTED)"

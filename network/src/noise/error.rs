@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_crypto::{noise::NoiseError, x25519::PublicKey};
+use diem_crypto::noise::NoiseError;
 use diem_types::PeerId;
 use short_hex_str::ShortHexStr;
 use std::io;
@@ -60,10 +60,9 @@ pub enum NoiseHandshakeError {
 
     #[error(
         "noise server: client {0}: client's self-reported peer id and pubkey-derived peer \
-         id don't match: self-reported: {1}, derived: {2}, \
-         remote: {3}"
+         id don't match: self-reported: {1}, derived: {2}"
     )]
-    ClientPeerIdMismatch(ShortHexStr, PeerId, PeerId, PublicKey),
+    ClientPeerIdMismatch(ShortHexStr, PeerId, PeerId),
 
     #[error("noise server: client {0}: handshake message is missing the anti-replay timestamp")]
     MissingAntiReplayTimestamp(ShortHexStr),
@@ -86,9 +85,6 @@ impl NoiseHandshakeError {
     /// immediately alert an engineer if we hit one of these errors.
     pub fn should_security_log(&self) -> bool {
         use NoiseHandshakeError::*;
-        match self {
-            ServerReplayDetected(_, _) => true,
-            _ => false,
-        }
+        matches!(self, ServerReplayDetected(_, _))
     }
 }

@@ -20,8 +20,9 @@ List of released stable methods (unless specifically mentioned, all parameters a
 
 ## Official Client SDKs
 
-* [Go] (https://github.com/diem/diem-client-sdk-go)
-* [Java] (https://github.com/diem/diem-client-sdk-java)
+* [Go] (https://github.com/diem/client-sdk-go)
+* [Java] (https://github.com/diem/client-sdk-java)
+* [Python] (https://github.com/diem/client-sdk-python)
 
 
 ## JSON-RPC specification
@@ -81,5 +82,32 @@ Unless specifically mentioned below, Diem JSON-RPC will return the default error
 ## Versioning
 
 We use URI versioning to version our API, current version is v1.
-For example, to hit testnet, the server url is: https://testnet.diem.org/v1.
+For example, to hit testnet, the server url is: https://testnet.diem.com/v1.
 You may check [API-CHANGELOG.md](API-CHANGELOG.md) and learn more about our API changes.
+
+## CORS support
+
+[CORS](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing) support is embeded.
+
+Allows:
+* Origin: any
+* Request-Method: POST
+* Request-Headers: content-type
+
+## HTTP Response Headers Extensions
+
+All Diem JSON-RPC server responses include the following headers:
+
+* `X-Diem-Chain-Id`: network chain id, e.g. testnet chain id is 2
+* `X-Diem-Ledger-Version`: server-side latest ledger version number
+* `X-Diem-Ledger-TimestampUsec`: server-side latest ledger timestamp microseconds
+
+These headers are similar with [Diem extensions](#diem-extensions), except the value type is all string.
+
+## Experimental APIs
+
+The following APIs are experimental APIs. They are unstable and likely to be changed.
+
+* get_state_proof
+* get_account_state_with_proof
+* get_transactions_with_proofs

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 //! Translates and validates specification language fragments as they are output from the Move
@@ -4235,7 +4235,7 @@ impl<'env, 'translator, 'module_translator> ExpTranslator<'env, 'translator, 'mo
             }
             EA::Exp_::Call(maccess, type_params, args) => {
                 // Need to make a &[&Exp] out of args.
-                let args = args.value.iter().map(|e| e).collect_vec();
+                let args = args.value.iter().collect_vec();
                 self.translate_fun_call(
                     expected_type,
                     &loc,

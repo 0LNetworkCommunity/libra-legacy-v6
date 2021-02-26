@@ -14,13 +14,13 @@ mod internal_macros;
 pub mod io_utils;
 
 /// Utils for key derivation
-pub mod key_factory;
+mod key_factory;
 
 /// Utils for mnemonic seed
-pub mod mnemonic;
+mod mnemonic;
 
-/// Utils for wallet diemry
-mod wallet_diemry;
+/// Utils for wallet library
+mod wallet_library;
 
 /// Default imports
-pub use crate::{mnemonic::Mnemonic, wallet_diemry::WalletDiemry};
+pub use crate::{mnemonic::Mnemonic, wallet_library::WalletLibrary};

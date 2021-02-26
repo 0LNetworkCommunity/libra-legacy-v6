@@ -1,10 +1,10 @@
 [package]
 name = "test-generation"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem test generation"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -13,11 +13,11 @@ edition = "2018"
 rand = "0.7.3"
 num_cpus = "1.13.0"
 mirai-annotations = "1.10.1"
-structopt = "0.3.18"
+structopt = "0.3.21"
 itertools = "0.9.0"
 hex = "0.4.2"
 getrandom = "0.2.0"
-crossbeam-channel = "0.4.4"
+crossbeam-channel = "0.5.0"
 
 bytecode-verifier = { path = "../../bytecode-verifier", version = "0.1.0" }
 diem-config = { path = "../../../config", version = "0.1.0" }

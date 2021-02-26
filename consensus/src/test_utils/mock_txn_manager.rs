@@ -7,13 +7,13 @@ use consensus_types::{
     block::{block_test_utils::random_payload, Block},
     common::Payload,
 };
-use executor_types::StateComputeResult;
-use futures::channel::mpsc;
 use diem_mempool::ConsensusRequest;
 use diem_types::{
     transaction::TransactionStatus,
     vm_status::{KeptVMStatus, StatusCode},
 };
+use executor_types::StateComputeResult;
+use futures::channel::mpsc;
 use rand::Rng;
 
 #[derive(Clone)]

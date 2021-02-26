@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{utils::project_root, Result};
+use anyhow::Context;
+use determinator::rules::DeterminatorRules;
 use guppy::graph::summaries::CargoOptionsSummary;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     fs,
     path::{Path, PathBuf},
 };
@@ -25,7 +27,60 @@ pub struct Config {
     fix: Fix,
     /// Cargo configuration
     cargo: CargoConfig,
-    tools: Vec<(String, String)>,
+    grcov: CargoTool,
+    /// Determinator configuration
+    determinator: DeterminatorRules,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub struct CargoTool {
+    pub installer: CargoInstallation,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub struct Sccache {
+    /// Sccache Url
+    pub installer: CargoInstallation,
+    /// Where cargo home must reside for sccache to function properly.  Paths are embedded in binaries by rustc.
+    pub required_cargo_home: String,
+    /// Where the git repo for this project must reside.  Paths are embedded in binaries by rustc.
+    pub required_git_home: String,
+    /// s3 bucket location
+    pub bucket: String,
+    /// prefix to files uploaded in to s3
+    pub prefix: Option<String>,
+    /// utility of this seems to change in stable/vs rusoto, left for completeness.
+    pub endpoint: Option<String>,
+    /// AWS region of the bucket if necessary.
+    pub region: Option<String>,
+    /// Only used in stable, sscache delete when rusoto is merged in
+    pub ssl: Option<bool>,
+    /// If the bucket is public
+    pub public: Option<bool>,
+    /// Extra environment variables to set for the sccache server.
+    pub envs: Option<Vec<(String, String)>>,
+}
+///
+/// These can be passed to the installer.rs, which can check the installation against the version number supplied,
+/// or install the cargo tool via either githash/repo if provided or with simply the version if the artifact is released
+/// to crates.io.
+///
+/// Unfortunately there is no gaurantee that the installation is correct if the version numbers match as the githash
+/// is not stored by default in the version number.
+///
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub struct CargoInstallation {
+    /// The version string that must match the installation, otherwise a fresh installation will occure.
+    pub version: String,
+    /// Overrides the default install with a specific git repo. git-rev is required.
+    pub git: Option<String>,
+    /// only used if the git url is set.  This is the full git hash.
+    pub git_rev: Option<String>,
+    /// features to enable in the installation.
+    pub features: Option<Vec<String>>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -47,6 +102,8 @@ pub struct SummariesConfig {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct WorkspaceConfig {
+    /// Allowed characters in file paths. Regex must have ^ and $ anchors.
+    pub allowed_paths: String,
     /// Attributes to enforce on workspace crates
     pub enforced_attributes: EnforcedAttributesConfig,
     /// Banned dependencies
@@ -55,6 +112,8 @@ pub struct WorkspaceConfig {
     pub overlay: OverlayConfig,
     /// Test-only config in this workspace
     pub test_only: TestOnlyConfig,
+    /// Exceptions to whitespace linters
+    pub whitespace_exceptions: Vec<String>,
     /// Subsets of this workspace
     pub subsets: BTreeMap<String, SubsetConfig>,
 }
@@ -87,15 +146,15 @@ pub struct OverlayConfig {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct TestOnlyConfig {
-    /// A list of test-only members
-    pub members: HashSet<PathBuf>,
+    /// A list of test-only workspace names
+    pub members: Vec<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SubsetConfig {
     /// The members in this subset
-    pub members: HashSet<PathBuf>,
+    pub members: Vec<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -114,12 +173,16 @@ pub struct Fix {}
 pub struct CargoConfig {
     pub toolchain: String,
     pub flags: Option<String>,
+    pub sccache: Option<Sccache>,
 }
 
 impl Config {
     pub fn from_file(f: impl AsRef<Path>) -> Result<Self> {
-        let contents = fs::read(f)?;
-        Self::from_toml(&contents).map_err(Into::into)
+        let f = f.as_ref();
+        let contents =
+            fs::read(f).with_context(|| format!("could not read config file {}", f.display()))?;
+        Self::from_toml(&contents)
+            .with_context(|| format!("could not parse config file {}", f.display()))
     }
 
     pub fn from_toml(bytes: &[u8]) -> Result<Self> {
@@ -154,7 +217,19 @@ impl Config {
         &self.clippy.warn
     }
 
-    pub fn tools(&self) -> &[(String, String)] {
-        &self.tools
+    pub fn tools(&self) -> Vec<(String, CargoInstallation)> {
+        let mut tools = vec![("grcov".to_owned(), self.grcov().installer.to_owned())];
+        if let Some(sccache) = &self.cargo_config().sccache {
+            tools.push(("sccache".to_owned(), sccache.installer.to_owned()));
+        }
+        tools
+    }
+
+    pub fn grcov(&self) -> &CargoTool {
+        &self.grcov
+    }
+
+    pub fn determinator_rules(&self) -> &DeterminatorRules {
+        &self.determinator
     }
 }

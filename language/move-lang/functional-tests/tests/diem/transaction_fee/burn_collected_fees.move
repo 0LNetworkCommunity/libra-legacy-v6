@@ -1,10 +1,10 @@
-//! account: bob, 10000Coin1
+//! account: bob, 10000XUS
 
 //! new-transaction
 //! sender: bob
 //! max-gas: 700
 //! gas-price: 1
-//! gas-currency: Coin1
+//! gas-currency: XUS
 script {
     fun main() { while (true) {} }
 }
@@ -14,7 +14,7 @@ script {
 
 //! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 script {
 use 0x1::TransactionFee;
 fun burn_txn_fees<CoinType>(blessed_account: &signer) {
@@ -29,7 +29,7 @@ fun burn_txn_fees<CoinType>(blessed_account: &signer) {
 
 //! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 script {
 use 0x1::TransactionFee;
 fun burn_txn_fees<CoinType>(blessed_account: &signer) {

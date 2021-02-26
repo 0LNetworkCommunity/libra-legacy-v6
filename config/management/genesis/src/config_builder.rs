@@ -16,8 +16,8 @@ use diem_temppath::TempPath;
 use diem_types::{chain_id::ChainId, waypoint::Waypoint};
 use std::path::{Path, PathBuf};
 
-const LIBRA_ROOT_NS: &str = "diem_root";
-const LIBRA_ROOT_SHARED_NS: &str = "diem_root_shared";
+const DIEM_ROOT_NS: &str = "diem_root";
+const DIEM_ROOT_SHARED_NS: &str = "diem_root_shared";
 const OPERATOR_NS: &str = "_operator";
 const OPERATOR_SHARED_NS: &str = "_operator_shared";
 const OWNER_NS: &str = "_owner";
@@ -64,8 +64,8 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
     /// Association uploads the validator layout to shared storage.
     fn create_layout(&self) {
         let mut layout = Layout::default();
-        // layout.diem_root = LIBRA_ROOT_SHARED_NS.into();
-        // layout.treasury_compliance = LIBRA_ROOT_SHARED_NS.into();
+        layout.diem_root = DIEM_ROOT_SHARED_NS.into();
+        layout.treasury_compliance = DIEM_ROOT_SHARED_NS.into();
         layout.owners = (0..self.num_validators)
             .map(|i| (i.to_string() + OWNER_SHARED_NS))
             .collect();
@@ -81,12 +81,12 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
     /// Root initializes diem root and treasury root keys.
     fn create_root(&self) {
         self.storage_helper
-            .initialize_by_idx(LIBRA_ROOT_NS.into(), 0);
+            .initialize_by_idx(DIEM_ROOT_NS.into(), 0);
         self.storage_helper
-            .diem_root_key(LIBRA_ROOT_NS, LIBRA_ROOT_SHARED_NS)
+            .diem_root_key(DIEM_ROOT_NS, DIEM_ROOT_SHARED_NS)
             .unwrap();
         self.storage_helper
-            .treasury_compliance_key(LIBRA_ROOT_NS, LIBRA_ROOT_SHARED_NS)
+            .treasury_compliance_key(DIEM_ROOT_NS, DIEM_ROOT_SHARED_NS)
             .unwrap();
     }
 
@@ -97,11 +97,6 @@ impl<T: AsRef<Path>> ValidatorBuilder<T> {
 
         self.storage_helper
             .initialize_by_idx(local_ns.clone(), 1 + index);
-        
-        //////// 0L /////////
-        self.storage_helper
-            .swarm_pow_helper(remote_ns.clone());
-
         let _ = self
             .storage_helper
             .owner_key(&local_ns, &remote_ns)
@@ -212,11 +207,10 @@ impl<T: AsRef<Path>> BuildSwarm for ValidatorBuilder<T> {
     fn build_swarm(&self) -> anyhow::Result<(Vec<NodeConfig>, Ed25519PrivateKey)> {
         self.create_layout();
         self.create_root();
-        // let diem_root_key = Ed25519PrivateKey::generate(&mut rng);
         let diem_root_key = self
             .storage_helper
-            .storage(LIBRA_ROOT_NS.into())
-            .export_private_key(diem_global_constants::LIBRA_ROOT_KEY)
+            .storage(DIEM_ROOT_NS.into())
+            .export_private_key(diem_global_constants::DIEM_ROOT_KEY)
             .unwrap();
 
         // Upload both owner and operator keys to shared storage

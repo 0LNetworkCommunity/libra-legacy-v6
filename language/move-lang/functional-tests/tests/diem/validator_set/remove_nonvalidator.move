@@ -5,10 +5,10 @@
 
 //! sender: alice
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // alice cannot remove herself
-        LibraSystem::remove_validator(account, {{alice}});
+        DiemSystem::remove_validator(account, {{alice}});
     }
 }
 
@@ -17,10 +17,10 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // alice cannot remove bob
-        LibraSystem::remove_validator(account, {{bob}});
+        DiemSystem::remove_validator(account, {{bob}});
     }
 }
 
@@ -29,10 +29,10 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::LibraSystem;
+    use 0x1::DiemSystem;
     fun main(account: &signer) {
         // bob cannot remove alice
-        LibraSystem::remove_validator(account, {{alice}});
+        DiemSystem::remove_validator(account, {{alice}});
     }
 }
 

@@ -1,6 +1,6 @@
 ---
 id: docker_compose
-title: Libra Docker-Compose Configuration
+title: Diem Docker-Compose Configuration
 custom_edit_url: https://github.com/diem/diem/edit/master/docker/compose/README.md
 ---
 

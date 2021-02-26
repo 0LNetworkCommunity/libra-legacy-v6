@@ -9,8 +9,8 @@ use crate::storage::{
         test_write_and_read_impl,
     },
 };
-use futures::Future;
 use diem_temppath::TempPath;
+use futures::Future;
 use proptest::prelude::*;
 use std::str::FromStr;
 use tokio::runtime::Runtime;

@@ -1,14 +1,14 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::{bail, Result};
+use diem_types::account_address::AccountAddress as DiemAddress;
 use functional_tests::{
     compiler::{Compiler, ScriptOrModule},
     testsuite,
 };
-use diem_types::account_address::AccountAddress as LibraAddress;
 use move_lang::{
-    compiled_unit::CompiledUnit, move_compile_no_report, shared::Address, test_utils::read_bool_var,
+    command_line::read_bool_env_var, compiled_unit::CompiledUnit, move_compile, shared::Address,
 };
 use std::{convert::TryFrom, fmt, io::Write, path::Path};
 use tempfile::NamedTempFile;
@@ -46,7 +46,7 @@ impl Compiler for MoveSourceCompiler {
     fn compile<Logger: FnMut(String)>(
         &mut self,
         _log: Logger,
-        address: LibraAddress,
+        address: DiemAddress,
         input: &str,
     ) -> Result<ScriptOrModule> {
         let cur_file = NamedTempFile::new()?;
@@ -56,10 +56,10 @@ impl Compiler for MoveSourceCompiler {
 
         let targets = &vec![cur_path.clone()];
         let sender = Some(sender_addr);
-        let (files, units_or_errors) = move_compile_no_report(targets, &self.deps, sender, None)?;
+        let (files, units_or_errors) = move_compile(targets, &self.deps, sender, None)?;
         let unit = match units_or_errors {
             Err(errors) => {
-                let error_buffer = if read_bool_var(testsuite::PRETTY) {
+                let error_buffer = if read_bool_env_var(testsuite::PRETTY) {
                     move_lang::errors::report_errors_to_color_buffer(files, errors)
                 } else {
                     move_lang::errors::report_errors_to_buffer(files, errors)

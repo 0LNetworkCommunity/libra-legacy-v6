@@ -1,9 +1,9 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
     account_address::AccountAddress,
-    account_config::COIN1_NAME,
+    account_config::XUS_NAME,
     account_state_blob::AccountStateBlob,
     block_metadata::BlockMetadata,
     chain_id::ChainId,
@@ -22,7 +22,7 @@ use diem_crypto::{
     traits::SigningKey,
     HashValue,
 };
-use diem_crypto_derive::{CryptoHasher, LCSCryptoHash};
+use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -54,7 +54,7 @@ pub type Version = u64; // Height - also used for MVCC in StateDB
 pub const PRE_GENESIS_VERSION: Version = u64::max_value();
 
 /// RawTransaction is the portion of a transaction that a client signs.
-#[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 pub struct RawTransaction {
     /// Sender's address.
     sender: AccountAddress,
@@ -72,7 +72,7 @@ pub struct RawTransaction {
     /// Price to be paid per gas unit.
     gas_unit_price: u64,
 
-    /// The currency code, e.g., "Coin1", used to pay for gas. The `max_gas_amount`
+    /// The currency code, e.g., "XUS", used to pay for gas. The `max_gas_amount`
     /// and `gas_unit_price` values refer to units of this currency.
     gas_currency_code: String,
 
@@ -83,7 +83,7 @@ pub struct RawTransaction {
     /// in the future to indicate that a transaction does not expire.
     expiration_timestamp_secs: u64,
 
-    /// Chain ID of the Libra network this transaction is intended for.
+    /// Chain ID of the Diem network this transaction is intended for.
     chain_id: ChainId,
 }
 
@@ -192,7 +192,7 @@ impl RawTransaction {
             // Since write-set transactions bypass the VM, these fields aren't relevant.
             max_gas_amount: 0,
             gas_unit_price: 0,
-            gas_currency_code: COIN1_NAME.to_owned(),
+            gas_currency_code: XUS_NAME.to_owned(),
             // Write-set transactions are special and important and shouldn't expire.
             expiration_timestamp_secs: u64::max_value(),
             chain_id,
@@ -216,7 +216,7 @@ impl RawTransaction {
             // Since write-set transactions bypass the VM, these fields aren't relevant.
             max_gas_amount: 0,
             gas_unit_price: 0,
-            gas_currency_code: COIN1_NAME.to_owned(),
+            gas_currency_code: XUS_NAME.to_owned(),
             // Write-set transactions are special and important and shouldn't expire.
             expiration_timestamp_secs: u64::max_value(),
             chain_id,
@@ -464,7 +464,7 @@ impl SignedTransaction {
     }
 
     pub fn raw_txn_bytes_len(&self) -> usize {
-        lcs::to_bytes(&self.raw_txn)
+        bcs::to_bytes(&self.raw_txn)
             .expect("Unable to serialize RawTransaction")
             .len()
     }
@@ -584,7 +584,7 @@ pub enum TransactionStatus {
     /// Keep the transaction output
     Keep(KeptVMStatus),
 
-    /// Retry the transaction because it is after a ValidatorSetChange txn
+    /// Retry the transaction, e.g., after a reconfiguration
     Retry,
 }
 
@@ -617,7 +617,7 @@ impl From<VMStatus> for TransactionStatus {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum GovernanceRole {
-    LibraRoot,
+    DiemRoot,
     TreasuryCompliance,
     Validator,
     ValidatorOperator,
@@ -629,7 +629,7 @@ impl GovernanceRole {
     pub fn from_role_id(role_id: u64) -> Self {
         use GovernanceRole::*;
         match role_id {
-            0 => LibraRoot,
+            0 => DiemRoot,
             1 => TreasuryCompliance,
             2 => DesignatedDealer,
             3 => Validator,
@@ -645,7 +645,7 @@ impl GovernanceRole {
     pub fn priority(&self) -> u64 {
         use GovernanceRole::*;
         match self {
-            LibraRoot => 3,
+            DiemRoot => 3,
             TreasuryCompliance => 2,
             Validator | ValidatorOperator | DesignatedDealer => 1,
             NonGovernanceRole => 0,
@@ -757,7 +757,7 @@ impl TransactionOutput {
 
 /// `TransactionInfo` is the object we store in the transaction accumulator. It consists of the
 /// transaction as well as the execution result of this transaction.
-#[derive(Clone, CryptoHasher, LCSCryptoHash, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, CryptoHasher, BCSCryptoHash, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct TransactionInfo {
     /// The hash of this transaction.
@@ -989,7 +989,7 @@ impl TransactionListWithProof {
 /// transaction.
 #[allow(clippy::large_enum_variant)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, LCSCryptoHash)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, CryptoHasher, BCSCryptoHash)]
 pub enum Transaction {
     /// Transaction submitted by the user. e.g: P2P payment transaction, publishing module
     /// transaction, etc.

@@ -26,6 +26,10 @@ use crate::{
 use anyhow::format_err;
 use bytes::Bytes;
 use channel::{self, diem_channel};
+use diem_config::network_id::NetworkContext;
+use diem_logger::prelude::*;
+use diem_network_address::NetworkAddress;
+use diem_types::PeerId;
 use futures::{
     channel::oneshot,
     future::{BoxFuture, FutureExt},
@@ -33,10 +37,6 @@ use futures::{
     sink::SinkExt,
     stream::{Fuse, FuturesUnordered, StreamExt},
 };
-use diem_config::network_id::NetworkContext;
-use diem_logger::prelude::*;
-use diem_network_address::NetworkAddress;
-use diem_types::PeerId;
 use netcore::transport::{ConnectionOrigin, Transport};
 use serde::Serialize;
 use std::{
@@ -287,6 +287,8 @@ where
     channel_size: usize,
     /// Max network frame size
     max_frame_size: usize,
+    /// Inbound connection limit separate of outbound connections
+    inbound_connection_limit: usize,
 }
 
 impl<TTransport, TSocket> PeerManager<TTransport, TSocket>
@@ -312,6 +314,7 @@ where
         max_concurrent_network_reqs: usize,
         max_concurrent_network_notifs: usize,
         max_frame_size: usize,
+        inbound_connection_limit: usize,
     ) -> Self {
         let (transport_notifs_tx, transport_notifs_rx) = channel::new(
             channel_size,
@@ -350,6 +353,7 @@ where
             max_concurrent_network_notifs,
             channel_size,
             max_frame_size,
+            inbound_connection_limit,
         }
     }
 
@@ -363,7 +367,7 @@ where
         let outbound = total.saturating_sub(inbound);
         let role = self.network_context.role().as_str();
 
-        counters::LIBRA_NETWORK_PEERS
+        counters::DIEM_NETWORK_PEERS
             .with_label_values(&[role, "connected"])
             .set(total as i64);
 
@@ -441,15 +445,41 @@ where
         self.sample_connected_peers();
         match event {
             TransportNotification::NewConnection(conn) => {
-                info!(
-                    NetworkSchema::new(&self.network_context)
-                        .connection_metadata_with_address(&conn.metadata),
-                    "{} New connection established: {}", self.network_context, conn.metadata
-                );
+                // TODO: Keep track of somewhere else to not take this hit in case of DDoS
+                let inbound_conns = self
+                    .active_peers
+                    .iter()
+                    .filter(|(_, (metadata, _))| metadata.origin == ConnectionOrigin::Inbound)
+                    .count();
 
-                // Update diem_network_peer counter.
-                self.add_peer(conn);
-                self.update_connected_peers_metrics();
+                // Reject excessive inbound connections by letting them just drop out of scope
+                // We control outbound connections with Connectivity manager before we even send them
+                // and we must allow connections that already exist to pass through tie breaking.
+                // TODO: Allow for trusted peers to still connect
+                if conn.metadata.origin == ConnectionOrigin::Outbound
+                    || self
+                        .active_peers
+                        .contains_key(&conn.metadata.remote_peer_id)
+                    || inbound_conns < self.inbound_connection_limit
+                {
+                    info!(
+                        NetworkSchema::new(&self.network_context)
+                            .connection_metadata_with_address(&conn.metadata),
+                        "{} New connection established: {}", self.network_context, conn.metadata
+                    );
+                    // Add new peer, updating counters and all
+                    self.add_peer(conn);
+                    self.update_connected_peers_metrics();
+                } else {
+                    info!(
+                        NetworkSchema::new(&self.network_context)
+                            .connection_metadata_with_address(&conn.metadata),
+                        "{} Connection rejected due to connection limit: {}",
+                        self.network_context,
+                        conn.metadata
+                    );
+                    self.disconnect(conn);
+                }
             }
             TransportNotification::Disconnected(lost_conn_metadata, reason) => {
                 // See: https://github.com/diem/diem/issues/3128#issuecomment-605351504 for
@@ -668,6 +698,30 @@ where
         }
     }
 
+    fn disconnect(&mut self, connection: Connection<TSocket>) {
+        let network_context = self.network_context.clone();
+
+        // Close connection, and drop it
+        let drop_fut = async move {
+            let mut connection = connection;
+            let peer_id = connection.metadata.remote_peer_id;
+            if let Err(e) =
+                tokio::time::timeout(transport::TRANSPORT_TIMEOUT, connection.socket.close()).await
+            {
+                error!(
+                    NetworkSchema::new(&network_context)
+                        .remote_peer(&peer_id),
+                    error = %e,
+                    "{} Closing connection with Peer {} failed with error: {}",
+                    network_context,
+                    peer_id.short_str(),
+                    e
+                );
+            };
+        };
+        self.executor.spawn(drop_fut);
+    }
+
     fn add_peer(&mut self, connection: Connection<TSocket>) {
         let conn_meta = connection.metadata.clone();
         let peer_id = conn_meta.remote_peer_id;
@@ -701,28 +755,8 @@ where
                     self.network_context,
                     peer_id.short_str()
                 );
-                let network_context = self.network_context.clone();
                 // Drop the new connection and keep the one already stored in active_peers
-                let drop_fut = async move {
-                    let mut connection = connection;
-                    if let Err(e) = tokio::time::timeout(
-                        transport::TRANSPORT_TIMEOUT,
-                        connection.socket.close(),
-                    )
-                    .await
-                    {
-                        error!(
-                            NetworkSchema::new(&network_context)
-                                .remote_peer(&peer_id),
-                            error = %e,
-                            "{} Closing connection with Peer {} failed with error: {}",
-                            network_context,
-                            peer_id.short_str(),
-                            e
-                        );
-                    };
-                };
-                self.executor.spawn(drop_fut);
+                self.disconnect(connection);
                 return;
             }
         }

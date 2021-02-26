@@ -13,12 +13,12 @@
 //! new-transaction
 //! sender: blessed
 script {
-use 0x1::Coin1::Coin1;
-use 0x1::LibraAccount;
+use 0x1::XUS::XUS;
+use 0x1::DiemAccount;
 fun main(tc_account: &signer) {
     let add_all_currencies = false;
 
-    LibraAccount::create_parent_vasp_account<Coin1>(
+    DiemAccount::create_parent_vasp_account<XUS>(
         tc_account,
         {{parent1}},
         {{parent1::auth_key}},
@@ -26,7 +26,7 @@ fun main(tc_account: &signer) {
         add_all_currencies,
     );
 
-    LibraAccount::create_parent_vasp_account<Coin1>(
+    DiemAccount::create_parent_vasp_account<XUS>(
         tc_account,
         {{parent2}},
         {{parent2::auth_key}},
@@ -42,11 +42,11 @@ fun main(tc_account: &signer) {
 //! new-transaction
 //! sender: parent1
 script {
-use 0x1::Coin1::Coin1;
-use 0x1::LibraAccount;
+use 0x1::XUS::XUS;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    LibraAccount::create_child_vasp_account<Coin1>(account, {{child1}}, {{child1::auth_key}}, false);
-    LibraAccount::create_child_vasp_account<Coin1>(account, {{child2}}, {{child2::auth_key}}, false)
+    DiemAccount::create_child_vasp_account<XUS>(account, {{child1}}, {{child1::auth_key}}, false);
+    DiemAccount::create_child_vasp_account<XUS>(account, {{child2}}, {{child2::auth_key}}, false)
 }
 }
 // check: "Keep(EXECUTED)"
@@ -57,10 +57,10 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: child1
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 use 0x1::RecoveryAddress;
 fun main(account: &signer) {
-    RecoveryAddress::publish(account, LibraAccount::extract_key_rotation_capability(account))
+    RecoveryAddress::publish(account, DiemAccount::extract_key_rotation_capability(account))
 }
 }
 // check: "Keep(EXECUTED)"
@@ -69,11 +69,11 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: parent1
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 use 0x1::RecoveryAddress;
 fun main(account: &signer) {
     RecoveryAddress::add_rotation_capability(
-        LibraAccount::extract_key_rotation_capability(account), {{child1}}
+        DiemAccount::extract_key_rotation_capability(account), {{child1}}
     );
 }
 }
@@ -85,11 +85,11 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: parent2
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 use 0x1::RecoveryAddress;
 fun main(account: &signer) {
     RecoveryAddress::add_rotation_capability(
-        LibraAccount::extract_key_rotation_capability(account), {{child1}}
+        DiemAccount::extract_key_rotation_capability(account), {{child1}}
     )
 }
 }
@@ -99,11 +99,11 @@ fun main(account: &signer) {
 //! new-transaction
 //! sender: parent2
 script {
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 use 0x1::RecoveryAddress;
 fun main(account: &signer) {
     RecoveryAddress::add_rotation_capability(
-        LibraAccount::extract_key_rotation_capability(account), 0x3333
+        DiemAccount::extract_key_rotation_capability(account), 0x3333
     )
 }
 }
@@ -152,9 +152,9 @@ fun main(account: &signer) {
 //! sender: blessed
 script {
 use 0x1::RecoveryAddress;
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    RecoveryAddress::publish(account, LibraAccount::extract_key_rotation_capability(account))
+    RecoveryAddress::publish(account, DiemAccount::extract_key_rotation_capability(account))
 }
 }
 // check: "ABORTED { code: 7,"
@@ -175,14 +175,14 @@ module Holder {
 
 //! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 //! args: 0, {{vasp1}}, {{vasp1::auth_key}}, b"bob", true
 stdlib_script::create_parent_vasp_account
 // check: "Keep(EXECUTED)"
 
 //! new-transaction
 //! sender: blessed
-//! type-args: 0x1::Coin1::Coin1
+//! type-args: 0x1::XUS::XUS
 //! args: 0, {{vasp2}}, {{vasp2::auth_key}}, b"bob", true
 stdlib_script::create_parent_vasp_account
 // check: "Keep(EXECUTED)"
@@ -191,9 +191,9 @@ stdlib_script::create_parent_vasp_account
 //! sender: vasp1
 script {
 use {{default}}::Holder;
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    Holder::hold(account, LibraAccount::extract_key_rotation_capability(account));
+    Holder::hold(account, DiemAccount::extract_key_rotation_capability(account));
 }
 }
 // check: "Keep(EXECUTED)"
@@ -204,9 +204,9 @@ fun main(account: &signer) {
 script {
 use 0x1::RecoveryAddress;
 use {{default}}::Holder;
-use 0x1::LibraAccount;
+use 0x1::DiemAccount;
 fun main(account: &signer) {
-    let cap = Holder::get<LibraAccount::KeyRotationCapability>({{vasp1}});
+    let cap = Holder::get<DiemAccount::KeyRotationCapability>({{vasp1}});
     RecoveryAddress::publish(account, cap);
 }
 }

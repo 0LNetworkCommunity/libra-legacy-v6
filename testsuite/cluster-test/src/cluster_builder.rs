@@ -17,15 +17,15 @@ use crate::{
     },
 };
 use anyhow::{format_err, Result};
-use futures::future::try_join_all;
 use diem_logger::info;
+use futures::future::try_join_all;
 use std::{fs::File, io::Write, path::Path};
 use structopt::StructOpt;
 
 use consensus_types::safety_data::SafetyData;
 use diem_genesis_tool::layout::Layout;
 use diem_global_constants::{
-    CONSENSUS_KEY, EXECUTION_KEY, FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT, LIBRA_ROOT_KEY,
+    CONSENSUS_KEY, DIEM_ROOT_KEY, EXECUTION_KEY, FULLNODE_NETWORK_KEY, GENESIS_WAYPOINT,
     OPERATOR_KEY, OWNER_KEY, SAFETY_DATA, TREASURY_COMPLIANCE_KEY, VALIDATOR_NETWORK_ADDRESS_KEYS,
     VALIDATOR_NETWORK_KEY, WAYPOINT,
 };
@@ -36,7 +36,7 @@ use std::str::FromStr;
 
 const VAULT_TOKEN: &str = "root";
 const VAULT_PORT: u32 = 8200;
-const LIBRA_ROOT_NS: &str = "val-0";
+const DIEM_ROOT_NS: &str = "val-0";
 const VAULT_BACKEND: &str = "vault";
 const GENESIS_PATH: &str = "/tmp/genesis.blob";
 
@@ -372,13 +372,13 @@ impl ClusterBuilder {
                 true,
             ));
             if validator_index == 0 {
-                vault_storage.create_key(LIBRA_ROOT_KEY).map_err(|e| {
-                    format_err!("Failed to create {}__{} : {}", pod_name, LIBRA_ROOT_KEY, e)
+                vault_storage.create_key(DIEM_ROOT_KEY).map_err(|e| {
+                    format_err!("Failed to create {}__{} : {}", pod_name, DIEM_ROOT_KEY, e)
                 })?;
                 let key = vault_storage
-                    .export_private_key(LIBRA_ROOT_KEY)
+                    .export_private_key(DIEM_ROOT_KEY)
                     .map_err(|e| {
-                        format_err!("Failed to export {}__{} : {}", pod_name, LIBRA_ROOT_KEY, e)
+                        format_err!("Failed to export {}__{} : {}", pod_name, DIEM_ROOT_KEY, e)
                     })?;
                 vault_storage
                     .import_private_key(TREASURY_COMPLIANCE_KEY, key)
@@ -441,8 +441,8 @@ impl ClusterBuilder {
         let layout = Layout {
             owners: owners.clone(),
             operators: owners,
-            diem_root: LIBRA_ROOT_NS.to_string(),
-            treasury_compliance: LIBRA_ROOT_NS.to_string(),
+            diem_root: DIEM_ROOT_NS.to_string(),
+            treasury_compliance: DIEM_ROOT_NS.to_string(),
         };
         let layout_path = "/tmp/layout.yaml";
         write!(
@@ -475,8 +475,8 @@ impl ClusterBuilder {
                 VAULT_BACKEND,
                 format!("http://{}:{}", vault_nodes[0].internal_ip, VAULT_PORT).as_str(),
                 token_path,
-                LIBRA_ROOT_NS,
-                LIBRA_ROOT_NS,
+                DIEM_ROOT_NS,
+                DIEM_ROOT_NS,
             )
             .await
             .map_err(|e| format_err!("Failed to diem_root_key : {}", e))?;
@@ -485,8 +485,8 @@ impl ClusterBuilder {
                 VAULT_BACKEND,
                 format!("http://{}:{}", vault_nodes[0].internal_ip, VAULT_PORT).as_str(),
                 token_path,
-                LIBRA_ROOT_NS,
-                LIBRA_ROOT_NS,
+                DIEM_ROOT_NS,
+                DIEM_ROOT_NS,
             )
             .await
             .map_err(|e| format_err!("Failed to diem_root_key : {}", e))?;
@@ -569,7 +569,7 @@ impl ClusterBuilder {
         }
         genesis_helper
             .extract_private_key(
-                format!("{}__{}", LIBRA_ROOT_NS, LIBRA_ROOT_KEY).as_str(),
+                format!("{}__{}", DIEM_ROOT_NS, DIEM_ROOT_KEY).as_str(),
                 "/tmp/mint.key",
                 VAULT_BACKEND,
                 format!("http://{}:{}", vault_nodes[0].internal_ip, VAULT_PORT).as_str(),

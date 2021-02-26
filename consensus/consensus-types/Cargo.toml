@@ -1,19 +1,19 @@
 [package]
 name = "consensus-types"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 mirai-annotations = { version = "1.10.1", default-features = false }
 proptest = { version = "0.10.1", optional = true }
-serde = { version = "1.0.116", default-features = false }
+serde = { version = "1.0.117", default-features = false }
 
 executor-types = { path = "../../execution/executor-types", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
 diem-crypto-derive = { path = "../../crypto/crypto-derive", version = "0.1.0" }
 diem-infallible = { path = "../../common/infallible", version = "0.1.0" }

@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
@@ -284,7 +284,7 @@ impl AstDebug for ModuleDefinition {
             functions,
         } = self;
         if *is_source_module {
-            w.writeln("diemry module")
+            w.writeln("library module")
         } else {
             w.writeln("source module")
         }

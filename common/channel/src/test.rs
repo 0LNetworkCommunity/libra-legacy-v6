@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate as channel;
+use diem_metrics::IntGauge;
 use futures::{
     executor::block_on,
     task::{noop_waker, Context, Poll},
     FutureExt, SinkExt, StreamExt,
 };
-use diem_metrics::IntGauge;
 
 #[test]
 fn test_send() {

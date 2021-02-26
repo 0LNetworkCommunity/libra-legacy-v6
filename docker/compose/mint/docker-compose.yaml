@@ -12,7 +12,7 @@
 version: "3.8"
 services:
     mint:
-        image: diem/mint:master_f53da21f
+        image: libra/mint:master_f53da21f
         environment:
             AC_HOST: "172.16.1.3"
             AC_PORT: "8080"

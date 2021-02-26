@@ -11,8 +11,8 @@ use crate::{
     tx_emitter::EmitJobRequest,
 };
 use async_trait::async_trait;
-use futures::future::try_join_all;
 use diem_logger::prelude::*;
+use futures::future::try_join_all;
 use std::{
     collections::HashSet,
     env, fmt,

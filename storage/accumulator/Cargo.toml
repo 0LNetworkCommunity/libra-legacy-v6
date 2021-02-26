@@ -1,16 +1,16 @@
 [package]
 name = "accumulator"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem accumulator"
 repository = "https://github.com/diem/diem"
-homepage = "https://diem.org"
+homepage = "https://diem.com"
 license = "Apache-2.0"
 publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.33"
+anyhow = "1.0.34"
 diem-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
 mirai-annotations = "1.10.1"
 diem-types = { path = "../../types", version = "0.1.0" }

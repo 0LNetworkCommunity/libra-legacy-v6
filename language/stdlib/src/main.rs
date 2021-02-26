@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -15,21 +15,13 @@ use std::{
 use stdlib::*;
 use vm::{normalized::Module, CompiledModule};
 
-// for Upgrade oracle
-/// The output path under which staged files will be put
-pub const STAGED_OUTPUT_PATH: &str = "staged";
-/// The file name for the staged stdlib
-pub const STAGED_STDLIB_NAME: &str = "stdlib";
-/// The extension for staged files
-pub const STAGED_EXTENSION: &str = "mv";
-
 // Generates the compiled stdlib and transaction scripts. Until this is run changes to the source
 // modules/scripts, and changes in the Move compiler will not be reflected in the stdlib used for
 // genesis, and everywhere else across the code-base unless otherwise specified.
 fn main() {
     let cli = App::new("stdlib")
-        .name("Move standard diemry")
-        .author("The Libra Core Contributors")
+        .name("Move standard library")
+        .author("The Diem Core Contributors")
         .arg(
             Arg::with_name("no-doc")
                 .long("no-doc")
@@ -43,7 +35,7 @@ fn main() {
         )
         .arg(
             Arg::with_name("no-script-builder")
-                .long("no-script-builer")
+                .long("no-script-builder")
                 .help("do not generate script builders"),
         )
         .arg(
@@ -53,32 +45,22 @@ fn main() {
         )
         .arg(
             Arg::with_name("no-check-linking-layout-compatibility")
-                .long("no-check-linking-layout-compatiblity")
-                .help("do not print information about linking and layout compatibility between the old and new standard diemry"),
+                .long("no-check-linking-layout-compatibility")
+                .help("do not print information about linking and layout compatibility between the old and new standard library"),
         )
-        //////// 0L ////////
-        // for upgrade oracle
-        // 1. build the stdlib first cargo run -p stdlib --release
-        // 2. compile into one file cargo run -p stdlib --release -- --create_upgrade_payload
         .arg(
-            Arg::with_name("create-upgrade-payload")
-                .long("create-upgrade-payload")
-                .help("generate test/stdlib.mv for upgrade oracle"),
+            Arg::with_name("with-diagram")
+                .long("with-diagram")
+                .help("include diagrams in the stdlib documentation")
         );
     let matches = cli.get_matches();
-    // for upgrade oracle
-    let create_upgrade_payload =
-        matches.is_present("create-upgrade-payload");
-    let no_doc = 
-        create_upgrade_payload || matches.is_present("no-doc");
-    let no_script_abi = 
-        create_upgrade_payload || matches.is_present("no-script-abi");
-    let no_script_builder = 
-        create_upgrade_payload || matches.is_present("no-script-builder");
-    let no_compiler = 
-        create_upgrade_payload || matches.is_present("no-compiler");
+    let no_doc = matches.is_present("no-doc");
+    let no_script_abi = matches.is_present("no-script-abi");
+    let no_script_builder = matches.is_present("no-script-builder");
+    let no_compiler = matches.is_present("no-compiler");
     let no_check_linking_layout_compatibility =
-        create_upgrade_payload || matches.is_present("no-check-liking-layout-compatibility");
+        matches.is_present("no-check-liking-layout-compatibility");
+    let with_diagram = matches.is_present("with-diagram");
 
     // Make sure that the current directory is `language/stdlib` from now on.
     let exec_path = std::env::args().next().expect("path of the executable");
@@ -100,7 +82,7 @@ fn main() {
             || {
                 let mut module_path = PathBuf::from(COMPILED_OUTPUT_PATH);
                 module_path.push(COMPILED_STDLIB_DIR);
-                for f in datatest_stable::utils::iterate_directory(&module_path) {
+                for f in stdlib::utils::iterate_directory(&module_path) {
                     let mut bytes = Vec::new();
                     File::open(f)
                         .expect("Failed to open module bytecode file")
@@ -161,31 +143,7 @@ fn main() {
         );
     }
 
-    let staged_path = PathBuf::from(STAGED_OUTPUT_PATH);
-    std::fs::create_dir_all(&staged_path).unwrap();
-
-    if create_upgrade_payload {
-        time_it("Creating staged/stdlib.mv for upgrade oracle", || {
-            let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
-            module_path.push(STAGED_STDLIB_NAME);
-            module_path.set_extension(STAGED_EXTENSION);
-            let modules: Vec<Vec<u8>> = build_stdlib()
-                .values().into_iter()
-                .map(|compiled_module| {
-                    let mut ser = Vec::new();
-                    compiled_module.serialize(&mut ser).unwrap();
-                    ser
-                })
-                .collect();
-            let bytes = lcs::to_bytes(&modules).unwrap();
-            let mut module_file = File::create(module_path).unwrap();
-            module_file.write_all(&bytes).unwrap();
-        });
-    }
-
-
-    let txn_source_files =
-        datatest_stable::utils::iterate_directory(Path::new(TRANSACTION_SCRIPTS));
+    let txn_source_files = stdlib::utils::iterate_directory(Path::new(TRANSACTION_SCRIPTS));
     let transaction_files = filter_move_files(txn_source_files)
         .flat_map(|path| path.into_os_string().into_string().ok())
         .collect::<Vec<_>>();
@@ -209,12 +167,12 @@ fn main() {
         time_it("Generating stdlib documentation", || {
             std::fs::remove_dir_all(&STD_LIB_DOC_DIR).unwrap_or(());
             std::fs::create_dir_all(&STD_LIB_DOC_DIR).unwrap();
-            build_stdlib_doc();
+            build_stdlib_doc(with_diagram);
         });
         time_it("Generating script documentation", || {
             std::fs::remove_dir_all(&TRANSACTION_SCRIPTS_DOC_DIR).unwrap_or(());
             std::fs::create_dir_all(&TRANSACTION_SCRIPTS_DOC_DIR).unwrap();
-            build_transaction_script_doc(&transaction_files);
+            build_transaction_script_doc(&transaction_files, with_diagram);
         });
     }
 
@@ -237,13 +195,11 @@ fn main() {
         });
     }
 
-    if !create_upgrade_payload {
-        time_it("Generating error explanations", || {
-            build_stdlib_error_code_map()
-        });
+    time_it("Generating error explanations", || {
+        build_stdlib_error_code_map()
+    });
 
-        time_it("Generating packed types map", build_packed_types_map);
-    }
+    time_it("Generating packed types map", build_packed_types_map);
 }
 
 fn time_it<F>(msg: &str, mut f: F)

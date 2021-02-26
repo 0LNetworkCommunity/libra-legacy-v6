@@ -14,7 +14,8 @@ use diem_config::{
     config::{
         DiscoveryMethod, NetworkConfig, RoleType, CONNECTION_BACKOFF_BASE,
         CONNECTIVITY_CHECK_INTERVAL_MS, MAX_CONCURRENT_NETWORK_NOTIFS, MAX_CONCURRENT_NETWORK_REQS,
-        MAX_CONNECTION_DELAY_MS, MAX_FRAME_SIZE, MAX_FULLNODE_CONNECTIONS, NETWORK_CHANNEL_SIZE,
+        MAX_CONNECTION_DELAY_MS, MAX_FRAME_SIZE, MAX_FULLNODE_OUTBOUND_CONNECTIONS,
+        MAX_INBOUND_CONNECTIONS, NETWORK_CHANNEL_SIZE,
     },
     network_id::NetworkContext,
 };
@@ -89,6 +90,7 @@ impl NetworkBuilder {
         network_channel_size: usize,
         max_concurrent_network_reqs: usize,
         max_concurrent_network_notifs: usize,
+        inbound_connection_limit: usize,
     ) -> Self {
         // A network cannot exist without a PeerManager
         // TODO:  construct this in create and pass it to new() as a parameter. The complication is manual construction of NetworkBuilder in various tests.
@@ -103,6 +105,7 @@ impl NetworkBuilder {
             max_concurrent_network_notifs,
             max_frame_size,
             enable_proxy_protocol,
+            inbound_connection_limit,
         );
 
         NetworkBuilder {
@@ -137,13 +140,14 @@ impl NetworkBuilder {
             NETWORK_CHANNEL_SIZE,
             MAX_CONCURRENT_NETWORK_REQS,
             MAX_CONCURRENT_NETWORK_NOTIFS,
+            MAX_INBOUND_CONNECTIONS,
         );
 
         builder.add_connectivity_manager(
             seed_addrs,
             seed_pubkeys,
             trusted_peers,
-            MAX_FULLNODE_CONNECTIONS,
+            MAX_FULLNODE_OUTBOUND_CONNECTIONS,
             CONNECTION_BACKOFF_BASE,
             MAX_CONNECTION_DELAY_MS,
             CONNECTIVITY_CHECK_INTERVAL_MS,
@@ -183,6 +187,7 @@ impl NetworkBuilder {
             config.network_channel_size,
             config.max_concurrent_network_reqs,
             config.max_concurrent_network_notifs,
+            config.max_inbound_connections,
         );
 
         network_builder.add_connection_monitoring(
@@ -216,7 +221,7 @@ impl NetworkBuilder {
                 config.seed_addrs.clone(),
                 config.seed_pubkeys.clone(),
                 trusted_peers,
-                config.max_fullnode_connections,
+                config.max_outbound_connections,
                 config.connection_backoff_base,
                 config.max_connection_delay_ms,
                 config.connectivity_check_interval_ms,
@@ -304,15 +309,15 @@ impl NetworkBuilder {
         seed_addrs: HashMap<PeerId, Vec<NetworkAddress>>,
         mut seed_pubkeys: HashMap<PeerId, HashSet<x25519::PublicKey>>,
         trusted_peers: Arc<RwLock<HashMap<PeerId, HashSet<x25519::PublicKey>>>>,
-        max_fullnode_connections: usize,
+        max_outbound_connections: usize,
         connection_backoff_base: u64,
         max_connection_delay_ms: u64,
         connectivity_check_interval_ms: u64,
         channel_size: usize,
     ) -> &mut Self {
         let pm_conn_mgr_notifs_rx = self.add_connection_event_listener();
-        let connection_limit = if let RoleType::FullNode = self.network_context.role() {
-            Some(max_fullnode_connections)
+        let outbound_connection_limit = if let RoleType::FullNode = self.network_context.role() {
+            Some(max_outbound_connections)
         } else {
             None
         };
@@ -340,7 +345,7 @@ impl NetworkBuilder {
             channel_size,
             ConnectionRequestSender::new(self.peer_manager_builder.connection_reqs_tx()),
             pm_conn_mgr_notifs_rx,
-            connection_limit,
+            outbound_connection_limit,
         ));
         self
     }

@@ -41,10 +41,10 @@ use 0x1::SlidingNonce;
 /// | `Errors::REQUIRES_ADDRESS` | `CoreAddresses::ETREASURY_COMPLIANCE`        | The sending account is not the Treasury Compliance account.                                |
 /// | `Errors::REQUIRES_ROLE`    | `Roles::ETREASURY_COMPLIANCE`                | The sending account is not the Treasury Compliance account.                                |
 /// | `Errors::INVALID_ARGUMENT` | `AccountFreezing::ECANNOT_FREEZE_TC`         | `to_freeze_account` was the Treasury Compliance account (`0xB1E55ED`).                     |
-/// | `Errors::INVALID_ARGUMENT` | `AccountFreezing::ECANNOT_FREEZE_LIBRA_ROOT` | `to_freeze_account` was the Diem Root account (`0xA550C18`).                              |
+/// | `Errors::INVALID_ARGUMENT` | `AccountFreezing::ECANNOT_FREEZE_DIEM_ROOT` | `to_freeze_account` was the Diem Root account (`0xA550C18`).                              |
 ///
 /// # Related Scripts
-/// * `Scripts::unfreeze_account`
+/// * `Script::unfreeze_account`
 
 fun freeze_account(tc_account: &signer, sliding_nonce: u64, to_freeze_account: address) {
     SlidingNonce::record_nonce_or_abort(tc_account, sliding_nonce);

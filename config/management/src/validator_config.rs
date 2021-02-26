@@ -17,7 +17,7 @@ use diem_network_address::{NetworkAddress, Protocol};
 use diem_types::{chain_id::ChainId, transaction::Transaction};
 use std::net::{Ipv4Addr, ToSocketAddrs};
 use structopt::StructOpt;
-use hex::*;
+
 #[derive(Clone, Debug, StructOpt)]
 pub struct ValidatorConfig {
     #[structopt(flatten)]
@@ -64,7 +64,6 @@ impl ValidatorConfig {
         // and encrypt the validator address.
         let validator_address =
             validator_address.append_prod_protos(validator_network_key, HANDSHAKE_VERSION);
-
         let encryptor = config.validator_backend().encryptor();
         let validator_addresses = encryptor
             .encrypt(
@@ -86,14 +85,11 @@ impl ValidatorConfig {
         } else {
             transaction_builder::encode_register_validator_config_script
         };
-
-        dbg!(&encode(&validator_addresses));
-
         let validator_config_script = transaction_callback(
             owner_account,
             consensus_key.to_bytes().to_vec(),
             validator_addresses,
-            lcs::to_bytes(&vec![fullnode_address]).unwrap(),
+            bcs::to_bytes(&vec![fullnode_address]).unwrap(),
         );
 
         // Create and sign the validator-config transaction

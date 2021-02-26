@@ -5,7 +5,6 @@
 
 use crate::builder::NetworkBuilder;
 use channel::message_queues::QueueStyle;
-use futures::{executor::block_on, StreamExt};
 use diem_config::{
     config::{RoleType, NETWORK_CHANNEL_SIZE},
     network_id::{NetworkContext, NetworkId},
@@ -15,6 +14,7 @@ use diem_infallible::RwLock;
 use diem_metrics::IntCounterVec;
 use diem_network_address::NetworkAddress;
 use diem_types::{chain_id::ChainId, PeerId};
+use futures::{executor::block_on, StreamExt};
 use netcore::transport::ConnectionOrigin;
 use network::{
     error::NetworkError,

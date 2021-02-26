@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use diem_metrics::{
@@ -62,9 +62,8 @@ pub static TXN_VALIDATION_SECONDS: Lazy<Histogram> = Lazy::new(|| {
     .unwrap()
 });
 
-pub static TXN_GAS_USAGE: Lazy<Histogram> = Lazy::new(|| {
-    register_histogram!("diem_vm_txn_gas_usage", "Gas used per transaction").unwrap()
-});
+pub static TXN_GAS_USAGE: Lazy<Histogram> =
+    Lazy::new(|| register_histogram!("diem_vm_txn_gas_usage", "Gas used per transaction").unwrap());
 
 /// Count the number of critical errors. This is not intended for display
 /// on a dashboard but rather for triggering alerts.

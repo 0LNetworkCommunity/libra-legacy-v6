@@ -12,7 +12,7 @@
 pub const CONSENSUS_KEY: &str = "consensus";
 pub const EXECUTION_KEY: &str = "execution";
 pub const FULLNODE_NETWORK_KEY: &str = "fullnode_network";
-pub const LIBRA_ROOT_KEY: &str = "diem_root";
+pub const DIEM_ROOT_KEY: &str = "diem_root";
 pub const TREASURY_COMPLIANCE_KEY: &str = "treasury_compliance";
 pub const OPERATOR_ACCOUNT: &str = "operator_account";
 pub const OPERATOR_KEY: &str = "operator";
@@ -25,10 +25,3 @@ pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 pub const SAFETY_DATA: &str = "safety_data";
 pub const WAYPOINT: &str = "waypoint";
 pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
-
-//////// 0L ////////
-pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
-pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
-pub const VDF_SECURITY_PARAM: u16 = 2048;
-pub const NODE_HOME: &str = ".0L/";
-pub const SALT_0L: &str = "0L";

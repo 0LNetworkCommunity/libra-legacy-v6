@@ -9,13 +9,13 @@ use crate::{
     util::mock_time_service::SimulatedTimeService,
 };
 use consensus_types::{block::Block, quorum_cert::QuorumCert};
+use diem_config::config::NodeConfig;
+use diem_crypto::{ed25519::Ed25519PrivateKey, Uniform};
+use diem_types::validator_signer::ValidatorSigner;
 use execution_correctness::{ExecutionCorrectness, ExecutionCorrectnessManager};
 use executor_test_helpers::start_storage_service;
 use executor_types::ExecutedTrees;
 use futures::channel::mpsc;
-use diem_config::config::NodeConfig;
-use diem_crypto::{ed25519::Ed25519PrivateKey, Uniform};
-use diem_types::validator_signer::ValidatorSigner;
 use state_synchronizer::StateSyncClient;
 use std::sync::Arc;
 use storage_interface::DbReader;

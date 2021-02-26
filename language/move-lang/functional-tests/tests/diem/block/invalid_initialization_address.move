@@ -1,7 +1,7 @@
 script {
-use 0x1::LibraBlock;
+use 0x1::DiemBlock;
 fun main(account: &signer) {
-    LibraBlock::initialize_block_metadata(account);
+    DiemBlock::initialize_block_metadata(account);
 }
 }
 // check: "Keep(ABORTED { code: 1,"

@@ -1,12 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use executor::{
-    db_bootstrapper::{generate_waypoint, maybe_bootstrap},
-    Executor,
+use diem_config::{
+    config::{NodeConfig, RocksdbConfig},
+    utils::get_genesis_txn,
 };
-use executor_types::BlockExecutor;
-use diem_config::{config::NodeConfig, utils::get_genesis_txn};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     hash::HashValue,
@@ -16,8 +14,8 @@ use diem_logger::prelude::*;
 use diem_types::{
     account_address::AccountAddress,
     account_config::{
-        coin1_tmp_tag, testnet_dd_account_address, treasury_compliance_account_address,
-        AccountResource, COIN1_NAME,
+        testnet_dd_account_address, treasury_compliance_account_address, xus_tag, AccountResource,
+        XUS_NAME,
     },
     block_info::BlockInfo,
     chain_id::ChainId,
@@ -28,6 +26,11 @@ use diem_types::{
 };
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
+use executor::{
+    db_bootstrapper::{generate_waypoint, maybe_bootstrap},
+    Executor,
+};
+use executor_types::BlockExecutor;
 use rand::{rngs::StdRng, SeedableRng};
 use std::{
     collections::BTreeMap,
@@ -122,7 +125,7 @@ impl TransactionGenerator {
                     &self.genesis_key,
                     self.genesis_key.public_key(),
                     encode_create_parent_vasp_account_script(
-                        coin1_tmp_tag(),
+                        xus_tag(),
                         0,
                         account.address,
                         account.auth_key_prefix(),
@@ -154,7 +157,7 @@ impl TransactionGenerator {
                     &self.genesis_key,
                     self.genesis_key.public_key(),
                     encode_peer_to_peer_with_metadata_script(
-                        coin1_tmp_tag(),
+                        xus_tag(),
                         account.address,
                         init_account_balance,
                         vec![],
@@ -189,7 +192,7 @@ impl TransactionGenerator {
                     &sender.private_key,
                     sender.public_key.clone(),
                     encode_peer_to_peer_with_metadata_script(
-                        coin1_tmp_tag(),
+                        xus_tag(),
                         receiver.address,
                         1, /* amount */
                         vec![],
@@ -309,6 +312,7 @@ fn create_storage_service_and_executor(
             &config.storage.dir(),
             false, /* readonly */
             None,  /* pruner */
+            RocksdbConfig::default(),
         )
         .expect("DB should open."),
     );
@@ -383,9 +387,9 @@ fn create_transaction(
         sender,
         sequence_number,
         program,
-        1_000_000,             /* max_gas_amount */
-        0,                     /* gas_unit_price */
-        COIN1_NAME.to_owned(), /* gas_currency_code */
+        1_000_000,           /* max_gas_amount */
+        0,                   /* gas_unit_price */
+        XUS_NAME.to_owned(), /* gas_currency_code */
         expiration_time,
         ChainId::test(),
     );

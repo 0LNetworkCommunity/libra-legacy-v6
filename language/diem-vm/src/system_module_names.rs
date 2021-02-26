@@ -1,6 +1,6 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-//! Names of modules, functions, and types used by Libra System.
+//! Names of modules, functions, and types used by Diem System.
 
 use diem_types::account_config;
 use move_core_types::{identifier::Identifier, language_storage::ModuleId};
@@ -9,24 +9,10 @@ use once_cell::sync::Lazy;
 // Data to resolve basic account and transaction flow functions and structs
 /// The ModuleId for the diem writeset manager module
 /// The ModuleId for the diem block module
-pub static LIBRA_BLOCK_MODULE: Lazy<ModuleId> = Lazy::new(|| {
+pub static DIEM_BLOCK_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     ModuleId::new(
         account_config::CORE_CODE_ADDRESS,
-        Identifier::new("LibraBlock").unwrap(),
-    )
-});
-
-// Oracle module
-pub static ORACLE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
-    ModuleId::new(
-        account_config::CORE_CODE_ADDRESS,
-        ORACLE_MODULE_NAME.clone(),
-    )
-});
-pub static UPGRADE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
-    ModuleId::new(
-        account_config::CORE_CODE_ADDRESS,
-        UPGRADE_MODULE_NAME.clone(),
+        Identifier::new("DiemBlock").unwrap(),
     )
 });
 
@@ -43,13 +29,3 @@ pub static USER_EPILOGUE_NAME: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("epilogue").unwrap());
 pub static BLOCK_PROLOGUE: Lazy<Identifier> =
     Lazy::new(|| Identifier::new("block_prologue").unwrap());
-
-// Oracles
-static ORACLE_MODULE_NAME: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("Oracle").unwrap());
-pub static CHECK_UPGRADE: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("check_upgrade").unwrap());
-static UPGRADE_MODULE_NAME: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("Upgrade").unwrap());
-pub static RESET_PAYLOAD: Lazy<Identifier> =
-    Lazy::new(|| Identifier::new("reset_payload").unwrap());

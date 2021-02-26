@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{methods, runtime, tests};
-use futures::{channel::mpsc::channel, StreamExt};
 use diem_config::config;
 use diem_proptest_helpers::ValueGenerator;
 use diem_types::account_state_blob::AccountStateWithProof;
+use futures::{channel::mpsc::channel, StreamExt};
 use std::sync::Arc;
 use warp::reply::Reply;
 
@@ -77,7 +77,7 @@ pub fn generate_corpus(gen: &mut ValueGenerator) -> Vec<u8> {
     let txn = gen.generate(proptest::arbitrary::any::<
         diem_types::transaction::SignedTransaction,
     >());
-    let payload = hex::encode(lcs::to_bytes(&txn).unwrap());
+    let payload = hex::encode(bcs::to_bytes(&txn).unwrap());
     let request =
         serde_json::json!({"jsonrpc": "2.0", "method": "submit", "params": [payload], "id": 1});
     serde_json::to_vec(&request).expect("failed to convert JSON to byte array")

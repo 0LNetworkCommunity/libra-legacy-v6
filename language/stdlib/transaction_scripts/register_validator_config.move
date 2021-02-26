@@ -9,7 +9,7 @@ use 0x1::ValidatorConfig;
 ///
 /// # Technical Description
 /// This updates the fields with corresponding names held in the `ValidatorConfig::ValidatorConfig`
-/// config resource held under `validator_account`. It does not emit a `LibraConfig::NewEpochEvent`
+/// config resource held under `validator_account`. It does not emit a `DiemConfig::NewEpochEvent`
 /// so the copy of this config held in the validator set will not be updated, and the changes are
 /// only "locally" under the `validator_account` account address.
 ///
@@ -55,26 +55,26 @@ fun register_validator_config(
     );
  }
 
-// /// Access control rule is that only the validator operator for a validator may set
-// /// call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
-// spec fun register_validator_config {
-//     use 0x1::Errors;
-//     use 0x1::LibraAccount;
-//     // use 0x1::Signer;
+/// Access control rule is that only the validator operator for a validator may set
+/// call this, but there is an aborts_if in SetConfigAbortsIf that tests that directly.
+spec fun register_validator_config {
+    use 0x1::Errors;
+    use 0x1::DiemAccount;
+    use 0x1::Signer;
 
-//     include LibraAccount::TransactionChecks{sender: validator_operator_account}; // properties checked by the prologue.
-//     include ValidatorConfig::SetConfigAbortsIf {validator_addr: validator_account};
-//     ensures ValidatorConfig::is_valid(validator_account);
+    include DiemAccount::TransactionChecks{sender: validator_operator_account}; // properties checked by the prologue.
+    include ValidatorConfig::SetConfigAbortsIf {validator_addr: validator_account};
+    ensures ValidatorConfig::is_valid(validator_account);
 
-//     aborts_with [check]
-//         Errors::INVALID_ARGUMENT,
-//         Errors::NOT_PUBLISHED;
+    aborts_with [check]
+        Errors::INVALID_ARGUMENT,
+        Errors::NOT_PUBLISHED;
 
-    // /// **Access Control:**
-    // /// Only the Validator Operator account which has been registered with the validator can
-    // /// update the validator's configuration [[H14]][PERMISSION].
-    // aborts_if Signer::address_of(validator_operator_account) !=
-    //             ValidatorConfig::get_operator(validator_account)
-    //                 with Errors::INVALID_ARGUMENT;
-// }
+    /// **Access Control:**
+    /// Only the Validator Operator account which has been registered with the validator can
+    /// update the validator's configuration [[H14]][PERMISSION].
+    aborts_if Signer::address_of(validator_operator_account) !=
+                ValidatorConfig::get_operator(validator_account)
+                    with Errors::INVALID_ARGUMENT;
+}
 }

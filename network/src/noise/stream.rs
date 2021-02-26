@@ -550,14 +550,14 @@ mod test {
         noise::{AntiReplayTimestamps, HandshakeAuthMode, NoiseUpgrader},
         testutils::fake_socket::{ReadOnlyTestSocket, ReadWriteTestSocket},
     };
+    use diem_config::network_id::NetworkContext;
+    use diem_crypto::{test_utils::TEST_SEED, traits::Uniform as _, x25519};
+    use diem_types::PeerId;
     use futures::{
         executor::block_on,
         future::join,
         io::{AsyncReadExt, AsyncWriteExt},
     };
-    use diem_config::network_id::NetworkContext;
-    use diem_crypto::{test_utils::TEST_SEED, traits::Uniform as _, x25519};
-    use diem_types::PeerId;
     use memsocket::MemorySocket;
     use rand::SeedableRng as _;
     use std::io;

@@ -23,7 +23,7 @@ pub use rotate_key::*;
 pub use universe::*;
 
 use crate::{
-    account::{self, coin1_tmp_currency_code, Account, AccountData},
+    account::{self, xus_currency_code, Account, AccountData},
     executor::FakeExecutor,
     gas_costs, transaction_status_eq,
 };
@@ -67,7 +67,7 @@ static UNIVERSE_SIZE: Lazy<usize> = Lazy::new(|| {
 /// is recommended for values above 100.
 #[inline]
 // REVIEW: this was changed from pub(crate) to pub in order to separate the actual tests from
-// the e2e tests diemry. Take a closer look and decide what we really want to do:
+// the e2e tests library. Take a closer look and decide what we really want to do:
 //   1. pub(crate) -> pub
 //   2. Move this into e2e-testsuite
 //   3. Move certain tests back (because they are unit tests)
@@ -129,7 +129,7 @@ pub struct AccountCurrent {
 
 impl AccountCurrent {
     fn new(initial_data: AccountData) -> Self {
-        let balance = initial_data.balance(&coin1_tmp_currency_code());
+        let balance = initial_data.balance(&xus_currency_code());
         let sequence_number = initial_data.sequence_number();
         let sent_events_count = initial_data.sent_events_count();
         let received_events_count = initial_data.received_events_count();
@@ -408,7 +408,7 @@ pub fn assert_accounts_match(
             .read_account_resource(&account.account())
             .expect("account resource must exist");
         let resource_balance = executor
-            .read_balance_resource(account.account(), account::coin1_tmp_currency_code())
+            .read_balance_resource(account.account(), account::xus_currency_code())
             .expect("account balance resource must exist");
         let auth_key = account.account().auth_key();
         prop_assert_eq!(

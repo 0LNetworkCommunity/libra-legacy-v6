@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use compiler::Compiler;
+use diem_crypto::{ed25519::*, HashValue, PrivateKey, Uniform};
+use diem_types::{
+    account_config::{diem_root_address, treasury_compliance_account_address, xus_tag},
+    account_state::AccountState,
+    block_metadata::BlockMetadata,
+    transaction::{Script, Transaction, WriteSetPayload},
+    trusted_state::{TrustedState, TrustedStateChange},
+    validator_signer::ValidatorSigner,
+};
 use executor_test_helpers::{
     gen_block_id, gen_block_metadata, gen_ledger_info_with_sigs, get_test_signed_transaction,
     integration_test_impl::{
@@ -9,15 +18,6 @@ use executor_test_helpers::{
     },
 };
 use executor_types::BlockExecutor;
-use diem_crypto::{ed25519::*, HashValue, PrivateKey, Uniform};
-use diem_types::{
-    account_config::{coin1_tmp_tag, diem_root_address, treasury_compliance_account_address},
-    account_state::AccountState,
-    block_metadata::BlockMetadata,
-    transaction::{Script, Transaction, WriteSetPayload},
-    trusted_state::{TrustedState, TrustedStateChange},
-    validator_signer::ValidatorSigner,
-};
 use std::convert::TryFrom;
 use transaction_builder::{
     encode_add_to_script_allow_list_script, encode_block_prologue_script,
@@ -102,7 +102,7 @@ fn test_reconfiguration() {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             validator_account,
             1_000_000,
             vec![],
@@ -255,7 +255,7 @@ fn test_change_publishing_option_to_custom() {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             validator_account,
             1_000_000,
             vec![],
@@ -436,7 +436,7 @@ fn test_extend_allowlist() {
         genesis_key.clone(),
         genesis_key.public_key(),
         Some(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             validator_account,
             1_000_000,
             vec![],

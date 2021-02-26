@@ -1,5 +1,6 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
+
 use crate::views::{
     AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, MetadataView,
     StateProofView, TransactionView,
@@ -8,7 +9,6 @@ use anyhow::{ensure, format_err, Error, Result};
 
 use serde_json::{Number, Value};
 use std::convert::TryFrom;
-use diem_json_rpc_types::views::{MinerStateResourceView, OracleResourceView};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, PartialEq, Debug)]
@@ -23,8 +23,6 @@ pub enum JsonRpcResponse {
     CurrenciesResponse(Vec<CurrencyInfoView>),
     AccountStateWithProofResponse(AccountStateWithProofView),
     NetworkStatusResponse(Number),
-    MinerStateViewResponse(MinerStateResourceView),
-    OracleResourceViewResponse(OracleResourceView),
     UnknownResponse(Value),
 }
 
@@ -95,18 +93,6 @@ impl TryFrom<(String, Value)> for JsonRpcResponse {
                 let connected_peers_count: Number = serde_json::from_value(value)?;
                 Ok(JsonRpcResponse::NetworkStatusResponse(
                     connected_peers_count,
-                ))
-            }
-            "get_miner_state" => {
-                let state: MinerStateResourceView = serde_json::from_value(value)?;
-                Ok(JsonRpcResponse::MinerStateViewResponse(
-                    state,
-                ))
-            }
-            "query_oracle_upgrade" => {
-                let state: OracleResourceView = serde_json::from_value(value)?;
-                Ok(JsonRpcResponse::OracleResourceViewResponse(
-                    state,
                 ))
             }
             _ => Ok(JsonRpcResponse::UnknownResponse(value)),
@@ -205,29 +191,6 @@ impl ResponseAsView for StateProofView {
 impl ResponseAsView for AccountStateWithProofView {
     fn from_response(response: JsonRpcResponse) -> Result<Self> {
         if let JsonRpcResponse::AccountStateWithProofResponse(resp) = response {
-            Ok(resp)
-        } else {
-            Self::unexpected_response_error::<Self>(response)
-        }
-    }
-}
-
-/// OL Implementation
-//add by Ping
-impl ResponseAsView for MinerStateResourceView {
-    fn from_response(response: JsonRpcResponse) -> Result<Self> {
-        if let JsonRpcResponse::MinerStateViewResponse(resp) = response {
-            Ok(resp)
-        } else {
-            Self::unexpected_response_error::<Self>(response)
-        }
-    }
-}
-
-//add by Ping
-impl ResponseAsView for OracleResourceView {
-    fn from_response(response: JsonRpcResponse) -> Result<Self> {
-        if let JsonRpcResponse::OracleResourceViewResponse(resp) = response {
             Ok(resp)
         } else {
             Self::unexpected_response_error::<Self>(response)

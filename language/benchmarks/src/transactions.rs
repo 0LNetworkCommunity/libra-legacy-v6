@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use criterion::{BatchSize, Bencher};
+use diem_proptest_helpers::ValueGenerator;
+use diem_types::transaction::SignedTransaction;
 use language_e2e_tests::{
     account_universe::{log_balance_strategy, AUTransactionGen, AccountUniverseGen},
     executor::FakeExecutor,
     gas_costs::TXN_RESERVED,
 };
-use diem_proptest_helpers::ValueGenerator;
-use diem_types::transaction::SignedTransaction;
 use proptest::{collection::vec, strategy::Strategy};
 
 /// Benchmarking support for transactions.

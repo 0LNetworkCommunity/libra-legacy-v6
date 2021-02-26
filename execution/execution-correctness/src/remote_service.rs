@@ -4,12 +4,12 @@
 use crate::serializer::{
     ExecutionCorrectnessInput, SerializerClient, SerializerService, TSerializerClient,
 };
-use executor::Executor;
-use executor_types::Error;
 use diem_crypto::ed25519::Ed25519PrivateKey;
 use diem_logger::warn;
 use diem_secure_net::{NetworkClient, NetworkServer};
 use diem_vm::DiemVM;
+use executor::Executor;
+use executor_types::Error;
 use std::net::SocketAddr;
 use storage_client::StorageClient;
 
@@ -71,7 +71,7 @@ impl RemoteClient {
 
 impl TSerializerClient for RemoteClient {
     fn request(&mut self, input: ExecutionCorrectnessInput) -> Result<Vec<u8>, Error> {
-        let input_message = lcs::to_bytes(&input)?;
+        let input_message = bcs::to_bytes(&input)?;
         loop {
             match self.process_one_message(&input_message) {
                 Err(err) => warn!("Failed to communicate with LEC service: {}", err),

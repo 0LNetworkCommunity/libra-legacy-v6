@@ -9,6 +9,8 @@
 //! It relays read/write operations on the physical storage via [`schemadb`] to the underlying
 //! Key-Value storage system, and implements diem data structures on top of it.
 
+#[cfg(any(feature = "diemsum"))]
+pub mod diemsum;
 // Used in this and other crates for testing.
 #[cfg(any(test, feature = "fuzzing"))]
 pub mod test_helper;
@@ -42,10 +44,9 @@ use crate::{
     ledger_counters::LedgerCounters,
     ledger_store::LedgerStore,
     metrics::{
-        LIBRA_STORAGE_API_LATENCY_SECONDS, LIBRA_STORAGE_CF_SIZE_BYTES,
-        LIBRA_STORAGE_COMMITTED_TXNS, LIBRA_STORAGE_LATEST_TXN_VERSION,
-        LIBRA_STORAGE_LEDGER_VERSION, LIBRA_STORAGE_NEXT_BLOCK_EPOCH,
-        LIBRA_STORAGE_OTHER_TIMERS_SECONDS,
+        DIEM_STORAGE_API_LATENCY_SECONDS, DIEM_STORAGE_CF_SIZE_BYTES, DIEM_STORAGE_COMMITTED_TXNS,
+        DIEM_STORAGE_LATEST_TXN_VERSION, DIEM_STORAGE_LEDGER_VERSION,
+        DIEM_STORAGE_NEXT_BLOCK_EPOCH, DIEM_STORAGE_OTHER_TIMERS_SECONDS,
     },
     pruner::Pruner,
     schema::*,
@@ -54,7 +55,7 @@ use crate::{
     transaction_store::TransactionStore,
 };
 use anyhow::{ensure, Result};
-use itertools::{izip, zip_eq};
+use diem_config::config::RocksdbConfig;
 use diem_crypto::hash::{CryptoHash, HashValue, SPARSE_MERKLE_PLACEHOLDER_HASH};
 use diem_logger::prelude::*;
 use diem_types::{
@@ -73,7 +74,8 @@ use diem_types::{
         Version, PRE_GENESIS_VERSION,
     },
 };
-use schemadb::{ColumnFamilyName, DB, DEFAULT_CF_NAME};
+use itertools::{izip, zip_eq};
+use schemadb::{ColumnFamilyName, Options, DB, DEFAULT_CF_NAME};
 use std::{iter::Iterator, path::Path, sync::Arc, time::Instant};
 use storage_interface::{DbReader, DbWriter, Order, StartupInfo, TreeState};
 
@@ -91,6 +93,13 @@ fn error_if_too_many_requested(num_requested: u64, max_allowed: u64) -> Result<(
     }
 }
 
+fn gen_rocksdb_options(config: &RocksdbConfig) -> Options {
+    let mut db_opts = Options::default();
+    db_opts.set_max_open_files(config.max_open_files);
+    db_opts.set_max_total_wal_size(config.max_total_wal_size);
+    db_opts
+}
+
 /// This holds a handle to the underlying DB responsible for physical storage and provides APIs for
 /// access to the core Diem data structures.
 #[derive(Debug)]
@@ -99,7 +108,7 @@ pub struct DiemDB {
     ledger_store: Arc<LedgerStore>,
     transaction_store: Arc<TransactionStore>,
     state_store: Arc<StateStore>,
-    event_store: EventStore,
+    event_store: Arc<EventStore>,
     system_store: SystemStore,
     pruner: Option<Pruner>,
 }
@@ -111,6 +120,7 @@ impl DiemDB {
             EPOCH_BY_VERSION_CF_NAME,
             EVENT_ACCUMULATOR_CF_NAME,
             EVENT_BY_KEY_CF_NAME,
+            EVENT_BY_VERSION_CF_NAME,
             EVENT_CF_NAME,
             JELLYFISH_MERKLE_NODE_CF_NAME,
             LEDGER_COUNTERS_CF_NAME,
@@ -127,7 +137,7 @@ impl DiemDB {
 
         DiemDB {
             db: Arc::clone(&db),
-            event_store: EventStore::new(Arc::clone(&db)),
+            event_store: Arc::new(EventStore::new(Arc::clone(&db))),
             ledger_store: Arc::new(LedgerStore::new(Arc::clone(&db))),
             state_store: Arc::new(StateStore::new(Arc::clone(&db))),
             transaction_store: Arc::new(TransactionStore::new(Arc::clone(&db))),
@@ -140,6 +150,7 @@ impl DiemDB {
         db_root_path: P,
         readonly: bool,
         prune_window: Option<u64>,
+        rocksdb_config: RocksdbConfig,
     ) -> Result<Self> {
         ensure!(
             prune_window.is_none() || !readonly,
@@ -149,10 +160,24 @@ impl DiemDB {
         let path = db_root_path.as_ref().join("diemdb");
         let instant = Instant::now();
 
+        let mut rocksdb_opts = gen_rocksdb_options(&rocksdb_config);
+
         let db = if readonly {
-            DB::open_readonly(path.clone(), "diemdb_ro", Self::column_families())?
+            DB::open_readonly(
+                path.clone(),
+                "diemdb_ro",
+                Self::column_families(),
+                &rocksdb_opts,
+            )?
         } else {
-            DB::open(path.clone(), "diemdb", Self::column_families())?
+            rocksdb_opts.create_if_missing(true);
+            rocksdb_opts.create_missing_column_families(true);
+            DB::open(
+                path.clone(),
+                "diemdb",
+                Self::column_families(),
+                &rocksdb_opts,
+            )?
         };
 
         info!(
@@ -167,9 +192,13 @@ impl DiemDB {
     pub fn open_as_secondary<P: AsRef<Path> + Clone>(
         db_root_path: P,
         secondary_path: P,
+        mut rocksdb_config: RocksdbConfig,
     ) -> Result<Self> {
         let primary_path = db_root_path.as_ref().join("diemdb");
         let secondary_path = secondary_path.as_ref().to_path_buf();
+        // Secondary needs `max_open_files = -1` per https://github.com/facebook/rocksdb/wiki/Secondary-instance
+        rocksdb_config.max_open_files = -1;
+        let rocksdb_opts = gen_rocksdb_options(&rocksdb_config);
 
         Ok(Self::new_with_db(
             DB::open_as_secondary(
@@ -177,6 +206,7 @@ impl DiemDB {
                 secondary_path,
                 "diemdb_sec",
                 Self::column_families(),
+                &rocksdb_opts,
             )?,
             None, // prune_window
         ))
@@ -189,6 +219,7 @@ impl DiemDB {
             db_root_path,
             false, /* readonly */
             None,  /* pruner */
+            RocksdbConfig::default(),
         )
         .expect("Unable to open DiemDB")
     }
@@ -289,6 +320,7 @@ impl DiemDB {
             Arc::clone(&self.ledger_store),
             Arc::clone(&self.transaction_store),
             Arc::clone(&self.state_store),
+            Arc::clone(&self.event_store),
         )
     }
 
@@ -380,8 +412,7 @@ impl DiemDB {
             Some(self.system_store.bump_ledger_counters(
                 first_version,
                 first_version + num_txns - 1,
-                cs.counter_bumps,
-                &mut cs.batch,
+                &mut cs,
             )?)
         } else {
             None
@@ -450,13 +481,13 @@ impl DiemDB {
     fn commit(&self, sealed_cs: SealedChangeSet) -> Result<()> {
         self.db.write_schemas(sealed_cs.batch)?;
 
-        let _timer = LIBRA_STORAGE_OTHER_TIMERS_SECONDS
+        let _timer = DIEM_STORAGE_OTHER_TIMERS_SECONDS
             .with_label_values(&["get_approximate_cf_sizes"])
             .start_timer();
         match self.db.get_approximate_sizes_cf() {
             Ok(cf_sizes) => {
                 for (cf_name, size) in cf_sizes {
-                    LIBRA_STORAGE_CF_SIZE_BYTES
+                    DIEM_STORAGE_CF_SIZE_BYTES
                         .with_label_values(&[&cf_name])
                         .set(size as i64);
                 }
@@ -748,7 +779,7 @@ impl DbReader for DiemDB {
     fn get_block_timestamp(&self, version: u64) -> Result<u64> {
         gauged_api("get_block_timestamp", || {
             let ts = match self.transaction_store.get_block_metadata(version)? {
-                Some((_v, block_meta)) => block_meta.into_inner()?.1,
+                Some((_v, block_meta)) => block_meta.into_inner().1,
                 // genesis timestamp is 0
                 None => 0,
             };
@@ -823,7 +854,7 @@ impl DbWriter for DiemDB {
             // Persist.
             let (sealed_cs, counters) = self.seal_change_set(first_version, num_txns, cs)?;
             {
-                let _timer = LIBRA_STORAGE_OTHER_TIMERS_SECONDS
+                let _timer = DIEM_STORAGE_OTHER_TIMERS_SECONDS
                     .with_label_values(&["save_transactions_commit"])
                     .start_timer();
                 self.commit(sealed_cs)?;
@@ -833,21 +864,21 @@ impl DbWriter for DiemDB {
             if let Some(x) = ledger_info_with_sigs {
                 self.ledger_store.set_latest_ledger_info(x.clone());
 
-                self.wake_pruner(x.ledger_info().version());
-
-                LIBRA_STORAGE_LEDGER_VERSION.set(x.ledger_info().version() as i64);
-                LIBRA_STORAGE_NEXT_BLOCK_EPOCH.set(x.ledger_info().next_block_epoch() as i64);
+                DIEM_STORAGE_LEDGER_VERSION.set(x.ledger_info().version() as i64);
+                DIEM_STORAGE_NEXT_BLOCK_EPOCH.set(x.ledger_info().next_block_epoch() as i64);
             }
 
             // Only increment counter if commit succeeds and there are at least one transaction written
             // to the storage. That's also when we'd inform the pruner thread to work.
             if num_txns > 0 {
                 let last_version = first_version + num_txns - 1;
-                LIBRA_STORAGE_COMMITTED_TXNS.inc_by(num_txns as i64);
-                LIBRA_STORAGE_LATEST_TXN_VERSION.set(last_version as i64);
+                DIEM_STORAGE_COMMITTED_TXNS.inc_by(num_txns);
+                DIEM_STORAGE_LATEST_TXN_VERSION.set(last_version as i64);
                 counters
                     .expect("Counters should be bumped with transactions being saved.")
                     .bump_op_counters();
+
+                self.wake_pruner(last_version);
             }
 
             Ok(())
@@ -881,6 +912,7 @@ impl GetRestoreHandler for Arc<DiemDB> {
             Arc::clone(&self.ledger_store),
             Arc::clone(&self.transaction_store),
             Arc::clone(&self.state_store),
+            Arc::clone(&self.event_store),
         )
     }
 }
@@ -904,7 +936,7 @@ where
             "Err"
         }
     };
-    LIBRA_STORAGE_API_LATENCY_SECONDS
+    DIEM_STORAGE_API_LATENCY_SECONDS
         .with_label_values(&[api_name, res_type])
         .observe(timer.elapsed().as_secs_f64());
 

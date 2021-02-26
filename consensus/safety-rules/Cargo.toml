@@ -1,7 +1,7 @@
 [package]
 name = "safety-rules"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.org>"]
+authors = ["Diem Association <opensource@diem.com>"]
 license = "Apache-2.0"
 publish = false
 edition = "2018"
@@ -14,7 +14,7 @@ rand_core = "0.5.1"
 
 crash-handler = { path = "../../common/crash-handler", version = "0.1.0" }
 consensus-types = { path = "../consensus-types", version = "0.1.0" }
-lcs = { path = "../../common/lcs", version = "0.1.0", package = "diem-canonical-serialization" }
+bcs = "0.1.1"
 diem-config = { path = "../../config", version = "0.1.0" }
 diem-crypto = { path = "../../crypto/crypto", version = "0.1.0" }
 diem-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
@@ -28,8 +28,8 @@ diem-temppath = { path = "../../common/temppath", version = "0.1.0" }
 diem-types = { path = "../../types", version = "0.1.0" }
 diem-vault-client = { path = "../../secure/storage/vault", version = "0.1.0" }
 diem-workspace-hack = { path = "../../common/workspace-hack", version = "0.1.0" }
-serde = { version = "1.0.116", default-features = false }
-thiserror = "1.0.21"
+serde = { version = "1.0.117", default-features = false }
+thiserror = "1.0.22"
 
 [dev-dependencies]
 criterion = "0.3.3"

@@ -13,8 +13,8 @@ This file is a checklist of requirement & technical details for a Diem client SD
     - utils:
       - signing
       - sha3 hashing, address parsing and converting, hex encoding / decoding
-      - [LIP-4] transaction metadata
-      - [LIP-5] intent identifier, account identifier
+      - [DIP-4] transaction metadata
+      - [DIP-5] intent identifier, account identifier
 - [ ] JSON-RPC 2.0 Spec:
   - spec version validation.
   - batch requests and responses handling.
@@ -44,16 +44,18 @@ This file is a checklist of requirement & technical details for a Diem client SD
 - [ ] Send request with "client sdk name / version" as HTTP User-Agent: this is for server to recognize client sdk version.
 - [ ] Decode transaction script bytes: it is possible we may add new transaction script without upgrading server, hence client decoding logic is important for client to recognize all transaction scripts.
     By upgrading client side move stdlib scripts (binary and generated type information code), we can decode latest move stdlib scripts executed on-chain.
-- [ ] Create transaction hash from signed transaction: hex-encode(sha3-256([]byte("LIBRA::Transaction")) + []byte(0) + signed transaction bytes) ([implementation example](https://github.com/diem/diem-client-sdk-go/blob/master/diemtypes/hash.go#L27))
+- [ ] Create transaction hash from signed transaction: hex-encode(sha3-256([]byte("DIEM::Transaction")) + []byte(0) + signed transaction bytes) ([implementation example](https://github.com/diem/client-sdk-go/blob/master/diemtypes/hash.go#L27))
+- [ ] Client interface should prefer to use AccountAddress type instead of string address.
 
-# [LIP-4][7] Transaction Metadata support
+
+# [DIP-4][7] Transaction Metadata support
 
 - [ ] Non-custodial to custodial transaction metadata
 - [ ] Custodial to non-custodial transaction metadata
 - [ ] Custodial to Custodial transaction metadata and signature
 - [ ] Refund metadata
 
-# [LIP-5][2] Address Formating support
+# [DIP-5][2] Address Formating support
 
 - [ ] bech32 encoding/decoding
 - [ ] Encode and decode account identifier
@@ -100,7 +102,7 @@ See [doc][5] for above concepts.
 
 # Examples
 
-- [ ] [p2p transfer examples](https://github.com/diem/lip/blob/master/lips/lip-4.md#transaction-examples)
+- [ ] [p2p transfer examples](https://github.com/diem/dip/blob/master/dips/dip-4.md#transaction-examples)
 - [ ] refund p2p transfer example
 - [ ] create childVASP example
 - [ ] Intent identifier encoding, decoding example
@@ -111,9 +113,9 @@ See [doc][5] for above concepts.
 - [ ] CLI connects to testnet for trying out features.
 
 [1]: https://github.com/diem/diem/blob/master/json-rpc/json-rpc-spec.md "Diem JSON-RPC SPEC"
-[2]: https://github.com/diem/lip/blob/master/lips/lip-5.md "LIP-5"
+[2]: https://github.com/diem/dip/blob/master/dips/dip-5.md "DIP-5"
 [3]: https://github.com/diem/diem/blob/master/language/stdlib/transaction_scripts/doc/peer_to_peer_with_metadata.md "P2P Transafer"
 [4]: https://github.com/diem/diem/tree/master/language/stdlib/transaction_scripts/doc "Move Stdlib scripts"
 [5]: https://github.com/diem/diem/blob/master/client/diem-dev/README.md "Diem Client Dev Doc"
 [6]: https://github.com/diem/diem/blob/master/json-rpc/docs/service_testnet_faucet.md "Faucet service"
-[7]: https://github.com/diem/lip/blob/master/lips/lip-4.md "Transaction Metadata Specification"
+[7]: https://github.com/diem/dip/blob/master/dips/dip-4.md "Transaction Metadata Specification"

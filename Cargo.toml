@@ -1,9 +1,9 @@
 [workspace]
 
 members = [
+    "client/diem-dev",
     "client/faucet",
     "client/json-rpc",
-    "client/diem-dev",
     "client/swiss-knife",
     "client/transaction-builder",
     "common/bitvec",
@@ -13,10 +13,8 @@ members = [
     "common/crash-handler",
     "common/datatest-stable",
     "common/debug-interface",
-    "common/futures-semaphore",
-    "common/infallible",
-    "common/lcs",
     "common/diemdoc",
+    "common/infallible",
     "common/logger",
     "common/logger/derive",
     "common/metrics",
@@ -26,7 +24,6 @@ members = [
     "common/proptest-helpers",
     "common/retrier",
     "common/short-hex-str",
-    "common/stream-ratelimiter",
     "common/subscription-service",
     "common/temppath",
     "common/trace",
@@ -47,6 +44,7 @@ members = [
     "devtools/x",
     "devtools/x-core",
     "devtools/x-lint",
+    "diem-node",
     "execution/db-bootstrapper",
     "execution/execution-correctness",
     "execution/executor",
@@ -64,16 +62,19 @@ members = [
     "language/compiler/bytecode-source-map",
     "language/compiler/ir-to-bytecode",
     "language/compiler/ir-to-bytecode/syntax",
-    "language/e2e-testsuite",
-    "language/ir-testsuite",
+    "language/diem-tools/diem-events-fetcher",
     "language/diem-tools/diem-validator-interface",
     "language/diem-tools/transaction-replay",
     "language/diem-tools/writeset-transaction-generator",
     "language/diem-vm",
+    "language/e2e-testsuite",
+    "language/ir-testsuite",
     "language/move-core/types",
     "language/move-ir/types",
     "language/move-lang",
     "language/move-lang/functional-tests",
+    "language/move-lang/ir-utils",
+    "language/move-lang/test-utils",
     "language/move-prover",
     "language/move-prover/abigen",
     "language/move-prover/bytecode",
@@ -104,9 +105,7 @@ members = [
     "language/transaction-builder/generator",
     "language/vm",
     "language/vm/serializer-tests",
-    "diem-node",
     "mempool",
-    "miner",
     "network",
     "network/builder",
     "network/memsocket",
@@ -126,9 +125,10 @@ members = [
     "storage/accumulator",
     "storage/backup/backup-cli",
     "storage/backup/backup-service",
+    "storage/diemdb",
+    "storage/diemsum",
     "storage/inspector",
     "storage/jellyfish-merkle",
-    "storage/diemdb",
     "storage/schemadb",
     "storage/scratchpad",
     "storage/state-view",
@@ -138,21 +138,17 @@ members = [
     "testsuite/cli",
     "testsuite/cli/diem-wallet",
     "testsuite/cluster-test",
-    "testsuite/generate-format",
     "testsuite/diem-fuzzer",
     "testsuite/diem-fuzzer/fuzz",
     "testsuite/diem-swarm",
+    "testsuite/generate-format",
     "testsuite/smoke-test",
+    "testsuite/smoke-test/attribute",
     "types",
     "vm-validator",
-    ######### 0L #########
-    "verifiable_delay/vdf",
-    "verifiable_delay/vdf-cli",
-    "verifiable_delay/classgroup",
-    "miner"
 ]
 
-# NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should
+# NOTE: default-members is the complete list of binaries that form the "production Diem codebase". These members should
 # never include crates that require fuzzing features or test features. These are the crates we want built with no extra
 # test-only code included.
 #
@@ -178,13 +174,14 @@ default-members = [
     "language/tools/genesis-viewer",
     "language/tools/move-cli",
     "language/tools/move-coverage",
-    "language/diem-tools/transaction-replay",
+    "language/diem-tools/diem-events-fetcher",
     "language/diem-tools/writeset-transaction-generator",
     "language/tools/move-explain",
     "language/transaction-builder/generator",
     "diem-node",
     "secure/key-manager",
     "storage/backup/backup-cli",
+    "storage/diemsum",
     "storage/inspector",
 ]
 
@@ -193,3 +190,7 @@ debug = true
 
 [profile.bench]
 debug = true
+
+# Build guppy in opt mode so that x commands are faster.
+[profile.dev.package.guppy]
+opt-level = 3

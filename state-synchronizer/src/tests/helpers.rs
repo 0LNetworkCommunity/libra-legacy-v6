@@ -72,8 +72,8 @@ impl SynchronizerEnvHelper {
             let voting_power = if idx == 0 { 1000 } else { 1 };
             let validator_config = ValidatorConfig::new(
                 signer.public_key(),
-                lcs::to_bytes(&vec![enc_addr.unwrap()]).unwrap(),
-                lcs::to_bytes(&vec![addr.clone()]).unwrap(),
+                bcs::to_bytes(&vec![enc_addr.unwrap()]).unwrap(),
+                bcs::to_bytes(&vec![addr.clone()]).unwrap(),
             );
             let validator_info = ValidatorInfo::new(peer_id, voting_power, validator_config);
             validator_infos.push(validator_info);
@@ -150,6 +150,11 @@ impl ExecutorProxyTrait for MockExecutorProxy {
 
     fn get_epoch_ending_ledger_info(&self, version: u64) -> Result<LedgerInfoWithSignatures> {
         self.storage.read().get_epoch_ending_ledger_info(version)
+    }
+
+    fn get_version_timestamp(&self, _version: u64) -> Result<u64> {
+        // Only used for logging purposes so no point in mocking
+        Ok(0)
     }
 
     fn load_on_chain_configs(&mut self) -> Result<()> {

@@ -4,6 +4,7 @@
 #![forbid(unsafe_code)]
 
 use anyhow::Result;
+use diem_config::config::RocksdbConfig;
 use diem_logger::info;
 use diemdb::DiemDB;
 use std::path::PathBuf;
@@ -166,8 +167,13 @@ fn main() {
     let log_dir = tempfile::tempdir().expect("Unable to get temp dir");
     info!("Opening DB at: {:?}, log at {:?}", p, log_dir.path());
 
-    let db =
-        DiemDB::open(p, true /* readonly */, None /* pruner */).expect("Unable to open DiemDB");
+    let db = DiemDB::open(
+        p,
+        true, /* readonly */
+        None, /* pruner */
+        RocksdbConfig::default(),
+    )
+    .expect("Unable to open DiemDB");
     info!("DB opened successfully.");
 
     if let Some(cmd) = opt.cmd {

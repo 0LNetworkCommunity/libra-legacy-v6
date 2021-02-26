@@ -1,13 +1,13 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common;
-use heck::{CamelCase, ShoutySnakeCase};
 use diem_types::transaction::{ArgumentABI, ScriptABI, TypeArgumentABI};
+use heck::{CamelCase, ShoutySnakeCase};
 use move_core_types::language_storage::TypeTag;
 use serde_generate::{
     indent::{IndentConfig, IndentedWriter},
-    python3, CodeGeneratorConfig, CustomCode,
+    python3, CodeGeneratorConfig,
 };
 
 use std::{
@@ -52,42 +52,6 @@ pub fn output(
     Ok(())
 }
 
-pub fn get_custom_diem_code(package_name: &str) -> CustomCode {
-    let mut map = BTreeMap::new();
-    let custom_code = vec![(
-        "AccountAddress",
-        r#"LENGTH = 16  # type: int
-
-def to_bytes(self) -> bytes:
-    """Convert account address to bytes."""
-    return bytes(typing.cast(typing.Iterable[int], self.value))
-
-@staticmethod
-def from_bytes(addr: bytes) -> "AccountAddress":
-    """Create an account address from bytes."""
-    if len(addr) != AccountAddress.LENGTH:
-        raise ValueError("Incorrect length for an account address")
-    return AccountAddress(value=tuple(st.uint8(x) for x in addr))  # pyre-ignore
-
-def to_hex(self) -> str:
-    """Convert account address to an hexadecimal string."""
-    return self.to_bytes().hex()
-
-@staticmethod
-def from_hex(addr: str) -> "AccountAddress":
-    """Create an account address from an hexadecimal string."""
-    return AccountAddress.from_bytes(bytes.fromhex(addr))
-"#,
-    )];
-    for (name, code) in &custom_code {
-        map.insert(
-            vec![package_name.to_string(), name.to_string()],
-            code.to_string(),
-        );
-    }
-    map
-}
-
 /// Shared state for the Python code generator.
 struct PythonEmitter<T> {
     /// Writer.
@@ -119,7 +83,7 @@ from {}diem_types import (Script, TypeTag, AccountAddress, TransactionArgument, 
             self.out,
             r#"
 def encode_script(call: ScriptCall) -> Script:
-    """Build a Libra `Script` from a structured object `ScriptCall`.
+    """Build a Diem `Script` from a structured object `ScriptCall`.
     """
     helper = SCRIPT_ENCODER_MAP[call.__class__]
     return helper(call)
@@ -132,7 +96,7 @@ def encode_script(call: ScriptCall) -> Script:
             self.out,
             r#"
 def decode_script(script: Script) -> ScriptCall:
-    """Try to recognize a Libra `Script` and convert it into a structured object `ScriptCall`.
+    """Try to recognize a Diem `Script` and convert it into a structured object `ScriptCall`.
     """
     helper = SCRIPT_DECODER_MAP.get(script.code)
     if helper is None:

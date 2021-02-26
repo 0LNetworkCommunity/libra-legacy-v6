@@ -24,9 +24,9 @@ pub fn new() -> (Sender, Receiver) {
 mod test {
     use super::*;
     use crate::peer::DisconnectReason;
-    use futures::{executor::block_on, future::FutureExt, stream::StreamExt};
     use diem_config::network_id::NetworkContext;
     use diem_network_address::NetworkAddress;
+    use futures::{executor::block_on, future::FutureExt, stream::StreamExt};
     use netcore::transport::ConnectionOrigin;
 
     fn send_new_peer(sender: &mut Sender, peer_id: PeerId) {

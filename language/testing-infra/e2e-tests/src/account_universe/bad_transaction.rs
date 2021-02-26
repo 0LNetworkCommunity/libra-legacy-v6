@@ -12,7 +12,7 @@ use diem_crypto::{
 };
 use diem_proptest_helpers::Index;
 use diem_types::{
-    account_config::COIN1_NAME,
+    account_config::XUS_NAME,
     transaction::{Script, SignedTransaction, TransactionStatus},
     vm_status::StatusCode,
 };
@@ -50,7 +50,7 @@ impl AUTransactionGen for SequenceNumberMismatchGen {
             seq,
             gas_costs::TXN_RESERVED,
             0,
-            COIN1_NAME.to_string(),
+            XUS_NAME.to_string(),
         );
 
         (
@@ -91,7 +91,7 @@ impl AUTransactionGen for InsufficientBalanceGen {
             sender.sequence_number,
             max_gas_unit,
             self.gas_unit_price,
-            COIN1_NAME.to_string(),
+            XUS_NAME.to_string(),
         );
 
         // TODO: Move such config to AccountUniverse

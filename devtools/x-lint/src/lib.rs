@@ -7,12 +7,10 @@
 //! [Arcanist](https://secure.phabricator.com/book/phabricator/article/arcanist_lint)'s lint engine.
 
 pub mod content;
-pub mod file;
+pub mod file_path;
 pub mod package;
 pub mod project;
-mod runner;
-
-pub use runner::*;
+pub mod runner;
 
 use guppy::PackageId;
 use std::{borrow::Cow, fmt, path::Path};
@@ -166,7 +164,7 @@ pub enum LintKind<'l> {
         name: &'l str,
         workspace_path: &'l Path,
     },
-    File(&'l Path),
+    FilePath(&'l Path),
     Content(&'l Path),
 }
 
@@ -178,7 +176,7 @@ impl<'l> fmt::Display for LintKind<'l> {
                 name,
                 workspace_path,
             } => write!(f, "package '{}' (at {})", name, workspace_path.display()),
-            LintKind::File(path) => write!(f, "file {}", path.display()),
+            LintKind::FilePath(path) => write!(f, "file path {}", path.display()),
             LintKind::Content(path) => write!(f, "content {}", path.display()),
         }
     }
@@ -187,9 +185,10 @@ impl<'l> fmt::Display for LintKind<'l> {
 pub mod prelude {
     pub use super::{
         content::{ContentContext, ContentLinter},
-        file::FileContext,
+        file_path::{FilePathContext, FilePathLinter},
         package::{PackageContext, PackageLinter},
         project::{ProjectContext, ProjectLinter},
+        runner::{LintEngine, LintEngineConfig, LintResults},
         LintFormatter, LintKind, LintLevel, LintMessage, LintSource, Linter, RunStatus, SkipReason,
     };
     pub use x_core::{Result, SystemError};

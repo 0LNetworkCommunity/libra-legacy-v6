@@ -7,8 +7,8 @@ use crate::{
     native_functions::FunctionContext,
     trace,
 };
-use fail::fail_point;
 use diem_logger::prelude::*;
+use fail::fail_point;
 use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::{AbstractMemorySize, GasAlgebra, GasCarrier},

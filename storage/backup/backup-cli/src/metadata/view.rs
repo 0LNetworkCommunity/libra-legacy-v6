@@ -5,8 +5,8 @@ use crate::metadata::{
     EpochEndingBackupMeta, Metadata, StateSnapshotBackupMeta, TransactionBackupMeta,
 };
 use anyhow::{anyhow, ensure, Result};
-use itertools::Itertools;
 use diem_types::transaction::Version;
+use itertools::Itertools;
 use serde::export::Formatter;
 use std::{fmt::Display, str::FromStr};
 

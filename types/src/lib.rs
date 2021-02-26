@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -12,17 +12,15 @@ pub mod block_info;
 pub mod block_metadata;
 pub mod chain_id;
 pub mod contract_event;
+pub mod diem_timestamp;
 pub mod epoch_change;
 pub mod epoch_state;
 pub mod event;
 pub mod ledger_info;
-pub mod diem_timestamp;
 pub mod mempool_status;
 pub mod move_resource;
 pub mod on_chain_config;
 pub mod proof;
-
-
 #[cfg(any(test, feature = "fuzzing"))]
 pub mod proptest_types;
 #[cfg(any(test, feature = "fuzzing"))]
@@ -34,7 +32,6 @@ pub mod validator_info;
 pub mod validator_signer;
 pub mod validator_verifier;
 pub mod vm_status;
-pub mod upgrade_payload;
 pub mod waypoint;
 pub mod write_set;
 

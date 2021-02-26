@@ -14,9 +14,9 @@ use crate::{
     transport::ConnectionMetadata,
 };
 use anyhow::anyhow;
-use futures::future::join;
 use diem_config::network_id::NetworkContext;
 use diem_types::PeerId;
+use futures::future::join;
 use serial_test::serial;
 use std::sync::Arc;
 use tokio::runtime::{Handle, Runtime};
@@ -25,8 +25,8 @@ static RPC_PROTOCOL_A: ProtocolId = ProtocolId::ConsensusRpc;
 static RPC_PROTOCOL_B: ProtocolId = ProtocolId::HealthCheckerRpc;
 
 fn reset_counters() {
-    counters::LIBRA_NETWORK_RPC_MESSAGES.reset();
-    counters::LIBRA_NETWORK_RPC_BYTES.reset();
+    counters::DIEM_NETWORK_RPC_MESSAGES.reset();
+    counters::DIEM_NETWORK_RPC_BYTES.reset();
 }
 
 fn start_rpc_actor(

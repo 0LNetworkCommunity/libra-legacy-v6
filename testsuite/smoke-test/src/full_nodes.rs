@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{smoke_test_environment::SmokeTestEnvironment, test_utils::compare_balances};
-use diem_types::account_config::{
-    testnet_dd_account_address, treasury_compliance_account_address,
-};
+use diem_types::account_config::{testnet_dd_account_address, treasury_compliance_account_address};
 
 #[test]
 fn test_full_node_basic_flow() {
@@ -40,10 +38,10 @@ fn test_full_node_basic_flow() {
         .get_sequence_number(&creation_sequence_reset_command)
         .unwrap();
     vfn_client
-        .mint_coins(&["mintb", "0", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "10", "XUS"], true)
         .expect("Fail to mint!");
     assert!(compare_balances(
-        vec![(10.0, "Coin1".to_string())],
+        vec![(10.0, "XUS".to_string())],
         vfn_client.get_balances(&["b", "0"]).unwrap(),
     ));
 
@@ -51,10 +49,10 @@ fn test_full_node_basic_flow() {
         .get_sequence_number(&sequence_reset_command)
         .unwrap();
     validator_client
-        .wait_for_transaction(sender_account, sequence)
+        .wait_for_transaction(sender_account, sequence - 1)
         .unwrap();
     assert!(compare_balances(
-        vec![(10.0, "Coin1".to_string())],
+        vec![(10.0, "XUS".to_string())],
         validator_client.get_balances(&["b", "0"]).unwrap(),
     ));
 
@@ -78,53 +76,55 @@ fn test_full_node_basic_flow() {
     pfn_client.create_next_account(false).unwrap();
 
     validator_client
-        .mint_coins(&["mintb", "1", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "10", "XUS"], true)
         .unwrap();
     let sequence = validator_client
         .get_sequence_number(&sequence_reset_command)
         .unwrap();
     vfn_client
-        .wait_for_transaction(sender_account, sequence)
+        .wait_for_transaction(sender_account, sequence - 1)
         .unwrap();
 
     assert!(compare_balances(
-        vec![(10.0, "Coin1".to_string())],
+        vec![(10.0, "XUS".to_string())],
         validator_client.get_balances(&["b", "1"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(10.0, "Coin1".to_string())],
+        vec![(10.0, "XUS".to_string())],
         vfn_client.get_balances(&["b", "1"]).unwrap(),
     ));
 
     // minting again on validator doesn't cause error since client sequence has been updated
     validator_client
-        .mint_coins(&["mintb", "1", "10", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "10", "XUS"], true)
         .unwrap();
 
     // test transferring balance from 0 to 1 through full node proxy
     vfn_client
-        .transfer_coins(&["tb", "0", "1", "10", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "10", "XUS"], true)
         .unwrap();
 
     assert!(compare_balances(
-        vec![(0.0, "Coin1".to_string())],
+        vec![(0.0, "XUS".to_string())],
         vfn_client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(30.0, "Coin1".to_string())],
+        vec![(30.0, "XUS".to_string())],
         validator_client.get_balances(&["b", "1"]).unwrap(),
     ));
 
     let sequence = validator_client
         .get_sequence_number(&["sequence", &format!("{}", account), "true"])
         .unwrap();
-    pfn_client.wait_for_transaction(account, sequence).unwrap();
+    pfn_client
+        .wait_for_transaction(account, sequence - 1)
+        .unwrap();
     assert!(compare_balances(
-        vec![(0.0, "Coin1".to_string())],
+        vec![(0.0, "XUS".to_string())],
         pfn_client.get_balances(&["b", "0"]).unwrap(),
     ));
     assert!(compare_balances(
-        vec![(30.0, "Coin1".to_string())],
+        vec![(30.0, "XUS".to_string())],
         pfn_client.get_balances(&["b", "1"]).unwrap(),
     ));
 }
@@ -159,26 +159,26 @@ fn test_vfn_failover() {
         vfn_0_client.create_next_account(false).unwrap();
     }
     vfn_0_client
-        .mint_coins(&["mb", "0", "100", "Coin1"], true)
+        .mint_coins(&["mb", "0", "100", "XUS"], true)
         .unwrap();
     vfn_0_client
-        .mint_coins(&["mb", "1", "50", "Coin1"], true)
+        .mint_coins(&["mb", "1", "50", "XUS"], true)
         .unwrap();
     for _ in 0..8 {
         vfn_0_client
-            .transfer_coins(&["t", "0", "1", "1", "Coin1"], false)
+            .transfer_coins(&["t", "0", "1", "1", "XUS"], false)
             .unwrap();
     }
     vfn_0_client
-        .transfer_coins(&["tb", "0", "1", "1", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "1", "XUS"], true)
         .unwrap();
 
     // wait for VFN 1 to catch up with creation and sender account
     vfn_1_client
-        .wait_for_transaction(creation_account, 1)
+        .wait_for_transaction(creation_account, 0)
         .unwrap();
     vfn_1_client
-        .wait_for_transaction(sender_account, 2)
+        .wait_for_transaction(sender_account, 1)
         .unwrap();
     vfn_1_client
         .get_sequence_number(&sequence_reset_command)
@@ -190,10 +190,10 @@ fn test_vfn_failover() {
         vfn_1_client.create_next_account(false).unwrap();
     }
     vfn_1_client
-        .mint_coins(&["mb", "2", "100", "Coin1"], true)
+        .mint_coins(&["mb", "2", "100", "XUS"], true)
         .unwrap();
     vfn_1_client
-        .mint_coins(&["mb", "3", "50", "Coin1"], true)
+        .mint_coins(&["mb", "3", "50", "XUS"], true)
         .unwrap();
 
     for _ in 0..6 {
@@ -201,10 +201,10 @@ fn test_vfn_failover() {
     }
     // wait for PFN to catch up with creation and sender account
     pfn_0_client
-        .wait_for_transaction(creation_account, 3)
+        .wait_for_transaction(creation_account, 2)
         .unwrap();
     pfn_0_client
-        .wait_for_transaction(sender_account, 4)
+        .wait_for_transaction(sender_account, 3)
         .unwrap();
     pfn_0_client
         .get_sequence_number(&sequence_reset_command)
@@ -213,10 +213,10 @@ fn test_vfn_failover() {
         .get_sequence_number(&creation_sequence_reset_command)
         .unwrap();
     pfn_0_client
-        .mint_coins(&["mb", "4", "100", "Coin1"], true)
+        .mint_coins(&["mb", "4", "100", "XUS"], true)
         .unwrap();
     pfn_0_client
-        .mint_coins(&["mb", "5", "50", "Coin1"], true)
+        .mint_coins(&["mb", "5", "50", "XUS"], true)
         .unwrap();
 
     // bring down another V
@@ -226,14 +226,14 @@ fn test_vfn_failover() {
     // submit some non-blocking txns during this scenario when >f validators are down
     for _ in 0..10 {
         vfn_1_client
-            .transfer_coins(&["t", "2", "3", "1", "Coin1"], false)
+            .transfer_coins(&["t", "2", "3", "1", "XUS"], false)
             .unwrap();
     }
 
     // submit txn for vfn_0 too
     for _ in 0..5 {
         vfn_0_client
-            .transfer_coins(&["t", "0", "1", "1", "Coin1"], false)
+            .transfer_coins(&["t", "0", "1", "1", "XUS"], false)
             .unwrap();
     }
 
@@ -241,7 +241,7 @@ fn test_vfn_failover() {
     // but by pigeonhole principle, we know the PFN is connected to max 2 live VFNs
     for _ in 0..7 {
         pfn_0_client
-            .transfer_coins(&["t", "4", "5", "1", "Coin1"], false)
+            .transfer_coins(&["t", "4", "5", "1", "XUS"], false)
             .unwrap();
     }
 
@@ -249,20 +249,20 @@ fn test_vfn_failover() {
     assert!(env.validator_swarm.add_node(0).is_ok());
     // check all txns submitted so far (even those submitted during overlapping validator downtime) are committed
     let vfn_0_acct_0 = vfn_0_client.copy_all_accounts().get(0).unwrap().address;
-    vfn_0_client.wait_for_transaction(vfn_0_acct_0, 14).unwrap();
+    vfn_0_client.wait_for_transaction(vfn_0_acct_0, 13).unwrap();
     let vfn_1_acct_0 = vfn_1_client.copy_all_accounts().get(2).unwrap().address;
-    vfn_1_client.wait_for_transaction(vfn_1_acct_0, 10).unwrap();
+    vfn_1_client.wait_for_transaction(vfn_1_acct_0, 9).unwrap();
     let pfn_acct_0 = pfn_0_client.copy_all_accounts().get(4).unwrap().address;
-    pfn_0_client.wait_for_transaction(pfn_acct_0, 7).unwrap();
+    pfn_0_client.wait_for_transaction(pfn_acct_0, 6).unwrap();
 
     // submit txns to vfn of dead V
     for _ in 0..5 {
         vfn_1_client
-            .transfer_coins(&["t", "2", "3", "1", "Coin1"], false)
+            .transfer_coins(&["t", "2", "3", "1", "XUS"], false)
             .unwrap();
     }
     vfn_1_client
-        .transfer_coins(&["tb", "2", "3", "1", "Coin1"], true)
+        .transfer_coins(&["tb", "2", "3", "1", "XUS"], true)
         .unwrap();
 
     // bring back all Vs back up
@@ -271,10 +271,10 @@ fn test_vfn_failover() {
     // just for kicks: check regular minting still works with revived validators
     for _ in 0..5 {
         pfn_0_client
-            .transfer_coins(&["t", "4", "5", "1", "Coin1"], false)
+            .transfer_coins(&["t", "4", "5", "1", "XUS"], false)
             .unwrap();
     }
     pfn_0_client
-        .transfer_coins(&["tb", "4", "5", "1", "Coin1"], true)
+        .transfer_coins(&["tb", "4", "5", "1", "XUS"], true)
         .unwrap();
 }

@@ -16,7 +16,7 @@ use anyhow::format_err;
 use async_trait::async_trait;
 use diem_logger::prelude::*;
 use diem_types::{
-    account_config::{coin1_tmp_tag, COIN1_NAME},
+    account_config::{xus_tag, XUS_NAME},
     chain_id::ChainId,
     transaction::{helpers::create_user_txn, TransactionPayload},
 };
@@ -117,7 +117,7 @@ impl Experiment for ValidatorVersioning {
         let account_2 = context.tx_emitter.take_account();
 
         let txn_payload = TransactionPayload::Script(encode_peer_to_peer_with_metadata_script(
-            coin1_tmp_tag(),
+            xus_tag(),
             account_2.address,
             1,
             vec![],
@@ -136,7 +136,7 @@ impl Experiment for ValidatorVersioning {
                 account.sequence_number,
                 123456,
                 0,
-                COIN1_NAME.to_owned(),
+                XUS_NAME.to_owned(),
                 10,
                 ChainId::test(),
             )
@@ -176,7 +176,7 @@ impl Experiment for ValidatorVersioning {
             faucet_account.sequence_number,
             123456,
             0,
-            COIN1_NAME.to_owned(),
+            XUS_NAME.to_owned(),
             10,
             ChainId::test(),
         )

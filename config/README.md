@@ -17,7 +17,7 @@ blockchain or performing transactions.
 
 For a more detailed summary of the differences between a Validator and a
 Fullnode, see this [blog
-post](https://developers.diem.org/blog/2020/01/23/full-node-basics).
+post](https://developers.diem.com/blog/2020/01/23/full-node-basics).
 
 ## Organization
 
@@ -28,8 +28,8 @@ Diem Configuration is broken up into many utilities:
 - `src/keys.rs` wraps keys within the configuration files for testing purposes
 - `config-builder` extends `src/generator.rs` with a command-line utility
   and also provides support for generating genesis
-- `generate-key` generates an Ed25519 private key in Diem Canonical
-  Serialization (LCS) format. This is used by the mint.
+- `generate-key` generates an Ed25519 private key in Binary Canonical
+  Serialization (BCS) format. This is used by the mint.
 
 The separation of the `config-builder` into its own crate was dictated by the
 need for `config-builder` to be able to generate genesis. Genesis requires the
@@ -159,7 +159,7 @@ The Diem Node configuration contains several modules:
 - DebugInterface - A special gRPC service for identifying internals of the
   system
 - ExecutionConfig - The gRPC service endpoint and path to the genesis file
-  that defines the Move standard diemry and the initial Validator set.
+  that defines the Move standard library and the initial Validator set.
 - MempoolConfig - Parameters for configuring uncommitted transaction storage
 - MetricsConfig - Local storage for metrics
 - NetworkConfig - DiemNet configuration file that specifies peers with keys,

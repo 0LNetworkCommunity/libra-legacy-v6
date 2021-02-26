@@ -1,4 +1,4 @@
-// Copyright (c) The Libra Core Contributors
+// Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{
@@ -1168,10 +1168,8 @@ fn exp_inner(context: &mut Context, sp!(eloc, ne_): N::Exp) -> T::Exp {
         }
 
         NE::DerefBorrow(ndotted) => {
-            assert!(match ndotted {
-                sp!(_, N::ExpDotted_::Exp(_)) => false,
-                _ => true,
-            });
+            assert!(!matches!(ndotted, sp!(_, N::ExpDotted_::Exp(_))));
+
             let (edotted, inner_ty) = exp_dotted(context, "dot access", ndotted);
             let ederefborrow = exp_dotted_to_owned_value(context, eloc, edotted, inner_ty);
             (ederefborrow.ty, ederefborrow.exp.value)

@@ -37,7 +37,7 @@ The overall structure of the Diem Framework is as follows:
 ```
 ├── compiled                                # Generated files and public rust interface to the Diem Framework
 │   ├── error_descriptions/*.errmap         # Generated error descriptions for use by the Move Explain tool
-│   ├── src                                 # External Rust interface/diemry to use the Diem Framework
+│   ├── src                                 # External Rust interface/library to use the Diem Framework
 │   ├── stdlib                              # The compiled Move bytecode of the Diem Framework source modules
 │   └── transaction_scripts                 # Generated ABIs and bytecode for each transaction script in the allowlist
 │       ├── abi/*.abi                       # Directory containing generated ABIs
@@ -46,7 +46,7 @@ The overall structure of the Diem Framework is as follows:
 │   ├── *.move
 │   └── doc/*.md                            # Generated documentation for the Diem Framework modules
 ├── nursery/*.move                          # Move modules that are not published on-chain, but are used for testing and debugging locally
-├── src                                     # Compilation and generation of information from Move source files in the Diem Framework. Not designed to be used as a Rust diemry
+├── src                                     # Compilation and generation of information from Move source files in the Diem Framework. Not designed to be used as a Rust library
 ├── tests
 └── transaction_scripts/*.move              # Move source files for allowed transaction scripts
     └── doc/*.md                            # Generated documentation for allowed transaction scripts

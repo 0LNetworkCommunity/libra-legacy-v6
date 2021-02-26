@@ -1,11 +1,11 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use execution_correctness::ExecutionCorrectnessManager;
 use diem_config::{
     config::{ExecutionCorrectnessService, PersistableConfig, RemoteExecutionService},
     utils,
 };
+use execution_correctness::ExecutionCorrectnessManager;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 const BINARY: &str = env!("CARGO_BIN_EXE_execution-correctness");

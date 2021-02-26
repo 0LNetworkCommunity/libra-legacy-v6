@@ -31,9 +31,14 @@ pub fn execute(
     storage: PersistentSafetyStorage,
     listen_addr: SocketAddr,
     verify_vote_proposal_signature: bool,
+    export_consensus_key: bool,
     network_timeout_ms: u64,
 ) {
-    let mut safety_rules = SafetyRules::new(storage, verify_vote_proposal_signature);
+    let mut safety_rules = SafetyRules::new(
+        storage,
+        verify_vote_proposal_signature,
+        export_consensus_key,
+    );
     if let Err(e) = safety_rules.consensus_state() {
         warn!("Unable to print consensus state: {}", e);
     }
@@ -75,7 +80,7 @@ impl RemoteClient {
 
 impl TSerializerClient for RemoteClient {
     fn request(&mut self, input: SafetyRulesInput) -> Result<Vec<u8>, Error> {
-        let input_message = lcs::to_bytes(&input)?;
+        let input_message = bcs::to_bytes(&input)?;
         loop {
             match self.process_one_message(&input_message) {
                 Err(err) => warn!("Failed to communicate with SafetyRules service: {}", err),

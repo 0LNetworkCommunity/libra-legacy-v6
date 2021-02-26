@@ -1,7 +1,7 @@
 # Tests for Move Prover
 
 This directory contains the tests for Move Prover. The tests are defined by the `.move` files in this tree,
-as well as all the `.move` files in the [Libra framework](../../stdlib).
+as well as all the `.move` files in the [Diem framework](../../stdlib).
 
 *Note*: in order to run these tests locally, you must have installed tools and setup a few environment variables.
 See [`../doc/user/install.md`](../doc/user/install.md) for details. If the environment variables for
@@ -43,7 +43,7 @@ MVP_TEST_FLAGS="-T=20" cargo test -p move-prover
 ## Code coverage
 
 Analyzing the test coverage of the diem repo is regularly done in CI, and the result updates the online report at
-* https://ci-artifacts.diem.org/coverage/unit-coverage/latest/index.html
+* https://ci-artifacts.diem.com/coverage/unit-coverage/latest/index.html
 * https://codecov.io/gh/diem/diem (reports significantly less coverage due to panic unwinding being considered a branch)
 
 Note that this report is based on the the coverage test when the environment variable `BOOGIE_EXE` is not set.

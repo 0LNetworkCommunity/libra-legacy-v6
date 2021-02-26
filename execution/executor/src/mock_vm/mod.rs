@@ -9,7 +9,7 @@ use diem_state_view::StateView;
 use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
-    account_config::{diem_root_address, validator_set_address, COIN1_NAME},
+    account_config::{diem_root_address, validator_set_address, XUS_NAME},
     chain_id::ChainId,
     contract_event::ContractEvent,
     event::EventKey,
@@ -69,7 +69,7 @@ impl VMExecutor for MockVM {
                     new_epoch_event_key(),
                     0,
                     TypeTag::Bool,
-                    lcs::to_bytes(&0).unwrap(),
+                    bcs::to_bytes(&0).unwrap(),
                 )],
                 0,
                 KEEP_STATUS.clone(),
@@ -154,7 +154,7 @@ impl VMExecutor for MockVM {
                             new_epoch_event_key(),
                             0,
                             TypeTag::Bool,
-                            lcs::to_bytes(&0).unwrap(),
+                            bcs::to_bytes(&0).unwrap(),
                         )],
                         0,
                         KEEP_STATUS.clone(),
@@ -225,11 +225,11 @@ fn gen_genesis_writeset() -> WriteSet {
     let validator_set_ap = ValidatorSet::CONFIG_ID.access_path();
     write_set.push((
         validator_set_ap,
-        WriteOp::Value(lcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
+        WriteOp::Value(bcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
     ));
     write_set.push((
         AccessPath::new(config_address(), ConfigurationResource::resource_path()),
-        WriteOp::Value(lcs::to_bytes(&ConfigurationResource::default()).unwrap()),
+        WriteOp::Value(bcs::to_bytes(&ConfigurationResource::default()).unwrap()),
     ));
     write_set
         .freeze()
@@ -313,7 +313,7 @@ fn encode_transaction(sender: AccountAddress, program: Script) -> Transaction {
         program,
         0,
         0,
-        COIN1_NAME.to_owned(),
+        XUS_NAME.to_owned(),
         0,
         ChainId::test(),
     );

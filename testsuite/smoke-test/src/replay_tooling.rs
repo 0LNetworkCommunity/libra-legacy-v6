@@ -5,7 +5,6 @@ use crate::{
     test_utils::{diem_swarm_utils::get_diem_debugger, setup_swarm_and_client_proxy},
     workspace_builder,
 };
-use diem_json_rpc::views::VMStatusView as JsonVMStatusView;
 
 #[test]
 fn test_replay_tooling() {
@@ -15,15 +14,15 @@ fn test_replay_tooling() {
     client.create_next_account(false).unwrap();
     client.create_next_account(false).unwrap();
     client
-        .mint_coins(&["mintb", "0", "100", "Coin1"], true)
+        .mint_coins(&["mintb", "0", "100", "XUS"], true)
         .unwrap();
 
     client
-        .mint_coins(&["mintb", "1", "100", "Coin1"], true)
+        .mint_coins(&["mintb", "1", "100", "XUS"], true)
         .unwrap();
 
     client
-        .transfer_coins(&["tb", "0", "1", "3", "Coin1"], true)
+        .transfer_coins(&["tb", "0", "1", "3", "XUS"], true)
         .unwrap();
 
     let txn = client
@@ -58,8 +57,5 @@ fn test_replay_tooling() {
 
     assert_eq!(account_creation_txn.version + 1, bisect_result);
     assert_eq!(replay_result.gas_used(), txn.gas_used);
-    assert_eq!(
-        JsonVMStatusView::from(&replay_result.status().status().unwrap()),
-        txn.vm_status
-    );
+    assert_eq!("executed", txn.vm_status.unwrap().r#type);
 }
