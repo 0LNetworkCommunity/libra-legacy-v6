@@ -3,8 +3,9 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::{submit_tx::{submit_tx_, eval_tx_status}};
-use crate::{test_tx_swarm::get_params_from_swarm};
+use crate::{submit_tx::{
+    submit_tx_, get_params_from_swarm, eval_tx_status
+}};
 use std::path::PathBuf;
 use std::fs;
 use libra_types::{transaction::{Script}};

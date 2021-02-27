@@ -5,19 +5,15 @@
 //! for specifying it.
 
 use std::{net::Ipv4Addr, fs};
-use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
-use crate::delay::delay_difficulty;
-use crate::submit_tx::TxParams;
 use ajson;
 use dirs;
 use libra_global_constants::NODE_HOME;
 use crate::commands::CONFIG_FILE;
 use std::{io::Write};
-
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -30,10 +26,6 @@ pub struct MinerConfig {
     /// Chain Info for all users
     pub chain_info: ChainInfo,
 }
-
-const AUTH_KEY_BYTES: usize = 32;
-const CHAIN_ID_BYTES: usize = 64;
-const STATEMENT_BYTES: usize = 1008;
 
 impl MinerConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
@@ -52,97 +44,6 @@ impl MinerConfig {
             None
             }
         }
-    }
-
-
-    /// Get configs from a running swarm instance.
-    pub fn load_swarm_config(param: &TxParams) -> Self {
-        let mut conf = MinerConfig::default();
-        conf.workspace.node_home = PathBuf::from("./swarm_temp");
-        // Load profile config
-        conf.profile.account = param.address;
-        conf.profile.auth_key = param.auth_key.to_string();
-
-        // Load chain info
-        conf.chain_info.node = Some(param.url.to_string());
-        conf
-    }
-    /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
-    pub fn genesis_preimage(&self) -> Vec<u8> {
-        let mut preimage: Vec<u8> = vec![];
-
-        let mut padded_key_bytes = match hex::decode(self.profile.auth_key.clone()) {
-            Err(x) => panic!("Invalid 0L Auth Key: {}", x),
-            Ok(key_bytes) => {
-                if key_bytes.len() != AUTH_KEY_BYTES {
-                    panic!("Expected a {} byte 0L Auth Key. Got {} bytes", AUTH_KEY_BYTES, key_bytes.len());
-                }
-                key_bytes
-            }
-        };
-
-        preimage.append(&mut padded_key_bytes);
-
-        let mut padded_chain_id_bytes = {
-            let mut chain_id_bytes = self.chain_info.chain_id.clone().into_bytes();
-
-            match chain_id_bytes.len() {
-                d if d > CHAIN_ID_BYTES => panic!(
-                    "Chain Id is longer than {} bytes. Got {} bytes", CHAIN_ID_BYTES,
-                    chain_id_bytes.len()
-                ),
-                d if d < CHAIN_ID_BYTES => {
-                    let padding_length = CHAIN_ID_BYTES - chain_id_bytes.len() as usize;
-                    let mut padding_bytes: Vec<u8> = vec![0; padding_length];
-                    padding_bytes.append(&mut chain_id_bytes);
-                    padding_bytes
-                }
-                d if d == CHAIN_ID_BYTES => chain_id_bytes,
-                _ => unreachable!(),
-            }
-        };
-
-        preimage.append(&mut padded_chain_id_bytes);
-
-        preimage
-            .write_u64::<LittleEndian>(delay_difficulty())
-            .unwrap();
-
-        let mut padded_statements_bytes = {
-            let mut statement_bytes = self.profile.statement.clone().into_bytes();
-
-            match statement_bytes.len() {
-                d if d > STATEMENT_BYTES => panic!(
-                    "Chain Id is longer than 1008 bytes. Got {} bytes",
-                    statement_bytes.len()
-                ),
-                d if d < STATEMENT_BYTES => {
-                    let padding_length = STATEMENT_BYTES - statement_bytes.len() as usize;
-                    let mut padding_bytes: Vec<u8> = vec![0; padding_length];
-                    padding_bytes.append(&mut statement_bytes);
-                    padding_bytes
-                }
-                d if d == STATEMENT_BYTES => statement_bytes,
-                _ => unreachable!(),
-            }
-        };
-
-        preimage.append(&mut padded_statements_bytes);
-
-        assert_eq!(preimage.len(), (
-            AUTH_KEY_BYTES // 0L Auth_Key
-                + CHAIN_ID_BYTES // chain_id
-                + 8 // iterations/difficulty
-                + STATEMENT_BYTES
-            // statement
-        ), "Preimage is the incorrect byte length");
-        return preimage;
-    }
-    /// Get where the block/proofs are stored.
-    pub fn get_block_dir(&self)-> PathBuf {
-        let mut home = self.workspace.node_home.clone();
-        home.push(&self.chain_info.block_dir);
-        home
     }
 
     /// Get where node key_store.json stored.
