@@ -10,40 +10,21 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
+mod init_cmd;
 mod keygen_cmd;
-mod start_cmd;
-mod version_cmd;
 mod create_account_cmd;
 mod oracle_upgrade_cmd;
-mod onboard_cmd;
-mod swarm_test_cmd;
-mod zero_cmd;
-mod ceremony_cmd;
-mod wizard_user_cmd;
-mod manifest_cmd;
-mod init_cmd;
-mod wizard_val_cmd;
-mod genesis_cmd;
+mod version_cmd;
 
 use self::{
-    start_cmd::StartCmd,
-    version_cmd::VersionCmd,
+    init_cmd::InitCmd,
+    keygen_cmd::KeygenCmd,
     create_account_cmd::CreateAccountCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
-    onboard_cmd::OnboardCmd,
-    swarm_test_cmd::SwarmCmd,
-    zero_cmd::ZeroCmd,
-    keygen_cmd::KeygenCmd,
-    ceremony_cmd::CeremonyUtilCmd,
-    wizard_user_cmd::UserWizardCmd,
-    init_cmd::InitCmd,
-    wizard_val_cmd::ValWizardCmd,
-    genesis_cmd::GenesisCmd,
+    version_cmd::VersionCmd,
 };
 use crate::config::MinerConfig;
-use abscissa_core::{
-    config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
-};
+use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
 use dirs;
 use libra_global_constants::NODE_HOME;
@@ -58,57 +39,25 @@ pub enum MinerCmd {
     #[options(help = "get usage information")]
     Help(Help<Self>),
 
-    /// The `genesis` subcommand
-    #[options(help = "mine the 0th block of the tower")]
-    Zero(ZeroCmd),
-
-    /// The `start` subcommand
-    #[options(help = "start mining blocks")]
-    Start(StartCmd),
-
-    /// The `version` subcommand
-    #[options(help = "display version information")]
-    Version(VersionCmd),
-
-    /// The `create-account` subcommand
-    #[options(help = "create user account")]
-    CreateAccount(CreateAccountCmd),
-
-    /// The `oracle-upgrade` subcommand
-    #[options(help = "oracle upgrade")]
-    OracleUpgrade(OracleUpgradeCmd),    
+    /// The `init` subcommand
+    #[options(help = "initialize miner configs miner.toml")]
+    Init(InitCmd),
 
     /// The `keygen` subcommand
     #[options(help = "generate keys")]
     Keygen(KeygenCmd),
 
-    /// The `keygen` subcommand
-    #[options(help = "wizard for genesis ceremony configurations")]
-    Ceremony(CeremonyUtilCmd),
-
-    /// The `onboard` subcommand
-    #[options(help = "onboard a new miner with a block_0.json proof")]
-    Onboard(OnboardCmd),
+    /// The `create-account` subcommand
+    #[options(help = "create user account")]
+    CreateAccount(CreateAccountCmd),
     
-    /// The `swarm` subcommand
-    #[options(help = "test connection to a local swarm")]
-    Swarm(SwarmCmd),
+    /// The `oracle-upgrade` subcommand
+    #[options(help = "oracle upgrade")]
+    OracleUpgrade(OracleUpgradeCmd),    
 
-    /// The `user_wizard` subcommand
-    #[options(help = "wizard to create accounts and local configs")]
-    UserWizard(UserWizardCmd),
-
-    /// The `init` subcommand
-    #[options(help = "initialize miner configs miner.toml")]
-    Init(InitCmd),
-
-    /// The `val_wizard` subcommand
-    #[options(help = "run all steps for validator onboarding")]
-    ValWizard(ValWizardCmd),
-
-    /// The `genesis` subcommand
-    #[options(help = "build a genesis.blob")]
-    Genesis(GenesisCmd),
+    /// The `version` subcommand
+    #[options(help = "display version information")]
+    Version(VersionCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
@@ -128,18 +77,6 @@ impl Configurable<MinerConfig> for MinerCmd {
             Some(config_path)
         } else {
             None
-        }
-    }
-
-    /// Apply changes to the config after it's been loaded, e.g. overriding
-    /// values in a config file using command-line options.
-    ///
-    /// This can be safely deleted if you don't want to override config
-    /// settings from command-line options.
-    fn process_config(&self, config: MinerConfig) -> Result<MinerConfig, FrameworkError> {
-        match self {
-            MinerCmd::Start(cmd) => cmd.override_config(config),
-            _ => Ok(config),
         }
     }
 }
