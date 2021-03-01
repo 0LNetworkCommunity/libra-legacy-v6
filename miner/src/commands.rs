@@ -35,6 +35,7 @@ use self::{
     init_cmd::InitCmd,
     wizard_val_cmd::ValWizardCmd,
     genesis_cmd::GenesisCmd,
+    manifest_cmd::ManifestCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -97,6 +98,10 @@ pub enum MinerCmd {
     /// The `genesis` subcommand
     #[options(help = "build a genesis.blob")]
     Genesis(GenesisCmd),
+
+    /// The `genesis` subcommand
+    #[options(help = "build a genesis.blob")]
+    Account(ManifestCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
