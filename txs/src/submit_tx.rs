@@ -1,25 +1,26 @@
-//! MinerApp submit_tx module
+//! Txs App submit_tx module
 #![forbid(unsafe_code)]
-use libra_types::{waypoint::Waypoint};
-
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use libra_types::{
+    account_address::AccountAddress, waypoint::Waypoint, 
+    transaction::helpers::*, chain_id::ChainId
+};
+use libra_types::transaction::{
+    Script, TransactionPayload, authenticator::AuthenticationKey
+};
 use libra_crypto::{
     test_utils::KeyPair,
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
 };
-use anyhow::Error;
+use libra_config::config::NodeConfig;
+use libra_json_rpc_types::views::{TransactionView, VMStatusView};
+use libra_genesis_tool::keyscheme::KeyScheme;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+
+use std::{fs, io::{stdout, Write},path::PathBuf, thread, time};
+use anyhow::Error;
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
-use std::{io::{stdout, Write}, thread, time};
-
-use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
-use libra_types::{transaction::helpers::*};
-// use crate::config::MinerConfig;
-// use compiled_stdlib::transaction_scripts;
-use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_types::chain_id::ChainId;
-use libra_genesis_tool::keyscheme::KeyScheme;
+use crate::keygen;
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -41,18 +42,20 @@ pub struct TxParams {
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
 
-/// --- Submit a transaction to the network.
-pub fn submit_tx_(
+/// Submit a transaction to the network.
+pub fn submit_tx(
     tx_params: &TxParams,
     script: Script,
 ) -> Result<TransactionView, Error> {
-
-    // Create a client object
-    let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let mut client = LibraClient::new(
+        tx_params.url.clone(), tx_params.waypoint
+    ).unwrap();
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
+    let (account_state,_) = client.get_account(
+        tx_params.address.clone(), true
+    ).unwrap();
 
-    let (account_state,_) = client.get_account(tx_params.address.clone(), true).unwrap();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,
@@ -67,7 +70,8 @@ pub fn submit_tx_(
         tx_params.max_gas_unit_for_tx,
         tx_params.coin_price_per_unit,
         "GAS".parse()?,
-        tx_params.user_tx_timeout as i64, // for compatibility with UTC's timestamp.
+        // for compatibility with UTC's timestamp
+        tx_params.user_tx_timeout as i64, 
         chain_id,
     )?;
 
@@ -86,7 +90,9 @@ pub fn submit_tx_(
         txn
     ){
         Ok(_) => {
-            match wait_for_tx(tx_params.address, sequence_number, &mut client) {
+            match wait_for_tx(
+                tx_params.address, sequence_number, &mut client
+            ) {
                 Some(res) => Ok(res),
                 None => Err(Error::msg("No Transaction View returned"))
             }
@@ -96,30 +102,27 @@ pub fn submit_tx_(
 
 }
 
-// use crate::submit_tx::{TxParams};
-use crate::keygen;
-// use anyhow::Error;
-use libra_config::config::NodeConfig;
-// use libra_crypto::test_utils::KeyPair;
-// use reqwest::Url;
-use std::{path::PathBuf};
-// use libra_genesis_tool::keyscheme::KeyScheme;
-
-/// Helper to extract params from a local running swarm.
-pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error> {
+/// Extract params from a local running swarm
+pub fn get_params_from_swarm(
+    mut swarm_path: PathBuf
+) 
+-> Result<TxParams, Error> {
     swarm_path.push("0/node.yaml");
     let config = NodeConfig::load(&swarm_path).unwrap_or_else(
         |_| panic!("Failed to load NodeConfig from file: {:?}", &swarm_path)
     );
-
     let url =  Url::parse(
         format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
     ).unwrap();
     let waypoint = config.base.waypoint.genesis_waypoint();
 
-    let (auth_key, address, wallet) = keygen::account_from_prompt();
-    let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
+    let alice_mnemonic = fs::read_to_string("./fixtures/mnemonic/alice.mnem")
+        .expect("Unable to read file");
+    let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let pubkey =  keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(&pubkey);
+    let address = auth_key.derived_address();  
 
     let tx_params = TxParams {
         auth_key,
@@ -135,22 +138,77 @@ pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error>
     Ok(tx_params)
 }
 
+/// Get params from command line
+pub fn get_params_from_command_line(
+    waypoint_str: &str, 
+    url_str: &str
+) -> Result<TxParams, Error> {
+    let url =  Url::parse(url_str).unwrap();
+    let (auth_key, address, wallet) = keygen::account_from_prompt();
+    let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let waypoint: Waypoint =  waypoint_str.parse().unwrap();
+
+    let tx_params = TxParams {
+        auth_key,
+        address,
+        url,
+        waypoint,
+        keypair,
+        max_gas_unit_for_tx: 1_000_000,
+        coin_price_per_unit: 1, // in micro_gas
+        user_tx_timeout: 5_000,
+    };
+
+    Ok(tx_params)
+}
+
+// todo
+// pub fn get_params_from_toml() -> Result<TxParams, Error> {    
+//     let url =  Url::parse(
+//         format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
+//     ).unwrap();
+//     let waypoint = config.base.waypoint.genesis_waypoint();
+
+//     let (auth_key, address, wallet) = keygen::account_from_prompt();
+//     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
+//     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+
+//     let tx_params = TxParams {
+//         auth_key,
+//         address,
+//         url,
+//         waypoint,
+//         keypair,
+//         max_gas_unit_for_tx: 1_000_000,
+//         coin_price_per_unit: 1, // in micro_gas
+//         user_tx_timeout: 5_000,
+//     };
+
+//     Ok(tx_params)
+// }
+
 /// Wait for the response from the libra RPC.
 pub fn wait_for_tx(
     sender_address: AccountAddress,
     sequence_number: u64,
-    client: &mut LibraClient) -> Option<TransactionView>{
+    client: &mut LibraClient
+) -> Option<TransactionView> {
         println!(
-            "Awaiting tx status \nSubmitted from account: {} with sequence number: {}",
+            "Awaiting tx status \n\
+             Submitted from account: {} with sequence number: {}",
             sender_address, sequence_number
         );
 
         loop {
             thread::sleep(time::Duration::from_millis(1000));
-            // prevent all the logging the client does while it loops through the query.
+            // prevent all the logging the client does while 
+            // it loops through the query.
             stdout().flush().unwrap();
             
-            match &mut client.get_txn_by_acc_seq(sender_address, sequence_number, false){
+            match &mut client.get_txn_by_acc_seq(
+                sender_address, sequence_number, false
+            ){
                 Ok(Some(txn_view)) => {
                     return Some(txn_view.to_owned());
                 },
