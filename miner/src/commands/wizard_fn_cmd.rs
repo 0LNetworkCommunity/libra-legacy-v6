@@ -17,16 +17,10 @@ pub struct FnWizardCmd {
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
-    #[options(help = "run keygen before wizard")]
-    keygen: bool, 
     #[options(help = "build genesis from ceremony repo")]
     rebuild_genesis: bool,
-    #[options(help = "only make fullnode config files")]
-    fullnode_only: bool,   
     #[options(help = "skip fetching genesis blob")]
     skip_fetch_genesis: bool, 
-    #[options(help = "skip mining a block zero")]
-    skip_mining: bool,   
 }
 
 impl Runnable for FnWizardCmd {
@@ -34,18 +28,6 @@ impl Runnable for FnWizardCmd {
     fn run(&self) {
 
         status_info!("\nFullnode Config Wizard", "This tool will create a node.yaml file which is needed for the node to initialize and begin syncing. Different than validator configuration, no credentials are needed to operate a public fullnode.\n");
-
-        // Get credentials from prompt
-        // let (authkey, account, wallet) = keygen::account_from_prompt();
-
-        // Initialize Miner
-        // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        // let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
-        // status_ok!("\nMiner config OK", "\n...........................\n");
-
-        // Initialize Validator Keys
-        // init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
-        // status_ok!("\nKey file OK", "\n...........................\n");
 
         if !self.skip_fetch_genesis {
             genesis_cmd::get_files(
@@ -57,7 +39,6 @@ impl Runnable for FnWizardCmd {
         }
 
         // Build Genesis and node.yaml file
-
         genesis_cmd::genesis_files(
             self.path.clone().unwrap_or(PathBuf::from(".")),
             Some("fullnode".to_string()),
@@ -65,7 +46,7 @@ impl Runnable for FnWizardCmd {
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
-            &self.fullnode_only,
+            &true,
         );
         status_ok!("\nNode config OK", "\n...........................\n");
     }
