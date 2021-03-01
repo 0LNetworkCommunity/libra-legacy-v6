@@ -9,7 +9,7 @@ use super::{genesis_cmd};
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FnWizardCmd {
-    #[options(help = "home path for all 0L files")]
+    #[options(help = "home path for all 0L files, defaults to current path")]
     path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
@@ -29,6 +29,7 @@ impl Runnable for FnWizardCmd {
 
         status_info!("\nFullnode Config Wizard", "This tool will create a node.yaml file which is needed for the node to initialize and begin syncing. Different than validator configuration, no credentials are needed to operate a public fullnode.\n");
 
+        // TODO: fetch epoch backup info from epoch archive, or build genesis.
         if !self.skip_fetch_genesis {
             genesis_cmd::get_files(
                 self.path.clone().unwrap_or(PathBuf::from(".")),

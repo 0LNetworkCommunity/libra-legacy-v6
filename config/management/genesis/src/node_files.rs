@@ -108,7 +108,9 @@ pub fn create_files(
 
     // Get node configs template
     let mut config = if *fullnode_only {
-        NodeConfig::default_for_public_full_node()
+        let mut c = NodeConfig::default_for_public_full_node();
+        c.base.waypoint = WaypointConfig::FromConfig(waypoint);
+        c
     } else {
         let mut c = NodeConfig::default();
             // If validator configs set val network configs
@@ -125,6 +127,18 @@ pub fn create_files(
         network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
 
         c.validator_network = Some(network.clone());
+
+            // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
+    
+        // Consensus
+        c.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+        
+        c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+        c.execution.genesis_file_location = genesis_path.clone();
+
+        c.consensus.safety_rules.service = SafetyRulesService::Thread;
+        c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+
         c
     };
 
@@ -143,19 +157,9 @@ pub fn create_files(
 
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
     config.upstream = UpstreamConfig { networks: vec!(NetworkId::Public)};
-    
-    // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
-    
-    // Consensus
-    config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
-    
-    config.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    config.execution.genesis_file_location = genesis_path.clone();
 
-    config.consensus.safety_rules.service = SafetyRulesService::Thread;
-    config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
 
-    // Misc
+    // Prune window for state snapshots
     config.storage.prune_window=Some(20_000);
 
     // Write yaml
