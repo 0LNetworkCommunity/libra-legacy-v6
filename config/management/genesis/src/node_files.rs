@@ -110,6 +110,9 @@ pub fn create_files(
     let mut config = if *fullnode_only {
         let mut c = NodeConfig::default_for_public_full_node();
         c.base.waypoint = WaypointConfig::FromConfig(waypoint);
+
+        c.execution.sign_vote_proposal = false;
+        c.execution.genesis_file_location = PathBuf::from("/");
         c
     } else {
         let mut c = NodeConfig::default();
