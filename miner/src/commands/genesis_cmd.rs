@@ -11,6 +11,8 @@ use std::io::Write;
 /// `genesis` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct GenesisCmd {
+    #[options(help = "path to write account manifest")]
+    path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -26,13 +28,22 @@ impl Runnable for GenesisCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config().to_owned();
-        genesis_files(
-            &miner_configs.clone(),
-            &self.chain_id,
-            &self.github_org,
-            &self.repo,
-            &self.rebuild_genesis,
-        ) 
+        if self.rebuild_genesis {
+            genesis_files(
+                &miner_configs.clone(),
+                &self.chain_id,
+                &self.github_org,
+                &self.repo,
+                &self.rebuild_genesis,
+            ) 
+        } else {
+            get_files(
+                self.path.to_owned().unwrap_or_else(|| PathBuf::from(".")),
+                &self.github_org,
+                &self.repo,
+            )
+        }
+
     }
 }
 
