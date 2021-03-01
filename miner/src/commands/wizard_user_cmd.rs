@@ -7,7 +7,6 @@ use crate::{
     block::build_block,
     config::MinerConfig,
     delay,
-    keygen,
 };
 use abscissa_core::{Command, Options, Runnable};
 use std::{path::PathBuf};

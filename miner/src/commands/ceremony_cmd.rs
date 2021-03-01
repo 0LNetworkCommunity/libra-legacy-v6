@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 use abscissa_core::{Command, Options, Runnable};
 use crate::config;
-use crate::{keygen::keygen, commands::CONFIG_FILE, block::build_block};
+use crate::{commands::CONFIG_FILE, block::build_block};
 use libra_global_constants::NODE_HOME;
 use toml;
 use std::{fs, io::Write};
@@ -41,7 +41,7 @@ impl Runnable for CeremonyUtilCmd {
         miner_configs.profile.statement = rl.readline("Make a (fun) statement: ").expect("Please enter a fun statement to go into genesis proof.");
 
         // Generate new keys
-        let (authkey, account, _) = keygen();
+        let (authkey, account, _) = keygen::keygen();
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
 
