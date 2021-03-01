@@ -55,6 +55,7 @@ members = [
     "execution/executor-types",
     "json-rpc",
     "json-rpc/types",
+    "keygen",
     "language/benchmarks",
     "language/borrow-graph",
     "language/bytecode-verifier",

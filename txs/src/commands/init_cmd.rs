@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 // use std::{path::PathBuf};
-use crate::{config::MinerConfig, keygen};
+use crate::{config::MinerConfig};
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme};

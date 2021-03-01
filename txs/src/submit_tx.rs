@@ -20,7 +20,6 @@ use std::{fs, io::{stdout, Write},path::PathBuf, thread, time};
 use anyhow::Error;
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
-use crate::keygen;
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -144,10 +143,10 @@ pub fn get_params_from_command_line(
     url_str: &str
 ) -> Result<TxParams, Error> {
     let url =  Url::parse(url_str).unwrap();
+    let waypoint: Waypoint =  waypoint_str.parse().unwrap();
     let (auth_key, address, wallet) = keygen::account_from_prompt();
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-    let waypoint: Waypoint =  waypoint_str.parse().unwrap();
 
     let tx_params = TxParams {
         auth_key,

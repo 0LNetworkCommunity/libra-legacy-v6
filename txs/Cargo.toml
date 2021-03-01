@@ -15,6 +15,7 @@ hex = "0.4"
 byteorder = "1"
 glob = "0.3"
 serde_json = "1"
+keygen = { path = "../keygen/", version = "0.1.0" }
 libra-crypto = { path = "../crypto/crypto", version = "0.1.0" }
 libra-wallet = { path = "../testsuite/cli/libra-wallet", version = "0.1.0" }
 cli = { path = "../testsuite/cli/", version = "0.1.0" }

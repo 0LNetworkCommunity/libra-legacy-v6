@@ -6,7 +6,6 @@ use libra_types::{
   transaction::authenticator::AuthenticationKey
 };
 
-
 /// Genereates keys from WalletLibrary, updates a MinerConfig
 pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
         // Generate new keys
@@ -54,7 +53,6 @@ pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrar
     .to_string();
     get_account_from_mnem(mnemonic_string)
 }
-
 
 #[test]
 fn wallet() { 

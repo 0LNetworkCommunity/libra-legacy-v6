@@ -21,5 +21,3 @@ pub mod config;
 pub mod error;
 pub mod prelude;
 pub mod submit_tx;
-// pub mod node_keys;
-pub mod keygen;

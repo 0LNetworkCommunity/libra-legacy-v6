@@ -2656,6 +2656,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "keygen"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "libra-types",
+ "libra-wallet",
+ "rpassword",
+]
+
+[[package]]
 name = "kube"
 version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7290,6 +7300,7 @@ dependencies = [
  "glob",
  "gumdrop",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
