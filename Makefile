@@ -270,7 +270,7 @@ set-waypoint:
 
 client: set-waypoint
 ifeq (${TEST}, y)
-	echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
+	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 else
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 endif
@@ -305,9 +305,6 @@ wipe:
 stop:
 	sudo service libra-node stop
 
-debug:
-	make smoke-onboard <<< $$'${MNEM}'
- 
 
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
@@ -365,4 +362,4 @@ devnet-pull:
 	git fetch && git checkout ${V} -f && git pull
 
 devnet-fn:
-	cargo run -p miner -- fn-wizard --path ~/.0L/ --github-org OLSF --repo dev-genesis
+	cargo run -p miner -- fn-wizard --path ~/.0L/
