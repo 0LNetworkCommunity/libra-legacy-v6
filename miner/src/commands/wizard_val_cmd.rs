@@ -22,7 +22,7 @@ pub struct ValWizardCmd {
     #[options(help = "run keygen before wizard")]
     keygen: bool, 
     #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool,   
+    rebuild_genesis: bool,
     #[options(help = "skip fetching genesis blob")]
     skip_fetch_genesis: bool, 
     #[options(help = "skip mining a block zero")]
@@ -62,12 +62,17 @@ impl Runnable for ValWizardCmd {
         }
 
         // Build Genesis and node.yaml file
+        let home_dir = miner_config.workspace.node_home.to_owned();
+        // 0L convention is for the namespace of the operator to be appended by '-oper'
+        let namespace = miner_config.profile.auth_key.clone() + "-oper";
         genesis_cmd::genesis_files(
-            &miner_config,
+            home_dir,
+            Some(namespace),
             &self.chain_id,
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
+            &false,
         );
         status_ok!("\nNode config OK", "\n...........................\n");
 

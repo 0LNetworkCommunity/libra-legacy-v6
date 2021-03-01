@@ -39,11 +39,21 @@ pub struct Files {
     data_path: PathBuf,
     #[structopt(long, verbatim_doc_comment)]
     genesis_path: Option<PathBuf>,
+    #[structopt(long, verbatim_doc_comment)]
+    fullnode_only: bool,
 }
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        create_files(self.data_path, self.chain_id, &self.github_org, &self.repo, &self.namespace, &true)
+        create_files(
+            self.data_path, 
+            self.chain_id, 
+            &self.github_org, 
+            &self.repo,
+            &self.namespace,
+            &true,
+            &self.fullnode_only
+        )
     }
 }
 
@@ -54,6 +64,7 @@ pub fn create_files(
     repo: &str,
     namespace: &str,
     rebuild_genesis: &bool,
+    fullnode_only: &bool,
 ) -> Result<String, Error> {
 
     let github_token_path = output_dir.join("github_token.txt");
@@ -67,10 +78,6 @@ pub fn create_files(
         path=github_token_path.to_str().unwrap(),
         ns=&namespace
     ); 
-
-    // Get node configs template
-    let mut config = NodeConfig::default();
-    config.set_data_dir(output_dir.clone());
 
 
     let genesis_path = output_dir.join("genesis.blob");
@@ -90,7 +97,6 @@ pub fn create_files(
         .expect("could not parse waypoint string");
     }
 
-
     storage_helper
         .insert_waypoint(&namespace, waypoint)
         .unwrap();
@@ -100,22 +106,31 @@ pub fn create_files(
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
 
-    // Set network configs
-    let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
+    // Get node configs template
+    let mut config = if *fullnode_only {
+        NodeConfig::default_for_public_full_node()
+    } else {
+        let mut c = NodeConfig::default();
+            // If validator configs set val network configs
+        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
     
-    // NOTE: Using configs as described in cluster tests: testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
-    network.discovery_method = DiscoveryMethod::Onchain;
-    network.mutual_authentication = true;
-    network.identity = Identity::from_storage(
-        VALIDATOR_NETWORK_KEY.to_string(),
-        OWNER_ACCOUNT.to_string(),
-        SecureBackend::OnDiskStorage(disk_storage.clone()),
-    );
-    network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+        // NOTE: Using configs as described in cluster tests: testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
+        network.discovery_method = DiscoveryMethod::Onchain;
+        network.mutual_authentication = true;
+        network.identity = Identity::from_storage(
+            VALIDATOR_NETWORK_KEY.to_string(),
+            OWNER_ACCOUNT.to_string(),
+            SecureBackend::OnDiskStorage(disk_storage.clone()),
+        );
+        network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
+        c.validator_network = Some(network.clone());
+        c
+    };
+
+    config.set_data_dir(output_dir.clone());
 
 
-    config.validator_network = Some(network.clone());
-    
     ///////// FULL NODE CONFIGS ////////
     let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
     
@@ -147,8 +162,8 @@ pub fn create_files(
     let yaml_path = output_dir.join("node.yaml");
     fs::create_dir_all(&output_dir).expect("Unable to create output directory");
     config
-        .save(&yaml_path)
-        .expect("Unable to save node configs");
-
+    .save(&yaml_path)
+    .expect("Unable to save node configs");
+        
     Ok(yaml_path.to_str().unwrap().to_string())
 }

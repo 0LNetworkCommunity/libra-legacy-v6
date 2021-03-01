@@ -2,11 +2,9 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::keygen;
-
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use std::{path::PathBuf};
-use super::{genesis_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
+use super::{genesis_cmd};
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -22,7 +20,9 @@ pub struct FnWizardCmd {
     #[options(help = "run keygen before wizard")]
     keygen: bool, 
     #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool,   
+    rebuild_genesis: bool,
+    #[options(help = "only make fullnode config files")]
+    fullnode_only: bool,   
     #[options(help = "skip fetching genesis blob")]
     skip_fetch_genesis: bool, 
     #[options(help = "skip mining a block zero")]
@@ -32,29 +32,24 @@ pub struct FnWizardCmd {
 impl Runnable for FnWizardCmd {
     /// Print version message
     fn run(&self) {
-        // Keygen
-        if self.keygen {
-            keygen_cmd::generate_keys();
-            status_ok!("\nKeys generated OK", "\n...........................\n");
-        }
 
-        status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys you can re-run this command with the flag '--keygen', or run the standalone keygen subcommand with 'miner keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
+        status_info!("\nFullnode Config Wizard", "This tool will create a node.yaml file which is needed for the node to initialize and begin syncing. Different than validator configuration, no credentials are needed to operate a public fullnode.\n");
 
         // Get credentials from prompt
-        let (authkey, account, wallet) = keygen::account_from_prompt();
+        // let (authkey, account, wallet) = keygen::account_from_prompt();
 
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
-        status_ok!("\nMiner config OK", "\n...........................\n");
+        // let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
+        // status_ok!("\nMiner config OK", "\n...........................\n");
 
         // Initialize Validator Keys
-        init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
-        status_ok!("\nKey file OK", "\n...........................\n");
+        // init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
+        // status_ok!("\nKey file OK", "\n...........................\n");
 
         if !self.skip_fetch_genesis {
             genesis_cmd::get_files(
-                miner_config.workspace.node_home.clone(),
+                self.path.clone().unwrap_or(PathBuf::from(".")),
                 &self.github_org,
                 &self.repo,
             );
@@ -62,25 +57,16 @@ impl Runnable for FnWizardCmd {
         }
 
         // Build Genesis and node.yaml file
+
         genesis_cmd::genesis_files(
-            &miner_config,
+            self.path.clone().unwrap_or(PathBuf::from(".")),
+            Some("fullnode".to_string()),
             &self.chain_id,
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
+            &self.fullnode_only,
         );
         status_ok!("\nNode config OK", "\n...........................\n");
-
-        if !self.skip_mining {
-            // Mine Block
-            zero_cmd::mine_zero(&miner_config);
-            status_ok!("\nProof OK", "\n...........................\n");
-        }
-        
-        // Write Manifest
-        manifest_cmd::write_manifest(&self.path, wallet);
-        status_ok!("\nAccount manifest OK", "\n...........................\n");
-
-        status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");
     }
 }
