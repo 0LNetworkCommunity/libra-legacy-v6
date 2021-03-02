@@ -57,13 +57,8 @@ pub fn create_user_account_script(
 impl Runnable for CreateAccountCmd {    
 
     fn run(&self) {
-        // TODO: generalize to main.rs for all commands
-        // if is_init()
-
+        // TODO(GS): generalize to main.rs for all commands
         let miner_configs = app_config();
-        dbg!(&miner_configs.workspace);
-        dbg!(&miner_configs.profile.auth_key);
-
         let mut tx_params= get_params_from_toml(miner_configs.clone()).unwrap();
 
         if miner_configs.profile.auth_key == "" { // if the settings are not initialized in txs.toml
