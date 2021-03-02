@@ -140,7 +140,7 @@ impl Default for Profile {
         Self {
             auth_key: "".to_owned(),
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
-            url: "localhost".to_owned(),
+            url: "http://localhost:8080".to_owned(),
             waypoint: "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46".parse::<Waypoint>().unwrap(),
             max_gas_unit_for_tx: 1_000_000,
             coin_price_per_unit: 1, // in micro_gas

@@ -12,7 +12,7 @@ use crate::{prelude::app_config, submit_tx::{
     }};
 use std::path::PathBuf;
 use std::fs;
-use libra_types::{transaction::{Script}};
+use libra_types::{transaction::{Script}, waypoint::Waypoint};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -64,9 +64,9 @@ impl Runnable for CreateAccountCmd {
         dbg!(&miner_configs.workspace);
         dbg!(&miner_configs.profile.auth_key);
 
-        let tx_params;
+        let mut tx_params= get_params_from_toml(miner_configs.clone()).unwrap();
 
-        if miner_configs.profile.auth_key == "" { // if there is no app config toml
+        if miner_configs.profile.auth_key == "" { // if the settings are not initialized in txs.toml
             tx_params = if self.swarm_path.clone().is_some() {
             // if being used for local testing or ci
                 get_params_from_swarm(self.swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
@@ -80,9 +80,19 @@ impl Runnable for CreateAccountCmd {
                     &self.waypoint.clone().expect("need to pass a url string http://a.b.c.d")
                 ).unwrap()
             };
-        } else {
-            tx_params = get_params_from_toml(miner_configs.clone()).unwrap();
         }
+
+        // Override waypoint
+        let waypoint = match miner_configs.get_waypoint(){
+            Some(waypoint) => waypoint,
+            _ => {
+                if *&self.waypoint.is_some() { 
+                    self.waypoint.unwrap().parse::<Waypoint>().unwrap()
+                } else {
+                    miner_configs.profile.waypoint 
+                }
+            }
+        };
 
 
         let account_json = self.account_json_path.to_str().unwrap();

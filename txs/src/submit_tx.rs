@@ -167,7 +167,6 @@ pub fn get_params_from_command_line(
 /// Gets transaction params from the 0L project root.
 pub fn get_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
     let url =  Url::parse(&config.profile.url).unwrap();
-    let waypoint = config.get_waypoint().unwrap();
 
     let (auth_key, address, wallet) = keygen::account_from_prompt();
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
@@ -177,11 +176,11 @@ pub fn get_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
         auth_key,
         address,
         url,
-        waypoint,
+        waypoint: config.waypoint,
         keypair,
-        max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 1, // in micro_gas
-        user_tx_timeout: 5_000,
+        max_gas_unit_for_tx: config.profile.max_gas_unit_for_tx,
+        coin_price_per_unit: config.profile.coin_price_per_unit, // in micro_gas
+        user_tx_timeout: config.profile.user_tx_timeout,
     };
 
     Ok(tx_params)
