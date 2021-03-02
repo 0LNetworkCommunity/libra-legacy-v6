@@ -4,9 +4,8 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::{net::Ipv4Addr, fs};
+use std::{fs};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
-use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use ajson;
@@ -52,7 +51,11 @@ impl AppConfig {
     }
 
         /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> AppConfig {
+    pub fn init_app_configs(
+        authkey: AuthenticationKey,
+        account: AccountAddress,
+        path: Option<PathBuf>
+    ) -> AppConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = AppConfig::default();
@@ -64,21 +67,10 @@ impl AppConfig {
         };
 
         miner_configs.workspace.node_home.push(NODE_HOME);
-        
-        fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
-        // Set up github token
-        let mut rl = Editor::<()>::new();
-
-        // Get the ip address of node.
-        let readline = rl.readline("IP address of your node: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
-        miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
-        
-        // Get optional statement which goes into genesis block
-        miner_configs.profile.statement = rl.readline("Enter a (fun) statement to go into your first transaction: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
-
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
 
+        fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
         let toml = toml::to_string(&miner_configs).unwrap();
         let home_path = miner_configs.workspace.node_home.clone();
         let miner_toml_path = home_path.join(CONFIG_FILE);
@@ -130,15 +122,17 @@ pub struct Profile {
 
     ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
+    /// URL for submitting txs to
+    pub url: String,
+    /// Waypoint from which the client will sync
+    pub waypoint: Waypoint,
+    /// Max gas units to pay per transaction
+    pub max_gas_unit_for_tx: u64, //1_000_000,
+    /// Max coin price per unit of gas
+    pub coin_price_per_unit: u64, //1, // in micro_gas
+    /// Time in milliseconds to timeout
+    pub user_tx_timeout: u64, // 5_000,
 
-    // ///The 0L private_key for signing transactions.
-    // pub operator_private_key: Option<String>,
-
-    /// ip address of the miner. May be different from transaction URL.
-    pub ip: Ipv4Addr,
-
-    ///An opportunity for the Miner to write a message on their genesis block.
-    pub statement: String,
 }
 
 impl Default for Profile {
@@ -146,8 +140,11 @@ impl Default for Profile {
         Self {
             auth_key: "".to_owned(),
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
-            ip: "0.0.0.0".parse().unwrap(),
-            statement: "Protests rage across the nation".to_owned(),
+            url: "localhost".to_owned(),
+            waypoint: "0:0".parse::<Waypoint>().unwrap(),
+            max_gas_unit_for_tx: 1_000_000,
+            coin_price_per_unit: 1, // in micro_gas
+            user_tx_timeout: 5_000,
         }
     }
 }
