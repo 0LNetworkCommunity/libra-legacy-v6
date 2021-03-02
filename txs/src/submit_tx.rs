@@ -176,7 +176,7 @@ pub fn get_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
         auth_key,
         address,
         url,
-        waypoint: config.waypoint,
+        waypoint: config.profile.waypoint,
         keypair,
         max_gas_unit_for_tx: config.profile.max_gas_unit_for_tx,
         coin_price_per_unit: config.profile.coin_price_per_unit, // in micro_gas

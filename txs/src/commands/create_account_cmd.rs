@@ -83,11 +83,11 @@ impl Runnable for CreateAccountCmd {
         }
 
         // Override waypoint
-        let waypoint = match miner_configs.get_waypoint(){
+        tx_params.waypoint = match miner_configs.get_waypoint(){
             Some(waypoint) => waypoint,
             _ => {
                 if *&self.waypoint.is_some() { 
-                    self.waypoint.unwrap().parse::<Waypoint>().unwrap()
+                    self.waypoint.clone().unwrap().parse::<Waypoint>().unwrap()
                 } else {
                     miner_configs.profile.waypoint 
                 }
