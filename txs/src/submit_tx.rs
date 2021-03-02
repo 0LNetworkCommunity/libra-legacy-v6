@@ -21,6 +21,8 @@ use anyhow::Error;
 use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
 
+use crate::config::AppConfig;
+
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
     /// User's 0L authkey used in mining.
@@ -162,30 +164,28 @@ pub fn get_params_from_command_line(
     Ok(tx_params)
 }
 
-// todo
-// pub fn get_params_from_toml() -> Result<TxParams, Error> {    
-//     let url =  Url::parse(
-//         format!("http://localhost:{}", config.json_rpc.address.port()).as_str()
-//     ).unwrap();
-//     let waypoint = config.base.waypoint.genesis_waypoint();
+/// Gets transaction params from the 0L project root.
+pub fn get_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
+    let url =  Url::parse(&config.profile.url).unwrap();
+    let waypoint = config.get_waypoint().unwrap();
 
-//     let (auth_key, address, wallet) = keygen::account_from_prompt();
-//     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
-//     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
+    let (auth_key, address, wallet) = keygen::account_from_prompt();
+    let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
+    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
 
-//     let tx_params = TxParams {
-//         auth_key,
-//         address,
-//         url,
-//         waypoint,
-//         keypair,
-//         max_gas_unit_for_tx: 1_000_000,
-//         coin_price_per_unit: 1, // in micro_gas
-//         user_tx_timeout: 5_000,
-//     };
+    let tx_params = TxParams {
+        auth_key,
+        address,
+        url,
+        waypoint,
+        keypair,
+        max_gas_unit_for_tx: 1_000_000,
+        coin_price_per_unit: 1, // in micro_gas
+        user_tx_timeout: 5_000,
+    };
 
-//     Ok(tx_params)
-// }
+    Ok(tx_params)
+}
 
 /// Wait for the response from the libra RPC.
 pub fn wait_for_tx(

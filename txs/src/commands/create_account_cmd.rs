@@ -3,14 +3,13 @@
 #![allow(clippy::never_loop)]
 
 use abscissa_core::{Command, Options, Runnable, status_err};
-use crate::{
-    submit_tx::{
+use crate::{prelude::app_config, submit_tx::{
         submit_tx,
         get_params_from_swarm,
+        get_params_from_toml,
+        get_params_from_command_line,
         eval_tx_status,
-        get_params_from_command_line
-    }
-};
+    }};
 use std::path::PathBuf;
 use std::fs;
 use libra_types::{transaction::{Script}};
@@ -60,19 +59,31 @@ impl Runnable for CreateAccountCmd {
     fn run(&self) {
         // TODO: generalize to main.rs for all commands
         // if is_init()
-        let tx_params = if self.swarm_path.clone().is_some() {
-        // if being used for local testing or ci
-            get_params_from_swarm(self.swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
+
+        let miner_configs = app_config();
+        dbg!(&miner_configs.workspace);
+        dbg!(&miner_configs.profile.auth_key);
+
+        let tx_params;
+
+        if miner_configs.profile.auth_key == "" { // if there is no app config toml
+            tx_params = if self.swarm_path.clone().is_some() {
+            // if being used for local testing or ci
+                get_params_from_swarm(self.swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
+            } else {
+                if *&self.url.is_none() | *&self.waypoint.is_none() {
+                    status_err!("Need to pass url and waypoint");
+                    return
+                }
+                get_params_from_command_line(
+                    &self.url.clone().expect("need to pass a waypoint in command line"), 
+                    &self.waypoint.clone().expect("need to pass a url string http://a.b.c.d")
+                ).unwrap()
+            };
         } else {
-            if *&self.url.is_none() | *&self.waypoint.is_none() {
-                status_err!("Need to pass url and waypoint");
-                return
-            }
-            get_params_from_command_line(
-                &self.url.clone().expect("need to pass a waypoint in command line"), 
-                &self.waypoint.clone().expect("need to pass a url string http://a.b.c.d")
-            ).unwrap()
-        };
+            tx_params = get_params_from_toml(miner_configs.clone()).unwrap();
+        }
+
 
         let account_json = self.account_json_path.to_str().unwrap();
         match submit_tx(
