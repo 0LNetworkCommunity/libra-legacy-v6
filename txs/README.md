@@ -1,5 +1,2 @@
-# Todo
-
-
 ## Getting Started
 

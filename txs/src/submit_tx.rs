@@ -243,7 +243,6 @@ fn test_make_params() {
     use crate::config::{
         Workspace,
         Profile,
-        ChainInfo
     };
     use std::path::PathBuf;
 
@@ -259,12 +258,6 @@ fn test_make_params() {
             account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
             ip: "1.1.1.1".parse().unwrap(),
             statement: "Protests rage across the nation".to_owned(),
-        },
-        chain_info: ChainInfo {
-            chain_id: "0L testnet".to_owned(),
-            block_dir: "test_blocks_temp_2".to_owned(),
-            base_waypoint: None,
-            node: Some("http://localhost:8080".to_string()),
         },
 
     };

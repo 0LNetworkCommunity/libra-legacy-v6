@@ -23,8 +23,6 @@ pub struct MinerConfig {
     pub workspace: Workspace,
     /// User Profile
     pub profile: Profile,
-    /// Chain Info for all users
-    pub chain_info: ChainInfo,
 }
 
 impl MinerConfig {
@@ -103,7 +101,6 @@ impl Default for MinerConfig {
         Self {
             workspace: Workspace::default(),
             profile: Profile::default(),
-            chain_info: ChainInfo::default(),
         }
     }
 }
@@ -124,32 +121,6 @@ impl Default for Workspace {
     }
 }
 
-/// Information about the Chain to mined for
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-pub struct ChainInfo {
-    /// Chain that this work is being committed to
-    pub chain_id: String,
-    /// Directory to store blocks in
-    pub block_dir: String,
-    /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    pub node: Option<String>,
-    /// Waypoint for last epoch which the node is syncing from.
-    pub base_waypoint: Option<Waypoint>,
-}
-
-// TODO: These defaults serving as test fixtures.
-impl Default for ChainInfo {
-    fn default() -> Self {
-        Self {
-            chain_id: "experimental".to_owned(),
-            block_dir: "blocks".to_owned(),
-            // Mock Waypoint. Miner complains without.
-            base_waypoint: None,
-            node: Some("http://localhost:8080".to_owned()),
-        }
-    }
-}
 /// Miner profile to commit this work chain to a particular identity
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
