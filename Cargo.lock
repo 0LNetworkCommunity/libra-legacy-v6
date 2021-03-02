@@ -3039,6 +3039,7 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
