@@ -2,10 +2,15 @@
 
 #![allow(clippy::never_loop)]
 
-use abscissa_core::{Command, Options, Runnable};
-use crate::{submit_tx::{
-    submit_tx, get_params_from_swarm, eval_tx_status
-}};
+use abscissa_core::{Command, Options, Runnable, status_err};
+use crate::{
+    submit_tx::{
+        submit_tx,
+        get_params_from_swarm,
+        eval_tx_status,
+        get_params_from_command_line
+    }
+};
 use std::path::PathBuf;
 use std::fs;
 use libra_types::{transaction::{Script}};
@@ -13,8 +18,15 @@ use libra_types::{transaction::{Script}};
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateAccountCmd {
-    #[options(help = "Path of account.json")]
+    #[options(help = "path of account.json")]
     account_json_path: PathBuf,
+    #[options(help = "url to send txs")]
+    url: Option<String>,
+    #[options(help = "waypoint to connect to")]
+    waypoint: Option<String>,
+    #[options(help = "temp swarm path, using transaction params from swarm")]
+    swarm_path: Option<PathBuf>,
+
 }
 
 pub fn create_user_account_script(
@@ -46,9 +58,22 @@ pub fn create_user_account_script(
 impl Runnable for CreateAccountCmd {    
 
     fn run(&self) {
-        let swarm_path = PathBuf::from("./swarm_temp");
-        let tx_params = get_params_from_swarm(swarm_path).unwrap();
-    
+        // TODO: generalize to main.rs for all commands
+        // if is_init()
+        let tx_params = if self.swarm_path.clone().is_some() {
+        // if being used for local testing or ci
+            get_params_from_swarm(self.swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
+        } else {
+            if *&self.url.is_none() | *&self.waypoint.is_none() {
+                status_err!("Need to pass url and waypoint");
+                return
+            }
+            get_params_from_command_line(
+                &self.url.clone().expect("need to pass a waypoint in command line"), 
+                &self.waypoint.clone().expect("need to pass a url string http://a.b.c.d")
+            ).unwrap()
+        };
+
         let account_json = self.account_json_path.to_str().unwrap();
         match submit_tx(
             &tx_params, 
@@ -59,6 +84,5 @@ impl Runnable for CreateAccountCmd {
                 eval_tx_status(res);
             }
         }
-
     }
 }

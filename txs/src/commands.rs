@@ -23,7 +23,7 @@ use self::{
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
 };
-use crate::config::MinerConfig;
+use crate::config::AppConfig;
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use std::path::PathBuf;
 use dirs;
@@ -34,7 +34,7 @@ pub const CONFIG_FILE: &str = "miner.toml";
 
 /// MinerApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
-pub enum MinerCmd {
+pub enum TxsCmd {
     /// The `help` subcommand
     #[options(help = "get usage information")]
     Help(Help<Self>),
@@ -61,7 +61,7 @@ pub enum MinerCmd {
 }
 
 /// This trait allows you to define how application configuration is loaded.
-impl Configurable<MinerConfig> for MinerCmd {
+impl Configurable<AppConfig> for TxsCmd {
     /// Location of the configuration file
     fn config_path(&self) -> Option<PathBuf> {
         // Check if the config file exists, and if it does not, ignore it.

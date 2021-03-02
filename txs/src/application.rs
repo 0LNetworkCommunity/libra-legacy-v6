@@ -1,38 +1,38 @@
-//! MinerApp Abscissa Application
+//! TxsApp Abscissa Application
 
-use crate::{commands::MinerCmd, config::MinerConfig};
+use crate::{commands::TxsCmd, config::AppConfig};
 use abscissa_core::{
     application::{self, AppCell},
     config, trace, Application, EntryPoint, FrameworkError, StandardPaths,
 };
 
 /// Application state
-pub static APPLICATION: AppCell<MinerApp> = AppCell::new();
+pub static APPLICATION: AppCell<TxsApp> = AppCell::new();
 
 /// Obtain a read-only (multi-reader) lock on the application state.
 ///
 /// Panics if the application state has not been initialized.
-pub fn app_reader() -> application::lock::Reader<MinerApp> {
+pub fn app_reader() -> application::lock::Reader<TxsApp> {
     APPLICATION.read()
 }
 
 /// Obtain an exclusive mutable lock on the application state.
-pub fn app_writer() -> application::lock::Writer<MinerApp> {
+pub fn app_writer() -> application::lock::Writer<TxsApp> {
     APPLICATION.write()
 }
 
 /// Obtain a read-only (multi-reader) lock on the application configuration.
 ///
 /// Panics if the application configuration has not been loaded.
-pub fn app_config() -> config::Reader<MinerApp> {
+pub fn app_config() -> config::Reader<TxsApp> {
     config::Reader::new(&APPLICATION)
 }
 
-/// MinerApp Application
+/// TxsApp Application
 #[derive(Debug)]
-pub struct MinerApp {
+pub struct TxsApp {
     /// Application configuration.
-    config: Option<MinerConfig>,
+    config: Option<AppConfig>,
 
     /// Application state.
     state: application::State<Self>,
@@ -42,7 +42,7 @@ pub struct MinerApp {
 ///
 /// By default no configuration is loaded, and the framework state is
 /// initialized to a default, empty state (no components, threads, etc).
-impl Default for MinerApp {
+impl Default for TxsApp {
     fn default() -> Self {
         Self {
             config: None,
@@ -51,18 +51,18 @@ impl Default for MinerApp {
     }
 }
 
-impl Application for MinerApp {
+impl Application for TxsApp {
     /// Entrypoint command for this application.
-    type Cmd = EntryPoint<MinerCmd>;
+    type Cmd = EntryPoint<TxsCmd>;
 
     /// Application configuration.
-    type Cfg = MinerConfig;
+    type Cfg = AppConfig;
 
     /// Paths to resources within the application.
     type Paths = StandardPaths;
 
     /// Accessor for application configuration.
-    fn config(&self) -> &MinerConfig {
+    fn config(&self) -> &AppConfig {
         self.config.as_ref().expect("config not loaded")
     }
 
@@ -99,7 +99,7 @@ impl Application for MinerApp {
     }
 
     /// Get tracing configuration from command-line options
-    fn tracing_config(&self, command: &EntryPoint<MinerCmd>) -> trace::Config {
+    fn tracing_config(&self, command: &EntryPoint<TxsCmd>) -> trace::Config {
         if command.verbose {
             trace::Config::verbose()
         } else {

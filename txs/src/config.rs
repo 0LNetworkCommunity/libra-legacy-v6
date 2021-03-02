@@ -18,14 +18,14 @@ use std::{io::Write};
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct MinerConfig {
+pub struct AppConfig {
     /// Workspace config
     pub workspace: Workspace,
     /// User Profile
     pub profile: Profile,
 }
 
-impl MinerConfig {
+impl AppConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
     pub fn get_waypoint(&self) -> Option<Waypoint> {
         match fs::File::open(self.get_key_store_path()) {
@@ -52,10 +52,10 @@ impl MinerConfig {
     }
 
         /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> MinerConfig {
+    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> AppConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
-        let mut miner_configs = MinerConfig::default();
+        let mut miner_configs = AppConfig::default();
 
         miner_configs.workspace.node_home = if path.is_some() {
             path.unwrap()
@@ -95,8 +95,8 @@ impl MinerConfig {
 /// Default configuration settings.
 ///
 /// Note: if your needs are as simple as below, you can
-/// use `#[derive(Default)]` on MinerConfig instead.
-impl Default for MinerConfig {
+/// use `#[derive(Default)]` on AppConfig instead.
+impl Default for AppConfig {
     fn default() -> Self {
         Self {
             workspace: Workspace::default(),
