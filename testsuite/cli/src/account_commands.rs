@@ -243,7 +243,7 @@ impl Command for AccountCommandCreateVal {
 }
 
 //////// 0L ////////
-/// 0L Sub command to create a validator account.
+/// 0L Sub command for the operator to include a validator.
 pub struct AccountCommandUpdateValConfig {}
 
 impl Command for AccountCommandUpdateValConfig {
@@ -260,6 +260,27 @@ impl Command for AccountCommandUpdateValConfig {
         match client.update_val_configs(params, true) {
             Ok(()) => println!("Val configs updated"),
             Err(e) => report_error("Error updating val configs", e),
+        }
+    }
+}
+
+/// 0L Sub command to create a validator account.
+pub struct AccountCommandSetOperator {}
+
+impl Command for AccountCommandSetOperator {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["update_operator", "up"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Validator picks a new operator"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_account_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.set_operator(params, true) {
+            Ok(()) => println!("Operator updated"),
+            Err(e) => report_error("Error updating operator", e),
         }
     }
 }
