@@ -455,16 +455,6 @@ impl ClientProxy {
         .parse::<AccountAddress>()
         .unwrap();
 
-
-
-        // let op_auth_key_prefix: Vec<u8> = hex::decode(
-        // json
-        //     .get("op_auth_key_prefix")
-        //     .unwrap()
-        //     .as_str()
-        //     .unwrap()
-        // ).unwrap();
-
         let op_consensus_pubkey: Vec<u8> = hex::decode(
         json
             .get("op_consensus_pubkey")
