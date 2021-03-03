@@ -475,9 +475,25 @@ impl ClientProxy {
         .parse()
         .unwrap();
 
-        let op_auth_key_prefix = hex::decode("ecc59a4a0963f65b5eceb0fffa01ea99").unwrap();
+        let op_auth_key_prefix: Vec<u8> = hex::decode(
+        json
+            .get("op_auth_key_prefix")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
 
-        let op_consensus_pubkey = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
+        let op_consensus_pubkey: Vec<u8> = hex::decode(
+        json
+            .get("op_consensus_pubkey")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
+
+        // let op_auth_key_prefix = hex::decode("ecc59a4a0963f65b5eceb0fffa01ea99").unwrap();
+
+        // let op_consensus_pubkey = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
         
         let op_validator_network_addresses = hex::decode(
             json.get("op_validator_network_addresses")
@@ -500,33 +516,6 @@ impl ClientProxy {
         .unwrap()
         .as_bytes()
         .to_vec();
-
-        // let my_trusted_accounts = json
-        // .get("my_trusted_accounts")
-        // .expect("no array found at key my_trusted_accounts")
-        // .as_array()
-        // .unwrap()
-        // .into_iter()
-        // .map(|addr| { 
-        //     AccountAddress::from_str(
-        //         addr.as_str().unwrap()
-        //     ).unwrap()
-        // })
-        // .collect();
-
-        // vec!(AccountAddress::random());
-        // let voter_trusted_accounts = json
-        // .get("voter_trusted_accounts")
-        // .expect("no array found at key my_trusted_accounts")
-        // .as_array()
-        // .unwrap()
-        // .into_iter()
-        // .map(|addr| { 
-        //     AccountAddress::from_str(
-        //         addr.as_str().unwrap()
-        //     ).unwrap()
-        // })
-        // .collect();
         
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
