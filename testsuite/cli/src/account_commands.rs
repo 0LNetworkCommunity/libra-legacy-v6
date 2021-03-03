@@ -269,7 +269,7 @@ pub struct AccountCommandSetOperator {}
 
 impl Command for AccountCommandSetOperator {
     fn get_aliases(&self) -> Vec<&'static str> {
-        vec!["update_operator", "up"]
+        vec!["set_operator", "so"]
     }
     fn get_description(&self) -> &'static str {
         "Validator picks a new operator"
