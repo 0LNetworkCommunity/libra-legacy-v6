@@ -32,6 +32,7 @@ impl Command for AccountCommand {
             Box::new(AccountCommandAutopayCreate {}),
             Box::new(AccountCommandAutopayBatch {}),
             Box::new(AccountCommandUpdateValConfig {}),
+            Box::new(AccountCommandSetOperator {}),
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
