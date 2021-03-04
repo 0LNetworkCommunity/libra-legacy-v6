@@ -141,8 +141,8 @@ pub fn get_params_from_swarm(
 
 /// Get params from command line
 pub fn get_params_from_command_line(
-    waypoint_str: &str, 
-    url_str: &str
+    url_str: &str,
+    waypoint_str: &str
 ) -> Result<TxParams, Error> {
     let url =  Url::parse(url_str).unwrap();
     let waypoint: Waypoint =  waypoint_str.parse().unwrap();

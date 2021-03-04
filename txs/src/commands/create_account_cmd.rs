@@ -58,33 +58,38 @@ impl Runnable for CreateAccountCmd {
 
     fn run(&self) {
         // TODO(GS): generalize to main.rs for all commands
-        let miner_configs = app_config();
-        let mut tx_params= get_params_from_toml(miner_configs.clone()).unwrap();
 
-        if miner_configs.profile.auth_key == "" { // if the settings are not initialized in txs.toml
+        // Get tx_params from toml e.g. ~/.0L/txs.toml
+        let miner_config = app_config();
+        let mut tx_params= get_params_from_toml(miner_config.clone()).unwrap();
+
+        // If the settings are not initialized in txs.toml
+        if miner_config.profile.auth_key == "" { 
+            // Get tx_params from local swarm
             tx_params = if self.swarm_path.clone().is_some() {
-            // if being used for local testing or ci
-                get_params_from_swarm(self.swarm_path.clone().expect("needs a valid swarm temp dir")).unwrap()
-            } else {
+                get_params_from_swarm(
+                    self.swarm_path.clone().expect("needs a valid swarm temp dir")
+                ).unwrap()
+            } else { // Get tx_params from command line
                 if *&self.url.is_none() | *&self.waypoint.is_none() {
                     status_err!("Need to pass url and waypoint");
                     return
-                }
+                }                
                 get_params_from_command_line(
-                    &self.url.clone().expect("need to pass a waypoint in command line"), 
-                    &self.waypoint.clone().expect("need to pass a url string http://a.b.c.d")
+                    &self.url.clone().expect("need to pass a url string http://a.b.c.d"),
+                    &self.waypoint.clone().expect("need to pass a waypoint in command line")
                 ).unwrap()
             };
         }
 
-        // Override waypoint
-        tx_params.waypoint = match miner_configs.get_waypoint(){
-            Some(waypoint) => waypoint,
+        // Override waypoint 
+        tx_params.waypoint = match miner_config.get_waypoint() {
+            Some(waypoint) => waypoint, // e.g. from ~/.0L/key_store.json
             _ => {
-                if *&self.waypoint.is_some() { 
+                if *&self.waypoint.is_some() { // from command line
                     self.waypoint.clone().unwrap().parse::<Waypoint>().unwrap()
-                } else {
-                    miner_configs.profile.waypoint 
+                } else { // from toml or Profile::default()
+                    miner_config.profile.waypoint 
                 }
             }
         };
