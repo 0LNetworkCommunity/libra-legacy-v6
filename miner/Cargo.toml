@@ -1,8 +1,11 @@
 [package]
 name = "miner"
-authors = []
 version = "0.1.0"
 edition = "2018"
+authors = ["Libra Association <opensource@libra.org>"]
+description = "Libra network"
+repository = "https://github.com/olsf/libra"
+homepage = "https://libra.org"
 
 [dependencies]
 wait-timeout = "0.2.0"
