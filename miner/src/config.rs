@@ -42,7 +42,7 @@ impl MinerConfig {
             Ok(file) => {
                 let json: serde_json::Value = serde_json::from_reader(file)
                     .expect("could not parse JSON in key_store.json");
-                let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
+                let value = ajson::get(&json.to_string(), "*oper/waypoint.value").expect("could not find key: waypoint");
                 dbg!(&value);
                 let waypoint: Waypoint = value.to_string().parse().unwrap();
                 Some(waypoint)
@@ -153,13 +153,13 @@ impl MinerConfig {
     }
 
         /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> MinerConfig {
+    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> MinerConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = MinerConfig::default();
 
         miner_configs.workspace.node_home = if path.is_some() {
-            path.unwrap()
+            path.clone().unwrap()
         } else {
             dirs::home_dir().unwrap()
         };
