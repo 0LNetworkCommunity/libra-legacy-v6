@@ -2,11 +2,11 @@
 
 // ALICE is CASE 1
 //! account: alice, 1000000, 0, validator
-// BOB is CASE 2
+// BOB is CASE 1
 //! account: bob, 1000000, 0, validator
-// CAROL is CASE 2
+// CAROL is CASE 1
 //! account: carol, 1000000, 0, validator
-// DAVE is CASE 2
+// DAVE is CASE 1
 //! account: dave, 1000000, 0, validator
 // EVE is CASE 3
 //! account: eve, 1000000, 0, validator
@@ -28,6 +28,48 @@ script {
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: bob
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: carol
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: dave
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -91,11 +133,14 @@ script {
 script {
     use 0x1::LibraSystem;
     use 0x1::LibraConfig;
+    use 0x1::Debug::print;
+
     fun main(_account: &signer) {
         // We are in a new epoch.
         assert(LibraConfig::get_current_epoch() == 2, 7357180107);
+        print(&LibraSystem::validator_set_size());
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 5, 7357180207);
+        assert(LibraSystem::validator_set_size() == 4, 7357180207);
         assert(LibraSystem::is_validator({{eve}}) == false, 7357180307);
     }
 }

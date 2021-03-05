@@ -49,8 +49,12 @@ script {
 script {
     use 0x1::Vector;
     use 0x1::Stats;
+    use 0x1::FullnodeState;
     // This is the the epoch boundary.
     fun main(vm: &signer) {
+        // This is not an onboarding case, steady state.
+        FullnodeState::test_set_fullnode_fixtures(vm, {{alice}}, 0, 0, 0, 200, 200, 1000000);
+
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, {{alice}});
         Vector::push_back<address>(&mut voters, {{bob}});
@@ -95,15 +99,13 @@ script {
 
 //! new-transaction
 //! sender: libraroot
-script {
-    
+script {  
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::Debug::print;
 
-    // use 0x1::ValidatorUniverse;
     fun main(_account: &signer) {
         // We are in a new epoch.
 
@@ -111,7 +113,7 @@ script {
         assert(LibraSystem::validator_set_size() == 5, 7357000180110);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180111);
         print(&LibraAccount::balance<GAS>({{alice}}));
-        assert(LibraAccount::balance<GAS>({{alice}}) == 296, 7357000180112);  
+        assert(LibraAccount::balance<GAS>({{alice}}) == 295000001, 7357000180112);  
         assert(NodeWeight::proof_of_weight({{alice}}) == 1, 7357000180113);  
     }
 }

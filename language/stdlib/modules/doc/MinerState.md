@@ -21,7 +21,7 @@
 -  [Function `get_miner_latest_epoch`](#0x1_MinerState_get_miner_latest_epoch)
 -  [Function `reset_rate_limit`](#0x1_MinerState_reset_rate_limit)
 -  [Function `get_epochs_mining`](#0x1_MinerState_get_epochs_mining)
--  [Function `rate_limit_create_acc`](#0x1_MinerState_rate_limit_create_acc)
+-  [Function `can_create_val_account`](#0x1_MinerState_can_create_val_account)
 -  [Function `test_helper_mock_mining`](#0x1_MinerState_test_helper_mock_mining)
 -  [Function `test_helper_mock_mining_vm`](#0x1_MinerState_test_helper_mock_mining_vm)
 -  [Function `test_helper_mock_reconfig`](#0x1_MinerState_test_helper_mock_reconfig)
@@ -38,6 +38,7 @@
 <b>use</b> <a href="Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
@@ -168,7 +169,7 @@
   challenge: vector&lt;u8&gt;,
   difficulty: u64,
   solution: vector&lt;u8&gt;
-) : <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
+): <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
    <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
      challenge,
      difficulty,
@@ -308,6 +309,9 @@
   };
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+
+  // TODO: This should not increment for validators in set.
+  // Including <a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a> causes a dependency cycling
   <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">FullnodeState::inc_proof</a>(miner_sign);
 }
 </code></pre>
@@ -698,13 +702,13 @@ Public APIs ///
 
 </details>
 
-<a name="0x1_MinerState_rate_limit_create_acc"></a>
+<a name="0x1_MinerState_can_create_val_account"></a>
 
-## Function `rate_limit_create_acc`
+## Function `can_create_val_account`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_can_create_val_account">can_create_val_account</a>(node_addr: address): bool
 </code></pre>
 
 
@@ -713,8 +717,10 @@ Public APIs ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">rate_limit_create_acc</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-  borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; 7
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_can_create_val_account">can_create_val_account</a>(node_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+  <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>() || <a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) <b>return</b> <b>true</b>;
+  // check <b>if</b> rate limited, needs 7 epochs of validating.
+  borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(node_addr).epochs_since_last_account_creation &gt; 6
 }
 </code></pre>
 

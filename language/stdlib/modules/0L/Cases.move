@@ -22,7 +22,7 @@ address 0x1{
             let mines = MinerState::node_above_thresh(vm, node_addr);
 
             if (signs && mines) return 1; // compliant: in next set, gets paid, weight increments
-            if (signs && !mines) return 2; // half compliant: in next set, does not get paid, weight does not increment.
+            if (signs && !mines) return 2; // half compliant: not in next set, does not get paid, weight does not increment.
             if (!signs && mines) return 3; // not compliant: jailed, not in next set, does not get paid, weight increments.
             //if !signs && !mines
             return 4 // not compliant: jailed, not in next set, does not get paid, weight does not increment.

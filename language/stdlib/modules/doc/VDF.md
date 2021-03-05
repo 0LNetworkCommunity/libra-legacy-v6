@@ -28,7 +28,11 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="VDF.md#0x1_VDF_verify">verify</a>(challenge: &vector&lt;u8&gt;, difficulty: &u64, alleged_solution: &vector&lt;u8&gt;): bool;
+<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="VDF.md#0x1_VDF_verify">verify</a>(
+  challenge: &vector&lt;u8&gt;,
+  difficulty: &u64,
+  alleged_solution: &vector&lt;u8&gt;
+): bool;
 </code></pre>
 
 

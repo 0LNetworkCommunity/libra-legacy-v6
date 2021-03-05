@@ -266,7 +266,7 @@ module LibraAccount {
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
+        assert(MinerState::can_create_val_account(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -628,6 +628,8 @@ module LibraAccount {
         let payer = cap.account_address;
         assert(exists_at(payer), Errors::not_published(EACCOUNT));
         assert(exists<Balance<Token>>(payer), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
+        // Do not attempt sending to a payee that does not have balance
+        assert(exists<Balance<Token>>(payee), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
         let account_balance = borrow_global_mut<Balance<Token>>(payer);
         // Load the payer's account and emit an event to record the withdrawal
         Event::emit_event<SentPaymentEvent>(
@@ -799,14 +801,26 @@ module LibraAccount {
         metadata_signature: vector<u8>,
         vm: &signer
     ) acquires LibraAccount , Balance, AccountOperationsCapability {
-        
-        assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 120101014010);
+        if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
 
-        assert(
-            !delegated_withdraw_capability(payer),
-            Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
-        );
-        assert(exists_at(payer), Errors::not_published(EACCOUNT));
+        // Check payee can receive funds in this currency.
+        if (!exists<Balance<Token>>(payee)) return; 
+        // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
+
+        // Check there is a payer
+        if (!exists_at(payer)) return; 
+
+        // assert(exists_at(payer), Errors::not_published(EACCOUNT));
+
+        // Check the payer is in possession of withdraw token.
+        if (delegated_withdraw_capability(payer)) return; 
+
+        // assert(
+        //     !delegated_withdraw_capability(payer),
+        //     Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
+        // );
+
+        // VM can extract the withdraw token.
         let account = borrow_global_mut<LibraAccount>(payer);
         let cap = Option::extract(&mut account.withdraw_capability);
         deposit<Token>(
@@ -1863,7 +1877,6 @@ module LibraAccount {
     ///////////////////////////////////////////////////////////////////////////
     // Proof of concept code used for Validator and ValidatorOperator roles management
     ///////////////////////////////////////////////////////////////////////////
-
     public fun create_validator_account(
         lr_account: &signer,
         new_account_address: address,
@@ -2132,7 +2145,6 @@ module LibraAccount {
     }
 
     /// ## Prologue
-
     spec define prologue_guarantees(sender: signer) : bool {
         let addr = Signer::spec_address_of(sender);
         LibraTimestamp::is_operating() && exists_at(addr) && !AccountFreezing::account_is_frozen(addr)
@@ -2163,101 +2175,5 @@ module LibraAccount {
             metadata_signature
         );
     }
-    
-    
-    // // Deposits the `to_deposit` coin into the `payee`'s account balance with the attached `metadata` and
-    // // sender address
-    // fun deposit_with_sender_and_metadata<Token>(
-    //     payee: address,
-    //     sender: address,
-    //     to_deposit: Libra<Token>,
-    //     metadata: vector<u8>,
-    //     metadata_signature: vector<u8>
-    // ) acquires LibraAccount, Balance, AccountOperationsCapability {
-    //     // Check that the `to_deposit` coin is non-zero
-    //     let deposit_value = Libra::value(&to_deposit);
-    //     assert(deposit_value > 0, 7);
-
-    //     // TODO: on-chain config for travel rule limit instead of hardcoded value
-    //     // TODO: nail down details of limit (specified in LBR? is 1 LBR a milliLibra or microLibra?)
-    //     let travel_rule_limit = 1000;
-    //     // travel rule only applies for payments over a threshold
-    //     let above_threshold =
-    //         Libra::approx_lbr_for_value<Token>(deposit_value) >= travel_rule_limit;
-    //     // travel rule only applies if the sender and recipient are both VASPs
-    //     let both_vasps = VASP::is_vasp(sender) && VASP::is_vasp(payee);
-    //     // Don't check the travel rule if we're on testnet and sender
-    //     // doesn't specify a metadata signature
-    //     let is_testnet_transfer = Testnet::is_testnet() && Vector::is_empty(&metadata_signature);
-    //     if (!is_testnet_transfer &&
-    //         above_threshold &&
-    //         both_vasps &&
-    //         // travel rule does not apply for intra-VASP transactions
-    //         VASP::parent_address(sender) != VASP::parent_address(payee)
-    //     ) {
-    //         // sanity check of signature validity
-    //         assert(Vector::length(&metadata_signature) == 64, 9001);
-    //         // message should be metadata | sender_address | amount | domain_separator
-    //         let domain_separator = b"@@$$LIBRA_ATTEST$$@@";
-    //         let message = copy metadata;
-    //         Vector::append(&mut message, LCS::to_bytes(&sender));
-    //         Vector::append(&mut message, LCS::to_bytes(&deposit_value));
-    //         Vector::append(&mut message, domain_separator);
-    //         // cryptographic check of signature validity
-    //         let sender_account = borrow_global_mut<LibraAccount>(payee);
-    //         assert(
-    //             Signature::ed25519_verify(
-    //                 metadata_signature,
-    //                 *&sender_account.authentication_key,
-    //                 message
-    //             ),
-    //             9002, // TODO: proper error code
-    //         );
-    //     };
-
-    //     // Ensure that this deposit is compliant with the account limits on
-    //     // this account.
-    //     let _ = borrow_global<AccountOperationsCapability>(0x0);
-    //     /*Transaction::assert(
-    //         AccountLimits::update_deposit_limits<Token>(
-    //             deposit_value,
-    //             payee,
-    //             &borrow_global<AccountOperationsCapability>(0x0).limits_cap
-    //         ),
-    //         9
-    //     );*/
-
-    //     // Get the code symbol for this currency
-    //     let currency_code = Libra::currency_code<Token>();
-
-    //     // Load the sender's account
-    //     let sender_account_ref = borrow_global_mut<LibraAccount>(sender);
-    //     // Log a sent event
-    //     Event::emit_event<SentPaymentEvent>(
-    //         &mut sender_account_ref.sent_events,
-    //         SentPaymentEvent {
-    //             amount: deposit_value,
-    //             currency_code: copy currency_code,
-    //             payee: payee,
-    //             metadata: *&metadata
-    //         },
-    //     );
-
-    //     // Load the payee's account
-    //     let payee_account_ref = borrow_global_mut<LibraAccount>(payee);
-    //     let payee_balance = borrow_global_mut<Balance<Token>>(payee);
-    //     // Deposit the `to_deposit` coin
-    //     Libra::deposit(&mut payee_balance.coin, to_deposit);
-    //     // Log a received event
-    //     Event::emit_event<ReceivedPaymentEvent>(
-    //         &mut payee_account_ref.received_events,
-    //         ReceivedPaymentEvent {
-    //             amount: deposit_value,
-    //             currency_code,
-    //             payer: sender,
-    //             metadata: metadata
-    //         }
-    //     );
-    // }
 }
 }

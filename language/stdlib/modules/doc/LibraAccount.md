@@ -920,7 +920,7 @@ Initialize this module. This is only callable from genesis.
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     // Rate limit spam accounts.
-    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_can_create_val_account">MinerState::can_create_val_account</a>(sender_addr), 120101011001);
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
         &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
@@ -1563,6 +1563,8 @@ Withdraw <code>amount</code> <code><a href="Libra.md#0x1_Libra">Libra</a>&lt;Tok
     <b>let</b> payer = cap.account_address;
     <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_exists_at">exists_at</a>(payer), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EACCOUNT">EACCOUNT</a>));
     <b>assert</b>(<b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>));
+    // Do not attempt sending <b>to</b> a payee that does not have balance
+    <b>assert</b>(<b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>));
     <b>let</b> account_balance = borrow_global_mut&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer);
     // Load the payer's account and emit an event <b>to</b> record the withdrawal
     <a href="Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="LibraAccount.md#0x1_LibraAccount_SentPaymentEvent">SentPaymentEvent</a>&gt;(
@@ -1901,14 +1903,26 @@ Return the withdraw capability to the account it originally came from
     metadata_signature: vector&lt;u8&gt;,
     vm: &signer
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> , <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <b>if</b> (<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()) <b>return</b>;
 
-    <b>assert</b>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 120101014010);
+    // Check payee can receive funds in this currency.
+    <b>if</b> (!<b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
+    // <b>assert</b>(<b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>));
 
-    <b>assert</b>(
-        !<a href="LibraAccount.md#0x1_LibraAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer),
-        <a href="Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
-    );
-    <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_exists_at">exists_at</a>(payer), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EACCOUNT">EACCOUNT</a>));
+    // Check there is a payer
+    <b>if</b> (!<a href="LibraAccount.md#0x1_LibraAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
+
+    // <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_exists_at">exists_at</a>(payer), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="LibraAccount.md#0x1_LibraAccount_EACCOUNT">EACCOUNT</a>));
+
+    // Check the payer is in possession of withdraw token.
+    <b>if</b> (<a href="LibraAccount.md#0x1_LibraAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer)) <b>return</b>;
+
+    // <b>assert</b>(
+    //     !<a href="LibraAccount.md#0x1_LibraAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer),
+    //     <a href="Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
+    // );
+
+    // VM can extract the withdraw token.
     <b>let</b> account = borrow_global_mut&lt;<a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>&gt;(payer);
     <b>let</b> cap = <a href="Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
     <a href="LibraAccount.md#0x1_LibraAccount_deposit">deposit</a>&lt;Token&gt;(

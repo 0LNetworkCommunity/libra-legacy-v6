@@ -1,5 +1,5 @@
 // Adding new validator epoch info
-//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+//! account: alice, 100000, 0, validator
 
 //! new-transaction
 //! sender: libraroot

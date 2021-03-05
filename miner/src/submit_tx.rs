@@ -15,10 +15,11 @@ use std::{io::{stdout, Write}, thread, time};
 
 use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
 use libra_types::{transaction::helpers::*};
-use crate::{node_keys::KeyScheme, config::MinerConfig};
+use crate::config::MinerConfig;
 use compiled_stdlib::transaction_scripts;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_types::chain_id::ChainId;
+use libra_genesis_tool::keyscheme::KeyScheme;
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -254,11 +255,11 @@ pub fn eval_tx_status(result: TransactionView) -> bool {
 
 /// Form tx parameters struct 
 pub fn get_params(
-    mnemonic: &str, 
+    keys: KeyScheme, 
     waypoint: Waypoint,
     config: &MinerConfig
 ) -> TxParams {
-    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
+    // let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(pubkey);
@@ -270,7 +271,7 @@ pub fn get_params(
         url: Url::parse(url_str).expect("No url provided in miner.toml"),
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 50_000,
+        max_gas_unit_for_tx: 5_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     }
@@ -376,7 +377,8 @@ fn test_make_params() {
 
     };
 
-    let p = get_params(&mnemonic, waypoint, &configs_fixture);
+    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
+    let p = get_params(keys, waypoint, &configs_fixture);
     assert_eq!("http://localhost:8080/".to_string(), p.url.to_string());
     // debug!("{:?}", p.url);
     //make_params
@@ -413,9 +415,7 @@ fn test_save_tx() {
         },
 
     };
-
-    let p = get_params(&mnemonic, waypoint, &configs_fixture);
+    let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
+    let p = get_params(keys, waypoint, &configs_fixture);
     util_save_tx(&p);
-    // dbg!(&p);
-
 }
