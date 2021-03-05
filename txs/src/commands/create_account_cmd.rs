@@ -59,7 +59,7 @@ impl Runnable for CreateAccountCmd {
     fn run(&self) {
         // TODO(GS): generalize to main.rs for all commands
 
-        // Get tx_params from toml e.g. ~/.0L/txs.toml
+        // Get tx_params from toml e.g. ~/.0L/txs.toml, or use Profile::default()
         let miner_config = app_config();
         let mut tx_params= get_params_from_toml(miner_config.clone()).unwrap();
 
@@ -82,17 +82,19 @@ impl Runnable for CreateAccountCmd {
             };
         }
 
-        // Override waypoint 
-        tx_params.waypoint = match miner_config.get_waypoint() {
-            Some(waypoint) => waypoint, // e.g. from ~/.0L/key_store.json
-            _ => {
-                if *&self.waypoint.is_some() { // from command line
-                    self.waypoint.clone().unwrap().parse::<Waypoint>().unwrap()
-                } else { // from toml or Profile::default()
-                    miner_config.profile.waypoint 
+        // Override waypoint if swarm is not used
+        if self.swarm_path.is_none() {
+            tx_params.waypoint = match miner_config.get_waypoint() {
+                Some(waypoint) => waypoint, // e.g. from ~/.0L/key_store.json
+                _ => {
+                    if *&self.waypoint.is_some() { // from command line
+                        self.waypoint.clone().unwrap().parse::<Waypoint>().unwrap()
+                    } else { // from toml or Profile::default()
+                        miner_config.profile.waypoint 
+                    }
                 }
-            }
-        };
+            };
+        }
 
 
         let account_json = self.account_json_path.to_str().unwrap();
