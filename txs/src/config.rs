@@ -37,8 +37,8 @@ impl AppConfig {
                 Some(waypoint)
             }
             Err(err) => {
-            println!("key_store.json not found. {:?}", err);
-            None
+                println!("key_store.json not found. {:?}", err);
+                None
             }
         }
     }
@@ -50,7 +50,7 @@ impl AppConfig {
         home
     }
 
-        /// Get where node key_store.json stored.
+    /// Get where node key_store.json stored.
     pub fn init_app_configs(
         authkey: AuthenticationKey,
         account: AccountAddress,

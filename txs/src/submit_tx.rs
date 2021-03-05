@@ -15,13 +15,12 @@ use libra_config::config::NodeConfig;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use crate::config::AppConfig;
 
 use std::{fs, io::{stdout, Write},path::PathBuf, thread, time};
 use anyhow::Error;
 use reqwest::Url;
-use abscissa_core::{status_warn, status_ok};
-
-use crate::config::AppConfig;
+use abscissa_core::{status_warn, status_ok, status_err};
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -103,8 +102,55 @@ pub fn submit_tx(
 
 }
 
+/// Todo
+pub fn get_tx_params(
+    url: &Option<String>,
+    waypoint: &Option<String>,
+    swarm_path: &Option<PathBuf>
+) -> Result<TxParams, Error> {
+    
+    // Get tx_params from toml e.g. ~/.0L/txs.toml, or use Profile::default()
+    let miner_config = crate::prelude::app_config();
+    let mut tx_params= get_tx_params_from_toml(miner_config.clone()).unwrap();
+
+    // If the settings are not initialized in txs.toml
+    if miner_config.profile.auth_key == "" { 
+        // Get tx_params from local swarm
+        tx_params = if swarm_path.clone().is_some() {
+            get_tx_params_from_swarm(
+                swarm_path.clone().expect("needs a valid swarm temp dir")
+            ).unwrap()
+        } else { // Get tx_params from command line
+            if url.is_none() | waypoint.is_none() {
+                status_err!("Need to pass url and waypoint");                
+            }                
+            get_tx_params_from_command_line(
+                &url.clone().expect("need to pass a url string http://a.b.c.d"),
+                &waypoint.clone().expect("need to pass a waypoint in command line")
+            ).unwrap()
+        };
+    }
+
+    // Override waypoint if swarm is not used
+    if swarm_path.is_none() {
+        tx_params.waypoint = match miner_config.get_waypoint() {
+            Some(waypoint) => waypoint, // e.g. from ~/.0L/key_store.json
+            _ => {
+                if waypoint.is_some() { // from command line
+                    waypoint.clone().unwrap().parse::<Waypoint>().unwrap()
+                } else { // from toml or Profile::default()
+                    miner_config.profile.waypoint 
+                }
+            }
+        };
+    }
+
+    Ok(tx_params)
+}
+
+
 /// Extract params from a local running swarm
-pub fn get_params_from_swarm(
+pub fn get_tx_params_from_swarm(
     mut swarm_path: PathBuf
 ) 
 -> Result<TxParams, Error> {
@@ -136,11 +182,12 @@ pub fn get_params_from_swarm(
         user_tx_timeout: 5_000,
     };
 
+    println!("Info: Got tx params from swarm");
     Ok(tx_params)
 }
 
 /// Get params from command line
-pub fn get_params_from_command_line(
+pub fn get_tx_params_from_command_line(
     url_str: &str,
     waypoint_str: &str
 ) -> Result<TxParams, Error> {
@@ -161,11 +208,12 @@ pub fn get_params_from_command_line(
         user_tx_timeout: 5_000,
     };
 
+    println!("Info: Got tx params from command line");
     Ok(tx_params)
 }
 
 /// Gets transaction params from the 0L project root.
-pub fn get_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
+pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
     let url =  Url::parse(&config.profile.url).unwrap();
 
     let (auth_key, address, wallet) = keygen::account_from_prompt();
@@ -183,6 +231,7 @@ pub fn get_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
         user_tx_timeout: config.profile.user_tx_timeout,
     };
 
+    println!("Info: Got tx params from txs.toml");
     Ok(tx_params)
 }
 
