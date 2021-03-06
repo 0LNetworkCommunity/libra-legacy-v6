@@ -39,7 +39,7 @@
     <b>let</b> mines = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(vm, node_addr);
 
     <b>if</b> (signs && mines) <b>return</b> 1; // compliant: in next set, gets paid, weight increments
-    <b>if</b> (signs && !mines) <b>return</b> 2; // half compliant: in next set, does not get paid, weight does not increment.
+    <b>if</b> (signs && !mines) <b>return</b> 2; // half compliant: not in next set, does not get paid, weight does not increment.
     <b>if</b> (!signs && mines) <b>return</b> 3; // not compliant: jailed, not in next set, does not get paid, weight increments.
     //<b>if</b> !signs && !mines
     <b>return</b> 4 // not compliant: jailed, not in next set, does not get paid, weight does not increment.
