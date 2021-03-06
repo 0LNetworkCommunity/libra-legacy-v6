@@ -168,7 +168,7 @@
   challenge: vector&lt;u8&gt;,
   difficulty: u64,
   solution: vector&lt;u8&gt;
-) : <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
+): <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
    <a href="MinerState.md#0x1_MinerState_Proof">Proof</a> {
      challenge,
      difficulty,
@@ -308,6 +308,9 @@
   };
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+
+  // TODO: This should not increment for validators in set.
+  // Including <a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a> causes a dependency cycling
   <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">FullnodeState::inc_proof</a>(miner_sign);
 }
 </code></pre>
