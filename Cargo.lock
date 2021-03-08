@@ -4777,6 +4777,7 @@ name = "ol_cli"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
+ "anyhow",
  "cli",
  "gumdrop",
  "libra-types",
@@ -4784,6 +4785,7 @@ dependencies = [
  "num-format",
  "once_cell",
  "reqwest",
+ "resource-viewer",
  "serde",
  "thiserror",
 ]

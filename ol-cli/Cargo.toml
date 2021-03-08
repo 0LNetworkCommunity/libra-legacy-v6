@@ -13,6 +13,8 @@ miner = { path = "../miner", version = "0.1.0" }
 cli = { path = "../testsuite/cli/", version = "0.1.0" }
 libra-types = { path = "../types/", version= "0.1.0"}
 num-format = "0.4.0"
+resource-viewer = { path = "../language/tools/resource-viewer", version = "0.1.0" }
+anyhow = "1.0"
 
 [dependencies.abscissa_core]
 version = "0.5.2"
