@@ -1,13 +1,13 @@
 //! `bal` subcommand
 
-use crate::account_resource;
 
-use abscissa_core::{Command, Options, Runnable};
+
+// use abscissa_core::{Command, Runnable};
 use cli::libra_client::LibraClient;
 use reqwest::Url;
-use libra_types::{account_address::AccountAddress, account_state::AccountState, transaction::Version, waypoint::Waypoint};
-use num_format::{Locale, ToFormattedString};
-use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
+use libra_types::{waypoint::Waypoint};
+
+
 
 use anyhow::Error;
 // use crate::{
@@ -34,18 +34,10 @@ use anyhow::{Result};
 // use reqwest::Url;
 // use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 // use rust_decimal::Decimal;
-use std::{
-    collections::HashMap,
-    convert::TryFrom,
-    fmt, fs,
-    io::{stdout, Write},
-    path::{Path, PathBuf},
-    // process::Command,
-    str::{self, FromStr},
-    thread, time,
-};
 
 
+/// returns a LibraClient instance.
+// TODO: Use app config file for params
 pub fn make_client(url: Option<Url>, waypoint: Waypoint) -> Result<LibraClient, Error> {
     Ok(LibraClient::new(
         url.clone().unwrap_or("http://localhost:8080".to_owned().parse().unwrap()),

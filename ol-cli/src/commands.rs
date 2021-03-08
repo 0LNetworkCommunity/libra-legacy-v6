@@ -13,13 +13,15 @@
 mod start;
 mod version;
 mod genesis_cmd;
-mod bal;
+mod bal_cmd;
+mod resource_cmd;
 
 use self::{
     start::StartCmd,
     version::VersionCmd,
     genesis_cmd::GenesisCmd,
-    bal::BalCmd
+    bal_cmd::BalCmd,
+    resource_cmd::ResourceCmd,
 };
 // use miner::commands::version::VersionCmd as NewVersionCmd;
 
@@ -53,6 +55,10 @@ pub enum OlCliCmd {
     /// The `bal` subcommand
     #[options(help = "get balance")]
     Bal(BalCmd),
+
+    /// The `resource` subcommand
+    #[options(help = "get account resources")]
+    Resource(ResourceCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
