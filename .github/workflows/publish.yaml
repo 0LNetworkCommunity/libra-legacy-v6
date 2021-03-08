@@ -15,6 +15,7 @@ jobs:
     name: Publish for Ubuntu
     runs-on: ubuntu-18.04
     steps:
+      - run: apt install -y cmake clang llvm libgmp-dev pkg-config libssl-dev
       - uses: actions/checkout@master
       - uses: actions-rs/toolchain@v1
         with:
