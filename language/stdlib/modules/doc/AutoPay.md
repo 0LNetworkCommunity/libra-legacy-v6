@@ -9,6 +9,7 @@
 -  [Resource `Data`](#0x1_AutoPay_Data)
 -  [Resource `AccountList`](#0x1_AutoPay_AccountList)
 -  [Struct `Payment`](#0x1_AutoPay_Payment)
+-  [Constants](#@Constants_0)
 -  [Function `tick`](#0x1_AutoPay_tick)
 -  [Function `reconfig_reset_tick`](#0x1_AutoPay_reconfig_reset_tick)
 -  [Function `initialize`](#0x1_AutoPay_initialize)
@@ -24,6 +25,7 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
+<b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -168,6 +170,21 @@
 
 
 </details>
+
+<a name="@Constants_0"></a>
+
+## Constants
+
+
+<a name="0x1_AutoPay_EPAYEE_DOES_NOT_EXIST"></a>
+
+Attempted to send funds to an account that does not exist
+
+
+<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>: u64 = 17;
+</code></pre>
+
+
 
 <a name="0x1_AutoPay_tick"></a>
 
@@ -416,6 +433,9 @@
     <b>assert</b>(<b>false</b>, 010104011021);
   };
   <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(addr).payments;
+
+  <b>assert</b>(<a href="LibraAccount.md#0x1_LibraAccount_exists_at">LibraAccount::exists_at</a>(payee), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AutoPay.md#0x1_AutoPay_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
+
   <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, <a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a> {
     // name: name,
     uid: uid,

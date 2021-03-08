@@ -8,10 +8,9 @@
     "ow_human_name": "3DC18D1CF61FAAC6AC70E3A63F062E4B",
     "op_address": "0E04E58B354EF058D08DD493F2352454",
     "op_auth_key_prefix": "ecc59a4a0963f65b5eceb0fffa01ea99",
-    "op_consensus_pubkey": "cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d",
+    "op_consensus_pubkey": "b8f2287e6108964b5becb656fa5d98f02e063a7ab9f8ac5dbb5b7fac481255db",
     "op_validator_network_addresses": "010000000000000000000000003e250c102074e46ce6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf0414d9acd8fea5b664688b864b54c8ec8ae",
     "op_fullnode_network_addresses": "2d0400a1230da90523180720151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b11812",
-    "op_human_name": "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper",
-    "my_trusted_accounts" : ["3DC18D1CF61FAAC6AC70E3A63F062E4B"],
-    "voter_trusted_accounts": ["3DC18D1CF61FAAC6AC70E3A63F062E4B"]
+    "op_fullnode_network_addresses_string": "/ip4/161.35.13.169/tcp/6180/ln-noise-ik/151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b11812/ln-handshake/0",
+    "op_human_name": "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper"
 }

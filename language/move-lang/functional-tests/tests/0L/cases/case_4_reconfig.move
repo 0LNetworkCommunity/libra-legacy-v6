@@ -123,8 +123,11 @@ script {
 script {
     use 0x1::Vector;
     use 0x1::Stats;
+    use 0x1::FullnodeState;
     // This is the the epoch boundary.
     fun main(vm: &signer) {
+                // This is not an onboarding case, steady state.
+        FullnodeState::test_set_fullnode_fixtures(vm, {{dave}}, 0, 0, 0, 200, 200, 1000000);
         let voters = Vector::empty<address>();
         // Case 3 skip Carol, did not validate.
         Vector::push_back<address>(&mut voters, {{alice}});

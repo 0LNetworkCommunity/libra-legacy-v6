@@ -1,8 +1,17 @@
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
+
 # Chain settings
 CHAIN_ID = 1
+
+ifndef SOURCE
+SOURCE=${HOME}/libra
+endif
+
+ifndef V
+V=previous
+endif
 
 # Account settings
 ifndef ACC
@@ -41,9 +50,8 @@ bins:
 	cargo install toml-cli
 	cargo run -p stdlib --release
 	#Build and install genesis tool, libra-node, and miner
-	# cargo build -p libra-genesis-tool --release && sudo cp -f ~/libra/target/release/libra-genesis-tool /usr/local/bin/genesis
-	cargo build -p miner --release && sudo cp -f ~/libra/target/release/miner /usr/local/bin/miner
-	cargo build -p libra-node --release && sudo cp -f ~/libra/target/release/libra-node /usr/local/bin/libra-node
+	cargo build -p miner --release && sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
+	cargo build -p libra-node --release && sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony
@@ -159,7 +167,8 @@ genesis:
 	--validator-backend ${LOCAL} \
 	--data-path ${DATA_PATH} \
 	--namespace ${ACC}-oper \
-	--repo ${REPO_NAME}
+	--repo ${REPO_NAME} \
+	--github-org ${REPO_ORG}
 
 
 #### NODE MANAGEMENT ####
@@ -168,9 +177,9 @@ start:
 	cargo run -p libra-node -- --config ${DATA_PATH}/node.yaml
 
 daemon:
-# your node's custom libra-node.service lives in node_data. Take the template from libra/utils and edit for your needs.
+# your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
 	sudo cp -f ~/.0L/libra-node.service /lib/systemd/system/
-# cp -f miner.service /lib/systemd/system/
+
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		sudo rm -rf ~/logs*; \
@@ -192,8 +201,15 @@ daemon:
 
 clear:
 	if test ${DATA_PATH}/key_store.json; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
+	if test -d ${DATA_PATH}/blocks; then \
+		rm -f ${DATA_PATH}/blocks/*.json; \
+	fi
+
+fixture-stdlib:
+	make stdlib
+	cp language/stdlib/staged/stdlib.mv fixtures/stdlib/fresh_stdlib.mv
 
 #### HELPERS ####
 check:
@@ -216,9 +232,8 @@ ifdef TEST
 	@if test ! -d ${0L_PATH}; then \
 		mkdir ${0L_PATH}; \
 		mkdir ${DATA_PATH}; \
+		mkdir -p ${DATA_PATH}/blocks/; \
 	fi
-
-	mkdir -p ${DATA_PATH}/blocks/
 
 	@if test -f ${DATA_PATH}/blocks/block_0.json; then \
 		rm ${DATA_PATH}/blocks/block_0.json; \
@@ -228,23 +243,46 @@ ifdef TEST
 		rm ${DATA_PATH}/miner.toml; \
 	fi 
 
+# skip  genesis files with fixtures, there may be no version
+ifndef SKIP_BLOB
+	cp ./fixtures/genesis/${V}/genesis.blob ${DATA_PATH}/
+	cp ./fixtures/genesis/${V}/genesis_waypoint ${DATA_PATH}/
+endif
+# skip miner configuration with fixtures
 	cp ./fixtures/configs/${NS}.toml ${DATA_PATH}/miner.toml
-
+# skip mining proof zero with fixtures
 	cp ./fixtures/blocks/${NODE_ENV}/${NS}/block_0.json ${DATA_PATH}/blocks/block_0.json
 
 endif
 
+
 #### HELPERS ####
-get_waypoint:
-	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
-  
-	echo $$WAY
+set-waypoint:
+	@if test -f ${DATA_PATH}/key_store.json; then \
+		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+	fi
 
-client: get_waypoint
-	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
+	@if test ! -f ${DATA_PATH}/key_store.json; then \
+		cat ${DATA_PATH}/restore_waypoint > ${DATA_PATH}/client_waypoint; \
+	fi
+	@echo client_waypoint:
+	@cat ${DATA_PATH}/client_waypoint
 
-compress: 
-	tar -C ~/libra/target/release/ -czvf test_net_bins.tar.gz libra-node miner
+client: set-waypoint
+ifeq (${TEST}, y)
+	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
+else
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
+endif
+
+test: set-waypoint
+	cargo run -p cli -- -u http://localhost:8080 --waypoint "$$(cat ${DATA_PATH}/client_waypoint)" --chain-id ${CHAIN_ID}
+
+
+stdlib:
+	cargo run --release -p stdlib
+	cargo run --release -p stdlib -- --create-upgrade-payload
+	sha256sum language/stdlib/staged/stdlib.mv
   
 keygen:
 	cd ${DATA_PATH} && miner keygen
@@ -253,6 +291,11 @@ miner-genesis:
 	cd ${DATA_PATH} && NODE_ENV=${NODE_ENV} miner genesis
 
 reset: stop clear fixtures init keys genesis daemon
+
+remove-keys:
+	make stop
+	jq 'del(.["${ACC}-oper/owner", "${ACC}-oper/operator"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
+	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
 
 wipe: 
 	history -c
@@ -263,17 +306,60 @@ stop:
 	sudo service libra-node stop
 
 
-##### SMOKE TEST #####
-smoke-reg:
+##### DEVNET TESTS #####
+# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
+
+devnet: stop clear fix devnet-keys devnet-yaml start
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+
+devnet-keys: 
+	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+
+devnet-yaml:
+	cargo run -p miner -- genesis
+
+devnet-onboard: clear fix
+	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+	cargo r -p miner -- genesis
+
+devnet-previous: stop clear 
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+	V=previous make fix devnet-keys devnet-yaml start
+
+
+### FULL DEVNET RESET ####
+
+devnet-reset: devnet-reset-ceremony genesis start
+# Tests the full genesis ceremony cycle, and rebuilds all genesis and waypoints.
+
+devnet-reset-ceremony:
 # note: this uses the NS in local env to create files i.e. alice or bob
 # as a operator/owner pair.
-	make clear fix
+	SKIP_BLOB=y make clear fix
 	echo ${MNEM} | head -c -1 | make register
-smoke-gen:
-	make genesis start
-smoke:
-	make smoke-reg
-# Create configs and start
-	make smoke-gen
 
+devnet-reset-onboard: clear 
+# fixtures needs a file that works
+	SKIP_BLOB=y fix
+# starts config for a new miner "eve", uses the devnet github repo for ceremony
+	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
 
+#### GIT HELPERS FOR DEVNET AUTOMATION ####
+devnet-save-genesis: get-waypoint
+	echo $$WAY > ${DATA_PATH}/genesis_waypoint
+	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
+	git add ${SOURCE}/fixtures/genesis/${V}/
+	git commit -a -m "save genesis fixtures to ${V}"
+	git push
+
+devnet-hard:
+	git reset --hard origin/${V} 
+
+devnet-pull:
+# must be on a branch
+	git fetch && git checkout ${V} -f && git pull
+
+devnet-fn:
+	cargo run -p miner -- fn-wizard --path ~/.0L/

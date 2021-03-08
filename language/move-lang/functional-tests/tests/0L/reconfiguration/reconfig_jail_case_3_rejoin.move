@@ -2,15 +2,15 @@
 
 // ALICE is CASE 1
 //! account: alice, 1000000, 0, validator
-// BOB is CASE 2
+// BOB is CASE 1
 //! account: bob, 1000000, 0, validator
-// CAROL is CASE 2
+// CAROL is CASE 1
 //! account: carol, 1000000, 0, validator
-// DAVE is CASE 2
+// DAVE is CASE 1
 //! account: dave, 1000000, 0, validator
 // EVE is CASE 3
 //! account: eve, 1000000, 0, validator
-// FRANK is CASE 2
+// FRANK is CASE 1
 //! account: frank, 1000000, 0, validator
 
 //! block-prologue
@@ -33,6 +33,48 @@ script {
 //check: EXECUTED
 
 //! new-transaction
+//! sender: bob
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: carol
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: dave
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
 //! sender: eve
 script {
     use 0x1::MinerState;
@@ -42,6 +84,20 @@ script {
 
         MinerState::test_helper_mock_mining(sender, 5);
         assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357180102011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: frank
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{frank}}) == 5, 7357180102011000);
     }
 }
 //check: EXECUTED
@@ -138,6 +194,91 @@ script {
 }
 //check: EXECUTED
 
+
+//! new-transaction
+//! sender: alice
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357180101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: bob
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{bob}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: carol
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{carol}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: dave
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Miner is the only one that can update their mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{dave}}) == 5, 7357300101011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: eve
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357180102011000);
+    }
+}
+//check: EXECUTED
+
+//! new-transaction
+//! sender: frank
+script {
+    use 0x1::MinerState;
+
+    fun main(sender: &signer) {
+        // Alice is the only one that can update her mining stats. Hence this first transaction.
+
+        MinerState::test_helper_mock_mining(sender, 5);
+        assert(MinerState::test_helper_get_count({{frank}}) == 5, 7357180102011000);
+    }
+}
+//check: EXECUTED
+
 ///////////////////////////////////////////////
 ///// Trigger reconfiguration at 4 seconds ////
 //! block-prologue
@@ -156,7 +297,8 @@ script {
     use 0x1::LibraConfig;
     fun main(_account: &signer) {
         assert(LibraConfig::get_current_epoch() == 3, 7357180107011000);
-        assert(LibraSystem::is_validator({{eve}}), 7357180107021000);
+        assert(LibraSystem::validator_set_size() == 6, 7357180105021000);
+        assert(LibraSystem::is_validator({{eve}}), 7357180107031000);
     }
 }
 //check: EXECUTED

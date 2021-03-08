@@ -432,6 +432,138 @@ impl ClientProxy {
 
     //////// 0L ////////
     /// Submits transaction creating user account from proof file.
+    pub fn update_val_configs(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() == 3,
+            "Invalid number of arguments to create user. Did you pass your account and the file path?"
+        );
+
+        //TODO: Parsing json should use Serde to deserialize from the miner::accounts::ValConfigs obj, but importing miner causes a circular dependency. Refactor...
+
+        let file = fs::File::open(space_delim_strings[2])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+        // let block = json.get("block_zero")
+            // .expect("file should have block_zero and preimage key");
+
+        let ow_account = json
+        .get("ow_human_name")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .parse::<AccountAddress>()
+        .unwrap();
+
+        let op_consensus_pubkey: Vec<u8> = hex::decode(
+        json
+            .get("op_consensus_pubkey")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
+
+        let op_validator_network_addresses = hex::decode(
+            json.get("op_validator_network_addresses")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
+
+        let op_fullnode_network_addresses = hex::decode(
+            json.get("op_fullnode_network_addresses")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
+        
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_set_validator_config_and_reconfigure_script(
+            ow_account,
+            op_consensus_pubkey,
+            op_validator_network_addresses,
+            op_fullnode_network_addresses,
+        );
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Submits transaction creating user account from proof file.
+    pub fn set_operator(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
+        ensure!(
+            space_delim_strings.len() == 3,
+            "Invalid number of arguments to create user. Did you pass your account and the file path?"
+        );
+
+        let file = fs::File::open(space_delim_strings[2])
+            .expect("file should open read only");
+        let json: serde_json::Value = serde_json::from_reader(file)
+            .expect("file should be proper JSON");
+
+        let op_human_name = json
+        .get("op_human_name")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .as_bytes()
+        .to_vec();
+
+        let op_address: AccountAddress = json
+        .get("op_address")
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+        
+        let (sender_address, _) =
+            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_set_validator_operator_script(
+            op_human_name,
+            op_address,
+        );
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        if is_blocking {
+            self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        }
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Submits transaction creating user account from proof file.
     pub fn create_val(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
         ensure!(
             space_delim_strings.len() == 3,
@@ -475,9 +607,25 @@ impl ClientProxy {
         .parse()
         .unwrap();
 
-        let op_auth_key_prefix = hex::decode("ecc59a4a0963f65b5eceb0fffa01ea99").unwrap();
+        let op_auth_key_prefix: Vec<u8> = hex::decode(
+        json
+            .get("op_auth_key_prefix")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
 
-        let op_consensus_pubkey = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
+        let op_consensus_pubkey: Vec<u8> = hex::decode(
+        json
+            .get("op_consensus_pubkey")
+            .unwrap()
+            .as_str()
+            .unwrap()
+        ).unwrap();
+
+        // let op_auth_key_prefix = hex::decode("ecc59a4a0963f65b5eceb0fffa01ea99").unwrap();
+
+        // let op_consensus_pubkey = hex::decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
         
         let op_validator_network_addresses = hex::decode(
             json.get("op_validator_network_addresses")
@@ -500,33 +648,6 @@ impl ClientProxy {
         .unwrap()
         .as_bytes()
         .to_vec();
-
-        // let my_trusted_accounts = json
-        // .get("my_trusted_accounts")
-        // .expect("no array found at key my_trusted_accounts")
-        // .as_array()
-        // .unwrap()
-        // .into_iter()
-        // .map(|addr| { 
-        //     AccountAddress::from_str(
-        //         addr.as_str().unwrap()
-        //     ).unwrap()
-        // })
-        // .collect();
-
-        // vec!(AccountAddress::random());
-        // let voter_trusted_accounts = json
-        // .get("voter_trusted_accounts")
-        // .expect("no array found at key my_trusted_accounts")
-        // .as_array()
-        // .unwrap()
-        // .into_iter()
-        // .map(|addr| { 
-        //     AccountAddress::from_str(
-        //         addr.as_str().unwrap()
-        //     ).unwrap()
-        // })
-        // .collect();
         
         let (sender_address, _) =
             self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
@@ -565,14 +686,10 @@ impl ClientProxy {
     }
     //////// 0L ////////
     /// Enables autopay on the sending account.
-    pub fn autopay_enable(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-        ensure!(
-            space_delim_strings.len() == 2,
-            "Invalid number of arguments to enable autopay. Did you pass your account address?"
-        );
+    pub fn autopay_enable(&mut self, account: &str) -> Result<()> {
 
         let (sender_address, _) =
-            self.get_account_address_from_parameter(space_delim_strings[1]).expect("address not submitted");
+            self.get_account_address_from_parameter(account).expect("address not submitted");
         let sender_ref_id = self.get_account_ref_id(&sender_address)?;
         let sender = self.accounts.get(sender_ref_id).unwrap();
         let sequence_number = sender.sequence_number;
@@ -589,9 +706,8 @@ impl ClientProxy {
 
         self.client
             .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
-        if is_blocking {
-            self.wait_for_transaction(sender_address, sequence_number + 1)?;
-        }
+        self.wait_for_transaction(sender_address, sequence_number + 1)?;
+
         Ok(())
     }
 
@@ -599,13 +715,6 @@ impl ClientProxy {
     //////// 0L ////////
     /// creates an autopay instruction on the sending account.
     pub fn autopay_create(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
-
-        // sender: &signer,
-        // uid: u64,
-        // payee: address,
-        // end_epoch: u64,
-        // percentage: u64,
-
         ensure!(
             space_delim_strings.len() == 6,
             "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
@@ -641,6 +750,45 @@ impl ClientProxy {
         }
         Ok(())
     }
+ 
+    //////// 0L ////////
+    /// creates an autopay instruction on the sending account.
+    pub fn autopay_batch(&mut self, uid: u64, payee_address: AccountAddress, end_epoch: u64, percentage: u64,) -> Result<()> {
+        // ensure!(
+        //     space_delim_strings.len() == 2,
+        //     "Invalid number of arguments to create autopay instruction. Did you pass your account address, instruction id, payee address, ending epoch, and percentage?"
+        // );
+        
+        // assume 0th address in wallet for transactions.
+        let (sender_address, _) =
+            self.get_account_address_from_parameter("0").expect("address not submitted");
+        
+        let sender_ref_id = self.get_account_ref_id(&sender_address)?;
+        let sender = self.accounts.get(sender_ref_id).unwrap();
+        let sequence_number = sender.sequence_number;
+
+        let program = transaction_builder::encode_autopay_create_instruction_script(
+            uid,
+            payee_address,
+            end_epoch,
+            percentage,
+        );
+
+        let txn = self.create_txn_to_submit(
+            TransactionPayload::Script(program),
+            &sender,
+            Some(1000000),    /* max_gas_amount */
+            Some(1),    /* gas_unit_price */
+            Some("GAS".to_string()), /* gas_currency_code */
+        )?;
+
+        self.client
+            .submit_transaction(self.accounts.get_mut(sender_ref_id), txn)?;
+        
+        self.wait_for_transaction(sender_address, sequence_number + 1)?;
+        Ok(())
+    }
+
     //////// 0L ////////
     /// Calls the oracle upgrade script
     pub fn oracle_upgrade_stdlib(&mut self, space_delim_strings: &[&str], is_blocking: bool) -> Result<()> {
@@ -1083,14 +1231,14 @@ impl ClientProxy {
                 Ok(Some(txn_view)) => {
                     println!();
                     if txn_view.vm_status == VMStatusView::Executed {
-                        println!("transaction executed!");
+                        println!("Transaction executed!");
                         if txn_view.events.is_empty() {
-                            println!("no events emitted");
+                            println!("No events emitted");
                         }
                         break Ok(());
                     } else {
                         break Err(format_err!(
-                            "transaction failed to execute; status: {:?}!",
+                            "Transaction failed to execute; status: {:?}!",
                             txn_view.vm_status
                         ));
                     }
