@@ -4748,6 +4748,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ab52be62400ca80aa00285d25253d7f7c437b7375c4de678f5405d3afe82ca5"
 
 [[package]]
+name = "ol_cli"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "cli",
+ "gumdrop",
+ "miner",
+ "once_cell",
+ "reqwest",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

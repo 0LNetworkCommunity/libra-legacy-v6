@@ -13,9 +13,15 @@
 mod start;
 mod version;
 mod genesis_cmd;
+mod bal;
 
-use self::{start::StartCmd, version::VersionCmd, genesis_cmd::GenesisCmd};
-use miner::commands::version::VersionCmd as NewVersionCmd;
+use self::{
+    start::StartCmd,
+    version::VersionCmd,
+    genesis_cmd::GenesisCmd,
+    bal::BalCmd
+};
+// use miner::commands::version::VersionCmd as NewVersionCmd;
 
 use crate::config::OlCliConfig;
 use abscissa_core::{
@@ -43,6 +49,10 @@ pub enum OlCliCmd {
     /// The `genesis` subcommand
     #[options(help = "get files")]
     Genesis(GenesisCmd),
+
+    /// The `bal` subcommand
+    #[options(help = "get balance")]
+    Bal(BalCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
