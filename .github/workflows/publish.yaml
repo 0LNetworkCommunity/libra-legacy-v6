@@ -21,7 +21,7 @@ jobs:
         with:
           toolchain: stable
       - run: cargo install cargo-deb
-      - run: cargo deb -p miner
+      - run: cargo deb -p miner --deb-version ${{ github.ref }} -- --exclude libra-fuzzer
       - uses: actions/upload-artifact@v2
         with:
           name: miner
