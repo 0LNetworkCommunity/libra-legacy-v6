@@ -9,6 +9,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  NODE_ENV: prod
 
 jobs:
   publish:
@@ -21,7 +22,8 @@ jobs:
         with:
           toolchain: stable
       - run: cargo install cargo-deb
-      - run: cargo deb -p miner --deb-version ${{ github.ref }} -- --exclude libra-fuzzer
+      - run: cargo build -p miner --exclude libra-fuzzer --exclude cluster-test --exclude libra-fuzz --workspace --release
+      - run: cargo deb -p miner --deb-version ${{ github.ref }} --no-build
       - uses: actions/upload-artifact@v2
         with:
           name: miner
