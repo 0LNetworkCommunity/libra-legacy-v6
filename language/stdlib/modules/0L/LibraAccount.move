@@ -36,6 +36,7 @@ module LibraAccount {
     use 0x1::MinerState;
     use 0x1::TrustedAccounts;
     use 0x1::FullnodeState;
+    use 0x1::Testnet::is_testnet;
     /// An `address` is a Libra Account if it has a published LibraAccount resource.
     resource struct LibraAccount {
         /// The current authentication key.
@@ -302,7 +303,7 @@ module LibraAccount {
             op_validator_network_addresses,
             op_fullnode_network_addresses
         );
-        
+
         make_account(new_signer, auth_key_prefix);
 
         make_account(new_op_account, op_auth_key_prefix);
@@ -310,7 +311,6 @@ module LibraAccount {
         MinerState::reset_rate_limit(sender_addr);
         new_account_address
     }
-
 
     /// Return `true` if `addr` has already published account limits for `Token`
     fun has_published_account_limits<Token>(addr: address): bool {
@@ -2137,6 +2137,20 @@ module LibraAccount {
             metadata,
             metadata_signature
         );
+    }
+
+    /////// TEST HELPERS //////
+    // TODO: This is scary stuff.
+    public fun test_helper_create_signer(vm: &signer, addr: address): signer {
+        CoreAddresses::assert_libra_root(vm);
+        assert(is_testnet(), 120102011021);
+        create_signer(addr)
+    } 
+
+    public fun test_helper_destroy_signer(vm: &signer, to_destroy: signer) {
+        CoreAddresses::assert_libra_root(vm);
+        assert(is_testnet(), 120103011021);
+        destroy_signer(to_destroy);
     }
 }
 }

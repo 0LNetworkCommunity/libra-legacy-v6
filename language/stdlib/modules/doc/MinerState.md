@@ -8,7 +8,10 @@
 -  [Resource `MinerList`](#0x1_MinerState_MinerList)
 -  [Struct `Proof`](#0x1_MinerState_Proof)
 -  [Resource `MinerProofHistory`](#0x1_MinerState_MinerProofHistory)
+-  [Function `init_list`](#0x1_MinerState_init_list)
+-  [Function `is_init`](#0x1_MinerState_is_init)
 -  [Function `create_proof_blob`](#0x1_MinerState_create_proof_blob)
+-  [Function `add_self_list`](#0x1_MinerState_add_self_list)
 -  [Function `increment_miners_list`](#0x1_MinerState_increment_miners_list)
 -  [Function `genesis_helper`](#0x1_MinerState_genesis_helper)
 -  [Function `test_helper`](#0x1_MinerState_test_helper)
@@ -178,6 +181,57 @@
 
 </details>
 
+<a name="0x1_MinerState_init_list"></a>
+
+## Function `init_list`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_init_list">init_list</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_init_list">init_list</a>(vm: &signer) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(vm);
+  move_to&lt;<a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a>&gt;(vm, <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+    list: <a href="Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
+  });
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_is_init"></a>
+
+## Function `is_init`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_is_init">is_init</a>(addr: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_is_init">is_init</a>(addr: address):bool {
+  <b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(addr)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_MinerState_create_proof_blob"></a>
 
 ## Function `create_proof_blob`
@@ -203,6 +257,31 @@
      difficulty,
      solution,
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_add_self_list"></a>
+
+## Function `add_self_list`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_add_self_list">add_self_list</a>(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_add_self_list">add_self_list</a>(sender: &signer) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerList">MinerList</a> {
+  <b>let</b> addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  <a href="MinerState.md#0x1_MinerState_increment_miners_list">increment_miners_list</a>(addr);
 }
 </code></pre>
 
@@ -447,7 +526,7 @@
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), 130109014010);
 
   // Miner may not have been initialized. Simply <b>return</b> in this case (don't <b>abort</b>)
-  <b>if</b>( !<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr) ) { <b>return</b> };
+  <b>if</b>(!<a href="MinerState.md#0x1_MinerState_is_init">is_init</a>(miner_addr)) { <b>return</b> };
 
 
   // Check that there was mining and validating in period.
@@ -496,7 +575,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_node_above_thresh">node_above_thresh</a>(_account: &signer, miner_addr: address): bool <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
   <b>let</b> miner_history= borrow_global&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr);
-  <b>return</b> (miner_history.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_mining_threshold">Globals::get_mining_threshold</a>())
+  miner_history.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_mining_threshold">Globals::get_mining_threshold</a>()
 }
 </code></pre>
 

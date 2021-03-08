@@ -110,8 +110,12 @@ script {
     use 0x1::MinerState;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
+    use 0x1::FullnodeState;
     
-    fun main(_sender: &signer) {
+    fun main(vm: &signer) {
+        // This is not an onboarding case, steady state.
+        FullnodeState::test_set_fullnode_fixtures(vm, {{carol}}, 0, 0, 0, 200, 200, 1000000);
+
         // Tests on initial size of validators 
         assert(LibraSystem::validator_set_size() == 6, 7357000180101);
         assert(LibraSystem::is_validator({{carol}}) == true, 7357000180102);

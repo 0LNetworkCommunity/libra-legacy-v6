@@ -156,7 +156,58 @@ script {
     use 0x1::LibraConfig;
     fun main(_account: &signer) {
         assert(LibraConfig::get_current_epoch() == 3, 7357180107011000);
-        assert(LibraSystem::is_validator({{eve}}), 7357180107021000);
+
+        // Cannot yet rejoin, since has not sent "join" transaction
+        assert(!LibraSystem::is_validator({{eve}}), 7357180107021000);
+
+
+
+    }
+}
+//check: EXECUTED
+
+
+
+//! new-transaction
+//! sender: eve
+script {
+use 0x1::MinerState;
+// use 0x1::LibraConfig;
+fun main(sender: &signer) {
+    // Mock some mining so Eve can send rejoin tx
+    MinerState::test_helper_mock_mining(sender, 100);
+}
+}
+
+// EVE SENDS JOIN TX
+
+//! new-transaction
+//! sender: eve
+stdlib_script::ol_join_validator_set
+// check: "Keep(EXECUTED)"
+
+
+///////////////////////////////////////////////
+///// Trigger reconfiguration at 4 seconds ////
+//! block-prologue
+//! proposer: alice
+//! block-time: 183000000
+//! round: 45
+
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
+
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::LibraSystem;
+    use 0x1::LibraConfig;
+    fun main(_account: &signer) {
+        assert(LibraConfig::get_current_epoch() == 4, 7357180108011000);
+
+        // Finally eve is a validator again
+        assert(LibraSystem::is_validator({{eve}}), 7357180108021000);
     }
 }
 //check: EXECUTED

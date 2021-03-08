@@ -8,7 +8,6 @@ address 0x1 {
     use 0x1::VDF;
     use 0x1::Vector;
     use 0x1::CoreAddresses;
-    // use 0x1::ValidatorUniverse;
     use 0x1::Signer;
     use 0x1::LibraConfig;
     use 0x1::Globals;
@@ -38,6 +37,16 @@ address 0x1 {
         epochs_since_last_account_creation: u64
     }
 
+    public fun init_list(vm: &signer) {
+      CoreAddresses::assert_libra_root(vm);
+      move_to<MinerList>(vm, MinerList {
+        list: Vector::empty<address>()
+      });  
+    }
+
+    public fun is_init(addr: address):bool {
+      exists<MinerProofHistory>(addr)
+    }
     // Creates proof blob object from input parameters
     // Permissions: PUBLIC, ANYONE can call this function.
     public fun create_proof_blob(
@@ -52,6 +61,10 @@ address 0x1 {
       }
     }
 
+    public fun add_self_list(sender: &signer) acquires MinerList {
+      let addr = Signer::address_of(sender);
+      increment_miners_list(addr);
+    }
     // Private, can only be called within module
     fun increment_miners_list(miner: address) acquires MinerList {
       if (exists<MinerList>(0x0)) {
@@ -186,7 +199,7 @@ address 0x1 {
       assert(sender == CoreAddresses::LIBRA_ROOT_ADDRESS(), 130109014010);
 
       // Miner may not have been initialized. Simply return in this case (don't abort)
-      if( !exists<MinerProofHistory>(miner_addr) ) { return };
+      if(!is_init(miner_addr)) { return };
 
 
       // Check that there was mining and validating in period.
@@ -215,7 +228,7 @@ address 0x1 {
 
     public fun node_above_thresh(_account: &signer, miner_addr: address): bool acquires MinerProofHistory {
       let miner_history= borrow_global<MinerProofHistory>(miner_addr);
-      return (miner_history.count_proofs_in_epoch > Globals::get_mining_threshold())
+      miner_history.count_proofs_in_epoch > Globals::get_mining_threshold()
     }
     // Get weight of validator identified by address
     // Permissions: public, only VM can call this function.
