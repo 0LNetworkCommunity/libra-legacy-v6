@@ -56,7 +56,7 @@ module Reconfigure {
 
             FullnodeState::inc_payment_count(vm, addr, count);
             FullnodeState::inc_payment_value(vm, addr, value);
-            FullnodeState::reconfig(vm, addr);
+            FullnodeState::reconfig(vm, addr, count);
 
             k = k + 1;
         };
@@ -86,12 +86,14 @@ module Reconfigure {
         // 1. remove jailed set from validator universe
         
         // save all the eligible list, before the jailing removes them.
-        let eligible = ValidatorUniverse::get_eligible_validators(vm);
+        let proposed_set = Vector::empty();
+
+        let top_accounts = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
 
         let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
 
         let i = 0;
-        while (i < Vector::length(&top_accounts)) {
+        while (i < Vector::length<address>(&top_accounts)) {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
             // TODO: temporary until jail-refactor merge.
@@ -113,12 +115,12 @@ module Reconfigure {
 
         // 2. get top accounts.
         // TODO: This is temporary. Top N is after jailed have been removed
-        let proposed_set = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
+        // let proposed_set = NodeWeight::top_n_accounts(vm, Globals::get_max_validator_per_epoch());
         // let proposed_set = top_accounts;
 
 
         // If the cardinality of validator_set in the next epoch is less than 4, we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&eligible;
+        if (Vector::length<address>(&proposed_set)<= 3) proposed_set = *&top_accounts;
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with at least 6 nodes and 6 rounds. If we reach an epoch boundary with at least 6 rounds, we would have at least 2/3rd of the validator set with at least 66% liveliness. 
 
@@ -128,7 +130,8 @@ module Reconfigure {
         //Reset Counters
         Stats::reconfig(vm, &proposed_set);
 
-        // Migrate elegible: in case there is no minerlist struct, use eligible for migrate_eligible_validators
+        // Migrate MinerState list from elegible: in case there is no minerlist struct, use eligible for migrate_eligible_validators
+        let eligible = ValidatorUniverse::get_eligible_validators(vm);
         MinerState::reconfig(vm, &eligible);
         // Reconfigure the network
         LibraSystem::bulk_update_validators(vm, proposed_set);
