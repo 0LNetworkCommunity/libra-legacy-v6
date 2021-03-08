@@ -22,14 +22,10 @@ jobs:
           toolchain: stable
       - run: cargo install cargo-deb
       - run: cargo deb -p miner
-#      - uses: actions-rs/cargo@v1
-#      - name: Deb Build
-#         run: cargo deb -p miner
-#      - name: Upload Deb Artifact
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: amd64deb
-#          path: ./target/x86_64-unknown-linux-musl/debian/*
+      - uses: actions/upload-artifact@v2
+        with:
+          name: miner
+          path: ./target/debian/*
 #      - name: Upload binaries to release
 #        uses: svenstaro/upload-release-action@v1-release
 #        with:
