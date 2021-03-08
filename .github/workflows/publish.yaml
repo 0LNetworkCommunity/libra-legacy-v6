@@ -16,8 +16,13 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
-      - name: Deb Build
-         run: cargo deb -p miner
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo deb -p miner
+#      - uses: actions-rs/cargo@v1
+#      - name: Deb Build
+#         run: cargo deb -p miner
 #      - name: Upload Deb Artifact
 #        uses: actions/upload-artifact@v2
 #        with:
