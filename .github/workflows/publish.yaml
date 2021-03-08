@@ -7,6 +7,9 @@ on:
      branch:
        - cargo-deb
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   publish:
     name: Publish for Ubuntu
@@ -14,10 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Deb Build
-        #uses: ebbflow-io/cargo-deb-armv7-debian@1.47.0-1
-        uses: ebbflow-io/cargo-deb-amd64-ubuntu@1.0
-        with:
-          cmd: cargo deb -p miner --target=x86_64-unknown-linux-musl
+         run: cargo deb -p miner
 #      - name: Upload Deb Artifact
 #        uses: actions/upload-artifact@v2
 #        with:
