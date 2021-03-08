@@ -19,6 +19,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - run: cargo install deb
       - run: cargo deb -p miner
 #      - uses: actions-rs/cargo@v1
 #      - name: Deb Build
