@@ -1,7 +1,18 @@
 //! `bal` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use cli::client_proxy::ClientProxy;
+use cli::{
+    libra_client::LibraClient,
+    AccountData,
+    AccountStatus
+};
+use reqwest::Url;
+use libra_types::{
+    waypoint::Waypoint,
+    account_address::AccountAddress,
+};
+use num_format::{Locale, ToFormattedString};
+
 
 /// `bal` subcommand
 ///
@@ -10,38 +21,30 @@ use cli::client_proxy::ClientProxy;
 /// for a more comprehensive example:
 ///
 /// <https://docs.rs/gumdrop/>
-#[derive(Command, Debug, Options)]
+#[derive(Command, Debug, Default, Options)]
 pub struct BalCmd {
-    // Example `--foobar` (with short `-f` argument)
-    // #[options(short = "f", help = "foobar path"]
-    // foobar: Option<PathBuf>
+    #[options(short = "u", help = "URL for client connection")]
+    url: Option<Url>,
 
-    // Example `--baz` argument with no short version
-    // #[options(no_short, help = "baz path")]
-    // baz: Options<PathBuf>
+    #[options(short = "w", help = "Waypoint to sync from")]
+    way: Option<Waypoint>,
 
-    // "free" arguments don't have an associated flag
-    // #[options(free)]
-    // free_args: Vec<String>,
+    #[options(short = "a", help = "account to query")]
+    account: String,
 }
 
 impl Runnable for BalCmd {
-    /// Start the application.
     fn run(&self) {
-        // let mut client_proxy = ClientProxy::new(
-        //     1,
-        //     &args.url,
-        //     &faucet_account_file,
-        //     &treasury_compliance_account_file,
-        //     &dd_account_file,
-        //     true, // 0L change
-        //     args.faucet_url.clone(),
-        //     mnemonic_file,
-        //     Some(mnemonic_string.unwrap().trim().to_owned()), // 0L change
-        //     waypoint,
-        // )
-        // .expect("Failed to construct client.");
+        let mut client = LibraClient::new(
+            self.url.clone().unwrap_or("http://localhost:808".to_owned().parse().unwrap()),
+            self.way.unwrap()
+        ).unwrap();
 
-        // Your code goes here
+        let account_struct = self.account.clone().parse::<AccountAddress>().unwrap();
+        let (account_view, _) = client.get_account(account_struct, true).unwrap();
+
+        for av in account_view.unwrap().balances.iter() {
+            if av.currency == "GAS" { println!("{} GAS", av.amount.to_formatted_string(&Locale::en)) }
+        }
     }
 }

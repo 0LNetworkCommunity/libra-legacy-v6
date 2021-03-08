@@ -2,7 +2,7 @@
 #![allow(clippy::never_loop)]
 
 use std::{fs::File, path::{PathBuf}};
-use crate::{application::app_config, config::OlCliConfig};
+use crate::{application::app_config};
 use abscissa_core::{Command, Options, Runnable};
 use std::io::Write;
 /// `genesis` subcommand
@@ -20,7 +20,7 @@ pub struct GenesisCmd {
 impl Runnable for GenesisCmd {
     /// Print version message
     fn run(&self) {
-        let miner_configs = app_config().to_owned();
+        let _miner_configs = app_config().to_owned();
         get_files(
             self.path.clone().unwrap_or(PathBuf::from(".")),
             &self.github_org,
