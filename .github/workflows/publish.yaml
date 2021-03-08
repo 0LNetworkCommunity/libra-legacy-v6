@@ -22,7 +22,8 @@ jobs:
         with:
           toolchain: stable
       - run: cargo install cargo-deb
-      - run: cargo build -p miner --exclude libra-fuzzer --exclude cluster-test --exclude libra-fuzz --workspace --release
+      # - run: cargo build --exclude libra-fuzzer --exclude cluster-test --exclude libra-fuzz --workspace --release
+      - run: cd miner & cargo build --release
       - run: cargo deb -p miner --deb-version ${{ github.ref }} --no-build
       - uses: actions/upload-artifact@v2
         with:
