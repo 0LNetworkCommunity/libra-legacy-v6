@@ -7,29 +7,16 @@ on:
 
 jobs:
   publish:
-    name: Publish for ${{ matrix.os }}
+    name: Publish for Ubuntu
     runs-on: ubuntu-18.04
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-18.04
-            artifact_name: miner
-            asset_name: miner.deb
-
     steps:
-    - uses: hecrj/setup-rust-action@v1
-      with:
-        rust-version: stable
-        components: 
-          - rustfmt
-          - deb
-    - uses: actions/checkout@v1
-    - name: Build
-      run: cargo deb -p miner
-    - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@v1-release
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/release/${{ matrix.artifact_name }}
-        asset_name: ${{ matrix.asset_name }}
-        tag: ${{ github.ref }}
+      - uses: actions/checkout@master
+      - name: Deb Build
+        uses: ebbflow-io/cargo-deb-armv7-debian@1.47.0-1
+#      - name: Upload binaries to release
+#        uses: svenstaro/upload-release-action@v1-release
+#        with:
+#          repo_token: ${{ secrets.GITHUB_TOKEN }}
+#          file: target/release/${{ matrix.artifact_name }}
+#          asset_name: ${{ matrix.asset_name }}
+#          tag: ${{ github.ref }}
