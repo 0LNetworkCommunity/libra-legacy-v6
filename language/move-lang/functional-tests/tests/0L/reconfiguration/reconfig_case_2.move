@@ -1,4 +1,4 @@
-// Testing if EVE a CASE 3 Validator gets dropped.
+// Testing if FRANK a CASE 2 Validator gets dropped.
 
 // ALICE is CASE 1
 //! account: alice, 1000000, 0, validator
@@ -8,7 +8,7 @@
 //! account: carol, 1000000, 0, validator
 // DAVE is CASE 1
 //! account: dave, 1000000, 0, validator
-// EVE is CASE 3
+// EVE is CASE 1
 //! account: eve, 1000000, 0, validator
 // FRANK is CASE 2
 //! account: frank, 1000000, 0, validator
@@ -27,7 +27,7 @@ script {
         // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::get_count_in_epoch({{alice}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{alice}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -83,7 +83,7 @@ script {
         // Miner is the only one that can update their mining stats. Hence this first transaction.
 
         MinerState::test_helper_mock_mining(sender, 5);
-        assert(MinerState::get_count_in_epoch({{eve}}) == 5, 7357300101011000);
+        assert(MinerState::test_helper_get_count({{eve}}) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -100,8 +100,7 @@ script {
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
-        // Skip Eve.
-        // Vector::push_back<address>(&mut voters, {{eve}});
+        Vector::push_back<address>(&mut voters, {{eve}});
         Vector::push_back<address>(&mut voters, {{frank}});
 
         let i = 1;
@@ -140,8 +139,8 @@ script {
         assert(LibraConfig::get_current_epoch() == 2, 7357180107);
         print(&LibraSystem::validator_set_size());
         // Tests on initial size of validators 
-        assert(LibraSystem::validator_set_size() == 4, 7357180207);
-        assert(LibraSystem::is_validator({{eve}}) == false, 7357180307);
+        assert(LibraSystem::validator_set_size() == 5, 7357180207);
+        assert(LibraSystem::is_validator({{frank}}) == false, 7357180307);
     }
 }
 //check: EXECUTED

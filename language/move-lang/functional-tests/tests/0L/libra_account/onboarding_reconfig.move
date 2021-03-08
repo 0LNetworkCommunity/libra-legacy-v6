@@ -89,6 +89,8 @@ script {
 }
 // check: EXECUTED
 
+// Epoch 2 began
+// The new node is in validatorUniverse but not in validator set
 
 //! new-transaction
 //! sender: libraroot
@@ -98,13 +100,74 @@ script {
     use 0x1::Vector;
     fun main(vm: &signer) {
         // Tests on initial size of validators 
-        // assert(LibraSystem::validator_set_size() == 4, 7357000180101);
+        assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
-
-        // Is not yet validator until sends a "join" transaction
-        assert(!LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180104);
+        assert(!LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(LibraSystem::validator_set_size() == len, 7357000180104);
+        assert(LibraSystem::validator_set_size() == (len-1), 7357000180104);
+      }
+}
+// check: EXECUTED
+
+// The new node starts mining and submiting proofs in the epoch 2
+
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::LibraSystem;
+    use 0x1::Reconfigure;
+    use 0x1::Vector;
+    use 0x1::MinerState;
+    use 0x1::Stats;
+  
+    fun main(vm: &signer) {
+        // Tests on initial size of validators 
+        assert(LibraSystem::validator_set_size() == 4, 7357000180101);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
+        assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
+        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 7357000180103);
+
+        // Mock everyone being a CASE 1
+        let voters = Vector::empty<address>();
+        Vector::push_back<address>(&mut voters, {{alice}});
+        Vector::push_back<address>(&mut voters, {{bob}});
+        Vector::push_back<address>(&mut voters, {{carol}});
+        Vector::push_back<address>(&mut voters, {{dave}});
+        
+
+        MinerState::test_helper_mock_mining_vm(vm, {{alice}}, 20);
+        MinerState::test_helper_mock_mining_vm(vm, {{bob}}, 20);
+        MinerState::test_helper_mock_mining_vm(vm, {{carol}}, 20);
+        MinerState::test_helper_mock_mining_vm(vm, {{dave}}, 20);
+        MinerState::test_helper_mock_mining_vm(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
+        let i = 1;
+        while (i < 16) {
+            // Mock the validator doing work for 15 blocks, and stats being updated.
+            Stats::process_set_votes(vm, &voters);
+            i = i + 1;
+        };
+
+        Reconfigure::reconfigure(vm, 15); // reconfigure at height 15
+    }
+}
+// check: EXECUTED
+
+// Epoch 3 began
+// The new node is in validatorUniverse and also in validator set
+
+//! new-transaction
+//! sender: libraroot
+script {
+    use 0x1::LibraSystem;
+    use 0x1::ValidatorUniverse;
+    use 0x1::Vector;
+    fun main(vm: &signer) {
+        // Tests on initial size of validators 
+        assert(LibraSystem::validator_set_size() == 5, 7357000200101);
+        assert(LibraSystem::is_validator({{alice}}) == true, 7357000200102);
+        assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200103);
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
+        assert(LibraSystem::validator_set_size() == len, 7357000200104);
       }
 }
 // check: EXECUTED

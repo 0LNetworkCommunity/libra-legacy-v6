@@ -257,17 +257,26 @@ endif
 
 
 #### HELPERS ####
-get-waypoint:
-	$(eval export WAY = $(shell jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json))
-  
-	echo $$WAY
+set-waypoint:
+	@if test -f ${DATA_PATH}/key_store.json; then \
+		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+	fi
 
-client: get-waypoint
+	@if test ! -f ${DATA_PATH}/key_store.json; then \
+		cat ${DATA_PATH}/restore_waypoint > ${DATA_PATH}/client_waypoint; \
+	fi
+	@echo client_waypoint:
+	@cat ${DATA_PATH}/client_waypoint
+
+client: set-waypoint
 ifeq (${TEST}, y)
-	echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
+	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 else
-	cargo run -p cli -- -u http://localhost:8080 --waypoint $$WAY --chain-id ${CHAIN_ID}
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 endif
+
+test: set-waypoint
+	cargo run -p cli -- -u http://localhost:8080 --waypoint "$$(cat ${DATA_PATH}/client_waypoint)" --chain-id ${CHAIN_ID}
 
 
 stdlib:
@@ -299,6 +308,29 @@ stop:
 debug:
 	make smoke-onboard <<< $$'${MNEM}'
  
+
+##### DEVNET TESTS #####
+# Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
+
+devnet: stop clear fix devnet-keys devnet-yaml start
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+
+devnet-keys: 
+	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+
+devnet-yaml:
+	cargo run -p miner -- genesis
+
+devnet-onboard: clear fix
+	#starts config for a new miner "eve", uses the devnet github repo for ceremony
+	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+	cargo r -p miner -- genesis
+
+devnet-previous: stop clear 
+# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
+	V=previous make fix devnet-keys devnet-yaml start
+
 
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
@@ -355,3 +387,5 @@ devnet-pull:
 # must be on a branch
 	git fetch && git checkout ${V} -f && git pull
 
+devnet-fn:
+	cargo run -p miner -- fn-wizard --path ~/.0L/

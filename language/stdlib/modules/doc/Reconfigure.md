@@ -73,7 +73,7 @@
 
         <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_count">FullnodeState::inc_payment_count</a>(vm, addr, count);
         <a href="FullnodeState.md#0x1_FullnodeState_inc_payment_value">FullnodeState::inc_payment_value</a>(vm, addr, value);
-        <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr, count);
+        <a href="FullnodeState.md#0x1_FullnodeState_reconfig">FullnodeState::reconfig</a>(vm, addr);
 
         k = k + 1;
     };
@@ -108,10 +108,13 @@
     <b>let</b> jailed_set = <a href="LibraSystem.md#0x1_LibraSystem_get_jailed_set">LibraSystem::get_jailed_set</a>(vm, height_start, height_now);
 
     <b>let</b> i = 0;
-    <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&jailed_set)) {
-        // TODO: Set Jailedbit <b>to</b> <b>true</b>
-        <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&jailed_set, i);
-        <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_validator_vm">ValidatorUniverse::remove_validator_vm</a>(vm, addr);
+    <b>while</b> (i &lt; <a href="Vector.md#0x1_Vector_length">Vector::length</a>(&top_accounts)) {
+        <b>let</b> addr = *<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
+        <b>let</b> mined_last_epoch = <a href="MinerState.md#0x1_MinerState_node_above_thresh">MinerState::node_above_thresh</a>(vm, addr);
+        // TODO: temporary until jail-refactor merge.
+        <b>if</b> ((!<a href="Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr)) && mined_last_epoch) {
+            <a href="Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
+        };
         i = i+ 1;
     };
 

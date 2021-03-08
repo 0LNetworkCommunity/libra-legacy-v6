@@ -53,12 +53,10 @@ module Reconfigure {
             } else {
                 value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
             };
-            
 
-            // TODO: Move inc_payment_count to reconfig
             FullnodeState::inc_payment_count(vm, addr, count);
             FullnodeState::inc_payment_value(vm, addr, value);
-            FullnodeState::reconfig(vm, addr, count);
+            FullnodeState::reconfig(vm, addr);
 
             k = k + 1;
         };
@@ -93,10 +91,13 @@ module Reconfigure {
         let jailed_set = LibraSystem::get_jailed_set(vm, height_start, height_now);
 
         let i = 0;
-        while (i < Vector::length(&jailed_set)) {
-            // TODO: Set Jailedbit to true
-            let addr = *Vector::borrow(&jailed_set, i);
-            ValidatorUniverse::remove_validator_vm(vm, addr);
+        while (i < Vector::length(&top_accounts)) {
+            let addr = *Vector::borrow(&top_accounts, i);
+            let mined_last_epoch = MinerState::node_above_thresh(vm, addr);
+            // TODO: temporary until jail-refactor merge.
+            if ((!Vector::contains(&jailed_set, &addr)) && mined_last_epoch) {
+                Vector::push_back(&mut proposed_set, addr);
+            };
             i = i+ 1;
         };
 

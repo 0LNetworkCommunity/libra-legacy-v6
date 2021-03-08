@@ -97,7 +97,9 @@ fn main() {
         // if not set assume prod
         _ => rpassword::read_password_from_tty(Some("\u{1F511}"))
     };
-    if mnemonic_string.is_ok() { entered_mnem = true; }
+    if mnemonic_string.is_ok() { 
+        entered_mnem = true;
+    }
 
 
     let mut logger = ::libra_logger::Logger::new();
@@ -140,11 +142,7 @@ fn main() {
         true, // 0L change
         args.faucet_url.clone(),
         mnemonic_file,
-        Some(mnemonic_string.unwrap()), // 0L change
-        waypoint,
-    )
     .expect("Failed to construct client.");
-    
     // Test connection to validator
     let block_metadata = client_proxy
         .test_validator_connection()

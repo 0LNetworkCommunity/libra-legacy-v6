@@ -52,7 +52,7 @@ script {
     use 0x1::FullnodeState;
     // This is the the epoch boundary.
     fun main(vm: &signer) {
-                // This is not an onboarding case, steady state.
+        // This is not an onboarding case, steady state.
         FullnodeState::test_set_fullnode_fixtures(vm, {{alice}}, 0, 0, 0, 200, 200, 1000000);
 
         let voters = Vector::empty<address>();

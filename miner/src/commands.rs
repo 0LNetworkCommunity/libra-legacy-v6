@@ -17,10 +17,11 @@ mod onboard_cmd;
 mod swarm_test_cmd;
 mod zero_cmd;
 mod ceremony_cmd;
-mod wizard_user_cmd;
 mod manifest_cmd;
 mod init_cmd;
+mod wizard_user_cmd;
 mod wizard_val_cmd;
+mod wizard_fn_cmd;
 mod genesis_cmd;
 
 use self::{
@@ -34,7 +35,9 @@ use self::{
     wizard_user_cmd::UserWizardCmd,
     init_cmd::InitCmd,
     wizard_val_cmd::ValWizardCmd,
+    wizard_fn_cmd::FnWizardCmd,
     genesis_cmd::GenesisCmd,
+    manifest_cmd::ManifestCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -94,9 +97,17 @@ pub enum MinerCmd {
     #[options(help = "run all steps for validator onboarding")]
     ValWizard(ValWizardCmd),
 
+    /// The `fn_wizard` subcommand
+    #[options(help = "run all steps for fullnode config")]
+    FnWizard(FnWizardCmd),
+    
     /// The `genesis` subcommand
     #[options(help = "build a genesis.blob")]
     Genesis(GenesisCmd),
+
+    /// The `genesis` subcommand
+    #[options(help = "build a genesis.blob")]
+    Account(ManifestCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

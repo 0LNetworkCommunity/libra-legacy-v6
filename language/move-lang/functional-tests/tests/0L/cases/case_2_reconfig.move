@@ -61,6 +61,8 @@ script {
         Vector::push_back<address>(&mut voters, {{dave}});
         Vector::push_back<address>(&mut voters, {{eve}});
 
+        /// NOTE: BOB DOES NOT MINE
+
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
         while (i < 16) {
@@ -68,6 +70,7 @@ script {
             Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
+
     }
 }
 
@@ -97,14 +100,12 @@ script {
 //! new-transaction
 //! sender: libraroot
 script {
-    
     use 0x1::LibraSystem;
     use 0x1::NodeWeight;
     use 0x1::GAS::GAS;
     use 0x1::LibraAccount;
     use 0x1::Debug::print;
 
-    // use 0x1::ValidatorUniverse;
     fun main(_account: &signer) {
         // We are in a new epoch.
 
