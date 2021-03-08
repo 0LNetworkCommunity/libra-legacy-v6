@@ -15,6 +15,8 @@ mod version;
 mod genesis_cmd;
 mod bal_cmd;
 mod resource_cmd;
+mod height_cmd;
+mod compare_cmd;
 
 use self::{
     start::StartCmd,
@@ -22,8 +24,9 @@ use self::{
     genesis_cmd::GenesisCmd,
     bal_cmd::BalCmd,
     resource_cmd::ResourceCmd,
+    height_cmd::HeightCmd,
+    compare_cmd::CompareCmd,
 };
-// use miner::commands::version::VersionCmd as NewVersionCmd;
 
 use crate::config::OlCliConfig;
 use abscissa_core::{
@@ -59,6 +62,14 @@ pub enum OlCliCmd {
     /// The `resource` subcommand
     #[options(help = "get account resources")]
     Resource(ResourceCmd),
+
+    /// The `height` subcommand
+    #[options(help = "get blockchain height")]
+    Height(HeightCmd),
+
+    /// The `compare` subcommand
+    #[options(help = "compare sync states between two nodes")]
+    Compare(CompareCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

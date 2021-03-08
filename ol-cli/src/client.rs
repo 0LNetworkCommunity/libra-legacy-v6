@@ -1,40 +1,10 @@
 //! `bal` subcommand
 
-
-
-// use abscissa_core::{Command, Runnable};
 use cli::libra_client::LibraClient;
 use reqwest::Url;
 use libra_types::{waypoint::Waypoint};
-
-
-
 use anyhow::Error;
-// use crate::{
-//     commands::{is_address, is_authentication_key},
-//     libra_client::LibraClient,
-//     // AccountData, AccountStatus,
-// };
 use anyhow::{Result};
-// use compiled_stdlib::StdLibOptions;
-// use compiler::Compiler;
-// use libra_crypto::{
-//     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
-//     test_utils::KeyPair,
-// };
-// use libra_json_rpc_client::views::{AccountView, EventView, MetadataView, TransactionView, VMStatusView, MinerStateResourceView, OracleResourceView};
-// use libra_logger::prelude::*;
-// use libra_temppath::TempPath;
-
-// use libra_wallet::{Mnemonic, WalletLibrary, io_utils};
-// use num_traits::{
-//     // cast::{FromPrimitive, ToPrimitive},
-//     // identities::Zero,
-// };
-// use reqwest::Url;
-// use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
-// use rust_decimal::Decimal;
-
 
 /// returns a LibraClient instance.
 // TODO: Use app config file for params

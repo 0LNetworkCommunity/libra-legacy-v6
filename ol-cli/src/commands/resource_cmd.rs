@@ -32,6 +32,6 @@ impl Runnable for ResourceCmd {
         let account = self.account.clone().parse::<AccountAddress>().unwrap();
         let resources = get_annotate_account_blob(client, account);
 
-        println!("{:?}", resources.unwrap().0);
+        println!("{:#?}", resources.unwrap().0);
     }
 }
