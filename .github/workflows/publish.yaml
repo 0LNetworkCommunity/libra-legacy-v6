@@ -16,12 +16,13 @@ jobs:
       - name: Deb Build
         #uses: ebbflow-io/cargo-deb-armv7-debian@1.47.0-1
         uses: ebbflow-io/cargo-deb-amd64-ubuntu@1.0
-      - run: cargo deb -p miner
-      - name: Upload Deb Artifact
-        uses: actions/upload-artifact@v2
         with:
-          name: amd64deb
-          path: ./target/x86_64-unknown-linux-musl/debian/*
+          - cmd: cargo deb -p miner #--target=x86_64-unknown-linux-musl
+#      - name: Upload Deb Artifact
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: amd64deb
+#          path: ./target/x86_64-unknown-linux-musl/debian/*
 #      - name: Upload binaries to release
 #        uses: svenstaro/upload-release-action@v1-release
 #        with:
