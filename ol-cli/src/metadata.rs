@@ -4,16 +4,11 @@ use cli::libra_client::LibraClient;
 use reqwest::Url;
 use anyhow::Error;
 use anyhow::{Result};
-
 use libra_json_rpc_client::views::MetadataView;
-use chrono::{
-    prelude::{Utc},
-    DateTime,
+use crate::{
+    prelude::app_config,
+    client::make_client,
 };
-use std::{time::{Duration, UNIX_EPOCH}};
-
-use crate::prelude::app_config;
-use crate::client::make_client;
 
 /// Get chain Metadata
 #[derive(Debug)]

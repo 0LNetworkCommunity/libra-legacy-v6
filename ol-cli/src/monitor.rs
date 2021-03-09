@@ -30,6 +30,7 @@ impl Monitor {
         sync  
     }
 
+    /// check if the node has ever synced
     pub fn has_ever_synced() -> bool {
         Monitor::read_db(SYNC_KEY) == b"true"
     }
@@ -37,7 +38,7 @@ impl Monitor {
     /// Persist Monitor state
     pub fn write_db(key: &str, value: &str) {
         let tree = sled::open("/tmp/welcome-to-sled").expect("open");
-        tree.insert(key.as_bytes(), value);
+        tree.insert(key.as_bytes(), value).unwrap();
     }
 
     /// Read Monitor state
@@ -58,17 +59,17 @@ pub fn mon() {
 
         // TODO: make keep cursor position
         let sync =  Monitor::check_sync();
-        stdout.queue(cursor::SavePosition);
+        stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
                 "Test: {}, Is synced: {}", 
                 &x,
                 &sync,
             ).as_bytes()
-        );
+        ).unwrap();
 
-        stdout.queue(cursor::RestorePosition);
-        stdout.flush();
+        stdout.queue(cursor::RestorePosition).unwrap();
+        stdout.flush().unwrap();
 
         x = x + 1;
     }
