@@ -24,7 +24,7 @@ jobs:
       - run: cargo install cargo-deb
       # - run: cargo build --exclude libra-fuzzer --exclude cluster-test --exclude libra-fuzz --workspace --release
       # - run: cd miner & cargo build --release
-      - run: cd miner & cargo deb -p miner --deb-version ${{ github.ref }}
+      - run: cargo deb -p miner --deb-version ${{ github.ref }} -- -p miner --release
       - uses: actions/upload-artifact@v2
         with:
           name: miner
