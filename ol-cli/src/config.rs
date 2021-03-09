@@ -5,6 +5,7 @@
 //! for specifying it.
 use std::{fs, io::Write, path::PathBuf};
 use crate::commands::{CONFIG_FILE, home_path};
+use libra_types::waypoint::Waypoint;
 use reqwest::Url;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use rustyline::Editor;
@@ -14,6 +15,9 @@ use rustyline::Editor;
 pub struct OlCliConfig {
     /// Where cli configs will be stored
     pub home_path: PathBuf,
+
+    /// The fallback waypoint
+    pub base_wapoint: Waypoint,
     /// The URL which the CLI connects to by default
     #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
     pub node_url: Url,
@@ -43,6 +47,7 @@ impl Default for OlCliConfig {
     fn default() -> Self {
         Self {
             home_path: home_path(),
+            base_wapoint: "0:0000000000000".parse::<Waypoint>().unwrap(),
             node_url: "https://localhost:8080".to_owned().parse::<Url>().unwrap(),
             upstream_node_url: "https://localhost:8080".to_owned().parse::<Url>().unwrap(),
         }

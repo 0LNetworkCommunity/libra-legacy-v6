@@ -23,3 +23,4 @@ pub mod prelude;
 pub mod account_resource;
 pub mod client;
 pub mod metadata;
+pub mod monitor;

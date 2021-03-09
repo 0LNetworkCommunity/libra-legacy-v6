@@ -17,6 +17,7 @@ mod bal_cmd;
 mod resource_cmd;
 mod height_cmd;
 mod compare_cmd;
+mod monitor_cmd;
 
 use self::{
     start::StartCmd,
@@ -26,6 +27,7 @@ use self::{
     resource_cmd::ResourceCmd,
     height_cmd::HeightCmd,
     compare_cmd::CompareCmd,
+    monitor_cmd::MonitorCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -72,6 +74,10 @@ pub enum OlCliCmd {
     /// The `compare` subcommand
     #[options(help = "compare sync states between two nodes")]
     Compare(CompareCmd),
+
+    /// The `monitor` subcommand
+    #[options(help = "monitor the node and upstream")]
+    Monitor(MonitorCmd),
 }
 
 /// Get home path for all 0L apps
