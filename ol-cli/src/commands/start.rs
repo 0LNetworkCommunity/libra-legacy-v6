@@ -5,6 +5,7 @@
 use crate::prelude::*;
 use crate::config::{OlCliConfig, init_configs};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
+use crate::commands::CONFIG_FILE;
 
 /// `start` subcommand
 ///
@@ -20,11 +21,12 @@ pub struct StartCmd {
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
-        init_configs(None);
         let config = app_config();
         println!("Node URL: {}", &config.node_url);
         println!("Upstream Node URL: {}", &config.upstream_node_url);
-
+        
+        println!("\nEnter new settings to overwrite config file: {}", CONFIG_FILE);
+        init_configs(None);
     }
 }
 
