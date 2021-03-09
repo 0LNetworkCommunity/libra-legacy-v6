@@ -110,11 +110,11 @@ pub fn get_tx_params(
 ) -> Result<TxParams, Error> {
     
     // Get tx_params from toml e.g. ~/.0L/txs.toml, or use Profile::default()
-    let miner_config = crate::prelude::app_config();
-    let mut tx_params= get_tx_params_from_toml(miner_config.clone()).unwrap();
+    let txs_config = crate::prelude::app_config();
+    let mut tx_params= get_tx_params_from_toml(txs_config.clone()).unwrap();
 
     // If the settings are not initialized in txs.toml
-    if miner_config.profile.auth_key == "" { 
+    if txs_config.profile.auth_key == "" { 
         // Get tx_params from local swarm
         tx_params = if swarm_path.clone().is_some() {
             get_tx_params_from_swarm(
@@ -133,13 +133,13 @@ pub fn get_tx_params(
 
     // Override waypoint if swarm is not used
     if swarm_path.is_none() {
-        tx_params.waypoint = match miner_config.get_waypoint() {
+        tx_params.waypoint = match txs_config.get_waypoint() {
             Some(waypoint) => waypoint, // e.g. from ~/.0L/key_store.json
             _ => {
                 if waypoint.is_some() { // from command line
                     waypoint.clone().unwrap().parse::<Waypoint>().unwrap()
                 } else { // from toml or Profile::default()
-                    miner_config.profile.waypoint 
+                    txs_config.profile.waypoint 
                 }
             }
         };
@@ -270,7 +270,7 @@ pub fn wait_for_tx(
         }
 }
 
-/// Evaluate the response of a submitted miner transaction.
+/// Evaluate the response of a submitted txs transaction.
 pub fn eval_tx_status(result: TransactionView) -> bool {
     match result.vm_status == VMStatusView::Executed {
         true => {

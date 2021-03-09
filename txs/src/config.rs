@@ -1,4 +1,4 @@
-//! MinerApp Config
+//! TxsApp Config
 //!
 //! See instructions in `commands.rs` to specify the path to your
 //! application's configuration file and/or command-line options
@@ -14,7 +14,7 @@ use libra_global_constants::NODE_HOME;
 use crate::commands::CONFIG_FILE;
 use std::{io::Write};
 
-/// MinerApp Configuration
+/// TxsApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct AppConfig {
@@ -58,28 +58,28 @@ impl AppConfig {
     ) -> AppConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
-        let mut miner_configs = AppConfig::default();
+        let mut txs_config = AppConfig::default();
 
-        miner_configs.workspace.node_home = if path.is_some() {
+        txs_config.workspace.node_home = if path.is_some() {
             path.unwrap()
         } else {
             dirs::home_dir().unwrap()
         };
 
-        miner_configs.workspace.node_home.push(NODE_HOME);
-        miner_configs.profile.auth_key = authkey.to_string();
-        miner_configs.profile.account = account;
+        txs_config.workspace.node_home.push(NODE_HOME);
+        txs_config.profile.auth_key = authkey.to_string();
+        txs_config.profile.account = account;
 
-        fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
-        let toml = toml::to_string(&miner_configs).unwrap();
-        let home_path = miner_configs.workspace.node_home.clone();
-        let miner_toml_path = home_path.join(CONFIG_FILE);
-        let file = fs::File::create(&miner_toml_path);
+        fs::create_dir_all(&txs_config.workspace.node_home).unwrap();
+        let toml = toml::to_string(&txs_config).unwrap();
+        let home_path = txs_config.workspace.node_home.clone();
+        let txs_toml_path = home_path.join(CONFIG_FILE);
+        let file = fs::File::create(&txs_toml_path);
         file.unwrap().write(&toml.as_bytes())
             .expect("Could not write toml file");
 
-        println!("\nminer app initialized, file saved to: {:?}", &miner_toml_path);
-        miner_configs
+        println!("\ntxs app initialized, file saved to: {:?}", &txs_toml_path);
+        txs_config
     }
 
 }
@@ -101,7 +101,7 @@ impl Default for AppConfig {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
-    /// home directory of the libra node, may be the same as miner.
+    /// home directory of the libra node, may be the same as Txs.
     pub node_home: PathBuf,
 }
 
@@ -113,14 +113,14 @@ impl Default for Workspace {
     }
 }
 
-/// Miner profile to commit this work chain to a particular identity
+/// Txs profile to commit this work chain to a particular identity
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
-    ///The 0L account for the Miner and prospective validator. This is derived from auth_key
+    ///The 0L account for the Txs and prospective validator. This is derived from auth_key
     pub account: AccountAddress,
 
-    ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
+    ///Txs Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
     /// URL for submitting txs to
     pub url: String,

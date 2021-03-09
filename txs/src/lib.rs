@@ -1,4 +1,4 @@
-//! MinerApp
+//! TxsApp
 //!
 //! Application based on the [Abscissa] framework.
 //!

@@ -1,4 +1,4 @@
-//! MinerApp Subcommands
+//! TxsApp Subcommands
 //!
 //! This is where you specify the subcommands of your application.
 //!
@@ -29,10 +29,10 @@ use std::path::PathBuf;
 use dirs;
 use libra_global_constants::NODE_HOME;
 
-/// MinerApp Configuration Filename
+/// TxsApp Configuration Filename
 pub const CONFIG_FILE: &str = "txs.toml";
 
-/// MinerApp Subcommands
+/// TxsApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
 pub enum TxsCmd {
     /// The `help` subcommand
@@ -40,7 +40,7 @@ pub enum TxsCmd {
     Help(Help<Self>),
 
     /// The `init` subcommand
-    #[options(help = "initialize miner configs miner.toml")]
+    #[options(help = "initialize txs configs txs.toml")]
     Init(InitCmd),
 
     /// The `keygen` subcommand

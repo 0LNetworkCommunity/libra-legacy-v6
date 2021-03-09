@@ -1,11 +1,11 @@
-//! Main entry point for MinerApp
+//! Main entry point for TxsApp
 
 #![deny(warnings, missing_docs, trivial_casts, unused_qualifications)]
 #![forbid(unsafe_code)]
 
 use txs::application::APPLICATION;
 
-/// Boot MinerApp
+/// Boot TxsApp
 fn main() {
     abscissa_core::boot(&APPLICATION);
 }
