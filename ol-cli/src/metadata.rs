@@ -44,16 +44,16 @@ impl Metadata {
 
     /// Compare the metadata of a local and a remote node
     pub fn compare(local: Metadata, remote: Metadata) -> u64 {
-        
+        if !(local.meta.version < remote.meta.version) { return 0 };
         let delay = local.meta.version - remote.meta.version;
 
-        fn ledger_info_str(m: &Metadata) -> String { format!(
-                "latest height: {} URL: {:#?} timestamp: {}",
-                m.meta.version,
-                m.url,
-                DateTime::<Utc>::from(UNIX_EPOCH + Duration::from_micros(m.meta.timestamp))
-            )
-        }   
+        // fn ledger_info_str(m: &Metadata) -> String { format!(
+        //         "latest height: {} URL: {:#?} timestamp: {}",
+        //         m.meta.version,
+        //         m.url,
+        //         DateTime::<Utc>::from(UNIX_EPOCH + Duration::from_micros(m.meta.timestamp))
+        //     )
+        // }   
 
         // println!("LOCAL: {:#?}", ledger_info_str(&local));
         // println!("REMOTE: {:#?}", ledger_info_str(&remote));
