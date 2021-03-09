@@ -38,9 +38,9 @@ impl Metadata {
     }
 
     /// Compare the metadata of a local and a remote node
-    pub fn compare(local: Metadata, remote: Metadata) -> u64 {
-        if !(local.meta.version < remote.meta.version) { return 0 };
-        let delay = local.meta.version - remote.meta.version;
+    pub fn compare(local: Metadata, remote: Metadata) -> i64 {
+        // if local.meta.version > remote.meta.version { return 0 };
+        let delay: i64 = local.meta.version as i64 - remote.meta.version as i64;
 
         // fn ledger_info_str(m: &Metadata) -> String { format!(
         //         "latest height: {} URL: {:#?} timestamp: {}",
@@ -57,7 +57,7 @@ impl Metadata {
     }
 
     /// Compare the nodes from toml config.
-    pub fn compare_from_config() -> u64 {
+    pub fn compare_from_config() -> i64 {
         let config = app_config();
         let local_url = config.upstream_node_url.clone();
         let remote_url = config.upstream_node_url.clone();
@@ -79,7 +79,7 @@ impl Metadata {
             ).unwrap()
         ).unwrap();
 
-        Metadata::compare(local, remote)
+        Metadata::compare(local, remote) as i64
     }
     
 }
