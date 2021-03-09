@@ -4780,6 +4780,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "cli",
+ "dirs 2.0.2",
  "gumdrop",
  "libra-global-constants",
  "libra-types",

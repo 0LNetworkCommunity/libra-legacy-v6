@@ -33,6 +33,8 @@ use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
 use std::path::PathBuf;
+use dirs;
+use libra_global_constants::NODE_HOME;
 
 /// OlCli Configuration Filename
 pub const CONFIG_FILE: &str = "ol_cli.toml";
@@ -72,6 +74,15 @@ pub enum OlCliCmd {
     Compare(CompareCmd),
 }
 
+/// Get home path for all 0L apps
+pub fn home_path() -> PathBuf{
+    let mut config_path = dirs::home_dir()
+    .unwrap();
+    config_path.push(NODE_HOME);
+    // config_path.push(CONFIG_FILE);
+    config_path
+}
+
 /// This trait allows you to define how application configuration is loaded.
 impl Configurable<OlCliConfig> for OlCliCmd {
     /// Location of the configuration file
@@ -79,10 +90,11 @@ impl Configurable<OlCliConfig> for OlCliCmd {
         // Check if the config file exists, and if it does not, ignore it.
         // If you'd like for a missing configuration file to be a hard error
         // instead, always return `Some(CONFIG_FILE)` here.
-        let filename = PathBuf::from(CONFIG_FILE);
 
-        if filename.exists() {
-            Some(filename)
+        let mut config_path = home_path();
+        config_path.push(CONFIG_FILE);
+        if config_path.exists() {
+            Some(config_path)
         } else {
             None
         }
