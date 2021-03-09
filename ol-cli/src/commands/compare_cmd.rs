@@ -1,14 +1,14 @@
 //! `bal` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::client::make_client;
+use crate::{
+    client::make_client,
+    application::app_config,
+    metadata::Metadata
+};
 use reqwest::Url;
 use libra_types::{waypoint::Waypoint};
-use chrono::{
-    prelude::{Utc},
-    DateTime,
-};
-use std::{env,time::{Duration, UNIX_EPOCH}};
+use std::{env};
 
 /// `bal` subcommand
 ///
@@ -25,30 +25,55 @@ pub struct CompareCmd {
     #[options(short = "w", help = "Waypoint to sync from")]
     waypoint: Option<Waypoint>,
 
-    #[options(short = "a", help = "account to query")]
-    account: String,
+    // #[options(short = "a", help = "account to query")]
+    // account: String,
 }
 
 impl Runnable for CompareCmd {
     fn run(&self) {
-        let mut client = make_client(self.url.clone(), self.waypoint.clone().unwrap()).unwrap();
-        
-        let block_metadata = client
-        .get_metadata()
-        .unwrap_or_else(|e| {
-            panic!(
-                "Not able to connect to validator at {:#?}. Error: {}",
-                &self.url,
-                e,
-            )
-        });
+        let config = app_config();
+        let local_url = config.upstream_node_url.clone();
+        let remote_url = config.upstream_node_url.clone();
+        let waypoint = self.waypoint.clone().unwrap();
 
-        let ledger_info_str = format!(
-            "latest height: {} timestamp: {}",
-            block_metadata.version,
-            DateTime::<Utc>::from(UNIX_EPOCH + Duration::from_micros(block_metadata.timestamp))
-        );
+        let local = Metadata::new(
+            local_url.clone(),
+            make_client(
+                Some(local_url), 
+                waypoint
+            ).unwrap()
+        ).unwrap();
 
-        println!("{:#?}", ledger_info_str);
+        let remote = Metadata::new(
+            remote_url.clone(),
+            make_client(
+               Some(remote_url), 
+                waypoint
+            ).unwrap()
+        ).unwrap();
+
+        Metadata::compare(local, remote);
+        // for u in urls.iter() {
+        //     Metadata::new(url.unwrap, client);
+        //     meta_vec(meta_vec)
+        //     // let block_metadata = client
+        //     // .get_metadata()
+        //     // .unwrap_or_else(|e| {
+        //     //     panic!(
+        //     //         "Not able to connect to validator at {:#?}. Error: {}",
+        //     //         u,
+        //     //         e,
+        //     //     )
+        //     // });
+
+        //     // let ledger_info_str = format!(
+        //     //     "latest height: {} URL: {:#?} timestamp: {}",
+        //     //     block_metadata.version,
+        //     //     u.as_ref().unwrap(),
+        //     //     DateTime::<Utc>::from(UNIX_EPOCH + Duration::from_micros(block_metadata.timestamp))
+        //     // );
+            
+        //     // println!("{:#?}", ledger_info_str);
+        // }
     }
 }
