@@ -16,16 +16,15 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct StartCmd {
-    /// To whom are we saying hello?
-    #[options(free)]
-    recipient: Vec<String>,
 }
 
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
         let config = app_config();
-        println!("Hello, {}!", &config.hello.recipient);
+        println!("Node URL: {}", &config.node_url);
+        println!("Upstream Node URL: {}", &config.upstream_node_url);
+
     }
 }
 
@@ -35,11 +34,11 @@ impl config::Override<OlCliConfig> for StartCmd {
     // arguments.
     fn override_config(
         &self,
-        mut config: OlCliConfig,
+        config: OlCliConfig,
     ) -> Result<OlCliConfig, FrameworkError> {
-        if !self.recipient.is_empty() {
-            config.hello.recipient = self.recipient.join(" ");
-        }
+        // if !self.node_url.is_empty() {
+        //     config.node_url = "No URL Provided".to_owned();
+        // }
 
         Ok(config)
     }
