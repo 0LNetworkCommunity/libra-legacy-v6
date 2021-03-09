@@ -3,8 +3,7 @@
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use crate::prelude::*;
-
-use crate::config::OlCliConfig;
+use crate::config::{OlCliConfig, init_configs};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 
 /// `start` subcommand
@@ -21,6 +20,7 @@ pub struct StartCmd {
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
+        init_configs(None);
         let config = app_config();
         println!("Node URL: {}", &config.node_url);
         println!("Upstream Node URL: {}", &config.upstream_node_url);

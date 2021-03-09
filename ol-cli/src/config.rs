@@ -4,11 +4,11 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 use std::{fs, io::Write, path::PathBuf};
-use dirs;
 use libra_global_constants::NODE_HOME;
 use crate::commands::CONFIG_FILE;
 use reqwest::Url;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use rustyline::Editor;
 
 /// OlCli Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -53,7 +53,7 @@ impl Default for OlCliConfig {
 
 
 /// Init the cli.toml file with defaults
-pub fn init_miner_configs(path: Option<PathBuf>) -> OlCliConfig {
+pub fn init_configs(path: Option<PathBuf>) -> OlCliConfig {
 
     // TODO: Check if configs exist and warn on overwrite.
     let mut miner_configs = OlCliConfig::default();
@@ -64,21 +64,13 @@ pub fn init_miner_configs(path: Option<PathBuf>) -> OlCliConfig {
         miner_configs.home_path
     };
 
-    // miner_configs.workspace.node_home.push(NODE_HOME);
-    
-    // fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
-    // // Set up github token
-    // let mut rl = Editor::<()>::new();
+    fs::create_dir_all(&miner_configs.home_path).unwrap();
+    // Set up github token
+    let mut rl = Editor::<()>::new();
 
-    // // Get the ip address of node.
-    // let readline = rl.readline("IP address of your node: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
-    // miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
-    
-    // // Get optional statement which goes into genesis block
-    // miner_configs.profile.statement = rl.readline("Enter a (fun) statement to go into your first transaction: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
-
-    // miner_configs.profile.auth_key = authkey.to_string();
-    // miner_configs.profile.account = account;
+    // Get the ip address of node.
+    let readline = rl.readline("IP address of your node: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
+    miner_configs.node_url = format!("http://{}:8080", readline).parse::<Url>().expect("Could not parse IP");
 
     let toml = toml::to_string(&miner_configs).unwrap();
     let home_path = miner_configs.home_path.clone();
