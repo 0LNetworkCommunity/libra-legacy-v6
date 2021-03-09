@@ -49,8 +49,7 @@ impl Monitor {
 }
 
 /// Start the node monitor
-pub fn mon() {
-
+pub fn mon() {    
     let mut stdout = stdout();
 
     let mut x = 0;
