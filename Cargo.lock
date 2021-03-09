@@ -4780,7 +4780,9 @@ dependencies = [
  "anyhow",
  "chrono",
  "cli",
+ "dirs 2.0.2",
  "gumdrop",
+ "libra-global-constants",
  "libra-types",
  "miner",
  "num-format",
@@ -4789,6 +4791,7 @@ dependencies = [
  "resource-viewer",
  "serde",
  "thiserror",
+ "toml",
 ]
 
 [[package]]

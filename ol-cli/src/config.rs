@@ -3,6 +3,10 @@
 //! See instructions in `commands.rs` to specify the path to your
 //! application's configuration file and/or command-line options
 //! for specifying it.
+use std::{fs, io::Write, path::PathBuf};
+use dirs;
+use libra_global_constants::NODE_HOME;
+use crate::commands::CONFIG_FILE;
 use reqwest::Url;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -10,6 +14,8 @@ use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 // #[serde(deny_unknown_fields)]
 pub struct OlCliConfig {
+    /// Where cli configs will be stored
+    pub home_path: PathBuf,
     /// The URL which the CLI connects to by default
     #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
     pub node_url: Url,
@@ -38,8 +44,49 @@ where
 impl Default for OlCliConfig {
     fn default() -> Self {
         Self {
+            home_path: PathBuf::from(NODE_HOME),
             node_url: "https://localhost:8080".to_owned().parse::<Url>().unwrap(),
             upstream_node_url: "https://localhost:8080".to_owned().parse::<Url>().unwrap(),
         }
     }
+}
+
+
+/// Init the cli.toml file with defaults
+pub fn init_miner_configs(path: Option<PathBuf>) -> OlCliConfig {
+
+    // TODO: Check if configs exist and warn on overwrite.
+    let mut miner_configs = OlCliConfig::default();
+
+    miner_configs.home_path = if path.is_some() {
+        path.unwrap()
+    } else {
+        miner_configs.home_path
+    };
+
+    // miner_configs.workspace.node_home.push(NODE_HOME);
+    
+    // fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
+    // // Set up github token
+    // let mut rl = Editor::<()>::new();
+
+    // // Get the ip address of node.
+    // let readline = rl.readline("IP address of your node: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
+    // miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
+    
+    // // Get optional statement which goes into genesis block
+    // miner_configs.profile.statement = rl.readline("Enter a (fun) statement to go into your first transaction: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
+
+    // miner_configs.profile.auth_key = authkey.to_string();
+    // miner_configs.profile.account = account;
+
+    let toml = toml::to_string(&miner_configs).unwrap();
+    let home_path = miner_configs.home_path.clone();
+    let miner_toml_path = home_path.join(CONFIG_FILE);
+    let file = fs::File::create(&miner_toml_path);
+    file.unwrap().write(&toml.as_bytes())
+        .expect("Could not write toml file");
+
+    println!("\nol-cli app initialized, file saved to: {:?}", &miner_toml_path);
+    miner_configs
 }
