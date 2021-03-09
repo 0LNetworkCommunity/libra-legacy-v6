@@ -153,13 +153,13 @@ impl MinerConfig {
     }
 
         /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> MinerConfig {
+    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> MinerConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = MinerConfig::default();
 
         miner_configs.workspace.node_home = if path.is_some() {
-            path.unwrap()
+            path.clone().unwrap()
         } else {
             dirs::home_dir().unwrap()
         };

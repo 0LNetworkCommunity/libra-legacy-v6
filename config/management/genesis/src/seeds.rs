@@ -54,7 +54,6 @@ impl Seeds {
 
         let info = validator_set.payload();
         let mut seed_addr = SeedAddresses::default();
-        // let vec_peers: Vec<NetworkAddress> = Vec::new();
 
         for info in info.iter() {
             let seed_pubkey = info.config().consensus_public_key.clone();
@@ -62,6 +61,8 @@ impl Seeds {
             let x25519 = PublicKey::from_ed25519_public_bytes(&seed_pubkey.to_bytes()).expect("Seed peers could not generate x25519 identitykey from ed25519 key provided");
             let peer_id = PeerId::from_identity_public_key(x25519);
 
+            // use validator address, not the operator consensus key.
+            // let peer_id = info.account_address().to_owned();
             let addr_vec = info.config().fullnode_network_addresses().expect("Get the Fullnode network address");
             seed_addr.insert(peer_id, addr_vec);
         }

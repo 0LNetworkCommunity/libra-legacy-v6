@@ -9,7 +9,7 @@ use super::{genesis_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
-    #[options(help = "path to write account manifest")]
+    #[options(help = "home path for all 0L files")]
     path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
@@ -18,9 +18,11 @@ pub struct ValWizardCmd {
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
     #[options(help = "run keygen before wizard")]
-    keygen: bool,   
+    keygen: bool, 
     #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool, 
+    rebuild_genesis: bool,
+    #[options(help = "skip fetching genesis blob")]
+    skip_fetch_genesis: bool, 
     #[options(help = "skip mining a block zero")]
     skip_mining: bool,   
 }
@@ -41,14 +43,14 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        let miner_config = init_cmd::initialize_miner(authkey, account).unwrap();
+        let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
         status_ok!("\nMiner config OK", "\n...........................\n");
 
         // Initialize Validator Keys
         init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
         status_ok!("\nKey file OK", "\n...........................\n");
 
-        if !self.rebuild_genesis {
+        if !self.skip_fetch_genesis {
             genesis_cmd::get_files(
                 miner_config.workspace.node_home.clone(),
                 &self.github_org,
@@ -58,12 +60,17 @@ impl Runnable for ValWizardCmd {
         }
 
         // Build Genesis and node.yaml file
+        let home_dir = miner_config.workspace.node_home.to_owned();
+        // 0L convention is for the namespace of the operator to be appended by '-oper'
+        let namespace = miner_config.profile.auth_key.clone() + "-oper";
         genesis_cmd::genesis_files(
-            &miner_config,
+            home_dir,
+            Some(namespace),
             &self.chain_id,
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
+            &false,
         );
         status_ok!("\nNode config OK", "\n...........................\n");
 
@@ -74,7 +81,7 @@ impl Runnable for ValWizardCmd {
         }
         
         // Write Manifest
-        manifest_cmd::write_manifest(None, wallet);
+        manifest_cmd::write_manifest(&self.path, wallet);
         status_ok!("\nAccount manifest OK", "\n...........................\n");
 
         status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");
