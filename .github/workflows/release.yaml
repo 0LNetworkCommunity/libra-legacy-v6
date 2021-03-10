@@ -12,7 +12,7 @@ env:
   NODE_ENV: prod
 
 jobs:
-  publish:
+  release:
     name: Publish for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -29,6 +29,7 @@ jobs:
             asset_name: move-macos-amd64
 
     steps:
+      - run: sudo apt install -y cmake clang llvm libgmp-dev pkg-config libssl-dev
       - uses: hecrj/setup-rust-action@v1
         with:
           rust-version: stable
