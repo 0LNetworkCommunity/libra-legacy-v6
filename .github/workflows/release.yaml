@@ -38,4 +38,6 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: miner
-          path: target/release/[miner][libra-node]
+          path: |
+            target/release/miner
+            target/release/*node
