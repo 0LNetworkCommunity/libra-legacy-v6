@@ -1,0 +1,42 @@
+name: Publish
+
+on:
+  push:
+    branch:
+      - cargo-deb
+#    tags:
+#      - '*'
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_ENV: prod
+
+jobs:
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: move
+            asset_name: move-linux-amd64
+          - os: windows-latest
+            artifact_name: move.exe
+            asset_name: move-windows-amd64
+          - os: macos-latest
+            artifact_name: move
+            asset_name: move-macos-amd64
+
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+          components: rustfmt
+      - uses: actions/checkout@v1
+      - name: Build
+        run: cargo build --release -p miner -p libra-node
+      - uses: actions/upload-artifact@v2
+        with:
+          name: miner
+          path: target/release/*
