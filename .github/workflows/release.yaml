@@ -13,7 +13,7 @@ env:
 
 jobs:
   release:
-    name: Publish for ${{ matrix.os }}
+    name: Release for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -21,12 +21,12 @@ jobs:
           - os: ubuntu-latest
             artifact_name: move
             asset_name: move-linux-amd64
-          - os: windows-latest
-            artifact_name: move.exe
-            asset_name: move-windows-amd64
-          - os: macos-latest
-            artifact_name: move
-            asset_name: move-macos-amd64
+#          - os: windows-latest
+#            artifact_name: move.exe
+#            asset_name: move-windows-amd64
+#          - os: macos-latest
+#            artifact_name: move
+#            asset_name: move-macos-amd64
 
     steps:
       - run: sudo apt install -y cmake clang llvm libgmp-dev pkg-config libssl-dev
