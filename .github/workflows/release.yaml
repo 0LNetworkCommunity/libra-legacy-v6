@@ -2,10 +2,8 @@ name: Publish
 
 on:
   push:
-    branch:
-      - cargo-deb
-#    tags:
-#      - '*'
+    tags:
+      - '*'
 
 env:
   CARGO_TERM_COLOR: always
@@ -40,4 +38,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: miner
-          path: target/release/*
+          path: target/release/[miner][libra-node]
