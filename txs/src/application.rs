@@ -1,9 +1,9 @@
 //! TxsApp Abscissa Application
 
-use crate::{commands::TxsCmd, config::AppConfig};
+use crate::{commands::TxsCmd, config::AppConfig, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
-    config, trace, Application, EntryPoint, FrameworkError, StandardPaths,
+    config, trace, Application, FrameworkError, StandardPaths,
 };
 
 /// Application state
