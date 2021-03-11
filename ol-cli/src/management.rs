@@ -36,6 +36,10 @@ env!("CARGO_PKG_VERSION"),
 // let mut headers = Headers::new();
 // headers.set(UserAgent("hyper/0.5.2".to_owned()));
 
+pub fn fast_forward_db() {
+    fetch_backups().unwrap();
+    restore_backup();
+}
 /// Fetch backups
 pub fn fetch_backups() -> Result<(), Error> {
     // get the highest epoch zip file

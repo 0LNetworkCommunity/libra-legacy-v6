@@ -25,4 +25,4 @@ pub mod client;
 pub mod metadata;
 pub mod monitor;
 pub mod management;
-// pub mod server;
+pub mod check;

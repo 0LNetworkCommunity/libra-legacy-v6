@@ -28,6 +28,8 @@ impl Runnable for MonitorCmd {
     /// Start the application.
     fn run(&self) {
         monitor::mon();
+        // monitor::timer();
+
         // Your code goes here
     }
 }

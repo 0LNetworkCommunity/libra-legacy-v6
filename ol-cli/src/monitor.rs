@@ -2,51 +2,12 @@
 
 
 use std::{thread, time::{Duration}};
-use crate::metadata::Metadata;
+use crate::{
+    check::Check,
+};
 use std::io::{Write, stdout};
 use crossterm::{QueueableCommand, cursor};
-use sled::{self, IVec};
-/// Monitor placeholder
-pub struct Monitor {}
-
-const SYNC_KEY: &str = "is_synced";
-
-impl Monitor {
-    /// Checks if node is synced
-    pub fn is_synced() -> bool {
-        Metadata::compare_from_config() < 1000
-    }
-
-    /// Check if node caught up, if so mark as caught up.
-    pub fn check_sync() -> bool {
-        let sync = Monitor::is_synced();
-        // let have_ever_synced = false;
-        // assert never synced
-        if !Monitor::has_ever_synced() && sync {
-            // mark as synced
-            Monitor::write_db(SYNC_KEY, "true");
-
-        }
-        sync  
-    }
-
-    /// check if the node has ever synced
-    pub fn has_ever_synced() -> bool {
-        Monitor::read_db(SYNC_KEY) == b"true"
-    }
-
-    /// Persist Monitor state
-    pub fn write_db(key: &str, value: &str) {
-        let tree = sled::open("/tmp/welcome-to-sled").expect("open");
-        tree.insert(key.as_bytes(), value).unwrap();
-    }
-
-    /// Read Monitor state
-    pub fn read_db(key: &str) -> IVec {
-        let tree = sled::open("/tmp/welcome-to-sled").expect("open");
-        tree.get(key).unwrap().unwrap()
-    }
-}
+use sled::{self};
 
 /// Start the node monitor
 pub fn mon() {    
@@ -57,7 +18,7 @@ pub fn mon() {
         thread::sleep(Duration::from_millis(1000));
 
         // TODO: make keep cursor position
-        let sync =  Monitor::check_sync();
+        let sync =  Check::check_sync();
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
@@ -72,4 +33,15 @@ pub fn mon() {
 
         x = x + 1;
     }
+}
+
+
+// TODO: Implement loop with clockwerk
+use clokwerk::{Scheduler, TimeUnits};
+
+pub fn timer () {
+    let mut scheduler = Scheduler::new();
+    scheduler.every(1.seconds()).run(|| println!("Periodic task"));
+
+    let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
 }
