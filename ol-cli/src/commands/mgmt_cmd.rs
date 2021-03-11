@@ -2,6 +2,8 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::management;
+use crate::management::NodeType;
+
 /// `mgmt` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
@@ -30,6 +32,6 @@ impl Runnable for MgmtCmd {
     fn run(&self) {
         // management::fetch_backups().unwrap();
 
-        management::start_fullnode();
+        management::start_node(NodeType::Validator);
     }
 }

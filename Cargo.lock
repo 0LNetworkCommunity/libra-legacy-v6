@@ -4897,6 +4897,7 @@ dependencies = [
  "resource-viewer",
  "rustyline",
  "serde",
+ "serde_json",
  "sled",
  "thiserror",
  "tokio",

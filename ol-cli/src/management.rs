@@ -1,17 +1,20 @@
 //! `trigger` functions
 
-use serde::Deserialize;
+// use serde::Deserialize;
 use reqwest::{
     Error,
 };
-use sled::{self, IVec};
-
+use sled::{self, Db};
+use serde::{Serialize, Deserialize};
+use std::process::Command;
 
 #[derive(Deserialize, Debug)]
 struct User {
     login: String,
     id: u32,
 }
+
+
 
 #[derive(Deserialize, Debug)]
 struct GithubFile {
@@ -74,28 +77,72 @@ pub fn restore_backup() {}
 /// Write Waypoint
 pub fn write_waypoint() {}
 
+fn get_sled() -> Db {
+    sled::open("/tmp/ol-sled-db-pid").expect("open")
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Process {
+    name: String,
+    pid: Vec<u32>,
+}
+/// Sled test
+pub fn save_pid(name: &str, pid: &u32) {
+
+    let tree = sled::open("/tmp/ol-sled-db-pid").expect("open");
+    let point = Process { name: name.to_owned(), pid: vec![*pid] };
+    // Convert the Process to bytes.
+    let serialized = serde_json::to_vec(&point).unwrap();
+    println!("{:#?}", serialized);
+    tree.insert(b"pids", serialized).unwrap();
+    let pid_saved = tree.get(b"pids").unwrap().unwrap();
+    println!("pid_saved: {:#?}", pid_saved);
+}
+
+/// Kill all the processes that are running
+pub fn kill_zombies(name: &str) {
+    let db = get_sled();
+    let pid_saved = db.get(b"pids").unwrap().unwrap();
+
+    // Get all the processes and sigkill all them.
+    // let process = pid_saved.to_vec();
+    // pid_saved.iter()
+    // .filter(|process| { 
+        
+    // })
+}
+/// What kind of node are we starting
+pub enum NodeType {
+    /// Validator
+    Validator,
+    /// Fullnode
+    Fullnode,
+}
 /// Start Node, as fullnode
-pub fn start_fullnode() {
-    use std::process::Command;
+pub fn start_node(config_type: NodeType) {
+    
+    // Start as validator or fullnode
+    // Get the yaml file
+    const FULLNODE_FILE: &str = "fullnode.node.yaml";
+    const VALIDATOR_FILE: &str = "validator.node.yaml";
+    const BINARY: &str = "libra-node";
+
+    // Stop any processes we may have started and detached from.
+    kill_zombies(BINARY);
 
     let mut child = Command::new("ls")
-                        .arg("/root/.0L/")
+                        .arg(BINARY)
+                        .arg("--config")
+                        .arg("validator.node.yaml")
                         .spawn()
                         .expect("failed to execute child");
 
     let pid = &child.id();
-
-    let tree = sled::open("/tmp/ol-sled-db-pid").expect("open");
-    // let vec_pid = vec![pid];
-    let ivec = IVec::from("value");
-    tree.insert(b"pids", ivec).unwrap();
-
-
     println!("pid: {}", pid);
+    save_pid(BINARY, pid);
 
-
-    println!("{:#?}", &child);
-
+    //TODO: Instead of waiting, detach from, here.
     let ecode = child.wait()
                     .expect("failed to wait on child");
 
@@ -103,11 +150,11 @@ pub fn start_fullnode() {
 
 }
 
-/// Start node, as validator
-pub fn start_validator() {}
 
 /// Stop node, as validator
-pub fn stop_node() {}
+pub fn stop_node() {
+    kill_zombies("libra-node");
+}
 
 /// Start Miner
 pub fn start_miner() {}
