@@ -24,5 +24,5 @@ pub mod account_resource;
 pub mod client;
 pub mod metadata;
 pub mod monitor;
-pub mod node_management;
+pub mod management;
 // pub mod server;
