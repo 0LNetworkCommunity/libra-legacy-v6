@@ -2,26 +2,19 @@
 
 #![allow(clippy::never_loop)]
 
-use abscissa_core::{Command, Options, Runnable, status_err};
+use abscissa_core::{Command, Options, Runnable};
 use crate::{
-    prelude::app_config, 
     submit_tx::{submit_tx, get_tx_params, eval_tx_status}
 };
 use std::path::PathBuf;
 use std::fs;
-use libra_types::{transaction::{Script}, waypoint::Waypoint};
+use libra_types::{transaction::{Script}};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct CreateAccountCmd {
     #[options(help = "path of account.json")]
     account_json_path: PathBuf,
-    #[options(help = "url to send txs")]
-    url: Option<String>,
-    #[options(help = "waypoint to connect to")]
-    waypoint: Option<String>,
-    #[options(help = "temp swarm path, using transaction params from swarm")]
-    swarm_path: Option<PathBuf>,
 }
 
 pub fn create_user_account_script(
@@ -54,9 +47,7 @@ impl Runnable for CreateAccountCmd {
 
     fn run(&self) {
         let account_json = self.account_json_path.to_str().unwrap();
-        let tx_params = get_tx_params(
-            &self.url, &self.waypoint, &self.swarm_path
-        ).unwrap();
+        let tx_params = get_tx_params().unwrap();
 
         match submit_tx(
             &tx_params, 

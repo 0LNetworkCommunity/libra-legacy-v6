@@ -15,12 +15,12 @@ use libra_config::config::NodeConfig;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_genesis_tool::keyscheme::KeyScheme;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
-use crate::config::AppConfig;
+use crate::{config::AppConfig, commands, entrypoint::EntryPoint};
 
 use std::{fs, io::{stdout, Write},path::PathBuf, thread, time};
 use anyhow::Error;
 use reqwest::Url;
-use abscissa_core::{status_warn, status_ok, status_err};
+use abscissa_core::{Command, status_warn, status_ok, status_err};
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -103,12 +103,12 @@ pub fn submit_tx(
 }
 
 /// Todo
-pub fn get_tx_params(
-    url: &Option<String>,
-    waypoint: &Option<String>,
-    swarm_path: &Option<PathBuf>
-) -> Result<TxParams, Error> {
-    
+pub fn get_tx_params() -> Result<TxParams, Error> {
+
+    type EntryPointTxsCmd = EntryPoint<commands::TxsCmd>;
+    let EntryPointTxsCmd { 
+        url, waypoint, swarm_path, .. } = Command::from_env_args();
+
     // Get tx_params from toml e.g. ~/.0L/txs.toml, or use Profile::default()
     let txs_config = crate::prelude::app_config();
     let mut tx_params= get_tx_params_from_toml(txs_config.clone()).unwrap();

@@ -32,6 +32,20 @@ where
     /// starting at the first free argument.
     #[options(command)]
     pub command: Option<Cmd>,
+
+    /// --- Customizing EntryPoint --- ///
+
+    /// Swarm path - get tx params from swarm
+    #[options(help = "swarm path - get tx params from swarm")]
+    pub swarm_path: Option<PathBuf>,
+
+    /// URL to send tx
+    #[options(help = "URL to send tx")]    
+    pub url: Option<String>,
+
+    /// Waypoint to connect to
+    #[options(help = "waypoint to connect to")]
+    pub waypoint: Option<String>,
 }
 
 impl<Cmd> EntryPoint<Cmd>
