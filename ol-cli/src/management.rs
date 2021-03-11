@@ -94,10 +94,10 @@ pub fn save_pid(name: &str, pid: &u32) {
     let point = Process { name: name.to_owned(), pid: vec![*pid] };
     // Convert the Process to bytes.
     let serialized = serde_json::to_vec(&point).unwrap();
-    println!("{:#?}", serialized);
+    // println!("{:#?}", serialized);
     tree.insert(b"pids", serialized).unwrap();
     let pid_saved = tree.get(b"pids").unwrap().unwrap();
-    println!("pid_saved: {:#?}", pid_saved);
+    // println!("pid_saved: {:#?}", pid_saved);
 }
 
 /// Kill all the processes that are running
@@ -105,7 +105,7 @@ pub fn kill_zombies(name: &str) {
     let db = get_sled();
     let pid_saved = db.get(b"pids").unwrap().unwrap();
 
-    // Get all the processes and sigkill all them.
+    // TODO: Get all the processes from sled and sigkill all them.
     // let process = pid_saved.to_vec();
     // pid_saved.iter()
     // .filter(|process| { 
@@ -121,20 +121,24 @@ pub enum NodeType {
 }
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) {
-    
+    const BINARY: &str = "libra-node";
+
+    // TODO: Get node home from configs:
+    let node_home = "/root/.0L/";
     // Start as validator or fullnode
     // Get the yaml file
-    const FULLNODE_FILE: &str = "fullnode.node.yaml";
-    const VALIDATOR_FILE: &str = "validator.node.yaml";
-    const BINARY: &str = "libra-node";
+    let config_file_name = match config_type {
+        NodeType::Validator => {format!("{}fullnode.node.yaml", node_home)}
+        NodeType::Fullnode => {format!("{}validator.node.yaml", node_home)}
+    };
 
     // Stop any processes we may have started and detached from.
     kill_zombies(BINARY);
 
-    let mut child = Command::new("ls")
-                        .arg(BINARY)
+    let mut child = Command::new(BINARY)
+                        // .arg(BINARY)
                         .arg("--config")
-                        .arg("validator.node.yaml")
+                        .arg(config_file_name)
                         .spawn()
                         .expect("failed to execute child");
 
