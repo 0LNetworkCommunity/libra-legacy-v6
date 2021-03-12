@@ -11,14 +11,12 @@
 //! application's configuration file.
 
 mod init_cmd;
-mod keygen_cmd;
 mod create_account_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
 
 use self::{
     init_cmd::InitCmd,
-    keygen_cmd::KeygenCmd,
     create_account_cmd::CreateAccountCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
@@ -52,10 +50,6 @@ pub enum TxsCmd {
     /// The `init` subcommand
     #[options(help = "initialize txs configs txs.toml")]
     Init(InitCmd),
-
-    /// The `keygen` subcommand
-    #[options(help = "generate keys")]
-    Keygen(KeygenCmd),
 
     /// The `version` subcommand
     #[options(help = "display version information")]
