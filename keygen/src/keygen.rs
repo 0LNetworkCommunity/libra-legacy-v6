@@ -30,45 +30,51 @@ pub fn keygen() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
       
 
         status_info!(&mnemonic_string.as_str(), "\n");
-        println!("WRITE THIS DOWN NOW. This is the last time you will see this mnemonic. It is not saved anywhere. Nobody can help you if you lose it.\n\n");
+        println!("WRITE THIS DOWN NOW. This is the last time you will see \
+                  this mnemonic. It is not saved anywhere. Nobody can help \
+                  you if you lose it.\n\n");
 
         (auth_key, account, wallet)
 }
 
 /// Get authkey and account from mnemonic
-pub fn get_account_from_mnem(mnemonic_string: String) -> (AuthenticationKey, AccountAddress, WalletLibrary){
-      let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
+pub fn get_account_from_mnem(mnemonic_string: String) 
+  -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+      let mut wallet = WalletLibrary::new_from_mnemonic(
+        Mnemonic::from(&mnemonic_string).unwrap()
+      );
       let (auth_key, _) = wallet.new_address().expect("Could not generate address");
       let account = auth_key.derived_address();
       (auth_key, account, wallet)
 }
 
 /// Prompts user to type mnemonic securely.
-pub fn account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
+pub fn account_from_prompt() 
+  -> (AuthenticationKey, AccountAddress, WalletLibrary) {
     println!("Enter your 0L mnemonic:");
-    let mnemonic_string = rpassword::read_password_from_tty(Some("\u{1F511} "))
-    .unwrap()
-    // .clone()
-    .trim()
-    .to_string();
+    let mnemonic_string = rpassword::read_password_from_tty(
+      Some("\u{1F511} ")
+    ).unwrap().trim().to_string();
     get_account_from_mnem(mnemonic_string)
 }
 
 #[test]
 fn wallet() { 
     use libra_wallet::Mnemonic;
-    // let mut wallet = WalletLibrary::new();
-
     let mut wallet = WalletLibrary::new();
 
-    let (auth_key, child_number) = wallet.new_address().expect("Could not generate address");
+    let (auth_key, child_number) = wallet.new_address().expect(
+      "Could not generate address"
+    );
     let mnemonic_string = wallet.mnemonic(); //wallet
 
     println!("auth_key:\n{:?}", auth_key.to_string());
     println!("child_number:\n{:?}", child_number);
     println!("mnemonic:\n{}", mnemonic_string);
 
-    let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
+    let mut wallet = WalletLibrary::new_from_mnemonic(
+      Mnemonic::from(&mnemonic_string).unwrap()
+    );
 
     // println!("wallet\n:{:?}", wallet);
 
