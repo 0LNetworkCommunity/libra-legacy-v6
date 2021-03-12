@@ -9,6 +9,8 @@ use libra_types::waypoint::Waypoint;
 use reqwest::Url;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use rustyline::Editor;
+use std::str::FromStr;
+
 /// OlCli Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 // #[serde(deny_unknown_fields)]
@@ -47,9 +49,9 @@ impl Default for OlCliConfig {
     fn default() -> Self {
         Self {
             home_path: home_path(),
-            base_wapoint: "0:0000000000000".parse::<Waypoint>().unwrap(),
-            node_url: "https://localhost:8080".to_owned().parse::<Url>().unwrap(),
-            upstream_node_url: "https://localhost:8080".to_owned().parse::<Url>().unwrap(),
+            base_wapoint: Waypoint::from_str("0:0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+            node_url: "http://localhost:63621".to_owned().parse::<Url>().unwrap(),
+            upstream_node_url: "http://localhost:63621".to_owned().parse::<Url>().unwrap(),
         }
     }
 }
