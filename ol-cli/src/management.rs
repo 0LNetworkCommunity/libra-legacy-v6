@@ -32,10 +32,7 @@ env!("CARGO_PKG_NAME"),
 env!("CARGO_PKG_VERSION"),
 );
 
-
-// let mut headers = Headers::new();
-// headers.set(UserAgent("hyper/0.5.2".to_owned()));
-
+/// Restore database from archive
 pub fn fast_forward_db() {
     fetch_backups().unwrap();
     restore_backup();
@@ -101,13 +98,13 @@ pub fn save_pid(name: &str, pid: &u32) {
     // println!("{:#?}", serialized);
     tree.insert(b"pids", serialized).unwrap();
     let pid_saved = tree.get(b"pids").unwrap().unwrap();
-    // println!("pid_saved: {:#?}", pid_saved);
+    println!("pid_saved: {:#?}", pid_saved);
 }
 
 /// Kill all the processes that are running
-pub fn kill_zombies(name: &str) {
+pub fn kill_zombies(_name: &str) {
     let db = get_sled();
-    let pid_saved = db.get(b"pids").unwrap().unwrap();
+    let _pid_saved = db.get(b"pids").unwrap().unwrap();
 
     // TODO: Get all the processes from sled and sigkill all them.
     // let process = pid_saved.to_vec();

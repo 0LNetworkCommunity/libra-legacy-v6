@@ -1,12 +1,7 @@
 //! `check` module
 
-use cli::libra_client::LibraClient;
-use reqwest::Url;
-// use anyhow::Error;
-// use anyhow::{Result};
-use libra_json_rpc_client::views::MetadataView;
 use sled::IVec;
-use crate::{client::*, management, metadata::Metadata};
+use crate::{management, metadata::Metadata};
 
 const CHECK_DB: &str = "/tmp/ol-system-checks";
 const SYNC_KEY: &str = "is_synced";

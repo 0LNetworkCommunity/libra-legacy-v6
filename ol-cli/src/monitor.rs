@@ -7,7 +7,6 @@ use crate::{
 };
 use std::io::{Write, stdout};
 use crossterm::{QueueableCommand, cursor};
-use sled::{self};
 
 /// Start the node monitor
 pub fn mon() {    
@@ -39,9 +38,10 @@ pub fn mon() {
 // TODO: Implement loop with clockwerk
 use clokwerk::{Scheduler, TimeUnits};
 
+/// set a timer for the monitor
 pub fn timer () {
     let mut scheduler = Scheduler::new();
     scheduler.every(1.seconds()).run(|| println!("Periodic task"));
 
-    let thread_handle = scheduler.watch_thread(Duration::from_millis(100));
+    let _thread_handle = scheduler.watch_thread(Duration::from_millis(100));
 }

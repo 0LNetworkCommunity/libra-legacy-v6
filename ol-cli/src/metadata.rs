@@ -2,18 +2,10 @@
 
 use cli::libra_client::LibraClient;
 use reqwest::Url;
-// use anyhow::Error;
-// use anyhow::{Result};
 use libra_json_rpc_client::views::MetadataView;
 use crate::{
-    // prelude::app_config,
     client::*,
 };
-
-// use libra_types::{
-//     waypoint::Waypoint,
-//     ledger_info::LedgerInfoWithSignatures
-// };
 /// Get chain Metadata
 #[derive(Debug)]
 pub struct Metadata {
