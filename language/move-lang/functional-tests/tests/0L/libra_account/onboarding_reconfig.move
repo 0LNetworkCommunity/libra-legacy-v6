@@ -4,9 +4,8 @@
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 
-
 //! new-transaction
-//! sender: alice
+//! sender: bob
 script {
   use 0x1::LibraAccount;
   // use 0x1::GAS::GAS;
@@ -56,9 +55,9 @@ script {
     use 0x1::Vector;
     use 0x1::MinerState;
     use 0x1::Stats;
-  
+
     fun main(vm: &signer) {
-        // Tests on initial size of validators 
+        // Tests on initial size of validators
         assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
@@ -70,7 +69,7 @@ script {
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
-        
+
 
         MinerState::test_helper_mock_mining_vm(vm, {{alice}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{bob}}, 20);
@@ -99,18 +98,18 @@ script {
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
     fun main(vm: &signer) {
-        // Tests on initial size of validators 
+        // Tests on initial size of validators
         assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(!LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(LibraSystem::validator_set_size() == (len-1), 7357000180104);
+        assert(len == 4 , 7357000180104);
       }
 }
 // check: EXECUTED
 
 // The new node starts mining and submiting proofs in the epoch 2
-
+//
 //! new-transaction
 //! sender: libraroot
 script {
@@ -119,9 +118,10 @@ script {
     use 0x1::Vector;
     use 0x1::MinerState;
     use 0x1::Stats;
-  
+    use 0x1::ValidatorUniverse;
+
     fun main(vm: &signer) {
-        // Tests on initial size of validators 
+        // Tests on initial size of validators
         assert(LibraSystem::validator_set_size() == 4, 7357000180101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000180102);
         assert(LibraSystem::is_validator({{bob}}) == true, 7357000180103);
@@ -133,13 +133,22 @@ script {
         Vector::push_back<address>(&mut voters, {{bob}});
         Vector::push_back<address>(&mut voters, {{carol}});
         Vector::push_back<address>(&mut voters, {{dave}});
-        
 
         MinerState::test_helper_mock_mining_vm(vm, {{alice}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{bob}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{carol}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, {{dave}}, 20);
         MinerState::test_helper_mock_mining_vm(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
+
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
+        assert(len == 4 , 7357000180104);
+
+        // Adding eve to validator universe - would be done by self
+        ValidatorUniverse::test_helper_add_self_onboard(vm, 0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
+
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
+        assert(len == 5 , 7357000180104);
+
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
@@ -162,7 +171,7 @@ script {
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
     fun main(vm: &signer) {
-        // Tests on initial size of validators 
+        // Tests on initial size of validators
         assert(LibraSystem::validator_set_size() == 5, 7357000200101);
         assert(LibraSystem::is_validator({{alice}}) == true, 7357000200102);
         assert(LibraSystem::is_validator(0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200103);

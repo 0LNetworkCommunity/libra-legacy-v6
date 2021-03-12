@@ -31,7 +31,6 @@ script {
     }
 }
 //check: EXECUTED
-
 //! new-transaction
 //! sender: eve
 script {
@@ -95,7 +94,7 @@ script {
     fun main(_account: &signer) {
         // We are in a new epoch.
         assert(LibraConfig::get_current_epoch() == 2, 7357180107);
-        // Tests on initial size of validators 
+        // Tests on initial size of validators
         assert(LibraSystem::validator_set_size() == 6, 7357180207);
     }
 }

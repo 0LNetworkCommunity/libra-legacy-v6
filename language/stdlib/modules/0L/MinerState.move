@@ -423,6 +423,10 @@ address 0x1 {
       let state = borrow_global<MinerProofHistory>(miner_addr);
       *&state.verified_tower_height
     }
+      public fun test_helper_get_count(miner_addr: address): u64 acquires MinerProofHistory {
+          assert(Testnet::is_testnet()== true, 130115014011);
+          borrow_global<MinerProofHistory>(miner_addr).count_proofs_in_epoch
+      }
 
     public fun test_helper_get_contiguous(miner_addr: address): u64 acquires MinerProofHistory {
       assert(Testnet::is_testnet()== true, 130115014011);

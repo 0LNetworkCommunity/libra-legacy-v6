@@ -8,10 +8,11 @@
 
 address 0x1 {
   module ValidatorUniverse {
-    use 0x1::Vector;
-    use 0x1::Signer;
     use 0x1::CoreAddresses;
     use 0x1::MinerState;
+    use 0x1::Signer;
+    use 0x1::Testnet;
+    use 0x1::Vector;
 
     // resource for tracking the universe of accounts that have submitted a mined proof correctly, with the epoch number.
     resource struct ValidatorUniverse {
@@ -131,8 +132,15 @@ address 0x1 {
 
     //////// TEST ////////
     public fun exists_jailedbit(addr: address): bool {
+      assert(Testnet::is_testnet()== true, 130115014011);
       exists<JailedBit>(addr)
     }
 
+    public fun test_helper_add_self_onboard(vm: &signer, addr:address) acquires ValidatorUniverse {
+      assert(Testnet::is_testnet()== true, 130115014011);
+      assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 220101015010);
+      let state = borrow_global_mut<ValidatorUniverse>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+      Vector::push_back<address>(&mut state.validators, addr);
+    }
   }
 }
