@@ -17,10 +17,10 @@ use libra_genesis_tool::keyscheme::KeyScheme;
 use cli::{libra_client::LibraClient, AccountData, AccountStatus};
 use crate::{config::AppConfig, commands, entrypoint::EntryPoint};
 
-use std::{fs, io::{stdout, Write},path::PathBuf, thread, time};
+use std::{fs, io::{stdout, Write},path::{Path, PathBuf}, thread, time};
 use anyhow::Error;
 use reqwest::Url;
-use abscissa_core::{Command, status_warn, status_ok, status_err};
+use abscissa_core::{Command, status_warn, status_ok};
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -102,52 +102,41 @@ pub fn submit_tx(
 
 }
 
-/// Todo
+/// Main get tx params logic based on the design in the link:
+/// https://github.com/OLSF/libra/wiki/Txs-App#app-logic
 pub fn get_tx_params() -> Result<TxParams, Error> {
 
     type EntryPointTxsCmd = EntryPoint<commands::TxsCmd>;
     let EntryPointTxsCmd { 
         url, waypoint, swarm_path, .. } = Command::from_env_args();
 
-    // Get tx_params from toml e.g. ~/.0L/txs.toml, or use Profile::default()
+    let mut tx_params: TxParams;
     let txs_config = crate::prelude::app_config();
-    let mut tx_params= get_tx_params_from_toml(txs_config.clone()).unwrap();
 
-    // If the settings are not initialized in txs.toml
-    if txs_config.profile.auth_key == "" { 
-        // Get tx_params from local swarm
-        tx_params = if swarm_path.clone().is_some() {
-            get_tx_params_from_swarm(
-                swarm_path.clone().expect("needs a valid swarm temp dir")
-            ).unwrap()
-        } else { // Get tx_params from command line
-            if url.is_none() | waypoint.is_none() {
-                status_err!("Need to pass url and waypoint");                
-            }                
-            get_tx_params_from_command_line(
-                &url.clone().expect("need to pass a url string http://a.b.c.d"),
-                &waypoint.clone().expect("need to pass a waypoint in command line")
-            ).unwrap()
-        };
+    if swarm_path.is_some() {
+        tx_params = get_tx_params_from_swarm(
+            swarm_path.clone().expect("needs a valid swarm temp dir")
+        ).unwrap();
+    } else {
+        // Get from txs.toml e.g. ~/.0L/txs.toml, or use Profile::default()
+        tx_params = get_tx_params_from_toml(txs_config.clone()).unwrap();        
     }
 
-    // Override waypoint if swarm is not used
-    if swarm_path.is_none() {
-        tx_params.waypoint = match txs_config.get_waypoint() {
-            Some(waypoint) => waypoint, // e.g. from ~/.0L/key_store.json
-            _ => {
-                if waypoint.is_some() { // from command line
-                    waypoint.clone().unwrap().parse::<Waypoint>().unwrap()
-                } else { // from toml or Profile::default()
-                    txs_config.profile.waypoint 
-                }
-            }
-        };
+    // Get/override dynamic waypoint from key_store.json
+    if Path::new(&txs_config.get_key_store_path()).exists() {
+        tx_params.waypoint = txs_config.get_waypoint().unwrap();
+    }
+
+    // Get/override some params from command line
+    if url.is_some() {
+        tx_params.url = Url::parse(&url.unwrap()).unwrap();
+    }
+    if waypoint.is_some() {
+        tx_params.waypoint = waypoint.unwrap().parse().unwrap();
     }
 
     Ok(tx_params)
 }
-
 
 /// Extract params from a local running swarm
 pub fn get_tx_params_from_swarm(
@@ -186,32 +175,6 @@ pub fn get_tx_params_from_swarm(
     Ok(tx_params)
 }
 
-/// Get params from command line
-pub fn get_tx_params_from_command_line(
-    url_str: &str,
-    waypoint_str: &str
-) -> Result<TxParams, Error> {
-    let url =  Url::parse(url_str).unwrap();
-    let waypoint: Waypoint =  waypoint_str.parse().unwrap();
-    let (auth_key, address, wallet) = keygen::account_from_prompt();
-    let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
-    let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
-
-    let tx_params = TxParams {
-        auth_key,
-        address,
-        url,
-        waypoint,
-        keypair,
-        max_gas_unit_for_tx: 1_000_000,
-        coin_price_per_unit: 1, // in micro_gas
-        user_tx_timeout: 5_000,
-    };
-
-    println!("Info: Got tx params from command line");
-    Ok(tx_params)
-}
-
 /// Gets transaction params from the 0L project root.
 pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
     let url =  Url::parse(&config.profile.url).unwrap();
@@ -231,7 +194,8 @@ pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
         user_tx_timeout: config.profile.user_tx_timeout,
     };
 
-    println!("Info: Got tx params from txs.toml");
+    println!("Info: Getting tx params from txs.toml if available, \
+              otherwise using AppConfig::Profile::default()");
     Ok(tx_params)
 }
 

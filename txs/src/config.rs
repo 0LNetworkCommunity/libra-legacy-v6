@@ -5,7 +5,7 @@
 //! for specifying it.
 
 use std::{fs};
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use libra_types::{waypoint::Waypoint};
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use ajson;
@@ -31,9 +31,11 @@ impl AppConfig {
             Ok(file) => {
                 let json: serde_json::Value = serde_json::from_reader(file)
                     .expect("could not parse JSON in key_store.json");
-                let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-                dbg!(&value);
+                let value = ajson::get(
+                    &json.to_string(), "*waypoint.value"
+                ).expect("could not find key: waypoint");
                 let waypoint: Waypoint = value.to_string().parse().unwrap();
+                println!("Info: Got waypoint from key_store.json");
                 Some(waypoint)
             }
             Err(err) => {
@@ -51,11 +53,7 @@ impl AppConfig {
     }
 
     /// Get where node key_store.json stored.
-    pub fn init_app_configs(
-        authkey: AuthenticationKey,
-        account: AccountAddress,
-        path: Option<PathBuf>
-    ) -> AppConfig {
+    pub fn init_app_configs(path: Option<PathBuf>) -> AppConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
         let mut txs_config = AppConfig::default();
@@ -67,8 +65,6 @@ impl AppConfig {
         };
 
         txs_config.workspace.node_home.push(NODE_HOME);
-        txs_config.profile.auth_key = authkey.to_string();
-        txs_config.profile.account = account;
 
         fs::create_dir_all(&txs_config.workspace.node_home).unwrap();
         let toml = toml::to_string(&txs_config).unwrap();
@@ -117,11 +113,6 @@ impl Default for Workspace {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Profile {
-    ///The 0L account for the Txs and prospective validator. This is derived from auth_key
-    pub account: AccountAddress,
-
-    ///Txs Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
-    pub auth_key: String,
     /// URL for submitting txs to
     pub url: String,
     /// Waypoint from which the client will sync
@@ -138,8 +129,6 @@ pub struct Profile {
 impl Default for Profile {
     fn default() -> Self {
         Self {
-            auth_key: "".to_owned(),
-            account: AccountAddress::from_hex_literal("0x0").unwrap(),
             url: "http://localhost:8080".to_owned(),
             waypoint: "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46".parse::<Waypoint>().unwrap(),
             max_gas_unit_for_tx: 1_000_000,

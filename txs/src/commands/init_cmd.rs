@@ -18,7 +18,6 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-        let (authkey, account, _) = keygen::account_from_prompt();
-        AppConfig::init_app_configs(authkey, account, self.path.clone());
+        AppConfig::init_app_configs(self.path.clone());
     }
 }
