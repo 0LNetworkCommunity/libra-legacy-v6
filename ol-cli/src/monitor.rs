@@ -14,17 +14,28 @@ pub fn mon() {
     let mut stdout = stdout();
 
     let mut x = 0;
+    let mut checker = Check::new();
     loop {
         thread::sleep(Duration::from_millis(1000));
 
         // TODO: make keep cursor position
-        let sync =  Check::check_sync();
+        let sync = checker.check_sync();
+        let mining = match checker.miner_is_mining() {
+            true=> "Running",
+            false => "Stopped"
+        };
+        let node_status = match checker.node_is_running() {
+            true=> "Running",
+            false => "Stopped"
+        };
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Is synced: {}", 
+                "Test: {}, Is synced: {}, node: {}, miner: {}",
                 &x,
                 &sync,
+                node_status,
+                mining,
             ).as_bytes()
         ).unwrap();
 
