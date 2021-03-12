@@ -4,7 +4,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::{submit_tx::{
-    submit_tx, get_tx_params_from_swarm, eval_tx_status
+    submit_tx, get_tx_params, eval_tx_status
 }};
 use std::path::PathBuf;
 use std::fs;
@@ -32,11 +32,10 @@ pub fn oracle_tx_script(
 
 impl Runnable for OracleUpgradeCmd {    
 
-    fn run(&self) {
-        let swarm_path = PathBuf::from("./swarm_temp");
-        let tx_params = get_tx_params_from_swarm(swarm_path).unwrap();
-    
+    fn run(&self) {                
+        let tx_params = get_tx_params().unwrap();
         let upgrade_file = self.upgrade_file_path.to_str().unwrap();
+
         match submit_tx(
             &tx_params, 
             oracle_tx_script(upgrade_file)
