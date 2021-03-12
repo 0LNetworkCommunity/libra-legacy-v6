@@ -52,7 +52,7 @@ impl AppConfig {
         home
     }
 
-    /// Get where node key_store.json stored.
+    /// Write app config into txs.toml file
     pub fn init_app_configs(path: Option<PathBuf>) -> AppConfig {
 
         // TODO: Check if configs exist and warn on overwrite.

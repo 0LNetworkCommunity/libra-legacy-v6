@@ -35,6 +35,16 @@ pub const CONFIG_FILE: &str = "txs.toml";
 /// TxsApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
 pub enum TxsCmd {
+    /// The `create-account` subcommand
+    #[options(help = "invoke stdlib script 'create_user_account'")]
+    CreateAccount(CreateAccountCmd),
+
+    /// The `oracle-upgrade` subcommand
+    #[options(help = "invoke stdlib script 'ol_oracle_tx_script'")]
+    OracleUpgrade(OracleUpgradeCmd),     
+
+    /// --- End of STDLIB SCRIPT COMMANDS ---
+
     /// The `help` subcommand
     #[options(help = "get usage information")]
     Help(Help<Self>),
@@ -47,17 +57,9 @@ pub enum TxsCmd {
     #[options(help = "generate keys")]
     Keygen(KeygenCmd),
 
-    /// The `create-account` subcommand
-    #[options(help = "create user account")]
-    CreateAccount(CreateAccountCmd),
-    
-    /// The `oracle-upgrade` subcommand
-    #[options(help = "oracle upgrade")]
-    OracleUpgrade(OracleUpgradeCmd),    
-
     /// The `version` subcommand
     #[options(help = "display version information")]
-    Version(VersionCmd),
+    Version(VersionCmd),   
 }
 
 /// This trait allows you to define how application configuration is loaded.

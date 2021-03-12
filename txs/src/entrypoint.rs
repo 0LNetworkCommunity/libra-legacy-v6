@@ -36,7 +36,7 @@ where
     /// --- Customizing EntryPoint --- ///
 
     /// Swarm path - get tx params from swarm
-    #[options(help = "swarm path - get tx params from swarm")]
+    #[options(help = "swarm path to get tx params from")]
     pub swarm_path: Option<PathBuf>,
 
     /// URL to send tx
