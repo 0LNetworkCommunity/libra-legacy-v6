@@ -122,22 +122,22 @@ pub enum NodeType {
 }
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) {
-    const BINARY: &str = "libra-node";
+    const BINARY: &str = "cargo r -p libra-node -- ";
 
     // TODO: Get node home from configs:
     let node_home = "/root/.0L/";
     // Start as validator or fullnode
     // Get the yaml file
     let config_file_name = match config_type {
-        NodeType::Validator => {format!("{}fullnode.node.yaml", node_home)}
-        NodeType::Fullnode => {format!("{}validator.node.yaml", node_home)}
+        NodeType::Validator => {format!("{}validator.node.yaml", node_home)}
+        NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
     };
 
+    dbg!(&config_file_name);
     // Stop any processes we may have started and detached from.
-    kill_zombies(BINARY);
+    // kill_zombies(BINARY);
 
     let mut child = Command::new(BINARY)
-                        // .arg(BINARY)
                         .arg("--config")
                         .arg(config_file_name)
                         .spawn()

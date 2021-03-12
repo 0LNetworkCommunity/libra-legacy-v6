@@ -32,6 +32,6 @@ impl Runnable for MgmtCmd {
     fn run(&self) {
         // management::fetch_backups().unwrap();
 
-        management::start_node(NodeType::Validator);
+        management::start_node(NodeType::Fullnode);
     }
 }

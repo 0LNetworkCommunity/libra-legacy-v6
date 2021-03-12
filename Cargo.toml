@@ -150,7 +150,7 @@ members = [
     "verifiable_delay/vdf-cli",
     "verifiable_delay/classgroup",
     "miner",
-    "ol-cli"
+    "ol-cli",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should

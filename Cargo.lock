@@ -962,7 +962,7 @@ dependencies = [
  "libra-types",
  "libra-workspace-hack",
  "once_cell",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "stdlib",
  "vm",
 ]
@@ -1629,7 +1629,7 @@ dependencies = [
  "ed25519",
  "rand 0.7.3",
  "serde",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "zeroize",
 ]
 
@@ -1643,7 +1643,7 @@ dependencies = [
  "ed25519",
  "rand 0.7.3",
  "serde",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "zeroize",
 ]
 
@@ -3008,7 +3008,7 @@ dependencies = [
  "serde-name",
  "serde_bytes",
  "serde_json",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "sha3 0.9.1",
  "short-hex-str",
  "static_assertions",
@@ -3889,7 +3889,7 @@ dependencies = [
  "pbkdf2",
  "rand 0.7.3",
  "serde",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "thiserror",
 ]
 
@@ -4461,7 +4461,7 @@ dependencies = [
  "move-core-types",
  "move-vm-types",
  "once_cell",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "vdf",
  "vm",
 ]
@@ -4514,7 +4514,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "serde",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "vm",
 ]
 
@@ -4920,7 +4920,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ab52be62400ca80aa00285d25253d7f7c437b7375c4de678f5405d3afe82ca5"
 
 [[package]]
-name = "ol_cli"
+name = "ol-cli"
 version = "0.1.0"
 dependencies = [
  "abscissa_core",
@@ -5091,7 +5091,7 @@ dependencies = [
  "hmac 0.9.0",
  "rand 0.7.3",
  "rand_core 0.5.1",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "subtle",
 ]
 
@@ -5927,7 +5927,7 @@ dependencies = [
  "rusoto_credential",
  "rustc_version",
  "serde",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "time 0.2.16",
  "tokio",
 ]
@@ -6398,12 +6398,12 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.9.1"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2933378ddfeda7ea26f48c555bdad8bb446bf8a3d17832dc83e380d444cfb8c1"
+checksum = "fa827a14b29ab7f44778d14a88d3cb76e949c45083f7dbfa507d0cb699dc12de"
 dependencies = [
  "block-buffer 0.9.0",
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "cpuid-bool",
  "digest 0.9.0",
  "opaque-debug 0.3.0",
@@ -6729,7 +6729,7 @@ dependencies = [
  "move-lang",
  "move-prover",
  "rayon",
- "sha2 0.9.1",
+ "sha2 0.9.3",
  "transaction-builder-generator",
  "vm",
 ]
