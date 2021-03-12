@@ -4,11 +4,10 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::{
-    submit_tx::{submit_tx, get_tx_params, eval_tx_status}
+    submit_tx::{eval_tx_status, get_tx_params, submit_tx}
 };
-use std::path::PathBuf;
-use std::fs;
 use libra_types::{transaction::{Script}};
+use std::{fs, path::PathBuf};
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -17,9 +16,7 @@ pub struct CreateAccountCmd {
     account_json_path: PathBuf,
 }
 
-pub fn create_user_account_script(
-    account_json_path: &str // e.g. "~/account.json"
-) -> Script {
+pub fn create_user_account_script(account_json_path: &str) -> Script {
     let file = fs::File::open(account_json_path)
         .expect("file should open read only");
     let json: serde_json::Value = serde_json::from_reader(file)
@@ -44,7 +41,6 @@ pub fn create_user_account_script(
 }
 
 impl Runnable for CreateAccountCmd {    
-
     fn run(&self) {
         let account_json = self.account_json_path.to_str().unwrap();
         let tx_params = get_tx_params().unwrap();

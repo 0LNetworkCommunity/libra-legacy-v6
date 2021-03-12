@@ -1,5 +1,17 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
+
+use anyhow::Error;
+use abscissa_core::{Command, status_warn, status_ok};
+use cli::{libra_client::LibraClient, AccountData, AccountStatus};
+use crate::{config::AppConfig, commands, entrypoint::EntryPoint};
+use libra_crypto::{
+    test_utils::KeyPair,
+    ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
+};
+use libra_config::config::NodeConfig;
+use libra_genesis_tool::keyscheme::KeyScheme;
+use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_types::{
     account_address::AccountAddress, waypoint::Waypoint, 
     transaction::helpers::*, chain_id::ChainId
@@ -7,20 +19,8 @@ use libra_types::{
 use libra_types::transaction::{
     Script, TransactionPayload, authenticator::AuthenticationKey
 };
-use libra_crypto::{
-    test_utils::KeyPair,
-    ed25519::{Ed25519PrivateKey, Ed25519PublicKey}
-};
-use libra_config::config::NodeConfig;
-use libra_json_rpc_types::views::{TransactionView, VMStatusView};
-use libra_genesis_tool::keyscheme::KeyScheme;
-use cli::{libra_client::LibraClient, AccountData, AccountStatus};
-use crate::{config::AppConfig, commands, entrypoint::EntryPoint};
-
-use std::{fs, io::{stdout, Write},path::{Path, PathBuf}, thread, time};
-use anyhow::Error;
 use reqwest::Url;
-use abscissa_core::{Command, status_warn, status_ok};
+use std::{fs, io::{stdout, Write}, path::{Path, PathBuf}, thread, time};
 
 /// All the parameters needed for a client transaction.
 pub struct TxParams {
@@ -61,7 +61,7 @@ pub fn submit_tx(
         None => 0,
     };
 
-    // sign the transaction script
+    // Sign the transaction script
     let txn = create_user_txn(
         &tx_params.keypair,
         TransactionPayload::Script(script),
@@ -75,7 +75,7 @@ pub fn submit_tx(
         chain_id,
     )?;
 
-    // get account_data struct
+    // Get account_data struct
     let mut sender_account_data = AccountData {
         address: tx_params.address,
         authentication_key: Some(tx_params.auth_key.to_vec()),
@@ -102,10 +102,9 @@ pub fn submit_tx(
 
 }
 
-/// Main get tx params logic based on the design in the link:
-/// https://github.com/OLSF/libra/wiki/Txs-App#app-logic
+/// Main get tx params logic based on the design in this URL:
+/// https://github.com/OLSF/libra/wiki/Txs-App#txs-logic--usage
 pub fn get_tx_params() -> Result<TxParams, Error> {
-
     type EntryPointTxsCmd = EntryPoint<commands::TxsCmd>;
     let EntryPointTxsCmd { 
         url, waypoint, swarm_path, .. } = Command::from_env_args();

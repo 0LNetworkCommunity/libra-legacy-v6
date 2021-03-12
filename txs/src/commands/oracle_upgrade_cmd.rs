@@ -6,10 +6,8 @@ use abscissa_core::{Command, Options, Runnable};
 use crate::{submit_tx::{
     submit_tx, get_tx_params, eval_tx_status
 }};
-use std::path::PathBuf;
-use std::fs;
-use std::io::prelude::*;
 use libra_types::{transaction::{Script}};
+use std::{fs, io::prelude::*, path::PathBuf};
 
 /// `OracleUpgrade` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -18,9 +16,7 @@ pub struct OracleUpgradeCmd {
     upgrade_file_path: PathBuf,
 }
 
-pub fn oracle_tx_script(
-    upgrade_file_path: &str // e.g. "../libra/fixtures/upgrade_payload/foo_stdlib.mv"
-) -> Script {
+pub fn oracle_tx_script(upgrade_file_path: &str) -> Script {
     let mut file = fs::File::open(upgrade_file_path)
         .expect("file should open read only");
     let mut buffer = Vec::new();
@@ -30,8 +26,7 @@ pub fn oracle_tx_script(
     transaction_builder::encode_ol_oracle_tx_script(id, buffer)
 }
 
-impl Runnable for OracleUpgradeCmd {    
-
+impl Runnable for OracleUpgradeCmd {
     fn run(&self) {                
         let tx_params = get_tx_params().unwrap();
         let upgrade_file = self.upgrade_file_path.to_str().unwrap();

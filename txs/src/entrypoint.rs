@@ -37,6 +37,7 @@ where
 
     /// Swarm path - get tx params from swarm
     #[options(help = "swarm path to get tx params from")]
+        /// TODO: help text for swarm_path is not shown, Abscissa bug?
     pub swarm_path: Option<PathBuf>,
 
     /// URL to send tx

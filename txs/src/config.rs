@@ -4,15 +4,14 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::{fs};
-use libra_types::{waypoint::Waypoint};
-use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use ajson;
+use crate::commands::CONFIG_FILE;
 use dirs;
 use libra_global_constants::NODE_HOME;
-use crate::commands::CONFIG_FILE;
-use std::{io::Write};
+use libra_types::{waypoint::Waypoint};
+use serde::{Deserialize, Serialize};
+use std::{fs, io::Write};
 
 /// TxsApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -120,17 +119,18 @@ pub struct Profile {
     /// Max gas units to pay per transaction
     pub max_gas_unit_for_tx: u64, //1_000_000,
     /// Max coin price per unit of gas
-    pub coin_price_per_unit: u64, //1, // in micro_gas
+    pub coin_price_per_unit: u64, // in micro_gas
     /// Time in milliseconds to timeout
-    pub user_tx_timeout: u64, // 5_000,
+    pub user_tx_timeout: u64,     // 5_000,
 
 }
 
 impl Default for Profile {
     fn default() -> Self {
+        const WAYPOINT: &str = "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46";
         Self {
             url: "http://localhost:8080".to_owned(),
-            waypoint: "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46".parse::<Waypoint>().unwrap(),
+            waypoint: WAYPOINT.parse::<Waypoint>().unwrap(),
             max_gas_unit_for_tx: 1_000_000,
             coin_price_per_unit: 1, // in micro_gas
             user_tx_timeout: 5_000,

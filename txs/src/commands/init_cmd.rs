@@ -2,9 +2,9 @@
 
 #![allow(clippy::never_loop)]
 
-use std::{path::PathBuf};
-use crate::{config::AppConfig};
 use abscissa_core::{Command, Options, Runnable};
+use crate::{config::AppConfig};
+use std::{path::PathBuf};
 
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]

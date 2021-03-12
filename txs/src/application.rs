@@ -1,10 +1,10 @@
 //! TxsApp Abscissa Application
 
-use crate::{commands::TxsCmd, config::AppConfig, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
-    config, trace, Application, FrameworkError, StandardPaths,
+    Application, config, FrameworkError, StandardPaths, trace
 };
+use crate::{commands::TxsCmd, config::AppConfig, entrypoint::EntryPoint};
 
 /// Application state
 pub static APPLICATION: AppCell<TxsApp> = AppCell::new();
