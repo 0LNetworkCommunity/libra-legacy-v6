@@ -6,10 +6,8 @@ use crate::metadata::Metadata;
 use crate::config::OlCliConfig;
 use crate::application::app_config;
 use std::str;
-use rocksdb;
 use rocksdb::DB;
 use serde::{Serialize, Deserialize};
-// use serde_json::json;
 
 /// caching database name, to be appended to node_home
 pub const CHECK_CACHE_PATH: &str = "ol-system-checks";
