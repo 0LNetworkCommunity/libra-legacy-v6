@@ -7,6 +7,7 @@ use handlebars::Handlebars;
 use serde::Serialize;
 use serde_json::json;
 use warp::Filter;
+use crate::check;
 // use crate::check;
 // use check::Check;
 struct WithTemplate<T: Serialize> {
@@ -62,13 +63,13 @@ pub async fn main() {
     let route = warp::get()
         .and(warp::path::end())
         .map(|| {
-            //TODO: retrieve from Sled.
             // let mut _checker = Check::new();
             // let answer = checker.read_db(check::SYNC_KEY).unwrap();
-            let is_synced = true;
+            let items = check::Items::from_cache().unwrap();
+            // let is_synced = true;
             WithTemplate {
                 name: "template.html",
-                value: json!({"is_synced" : is_synced }),
+                value: json!({"is_synced" : items.is_synced }),
             }
         })
         .map(handlebars);

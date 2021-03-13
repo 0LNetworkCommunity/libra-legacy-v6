@@ -5,9 +5,11 @@ use sysinfo::SystemExt;
 use crate::metadata::Metadata;
 use crate::config::OlCliConfig;
 use crate::application::app_config;
-use std::str;
+use std::{convert::TryInto, str};
 use rocksdb;
 use rocksdb::{DB};
+use serde::{Serialize, Deserialize};
+// use serde_json::json;
 
 /// caching database name, to be appended to node_home
 pub const CHECK_CACHE_PATH: &str = "ol-system-checks";
@@ -27,24 +29,38 @@ pub fn init_cache() {
         Ok(_) => {}
         Err(err) => {dbg!(&err);}
     };
-    // match db.get(SYNC_KEY) {
-    //     Ok(Some(value)) => println!("retrieved value {}", value.to_utf8().unwrap()),
-    //     Ok(None) => println!("value not found"),
-    //     Err(e) => println!("operational problem encountered: {}", e),
-    // };
-    // self.db.insert(key.as_bytes(), value).unwrap();
 }
-// fn main() {
-//     let db = DB::open_default("/tmp/rocksdb.1").unwrap();
-//     db.put(b"my key", b"my value").unwrap();
-//     match db.get(b"my key") {
-//         Ok(Some(value)) => println!("retrieved value {}", value.to_utf8().unwrap()),
-//         Ok(None) => println!("value not found"),
-//         Err(e) => println!("operational problem encountered: {}", e),
-//     }
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Items {
+    pub is_synced: bool,
+}
 
-//     db.delete(b"my key").unwrap();
-// }
+impl Items {
+    pub fn new() -> Self {
+        Items {
+            is_synced: false,
+        }
+    }
+
+    pub fn save_to_cache(&self) {
+        let serialized = serde_json::to_vec(&self).unwrap();
+
+        match cache_handle().put("items", serialized) {
+            Ok(_) => {}
+            Err(err) => {dbg!(&err);}
+        }; 
+    }
+
+    pub fn from_cache() -> Option<Items>{
+        let q = cache_handle().get("items").unwrap().unwrap();
+        match serde_json::from_slice(&q.as_slice()) {
+            Ok(items) => {Some(items)}
+            Err(_) => {None}
+        }
+    }
+}
+
 
 /// Configuration used for checks we want to make on the node
 pub struct Check {
