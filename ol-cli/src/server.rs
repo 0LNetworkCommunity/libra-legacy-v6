@@ -7,9 +7,7 @@ use handlebars::Handlebars;
 use serde::Serialize;
 use serde_json::json;
 use warp::Filter;
-use crate::check;
-// use crate::check;
-// use check::Check;
+use crate::{check, monitor};
 struct WithTemplate<T: Serialize> {
     name: &'static str,
     value: T,
@@ -70,6 +68,10 @@ pub async fn main() {
             }
         })
         .map(handlebars);
-
+    
+    // TODO: Server runs monitor in background.
+    // monitor::mon();
     warp::serve(route).run(([127, 0, 0, 1], 3030)).await;
+
+
 }

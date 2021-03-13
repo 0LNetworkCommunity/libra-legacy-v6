@@ -60,7 +60,6 @@ impl Items {
         let q = cache_handle().get("items").unwrap().unwrap();
         match serde_json::from_slice(&q.as_slice()) {
             Ok(items) => {
-                dbg!(&items);
                 Some(items)
             }
             Err(_) => {None}
