@@ -29,8 +29,7 @@ impl Runnable for StartCmd {
         println!("Upstream Node URL: {}", &config.upstream_node_url);
         println!("\nEnter new settings to overwrite config file: {}", CONFIG_FILE);
         init_configs(Some(home_path()));
-        check::init_cache();
-        check::Items::new().save_to_cache();
+        check::Items::init();
     }
 }
 

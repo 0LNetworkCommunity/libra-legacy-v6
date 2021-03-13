@@ -5,9 +5,9 @@ use sysinfo::SystemExt;
 use crate::metadata::Metadata;
 use crate::config::OlCliConfig;
 use crate::application::app_config;
-use std::{convert::TryInto, str};
+use std::str;
 use rocksdb;
-use rocksdb::{DB};
+use rocksdb::DB;
 use serde::{Serialize, Deserialize};
 // use serde_json::json;
 
@@ -23,52 +23,62 @@ pub fn cache_handle() -> DB {
     DB::open_default(conf.home_path).unwrap()
 }
 
-/// Initialize the monitor cache
-pub fn init_cache() {
-    match cache_handle().put(SYNC_KEY, "false") {
-        Ok(_) => {}
-        Err(err) => {dbg!(&err);}
-    };
-}
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+/// Steps needed to initialize a miner
 pub struct Items {
+    /// is the blockchain in sync with upstream
     pub is_synced: bool,
 }
 
 impl Items {
-    pub fn new() -> Self {
+    /// Get new object
+    pub fn new(is_synced: bool) -> Self {
         Items {
-            is_synced: false,
+            is_synced,
         }
     }
 
-    pub fn save_to_cache(&self) {
-        let serialized = serde_json::to_vec(&self).unwrap();
+    /// Returns object in init state
+    pub fn init() -> Items {
+        //TODO: Check if db exists
+        let items = Items::new(false);
+        items.write_cache();
+        items
+    }
 
+    /// Saves the Items to cache
+    pub fn write_cache(&self) {
+        let serialized = serde_json::to_vec(&self).unwrap();
         match cache_handle().put("items", serialized) {
             Ok(_) => {}
             Err(err) => {dbg!(&err);}
         }; 
     }
 
-    pub fn from_cache() -> Option<Items>{
+    
+    /// Get from cache
+    pub fn read_cache() -> Option<Items>{
         let q = cache_handle().get("items").unwrap().unwrap();
         match serde_json::from_slice(&q.as_slice()) {
-            Ok(items) => {Some(items)}
+            Ok(items) => {
+                dbg!(&items);
+                Some(items)
+            }
             Err(_) => {None}
         }
     }
 }
 
 
+
 /// Configuration used for checks we want to make on the node
 pub struct Check {
     conf: OlCliConfig,
-    db: DB,
     client: LibraClient,
     miner_process_name: &'static str,
     node_process_name: &'static str,
+    items: Items,
 }
 
 
@@ -80,36 +90,12 @@ impl Check {
         return Self {
             client: LibraClient::new(conf.node_url.clone(), conf.base_waypoint.clone()).unwrap(),
             conf,
-            db: cache_handle(),
             miner_process_name: "miner",
-            node_process_name: "libra-node"
+            node_process_name: "libra-node",
+            items: Items::init(),
         }
     }
 
-    /// Persist Checks state
-    pub fn write_cache(&mut self, key: &str, value: &str) {
-        self.db.put(key, value).unwrap();
-        // self.db.insert(key.as_bytes(), value).unwrap();
-    }
-
-    /// Read Checks state
-    pub fn read_cache(&self, key: &str) -> Option<String>{
-        match self.db.get(key) {
-            Ok(Some(value)) => {
-                let res = str::from_utf8(&value).unwrap();
-                // println!("retrieved value {:?}", res);
-                Some(res.to_owned())
-            },
-            Ok(None) => {
-                // println!("value not found");
-                None
-            },
-            Err(e) => {
-                println!("operational problem encountered: {}", e);
-                None
-            },
-        }
-    }
 
     /// nothing is configured yet, empty box
     pub fn is_clean_start(&self) -> bool {
@@ -150,24 +136,26 @@ impl Check {
         // assert never synced
         if self.has_never_synced() && sync {
             // mark as synced
-            self.write_cache(SYNC_KEY, "true");
+            self.items.is_synced = true;
+            self.items.write_cache();
         }
         sync  
     }
 
     /// check if the node has ever synced
     pub fn has_never_synced(&self) -> bool {
-        match self.read_cache(SYNC_KEY) {
-            Some(state) => state != "true".to_owned(),
-            None => false
+        match Items::read_cache() {
+            Some(i) => {!i.is_synced}
+            None => {true}
         }
     }
 
     /// node started sync
     pub fn node_started_sync(&self) -> bool {
-        match self.read_cache(SYNC_KEY) {
-            Some(state) => state == "true".to_owned(),
-            None => false
+        match Items::read_cache() {
+            // TODO: Use has_started_sync
+            Some(i) => {!i.is_synced}
+            None => {true}
         }
     }
 

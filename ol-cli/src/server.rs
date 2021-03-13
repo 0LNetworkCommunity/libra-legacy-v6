@@ -63,10 +63,7 @@ pub async fn main() {
     let route = warp::get()
         .and(warp::path::end())
         .map(|| {
-            // let mut _checker = Check::new();
-            // let answer = checker.read_db(check::SYNC_KEY).unwrap();
-            let items = check::Items::from_cache().unwrap();
-            // let is_synced = true;
+            let items = check::Items::read_cache().unwrap();
             WithTemplate {
                 name: "template.html",
                 value: json!({"is_synced" : items.is_synced }),
