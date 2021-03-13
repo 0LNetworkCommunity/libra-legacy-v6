@@ -36,15 +36,10 @@ pub async fn main() {
                         <title>0L</title>
                       </head>
                       <body>
-                      <div uk-container>
-                        <div class='uk-grid'>
-                            <div class='uk-child-width-expand@s uk-text-center' uk-grid>
-                            <div>
-                                <h3 class='uk-card-title uk-text-primary'>NODE INFO</h3>
-                                <div class='uk-card uk-card-default uk-card-body'>
-                                    <h5>Is Synced: {{is_synced}}</h5>
-                                </div>
-                            </div>
+                      <div class='uk-container uk-container-small'>
+                        <div class='uk-card uk-card-default uk-card-body uk-width-1-2@m'>
+                            <h3 class='uk-card-title'>Node info</h3>
+                            <p>Node is synced: {{is_synced}}</p>
                         </div>
                         </div>
                     </body>
