@@ -21,13 +21,13 @@ dirs = "2.0.2"
 toml = "0.5.6"
 rustyline = "6.2.0"
 libra-json-rpc-client = { path = "../client/json-rpc", version = "0.1.0" }
-sled = "0.34.6"
 crossterm = "0.19.0"
 tokio = { version = "0.2", features = ["full"] }
 warp = "0.2"
 serde_json = "1.0"
 clokwerk = "0.3.4"
 handlebars = "3.5.3"
+rocksdb = "0.15.0"
 
 [dependencies.abscissa_core]
 version = "0.5.2"

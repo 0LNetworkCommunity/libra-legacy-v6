@@ -56,8 +56,8 @@ impl Default for OlCliConfig {
             address: AccountAddress::from_hex_literal("0x4C613C2F4B1E67CA8D98A542EE3F59F5").expect("Address is not valid"),
             home_path: home_path(),
             base_waypoint: Waypoint::from_str("0:0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-            node_url: "http://localhost:63621".to_owned().parse::<Url>().unwrap(),
-            upstream_node_url: "http://localhost:63621".to_owned().parse::<Url>().unwrap(),
+            node_url: "http://localhost:8080".to_owned().parse::<Url>().unwrap(),
+            upstream_node_url: "http://167.172.248.37:8080".to_owned().parse::<Url>().unwrap(),
         }
     }
 }

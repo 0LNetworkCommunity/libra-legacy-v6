@@ -4,10 +4,9 @@
 use reqwest::{
     Error,
 };
-use sled::{self, Db};
 use serde::{Serialize, Deserialize};
 use std::process::Command;
-
+use crate::check;
 #[derive(Deserialize, Debug)]
 struct User {
     login: String,
@@ -78,9 +77,9 @@ pub fn restore_backup() {}
 /// Write Waypoint
 pub fn write_waypoint() {}
 
-fn get_sled() -> Db {
-    sled::open("/tmp/ol-sled-db-pid").expect("open")
-}
+// fn get_sled() -> Db {
+//     sled::open("/tmp/ol-sled-db-pid").expect("open")
+// }
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -91,20 +90,20 @@ struct Process {
 /// Sled test
 pub fn save_pid(name: &str, pid: &u32) {
 
-    let tree = sled::open("/tmp/ol-sled-db-pid").expect("open");
+    // let tree = sled::open("/tmp/ol-sled-db-pid").expect("open");
+    let db = check::cache_handle();
     let point = Process { name: name.to_owned(), pid: vec![*pid] };
     // Convert the Process to bytes.
     let serialized = serde_json::to_vec(&point).unwrap();
     // println!("{:#?}", serialized);
-    tree.insert(b"pids", serialized).unwrap();
-    let pid_saved = tree.get(b"pids").unwrap().unwrap();
+    db.put("pids", serialized).unwrap();
+    let pid_saved = db.get("pids").unwrap();
     println!("pid_saved: {:#?}", pid_saved);
 }
 
 /// Kill all the processes that are running
 pub fn kill_zombies(_name: &str) {
-    let db = get_sled();
-    let _pid_saved = db.get(b"pids").unwrap().unwrap();
+    // let _pid_saved = db.get(b"pids").unwrap().unwrap();
 
     // TODO: Get all the processes from sled and sigkill all them.
     // let process = pid_saved.to_vec();

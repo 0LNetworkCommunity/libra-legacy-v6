@@ -10,7 +10,7 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod start;
+mod init;
 mod version;
 mod genesis_cmd;
 mod bal_cmd;
@@ -22,7 +22,7 @@ mod mgmt_cmd;
 mod serve_cmd;
 
 use self::{
-    start::StartCmd,
+    init::StartCmd,
     version::VersionCmd,
     genesis_cmd::GenesisCmd,
     bal_cmd::BalCmd,
@@ -53,8 +53,8 @@ pub enum OlCliCmd {
     Help(Help<Self>),
 
     /// The `start` subcommand
-    #[options(help = "start the application")]
-    Start(StartCmd),
+    #[options(help = "initialize the application")]
+    Init(StartCmd),
 
     /// The `version` subcommand
     Version(VersionCmd),
@@ -127,7 +127,7 @@ impl Configurable<OlCliConfig> for OlCliCmd {
         config: OlCliConfig,
     ) -> Result<OlCliConfig, FrameworkError> {
         match self {
-            OlCliCmd::Start(cmd) => cmd.override_config(config),
+            OlCliCmd::Init(cmd) => cmd.override_config(config),
             _ => Ok(config),
         }
     }
