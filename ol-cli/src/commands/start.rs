@@ -5,7 +5,7 @@
 use crate::prelude::*;
 use crate::config::{OlCliConfig, init_configs};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use crate::commands::CONFIG_FILE;
+use crate::commands::{CONFIG_FILE, home_path};
 
 /// `start` subcommand
 ///
@@ -26,7 +26,7 @@ impl Runnable for StartCmd {
         println!("Upstream Node URL: {}", &config.upstream_node_url);
         
         println!("\nEnter new settings to overwrite config file: {}", CONFIG_FILE);
-        init_configs(None);
+        init_configs(Some(home_path()));
     }
 }
 

@@ -20,7 +20,7 @@ pub fn make_client(url: Option<Url>, waypoint: Waypoint) -> Result<LibraClient, 
 pub fn default_remote_client()  ->(Result<LibraClient, Error>, Url){
     let config = app_config();
     let remote_url = config.upstream_node_url.clone();
-    let waypoint = config.base_wapoint.clone();
+    let waypoint = config.base_waypoint.clone();
     (make_client(Some(remote_url.clone()), waypoint), remote_url)
 }
 
@@ -28,6 +28,6 @@ pub fn default_remote_client()  ->(Result<LibraClient, Error>, Url){
 pub fn default_local_client()  -> (Result<LibraClient, Error>, Url){
     let config = app_config();
     let local_url = config.upstream_node_url.clone();
-    let waypoint = config.base_wapoint.clone();
+    let waypoint = config.base_waypoint.clone();
     (make_client(Some(local_url.clone()), waypoint), local_url)
 }

@@ -2,6 +2,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::monitor;
+
 /// `monitor-cmd` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct

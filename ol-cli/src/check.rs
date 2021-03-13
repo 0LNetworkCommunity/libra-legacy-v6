@@ -1,34 +1,36 @@
 //! `check` module
 
 use cli::libra_client::LibraClient;
-use reqwest::Url;
 // use anyhow::Error;
 // use anyhow::{Result};
-use libra_json_rpc_client::views::MetadataView;
 use sled::{IVec, Db};
-use crate::{client::*, management, metadata::Metadata};
-use std::path::PathBuf;
-use std::str::FromStr;
-use sysinfo::{SystemExt, ProcessExt};
+use sysinfo::SystemExt;
+use crate::metadata::Metadata;
+use crate::config::OlCliConfig;
+use crate::application::app_config;
 
-const HOME: &str = "~/.0L";
 const CHECK_DB: &str = "ol-system-checks";
 const SYNC_KEY: &str = "is_synced";
 
 /// Checks we want to make on the node
 pub struct Check {
+    conf: OlCliConfig,
     tree: Db,
+    client: LibraClient,
     miner_process_name: &'static str,
     node_process_name: &'static str,
 }
 
 impl Check {
+    /// Create a instance of Check
     pub fn new() -> Self {
-        let mut path = PathBuf::new();
-        path.push(HOME);
+        let conf = app_config().to_owned();
+        let mut path = conf.home_path.clone();
         path.push(CHECK_DB);
         println!("Open monitor db at {:?}", &path);
         return Self {
+            client: LibraClient::new(conf.node_url.clone(), conf.base_waypoint.clone()).unwrap(),
+            conf,
             tree: sled::open(path).expect("Failed to open database for monitor"),
             miner_process_name: "miner",
             node_process_name: "libra-node"
@@ -46,17 +48,25 @@ impl Check {
     }
 
     /// nothing is configured yet, empty box
-    pub fn is_clean_start() -> bool {
+    pub fn is_clean_start(&self) -> bool {
         // check to see no files are present
-        let mut file = PathBuf::from(HOME);
+        let mut file = self.conf.home_path.clone();
         file.push("blocks/block_0.json"); //TODO change file name later
-        file.exists()
+        !file.exists()
     }
 
     /// the owner and operator accounts exist on chain
-    pub fn accounts_exist_on_chain() -> bool {
+    pub fn accounts_exist_on_chain(&mut self) -> bool {
         // check to see no files are present
-        true
+        let x = self.client.get_account(self.conf.address, false);
+        //println!("Account address: {}", &self.conf.address);
+        match x {
+            Ok((opt,_)) => match opt{
+                Some(_) => true,
+                None => false
+            },
+            Err(err) => panic!("Error: {}", err),
+        }
     }
 
     /// database is initialized

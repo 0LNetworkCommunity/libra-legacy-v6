@@ -88,8 +88,7 @@ pub enum OlCliCmd {
 
 /// Get home path for all 0L apps
 pub fn home_path() -> PathBuf{
-    let mut config_path = dirs::home_dir()
-    .unwrap();
+    let mut config_path = dirs::home_dir().unwrap();
     config_path.push(NODE_HOME);
     // config_path.push(CONFIG_FILE);
     config_path

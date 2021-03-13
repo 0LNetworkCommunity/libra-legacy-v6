@@ -9,7 +9,7 @@ use std::io::{Write, stdout};
 use crossterm::{QueueableCommand, cursor};
 
 /// Start the node monitor
-pub fn mon() {    
+pub fn mon() {
     let mut stdout = stdout();
 
     let mut x = 0;
@@ -30,11 +30,13 @@ pub fn mon() {
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Is synced: {}, node: {}, miner: {}",
+                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}",
                 &x,
+                checker.is_clean_start(),
                 &sync,
                 node_status,
                 mining,
+                checker.accounts_exist_on_chain()
             ).as_bytes()
         ).unwrap();
 
