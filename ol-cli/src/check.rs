@@ -13,7 +13,7 @@ use sysinfo::{SystemExt, ProcessExt};
 
 const HOME: &str = "~/.0L";
 const CHECK_DB: &str = "ol-system-checks";
-const SYNC_KEY: &str = "is_synced";
+pub const SYNC_KEY: &str = "is_synced";
 
 /// Checks we want to make on the node
 pub struct Check {
@@ -84,7 +84,7 @@ impl Check {
     /// check if the node has ever synced
     pub fn has_never_synced(&self) -> bool {
         match self.read_db(SYNC_KEY) {
-            Some(state) => state!= b"true",
+            Some(state) => state != b"true",
             None => false
         }
     }
