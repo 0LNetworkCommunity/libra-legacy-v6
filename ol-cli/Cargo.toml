@@ -27,6 +27,7 @@ tokio = { version = "0.2", features = ["full"] }
 warp = "0.2"
 serde_json = "1.0"
 clokwerk = "0.3.4"
+handlebars = "3.5.3"
 
 [dependencies.abscissa_core]
 version = "0.5.2"
