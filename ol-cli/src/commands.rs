@@ -19,6 +19,7 @@ mod height_cmd;
 mod compare_cmd;
 mod monitor_cmd;
 mod mgmt_cmd;
+mod serve_cmd;
 
 use self::{
     start::StartCmd,
@@ -30,6 +31,7 @@ use self::{
     compare_cmd::CompareCmd,
     monitor_cmd::MonitorCmd,
     mgmt_cmd::MgmtCmd,
+    serve_cmd::ServeCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -81,9 +83,13 @@ pub enum OlCliCmd {
     #[options(help = "monitor the node and upstream")]
     Monitor(MonitorCmd),
 
-    /// The `monitor` subcommand
-    #[options(help = "Management tools")]
+    /// The `management` subcommand
+    #[options(help = "management tools")]
     Mgmt(MgmtCmd),
+
+    /// The `server` subcommand
+    #[options(help = "serve the monitor over http")]
+    Serve(ServeCmd),
 }
 
 /// Get home path for all 0L apps

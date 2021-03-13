@@ -26,3 +26,4 @@ pub mod metadata;
 pub mod monitor;
 pub mod management;
 pub mod check;
+pub mod server;
