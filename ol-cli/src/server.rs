@@ -7,7 +7,7 @@ use handlebars::Handlebars;
 use serde::Serialize;
 use serde_json::json;
 use warp::Filter;
-use crate::{check, monitor};
+use crate::{check};
 struct WithTemplate<T: Serialize> {
     name: &'static str,
     value: T,
