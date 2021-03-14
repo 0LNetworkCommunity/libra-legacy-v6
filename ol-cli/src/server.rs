@@ -18,7 +18,7 @@ struct WithTemplate<T: Serialize> {
 }
 
 // create server-sent event
-fn sse_counter(counter: u64) -> Result<impl ServerSentEvent, Infallible> {
+fn sse_counter(counter: bool) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::data(counter))
 }
 
@@ -80,10 +80,10 @@ pub async fn main() {
     
     //GET ticks/
     let ticks = warp::path("ticks").and(warp::get()).map(|| {
-        let mut counter: u64 = 0;
+        // let mut counter = false;
         // create server event source
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            counter += 1;
+            let counter = check::Items::read_cache().unwrap().is_synced;
             sse_counter(counter)
         });
         // reply using server-sent events

@@ -71,11 +71,11 @@ impl Items {
 
 /// Configuration used for checks we want to make on the node
 pub struct Check {
-    conf: OlCliConfig,
-    client: LibraClient,
+    pub conf: OlCliConfig,
+    pub client: LibraClient,
     miner_process_name: &'static str,
     node_process_name: &'static str,
-    items: Items,
+    pub items: Items,
 }
 
 
@@ -174,6 +174,11 @@ impl Check {
         system.refresh_all();
         let ps = system.get_process_by_name(self.miner_process_name);
         ps.len() > 0
+    }
+
+    pub fn get_height(&self) -> u64 {
+        let m = Metadata::new(self.conf.node_url, self.client);
+        m.meta.version
     }
 }
 

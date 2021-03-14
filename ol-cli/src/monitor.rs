@@ -14,6 +14,7 @@ pub fn mon() {
 
     let mut x = 0;
     let mut checker = Check::new();
+
     loop {
         thread::sleep(Duration::from_millis(1000));
 
@@ -27,16 +28,20 @@ pub fn mon() {
             true=> "Running",
             false => "Stopped"
         };
+
+        let height = 10u64; //checker.get_height();
+
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}",
+                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}, height: {}",
                 &x,
                 checker.is_clean_start(),
                 &sync,
                 node_status,
                 mining,
-                checker.accounts_exist_on_chain()
+                checker.accounts_exist_on_chain(),
+                height,
             ).as_bytes()
         ).unwrap();
 

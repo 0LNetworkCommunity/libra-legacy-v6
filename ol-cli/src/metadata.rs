@@ -9,8 +9,8 @@ use crate::{
 /// Get chain Metadata
 #[derive(Debug)]
 pub struct Metadata {
-    url: Url,
-    meta: MetadataView,
+    pub url: Url,
+    pub meta: MetadataView,
 }
 
 
@@ -28,7 +28,7 @@ impl Metadata {
             )
         });
         Metadata {
-            url: url,
+            url,
             meta: block_metadata
         }
     }
