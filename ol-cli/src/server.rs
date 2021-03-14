@@ -2,15 +2,24 @@
 
 #![deny(warnings)]
 use std::sync::Arc;
-
 use handlebars::Handlebars;
 use serde::Serialize;
 use serde_json::json;
-use warp::Filter;
-use crate::{check};
+use futures::StreamExt;
+use std::convert::Infallible;
+use std::time::Duration;
+use tokio::time::interval;
+use warp::{sse::ServerSentEvent, Filter};
+use crate::check;
+
 struct WithTemplate<T: Serialize> {
     name: &'static str,
     value: T,
+}
+
+// create server-sent event
+fn sse_counter(counter: u64) -> Result<impl ServerSentEvent, Infallible> {
+    Ok(warp::sse::data(counter))
 }
 
 fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars>) -> impl warp::Reply
@@ -69,9 +78,20 @@ pub async fn main() {
         })
         .map(handlebars);
     
+    //GET ticks/
+    let ticks = warp::path("ticks").and(warp::get()).map(|| {
+        let mut counter: u64 = 0;
+        // create server event source
+        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+            counter += 1;
+            sse_counter(counter)
+        });
+        // reply using server-sent events
+        warp::sse::reply(event_stream)
+    });
     // TODO: Server runs monitor in background.
     // monitor::mon();
-    warp::serve(route).run(([127, 0, 0, 1], 3030)).await;
+    warp::serve(route.or(ticks)).run(([127, 0, 0, 1], 3030)).await;
 
 
 }
