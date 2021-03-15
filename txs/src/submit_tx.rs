@@ -103,7 +103,7 @@ pub fn submit_tx(
 }
 
 /// Main get tx params logic based on the design in this URL:
-/// https://github.com/OLSF/libra/wiki/Txs-App#txs-logic--usage
+/// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
 pub fn get_tx_params() -> Result<TxParams, Error> {
     type EntryPointTxsCmd = EntryPoint<commands::TxsCmd>;
     let EntryPointTxsCmd { 
