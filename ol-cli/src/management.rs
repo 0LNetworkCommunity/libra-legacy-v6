@@ -85,32 +85,54 @@ pub fn write_waypoint() {}
 #[derive(Serialize, Deserialize, Debug)]
 struct Process {
     name: String,
-    pid: Vec<u32>,
+    pids: Vec<u32>,
 }
-/// Sled test
-pub fn save_pid(name: &str, pid: &u32) {
 
-    // let tree = sled::open("/tmp/ol-sled-db-pid").expect("open");
+/// Save PID
+pub fn save_pid(name: &str, pid: u32) {
+
     let db = check::cache_handle();
-    let point = Process { name: name.to_owned(), pid: vec![*pid] };
-    // Convert the Process to bytes.
-    let serialized = serde_json::to_vec(&point).unwrap();
-    // println!("{:#?}", serialized);
-    db.put("pids", serialized).unwrap();
-    let pid_saved = db.get("pids").unwrap();
-    println!("pid_saved: {:#?}", pid_saved);
+    
+    // TODO: Handle the first pass - no "pids"
+    // if !db.is_empty() {
+        // let process = Process { name: name.to_owned(), pids: vec![] };
+        // let serialized = serde_json::to_vec(&process).unwrap();
+        // db.put(b"pids", serialized).unwrap();
+    // }
+
+    // Load
+    let pids_loaded = db.get(b"pids").unwrap().unwrap();    
+    let mut process: Process = serde_json::de::from_slice(
+        &pids_loaded.to_vec()
+    ).unwrap();
+    // println!("--- Loaded: {:?}", &p);
+
+    // Update & Save
+    if !process.pids.contains(&pid) {
+        process.pids.push(pid);
+    }
+    let serialized = serde_json::to_vec(&process).unwrap();
+    let _res = db.put(b"pids", serialized);
+    println!("--- Saved: {:?}", &process);
 }
 
 /// Kill all the processes that are running
 pub fn kill_zombies(_name: &str) {
-    // let _pid_saved = db.get(b"pids").unwrap().unwrap();
+    let db = check::cache_handle();
+    // TODO: 
+    // if db.is_empty() { return; }
 
-    // TODO: Get all the processes from sled and sigkill all them.
-    // let process = pid_saved.to_vec();
-    // pid_saved.iter()
-    // .filter(|process| { 
-        
-    // })
+    let pids_loaded = db.get(b"pids").unwrap().unwrap().to_vec();
+    let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
+    println!("--- kz: Loaded: {:?}", &process);
+
+    use nix::sys::signal::{self, Signal};
+    for pid in process.pids.iter() {
+        let res = signal::kill(
+            nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM
+        );
+        println!("--- kz: Killing pid {}, result: {:?}", pid, res);
+    }        
 }
 /// What kind of node are we starting
 pub enum NodeType {
@@ -134,7 +156,7 @@ pub fn start_node(config_type: NodeType) {
 
     dbg!(&config_file_name);
     // Stop any processes we may have started and detached from.
-    // kill_zombies(BINARY);
+    kill_zombies(BINARY);
 
     let mut child = Command::new(BINARY)
                         .arg("--config")
@@ -144,14 +166,7 @@ pub fn start_node(config_type: NodeType) {
 
     let pid = &child.id();
     println!("pid: {}", pid);
-    save_pid(BINARY, pid);
-
-    //TODO: Instead of waiting, detach from, here.
-    let ecode = child.wait()
-                    .expect("failed to wait on child");
-
-    assert!(ecode.success());
-
+    save_pid(BINARY, *pid);
 }
 
 

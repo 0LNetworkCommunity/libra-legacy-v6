@@ -29,6 +29,7 @@ clokwerk = "0.3.4"
 handlebars = "3.5.3"
 rocksdb = "0.15.0"
 futures = "0.3.6"
+nix = "*"
 
 
 [dependencies.abscissa_core]

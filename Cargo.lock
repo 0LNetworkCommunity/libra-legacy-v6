@@ -4917,6 +4917,7 @@ dependencies = [
  "libra-global-constants",
  "libra-json-rpc-client",
  "libra-types",
+ "nix 0.17.0",
  "num-format",
  "once_cell",
  "reqwest",
