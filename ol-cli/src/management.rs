@@ -1,86 +1,8 @@
 //! `trigger` functions
 
-// use serde::Deserialize;
-use reqwest::{
-    Error,
-};
 use serde::{Serialize, Deserialize};
 use std::process::Command;
 use crate::check;
-#[derive(Deserialize, Debug)]
-struct User {
-    login: String,
-    id: u32,
-}
-
-
-
-#[derive(Deserialize, Debug)]
-struct GithubFile {
-    name: String,
-    path: String,
-    #[serde(alias = "type")]
-    file_type: String,
-}
-
-
-// Name your user agent after the app
-static APP_USER_AGENT: &str = concat!(
-env!("CARGO_PKG_NAME"),
-"/",
-env!("CARGO_PKG_VERSION"),
-);
-
-/// Restore database from archive
-pub fn fast_forward_db() {
-    fetch_backups().unwrap();
-    restore_backup();
-}
-/// Fetch backups
-pub fn fetch_backups() -> Result<(), Error> {
-    // get the highest epoch zip file
-    get_highest_epoch_zip()?;
-
-    // unzip in hope path
-    Ok(())
-}
-
-fn get_highest_epoch_zip() -> Result<(), Error> {
-    let client = reqwest::blocking::Client::builder()
-    .user_agent(APP_USER_AGENT)
-    .build()?;
-
-    let request_url = format!("https://api.github.com/repos/{owner}/{repo}/contents/",
-                              owner = "OLSF",
-                              repo = "epoch-archive");
-    println!("{}", request_url);
-    let response = client.get(&request_url).send()?;
-    // let text = response.text()?;
-    // println!("{:?}", &text);
-
-    let files: Vec<GithubFile> = response.json()?;
-    println!("{:?}", files);
-
-    let filter = files.iter()
-    .filter(|file| {
-        // true
-        file.file_type == "file".to_owned()
-    });
-    println!("{:?}", filter);
-
-    Ok(())
-}
-
-/// Restore Backups
-pub fn restore_backup() {}
-
-/// Write Waypoint
-pub fn write_waypoint() {}
-
-// fn get_sled() -> Db {
-//     sled::open("/tmp/ol-sled-db-pid").expect("open")
-// }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Process {

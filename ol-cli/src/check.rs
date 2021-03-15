@@ -117,8 +117,13 @@ impl Check {
     }
 
     /// database is initialized
-    pub fn database_bootstrapped() -> bool {
-        true
+    pub fn database_bootstrapped(&self) -> bool {
+        // TODO: This only checks that the database files exist.
+        // need to check if it is "boostrapped" with db-bootstrapper
+
+        let mut file = self.conf.home_path.clone();
+        file.push("db/libradb"); //TODO change file name later
+        !file.exists()
     }
 
     /// Checks if node is synced
