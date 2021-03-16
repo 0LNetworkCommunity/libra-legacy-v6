@@ -6,7 +6,7 @@ use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
 use reqwest;
 
 use anyhow::Error;
-
+use glob::glob;
 use serde::{Serialize, Deserialize};
 use warp::Buf;
 use std::{fs::{self, File}, io::{self, Write}, path::{Path, PathBuf}, process::Command};
@@ -100,8 +100,31 @@ impl Backup {
 
     /// Restore Backups
     pub fn restore_backup(&self) -> Result<(), Error>{
+        let restore_method = "epoch-ending";
+        let db_path = &self.home_path.join("db/");
+        dbg!(db_path);
+        let manifest_path = glob(
+            &format!("{}/**/epoch_ending.manifest", &self.restore_path.to_str().unwrap())
+        ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+        dbg!(&manifest_path);
+        dbg!(&self.restore_path);
 
+        let mut child = Command::new("db-restore")
+            .arg("--target-db-dir")
+            .arg(db_path)
+            .arg(restore_method)
+            .arg("--epoch-ending-manifest")
+            .arg(manifest_path.to_str().unwrap())
+            .arg("local-fs")
+            .arg("--dir")
+            .arg(&self.restore_path)
+            .spawn()
+            .expect("failed to execute child");
 
+        let ecode = child.wait()
+                    .expect("failed to wait on child");
+
+        assert!(ecode.success());
 //         restore-epoch:
 // 	db-restore --target-db-dir ${DB_PATH} epoch-ending --epoch-ending-manifest ${ARCHIVE_PATH}/${EPOCH}/epoch_ending_${EPOCH}*/epoch_ending.manifest local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
 
@@ -122,7 +145,6 @@ impl Backup {
 
     pub fn parse_manifest_waypoint(&self) -> Result<Waypoint, Error> {
         // Some JSON input data as a &str. Maybe this comes from the user.
-        use glob::glob;
 
         let manifest_path = self.restore_path.to_str().unwrap();
         for entry in glob(&format!("{}/**/epoch_ending.manifest", manifest_path)).expect("Failed to read glob pattern") {
