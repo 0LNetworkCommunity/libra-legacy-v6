@@ -17,6 +17,8 @@ pub fn mon() {
     loop {
         thread::sleep(Duration::from_millis(1000));
 
+        checker.fetch_upstream_states();
+
         // TODO: make keep cursor position
         let sync = checker.check_sync();
         let mining = match checker.miner_is_mining() {
@@ -27,16 +29,19 @@ pub fn mon() {
             true=> "Running",
             false => "Stopped"
         };
+
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}",
+                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}, epoch: {}, validator set:{}",
                 &x,
                 checker.is_clean_start(),
                 &sync,
                 node_status,
                 mining,
-                checker.accounts_exist_on_chain()
+                checker.accounts_exist_on_chain(),
+                checker.epoch_on_chain(),
+                checker.is_in_validator_set(),
             ).as_bytes()
         ).unwrap();
 

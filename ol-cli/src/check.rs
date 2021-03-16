@@ -1,5 +1,5 @@
 //! `check` module
-
+use anyhow::Result;
 use cli::libra_client::LibraClient;
 use sysinfo::SystemExt;
 use crate::metadata::Metadata;
@@ -8,6 +8,10 @@ use crate::application::app_config;
 use std::str;
 use rocksdb::DB;
 use serde::{Serialize, Deserialize};
+use resource_viewer::{NullStateView, MoveValueAnnotator, AnnotatedAccountStateBlob};
+use libra_types::{account_address::AccountAddress, account_state::AccountState, transaction::Version};
+use std::convert::TryFrom;
+use libra_json_rpc_client::views::MinerStateResourceView;
 
 /// caching database name, to be appended to node_home
 pub const CHECK_CACHE_PATH: &str = "ol-system-checks";
@@ -47,7 +51,7 @@ impl Items {
 
     /// Saves the Items to cache
     pub fn write_cache(&self) {
-        let serialized = serde_json::to_vec(&self).unwrap();
+        let serialized = serde_json::to_vec(&self.clone()).unwrap();
         match cache_handle().put("items", serialized) {
             Ok(_) => {}
             Err(err) => {dbg!(&err);}
@@ -76,6 +80,8 @@ pub struct Check {
     miner_process_name: &'static str,
     node_process_name: &'static str,
     items: Items,
+    chain_state: Option<AccountState>,
+    miner_state: Option<MinerStateResourceView>,
 }
 
 
@@ -90,9 +96,82 @@ impl Check {
             miner_process_name: "miner",
             node_process_name: "libra-node",
             items: Items::init(),
+            miner_state: None,
+            chain_state: None,
         }
     }
 
+    fn get_annotate_account_blob(&mut self, address: AccountAddress) -> Option<AccountState> {
+        let (blob, ver) = self.client.get_account_state_blob(address).unwrap();
+        if let Some(account_blob) = blob {
+            Some(AccountState::try_from(&account_blob).unwrap())
+        }else{
+            None
+        }
+
+    }
+
+    pub fn fetch_upstream_states(&mut self) {
+        self.chain_state = self.get_annotate_account_blob(AccountAddress::ZERO);
+        self.miner_state = self.client.get_miner_state(self.conf.address)
+            .expect("Error occurs on fetching miner states");
+    }
+
+    /// return tower height on chain
+    pub fn tower_height_on_chain(&self)-> u64 {
+        match &self.miner_state {
+            Some(s)=> s.verified_tower_height,
+            None => 0
+        }
+    }
+
+    /// return tower height on chain
+    pub fn mining_epoch_on_chain(&self)-> u64 {
+        match &self.miner_state {
+            Some(s)=> s.latest_epoch_mining,
+            None => 0
+        }
+    }
+
+    /// return epoch on chain
+    pub fn epoch_on_chain(&self)-> u64 {
+        match &self.chain_state {
+            Some(s)=> s.get_configuration_resource().unwrap().unwrap().epoch(),
+            None => 0
+        }
+    }
+    /// validator sets
+    pub fn validator_set_count(&self)-> usize {
+        match &self.chain_state {
+            Some(s)=> s.get_validator_set().unwrap().unwrap().payload().len(),
+            None => 0
+        }
+    }
+
+    /// Current monitor account
+    pub fn account(&self)-> Vec<u8> {
+        self.conf.address.to_vec()
+    }
+
+    /// is validator jailed
+    pub fn is_jailed() -> bool {
+        unimplemented!("Don't know how to implement")
+    }
+
+    /// Is current account in validator set
+    pub fn is_in_validator_set(&self) -> bool {
+        match &self.chain_state {
+            Some(s)=> {
+                for v in s.get_validator_set().unwrap().unwrap().payload().iter() {
+                    if v.account_address().to_vec() == self.conf.address.to_vec() {
+                        return true
+                    }
+                }
+                false
+            },
+            None => false
+        }
+    }
 
     /// nothing is configured yet, empty box
     pub fn is_clean_start(&self) -> bool {
