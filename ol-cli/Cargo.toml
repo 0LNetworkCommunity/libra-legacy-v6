@@ -30,6 +30,7 @@ handlebars = "3.5.3"
 rocksdb = "0.15.0"
 futures = "0.3.6"
 nix = "*"
+libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
 
 
 [dependencies.abscissa_core]

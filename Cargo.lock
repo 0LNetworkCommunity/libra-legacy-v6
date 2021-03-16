@@ -4916,6 +4916,7 @@ dependencies = [
  "handlebars",
  "libra-global-constants",
  "libra-json-rpc-client",
+ "libra-secure-storage",
  "libra-types",
  "nix 0.17.0",
  "num-format",

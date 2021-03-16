@@ -1,5 +1,6 @@
 //! `restore` functions
 
+use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
 // use serde::Deserialize;
 use reqwest::{
     Error,
@@ -9,11 +10,27 @@ use warp::Buf;
 use std::{fs::{self, File}, io::{self, Write}, path::{Path, PathBuf}, process::Command};
 use crate::check;
 use crate::application::app_config;
+use libra_secure_storage::{self, NamespacedStorage, OnDiskStorageInternal};
+use libra_types::{waypoint::Waypoint};
+// use libra_crypto::ed25519::Ed25519PublicKey;
+use libra_global_constants::{OPERATOR_ACCOUNT, OWNER_ACCOUNT};
+// use libra_management::{config:: ConfigPath, error::Error, secure_backend::{SecureBackend, SharedBackend}};
+// use libra_secure_storage::OnDiskStorageInternal;
+use libra_types::transaction::authenticator::AuthenticationKey;
+// use std::path::PathBuf;
+// use structopt::StructOpt;
+use libra_secure_storage::CryptoStorage;
+use libra_secure_storage::KVStorage;
 
 #[derive(Deserialize, Debug)]
 struct User {
     login: String,
     id: u32,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Manifest {
+    waypoints: Vec<Waypoint>,
 }
 #[derive(Deserialize, Debug)]
 struct GithubFile {
@@ -38,6 +55,7 @@ pub struct Backup {
     home_path: PathBuf,
     restore_path: PathBuf,
     zip_path: PathBuf,
+    node_namespace: String,
 }
 
 impl Backup {
@@ -53,7 +71,8 @@ impl Backup {
             zip_url,
             home_path: conf.home_path.clone(),
             restore_path: restore_path.clone(),
-            zip_path: conf.home_path.join(format!("restore-{}.zip", version_number))
+            zip_path: conf.home_path.join(format!("restore-{}.zip", version_number)),
+            node_namespace: conf.node_namespace,
         }
     }
     /// Fetch backups
@@ -91,10 +110,35 @@ impl Backup {
         Ok(())
     }
 
-    /// Write Waypoint
-    pub fn write_waypoint() {
-        
+    pub fn test_waypoint() {
+        let backup = Self::new();
+        let wp = backup.parse_manifest_waypoint().unwrap();
+        backup.set_waypoint(&wp);
     }
+
+    pub fn parse_manifest_waypoint(&self) -> Result<Waypoint, Error> {
+        // Some JSON input data as a &str. Maybe this comes from the user.
+        let manifest_path = self.restore_path.join("epoch_ending_99-.8f1b/epoch_ending.manifest");
+        let data = fs::read_to_string(manifest_path).unwrap();
+        let p: Manifest = serde_json::from_str(&data).unwrap();
+        Ok(p.waypoints[0])
+    }
+
+    /// Write Waypoint
+    pub fn set_waypoint(&self, waypoint: &Waypoint) {
+
+        let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(self.home_path.join("key_store.json").to_owned()));
+        // TODO: Do we need namespaced storage? if not just call storage.set
+        // storage.set(GENESIS_WAYPOINT, waypoint).unwrap();
+        // storage.set(WAYPOINT, waypoint).unwrap();
+        
+        let mut nss = NamespacedStorage::new(storage, self.node_namespace.clone().into());
+
+        // TODO: Remove hard coded field
+        nss.set(GENESIS_WAYPOINT, waypoint).unwrap();
+        nss.set(WAYPOINT, waypoint).unwrap();
+    }
+
 
 }
 /// Restore database from archive
@@ -138,4 +182,14 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
         ))
     )
 }
+
+
+// pub fn insert_waypoint() -> Result<(), Error> {
+//     set_waypoint(
+//         &PathBuf::from("/root/.0L/"),
+//     "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5-oper",
+//     &"48328718:0f8ae2d0e6db807f18098da10ad896fe3e712539de836dcb73e599d81d6e72ca".parse::<Waypoint>().unwrap(),
+//     );
+//     Ok(())
+// }
 

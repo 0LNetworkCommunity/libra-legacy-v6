@@ -30,6 +30,8 @@ pub struct OlCliConfig {
     /// The fallback waypoint
     pub address: AccountAddress,
 
+    /// The fallback waypoint
+    pub node_namespace: String,
 
 }
 
@@ -58,6 +60,7 @@ impl Default for OlCliConfig {
             base_waypoint: Waypoint::from_str("0:0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
             node_url: "http://localhost:8080".to_owned().parse::<Url>().unwrap(),
             upstream_node_url: "http://167.172.248.37:8080".to_owned().parse::<Url>().unwrap(),
+            node_namespace: "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5-oper/safety_data".to_string(),
         }
     }
 }
