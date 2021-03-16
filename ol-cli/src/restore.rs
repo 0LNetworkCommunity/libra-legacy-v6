@@ -1,6 +1,7 @@
 //! `restore` functions
 
-use abscissa_core::status_info;
+use abscissa_core::{status_info, status_ok};
+use futures::task::waker;
 use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
 // use serde::Deserialize;
 use reqwest;
@@ -57,6 +58,7 @@ pub struct Backup {
     home_path: PathBuf,
     restore_path: PathBuf,
     zip_path: PathBuf,
+    waypoint: Option<Waypoint>
     // node_namespace: String,
 }
 
@@ -75,6 +77,8 @@ impl Backup {
             home_path: conf.home_path.clone(),
             restore_path: restore_path.clone(),
             zip_path: conf.home_path.join(format!("restore/restore-{}.zip", version_number)),
+            waypoint: None,
+            // TODO: Do we need namespaced waypoints?
             // node_namespace: conf.node_namespace,
         }
     }
@@ -100,50 +104,22 @@ impl Backup {
 
     /// Restore Backups
     pub fn restore_backup(&self) -> Result<(), Error>{
-        let restore_method = "epoch-ending";
         let db_path = &self.home_path.join("db/");
-        dbg!(db_path);
-        let manifest_path = glob(
-            &format!("{}/**/epoch_ending.manifest", &self.restore_path.to_str().unwrap())
-        ).expect("Failed to read glob pattern").next().unwrap().unwrap();
-        dbg!(&manifest_path);
-        dbg!(&self.restore_path);
-
-        let mut child = Command::new("db-restore")
-            .arg("--target-db-dir")
-            .arg(db_path)
-            .arg(restore_method)
-            .arg("--epoch-ending-manifest")
-            .arg(manifest_path.to_str().unwrap())
-            .arg("local-fs")
-            .arg("--dir")
-            .arg(&self.restore_path)
-            .spawn()
-            .expect("failed to execute child");
-
-        let ecode = child.wait()
-                    .expect("failed to wait on child");
-
-        assert!(ecode.success());
-//         restore-epoch:
-// 	db-restore --target-db-dir ${DB_PATH} epoch-ending --epoch-ending-manifest ${ARCHIVE_PATH}/${EPOCH}/epoch_ending_${EPOCH}*/epoch_ending.manifest local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
-
-// restore-transaction:
-// 	db-restore --target-db-dir ${DB_PATH} transaction --transaction-manifest ${ARCHIVE_PATH}/${EPOCH}/transaction_${EPOCH_HEIGHT}*/transaction.manifest local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
-
-// restore-snapshot:
-// 	db-restore --target-db-dir ${DB_PATH} state-snapshot --state-manifest ${ARCHIVE_PATH}/${EPOCH}/state_ver_${EPOCH_HEIGHT}*/state.manifest --state-into-version ${EPOCH_HEIGHT} local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
-
+        let restore_path = self.restore_path.to_str().unwrap();
+        let height = &self.waypoint.unwrap().version();
+        restore_epoch(db_path, restore_path);
+        restore_transaction(db_path, restore_path);
+        restore_snapshot(db_path, restore_path, height);
         Ok(())
     }
 
     pub fn test_waypoint() {
-        let backup = Self::new();
+        let mut backup = Self::new();
         let wp = backup.parse_manifest_waypoint().unwrap();
         // backup.set_waypoint(&wp);
     }
 
-    pub fn parse_manifest_waypoint(&self) -> Result<Waypoint, Error> {
+    pub fn parse_manifest_waypoint(&mut self) -> Result<Waypoint, Error> {
         // Some JSON input data as a &str. Maybe this comes from the user.
 
         let manifest_path = self.restore_path.to_str().unwrap();
@@ -153,7 +129,9 @@ impl Backup {
                     println!("{:?}", path.display());
                     let data = fs::read_to_string(path).unwrap();
                     let p: Manifest = serde_json::from_str(&data).unwrap();
-                    return Ok(p.waypoints[0])
+                    let waypoint = p.waypoints[0];
+                    self.waypoint = Some(waypoint);
+                    return Ok(waypoint)
                 },
                 Err(e) => {
                     println!("{:?}", e);
@@ -168,12 +146,14 @@ impl Backup {
     }
 
     /// Write Waypoint
-    pub fn set_waypoint(&self) {
+    pub fn set_waypoint(&mut self) -> Result<Waypoint, Error>{
         let waypoint = self.parse_manifest_waypoint().unwrap();
         let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(self.home_path.join("key_store.json").to_owned()));
         // TODO: Do we need namespaced storage? if not just call storage.set
-        storage.set(GENESIS_WAYPOINT, waypoint).unwrap();
-        storage.set(WAYPOINT, waypoint).unwrap();
+        storage.set(GENESIS_WAYPOINT, waypoint)?;
+        storage.set(WAYPOINT, waypoint)?;
+
+        Ok(waypoint)
         
         // TODO: Do we need namespaced storage for waypoint?
         // let mut nss = NamespacedStorage::new(storage, self.node_namespace.clone().into());
@@ -186,16 +166,18 @@ impl Backup {
 
 /// Restore database from archive
 pub fn fast_forward_db() -> Result<(), Error>{
-    let backup = Backup::new();
+    let mut backup = Backup::new();
 
     status_info!("fetching latest epoch archive", "");
     backup.fetch_backup()?;
 
+    status_info!("setting waypoint", "");
+    backup.set_waypoint()?;
+
     status_info!("restoring db from archive", "");
     backup.restore_backup()?;
 
-    status_info!("setting waypoint", "");
-    backup.set_waypoint();
+
     Ok(())
 }
 
@@ -243,3 +225,81 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
 //     Ok(())
 // }
 
+pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, ) {
+    let manifest_path = glob(
+    &format!("{}/**/epoch_ending.manifest", restore_path)
+    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+
+    let mut child = Command::new("db-restore")
+    .arg("--target-db-dir")
+    .arg(db_path)
+    .arg("epoch-ending")
+    .arg("--epoch-ending-manifest")
+    .arg(manifest_path.to_str().unwrap())
+    .arg("local-fs")
+    .arg("--dir")
+    .arg(restore_path)
+    .spawn()
+    .expect("failed to execute child");
+
+    let ecode = child.wait()
+            .expect("failed to wait on child");
+
+    assert!(ecode.success());
+    status_ok!("Success", "epoch restored");
+}
+
+pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, ) {
+    let manifest_path = glob(
+    &format!("{}/**/transaction.manifest", restore_path)
+    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+
+    // restore-transaction:
+// 	db-restore --target-db-dir ${DB_PATH} transaction --transaction-manifest ${ARCHIVE_PATH}/${EPOCH}/transaction_${EPOCH_HEIGHT}*/transaction.manifest local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
+
+    let mut child = Command::new("db-restore")
+    .arg("--target-db-dir")
+    .arg(db_path)
+    .arg("transaction")
+    .arg("--transaction-manifest")
+    .arg(manifest_path.to_str().unwrap())
+    .arg("local-fs")
+    .arg("--dir")
+    .arg(restore_path)
+    .spawn()
+    .expect("failed to execute child");
+
+    let ecode = child.wait()
+            .expect("failed to wait on child");
+
+    assert!(ecode.success());
+    status_ok!("Success", "transactions restored");
+}
+
+pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64) {
+    let manifest_path = glob(
+    &format!("{}/**/state.manifest", restore_path)
+    ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+
+// 	db-restore --target-db-dir ${DB_PATH} state-snapshot --state-manifest ${ARCHIVE_PATH}/${EPOCH}/state_ver_${EPOCH_HEIGHT}*/state.manifest --state-into-version ${EPOCH_HEIGHT} local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
+
+    let mut child = Command::new("db-restore")
+    .arg("--target-db-dir")
+    .arg(db_path)
+    .arg("state-snapshot")
+    .arg("--state-manifest")
+    .arg(manifest_path)
+    .arg("--state-into-version")
+    .arg(&epoch_height.to_string())
+    .arg("local-fs")
+    .arg("--dir")
+    .arg(restore_path)
+    .spawn()
+    .expect("failed to execute child");
+
+    let ecode = child.wait()
+            .expect("failed to wait on child");
+
+    assert!(ecode.success());
+    status_ok!("Success", "state snapshot restored");
+}
