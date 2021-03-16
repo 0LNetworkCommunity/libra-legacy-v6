@@ -1,28 +1,15 @@
 //! `restore` functions
 
 use abscissa_core::{status_info, status_ok};
-use futures::task::waker;
 use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
-// use serde::Deserialize;
 use reqwest;
-
 use anyhow::Error;
 use glob::glob;
 use serde::{Serialize, Deserialize};
-use warp::Buf;
-use std::{fs::{self, File}, io::{self, Write}, path::{Path, PathBuf}, process::Command};
-use crate::check;
+use std::{fs::{self, File}, io::{self}, path::{PathBuf}, process::Command};
 use crate::application::app_config;
-use libra_secure_storage::{self, NamespacedStorage, OnDiskStorageInternal};
+use libra_secure_storage::{self, OnDiskStorageInternal};
 use libra_types::{waypoint::Waypoint};
-// use libra_crypto::ed25519::Ed25519PublicKey;
-use libra_global_constants::{OPERATOR_ACCOUNT, OWNER_ACCOUNT};
-// use libra_management::{config:: ConfigPath, error::Error, secure_backend::{SecureBackend, SharedBackend}};
-// use libra_secure_storage::OnDiskStorageInternal;
-use libra_types::transaction::authenticator::AuthenticationKey;
-// use std::path::PathBuf;
-// use structopt::StructOpt;
-use libra_secure_storage::CryptoStorage;
 use libra_secure_storage::KVStorage;
 
 #[derive(Deserialize, Debug)]
@@ -30,7 +17,6 @@ struct User {
     login: String,
     id: u32,
 }
-
 #[derive(Serialize, Deserialize)]
 struct Manifest {
     waypoints: Vec<Waypoint>,
@@ -43,7 +29,6 @@ struct GithubFile {
     file_type: String,
 }
 
-
 // Name your user agent after the app
 static APP_USER_AGENT: &str = concat!(
 env!("CARGO_PKG_NAME"),
@@ -51,6 +36,7 @@ env!("CARGO_PKG_NAME"),
 env!("CARGO_PKG_VERSION"),
 );
 
+/// Backup metadata
 #[derive(Debug)]
 pub struct Backup {
     version_number: u64,
@@ -113,15 +99,8 @@ impl Backup {
         Ok(())
     }
 
-    pub fn test_waypoint() {
-        let mut backup = Self::new();
-        let wp = backup.parse_manifest_waypoint().unwrap();
-        // backup.set_waypoint(&wp);
-    }
-
+    /// parse waypoint from manifest
     pub fn parse_manifest_waypoint(&mut self) -> Result<Waypoint, Error> {
-        // Some JSON input data as a &str. Maybe this comes from the user.
-
         let manifest_path = self.restore_path.to_str().unwrap();
         for entry in glob(&format!("{}/**/epoch_ending.manifest", manifest_path)).expect("Failed to read glob pattern") {
             match entry {
@@ -176,11 +155,8 @@ pub fn fast_forward_db() -> Result<(), Error>{
 
     status_info!("restoring db from archive", "");
     backup.restore_backup()?;
-
-
     Ok(())
 }
-
 
 fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     let client = reqwest::blocking::Client::builder()
@@ -215,16 +191,7 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     )
 }
 
-
-// pub fn insert_waypoint() -> Result<(), Error> {
-//     set_waypoint(
-//         &PathBuf::from("/root/.0L/"),
-//     "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5-oper",
-//     &"48328718:0f8ae2d0e6db807f18098da10ad896fe3e712539de836dcb73e599d81d6e72ca".parse::<Waypoint>().unwrap(),
-//     );
-//     Ok(())
-// }
-
+/// Restores transaction epoch backups
 pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, ) {
     let manifest_path = glob(
     &format!("{}/**/epoch_ending.manifest", restore_path)
@@ -249,13 +216,11 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, ) {
     status_ok!("Success", "epoch restored");
 }
 
+/// Restores transaction type backups
 pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, ) {
     let manifest_path = glob(
     &format!("{}/**/transaction.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap().unwrap();
-
-    // restore-transaction:
-// 	db-restore --target-db-dir ${DB_PATH} transaction --transaction-manifest ${ARCHIVE_PATH}/${EPOCH}/transaction_${EPOCH_HEIGHT}*/transaction.manifest local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
 
     let mut child = Command::new("db-restore")
     .arg("--target-db-dir")
@@ -276,12 +241,11 @@ pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, ) {
     status_ok!("Success", "transactions restored");
 }
 
+/// Restores snapshot type backups
 pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64) {
     let manifest_path = glob(
     &format!("{}/**/state.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap().unwrap();
-
-// 	db-restore --target-db-dir ${DB_PATH} state-snapshot --state-manifest ${ARCHIVE_PATH}/${EPOCH}/state_ver_${EPOCH_HEIGHT}*/state.manifest --state-into-version ${EPOCH_HEIGHT} local-fs --dir ${ARCHIVE_PATH}/${EPOCH}
 
     let mut child = Command::new("db-restore")
     .arg("--target-db-dir")

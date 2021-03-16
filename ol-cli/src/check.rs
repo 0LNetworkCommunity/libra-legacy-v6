@@ -1,5 +1,5 @@
 //! `check` module
-use anyhow::Result;
+
 use cli::libra_client::LibraClient;
 use sysinfo::SystemExt;
 use crate::metadata::Metadata;
@@ -8,8 +8,8 @@ use crate::application::app_config;
 use std::str;
 use rocksdb::DB;
 use serde::{Serialize, Deserialize};
-use resource_viewer::{NullStateView, MoveValueAnnotator, AnnotatedAccountStateBlob};
-use libra_types::{account_address::AccountAddress, account_state::AccountState, transaction::Version};
+
+use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 use libra_json_rpc_client::views::MinerStateResourceView;
 
@@ -102,7 +102,7 @@ impl Check {
     }
 
     fn get_annotate_account_blob(&mut self, address: AccountAddress) -> Option<AccountState> {
-        let (blob, ver) = self.client.get_account_state_blob(address).unwrap();
+        let (blob, _ver) = self.client.get_account_state_blob(address).unwrap();
         if let Some(account_blob) = blob {
             Some(AccountState::try_from(&account_blob).unwrap())
         }else{
@@ -111,6 +111,7 @@ impl Check {
 
     }
 
+    /// Fetch chain state from the upstream node
     pub fn fetch_upstream_states(&mut self) {
         self.chain_state = self.get_annotate_account_blob(AccountAddress::ZERO);
         self.miner_state = self.client.get_miner_state(self.conf.address)

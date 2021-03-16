@@ -22,7 +22,7 @@ fn sse_counter(counter: u64) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::data(counter))
 }
 
-fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars>) -> impl warp::Reply
+fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars<'_>>) -> impl warp::Reply
 where
     T: Serialize,
 {
