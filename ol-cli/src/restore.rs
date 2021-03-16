@@ -64,10 +64,9 @@ impl Backup {
         io::copy(&mut resp, &mut out).expect("failed to copy content");
 
         let mut child = Command::new("unzip")
-            .arg("-j") // prevents an extra directory layer
             .arg(&self.zip_path)
-            // .arg("-d")
-            // .arg(&self.restore_path)
+            .arg("-d")
+            .arg(&self.restore_path)
             .spawn()
             .expect("failed to execute child");
 
