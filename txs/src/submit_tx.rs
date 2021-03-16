@@ -109,9 +109,8 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
     let EntryPointTxsCmd { 
         url, waypoint, swarm_path, .. } = Command::from_env_args();
 
-    let mut tx_params: TxParams;
     let txs_config = crate::prelude::app_config();
-
+    let mut tx_params: TxParams;
     if swarm_path.is_some() {
         tx_params = get_tx_params_from_swarm(
             swarm_path.clone().expect("needs a valid swarm temp dir")
