@@ -14,37 +14,39 @@ struct Process {
 pub fn save_pid(name: &str, pid: u32) {
 
     let db = check::cache_handle();
-    
-    // TODO: Handle the first pass - no "pids"
-    // if !db.is_empty() {
-        // let process = Process { name: name.to_owned(), pids: vec![] };
-        // let serialized = serde_json::to_vec(&process).unwrap();
-        // db.put(b"pids", serialized).unwrap();
-    // }
 
-    // Load
-    let pids_loaded = db.get(b"pids").unwrap().unwrap();    
+    // Handle empty case
+    match db.get(name.as_bytes()) {
+        Ok(Some(_value)) => { /* TODO */},
+        Ok(None) => { 
+            let process = Process { name: name.to_owned(), pids: vec![pid] };
+            let serialized = serde_json::to_vec(&process).unwrap();
+            db.put(name.as_bytes(), serialized).unwrap();                 
+        },
+        Err(e) => println!("RocksDB operational problem occured: {}", e),
+    }    
+
+    // Load, update and save
+    let pids_loaded = db.get(name.as_bytes()).unwrap().unwrap();    
     let mut process: Process = serde_json::de::from_slice(
-        &pids_loaded.to_vec()
+        &pids_loaded
     ).unwrap();
-    // println!("--- Loaded: {:?}", &p);
-
-    // Update & Save
     if !process.pids.contains(&pid) {
         process.pids.push(pid);
     }
     let serialized = serde_json::to_vec(&process).unwrap();
-    let _res = db.put(b"pids", serialized);
+    let _res = db.put(name.as_bytes(), serialized);
     println!("--- Saved: {:?}", &process);
 }
 
 /// Kill all the processes that are running
-pub fn kill_zombies(_name: &str) {
+pub fn kill_zombies(name: &str) {
     let db = check::cache_handle();
-    // TODO: 
-    // if db.is_empty() { return; }
+    if db.get(name.as_bytes()).unwrap().is_none() {
+        return;
+    }
 
-    let pids_loaded = db.get(b"pids").unwrap().unwrap().to_vec();
+    let pids_loaded = db.get(name.as_bytes()).unwrap().unwrap();
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
     println!("--- kz: Loaded: {:?}", &process);
 
@@ -63,6 +65,7 @@ pub enum NodeType {
     /// Fullnode
     Fullnode,
 }
+
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) {
     const BINARY: &str = "cargo r -p libra-node -- ";
@@ -76,18 +79,17 @@ pub fn start_node(config_type: NodeType) {
         NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
     };
 
-    dbg!(&config_file_name);
     // Stop any processes we may have started and detached from.
     kill_zombies(BINARY);
 
-    let mut child = Command::new(BINARY)
+    let child = Command::new(BINARY)
                         .arg("--config")
                         .arg(config_file_name)
                         .spawn()
                         .expect("failed to execute child");
 
     let pid = &child.id();
-    println!("pid: {}", pid);
+    println!("--- Started new w/ pid: {}", pid);
     save_pid(BINARY, *pid);
 }
 
