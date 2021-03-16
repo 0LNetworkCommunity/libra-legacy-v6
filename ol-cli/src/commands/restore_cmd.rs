@@ -28,7 +28,7 @@ impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
         // Your code goes here
-        // restore::fast_forward_db();
-        restore::Backup::test_waypoint();
+        restore::fast_forward_db();
+        // restore::Backup::test_waypoint();
     }
 }

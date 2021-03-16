@@ -4912,6 +4912,7 @@ dependencies = [
  "crossterm",
  "dirs 2.0.2",
  "futures 0.3.6",
+ "glob",
  "gumdrop",
  "handlebars",
  "libra-global-constants",
