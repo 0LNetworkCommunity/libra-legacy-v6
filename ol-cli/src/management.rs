@@ -1,13 +1,13 @@
 //! `trigger` functions
 
-use serde::{Serialize, Deserialize};
-use std::process::Command;
 use crate::check;
+use serde::{Serialize, Deserialize};
+use std::{collections::HashSet, process::Command};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Process {
     name: String,
-    pids: Vec<u32>,
+    pids: HashSet<u32>,
 }
 
 /// Save PID
@@ -19,7 +19,9 @@ pub fn save_pid(name: &str, pid: u32) {
     match db.get(name.as_bytes()) {
         Ok(Some(_value)) => { /* TODO */},
         Ok(None) => { 
-            let process = Process { name: name.to_owned(), pids: vec![pid] };
+            let process = Process { 
+                name: name.to_owned(), pids: vec![pid].into_iter().collect() 
+            };
             let serialized = serde_json::to_vec(&process).unwrap();
             db.put(name.as_bytes(), serialized).unwrap();                 
         },
@@ -30,13 +32,12 @@ pub fn save_pid(name: &str, pid: u32) {
     let pids_loaded = db.get(name.as_bytes()).unwrap().unwrap();    
     let mut process: Process = serde_json::de::from_slice(
         &pids_loaded
-    ).unwrap();
-    if !process.pids.contains(&pid) {
-        process.pids.push(pid);
-    }
+    ).unwrap();    
+    process.pids.insert(pid);
+    
     let serialized = serde_json::to_vec(&process).unwrap();
     let _res = db.put(name.as_bytes(), serialized);
-    println!("--- Saved: {:?}", &process);
+    println!("--- Saved: {:?}, pids.len: {}", &process, process.pids.len());
 }
 
 /// Kill all the processes that are running
@@ -48,7 +49,7 @@ pub fn kill_zombies(name: &str) {
 
     let pids_loaded = db.get(name.as_bytes()).unwrap().unwrap();
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
-    println!("--- kz: Loaded: {:?}", &process);
+    println!("--- kz: Loaded: {:?}, pids.len: {}", &process, process.pids.len());
 
     use nix::sys::signal::{self, Signal};
     for pid in process.pids.iter() {
@@ -89,8 +90,8 @@ pub fn start_node(config_type: NodeType) {
                         .expect("failed to execute child");
 
     let pid = &child.id();
-    println!("--- Started new w/ pid: {}", pid);
     save_pid(BINARY, *pid);
+    println!("--- Started new w/ pid: {}", pid);
 }
 
 
