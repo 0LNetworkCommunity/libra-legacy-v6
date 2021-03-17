@@ -1,7 +1,7 @@
 //! server
 
 #![deny(warnings)]
-use std::sync::Arc;
+use std::{fs, sync::Arc};
 use handlebars::Handlebars;
 use serde::Serialize;
 use serde_json::json;
@@ -18,8 +18,10 @@ struct WithTemplate<T: Serialize> {
 }
 
 // create server-sent event
-fn sse_counter(counter: u64) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::data(counter))
+fn sse_counter(info: check::Items) -> Result<impl ServerSentEvent, Infallible> {
+    // Ok(warp::sse::data(format!("{:#?}", serde_json::to_string(&info))));
+    Ok(warp::sse::json(info))
+
 }
 
 fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars<'_>>) -> impl warp::Reply
@@ -35,23 +37,7 @@ where
 /// main server
 #[tokio::main]
 pub async fn main() {
-    let template = "<!DOCTYPE html>
-                    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/css/uikit.min.css' />
-                    <script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit.min.js'></script>
-                    <script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit-icons.min.js'></script>
-                    <html>
-                      <head>
-                        <title>0L</title>
-                      </head>
-                      <body>
-                      <div class='uk-container uk-container-small'>
-                        <div class='uk-card uk-card-default uk-card-body uk-width-1-2@m'>
-                            <h3 class='uk-card-title'>Node info</h3>
-                            <p>Node is synced: {{is_synced}}</p>
-                        </div>
-                        </div>
-                    </body>
-                </html>";
+    let template = fs::read_to_string("/root/libra/ol-cli/web/index.html").expect("cannot find index.html");
 
     let mut hb = Handlebars::new();
     // register the template
@@ -79,12 +65,15 @@ pub async fn main() {
         .map(handlebars);
     
     //GET ticks/
-    let ticks = warp::path("ticks").and(warp::get()).map(|| {
-        let mut counter: u64 = 0;
+    let ticks = warp::path("check").and(warp::get()).map(|| {
+
+        // let mut counter: u64 = 0;
         // create server event source
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            counter += 1;
-            sse_counter(counter)
+            // counter += 1;
+            let items = check::Items::read_cache().unwrap();
+
+            sse_counter(items)
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)

@@ -33,7 +33,7 @@ pub fn mon() {
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}, epoch: {}, validator set:{}",
+                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}, epoch: {}-{}, validator set:{}",
                 &x,
                 checker.is_clean_start(),
                 &sync,
@@ -41,6 +41,7 @@ pub fn mon() {
                 mining,
                 checker.accounts_exist_on_chain(),
                 checker.epoch_on_chain(),
+                checker.chain_height(),
                 checker.is_in_validator_set(),
             ).as_bytes()
         ).unwrap();
