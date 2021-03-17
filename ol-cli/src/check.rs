@@ -31,6 +31,7 @@ pub fn cache_handle() -> DB {
 pub struct Items {
     /// is the blockchain in sync with upstream
     pub is_synced: bool,
+    pub height: u64,
 }
 
 impl Items {
@@ -38,6 +39,7 @@ impl Items {
     pub fn new(is_synced: bool) -> Self {
         Items {
             is_synced,
+            height: 0,
         }
     }
 
@@ -133,6 +135,13 @@ impl Check {
             None => 0
         }
     }
+
+    /// return  height on chain
+    pub fn chain_height(&self)-> u64 {
+        // Metadata::new(self.conf.clone().node_url, self.client.clone()).get_height()
+    }
+
+    
 
     /// return epoch on chain
     pub fn epoch_on_chain(&self)-> u64 {

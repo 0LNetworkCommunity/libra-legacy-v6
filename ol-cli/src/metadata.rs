@@ -58,6 +58,10 @@ impl Metadata {
         Metadata::compare(local, remote) as i64
     }
 
+    pub fn get_height(&self) -> u64{
+        self.meta.version
+    }
+
     // pub fn get_waypoint_upstream() -> Waypoint {
     //     // let client = default_remote_client().0.unwrap();
     //     // let li = client
