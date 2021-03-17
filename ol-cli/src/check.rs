@@ -12,6 +12,9 @@ use serde::{Serialize, Deserialize};
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 use libra_json_rpc_client::views::MinerStateResourceView;
+use cli::client_proxy::ClientProxy;
+use libra_types::ledger_info::LedgerInfoWithSignatures;
+use libra_types::waypoint::Waypoint;
 
 /// caching database name, to be appended to node_home
 pub const CHECK_CACHE_PATH: &str = "ol-system-checks";
@@ -89,7 +92,6 @@ impl Check {
     /// Create a instance of Check
     pub fn new() -> Self {
         let conf = app_config().to_owned();
-
         return Self {
             client: LibraClient::new(conf.node_url.clone(), conf.base_waypoint.clone()).unwrap(),
             conf,
@@ -116,6 +118,7 @@ impl Check {
         self.chain_state = self.get_annotate_account_blob(AccountAddress::ZERO);
         self.miner_state = self.client.get_miner_state(self.conf.address)
             .expect("Error occurs on fetching miner states");
+        self.chain_state.unwrap().get_validator_config_resource().unwrap().unwrap().
     }
 
     /// return tower height on chain
@@ -152,6 +155,11 @@ impl Check {
     /// Current monitor account
     pub fn account(&self)-> Vec<u8> {
         self.conf.address.to_vec()
+    }
+
+    /// Current monitor account
+    pub fn waypoint(&self) -> Option<Waypoint> {
+        self.client.waypoint()
     }
 
     /// is validator jailed
