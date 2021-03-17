@@ -158,8 +158,14 @@ impl Check {
     }
 
     /// Current monitor account
-    pub fn waypoint(&self) -> Option<Waypoint> {
-        self.client.waypoint()
+    pub fn waypoint(&mut self) -> Waypoint {
+        match self.client.waypoint() {
+            Some(w)=> {
+                self.client = LibraClient::new(conf.node_url.clone(), w.clone()).unwrap();
+                w
+            },
+            None=> self.conf.base_waypoint
+        }
     }
 
     /// is validator jailed
