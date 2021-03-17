@@ -32,6 +32,7 @@ futures = "0.3.6"
 nix = "*"
 libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
 glob = "0.3.0"
+sm = "0.9.0"
 
 [dependencies.abscissa_core]
 version = "0.5.2"

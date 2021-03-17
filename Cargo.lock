@@ -4919,7 +4919,7 @@ dependencies = [
  "libra-json-rpc-client",
  "libra-secure-storage",
  "libra-types",
- "nix 0.17.0",
+ "nix 0.18.0",
  "num-format",
  "once_cell",
  "reqwest",
@@ -4928,6 +4928,7 @@ dependencies = [
  "rustyline",
  "serde",
  "serde_json",
+ "sm",
  "sysinfo",
  "thiserror",
  "tokio",
@@ -6487,6 +6488,26 @@ name = "slab"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
+
+[[package]]
+name = "sm"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8e4a3f3651a411045a4324773afcf10d11919a90c006b94a4178da1d18e5769"
+dependencies = [
+ "sm_macro",
+]
+
+[[package]]
+name = "sm_macro"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba245bc9067435452e4d8b9af04509929a9e99ce7273c82c2b8551e7f09ee861"
+dependencies = [
+ "proc-macro2 0.4.30",
+ "quote 0.6.13",
+ "syn 0.15.44",
+]
 
 [[package]]
 name = "smallvec"

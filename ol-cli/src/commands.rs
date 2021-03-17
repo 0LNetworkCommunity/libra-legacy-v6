@@ -21,6 +21,7 @@ mod monitor_cmd;
 mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
+mod sm_cmd;
 
 use self::{
     init::StartCmd,
@@ -34,6 +35,7 @@ use self::{
     mgmt_cmd::MgmtCmd,
     serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
+    sm_cmd::SMCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -96,6 +98,10 @@ pub enum OlCliCmd {
     /// The `restore` subcommand
     #[options(help = "serve the monitor over http")]
     Restore(RestoreCmd),
+
+    /// The `..` subcommand
+    #[options(help = "state machine")]
+    Sm(SMCmd),    
 }
 
 /// Get home path for all 0L apps
