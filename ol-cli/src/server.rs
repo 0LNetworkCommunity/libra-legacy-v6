@@ -1,7 +1,7 @@
 //! server
 
 #![deny(warnings)]
-use std::sync::Arc;
+use std::{fs, sync::Arc};
 use handlebars::Handlebars;
 use serde::Serialize;
 use serde_json::json;
@@ -35,23 +35,7 @@ where
 /// main server
 #[tokio::main]
 pub async fn main() {
-    let template = "<!DOCTYPE html>
-                    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/css/uikit.min.css' />
-                    <script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit.min.js'></script>
-                    <script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit-icons.min.js'></script>
-                    <html>
-                      <head>
-                        <title>0L</title>
-                      </head>
-                      <body>
-                      <div class='uk-container uk-container-small'>
-                        <div class='uk-card uk-card-default uk-card-body uk-width-1-2@m'>
-                            <h3 class='uk-card-title'>Node info</h3>
-                            <p>Node is synced: {{is_synced}}</p>
-                        </div>
-                        </div>
-                    </body>
-                </html>";
+    let template = fs::read_to_string("/root/libra/ol-cli/src/web/index.html").expect("cannot find index.html");
 
     let mut hb = Handlebars::new();
     // register the template
