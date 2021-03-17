@@ -34,7 +34,17 @@ pub fn cache_handle() -> DB {
 pub struct Items {
     /// is the blockchain in sync with upstream
     pub is_synced: bool,
+    /// the chain height
     pub height: u64,
+}
+#[derive(Clone, Debug, Deserialize, Serialize)]
+impl Default for Items {
+    fn default() -> Self { 
+        Self {
+            is_synced: false,
+            height: 0,
+        }
+    }
 }
 
 impl Items {

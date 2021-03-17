@@ -56,7 +56,7 @@ pub async fn main() {
     let route = warp::get()
         .and(warp::path::end())
         .map(|| {
-            let items = check::Items::read_cache().unwrap();
+            let items = check::Items::read_cache().unwrap_or_default();
             WithTemplate {
                 name: "template.html",
                 value: json!({"is_synced" : items.is_synced }),
