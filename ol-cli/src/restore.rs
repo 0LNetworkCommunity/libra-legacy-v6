@@ -147,13 +147,13 @@ impl Backup {
 pub fn fast_forward_db() -> Result<(), Error>{
     let mut backup = Backup::new();
 
-    status_info!("fetching latest epoch archive", "");
+    status_info!("Fetching latest epoch backup", "from epoch archive");
     backup.fetch_backup()?;
 
-    status_info!("setting waypoint", "");
+    status_info!("Setting waypoint", "key_store.json being updated");
     backup.set_waypoint()?;
 
-    status_info!("restoring db from archive", "");
+    status_info!("Restoring db from archive", "to home path");
     backup.restore_backup()?;
     Ok(())
 }
