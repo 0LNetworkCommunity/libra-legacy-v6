@@ -18,8 +18,10 @@ struct WithTemplate<T: Serialize> {
 }
 
 // create server-sent event
-fn sse_counter(counter: u64) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::data(counter))
+fn sse_counter(info: check::Items) -> Result<impl ServerSentEvent, Infallible> {
+    // Ok(warp::sse::data(format!("{:#?}", serde_json::to_string(&info))));
+    Ok(warp::sse::json(info))
+
 }
 
 fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars<'_>>) -> impl warp::Reply
@@ -35,7 +37,7 @@ where
 /// main server
 #[tokio::main]
 pub async fn main() {
-    let template = fs::read_to_string("/root/libra/ol-cli/src/web/index.html").expect("cannot find index.html");
+    let template = fs::read_to_string("/root/libra/ol-cli/web/index.html").expect("cannot find index.html");
 
     let mut hb = Handlebars::new();
     // register the template
@@ -63,12 +65,15 @@ pub async fn main() {
         .map(handlebars);
     
     //GET ticks/
-    let ticks = warp::path("ticks").and(warp::get()).map(|| {
-        let mut counter: u64 = 0;
+    let ticks = warp::path("check").and(warp::get()).map(|| {
+
+        // let mut counter: u64 = 0;
         // create server event source
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            counter += 1;
-            sse_counter(counter)
+            // counter += 1;
+            let items = check::Items::read_cache().unwrap();
+
+            sse_counter(items)
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)
