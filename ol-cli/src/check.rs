@@ -120,7 +120,6 @@ impl Check {
         self.chain_state = self.get_annotate_account_blob(AccountAddress::ZERO);
         self.miner_state = self.client.get_miner_state(self.conf.address)
             .expect("Error occurs on fetching miner states");
-        self.chain_state.unwrap().get_validator_config_resource().unwrap().unwrap().
     }
 
     /// return tower height on chain
@@ -167,9 +166,10 @@ impl Check {
 
     /// Current monitor account
     pub fn waypoint(&mut self) -> Waypoint {
-        match self.client.waypoint() {
+        let waypoint = self.client.waypoint();
+        match waypoint.clone() {
             Some(w)=> {
-                self.client = LibraClient::new(conf.node_url.clone(), w.clone()).unwrap();
+                //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
                 w
             },
             None=> self.conf.base_waypoint

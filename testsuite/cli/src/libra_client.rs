@@ -324,7 +324,8 @@ impl LibraClient {
         Ok(())
     }
 
-    pub fn waypoint(self)->Option<Waypoint> {
+    /// generate latest waypoint
+    pub fn waypoint(&self)->Option<Waypoint> {
         let latest_epoch_change_li = match self.latest_epoch_change_li() {
             Some(li) => li,
             None => {
