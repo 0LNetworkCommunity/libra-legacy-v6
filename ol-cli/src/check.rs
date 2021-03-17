@@ -37,7 +37,6 @@ pub struct Items {
     /// the chain height
     pub height: u64,
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
 impl Default for Items {
     fn default() -> Self { 
         Self {
