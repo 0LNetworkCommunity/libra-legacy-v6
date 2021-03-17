@@ -137,11 +137,10 @@ impl Check {
     }
 
     /// return  height on chain
-    pub fn chain_height(&self)-> u64 {
-        // Metadata::new(self.conf.clone().node_url, self.client.clone()).get_height()
+    pub fn chain_height(&mut self) -> u64 {
+        let m = self.client.get_metadata().unwrap();
+        m.version
     }
-
-    
 
     /// return epoch on chain
     pub fn epoch_on_chain(&self)-> u64 {
