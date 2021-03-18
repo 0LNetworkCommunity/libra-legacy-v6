@@ -77,7 +77,7 @@ pub fn get_files(
     let mut w_file = File::create(&w_path).expect("couldn't create file");
     let w_content =  w_res.unwrap().text().unwrap();
     w_file.write_all(w_content.as_bytes()).unwrap();
-    println!("genesis waypoint, file saved to: {:?}", w_path);
+    println!("genesis waypoint fetched, file saved to: {:?}", w_path);
 
     let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url));
 

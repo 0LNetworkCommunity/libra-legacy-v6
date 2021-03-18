@@ -30,7 +30,6 @@ else
 REPO_NAME = experimental-genesis
 NODE_ENV = prod
 endif
-#experimental network is #7
 
 # Registration params
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
@@ -38,38 +37,19 @@ LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
 ##### DEPENDENCIES #####
 deps:
-	#install rust
-	curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
-	#target is Ubuntu
-	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev pkg-config libssl-dev
-
+	. ./util/setup.sh
 
 bins:
 	#Build and install genesis tool, libra-node, and miner
 
-	# first need a TOML cli
-	cargo install toml-cli
+	# NOTE: stdlib is built for cli bindings
+	cargo run -p stdlib -p libra-node -p miner -p backup-cli -p ol-cli --release
 
-	# stdlib is built for cli bindings
-	cargo run -p stdlib --release
-
-	# miner
-	cargo build -p miner --release && sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
-	
-	# libra node
-	cargo build -p libra-node --release && sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
-
-	# backup and restore binaries
-	cargo build -p backup-cli --release
+	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
+	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
 	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
-
-	# 0L monitor app
-	cargo build -p ol-cli --release && sudo cp -f ${SOURCE}/target/release/ol-cli /usr/local/bin/ol
-
-##### PIPELINES #####
-# pipelines for genesis ceremony
+	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 

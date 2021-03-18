@@ -73,12 +73,12 @@ impl Runnable for ValWizardCmd {
         if !self.skip_mining {
             // Mine Block
             zero_cmd::mine_zero(&miner_config);
-            status_ok!("\nProof zero complete", "\n...........................\n");
+            status_ok!("\nGenesis proof complete", "\n...........................\n");
         }
         
         // Write Manifest
         manifest_cmd::write_manifest(None, wallet);
-        status_ok!("\nAccount manifest OK", "\n...........................\n");
+        status_ok!("\nAccount manifest written", "\n...........................\n");
 
         status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");
     }
