@@ -12,21 +12,21 @@ use serde::{Serialize, Deserialize};
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 use libra_json_rpc_client::views::MinerStateResourceView;
-// use cli::client_proxy::ClientProxy;
-// use libra_types::ledger_info::LedgerInfoWithSignatures;
 use libra_types::waypoint::Waypoint;
+use once_cell::sync::Lazy;
 
 /// caching database name, to be appended to node_home
 pub const CHECK_CACHE_PATH: &str = "ol-system-checks";
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
-/// Return the DB object
-pub fn cache_handle() -> DB {
+
+/// Construct Lazy Database instance
+pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
     let mut conf = app_config().to_owned();
     conf.home_path.push(CHECK_CACHE_PATH);
     DB::open_default(conf.home_path).unwrap()
-}
+});
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -70,7 +70,7 @@ impl Items {
     /// Saves the Items to cache
     pub fn write_cache(&self) {
         let serialized = serde_json::to_vec(&self.clone()).unwrap();
-        match cache_handle().put("items", serialized) {
+        match DB_CACHE.put("items", serialized) {
             Ok(_) => {}
             Err(err) => {dbg!(&err);}
         }; 
@@ -79,7 +79,7 @@ impl Items {
     
     /// Get from cache
     pub fn read_cache() -> Option<Items>{
-        let q = cache_handle().get("items").unwrap().unwrap();
+        let q = DB_CACHE.get("items").unwrap().unwrap();
         match serde_json::from_slice(&q.as_slice()) {
             Ok(items) => {
                 Some(items)

@@ -13,41 +13,38 @@ struct Process {
 /// Save PID
 pub fn save_pid(name: &str, pid: u32) {
 
-    let db = check::cache_handle();
-
     // Handle empty case
-    match db.get(name.as_bytes()) {
+    match check::DB_CACHE.get(name.as_bytes()) {
         Ok(Some(_value)) => { /* TODO */},
         Ok(None) => { 
             let process = Process { 
                 name: name.to_owned(), pids: vec![pid].into_iter().collect() 
             };
             let serialized = serde_json::to_vec(&process).unwrap();
-            db.put(name.as_bytes(), serialized).unwrap();                 
+            check::DB_CACHE.put(name.as_bytes(), serialized).unwrap();
         },
         Err(e) => println!("RocksDB operational problem occured: {}", e),
     }    
 
     // Load, update and save
-    let pids_loaded = db.get(name.as_bytes()).unwrap().unwrap();    
+    let pids_loaded = check::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
     let mut process: Process = serde_json::de::from_slice(
         &pids_loaded
     ).unwrap();    
     process.pids.insert(pid);
     
     let serialized = serde_json::to_vec(&process).unwrap();
-    let _res = db.put(name.as_bytes(), serialized);
+    let _res = check::DB_CACHE.put(name.as_bytes(), serialized);
     println!("--- Saved: {:?}, pids.len: {}", &process, process.pids.len());
 }
 
 /// Kill all the processes that are running
 pub fn kill_zombies(name: &str) {
-    let db = check::cache_handle();
-    if db.get(name.as_bytes()).unwrap().is_none() {
+    if check::DB_CACHE.get(name.as_bytes()).unwrap().is_none() {
         return;
     }
 
-    let pids_loaded = db.get(name.as_bytes()).unwrap().unwrap();
+    let pids_loaded = check::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
     println!("--- kz: Loaded: {:?}, pids.len: {}", &process, process.pids.len());
 

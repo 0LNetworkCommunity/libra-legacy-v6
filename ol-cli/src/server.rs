@@ -1,7 +1,7 @@
 //! server
 
 #![deny(warnings)]
-use std::{fs, sync::Arc};
+use std::{sync::Arc};
 use handlebars::Handlebars;
 use serde::Serialize;
 use serde_json::json;
@@ -37,6 +37,9 @@ where
     warp::reply::html(render)
 }
 
+/// Web Template
+pub const TEMPLATE: &'static str = std::include_str!("../web/index.html");
+
 /// main server
 #[tokio::main]
 pub async fn main() {
@@ -45,11 +48,9 @@ pub async fn main() {
         monitor::mon();
     });
 
-    let template = fs::read_to_string("/root/libra/ol-cli/web/index.html").expect("cannot find index.html");
-
     let mut hb = Handlebars::new();
     // register the template
-    hb.register_template_string("template.html", template)
+    hb.register_template_string("template.html", TEMPLATE)
         .unwrap();
 
     // Turn Handlebars instance into a Filter so we can combine it
