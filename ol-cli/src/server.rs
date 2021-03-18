@@ -10,7 +10,10 @@ use std::convert::Infallible;
 use std::time::Duration;
 use tokio::time::interval;  
 use warp::{sse::ServerSentEvent, Filter};
-use crate::check;
+use crate::{check, monitor};
+
+use std::thread;
+
 
 struct WithTemplate<T: Serialize> {
     name: &'static str,
@@ -37,6 +40,11 @@ where
 /// main server
 #[tokio::main]
 pub async fn main() {
+
+    thread::spawn(|| {
+        monitor::mon();
+    });
+
     let template = fs::read_to_string("/root/libra/ol-cli/web/index.html").expect("cannot find index.html");
 
     let mut hb = Handlebars::new();
@@ -50,7 +58,6 @@ pub async fn main() {
 
     // Create a reusable closure to render template
     let handlebars = move |with_template| render(with_template, hb.clone());
-
 
     //GET /
     let route = warp::get()
@@ -81,6 +88,4 @@ pub async fn main() {
     // TODO: Server runs monitor in background.
     // monitor::mon();
     warp::serve(route.or(ticks)).run(([127, 0, 0, 1], 3030)).await;
-
-
 }

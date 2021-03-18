@@ -46,6 +46,8 @@ pub fn mon() {
             ).as_bytes()
         ).unwrap();
 
+        checker.items.write_cache();
+        
         stdout.queue(cursor::RestorePosition).unwrap();
         stdout.flush().unwrap();
 

@@ -3,10 +3,15 @@
 <script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit-icons.min.js'></script>
         <script type="text/javascript">
-          var uri = 'http://' + location.host + '/ticks';
+          var uri = 'http://' + location.host + '/check';
           var sse = new EventSource(uri);
           sse.onmessage = function (msg) {
-            document.getElementById("demo").innerHTML = msg.data;
+            let data_json = JSON.parse(msg.data);
+            console.log(data_json);
+            document.getElementById("is_sync").innerHTML = data_json.is_synced;
+            document.getElementById("height").innerHTML = data_json.height;
+            document.getElementById("epoch").innerHTML = data_json.epoch;
+
           };
         </script>
 <html>
@@ -28,25 +33,31 @@
           <div class="uk-card uk-card-default uk-card-body">
             <h3 class='uk-card-title uk-text-center uk-text-uppercase uk-text-muted' >Onboarding</h3>
             <dl class="uk-description-list">
-              <dt><span class="uk-margin-small-right" uk-icon="icon: check; ratio: 1"> </span>Database is bootstrapped:
-                True </dt>
+              <dt><span class="uk-margin-small-right" uk-icon="icon: more; ratio: 1"> </span>Database is bootstrapped:
+                n/a </dt>
               <dd>db successfully restored</dd>
-              <dt><span class="uk-margin-small-right" uk-icon="icon: check; ratio: 1"> </span>Account is created: True
+              <dt><span class="uk-margin-small-right" uk-icon="icon: more; ratio: 1"> </span>Account is created: n/a
               </dt>
               <dd>owner account created on chain</dd>
-              <dt><span class="uk-margin-small-right" uk-icon="icon: check; ratio: 1"> </span>Account has balance: True
+              <dt><span class="uk-margin-small-right" uk-icon="icon: more; ratio: 1"> </span>Account has balance: n/a
               </dt>
               <dd>owner has minimum balance for mining</dd>
-              <dt><span class="uk-margin-small-right" uk-icon="icon: check; ratio: 1"> </span>Miner is running: True
+              <dt><span class="uk-margin-small-right" uk-icon="icon: more; ratio: 1"> </span>Miner is running: n/a
               </dt>
               <dd>process `miner` has started</dd>
-              <dt><span class="uk-margin-small-right" uk-icon="icon: check; ratio: 1"> </span>Node is running: True</dt>
+              <dt><span class="uk-margin-small-right" uk-icon="icon: more; ratio: 1"> </span>Node is running: n/a</dt>
               <dd>process `libra-node` has started</dd>
-              <dt> <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: ban; ratio: 1"></span>Node is
+              <dt> 
+                {{#if is_synced}}
+                <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                {{else}}
+                <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                {{/if}}
+                Node is
                 synced:
-                <span id="demo"> {{is_synced}} </span>
+                <span id="is_sync"> {{is_synced}} </span>
               </dt>
-              <dd>Lorem ipsum dolor sit amet, </dd>
+              <dd>node is up to date with upstream </dd>
             </dl>
 
 
@@ -60,11 +71,11 @@
               <tbody>
                 <tr>
                   <td>Epoch</td>
-                  <td>105</td>
+                  <td id="epoch">0</td>
                 </tr>
                 <tr>
                   <td>Height</td>
-                  <td>x</td>
+                  <td id="height">0</td>
                 </tr>
               </tbody>
             </table>

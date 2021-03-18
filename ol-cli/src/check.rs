@@ -12,8 +12,8 @@ use serde::{Serialize, Deserialize};
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 use libra_json_rpc_client::views::MinerStateResourceView;
-use cli::client_proxy::ClientProxy;
-use libra_types::ledger_info::LedgerInfoWithSignatures;
+// use cli::client_proxy::ClientProxy;
+// use libra_types::ledger_info::LedgerInfoWithSignatures;
 use libra_types::waypoint::Waypoint;
 
 /// caching database name, to be appended to node_home
@@ -36,12 +36,15 @@ pub struct Items {
     pub is_synced: bool,
     /// the chain height
     pub height: u64,
+    /// current epoch
+    pub epoch: u64,
 }
 impl Default for Items {
     fn default() -> Self { 
         Self {
             is_synced: false,
             height: 0,
+            epoch: 0,
         }
     }
 }
@@ -52,6 +55,7 @@ impl Items {
         Items {
             is_synced,
             height: 0,
+            epoch: 0,
         }
     }
 
@@ -93,7 +97,8 @@ pub struct Check {
     client: LibraClient,
     miner_process_name: &'static str,
     node_process_name: &'static str,
-    items: Items,
+    /// all items we are checking. Monitor sends these to cache.
+    pub items: Items,
     chain_state: Option<AccountState>,
     miner_state: Option<MinerStateResourceView>,
 }
@@ -150,13 +155,18 @@ impl Check {
     /// return  height on chain
     pub fn chain_height(&mut self) -> u64 {
         let m = self.client.get_metadata().unwrap();
+        self.items.height = m.version;
         m.version
     }
 
     /// return epoch on chain
-    pub fn epoch_on_chain(&self)-> u64 {
+    pub fn epoch_on_chain(&mut self)-> u64 {
         match &self.chain_state {
-            Some(s)=> s.get_configuration_resource().unwrap().unwrap().epoch(),
+            Some(s) => {
+                let epoch = s.get_configuration_resource().unwrap().unwrap().epoch();
+                self.items.epoch = epoch;
+                epoch
+            },
             None => 0
         }
     }
