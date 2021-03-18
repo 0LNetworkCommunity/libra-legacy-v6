@@ -46,7 +46,7 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) 
     key::set_operator_key(home_dir, &namespace);
     key::set_owner_key(home_dir, &namespace);
 
-    println!("key file written to {}key_store.json", &miner_config.workspace.node_home)
+    println!("key file written to {}key_store.json", &miner_config.workspace.node_home.to_str().unwrap());
     Ok(())
 }
 

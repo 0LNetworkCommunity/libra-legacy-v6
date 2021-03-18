@@ -66,7 +66,7 @@ bins:
 	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
 
 	# 0L monitor app
-	cargo build -p ol-cli --release && sudo cp -f ${SOURCE}/target/release/ol-cli /usr/local/bin/monitor
+	cargo build -p ol-cli --release && sudo cp -f ${SOURCE}/target/release/ol-cli /usr/local/bin/ol
 
 ##### PIPELINES #####
 # pipelines for genesis ceremony

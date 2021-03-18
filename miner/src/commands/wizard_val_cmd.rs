@@ -60,7 +60,7 @@ impl Runnable for ValWizardCmd {
         }
 
         // Build Genesis and node.yaml file
-        genesis_cmd::genesis_files(
+        files_cmd::genesis_files(
             &miner_config,
             &self.chain_id,
             &self.github_org,
