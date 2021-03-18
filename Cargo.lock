@@ -4915,6 +4915,7 @@ dependencies = [
  "glob",
  "gumdrop",
  "handlebars",
+ "libra-config",
  "libra-global-constants",
  "libra-json-rpc-client",
  "libra-secure-storage",

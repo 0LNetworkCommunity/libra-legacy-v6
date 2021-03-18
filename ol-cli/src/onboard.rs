@@ -1,6 +1,6 @@
 //! `onboard` 
 
-/// TODO: move to state_machine.rs?
+// TODO: move to state_machine.rs?
 sm::sm! {
     NodeState {
         InitialStates { EmptyBox, NoConfigs }
