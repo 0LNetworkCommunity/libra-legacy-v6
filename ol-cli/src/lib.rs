@@ -29,3 +29,4 @@ pub mod check;
 pub mod server;
 pub mod restore;
 pub mod sm;
+pub mod onboard;
