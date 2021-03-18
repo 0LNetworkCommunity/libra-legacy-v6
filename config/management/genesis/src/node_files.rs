@@ -144,7 +144,7 @@ pub fn create_files(
     config.storage.prune_window=Some(20_000);
 
     // Write yaml
-    let yaml_path = output_dir.join("node.yaml");
+    let yaml_path = output_dir.join("validator.node.yaml");
     fs::create_dir_all(&output_dir).expect("Unable to create output directory");
     config
         .save(&yaml_path)
