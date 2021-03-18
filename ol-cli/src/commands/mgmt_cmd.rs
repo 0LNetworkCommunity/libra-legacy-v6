@@ -22,8 +22,8 @@ pub struct MgmtCmd {
     // baz: Options<PathBuf>
 
     // "free" arguments don't have an associated flag
-    // #[options(free)]
-    // free_args: Vec<String>,
+    #[options(free)]
+    free_args: Vec<String>,
 }
 
 impl Runnable for MgmtCmd {
@@ -31,7 +31,12 @@ impl Runnable for MgmtCmd {
     
     fn run(&self) {
         // management::fetch_backups().unwrap();
+        if self.free_args.clone().into_iter().find(|x| x == "start" ).is_some() {
+            management::start_node(NodeType::Fullnode);
+        } 
+        if self.free_args.clone().into_iter().find(|x| x == "stop" ).is_some() {
+            management::stop_node();
+        } 
 
-        management::start_node(NodeType::Fullnode);
     }
 }

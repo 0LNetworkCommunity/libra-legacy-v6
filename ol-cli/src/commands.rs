@@ -12,7 +12,6 @@
 
 mod init;
 mod version;
-mod genesis_cmd;
 mod bal_cmd;
 mod resource_cmd;
 mod height_cmd;
@@ -27,7 +26,6 @@ mod onboard_cmd;
 use self::{
     init::StartCmd,
     version::VersionCmd,
-    genesis_cmd::GenesisCmd,
     bal_cmd::BalCmd,
     resource_cmd::ResourceCmd,
     height_cmd::HeightCmd,
@@ -64,10 +62,6 @@ pub enum OlCliCmd {
 
     /// The `version` subcommand
     Version(VersionCmd),
-
-    /// The `genesis` subcommand
-    #[options(help = "get files")]
-    Genesis(GenesisCmd),
 
     /// The `bal` subcommand
     #[options(help = "get balance")]
