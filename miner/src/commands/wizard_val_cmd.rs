@@ -68,7 +68,6 @@ impl Runnable for ValWizardCmd {
             &self.rebuild_genesis,
         );
         status_ok!("\nNode config written", "\n...........................\n");
-        println!("created validator.node.yaml\n");
 
         if !self.skip_mining {
             // Mine Block
