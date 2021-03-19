@@ -324,7 +324,12 @@ impl<'env> Translator<'env> {
             is_pure: false,
         };
         // Duplicate declarations have been checked by the Move compiler.
-        assert!(self.fun_table.insert(name, entry).is_none());
+        ////////// 0L //////////
+        let script_inserted_success = self.fun_table.insert(name.clone(), entry).is_none();
+        if !*&script_inserted_success {
+            dbg!(&name);
+        }
+        assert!(script_inserted_success);
     }
 
     /// Defines a constant.

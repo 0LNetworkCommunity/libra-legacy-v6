@@ -3,7 +3,7 @@
 script {
 use 0x1::MinerState;
 use 0x1::Globals;
-fun minerstate_commit(operator_sig: &signer, owner_address: address, challenge: vector<u8>, solution: vector<u8>) {
+fun minerstate_commit_by_operator(operator_sig: &signer, owner_address: address, challenge: vector<u8>, solution: vector<u8>) {
 
     
     let proof = MinerState::create_proof_blob(

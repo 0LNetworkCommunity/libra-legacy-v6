@@ -244,6 +244,8 @@ address 0x1 {
         b"onboarding_subsidy",
         b""
       );
+
+      // TODO: split this payment with the operator, so the operator can mine.
       subsidy
     }
 
