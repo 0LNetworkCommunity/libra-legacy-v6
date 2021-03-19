@@ -22,6 +22,8 @@ pub fn swarm_miner(swarm_path: PathBuf) {
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
     fs::copy("./fixtures/blocks/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
 
+    dbg!(&tx_params);
+
     backlog::process_backlog(&conf, &tx_params);
 
     loop {
@@ -104,7 +106,7 @@ pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error>
         url,
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 5_000_000,
+        max_gas_unit_for_tx: 5_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     };

@@ -24,6 +24,7 @@ use libra_types::chain_id::ChainId;
 use libra_genesis_tool::keyscheme::KeyScheme;
 
 /// All the parameters needed for a client transaction.
+#[derive(Debug)]
 pub struct TxParams {
     /// User's 0L authkey used in mining.
     pub auth_key: AuthenticationKey,
@@ -75,7 +76,7 @@ pub fn submit_tx(
         );
     } else {
 
-        /// TODO: Remove this, demoware
+        // TODO: Remove this, demoware
         let consensus_pubkey = hex::decode("8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010").unwrap();
         let validator_network_address = "test".as_bytes().to_vec();
         let full_node_network_address = "test".as_bytes().to_vec();
