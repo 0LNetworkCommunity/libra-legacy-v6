@@ -185,6 +185,7 @@ impl Check {
 
     /// Current monitor account
     pub fn waypoint(&mut self) -> Waypoint {
+        self.client.get_state_proof(); // refresh latest state proof
         let waypoint = self.client.waypoint();
         match waypoint.clone() {
             Some(w)=> {
