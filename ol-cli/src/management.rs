@@ -1,8 +1,12 @@
 //! `trigger` functions
 
-use crate::check;
+use crate::{check, prelude::app_config};
+use reqwest::Url;
 use serde::{Serialize, Deserialize};
 use std::{collections::HashSet, process::Command};
+
+const NODE_BINARY: &str = "libra-node";
+const MINER_BINARY: &str = "miner";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Process {
@@ -66,7 +70,6 @@ pub enum NodeType {
 
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) {
-    const BINARY: &str = "libra-node";
 
     // TODO: Get node home from configs:
     let node_home = "/root/.0L/";
@@ -78,29 +81,63 @@ pub fn start_node(config_type: NodeType) {
     };
 
     // Stop any processes we may have started and detached from.
-    kill_zombies(BINARY);
+    kill_zombies(NODE_BINARY);
 
-    let child = Command::new(BINARY)
+    let child = Command::new(NODE_BINARY)
                         .arg("--config")
                         .arg(config_file_name)
                         .spawn()
                         .expect("failed to execute child");
 
     let pid = &child.id();
-    save_pid(BINARY, *pid);
-    println!("--- Started new w/ pid: {}", pid);
+    save_pid(NODE_BINARY, *pid);
+    println!("--- Started new {} w/ pid: {}", NODE_BINARY, pid);
 }
 
 
 /// Stop node, as validator
 pub fn stop_node() {
-    kill_zombies("libra-node");
+    kill_zombies(NODE_BINARY);
 }
 
 /// Start Miner
-pub fn start_miner() {}
+pub fn start_miner() {
+    // Stop any processes we may have started and detached from.
+    kill_zombies(MINER_BINARY);
+
+    let child = Command::new(MINER_BINARY)
+                        .arg("start")
+                        .spawn()
+                        .expect("failed to execute child");
+
+    let pid = &child.id();
+    save_pid(MINER_BINARY, *pid);
+    println!("--- Started new {} w/ pid: {}", MINER_BINARY, pid);
+}
 
 /// Stop Miner
-pub fn stop_miner() {}
+pub fn stop_miner() {
+    kill_zombies(MINER_BINARY);
+}
 
+/// Choose a node to connect for rpc, local or upstream
+pub fn choose_rpc_node() -> Option<Url> {
+    let conf = app_config().to_owned();
 
+    // check the node is in sync
+    // Note this assumes that we can connect to local and to a backup.
+    if check::Check::node_is_synced() {
+        // always choose local node if in sync
+        return conf.chain_info.default_node
+    } else {
+        // otherwise use a backup
+        // TODO: check all backups in vector to see which connects
+        Some(conf.chain_info
+            .backup_nodes
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap()
+        )
+    }
+}

@@ -31,9 +31,14 @@ impl Runnable for MgmtCmd {
     
     fn run(&self) {
         // management::fetch_backups().unwrap();
-        if self.free_args.clone().into_iter().find(|x| x == "start" ).is_some() {
+        if self.free_args.clone().into_iter().find(|x| x == "start-node").is_some() {
             management::start_node(NodeType::Fullnode);
         } 
+
+        if self.free_args.clone().into_iter().find(|x| x == "start-miner").is_some() {
+            management::start_miner();
+        } 
+
         if self.free_args.clone().into_iter().find(|x| x == "stop" ).is_some() {
             management::stop_node();
         } 
