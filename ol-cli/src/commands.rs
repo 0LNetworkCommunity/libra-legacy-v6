@@ -12,7 +12,6 @@
 
 mod init;
 mod version;
-mod genesis_cmd;
 mod bal_cmd;
 mod resource_cmd;
 mod height_cmd;
@@ -22,11 +21,11 @@ mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
 mod sm_cmd;
+mod onboard_cmd;
 
 use self::{
     init::StartCmd,
     version::VersionCmd,
-    genesis_cmd::GenesisCmd,
     bal_cmd::BalCmd,
     resource_cmd::ResourceCmd,
     height_cmd::HeightCmd,
@@ -36,6 +35,7 @@ use self::{
     serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
     sm_cmd::SMCmd,
+    onboard_cmd::OnboardCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -62,10 +62,6 @@ pub enum OlCliCmd {
 
     /// The `version` subcommand
     Version(VersionCmd),
-
-    /// The `genesis` subcommand
-    #[options(help = "get files")]
-    Genesis(GenesisCmd),
 
     /// The `bal` subcommand
     #[options(help = "get balance")]
@@ -99,9 +95,13 @@ pub enum OlCliCmd {
     #[options(help = "serve the monitor over http")]
     Restore(RestoreCmd),
 
-    /// The `..` subcommand
+    /// The `state machine` subcommand
     #[options(help = "state machine")]
     Sm(SMCmd),    
+
+    /// The `onboard` subcommand
+    #[options(help = "onboard daemon")]
+    Onboard(OnboardCmd),        
 }
 
 /// Get home path for all 0L apps

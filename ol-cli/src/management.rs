@@ -66,7 +66,7 @@ pub enum NodeType {
 
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) {
-    const BINARY: &str = "cargo r -p libra-node -- ";
+    const BINARY: &str = "libra-node";
 
     // TODO: Get node home from configs:
     let node_home = "/root/.0L/";

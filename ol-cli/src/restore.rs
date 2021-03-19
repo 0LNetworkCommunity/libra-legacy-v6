@@ -1,5 +1,6 @@
 //! `restore` functions
 
+use std::io::Write;
 use abscissa_core::{status_info, status_ok};
 use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
 use reqwest;
@@ -12,10 +13,22 @@ use libra_secure_storage::{self, OnDiskStorageInternal};
 use libra_types::{waypoint::Waypoint};
 use libra_secure_storage::KVStorage;
 
-#[derive(Deserialize, Debug)]
-struct User {
-    login: String,
-    id: u32,
+/// Restore database from archive
+pub fn fast_forward_db() -> Result<(), Error>{
+    let mut backup = Backup::new();
+
+    status_info!("Fetching latest epoch backup", "from epoch archive");
+    backup.fetch_backup()?;
+
+    status_info!("Setting waypoint", "key_store.json being updated");
+    backup.set_waypoint()?;
+
+    status_info!("Restoring db from archive", "to home path");
+    backup.restore_backup()?;
+    
+    status_info!("Creating fullnode.node.yaml", "to home path");
+    backup.create_fullnode_yaml()?;
+    Ok(())
 }
 #[derive(Serialize, Deserialize)]
 struct Manifest {
@@ -141,22 +154,54 @@ impl Backup {
 
         // TODO set waypoint in fullnode.node.yaml
     }
+    /// Creates a fullnode yaml file with restore waypoint.
+    pub fn create_fullnode_yaml(&self) -> Result<(), Error>{
+
+        let yaml = format!(
+// NOTE: With yaml formatting Be aware of indents, two spaces
+r#"
+base:
+  data_dir: "{home_path}"
+  role: "full_node"
+  waypoint: 
+    from_config: "{waypoint}"
+execution:
+  genesis_file_location: ""
+full_node_networks:
+  - discovery_method: "onchain"
+    listen_address: "/ip4/0.0.0.0/tcp/6179"
+    network_id: "public"
+    seed_addrs:
+      252F0B551C80CD9E951D82C6F70792AE:
+        - "/ip4/34.82.239.18/tcp/6179/ln-noise-ik/d578327226cc025724e9e5f96a6d33f55c2cfad8713836fa39a8cf7efeaf6a4e/ln-handshake/0"
+      ECAF65ADD1B785B0495E3099F4045EC0:
+        - "/ip4/167.172.248.37/tcp/6179/ln-noise-ik/f2ce22752b28a14477d377a01cd92411defdb303fa17a08a640128864343ed45/ln-handshake/0"
+storage:
+  address: "127.0.0.1:6666"
+  backup_service_address: "127.0.0.1:6186"
+  dir: db
+  grpc_max_receive_len: 100000000
+  prune_window: 20000
+  timeout_ms: 30000
+json_rpc:
+  address: 127.0.0.1:8080
+upstream:
+  networks:
+    - public
+"#,
+            home_path = &self.home_path.to_str().expect("no home path provided"),
+            waypoint = &self.waypoint.expect("no waypoint provided"),
+        );
+
+        let yaml_path = &self.home_path.join("fullnode.node.yaml");
+        let mut file = File::create(yaml_path)?;
+        file.write_all(&yaml.as_bytes())?;
+        status_ok!("Success", format!("file created to {}", yaml_path.to_str().unwrap()));
+
+        Ok(())
+    }
 }
 
-/// Restore database from archive
-pub fn fast_forward_db() -> Result<(), Error>{
-    let mut backup = Backup::new();
-
-    status_info!("Fetching latest epoch backup", "from epoch archive");
-    backup.fetch_backup()?;
-
-    status_info!("Setting waypoint", "key_store.json being updated");
-    backup.set_waypoint()?;
-
-    status_info!("Restoring db from archive", "to home path");
-    backup.restore_backup()?;
-    Ok(())
-}
 
 fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     let client = reqwest::blocking::Client::builder()
