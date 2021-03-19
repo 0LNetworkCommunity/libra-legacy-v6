@@ -187,7 +187,7 @@ impl Check {
     pub fn waypoint(&mut self) -> Waypoint {
         self.client.get_state_proof(); // refresh latest state proof
         let waypoint = self.client.waypoint();
-        match waypoint.clone() {
+        match waypoint {
             Some(w)=> {
                 //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
                 w
