@@ -24,8 +24,8 @@ pub const SYNC_KEY: &str = "is_synced";
 /// Construct Lazy Database instance
 pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
     let mut conf = app_config().to_owned();
-    conf.home_path.push(CHECK_CACHE_PATH);
-    DB::open_default(conf.home_path).unwrap()
+    conf.workspace.node_home.push(CHECK_CACHE_PATH);
+    DB::open_default(conf.workspace.node_home).unwrap()
 });
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -109,7 +109,10 @@ impl Check {
     pub fn new() -> Self {
         let conf = app_config().to_owned();
         return Self {
-            client: LibraClient::new(conf.node_url.clone(), conf.base_waypoint.clone()).unwrap(),
+            client: LibraClient::new(
+                conf.clone().chain_info.default_node.expect("cannot get url"), 
+                conf.get_waypoint().expect("could not get waypoint")
+            ).unwrap(),
             conf,
             miner_process_name: "miner",
             node_process_name: "libra-node",
@@ -132,7 +135,7 @@ impl Check {
     /// Fetch chain state from the upstream node
     pub fn fetch_upstream_states(&mut self) {
         self.chain_state = self.get_annotate_account_blob(AccountAddress::ZERO);
-        self.miner_state = self.client.get_miner_state(self.conf.address)
+        self.miner_state = self.client.get_miner_state(self.conf.profile.account)
             .expect("Error occurs on fetching miner states");
     }
 
@@ -180,7 +183,7 @@ impl Check {
 
     /// Current monitor account
     pub fn account(&self)-> Vec<u8> {
-        self.conf.address.to_vec()
+        self.conf.profile.account.to_vec()
     }
 
     /// Current monitor account
@@ -192,7 +195,7 @@ impl Check {
                 //self.client = LibraClient::new(self.conf.node_url.clone(), w.clone()).unwrap();
                 w
             },
-            None=> self.conf.base_waypoint
+            None=> self.conf.get_waypoint().expect("could not get waypoint")
         }
     }
 
@@ -206,7 +209,7 @@ impl Check {
         match &self.chain_state {
             Some(s)=> {
                 for v in s.get_validator_set().unwrap().unwrap().payload().iter() {
-                    if v.account_address().to_vec() == self.conf.address.to_vec() {
+                    if v.account_address().to_vec() == self.conf.profile.account.to_vec() {
                         return true
                     }
                 }
@@ -219,7 +222,7 @@ impl Check {
     /// nothing is configured yet, empty box
     pub fn is_clean_start(&self) -> bool {
         // check to see no files are present
-        let mut file = self.conf.home_path.clone();
+        let mut file = self.conf.workspace.node_home.clone();
         file.push("blocks/block_0.json"); //TODO change file name later
         !file.exists()
     }
@@ -227,7 +230,7 @@ impl Check {
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
         // check to see no files are present
-        let x = self.client.get_account(self.conf.address, false);
+        let x = self.client.get_account(self.conf.profile.account, false);
         //println!("Account address: {}", &self.conf.address);
         match x {
             Ok((opt,_)) => match opt{
@@ -243,7 +246,7 @@ impl Check {
         // TODO: This only checks that the database files exist.
         // need to check if it is "boostrapped" with db-bootstrapper
 
-        let mut file = self.conf.home_path.clone();
+        let mut file = self.conf.workspace.node_home.clone();
         file.push("db/libradb"); //TODO change file name later
         !file.exists()
     }

@@ -373,6 +373,8 @@ fn test_make_params() {
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
             node: Some("http://localhost:8080".to_string()),
+            default_node: Some("http://localhost:8080".parse().unwrap()),
+            backup_nodes: None,
         },
 
     };
@@ -412,6 +414,8 @@ fn test_save_tx() {
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
             node: Some("http://localhost:8080".to_string()),
+            default_node: Some("http://localhost:8080".parse().unwrap()),
+            backup_nodes: None,
         },
 
     };

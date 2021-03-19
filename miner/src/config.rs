@@ -9,7 +9,7 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
 use reqwest::Url;
 use rustyline::Editor;
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
@@ -43,14 +43,17 @@ impl MinerConfig {
             Ok(file) => {
                 let json: serde_json::Value = serde_json::from_reader(file)
                     .expect("could not parse JSON in key_store.json");
-                let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-                dbg!(&value);
-                let waypoint: Waypoint = value.to_string().parse().unwrap();
-                Some(waypoint)
+                match ajson::get(&json.to_string(), "*waypoint.value") {
+                    Some(value) => Some(value.to_string().parse().unwrap()),
+                    // If nothing is found in key_store.json fallback to base_waypoint in toml
+                    _ => Some(self.chain_info.base_waypoint.expect("no base waypointin toml")),
+                }
+                // let waypoint: Waypoint = value.
+                // Some(waypoint)
             }
             Err(err) => {
-            println!("key_store.json not found. {:?}", err);
-            None
+                println!("key_store.json not found. {:?}", err);
+                None
             }
         }
     }
@@ -233,12 +236,13 @@ pub struct ChainInfo {
     /// Directory to store blocks in
     pub block_dir: String,
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
+    // #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
     pub node: Option<String>,
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
+    // #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
     pub default_node: Option<Url>,
     /// Other nodes to connect for fallback connections
-    #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
+    // #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
     pub backup_nodes: Option<Vec<Url>>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: Option<Waypoint>,
@@ -290,17 +294,17 @@ impl Default for Profile {
     }
 }
 
-fn ser_url<S>(url: &Url, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&url.to_owned().into_string())
-}
+// fn ser_url<S>(url: &Option<Url>, serializer: S) -> Result<S::Ok, S::Error>
+// where
+//     S: Serializer,
+// {
+//     serializer.serialize_str(&url.to_owned().into_string())
+// }
 
-fn de_url<'de, D>(deserializer: D) -> Result<Url, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s: String = Deserialize::deserialize(deserializer)?;
-    s.parse::<Url>().map_err(D::Error::custom)
-}
+// fn de_url<'de, D>(deserializer: D) -> Result<Option<Url>, D::Error>
+// where
+//     D: Deserializer<'de>,
+// {
+//     let s: String = Deserialize::deserialize(deserializer)?;
+//     Some(s.parse::<Url>().map_err(D::Error::custom))
+// }

@@ -4,8 +4,8 @@
 /// accessors along with logging macros. Customize as you see fit.
 use crate::{
     prelude::*,
-    config::{OlCliConfig, init_configs},
-    commands::{CONFIG_FILE, home_path},
+    config::{OlCliConfig},
+    // commands::{CONFIG_FILE, home_path},
     check,
 };
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
@@ -24,11 +24,11 @@ pub struct StartCmd {
 impl Runnable for StartCmd {
     /// Start the application.
     fn run(&self) {
-        let config = app_config();
-        println!("Node URL: {}", &config.node_url);
-        println!("Upstream Node URL: {}", &config.upstream_node_url);
-        println!("\nEnter new settings to overwrite config file: {}", CONFIG_FILE);
-        init_configs(Some(home_path()));
+        // let config = app_config();
+        // println!("Node URL: {}", &config.node_url);
+        // println!("Upstream Node URL: {}", &config.upstream_node_url);
+        // println!("\nEnter new settings to overwrite config file: {}", CONFIG_FILE);
+        // init_configs(Some(home_path()));
         check::Items::init();
     }
 }

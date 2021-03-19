@@ -4126,6 +4126,7 @@ dependencies = [
  "thiserror",
  "toml",
  "transaction-builder",
+ "url",
  "vdf",
  "vm-genesis",
  "wait-timeout",
@@ -4920,6 +4921,7 @@ dependencies = [
  "libra-json-rpc-client",
  "libra-secure-storage",
  "libra-types",
+ "miner",
  "nix 0.18.0",
  "num-format",
  "once_cell",
@@ -7611,6 +7613,7 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

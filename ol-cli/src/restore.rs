@@ -66,16 +66,16 @@ impl Backup {
     pub fn new() -> Self {
         let conf = app_config().to_owned();
         let (version_number, zip_url) = get_highest_epoch_zip().unwrap();
-        let restore_path = conf.home_path.join(format!("restore/{}", version_number));
+        let restore_path = conf.workspace.node_home.join(format!("restore/{}", version_number));
         fs::create_dir_all(&restore_path).unwrap();
         println!("most recent epoch backup: {}", &version_number);
 
         Backup {
             version_number,
             zip_url,
-            home_path: conf.home_path.clone(),
+            home_path: conf.workspace.node_home.clone(),
             restore_path: restore_path.clone(),
-            zip_path: conf.home_path.join(format!("restore/restore-{}.zip", version_number)),
+            zip_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", version_number)),
             waypoint: None,
             // TODO: Do we need namespaced waypoints?
             // node_namespace: conf.node_namespace,

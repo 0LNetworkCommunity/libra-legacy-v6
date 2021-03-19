@@ -19,15 +19,15 @@ pub fn make_client(url: Option<Url>, waypoint: Waypoint) -> Result<LibraClient, 
 /// get client type with defaults from toml for remote node
 pub fn default_remote_client()  ->(Result<LibraClient, Error>, Url){
     let config = app_config();
-    let remote_url = config.upstream_node_url.clone();
-    let waypoint = config.base_waypoint.clone();
+    let remote_url = config.chain_info.backup_nodes.clone().unwrap().into_iter().next().unwrap(); // upstream_node_url.clone();
+    let waypoint = config.get_waypoint().expect("could not get waypoint");
     (make_client(Some(remote_url.clone()), waypoint), remote_url)
 }
 
 /// get client type with defaults from toml for local node
 pub fn default_local_client()  -> (Result<LibraClient, Error>, Url){
     let config = app_config();
-    let local_url = config.upstream_node_url.clone();
-    let waypoint = config.base_waypoint.clone();
+    let local_url = config.chain_info.default_node.clone().expect("could not get url from configs");
+    let waypoint = config.get_waypoint().expect("could not get waypoint");
     (make_client(Some(local_url.clone()), waypoint), local_url)
 }
