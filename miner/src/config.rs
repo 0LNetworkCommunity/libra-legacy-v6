@@ -68,7 +68,7 @@ impl MinerConfig {
         conf.profile.auth_key = param.auth_key.to_string();
 
         // Load chain info
-        conf.chain_info.node = Some(param.url.to_string());
+        conf.chain_info.default_node = Some(param.url.clone());
         conf
     }
     /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
@@ -236,13 +236,8 @@ pub struct ChainInfo {
     /// Directory to store blocks in
     pub block_dir: String,
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    // #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
-    pub node: Option<String>,
-    /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    // #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
     pub default_node: Option<Url>,
     /// Other nodes to connect for fallback connections
-    // #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
     pub backup_nodes: Option<Vec<Url>>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: Option<Waypoint>,
@@ -256,7 +251,6 @@ impl Default for ChainInfo {
             block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
             base_waypoint: None,
-            node: Some("http://localhost:8080".to_owned()),
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             backup_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
 

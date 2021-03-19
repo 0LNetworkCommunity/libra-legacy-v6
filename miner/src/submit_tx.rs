@@ -263,12 +263,11 @@ pub fn get_params(
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(pubkey);
-    let url_str = config.chain_info.node.as_ref().unwrap();
 
     TxParams {
         auth_key,
         address: config.profile.account,
-        url: Url::parse(url_str).expect("No url provided in miner.toml"),
+        url: config.chain_info.default_node.clone().expect("no url provided in config toml"),
         waypoint,
         keypair,
         max_gas_unit_for_tx: 5_000,
@@ -372,7 +371,6 @@ fn test_make_params() {
             chain_id: "0L testnet".to_owned(),
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
-            node: Some("http://localhost:8080".to_string()),
             default_node: Some("http://localhost:8080".parse().unwrap()),
             backup_nodes: None,
         },
@@ -413,7 +411,6 @@ fn test_save_tx() {
             chain_id: "0L testnet".to_owned(),
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
-            node: Some("http://localhost:8080".to_string()),
             default_node: Some("http://localhost:8080".parse().unwrap()),
             backup_nodes: None,
         },

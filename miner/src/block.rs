@@ -147,7 +147,7 @@ pub mod build_block {
                 let block = mine_once(&config)?;
                 status_info!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
-                if let Some(ref _node) = config.chain_info.node {
+                if let Some(ref _node) = config.chain_info.default_node {
 
                     match submit_tx(&tx_params, block.preimage, block.proof, false) {
                         Ok(tx_view) => {
@@ -254,7 +254,6 @@ fn test_mine_genesis() {
             chain_id: "0L testnet".to_owned(),
             block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
             base_waypoint: None,
-            node: None,
             default_node: Some("http://localhost:8080".parse().unwrap()),
             backup_nodes: None,
         },
@@ -313,7 +312,6 @@ fn create_fixtures() {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
                 base_waypoint: None,
-                node: Some("http://localhost:8080".to_string()),
                 default_node: Some("http://localhost:8080".parse().unwrap()),
                 backup_nodes: None,
             },
@@ -363,7 +361,6 @@ fn test_mine_once() {
             chain_id: "0L testnet".to_owned(),
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
-            node: None,
             default_node: Some("http://localhost:8080".parse().unwrap()),
             backup_nodes: None,
         },
