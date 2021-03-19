@@ -1,7 +1,9 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
+use libra_global_constants::OPERATOR_KEY;
+use libra_secure_storage::{OnDiskStorageInternal, Storage};
 use libra_types::{waypoint::Waypoint};
-
+use libra_secure_storage::CryptoStorage;
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
 use libra_crypto::{
     test_utils::KeyPair,
@@ -285,7 +287,51 @@ pub fn get_params(
 
     TxParams {
         auth_key,
-        address: config.profile.account,
+        address: auth_key.derived_address(),
+        url,
+        waypoint,
+        keypair,
+        max_gas_unit_for_tx: 5_000,
+        coin_price_per_unit: 1, // in micro_gas
+        user_tx_timeout: 5_000,
+    }
+}
+
+
+/// Form tx parameters struct 
+pub fn get_oper_params(
+    waypoint: Waypoint,
+    config: &MinerConfig,
+    // url_opt overrides all node configs, takes precedence over use_backup_url
+    url_opt: Option<Url>,
+    backup_url: bool
+) -> TxParams {
+    let storage = Storage::OnDiskStorage(OnDiskStorageInternal::new(config.workspace.node_home.join("key_store.json").to_owned()));
+    let privkey = storage.export_private_key(OPERATOR_KEY).expect("could not parse operator key in key_store.json");
+    
+    let keypair = KeyPair::from(privkey);
+    let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
+    let auth_key = AuthenticationKey::ed25519(pubkey);
+    
+    let url: Url = if url_opt.is_some() { 
+        url_opt.expect("could nod parse url")
+    } else {
+        if backup_url {
+            config.chain_info.backup_nodes
+            .clone()
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("no backup url provided in config toml")
+
+        } else {
+            config.chain_info.default_node.clone().expect("no url provided in config toml")
+        }
+    };
+
+    TxParams {
+        auth_key,
+        address: auth_key.derived_address(),
         url,
         waypoint,
         keypair,
