@@ -33,7 +33,7 @@ before and after every transaction.
 -  [Function `preburn`](#0x1_LibraAccount_preburn)
 -  [Function `extract_withdraw_capability`](#0x1_LibraAccount_extract_withdraw_capability)
 -  [Function `restore_withdraw_capability`](#0x1_LibraAccount_restore_withdraw_capability)
--  [Function `make_payment`](#0x1_LibraAccount_make_payment)
+-  [Function `vm_make_payment`](#0x1_LibraAccount_vm_make_payment)
 -  [Function `pay_from`](#0x1_LibraAccount_pay_from)
 -  [Function `rotate_authentication_key`](#0x1_LibraAccount_rotate_authentication_key)
     -  [Access Control](#@Access_Control_2)
@@ -1880,13 +1880,13 @@ Return the withdraw capability to the account it originally came from
 
 </details>
 
-<a name="0x1_LibraAccount_make_payment"></a>
+<a name="0x1_LibraAccount_vm_make_payment"></a>
 
-## Function `make_payment`
+## Function `vm_make_payment`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_make_payment">make_payment</a>&lt;Token&gt;(payer: address, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">vm_make_payment</a>&lt;Token&gt;(payer: address, payee: address, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
 </code></pre>
 
 
@@ -1895,7 +1895,7 @@ Return the withdraw capability to the account it originally came from
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_make_payment">make_payment</a>&lt;Token&gt;(
+<pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">vm_make_payment</a>&lt;Token&gt;(
     payer : address,
     payee: address,
     amount: u64,

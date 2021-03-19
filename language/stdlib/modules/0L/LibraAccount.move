@@ -778,7 +778,7 @@ module LibraAccount {
     
     // 0L function for AutoPay module
     // 0L error suffix 120101
-    public fun make_payment<Token>(
+    public fun vm_make_payment<Token>(
         payer : address,
         payee: address,
         amount: u64,
