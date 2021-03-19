@@ -24,6 +24,7 @@ address 0x1 {
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
     use 0x1::FullnodeState;
+    use 0x1::ValidatorConfig;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -237,9 +238,13 @@ address 0x1 {
       let state = borrow_global<FullnodeSubsidy>(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
       let subsidy = bootstrap_validator_balance();
+      // give max possible subisidy, if auction is higher
       if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
+      
+      // split subsidy with operator account, so can send transactions.
+      let half_subsidy = subsidy/2;
 
-      let minted_coins = Libra::mint<GAS>(vm, subsidy);
+      let minted_coins = Libra::mint<GAS>(vm, half_subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
         miner,
@@ -248,7 +253,18 @@ address 0x1 {
         b""
       );
 
-      // TODO: split this payment with the operator, so the operator can mine.
+      
+      let minted_coins_operator = Libra::mint<GAS>(vm, half_subsidy);
+      let oper_addr = ValidatorConfig::get_operator(miner);
+
+      LibraAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        oper_addr,
+        minted_coins_operator,
+        b"onboarding_subsidy_operator",
+        b""
+      );
+
       subsidy
     }
 
@@ -402,7 +418,6 @@ address 0x1 {
       let subsidy_value = proofs_per_day * proof_cost;
       subsidy_value
     }
-    use 0x1::ValidatorConfig;
 
     // Operators may run out of balance to submit txs for the Validator. This is true for mining, where the operator receives no network subsidy.
     fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {

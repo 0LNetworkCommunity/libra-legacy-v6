@@ -435,9 +435,13 @@
   <b>let</b> state = borrow_global&lt;<a href="Subsidy.md#0x1_Subsidy_FullnodeSubsidy">FullnodeSubsidy</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>());
 
   <b>let</b> subsidy = <a href="Subsidy.md#0x1_Subsidy_bootstrap_validator_balance">bootstrap_validator_balance</a>();
+  // give max possible subisidy, <b>if</b> auction is higher
   <b>if</b> (state.current_proof_price &gt; subsidy) subsidy = state.current_proof_price;
 
-  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
+  // split subsidy <b>with</b> operator account, so can send transactions.
+  <b>let</b> half_subsidy = subsidy/2;
+
+  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, half_subsidy);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
     miner,
@@ -446,7 +450,18 @@
     b""
   );
 
-  // TODO: split this payment <b>with</b> the operator, so the operator can mine.
+
+  <b>let</b> minted_coins_operator = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, half_subsidy);
+  <b>let</b> oper_addr = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner);
+
+  <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+    vm,
+    oper_addr,
+    minted_coins_operator,
+    b"onboarding_subsidy_operator",
+    b""
+  );
+
   subsidy
 }
 </code></pre>
