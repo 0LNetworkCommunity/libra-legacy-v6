@@ -56,7 +56,7 @@ pub fn genesis_files(
         rebuild_genesis,
     ).unwrap();
 
-    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("node.yaml"));
+    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));
 
 }
 
