@@ -19,6 +19,6 @@ impl Runnable for OnboardCmd {
 
     /// Start the application.
     fn run(&self) {
-        onboard::demo();
+        onboard::onboard();
     }
 }
