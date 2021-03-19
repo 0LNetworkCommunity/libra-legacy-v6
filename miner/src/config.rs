@@ -7,8 +7,9 @@
 use std::{net::Ipv4Addr, fs};
 use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use reqwest::Url;
 use rustyline::Editor;
-use serde::{Deserialize, Serialize};
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use abscissa_core::path::{PathBuf};
 use crate::delay::delay_difficulty;
 use crate::submit_tx::TxParams;
@@ -233,6 +234,12 @@ pub struct ChainInfo {
     pub block_dir: String,
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub node: Option<String>,
+    /// Node URL and and port to submit transactions. Defaults to localhost:8080
+    #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
+    pub default_node: Option<Url>,
+    /// Other nodes to connect for fallback connections
+    #[serde(serialize_with = "ser_url", deserialize_with = "de_url")]
+    pub backup_nodes: Option<Vec<Url>>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: Option<Waypoint>,
 }
@@ -246,6 +253,9 @@ impl Default for ChainInfo {
             // Mock Waypoint. Miner complains without.
             base_waypoint: None,
             node: Some("http://localhost:8080".to_owned()),
+            default_node: Some("http://localhost:8080".parse().expect("parse url")),
+            backup_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+
         }
     }
 }
@@ -278,4 +288,19 @@ impl Default for Profile {
             statement: "Protests rage across the nation".to_owned(),
         }
     }
+}
+
+fn ser_url<S>(url: &Url, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&url.to_owned().into_string())
+}
+
+fn de_url<'de, D>(deserializer: D) -> Result<Url, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: String = Deserialize::deserialize(deserializer)?;
+    s.parse::<Url>().map_err(D::Error::custom)
 }
