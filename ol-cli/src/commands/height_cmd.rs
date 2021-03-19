@@ -4,11 +4,7 @@ use abscissa_core::{Command, Options, Runnable};
 use crate::check;
 use reqwest::Url;
 use libra_types::{waypoint::Waypoint};
-use chrono::{
-    prelude::{Utc},
-    DateTime,
-};
-use std::{env,time::{Duration, UNIX_EPOCH}};
+use std::env;
 
 /// `bal` subcommand
 ///

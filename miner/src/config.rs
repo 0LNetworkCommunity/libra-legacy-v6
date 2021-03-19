@@ -46,7 +46,7 @@ impl MinerConfig {
                 match ajson::get(&json.to_string(), "*waypoint.value") {
                     Some(value) => Some(value.to_string().parse().unwrap()),
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
-                    _ => Some(self.chain_info.base_waypoint.expect("no base waypointin toml")),
+                    _ => Some(self.chain_info.base_waypoint.expect("no base waypoint in toml")),
                 }
                 // let waypoint: Waypoint = value.
                 // Some(waypoint)

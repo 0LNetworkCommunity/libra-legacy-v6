@@ -3,7 +3,6 @@
 /// App-local prelude includes `app_reader()`/`app_writer()`/`app_config()`
 /// accessors along with logging macros. Customize as you see fit.
 use crate::{
-    prelude::*,
     config::{OlCliConfig},
     // commands::{CONFIG_FILE, home_path},
     check,
