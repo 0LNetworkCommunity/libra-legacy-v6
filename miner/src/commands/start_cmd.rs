@@ -7,6 +7,7 @@ use crate::{
     keygen
 };
 use libra_genesis_tool::keyscheme::KeyScheme;
+use reqwest::Url;
 
 use crate::config::MinerConfig;
 use crate::prelude::*;
@@ -39,6 +40,14 @@ pub struct StartCmd {
     // Option for setting path for the blocks/proofs that are mined.
     #[options(help = "The home directory where the blocks will be stored")]
     home: PathBuf, 
+
+    // Option for overriding url to connect
+    #[options(help = "option for overriding url to connect")]
+    url: Option<Url>, 
+
+    // Option for overriding url to connect
+    #[options(help = "connect to backup node, instead of default (local) node")]
+    backup_url: bool, 
 }
 
 impl Runnable for StartCmd {
@@ -74,7 +83,7 @@ impl Runnable for StartCmd {
         let (_authkey, _account, wallet) = keygen::account_from_prompt();
         let keys = KeyScheme::new(&wallet);
 
-        let tx_params = get_params(keys, waypoint, &miner_configs);
+        let tx_params = get_params(keys, waypoint, &miner_configs, self.url.clone(), self.backup_url);
         
         // Check for, and submit backlog proofs.
         if !self.skip {

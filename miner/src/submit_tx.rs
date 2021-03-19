@@ -257,17 +257,36 @@ pub fn eval_tx_status(result: TransactionView) -> bool {
 pub fn get_params(
     keys: KeyScheme, 
     waypoint: Waypoint,
-    config: &MinerConfig
+    config: &MinerConfig,
+    // url_opt overrides all node configs, takes precedence over use_backup_url
+    url_opt: Option<Url>,
+    backup_url: bool
 ) -> TxParams {
     // let keys = KeyScheme::new_from_mnemonic(mnemonic.to_string());
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  &keypair.public_key;// keys.child_0_owner.get_public();
     let auth_key = AuthenticationKey::ed25519(pubkey);
+    
+    let url: Url = if url_opt.is_some() { 
+        url_opt.expect("could nod parse url")
+    } else {
+        if backup_url {
+            config.chain_info.backup_nodes
+            .clone()
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("no backup url provided in config toml")
+
+        } else {
+            config.chain_info.default_node.clone().expect("no url provided in config toml")
+        }
+    };
 
     TxParams {
         auth_key,
         address: config.profile.account,
-        url: config.chain_info.default_node.clone().expect("no url provided in config toml"),
+        url,
         waypoint,
         keypair,
         max_gas_unit_for_tx: 5_000,
@@ -378,7 +397,7 @@ fn test_make_params() {
     };
 
     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
-    let p = get_params(keys, waypoint, &configs_fixture);
+    let p = get_params(keys, waypoint, &configs_fixture, None, false);
     assert_eq!("http://localhost:8080/".to_string(), p.url.to_string());
     // debug!("{:?}", p.url);
     //make_params
@@ -417,6 +436,6 @@ fn test_save_tx() {
 
     };
     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
-    let p = get_params(keys, waypoint, &configs_fixture);
+    let p = get_params(keys, waypoint, &configs_fixture, None, false);
     util_save_tx(&p);
 }

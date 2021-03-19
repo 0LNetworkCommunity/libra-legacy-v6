@@ -126,8 +126,12 @@ pub fn start_miner() {
     let outputs = File::create(logs_file).expect("could not create miner log file");
     let errors = outputs.try_clone().unwrap();
 
+    // if node is NOT synced, then should use a backup/upstream node
+    // let url = choose_rpc_node().unwrap();
+    let use_backup = if check::Check::node_is_synced() {"--backup-url"} else { "" };
     let child = Command::new(MINER_BINARY)
                         .arg("start")
+                        .arg(use_backup)
                         .stdout(Stdio::from(outputs))
                         .stderr(Stdio::from(errors))
                         .spawn()
