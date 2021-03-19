@@ -3,7 +3,7 @@
 use crate::{check, prelude::app_config};
 use reqwest::Url;
 use serde::{Serialize, Deserialize};
-use std::{collections::HashSet, process::Command};
+use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio}};
 
 const NODE_BINARY: &str = "libra-node";
 const MINER_BINARY: &str = "miner";
@@ -70,22 +70,34 @@ pub enum NodeType {
 
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) {
+    // Stop any processes we may have started and detached from.
+    kill_zombies(NODE_BINARY);
 
-    // TODO: Get node home from configs:
-    let node_home = "/root/.0L/";
+    let conf = app_config().to_owned();
+    // craete logs path if it doesn't yet exist
+    let logs_dir = conf.workspace.node_home.join("logs/");
+    dbg!(&logs_dir);
+    fs::create_dir_all(&logs_dir).expect("could not create logs dir");
+    let logs_file = logs_dir.join("node.log");
+    let outputs = File::create(logs_file).expect("could not create node log file");
+    let errors = outputs.try_clone().unwrap();
+
     // Start as validator or fullnode
     // Get the yaml file
     let config_file_name = match config_type {
-        NodeType::Validator => {format!("{}validator.node.yaml", node_home)}
-        NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
+        NodeType::Validator => {format!("{}validator.node.yaml", conf.workspace.node_home.to_str().unwrap())}
+        NodeType::Fullnode => {format!("{}fullnode.node.yaml", conf.workspace.node_home.to_str().unwrap())}
     };
 
-    // Stop any processes we may have started and detached from.
-    kill_zombies(NODE_BINARY);
+
+
+
 
     let child = Command::new(NODE_BINARY)
                         .arg("--config")
                         .arg(config_file_name)
+                        .stdout(Stdio::from(outputs))
+                        .stderr(Stdio::from(errors))
                         .spawn()
                         .expect("failed to execute child");
 
