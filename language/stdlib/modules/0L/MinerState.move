@@ -17,6 +17,7 @@ address 0x1 {
     use 0x1::StagingNet;
     use 0x1::Stats;
     use 0x1::FullnodeState;
+    use 0x1::ValidatorConfig;
     // Struct to store information about a VDF proof submitted
     struct Proof {
         challenge: vector<u8>,
@@ -103,16 +104,13 @@ address 0x1 {
 
     }
 
-    // This function verifies the proof and commits to chain.
+    // This function is called by the OWNER the proof and commits to chain.
     // Function index: 03
     // Permissions: PUBLIC, ANYONE
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
     ) acquires MinerProofHistory {
-
-      //NOTE: Does not check that the Sender is the Signer. Which we must skip for the onboarding transaction.
-
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
 
@@ -132,6 +130,37 @@ address 0x1 {
       // TODO: This should not increment for validators in set.
       // Including LibraSystem::is_validator causes a dependency cycling
       FullnodeState::inc_proof(miner_sign);
+    }
+
+    // This function is called by the OPERATOR associated with node, it verifies the proof and commits to chain.
+    // Function index: 03
+    // Permissions: PUBLIC, ANYONE
+    public fun commit_state_by_operator(
+      operator_sig: &signer,
+      miner_addr: address, 
+      proof: Proof
+    ) acquires MinerProofHistory {
+
+      // Check the signer is in fact an operator delegated by the owner.
+      
+      // Get address, assumes the sender is the signer.
+      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), 130103010020);
+      // Abort if not initialized.
+      assert(exists<MinerProofHistory>(miner_addr), 130103011021);
+
+      // Get vdf difficulty constant. Will be different in tests than in production.
+      let difficulty_constant = Globals::get_difficulty();
+
+      // Skip this check on local tests, we need tests to send different difficulties.
+      if (!Testnet::is_testnet()){
+        assert(&proof.difficulty == &difficulty_constant, 130103021010);
+      };
+      
+      verify_and_update_state(miner_addr, proof, true);
+
+      // TODO: This should not increment for validators in set.
+      // however, including LibraSystem::is_validator here causes a dependency cycling
+      FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 
     // Function to verify a proof blob and update a MinerProofHistory
