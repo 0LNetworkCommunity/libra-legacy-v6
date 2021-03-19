@@ -3,7 +3,7 @@
 use crate::{
     backlog,
     block::*,
-    submit_tx::get_params,
+    submit_tx::{get_params, get_oper_params},
     keygen
 };
 use libra_genesis_tool::keyscheme::KeyScheme;
@@ -34,20 +34,25 @@ pub struct StartCmd {
     // Option for --backlog, only sends backlogged transactions.
     #[options(help = "Start but don't mine, and only resubmit backlog of proofs")]
     backlog: bool,
-
+    // don't process backlog
     #[options(help = "Skip backlog")]
     skip: bool,
+
     // Option for setting path for the blocks/proofs that are mined.
     #[options(help = "The home directory where the blocks will be stored")]
     home: PathBuf, 
 
     // Option for overriding url to connect
-    #[options(help = "option for overriding url to connect")]
+    #[options(help = "Option for overriding url to connect")]
     url: Option<Url>, 
 
     // Option for overriding url to connect
-    #[options(help = "connect to backup node, instead of default (local) node")]
+    #[options(help = "Connect to backup node, instead of default (local) node")]
     backup_url: bool, 
+
+    // Option for operator to submit transactions for owner.
+    #[options(help = "Operator to submit transactions for owner.")]
+    is_operator: bool, 
 }
 
 impl Runnable for StartCmd {
@@ -83,7 +88,11 @@ impl Runnable for StartCmd {
         let (_authkey, _account, wallet) = keygen::account_from_prompt();
         let keys = KeyScheme::new(&wallet);
 
-        let tx_params = get_params(keys, waypoint, &miner_configs, self.url.clone(), self.backup_url);
+        let tx_params = if self.is_operator {
+            get_oper_params(waypoint, &miner_configs, self.url.clone(), self.backup_url)
+        } else {
+            get_params(keys, waypoint, &miner_configs, self.url.clone(), self.backup_url)
+        };
         
         // Check for, and submit backlog proofs.
         if !self.skip {
