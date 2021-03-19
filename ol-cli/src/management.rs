@@ -73,8 +73,8 @@ pub fn start_node(config_type: NodeType) {
     // Stop any processes we may have started and detached from.
     kill_zombies(NODE_BINARY);
 
+    // create log file, and pipe stdout/err
     let conf = app_config().to_owned();
-    // craete logs path if it doesn't yet exist
     let logs_dir = conf.workspace.node_home.join("logs/");
     dbg!(&logs_dir);
     fs::create_dir_all(&logs_dir).expect("could not create logs dir");
@@ -117,8 +117,19 @@ pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     kill_zombies(MINER_BINARY);
 
+        // create log file, and pipe stdout/err
+    let conf = app_config().to_owned();
+    let logs_dir = conf.workspace.node_home.join("logs/");
+    dbg!(&logs_dir);
+    fs::create_dir_all(&logs_dir).expect("could not create logs dir");
+    let logs_file = logs_dir.join("miner.log");
+    let outputs = File::create(logs_file).expect("could not create miner log file");
+    let errors = outputs.try_clone().unwrap();
+
     let child = Command::new(MINER_BINARY)
                         .arg("start")
+                        .stdout(Stdio::from(outputs))
+                        .stderr(Stdio::from(errors))
                         .spawn()
                         .expect("failed to execute child");
 
