@@ -43,7 +43,7 @@ bins:
 	#Build and install genesis tool, libra-node, and miner
 
 	# NOTE: stdlib is built for cli bindings
-	cargo run -p stdlib -p libra-node -p miner -p backup-cli -p ol-cli --release
+	cargo build -p stdlib -p libra-node -p miner -p backup-cli -p ol-cli --release
 
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
