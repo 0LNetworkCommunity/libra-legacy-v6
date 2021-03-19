@@ -157,9 +157,10 @@ address 0x1 {
       };
       
       verify_and_update_state(miner_addr, proof, true);
-
-      // TODO: This should not increment for validators in set.
-      // however, including LibraSystem::is_validator here causes a dependency cycling
+      
+      // TODO: The operator mining needs its own struct to count mining.
+      // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place to count.
+      // This will require a breaking change to MinerState
       FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 

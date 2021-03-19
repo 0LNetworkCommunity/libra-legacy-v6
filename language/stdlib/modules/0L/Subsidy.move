@@ -241,10 +241,7 @@ address 0x1 {
       // give max possible subisidy, if auction is higher
       if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
       
-      // split subsidy with operator account, so can send transactions.
-      let half_subsidy = subsidy/2;
-
-      let minted_coins = Libra::mint<GAS>(vm, half_subsidy);
+      let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
         miner,
@@ -253,8 +250,9 @@ address 0x1 {
         b""
       );
 
-      
-      let minted_coins_operator = Libra::mint<GAS>(vm, half_subsidy);
+      // double the subsidy with operator account, so can send transactions.
+
+      let minted_coins_operator = Libra::mint<GAS>(vm, subsidy);
       let oper_addr = ValidatorConfig::get_operator(miner);
 
       LibraAccount::vm_deposit_with_metadata<GAS>(
