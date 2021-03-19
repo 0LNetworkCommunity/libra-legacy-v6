@@ -400,6 +400,15 @@ address 0x1 {
       subsidy_value
     }
 
+    // fun calc_operator_tx_fees() {
+        // get operator for validator
+        // count mining proofs submitted
+        // find baseline_tx cost
+        // multiply
+        // deduct from subsidy to miner
+        // send payment to operator
+    // }
+
     //////// TEST HELPERS ///////
     public fun test_set_fullnode_fixtures(
       vm: &signer,

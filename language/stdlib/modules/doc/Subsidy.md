@@ -431,6 +431,8 @@
     b"onboarding_subsidy",
     b""
   );
+
+  // TODO: split this payment <b>with</b> the operator, so the operator can mine.
   subsidy
 }
 </code></pre>
