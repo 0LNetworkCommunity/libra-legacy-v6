@@ -438,10 +438,7 @@
   // give max possible subisidy, <b>if</b> auction is higher
   <b>if</b> (state.current_proof_price &gt; subsidy) subsidy = state.current_proof_price;
 
-  // split subsidy <b>with</b> operator account, so can send transactions.
-  <b>let</b> half_subsidy = subsidy/2;
-
-  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, half_subsidy);
+  <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
     miner,
@@ -450,8 +447,9 @@
     b""
   );
 
+  // double the subsidy <b>with</b> operator account, so can send transactions.
 
-  <b>let</b> minted_coins_operator = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, half_subsidy);
+  <b>let</b> minted_coins_operator = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
   <b>let</b> oper_addr = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner);
 
   <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(

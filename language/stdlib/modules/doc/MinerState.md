@@ -357,8 +357,9 @@
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 
-  // TODO: This should not increment for validators in set.
-  // however, including <a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a> here causes a dependency cycling
+  // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
+  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
   <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">FullnodeState::inc_proof_by_operator</a>(operator_sig, miner_addr);
 }
 </code></pre>
