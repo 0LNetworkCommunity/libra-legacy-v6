@@ -45,9 +45,9 @@ use abscissa_core::{
 use std::path::PathBuf;
 use dirs;
 use libra_global_constants::NODE_HOME;
-
+use miner::commands::CONFIG_FILE;
 /// OlCli Configuration Filename
-pub const CONFIG_FILE: &str = "ol_cli.toml";
+// pub const CONFIG_FILE: &str = "miner.toml";
 
 /// OlCli Subcommands
 #[derive(Command, Debug, Options, Runnable)]

@@ -48,8 +48,6 @@ impl MinerConfig {
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
                     _ => Some(self.chain_info.base_waypoint.expect("no base waypoint in toml")),
                 }
-                // let waypoint: Waypoint = value.
-                // Some(waypoint)
             }
             Err(err) => {
                 println!("key_store.json not found. {:?}", err);
