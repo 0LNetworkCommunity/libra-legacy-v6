@@ -1,4 +1,4 @@
-//! MinerApp
+//! TxsApp
 //!
 //! Application based on the [Abscissa] framework.
 //!
@@ -16,14 +16,9 @@
 )]
 
 pub mod application;
-pub mod block;
 pub mod commands;
 pub mod config;
-pub mod delay;
+pub mod entrypoint;
 pub mod error;
 pub mod prelude;
 pub mod submit_tx;
-pub mod test_tx_swarm;
-pub mod backlog;
-pub mod account;
-

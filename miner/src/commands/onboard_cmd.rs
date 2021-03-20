@@ -3,7 +3,6 @@
 use crate::{
     account::ValConfigs,
     submit_tx::{eval_tx_status, get_params},
-    keygen,
     config::MinerConfig,
     test_tx_swarm::get_params_from_swarm,
     submit_tx::submit_onboard_tx,

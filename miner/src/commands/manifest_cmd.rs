@@ -6,7 +6,6 @@ use crate::{
     account,
     block::{build_block},
     delay,
-    keygen,
 };
 
 use libra_genesis_tool::keyscheme::KeyScheme;

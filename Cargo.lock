@@ -769,6 +769,7 @@ dependencies = [
  "crash-handler",
  "generate-key",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -2656,6 +2657,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "keygen"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "libra-types",
+ "libra-wallet",
+ "rpassword",
+]
+
+[[package]]
 name = "kube"
 version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3028,6 +3039,7 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -3986,6 +3998,7 @@ dependencies = [
  "glob",
  "gumdrop",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -7272,6 +7285,53 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59b11b2b5241ba34be09c3cc85a36e56e48f9888862e19cedf23336d35316ed1"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "txs"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "ajson",
+ "anyhow",
+ "byteorder",
+ "classgroup",
+ "cli",
+ "compiled-stdlib",
+ "criterion",
+ "dirs 2.0.2",
+ "glob",
+ "gumdrop",
+ "hex 0.4.2",
+ "keygen",
+ "libra-canonical-serialization",
+ "libra-config",
+ "libra-crypto",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-json-rpc-types",
+ "libra-logger",
+ "libra-management",
+ "libra-network-address",
+ "libra-types",
+ "libra-wallet",
+ "libradb",
+ "move-core-types",
+ "once_cell",
+ "regex",
+ "reqwest",
+ "rpassword",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "stdlib",
+ "storage-interface",
+ "thiserror",
+ "toml",
+ "transaction-builder",
+ "vdf",
+ "vm-genesis",
+ "wait-timeout",
 ]
 
 [[package]]
