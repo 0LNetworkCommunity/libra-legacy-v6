@@ -24,7 +24,7 @@ pub fn swarm_miner(swarm_path: PathBuf) {
 
     dbg!(&tx_params);
 
-    backlog::process_backlog(&conf, &tx_params);
+    backlog::process_backlog(&conf, &tx_params, false);
 
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);

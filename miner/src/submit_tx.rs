@@ -66,7 +66,7 @@ pub fn submit_tx(
         None => 0,
     };
 
-    let script: Script =  if is_operator {
+    let script: Script = if is_operator {
         transaction_builder::encode_minerstate_commit_by_operator_script(tx_params.owner_address.clone(), preimage, proof)
     } else {
         // if owner sending with mnemonic

@@ -149,7 +149,6 @@ pub mod build_block {
                 status_info!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
                 if let Some(ref _node) = config.chain_info.default_node {
-
                     match submit_tx(&tx_params, block.preimage, block.proof, is_operator) {
                         Ok(tx_view) => {
                             match eval_tx_status(tx_view) {

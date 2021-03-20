@@ -53,7 +53,7 @@ pub struct StartCmd {
     backup_url: bool, 
 
     // Option for operator to submit transactions for owner.
-    #[options(help = "Operator to submit transactions for owner.")]
+    #[options(help = "Operator will submit transactions for owner")]
     is_operator: bool, 
 }
 
@@ -71,12 +71,18 @@ impl Runnable for StartCmd {
             Err(_e) => {
                 status_info!("Waypoint:",format!("No waypoint parsed from command line args. Searching for waypoint in key_store.json"));
                 match miner_configs.get_waypoint() {
-                    Some(from_ks) => { waypoint = from_ks }
+                    Some(from_ks) => { 
+                        status_ok!("Waypoint:", "found in key_store.json");
+                        waypoint = from_ks 
+                    }
                     None => {
-                       status_info!("Waypoint:",format!("No waypoint found in key_store.json. Failover to chain_info.base_waypoint in miner.toml"));
+                       status_info!("Waypoint:", format!("Not found in key_store.json. Failover to chain_info.base_waypoint in miner.toml"));
 
                        match miner_configs.chain_info.base_waypoint {
-                           Some(from_toml) => {waypoint = from_toml}
+                           Some(from_toml) => {
+                                status_ok!("Waypoint:", "found in miner.toml");
+                                waypoint = from_toml
+                            }
                            None => {
                                status_err!("No waypoint found in commandline, key_store.json, nor miner.toml. Exiting.");
                                std::process::exit(-1);
@@ -98,12 +104,16 @@ impl Runnable for StartCmd {
         
         // Check for, and submit backlog proofs.
         if !self.skip {
-            backlog::process_backlog(&miner_configs, &tx_params);
+            backlog::process_backlog(&miner_configs, &tx_params, self.is_operator);
         }
 
         if !self.backlog_only {
             // Steady state.
-            let result = build_block::mine_and_submit(&miner_configs, tx_params, self.is_operator);
+            let result = build_block::mine_and_submit(
+                &miner_configs,
+                tx_params,
+                self.is_operator
+            );
             match result {
                 Ok(_val) => {}
                 Err(err) => {
