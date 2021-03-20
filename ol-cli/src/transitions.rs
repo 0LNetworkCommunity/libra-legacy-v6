@@ -4,17 +4,17 @@ use crate::check::DB_CACHE;
 use serde::{Serialize, Deserialize};
 
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct Transition {
-    action: NodeTrans,
-    from: NodeState,
-    to: NodeState,
-    // trigger: Fn // function from check.rs
-}
+// #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+// #[serde(deny_unknown_fields)]
+// struct Transition {
+//     action: NodeTrans,
+//     from: NodeState,
+//     to: NodeState,
+//     // trigger: Fn // function from check.rs
+// }
 
 ///
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub enum NodeVariants {
     EmptyBox,
@@ -26,7 +26,8 @@ pub enum NodeVariants {
     ValidatorInSync
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+///
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub enum NodeTrans {
     Init,
@@ -35,7 +36,7 @@ pub enum NodeTrans {
 }
 
 ///
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct NodeState {
     state: NodeVariants,
@@ -44,6 +45,7 @@ pub struct NodeState {
 
 
 impl NodeState {
+    /// init
     pub fn init() -> Self{
         Self {
             state: NodeVariants::EmptyBox,
@@ -71,19 +73,53 @@ impl NodeState {
             Err(_) => {None}
         }
     }
-    // pub fn c
+    /// get state
     pub fn get_state(self) -> NodeVariants {
         self.state
     }
 
-    // pub fn transition(mut self, from: NodeVariants, to: NodeVariants, trigger: NodeTrans) -> Self {        
-    //     if self.state == from {
-    //         self.state = to;
-    //         self.trigger = trigger;
-    //     };
-    //     self
-    // }
-    pub fn advance(mut self) -> Self {
+    /// trigger
+    pub fn trigger(mut self, trigger: NodeTrans) -> Self {        
+        match trigger {
+            NodeTrans::Init => {}
+            // node has an empty box, no config files
+            NodeTrans::RunWizard => {
+                if self.state == NodeVariants::EmptyBox {self.state = NodeVariants::ValConfigsOk;}
+            }
+            // revert
+            NodeTrans::WipeConfigs => {
+                if self.state == NodeVariants::ValConfigsOk {self.state = NodeVariants::EmptyBox;}
+            }
+
+            //             // start fullnode, to sync
+            // FullnodeSync { StateDbRestoredOk => StateFullnodeStarted}
+            // // reverse
+            // StopFullnodeSync { StateFullnodeStarted => StateDbRestoredOk}
+
+            // // when sync is complete
+            // FullnodeInSync { StateFullnodeStarted => StateFullnodeSyncComplete}
+            // // reverse, the node falls
+            // FullnodeLostSync { StateFullnodeSyncComplete => StateFullnodeStarted}
+
+            // // switch to validator mode if sync is complete
+            // SwitchValidatorMode { StateFullnodeSyncComplete => StateValidatorModeRunning }
+            // // reverse, failed to enter validator mode, node failed to start
+            // FallbackFullnode { StateValidatorModeSwitch => StateFullnodeSyncComplete }
+
+            // // validator in sync
+            // ValidatorInSync { StateValidatorModeRunning => StateValidatorInSync}
+
+            // // // Validator mode can lose sync
+            // // ValidatorLostSync { StateValidatorInSync => StateValidatorModeLostSync }
+            
+            // // Validator mode can lose sync, drops all the way back to FullnodeStated
+            // ValidatorDroppedFromSet { StateValidatorInSync => StateFullnodeStarted }
+        };
+        self
+    }
+
+    /// Advance to the next stage
+    pub fn override_forward(mut self) -> Self {
         match self.state {
             NodeVariants::EmptyBox => {
                 self.state = NodeVariants::ValConfigsOk;
@@ -110,15 +146,4 @@ impl NodeState {
         };
         self
     }
-    // pub fn allowed_transitions() Vec<Transition>{
-    //     vec![
-    //         Transition {
-    //             action: NodeTrans::RunWizard,
-    //             from: NodeState::EmptyBox,
-    //             to: NodeState::ValConfigsOk,
-    //             // trigger: Fn // function from check.rs
-    //         }
-
-    //     ]
-    // }
 }
