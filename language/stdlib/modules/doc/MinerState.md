@@ -343,16 +343,16 @@
   // Check the signer is in fact an operator delegated by the owner.
 
   // Get address, assumes the sender is the signer.
-  <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), 130103010020);
+  <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), 130103021000);
   // Abort <b>if</b> not initialized.
-  <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr), 130103011021);
+  <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr), 130103021001);
 
   // Get vdf difficulty constant. Will be different in tests than in production.
   <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
 
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
-    <b>assert</b>(&proof.difficulty == &difficulty_constant, 130103021010);
+    <b>assert</b>(&proof.difficulty == &difficulty_constant, 130103021003);
   };
 
   <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);

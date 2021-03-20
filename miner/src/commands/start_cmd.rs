@@ -103,7 +103,7 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            let result = build_block::mine_and_submit(&miner_configs, tx_params);
+            let result = build_block::mine_and_submit(&miner_configs, tx_params, self.is_operator);
             match result {
                 Ok(_val) => {}
                 Err(err) => {

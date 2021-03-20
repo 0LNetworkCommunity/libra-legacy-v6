@@ -15,10 +15,10 @@ use reqwest::Url;
 use abscissa_core::{status_warn, status_ok};
 use std::{io::{stdout, Write}, thread, time};
 
-use libra_types::transaction::{Script, TransactionArgument, TransactionPayload};
+use libra_types::transaction::{Script, TransactionPayload};
 use libra_types::{transaction::helpers::*};
 use crate::config::MinerConfig;
-use compiled_stdlib::transaction_scripts;
+// use compiled_stdlib::transaction_scripts;
 use libra_json_rpc_types::views::{TransactionView, VMStatusView};
 use libra_types::chain_id::ChainId;
 use libra_genesis_tool::keyscheme::KeyScheme;
@@ -59,24 +59,18 @@ pub fn submit_tx(
 
     let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
 
-    let (account_state,_) = client.get_account(tx_params.owner_address.clone(), true).unwrap();
+    // For sequence number
+    let (account_state,_) = client.get_account(tx_params.sender_address.clone(), true).unwrap();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,
     };
 
-    let script: Script =  if !is_operator {
-        transaction_builder::encode_minerstate_commit_script(preimage, proof)
-        // Script::new(
-        //     transaction_scripts::StdlibScript::MinerStateCommit.compiled_bytes().into_vec(),
-        //     vec![],
-        //     vec![
-        //         TransactionArgument::U8Vector(preimage),
-        //         TransactionArgument::U8Vector(proof),
-        //     ],
-        // )
-    } else {
+    let script: Script =  if is_operator {
         transaction_builder::encode_minerstate_commit_by_operator_script(tx_params.owner_address.clone(), preimage, proof)
+    } else {
+        // if owner sending with mnemonic
+        transaction_builder::encode_minerstate_commit_script(preimage, proof)
     };
 
     // sign the transaction script

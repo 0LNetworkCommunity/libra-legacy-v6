@@ -128,6 +128,7 @@ pub mod build_block {
     pub fn mine_and_submit(
         config: &MinerConfig,
         tx_params: TxParams,
+        is_operator: bool,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
         let mut blocks_dir = config.workspace.node_home.clone();
@@ -149,7 +150,7 @@ pub mod build_block {
 
                 if let Some(ref _node) = config.chain_info.default_node {
 
-                    match submit_tx(&tx_params, block.preimage, block.proof, false) {
+                    match submit_tx(&tx_params, block.preimage, block.proof, is_operator) {
                         Ok(tx_view) => {
                             match eval_tx_status(tx_view) {
                                 true => status_ok!("Success:", "Proof committed to chain"),

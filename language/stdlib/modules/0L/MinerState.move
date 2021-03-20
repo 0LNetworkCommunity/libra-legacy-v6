@@ -144,16 +144,16 @@ address 0x1 {
       // Check the signer is in fact an operator delegated by the owner.
       
       // Get address, assumes the sender is the signer.
-      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), 130103010020);
+      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), 130103021000);
       // Abort if not initialized.
-      assert(exists<MinerProofHistory>(miner_addr), 130103011021);
+      assert(exists<MinerProofHistory>(miner_addr), 130103021001);
 
       // Get vdf difficulty constant. Will be different in tests than in production.
       let difficulty_constant = Globals::get_difficulty();
 
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &difficulty_constant, 130103021010);
+        assert(&proof.difficulty == &difficulty_constant, 130103021003);
       };
       
       verify_and_update_state(miner_addr, proof, true);
