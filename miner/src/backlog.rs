@@ -21,7 +21,7 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams) {
     // Getting remote miner state
     let mut client = LibraClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     println!("Fetching remote tower height");
-    let remote_state  = match client.get_miner_state(tx_params.address.clone()) {
+    let remote_state  = match client.get_miner_state(tx_params.owner_address.clone()) {
         Ok( s ) => { match s {
             Some(state) => {
                 state

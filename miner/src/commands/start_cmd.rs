@@ -31,9 +31,11 @@ pub struct StartCmd {
     // Option for --waypoint, to set a specific waypoint besides genesis_waypoint which is found in key_store.json
     #[options(help = "Provide a waypoint for tx submission. Will otherwise use what is in key_store.json")]
     waypoint: String,
+    
     // Option for --backlog, only sends backlogged transactions.
     #[options(help = "Start but don't mine, and only resubmit backlog of proofs")]
-    backlog: bool,
+    backlog_only: bool,
+
     // don't process backlog
     #[options(help = "Skip backlog")]
     skip: bool,
@@ -85,12 +87,12 @@ impl Runnable for StartCmd {
             }
         }
 
-        let (_authkey, _account, wallet) = keygen::account_from_prompt();
-        let keys = KeyScheme::new(&wallet);
-
         let tx_params = if self.is_operator {
             get_oper_params(waypoint, &miner_configs, self.url.clone(), self.backup_url)
         } else {
+            // prompt the owner for account
+            let (_authkey, _account, wallet) = keygen::account_from_prompt();
+            let keys = KeyScheme::new(&wallet);
             get_params(keys, waypoint, &miner_configs, self.url.clone(), self.backup_url)
         };
         
@@ -99,7 +101,7 @@ impl Runnable for StartCmd {
             backlog::process_backlog(&miner_configs, &tx_params);
         }
 
-        if !self.backlog {
+        if !self.backlog_only {
             // Steady state.
             let result = build_block::mine_and_submit(&miner_configs, tx_params);
             match result {

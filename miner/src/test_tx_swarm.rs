@@ -94,15 +94,16 @@ pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error>
     let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  keys.child_0_owner.get_public();
-    let auth_key = AuthenticationKey::ed25519(&pubkey);
-    let address = auth_key.derived_address();
+    let sender_auth_key = AuthenticationKey::ed25519(&pubkey);
+    let sender_address = sender_auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
     let waypoint = config.base.waypoint.genesis_waypoint();
 
     let tx_params = TxParams {
-        auth_key,
-        address,
+        sender_auth_key,
+        sender_address,
+        owner_address: sender_address,
         url,
         waypoint,
         keypair,

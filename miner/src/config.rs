@@ -62,8 +62,8 @@ impl MinerConfig {
         let mut conf = MinerConfig::default();
         conf.workspace.node_home = PathBuf::from("./swarm_temp");
         // Load profile config
-        conf.profile.account = param.address;
-        conf.profile.auth_key = param.auth_key.to_string();
+        conf.profile.account = param.owner_address;
+        conf.profile.auth_key = param.sender_auth_key.to_string();
 
         // Load chain info
         conf.chain_info.default_node = Some(param.url.clone());
