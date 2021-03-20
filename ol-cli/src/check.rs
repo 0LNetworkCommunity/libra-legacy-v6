@@ -135,8 +135,12 @@ impl Check {
     /// Fetch chain state from the upstream node
     pub fn fetch_upstream_states(&mut self) {
         self.chain_state = self.get_annotate_account_blob(AccountAddress::ZERO);
-        self.miner_state = self.client.get_miner_state(self.conf.profile.account)
-            .expect("Error occurs on fetching miner states");
+        self.miner_state = match self.client.get_miner_state(self.conf.profile.account) {
+            Ok(state) => state,
+            _ => {
+                None
+            },
+        }
     }
 
     /// return tower height on chain
