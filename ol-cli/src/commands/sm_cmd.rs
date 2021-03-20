@@ -1,7 +1,8 @@
 //! `sm-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::sm;
+// use crate::machine;
+use crate::transitions;
 
 /// `sm-cmd` subcommand
 ///
@@ -19,7 +20,7 @@ impl Runnable for SMCmd {
 
     /// Start the application.
     fn run(&self) {
-        sm::node_state_machine::demo();
-        sm::miner_state_machine::demo();
+        let trans = transitions::NodeState::init().advance().get_state();
+        dbg!(&trans);
     }
 }

@@ -15,6 +15,7 @@
     unused_qualifications
 )]
 
+
 pub mod application;
 pub mod commands;
 pub mod config;
@@ -28,5 +29,6 @@ pub mod management;
 pub mod check;
 pub mod server;
 pub mod restore;
-pub mod sm;
+// pub mod machine;
 pub mod onboard;
+pub mod transitions;
