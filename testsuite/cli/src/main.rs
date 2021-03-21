@@ -13,10 +13,7 @@ use cli::{
 };
 use libra_types::{chain_id::ChainId, waypoint::Waypoint};
 use rustyline::{config::CompletionType, error::ReadlineError, Config, Editor};
-use std::{
-    str::FromStr,
-    time::{Duration, UNIX_EPOCH},
-};
+use std::{str::FromStr, time::{Duration, UNIX_EPOCH}};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -83,23 +80,8 @@ struct Args {
 
 fn main() {
     let args = Args::from_args();
-
-    println!("Enter your 0L mnemonic:");
-    let mut entered_mnem = false;
-    let mnemonic_string = match rpassword::read_password_from_tty(Some("\u{1F511} ")) {
-        Ok(string) => {
-            if string.len() > 0 {
-                entered_mnem = true;
-                Some(string)
-                
-
-            } else {
-                None
-            }
-        },
-        _ => None,
-    };
-
+    let mnemonic_str = keygen::account_from_prompt().2.mnemonic();
+    let entered_mnem = if mnemonic_str.is_empty() { false } else { true };
 
     let mut logger = ::libra_logger::Logger::new();
     if !args.verbose {
@@ -141,7 +123,7 @@ fn main() {
         true, // 0L change
         args.faucet_url.clone(),
         mnemonic_file,
-        mnemonic_string, // 0L change
+        Some(mnemonic_str.trim().to_string()), // 0L change
         waypoint,
     )
     .expect("Failed to construct client.");

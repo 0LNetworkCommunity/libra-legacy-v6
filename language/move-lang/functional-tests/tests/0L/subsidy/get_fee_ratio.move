@@ -28,7 +28,6 @@ script {
   use 0x1::Stats;
   use 0x1::FixedPoint32;
   use 0x1::LibraSystem;
-  use 0x1::Debug::print;
 
   fun main(vm: &signer) {
     // check the case of a network density of 4 active validators.
@@ -46,7 +45,6 @@ script {
     };
 
     let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
-    print(&fee_ratios);
     assert(Vector::length(&validators) == 2, 735701);
     assert(Vector::length(&fee_ratios) == 2, 735702);
     assert(*(Vector::borrow<FixedPoint32::FixedPoint32>(&fee_ratios, 1)) == FixedPoint32::create_from_raw_value(2147483648u64), 735703);

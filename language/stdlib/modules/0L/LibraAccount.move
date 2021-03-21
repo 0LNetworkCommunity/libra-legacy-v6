@@ -3,6 +3,7 @@ address 0x1 {
 /// The `LibraAccount` module manages accounts. It defines the `LibraAccount` resource and
 /// numerous auxiliary data structures. It also defines the prolog and epilog that run
 /// before and after every transaction.
+// File Prefix for errors: 1201 used for OL errors
 
 module LibraAccount {
     use 0x1::AccountFreezing;
@@ -264,7 +265,7 @@ module LibraAccount {
     ):address acquires AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(MinerState::rate_limit_create_acc(sender_addr), 120101011001);
+        assert(MinerState::can_create_val_account(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
             &Globals::get_difficulty(),
@@ -718,12 +719,25 @@ module LibraAccount {
     }
 
     /// Return a unique capability granting permission to withdraw from the sender's account balance.
+    // Function code: 10 Prefix: 170110
     public fun extract_withdraw_capability(
         sender: &signer
     ): WithdrawCapability acquires LibraAccount {
-        //////// 0L //////// Transfers disabled
+        //////// 0L //////// Transfers disabled by default
+        //////// 0L //////// Transfers of 10 GAS 
+        //////// 0L //////// enabled when validator count is 100. 
         let sender_addr = Signer::address_of(sender);
-        assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        if (LibraConfig::check_transfer_enabled()) {
+            if(!AccountLimits::has_limits_published<GAS>(sender_addr)){
+                AccountLimits::publish_restricted_limits_definition_OL<GAS>(sender);
+            };
+            // Check if limits window is published
+            if(!AccountLimits::has_window_published<GAS>(sender_addr)){
+                AccountLimits::publish_window_OL<GAS>(sender, sender_addr);
+            };
+        } else {
+            assert(sender_addr == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        };
 
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
@@ -823,6 +837,7 @@ module LibraAccount {
     /// The included `metadata` will appear in the `SentPaymentEvent` and `ReceivedPaymentEvent`.
     /// The `metadata_signature` will only be checked if this payment is subject to the dual
     /// attestation protocol
+    // Function code: 13 Prefix: 170113
     public fun pay_from<Token>(
         cap: &WithdrawCapability,
         payee: address,
@@ -830,6 +845,27 @@ module LibraAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
+        //////// 0L //////// Transfers disabled by default
+        //////// 0L //////// Transfers of 10 GAS 
+        //////// 0L //////// enabled when validator count is 100. 
+        if (LibraConfig::check_transfer_enabled()) {
+            // Ensure that this withdrawal is compliant with the account limits on
+            // this account.
+            assert(
+                    AccountLimits::update_withdrawal_limits<Token>(
+                        amount,
+                        {{*&cap.account_address}},
+                        &borrow_global<AccountOperationsCapability>(CoreAddresses::LIBRA_ROOT_ADDRESS()).limits_cap
+                    ),
+                    Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS)
+                );
+    
+        } else {
+            assert(*&cap.account_address == CoreAddresses::LIBRA_ROOT_ADDRESS(), Errors::limit_exceeded(EWITHDRAWAL_EXCEEDS_LIMITS));
+        };
+
+        
+
         deposit<Token>(
             *&cap.account_address,
             payee,
@@ -1840,7 +1876,6 @@ module LibraAccount {
     ///////////////////////////////////////////////////////////////////////////
     // Proof of concept code used for Validator and ValidatorOperator roles management
     ///////////////////////////////////////////////////////////////////////////
-
     public fun create_validator_account(
         lr_account: &signer,
         new_account_address: address,

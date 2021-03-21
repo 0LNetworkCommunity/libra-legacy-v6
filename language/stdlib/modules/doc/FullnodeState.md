@@ -12,10 +12,14 @@
 -  [Function `inc_payment_count`](#0x1_FullnodeState_inc_payment_count)
 -  [Function `inc_payment_value`](#0x1_FullnodeState_inc_payment_value)
 -  [Function `get_address_proof_count`](#0x1_FullnodeState_get_address_proof_count)
+-  [Function `get_cumulative_subsidy`](#0x1_FullnodeState_get_cumulative_subsidy)
+-  [Function `is_onboarding`](#0x1_FullnodeState_is_onboarding)
+-  [Function `test_set_fullnode_fixtures`](#0x1_FullnodeState_test_set_fullnode_fixtures)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 </code></pre>
 
 
@@ -246,6 +250,101 @@ VM Increments payments in epoch. Increases by <code>count</code>
 <pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">get_address_proof_count</a>(addr: address):u64 <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
   <b>let</b> state = borrow_global&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
   state.proofs_submitted_in_epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_FullnodeState_get_cumulative_subsidy"></a>
+
+## Function `get_cumulative_subsidy`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_cumulative_subsidy">get_cumulative_subsidy</a>(addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_get_cumulative_subsidy">get_cumulative_subsidy</a>(addr: address): u64 <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>{
+  <b>let</b> state = borrow_global&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
+  state.cumulative_subsidy
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_FullnodeState_is_onboarding"></a>
+
+## Function `is_onboarding`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">is_onboarding</a>(addr: address): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_is_onboarding">is_onboarding</a>(addr: address): bool <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>{
+  <b>let</b> state = borrow_global&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
+
+  state.cumulative_proofs_submitted &lt; 2 &&
+  state.cumulative_proofs_paid &lt; 2 &&
+  state.cumulative_subsidy &lt; 1000000
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_FullnodeState_test_set_fullnode_fixtures"></a>
+
+## Function `test_set_fullnode_fixtures`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_test_set_fullnode_fixtures">test_set_fullnode_fixtures</a>(vm: &signer, addr: address, proofs_submitted_in_epoch: u64, proofs_paid_in_epoch: u64, subsidy_in_epoch: u64, cumulative_proofs_submitted: u64, cumulative_proofs_paid: u64, cumulative_subsidy: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="FullnodeState.md#0x1_FullnodeState_test_set_fullnode_fixtures">test_set_fullnode_fixtures</a>(
+  vm: &signer,
+  addr: address,
+  proofs_submitted_in_epoch: u64,
+  proofs_paid_in_epoch: u64,
+  subsidy_in_epoch: u64,
+  cumulative_proofs_submitted: u64,
+  cumulative_proofs_paid: u64,
+  cumulative_subsidy: u64,
+) <b>acquires</b> <a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_libra_root">CoreAddresses::assert_libra_root</a>(vm);
+  <b>assert</b>(is_testnet(), 130112011101);
+
+  <b>let</b> state = borrow_global_mut&lt;<a href="FullnodeState.md#0x1_FullnodeState_FullnodeCounter">FullnodeCounter</a>&gt;(addr);
+  state.proofs_submitted_in_epoch = proofs_submitted_in_epoch;
+  state.proofs_paid_in_epoch = proofs_paid_in_epoch;
+  state.subsidy_in_epoch = subsidy_in_epoch;
+  state.cumulative_proofs_submitted = cumulative_proofs_submitted;
+  state.cumulative_proofs_paid = cumulative_proofs_paid;
+  state.cumulative_subsidy = cumulative_subsidy;
 }
 </code></pre>
 

@@ -19,7 +19,7 @@ pub const DEFAULT_JSON_RPC_PORT: u16 = 8080;
 pub const DEFAULT_BATCH_SIZE_LIMIT: u16 = 20;
 pub const DEFAULT_PAGE_SIZE_LIMIT: u16 = 1000;
 /// 0L increased the json-RPC length so we can include stdlib in upgrade oracle.
-pub const DEFAULT_CONTENT_LENGTH_LIMIT: usize = 4096 * 1024; // 4096kb
+pub const DEFAULT_CONTENT_LENGTH_LIMIT: usize = 4096 * 1024;
 
 impl Default for JsonRpcConfig {
     fn default() -> JsonRpcConfig {

@@ -1,11 +1,13 @@
 //! Formatters for libra account creation
-use crate::{block::Block, node_keys::KeyScheme};
+use crate::block::Block;
 use libra_crypto::x25519::PublicKey;
 use libra_types::account_address::AccountAddress;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use hex::{decode, encode};
 use std::{fs::File, io::Write, path::PathBuf};
 use libra_network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}};
+use libra_genesis_tool::keyscheme::KeyScheme;
+
 
 #[derive(Serialize, Deserialize, Debug)]
 /// Configuration data necessary to initialize a validator.
@@ -24,10 +26,12 @@ pub struct ValConfigs {
     pub op_consensus_pubkey: Vec<u8>,
     /// Key validator will use for network connections
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub op_validator_network_addresses: Vec<u8>, //NetworkAddress network/network-address/src/lib.rs
+    pub op_validator_network_addresses: Vec<u8>,
     /// FullNode will use for network connections
     #[serde(serialize_with = "as_hex", deserialize_with = "from_hex")]
-    pub op_fullnode_network_addresses: Vec<u8>, //NetworkAddress
+    pub op_fullnode_network_addresses: Vec<u8>,
+    /// FullNode will use for network connections
+    pub op_fullnode_network_addresses_string: NetworkAddress,
     /// Human readable name of account
     pub op_human_name: String,
 }
@@ -90,7 +94,7 @@ impl ValConfigs {
         let fn_addr_obj: NetworkAddress = fullnode_network_string.parse().expect("could not parse fullnode network address");
         let fn_pubkey =  PublicKey::from_ed25519_public_bytes(
             &keys
-            .child_2_val_network
+            .child_3_fullnode_network
             .get_public()
             .to_bytes()
         ).unwrap();
@@ -105,6 +109,7 @@ impl ValConfigs {
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
             op_validator_network_addresses: lcs::to_bytes(&encrypted_addr).unwrap(),
             op_fullnode_network_addresses: lcs::to_bytes(&fn_addr_obj).unwrap(),
+            op_fullnode_network_addresses_string: fn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address),
         }
     }
@@ -119,6 +124,7 @@ impl ValConfigs {
         let buf = serde_json::to_string(&self).expect("Config should be export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
+        println!("account manifest created, file saved to: {:?}", json_path);
     }
 
     /// Extract the preimage and proof from a genesis proof block_0.json
@@ -151,6 +157,7 @@ impl UserConfigs {
         let buf = serde_json::to_string(&self ).expect("Manifest should export to json");
         file.write(&buf.as_bytes() )
             .expect("Could not write account.json");
+        println!("Account manifest saved to: {:?}", json_path);
     }
    /// Extract the preimage and proof from a genesis proof block_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs,std::io::Error> {
@@ -164,9 +171,9 @@ impl UserConfigs {
 #[test]
 fn test_parse_init_file() {
     use crate::account::ValConfigs;
-    let fixtures = PathBuf::from("../fixtures/eve_init_test.json");
+    let fixtures = PathBuf::from("../fixtures/onboarding/eve_init_test.json");
     let init_configs = ValConfigs::get_init_data(&fixtures).unwrap();
-    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d0400a1230da90523180720151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b11812").unwrap(), "Could not parse network address");
+    assert_eq!(init_configs.op_fullnode_network_addresses, decode("2d040000000000052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
 
     let consensus_key_vec = decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
     
@@ -195,7 +202,7 @@ fn val_config_ip_address() {
         "161.35.13.169".to_string(),
     );
     
-    let correct_fn_hex = "2d0400a1230da90523180720151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b118120800".to_owned();
+    let correct_fn_hex = "2d0400a1230da9052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
     assert_eq!(
         encode(&val.op_fullnode_network_addresses),
         correct_fn_hex

@@ -15,8 +15,10 @@ a given time period.
 -  [Function `update_deposit_limits`](#0x1_AccountLimits_update_deposit_limits)
 -  [Function `update_withdrawal_limits`](#0x1_AccountLimits_update_withdrawal_limits)
 -  [Function `publish_window`](#0x1_AccountLimits_publish_window)
+-  [Function `publish_window_OL`](#0x1_AccountLimits_publish_window_OL)
 -  [Function `publish_unrestricted_limits`](#0x1_AccountLimits_publish_unrestricted_limits)
 -  [Function `update_limits_definition`](#0x1_AccountLimits_update_limits_definition)
+-  [Function `publish_restricted_limits_definition_OL`](#0x1_AccountLimits_publish_restricted_limits_definition_OL)
 -  [Function `update_window_info`](#0x1_AccountLimits_update_window_info)
 -  [Function `reset_window`](#0x1_AccountLimits_reset_window)
 -  [Function `can_receive`](#0x1_AccountLimits_can_receive)
@@ -30,6 +32,7 @@ a given time period.
 
 
 <pre><code><b>use</b> <a href="Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="LibraConfig.md#0x1_LibraConfig">0x1::LibraConfig</a>;
 <b>use</b> <a href="LibraTimestamp.md#0x1_LibraTimestamp">0x1::LibraTimestamp</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -517,6 +520,47 @@ Only ParentVASP and ChildVASP can have the account limits [[E1]][ROLE][[E2]][ROL
 
 </details>
 
+<a name="0x1_AccountLimits_publish_window_OL"></a>
+
+## Function `publish_window_OL`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">publish_window_OL</a>&lt;CoinType&gt;(to_limit: &signer, limit_address: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">publish_window_OL</a>&lt;CoinType&gt;(
+    to_limit: &signer,
+    limit_address: address,
+) {
+    <b>assert</b>(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(limit_address), <a href="Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>));
+    <b>assert</b>(
+        !<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(to_limit)),
+        <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_EWINDOW">EWINDOW</a>)
+    );
+    move_to(
+        to_limit,
+        <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt; {
+            window_start: <a href="AccountLimits.md#0x1_AccountLimits_current_time">current_time</a>(),
+            window_inflow: 0,
+            window_outflow: 0,
+            tracked_balance: 0,
+            limit_address,
+        }
+    )
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_AccountLimits_publish_unrestricted_limits"></a>
 
 ## Function `publish_unrestricted_limits`
@@ -632,6 +676,48 @@ TODO: This should be specified.
     <b>if</b> (new_max_outflow &gt; 0) { limits_def.max_outflow = new_max_outflow };
     <b>if</b> (new_max_holding_balance &gt; 0) { limits_def.max_holding = new_max_holding_balance };
     <b>if</b> (new_time_period &gt; 0) { limits_def.time_period = new_time_period };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_AccountLimits_publish_restricted_limits_definition_OL"></a>
+
+## Function `publish_restricted_limits_definition_OL`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_restricted_limits_definition_OL">publish_restricted_limits_definition_OL</a>&lt;CoinType&gt;(account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_restricted_limits_definition_OL">publish_restricted_limits_definition_OL</a>&lt;CoinType&gt;(
+    account: &signer
+) {
+
+    <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+    // As we don't have Optionals for txn scripts, in update_account_limit_definition.<b>move</b>
+    // we <b>use</b> 0 value <b>to</b> represent a None (ie no <b>update</b> <b>to</b> that variable)
+    <b>assert</b>(
+        !<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(sender_addr),
+        <a href="Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>)
+    );
+    move_to(
+        account,
+        <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt; {
+            max_inflow: <a href="AccountLimits.md#0x1_AccountLimits_MAX_U64">MAX_U64</a>,
+            max_outflow: <a href="LibraConfig.md#0x1_LibraConfig_get_epoch_transfer_limit">LibraConfig::get_epoch_transfer_limit</a>(),
+            max_holding: <a href="AccountLimits.md#0x1_AccountLimits_MAX_U64">MAX_U64</a>,
+            time_period: <a href="AccountLimits.md#0x1_AccountLimits_ONE_DAY">ONE_DAY</a>
+        }
+    )
 }
 </code></pre>
 

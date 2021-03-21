@@ -920,7 +920,7 @@ Initialize this module. This is only callable from genesis.
 ):address <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
     // Rate limit spam accounts.
-    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_rate_limit_create_acc">MinerState::rate_limit_create_acc</a>(sender_addr), 120101011001);
+    <b>assert</b>(<a href="MinerState.md#0x1_MinerState_can_create_val_account">MinerState::can_create_val_account</a>(sender_addr), 120101011001);
     <b>let</b> valid = <a href="VDF.md#0x1_VDF_verify">VDF::verify</a>(
         challenge,
         &<a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>(),
@@ -1775,9 +1775,21 @@ Return a unique capability granting permission to withdraw from the sender's acc
 <pre><code><b>public</b> <b>fun</b> <a href="LibraAccount.md#0x1_LibraAccount_extract_withdraw_capability">extract_withdraw_capability</a>(
     sender: &signer
 ): <a href="LibraAccount.md#0x1_LibraAccount_WithdrawCapability">WithdrawCapability</a> <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> {
-    //////// 0L //////// Transfers disabled
+    //////// 0L //////// Transfers disabled by default
+    //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
+    //////// 0L //////// enabled when validator count is 100.
     <b>let</b> sender_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-    <b>assert</b>(sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>));
+    <b>if</b> (<a href="LibraConfig.md#0x1_LibraConfig_check_transfer_enabled">LibraConfig::check_transfer_enabled</a>()) {
+        <b>if</b>(!<a href="AccountLimits.md#0x1_AccountLimits_has_limits_published">AccountLimits::has_limits_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)){
+            <a href="AccountLimits.md#0x1_AccountLimits_publish_restricted_limits_definition_OL">AccountLimits::publish_restricted_limits_definition_OL</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender);
+        };
+        // Check <b>if</b> limits window is published
+        <b>if</b>(!<a href="AccountLimits.md#0x1_AccountLimits_has_window_published">AccountLimits::has_window_published</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr)){
+            <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">AccountLimits::publish_window_OL</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, sender_addr);
+        };
+    } <b>else</b> {
+        <b>assert</b>(sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>));
+    };
 
     // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
     <b>assert</b>(
@@ -1967,6 +1979,27 @@ attestation protocol
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a>, <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    //////// 0L //////// Transfers disabled by default
+    //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
+    //////// 0L //////// enabled when validator count is 100.
+    <b>if</b> (<a href="LibraConfig.md#0x1_LibraConfig_check_transfer_enabled">LibraConfig::check_transfer_enabled</a>()) {
+        // Ensure that this withdrawal is compliant <b>with</b> the account limits on
+        // this account.
+        <b>assert</b>(
+                <a href="AccountLimits.md#0x1_AccountLimits_update_withdrawal_limits">AccountLimits::update_withdrawal_limits</a>&lt;Token&gt;(
+                    amount,
+                    {{*&cap.account_address}},
+                    &borrow_global&lt;<a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()).limits_cap
+                ),
+                <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>)
+            );
+
+    } <b>else</b> {
+        <b>assert</b>(*&cap.account_address == <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>(), <a href="Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="LibraAccount.md#0x1_LibraAccount_EWITHDRAWAL_EXCEEDS_LIMITS">EWITHDRAWAL_EXCEEDS_LIMITS</a>));
+    };
+
+
+
     <a href="LibraAccount.md#0x1_LibraAccount_deposit">deposit</a>&lt;Token&gt;(
         *&cap.account_address,
         payee,
