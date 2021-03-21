@@ -12,7 +12,7 @@ use 0x1::TestFixtures;
 use 0x1::ValidatorConfig;
 use 0x1::Roles;
 use 0x1::Signer;
-use 0x1::Debug::print;
+// use 0x1::Debug::print;
 // Test Prefix: 1301
 fun main(sender: &signer) {
   // // Scenario: Bob, an existing validator, is sending a transaction for Eve, with a challenge and proof not yet submitted to the chain.
@@ -55,16 +55,12 @@ fun main(sender: &signer) {
   assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
 
   // Check the account exists and the balance is 10, from Bob's onboarding transfer
-  // TODO: The operator account.
-  print(&LibraAccount::balance<GAS>(eve_addr));
   assert(LibraAccount::balance<GAS>(eve_addr) == 1000000, 7357130101081000);
 
   // // assert the operator has balance
   assert(LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010) == 1000000, 7357130101091000);
 
-  
-  print(&LibraAccount::balance<GAS>({{bob}}));
-  // // Bob's balance should have gone down by 20 (operator and owner)
+  // // Bob's balance should have gone down by 2M gas (operator and owner)
   assert(LibraAccount::balance<GAS>({{bob}}) == 8000000, 73571301011000);
 
 }
@@ -79,7 +75,6 @@ script {
   use 0x1::GAS::GAS;
   use 0x1::Reconfigure;
   use 0x1::MinerState;
-  use 0x1::Debug::print;
   use 0x1::Testnet;
 
 fun main(vm: &signer) {
@@ -89,12 +84,14 @@ fun main(vm: &signer) {
     let old_account_bal = LibraAccount::balance<GAS>(eve);
     Reconfigure::reconfigure(vm, 100);
     let new_account_bal = LibraAccount::balance<GAS>(eve);
-    print(&old_account_bal);
-    print(&new_account_bal);
-
+  
     assert(old_account_bal == 1000000, 7357001);
     assert(new_account_bal == 3497536, 7357002);
 
-    assert(MinerState::can_create_val_account({{bob}}) == false, 7357003);
+    // Operator account should not increase after epoch change
+    assert(LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010) == 1000000, 7357003);
+
+    assert(MinerState::can_create_val_account({{bob}}) == false, 7357004);
+    
 }
 }
