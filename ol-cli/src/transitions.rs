@@ -1,46 +1,58 @@
 //! 'transition'
 
-use crate::check::DB_CACHE;
+use crate::check::{Check, DB_CACHE};
 use serde::{Serialize, Deserialize};
 
-
-// #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-// #[serde(deny_unknown_fields)]
-// struct Transition {
-//     action: NodeTrans,
-//     from: NodeState,
-//     to: NodeState,
-//     // trigger: Fn // function from check.rs
-// }
-
-///
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+/// All states a node can be in
 pub enum NodeVariants {
+    /// Nothing is configured
     EmptyBox,
+    /// Files initialized node.yaml, key_store.json
     ValConfigsOk,
+    /// Database restored from backup
     DbRestoredOk,
-    FullnodeStarted,
+    /// Node is running in fullnode mode
+    FullnodeIsRunning,
+    /// Database is in sync, as fullnode 
     FullnodeSyncComplete,
-    ValidatorModeRunning,
-    ValidatorInSync
+    /// Node is running in validator mode
+    ValidatorIsRunning,
+    /// Validator has fallen out of validator set, likely cannot sync, should change to fullnode mode.
+    ValOutOfSet,
 }
 
-///
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-pub enum NodeTrans {
+/// All actions which can be taken on a node
+pub enum NodeAction {
+    /// Initialize the onboarding state
     Init,
+    /// Create files by running wizard
     RunWizard,
-    WipeConfigs
+    /// Restore the DB from state backups
+    RestoreDb,
+    /// Start the fullnode
+    StartFullnode,
+    /// Notify the fullnode has synced
+    FullnodeSynced,
+    /// Notify the fullnode lost sync
+    FullnodeLostSync,
+    /// Restart the node in validator mode
+    SwitchToValidatorMode,
+    /// Notify the validatro was dropped from set.
+    ValidatorDroppedFromSet,
+
 }
 
-///
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
+/// The Current state of a node
 pub struct NodeState {
     state: NodeVariants,
-    trigger: NodeTrans,
+    trigger: NodeAction,
+    // check: Check,
 }
 
 
@@ -49,7 +61,8 @@ impl NodeState {
     pub fn init() -> Self{
         Self {
             state: NodeVariants::EmptyBox,
-            trigger: NodeTrans::Init,
+            trigger: NodeAction::Init,
+            // check: Check::new(),
         }
     }
 
@@ -74,72 +87,72 @@ impl NodeState {
         }
     }
     /// get state
-    pub fn get_state(self) -> NodeVariants {
-        self.state
+    pub fn get_state(&self) -> NodeVariants {
+        self.state.to_owned()
     }
 
     /// trigger
-    pub fn trigger(mut self, trigger: NodeTrans) -> Self {        
-        match trigger {
-            NodeTrans::Init => {}
+    pub fn transition(&mut self, action: NodeAction) -> &Self {        
+        match action {
+            NodeAction::Init => {}
             // node has an empty box, no config files
-            NodeTrans::RunWizard => {
+            NodeAction::RunWizard => {
                 if self.state == NodeVariants::EmptyBox {self.state = NodeVariants::ValConfigsOk;}
             }
-            // revert
-            NodeTrans::WipeConfigs => {
-                if self.state == NodeVariants::ValConfigsOk {self.state = NodeVariants::EmptyBox;}
+
+            NodeAction::RestoreDb => {
+                if self.state == NodeVariants::ValConfigsOk {self.state = NodeVariants::DbRestoredOk;}
+            }
+            // Forward
+            NodeAction::StartFullnode => {
+                if self.state == NodeVariants::DbRestoredOk {self.state = NodeVariants::FullnodeIsRunning;}
+
+                // if the node was previously in validator mode.
+                if self.state == NodeVariants::ValidatorIsRunning || self.state ==  NodeVariants::ValOutOfSet {self.state = NodeVariants::FullnodeIsRunning;}
+ 
             }
 
-            //             // start fullnode, to sync
-            // FullnodeSync { StateDbRestoredOk => StateFullnodeStarted}
-            // // reverse
-            // StopFullnodeSync { StateFullnodeStarted => StateDbRestoredOk}
+            //Forward
+            NodeAction::FullnodeSynced => {
+                if self.state == NodeVariants::FullnodeIsRunning {self.state = NodeVariants::FullnodeSyncComplete};
+            }
 
-            // // when sync is complete
-            // FullnodeInSync { StateFullnodeStarted => StateFullnodeSyncComplete}
-            // // reverse, the node falls
-            // FullnodeLostSync { StateFullnodeSyncComplete => StateFullnodeStarted}
+            NodeAction::FullnodeLostSync => {
+                if self.state == NodeVariants::FullnodeSyncComplete {self.state = NodeVariants::FullnodeIsRunning};
+            }
 
-            // // switch to validator mode if sync is complete
-            // SwitchValidatorMode { StateFullnodeSyncComplete => StateValidatorModeRunning }
-            // // reverse, failed to enter validator mode, node failed to start
-            // FallbackFullnode { StateValidatorModeSwitch => StateFullnodeSyncComplete }
+            NodeAction::SwitchToValidatorMode => {
+                if self.state == NodeVariants::FullnodeSyncComplete {self.state = NodeVariants::ValidatorIsRunning};
+            }
 
-            // // validator in sync
-            // ValidatorInSync { StateValidatorModeRunning => StateValidatorInSync}
-
-            // // // Validator mode can lose sync
-            // // ValidatorLostSync { StateValidatorInSync => StateValidatorModeLostSync }
-            
-            // // Validator mode can lose sync, drops all the way back to FullnodeStated
-            // ValidatorDroppedFromSet { StateValidatorInSync => StateFullnodeStarted }
+            //Forward
+            NodeAction::ValidatorDroppedFromSet => {
+                if self.state == NodeVariants::ValidatorIsRunning {self.state = NodeVariants::ValOutOfSet};
+            }
         };
         self
     }
 
     /// Advance to the next stage
-    pub fn override_forward(mut self) -> Self {
-        match self.state {
+    pub fn maybe_advance(&mut self) -> &Self {
+        let check = Check::new();
+        match &self.state {
             NodeVariants::EmptyBox => {
-                self.state = NodeVariants::ValConfigsOk;
-            },
+                if check.configs_exist() {&self.transition(NodeAction::RunWizard);}
+                else { println!("Onboarding: no state changes") };
+            }
             NodeVariants::ValConfigsOk => {
                 self.state = NodeVariants::DbRestoredOk;
-            },
+            }
             NodeVariants::DbRestoredOk => {
-                self.state = NodeVariants::FullnodeStarted;
-            },
-            NodeVariants::FullnodeStarted => {
+                self.state = NodeVariants::FullnodeIsRunning;
+            }
+            NodeVariants::FullnodeIsRunning => {
                 self.state = NodeVariants::FullnodeSyncComplete;
 
-            },
+            }
             NodeVariants::FullnodeSyncComplete => {
-                self.state = NodeVariants::ValidatorModeRunning;
-
-            },
-            NodeVariants::ValidatorModeRunning => {
-                self.state = NodeVariants::ValidatorInSync;
+                self.state = NodeVariants::ValidatorIsRunning;
 
             }
             _ => {}

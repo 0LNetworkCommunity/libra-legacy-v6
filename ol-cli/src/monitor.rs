@@ -22,20 +22,20 @@ pub fn mon() {
         // TODO: make keep cursor position
         let sync = checker.check_sync();
         let mining = match checker.miner_is_mining() {
-            true=> "Running",
-            false => "Stopped"
+            true=> "running",
+            false => "stopped"
         };
         let node_status = match checker.node_is_running() {
-            true=> "Running",
-            false => "Stopped"
+            true=> "running",
+            false => "stopped"
         };
 
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}, epoch: {}-{}, validator set:{}",
+                "Test: {}, Configs Exist:{}, Is synced: {}, Node app: {}, Miner app: {}, Account on chain: {}, Epoch: {}, Height {}, In val set:{}",
                 &x,
-                checker.is_clean_start(),
+                checker.configs_exist(),
                 &sync,
                 node_status,
                 mining,

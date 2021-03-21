@@ -1,7 +1,7 @@
 //! `onboard-cmd` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::onboard;
+use crate::transitions;
 
 /// `onboard-cmd` subcommand
 ///
@@ -12,13 +12,19 @@ use crate::onboard;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct OnboardCmd {
-    // ..
+
+    // "free" arguments don't have an associated flag
+    #[options(free)]
+    free_args: Vec<String>,
 }
 
 impl Runnable for OnboardCmd {
 
     /// Start the application.
     fn run(&self) {
-        onboard::onboard();
+        if self.free_args.clone().into_iter().find(|x| x == "next").is_some() {
+            let state = transitions::NodeState::init().maybe_advance().get_state();
+            dbg!(state);
+        } 
     }
 }

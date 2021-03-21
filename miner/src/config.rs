@@ -46,12 +46,11 @@ impl MinerConfig {
                 match ajson::get(&json.to_string(), "*waypoint.value") {
                     Some(value) => Some(value.to_string().parse().unwrap()),
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
-                    _ => Some(self.chain_info.base_waypoint.expect("no base waypoint in toml")),
+                    _ => self.chain_info.base_waypoint
                 }
             }
-            Err(err) => {
-                println!("key_store.json not found. {:?}", err);
-                None
+            Err(_err) => {
+                self.chain_info.base_waypoint
             }
         }
     }

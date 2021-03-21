@@ -111,7 +111,7 @@ impl Check {
         return Self {
             client: LibraClient::new(
                 conf.clone().chain_info.default_node.expect("cannot get url"), 
-                conf.get_waypoint().expect("could not get waypoint")
+                conf.get_waypoint().unwrap_or_default() //default for Waypoint will not be able to connect
             ).unwrap(),
             conf,
             miner_process_name: "miner",
@@ -224,11 +224,12 @@ impl Check {
     }
 
     /// nothing is configured yet, empty box
-    pub fn is_clean_start(&self) -> bool {
+    pub fn configs_exist(&self) -> bool {
         // check to see no files are present
-        let mut file = self.conf.workspace.node_home.clone();
-        file.push("blocks/block_0.json"); //TODO change file name later
-        !file.exists()
+        let home_path = self.conf.workspace.node_home.clone();
+        home_path.join("blocks/block_0.json").exists() && 
+        home_path.join("node.yaml").exists() && 
+        home_path.join("key_store.json").exists()
     }
 
     /// the owner and operator accounts exist on chain

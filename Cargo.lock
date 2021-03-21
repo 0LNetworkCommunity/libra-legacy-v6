@@ -206,6 +206,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d25d88fd6b8041580a654f9d0c581a047baee2b3efee13275f2fc392fc75034"
 
 [[package]]
+name = "argh"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91792f088f87cdc7a2cfb1d617fa5ea18d7f1dc22ef0e1b5f82f3157cdc522be"
+dependencies = [
+ "argh_derive",
+ "argh_shared",
+]
+
+[[package]]
+name = "argh_derive"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4eb0c0c120ad477412dc95a4ce31e38f2113e46bd13511253f79196ca68b067"
+dependencies = [
+ "argh_shared",
+ "heck",
+ "proc-macro2 1.0.24",
+ "quote 1.0.7",
+ "syn 1.0.42",
+]
+
+[[package]]
+name = "argh_shared"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "781f336cc9826dbaddb9754cb5db61e64cab4f69668bd19dcc4a0394a86f4cb1"
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -656,6 +685,12 @@ dependencies = [
  "serde_derive",
  "serde_json",
 ]
+
+[[package]]
+name = "cassowary"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df8670b8c7b9dae1793364eafadf7239c40d669904660c5960d74cfd80b46a53"
 
 [[package]]
 name = "cast"
@@ -1856,6 +1891,25 @@ dependencies = [
  "serde",
  "storage-interface",
  "thiserror",
+]
+
+[[package]]
+name = "explorer"
+version = "0.1.0"
+dependencies = [
+ "argh",
+ "bitflags",
+ "cassowary",
+ "chrono",
+ "cli",
+ "libra-json-rpc-client",
+ "libra-types",
+ "rand 0.7.3",
+ "reqwest",
+ "termion",
+ "tui",
+ "unicode-segmentation",
+ "unicode-width",
 ]
 
 [[package]]
@@ -7473,6 +7527,19 @@ dependencies = [
  "serde_json",
  "termcolor",
  "toml",
+]
+
+[[package]]
+name = "tui"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ced152a8e9295a5b168adc254074525c17ac4a83c90b2716274cc38118bddc9"
+dependencies = [
+ "bitflags",
+ "cassowary",
+ "termion",
+ "unicode-segmentation",
+ "unicode-width",
 ]
 
 [[package]]

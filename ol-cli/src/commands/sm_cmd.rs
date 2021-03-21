@@ -20,9 +20,9 @@ impl Runnable for SMCmd {
 
     /// Start the application.
     fn run(&self) {
-        // let trans = transitions::NodeState::init().override_forward().get_state();
-        let trans = NodeState::init().trigger(NodeTrans::RunWizard).get_state();
+        // let trans = transitcions::NodeState::init().override_forward().get_state();
+        let trans = NodeState::init().transition(NodeAction::RunWizard).get_state();
 
-        dbg!(&trans);
+        dbg!(trans);
     }
 }
