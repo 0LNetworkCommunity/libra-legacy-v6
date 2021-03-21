@@ -1,4 +1,4 @@
-//! account: bob, 100000, 0, validator
+//! account: bob, 10000000, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -57,15 +57,15 @@ fun main(sender: &signer) {
   // Check the account exists and the balance is 10, from Bob's onboarding transfer
   // TODO: The operator account.
   print(&LibraAccount::balance<GAS>(eve_addr));
-  assert(LibraAccount::balance<GAS>(eve_addr) == 10, 7357130101081000);
+  assert(LibraAccount::balance<GAS>(eve_addr) == 1000000, 7357130101081000);
 
-  // assert the operator has balance
-  assert(LibraAccount::balance<GAS>("0x0E04E58B354EF058D08DD493F2352454") == 10, 7357130101091000);
+  // // assert the operator has balance
+  assert(LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010) == 1000000, 7357130101091000);
 
+  
   print(&LibraAccount::balance<GAS>({{bob}}));
-
-  // Bob's balance should have gone down by 10
-  assert(LibraAccount::balance<GAS>({{bob}}) == 99990, 7357130101101000);
+  // // Bob's balance should have gone down by 20 (operator and owner)
+  assert(LibraAccount::balance<GAS>({{bob}}) == 8000000, 73571301011000);
 
 }
 }
@@ -92,8 +92,8 @@ fun main(vm: &signer) {
     print(&old_account_bal);
     print(&new_account_bal);
 
-    assert(old_account_bal == 10, 7357001);
-    assert(new_account_bal == 2497546, 7357002);
+    assert(old_account_bal == 1000000, 7357001);
+    assert(new_account_bal == 3497536, 7357002);
 
     assert(MinerState::can_create_val_account({{bob}}) == false, 7357003);
 }

@@ -945,7 +945,7 @@ module LibraAccount {
         let payer_addr = Signer::address_of(payer_sig);
         let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
         let balance_coin = &mut account_balance.coin;
-        let bootstrap_amount = 10; 
+        let bootstrap_amount = 1000000; // 1 gascoin, without scaling representation 
         let metadata = b"onboarding transfer";
         let coin_to_deposit = Libra::withdraw(balance_coin, bootstrap_amount);
         deposit<Token>(
