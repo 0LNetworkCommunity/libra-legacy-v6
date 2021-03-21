@@ -54,13 +54,19 @@ fun main(sender: &signer) {
   //Check the validator is in the validator universe.
   assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
 
-  // Check the account exists and the balance is 0
-  // TODO: Needs some balance
+  // Check the account exists and the balance is 10, from Bob's onboarding transfer
+  // TODO: The operator account.
   print(&LibraAccount::balance<GAS>(eve_addr));
-  assert(LibraAccount::balance<GAS>(eve_addr) == 0, 7357130101081000);
+  assert(LibraAccount::balance<GAS>(eve_addr) == 10, 7357130101081000);
 
-  // Is rate-limited
-  assert(MinerState::rate_limit_create_acc(sender_addr) == false, 7357130101091000);
+  // assert the operator has balance
+  assert(LibraAccount::balance<GAS>("0x0E04E58B354EF058D08DD493F2352454") == 10, 7357130101091000);
+
+  print(&LibraAccount::balance<GAS>({{bob}}));
+
+  // Bob's balance should have gone down by 10
+  assert(LibraAccount::balance<GAS>({{bob}}) == 99990, 7357130101101000);
+
 }
 }
 // check: EXECUTED
@@ -72,15 +78,23 @@ script {
   use 0x1::LibraAccount;
   use 0x1::GAS::GAS;
   use 0x1::Reconfigure;
+  use 0x1::MinerState;
+  use 0x1::Debug::print;
+  use 0x1::Testnet;
 
 fun main(vm: &signer) {
+    Testnet::remove_testnet(vm); // need to remove testnet for this test, since testnet does not ratelimit account creation.
+
     let eve = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
     let old_account_bal = LibraAccount::balance<GAS>(eve);
-    assert(old_account_bal == 0, 7357001);
     Reconfigure::reconfigure(vm, 100);
     let new_account_bal = LibraAccount::balance<GAS>(eve);
-    assert(new_account_bal == 675648, 7357002);
-    // print(&old_account_bal);
-    // print(&new_account_bal);
+    print(&old_account_bal);
+    print(&new_account_bal);
+
+    assert(old_account_bal == 10, 7357001);
+    assert(new_account_bal == 2497546, 7357002);
+
+    assert(MinerState::can_create_val_account({{bob}}) == false, 7357003);
 }
 }

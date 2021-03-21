@@ -262,7 +262,7 @@ module LibraAccount {
         op_validator_network_addresses: vector<u8>,
         op_fullnode_network_addresses: vector<u8>,
         op_human_name: vector<u8>,
-    ):address acquires AccountOperationsCapability {
+    ):address acquires LibraAccount, Balance, AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         assert(MinerState::can_create_val_account(sender_addr), 120101011001);
@@ -309,6 +309,13 @@ module LibraAccount {
         make_account(new_op_account, op_auth_key_prefix);
 
         MinerState::reset_rate_limit(sender_addr);
+
+        // Transfer for owner
+        onboarding_gas_transfer<GAS>(sender, new_account_address);
+
+        // Transfer for operator as well
+        onboarding_gas_transfer<GAS>(sender, op_address);
+
         new_account_address
     }
 
@@ -920,6 +927,34 @@ module LibraAccount {
         ensures payer == payee ==> balance<Token>(payer) == old(balance<Token>(payer));
         ensures payer != payee ==> balance<Token>(payer) == old(balance<Token>(payer)) - amount;
         ensures payer != payee ==> balance<Token>(payee) == old(balance<Token>(payee)) + amount;
+    }
+
+
+    //////// 0L ////////
+    // when a new account is created it doesn't have any gas, and cannot
+    // mine or do other operations
+    // without this the new account must wait until the next epoch change to receive the fullnode subsidy, only to then begin interacting with the network.
+    // the person submitting the account creation transaction can bootstrap the account, until the epoch change when the fullnode subsidy will be paid.
+    // This transfer option skips all account limit checks.
+    // Can be used to send a bootstrapping amout to the Owner account and/or Operator.
+    // Can only be called within this module, and by create_valiator_account_with_proof
+    fun onboarding_gas_transfer<Token>(
+        payer_sig: &signer,
+        payee: address
+    ) acquires LibraAccount, Balance, AccountOperationsCapability {
+        let payer_addr = Signer::address_of(payer_sig);
+        let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+        let bootstrap_amount = 10; 
+        let metadata = b"onboarding transfer";
+        let coin_to_deposit = Libra::withdraw(balance_coin, bootstrap_amount);
+        deposit<Token>(
+            payer_addr,
+            payee,
+            coin_to_deposit, // withdraw_from(cap, payee, bootstrap_amount, copy metadata),
+            metadata,
+            b""
+        );
     }
 
     /// Rotate the authentication key for the account under cap.account_address
