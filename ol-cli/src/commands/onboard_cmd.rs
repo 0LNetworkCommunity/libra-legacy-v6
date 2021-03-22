@@ -30,5 +30,15 @@ impl Runnable for OnboardCmd {
             .get_state();
             dbg!(state);
         } 
+
+        if self.free_args.clone().into_iter().find(|x| x == "autopilot").is_some() {
+            loop {
+                let state = transitions::NodeState::init()
+                .maybe_advance(self.trigger_actions)
+                .get_state();
+                dbg!(state);
+            }
+
+        } 
     }
 }
