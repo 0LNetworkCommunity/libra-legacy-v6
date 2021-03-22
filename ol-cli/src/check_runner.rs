@@ -9,7 +9,7 @@ use std::io::{Write, stdout};
 use crossterm::{QueueableCommand, cursor};
 
 /// Start the node monitor
-pub fn mon() {
+pub fn mon(is_live: bool) {
     let mut stdout = stdout();
 
     let mut x = 0;
@@ -51,18 +51,19 @@ pub fn mon() {
         stdout.queue(cursor::RestorePosition).unwrap();
         stdout.flush().unwrap();
 
+        if !is_live && x==0 { break };
         x = x + 1;
     }
 }
 
 
-// TODO: Implement loop with clockwerk
-use clokwerk::{Scheduler, TimeUnits};
+// // TODO: Implement loop with clockwerk
+// use clokwerk::{Scheduler, TimeUnits};
 
-/// set a timer for the monitor
-pub fn timer () {
-    let mut scheduler = Scheduler::new();
-    scheduler.every(1.seconds()).run(|| println!("Periodic task"));
+// /// set a timer for the monitor
+// pub fn timer () {
+//     let mut scheduler = Scheduler::new();
+//     scheduler.every(1.seconds()).run(|| println!("Periodic task"));
 
-    let _thread_handle = scheduler.watch_thread(Duration::from_millis(100));
-}
+//     let _thread_handle = scheduler.watch_thread(Duration::from_millis(100));
+// }

@@ -24,7 +24,7 @@ pub mod prelude;
 pub mod account_resource;
 pub mod client;
 pub mod metadata;
-pub mod monitor;
+pub mod check_runner;
 pub mod management;
 pub mod check;
 pub mod server;

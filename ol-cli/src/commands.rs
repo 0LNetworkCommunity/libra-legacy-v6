@@ -18,6 +18,7 @@ mod serve_cmd;
 mod restore_cmd;
 mod onboard_cmd;
 mod query_cmd;
+mod check_cmd;
 
 
 use self::{
@@ -29,6 +30,7 @@ use self::{
     restore_cmd::RestoreCmd,
     onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
+    check_cmd::CheckCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -79,6 +81,11 @@ pub enum OlCliCmd {
     /// The `query` subcommand
     #[options(help = "query helpers")]
     Query(QueryCmd), 
+
+    /// The `query` subcommand
+    #[options(help = "query helpers")]
+    Check(CheckCmd), 
+    
     
 }
 

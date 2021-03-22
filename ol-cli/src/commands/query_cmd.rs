@@ -33,7 +33,7 @@ impl Runnable for QueryCmd {
         else { config.profile.account };
 
         let mut info = "".to_owned();
-        let mut display  = "".to_owned();
+        let mut display = "".to_owned();
         // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance
         if self.free_args.clone().into_iter().find(|x| x == "balance").is_some() {
             info = get(QueryType::Balance, account);
@@ -46,7 +46,7 @@ impl Runnable for QueryCmd {
         }
 
         if self.free_args.clone().into_iter().find(|x| x == "sync-delay").is_some() {
-            info = get(QueryType::Balance, account);
+            info = get(QueryType::SyncDelay, account);
             display = "sync-delay".to_uppercase().to_owned()
         }
  

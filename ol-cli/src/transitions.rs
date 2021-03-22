@@ -1,4 +1,4 @@
-//! 'transition'
+//! 'transitions' a state machine for the onboarding stages of a new validator. Can query and/or trigger the next expected action in the onboarding process.
 
 use crate::{
     check::{DB_CACHE, Check},

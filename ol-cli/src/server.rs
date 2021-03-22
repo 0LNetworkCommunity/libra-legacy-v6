@@ -10,7 +10,7 @@ use std::convert::Infallible;
 use std::time::Duration;
 use tokio::time::interval;  
 use warp::{sse::ServerSentEvent, Filter};
-use crate::{check, monitor};
+use crate::{check, check_runner};
 
 use std::thread;
 
@@ -45,7 +45,7 @@ pub const TEMPLATE: &'static str = std::include_str!("../web/index.html");
 pub async fn main() {
 
     thread::spawn(|| {
-        monitor::mon();
+        check_runner::mon(true);
     });
 
     let mut hb = Handlebars::new();
