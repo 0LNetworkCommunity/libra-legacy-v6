@@ -41,8 +41,6 @@ pub enum NodeAction {
     StartFullnode,
     /// Notify the fullnode has synced
     FullnodeSynced,
-    /// Notify the fullnode lost sync
-    FullnodeLostSync,
     /// Restart the node in validator mode
     SwitchToValidatorMode,
     /// Notify the validatro was dropped from set.
@@ -121,10 +119,6 @@ impl NodeState {
                 if self.state == NodeVariants::FullnodeIsRunning {self.state = NodeVariants::FullnodeSyncComplete};
             }
 
-            NodeAction::FullnodeLostSync => {
-                if self.state == NodeVariants::FullnodeSyncComplete {self.state = NodeVariants::FullnodeIsRunning};
-            }
-
             NodeAction::SwitchToValidatorMode => {
                 if self.state == NodeVariants::FullnodeSyncComplete {self.state = NodeVariants::ValidatorIsRunning};
             }
@@ -142,7 +136,7 @@ impl NodeState {
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
         dbg!("maybe advance");
         dbg!(&self.state);
-        let check = Check::new();
+        let mut check = Check::new();
         match &self.state {
             NodeVariants::EmptyBox => {
                 if check.configs_exist() {
@@ -156,25 +150,56 @@ impl NodeState {
                 };
             }
             NodeVariants::ValConfigsOk => {
-                if check.database_bootstrapped() {&self.transition(NodeAction::RestoreDb, trigger_action);}
-                else { 
+                if check.database_bootstrapped() {
+                    &self.transition(NodeAction::RestoreDb, trigger_action);
+                } else { 
                     println!("Onboarding: no state changes");
                     if trigger_action {
                         println!("Triggering expected action");
                         restore::fast_forward_db().expect("unable to fast forward db");
                     }
                 }
-                // self.state = NodeVariants::DbRestoredOk;
             }
             NodeVariants::DbRestoredOk => {
-                self.state = NodeVariants::FullnodeIsRunning;
+                if check.node_is_running() {
+                    &self.transition(NodeAction::StartFullnode, trigger_action);
+                } else { 
+                    println!("Onboarding: no state changes");
+                    if trigger_action {
+                        println!("Triggering expected action");
+                        management::start_node(management::NodeType::Fullnode).expect("unable to start fullnode");
+                    }
+                }
             }
+            // TODO: Miner should have own separate state machine
+            // If fullnode is running try to mine (if account is created)
             NodeVariants::FullnodeIsRunning => {
-                self.state = NodeVariants::FullnodeSyncComplete;
+                // start miner but don't advance.
+                // advance only when in sync
+                if check.accounts_exist_on_chain() && !check.miner_is_mining() {
+                    management::start_miner()
+                }
 
+                if check.check_sync() {
+                    &self.transition(NodeAction::FullnodeSynced, trigger_action);
+                } else { 
+                    println!("Onboarding: no state changes");
+                    // Nothing to do to make fullnode sync, just waiting
+                }
             }
+            // TODO: would be unusual if the validator joined val set before the fullnode is synced, but could happen.
+
+            // if node sync is complete, can check if is in validator set, and switch to validator mode.
             NodeVariants::FullnodeSyncComplete => {
-                self.state = NodeVariants::ValidatorIsRunning;
+                if check.is_in_validator_set() {
+                    &self.transition(NodeAction::SwitchToValidatorMode, trigger_action);
+                } else { 
+                    println!("Onboarding: no state changes");
+                    // Nothing to do to make fullnode sync, just waiting
+
+                    // TODO: Do we need to stop node, or is the process killing correct?
+                    management::start_node(management::NodeType::Validator).expect("unable to start node in validator mode");
+                }
 
             }
             _ => {}

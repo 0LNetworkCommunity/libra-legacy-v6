@@ -1,6 +1,7 @@
 //! `trigger` functions
 
 use crate::{check, prelude::app_config};
+use anyhow::Error;
 use reqwest::Url;
 use serde::{Serialize, Deserialize};
 use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio}};
@@ -69,7 +70,7 @@ pub enum NodeType {
 }
 
 /// Start Node, as fullnode
-pub fn start_node(config_type: NodeType) {
+pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     // Stop any processes we may have started and detached from.
     kill_zombies(NODE_BINARY);
 
@@ -104,6 +105,7 @@ pub fn start_node(config_type: NodeType) {
     let pid = &child.id();
     save_pid(NODE_BINARY, *pid);
     println!("--- Started new {} w/ pid: {}", NODE_BINARY, pid);
+    Ok(())
 }
 
 
