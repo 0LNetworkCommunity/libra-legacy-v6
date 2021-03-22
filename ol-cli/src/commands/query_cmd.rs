@@ -56,6 +56,6 @@ impl Runnable for QueryCmd {
 
         }
 
-        status_info!(display.to_uppercase(),format!("{:#?}", info));
+        status_info!(display.to_uppercase(),format!("{}", info));
     }
 }
