@@ -6,9 +6,10 @@ use reqwest::Url;
 use serde::{Serialize, Deserialize};
 use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio}};
 
-const NODE_BINARY: &str = "libra-node";
 const MINER_BINARY: &str = "miner";
+const NODE_BINARY: &str = "libra-node";
 
+/// Process name and its set of PIDs ever spawned
 #[derive(Serialize, Deserialize, Debug)]
 struct Process {
     name: String,
@@ -36,11 +37,9 @@ pub fn save_pid(name: &str, pid: u32) {
     let mut process: Process = serde_json::de::from_slice(
         &pids_loaded
     ).unwrap();    
-    process.pids.insert(pid);
-    
+    process.pids.insert(pid);    
     let serialized = serde_json::to_vec(&process).unwrap();
     let _res = check::DB_CACHE.put(name.as_bytes(), serialized);
-    println!("--- Saved: {:?}, pids.len: {}", &process, process.pids.len());
 }
 
 /// Kill all the processes that are running
@@ -51,15 +50,14 @@ pub fn kill_zombies(name: &str) {
 
     let pids_loaded = check::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
-    println!("--- kz: Loaded: {:?}, pids.len: {}", &process, process.pids.len());
 
+    println!("Killing zombie '{}' processes...", name);
     use nix::sys::signal::{self, Signal};
     for pid in process.pids.iter() {
-        let res = signal::kill(
+        let _res = signal::kill(
             nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM
         );
-        println!("--- kz: Killing pid {}, result: {:?}", pid, res);
-    }        
+    }
 }
 /// What kind of node are we starting
 pub enum NodeType {
@@ -74,7 +72,7 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     // Stop any processes we may have started and detached from.
     kill_zombies(NODE_BINARY);
 
-    // create log file, and pipe stdout/err
+    // Create log file, and pipe stdout/err
     let conf = app_config().to_owned();
     let logs_dir = conf.workspace.node_home.join("logs/");
     dbg!(&logs_dir);
@@ -85,14 +83,11 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
 
     // Start as validator or fullnode
     // Get the yaml file
+    let node_home = conf.workspace.node_home.to_str().unwrap();
     let config_file_name = match config_type {
-        NodeType::Validator => {format!("{}validator.node.yaml", conf.workspace.node_home.to_str().unwrap())}
-        NodeType::Fullnode => {format!("{}fullnode.node.yaml", conf.workspace.node_home.to_str().unwrap())}
+        NodeType::Validator => {format!("{}validator.node.yaml", node_home)}
+        NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
     };
-
-
-
-
 
     let child = Command::new(NODE_BINARY)
                         .arg("--config")
@@ -104,10 +99,9 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
 
     let pid = &child.id();
     save_pid(NODE_BINARY, *pid);
-    println!("--- Started new {} w/ pid: {}", NODE_BINARY, pid);
+    println!("Started new '{}' with PID: {}", NODE_BINARY, pid);
     Ok(())
 }
-
 
 /// Stop node, as validator
 pub fn stop_node() {
@@ -141,7 +135,7 @@ pub fn start_miner() {
 
     let pid = &child.id();
     save_pid(MINER_BINARY, *pid);
-    println!("--- Started new {} w/ pid: {}", MINER_BINARY, pid);
+    println!("Started new {} with PID: {}", MINER_BINARY, pid);
 }
 
 /// Stop Miner
@@ -171,6 +165,7 @@ pub fn choose_rpc_node() -> Option<Url> {
     }
 }
 
+/// 
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
     // TODO: switch between debug mode?
