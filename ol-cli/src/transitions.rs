@@ -134,7 +134,6 @@ impl NodeState {
 
     /// Advance to the next stage
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
-        dbg!("maybe advance");
         dbg!(&self.state);
         let mut check = Check::new();
         match &self.state {
