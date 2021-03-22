@@ -1,4 +1,4 @@
-//! account: bob, 000001, 0, validator
+//! account: bob, 2000001, 0, validator
 
 //! new-transaction
 //! sender: bob
