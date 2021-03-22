@@ -205,6 +205,9 @@ module LibraAccount {
     const PROLOGUE_EMODULE_NOT_ALLOWED: u64 = 1009;
     const PROLOGUE_INVALID_WRITESET_SENDER: u64 = 1010;
 
+    //////// 0L //////////
+    const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
+
     /// Initialize this module. This is only callable from genesis.
     public fun initialize(
         lr_account: &signer,
@@ -265,6 +268,7 @@ module LibraAccount {
     ):address acquires LibraAccount, Balance, AccountOperationsCapability {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
+
         assert(MinerState::can_create_val_account(sender_addr), 120101011001);
         let valid = VDF::verify(
             challenge,
@@ -284,17 +288,14 @@ module LibraAccount {
 
         // NOTE: VDF verification is being called twice!
         MinerState::init_miner_state(&new_signer, challenge, solution);
-
         // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
         add_currencies_for_account<GAS>(&new_op_account, false);
-
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
-
         // OP sends network info to Owner config"
         ValidatorConfig::set_config(
             &new_op_account, // signer
@@ -303,19 +304,16 @@ module LibraAccount {
             op_validator_network_addresses,
             op_fullnode_network_addresses
         );
-        
-        make_account(new_signer, auth_key_prefix);
 
+        make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
 
         MinerState::reset_rate_limit(sender_addr);
 
         // Transfer for owner
         onboarding_gas_transfer<GAS>(sender, new_account_address);
-
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address);
-
         new_account_address
     }
 
@@ -942,20 +940,17 @@ module LibraAccount {
         payer_sig: &signer,
         payee: address
     ) acquires LibraAccount, Balance, AccountOperationsCapability {
-        let bootstrap_amount = 1000000; // 1 gascoin, without scaling representation 
         let payer_addr = Signer::address_of(payer_sig);
         let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
         let balance_coin = &mut account_balance.coin;
-
-        assert(Libra::value(balance_coin) > bootstrap_amount * 2, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
+        assert(Libra::value(balance_coin) > BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
         // Should abort if the 
-
         let metadata = b"onboarding transfer";
-        let coin_to_deposit = Libra::withdraw(balance_coin, bootstrap_amount);
+        let coin_to_deposit = Libra::withdraw(balance_coin, BOOTSTRAP_COIN_VALUE);
         deposit<Token>(
             payer_addr,
             payee,
-            coin_to_deposit, // withdraw_from(cap, payee, bootstrap_amount, copy metadata),
+            coin_to_deposit,
             metadata,
             b""
         );
