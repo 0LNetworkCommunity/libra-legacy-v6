@@ -38,7 +38,7 @@ impl<'a> App<'a> {
             should_quit: false,
             tabs: TabsState::new(vec!["Overview", "Network", "Transactions", "Coin List"]),
             show_chart: true,
-            progress: 0.0,
+            progress: 0.1,
             servers: vec![],
             enhanced_graphics,
             validators: vec![],
