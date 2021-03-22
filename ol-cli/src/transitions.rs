@@ -1,11 +1,11 @@
 //! 'transition'
 
 use crate::{
-    check::{Check, DB_CACHE},
+    check::{DB_CACHE, Check},
     management,
     restore,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -57,7 +57,6 @@ pub struct NodeState {
     // check: Check,
 }
 
-
 impl NodeState {
     /// init
     pub fn init() -> Self{
@@ -95,37 +94,40 @@ impl NodeState {
 
     /// trigger
     pub fn transition(&mut self, action: NodeAction, trigger_action: bool) -> &Self {        
+        use NodeVariants::*;
         match action {
             NodeAction::Init => {}
             // node has an empty box, no config files
             NodeAction::RunWizard => {
-                if self.state == NodeVariants::EmptyBox {self.state = NodeVariants::ValConfigsOk;}
+                if self.state == EmptyBox {self.state = ValConfigsOk;}
             }
 
             NodeAction::RestoreDb => {
-                if self.state == NodeVariants::ValConfigsOk {self.state = NodeVariants::DbRestoredOk;}
+                if self.state == ValConfigsOk {self.state = DbRestoredOk;}
             }
             // Forward
             NodeAction::StartFullnode => {
-                if self.state == NodeVariants::DbRestoredOk {self.state = NodeVariants::FullnodeIsRunning;}
+                if self.state == DbRestoredOk {self.state = FullnodeIsRunning;}
 
                 // if the node was previously in validator mode.
-                if self.state == NodeVariants::ValidatorIsRunning || self.state ==  NodeVariants::ValOutOfSet {self.state = NodeVariants::FullnodeIsRunning;}
+                if self.state == ValidatorIsRunning || self.state ==  ValOutOfSet {
+                       self.state = FullnodeIsRunning;
+                }
  
             }
 
             //Forward
             NodeAction::FullnodeSynced => {
-                if self.state == NodeVariants::FullnodeIsRunning {self.state = NodeVariants::FullnodeSyncComplete};
+                if self.state == FullnodeIsRunning {self.state = FullnodeSyncComplete};
             }
 
             NodeAction::SwitchToValidatorMode => {
-                if self.state == NodeVariants::FullnodeSyncComplete {self.state = NodeVariants::ValidatorIsRunning};
+                if self.state == FullnodeSyncComplete {self.state = ValidatorIsRunning};
             }
 
             //Forward
             NodeAction::ValidatorDroppedFromSet => {
-                if self.state == NodeVariants::ValidatorIsRunning {self.state = NodeVariants::ValOutOfSet};
+                if self.state == ValidatorIsRunning {self.state = ValOutOfSet};
             }
         };
         self.maybe_advance(trigger_action);
@@ -166,7 +168,9 @@ impl NodeState {
                     println!("Onboarding: no state changes");
                     if trigger_action {
                         println!("Triggering expected action");
-                        management::start_node(management::NodeType::Fullnode).expect("unable to start fullnode");
+                        management::start_node(
+                            management::NodeType::Fullnode
+                        ).expect("unable to start fullnode");
                     }
                 }
             }
@@ -186,9 +190,11 @@ impl NodeState {
                     // Nothing to do to make fullnode sync, just waiting
                 }
             }
-            // TODO: would be unusual if the validator joined val set before the fullnode is synced, but could happen.
+            // TODO: would be unusual if the validator joined val set before 
+            //       the fullnode is synced, but could happen.
 
-            // if node sync is complete, can check if is in validator set, and switch to validator mode.
+            // if node sync is complete, can check if is in validator set, and 
+            // switch to validator mode.
             NodeVariants::FullnodeSyncComplete => {
                 if check.is_in_validator_set() {
                     &self.transition(NodeAction::SwitchToValidatorMode, trigger_action);
@@ -197,7 +203,9 @@ impl NodeState {
                     // Nothing to do to make fullnode sync, just waiting
 
                     // TODO: Do we need to stop node, or is the process killing correct?
-                    management::start_node(management::NodeType::Validator).expect("unable to start node in validator mode");
+                    management::start_node(
+                        management::NodeType::Validator
+                    ).expect("unable to start node in validator mode");
                 }
 
             }
