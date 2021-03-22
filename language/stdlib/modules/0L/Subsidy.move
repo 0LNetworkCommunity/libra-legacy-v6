@@ -50,7 +50,6 @@ address 0x1 {
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-
         // Transfer gas from vm address to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
         LibraAccount::vm_deposit_with_metadata<GAS>(

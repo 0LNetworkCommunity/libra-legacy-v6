@@ -1,0 +1,17 @@
+[package]
+name = "keygen"
+authors = []
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+rpassword = "5.0"
+
+libra-wallet = { path = "../testsuite/cli/libra-wallet", version = "0.1.0" }
+libra-types = { path = "../types/", version = "0.1.0" }
+
+[dependencies.abscissa_core]
+version = "0.5.2"
+
+[dev-dependencies]
+abscissa_core = { version = "0.5.2", features = ["testing"] }

@@ -121,19 +121,16 @@
   // Get the split of payments from <a href="Stats.md#0x1_Stats">Stats</a>.
   <b>let</b> len = <a href="Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(outgoing_set);
 
-  //TODO: <b>assert</b> the lengths of vectors are the same.
+  // equal subsidy for all active validators
+  <b>let</b> subsidy_granted;
+  <b>if</b> (subsidy_units &gt; len && subsidy_units &gt; 0 ) { // arithmetic safety check
+    subsidy_granted = subsidy_units/len;
+  } <b>else</b> { <b>return</b> };
+
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
 
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
-    // <b>let</b> node_ratio = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>&gt;(fee_ratio, i));
-
-    <b>let</b> subsidy_granted = 0;
-    <b>if</b> (subsidy_units &gt; len) {
-      subsidy_granted = subsidy_units/len;
-    };
-    // should not be possible
-    <b>if</b> (subsidy_granted == 0) <b>break</b>;
     // Transfer gas from vm address <b>to</b> validator
     <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm_sig, subsidy_granted);
     <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(

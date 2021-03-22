@@ -7,6 +7,7 @@ module AccountLimits {
     use 0x1::LibraTimestamp;
     use 0x1::Roles;
     use 0x1::Signer;
+    use 0x1::LibraConfig;
 
     /// An operations capability that restricts callers of this module since
     /// the operations can mutate account states.
@@ -177,6 +178,28 @@ module AccountLimits {
         aborts_if exists<Window<CoinType>>(Signer::spec_address_of(to_limit)) with Errors::ALREADY_PUBLISHED;
     }
 
+    // OL function to publish window by account without libraroot
+    public fun publish_window_OL<CoinType>(
+        to_limit: &signer,
+        limit_address: address,
+    ) {
+        assert(exists<LimitsDefinition<CoinType>>(limit_address), Errors::not_published(ELIMITS_DEFINITION));
+        assert(
+            !exists<Window<CoinType>>(Signer::address_of(to_limit)),
+            Errors::already_published(EWINDOW)
+        );
+        move_to(
+            to_limit,
+            Window<CoinType> {
+                window_start: current_time(),
+                window_inflow: 0,
+                window_outflow: 0,
+                tracked_balance: 0,
+                limit_address,
+            }
+        )
+    }
+
     /// Unrestricted limits are represented by setting all fields in the
     /// limits definition to `MAX_U64`. Anyone can publish an unrestricted
     /// limits since no windows will point to this limits definition unless the
@@ -232,6 +255,29 @@ module AccountLimits {
         if (new_max_outflow > 0) { limits_def.max_outflow = new_max_outflow };
         if (new_max_holding_balance > 0) { limits_def.max_holding = new_max_holding_balance };
         if (new_time_period > 0) { limits_def.time_period = new_time_period };
+    }
+
+    // OL function to publish restricted limits
+    public fun publish_restricted_limits_definition_OL<CoinType>(
+        account: &signer
+    ) {
+        
+        let sender_addr = Signer::address_of(account);
+        // As we don't have Optionals for txn scripts, in update_account_limit_definition.move
+        // we use 0 value to represent a None (ie no update to that variable)
+        assert(
+            !exists<LimitsDefinition<CoinType>>(sender_addr),
+            Errors::already_published(ELIMITS_DEFINITION)
+        );
+        move_to(
+            account,
+            LimitsDefinition<CoinType> {
+                max_inflow: MAX_U64,
+                max_outflow: LibraConfig::get_epoch_transfer_limit(),
+                max_holding: MAX_U64,
+                time_period: ONE_DAY
+            }
+        )
     }
 
     /// Update either the `tracked_balance` or `limit_address` fields of the

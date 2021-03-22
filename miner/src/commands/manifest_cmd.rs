@@ -2,7 +2,11 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{account, block::{build_block}, config::MinerConfig, delay, keygen};
+use crate::{
+    account,
+    block::{build_block},
+    delay,
+};
 
 use libra_genesis_tool::keyscheme::KeyScheme;
 

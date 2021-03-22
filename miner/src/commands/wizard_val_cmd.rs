@@ -2,8 +2,6 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::keygen;
-
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use std::{path::PathBuf};
 use super::{genesis_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
