@@ -277,6 +277,9 @@ module LibraAccount {
         );
         assert(valid, 120101011021);
 
+        // check there's enough balance for bootstrapping both operator and validator account
+        assert(balance<GAS>(sender_addr)  >= 2 * BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
+
         //Create Owner Account
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
@@ -943,6 +946,7 @@ module LibraAccount {
         let payer_addr = Signer::address_of(payer_sig);
         let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
         let balance_coin = &mut account_balance.coin;
+        // Doubly check balance exists.
         assert(Libra::value(balance_coin) > BOOTSTRAP_COIN_VALUE, Errors::limit_exceeded(EINSUFFICIENT_BALANCE));
         // Should abort if the 
         let metadata = b"onboarding transfer";
