@@ -2,12 +2,7 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::{
-    account,
-    block::{build_block},
-    delay,
-    keygen,
-};
+use crate::{account, block::{build_block}, config::MinerConfig, delay, keygen};
 
 use libra_genesis_tool::keyscheme::KeyScheme;
 
@@ -41,26 +36,27 @@ impl Runnable for ManifestCmd {
         } else {
             let (_, _, wallet) = keygen::account_from_prompt();
 
-            write_manifest(&Some(path), wallet);
+            write_manifest(&Some(path), wallet, None);
         }
     }
 }
 /// Creates an account.json file for the validator
-pub fn write_manifest(path: &Option<PathBuf>, wallet: WalletLibrary ) {
-    let stored_configs = app_config();
+pub fn write_manifest(path: &Option<PathBuf>, wallet: WalletLibrary, wizard_config: Option<MinerConfig> ) {
+    let cfg = if wizard_config.is_some() { wizard_config.unwrap() }
+    else { app_config().clone() };
 
     let miner_home = path
     .clone()
-    .unwrap_or_else(|| stored_configs.workspace.node_home.clone()
+    .unwrap_or_else(|| cfg.workspace.node_home.clone()
     );
 
     let keys = KeyScheme::new(&wallet);
-    let block = build_block::parse_block_file(stored_configs.get_block_dir().join("block_0.json").to_owned());
+    let block = build_block::parse_block_file(cfg.get_block_dir().join("block_0.json").to_owned());
 
     account::ValConfigs::new(
         block,
         keys,  
-        stored_configs.profile.ip.to_string()
+        cfg.profile.ip.to_string()
     ).create_manifest(miner_home);
 }
 
