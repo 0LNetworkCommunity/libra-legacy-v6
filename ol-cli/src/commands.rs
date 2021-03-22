@@ -12,30 +12,23 @@
 
 mod init;
 mod version;
-mod bal_cmd;
-mod resource_cmd;
-mod height_cmd;
-mod compare_cmd;
 mod monitor_cmd;
 mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
-mod sm_cmd;
 mod onboard_cmd;
+mod query_cmd;
+
 
 use self::{
     init::StartCmd,
     version::VersionCmd,
-    bal_cmd::BalCmd,
-    resource_cmd::ResourceCmd,
-    height_cmd::HeightCmd,
-    compare_cmd::CompareCmd,
     monitor_cmd::MonitorCmd,
     mgmt_cmd::MgmtCmd,
     serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
-    sm_cmd::SMCmd,
     onboard_cmd::OnboardCmd,
+    query_cmd::QueryCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -63,22 +56,6 @@ pub enum OlCliCmd {
     /// The `version` subcommand
     Version(VersionCmd),
 
-    /// The `bal` subcommand
-    #[options(help = "get balance")]
-    Bal(BalCmd),
-
-    /// The `resource` subcommand
-    #[options(help = "get account resources")]
-    Resource(ResourceCmd),
-
-    /// The `height` subcommand
-    #[options(help = "get blockchain height")]
-    Height(HeightCmd),
-
-    /// The `compare` subcommand
-    #[options(help = "compare sync states between two nodes")]
-    Compare(CompareCmd),
-
     /// The `monitor` subcommand
     #[options(help = "monitor the node and upstream")]
     Monitor(MonitorCmd),
@@ -93,15 +70,16 @@ pub enum OlCliCmd {
 
     /// The `restore` subcommand
     #[options(help = "serve the monitor over http")]
-    Restore(RestoreCmd),
-
-    /// The `state machine` subcommand
-    #[options(help = "state machine")]
-    Sm(SMCmd),    
+    Restore(RestoreCmd), 
 
     /// The `onboard` subcommand
-    #[options(help = "onboard daemon")]
+    #[options(help = "onboarding actions")]
     Onboard(OnboardCmd),        
+
+    /// The `query` subcommand
+    #[options(help = "query helpers")]
+    Query(QueryCmd), 
+    
 }
 
 /// Get home path for all 0L apps

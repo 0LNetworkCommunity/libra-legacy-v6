@@ -30,3 +30,4 @@ pub mod check;
 pub mod server;
 pub mod restore;
 pub mod transitions;
+pub mod query;

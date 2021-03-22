@@ -104,6 +104,8 @@ Subcommands:
 
 * `query blockheight`: fetches height of chain. 
 
-* `query resource`: fetches the entire state of an account. Defaults to account in `miner.toml`. 
+* `query resources`: fetches the entire state of an account. Defaults to account in `miner.toml`. 
 
 * `query balance`: fetches GAS balance of account. Defaults to account in `miner.toml`. 
+
+* `query sync-delay`: checks how far behind the local is to the upstream nodes, in blocks.
