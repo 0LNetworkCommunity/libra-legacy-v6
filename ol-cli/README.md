@@ -93,7 +93,7 @@ Runs a block explorer dashboard in the terminal. Wrapping the `../explorer` app.
 Starts a webserver on :3030, which displays the mon
 
 
-### ol query
+### `ol query`
 Runs simple queries through subcommands, prints the value to stdout.
 
 Note: defaults to account used in `miner.toml`, see Entrypoint Options above.
