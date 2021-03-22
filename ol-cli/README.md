@@ -90,7 +90,11 @@ Runs a block explorer dashboard in the terminal. Wrapping the `../explorer` app.
 
 ### `ol serve`
 
-Starts a webserver on :3030, which displays the mon
+Starts a webserver on localhost:3030, which displays info on the node (and onboarding), chain info, and account info.
+
+Serves the routes:
+/checks/ which serves a json formatted data feed of the dashboard
+/account/ which is sourced from static `account.json` which can be used in the onboarding process.
 
 
 ### `ol query`
