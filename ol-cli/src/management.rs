@@ -168,3 +168,19 @@ pub fn choose_rpc_node() -> Option<Url> {
         )
     }
 }
+
+pub fn run_validator_wizard() -> bool {
+    println!("Running validator wizard");
+    // TODO: switch between debug mode?
+    // let miner_path = "miner";
+    let mut miner = std::process::Command::new("miner")
+                        .arg("val-wizard")
+                        .arg("--keygen")
+                        .spawn()
+                        .expect(&format!("failed to start miner app"));
+
+    let exit_code = miner.wait().expect("failed to wait on miner"); 
+    assert!(exit_code.success());
+
+    true
+}

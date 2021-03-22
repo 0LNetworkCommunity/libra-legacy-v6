@@ -29,6 +29,4 @@ pub mod management;
 pub mod check;
 pub mod server;
 pub mod restore;
-// pub mod machine;
-pub mod onboard;
 pub mod transitions;

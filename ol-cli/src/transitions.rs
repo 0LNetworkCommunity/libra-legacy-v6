@@ -1,6 +1,10 @@
 //! 'transition'
 
-use crate::check::{Check, DB_CACHE};
+use crate::{
+    check::{Check, DB_CACHE},
+    management,
+    restore,
+};
 use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -92,7 +96,7 @@ impl NodeState {
     }
 
     /// trigger
-    pub fn transition(&mut self, action: NodeAction) -> &Self {        
+    pub fn transition(&mut self, action: NodeAction, trigger_action: bool) -> &Self {        
         match action {
             NodeAction::Init => {}
             // node has an empty box, no config files
@@ -130,19 +134,37 @@ impl NodeState {
                 if self.state == NodeVariants::ValidatorIsRunning {self.state = NodeVariants::ValOutOfSet};
             }
         };
+        self.maybe_advance(trigger_action);
         self
     }
 
     /// Advance to the next stage
-    pub fn maybe_advance(&mut self) -> &Self {
+    pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
+        dbg!("maybe advance");
+        dbg!(&self.state);
         let check = Check::new();
         match &self.state {
             NodeVariants::EmptyBox => {
-                if check.configs_exist() {&self.transition(NodeAction::RunWizard);}
-                else { println!("Onboarding: no state changes") };
+                if check.configs_exist() {
+                    &self.transition(NodeAction::RunWizard, trigger_action);}
+                else { 
+                    println!("Onboarding: no state changes");
+                    if trigger_action {
+                        println!("Triggering expected action");
+                        management::run_validator_wizard();
+                    }
+                };
             }
             NodeVariants::ValConfigsOk => {
-                self.state = NodeVariants::DbRestoredOk;
+                if check.database_bootstrapped() {&self.transition(NodeAction::RestoreDb, trigger_action);}
+                else { 
+                    println!("Onboarding: no state changes");
+                    if trigger_action {
+                        println!("Triggering expected action");
+                        restore::fast_forward_db().expect("unable to fast forward db");
+                    }
+                }
+                // self.state = NodeVariants::DbRestoredOk;
             }
             NodeVariants::DbRestoredOk => {
                 self.state = NodeVariants::FullnodeIsRunning;

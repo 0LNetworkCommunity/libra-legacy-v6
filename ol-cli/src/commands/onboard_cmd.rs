@@ -22,8 +22,11 @@ impl Runnable for OnboardCmd {
 
     /// Start the application.
     fn run(&self) {
+        let trigger_actions = true;
         if self.free_args.clone().into_iter().find(|x| x == "next").is_some() {
-            let state = transitions::NodeState::init().maybe_advance().get_state();
+            let state = transitions::NodeState::init()
+            .maybe_advance(trigger_actions)
+            .get_state();
             dbg!(state);
         } 
     }

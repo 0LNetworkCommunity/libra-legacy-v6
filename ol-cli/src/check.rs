@@ -228,7 +228,7 @@ impl Check {
         // check to see no files are present
         let home_path = self.conf.workspace.node_home.clone();
         home_path.join("blocks/block_0.json").exists() && 
-        home_path.join("node.yaml").exists() && 
+        home_path.join("validator.node.yaml").exists() && 
         home_path.join("key_store.json").exists()
     }
 
@@ -253,7 +253,7 @@ impl Check {
 
         let mut file = self.conf.workspace.node_home.clone();
         file.push("db/libradb"); //TODO change file name later
-        !file.exists()
+        file.exists()
     }
 
     /// Checks if node is synced
