@@ -1,8 +1,7 @@
 # ol-cli
 
-This is the entrypoint for monitoring, management and configuration tools for 0L.
+This is the entrypoint for monitoring, management, and configuration tools for 0L.
 
-All default parameters come from the `miner.toml` file (which is initialized in the `miner` app usually by validator wizard, and stored by default in `~/.0L/`)
 
 ## Quick start
 
@@ -26,7 +25,9 @@ All default parameters come from the `miner.toml` file (which is initialized in 
 
 ## Defaults
 
-Node to query:
+All default parameters come from the `miner.toml` file, and stored by default in `~/.0L/miner.toml`
+
+The `ol onboard` subcommand can initialize this. Note that in this case the `ol` cli app is simply calling the `miner` app's `val-wizard` subcommand.
 
 The default is to query the ip address of `local_node` in `miner.toml`. The validator wizard in `miner` on initialization sets this by default to `localhost:8080`.
 
