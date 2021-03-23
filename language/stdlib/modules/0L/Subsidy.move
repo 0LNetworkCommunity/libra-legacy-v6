@@ -421,20 +421,25 @@ address 0x1 {
     fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {
         // get operator for validator
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
-        // count mining proofs submitted
+        // count OWNER's proofs submitted
         let proofs_in_epoch = FullnodeState::get_address_proof_count(miner_addr);
+        let cost = 0;
         // find cost from baseline
-        let cost = BASELINE_TX_COST * proofs_in_epoch;
+        if (proofs_in_epoch > 0) {
+          cost = BASELINE_TX_COST * proofs_in_epoch;
+        };
         // deduct from subsidy to miner
         // send payment to operator
-        LibraAccount::vm_make_payment<GAS>(
-          miner_addr,
-          oper_addr,
-          cost,
-          b"tx fee refund",
-          b"",
-          vm
-        );
+        if (cost > 0) {
+          LibraAccount::vm_make_payment<GAS>(
+            miner_addr,
+            oper_addr,
+            cost,
+            b"tx fee refund",
+            b"",
+            vm
+          );
+        };
     }
 
 
