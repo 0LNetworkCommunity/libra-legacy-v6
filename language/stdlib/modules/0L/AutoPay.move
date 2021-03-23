@@ -123,7 +123,7 @@ address 0x1{
             // A payment will happen now
             // Obtain the amount to pay from percentage and balance
             let amount = FixedPoint32::multiply_u64(account_bal , FixedPoint32::create_from_rational(payment.percentage, 100));
-            LibraAccount::make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
+            LibraAccount::vm_make_payment<GAS>(*account_addr, payment.payee, amount, x"", x"", vm);
           };
           // ToDo: might want to delete inactive instructions to save memory
           payments_idx = payments_idx + 1;

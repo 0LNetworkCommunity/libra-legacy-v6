@@ -1,0 +1,29 @@
+
+base:
+    data_dir: "/root/.0L/"
+    role: "full_node"
+waypoint: 
+    from_config: "hello"
+execution:
+    genesis_file_location: ""
+full_node_networks:
+    - discovery_method: "onchain"
+    listen_address: "/ip4/0.0.0.0/tcp/6179"
+    network_id: "public"
+    seed_addrs:
+        252F0B551C80CD9E951D82C6F70792AE:
+            - "/ip4/34.82.239.18/tcp/6179/ln-noise-ik/d578327226cc025724e9e5f96a6d33f55c2cfad8713836fa39a8cf7efeaf6a4e/ln-handshake/0"
+        ECAF65ADD1B785B0495E3099F4045EC0:
+            - "/ip4/167.172.248.37/tcp/6179/ln-noise-ik/f2ce22752b28a14477d377a01cd92411defdb303fa17a08a640128864343ed45/ln-handshake/0"
+storage:
+    address: "127.0.0.1:6666"
+    backup_service_address: "127.0.0.1:6186"
+    dir: db
+    grpc_max_receive_len: 100000000
+    prune_window: 20000
+    timeout_ms: 30000
+json_rpc:
+    address: 127.0.0.1:8080
+upstream:
+    networks:
+    - public

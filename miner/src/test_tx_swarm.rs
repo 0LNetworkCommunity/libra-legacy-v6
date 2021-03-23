@@ -22,7 +22,9 @@ pub fn swarm_miner(swarm_path: PathBuf) {
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
     fs::copy("./fixtures/blocks/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
 
-    backlog::process_backlog(&conf, &tx_params);
+    dbg!(&tx_params);
+
+    backlog::process_backlog(&conf, &tx_params, false);
 
     loop {
         let (preimage, proof) = get_block_fixtures(&conf);
@@ -92,19 +94,20 @@ pub fn get_params_from_swarm(mut swarm_path: PathBuf) -> Result<TxParams, Error>
     let keys = KeyScheme::new_from_mnemonic(alice_mnemonic);
     let keypair = KeyPair::from(keys.child_0_owner.get_private_key());
     let pubkey =  keys.child_0_owner.get_public();
-    let auth_key = AuthenticationKey::ed25519(&pubkey);
-    let address = auth_key.derived_address();
+    let sender_auth_key = AuthenticationKey::ed25519(&pubkey);
+    let sender_address = sender_auth_key.derived_address();
 
     let url =  Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str()).unwrap();
     let waypoint = config.base.waypoint.genesis_waypoint();
 
     let tx_params = TxParams {
-        auth_key,
-        address,
+        sender_auth_key,
+        sender_address,
+        owner_address: sender_address,
         url,
         waypoint,
         keypair,
-        max_gas_unit_for_tx: 1_000_000,
+        max_gas_unit_for_tx: 5_000,
         coin_price_per_unit: 1, // in micro_gas
         user_tx_timeout: 5_000,
     };

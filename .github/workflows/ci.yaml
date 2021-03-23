@@ -5,7 +5,7 @@ on:
     branches: [ OLv4, 'release**', ci ]
   pull_request:
     branches: [ master, OLv4, 'release**' ]
-
+    
 jobs:
   functional:
     name: Functional Tests

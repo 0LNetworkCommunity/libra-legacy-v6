@@ -1,0 +1,403 @@
+use crate::explorer::App;
+use libra_types::{account_address::AccountAddress, account_state::AccountState};
+use std::convert::TryFrom;
+use tui::layout::Alignment;
+use tui::{
+    backend::Backend,
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    symbols,
+    text::{Span, Spans},
+    widgets::canvas::{Canvas, Line, Map, MapResolution, Rectangle},
+    widgets::{
+        Block, Borders, Cell, LineGauge,
+        Paragraph, Row, Table, Tabs, Wrap,
+    },
+    Frame,
+};
+
+pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    let chunks = Layout::default()
+        .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
+        .split(f.size());
+    let titles = app
+        .tabs
+        .titles
+        .iter()
+        .map(|t| Spans::from(Span::styled(*t, Style::default().fg(Color::Green))))
+        .collect();
+    let tabs = Tabs::new(titles)
+        .block(Block::default().borders(Borders::ALL).title(app.title))
+        .highlight_style(Style::default().fg(Color::Yellow))
+        .select(app.tabs.index);
+    f.render_widget(tabs, chunks[0]);
+    match app.tabs.index {
+        0 => draw_first_tab(f, app, chunks[1]),
+        1 => draw_second_tab(f, app, chunks[1]),
+        2 => draw_txs_tab(f, app, chunks[1]),
+        3 => draw_third_tab(f, app, chunks[1]),
+        _ => {}
+    };
+}
+
+fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let chunks = Layout::default()
+        .constraints(
+            [
+                Constraint::Length(7),
+                Constraint::Min(8),
+                Constraint::Length(7),
+            ]
+            .as_ref(),
+        )
+        .split(area);
+    draw_chain_info(f, app, chunks[0]);
+    draw_validator_list(f, app, chunks[1]);
+    draw_parameters(f, app, chunks[2]);
+}
+
+fn draw_chain_info<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let chunks = Layout::default()
+        .constraints(
+            [
+                Constraint::Length(3),
+                Constraint::Length(1),
+                //Constraint::Length(1),
+            ]
+            .as_ref(),
+        )
+        .margin(1)
+        .split(area);
+
+    let block = Block::default().borders(Borders::ALL).title(" Overview ");
+    f.render_widget(block, area);
+
+    let columns = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+            ]
+            .as_ref(),
+        )
+        .split(chunks[0]);
+
+    let paragraph = Paragraph::new(format!("{}", app.chain_state.as_ref().unwrap().epoch))
+        .style(Style::default().add_modifier(Modifier::BOLD))
+        .block(Block::default().borders(Borders::ALL).title(" Epoch "))
+        .alignment(Alignment::Center);
+    f.render_widget(paragraph, columns[0]);
+
+    let paragraph = Paragraph::new(format!("{}", &app.chain_state.as_ref().unwrap().height))
+        .style(Style::default().add_modifier(Modifier::BOLD))
+        .block(Block::default().borders(Borders::ALL).title(" Height "))
+        .alignment(Alignment::Center);
+    f.render_widget(paragraph, columns[1]);
+
+    let paragraph = Paragraph::new(format!(
+        "{}",
+        &app.chain_state.as_ref().unwrap().validator_count
+    ))
+    .style(Style::default().add_modifier(Modifier::BOLD))
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title(" Validator Count "),
+    )
+    .alignment(Alignment::Center);
+    f.render_widget(paragraph, columns[2]);
+
+    let paragraph = Paragraph::new(format!(
+        "{}",
+        &app.chain_state.as_ref().unwrap().total_supply
+    ))
+    .style(Style::default().add_modifier(Modifier::BOLD))
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title(" Total Supply "),
+    )
+    .alignment(Alignment::Center);
+    f.render_widget(paragraph, columns[3]);
+
+    let line_gauge = LineGauge::default()
+        .block(Block::default().title("Epoch Process: "))
+        .gauge_style(Style::default().fg(Color::Green))
+        .line_set(if app.enhanced_graphics {
+            symbols::line::THICK
+        } else {
+            symbols::line::NORMAL
+        })
+        .ratio(app.progress);
+    f.render_widget(line_gauge, chunks[1]);
+}
+
+fn draw_validator_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let up_style = Style::default();
+    let failure_style = Style::default()
+        .fg(Color::Red)
+        .add_modifier(Modifier::RAPID_BLINK | Modifier::CROSSED_OUT);
+    let rows = app.validators.iter().map(|s| {
+        let style = if s.voting_power > 0 {
+            up_style
+        } else {
+            failure_style
+        };
+        Row::new(vec![
+            s.account_address.to_owned(),
+            s.voting_power.to_string(),
+            s.epochs_since_last_account_creation.to_string(),
+            s.tower_epoch.to_string(),
+            s.tower_height.to_string(),
+            s.count_proofs_in_epoch.to_string(),
+        ])
+        .style(style)
+    });
+    let table = Table::new(rows)
+        .header(
+            Row::new(vec![
+                "VALIDATOR",
+                "VOTING POWER",
+                "START EPOCH",
+                "TOWER EPOCH",
+                "TOWER HEIGHT",
+                "PROOFS",
+            ])
+            .style(
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ), //.bottom_margin(1),
+        )
+        .block(Block::default().title(" Validators ").borders(Borders::ALL))
+        .widths(&[
+            Constraint::Ratio(20, 30),
+            Constraint::Length(12),
+            Constraint::Length(12),
+            Constraint::Length(12),
+            Constraint::Length(12),
+            Constraint::Length(15),
+        ]);
+    f.render_widget(table, area);
+}
+
+fn draw_parameters<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let meta = app.client.get_metadata().unwrap();
+    let text = vec![
+        Spans::from(vec![
+            Span::from("Libra Version: "),
+            Span::styled(
+                format!("{}", meta.libra_version.unwrap()),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Spans::from(vec![
+            Span::raw("Chain ID: "),
+            Span::styled(
+                format!("{}", meta.chain_id),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Spans::from(vec![
+            Span::raw("Timestamp: "),
+            Span::styled(
+                format!("{}", meta.timestamp),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Spans::from(vec![
+            Span::raw(" Root Hash: "),
+            Span::styled(
+                meta.accumulator_root_hash,
+                Style::default().add_modifier(Modifier::UNDERLINED),
+            ),
+        ]),
+        Spans::from(format!(
+            "Allow Publish Module: {}",
+            meta.module_publishing_allowed.unwrap()
+        )),
+    ];
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(Span::styled(" Parameters ", Style::default()));
+    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+    f.render_widget(paragraph, area);
+}
+
+fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let chunks = Layout::default()
+        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)].as_ref())
+        .direction(Direction::Horizontal)
+        .split(area);
+    let up_style = Style::default();
+    let failure_style = Style::default()
+        .fg(Color::Red)
+        .add_modifier(Modifier::RAPID_BLINK | Modifier::CROSSED_OUT);
+    let rows = app.validators.iter().map(|s| {
+        let style = if s.voting_power > 0 {
+            up_style
+        } else {
+            failure_style
+        };
+        Row::new(vec![
+            s.account_address.as_str(),
+            s.full_node_ip.as_str(),
+            "Up",
+        ])
+        .style(style)
+    });
+    let table = Table::new(rows)
+        .header(
+            Row::new(vec!["Server", "Address", "Status"])
+                .style(Style::default().fg(Color::Green))
+                .bottom_margin(1),
+        )
+        .block(Block::default().title(" Full Nodes ").borders(Borders::ALL))
+        .widths(&[Constraint::Length(15), Constraint::Length(40)]);
+    f.render_widget(table, chunks[0]);
+
+    let map = Canvas::default()
+        .block(Block::default().title(" World ").borders(Borders::ALL))
+        .paint(|ctx| {
+            ctx.draw(&Map {
+                color: Color::White,
+                resolution: MapResolution::High,
+            });
+            ctx.layer();
+            ctx.draw(&Rectangle {
+                x: 0.0,
+                y: 30.0,
+                width: 10.0,
+                height: 10.0,
+                color: Color::Yellow,
+            });
+            for (i, s1) in app.servers.iter().enumerate() {
+                for s2 in &app.servers[i + 1..] {
+                    ctx.draw(&Line {
+                        x1: s1.coords.1,
+                        y1: s1.coords.0,
+                        y2: s2.coords.0,
+                        x2: s2.coords.1,
+                        color: Color::Yellow,
+                    });
+                }
+            }
+            for server in &app.servers {
+                let color = if server.status == "Up" {
+                    Color::Green
+                } else {
+                    Color::Red
+                };
+                ctx.print(server.coords.1, server.coords.0, "X", color);
+            }
+        })
+        .marker(if app.enhanced_graphics {
+            symbols::Marker::Braille
+        } else {
+            symbols::Marker::Dot
+        })
+        .x_bounds([-180.0, 180.0])
+        .y_bounds([-90.0, 90.0]);
+    f.render_widget(map, chunks[1]);
+}
+
+fn draw_third_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let mut items: Vec<Row> = vec![];
+    let (blob, _version) = app
+        .client
+        .get_account_state_blob(AccountAddress::ZERO)
+        .unwrap();
+    if let Some(account_blob) = blob {
+        let account_state = AccountState::try_from(&account_blob).unwrap();
+        items = account_state
+            .get_registered_currency_info_resources()
+            .unwrap()
+            .iter()
+            .map(|c| {
+                let cells = vec![
+                    Cell::from(Span::raw(format!("{}", c.currency_code()))),
+                    Cell::from(Span::raw(format!("{:?}", c.total_value()))),
+                    Cell::from(Span::raw(format!("{:?}", c.fractional_part()))),
+                    Cell::from(Span::raw(format!("{:?}", c.scaling_factor()))),
+                    Cell::from(Span::raw(format!("{:?}", c.exchange_rate()))),
+                ];
+                Row::new(cells)
+            })
+            .collect();
+    }
+    let table = Table::new(items)
+        .header(
+            Row::new(vec![
+                "Coin",
+                "Total Value",
+                "Fractional Part",
+                "Scaling Factor",
+                "Change Rate",
+            ])
+            .style(Style::default().fg(Color::Green)),
+        )
+        .block(Block::default().title(" Coins ").borders(Borders::ALL))
+        .widths(&[
+            Constraint::Length(10),
+            Constraint::Length(25),
+            Constraint::Length(15),
+            Constraint::Length(15),
+            Constraint::Ratio(1, 3),
+        ]);
+    f.render_widget(table, area);
+}
+
+fn draw_txs_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+where
+    B: Backend,
+{
+    let items: Vec<Row> = app
+        .txs
+        .iter()
+        .map(|c| {
+            let cells = vec![
+                Cell::from(Span::raw(format!("{}", c.version))),
+                Cell::from(Span::raw(format!("{:?}", c.hash))),
+                Cell::from(Span::raw(format!("{:?}", c.gas_used))),
+                Cell::from(Span::raw(format!("{:?}", c.vm_status))),
+                Cell::from(Span::raw(format!("{:?}", c.transaction))),
+            ];
+            Row::new(cells)
+        })
+        .collect();
+    let table = Table::new(items)
+        .header(
+            Row::new(vec!["Version", "Hash", "Gas", "Status", "Type", "Body"])
+                .style(Style::default().fg(Color::Green)),
+        )
+        .block(Block::default().title(" Coins ").borders(Borders::ALL))
+        .widths(&[
+            Constraint::Length(10),
+            Constraint::Length(25),
+            Constraint::Length(15),
+            Constraint::Length(15),
+            Constraint::Ratio(1, 3),
+        ]);
+    f.render_widget(table, area);
+}

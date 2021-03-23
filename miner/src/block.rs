@@ -128,6 +128,7 @@ pub mod build_block {
     pub fn mine_and_submit(
         config: &MinerConfig,
         tx_params: TxParams,
+        is_operator: bool,
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
         let mut blocks_dir = config.workspace.node_home.clone();
@@ -147,9 +148,8 @@ pub mod build_block {
                 let block = mine_once(&config)?;
                 status_info!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
-                if let Some(ref _node) = config.chain_info.node {
-
-                    match submit_tx(&tx_params, block.preimage, block.proof, false) {
+                if let Some(ref _node) = config.chain_info.default_node {
+                    match submit_tx(&tx_params, block.preimage, block.proof, is_operator) {
                         Ok(tx_view) => {
                             match eval_tx_status(tx_view) {
                                 true => status_ok!("Success:", "Proof committed to chain"),
@@ -254,7 +254,8 @@ fn test_mine_genesis() {
             chain_id: "0L testnet".to_owned(),
             block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
             base_waypoint: None,
-            node: None,
+            default_node: Some("http://localhost:8080".parse().unwrap()),
+            backup_nodes: None,
         },
     };
     //clear from sideffects.
@@ -311,7 +312,8 @@ fn create_fixtures() {
                 chain_id: "0L testnet".to_owned(),
                 block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
                 base_waypoint: None,
-                node: Some("http://localhost:8080".to_string()),
+                default_node: Some("http://localhost:8080".parse().unwrap()),
+                backup_nodes: None,
             },
         };
 
@@ -359,7 +361,8 @@ fn test_mine_once() {
             chain_id: "0L testnet".to_owned(),
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
-            node: None,
+            default_node: Some("http://localhost:8080".parse().unwrap()),
+            backup_nodes: None,
         },
     };
 

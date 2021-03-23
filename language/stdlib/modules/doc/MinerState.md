@@ -11,6 +11,7 @@
 -  [Function `genesis_helper`](#0x1_MinerState_genesis_helper)
 -  [Function `test_helper`](#0x1_MinerState_test_helper)
 -  [Function `commit_state`](#0x1_MinerState_commit_state)
+-  [Function `commit_state_by_operator`](#0x1_MinerState_commit_state_by_operator)
 -  [Function `verify_and_update_state`](#0x1_MinerState_verify_and_update_state)
 -  [Function `update_metrics`](#0x1_MinerState_update_metrics)
 -  [Function `node_above_thresh`](#0x1_MinerState_node_above_thresh)
@@ -42,6 +43,7 @@
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
+<b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -291,9 +293,6 @@
   miner_sign: &signer,
   proof: <a href="MinerState.md#0x1_MinerState_Proof">Proof</a>
 ) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
-
-  //NOTE: Does not check that the Sender is the <a href="Signer.md#0x1_Signer">Signer</a>. Which we must skip for the onboarding transaction.
-
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
@@ -313,6 +312,55 @@
   // TODO: This should not increment for validators in set.
   // Including <a href="LibraSystem.md#0x1_LibraSystem_is_validator">LibraSystem::is_validator</a> causes a dependency cycling
   <a href="FullnodeState.md#0x1_FullnodeState_inc_proof">FullnodeState::inc_proof</a>(miner_sign);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MinerState_commit_state_by_operator"></a>
+
+## Function `commit_state_by_operator`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_commit_state_by_operator">commit_state_by_operator</a>(operator_sig: &signer, miner_addr: address, proof: <a href="MinerState.md#0x1_MinerState_Proof">MinerState::Proof</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MinerState.md#0x1_MinerState_commit_state_by_operator">commit_state_by_operator</a>(
+  operator_sig: &signer,
+  miner_addr: address,
+  proof: <a href="MinerState.md#0x1_MinerState_Proof">Proof</a>
+) <b>acquires</b> <a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a> {
+
+  // Check the signer is in fact an operator delegated by the owner.
+
+  // Get address, assumes the sender is the signer.
+  <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), 130103021000);
+  // Abort <b>if</b> not initialized.
+  <b>assert</b>(<b>exists</b>&lt;<a href="MinerState.md#0x1_MinerState_MinerProofHistory">MinerProofHistory</a>&gt;(miner_addr), 130103021001);
+
+  // Get vdf difficulty constant. Will be different in tests than in production.
+  <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_difficulty">Globals::get_difficulty</a>();
+
+  // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+    <b>assert</b>(&proof.difficulty == &difficulty_constant, 130103021003);
+  };
+
+  <a href="MinerState.md#0x1_MinerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+
+  // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
+  // For now it is implicit there is only 1 operator per validator, and that the fullnode state is the place <b>to</b> count.
+  // This will require a breaking change <b>to</b> <a href="MinerState.md#0x1_MinerState">MinerState</a>
+  <a href="FullnodeState.md#0x1_FullnodeState_inc_proof_by_operator">FullnodeState::inc_proof_by_operator</a>(operator_sig, miner_addr);
 }
 </code></pre>
 

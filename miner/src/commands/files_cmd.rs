@@ -10,11 +10,7 @@ use libra_genesis_tool::node_files;
 use std::io::Write;
 /// `genesis` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct GenesisCmd {
-    #[options(help = "path to write account manifest")]
-    path: Option<PathBuf>,
-    #[options(help = "namespace for configs, will default to miner.toml account appended with '-oper'")]
-    namespace: Option<String>,
+pub struct FilesCmd {
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -29,7 +25,7 @@ pub struct GenesisCmd {
 }
 
 
-impl Runnable for GenesisCmd {
+impl Runnable for FilesCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config().to_owned();
@@ -81,7 +77,7 @@ pub fn genesis_files(
 
     ).unwrap();
 
-    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("node.yaml"));
+    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));
 
 }
 
@@ -102,6 +98,7 @@ pub fn get_files(
     let mut w_file = File::create(&w_path).expect("couldn't create file");
     let w_content =  w_res.unwrap().text().unwrap();
     w_file.write_all(w_content.as_bytes()).unwrap();
+    println!("genesis waypoint fetched, file saved to: {:?}", w_path);
 
     let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url));
 

@@ -7,6 +7,7 @@
 use std::{net::Ipv4Addr, fs};
 use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use reqwest::Url;
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
@@ -42,14 +43,14 @@ impl MinerConfig {
             Ok(file) => {
                 let json: serde_json::Value = serde_json::from_reader(file)
                     .expect("could not parse JSON in key_store.json");
-                let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-                dbg!(&value);
-                let waypoint: Waypoint = value.to_string().parse().unwrap();
-                Some(waypoint)
+                match ajson::get(&json.to_string(), "*waypoint.value") {
+                    Some(value) => Some(value.to_string().parse().unwrap()),
+                    // If nothing is found in key_store.json fallback to base_waypoint in toml
+                    _ => self.chain_info.base_waypoint
+                }
             }
-            Err(err) => {
-            println!("key_store.json not found. {:?}", err);
-            None
+            Err(_err) => {
+                self.chain_info.base_waypoint
             }
         }
     }
@@ -60,11 +61,11 @@ impl MinerConfig {
         let mut conf = MinerConfig::default();
         conf.workspace.node_home = PathBuf::from("./swarm_temp");
         // Load profile config
-        conf.profile.account = param.address;
-        conf.profile.auth_key = param.auth_key.to_string();
+        conf.profile.account = param.owner_address;
+        conf.profile.auth_key = param.sender_auth_key.to_string();
 
         // Load chain info
-        conf.chain_info.node = Some(param.url.to_string());
+        conf.chain_info.default_node = Some(param.url.clone());
         conf
     }
     /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
@@ -232,7 +233,9 @@ pub struct ChainInfo {
     /// Directory to store blocks in
     pub block_dir: String,
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    pub node: Option<String>,
+    pub default_node: Option<Url>,
+    /// Other nodes to connect for fallback connections
+    pub backup_nodes: Option<Vec<Url>>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: Option<Waypoint>,
 }
@@ -245,7 +248,9 @@ impl Default for ChainInfo {
             block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
             base_waypoint: None,
-            node: Some("http://localhost:8080".to_owned()),
+            default_node: Some("http://localhost:8080".parse().expect("parse url")),
+            backup_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+
         }
     }
 }
@@ -279,3 +284,18 @@ impl Default for Profile {
         }
     }
 }
+
+// fn ser_url<S>(url: &Option<Url>, serializer: S) -> Result<S::Ok, S::Error>
+// where
+//     S: Serializer,
+// {
+//     serializer.serialize_str(&url.to_owned().into_string())
+// }
+
+// fn de_url<'de, D>(deserializer: D) -> Result<Option<Url>, D::Error>
+// where
+//     D: Deserializer<'de>,
+// {
+//     let s: String = Deserialize::deserialize(deserializer)?;
+//     Some(s.parse::<Url>().map_err(D::Error::custom))
+// }

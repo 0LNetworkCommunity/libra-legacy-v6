@@ -152,6 +152,8 @@ members = [
     "verifiable_delay/classgroup",
     "miner",
     "txs",
+    "ol-cli",
+    "explorer"
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should

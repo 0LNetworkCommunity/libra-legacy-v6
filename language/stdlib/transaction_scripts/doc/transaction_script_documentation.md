@@ -5126,6 +5126,7 @@ with this <code>hash</code> can be successfully sent to the network.
 -  [`demo_e2e`](ol_demo_e2e.md#demo_e2e)
 -  [`freeze_account`](transaction_script_documentation.md#freeze_account)
 -  [`minerstate_commit`](ol_miner_state_commit.md#minerstate_commit)
+-  [`minerstate_commit_by_operator`](ol_miner_state_commit_by_operator.md#minerstate_commit_by_operator)
 -  [`minerstate_helper`](ol_miner_state_helper.md#minerstate_helper)
 -  [`minerstate_onboarding`](ol_miner_state_onboarding.md#minerstate_onboarding)
 -  [`ol_oracle_tx`](ol_oracle_tx.md#ol_oracle_tx)
