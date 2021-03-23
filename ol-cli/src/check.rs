@@ -227,6 +227,7 @@ impl Check {
     pub fn configs_exist(&self) -> bool {
         // check to see no files are present
         let home_path = self.conf.workspace.node_home.clone();
+        
         home_path.join("blocks/block_0.json").exists() && 
         home_path.join("validator.node.yaml").exists() && 
         home_path.join("key_store.json").exists()
@@ -304,11 +305,16 @@ impl Check {
     /// miner is running
     pub fn miner_is_mining(&self) -> bool {
         let mut system = sysinfo::System::new_all();
-
-        // First we update all information of our system struct.
         system.refresh_all();
-        let ps = system.get_process_by_name(self.miner_process_name);
-        ps.len() > 0
+
+        use sysinfo::ProcessExt;
+        for (_, process) in system.get_processes() {
+            if process.name() == self.miner_process_name { 
+                return true; 
+            }            
+        }
+
+        false
     }
 }
 
