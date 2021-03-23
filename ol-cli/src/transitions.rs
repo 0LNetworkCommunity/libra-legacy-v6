@@ -23,8 +23,9 @@ pub enum NodeVariants {
     FullnodeSyncComplete,
     /// Node is running in validator mode
     ValidatorIsRunning,
-    /// Validator has fallen out of validator set, likely cannot sync, should change to fullnode mode.
-    ValOutOfSet,
+    /// Validator has fallen out of validator set, likely cannot sync, 
+    /// should change to fullnode mode.
+    ValidatorOutOfSet,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -75,7 +76,6 @@ impl NodeState {
             Err(err) => {dbg!(&err);}
         }; 
     }
-
     
     /// Get from cache
     pub fn read_cache() -> Option<NodeState>{
@@ -87,17 +87,19 @@ impl NodeState {
             Err(_) => {None}
         }
     }
-    /// get state
+
+    /// Get state
     pub fn get_state(&self) -> NodeVariants {
         self.state.to_owned()
     }
 
-    /// trigger
+    /// State transition
     pub fn transition(&mut self, action: NodeAction, trigger_action: bool) -> &Self {        
         use NodeVariants::*;
         match action {
             NodeAction::Init => {}
-            // node has an empty box, no config files
+
+            // Node has an empty box, no config files
             NodeAction::RunWizard => {
                 if self.state == EmptyBox {self.state = ValConfigsOk;}
             }
@@ -105,18 +107,19 @@ impl NodeState {
             NodeAction::RestoreDb => {
                 if self.state == ValConfigsOk {self.state = DbRestoredOk;}
             }
+            
             // Forward
             NodeAction::StartFullnode => {
                 if self.state == DbRestoredOk {self.state = FullnodeIsRunning;}
 
-                // if the node was previously in validator mode.
-                if self.state == ValidatorIsRunning || self.state ==  ValOutOfSet {
-                       self.state = FullnodeIsRunning;
+                // if the node was previously in validator mode
+                if self.state == ValidatorIsRunning || self.state == ValidatorOutOfSet {
+                    self.state = FullnodeIsRunning;
                 }
  
             }
 
-            //Forward
+            // Forward
             NodeAction::FullnodeSynced => {
                 if self.state == FullnodeIsRunning {self.state = FullnodeSyncComplete};
             }
@@ -127,14 +130,15 @@ impl NodeState {
 
             //Forward
             NodeAction::ValidatorDroppedFromSet => {
-                if self.state == ValidatorIsRunning {self.state = ValOutOfSet};
+                if self.state == ValidatorIsRunning {self.state = ValidatorOutOfSet};
             }
         };
+
         self.maybe_advance(trigger_action);
         self
     }
 
-    /// Advance to the next stage
+    /// Advance to the next state
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
         dbg!(&self.state);
         let mut check = Check::new();
@@ -211,6 +215,7 @@ impl NodeState {
             }
             _ => {}
         };
+        
         self
     }
 }

@@ -239,7 +239,7 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
 /// Restores transaction epoch backups
 pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, ) {
     let manifest_path = glob(
-    &format!("{}/**/epoch_ending.manifest", restore_path)
+        &format!("{}/**/epoch_ending.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap().unwrap();
 
     let mut child = Command::new("db-restore")
