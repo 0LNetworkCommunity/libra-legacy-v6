@@ -1,9 +1,9 @@
 //! OlCli Abscissa Application
 
-use crate::{commands::OlCliCmd, config::OlCliConfig};
+use crate::{commands::OlCliCmd, config::OlCliConfig, entrypoint::EntryPoint};
 use abscissa_core::{
     application::{self, AppCell},
-    config, trace, Application, EntryPoint, FrameworkError, StandardPaths,
+    config, trace, Application, FrameworkError, StandardPaths,
 };
 
 /// Application state
