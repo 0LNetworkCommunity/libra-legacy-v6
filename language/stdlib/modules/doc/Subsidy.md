@@ -148,10 +148,6 @@
   <b>while</b> (i &lt; len) {
 
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
-<<<<<<< HEAD
-=======
-
->>>>>>> moonshot-cli
     // Transfer gas from vm address <b>to</b> validator
     <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm_sig, subsidy_granted);
     <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -799,20 +795,29 @@
 <pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_refund_operator_tx_fees">refund_operator_tx_fees</a>(vm: &signer, miner_addr: address) {
     // get operator for validator
     <b>let</b> oper_addr = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr);
-    // count mining proofs submitted
+    // count OWNER's proofs submitted
     <b>let</b> proofs_in_epoch = <a href="FullnodeState.md#0x1_FullnodeState_get_address_proof_count">FullnodeState::get_address_proof_count</a>(miner_addr);
+    <b>let</b> cost = 0;
     // find cost from baseline
-    <b>let</b> cost = <a href="Subsidy.md#0x1_Subsidy_BASELINE_TX_COST">BASELINE_TX_COST</a> * proofs_in_epoch;
+    <b>if</b> (proofs_in_epoch &gt; 0) {
+      cost = <a href="Subsidy.md#0x1_Subsidy_BASELINE_TX_COST">BASELINE_TX_COST</a> * proofs_in_epoch;
+    };
     // deduct from subsidy <b>to</b> miner
     // send payment <b>to</b> operator
-    <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-      miner_addr,
-      oper_addr,
-      cost,
-      b"tx fee refund",
-      b"",
-      vm
-    );
+    <b>if</b> (cost &gt; 0) {
+      <b>let</b> owner_balance = <a href="LibraAccount.md#0x1_LibraAccount_balance">LibraAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(miner_addr);
+      <b>if</b> (!(owner_balance &gt; cost)) {
+        cost = owner_balance;
+      };
+      <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+        miner_addr,
+        oper_addr,
+        cost,
+        b"tx fee refund",
+        b"",
+        vm
+      );
+    };
 }
 </code></pre>
 
