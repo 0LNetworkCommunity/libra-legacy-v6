@@ -18,7 +18,6 @@ struct Process {
 
 /// Save PID
 pub fn save_pid(name: &str, pid: u32) {
-
     // Handle empty case
     match check::DB_CACHE.get(name.as_bytes()) {
         Ok(Some(_value)) => { /* TODO */},
@@ -59,6 +58,7 @@ pub fn kill_zombies(name: &str) {
         );
     }
 }
+
 /// What kind of node are we starting
 pub enum NodeType {
     /// Validator
@@ -67,22 +67,29 @@ pub enum NodeType {
     Fullnode,
 }
 
+/// 
+pub fn create_log_file(file_name: &str) -> File {
+    let conf = app_config();
+    let logs_dir = conf.workspace.node_home.join("logs/");
+    dbg!(&logs_dir);
+    fs::create_dir_all(&logs_dir).expect("could not create logs dir");
+    let logs_file = logs_dir.join([file_name, ".log"].join(""));
+
+    File::create(logs_file).expect("could not create log file")
+}
+
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     // Stop any processes we may have started and detached from.
     kill_zombies(NODE_BINARY);
 
-    // Create log file, and pipe stdout/err
-    let conf = app_config().to_owned();
-    let logs_dir = conf.workspace.node_home.join("logs/");
-    dbg!(&logs_dir);
-    fs::create_dir_all(&logs_dir).expect("could not create logs dir");
-    let logs_file = logs_dir.join("node.log");
-    let outputs = File::create(logs_file).expect("could not create node log file");
+    // Create log file, and pipe stdout/err    
+    let outputs = create_log_file("node");
     let errors = outputs.try_clone().unwrap();
 
     // Start as validator or fullnode
     // Get the yaml file
+    let conf = app_config();
     let node_home = conf.workspace.node_home.to_str().unwrap();
     let config_file_name = match config_type {
         NodeType::Validator => {format!("{}validator.node.yaml", node_home)}
@@ -113,13 +120,8 @@ pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     kill_zombies(MINER_BINARY);
 
-        // create log file, and pipe stdout/err
-    let conf = app_config().to_owned();
-    let logs_dir = conf.workspace.node_home.join("logs/");
-    dbg!(&logs_dir);
-    fs::create_dir_all(&logs_dir).expect("could not create logs dir");
-    let logs_file = logs_dir.join("miner.log");
-    let outputs = File::create(logs_file).expect("could not create miner log file");
+    // Create log file, and pipe stdout/err
+    let outputs = create_log_file("miner");
     let errors = outputs.try_clone().unwrap();
 
     // if node is NOT synced, then should use a backup/upstream node
