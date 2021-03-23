@@ -431,6 +431,10 @@ address 0x1 {
         // deduct from subsidy to miner
         // send payment to operator
         if (cost > 0) {
+          let owner_balance = LibraAccount::balance<GAS>(miner_addr);
+          if (!(owner_balance > cost)) {
+            cost = owner_balance;
+          };
           LibraAccount::vm_make_payment<GAS>(
             miner_addr,
             oper_addr,
