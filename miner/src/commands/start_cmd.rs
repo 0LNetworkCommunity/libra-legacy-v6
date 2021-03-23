@@ -4,7 +4,6 @@ use crate::{
     backlog,
     block::*,
     submit_tx::{get_params, get_oper_params},
-    keygen
 };
 use libra_genesis_tool::keyscheme::KeyScheme;
 use reqwest::Url;

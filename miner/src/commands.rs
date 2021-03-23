@@ -20,6 +20,7 @@ mod manifest_cmd;
 mod init_cmd;
 mod wizard_user_cmd;
 mod wizard_val_cmd;
+mod wizard_fn_cmd;
 mod files_cmd;
 
 use self::{
@@ -32,6 +33,7 @@ use self::{
     wizard_user_cmd::UserWizardCmd,
     init_cmd::InitCmd,
     wizard_val_cmd::ValWizardCmd,
+    wizard_fn_cmd::FnWizardCmd,
     files_cmd::FilesCmd,
 };
 use crate::config::MinerConfig;

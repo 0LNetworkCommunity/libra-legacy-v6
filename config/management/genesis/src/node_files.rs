@@ -112,15 +112,11 @@ pub fn create_files(
     let mut disk_storage = OnDiskStorageConfig::default();
     disk_storage.set_data_dir(output_dir.clone());
     disk_storage.path = output_dir.clone().join("key_store.json");
-    // Note skip setting namepace for later.
-    config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
 
     let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(output_dir.join("key_store.json").to_owned()));
     storage.set(GENESIS_WAYPOINT, waypoint).unwrap();
     storage.set(WAYPOINT, waypoint).unwrap();
-    
-    // now that waypoint is set, all other fields can have a namespace, as expected.
-    disk_storage.namespace = Some(namespace.to_owned());
 
     // Get node configs template
     let mut config = if *fullnode_only {
@@ -132,7 +128,14 @@ pub fn create_files(
         c
     } else {
         let mut c = NodeConfig::default();
-            // If validator configs set val network configs
+
+        // Note skip setting namepace for later.
+        c.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+            
+        // now that waypoint is set, all other fields can have a namespace, as expected.
+        disk_storage.namespace = Some(namespace.to_owned());
+
+        // If validator configs set val network configs
         let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
     
         // NOTE: Using configs as described in cluster tests: testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml

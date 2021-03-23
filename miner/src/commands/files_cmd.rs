@@ -4,11 +4,12 @@
 
 use std::{fs::File, path::{PathBuf}};
 
-use crate::{application::app_config};
+use crate::{application::app_config, config::MinerConfig};
 use abscissa_core::{Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use std::io::Write;
-/// `genesis` subcommand
+
+/// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FilesCmd {
     #[options(help = "id of the chain")]
@@ -21,7 +22,6 @@ pub struct FilesCmd {
     rebuild_genesis: bool, 
     #[options(help = "only make fullnode config files")]
     fullnode_only: bool,
-
 }
 
 
@@ -29,52 +29,37 @@ impl Runnable for FilesCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config().to_owned();
-        if !self.rebuild_genesis {
-            get_files(
-                self.path.to_owned().unwrap_or_else(|| PathBuf::from(".")),
-                &self.github_org,
-                &self.repo,
-            );
-        }
-
-        // Build Genesis and node.yaml file
-        let home_dir = miner_configs.workspace.node_home.to_owned();
-        // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let mut namespace = self.namespace.clone();
-        if namespace.is_none() { namespace = Some(miner_configs.profile.auth_key.clone() + "-oper"); }
-
         genesis_files(
-            self.path.clone().unwrap_or(home_dir),
-            namespace,
+            &miner_configs.clone(),
             &self.chain_id,
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
             &self.fullnode_only,
-        );
+        ) 
     }
 }
 
 pub fn genesis_files(
-    home_dir: PathBuf,
-    namespace: Option<String>,
+    miner_config: &MinerConfig,
     chain_id: &Option<u8>,
     github_org: &Option<String>,
     repo: &Option<String>,
     rebuild_genesis: &bool,
-    fullnode_only: &bool
+    fullnode_only: &bool,
 ) {
-
+    let home_dir = miner_config.workspace.node_home.to_owned();
+    // 0L convention is for the namespace of the operator to be appended by '-oper'
+    let namespace = miner_config.profile.auth_key.clone() + "-oper";
     
     node_files::create_files(
         home_dir.clone(), 
         chain_id.unwrap_or(1),
         &github_org.clone().unwrap_or("OLSF".to_string()),
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
-        &namespace.unwrap_or("fullnode".to_string()),
+        &namespace,
         rebuild_genesis,
-        fullnode_only,
-
+        fullnode_only
     ).unwrap();
 
     println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));

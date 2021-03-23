@@ -4,8 +4,8 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use std::{path::PathBuf};
-use super::{genesis_cmd};
-
+use super::{files_cmd};
+use crate::{application::app_config};
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FnWizardCmd {
@@ -31,18 +31,17 @@ impl Runnable for FnWizardCmd {
 
         // TODO: fetch epoch backup info from epoch archive, or build genesis.
         if !self.skip_fetch_genesis {
-            genesis_cmd::get_files(
+            files_cmd::get_files(
                 self.path.clone().unwrap_or(PathBuf::from(".")),
                 &self.github_org,
                 &self.repo,
             );
             status_ok!("\nGenesis OK", "\n...........................\n");
         }
-
+        let conf = app_config().clone();
         // Build Genesis and node.yaml file
-        genesis_cmd::genesis_files(
-            self.path.clone().unwrap_or(PathBuf::from(".")),
-            Some("fullnode".to_string()),
+        files_cmd::genesis_files(
+            &conf,
             &self.chain_id,
             &self.github_org,
             &self.repo,

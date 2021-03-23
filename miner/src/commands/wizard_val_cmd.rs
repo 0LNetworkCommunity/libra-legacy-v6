@@ -43,7 +43,7 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        let miner_config = init_cmd::initialize_miner(authkey, account).unwrap();
+        let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
         status_ok!("\nMiner config written", "\n...........................\n");
 
         // Initialize Validator Keys
@@ -77,7 +77,7 @@ impl Runnable for ValWizardCmd {
         }
         
         // Write Manifest
-        manifest_cmd::write_manifest(None, wallet);
+        manifest_cmd::write_manifest(&self.path, wallet);
         status_ok!("\nAccount manifest written", "\n...........................\n");
 
         status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");
