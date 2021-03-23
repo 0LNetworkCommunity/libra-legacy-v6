@@ -302,7 +302,7 @@ impl Check {
         ps.len() > 0
     }
 
-    /// miner is running
+    /// TODO: rename to miner_running() ? 
     pub fn miner_is_mining(&self) -> bool {
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
