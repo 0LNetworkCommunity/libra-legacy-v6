@@ -158,7 +158,7 @@ pub fn choose_rpc_node() -> Option<Url> {
         // otherwise use a backup
         // TODO: check all backups in vector to see which connects
         Some(conf.chain_info
-            .backup_nodes
+            .upstream_nodes
             .unwrap()
             .into_iter()
             .next()

@@ -23,7 +23,7 @@ fn test_genesis_preimage() {
             block_dir: "blocks".to_owned(),
             base_waypoint: None,
             default_node: None,
-            backup_nodes: None,
+            upstream_nodes: None,
         },
     };
 

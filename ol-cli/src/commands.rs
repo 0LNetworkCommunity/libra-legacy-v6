@@ -21,7 +21,6 @@ mod query_cmd;
 mod check_cmd;
 mod explorer_cmd;
 
-
 use self::{
     init::StartCmd,
     version::VersionCmd,

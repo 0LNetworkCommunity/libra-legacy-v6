@@ -235,7 +235,7 @@ pub struct ChainInfo {
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
     pub default_node: Option<Url>,
     /// Other nodes to connect for fallback connections
-    pub backup_nodes: Option<Vec<Url>>,
+    pub upstream_nodes: Option<Vec<Url>>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: Option<Waypoint>,
 }
@@ -249,7 +249,7 @@ impl Default for ChainInfo {
             // Mock Waypoint. Miner complains without.
             base_waypoint: None,
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            backup_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
 
         }
     }

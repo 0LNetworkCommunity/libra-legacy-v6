@@ -275,7 +275,7 @@ impl Check {
         sync  
     }
 
-    /// check if the node has ever synced
+    /// Check if the node has ever synced
     pub fn has_never_synced(&self) -> bool {
         match Items::read_cache() {
             Some(i) => {!i.is_synced}
@@ -283,7 +283,7 @@ impl Check {
         }
     }
 
-    /// node started sync
+    /// Check if node started sync
     pub fn node_started_sync(&self) -> bool {
         match Items::read_cache() {
             // TODO: Use has_started_sync
@@ -292,8 +292,8 @@ impl Check {
         }
     }
 
-    /// node is running
-    pub fn node_is_running(&self) -> bool {
+    /// Check if node is running
+    pub fn node_running(&self) -> bool {
         let mut system = sysinfo::System::new_all();
 
         // First we update all information of our system struct.
@@ -302,8 +302,8 @@ impl Check {
         ps.len() > 0
     }
 
-    /// TODO: rename to miner_running() ? 
-    pub fn miner_is_mining(&self) -> bool {
+    /// Check if miner is running
+    pub fn miner_running(&self) -> bool {
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
 
