@@ -342,7 +342,7 @@ devnet-reset-onboard: clear
 	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
-devnet-save-genesis: get-waypoint
+devnet-save-genesis: set-waypoint
 	echo $$WAY > ${DATA_PATH}/genesis_waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
 	git add ${SOURCE}/fixtures/genesis/${V}/
@@ -356,5 +356,5 @@ devnet-pull:
 # must be on a branch
 	git fetch && git checkout ${V} -f && git pull
 
-devnet-fn:
+devnet-fullnode:
 	cargo run -p miner -- fn-wizard --path ~/.0L/

@@ -13,6 +13,8 @@ struct Process {
     name: String,
     pids: HashSet<u32>,
 }
+
+#[derive(Debug)]
 /// What binaries will be used by mgmt command
 pub struct Binaries {
     node: &'static str,
@@ -206,6 +208,7 @@ pub fn choose_rpc_node() -> Option<Url> {
 /// 
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
+    dbg!(&BINARY);
     // TODO: switch between debug mode?
     let mut miner = std::process::Command::new(BINARY.miner)
                         .arg("val-wizard")
