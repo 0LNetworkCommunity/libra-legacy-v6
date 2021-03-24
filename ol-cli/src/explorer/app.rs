@@ -5,6 +5,7 @@ use cli::libra_client::LibraClient;
 use libra_json_rpc_client::views::TransactionView;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
+// use libra_network_address::Protocol;
 
 /// struct for fullnode list
 pub struct Server<'a> {
@@ -61,7 +62,44 @@ impl<'a> App<'a> {
             tabs: TabsState::new(vec!["Overview", "Network", "Transactions", "Coin List"]),
             show_chart: true,
             progress: 0.1,
-            servers: vec![],
+            servers: vec![
+                Server{
+                    name: "NorthAmerica-1",
+                    location: "New York City",
+                    coords: (40.71, -74.00),
+                    status: "Up",
+                },
+                Server{
+                    name: "NorthAmerica-2",
+                    location: "New York City",
+                    coords: (43.38, -79.23),
+                    status: "Up",
+                },
+                Server{
+                    name: "NorthAmerica-3",
+                    location: "New York City",
+                    coords: (34.04, -118.15),
+                    status: "Up",
+                },
+                Server {
+                    name: "Europe-1",
+                    location: "Paris",
+                    coords: (48.85, 2.35),
+                    status: "Up",
+                },
+                Server {
+                    name: "Asia-0",
+                    location: "ShangHai",
+                    coords: (32.23, 118.76),
+                    status: "Up",
+                },
+                Server {
+                    name: "Asia-1",
+                    location: "Singapore",
+                    coords: (1.35, 103.86),
+                    status: "Up",
+                },
+            ],
             enhanced_graphics,
             validators: vec![],
             last_fetch_tx_version: 0,
@@ -150,14 +188,31 @@ impl<'a> App<'a> {
                     let full_node_ip = match v.config().fullnode_network_addresses() {
                         Ok(ips) => {
                             if !ips.is_empty() {
-                                // ips.iter().map(|ip|{
-                                //     self.servers.push(Server{
-                                //         name: ip.as_slice().first().unwrap().to_string().as_str(),
-                                //         location: "",
-                                //         coords: (0.0, 0.0),
-                                //         status: "Up"
-                                //     });
-                                // });
+                            //     ips.iter().map(|na|{
+                            //         na.as_slice().iter().map(|ip| {
+                            //             match ip {
+                            //                 Protocol::Ip4(ip4) => {
+                            //                     if !ip4.is_private() {
+                            //                         // servers.push(Server {
+                            //                         //     name: ip4.to_string(),
+                            //                         //     location: "",
+                            //                         //     coords: (0.0, 0.0),
+                            //                         //     status: "Up"
+                            //                         // });
+                            //                     }
+                            //                 }
+                            //                 Protocol::Ip6(_ip6) => {
+                            //                     // servers.push(Server {
+                            //                     //     name: ip6.to_string().as_str(),
+                            //                     //     location: "",
+                            //                     //     coords: (0.0, 0.0),
+                            //                     //     status: "Up"
+                            //                     // });
+                            //                 }
+                            //                 _ => {}
+                            //             }
+                            //         });
+                            //     }).count();
                                 ips.last().unwrap().to_string()
                             } else {
                                 "--".to_string()

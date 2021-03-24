@@ -8,7 +8,7 @@ use tui::{
     style::{Color, Modifier, Style},
     symbols,
     text::{Span, Spans},
-    widgets::canvas::{Canvas, Line, Map, MapResolution, Rectangle},
+    widgets::canvas::{Canvas, /*Line,*/ Map, MapResolution},
     widgets::{
         Block, Borders, Cell, LineGauge,
         Paragraph, Row, Table, Tabs, Wrap,
@@ -102,7 +102,7 @@ where
 
     let paragraph = Paragraph::new(format!("{}", &app.chain_state.as_ref().unwrap().height))
         .style(Style::default().add_modifier(Modifier::BOLD))
-        .block(Block::default().borders(Borders::ALL).title(" Height "))
+        .block(Block::default().borders(Borders::ALL).title(" Version "))
         .alignment(Alignment::Center);
     f.render_widget(paragraph, columns[1]);
 
@@ -232,10 +232,7 @@ where
         ]),
         Spans::from(vec![
             Span::raw(" Root Hash: "),
-            Span::styled(
-                meta.accumulator_root_hash,
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            ),
+            Span::raw(meta.accumulator_root_hash),
         ]),
         Spans::from(format!(
             "Allow Publish Module: {}",
@@ -286,31 +283,32 @@ where
     f.render_widget(table, chunks[0]);
 
     let map = Canvas::default()
-        .block(Block::default().title(" World ").borders(Borders::ALL))
+        .block(Block::default().title(" Peers In The World ").borders(Borders::ALL))
         .paint(|ctx| {
             ctx.draw(&Map {
                 color: Color::White,
                 resolution: MapResolution::High,
             });
             ctx.layer();
-            ctx.draw(&Rectangle {
-                x: 0.0,
-                y: 30.0,
-                width: 10.0,
-                height: 10.0,
-                color: Color::Yellow,
-            });
-            for (i, s1) in app.servers.iter().enumerate() {
-                for s2 in &app.servers[i + 1..] {
-                    ctx.draw(&Line {
-                        x1: s1.coords.1,
-                        y1: s1.coords.0,
-                        y2: s2.coords.0,
-                        x2: s2.coords.1,
-                        color: Color::Yellow,
-                    });
-                }
-            }
+            // ctx.draw(&Rectangle {
+            //     x: 0.0,
+            //     y: 30.0,
+            //     width: 10.0,
+            //     height: 10.0,
+            //     color: Color::Yellow,
+            // });
+            // Connect servers with line
+            // for (i, s1) in app.servers.iter().enumerate() {
+            //     for s2 in &app.servers[i + 1..] {
+            //         ctx.draw(&Line {
+            //             x1: s1.coords.1,
+            //             y1: s1.coords.0,
+            //             x2: s2.coords.1,
+            //             y2: s2.coords.0,
+            //             color: Color::Yellow,
+            //         });
+            //     }
+            // }
             for server in &app.servers {
                 let color = if server.status == "Up" {
                     Color::Green
@@ -404,7 +402,7 @@ where
             Row::new(vec!["Version", "Hash", "Gas", "Status", "Type", "Body"])
                 .style(Style::default().fg(Color::Green)),
         )
-        .block(Block::default().title(" Coins ").borders(Borders::ALL))
+        .block(Block::default().title(" Transactions ").borders(Borders::ALL))
         .widths(&[
             Constraint::Length(10),
             Constraint::Length(25),

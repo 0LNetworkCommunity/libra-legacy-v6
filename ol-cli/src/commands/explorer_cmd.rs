@@ -40,6 +40,7 @@ impl Runnable for ExplorerCMD {
 
         let mut app = App::new(" Block Explorer Menu ", self.enhanced_graphics, rpc);
         app.fetch();
+        terminal.clear().unwrap();
         loop {
             terminal.draw(|f| ui::draw(f, &mut app))
                 .expect("failed to draw screen");
@@ -71,5 +72,7 @@ impl Runnable for ExplorerCMD {
                 break;
             }
         }
+        terminal.clear().unwrap();
+        terminal.flush().unwrap();
     }
 }
