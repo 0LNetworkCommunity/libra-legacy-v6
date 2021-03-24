@@ -1,4 +1,4 @@
-//! account: bob, 100, 0, validator
+//! account: bob, 2000002, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -52,14 +52,14 @@ fun main(vm: &signer) {
     print(&old_account_bal);
 
     // Make the current auction price above minimum guarantee.
-    Subsidy::test_set_fullnode_fixtures(vm, 0, 1000000, 0, 0, 0);
+    Subsidy::test_set_fullnode_fixtures(vm, 0, 3000000, 0, 0, 0);
     // Fullnode rewards are paid at epoch boundary.
     Reconfigure::reconfigure(vm, 100);
 
     let new_account_bal = LibraAccount::balance<GAS>(eve_addr);
     print(&new_account_bal);
 
-    assert(new_account_bal == 1000000, 735702);
+    assert(new_account_bal == 4000000, 735702);
     assert(new_account_bal>old_account_bal, 735703);
 }
 }

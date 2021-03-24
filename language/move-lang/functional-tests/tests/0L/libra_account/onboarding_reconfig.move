@@ -1,5 +1,5 @@
 // Module to test bulk validator updates function in LibraSystem.move
-//! account: alice, 1000000, 0, validator
+//! account: alice, 4000000, 0, validator
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
