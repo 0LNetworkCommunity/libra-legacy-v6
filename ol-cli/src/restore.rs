@@ -16,17 +16,26 @@ use libra_secure_storage::KVStorage;
 
 const GITHUB_ORG: &str = "OLSF";
 /// Check if we are in testnet mode
-pub static GITHUB_REPO: Lazy<&str> = Lazy::new(||{  
+pub static GITHUB_REPO: Lazy<&str> = Lazy::new(||{
+    if *IS_DEVNET {
+        "dev-epoch-archive"
+    } else {
+        "epoch-archive"
+    }
+});
+
+/// Are we restoring devnet database
+pub static IS_DEVNET: Lazy<bool> = Lazy::new(||{  
     match env::var("TEST") {
         Ok(val) => {
             match val.as_str() {
-                "y" =>  "dev-epoch-archive",
+                "y" =>  true,
                 // if anything else is set by user is false
-                _ => "epoch-archive" 
+                _ => false 
             }
         }
         // default to prod if nothig is set
-        _ => "epoch-archive"
+        _ => false
     }
 });
 
@@ -183,41 +192,17 @@ impl Backup {
     /// Creates a fullnode yaml file with restore waypoint.
     pub fn create_fullnode_yaml(&self) -> Result<(), Error>{
 
-        let yaml = format!(
-// NOTE: With yaml formatting Be aware of indents, two spaces
-r#"
-base:
-  data_dir: "{home_path}"
-  role: "full_node"
-  waypoint: 
-    from_config: "{waypoint}"
-execution:
-  genesis_file_location: ""
-full_node_networks:
-  - discovery_method: "onchain"
-    listen_address: "/ip4/0.0.0.0/tcp/6179"
-    network_id: "public"
-    seed_addrs:
-      252F0B551C80CD9E951D82C6F70792AE:
-        - "/ip4/34.82.239.18/tcp/6179/ln-noise-ik/d578327226cc025724e9e5f96a6d33f55c2cfad8713836fa39a8cf7efeaf6a4e/ln-handshake/0"
-      ECAF65ADD1B785B0495E3099F4045EC0:
-        - "/ip4/167.172.248.37/tcp/6179/ln-noise-ik/f2ce22752b28a14477d377a01cd92411defdb303fa17a08a640128864343ed45/ln-handshake/0"
-storage:
-  address: "127.0.0.1:6666"
-  backup_service_address: "127.0.0.1:6186"
-  dir: db
-  grpc_max_receive_len: 100000000
-  prune_window: 20000
-  timeout_ms: 30000
-json_rpc:
-  address: 127.0.0.1:8080
-upstream:
-  networks:
-    - public
-"#,
-            home_path = &self.home_path.to_str().expect("no home path provided"),
-            waypoint = &self.waypoint.expect("no waypoint provided"),
-        );
+        let yaml = if *IS_DEVNET {
+            devnet_yaml(
+            &self.home_path.to_str().expect("no home path provided"), 
+            &self.waypoint.expect("no waypoint provided").to_string()
+            )
+        } else {
+            prod_yaml(
+            &self.home_path.to_str().expect("no home path provided"), 
+            &self.waypoint.expect("no waypoint provided").to_string()
+            )
+        };
 
         let yaml_path = &self.home_path.join("fullnode.node.yaml");
         let mut file = File::create(yaml_path)?;
@@ -338,4 +323,81 @@ pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u6
 
     assert!(ecode.success());
     status_ok!("Success", "state snapshot restored");
+}
+
+
+
+fn prod_yaml(home_path: &str, waypoint: &str) -> String {
+    format!(
+// NOTE: With yaml formatting Be aware of indents, two spaces
+r#"
+base:
+  data_dir: "{home_path}"
+  role: "full_node"
+  waypoint: 
+    from_config: "{waypoint}"
+execution:
+  genesis_file_location: ""
+full_node_networks:
+  - discovery_method: "onchain"
+    listen_address: "/ip4/0.0.0.0/tcp/6179"
+    network_id: "public"
+    seed_addrs:
+      252F0B551C80CD9E951D82C6F70792AE:
+        - "/ip4/34.82.239.18/tcp/6179/ln-noise-ik/d578327226cc025724e9e5f96a6d33f55c2cfad8713836fa39a8cf7efeaf6a4e/ln-handshake/0"
+      ECAF65ADD1B785B0495E3099F4045EC0:
+        - "/ip4/167.172.248.37/tcp/6179/ln-noise-ik/f2ce22752b28a14477d377a01cd92411defdb303fa17a08a640128864343ed45/ln-handshake/0"
+storage:
+  address: "127.0.0.1:6666"
+  backup_service_address: "127.0.0.1:6186"
+  dir: db
+  grpc_max_receive_len: 100000000
+  prune_window: 20000
+  timeout_ms: 30000
+json_rpc:
+  address: 127.0.0.1:8080
+upstream:
+  networks:
+    - public
+"#,
+        home_path = home_path,
+        waypoint = waypoint,
+    )
+}
+
+
+fn devnet_yaml(home_path: &str, waypoint: &str) -> String {
+    format!(
+// NOTE: With yaml formatting Be aware of indents, two spaces
+r#"
+base:
+  data_dir: "{home_path}"
+  role: "full_node"
+  waypoint: 
+    from_config: "{waypoint}"
+execution:
+  genesis_file_location: ""
+full_node_networks:
+  - discovery_method: "onchain"
+    listen_address: "/ip4/0.0.0.0/tcp/6179"
+    network_id: "public"
+    seed_addrs:
+      4C613C2F4B1E67CA8D98A542EE3F59F5:
+        - "/ip4/157.230.15.42/tcp/6179/ln-noise-ik/493847429420549694a18a82bc9b1b1ce21948bbf1cd4c5cee9ece0fb8ead50a/ln-handshake/0"
+storage:
+  address: "127.0.0.1:6666"
+  backup_service_address: "127.0.0.1:6186"
+  dir: db
+  grpc_max_receive_len: 100000000
+  prune_window: 20000
+  timeout_ms: 30000
+json_rpc:
+  address: 127.0.0.1:8080
+upstream:
+  networks:
+    - public
+"#,
+        home_path = home_path,
+        waypoint = waypoint,
+    )
 }
