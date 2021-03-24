@@ -263,6 +263,9 @@ set-waypoint:
 	@echo client_waypoint:
 	@cat ${DATA_PATH}/client_waypoint
 
+get-genesis-waypoint:
+	cat ${DATA_PATH}/genesis_waypoint > ${DATA_PATH}/client_waypoint; \
+
 client: set-waypoint
 ifeq (${TEST}, y)
 	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}

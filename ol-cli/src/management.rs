@@ -1,4 +1,4 @@
-//! `trigger` functions
+//! `management` functions
 
 use crate::{check, prelude::app_config};
 use anyhow::Error;
@@ -7,6 +7,9 @@ use serde::{Serialize, Deserialize};
 use std::{collections::HashSet, env, fs::{self, File}, process::{Command, Stdio}};
 use once_cell::sync::Lazy;
 
+const BINARY_NODE: &str = "libra-node";
+const BINARY_MINER: &str = "miner";
+
 /// Process name and its set of PIDs ever spawned
 #[derive(Serialize, Deserialize, Debug)]
 struct Process {
@@ -14,35 +17,76 @@ struct Process {
     pids: HashSet<u32>,
 }
 
-#[derive(Debug)]
-/// What binaries will be used by mgmt command
-pub struct Binaries {
-    node: &'static str,
-    miner: &'static str,
-}
-
-/// Construct Lazy Binary
-pub static BINARY: Lazy<Binaries> = Lazy::new(||{        
-        match env::var("NODE_ENV") {
+/// Check if we are in prod mode
+pub static IS_PROD: Lazy<bool> = Lazy::new(||{  
+    match env::var("NODE_ENV") {
         Ok(val) => {
             match val.as_str() {
-                "prod" =>  {},
-                // defaults to prod unless something else was set
-                _ => return Binaries {
-                    // build current source
-                    node: "cargo r -p libra-node --",
-                    miner: "cargo r -p miner --"
-                } 
+                "prod" =>  {true},
+                // if anything else is set by user is false
+                _ => {false} 
             }
         }
-        _ => {}// default to "prod" if not set
-    }
-    Binaries {
-        node: "libra-node",
-        miner: "miner"
+        // default to prod if nothig is set
+        _ => {true}
     }
 });
+// /// Construct Lazy Binary
+// pub static BINARY: Lazy<Binaries> = Lazy::new(||{        
+//         match env::var("NODE_ENV") {
+//         Ok(val) => {
+//             match val.as_str() {
+//                 "prod" =>  {},
+//                 // defaults to prod unless something else was set
+//                 _ => return Binaries {
+//                     // build current source
+//                     node: "cargo r -p libra-node --",
+//                     miner: "cargo r -p miner --"
+//                 } 
+//             }
+//         }
+//         _ => {}// default to "prod" if not set
+//     }
+//     Binaries {
+//         node: "libra-node",
+//         miner: "miner"
+//     }
+// });
 
+// /// what apps the mgmt command can run
+// pub enum Binary {
+//     /// Node
+//     Node,
+//     /// Miner
+//     Miner
+// }
+
+// /// get a Child object formatted
+// pub fn new_process(app: Binary) -> Command {
+
+//     let app = match app {
+//         Binary::Miner => "miner",
+//         Binary::Node => "libra-node"
+//     };
+    
+//     // match env::var("NODE_ENV") {
+//     //     Ok(val) => {
+//     //         match val.as_str() {
+//     //             "prod" =>  {},
+//     //             // any other node env defined is debug, otherwise is prod
+//     //             _ => { 
+//     //                 return std::process::Command::new("cargo")
+//     //                 .arg(
+//     //                     format!("r -p {} --", app.clone())
+//     //                 )
+//     //             }
+//     //         }
+//     //     }
+//     //     _ => {}
+//     // }
+
+//     std::process::Command::new(app)
+// }
 
 /// Save PID
 pub fn save_pid(name: &str, pid: u32) {
@@ -99,7 +143,6 @@ pub enum NodeType {
 pub fn create_log_file(file_name: &str) -> File {
     let conf = app_config();
     let logs_dir = conf.workspace.node_home.join("logs/");
-    dbg!(&logs_dir);
     fs::create_dir_all(&logs_dir).expect("could not create logs dir");
     let logs_file = logs_dir.join([file_name, ".log"].join(""));
 
@@ -130,23 +173,34 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
         NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
     };
 
-    let child = Command::new(BINARY.node)
-                        .arg("--config")
-                        .arg(config_file_name)
-                        .stdout(Stdio::from(outputs))
-                        .stderr(Stdio::from(errors))
-                        .spawn()
-                        .expect("failed to execute child");
+    // TODO: Boilerplate, figure out how to make generic
+    let child = if *IS_PROD {
+        Command::new("libra-node")
+        .arg("--config")
+        .arg(config_file_name)
+        .stdout(Stdio::from(outputs))
+        .stderr(Stdio::from(errors))
+        .spawn()
+        .expect("failed to execute child")
+    } else {
+        Command::new("cargo").args(&["r", "-p", "libra-node", "--"])
+        .arg("--config")
+        .arg(config_file_name)
+        .stdout(Stdio::from(outputs))
+        .stderr(Stdio::from(errors))
+        .spawn()
+        .expect("failed to execute child")
+    };
 
     let pid = &child.id();
-    save_pid(BINARY.node, *pid);
-    println!("Started new '{}' with PID: {}", BINARY.node, pid);
+    save_pid(BINARY_NODE, *pid);
+    println!("Started new '{}' with PID: {}", BINARY_NODE, pid);
     Ok(())
 }
 
 /// Stop node, as validator
 pub fn stop_node() {
-    kill_zombies(BINARY.node);
+    kill_zombies(BINARY_NODE);
 }
 
 /// Start Miner
@@ -165,22 +219,34 @@ pub fn start_miner() {
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
     let use_backup = if check::Check::node_is_synced() {"--backup-url"} else { "" };
-    let child = Command::new(BINARY.miner)
-                        .arg("start")
-                        .arg(use_backup)
-                        .stdout(Stdio::from(outputs))
-                        .stderr(Stdio::from(errors))
-                        .spawn()
-                        .expect("failed to execute child");
+    
+    // TODO: Boilerplate, figure out how to make generic
+    let child = if *IS_PROD {
+        Command::new("miner")
+        .arg("start")
+        .arg(use_backup)
+        .stdout(Stdio::from(outputs))
+        .stderr(Stdio::from(errors))
+        .spawn()
+        .expect("failed to execute child")
+    } else {
+        Command::new("cargo").args(&["r", "-p", "miner", "--"])
+        .arg("start")
+        .arg(use_backup)
+        .stdout(Stdio::from(outputs))
+        .stderr(Stdio::from(errors))
+        .spawn()
+        .expect("failed to execute child")
+    };
 
     let pid = &child.id();
-    save_pid(BINARY.miner, *pid);
-    println!("Started new {} with PID: {}", BINARY.miner, pid);
+    save_pid(BINARY_MINER, *pid);
+    println!("Started new {} with PID: {}", BINARY_MINER, pid);
 }
 
 /// Stop Miner
 pub fn stop_miner() {
-    kill_zombies(BINARY.miner);
+    kill_zombies(BINARY_MINER);
 }
 
 /// Choose a node to connect for rpc, local or upstream
@@ -208,9 +274,9 @@ pub fn choose_rpc_node() -> Option<Url> {
 /// 
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
-    dbg!(&BINARY);
+    dbg!(&BINARY_MINER);
     // TODO: switch between debug mode?
-    let mut miner = std::process::Command::new(BINARY.miner)
+    let mut miner = std::process::Command::new(BINARY_MINER)
                         .arg("val-wizard")
                         .arg("--keygen")
                         .spawn()
