@@ -26,7 +26,7 @@ pub fn default_remote_client()  ->(Result<LibraClient, Error>, Url){
 
 /// get client type with defaults from toml for local node
 pub fn default_local_client()  -> (Result<LibraClient, Error>, Url){
-    let config = app_config();
+    let config = app_config().to_owned();
     let local_url = config.chain_info.default_node.clone().expect("could not get url from configs");
     let waypoint = config.get_waypoint().expect("could not get waypoint");
     (make_client(Some(local_url.clone()), waypoint), local_url)

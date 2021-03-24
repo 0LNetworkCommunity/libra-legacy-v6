@@ -1,34 +1,56 @@
-use crate::util::TabsState;
+#[allow(missing_docs)]
+use super::TabsState;
 use chrono::Utc;
 use cli::libra_client::LibraClient;
 use libra_json_rpc_client::views::TransactionView;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 
+/// struct for fullnode list
 pub struct Server<'a> {
+    /// owner name or hex address
     pub name: &'a str,
+    /// IP location
     pub location: &'a str,
+    /// GEO
     pub coords: (f64, f64),
+    /// Status(Up or Down)
     pub status: &'a str,
 }
 
+/// Explorer Application
 pub struct App<'a> {
+    /// blockchain client to fetch data
     pub client: LibraClient,
+    /// title of app
     pub title: &'a str,
+    /// should quit?
     pub should_quit: bool,
+    /// tabs
     pub tabs: TabsState<'a>,
+    /// not use currently
     pub show_chart: bool,
+    /// progress of epoch
     pub progress: f64,
+    /// caches for fullnodes
     pub servers: Vec<Server<'a>>,
+    /// enhanced graphics
     pub enhanced_graphics: bool,
+    /// caches for account state
     pub account_state: Option<AccountState>,
+    /// caches for chain state
     pub chain_state: Option<ChainState>,
+    /// caches for validator list
     pub validators: Vec<ValidatorInfo>,
+    /// latest fetched tx version
     pub last_fetch_tx_version: u64,
+    /// transaction list
     pub txs: Vec<TransactionView>,
 }
 
+/// implementation of app
 impl<'a> App<'a> {
+    /// new a instance of explorer
     pub fn new(title: &'a str, enhanced_graphics: bool, client: LibraClient) -> App<'a> {
         App {
             title,
@@ -47,6 +69,7 @@ impl<'a> App<'a> {
         }
     }
 
+    /// fetch transactions
     pub fn fetch_txs(&mut self) {
         let latest_version = self
             .client
@@ -70,6 +93,7 @@ impl<'a> App<'a> {
         self.last_fetch_tx_version = latest_version;
     }
 
+    /// fetch basic data for first tab
     pub fn fetch(&mut self) {
         let (blob, _version) = self
             .client
@@ -78,6 +102,7 @@ impl<'a> App<'a> {
         let mut cs = ChainState::default();
         if let Some(account_blob) = blob {
             let account_state = AccountState::try_from(&account_blob).unwrap();
+            let meta = self.client.get_metadata().unwrap();
             cs.epoch = account_state
                 .get_configuration_resource()
                 .unwrap()
@@ -96,7 +121,13 @@ impl<'a> App<'a> {
                 .last_reconfiguration_time() as i64
                 / 1000000;
             let now = Utc::now().timestamp();
-            self.progress = (now - ts) as f64 / 61f64;
+            match meta.chain_id {
+                4 => self.progress = (now - ts) as f64 / 61f64, // 1 minute
+                _ => self.progress = (now - ts) as f64 / 86401f64, // 24 hours
+            }
+            if self.progress > 1f64 {
+                self.progress = 0f64;
+            };
 
             if let Some(first) = account_state
                 .get_registered_currency_info_resources()
@@ -105,6 +136,9 @@ impl<'a> App<'a> {
             {
                 cs.total_supply = (first.total_value() / first.fractional_part() as u128) as u64;
             }
+
+            cs.height = meta.version;
+            self.chain_state = Some(cs);
 
             self.validators = account_state
                 .get_validator_set()
@@ -167,26 +201,29 @@ impl<'a> App<'a> {
                 .collect();
         }
 
-        cs.height = self.client.get_metadata().unwrap().version;
-        self.chain_state = Some(cs);
     }
 
+    /// handler for key up
     pub fn on_up(&mut self) {
         //self.tasks.previous();
     }
 
+    /// handler for key down
     pub fn on_down(&mut self) {
         //self.tasks.next();
     }
 
+    /// handler for key right
     pub fn on_right(&mut self) {
         self.tabs.next();
     }
 
+    /// handler for key left
     pub fn on_left(&mut self) {
         self.tabs.previous();
     }
 
+    /// handler for all keys
     pub fn on_key(&mut self, c: char) {
         match c {
             'q' => {
@@ -199,6 +236,7 @@ impl<'a> App<'a> {
         }
     }
 
+    /// handler for tick
     pub fn on_tick(&mut self) {
         // Update progress
         self.progress += 0.001;
@@ -211,38 +249,47 @@ impl<'a> App<'a> {
             2 => self.fetch_txs(),
             _ => {}
         }
-        //
-        // self.sparkline.on_tick();
-        // self.signals.on_tick();
-        //
-        // let log = self.logs.items.pop().unwrap();
-        // self.logs.items.insert(0, log);
-        //
-        // let event = self.barchart.pop().unwrap();
-        // self.barchart.insert(0, event);
     }
 }
 
 #[derive(Default)]
+/// ChainState struct
 pub struct ChainState {
+    /// epoch
     pub epoch: u64,
+    /// height/version
     pub height: u64,
+    /// validator count
     pub validator_count: u64,
+    /// total supply of GAS
     pub total_supply: u64,
+    /// latest epoch change time
     pub latest_epoch_change_time: u64,
 }
 
 #[derive(Default)]
+/// Validator info struct
 pub struct ValidatorInfo {
+    /// account address
     pub account_address: String,
+    /// public key
     pub pub_key: String,
+    /// voting power
     pub voting_power: u64,
+    /// full node ip
     pub full_node_ip: String,
+    /// validator ip
     pub validator_ip: String,
+    /// tower height
     pub tower_height: u64,
+    /// tower epoch
     pub tower_epoch: u64,
+    /// proof counts in current epoch
     pub count_proofs_in_epoch: u64,
+    /// epoch validating and mining
     pub epochs_validating_and_mining: u64,
+    /// contiguous epochs of mining
     pub contiguous_epochs_validating_and_mining: u64,
+    /// epoch count since creation
     pub epochs_since_last_account_creation: u64,
 }

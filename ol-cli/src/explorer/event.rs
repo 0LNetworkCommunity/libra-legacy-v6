@@ -10,26 +10,38 @@ use std::time::Duration;
 use termion::event::Key;
 use termion::input::TermRead;
 
+/// Event Struct
 pub enum Event<I> {
+    /// Input Event
     Input(I),
+    /// Tick Event
     Tick,
 }
+
 #[allow(dead_code)]
 /// A small event handler that wrap termion input and tick events. Each event
 /// type is handled in its own thread and returned to a common `Receiver`
 pub struct Events {
+    /// rx
     rx: mpsc::Receiver<Event<Key>>,
+    /// input handler
     input_handle: thread::JoinHandle<()>,
+    /// ignore exit key
     ignore_exit_key: Arc<AtomicBool>,
+    /// tick handler
     tick_handle: thread::JoinHandle<()>,
 }
 
 #[derive(Debug, Clone, Copy)]
+/// Config struct of Event
 pub struct Config {
+    /// exit key
     pub exit_key: Key,
+    /// tick rate
     pub tick_rate: Duration,
 }
 
+/// implement default() for Config struct
 impl Default for Config {
     fn default() -> Config {
         Config {
@@ -39,11 +51,13 @@ impl Default for Config {
     }
 }
 
+/// Events
 impl Events {
     // pub fn new() -> Events {
     //     Events::with_config(Config::default())
     // }
 
+    /// Config Event
     pub fn with_config(config: Config) -> Events {
         let (tx, rx) = mpsc::channel();
         let ignore_exit_key = Arc::new(AtomicBool::new(false));
@@ -81,6 +95,7 @@ impl Events {
         }
     }
 
+    /// Next Event
     pub fn next(&self) -> Result<Event<Key>, mpsc::RecvError> {
         self.rx.recv()
     }

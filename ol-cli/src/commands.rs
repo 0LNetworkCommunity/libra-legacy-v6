@@ -19,6 +19,7 @@ mod restore_cmd;
 mod onboard_cmd;
 mod query_cmd;
 mod check_cmd;
+mod explorer_cmd;
 
 
 use self::{
@@ -41,6 +42,8 @@ use std::path::PathBuf;
 use dirs;
 use libra_global_constants::NODE_HOME;
 use miner::commands::CONFIG_FILE;
+use crate::commands::explorer_cmd::ExplorerCMD;
+
 /// OlCli Configuration Filename
 // pub const CONFIG_FILE: &str = "miner.toml";
 
@@ -84,9 +87,12 @@ pub enum OlCliCmd {
 
     /// The `query` subcommand
     #[options(help = "query helpers")]
-    Check(CheckCmd), 
-    
-    
+    Check(CheckCmd),
+
+    /// The `explorer` subcommand
+    #[options(help = "query helpers")]
+    Explorer(ExplorerCMD),
+
 }
 
 /// Get home path for all 0L apps

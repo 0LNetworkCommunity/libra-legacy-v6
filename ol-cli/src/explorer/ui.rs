@@ -16,7 +16,8 @@ use tui::{
     Frame,
 };
 
-pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+/// draw app
+pub fn draw<B: Backend>(f: &mut Frame<'_, B>, app: &mut App<'_>) {
     let chunks = Layout::default()
         .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
         .split(f.size());
@@ -40,7 +41,8 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     };
 }
 
-fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+///draw first tab
+fn draw_first_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
@@ -59,7 +61,8 @@ where
     draw_parameters(f, app, chunks[2]);
 }
 
-fn draw_chain_info<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/// draw chain info in first tab
+fn draw_chain_info<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
@@ -141,7 +144,8 @@ where
     f.render_widget(line_gauge, chunks[1]);
 }
 
-fn draw_validator_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/// draw validator list in first tab
+fn draw_validator_list<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
@@ -193,7 +197,8 @@ where
     f.render_widget(table, area);
 }
 
-fn draw_parameters<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/// draw parameters
+fn draw_parameters<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
@@ -205,11 +210,16 @@ where
                 format!("{}", meta.libra_version.unwrap()),
                 Style::default().add_modifier(Modifier::BOLD),
             ),
-        ]),
-        Spans::from(vec![
-            Span::raw("Chain ID: "),
+            Span::raw("    Chain ID: "),
             Span::styled(
                 format!("{}", meta.chain_id),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Spans::from(vec![
+            Span::from("Version: "),
+            Span::styled(
+                format!("{}", meta.version),
                 Style::default().add_modifier(Modifier::BOLD),
             ),
         ]),
@@ -239,7 +249,8 @@ where
     f.render_widget(paragraph, area);
 }
 
-fn draw_second_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/// draw second tab
+fn draw_second_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
@@ -319,11 +330,12 @@ where
     f.render_widget(map, chunks[1]);
 }
 
-fn draw_third_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/// draw third tab
+fn draw_third_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
-    let mut items: Vec<Row> = vec![];
+    let mut items: Vec<Row<'_>> = vec![];
     let (blob, _version) = app
         .client
         .get_account_state_blob(AccountAddress::ZERO)
@@ -368,11 +380,12 @@ where
     f.render_widget(table, area);
 }
 
-fn draw_txs_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/// draw txs tab
+fn draw_txs_tab<B>(f: &mut Frame<'_, B>, app: &mut App<'_>, area: Rect)
 where
     B: Backend,
 {
-    let items: Vec<Row> = app
+    let items: Vec<Row<'_>> = app
         .txs
         .iter()
         .map(|c| {
