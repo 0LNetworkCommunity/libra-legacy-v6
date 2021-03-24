@@ -13,6 +13,12 @@ use libra_secure_storage::{self, OnDiskStorageInternal};
 use libra_types::{waypoint::Waypoint};
 use libra_secure_storage::KVStorage;
 
+const GITHUB_ORG: &str = "OLSF";
+// const GITHUB_REPO: &str = "epoch-archive";
+
+// const GITHUB_ORG_DEBUG: &str = "OLSF";
+const GITHUB_REPO_DEBUG: &str = "epoch-archive";
+
 /// Restore database from archive
 pub fn fast_forward_db() -> Result<(), Error>{
     let mut backup = Backup::new();
@@ -65,7 +71,7 @@ impl Backup {
     /// Creates a backup info instance
     pub fn new() -> Self {
         let conf = app_config().to_owned();
-        let (version_number, zip_url) = get_highest_epoch_zip().unwrap();
+        let (version_number, zip_url) = get_highest_epoch_zip().expect(&format!("could not find a zip backup at url: {}", GITHUB_REPO_DEBUG));
         let restore_path = conf.workspace.node_home.join(format!("restore/{}", version_number));
         fs::create_dir_all(&restore_path).unwrap();
         println!("most recent epoch backup: {}", &version_number);
@@ -209,8 +215,8 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     .build()?;
 
     let request_url = format!("https://api.github.com/repos/{owner}/{repo}/contents/",
-                              owner = "OLSF",
-                              repo = "epoch-archive");
+                              owner = GITHUB_ORG,
+                              repo = GITHUB_REPO_DEBUG);
     let response = client.get(&request_url).send()?;
 
     let files: Vec<GithubFile> = response.json()?;
@@ -229,8 +235,8 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     Ok(
         (highest_epoch, 
             format!("https://raw.githubusercontent.com/{owner}/{repo}/main/{highest_epoch}.zip",
-        owner = "OLSF",
-        repo = "epoch-archive",
+        owner = GITHUB_ORG,
+        repo = GITHUB_REPO_DEBUG,
         highest_epoch = highest_epoch.to_string(),
         ))
     )

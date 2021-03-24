@@ -6,9 +6,10 @@ use reqwest::Url;
 use serde::{Serialize, Deserialize};
 use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio}};
 
-const MINER_BINARY: &str = "miner";
-const NODE_BINARY: &str = "libra-node";
-
+// const MINER_BINARY: &str = "miner";
+// const NODE_BINARY: &str = "libra-node";
+const MINER_BINARY_DEBUG: &str = "/root/libra/target/debug/miner";
+const NODE_BINARY_DEBUG: &str = "/root/libra/target/debug/libra-node";
 /// Process name and its set of PIDs ever spawned
 #[derive(Serialize, Deserialize, Debug)]
 struct Process {
@@ -81,7 +82,14 @@ pub fn create_log_file(file_name: &str) -> File {
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     // Stop any processes we may have started and detached from.
-    kill_zombies(NODE_BINARY);
+    // Do not need to start
+
+    // if is running do nothing
+    if check::Check::new().node_running() {
+        println!("node is already running. Exiting.");
+        return Ok(())
+    }
+    // kill_zombies(NODE_BINARY_DEBUG);
 
     // Create log file, and pipe stdout/err    
     let outputs = create_log_file("node");
@@ -96,7 +104,7 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
         NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
     };
 
-    let child = Command::new(NODE_BINARY)
+    let child = Command::new(NODE_BINARY_DEBUG)
                         .arg("--config")
                         .arg(config_file_name)
                         .stdout(Stdio::from(outputs))
@@ -105,20 +113,24 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
                         .expect("failed to execute child");
 
     let pid = &child.id();
-    save_pid(NODE_BINARY, *pid);
-    println!("Started new '{}' with PID: {}", NODE_BINARY, pid);
+    save_pid(NODE_BINARY_DEBUG, *pid);
+    println!("Started new '{}' with PID: {}", NODE_BINARY_DEBUG, pid);
     Ok(())
 }
 
 /// Stop node, as validator
 pub fn stop_node() {
-    kill_zombies(NODE_BINARY);
+    kill_zombies(NODE_BINARY_DEBUG);
 }
 
 /// Start Miner
 pub fn start_miner() {
     // Stop any processes we may have started and detached from.
-    kill_zombies(MINER_BINARY);
+    // if is running do nothing
+    if check::Check::new().miner_running() {
+        println!("node is already running. Exiting.");
+        return
+    }
 
     // Create log file, and pipe stdout/err
     let outputs = create_log_file("miner");
@@ -127,7 +139,7 @@ pub fn start_miner() {
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
     let use_backup = if check::Check::node_is_synced() {"--backup-url"} else { "" };
-    let child = Command::new(MINER_BINARY)
+    let child = Command::new(MINER_BINARY_DEBUG)
                         .arg("start")
                         .arg(use_backup)
                         .stdout(Stdio::from(outputs))
@@ -136,13 +148,13 @@ pub fn start_miner() {
                         .expect("failed to execute child");
 
     let pid = &child.id();
-    save_pid(MINER_BINARY, *pid);
-    println!("Started new {} with PID: {}", MINER_BINARY, pid);
+    save_pid(MINER_BINARY_DEBUG, *pid);
+    println!("Started new {} with PID: {}", MINER_BINARY_DEBUG, pid);
 }
 
 /// Stop Miner
 pub fn stop_miner() {
-    kill_zombies(MINER_BINARY);
+    kill_zombies(MINER_BINARY_DEBUG);
 }
 
 /// Choose a node to connect for rpc, local or upstream
@@ -171,8 +183,7 @@ pub fn choose_rpc_node() -> Option<Url> {
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
     // TODO: switch between debug mode?
-    // let miner_path = "miner";
-    let mut miner = std::process::Command::new("miner")
+    let mut miner = std::process::Command::new(MINER_BINARY_DEBUG)
                         .arg("val-wizard")
                         .arg("--keygen")
                         .spawn()

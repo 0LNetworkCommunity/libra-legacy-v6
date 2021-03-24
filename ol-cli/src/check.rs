@@ -32,19 +32,35 @@ pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
 #[serde(deny_unknown_fields)]
 /// Steps needed to initialize a miner
 pub struct Items {
-    /// is the blockchain in sync with upstream
-    pub is_synced: bool,
     /// the chain height
     pub height: u64,
     /// current epoch
     pub epoch: u64,
+    /// node configs created
+    pub configs_exist: bool,
+    /// current epoch
+    pub db_restored: bool,
+    /// account created
+    pub account_created: bool,
+    /// current epoch
+    pub node_running: bool,
+    /// current epoch
+    pub miner_running: bool,
+    /// is the blockchain in sync with upstream
+    pub is_synced: bool,
+
 }
 impl Default for Items {
     fn default() -> Self { 
         Self {
-            is_synced: false,
             height: 0,
             epoch: 0,
+            is_synced: false,
+            configs_exist: false,
+            db_restored: false,
+            account_created: false,
+            node_running: false,
+            miner_running: false,
         }
     }
 }
@@ -53,9 +69,14 @@ impl Items {
     /// Get new object
     pub fn new(is_synced: bool) -> Self {
         Items {
-            is_synced,
             height: 0,
             epoch: 0,
+            configs_exist: false,
+            db_restored: false,
+            account_created: false,
+            node_running: false,
+            miner_running: false,
+            is_synced,
         }
     }
 
@@ -224,13 +245,16 @@ impl Check {
     }
 
     /// nothing is configured yet, empty box
-    pub fn configs_exist(&self) -> bool {
+    pub fn configs_exist(&mut self) -> bool {
         // check to see no files are present
         let home_path = self.conf.workspace.node_home.clone();
         
-        home_path.join("blocks/block_0.json").exists() && 
+        let c_exist = home_path.join("blocks/block_0.json").exists() && 
         home_path.join("validator.node.yaml").exists() && 
-        home_path.join("key_store.json").exists()
+        home_path.join("key_store.json").exists();
+
+        self.items.configs_exist = c_exist;
+        c_exist
     }
 
     /// the owner and operator accounts exist on chain
@@ -248,13 +272,15 @@ impl Check {
     }
 
     /// database is initialized
-    pub fn database_bootstrapped(&self) -> bool {
+    pub fn database_bootstrapped(&mut self) -> bool {
         // TODO: This only checks that the database files exist.
         // need to check if it is "boostrapped" with db-bootstrapper
 
         let mut file = self.conf.workspace.node_home.clone();
         file.push("db/libradb"); //TODO change file name later
-        file.exists()
+        let exists = file.exists();
+        self.items.db_restored = exists;
+        exists
     }
 
     /// Checks if node is synced
@@ -293,13 +319,18 @@ impl Check {
     }
 
     /// Check if node is running
-    pub fn node_running(&self) -> bool {
+    pub fn node_running(&mut self) -> bool {
         let mut system = sysinfo::System::new_all();
 
         // First we update all information of our system struct.
         system.refresh_all();
         let ps = system.get_process_by_name(self.node_process_name );
-        ps.len() > 0
+
+
+        let is_running = ps.len() > 0;
+        self.items.node_running = is_running;
+        is_running
+
     }
 
     /// Check if miner is running

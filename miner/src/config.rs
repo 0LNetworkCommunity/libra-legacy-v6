@@ -248,8 +248,9 @@ impl Default for ChainInfo {
             block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
             base_waypoint: None,
-            default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            // TODO: select defaults from command line.
+            default_node: Some("http://167.172.248.37:8080".parse().expect("parse url")),
+            upstream_nodes: Some(vec!["http://167.172.248.37:8080".parse().expect("parse url")]),
 
         }
     }
