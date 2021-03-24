@@ -169,7 +169,7 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p libra-node -- --config ${DATA_PATH}/node.yaml
+	cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
 
 daemon:
 # your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
