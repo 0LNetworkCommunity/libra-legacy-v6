@@ -267,6 +267,7 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, ) {
     let manifest_path = glob(
         &format!("{}/**/epoch_ending.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+    dbg!(&manifest_path);
 
     let mut child = Command::new("db-restore")
     .arg("--target-db-dir")

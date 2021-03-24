@@ -182,6 +182,7 @@ impl MinerConfig {
         miner_configs.profile.account = account;
 
         let toml = toml::to_string(&miner_configs).unwrap();
+        dbg!(&toml);
         let home_path = miner_configs.workspace.node_home.clone();
         let miner_toml_path = home_path.join(CONFIG_FILE);
         let file = fs::File::create(&miner_toml_path);
@@ -249,7 +250,7 @@ impl Default for ChainInfo {
             // Mock Waypoint. Miner complains without.
             base_waypoint: None,
             // TODO: select defaults from command line.
-            default_node: Some("http://167.172.248.37:8080".parse().expect("parse url")),
+            default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://167.172.248.37:8080".parse().expect("parse url")]),
 
         }

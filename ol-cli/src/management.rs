@@ -218,15 +218,22 @@ pub fn choose_rpc_node() -> Option<Url> {
 /// 
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
-    dbg!(&BINARY_MINER);
-    // TODO: switch between debug mode?
-    let mut miner = std::process::Command::new(BINARY_MINER)
-                        .arg("val-wizard")
-                        .arg("--keygen")
-                        .spawn()
-                        .expect(&format!("failed to start miner app"));
+    // TODO: Boilerplate, figure out how to make generic
+    let mut child = if *IS_PROD {
+        Command::new("miner")
+        .arg("val-wizard")
+        .arg("--keygen")
+        .spawn()
+        .expect(&format!("failed to start miner app"))
+    } else {
+        Command::new("cargo").args(&["r", "-p", "miner", "--"])
+        .arg("val-wizard")
+        .arg("--keygen")
+        .spawn()
+        .expect(&format!("failed to start miner app"))
+    };
 
-    let exit_code = miner.wait().expect("failed to wait on miner"); 
+    let exit_code = child.wait().expect("failed to wait on miner"); 
     assert!(exit_code.success());
 
     true
