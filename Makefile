@@ -263,18 +263,12 @@ set-waypoint:
 	@echo client_waypoint:
 	@cat ${DATA_PATH}/client_waypoint
 
-get-genesis-waypoint:
-	cat ${DATA_PATH}/genesis_waypoint > ${DATA_PATH}/client_waypoint; \
-
 client: set-waypoint
 ifeq (${TEST}, y)
 	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 else
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
 endif
-
-test: set-waypoint
-	cargo run -p cli -- -u http://localhost:8080 --waypoint "$$(cat ${DATA_PATH}/client_waypoint)" --chain-id ${CHAIN_ID}
 
 
 stdlib:
@@ -346,7 +340,6 @@ devnet-reset-onboard: clear
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
 devnet-save-genesis: set-waypoint
-	echo $$WAY > ${DATA_PATH}/genesis_waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
 	git add ${SOURCE}/fixtures/genesis/${V}/
 	git commit -a -m "save genesis fixtures to ${V}"
