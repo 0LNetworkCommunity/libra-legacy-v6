@@ -58,15 +58,16 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
 
 fn get_account_view(account: AccountAddress) -> AccountView {
     let (account_view, _) = what_client()
-    .get_account(account, true)
-    .expect(&format!("could not get account at address {:?}", account));
+      .get_account(account, true)
+      .expect(&format!("could not get account at address {:?}", account));
     account_view.expect(&format!("could not get account at address {:?}", account))
 }
 
 fn what_client() -> LibraClient{
     // check if is in sync
     let is_synced = true;
-    let client_tuple = if is_synced { client::default_local_client() }
-    else { client::default_remote_client() };
+    let client_tuple = 
+      if is_synced { client::default_local_client() }
+      else         { client::default_remote_client() };
     client_tuple.0.expect("could not configure a client")
 }

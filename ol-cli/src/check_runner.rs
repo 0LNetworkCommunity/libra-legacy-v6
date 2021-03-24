@@ -21,11 +21,11 @@ pub fn mon(is_live: bool) {
 
         // TODO: make keep cursor position
         let sync = checker.check_sync();
-        let mining = match checker.miner_is_mining() {
+        let mining = match checker.miner_running() {
             true=> "running",
             false => "stopped"
         };
-        let node_status = match checker.node_is_running() {
+        let node_status = match checker.node_running() {
             true=> "running",
             false => "stopped"
         };

@@ -166,7 +166,7 @@ impl NodeState {
                 }
             }
             NodeVariants::DbRestoredOk => {
-                if check.node_is_running() {
+                if check.node_running() {
                     &self.transition(NodeAction::StartFullnode, trigger_action);
                 } else { 
                     println!("Onboarding: no state changes");
@@ -183,7 +183,7 @@ impl NodeState {
             NodeVariants::FullnodeIsRunning => {
                 // start miner but don't advance.
                 // advance only when in sync
-                if check.accounts_exist_on_chain() && !check.miner_is_mining() {
+                if check.accounts_exist_on_chain() && !check.miner_running() {
                     management::start_miner()
                 }
 
