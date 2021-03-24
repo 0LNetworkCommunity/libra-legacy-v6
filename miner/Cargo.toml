@@ -45,6 +45,7 @@ transaction-builder = { path = "../language/transaction-builder", version = "0.1
 libra-network-address = { path = "../network/network-address", version = "0.1.0" }
 libra-genesis-tool = { path = "../config/management/genesis", version = "0.1.0" }
 libra-management = { path = "../config/management", version = "0.1.0" }
+keygen = { path = "../keygen/", version = "0.1.0" }
 url = { version = "^2.1", features = ["serde"]}
 libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
 

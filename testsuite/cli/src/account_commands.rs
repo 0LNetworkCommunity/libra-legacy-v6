@@ -30,7 +30,9 @@ impl Command for AccountCommand {
             Box::new(AccountCommandCreateVal {}),
             Box::new(AccountCommandAutopayEnable {}),
             Box::new(AccountCommandAutopayCreate {}),
-            Box::new(AccountCommandAutopayBatch {}),            
+            Box::new(AccountCommandAutopayBatch {}),
+            Box::new(AccountCommandUpdateValConfig {}),
+            Box::new(AccountCommandSetOperator {}),
         ];
 
         subcommand_execute(&params[0], commands, client, &params[1..]);
@@ -237,6 +239,49 @@ impl Command for AccountCommandCreateVal {
         match client.create_val(params, true) {
             Ok(()) => println!("Created account"),
             Err(e) => report_error("Error creating user account", e),
+        }
+    }
+}
+
+//////// 0L ////////
+/// 0L Sub command for the operator to include a validator.
+pub struct AccountCommandUpdateValConfig {}
+
+impl Command for AccountCommandUpdateValConfig {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["update_val_config", "uvc"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Operator updates a val config"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_account_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.update_val_configs(params, true) {
+            Ok(()) => println!("Val configs updated"),
+            Err(e) => report_error("Error updating val configs", e),
+        }
+    }
+}
+
+/// 0L Sub command to create a validator account.
+pub struct AccountCommandSetOperator {}
+
+impl Command for AccountCommandSetOperator {
+    fn get_aliases(&self) -> Vec<&'static str> {
+        vec!["set_operator", "so"]
+    }
+    fn get_description(&self) -> &'static str {
+        "Validator picks a new operator"
+    }
+    fn get_params_help(&self) -> &'static str {
+        "<sending_account> <path_to_account_file>"
+    }
+    fn execute(&self, client: &mut ClientProxy, params: &[&str]) {
+        match client.set_operator(params, true) {
+            Ok(()) => println!("Operator updated"),
+            Err(e) => report_error("Error updating operator", e),
         }
     }
 }

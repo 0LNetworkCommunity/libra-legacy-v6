@@ -2,8 +2,6 @@
 
 #![allow(clippy::never_loop)]
 
-use crate::keygen;
-
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use std::{path::PathBuf};
 use super::{files_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
@@ -11,7 +9,7 @@ use super::{files_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValWizardCmd {
-    #[options(help = "path to write account manifest")]
+    #[options(help = "home path for all 0L files")]
     path: Option<PathBuf>,
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
@@ -20,9 +18,11 @@ pub struct ValWizardCmd {
     #[options(help = "repo with with genesis transactions")]
     repo: Option<String>,   
     #[options(help = "run keygen before wizard")]
-    keygen: bool,   
+    keygen: bool, 
     #[options(help = "build genesis from ceremony repo")]
-    rebuild_genesis: bool, 
+    rebuild_genesis: bool,
+    #[options(help = "skip fetching genesis blob")]
+    skip_fetch_genesis: bool, 
     #[options(help = "skip mining a block zero")]
     skip_mining: bool,   
 }
@@ -43,7 +43,7 @@ impl Runnable for ValWizardCmd {
 
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
-        let miner_config = init_cmd::initialize_miner(authkey, account).unwrap();
+        let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
         status_ok!("\nMiner config written", "\n...........................\n");
 
         // Initialize Validator Keys
@@ -66,6 +66,7 @@ impl Runnable for ValWizardCmd {
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
+            &false,
         );
         status_ok!("\nNode config written", "\n...........................\n");
 
@@ -76,7 +77,7 @@ impl Runnable for ValWizardCmd {
         }
         
         // Write Manifest
-        manifest_cmd::write_manifest(None, wallet);
+        manifest_cmd::write_manifest(&self.path, wallet, Some(miner_config));
         status_ok!("\nAccount manifest written", "\n...........................\n");
 
         status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");

@@ -388,5 +388,18 @@ module LibraConfig {
         config_ref.epoch
     }
 
+    public fun get_epoch_transfer_limit(): u64 acquires Configuration {
+        // Constant to start the withdrawal limit calculation from 
+        let transfer_enabled_epoch = 75;
+        let config_ref = borrow_global<Configuration>(CoreAddresses::LIBRA_ROOT_ADDRESS());
+        
+        // Calculating transfer limit in multiples of epoch
+        ((config_ref.epoch - transfer_enabled_epoch) * 10)
+    }
+
+    public fun check_transfer_enabled(): bool acquires Configuration {
+        get_current_epoch() > 1000
+    }
+
 }
 }

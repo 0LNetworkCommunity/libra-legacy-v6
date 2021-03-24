@@ -2,10 +2,11 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
-    query::{get, QueryType},
+    commands,
+    entrypoint::EntryPoint,
     prelude::app_config,
+    query::{get, QueryType},
 };
-use libra_types::{account_address::AccountAddress};
 
 /// `bal` subcommand
 ///
@@ -16,10 +17,6 @@ use libra_types::{account_address::AccountAddress};
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Default, Options)]
 pub struct QueryCmd {
-    // TODO: This should be an entrypoint arg, not subcommand
-    #[options(short = "a", help = "account to query")]
-    account: Option<AccountAddress>,
-
     // "free" arguments don't have an associated flag
     #[options(free)]
     free_args: Vec<String>,
@@ -27,33 +24,37 @@ pub struct QueryCmd {
 
 impl Runnable for QueryCmd {
     fn run(&self) {
-        let config = app_config().clone();
-        // let account = if 
-        let account = if self.account.is_some() { self.account.unwrap() } 
-        else { config.profile.account };
+
+        type EntryPointOlCliCmd = EntryPoint<commands::OlCliCmd>;
+        let EntryPointOlCliCmd { account, .. } = Command::from_env_args();
+
+        let account = 
+            if account.is_some() { account.unwrap() }
+            else { app_config().profile.account };
 
         let mut info = "".to_owned();
         let mut display = "".to_owned();
+
         // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance
-        if self.free_args.clone().into_iter().find(|x| x == "balance").is_some() {
+        let free_arg_exists = |s: &str| self.free_args.contains(&s.to_string());
+        if free_arg_exists("balance") {
             info = get(QueryType::Balance, account);
             display = "balance".to_uppercase().to_owned()
         } 
 
-        if self.free_args.clone().into_iter().find(|x| x == "blockheight").is_some() {
+        if free_arg_exists("blockheight") {
             info = get(QueryType::BlockHeight, account);
             display = "blockheight".to_uppercase().to_owned()
         }
 
-        if self.free_args.clone().into_iter().find(|x| x == "sync-delay").is_some() {
+        if free_arg_exists("sync-delay") {
             info = get(QueryType::SyncDelay, account);
             display = "sync-delay".to_uppercase().to_owned()
         }
  
-        if self.free_args.clone().into_iter().find(|x| x == "resources").is_some() {
+        if free_arg_exists("resources") {
             info = get(QueryType::Resources, account);
             display = "resources".to_uppercase().to_owned()
-
         }
 
         status_info!(display.to_uppercase(),format!("{}", info));

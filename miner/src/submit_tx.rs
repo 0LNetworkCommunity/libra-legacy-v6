@@ -235,7 +235,7 @@ pub fn eval_tx_status(result: TransactionView) -> bool {
     }
 }
 
-/// Form tx parameters struct 
+/// Form tx parameters struct, all info needed for client tx.
 pub fn get_params(
     keys: KeyScheme, 
     waypoint: Waypoint,

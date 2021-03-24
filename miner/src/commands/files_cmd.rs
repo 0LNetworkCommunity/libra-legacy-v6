@@ -8,7 +8,8 @@ use crate::{application::app_config, config::MinerConfig};
 use abscissa_core::{Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use std::io::Write;
-/// `genesis` subcommand
+
+/// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct FilesCmd {
     #[options(help = "id of the chain")]
@@ -19,6 +20,8 @@ pub struct FilesCmd {
     repo: Option<String>,   
     #[options(help = "build genesis from ceremony repo")]
     rebuild_genesis: bool, 
+    #[options(help = "only make fullnode config files")]
+    fullnode_only: bool,
 }
 
 
@@ -32,6 +35,7 @@ impl Runnable for FilesCmd {
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
+            &self.fullnode_only,
         ) 
     }
 }
@@ -42,6 +46,7 @@ pub fn genesis_files(
     github_org: &Option<String>,
     repo: &Option<String>,
     rebuild_genesis: &bool,
+    fullnode_only: &bool,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -54,6 +59,7 @@ pub fn genesis_files(
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
         rebuild_genesis,
+        fullnode_only
     ).unwrap();
 
     println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));

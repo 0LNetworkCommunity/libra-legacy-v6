@@ -43,7 +43,7 @@ impl MinerConfig {
             Ok(file) => {
                 let json: serde_json::Value = serde_json::from_reader(file)
                     .expect("could not parse JSON in key_store.json");
-                match ajson::get(&json.to_string(), "*waypoint.value") {
+                match ajson::get(&json.to_string(), "waypoint.value") {
                     Some(value) => Some(value.to_string().parse().unwrap()),
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
                     _ => self.chain_info.base_waypoint
@@ -154,13 +154,13 @@ impl MinerConfig {
     }
 
         /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> MinerConfig {
+    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> MinerConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = MinerConfig::default();
 
         miner_configs.workspace.node_home = if path.is_some() {
-            path.unwrap()
+            path.clone().unwrap()
         } else {
             dirs::home_dir().unwrap()
         };
