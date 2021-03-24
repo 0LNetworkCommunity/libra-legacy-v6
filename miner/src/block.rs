@@ -255,7 +255,7 @@ fn test_mine_genesis() {
             block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
             base_waypoint: None,
             default_node: Some("http://localhost:8080".parse().unwrap()),
-            backup_nodes: None,
+            upstream_nodes: None,
         },
     };
     //clear from sideffects.
@@ -313,7 +313,7 @@ fn create_fixtures() {
                 block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
                 base_waypoint: None,
                 default_node: Some("http://localhost:8080".parse().unwrap()),
-                backup_nodes: None,
+                upstream_nodes: None,
             },
         };
 
@@ -362,7 +362,7 @@ fn test_mine_once() {
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
             default_node: Some("http://localhost:8080".parse().unwrap()),
-            backup_nodes: None,
+            upstream_nodes: None,
         },
     };
 

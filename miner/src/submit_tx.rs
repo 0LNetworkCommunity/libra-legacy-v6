@@ -254,7 +254,7 @@ pub fn get_params(
         url_opt.expect("could nod parse url")
     } else {
         if backup_url {
-            config.chain_info.backup_nodes
+            config.chain_info.upstream_nodes
             .clone()
             .unwrap()
             .into_iter()
@@ -306,7 +306,7 @@ pub fn get_oper_params(
         url_opt.expect("could nod parse url")
     } else {
         if backup_url {
-            config.chain_info.backup_nodes
+            config.chain_info.upstream_nodes
             .clone()
             .unwrap()
             .into_iter()
@@ -427,7 +427,7 @@ fn test_make_params() {
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
             default_node: Some("http://localhost:8080".parse().unwrap()),
-            backup_nodes: None,
+            upstream_nodes: None,
         },
 
     };
@@ -467,7 +467,7 @@ fn test_save_tx() {
             block_dir: "test_blocks_temp_2".to_owned(),
             base_waypoint: None,
             default_node: Some("http://localhost:8080".parse().unwrap()),
-            backup_nodes: None,
+            upstream_nodes: None,
         },
 
     };
