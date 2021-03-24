@@ -1,8 +1,9 @@
 //! `restore` functions
 
-use std::io::Write;
+use std::{env, io::Write};
 use abscissa_core::{status_info, status_ok};
 use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
+use once_cell::sync::Lazy;
 use reqwest;
 use anyhow::Error;
 use glob::glob;
@@ -14,10 +15,20 @@ use libra_types::{waypoint::Waypoint};
 use libra_secure_storage::KVStorage;
 
 const GITHUB_ORG: &str = "OLSF";
-// const GITHUB_REPO: &str = "epoch-archive";
-
-// const GITHUB_ORG_DEBUG: &str = "OLSF";
-const GITHUB_REPO_DEBUG: &str = "epoch-archive";
+/// Check if we are in testnet mode
+pub static GITHUB_REPO: Lazy<&str> = Lazy::new(||{  
+    match env::var("TEST") {
+        Ok(val) => {
+            match val.as_str() {
+                "y" =>  "dev-epoch-archive",
+                // if anything else is set by user is false
+                _ => "epoch-archive" 
+            }
+        }
+        // default to prod if nothig is set
+        _ => "epoch-archive"
+    }
+});
 
 /// Restore database from archive
 pub fn fast_forward_db() -> Result<(), Error>{
@@ -71,7 +82,7 @@ impl Backup {
     /// Creates a backup info instance
     pub fn new() -> Self {
         let conf = app_config().to_owned();
-        let (version_number, zip_url) = get_highest_epoch_zip().expect(&format!("could not find a zip backup at url: {}", GITHUB_REPO_DEBUG));
+        let (version_number, zip_url) = get_highest_epoch_zip().expect(&format!("could not find a zip backup at url: {}", GITHUB_REPO.clone()));
         let restore_path = conf.workspace.node_home.join(format!("restore/{}", version_number));
         fs::create_dir_all(&restore_path).unwrap();
         println!("most recent epoch backup: {}", &version_number);
@@ -224,8 +235,8 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     .build()?;
 
     let request_url = format!("https://api.github.com/repos/{owner}/{repo}/contents/",
-                              owner = GITHUB_ORG,
-                              repo = GITHUB_REPO_DEBUG);
+                              owner = GITHUB_ORG.clone(),
+                              repo = GITHUB_REPO.clone());
     let response = client.get(&request_url).send()?;
 
     let files: Vec<GithubFile> = response.json()?;
@@ -244,8 +255,8 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
     Ok(
         (highest_epoch, 
             format!("https://raw.githubusercontent.com/{owner}/{repo}/main/{highest_epoch}.zip",
-        owner = GITHUB_ORG,
-        repo = GITHUB_REPO_DEBUG,
+        owner = GITHUB_ORG.clone(),
+        repo = GITHUB_REPO.clone(),
         highest_epoch = highest_epoch.to_string(),
         ))
     )

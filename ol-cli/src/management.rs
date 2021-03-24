@@ -31,62 +31,6 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(||{
         _ => {true}
     }
 });
-// /// Construct Lazy Binary
-// pub static BINARY: Lazy<Binaries> = Lazy::new(||{        
-//         match env::var("NODE_ENV") {
-//         Ok(val) => {
-//             match val.as_str() {
-//                 "prod" =>  {},
-//                 // defaults to prod unless something else was set
-//                 _ => return Binaries {
-//                     // build current source
-//                     node: "cargo r -p libra-node --",
-//                     miner: "cargo r -p miner --"
-//                 } 
-//             }
-//         }
-//         _ => {}// default to "prod" if not set
-//     }
-//     Binaries {
-//         node: "libra-node",
-//         miner: "miner"
-//     }
-// });
-
-// /// what apps the mgmt command can run
-// pub enum Binary {
-//     /// Node
-//     Node,
-//     /// Miner
-//     Miner
-// }
-
-// /// get a Child object formatted
-// pub fn new_process(app: Binary) -> Command {
-
-//     let app = match app {
-//         Binary::Miner => "miner",
-//         Binary::Node => "libra-node"
-//     };
-    
-//     // match env::var("NODE_ENV") {
-//     //     Ok(val) => {
-//     //         match val.as_str() {
-//     //             "prod" =>  {},
-//     //             // any other node env defined is debug, otherwise is prod
-//     //             _ => { 
-//     //                 return std::process::Command::new("cargo")
-//     //                 .arg(
-//     //                     format!("r -p {} --", app.clone())
-//     //                 )
-//     //             }
-//     //         }
-//     //     }
-//     //     _ => {}
-//     // }
-
-//     std::process::Command::new(app)
-// }
 
 /// Save PID
 pub fn save_pid(name: &str, pid: u32) {
