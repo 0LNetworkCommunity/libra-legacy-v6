@@ -9,6 +9,8 @@
             let data_json = JSON.parse(msg.data);
             console.log(data_json);
             document.getElementById("is_sync").innerHTML = data_json.is_synced;
+            document.getElementById("is_config").innerHTML = data_json.is_config;
+
             document.getElementById("height").innerHTML = data_json.height;
             document.getElementById("epoch").innerHTML = data_json.epoch;
 
@@ -40,7 +42,7 @@
                   <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
                   {{/if}}
                   Node configured:
-                  <span id="is_sync"> {{is_config}} </span>
+                  <span id="is_config"> {{is_config}} </span>
                 </dt>
                 <dd>node.yaml, miner.toml, key_store.json</dd>
 
@@ -51,7 +53,7 @@
                 <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
                 {{/if}}
                 DB is restored:
-                <span id="is_sync"> {{is_restored}} </span>
+                <span id="is_restored"> {{is_restored}} </span>
               </dt>
               <dd>db successfully restored</dd>
               
@@ -64,7 +66,7 @@
                 <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
                 {{/if}}
                 Account on chain:
-                <span id="is_sync"> {{is_created}} </span>
+                <span id="is_created"> {{is_created}} </span>
               </dt>
               <dd>owner account created on chain</dd>
 
@@ -86,7 +88,7 @@
                 <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
                 {{/if}}
                 Miner is running:
-                <span id="is_sync"> {{is_mining}} </span>
+                <span id="is_mining"> {{is_mining}} </span>
               </dt>
               <dd>process `miner` has started</dd>
               
@@ -97,7 +99,7 @@
                 <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
                 {{/if}}
                 Node is running:
-                <span id="is_sync"> {{is_node}} </span>
+                <span id="is_node"> {{is_node}} </span>
               </dt>
               <dd>process `libra-node` has started</dd>
               <!-- Node sync -->
