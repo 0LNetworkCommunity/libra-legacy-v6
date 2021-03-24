@@ -7,18 +7,16 @@ use libra_config::{config::{
         NodeConfig
     }, config::OnDiskStorageConfig, config::SafetyRulesService, config::{Identity, UpstreamConfig, WaypointConfig}, network_id::NetworkId};
 
-use libra_global_constants::{GENESIS_WAYPOINT, OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY, WAYPOINT};
+use libra_global_constants::{OWNER_ACCOUNT, VALIDATOR_NETWORK_KEY};
 use libra_management::{
     config::ConfigPath,
     error::Error,
     secure_backend::ValidatorBackend
 };
-use libra_secure_storage::OnDiskStorageInternal;
 use libra_types::{chain_id::ChainId, waypoint::Waypoint};
 use structopt::StructOpt;
 use crate::storage_helper::StorageHelper;
 use crate::seeds::Seeds;
-use libra_secure_storage::KVStorage;
 /// Prints the public information within a store
 #[derive(Debug, StructOpt)]
 pub struct Files {
@@ -104,19 +102,11 @@ pub fn create_files(
         .insert_waypoint(&namespace, waypoint)
         .unwrap();
 
-    // Waypoint needs to be written to key_store.json with NO NAMESPACE
-    // validator.node.yaml, base.waypoint.namespace should be blank.
-
-
     // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();
     disk_storage.set_data_dir(output_dir.clone());
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
-
-    // let mut storage = libra_secure_storage::Storage::NamespacedStorage(NamespacedStorage::new(output_dir.join("key_store.json").to_owned(), namespace));
-    // disk_storage.set(GENESIS_WAYPOINT, waypoint).unwrap();
-    // disk_storage.set(WAYPOINT, waypoint).unwrap();
 
     // Get node configs template
     let mut config = if *fullnode_only {
