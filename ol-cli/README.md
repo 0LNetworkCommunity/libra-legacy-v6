@@ -29,9 +29,9 @@ All default parameters come from the `miner.toml` file, and stored by default in
 
 The `ol onboard` subcommand can initialize this. Note that in this case the `ol` cli app is simply calling the `miner` app's `val-wizard` subcommand.
 
-The default is to query the ip address of `local_node` in `miner.toml`. The validator wizard in `miner` on initialization sets this by default to `localhost:8080`.
+The default is to query the ip address of `default_node` in `miner.toml`. The validator wizard in `miner` on initialization sets this by default to `localhost:8080`.
 
-Queries will fallback by default to `remote_node` if local node's `sync` healthchech shows local is not caught up with chain. The validator wizard sets this to a seed fullnode.
+Queries will fallback by default to one of multple `upstream_nodes` if the local node's `sync` healthcheck shows local is not caught up with chain. The validator wizard sets this to a seed fullnode.
 
 To force the query to a given URL see entry point options below.
 
@@ -45,7 +45,9 @@ Options on the entrypoint will override configs found in `miner.toml`.
 
 `--account`: string, sets the account for queries
 
-`--force-local`: bool,  uses the node configured as `local_node` in `miner.toml`
+`--force-local`: bool,  uses the node configured as `default
+
+_node` in `miner.toml`
 ## Subcommands
 
 
