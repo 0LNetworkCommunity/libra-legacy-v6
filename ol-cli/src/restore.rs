@@ -63,8 +63,8 @@ pub struct Backup {
     home_path: PathBuf,
     restore_path: PathBuf,
     zip_path: PathBuf,
-    waypoint: Option<Waypoint>
-    // node_namespace: String,
+    waypoint: Option<Waypoint>,
+    node_namespace: String,
 }
 
 impl Backup {
@@ -83,6 +83,7 @@ impl Backup {
             restore_path: restore_path.clone(),
             zip_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", version_number)),
             waypoint: None,
+            node_namespace: format!("{}-oper", conf.profile.auth_key.clone()),
             // TODO: Do we need namespaced waypoints?
             // node_namespace: conf.node_namespace,
         }
@@ -145,15 +146,19 @@ impl Backup {
 
     /// Write Waypoint
     pub fn set_waypoint(&mut self) -> Result<Waypoint, Error>{
+
         let waypoint = self.parse_manifest_waypoint().unwrap();
-        let mut storage = libra_secure_storage::Storage::NamespacedStorage(
+        let storage = libra_secure_storage::Storage::OnDiskStorage(
+            OnDiskStorageInternal::new(self.home_path.join("key_store.json").to_owned())
+        );
+        let mut ns_storage = libra_secure_storage::Storage::NamespacedStorage(
             NamespacedStorage::new(
-                self.home_path.join("key_store.json").to_owned(),
-                "auth-oper"
+                storage,
+                self.node_namespace.clone()
             )
         );
-        storage.set(GENESIS_WAYPOINT, waypoint)?;
-        storage.set(WAYPOINT, waypoint)?;
+        ns_storage.set(GENESIS_WAYPOINT, waypoint)?;
+        ns_storage.set(WAYPOINT, waypoint)?;
 
         Ok(waypoint)
         
