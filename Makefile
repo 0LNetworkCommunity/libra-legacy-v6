@@ -309,12 +309,12 @@ devnet-keys:
 	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
 
 devnet-yaml:
-	cargo run -p miner -- genesis
+	cargo run -p miner -- files
 
 devnet-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
 	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
-	cargo r -p miner -- genesis
+	cargo r -p miner -- files
 
 devnet-previous: stop clear 
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
