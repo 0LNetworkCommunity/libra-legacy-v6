@@ -9,7 +9,7 @@ use glob::glob;
 use serde::{Serialize, Deserialize};
 use std::{fs::{self, File}, io::{self}, path::{PathBuf}, process::Command};
 use crate::application::app_config;
-use libra_secure_storage::{self, OnDiskStorageInternal};
+use libra_secure_storage::{self, NamespacedStorage, OnDiskStorageInternal};
 use libra_types::{waypoint::Waypoint};
 use libra_secure_storage::KVStorage;
 
@@ -146,8 +146,12 @@ impl Backup {
     /// Write Waypoint
     pub fn set_waypoint(&mut self) -> Result<Waypoint, Error>{
         let waypoint = self.parse_manifest_waypoint().unwrap();
-        let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(self.home_path.join("key_store.json").to_owned()));
-        // TODO: Do we need namespaced storage? if not just call storage.set
+        let mut storage = libra_secure_storage::Storage::NamespacedStorage(
+            NamespacedStorage::new(
+                self.home_path.join("key_store.json").to_owned(),
+                "auth-oper"
+            )
+        );
         storage.set(GENESIS_WAYPOINT, waypoint)?;
         storage.set(WAYPOINT, waypoint)?;
 
