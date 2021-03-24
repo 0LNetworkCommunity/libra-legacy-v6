@@ -145,6 +145,11 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
 /// Stop node, as validator
 pub fn stop_node() {
     kill_zombies(BINARY_NODE);
+    
+    let mut child = Command::new("killall").arg(BINARY_NODE)
+    .spawn()
+    .expect("failed to run killall libra-node");
+    child.wait().expect("killall did not exit");
 }
 
 /// Start Miner
