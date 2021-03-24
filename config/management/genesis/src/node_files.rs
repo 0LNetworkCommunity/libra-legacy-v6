@@ -114,9 +114,9 @@ pub fn create_files(
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
 
-    let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(output_dir.join("key_store.json").to_owned()));
-    storage.set(GENESIS_WAYPOINT, waypoint).unwrap();
-    storage.set(WAYPOINT, waypoint).unwrap();
+    // let mut storage = libra_secure_storage::Storage::OnDiskStorage(OnDiskStorageInternal::new(output_dir.join("key_store.json").to_owned()));
+    // storage.set(GENESIS_WAYPOINT, waypoint).unwrap();
+    // storage.set(WAYPOINT, waypoint).unwrap();
 
     // Get node configs template
     let mut config = if *fullnode_only {
@@ -186,7 +186,7 @@ pub fn create_files(
 
 
     // Prune window for state snapshots
-    config.storage.prune_window=Some(20_000);
+    // config.storage.prune_window=Some(20_000);
 
     // Write yaml
     let yaml_path = output_dir.join("validator.node.yaml");
