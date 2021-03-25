@@ -20,6 +20,11 @@ This is the entrypoint for monitoring, management, and configuration tools for 0
 
 # query your balance
 > ol query balance 
+
+# how to use entrypoint options (main command arguments)
+# e.g. -a or --account
+> ol -a F020472FEF994EA54A95055CF69C62F6 query balance 
+
 ```
 
 ## Help
@@ -49,7 +54,7 @@ Options on the entrypoint will override configs found in `miner.toml`.
 
 `--waypoint`: string, sets the waypoint from which the client starts to sync from
 
-`--account`: string, sets the account for queries
+`-a or --account`: string, sets the account for queries
 
 `--force-local`: bool,  uses the node configured as `default_node` in `miner.toml`
 
