@@ -108,7 +108,6 @@ impl NodeState {
                 if self.state == ValConfigsOk {self.state = DbRestoredOk;}
             }
             
-            // Forward
             NodeAction::StartFullnode => {
                 if self.state == DbRestoredOk {self.state = FullnodeIsRunning;}
 
@@ -119,7 +118,6 @@ impl NodeState {
  
             }
 
-            // Forward
             NodeAction::FullnodeSynced => {
                 if self.state == FullnodeIsRunning {self.state = FullnodeSyncComplete};
             }
@@ -128,7 +126,6 @@ impl NodeState {
                 if self.state == FullnodeSyncComplete {self.state = ValidatorIsRunning};
             }
 
-            //Forward
             NodeAction::ValidatorDroppedFromSet => {
                 if self.state == ValidatorIsRunning {self.state = ValidatorOutOfSet};
             }

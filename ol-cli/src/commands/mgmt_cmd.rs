@@ -1,8 +1,7 @@
 //! `mgmt` subcommand
 
 use abscissa_core::{Command, Options, Runnable};
-use crate::management;
-use crate::management::NodeType;
+use crate::management::{self, NodeType};
 
 /// `mgmt` subcommand
 ///
@@ -13,35 +12,27 @@ use crate::management::NodeType;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct MgmtCmd {
-    // Example `--foobar` (with short `-f` argument)
-    // #[options(short = "f", help = "foobar path"]
-    // foobar: Option<PathBuf>
+    #[options(no_short, help = "start node")]
+    start_node: bool,
 
-    // Example `--baz` argument with no short version
-    // #[options(no_short, help = "baz path")]
-    // baz: Options<PathBuf>
+    #[options(no_short, help = "stop node")]
+    stop_node: bool,
 
-    // "free" arguments don't have an associated flag
-    #[options(free)]
-    free_args: Vec<String>,
+    #[options(no_short, help = "start miner")]
+    start_miner: bool,
 }
 
 impl Runnable for MgmtCmd {
-    /// Start the application.
-    
     fn run(&self) {
         // management::fetch_backups().unwrap();
-        if self.free_args.clone().into_iter().find(|x| x == "start-node").is_some() {
+        if self.start_node {
             management::start_node(NodeType::Fullnode).expect("could not start fullnode");
         } 
-
-        if self.free_args.clone().into_iter().find(|x| x == "start-miner").is_some() {
+        else if self.stop_node {
+            management::stop_node();            
+        } 
+        else if self.start_miner {
             management::start_miner();
-        } 
-
-        if self.free_args.clone().into_iter().find(|x| x == "stop" ).is_some() {
-            management::stop_node();
-        } 
-
+        }
     }
 }
