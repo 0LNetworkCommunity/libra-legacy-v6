@@ -19,8 +19,14 @@ This is the entrypoint for monitoring, management, and configuration tools for 0
 > ol monitor
 
 # query your balance
-> ol query balance
+> ol query balance 
+```
 
+## Help
+
+```
+# show flags for "query" command
+> ol help query 
 ```
 
 ## Defaults
@@ -45,9 +51,8 @@ Options on the entrypoint will override configs found in `miner.toml`.
 
 `--account`: string, sets the account for queries
 
-`--force-local`: bool,  uses the node configured as `default
+`--force-local`: bool,  uses the node configured as `default_node` in `miner.toml`
 
-_node` in `miner.toml`
 ## Subcommands
 
 
