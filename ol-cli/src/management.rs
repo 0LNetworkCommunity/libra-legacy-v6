@@ -100,7 +100,7 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
 
     // if is running do nothing
     if check::Check::new().node_running() {
-        println!("node is already running. Exiting.");
+        println!("Node is already running. Exiting.");
         return Ok(())
     }
 
@@ -177,7 +177,7 @@ pub fn start_miner() {
         .stdout(Stdio::from(outputs))
         .stderr(Stdio::from(errors))
         .spawn()
-        .expect("failed to execute child")
+        .expect("failed to run 'miner', is it installed?")
     } else {
         Command::new("cargo").args(&["r", "-p", "miner", "--"])
         .arg("start")
@@ -185,7 +185,7 @@ pub fn start_miner() {
         .stdout(Stdio::from(outputs))
         .stderr(Stdio::from(errors))
         .spawn()
-        .expect("failed to execute child")
+        .expect("failed to run cargo r -p miner")
     };
 
     let pid = &child.id();
@@ -229,13 +229,13 @@ pub fn run_validator_wizard() -> bool {
         .arg("val-wizard")
         .arg("--keygen")
         .spawn()
-        .expect(&format!("failed to start miner app"))
+        .expect(&format!("failed to find 'miner', is it installed?"))
     } else {
         Command::new("cargo").args(&["r", "-p", "miner", "--"])
         .arg("val-wizard")
         .arg("--keygen")
         .spawn()
-        .expect(&format!("failed to start miner app"))
+        .expect(&format!("failed to run cargo r -p miner"))
     };
 
     let exit_code = child.wait().expect("failed to wait on miner"); 
