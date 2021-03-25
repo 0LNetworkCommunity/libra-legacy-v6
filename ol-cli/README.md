@@ -30,7 +30,10 @@ This is the entrypoint for monitoring, management, and configuration tools for 0
 ## Help
 
 ```
-# show flags for "query" command
+# show entrypoint options (main command arguments)
+> ol h // TODO: This is a hack, consult Abscissa to learn the correct usage
+
+# show flags for a sub-command e.g. "query" 
 > ol help query 
 ```
 
