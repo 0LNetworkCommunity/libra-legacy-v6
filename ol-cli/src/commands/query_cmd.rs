@@ -17,14 +17,21 @@ use crate::{
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Default, Options)]
 pub struct QueryCmd {
-    // "free" arguments don't have an associated flag
-    #[options(free)]
-    free_args: Vec<String>,
+    #[options(no_short, help = "balance")]
+    balance: bool,
+
+    #[options(no_short, help = "blockheight")]
+    blockheight: bool,
+    
+    #[options(help = "sync delay")]
+    sync_delay: bool,
+    
+    #[options(help = "resources")]
+    resources: bool,
 }
 
 impl Runnable for QueryCmd {
     fn run(&self) {
-
         type EntryPointOlCliCmd = EntryPoint<commands::OlCliCmd>;
         let EntryPointOlCliCmd { account, .. } = Command::from_env_args();
 
@@ -32,31 +39,27 @@ impl Runnable for QueryCmd {
             if account.is_some() { account.unwrap() }
             else { app_config().profile.account };
 
-        let mut info = "".to_owned();
-        let mut display = "".to_owned();
+        let mut info = String::new();
+        let mut display = "";
 
-        // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance
-        let free_arg_exists = |s: &str| self.free_args.contains(&s.to_string());
-        if free_arg_exists("balance") {
+        // TODO: Reduce boilerplate. Serialize "balance" to cast to QueryType::Balance        
+        if self.balance {
             info = get(QueryType::Balance, account);
-            display = "balance".to_uppercase().to_owned()
+            display = "BALANCE";
         } 
-
-        if free_arg_exists("blockheight") {
+        else if self.blockheight {
             info = get(QueryType::BlockHeight, account);
-            display = "blockheight".to_uppercase().to_owned()
+            display = "BLOCKHEIGHT";
         }
-
-        if free_arg_exists("sync-delay") {
+        else if self.sync_delay {
             info = get(QueryType::SyncDelay, account);
-            display = "sync-delay".to_uppercase().to_owned()
-        }
- 
-        if free_arg_exists("resources") {
+            display = "SYNC-DELAY";
+        } 
+        else if self.resources {
             info = get(QueryType::Resources, account);
-            display = "resources".to_uppercase().to_owned()
+            display = "RESOURCES";
         }
 
-        status_info!(display.to_uppercase(),format!("{}", info));
+        status_info!(display, format!("{}", info));
     }
 }
