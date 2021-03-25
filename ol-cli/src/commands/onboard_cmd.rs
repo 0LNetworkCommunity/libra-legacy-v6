@@ -1,5 +1,7 @@
 //! `onboard-cmd` subcommand
 
+use std::{thread, time::Duration};
+
 use abscissa_core::{Command, Options, Runnable};
 use crate::transitions;
 
@@ -21,23 +23,24 @@ pub struct OnboardCmd {
 }
 
 impl Runnable for OnboardCmd {
-
     /// Start the application.
     fn run(&self) {
         if self.free_args.clone().into_iter().find(|x| x == "next").is_some() {
             let state = transitions::NodeState::init()
             .maybe_advance(self.trigger_actions)
             .get_state();
-            dbg!(state);
+            println!("Onboarding stage at exit: {:?}", state);
+
         } 
 
         if self.free_args.clone().into_iter().find(|x| x == "autopilot").is_some() {
             loop {
-                let state = transitions::NodeState::init()
+                thread::sleep(Duration::from_millis(10_000));
+                let _state = transitions::NodeState::init()
                 .maybe_advance(self.trigger_actions)
                 .get_state();
-                dbg!(state);
             }
+
 
         } 
     }

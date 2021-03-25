@@ -95,6 +95,7 @@ impl NodeState {
 
     /// State transition
     pub fn transition(&mut self, action: NodeAction, trigger_action: bool) -> &Self {        
+
         use NodeVariants::*;
         match action {
             NodeAction::Init => {}
@@ -131,22 +132,24 @@ impl NodeState {
             }
         };
 
+        // Keep advancing through the state machine
         self.maybe_advance(trigger_action);
         self
     }
 
     /// Advance to the next state
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
-        dbg!(&self.state);
+        fn action_print() { println!("Triggering expected action") };
+        println!("Onboarding stage: {:?}", self.state);
+
         let mut check = Check::new();
         match &self.state {
             NodeVariants::EmptyBox => {
                 if check.configs_exist() {
                     &self.transition(NodeAction::RunWizard, trigger_action);}
                 else { 
-                    println!("Onboarding: no state changes");
                     if trigger_action {
-                        println!("Triggering expected action");
+                        action_print();
                         management::run_validator_wizard();
                     }
                 };
@@ -155,9 +158,8 @@ impl NodeState {
                 if check.database_bootstrapped() {
                     &self.transition(NodeAction::RestoreDb, trigger_action);
                 } else { 
-                    println!("Onboarding: no state changes");
                     if trigger_action {
-                        println!("Triggering expected action");
+                        action_print();
                         restore::fast_forward_db().expect("unable to fast forward db");
                     }
                 }
@@ -168,7 +170,7 @@ impl NodeState {
                 } else { 
                     println!("Onboarding: no state changes");
                     if trigger_action {
-                        println!("Triggering expected action");
+                        action_print();
                         management::start_node(
                             management::NodeType::Fullnode
                         ).expect("unable to start fullnode");
@@ -186,10 +188,10 @@ impl NodeState {
 
                 if check.check_sync() {
                     &self.transition(NodeAction::FullnodeSynced, trigger_action);
-                } else { 
-                    println!("Onboarding: no state changes");
-                    // Nothing to do to make fullnode sync, just waiting
-                }
+                } 
+
+                //No 'else'. Nothing to do to make fullnode sync, just waiting
+
             }
             // TODO: would be unusual if the validator joined val set before 
             //       the fullnode is synced, but could happen.
@@ -198,16 +200,17 @@ impl NodeState {
             // switch to validator mode.
             NodeVariants::FullnodeSyncComplete => {
                 if check.is_in_validator_set() {
-                    &self.transition(NodeAction::SwitchToValidatorMode, trigger_action);
-                } else { 
-                    println!("Onboarding: no state changes");
-                    // Nothing to do to make fullnode sync, just waiting
+                    // Stop node first, then restart as validator.
+                    management::stop_node();
 
-                    // TODO: Do we need to stop node, or is the process killing correct?
                     management::start_node(
                         management::NodeType::Validator
                     ).expect("unable to start node in validator mode");
-                }
+
+                    &self.transition(NodeAction::SwitchToValidatorMode, trigger_action);
+                } 
+                //No 'else'. Nothing to do to make fullnode sync, just waiting
+
 
             }
             _ => {}

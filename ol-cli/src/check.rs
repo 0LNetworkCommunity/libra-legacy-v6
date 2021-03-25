@@ -321,11 +321,12 @@ impl Check {
     /// Check if node is running
     pub fn node_running(&mut self) -> bool {
         let mut system = sysinfo::System::new_all();
+        // dbg!(&self.node_process_name);
 
         // First we update all information of our system struct.
         system.refresh_all();
-        let ps = system.get_process_by_name(self.node_process_name );
-
+        let ps = system.get_process_by_name(self.node_process_name);
+        // dbg!(&ps);
 
         let is_running = ps.len() > 0;
         self.items.node_running = is_running;
