@@ -157,7 +157,7 @@ pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     // if is running do nothing
     if check::Check::new().miner_running() {
-        println!("node is already running. Exiting.");
+        println!("Miner is already running. Exiting.");
         return
     }
 
