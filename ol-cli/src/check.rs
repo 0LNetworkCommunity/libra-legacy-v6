@@ -42,14 +42,14 @@ pub struct Items {
     pub db_restored: bool,
     /// account created
     pub account_created: bool,
-    /// current epoch
+    /// node running
     pub node_running: bool,
-    /// current epoch
+    /// miner running
     pub miner_running: bool,
     /// is the blockchain in sync with upstream
     pub is_synced: bool,
-
 }
+
 impl Default for Items {
     fn default() -> Self { 
         Self {
@@ -68,16 +68,7 @@ impl Default for Items {
 impl Items {
     /// Get new object
     pub fn new(is_synced: bool) -> Self {
-        Items {
-            height: 0,
-            epoch: 0,
-            configs_exist: false,
-            db_restored: false,
-            account_created: false,
-            node_running: false,
-            miner_running: false,
-            is_synced,
-        }
+        Self { is_synced, ..Items::default() }
     }
 
     /// Returns object in init state
