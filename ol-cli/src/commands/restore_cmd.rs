@@ -2,6 +2,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::restore;
+
 /// `restore-cmd` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
@@ -10,19 +11,7 @@ use crate::restore;
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct RestoreCmd {
-    // Example `--foobar` (with short `-f` argument)
-    // #[options(short = "f", help = "foobar path"]
-    // foobar: Option<PathBuf>
-
-    // Example `--baz` argument with no short version
-    // #[options(no_short, help = "baz path")]
-    // baz: Options<PathBuf>
-
-    // "free" arguments don't have an associated flag
-    // #[options(free)]
-    // free_args: Vec<String>,
-}
+pub struct RestoreCmd {}
 
 impl Runnable for RestoreCmd {
     /// Start the application.

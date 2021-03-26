@@ -24,7 +24,6 @@ pub struct MgmtCmd {
 
 impl Runnable for MgmtCmd {
     fn run(&self) {
-        // management::fetch_backups().unwrap();
         if self.start_node {
             management::start_node(NodeType::Fullnode).expect("could not start fullnode");
         } 
