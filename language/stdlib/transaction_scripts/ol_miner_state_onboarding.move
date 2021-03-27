@@ -2,7 +2,7 @@
 // The same algortihm for generating account addresses is available offline. This transaction confirms the address.
 script {
   use 0x1::LibraAccount;
-  use 0x1::GAS::GAS;
+  // use 0x1::GAS::GAS;
   // use 0x1::Transaction;
   // use 0x1::VDF;
   use 0x1::ValidatorConfig;
