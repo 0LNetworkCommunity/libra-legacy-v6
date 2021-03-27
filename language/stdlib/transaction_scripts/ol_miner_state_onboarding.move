@@ -37,7 +37,7 @@ script {
     // Check the account has the Validator role
     assert(ValidatorConfig::is_valid(new_account_address), 03);
 
-    // Check the account exists and the balance is greater than 0
-    assert(LibraAccount::balance<GAS>(new_account_address) > 0, 04);
+    // // Check the account exists and the balance is greater than 0
+    // assert(LibraAccount::balance<GAS>(new_account_address) > 0, 04);
 }
 }
