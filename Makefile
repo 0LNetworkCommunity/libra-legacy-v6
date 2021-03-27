@@ -254,7 +254,7 @@ endif
 #### HELPERS ####
 set-waypoint:
 	@if test -f ${DATA_PATH}/key_store.json; then \
-		jq -r '. | with_entries(select(.key|match("waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+		jq -r '. | with_entries(select(.key|match("/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
 	fi
 
 	@if test ! -f ${DATA_PATH}/key_store.json; then \
