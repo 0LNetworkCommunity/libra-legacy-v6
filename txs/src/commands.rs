@@ -11,6 +11,7 @@
 //! application's configuration file.
 
 mod create_account_cmd;
+mod create_validator_cmd;
 mod init_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
@@ -21,9 +22,11 @@ use dirs;
 use libra_global_constants::NODE_HOME;
 use self::{
     create_account_cmd::CreateAccountCmd,
+    create_validator_cmd::CreateValidatorCmd,
     init_cmd::InitCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
+    
 };
 use std::path::PathBuf;
 
@@ -34,8 +37,12 @@ pub const CONFIG_FILE: &str = "txs.toml";
 #[derive(Command, Debug, Options, Runnable)]
 pub enum TxsCmd {
     /// The `create-account` subcommand
-    #[options(help = "invoke stdlib script 'create_user_account'")]
+    #[options(help = "invoke stdlib script 'ol_create_user_account'")]
     CreateAccount(CreateAccountCmd),
+
+    /// The `create-validator` subcommand
+    #[options(help = "invoke stdlib script 'ol_miner_state_onboarding'")]
+    CreateValidator(CreateValidatorCmd),
 
     /// The `oracle-upgrade` subcommand
     #[options(help = "invoke stdlib script 'ol_oracle_tx_script'")]
