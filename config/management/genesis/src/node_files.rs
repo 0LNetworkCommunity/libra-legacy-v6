@@ -88,7 +88,7 @@ pub fn create_files(
         .build_genesis_from_github(chain_id, &remote, &genesis_path)
         .unwrap();
     } else {
-        // assumes genesis.blob and genesis_waypoint is in output_dir, only inserts to key_store.json
+        // assumes genesis.blob and genesis_waypoint has been otherwise copied to the output_dir and won't create them.
         // read genesis_waypoint file.
         waypoint = fs::read_to_string( output_dir.join("genesis_waypoint"))
         .expect("could not read waypoint file.")
@@ -96,7 +96,6 @@ pub fn create_files(
         .parse()
         .expect("could not parse waypoint string");
     }
-
 
     storage_helper
         .insert_waypoint(&namespace, waypoint)
@@ -153,7 +152,6 @@ pub fn create_files(
 
     config.set_data_dir(output_dir.clone());
 
-
     ///////// FULL NODE CONFIGS ////////
     let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
     
@@ -167,19 +165,16 @@ pub fn create_files(
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
     config.upstream = UpstreamConfig { networks: vec!(NetworkId::Public)};
     
-    // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
-    
-    // Consensus
-
-    config.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    config.execution.genesis_file_location = genesis_path.clone();
-
-
     // Prune window for state snapshots
-    // config.storage.prune_window=Some(20_000);
+    config.storage.prune_window=Some(20_000);
 
     // Write yaml
-    let yaml_path = output_dir.join("validator.node.yaml");
+    let yaml_path = if *fullnode_only {
+        output_dir.join("fullnode.node.yaml")
+    } else { 
+        output_dir.join("validator.node.yaml")
+    };
+
     fs::create_dir_all(&output_dir).expect("Unable to create output directory");
     config
     .save(&yaml_path)
