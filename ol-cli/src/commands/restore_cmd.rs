@@ -11,11 +11,14 @@ use crate::restore;
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct RestoreCmd {}
+pub struct RestoreCmd {
+    #[options(short="v", help = "verbose logging of backup restore")]
+    verbose: bool,
+}
 
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        restore::fast_forward_db().unwrap();
+        restore::fast_forward_db(self.verbose).unwrap();
     }
 }

@@ -1,7 +1,7 @@
 //! `restore` functions
 
-use std::{env, io::Write};
-use abscissa_core::{status_info, status_ok};
+use std::{env, io::Write, process::Stdio};
+use abscissa_core::{status_ok};
 use libra_global_constants::{GENESIS_WAYPOINT, WAYPOINT};
 use once_cell::sync::Lazy;
 use reqwest;
@@ -40,19 +40,19 @@ pub static IS_DEVNET: Lazy<bool> = Lazy::new(||{
 });
 
 /// Restore database from archive
-pub fn fast_forward_db() -> Result<(), Error>{
+pub fn fast_forward_db(verbose: bool) -> Result<(), Error>{
     let mut backup = Backup::new();
 
-    status_info!("Fetching latest epoch backup", "from epoch archive");
-    backup.fetch_backup()?;
+    println!("fetching latest epoch backup from epoch archive");
+    backup.fetch_backup(verbose)?;
 
-    status_info!("Setting waypoint", "key_store.json being updated");
+    println!("\nSetting waypoint key_store.json being updated");
     backup.set_waypoint()?;
 
-    status_info!("Restoring db from archive", "to home path");
-    backup.restore_backup()?;
+    println!("\nRestoring db from archive to home path");
+    backup.restore_backup(verbose)?;
     
-    status_info!("Creating fullnode.node.yaml", "to home path");
+    println!("\nCreating fullnode.node.yaml to home path");
     backup.create_fullnode_yaml()?;
     Ok(())
 }
@@ -94,7 +94,8 @@ impl Backup {
         let (version_number, zip_url) = get_highest_epoch_zip().expect(&format!("could not find a zip backup at url: {}", GITHUB_REPO.clone()));
         let restore_path = conf.workspace.node_home.join(format!("restore/{}", version_number));
         fs::create_dir_all(&restore_path).unwrap();
-        println!("most recent epoch backup: {}", &version_number);
+        
+        println!("DB fast forward to epoch: {}", &version_number);
 
         Backup {
             version_number,
@@ -104,38 +105,45 @@ impl Backup {
             zip_path: conf.workspace.node_home.join(format!("restore/restore-{}.zip", version_number)),
             waypoint: None,
             node_namespace: format!("{}-oper", conf.profile.auth_key.clone()),
-            // TODO: Do we need namespaced waypoints?
-            // node_namespace: conf.node_namespace,
         }
     }
     /// Fetch backups
-    pub fn fetch_backup(&self) -> Result<(), Error> {    
+    pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {    
         let mut resp = reqwest::blocking::get(&self.zip_url).expect("request failed");
         let mut out = File::create(&self.zip_path).expect("failed to create file");
         io::copy(&mut resp, &mut out).expect("failed to copy content");
-        let mut child = Command::new("unzip")
-            .arg("-o")
-            .arg(&self.zip_path)
-            .arg("-d")
-            .arg(&self.home_path.join("restore/"))
-            .spawn()
-            .expect("failed to execute child");
+        
+        let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
-        let ecode = child.wait()
-                    .expect("failed to wait on child");
+        
+        let mut child = Command::new("unzip")
+        .arg("-o")
+        .arg(&self.zip_path)
+        .arg("-d")
+        .arg(&self.home_path.join("restore/"))
+        .stdout(stdio_cfg)
+        .spawn()
+        .expect("failed to execute child");
+
+        let ecode = child.wait().expect("failed to wait on child");
 
         assert!(ecode.success());
+
+        println!("fetched archive zip, copied to {:?}", &self.home_path.join("restore/"));
+        status_ok!("\nArchive downloaded", "\n...........................\n");
+
+
         Ok(())
     }
 
     /// Restore Backups
-    pub fn restore_backup(&self) -> Result<(), Error>{
+    pub fn restore_backup(&self, verbose: bool) -> Result<(), Error>{
         let db_path = &self.home_path.join("db/");
         let restore_path = self.restore_path.to_str().unwrap();
         let height = &self.waypoint.unwrap().version();
-        restore_epoch(db_path, restore_path);
-        restore_transaction(db_path, restore_path);
-        restore_snapshot(db_path, restore_path, height);
+        restore_epoch(db_path, restore_path, verbose);
+        restore_transaction(db_path, restore_path, verbose);
+        restore_snapshot(db_path, restore_path, height, verbose);
         Ok(())
     }
 
@@ -180,14 +188,10 @@ impl Backup {
         ns_storage.set(GENESIS_WAYPOINT, waypoint)?;
         ns_storage.set(WAYPOINT, waypoint)?;
 
-        Ok(waypoint)
-        
-        // TODO: Do we need namespaced storage for waypoint?
-        // let mut nss = NamespacedStorage::new(storage, self.node_namespace.clone().into());
-        // nss.set(GENESIS_WAYPOINT, waypoint).unwrap();
-        // nss.set(WAYPOINT, waypoint).unwrap();
+        println!("waypoint retrieve, updated key_store.json");
+        status_ok!("\nWaypoint set", "\n...........................\n");
 
-        // TODO set waypoint in fullnode.node.yaml
+        Ok(waypoint)
     }
     /// Creates a fullnode yaml file with restore waypoint.
     pub fn create_fullnode_yaml(&self) -> Result<(), Error>{
@@ -207,7 +211,9 @@ impl Backup {
         let yaml_path = &self.home_path.join("fullnode.node.yaml");
         let mut file = File::create(yaml_path)?;
         file.write_all(&yaml.as_bytes())?;
-        status_ok!("Success", format!("file created to {}", yaml_path.to_str().unwrap()));
+
+        println!("fullnode yaml created, file saved to: {:?}", yaml_path.to_str().unwrap());
+        status_ok!("\nFullnode config written", "\n...........................\n");
 
         Ok(())
     }
@@ -248,11 +254,12 @@ fn get_highest_epoch_zip() -> Result<(u64, String), Error> {
 }
 
 /// Restores transaction epoch backups
-pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, ) {
+pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) {
     let manifest_path = glob(
         &format!("{}/**/epoch_ending.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap().unwrap();
-    dbg!(&manifest_path);
+    
+    let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
     let mut child = Command::new("db-restore")
     .arg("--target-db-dir")
@@ -263,21 +270,25 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, ) {
     .arg("local-fs")
     .arg("--dir")
     .arg(restore_path)
+    .stdout(stdio_cfg)
     .spawn()
     .expect("failed to execute child");
 
-    let ecode = child.wait()
-            .expect("failed to wait on child");
+    let ecode = child.wait().expect("failed to wait on child");
 
     assert!(ecode.success());
-    status_ok!("Success", "epoch restored");
+    
+    println!("epoch metadata restored from epoch archive, files saved to: {:?}", restore_path);
+    status_ok!("\nEpoch metadata restored", "\n...........................\n");
 }
 
 /// Restores transaction type backups
-pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, ) {
+pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, verbose: bool) {
     let manifest_path = glob(
     &format!("{}/**/transaction.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+
+    let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
     let mut child = Command::new("db-restore")
     .arg("--target-db-dir")
@@ -288,21 +299,25 @@ pub fn restore_transaction(db_path: &PathBuf, restore_path: &str, ) {
     .arg("local-fs")
     .arg("--dir")
     .arg(restore_path)
+    .stdout(stdio_cfg)
     .spawn()
     .expect("failed to execute child");
 
-    let ecode = child.wait()
-            .expect("failed to wait on child");
+    let ecode = child.wait().expect("failed to wait on child");
 
     assert!(ecode.success());
-    status_ok!("Success", "transactions restored");
+    
+    println!("transactions restored from epoch archive,");
+    status_ok!("\nTransactions restored", "\n...........................\n");
 }
 
 /// Restores snapshot type backups
-pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64) {
+pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u64, verbose: bool) {
     let manifest_path = glob(
     &format!("{}/**/state.manifest", restore_path)
     ).expect("Failed to read glob pattern").next().unwrap().unwrap();
+
+    let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
     let mut child = Command::new("db-restore")
     .arg("--target-db-dir")
@@ -315,6 +330,7 @@ pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u6
     .arg("local-fs")
     .arg("--dir")
     .arg(restore_path)
+    .stdout(stdio_cfg)
     .spawn()
     .expect("failed to execute child");
 
@@ -322,7 +338,8 @@ pub fn restore_snapshot(db_path: &PathBuf, restore_path: &str, epoch_height: &u6
             .expect("failed to wait on child");
 
     assert!(ecode.success());
-    status_ok!("Success", "state snapshot restored");
+    println!("state snapshot restored from epoch archive,");
+    status_ok!("\nState snapshot restored", "\n...........................\n");
 }
 
 

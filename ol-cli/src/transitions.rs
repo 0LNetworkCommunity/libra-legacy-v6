@@ -160,7 +160,7 @@ impl NodeState {
                 } else { 
                     if trigger_action {
                         action_print();
-                        restore::fast_forward_db().expect("unable to fast forward db");
+                        restore::fast_forward_db(false).expect("unable to fast forward db");
                     }
                 }
             }
