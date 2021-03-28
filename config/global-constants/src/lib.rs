@@ -31,4 +31,5 @@ pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
 pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
 pub const VDF_SECURITY_PARAM: u16 = 2048;
 pub const NODE_HOME: &str = ".0L/";
+pub const SOURCE_DIR: &str = "libra/";
 pub const SALT_0L: &str = "0L";

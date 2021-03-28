@@ -17,5 +17,6 @@ impl Runnable for ServeCmd {
     /// Start the application.
     fn run(&self) {
         server::main();
+        println!("server started");
     }
 }

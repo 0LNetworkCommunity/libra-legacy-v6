@@ -8,7 +8,7 @@ use abscissa_core::path::{PathBuf};
 use ajson;
 use crate::commands::CONFIG_FILE;
 use dirs;
-use libra_global_constants::NODE_HOME;
+use libra_global_constants::{NODE_HOME, SOURCE_DIR};
 use libra_types::{waypoint::Waypoint};
 use serde::{Deserialize, Serialize};
 use std::{fs, io::Write};
@@ -98,12 +98,15 @@ impl Default for AppConfig {
 pub struct Workspace {
     /// home directory of the libra node, may be the same as Txs.
     pub node_home: PathBuf,
+    /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
+    pub stdlib_bin_path: PathBuf
 }
 
 impl Default for Workspace {
     fn default() -> Self {
         Self{
-            node_home: dirs::home_dir().unwrap().join(NODE_HOME)
+            node_home: dirs::home_dir().unwrap().join(NODE_HOME),
+            stdlib_bin_path: dirs::home_dir().unwrap().join(SOURCE_DIR).join("language/stdlib/staged/stdlib.mv"),
         }
     }
 }
