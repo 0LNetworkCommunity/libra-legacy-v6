@@ -4,7 +4,7 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::{net::Ipv4Addr, fs};
+use std::{fs, net::Ipv4Addr, str::FromStr};
 use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
 use reqwest::Url;
@@ -18,7 +18,6 @@ use dirs;
 use libra_global_constants::NODE_HOME;
 use crate::commands::CONFIG_FILE;
 use std::{io::Write};
-
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -244,15 +243,15 @@ pub struct ChainInfo {
 // TODO: These defaults serving as test fixtures.
 impl Default for ChainInfo {
     fn default() -> Self {
+        use libra_global_constants::BASE_WAYPOINT;
         Self {
             chain_id: "experimental".to_owned(),
             block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
-            base_waypoint: None,
+            base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
             // TODO: select defaults from command line.
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
             upstream_nodes: Some(vec!["http://167.172.248.37:8080".parse().expect("parse url")]),
-
         }
     }
 }

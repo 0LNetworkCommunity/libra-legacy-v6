@@ -27,9 +27,10 @@ pub const WAYPOINT: &str = "waypoint";
 pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
 
 //////// 0L ////////
+pub const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
+pub const NODE_HOME: &str = ".0L/";
 pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
 pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
-pub const VDF_SECURITY_PARAM: u16 = 2048;
-pub const NODE_HOME: &str = ".0L/";
-pub const SOURCE_DIR: &str = "libra/";
 pub const SALT_0L: &str = "0L";
+pub const SOURCE_DIR: &str = "libra/";
+pub const VDF_SECURITY_PARAM: u16 = 2048;

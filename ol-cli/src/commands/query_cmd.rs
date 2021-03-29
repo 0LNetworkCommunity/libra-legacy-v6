@@ -17,7 +17,7 @@ use crate::{
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Default, Options)]
 pub struct QueryCmd {
-    #[options(no_short, help = "balance")]
+    #[options(short = "b", help = "balance")]
     balance: bool,
 
     #[options(no_short, help = "blockheight")]
