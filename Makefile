@@ -301,29 +301,26 @@ stop:
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
 
-devnet: stop clear fix devnet-keys devnet-yaml start
+devnet: 
+	MNEM='${MNEM}' make stop clear fix devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 
 devnet-keys: 
-	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+	MNEM='${MNEM}' cargo run -p miner -- init --skip-miner
 
 devnet-yaml:
 	cargo run -p miner -- files
 
 devnet-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
-	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
+	MNEM='${MNEM}' cargo r -p miner -- init --skip-miner
 	cargo r -p miner -- files
-
-devnet-previous: stop clear 
-# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-	V=previous make fix devnet-keys devnet-yaml start
-
 
 ### FULL DEVNET RESET ####
 
-devnet-reset: devnet-reset-ceremony genesis start
+devnet-reset: 
+	MNEM='${MNEM}' make devnet-reset-ceremony genesis start
 # Tests the full genesis ceremony cycle, and rebuilds all genesis and waypoints.
 
 devnet-reset-ceremony:
