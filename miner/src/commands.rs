@@ -35,6 +35,7 @@ use self::{
     wizard_val_cmd::ValWizardCmd,
     wizard_fn_cmd::FnWizardCmd,
     files_cmd::FilesCmd,
+    manifest_cmd::ManifestCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -97,6 +98,10 @@ pub enum MinerCmd {
     /// The `genesis` subcommand
     #[options(help = "generate validator files")]
     Files(FilesCmd),
+
+    /// The `manifest` subcommand
+    #[options(help = "account manifest")]
+    Manifest(ManifestCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.
