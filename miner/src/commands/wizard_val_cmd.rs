@@ -50,13 +50,15 @@ impl Runnable for ValWizardCmd {
         init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
         status_ok!("\nKey file written", "\n...........................\n");
 
-        if !self.rebuild_genesis {
-            files_cmd::get_files(
-                miner_config.workspace.node_home.clone(),
-                &self.github_org,
-                &self.repo,
-            );
-            status_ok!("\nDownloaded genesis files", "\n...........................\n");
+        if !self.skip_fetch_genesis {
+            if !self.rebuild_genesis  {
+                files_cmd::get_files(
+                    miner_config.workspace.node_home.clone(),
+                    &self.github_org,
+                    &self.repo,
+                );
+                status_ok!("\nDownloaded genesis files", "\n...........................\n");
+            }
         }
 
         // Build Genesis and node.yaml file

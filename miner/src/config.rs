@@ -4,20 +4,24 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::{fs, net::Ipv4Addr, str::FromStr};
+use crate::commands::CONFIG_FILE;
+use crate::delay::delay_difficulty;
+use crate::submit_tx::TxParams;
+use abscissa_core::path::PathBuf;
+use ajson;
 use byteorder::{LittleEndian, WriteBytesExt};
-use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use dirs;
+use libra_global_constants::NODE_HOME;
+use libra_types::{
+    account_address::AccountAddress, transaction::authenticator::AuthenticationKey,
+    waypoint::Waypoint,
+};
+use machine_ip;
 use reqwest::Url;
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
-use abscissa_core::path::{PathBuf};
-use crate::delay::delay_difficulty;
-use crate::submit_tx::TxParams;
-use ajson;
-use dirs;
-use libra_global_constants::NODE_HOME;
-use crate::commands::CONFIG_FILE;
-use std::{io::Write};
+use std::io::Write;
+use std::{fs, net::Ipv4Addr, str::FromStr};
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -40,20 +44,17 @@ impl MinerConfig {
     pub fn get_waypoint(&self) -> Option<Waypoint> {
         match fs::File::open(self.get_key_store_path()) {
             Ok(file) => {
-                let json: serde_json::Value = serde_json::from_reader(file)
-                    .expect("could not parse JSON in key_store.json");
+                let json: serde_json::Value =
+                    serde_json::from_reader(file).expect("could not parse JSON in key_store.json");
                 match ajson::get(&json.to_string(), "*/waypoint.value") {
                     Some(value) => Some(value.to_string().parse().unwrap()),
                     // If nothing is found in key_store.json fallback to base_waypoint in toml
-                    _ => self.chain_info.base_waypoint
+                    _ => self.chain_info.base_waypoint,
                 }
             }
-            Err(_err) => {
-                self.chain_info.base_waypoint
-            }
+            Err(_err) => self.chain_info.base_waypoint,
         }
     }
-
 
     /// Get configs from a running swarm instance.
     pub fn load_swarm_config(param: &TxParams) -> Self {
@@ -75,7 +76,11 @@ impl MinerConfig {
             Err(x) => panic!("Invalid 0L Auth Key: {}", x),
             Ok(key_bytes) => {
                 if key_bytes.len() != AUTH_KEY_BYTES {
-                    panic!("Expected a {} byte 0L Auth Key. Got {} bytes", AUTH_KEY_BYTES, key_bytes.len());
+                    panic!(
+                        "Expected a {} byte 0L Auth Key. Got {} bytes",
+                        AUTH_KEY_BYTES,
+                        key_bytes.len()
+                    );
                 }
                 key_bytes
             }
@@ -88,7 +93,8 @@ impl MinerConfig {
 
             match chain_id_bytes.len() {
                 d if d > CHAIN_ID_BYTES => panic!(
-                    "Chain Id is longer than {} bytes. Got {} bytes", CHAIN_ID_BYTES,
+                    "Chain Id is longer than {} bytes. Got {} bytes",
+                    CHAIN_ID_BYTES,
                     chain_id_bytes.len()
                 ),
                 d if d < CHAIN_ID_BYTES => {
@@ -129,32 +135,39 @@ impl MinerConfig {
 
         preimage.append(&mut padded_statements_bytes);
 
-        assert_eq!(preimage.len(), (
-            AUTH_KEY_BYTES // 0L Auth_Key
+        assert_eq!(
+            preimage.len(),
+            (
+                AUTH_KEY_BYTES // 0L Auth_Key
                 + CHAIN_ID_BYTES // chain_id
                 + 8 // iterations/difficulty
                 + STATEMENT_BYTES
-            // statement
-        ), "Preimage is the incorrect byte length");
+                // statement
+            ),
+            "Preimage is the incorrect byte length"
+        );
         return preimage;
     }
     /// Get where the block/proofs are stored.
-    pub fn get_block_dir(&self)-> PathBuf {
+    pub fn get_block_dir(&self) -> PathBuf {
         let mut home = self.workspace.node_home.clone();
         home.push(&self.chain_info.block_dir);
         home
     }
 
     /// Get where node key_store.json stored.
-    pub fn get_key_store_path(&self)-> PathBuf {
+    pub fn get_key_store_path(&self) -> PathBuf {
         let mut home = self.workspace.node_home.clone();
         home.push("key_store.json");
         home
     }
 
-        /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> MinerConfig {
-
+    /// Get where node key_store.json stored.
+    pub fn init_miner_configs(
+        authkey: AuthenticationKey,
+        account: AccountAddress,
+        path: &Option<PathBuf>,
+    ) -> MinerConfig {
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = MinerConfig::default();
 
@@ -165,17 +178,41 @@ impl MinerConfig {
         };
 
         miner_configs.workspace.node_home.push(NODE_HOME);
-        
+
         fs::create_dir_all(&miner_configs.workspace.node_home).unwrap();
         // Set up github token
         let mut rl = Editor::<()>::new();
 
-        // Get the ip address of node.
-        let readline = rl.readline("IP address of your node: ").expect("Must enter an ip address, or 0.0.0.0 as localhost");
-        miner_configs.profile.ip = readline.parse().expect("Could not parse IP address");
         
+        let system_ip = machine_ip::get().unwrap().to_string();
+        // println!("\nFound host IP address: {:?}\n", system_ip);
+
+        let ip = match rl.readline(&format!("Will you use this host, and this IP address {:?}, for your node? (y/n)", system_ip)) {
+            Ok(val) => {
+                if (val == "y") | (val == "Y") {
+                    system_ip.parse::<Ipv4Addr>().expect("Could not parse IP address: {:?}")
+                } else {
+                    let readline = rl
+                        .readline("Enter the IP address of the node: ")
+                        .expect("Must enter an ip address, or 0.0.0.0 as localhost");
+
+                    readline.parse::<Ipv4Addr>().expect("Could not parse IP address")
+                }
+            }
+            Err(_) => {
+                std::process::exit(1);
+            }
+        };
+
+
+        miner_configs.profile.ip = ip;
+
         // Get optional statement which goes into genesis block
-        miner_configs.profile.statement = rl.readline("Enter a (fun) statement to go into your first transaction: ").expect("Please enter some text unique to you which will go into your block 0 preimage.");
+        miner_configs.profile.statement = rl
+            .readline("Enter a (fun) statement to go into your first transaction: ")
+            .expect(
+                "Please enter some text unique to you which will go into your block 0 preimage.",
+            );
 
         miner_configs.profile.auth_key = authkey.to_string();
         miner_configs.profile.account = account;
@@ -185,13 +222,16 @@ impl MinerConfig {
         let home_path = miner_configs.workspace.node_home.clone();
         let miner_toml_path = home_path.join(CONFIG_FILE);
         let file = fs::File::create(&miner_toml_path);
-        file.unwrap().write(&toml.as_bytes())
+        file.unwrap()
+            .write(&toml.as_bytes())
             .expect("Could not write toml file");
 
-        println!("\nminer app initialized, file saved to: {:?}", &miner_toml_path);
+        println!(
+            "\nminer app initialized, file saved to: {:?}",
+            &miner_toml_path
+        );
         miner_configs
     }
-
 }
 
 /// Default configuration settings.
@@ -218,8 +258,8 @@ pub struct Workspace {
 
 impl Default for Workspace {
     fn default() -> Self {
-        Self{
-            node_home: dirs::home_dir().unwrap().join(NODE_HOME)
+        Self {
+            node_home: dirs::home_dir().unwrap().join(NODE_HOME),
         }
     }
 }
@@ -251,7 +291,9 @@ impl Default for ChainInfo {
             base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
             // TODO: select defaults from command line.
             default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            upstream_nodes: Some(vec!["http://167.172.248.37:8080".parse().expect("parse url")]),
+            upstream_nodes: Some(vec!["http://167.172.248.37:8080"
+                .parse()
+                .expect("parse url")]),
         }
     }
 }
@@ -267,7 +309,6 @@ pub struct Profile {
 
     // ///The 0L private_key for signing transactions.
     // pub operator_private_key: Option<String>,
-
     /// ip address of the miner. May be different from transaction URL.
     pub ip: Ipv4Addr,
 

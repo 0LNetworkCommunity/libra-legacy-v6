@@ -335,8 +335,9 @@ devnet-reset-ceremony:
 devnet-reset-onboard: clear 
 # fixtures needs a file that works
 	SKIP_BLOB=y make fix
-# starts config for a new miner "eve", uses the devnet github repo for ceremony
-	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
+	cp ${SOURCE}/fixtures/genesis/${V}/* ~/.0L/
+# # starts config for a new miner "eve", uses the devnet github repo for ceremony
+	MNEM="${MNEM}" cargo r -p miner -- val-wizard  --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --skip-mining 
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
 devnet-save-genesis: set-waypoint

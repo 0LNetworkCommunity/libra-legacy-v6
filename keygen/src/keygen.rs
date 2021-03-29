@@ -1,7 +1,7 @@
 //! Key generation
-// use std::env;
+use std::env;
 
-use abscissa_core::{status_info};
+use abscissa_core::{status_info, status_warn};
 use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
   account_address::AccountAddress,
@@ -56,21 +56,19 @@ pub fn account_from_prompt()
     println!("Enter your 0L mnemonic:");
     // TODO: Simplify mnemonic entry for CI/debug cases
 
-    // let node_env = match env::var("NODE_ENV") {
-    //   Ok(val) => val,
-    //   _ => "prod".to_string() // default to "prod" if not set
-    // };
-
-    // let read = if node_env == "prod" {
-    //   rpassword::read_password_from_tty(
-    //     Some("\u{1F511} ")
-    //   )
-    // } else {
-    //   status_warn!("Unsafe, reading password from STDIN for debugging. \u{1F511}" );
-    //   /// TODO: This fails with abscissa error
-    //   // thread 'main' panicked at 'terminal streams not yet initialized!'
-    //   rpassword::read_password()
-    // };
+    match env::var("NODE_ENV") {
+      Ok(val) => {
+        let maybe_env_mnem = env::var("MNEM");
+        
+        // if we are in debugging or CI mode
+        if val != "prod" && maybe_env_mnem.is_ok() {
+          status_warn!("Debugging mode, using mnemonic from env variable, $MNEM");
+          return get_account_from_mnem(maybe_env_mnem.unwrap().trim().to_string())
+        }
+        println!("Debugging mode, you can set mnemonic to env $MNEM");
+      },
+      _ => {}, // default to "prod" if not set
+    };
     
     let read = rpassword::read_password_from_tty(Some("\u{1F511} "));
     get_account_from_mnem(read.unwrap().trim().to_string())

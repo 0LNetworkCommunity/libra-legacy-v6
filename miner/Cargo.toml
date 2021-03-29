@@ -48,7 +48,7 @@ libra-management = { path = "../config/management", version = "0.1.0" }
 keygen = { path = "../keygen/", version = "0.1.0" }
 url = { version = "^2.1", features = ["serde"]}
 libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
-
+machine-ip = "0.2.1"
 
 [dependencies.abscissa_core]
 version = "0.5.2"
