@@ -105,7 +105,9 @@ impl Items {
 
 /// Configuration used for checks we want to make on the node
 pub struct Check {
+    /// OL configs
     pub conf: OlCliConfig,
+    /// libraclient for connecting
     pub client: LibraClient,
     miner_process_name: &'static str,
     node_process_name: &'static str,
@@ -340,8 +342,13 @@ impl Check {
         false
     }
 
-    pub fn get_height(&self) -> u64 {
-        let m = Metadata::new(self.conf.node_url, self.client);
+    /// get blockchain height
+    pub fn get_height(&mut self) -> u64 {
+
+        let m = Metadata::new(
+            &self.conf.chain_info.default_node.clone().unwrap(),
+            &mut self.client
+        );
         m.meta.version
     }
 }
