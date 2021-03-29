@@ -264,11 +264,11 @@ set-waypoint:
 	@cat ${DATA_PATH}/client_waypoint
 
 client: set-waypoint
-ifeq (${TEST}, y)
-	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
-else
+# ifeq (${TEST}, y)
+# 	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
+# else
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
-endif
+# endif
 
 
 stdlib:
