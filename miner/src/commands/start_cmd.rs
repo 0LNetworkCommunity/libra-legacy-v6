@@ -52,7 +52,7 @@ pub struct StartCmd {
     backup_url: bool, 
 
     // Option for operator to submit transactions for owner.
-    #[options(help = "Operator will submit transactions for owner")]
+    #[options(short ="o", help = "Operator will submit transactions for owner")]
     is_operator: bool, 
 }
 
