@@ -1,7 +1,7 @@
 //! Key generation
-use std::env;
+// use std::env;
 
-use abscissa_core::{status_info, status_warn};
+use abscissa_core::{status_info};
 use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
   account_address::AccountAddress,
