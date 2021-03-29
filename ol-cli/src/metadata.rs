@@ -9,7 +9,9 @@ use crate::{
 /// Get chain Metadata
 #[derive(Debug)]
 pub struct Metadata {
+    /// url
     pub url: Url,
+    /// metadata object
     pub meta: MetadataView,
 }
 
@@ -17,7 +19,7 @@ pub struct Metadata {
 impl Metadata {
     /// returns a LibraClient instance.
     // TODO: Use app config file for params
-    pub fn new(url: Url, mut client: LibraClient) -> Self {    
+    pub fn new(url: &Url, client: &mut LibraClient) -> Self {    
         let block_metadata = client
         .get_metadata()
         .unwrap_or_else(|e| {
@@ -28,7 +30,7 @@ impl Metadata {
             )
         });
         Metadata {
-            url,
+            url: url.clone(),
             meta: block_metadata
         }
     }
@@ -44,15 +46,15 @@ impl Metadata {
 
         let local_client = default_local_client();
         let local = Metadata::new(
-            local_client.1,
-            local_client.0.unwrap()
+            &local_client.1,
+            &mut local_client.0.unwrap()
         );
 
         let remote_client = default_remote_client();
 
         let remote = Metadata::new(
-            remote_client.1,
-            remote_client.0.unwrap()
+            &remote_client.1,
+            &mut remote_client.0.unwrap()
         );
 
         Metadata::compare(local, remote) as i64
