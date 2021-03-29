@@ -54,20 +54,27 @@ pub fn get_account_from_mnem(mnemonic_string: String)
 pub fn account_from_prompt() 
   -> (AuthenticationKey, AccountAddress, WalletLibrary) {
     println!("Enter your 0L mnemonic:");
+    // TODO: Simplify mnemonic entry for CI/debug cases
 
-    let node_env = match env::var("NODE_ENV") {
-      Ok(val) => val,
-      _ => "prod".to_string() // default to "prod" if not set
-    };
+    // let node_env = match env::var("NODE_ENV") {
+    //   Ok(val) => val,
+    //   _ => "prod".to_string() // default to "prod" if not set
+    // };
 
-    let read = if node_env == "prod" {
-      rpassword::read_password_from_tty(
+    // let read = if node_env == "prod" {
+    //   rpassword::read_password_from_tty(
+    //     Some("\u{1F511} ")
+    //   )
+    // } else {
+    //   status_warn!("Unsafe, reading password from STDIN for debugging. \u{1F511}" );
+    //   /// TODO: This fails with abscissa error
+    //   // thread 'main' panicked at 'terminal streams not yet initialized!'
+    //   rpassword::read_password()
+    // };
+    
+    let read = rpassword::read_password_from_tty(
         Some("\u{1F511} ")
       )
-    } else {
-      status_warn!("Unsafe, reading password from STDIN for debugging. \u{1F511}" );
-      rpassword::read_password()
-    };
     get_account_from_mnem(read.unwrap().trim().to_string())
 }
 
