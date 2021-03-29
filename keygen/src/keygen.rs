@@ -72,9 +72,7 @@ pub fn account_from_prompt()
     //   rpassword::read_password()
     // };
     
-    let read = rpassword::read_password_from_tty(
-        Some("\u{1F511} ")
-      )
+    let read = rpassword::read_password_from_tty(Some("\u{1F511} "));
     get_account_from_mnem(read.unwrap().trim().to_string())
 }
 
