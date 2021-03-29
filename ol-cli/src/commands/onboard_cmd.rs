@@ -31,10 +31,10 @@ impl Runnable for OnboardCmd {
         if self.autopilot {
             loop {
                 println!("Running onboarding autopilot, {}", trigger_actions_str);
-                thread::sleep(Duration::from_millis(10_000));
                 let _state = transitions::NodeState::init()
                     .maybe_advance(trigger_actions)
                     .get_state();
+                thread::sleep(Duration::from_millis(10_000));
             }
         } 
         else if self.next {

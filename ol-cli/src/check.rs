@@ -68,7 +68,7 @@ impl Default for Items {
 impl Items {
     /// Get new object
     pub fn new(is_synced: bool) -> Self {
-        Self { is_synced, ..Items::default() }
+        Self { is_synced, ..Self::default() }
     }
 
     /// Returns object in init state
