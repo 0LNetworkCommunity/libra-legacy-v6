@@ -12,7 +12,6 @@ cassowary = "0.3"
 unicode-segmentation = "1.2"
 unicode-width = "0.1"
 chrono = "0.4.19"
-
 once_cell = "1.7.2"
 sysinfo = "0.16.4"
 gumdrop = "0.7"
@@ -35,7 +34,7 @@ warp = "0.2"
 serde_json = "1.0"
 clokwerk = "0.3.4"
 handlebars = "3.5.3"
-rocksdb = "0.15.0"
+# rocksdb = "0.15.0"
 futures = "0.3.6"
 nix = "*"
 libra-secure-storage = { path = "../secure/storage", version = "0.1.0" }
@@ -44,6 +43,12 @@ glob = "0.3.0"
 sm = "0.9.0"
 libra-config = { path = "../config", version = "0.1.0"}
 miner = {path = "../miner"}
+
+# Parity with Storage create
+[dependencies.rocksdb]
+version = "0.15.0"
+default-features = false
+features = ["lz4"]
 
 [dependencies.abscissa_core]
 version = "0.5.2"

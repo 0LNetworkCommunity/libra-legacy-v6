@@ -20,13 +20,8 @@ struct WithTemplate<T: Serialize> {
 
 // TODO: does this need to be a separate function?
 // create server-sent event
-<<<<<<< HEAD
-fn sse_counter(counter: bool) -> Result<impl ServerSentEvent, Infallible> {
-    Ok(warp::sse::data(counter))
-=======
 fn sse_check(info: check::Items) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
->>>>>>> moonshot-cli
 }
 
 fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars<'_>>) -> impl warp::Reply
@@ -75,15 +70,6 @@ pub async fn main() {
         })
         .map(handlebars);
     
-<<<<<<< HEAD
-    //GET ticks/
-    let ticks = warp::path("ticks").and(warp::get()).map(|| {
-        // let mut counter = false;
-        // create server event source
-        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            let counter = check::Items::read_cache().unwrap().is_synced;
-            sse_counter(counter)
-=======
     //GET check/ (json api for check data)
     let check = warp::path("check").and(warp::get()).map(|| {
         // create server event source from Check object
@@ -92,7 +78,6 @@ pub async fn main() {
             let items = check::Items::read_cache().unwrap();
 
             sse_check(items)
->>>>>>> moonshot-cli
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)
