@@ -57,16 +57,4 @@ impl Metadata {
 
         Metadata::compare(local, remote) as i64
     }
-
-    // pub fn get_waypoint_upstream() -> Waypoint {
-    //     // let client = default_remote_client().0.unwrap();
-    //     // let li = client
-    //     // .latest_epoch_change_li_ol()
-    //     // .unwrap()
-    //     // .ledger_info()
-    //     // .clone();
-
-    //     // Waypoint::new_any(&li)
-    // }
-    
 }

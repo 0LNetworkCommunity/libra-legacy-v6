@@ -22,7 +22,8 @@ fn test_genesis_preimage() {
             chain_id: "0L testnet".to_owned(),
             block_dir: "blocks".to_owned(),
             base_waypoint: None,
-            node: None,
+            default_node: None,
+            upstream_nodes: None,
         },
     };
 

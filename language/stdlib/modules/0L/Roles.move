@@ -149,10 +149,6 @@ module Roles {
     // }
 
 
-    // spec fun new_validator_role_with_proof {
-    //     include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
-    // }
-
     //////// 0L ////////
     /// Publish a Validator `RoleId` under `new_account`.
     /// The `creating_account` must be libra root.

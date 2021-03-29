@@ -8,9 +8,10 @@ use crate::{application::app_config, config::MinerConfig};
 use abscissa_core::{Command, Options, Runnable};
 use libra_genesis_tool::node_files;
 use std::io::Write;
-/// `genesis` subcommand
+
+/// `files` subcommand
 #[derive(Command, Debug, Default, Options)]
-pub struct GenesisCmd {
+pub struct FilesCmd {
     #[options(help = "id of the chain")]
     chain_id: Option<u8>,
     #[options(help = "github org of genesis repo")]
@@ -19,10 +20,12 @@ pub struct GenesisCmd {
     repo: Option<String>,   
     #[options(help = "build genesis from ceremony repo")]
     rebuild_genesis: bool, 
+    #[options(help = "only make fullnode config files")]
+    fullnode_only: bool,
 }
 
 
-impl Runnable for GenesisCmd {
+impl Runnable for FilesCmd {
     /// Print version message
     fn run(&self) {
         let miner_configs = app_config().to_owned();
@@ -32,6 +35,7 @@ impl Runnable for GenesisCmd {
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
+            &self.fullnode_only,
         ) 
     }
 }
@@ -42,6 +46,7 @@ pub fn genesis_files(
     github_org: &Option<String>,
     repo: &Option<String>,
     rebuild_genesis: &bool,
+    fullnode_only: &bool,
 ) {
     let home_dir = miner_config.workspace.node_home.to_owned();
     // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -54,9 +59,10 @@ pub fn genesis_files(
         &repo.clone().unwrap_or("experimetal-genesis".to_string()),
         &namespace,
         rebuild_genesis,
+        fullnode_only
     ).unwrap();
 
-    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("node.yaml"));
+    println!("validator configurations initialized, file saved to: {:?}", &home_dir.join("validator.node.yaml"));
 
 }
 
@@ -77,6 +83,7 @@ pub fn get_files(
     let mut w_file = File::create(&w_path).expect("couldn't create file");
     let w_content =  w_res.unwrap().text().unwrap();
     w_file.write_all(w_content.as_bytes()).unwrap();
+    println!("genesis waypoint fetched, file saved to: {:?}", w_path);
 
     let g_res = reqwest::blocking::get(&format!("{}genesis.blob", base_url));
 

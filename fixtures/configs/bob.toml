@@ -10,4 +10,4 @@ statement = "Protests rage across the nation"
 [chain_info]
 chain_id = "0L testnet"
 block_dir = "blocks"
-node = "http://localhost:8080"
+default_node = "http://localhost:8080"

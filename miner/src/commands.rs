@@ -13,20 +13,19 @@
 mod keygen_cmd;
 mod start_cmd;
 mod version_cmd;
-mod onboard_cmd;
 mod swarm_test_cmd;
 mod zero_cmd;
 mod ceremony_cmd;
-mod wizard_user_cmd;
 mod manifest_cmd;
 mod init_cmd;
+mod wizard_user_cmd;
 mod wizard_val_cmd;
-mod genesis_cmd;
+mod wizard_fn_cmd;
+mod files_cmd;
 
 use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
-    onboard_cmd::OnboardCmd,
     swarm_test_cmd::SwarmCmd,
     zero_cmd::ZeroCmd,
     keygen_cmd::KeygenCmd,
@@ -34,7 +33,8 @@ use self::{
     wizard_user_cmd::UserWizardCmd,
     init_cmd::InitCmd,
     wizard_val_cmd::ValWizardCmd,
-    genesis_cmd::GenesisCmd,
+    wizard_fn_cmd::FnWizardCmd,
+    files_cmd::FilesCmd,
 };
 use crate::config::MinerConfig;
 use abscissa_core::{
@@ -73,10 +73,6 @@ pub enum MinerCmd {
     /// The `ceremony` subcommand
     #[options(help = "wizard for genesis ceremony configurations")]
     Ceremony(CeremonyUtilCmd),
-
-    /// The `onboard` subcommand
-    #[options(help = "onboard a new miner with a block_0.json proof")]
-    Onboard(OnboardCmd),
     
     /// The `swarm` subcommand
     #[options(help = "test connection to a local swarm")]
@@ -94,9 +90,13 @@ pub enum MinerCmd {
     #[options(help = "run all steps for validator onboarding")]
     ValWizard(ValWizardCmd),
 
+    /// The `fn_wizard` subcommand
+    #[options(help = "run all steps for fullnode config")]
+    FnWizard(FnWizardCmd),
+    
     /// The `genesis` subcommand
-    #[options(help = "build a genesis.blob")]
-    Genesis(GenesisCmd),
+    #[options(help = "generate validator files")]
+    Files(FilesCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

@@ -80,11 +80,18 @@ script {
   use 0x1::GAS::GAS;
   use 0x1::LibraAccount;
   use 0x1::LibraSystem;
+  use 0x1::Debug::print;
 
   fun main(vm: &signer) {
     let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
-    Subsidy::process_subsidy(vm, 100, &validators, &fee_ratios);
-    assert(LibraAccount::balance<GAS>({{alice}}) == 101, 7357190102091000);
+    let subsidy_amount = 1000000;
+    let refund_to_operator = 4336 * 1; // from Subsidy::BASELINE_TX_COST * genesis proof for account
+    Subsidy::process_subsidy(vm, subsidy_amount, &validators, &fee_ratios);
+    print(&7357);
+    print(&LibraAccount::balance<GAS>({{alice}}));
+    assert(LibraAccount::balance<GAS>({{alice}}) == 1 + subsidy_amount - refund_to_operator, 7357190102091000);
+    // 995764
+
     assert(LibraAccount::balance<GAS>({{bob}}) == 1, 7357190102101000);
     assert(LibraAccount::balance<GAS>({{carol}}) == 1, 7357190102111000);
     assert(LibraAccount::balance<GAS>({{dave}}) == 1, 7357190102121000);

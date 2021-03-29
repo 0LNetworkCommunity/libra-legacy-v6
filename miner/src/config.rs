@@ -4,9 +4,10 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-use std::{net::Ipv4Addr, fs};
+use std::{fs, net::Ipv4Addr, str::FromStr};
 use byteorder::{LittleEndian, WriteBytesExt};
 use libra_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, waypoint::Waypoint};
+use reqwest::Url;
 use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use abscissa_core::path::{PathBuf};
@@ -17,7 +18,6 @@ use dirs;
 use libra_global_constants::NODE_HOME;
 use crate::commands::CONFIG_FILE;
 use std::{io::Write};
-
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -42,14 +42,14 @@ impl MinerConfig {
             Ok(file) => {
                 let json: serde_json::Value = serde_json::from_reader(file)
                     .expect("could not parse JSON in key_store.json");
-                let value = ajson::get(&json.to_string(), "*waypoint.value").expect("could not find key: waypoint");
-                dbg!(&value);
-                let waypoint: Waypoint = value.to_string().parse().unwrap();
-                Some(waypoint)
+                match ajson::get(&json.to_string(), "*/waypoint.value") {
+                    Some(value) => Some(value.to_string().parse().unwrap()),
+                    // If nothing is found in key_store.json fallback to base_waypoint in toml
+                    _ => self.chain_info.base_waypoint
+                }
             }
-            Err(err) => {
-            println!("key_store.json not found. {:?}", err);
-            None
+            Err(_err) => {
+                self.chain_info.base_waypoint
             }
         }
     }
@@ -60,11 +60,11 @@ impl MinerConfig {
         let mut conf = MinerConfig::default();
         conf.workspace.node_home = PathBuf::from("./swarm_temp");
         // Load profile config
-        conf.profile.account = param.address;
-        conf.profile.auth_key = param.auth_key.to_string();
+        conf.profile.account = param.owner_address;
+        conf.profile.auth_key = param.sender_auth_key.to_string();
 
         // Load chain info
-        conf.chain_info.node = Some(param.url.to_string());
+        conf.chain_info.default_node = Some(param.url.clone());
         conf
     }
     /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
@@ -153,13 +153,13 @@ impl MinerConfig {
     }
 
         /// Get where node key_store.json stored.
-    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: Option<PathBuf>) -> MinerConfig {
+    pub fn init_miner_configs(authkey: AuthenticationKey, account: AccountAddress, path: &Option<PathBuf>) -> MinerConfig {
 
         // TODO: Check if configs exist and warn on overwrite.
         let mut miner_configs = MinerConfig::default();
 
         miner_configs.workspace.node_home = if path.is_some() {
-            path.unwrap()
+            path.clone().unwrap()
         } else {
             dirs::home_dir().unwrap()
         };
@@ -181,6 +181,7 @@ impl MinerConfig {
         miner_configs.profile.account = account;
 
         let toml = toml::to_string(&miner_configs).unwrap();
+        dbg!(&toml);
         let home_path = miner_configs.workspace.node_home.clone();
         let miner_toml_path = home_path.join(CONFIG_FILE);
         let file = fs::File::create(&miner_toml_path);
@@ -232,7 +233,9 @@ pub struct ChainInfo {
     /// Directory to store blocks in
     pub block_dir: String,
     /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    pub node: Option<String>,
+    pub default_node: Option<Url>,
+    /// Other nodes to connect for fallback connections
+    pub upstream_nodes: Option<Vec<Url>>,
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: Option<Waypoint>,
 }
@@ -240,12 +243,15 @@ pub struct ChainInfo {
 // TODO: These defaults serving as test fixtures.
 impl Default for ChainInfo {
     fn default() -> Self {
+        use libra_global_constants::BASE_WAYPOINT;
         Self {
             chain_id: "experimental".to_owned(),
             block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
-            base_waypoint: None,
-            node: Some("http://localhost:8080".to_owned()),
+            base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
+            // TODO: select defaults from command line.
+            default_node: Some("http://localhost:8080".parse().expect("parse url")),
+            upstream_nodes: Some(vec!["http://167.172.248.37:8080".parse().expect("parse url")]),
         }
     }
 }
@@ -279,3 +285,18 @@ impl Default for Profile {
         }
     }
 }
+
+// fn ser_url<S>(url: &Option<Url>, serializer: S) -> Result<S::Ok, S::Error>
+// where
+//     S: Serializer,
+// {
+//     serializer.serialize_str(&url.to_owned().into_string())
+// }
+
+// fn de_url<'de, D>(deserializer: D) -> Result<Option<Url>, D::Error>
+// where
+//     D: Deserializer<'de>,
+// {
+//     let s: String = Deserialize::deserialize(deserializer)?;
+//     Some(s.parse::<Url>().map_err(D::Error::custom))
+// }

@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fs};
+use std::{fmt::Debug, fs, path::PathBuf};
 
 use libra_config::{config::{ 
         NetworkConfig,
@@ -39,11 +39,21 @@ pub struct Files {
     data_path: PathBuf,
     #[structopt(long, verbatim_doc_comment)]
     genesis_path: Option<PathBuf>,
+    #[structopt(long, verbatim_doc_comment)]
+    fullnode_only: bool,
 }
 
 impl Files {
     pub fn execute(self) -> Result<String, Error> {
-        create_files(self.data_path, self.chain_id, &self.github_org, &self.repo, &self.namespace, &true)
+        create_files(
+            self.data_path, 
+            self.chain_id, 
+            &self.github_org, 
+            &self.repo,
+            &self.namespace,
+            &true,
+            &self.fullnode_only
+        )
     }
 }
 
@@ -54,11 +64,11 @@ pub fn create_files(
     repo: &str,
     namespace: &str,
     rebuild_genesis: &bool,
+    fullnode_only: &bool,
 ) -> Result<String, Error> {
 
     let github_token_path = output_dir.join("github_token.txt");
     let chain_id = ChainId::new(chain_id);
-    let storage_helper = StorageHelper::get_with_path(output_dir.clone());
     
     let remote = format!(
         "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
@@ -68,10 +78,7 @@ pub fn create_files(
         ns=&namespace
     ); 
 
-    // Get node configs template
-    let mut config = NodeConfig::default();
-    config.set_data_dir(output_dir.clone());
-
+    let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
     let genesis_path = output_dir.join("genesis.blob");
     let waypoint: Waypoint;
@@ -81,7 +88,7 @@ pub fn create_files(
         .build_genesis_from_github(chain_id, &remote, &genesis_path)
         .unwrap();
     } else {
-        // assumes genesis.blob and genesis_waypoint is in output_dir, only inserts to key_store.json
+        // assumes genesis.blob and genesis_waypoint has been otherwise copied to the output_dir and won't create them.
         // read genesis_waypoint file.
         waypoint = fs::read_to_string( output_dir.join("genesis_waypoint"))
         .expect("could not read waypoint file.")
@@ -90,32 +97,61 @@ pub fn create_files(
         .expect("could not parse waypoint string");
     }
 
-
     storage_helper
         .insert_waypoint(&namespace, waypoint)
         .unwrap();
-    
+
+    // Write the genesis waypoint without a namespaced storage.
     let mut disk_storage = OnDiskStorageConfig::default();
     disk_storage.set_data_dir(output_dir.clone());
     disk_storage.path = output_dir.clone().join("key_store.json");
     disk_storage.namespace = Some(namespace.to_owned());
 
-    // Set network configs
-    let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
-    
-    // NOTE: Using configs as described in cluster tests: testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
-    network.discovery_method = DiscoveryMethod::Onchain;
-    network.mutual_authentication = true;
-    network.identity = Identity::from_storage(
-        VALIDATOR_NETWORK_KEY.to_string(),
-        OWNER_ACCOUNT.to_string(),
-        SecureBackend::OnDiskStorage(disk_storage.clone()),
-    );
-    network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+    // Get node configs template
+    let mut config = if *fullnode_only {
+        let mut c = NodeConfig::default_for_public_full_node();
+        c.base.waypoint = WaypointConfig::FromConfig(waypoint);
 
+        c.execution.sign_vote_proposal = false;
+        c.execution.genesis_file_location = PathBuf::from("/");
+        c
+    } else {
+        let mut c = NodeConfig::default();
 
-    config.validator_network = Some(network.clone());
+        // Note skip setting namepace for later.
+        c.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));        
+
+        // If validator configs set val network configs
+        let mut network = NetworkConfig::network_with_id(NetworkId::Validator);
     
+        // NOTE: Using configs as described in cluster tests: testsuite/cluster-test/src/cluster_swarm/configs/validator.yaml
+        network.discovery_method = DiscoveryMethod::Onchain;
+        network.mutual_authentication = true;
+        network.identity = Identity::from_storage(
+            VALIDATOR_NETWORK_KEY.to_string(),
+            OWNER_ACCOUNT.to_string(),
+            SecureBackend::OnDiskStorage(disk_storage.clone()),
+        );
+        network.network_address_key_backend = Some(SecureBackend::OnDiskStorage(disk_storage.clone()));
+
+        c.validator_network = Some(network.clone());
+
+            // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
+    
+        // Consensus
+        c.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
+        
+        c.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+        c.execution.genesis_file_location = genesis_path.clone();
+
+        c.consensus.safety_rules.service = SafetyRulesService::Thread;
+        c.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
+
+        c
+    };
+
+    config.set_data_dir(output_dir.clone());
+
     ///////// FULL NODE CONFIGS ////////
     let mut fn_network = NetworkConfig::network_with_id(NetworkId::Public);
     
@@ -129,26 +165,20 @@ pub fn create_files(
     // NOTE: for future reference, "upstream" is not necessary for validator settings.
     config.upstream = UpstreamConfig { networks: vec!(NetworkId::Public)};
     
-    // NOTE: for future reference, seed addresses are not necessary for setting a validator if on-chain discovery is used.
-    
-    // Consensus
-    config.base.waypoint = WaypointConfig::FromStorage(SecureBackend::OnDiskStorage(disk_storage.clone()));
-    
-    config.execution.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-    config.execution.genesis_file_location = genesis_path.clone();
-
-    config.consensus.safety_rules.service = SafetyRulesService::Thread;
-    config.consensus.safety_rules.backend = SecureBackend::OnDiskStorage(disk_storage.clone());
-
-    // Misc
+    // Prune window for state snapshots
     config.storage.prune_window=Some(20_000);
 
     // Write yaml
-    let yaml_path = output_dir.join("node.yaml");
+    let yaml_path = if *fullnode_only {
+        output_dir.join("fullnode.node.yaml")
+    } else { 
+        output_dir.join("validator.node.yaml")
+    };
+
     fs::create_dir_all(&output_dir).expect("Unable to create output directory");
     config
-        .save(&yaml_path)
-        .expect("Unable to save node configs");
-
+    .save(&yaml_path)
+    .expect("Unable to save node configs");
+        
     Ok(yaml_path.to_str().unwrap().to_string())
 }

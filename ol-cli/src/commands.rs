@@ -12,26 +12,25 @@
 
 mod init;
 mod version;
-mod genesis_cmd;
-mod bal_cmd;
-mod resource_cmd;
-mod height_cmd;
-mod compare_cmd;
 mod monitor_cmd;
 mod mgmt_cmd;
 mod serve_cmd;
+mod restore_cmd;
+mod onboard_cmd;
+mod query_cmd;
+mod check_cmd;
+mod explorer_cmd;
 
 use self::{
     init::StartCmd,
     version::VersionCmd,
-    genesis_cmd::GenesisCmd,
-    bal_cmd::BalCmd,
-    resource_cmd::ResourceCmd,
-    height_cmd::HeightCmd,
-    compare_cmd::CompareCmd,
     monitor_cmd::MonitorCmd,
     mgmt_cmd::MgmtCmd,
     serve_cmd::ServeCmd,
+    restore_cmd::RestoreCmd,
+    onboard_cmd::OnboardCmd,
+    query_cmd::QueryCmd,
+    check_cmd::CheckCmd,
 };
 
 use crate::config::OlCliConfig;
@@ -41,9 +40,11 @@ use abscissa_core::{
 use std::path::PathBuf;
 use dirs;
 use libra_global_constants::NODE_HOME;
+use miner::commands::CONFIG_FILE;
+use crate::commands::explorer_cmd::ExplorerCMD;
 
 /// OlCli Configuration Filename
-pub const CONFIG_FILE: &str = "ol_cli.toml";
+// pub const CONFIG_FILE: &str = "miner.toml";
 
 /// OlCli Subcommands
 #[derive(Command, Debug, Options, Runnable)]
@@ -59,26 +60,6 @@ pub enum OlCliCmd {
     /// The `version` subcommand
     Version(VersionCmd),
 
-    /// The `genesis` subcommand
-    #[options(help = "get files")]
-    Genesis(GenesisCmd),
-
-    /// The `bal` subcommand
-    #[options(help = "get balance")]
-    Bal(BalCmd),
-
-    /// The `resource` subcommand
-    #[options(help = "get account resources")]
-    Resource(ResourceCmd),
-
-    /// The `height` subcommand
-    #[options(help = "get blockchain height")]
-    Height(HeightCmd),
-
-    /// The `compare` subcommand
-    #[options(help = "compare sync states between two nodes")]
-    Compare(CompareCmd),
-
     /// The `monitor` subcommand
     #[options(help = "monitor the node and upstream")]
     Monitor(MonitorCmd),
@@ -87,9 +68,30 @@ pub enum OlCliCmd {
     #[options(help = "management tools")]
     Mgmt(MgmtCmd),
 
-    /// The `server` subcommand
+    /// The `serve` subcommand
     #[options(help = "serve the monitor over http")]
     Serve(ServeCmd),
+
+    /// The `restore` subcommand
+    #[options(help = "serve the monitor over http")]
+    Restore(RestoreCmd), 
+
+    /// The `onboard` subcommand
+    #[options(help = "onboarding actions")]
+    Onboard(OnboardCmd),        
+
+    /// The `query` subcommand
+    #[options(help = "query helpers")]
+    Query(QueryCmd), 
+
+    /// The `query` subcommand
+    #[options(help = "query helpers")]
+    Check(CheckCmd),
+
+    /// The `explorer` subcommand
+    #[options(help = "query helpers")]
+    Explorer(ExplorerCMD),
+
 }
 
 /// Get home path for all 0L apps

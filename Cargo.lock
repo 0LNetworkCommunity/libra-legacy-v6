@@ -658,6 +658,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cassowary"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df8670b8c7b9dae1793364eafadf7239c40d669904660c5960d74cfd80b46a53"
+
+[[package]]
 name = "cast"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -784,6 +790,7 @@ dependencies = [
  "crash-handler",
  "generate-key",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -2762,6 +2769,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "keygen"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "libra-types",
+ "libra-wallet",
+ "rpassword",
+]
+
+[[package]]
 name = "kube"
 version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3134,6 +3151,7 @@ dependencies = [
  "executor",
  "generate-key",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -4101,6 +4119,7 @@ dependencies = [
  "glob",
  "gumdrop",
  "hex 0.4.2",
+ "keygen",
  "libra-canonical-serialization",
  "libra-config",
  "libra-crypto",
@@ -4110,6 +4129,7 @@ dependencies = [
  "libra-logger",
  "libra-management",
  "libra-network-address",
+ "libra-secure-storage",
  "libra-types",
  "libra-wallet",
  "libradb",
@@ -4126,6 +4146,7 @@ dependencies = [
  "thiserror",
  "toml",
  "transaction-builder",
+ "url",
  "vdf",
  "vm-genesis",
  "wait-timeout",
@@ -4906,17 +4927,25 @@ version = "0.1.0"
 dependencies = [
  "abscissa_core",
  "anyhow",
+ "bitflags",
+ "cassowary",
  "chrono",
  "cli",
  "clokwerk",
  "crossterm",
  "dirs 2.0.2",
  "futures 0.3.6",
+ "glob",
  "gumdrop",
  "handlebars",
+ "libra-config",
  "libra-global-constants",
  "libra-json-rpc-client",
+ "libra-network-address",
+ "libra-secure-storage",
  "libra-types",
+ "miner",
+ "nix 0.18.0",
  "num-format",
  "once_cell",
  "reqwest",
@@ -4925,18 +4954,23 @@ dependencies = [
  "rustyline",
  "serde",
  "serde_json",
+ "sm",
  "sysinfo",
+ "termion",
  "thiserror",
  "tokio",
  "toml",
+ "tui",
+ "unicode-segmentation",
+ "unicode-width",
  "warp",
 ]
 
 [[package]]
 name = "once_cell"
-version = "1.4.1"
+version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
+checksum = "af8b08b04175473088b46763e51ee54da5f9a164bc162f615b91bc179dbf15a3"
 
 [[package]]
 name = "oorandom"
@@ -6486,6 +6520,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
+name = "sm"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8e4a3f3651a411045a4324773afcf10d11919a90c006b94a4178da1d18e5769"
+dependencies = [
+ "sm_macro",
+]
+
+[[package]]
+name = "sm_macro"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba245bc9067435452e4d8b9af04509929a9e99ce7273c82c2b8551e7f09ee861"
+dependencies = [
+ "proc-macro2 0.4.30",
+ "quote 0.6.13",
+ "syn 0.15.44",
+]
+
+[[package]]
 name = "smallvec"
 version = "0.6.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7448,6 +7502,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tui"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ced152a8e9295a5b168adc254074525c17ac4a83c90b2716274cc38118bddc9"
+dependencies = [
+ "bitflags",
+ "cassowary",
+ "termion",
+ "unicode-segmentation",
+ "unicode-width",
+]
+
+[[package]]
 name = "tungstenite"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7473,6 +7540,53 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59b11b2b5241ba34be09c3cc85a36e56e48f9888862e19cedf23336d35316ed1"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "txs"
+version = "0.1.0"
+dependencies = [
+ "abscissa_core",
+ "ajson",
+ "anyhow",
+ "byteorder",
+ "classgroup",
+ "cli",
+ "compiled-stdlib",
+ "criterion",
+ "dirs 2.0.2",
+ "glob",
+ "gumdrop",
+ "hex 0.4.2",
+ "keygen",
+ "libra-canonical-serialization",
+ "libra-config",
+ "libra-crypto",
+ "libra-genesis-tool",
+ "libra-global-constants",
+ "libra-json-rpc-types",
+ "libra-logger",
+ "libra-management",
+ "libra-network-address",
+ "libra-types",
+ "libra-wallet",
+ "libradb",
+ "move-core-types",
+ "once_cell",
+ "regex",
+ "reqwest",
+ "rpassword",
+ "rustyline",
+ "serde",
+ "serde_json",
+ "stdlib",
+ "storage-interface",
+ "thiserror",
+ "toml",
+ "transaction-builder",
+ "vdf",
+ "vm-genesis",
+ "wait-timeout",
 ]
 
 [[package]]
@@ -7586,6 +7700,7 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]
