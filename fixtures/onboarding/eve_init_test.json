@@ -11,6 +11,6 @@
     "op_consensus_pubkey": "cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d",
     "op_validator_network_addresses": "010000000000000000000000003e250c108157e9c5e6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf0411ac521c7ffd6354a98bad17980a7de22",
     "op_fullnode_network_addresses": "2d040000000000052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800",
-    "op_fullnode_network_addresses_string": "/ip4/0.0.0.0/tcp/6179/ln-noise-ik/29fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f/ln-handshake/0",
+    "op_fullnode_network_addresses_string": "/ip4/161.35.13.169/tcp/6179/ln-noise-ik/29fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f/ln-handshake/0",
     "op_human_name": "3DC18D1CF61FAAC6AC70E3A63F062E4B-oper"
 }
