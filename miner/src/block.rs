@@ -63,7 +63,7 @@ pub mod build_block {
 
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn mine_genesis(config: &MinerConfig) -> Block {
+    pub fn mine_genesis(_config: &MinerConfig) -> Block {
         println!("Mining Genesis Proof");
         let preimage = super::genesis_preimage();
         let now = Instant::now();

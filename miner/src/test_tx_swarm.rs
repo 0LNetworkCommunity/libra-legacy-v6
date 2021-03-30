@@ -1,7 +1,7 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
 
-use crate::{backlog, account::ValConfigs};
+use crate::{backlog};
 use crate::block::build_block::{mine_genesis, mine_once, parse_block_height};
 use crate::config::MinerConfig;
 use crate::prelude::*;
