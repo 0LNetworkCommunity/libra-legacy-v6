@@ -46,7 +46,7 @@ use dirs;
 use libra_global_constants::NODE_HOME;
 
 /// MinerApp Configuration Filename
-pub const CONFIG_FILE: &str = "miner.toml";
+pub const CONFIG_FILE: &str = "0L.toml";
 
 /// MinerApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
