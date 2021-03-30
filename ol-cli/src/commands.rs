@@ -72,23 +72,23 @@ pub enum OlCliCmd {
     Serve(ServeCmd),
 
     /// The `restore` subcommand
-    #[options(help = "serve the monitor over http")]
+    #[options(help = "restore the database from the epoch-archive repository")]
     Restore(RestoreCmd), 
 
     /// The `onboard` subcommand
-    #[options(help = "onboarding actions")]
+    #[options(help = "onboarding validator actions")]
     Onboard(OnboardCmd),        
 
     /// The `query` subcommand
-    #[options(help = "query helpers")]
+    #[options(help = "run simple queries through subcommands, prints the value to stdout")]
     Query(QueryCmd), 
 
-    /// The `query` subcommand
-    #[options(help = "query helpers")]
+    /// The `check` subcommand
+    #[options(help = "run healthcheck on the account, node, and displays some network information")]
     Check(CheckCmd),
 
     /// The `explorer` subcommand
-    #[options(help = "query helpers")]
+    #[options(help = "watch a block explorer monitor in terminal")]
     Explorer(ExplorerCMD),
 
 }
