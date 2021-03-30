@@ -240,33 +240,6 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
     }
 }
 #[test]
-fn test_mine_genesis() {
-    // if no file is found, the block height is 0
-    //let blocks_dir = Path::new("./test_blocks");
-    let configs_fixture = test_make_configs_fixture();
-    //clear from sideffects.
-    test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
-
-    // mine
-    write_genesis(&configs_fixture);
-    // read file
-    let block_file =
-        // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));
-        fs::read_to_string("./test_blocks_temp_1/block_0.json").expect("Could not read latest block");
-
-    let latest_block: Block =
-        serde_json::from_str(&block_file).expect("could not deserialize latest block");
-
-    // Test the file is read, and blockheight is 0
-    assert_eq!(latest_block.height, 0, "test");
-
-    // Test the expected proof is writtent to file correctly.
-    let correct_proof = "003d41f284017717cb66307f5a00093c74de74cbf7dedc66d964bae4fff96d2d433446fef7c3d0fa75c925dbf3d315bb12671a6039d0c20f1072287e461eef237095dbafa58ef902537668d870e21c9db778beb8c9218e4b8c49a901f42864d2104872c8616662b07976493d79ef0ebffaabf869b33c31875919d88d5e7f176913ffc68b09bebf2568068ee678db86b31c64d24a65e9390711a1a86c7ea7c705e271b4fe926027dd445f30e6df763e7a584a7b34a8126d8715eec6d30de906a21bd48533477aec05f8e05da33ba81698008ad2a919169b0249914af0324351cba6ac06a25a767c31c0306f19a8a922807c37bd790e02f593649ce4155c4d6d406db5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
-    assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
-
-    test_helper_clear_block_dir(&configs_fixture.get_block_dir());
-}
-#[test]
 #[ignore]
 //Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
@@ -286,25 +259,6 @@ fn create_fixtures() {
         fs::create_dir_all(save_to.clone()).unwrap();
         let mut configs_fixture = test_make_configs_fixture();
         configs_fixture.workspace.block_dir = save_to.clone(); 
-
-        // let mut configs_fixture = MinerConfig {
-        //     workspace: Workspace{
-        //         node_home: PathBuf::from("/root/.0L"),
-        //     },
-        //     profile: Profile {
-        //         auth_key: auth_key.to_string(),
-        //         account: auth_key.derived_address(),
-        //         ip: "1.1.1.1".parse().unwrap(),
-        //         statement: "Protests rage across the nation".to_owned(),
-        //     },
-        //     chain_info: ChainInfo {
-        //         chain_id: "0L testnet".to_owned(),
-        //         block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
-        //         base_waypoint: None,
-        //         default_node: Some("http://localhost:8080".parse().unwrap()),
-        //         upstream_nodes: None,
-        //     },
-        // };
 
         // mine to save_to path
         write_genesis(&configs_fixture);
@@ -391,6 +345,36 @@ fn test_mine_once() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir() );
 }
 
+
+#[test]
+fn test_mine_genesis() {
+    println!("test");
+    // if no file is found, the block height is 0
+    //let blocks_dir = Path::new("./test_blocks");
+    let configs_fixture = test_make_configs_fixture();
+    //clear from sideffects.
+    test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
+
+    // mine
+    write_genesis(&configs_fixture);
+    // read file
+    let block_file =
+        // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("block_0.json"));
+        fs::read_to_string("./test_blocks_temp_1/block_0.json").expect("Could not read latest block");
+
+    let latest_block: Block =
+        serde_json::from_str(&block_file).expect("could not deserialize latest block");
+
+    // Test the file is read, and blockheight is 0
+    assert_eq!(latest_block.height, 0, "test");
+
+    // Test the expected proof is writtent to file correctly.
+    let correct_proof = "003d41f284017717cb66307f5a00093c74de74cbf7dedc66d964bae4fff96d2d433446fef7c3d0fa75c925dbf3d315bb12671a6039d0c20f1072287e461eef237095dbafa58ef902537668d870e21c9db778beb8c9218e4b8c49a901f42864d2104872c8616662b07976493d79ef0ebffaabf869b33c31875919d88d5e7f176913ffc68b09bebf2568068ee678db86b31c64d24a65e9390711a1a86c7ea7c705e271b4fe926027dd445f30e6df763e7a584a7b34a8126d8715eec6d30de906a21bd48533477aec05f8e05da33ba81698008ad2a919169b0249914af0324351cba6ac06a25a767c31c0306f19a8a922807c37bd790e02f593649ce4155c4d6d406db5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
+    assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
+
+    test_helper_clear_block_dir(&configs_fixture.get_block_dir());
+}
+
 #[test]
 fn test_parse_no_files() {
     // if no file is found, the block height is 0
@@ -427,17 +411,14 @@ fn test_parse_one_file() {
     test_helper_clear_block_dir(&blocks_dir)
 }
 
+/// make fixtures for file
 pub fn test_make_configs_fixture() -> MinerConfig {
-    use std::path::PathBuf;
-
-
     let mut cfg = MinerConfig::default();
     cfg.workspace.node_home = PathBuf::from(".");
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
     cfg.chain_info.chain_id = "0L testnet".to_owned();
     cfg
 }
-
 
 }
 
@@ -449,7 +430,7 @@ pub fn genesis_preimage() -> Vec<u8> {
     let cfg = app_config();
     let mut preimage: Vec<u8> = vec![];
 
-    let mut padded_key_bytes = match hex::decode(cfg.profile.auth_key.clone()) {
+    let mut padded_key_bytes = match decode(cfg.profile.auth_key.clone()) {
         Err(x) => panic!("Invalid 0L Auth Key: {}", x),
         Ok(key_bytes) => {
             if key_bytes.len() != AUTH_KEY_BYTES {

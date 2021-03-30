@@ -4,7 +4,6 @@
 // use miner::submit_tx::TxParams;
 use abscissa_core::path::PathBuf;
 use ajson;
-use byteorder::{LittleEndian, WriteBytesExt};
 use dirs;
 use libra_global_constants::NODE_HOME;
 use libra_types::{

@@ -42,6 +42,7 @@ use dirs;
 use libra_global_constants::NODE_HOME;
 use crate::commands::explorer_cmd::ExplorerCMD;
 
+/// Filename for all 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
 
 /// OlCli Subcommands
