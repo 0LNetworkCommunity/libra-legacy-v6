@@ -4,7 +4,7 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use crate::delay;
-use crate::prelude::app_config;
+use crate::config::MinerConfig;
 
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug)]
@@ -64,9 +64,9 @@ pub mod build_block {
 
 
     /// writes a JSON file with the vdf proof, ordered by a blockheight
-    pub fn mine_genesis(_config: &MinerConfig) -> Block {
+    pub fn mine_genesis(config: &MinerConfig) -> Block {
         println!("Mining Genesis Proof");
-        let preimage = super::genesis_preimage();
+        let preimage = super::genesis_preimage(&config);
         let now = Instant::now();
         let proof = do_delay(&preimage);
         let elapsed_secs = now.elapsed().as_secs();
@@ -348,10 +348,10 @@ fn test_mine_once() {
 
 #[test]
 fn test_mine_genesis() {
-    println!("test");
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
     let configs_fixture = test_make_configs_fixture();
+    
     //clear from sideffects.
     test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
 
@@ -369,7 +369,7 @@ fn test_mine_genesis() {
     assert_eq!(latest_block.height, 0, "test");
 
     // Test the expected proof is writtent to file correctly.
-    let correct_proof = "003d41f284017717cb66307f5a00093c74de74cbf7dedc66d964bae4fff96d2d433446fef7c3d0fa75c925dbf3d315bb12671a6039d0c20f1072287e461eef237095dbafa58ef902537668d870e21c9db778beb8c9218e4b8c49a901f42864d2104872c8616662b07976493d79ef0ebffaabf869b33c31875919d88d5e7f176913ffc68b09bebf2568068ee678db86b31c64d24a65e9390711a1a86c7ea7c705e271b4fe926027dd445f30e6df763e7a584a7b34a8126d8715eec6d30de906a21bd48533477aec05f8e05da33ba81698008ad2a919169b0249914af0324351cba6ac06a25a767c31c0306f19a8a922807c37bd790e02f593649ce4155c4d6d406db5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
+    let correct_proof = "004812351796d94cab9a9932ec179630d86ced7db3fd7dbd66f36b0a9c0f1398756465304908e05c6397bffc7b6ac9b158c166eaade6169ffe54ddcd9251c149c5f3cceeacc59a9044bc9b9427237ac63d189873736b8ff2970f236f541bef4cf1d789f39f97f8b87ecccf7fd34f99bc4e193986da0761f5698f9715de76f0b5b5ffd41a4dcd73c3bbc19f1047bb2862c65699a4dc5ecbdf6297383a6a4e97d346a098f0a6d83b9aa3ccb703ab008356c45fb84a6e550f06f98c55300865f9774d0dee94bfcefc79208c35e79b3a8458ac246193ccf36f5b8d74975d1b0ecb7cefc419960fa9b31bda6582a046c70ba2aaec637a5d0a95ec59cda1edcf8a51b97463000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
     assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
 
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
@@ -417,17 +417,18 @@ pub fn test_make_configs_fixture() -> MinerConfig {
     cfg.workspace.node_home = PathBuf::from(".");
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
     cfg.chain_info.chain_id = "0L testnet".to_owned();
+    cfg.profile.auth_key = "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".to_string();
     cfg
 }
 
 }
 
 /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
-pub fn genesis_preimage() -> Vec<u8> {
+pub fn genesis_preimage(cfg: &MinerConfig) -> Vec<u8> {
     const AUTH_KEY_BYTES: usize = 32;
     const CHAIN_ID_BYTES: usize = 64;
     const STATEMENT_BYTES: usize = 1008;
-    let cfg = app_config();
+
     let mut preimage: Vec<u8> = vec![];
 
     let mut padded_key_bytes = match decode(cfg.profile.auth_key.clone()) {
