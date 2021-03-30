@@ -5,7 +5,7 @@ use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use crate::delay;
 use crate::prelude::app_config;
-
+use crate::config::MinerConfig;
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
@@ -241,27 +241,9 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
 }
 #[test]
 fn test_mine_genesis() {
-    use libra_types::PeerId;
     // if no file is found, the block height is 0
     //let blocks_dir = Path::new("./test_blocks");
-    let configs_fixture = MinerConfig {
-        workspace: Workspace{
-            node_home: PathBuf::from("."),
-        },
-        profile: Profile {
-            auth_key: "5ffd9856978b5020be7f72339e41a401000000000000000000000000deadbeef".to_owned(),
-            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
-            ip: "1.1.1.1".parse().unwrap(),
-            statement: "Protests rage across the nation".to_owned(),
-        },
-        chain_info: ChainInfo {
-            chain_id: "0L testnet".to_owned(),
-            block_dir: "test_blocks_temp_1".to_owned(), //  path should be unique for concurrent tests.
-            base_waypoint: None,
-            default_node: Some("http://localhost:8080".parse().unwrap()),
-            upstream_nodes: None,
-        },
-    };
+    let configs_fixture = test_make_configs_fixture();
     //clear from sideffects.
     test_helper_clear_block_dir( &configs_fixture.get_block_dir() );
 
@@ -302,24 +284,27 @@ fn create_fixtures() {
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
         fs::create_dir_all(save_to.clone()).unwrap();
-        let mut configs_fixture = MinerConfig {
-            workspace: Workspace{
-                node_home: PathBuf::from("/root/.0L"),
-            },
-            profile: Profile {
-                auth_key: auth_key.to_string(),
-                account: auth_key.derived_address(),
-                ip: "1.1.1.1".parse().unwrap(),
-                statement: "Protests rage across the nation".to_owned(),
-            },
-            chain_info: ChainInfo {
-                chain_id: "0L testnet".to_owned(),
-                block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
-                base_waypoint: None,
-                default_node: Some("http://localhost:8080".parse().unwrap()),
-                upstream_nodes: None,
-            },
-        };
+        let mut configs_fixture = test_make_configs_fixture();
+        configs_fixture.workspace.block_dir = save_to.clone(); 
+
+        // let mut configs_fixture = MinerConfig {
+        //     workspace: Workspace{
+        //         node_home: PathBuf::from("/root/.0L"),
+        //     },
+        //     profile: Profile {
+        //         auth_key: auth_key.to_string(),
+        //         account: auth_key.derived_address(),
+        //         ip: "1.1.1.1".parse().unwrap(),
+        //         statement: "Protests rage across the nation".to_owned(),
+        //     },
+        //     chain_info: ChainInfo {
+        //         chain_id: "0L testnet".to_owned(),
+        //         block_dir: save_to.clone(), //  path should be unique for concurrent tests. needed for mine_genesi below
+        //         base_waypoint: None,
+        //         default_node: Some("http://localhost:8080".parse().unwrap()),
+        //         upstream_nodes: None,
+        //     },
+        // };
 
         // mine to save_to path
         write_genesis(&configs_fixture);
@@ -334,7 +319,7 @@ fn create_fixtures() {
         
         // create miner.toml
         //rename the path for actual fixtures
-        configs_fixture.chain_info.block_dir = "blocks".to_string();
+        configs_fixture.workspace.block_dir = "blocks".to_string();
         let toml = toml::to_string(&configs_fixture).unwrap();
         let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
@@ -350,25 +335,27 @@ fn create_fixtures() {
 fn test_mine_once() {
     use libra_types::PeerId;
     // if no file is found, the block height is 0
-    let configs_fixture = MinerConfig {
-        workspace: Workspace{
-            node_home: PathBuf::from("."),
-        },
-        profile: Profile {
-            auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
-                .to_owned(),
-            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
-            ip: "1.1.1.1".parse().unwrap(),
-            statement: "Protests rage across the nation".to_owned(),
-        },
-        chain_info: ChainInfo {
-            chain_id: "0L testnet".to_owned(),
-            block_dir: "test_blocks_temp_2".to_owned(),
-            base_waypoint: None,
-            default_node: Some("http://localhost:8080".parse().unwrap()),
-            upstream_nodes: None,
-        },
-    };
+    let mut configs_fixture = test_make_configs_fixture();
+    configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
+    // let configs_fixture = MinerConfig {
+    //     workspace: Workspace{
+    //         node_home: PathBuf::from("."),
+    //     },
+    //     profile: Profile {
+    //         auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+    //             .to_owned(),
+    //         account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+    //         ip: "1.1.1.1".parse().unwrap(),
+    //         statement: "Protests rage across the nation".to_owned(),
+    //     },
+    //     chain_info: ChainInfo {
+    //         chain_id: "0L testnet".to_owned(),
+    //         block_dir: "test_blocks_temp_2".to_owned(),
+    //         base_waypoint: None,
+    //         default_node: Some("http://localhost:8080".parse().unwrap()),
+    //         upstream_nodes: None,
+    //     },
+    // };
 
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir() );
@@ -438,6 +425,17 @@ fn test_parse_one_file() {
     assert_eq!(parse_block_height(&blocks_dir).0, Some(33));
 
     test_helper_clear_block_dir(&blocks_dir)
+}
+
+pub fn test_make_configs_fixture() -> MinerConfig {
+    use std::path::PathBuf;
+
+
+    let mut cfg = MinerConfig::default();
+    cfg.workspace.node_home = PathBuf::from(".");
+    cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
+    cfg.chain_info.chain_id = "0L testnet".to_owned();
+    cfg
 }
 
 
@@ -527,3 +525,4 @@ pub fn genesis_preimage() -> Vec<u8> {
     );
     return preimage;
 }
+

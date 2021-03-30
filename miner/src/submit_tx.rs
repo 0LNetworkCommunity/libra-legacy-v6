@@ -411,26 +411,28 @@ fn test_make_params() {
 
     let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-    let configs_fixture = MinerConfig {
-        workspace: Workspace{
-            node_home: PathBuf::from("."),
-        },
-        profile: Profile {
-            auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
-                .to_owned(),
-            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
-            ip: "1.1.1.1".parse().unwrap(),
-            statement: "Protests rage across the nation".to_owned(),
-        },
-        chain_info: ChainInfo {
-            chain_id: "0L testnet".to_owned(),
-            block_dir: "test_blocks_temp_2".to_owned(),
-            base_waypoint: None,
-            default_node: Some("http://localhost:8080".parse().unwrap()),
-            upstream_nodes: None,
-        },
+    let mut configs_fixture = crate::block::build_block::test_make_configs_fixture();
+    configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
+    // let configs_fixture = MinerConfig {
+    //     workspace: Workspace{
+    //         node_home: PathBuf::from("."),
+    //     },
+    //     profile: Profile {
+    //         auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+    //             .to_owned(),
+    //         account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+    //         ip: "1.1.1.1".parse().unwrap(),
+    //         statement: "Protests rage across the nation".to_owned(),
+    //     },
+    //     chain_info: ChainInfo {
+    //         chain_id: "0L testnet".to_owned(),
+    //         block_dir: "test_blocks_temp_2".to_owned(),
+    //         base_waypoint: None,
+    //         default_node: Some("http://localhost:8080".parse().unwrap()),
+    //         upstream_nodes: None,
+    //     },
 
-    };
+    // };
 
     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
     let p = get_params(keys, waypoint, &configs_fixture, None, false);
@@ -451,26 +453,29 @@ fn test_save_tx() {
 
     let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse";
     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-    let configs_fixture = MinerConfig {
-        workspace: Workspace{
-            node_home: PathBuf::from("."),
-        },
-        profile: Profile {
-            auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
-                .to_owned(),
-            account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
-            ip: "1.1.1.1".parse().unwrap(),
-            statement: "Protests rage across the nation".to_owned(),
-        },
-        chain_info: ChainInfo {
-            chain_id: "0L testnet".to_owned(),
-            block_dir: "test_blocks_temp_2".to_owned(),
-            base_waypoint: None,
-            default_node: Some("http://localhost:8080".parse().unwrap()),
-            upstream_nodes: None,
-        },
+    let mut configs_fixture = crate::block::build_block::test_make_configs_fixture();
+    configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
 
-    };
+    // let configs_fixture = MinerConfig {
+    //     workspace: Workspace{
+    //         node_home: PathBuf::from("."),
+    //     },
+    //     profile: Profile {
+    //         auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
+    //             .to_owned(),
+    //         account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
+    //         ip: "1.1.1.1".parse().unwrap(),
+    //         statement: "Protests rage across the nation".to_owned(),
+    //     },
+    //     chain_info: ChainInfo {
+    //         chain_id: "0L testnet".to_owned(),
+    //         block_dir: "test_blocks_temp_2".to_owned(),
+    //         base_waypoint: None,
+    //         default_node: Some("http://localhost:8080".parse().unwrap()),
+    //         upstream_nodes: None,
+    //     },
+
+    // };
     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
     let p = get_params(keys, waypoint, &configs_fixture, None, false);
     util_save_tx(&p);
