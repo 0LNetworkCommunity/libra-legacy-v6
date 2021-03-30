@@ -809,6 +809,8 @@ module LibraAccount {
         vm: &signer
     ) acquires LibraAccount , Balance, AccountOperationsCapability {
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 0) return; 
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 

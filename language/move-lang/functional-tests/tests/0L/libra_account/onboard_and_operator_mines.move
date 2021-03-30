@@ -1,6 +1,6 @@
 // Module to test bulk validator updates function in LibraSystem.move
-//! account: alice, 1000000, 0, validator
-
+//! account: alice, 3000000, 0, validator
+// NOTE: enough balance for onboarding gas transfer.
 
 //! new-transaction
 //! sender: alice
