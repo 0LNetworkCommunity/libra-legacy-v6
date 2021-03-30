@@ -4974,6 +4974,7 @@ dependencies = [
  "tui",
  "unicode-segmentation",
  "unicode-width",
+ "url",
  "warp",
 ]
 
@@ -7582,8 +7583,8 @@ dependencies = [
  "libra-types",
  "libra-wallet",
  "libradb",
- "miner",
  "move-core-types",
+ "ol-cli",
  "once_cell",
  "regex",
  "reqwest",

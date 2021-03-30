@@ -4,7 +4,7 @@
 //! application's configuration file and/or command-line options
 //! for specifying it.
 
-pub use miner::config::MinerConfig as AppConfig;
+pub use ol_cli::config::OlCliConfig as AppConfig;
 
 
 // use abscissa_core::path::{PathBuf};
