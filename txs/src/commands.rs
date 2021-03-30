@@ -12,7 +12,6 @@
 
 mod create_account_cmd;
 mod create_validator_cmd;
-mod init_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
 mod autopay_new_cmd;
@@ -24,7 +23,6 @@ use libra_global_constants::NODE_HOME;
 use self::{
     create_account_cmd::CreateAccountCmd,
     create_validator_cmd::CreateValidatorCmd,
-    init_cmd::InitCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
     autopay_new_cmd::AutopayNewCmd,
@@ -55,10 +53,6 @@ pub enum TxsCmd {
     /// The `help` subcommand
     #[options(help = "get usage information")]
     Help(Help<Self>),
-
-    /// The `init` subcommand
-    #[options(help = "initialize txs configs txs.toml")]
-    Init(InitCmd),
 
     /// The `version` subcommand
     #[options(help = "display version information")]
