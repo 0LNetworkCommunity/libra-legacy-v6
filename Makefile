@@ -41,15 +41,17 @@ deps:
 
 bins:
 	#Build and install genesis tool, libra-node, and miner
-
+	cargo run -p stdlib --release
 	# NOTE: stdlib is built for cli bindings
-	cargo build -p stdlib -p libra-node -p miner -p backup-cli -p ol-cli --release
+	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs --release
 
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
 	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
 	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
+	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
+
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
