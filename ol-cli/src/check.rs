@@ -1,5 +1,6 @@
 //! `check` module
 
+use anyhow::Error;
 use cli::libra_client::LibraClient;
 use sysinfo::SystemExt;
 use crate::metadata::Metadata;
@@ -136,19 +137,22 @@ impl Check {
         }
     }
 
-    fn get_annotate_account_blob(&mut self, address: AccountAddress) -> Option<AccountState> {
-        let (blob, _ver) = self.client.get_account_state_blob(address).unwrap();
+    fn get_annotate_account_blob(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
+        let (blob, _ver) = self.client.get_account_state_blob(address)?;
         if let Some(account_blob) = blob {
-            Some(AccountState::try_from(&account_blob).unwrap())
+            Ok(AccountState::try_from(&account_blob).unwrap())
         }else{
-            None
+            Err(Error::msg("connection to client"))
         }
 
     }
 
     /// Fetch chain state from the upstream node
     pub fn fetch_upstream_states(&mut self) {
-        self.chain_state = self.get_annotate_account_blob(AccountAddress::ZERO);
+        self.chain_state = match self.get_annotate_account_blob(AccountAddress::ZERO) {
+            Ok(account_state) => {Some(account_state)}
+            Err(_) => None
+        };
         self.miner_state = match self.client.get_miner_state(self.conf.profile.account) {
             Ok(state) => state,
             _ => {
@@ -175,9 +179,13 @@ impl Check {
 
     /// return  height on chain
     pub fn chain_height(&mut self) -> u64 {
-        let m = self.client.get_metadata().unwrap();
-        self.items.height = m.version;
-        m.version
+        match self.client.get_metadata() {
+            Ok(m) => {
+                self.items.height = m.version;
+                m.version
+            }
+            Err(_) => 0
+        }
     }
 
     /// return epoch on chain
@@ -243,6 +251,7 @@ impl Check {
         let home_path = self.conf.workspace.node_home.clone();
         
         let c_exist = home_path.join("blocks/block_0.json").exists() && 
+        // home_path.join("validator.node.yaml").exists() && 
         home_path.join("validator.node.yaml").exists() && 
         home_path.join("key_store.json").exists();
 
@@ -260,7 +269,7 @@ impl Check {
                 Some(_) => true,
                 None => false
             },
-            Err(err) => panic!("Error: {}", err),
+            Err(_) => false,
         }
     }
 
@@ -277,16 +286,17 @@ impl Check {
     }
 
     /// Checks if node is synced
-    pub fn node_is_synced() -> bool {
-        Metadata::compare_from_config() < 1000
+    pub fn node_is_synced() -> (bool, i64) {
+        let delay = Metadata::compare_from_config();
+        ( delay < 10_000, delay)
     }
 
     /// Check if node caught up, if so mark as caught up.
-    pub fn check_sync(&mut self) -> bool {
+    pub fn check_sync(&mut self) -> (bool, i64) {
         let sync = Check::node_is_synced();
         // let have_ever_synced = false;
         // assert never synced
-        if self.has_never_synced() && sync {
+        if self.has_never_synced() && sync.0 {
             // mark as synced
             self.items.is_synced = true;
             self.items.write_cache();
@@ -349,7 +359,10 @@ impl Check {
             &self.conf.profile.default_node.clone().unwrap(),
             &mut self.client
         );
-        m.meta.version
+        if let Some(mv) = m.meta {
+           return mv.version
+        }
+        0
     }
 }
 

@@ -20,7 +20,8 @@ pub fn mon(is_live: bool) {
         checker.fetch_upstream_states();
 
         // TODO: make keep cursor position
-        let sync = checker.check_sync();
+        let sync_tuple = checker.check_sync();
+
         let mining = match checker.miner_running() {
             true=> "running",
             false => "stopped"
@@ -33,10 +34,11 @@ pub fn mon(is_live: bool) {
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Configs Exist:{}, Is synced: {}, Node app: {}, Miner app: {}, Account on chain: {}, Epoch: {}, Height {}, In val set:{}",
+                "Test: {}, Configs Exist:{}, Is synced: {}, Sync delay: {}, Node app: {}, Miner app: {}, Account on chain: {}, Epoch: {}, Height {}, In val set:{}",
                 &x,
                 checker.configs_exist(),
-                &sync,
+                &sync_tuple.0,
+                &sync_tuple.1,
                 node_status,
                 mining,
                 checker.accounts_exist_on_chain(),

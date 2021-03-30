@@ -186,7 +186,7 @@ impl NodeState {
                     management::start_miner()
                 }
 
-                if check.check_sync() {
+                if check.check_sync().0 {
                     &self.transition(NodeAction::FullnodeSynced, trigger_action);
                 } 
 

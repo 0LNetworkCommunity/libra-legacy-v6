@@ -167,7 +167,7 @@ pub fn start_miner() {
 
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
-    let use_backup = if check::Check::node_is_synced() {"--backup-url"} else { "" };
+    let use_backup = if check::Check::node_is_synced().0 {"--backup-url"} else { "" };
     
     // TODO: Boilerplate, figure out how to make generic
     let child = if *IS_PROD {
@@ -204,7 +204,7 @@ pub fn choose_rpc_node() -> Option<Url> {
 
     // check the node is in sync
     // Note this assumes that we can connect to local and to a backup.
-    if check::Check::node_is_synced() {
+    if check::Check::node_is_synced().0 {
         // always choose local node if in sync
         return conf.profile.default_node
     } else {

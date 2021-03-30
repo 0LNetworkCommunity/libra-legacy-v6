@@ -12,7 +12,7 @@ pub struct Metadata {
     /// url
     pub url: Url,
     /// metadata object
-    pub meta: MetadataView,
+    pub meta: Option<MetadataView>,
 }
 
 
@@ -20,24 +20,26 @@ impl Metadata {
     /// returns a LibraClient instance.
     // TODO: Use app config file for params
     pub fn new(url: &Url, client: &mut LibraClient) -> Self {    
-        let block_metadata = client
-        .get_metadata()
-        .unwrap_or_else(|e| {
-            panic!(
-                "Not able to connect to validator at {:#?}. Error: {}",
-                &url,
-                e,
-            )
-        });
-        Metadata {
-            url: url.clone(),
-            meta: block_metadata
+        match client.get_metadata() {
+            Ok(meta) => {
+                Metadata {
+                    url: url.clone(),
+                    meta: Some(meta)
+                }
+            }
+            Err(_) => {
+                Metadata {
+                    url: url.clone(),
+                    meta: None
+                }
+            }
         }
+
     }
 
     /// Compare the metadata of a local and a remote node
-    pub fn compare(local: Metadata, remote: Metadata) -> i64 {
-        let delay: i64 = local.meta.version as i64 - remote.meta.version as i64;
+    pub fn compare(local: MetadataView, remote: MetadataView) -> i64 {
+        let delay: i64 =  remote.version as i64 - local.version as i64;
         delay
     }
 
@@ -56,7 +58,9 @@ impl Metadata {
             &remote_client.1,
             &mut remote_client.0.unwrap()
         );
-
-        Metadata::compare(local, remote) as i64
+        if local.meta.is_some() && remote.meta.is_some() {
+         return Metadata::compare(local.meta.unwrap(), remote.meta.unwrap()) as i64
+        }
+        0
     }
 }
