@@ -5,7 +5,7 @@ use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use crate::delay;
 use crate::prelude::app_config;
-use crate::config::MinerConfig;
+
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
@@ -279,7 +279,7 @@ fn create_fixtures() {
         let ns = i.to_string();
         let mut wallet = WalletLibrary::new();
 
-        let (auth_key, _) = wallet.new_address().expect("Could not generate address");
+        let (_auth_key, _) = wallet.new_address().expect("Could not generate address");
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
@@ -333,7 +333,7 @@ fn create_fixtures() {
 
 #[test]
 fn test_mine_once() {
-    use libra_types::PeerId;
+    
     // if no file is found, the block height is 0
     let mut configs_fixture = test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();

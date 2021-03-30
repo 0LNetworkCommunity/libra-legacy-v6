@@ -1,17 +1,13 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
-use libra_types::PeerId;
-use miner::config::*;
-use abscissa_core::path::PathBuf;
-use ol_cli::config::{
-    Workspace,
-    Profile,
-    ChainInfo,
-};
+
+
+
+
 #[test]
 fn test_genesis_preimage() {
-    let mut configs = miner::block::build_block::test_make_configs_fixture();
+    let _configs = miner::block::build_block::test_make_configs_fixture();
     // // Create fixtures.
     // let configs = MinerConfig {
     //     workspace: Workspace {
