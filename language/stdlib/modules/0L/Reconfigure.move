@@ -24,8 +24,6 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
-    use 0x1::Debug::print;
-    use 0x1::LibraAccount;
 
 
     // This function is called by block-prologue once after n blocks.
@@ -33,7 +31,6 @@ module Reconfigure {
     public fun reconfigure(vm: &signer, height_now: u64) {
         assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
 
-        
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
@@ -48,17 +45,13 @@ module Reconfigure {
             
             let value: u64;
             // check if is in onboarding state (or stuck)
-            print(&LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010));
 
             if (FullnodeState::is_onboarding(addr)) {
-                print(&addr);
                 value = Subsidy::distribute_onboarding_subsidy(vm, addr);
             } else {
-                print(&0x00000122);
                 // steady state
                 value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
             };
-            print(&LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010));
 
             FullnodeState::inc_payment_count(vm, addr, count);
             FullnodeState::inc_payment_value(vm, addr, value);
