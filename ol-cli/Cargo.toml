@@ -47,6 +47,9 @@ ajson = "0.2.3"
 hex = "0.4"
 machine-ip = "0.2.1"
 url = { version = "^2.1", features = ["serde"]}
+libra-genesis-tool = { path = "../config/management/genesis", version = "0.1.0" }
+libra-wallet = { path = "../testsuite/cli/libra-wallet", version = "0.1.0" }
+keygen = { path = "../keygen/", version = "0.1.0" }
 
 
 # Parity with Storage create

@@ -10,7 +10,7 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-mod init;
+mod init_cmd;
 mod version;
 mod monitor_cmd;
 mod mgmt_cmd;
@@ -22,7 +22,7 @@ mod check_cmd;
 mod explorer_cmd;
 
 use self::{
-    init::StartCmd,
+    init_cmd::InitCmd,
     version::VersionCmd,
     monitor_cmd::MonitorCmd,
     mgmt_cmd::MgmtCmd,
@@ -53,8 +53,8 @@ pub enum OlCliCmd {
     Help(Help<Self>),
 
     /// The `start` subcommand
-    #[options(help = "initialize the application")]
-    Init(StartCmd),
+    #[options(help = "initialize the 0L configs")]
+    Init(InitCmd),
 
     /// The `version` subcommand
     Version(VersionCmd),
