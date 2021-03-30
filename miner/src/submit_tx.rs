@@ -402,7 +402,7 @@ pub fn util_save_tx(
 #[test]
 fn test_make_params() {
     use libra_types::PeerId; 
-    use crate::config::MinerConfig::{
+    use ol_cli::config::{
         Workspace,
         Profile,
         ChainInfo
