@@ -22,6 +22,13 @@ pub const CHECK_CACHE_PATH: &str = "ol-system-checks";
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
 
+/// node process name: 
+pub const NODE_PROCESS: &str = "libra-node";
+
+/// miner process name: 
+pub const MINER_PROCESS: &str = "miner";
+
+
 /// Construct Lazy Database instance
 pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
     let mut conf = app_config().to_owned();
@@ -110,8 +117,8 @@ pub struct Check {
     pub conf: OlCliConfig,
     /// libraclient for connecting
     pub client: LibraClient,
-    miner_process_name: &'static str,
-    node_process_name: &'static str,
+    // miner_process_name: &'static str,
+    // node_process_name: &'static str,
     /// all items we are checking. Monitor sends these to cache.
     pub items: Items,
     chain_state: Option<AccountState>,
@@ -123,14 +130,29 @@ impl Check {
     /// Create a instance of Check
     pub fn new() -> Self {
         let conf = app_config().to_owned();
+        let use_local = Check::check_node_state();
+
+        let url = if use_local {
+            conf
+            .clone()
+            .profile
+            .default_node
+            .expect("cannot get default url")
+        } else {
+            conf.clone()
+            .profile
+            .upstream_nodes
+            .unwrap()
+            .pop()
+            .expect("cannot get upstream node url")
+        };
+
         return Self {
             client: LibraClient::new(
-                conf.clone().profile.default_node.expect("cannot get url"), 
+                url, 
                 conf.get_waypoint().unwrap_or_default() //default for Waypoint will not be able to connect
             ).unwrap(),
             conf,
-            miner_process_name: "miner",
-            node_process_name: "libra-node",
             items: Items::init(),
             miner_state: None,
             chain_state: None,
@@ -287,6 +309,9 @@ impl Check {
 
     /// Checks if node is synced
     pub fn node_is_synced() -> (bool, i64) {
+        if !Check::check_node_state() {
+            return (false, 0)
+        };
         let delay = Metadata::compare_from_config();
         ( delay < 10_000, delay)
     }
@@ -322,19 +347,23 @@ impl Check {
     }
 
     /// Check if node is running
-    pub fn node_running(&mut self) -> bool {
+    pub fn check_node_state() -> bool {
         let mut system = sysinfo::System::new_all();
         // dbg!(&self.node_process_name);
 
         // First we update all information of our system struct.
         system.refresh_all();
-        let ps = system.get_process_by_name(self.node_process_name);
+        let ps = system.get_process_by_name(NODE_PROCESS);
         // dbg!(&ps);
 
         let is_running = ps.len() > 0;
+        is_running
+    }
+    /// Check if node is running
+    pub fn node_running(&mut self) -> bool {
+        let is_running = Check::check_node_state();
         self.items.node_running = is_running;
         is_running
-
     }
 
     /// Check if miner is running
@@ -344,7 +373,7 @@ impl Check {
 
         use sysinfo::ProcessExt;
         for (_, process) in system.get_processes() {
-            if process.name() == self.miner_process_name { 
+            if process.name() == MINER_PROCESS { 
                 return true; 
             }            
         }
