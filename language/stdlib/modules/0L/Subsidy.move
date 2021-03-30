@@ -25,6 +25,7 @@ address 0x1 {
     use 0x1::Testnet::is_testnet;
     use 0x1::FullnodeState;
     use 0x1::ValidatorConfig;
+    use 0x1::Debug::print;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -53,10 +54,14 @@ address 0x1 {
         subsidy_granted = subsidy_units/len;
       } else { return };
 
+      print(&0x0000002);
+
       let i = 0;
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
+        print(&node_address);
+
         // Transfer gas from vm address to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
         LibraAccount::vm_deposit_with_metadata<GAS>(
@@ -169,6 +174,8 @@ address 0x1 {
       assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 190103014010);
       let capability_token = LibraAccount::extract_withdraw_capability(vm);
 
+      print(&0x0000003);
+
       let len = Vector::length<address>(outgoing_set);
 
       let bal = TransactionFee::get_amount_to_distribute(vm);
@@ -225,6 +232,7 @@ address 0x1 {
       });
     }
 
+    // TODO: Deprecate in v4.2.9+ since the onboarding gas transfer resolves this issue.
     public fun distribute_onboarding_subsidy(
       vm: &signer,
       miner: address
@@ -246,19 +254,6 @@ address 0x1 {
         miner,
         minted_coins,
         b"onboarding_subsidy",
-        b""
-      );
-
-      // double the subsidy with operator account, so can send transactions.
-
-      let minted_coins_operator = Libra::mint<GAS>(vm, subsidy);
-      let oper_addr = ValidatorConfig::get_operator(miner);
-
-      LibraAccount::vm_deposit_with_metadata<GAS>(
-        vm,
-        oper_addr,
-        minted_coins_operator,
-        b"onboarding_subsidy_operator",
         b""
       );
 
@@ -418,6 +413,7 @@ address 0x1 {
 
     // Operators may run out of balance to submit txs for the Validator. This is true for mining, where the operator receives no network subsidy.
     fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {
+        print(&0x0000004);
         // get operator for validator
         let oper_addr = ValidatorConfig::get_operator(miner_addr);
         // count OWNER's proofs submitted
@@ -434,6 +430,8 @@ address 0x1 {
           if (!(owner_balance > cost)) {
             cost = owner_balance;
           };
+          
+          print(&cost);
           LibraAccount::vm_make_payment<GAS>(
             miner_addr,
             oper_addr,

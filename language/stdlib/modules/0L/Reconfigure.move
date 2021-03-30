@@ -24,12 +24,15 @@ module Reconfigure {
     use 0x1::AccountLimits;
     use 0x1::GAS::GAS;
     use 0x1::LibraConfig;
+    use 0x1::Debug::print;
+    use 0x1::LibraAccount;
 
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer, height_now: u64) {
         assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
+
         
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
@@ -45,11 +48,17 @@ module Reconfigure {
             
             let value: u64;
             // check if is in onboarding state (or stuck)
+            print(&LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010));
+
             if (FullnodeState::is_onboarding(addr)) {
+                print(&addr);
                 value = Subsidy::distribute_onboarding_subsidy(vm, addr);
             } else {
+                print(&0x00000122);
+                // steady state
                 value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
             };
+            print(&LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010));
 
             FullnodeState::inc_payment_count(vm, addr, count);
             FullnodeState::inc_payment_value(vm, addr, value);
@@ -104,7 +113,7 @@ module Reconfigure {
         // Update all validators with account limits
         // After Epoch 1000. 
         if (LibraConfig::check_transfer_enabled()) {
-        update_validator_withdrawal_limit(vm);
+            update_validator_withdrawal_limit(vm);
         };
     
         // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig

@@ -76,19 +76,24 @@ script {
   use 0x1::Reconfigure;
   use 0x1::MinerState;
   use 0x1::Testnet;
+  use 0x1::Debug::print;
 
 fun main(vm: &signer) {
     Testnet::remove_testnet(vm); // need to remove testnet for this test, since testnet does not ratelimit account creation.
 
     let eve = 0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
     let old_account_bal = LibraAccount::balance<GAS>(eve);
+    let old_account_bal_oper = LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010);
+    print(&old_account_bal_oper);
+
     Reconfigure::reconfigure(vm, 100);
     let new_account_bal = LibraAccount::balance<GAS>(eve);
-  
+
     assert(old_account_bal == 1000000, 7357001);
     assert(new_account_bal == 3497536, 7357002);
 
     // Operator account should not increase after epoch change
+    print(&LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010));
     assert(LibraAccount::balance<GAS>(0xfa72817f1b5aab94658238ddcdc08010) == 1000000, 7357003);
 
     assert(MinerState::can_create_val_account({{bob}}) == false, 7357004);
