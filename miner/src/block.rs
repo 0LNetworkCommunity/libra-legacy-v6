@@ -5,7 +5,7 @@ use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use crate::delay;
 use crate::prelude::app_config;
-use crate::config::MinerConfig;
+
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {

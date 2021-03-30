@@ -442,7 +442,7 @@ fn test_make_params() {
 #[test]
 fn test_save_tx() {
     use libra_types::PeerId; 
-    use crate::config::{
+    use ol_cli::config::{
         Workspace,
         Profile,
         ChainInfo
