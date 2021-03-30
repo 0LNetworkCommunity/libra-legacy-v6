@@ -64,7 +64,7 @@ fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
-    blocks_dir.push(&config.chain_info.block_dir);
+    blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
     // If there are NO files in path, mine the genesis proof.

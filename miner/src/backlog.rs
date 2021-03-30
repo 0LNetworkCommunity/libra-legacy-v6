@@ -42,7 +42,7 @@ pub fn process_backlog(config: &MinerConfig, tx_params: &TxParams, is_operator: 
     println!("Remote tower height: {}", remote_height);
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
-    blocks_dir.push(&config.chain_info.block_dir);
+    blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
     println!("Local tower height: {:?}", current_block_number.unwrap());

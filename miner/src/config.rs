@@ -68,7 +68,7 @@ impl MinerConfig {
         conf.profile.auth_key = param.sender_auth_key.to_string();
 
         // Load chain info
-        conf.chain_info.default_node = Some(param.url.clone());
+        conf.profile.default_node = Some(param.url.clone());
         conf
     }
     /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
@@ -154,7 +154,7 @@ impl MinerConfig {
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
         let mut home = self.workspace.node_home.clone();
-        home.push(&self.chain_info.block_dir);
+        home.push(&self.workspace.block_dir);
         home
     }
 
@@ -257,15 +257,22 @@ impl Default for MinerConfig {
 pub struct Workspace {
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
+    
+    /// Directory to store blocks in
+    pub block_dir: String,
+
     /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
-    pub stdlib_bin_path: PathBuf
+    pub stdlib_bin_path: PathBuf,
+
+
 }
 
 impl Default for Workspace {
     fn default() -> Self {
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
-            stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv".parse::<PathBuf>().unwrap()
+            block_dir: "blocks".to_owned(),
+            stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv".parse::<PathBuf>().unwrap(),
 
         }
     }
@@ -277,12 +284,7 @@ impl Default for Workspace {
 pub struct ChainInfo {
     /// Chain that this work is being committed to
     pub chain_id: String,
-    /// Directory to store blocks in
-    pub block_dir: String,
-    /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    pub default_node: Option<Url>,
-    /// Other nodes to connect for fallback connections
-    pub upstream_nodes: Option<Vec<Url>>,
+
     /// Waypoint for last epoch which the node is syncing from.
     pub base_waypoint: Option<Waypoint>,
 }
@@ -292,14 +294,8 @@ impl Default for ChainInfo {
     fn default() -> Self {
         Self {
             chain_id: "experimental".to_owned(),
-            block_dir: "blocks".to_owned(),
             // Mock Waypoint. Miner complains without.
             base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
-            // TODO: select defaults from command line.
-            default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            upstream_nodes: Some(vec!["http://167.172.248.37:8080"
-                .parse()
-                .expect("parse url")]),
         }
     }
 }
@@ -313,13 +309,17 @@ pub struct Profile {
     ///Miner Authorization Key for 0L Blockchain. Note: not the same as public key, nor account.
     pub auth_key: String,
 
-    // ///The 0L private_key for signing transactions.
-    // pub operator_private_key: Option<String>,
-    /// ip address of the miner. May be different from transaction URL.
-    pub ip: Ipv4Addr,
-
     ///An opportunity for the Miner to write a message on their genesis block.
     pub statement: String,
+
+    /// ip address of this node. May be different from transaction URL.
+    pub ip: Ipv4Addr,
+
+    /// Node URL and and port to submit transactions. Defaults to localhost:8080
+    pub default_node: Option<Url>,
+
+    /// Other nodes to connect for fallback connections
+    pub upstream_nodes: Option<Vec<Url>>,
 }
 
 impl Default for Profile {
@@ -327,8 +327,12 @@ impl Default for Profile {
         Self {
             auth_key: "".to_owned(),
             account: AccountAddress::from_hex_literal("0x0").unwrap(),
-            ip: "0.0.0.0".parse().unwrap(),
             statement: "Protests rage across the nation".to_owned(),
+            ip: "0.0.0.0".parse().unwrap(),
+            default_node: Some("http://localhost:8080".parse().expect("parse url")),
+            upstream_nodes: Some(vec!["http://167.172.248.37:8080"
+                .parse()
+                .expect("parse url")]),
         }
     }
 }

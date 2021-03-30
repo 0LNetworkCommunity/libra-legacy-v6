@@ -132,7 +132,7 @@ pub mod build_block {
     ) -> Result<(), Error> {
         // get the location of this miner's blocks
         let mut blocks_dir = config.workspace.node_home.clone();
-        blocks_dir.push(&config.chain_info.block_dir);
+        blocks_dir.push(&config.workspace.block_dir);
         let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
 
         // If there are NO files in path, mine the genesis proof.
@@ -148,7 +148,7 @@ pub mod build_block {
                 let block = mine_once(&config)?;
                 status_info!("Proof mined:", format!("block_{}.json created.", block.height.to_string()));
 
-                if let Some(ref _node) = config.chain_info.default_node {
+                if let Some(ref _node) = config.profile.default_node {
                     match submit_tx(&tx_params, block.preimage, block.proof, is_operator) {
                         Ok(tx_view) => {
                             match eval_tx_status(tx_view) {

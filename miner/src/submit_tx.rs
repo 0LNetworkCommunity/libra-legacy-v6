@@ -254,7 +254,7 @@ pub fn get_params(
         url_opt.expect("could nod parse url")
     } else {
         if backup_url {
-            config.chain_info.upstream_nodes
+            config.profile.upstream_nodes
             .clone()
             .unwrap()
             .into_iter()
@@ -262,7 +262,7 @@ pub fn get_params(
             .expect("no backup url provided in config toml")
 
         } else {
-            config.chain_info.default_node.clone().expect("no url provided in config toml")
+            config.profile.default_node.clone().expect("no url provided in config toml")
         }
     };
 
@@ -306,7 +306,7 @@ pub fn get_oper_params(
         url_opt.expect("could nod parse url")
     } else {
         if backup_url {
-            config.chain_info.upstream_nodes
+            config.profile.upstream_nodes
             .clone()
             .unwrap()
             .into_iter()
@@ -314,7 +314,7 @@ pub fn get_oper_params(
             .expect("no backup url provided in config toml")
 
         } else {
-            config.chain_info.default_node.clone().expect("no url provided in config toml")
+            config.profile.default_node.clone().expect("no url provided in config toml")
         }
     };
 
