@@ -58,8 +58,8 @@ pub struct AutopayNewCmd {
 //     transaction_builder::encode_create_user_account_script(pre_hex, proof_hex)
 // }
 
-fn get_epoch(tx_params: TxParams){
-            // Get epoch
+/// get epoch on chain
+fn get_epoch(tx_params: TxParams) -> u64{
         let mut client = LibraClient::new(
             tx_params.url.clone(), tx_params.waypoint
         ).unwrap();
@@ -67,18 +67,19 @@ fn get_epoch(tx_params: TxParams){
         .get_account_state_blob(AccountAddress::ZERO)
         .unwrap();
 
-        // dbg!(&blob);
-        // let mut cs = ChainState::default();
-        if let Some(account_blob) = blob {
-            let account_state = AccountState::try_from(&account_blob).unwrap();
-            // let meta = client.get_metadata().unwrap();
-            let epoch = account_state
+        match blob {
+            Some(account_state) => {
+                let account_state = AccountState::try_from(&account_blob).unwrap();
+                // let meta = client.get_metadata().unwrap();
+                account_state
                 .get_configuration_resource()
                 .unwrap()
                 .unwrap()
-                .epoch();
-            
-            dbg!(epoch);
+                .epoch()
+                
+                // dbg!(epoch);
+            }
+            _ => 0
         }
 
 }

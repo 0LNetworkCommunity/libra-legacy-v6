@@ -83,6 +83,7 @@ pub enum MinerCmd {
     #[options(help = "wizard to create accounts and local configs")]
     UserWizard(UserWizardCmd),
 
+    // TODO: init is duplicated with ol-cli
     /// The `init` subcommand
     #[options(help = "initialize miner configs miner.toml")]
     Init(InitCmd),
