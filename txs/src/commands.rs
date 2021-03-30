@@ -15,6 +15,7 @@ mod create_validator_cmd;
 mod init_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
+mod autopay_new_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use crate::config::AppConfig;
@@ -26,6 +27,7 @@ use self::{
     init_cmd::InitCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
+    autopay_new_cmd::AutopayNewCmd,
     
 };
 use std::path::PathBuf;
@@ -61,6 +63,11 @@ pub enum TxsCmd {
     /// The `version` subcommand
     #[options(help = "display version information")]
     Version(VersionCmd),   
+
+    /// The `autopay-new` subcommand
+    #[options(help = "display version information")]
+    AutopayNew(AutopayNewCmd),   
+    
 }
 
 /// This trait allows you to define how application configuration is loaded.

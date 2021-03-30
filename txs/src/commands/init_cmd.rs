@@ -16,6 +16,6 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Run
     fn run(&self) {
-        AppConfig::init_app_configs(self.path.clone());
+        // AppConfig::init_app_configs(self.path.clone());
     }
 }

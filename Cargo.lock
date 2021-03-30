@@ -7578,6 +7578,7 @@ dependencies = [
  "libra-types",
  "libra-wallet",
  "libradb",
+ "miner",
  "move-core-types",
  "once_cell",
  "regex",

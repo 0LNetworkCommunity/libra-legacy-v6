@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::{fs, net::Ipv4Addr, str::FromStr};
 
+const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -33,6 +34,8 @@ pub struct MinerConfig {
     pub profile: Profile,
     /// Chain Info for all users
     pub chain_info: ChainInfo,
+    /// Transaction configurations
+    pub tx_configs: TxTypes,
 }
 
 const AUTH_KEY_BYTES: usize = 32;
@@ -243,6 +246,7 @@ impl Default for MinerConfig {
             workspace: Workspace::default(),
             profile: Profile::default(),
             chain_info: ChainInfo::default(),
+            tx_configs: TxTypes::default()
         }
     }
 }
@@ -253,12 +257,16 @@ impl Default for MinerConfig {
 pub struct Workspace {
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
+    /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
+    pub stdlib_bin_path: PathBuf
 }
 
 impl Default for Workspace {
     fn default() -> Self {
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
+            stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv".parse::<PathBuf>().unwrap()
+
         }
     }
 }
@@ -282,7 +290,6 @@ pub struct ChainInfo {
 // TODO: These defaults serving as test fixtures.
 impl Default for ChainInfo {
     fn default() -> Self {
-        use libra_global_constants::BASE_WAYPOINT;
         Self {
             chain_id: "experimental".to_owned(),
             block_dir: "blocks".to_owned(),
@@ -325,18 +332,43 @@ impl Default for Profile {
         }
     }
 }
+/// Transaction types used in 0L clients
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TxTypes {
+    /// Transactions related to management: val configs, onboarding, upgrade
+    pub management_txs: TxPrefs,
+    /// Transactions related to mining: commit proof.
+    pub miner_txs: TxPrefs, 
+}
 
-// fn ser_url<S>(url: &Option<Url>, serializer: S) -> Result<S::Ok, S::Error>
-// where
-//     S: Serializer,
-// {
-//     serializer.serialize_str(&url.to_owned().into_string())
-// }
+impl Default for TxTypes {
+        fn default() -> Self {
+        Self {
+            management_txs: TxPrefs::default(), // gas UNITS of computation
+            miner_txs: TxPrefs::default(),
+        }
+    }
+}
 
-// fn de_url<'de, D>(deserializer: D) -> Result<Option<Url>, D::Error>
-// where
-//     D: Deserializer<'de>,
-// {
-//     let s: String = Deserialize::deserialize(deserializer)?;
-//     Some(s.parse::<Url>().map_err(D::Error::custom))
-// }
+/// Transaction preferences for a given type of transaction
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TxPrefs {
+    /// Max gas units to pay per transaction
+    pub max_gas_unit_for_tx: u64, //100_000,
+    /// Max coin price per unit of gas
+    pub coin_price_per_unit: u64, // in micro_gas
+    /// Time in milliseconds to timeout
+    pub user_tx_timeout: u64,     // 5_000,
+}
+
+impl Default for TxPrefs {
+    fn default() -> Self {
+        Self {
+            max_gas_unit_for_tx: 100_000, // gas UNITS of computation
+            coin_price_per_unit: 1, // GAS PRICE in micro_gas
+            user_tx_timeout: 5_000,
+        }
+    }
+}
