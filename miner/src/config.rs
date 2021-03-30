@@ -218,7 +218,6 @@ impl MinerConfig {
         miner_configs.profile.account = account;
 
         let toml = toml::to_string(&miner_configs).unwrap();
-        dbg!(&toml);
         let home_path = miner_configs.workspace.node_home.clone();
         let miner_toml_path = home_path.join(CONFIG_FILE);
         let file = fs::File::create(&miner_toml_path);
