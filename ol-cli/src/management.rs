@@ -144,11 +144,15 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
 
 /// Stop node, as validator
 pub fn stop_node() {
-    kill_zombies(BINARY_NODE);
-    
-    let mut child = Command::new("killall").arg(BINARY_NODE)
-    .spawn()
-    .expect("failed to run killall libra-node");
+    kill_all(BINARY_NODE);    
+}
+
+fn kill_all(process: &str) {
+    kill_zombies(process);
+
+    let mut child = Command::new("killall").arg(process)
+        .spawn()
+        .expect(&format!("failed to run killall {}", process));
     child.wait().expect("killall did not exit");
 }
 
@@ -195,7 +199,7 @@ pub fn start_miner() {
 
 /// Stop Miner
 pub fn stop_miner() {
-    kill_zombies(BINARY_MINER);
+    kill_all(BINARY_MINER);
 }
 
 /// Choose a node to connect for rpc, local or upstream

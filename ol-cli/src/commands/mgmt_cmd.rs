@@ -20,6 +20,12 @@ pub struct MgmtCmd {
 
     #[options(no_short, help = "start miner")]
     start_miner: bool,
+
+    #[options(no_short, help = "stop miner")]
+    stop_miner: bool,
+    
+    #[options(no_short, help = "stop node and miner")]
+    stop_all: bool,    
 }
 
 impl Runnable for MgmtCmd {
@@ -33,5 +39,12 @@ impl Runnable for MgmtCmd {
         else if self.start_miner {
             management::start_miner();
         }
+        else if self.stop_miner {
+            management::stop_miner();
+        }
+        else if self.stop_all {
+            management::stop_node();
+            management::stop_miner();
+        }        
     }
 }
