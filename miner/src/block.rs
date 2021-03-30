@@ -1,7 +1,10 @@
 //! Proof block datastructure
 
+use byteorder::{LittleEndian, WriteBytesExt};
 use hex::{decode, encode};
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use crate::delay;
+use crate::prelude::app_config;
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
@@ -62,7 +65,7 @@ pub mod build_block {
     /// writes a JSON file with the vdf proof, ordered by a blockheight
     pub fn mine_genesis(config: &MinerConfig) -> Block {
         println!("Mining Genesis Proof");
-        let preimage = config.genesis_preimage();
+        let preimage = super::genesis_preimage();
         let now = Instant::now();
         let proof = do_delay(&preimage);
         let elapsed_secs = now.elapsed().as_secs();
@@ -437,4 +440,89 @@ fn test_parse_one_file() {
 }
 
 
+}
+
+/// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
+pub fn genesis_preimage() -> Vec<u8> {
+    const AUTH_KEY_BYTES: usize = 32;
+    const CHAIN_ID_BYTES: usize = 64;
+    const STATEMENT_BYTES: usize = 1008;
+    let cfg = app_config();
+    let mut preimage: Vec<u8> = vec![];
+
+    let mut padded_key_bytes = match hex::decode(cfg.profile.auth_key.clone()) {
+        Err(x) => panic!("Invalid 0L Auth Key: {}", x),
+        Ok(key_bytes) => {
+            if key_bytes.len() != AUTH_KEY_BYTES {
+                panic!(
+                    "Expected a {} byte 0L Auth Key. Got {} bytes",
+                    AUTH_KEY_BYTES,
+                    key_bytes.len()
+                );
+            }
+            key_bytes
+        }
+    };
+
+    preimage.append(&mut padded_key_bytes);
+
+    let mut padded_chain_id_bytes = {
+        let mut chain_id_bytes = cfg.chain_info.chain_id.clone().into_bytes();
+
+        match chain_id_bytes.len() {
+            d if d > CHAIN_ID_BYTES => panic!(
+                "Chain Id is longer than {} bytes. Got {} bytes",
+                CHAIN_ID_BYTES,
+                chain_id_bytes.len()
+            ),
+            d if d < CHAIN_ID_BYTES => {
+                let padding_length = CHAIN_ID_BYTES - chain_id_bytes.len() as usize;
+                let mut padding_bytes: Vec<u8> = vec![0; padding_length];
+                padding_bytes.append(&mut chain_id_bytes);
+                padding_bytes
+            }
+            d if d == CHAIN_ID_BYTES => chain_id_bytes,
+            _ => unreachable!(),
+        }
+    };
+
+    preimage.append(&mut padded_chain_id_bytes);
+
+    preimage
+        .write_u64::<LittleEndian>(delay::delay_difficulty())
+        .unwrap();
+
+    let mut padded_statements_bytes = {
+        let mut statement_bytes = cfg.profile.statement.clone().into_bytes();
+
+        match statement_bytes.len() {
+            d if d > STATEMENT_BYTES => panic!(
+                "Chain Id is longer than 1008 bytes. Got {} bytes",
+                statement_bytes.len()
+            ),
+            d if d < STATEMENT_BYTES => {
+                let padding_length = STATEMENT_BYTES - statement_bytes.len() as usize;
+                let mut padding_bytes: Vec<u8> = vec![0; padding_length];
+                padding_bytes.append(&mut statement_bytes);
+                padding_bytes
+            }
+            d if d == STATEMENT_BYTES => statement_bytes,
+            _ => unreachable!(),
+        }
+    };
+
+    preimage.append(&mut padded_statements_bytes);
+
+    assert_eq!(
+        preimage.len(),
+        (
+            AUTH_KEY_BYTES // 0L Auth_Key
+            + CHAIN_ID_BYTES // chain_id
+            + 8 // iterations/difficulty
+            + STATEMENT_BYTES
+            // statement
+        ),
+        "Preimage is the incorrect byte length"
+    );
+    return preimage;
 }

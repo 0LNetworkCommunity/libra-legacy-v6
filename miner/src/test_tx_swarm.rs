@@ -18,7 +18,7 @@ use libra_genesis_tool::keyscheme::KeyScheme;
 pub fn swarm_miner(swarm_path: PathBuf) {
 
     let tx_params = get_params_from_swarm(swarm_path).unwrap();
-    let conf = MinerConfig::load_swarm_config(&tx_params);
+    let conf = load_swarm_config(&tx_params);
     fs::create_dir_all("./swarm_temp/blocks").unwrap();
     fs::copy("./fixtures/blocks/test/alice/block_0.json", "./swarm_temp/blocks/block_0.json").expect("error copying file");
 
@@ -42,25 +42,38 @@ pub fn swarm_miner(swarm_path: PathBuf) {
     }
 }
 
-/// A test harness for the submit_tx with a local swarm 
-pub fn swarm_onboarding(swarm_path: PathBuf) {
-    // let file = "./blocks/val_init.json";
-    // fs::copy("../fixtures/val_init_stage.json", file).unwrap();
-    let init_file = fs::read_to_string("./fixtures/eve_init_stage.json")
-        .expect("Could not read init file");
+/// Get configs from a running swarm instance.
+fn load_swarm_config(param: &TxParams) -> MinerConfig {
+    let mut conf = MinerConfig::default();
+    conf.workspace.node_home = PathBuf::from("./swarm_temp");
+    // Load profile config
+    conf.profile.account = param.owner_address;
+    conf.profile.auth_key = param.sender_auth_key.to_string();
 
-    let init_file: ValConfigs =
-        serde_json::from_str(&init_file).expect("could not deserialize val_init.json");
-
-    let tx_params = get_params_from_swarm(swarm_path).unwrap();
-        match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
-            Err(err)=>{ println!("{:?}", err) }
-            Ok(res) => {println!("{:?}",Some(res));}
-        }
+    // Load chain info
+    conf.profile.default_node = Some(param.url.clone());
+    conf
 }
 
+// /// A test harness for the submit_tx with a local swarm 
+// pub fn swarm_onboarding(swarm_path: PathBuf) {
+//     // let file = "./blocks/val_init.json";
+//     // fs::copy("../fixtures/val_init_stage.json", file).unwrap();
+//     let init_file = fs::read_to_string("./fixtures/eve_init_stage.json")
+//         .expect("Could not read init file");
 
-fn get_block_fixtures (config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
+//     let init_file: ValConfigs =
+//         serde_json::from_str(&init_file).expect("could not deserialize val_init.json");
+
+//     let tx_params = get_params_from_swarm(swarm_path).unwrap();
+//         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
+//             Err(err)=>{ println!("{:?}", err) }
+//             Ok(res) => {println!("{:?}",Some(res));}
+//         }
+// }
+
+
+fn get_block_fixtures(config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();

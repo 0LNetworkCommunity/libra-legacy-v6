@@ -206,12 +206,11 @@ pub fn choose_rpc_node() -> Option<Url> {
     // Note this assumes that we can connect to local and to a backup.
     if check::Check::node_is_synced() {
         // always choose local node if in sync
-        return conf.chain_info.default_node
+        return conf.profile.default_node
     } else {
         // otherwise use a backup
         // TODO: check all backups in vector to see which connects
-        Some(conf.chain_info
-            .upstream_nodes
+        Some(conf.profile.upstream_nodes
             .unwrap()
             .into_iter()
             .next()

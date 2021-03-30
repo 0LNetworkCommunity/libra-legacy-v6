@@ -24,6 +24,7 @@ num-format = "0.4.0"
 resource-viewer = { path = "../language/tools/resource-viewer", version = "0.1.0" }
 anyhow = "1.0"
 libra-global-constants = { path = "../config/global-constants", version = "0.1.0"}
+byteorder = "1"
 dirs = "2.0.2"
 toml = "0.5.6"
 rustyline = "6.2.0"
@@ -42,7 +43,10 @@ libra-network-address = { path = "../network/network-address", package="libra-ne
 glob = "0.3.0"
 sm = "0.9.0"
 libra-config = { path = "../config", version = "0.1.0"}
-miner = {path = "../miner"}
+ajson = "0.2.3"
+hex = "0.4"
+machine-ip = "0.2.1"
+
 
 # Parity with Storage create
 [dependencies.rocksdb]

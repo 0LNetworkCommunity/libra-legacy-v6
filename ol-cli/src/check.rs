@@ -124,7 +124,7 @@ impl Check {
         let conf = app_config().to_owned();
         return Self {
             client: LibraClient::new(
-                conf.clone().chain_info.default_node.expect("cannot get url"), 
+                conf.clone().profile.default_node.expect("cannot get url"), 
                 conf.get_waypoint().unwrap_or_default() //default for Waypoint will not be able to connect
             ).unwrap(),
             conf,
@@ -346,7 +346,7 @@ impl Check {
     pub fn get_height(&mut self) -> u64 {
 
         let m = Metadata::new(
-            &self.conf.chain_info.default_node.clone().unwrap(),
+            &self.conf.profile.default_node.clone().unwrap(),
             &mut self.client
         );
         m.meta.version
