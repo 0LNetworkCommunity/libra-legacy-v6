@@ -175,7 +175,7 @@ pub fn get_tx_params_from_swarm(
 
 /// Gets transaction params from the 0L project root.
 pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
-    let url =  config.chain_info.default_node.clone().unwrap();
+    let url =  config.profile.default_node.clone().unwrap();
 
     let (auth_key, address, wallet) = keygen::account_from_prompt();
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
