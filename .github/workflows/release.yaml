@@ -11,20 +11,8 @@ env:
 
 jobs:
   release:
-    name: Release for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: move
-            asset_name: move-linux-amd64
-#          - os: windows-latest
-#            artifact_name: move.exe
-#            asset_name: move-windows-amd64
-#          - os: macos-latest
-#            artifact_name: move
-#            asset_name: move-macos-amd64
+    name: Release for OLSF
+    runs-on: self-hosted
 
     steps:
       - run: sudo apt install -y cmake clang llvm libgmp-dev pkg-config libssl-dev
@@ -32,9 +20,10 @@ jobs:
         with:
           rust-version: stable
           components: rustfmt
+      - run: cargo install cargo-deb
       - uses: actions/checkout@v1
       - name: Build
-        run: cargo build --release -p miner -p libra-node
+        run:  cargo deb --deb-version ${{ github.ref }} -- -p miner --exclude libra-fuzzer --exclude cluster-test --exclude libra-fuzz
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
