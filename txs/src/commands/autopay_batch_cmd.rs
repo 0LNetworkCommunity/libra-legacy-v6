@@ -112,7 +112,7 @@ impl Runnable for AutopayBatchCmd {
             println!("{}", &warning);
             // check the user wants to do this.
             if Confirm::new().with_prompt("").interact().unwrap() {
-                let script = transaction_builder::encode_autopay_create_instruction_script(0, i.destination, i.end_epoch, i.percentage);
+                let script = transaction_builder::encode_autopay_create_instruction_script(i.uid, i.destination, i.end_epoch, i.percentage);
 
                 match submit_tx(
                     &tx_params, 
