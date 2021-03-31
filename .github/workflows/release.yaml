@@ -16,6 +16,7 @@ jobs:
 
     steps:
       - run: sudo apt install -y cmake clang llvm libgmp-dev pkg-config libssl-dev
+      - uses: actions-rs/toolchain@v1
       - uses: hecrj/setup-rust-action@v1
         with:
           rust-version: stable
