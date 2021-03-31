@@ -22,7 +22,9 @@ jobs:
           rust-version: stable
           components: rustfmt
       - name: Build
-        run:  cargo build -p miner -p libra-node -p ol-cli --release
+        run:  cargo build -p miner -p libra-node --release
+      - name: Build
+        run: cd ol-cli && cargo build -p ol-cli --release
       - name: Upload `miner` to release
         uses: svenstaro/upload-release-action@v2
         with:
