@@ -22,17 +22,15 @@ jobs:
           rust-version: stable
           components: rustfmt
       - name: Build
-        run:  cargo build -p miner -p libra-node -p ol-cli --release --exclude libra-fuzzer --exclude cluster-test --exclude libra-fuzz
-      - name: Rename
-        run:  cp target/release/miner target/release/ol-miner
-      - name: Upload binaries to release
+        run:  cargo build -p miner -p libra-node -p ol-cli --release
+      - name: Upload `miner` to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/ol*
+          file: target/release/miner
           tag: ${{ github.ref }}
           overwrite: true
-      - name: Upload binaries to release 2
+      - name: Upload `libra-node` to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -40,3 +38,10 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
+      - name: Upload `ol-cli` to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/ol*
+          tag: ${{ github.ref }}
+          overwrite: true
