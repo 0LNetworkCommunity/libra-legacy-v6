@@ -14,7 +14,7 @@ mod create_account_cmd;
 mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
-mod autopay_new_cmd;
+mod autopay_batch_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use crate::config::AppConfig;
@@ -25,7 +25,7 @@ use self::{
     create_validator_cmd::CreateValidatorCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
-    autopay_new_cmd::AutopayNewCmd,
+    autopay_batch_cmd::AutopayBatchCmd,
     
 };
 use std::path::PathBuf;
@@ -37,15 +37,15 @@ pub const CONFIG_FILE: &str = "txs.toml";
 #[derive(Command, Debug, Options, Runnable)]
 pub enum TxsCmd {
     /// The `create-account` subcommand
-    #[options(help = "invoke stdlib script 'ol_create_user_account'")]
+    #[options(help = "submit tx to create a user account from account.json file")]
     CreateAccount(CreateAccountCmd),
 
     /// The `create-validator` subcommand
-    #[options(help = "invoke stdlib script 'ol_miner_state_onboarding'")]
+    #[options(help = "submit tx to create a validator from account.json file")]
     CreateValidator(CreateValidatorCmd),
 
     /// The `oracle-upgrade` subcommand
-    #[options(help = "invoke stdlib script 'ol_oracle_tx_script'")]
+    #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),     
 
     /// --- End of STDLIB SCRIPT COMMANDS ---
@@ -59,8 +59,8 @@ pub enum TxsCmd {
     Version(VersionCmd),   
 
     /// The `autopay-new` subcommand
-    #[options(help = "display version information")]
-    AutopayNew(AutopayNewCmd),   
+    #[options(help = "batch autopay transactions from json file")]
+    AutopayBatch(AutopayBatchCmd),   
     
 }
 

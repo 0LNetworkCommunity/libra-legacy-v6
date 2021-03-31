@@ -192,8 +192,8 @@ pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
         user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
     };
 
-    println!("Info: Getting tx params from txs.toml if available, \
-              otherwise using AppConfig::Profile::default()");
+    // println!("Info: Getting tx params from txs.toml if available, \
+    //           otherwise using AppConfig::Profile::default()");
     Ok(tx_params)
 }
 

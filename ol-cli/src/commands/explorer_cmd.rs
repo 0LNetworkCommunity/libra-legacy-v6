@@ -47,8 +47,8 @@ impl Runnable for ExplorerCMD {
 
             match events.next().unwrap() {
                 Event::Input(key) => match key {
-                    Key::Char(c) => {
-                        app.on_key(c);
+                    Key::Char(character) => {
+                        app.on_key(character);
                     }
                     Key::Up => {
                         app.on_up();
