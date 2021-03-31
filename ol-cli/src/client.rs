@@ -16,6 +16,29 @@ pub fn make_client(url: Option<Url>, waypoint: Waypoint) -> Result<LibraClient, 
     ).unwrap())
 }
 
+/// Experimental
+pub fn get_client(_url: Option<Url>, _waypoint: Waypoint) -> Option<LibraClient> {
+    // if url and waypoint provided as fn params 
+    //     return LibraClient::new(url, waypoint);
+
+    // if local node in-sync 
+    //    return default_local_client()
+    // else find and return connect-able upstream node
+    let config = app_config();
+    let waypoint = config.get_waypoint().expect("could not get waypoint");
+    for url in config.profile.upstream_nodes.as_ref().unwrap() {
+        let mut client = LibraClient::new(url.clone(), waypoint).unwrap();
+        // TODO: What's the better way to check we can connect to client?
+        let metadata = client.get_metadata();
+        dbg!(&metadata);
+        if metadata.is_ok() {   // found a connect-able upstream node
+            return Some(client);
+        }
+    }
+
+    None
+}
+
 /// get client type with defaults from toml for remote node
 pub fn default_remote_client()  ->(Result<LibraClient, Error>, Url){
     let config = app_config();
