@@ -1,14 +1,4 @@
 //! MinerApp Subcommands
-//!
-//! This is where you specify the subcommands of your application.
-//!
-//! The default application comes with two subcommands:
-//!
-//! - `start`: launches the application
-//! - `version`: print application version
-//!
-//! See the `impl Configurable` below for how to specify the path to the
-//! application's configuration file.
 
 mod keygen_cmd;
 mod start_cmd;
@@ -89,11 +79,11 @@ pub enum MinerCmd {
     Init(InitCmd),
 
     /// The `val_wizard` subcommand
-    #[options(help = "run all steps for validator onboarding")]
+    #[options(help = "create all files for validator onboarding")]
     ValWizard(ValWizardCmd),
 
     /// The `fn_wizard` subcommand
-    #[options(help = "run all steps for fullnode config")]
+    #[options(help = "create all files for fullnode config")]
     FnWizard(FnWizardCmd),
     
     /// The `genesis` subcommand

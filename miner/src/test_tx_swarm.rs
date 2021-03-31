@@ -55,24 +55,6 @@ fn load_swarm_config(param: &TxParams) -> MinerConfig {
     conf
 }
 
-// /// A test harness for the submit_tx with a local swarm 
-// pub fn swarm_onboarding(swarm_path: PathBuf) {
-//     // let file = "./blocks/val_init.json";
-//     // fs::copy("../fixtures/val_init_stage.json", file).unwrap();
-//     let init_file = fs::read_to_string("./fixtures/eve_init_stage.json")
-//         .expect("Could not read init file");
-
-//     let init_file: ValConfigs =
-//         serde_json::from_str(&init_file).expect("could not deserialize val_init.json");
-
-//     let tx_params = get_params_from_swarm(swarm_path).unwrap();
-//         match submit_tx(&tx_params, init_file.block_zero.preimage, init_file.block_zero.proof, true) {
-//             Err(err)=>{ println!("{:?}", err) }
-//             Ok(res) => {println!("{:?}",Some(res));}
-//         }
-// }
-
-
 fn get_block_fixtures(config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
