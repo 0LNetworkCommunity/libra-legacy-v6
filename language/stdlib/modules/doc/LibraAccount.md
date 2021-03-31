@@ -1931,6 +1931,8 @@ Return the withdraw capability to the account it originally came from
     vm: &signer
 ) <b>acquires</b> <a href="LibraAccount.md#0x1_LibraAccount">LibraAccount</a> , <a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>, <a href="LibraAccount.md#0x1_LibraAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
     <b>if</b> (<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != <a href="CoreAddresses.md#0x1_CoreAddresses_LIBRA_ROOT_ADDRESS">CoreAddresses::LIBRA_ROOT_ADDRESS</a>()) <b>return</b>;
+    // don't try <b>to</b> send a 0 balance, will halt.
+    <b>if</b> (amount &lt; 0) <b>return</b>;
 
     // Check payee can receive funds in this currency.
     <b>if</b> (!<b>exists</b>&lt;<a href="LibraAccount.md#0x1_LibraAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;

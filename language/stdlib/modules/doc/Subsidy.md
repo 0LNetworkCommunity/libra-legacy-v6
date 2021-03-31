@@ -148,6 +148,7 @@
   <b>while</b> (i &lt; len) {
 
     <b>let</b> node_address = *(<a href="Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(outgoing_set, i));
+
     // Transfer gas from vm address <b>to</b> validator
     <b>let</b> minted_coins = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm_sig, subsidy_granted);
     <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -443,19 +444,6 @@
     miner,
     minted_coins,
     b"onboarding_subsidy",
-    b""
-  );
-
-  // double the subsidy <b>with</b> operator account, so can send transactions.
-
-  <b>let</b> minted_coins_operator = <a href="Libra.md#0x1_Libra_mint">Libra::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, subsidy);
-  <b>let</b> oper_addr = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner);
-
-  <a href="LibraAccount.md#0x1_LibraAccount_vm_deposit_with_metadata">LibraAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-    vm,
-    oper_addr,
-    minted_coins_operator,
-    b"onboarding_subsidy_operator",
     b""
   );
 
@@ -809,6 +797,7 @@
       <b>if</b> (!(owner_balance &gt; cost)) {
         cost = owner_balance;
       };
+
       <a href="LibraAccount.md#0x1_LibraAccount_vm_make_payment">LibraAccount::vm_make_payment</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
         miner_addr,
         oper_addr,
