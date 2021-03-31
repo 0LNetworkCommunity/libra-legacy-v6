@@ -55,7 +55,6 @@ fn load_swarm_config(param: &TxParams) -> MinerConfig {
     conf
 }
 
-
 fn get_block_fixtures(config: &MinerConfig) -> (Vec<u8>, Vec<u8>){
 
     // get the location of this miner's blocks
