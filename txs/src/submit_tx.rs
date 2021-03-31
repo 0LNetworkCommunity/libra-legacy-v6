@@ -121,6 +121,7 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
     }
 
     // Get/override dynamic waypoint from key_store.json
+    // TODO: make this only apply to prod
     if Path::new(&txs_config.get_key_store_path()).exists() {
         tx_params.waypoint = txs_config.get_waypoint().unwrap();
     }
