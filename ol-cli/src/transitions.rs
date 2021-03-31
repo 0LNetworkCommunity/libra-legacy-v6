@@ -218,7 +218,3 @@ impl NodeState {
         self
     }
 }
-
-fn app_config() -> crate::config::OlCliConfig {
-    todo!()
-}

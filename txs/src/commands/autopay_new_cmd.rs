@@ -4,8 +4,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use libra_types::account_address::AccountAddress;
-use ol_cli::{check::Check};
-use crate::prelude::app_config;
+
 use crate::{submit_tx::{eval_tx_status, get_tx_params, submit_tx}};
 use std::{fs, path::PathBuf};
 use serde::{Serialize, Deserialize};
@@ -58,6 +57,7 @@ impl Runnable for AutopayNewCmd {
         let instructions = get_instructions(&self.autopay_batch_file);
         
         instructions.into_iter().for_each(|i| {
+            dbg!(&i);
             let script = transaction_builder::encode_autopay_create_instruction_script(0, i.destination, i.end_epoch, i.percentage);
 
             match submit_tx(
