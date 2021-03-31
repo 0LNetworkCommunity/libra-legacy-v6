@@ -699,6 +699,12 @@ pub enum ScriptCall {
         solution: Bytes,
     },
 
+    MinerstateCommitByOperator {
+        owner_address: AccountAddress,
+        challenge: Bytes,
+        solution: Bytes,
+    },
+
     MinerstateHelper {},
 
     MinerstateOnboarding {
@@ -1660,6 +1666,11 @@ impl ScriptCall {
                 challenge,
                 solution,
             } => encode_minerstate_commit_script(challenge, solution),
+            MinerstateCommitByOperator {
+                owner_address,
+                challenge,
+                solution,
+            } => encode_minerstate_commit_by_operator_script(owner_address, challenge, solution),
             MinerstateHelper {} => encode_minerstate_helper_script(),
             MinerstateOnboarding {
                 challenge,
@@ -2623,6 +2634,22 @@ pub fn encode_minerstate_commit_script(challenge: Vec<u8>, solution: Vec<u8>) ->
         MINERSTATE_COMMIT_CODE.to_vec(),
         vec![],
         vec![
+            TransactionArgument::U8Vector(challenge),
+            TransactionArgument::U8Vector(solution),
+        ],
+    )
+}
+
+pub fn encode_minerstate_commit_by_operator_script(
+    owner_address: AccountAddress,
+    challenge: Vec<u8>,
+    solution: Vec<u8>,
+) -> Script {
+    Script::new(
+        MINERSTATE_COMMIT_BY_OPERATOR_CODE.to_vec(),
+        vec![],
+        vec![
+            TransactionArgument::Address(owner_address),
             TransactionArgument::U8Vector(challenge),
             TransactionArgument::U8Vector(solution),
         ],
@@ -3812,6 +3839,14 @@ fn decode_minerstate_commit_script(script: &Script) -> Option<ScriptCall> {
     })
 }
 
+fn decode_minerstate_commit_by_operator_script(script: &Script) -> Option<ScriptCall> {
+    Some(ScriptCall::MinerstateCommitByOperator {
+        owner_address: decode_address_argument(script.args().get(0)?.clone())?,
+        challenge: decode_u8vector_argument(script.args().get(1)?.clone())?,
+        solution: decode_u8vector_argument(script.args().get(2)?.clone())?,
+    })
+}
+
 fn decode_minerstate_helper_script(_script: &Script) -> Option<ScriptCall> {
     Some(ScriptCall::MinerstateHelper {})
 }
@@ -4085,6 +4120,10 @@ static SCRIPT_DECODER_MAP: once_cell::sync::Lazy<DecoderMap> = once_cell::sync::
         Box::new(decode_minerstate_commit_script),
     );
     map.insert(
+        MINERSTATE_COMMIT_BY_OPERATOR_CODE.to_vec(),
+        Box::new(decode_minerstate_commit_by_operator_script),
+    );
+    map.insert(
         MINERSTATE_HELPER_CODE.to_vec(),
         Box::new(decode_minerstate_helper_script),
     );
@@ -4256,24 +4295,25 @@ const ADD_VALIDATOR_AND_RECONFIGURE_CODE: &[u8] = &[
 ];
 
 const AUTOPAY_CREATE_INSTRUCTION_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 19, 7, 38, 56, 8, 94, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 1, 4, 0, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5, 3, 3, 0, 1, 1,
-    3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100,
-    100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101, 95, 105, 110, 115, 116,
-    114, 117, 99, 116, 105, 111, 110, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 19, 10, 0, 17, 0, 12, 5, 10, 5, 17, 2, 12, 6,
-    11, 6, 3, 12, 11, 0, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 11, 0, 10, 1, 10, 2, 10, 3, 10, 4, 17,
-    1, 2,
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 20, 5, 24, 19, 7, 43, 71, 8, 114, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 2, 3, 0, 0, 4, 0, 3, 0, 0, 5, 1, 4, 0, 1, 6, 12, 1, 5, 5, 6, 12, 3, 5,
+    3, 3, 0, 1, 1, 3, 5, 1, 3, 7, 65, 117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114,
+    10, 97, 100, 100, 114, 101, 115, 115, 95, 111, 102, 18, 99, 114, 101, 97, 116, 101, 95, 105,
+    110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117,
+    116, 111, 112, 97, 121, 10, 105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 5, 25, 10, 0, 17, 0, 12, 5, 10, 5, 17, 3, 32, 3, 8, 5, 10, 10,
+    0, 17, 2, 10, 0, 10, 1, 10, 2, 10, 3, 10, 4, 17, 1, 11, 0, 17, 0, 17, 3, 12, 6, 11, 6, 3, 24,
+    6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const AUTOPAY_ENABLE_CODE: &[u8] = &[
-    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 11, 7, 30, 52, 8, 82, 16, 0, 0, 0,
-    1, 1, 2, 0, 1, 0, 0, 3, 0, 2, 0, 0, 4, 1, 3, 0, 1, 6, 12, 1, 5, 0, 1, 1, 2, 1, 3, 7, 65, 117,
-    116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100, 114, 101, 115, 115,
-    95, 111, 102, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121, 10, 105,
-    115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-    4, 11, 10, 0, 17, 1, 11, 0, 17, 0, 17, 2, 12, 1, 11, 1, 3, 10, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39,
-    2,
+    161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 4, 3, 4, 15, 5, 19, 12, 7, 31, 52, 8, 83, 16, 0, 0, 0,
+    1, 1, 2, 0, 1, 0, 0, 3, 0, 2, 0, 0, 4, 1, 3, 0, 1, 6, 12, 1, 5, 0, 1, 1, 3, 5, 1, 3, 7, 65,
+    117, 116, 111, 80, 97, 121, 6, 83, 105, 103, 110, 101, 114, 10, 97, 100, 100, 114, 101, 115,
+    115, 95, 111, 102, 14, 101, 110, 97, 98, 108, 101, 95, 97, 117, 116, 111, 112, 97, 121, 10,
+    105, 115, 95, 101, 110, 97, 98, 108, 101, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+    0, 0, 4, 21, 10, 0, 17, 0, 12, 1, 10, 1, 17, 2, 32, 3, 8, 5, 11, 11, 0, 17, 1, 5, 13, 11, 0, 1,
+    10, 1, 17, 2, 12, 2, 11, 2, 3, 20, 6, 0, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 
 const BURN_CODE: &[u8] = &[
@@ -4409,6 +4449,18 @@ const MINERSTATE_COMMIT_CODE: &[u8] = &[
     3, 11, 0, 11, 3, 17, 1, 2,
 ];
 
+const MINERSTATE_COMMIT_BY_OPERATOR_CODE: &[u8] = &[
+    161, 28, 235, 11, 1, 0, 0, 0, 6, 1, 0, 4, 2, 4, 4, 3, 8, 15, 5, 23, 26, 7, 49, 83, 8, 132, 1,
+    16, 0, 0, 0, 1, 1, 3, 2, 0, 0, 2, 0, 1, 0, 1, 4, 2, 0, 0, 1, 5, 3, 4, 0, 0, 1, 3, 3, 6, 12, 5,
+    8, 0, 3, 10, 2, 3, 10, 2, 1, 8, 0, 4, 6, 12, 5, 10, 2, 10, 2, 7, 71, 108, 111, 98, 97, 108,
+    115, 10, 77, 105, 110, 101, 114, 83, 116, 97, 116, 101, 14, 103, 101, 116, 95, 100, 105, 102,
+    102, 105, 99, 117, 108, 116, 121, 5, 80, 114, 111, 111, 102, 24, 99, 111, 109, 109, 105, 116,
+    95, 115, 116, 97, 116, 101, 95, 98, 121, 95, 111, 112, 101, 114, 97, 116, 111, 114, 17, 99,
+    114, 101, 97, 116, 101, 95, 112, 114, 111, 111, 102, 95, 98, 108, 111, 98, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 5, 4, 10, 11, 2, 17, 0, 11, 3, 17, 2, 12, 4, 11, 0, 10, 1, 11, 4,
+    17, 1, 2,
+];
+
 const MINERSTATE_HELPER_CODE: &[u8] = &[
     161, 28, 235, 11, 1, 0, 0, 0, 5, 1, 0, 8, 3, 8, 25, 5, 33, 22, 7, 55, 113, 8, 168, 1, 16, 0, 0,
     0, 1, 0, 2, 0, 3, 0, 4, 0, 1, 0, 1, 5, 2, 0, 0, 2, 6, 0, 3, 0, 2, 7, 0, 3, 0, 3, 8, 0, 4, 0, 0,
@@ -4434,7 +4486,7 @@ const MINERSTATE_ONBOARDING_CODE: &[u8] = &[
     99, 111, 117, 110, 116, 95, 119, 105, 116, 104, 95, 112, 114, 111, 111, 102, 8, 105, 115, 95,
     118, 97, 108, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 4, 5, 29, 11, 0, 14,
     1, 14, 2, 11, 3, 10, 4, 11, 5, 11, 6, 11, 7, 11, 8, 11, 9, 17, 1, 12, 10, 10, 10, 17, 2, 12,
-    11, 11, 11, 3, 19, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 10, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 33,
+    11, 11, 11, 3, 19, 6, 3, 0, 0, 0, 0, 0, 0, 0, 39, 10, 10, 56, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 36,
     12, 13, 11, 13, 3, 28, 6, 4, 0, 0, 0, 0, 0, 0, 0, 39, 2,
 ];
 

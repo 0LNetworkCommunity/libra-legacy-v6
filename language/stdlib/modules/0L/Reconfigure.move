@@ -30,7 +30,7 @@ module Reconfigure {
     // Function code: 01. Prefix: 180101
     public fun reconfigure(vm: &signer, height_now: u64) {
         assert(Signer::address_of(vm) == CoreAddresses::LIBRA_ROOT_ADDRESS(), 180101014010);
-        
+
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
         // Should happen before transactionfees get distributed.
@@ -45,9 +45,11 @@ module Reconfigure {
             
             let value: u64;
             // check if is in onboarding state (or stuck)
+
             if (FullnodeState::is_onboarding(addr)) {
                 value = Subsidy::distribute_onboarding_subsidy(vm, addr);
             } else {
+                // steady state
                 value = Subsidy::distribute_fullnode_subsidy(vm, addr, count);
             };
 
@@ -104,7 +106,7 @@ module Reconfigure {
         // Update all validators with account limits
         // After Epoch 1000. 
         if (LibraConfig::check_transfer_enabled()) {
-        update_validator_withdrawal_limit(vm);
+            update_validator_withdrawal_limit(vm);
         };
     
         // needs to be set before the auctioneer runs in Subsidy::fullnode_reconfig

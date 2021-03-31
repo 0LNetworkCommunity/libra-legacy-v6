@@ -24,11 +24,18 @@ address 0x1 {
     use 0x1::Roles;
     use 0x1::Testnet::is_testnet;
     use 0x1::FullnodeState;
-    // use 0x1::StagingNet::is_staging_net;    
+    use 0x1::ValidatorConfig;
+
+    // estimated gas unit cost for proof verification divided coin scaling factor
+    // Cost for verification test/easy difficulty: 1173 / 1000000
+    // Cost for verification prod/hard difficulty: 2294 / 1000000
+    // Cost for account creation prod/hard: 4336
+
+    const BASELINE_TX_COST: u64 = 4336; // microgas
+    
     // Method to calculate subsidy split for an epoch.
     // This method should be used to get the units at the beginning of the epoch.
-
-        // Function code: 03 Prefix: 190103
+    // Function code: 03 Prefix: 190103
     public fun process_subsidy(
       vm_sig: &signer,
       subsidy_units: u64,
@@ -50,6 +57,7 @@ address 0x1 {
       while (i < len) {
 
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
+
         // Transfer gas from vm address to validator
         let minted_coins = Libra::mint<GAS>(vm_sig, subsidy_granted);
         LibraAccount::vm_deposit_with_metadata<GAS>(
@@ -59,6 +67,9 @@ address 0x1 {
           x"",
           x""
         );
+
+        // refund operator tx fees for mining
+        refund_operator_tx_fees(vm_sig, node_address);
         i = i + 1;
       };
     }
@@ -202,25 +213,20 @@ address 0x1 {
       if (validator_count < 10) validator_count = 10;
       // baseline_cap: baseline units per epoch times the mininmum as used in tx, times minimum gas per unit.
 
-      // estimated gas unit cost for proof verification divided coin scaling factor
-      // Cost for verification test/easy difficulty: 1173 / 1000000
-      // Cost for verification prod/hard difficulty: 2294 / 1000000
-      // Cost for account creation prod/hard: 4336
-
-      let baseline_tx_cost = 4336; // microgas
-      let ceiling = baseline_auction_units() * baseline_tx_cost * validator_count;
+      let ceiling = baseline_auction_units() * BASELINE_TX_COST * validator_count;
 
       Roles::assert_libra_root(vm);
       assert(!exists<FullnodeSubsidy>(Signer::address_of(vm)), 130112011021);
       move_to<FullnodeSubsidy>(vm, FullnodeSubsidy{
         previous_epoch_proofs: 0u64,
-        current_proof_price: baseline_tx_cost * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
+        current_proof_price: BASELINE_TX_COST * 24 * 8 * 3, // number of proof submisisons in 3 initial epochs.
         current_cap: ceiling,
         current_subsidy_distributed: 0u64,
         current_proofs_verified: 0u64,
       });
     }
 
+    // TODO: Deprecate in v4.2.9+ since the onboarding gas transfer resolves this issue.
     public fun distribute_onboarding_subsidy(
       vm: &signer,
       miner: address
@@ -233,8 +239,9 @@ address 0x1 {
       let state = borrow_global<FullnodeSubsidy>(CoreAddresses::LIBRA_ROOT_ADDRESS());
 
       let subsidy = bootstrap_validator_balance();
+      // give max possible subisidy, if auction is higher
       if (state.current_proof_price > subsidy) subsidy = state.current_proof_price;
-
+      
       let minted_coins = Libra::mint<GAS>(vm, subsidy);
       LibraAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -243,6 +250,7 @@ address 0x1 {
         b"onboarding_subsidy",
         b""
       );
+
       subsidy
     }
 
@@ -396,6 +404,37 @@ address 0x1 {
       let subsidy_value = proofs_per_day * proof_cost;
       subsidy_value
     }
+
+    // Operators may run out of balance to submit txs for the Validator. This is true for mining, where the operator receives no network subsidy.
+    fun refund_operator_tx_fees(vm: &signer, miner_addr: address) {
+        // get operator for validator
+        let oper_addr = ValidatorConfig::get_operator(miner_addr);
+        // count OWNER's proofs submitted
+        let proofs_in_epoch = FullnodeState::get_address_proof_count(miner_addr);
+        let cost = 0;
+        // find cost from baseline
+        if (proofs_in_epoch > 0) {
+          cost = BASELINE_TX_COST * proofs_in_epoch;
+        };
+        // deduct from subsidy to miner
+        // send payment to operator
+        if (cost > 0) {
+          let owner_balance = LibraAccount::balance<GAS>(miner_addr);
+          if (!(owner_balance > cost)) {
+            cost = owner_balance;
+          };
+          
+          LibraAccount::vm_make_payment<GAS>(
+            miner_addr,
+            oper_addr,
+            cost,
+            b"tx fee refund",
+            b"",
+            vm
+          );
+        };
+    }
+
 
     //////// TEST HELPERS ///////
     public fun test_set_fullnode_fixtures(

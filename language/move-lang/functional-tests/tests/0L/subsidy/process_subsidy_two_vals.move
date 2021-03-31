@@ -82,11 +82,14 @@ script {
 
   fun main(vm: &signer) {
     let (validators, fee_ratios) = LibraSystem::get_fee_ratio(vm, 0, 15);
-    Subsidy::process_subsidy(vm, 100, &validators, &fee_ratios);
+    let subsidy_amount = 1000000;
+    let refund_to_operator = 4336 * 1; // from Subsidy::BASELINE_TX_COST * genesis proof for account
+    Subsidy::process_subsidy(vm, subsidy_amount, &validators, &fee_ratios);
     print(&LibraAccount::balance<GAS>({{alice}}));
-    assert(LibraAccount::balance<GAS>({{alice}}) == 51, 7357190102091000);
+    assert(LibraAccount::balance<GAS>({{alice}}) == 1 + subsidy_amount/2 - refund_to_operator, 7357190102091000);
+
     assert(LibraAccount::balance<GAS>({{bob}}) == 1, 7357190102101000);
-    assert(LibraAccount::balance<GAS>({{carol}}) == 51, 7357190102111000);
+    assert(LibraAccount::balance<GAS>({{carol}}) == 1 + subsidy_amount/2 - refund_to_operator, 7357190102111000);
     assert(LibraAccount::balance<GAS>({{dave}}) == 1, 7357190102121000);
 
   }

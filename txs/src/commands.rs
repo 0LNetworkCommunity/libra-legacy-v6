@@ -11,9 +11,10 @@
 //! application's configuration file.
 
 mod create_account_cmd;
-mod init_cmd;
+mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
+mod autopay_batch_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use crate::config::AppConfig;
@@ -21,9 +22,11 @@ use dirs;
 use libra_global_constants::NODE_HOME;
 use self::{
     create_account_cmd::CreateAccountCmd,
-    init_cmd::InitCmd,
+    create_validator_cmd::CreateValidatorCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
+    autopay_batch_cmd::AutopayBatchCmd,
+    
 };
 use std::path::PathBuf;
 
@@ -34,11 +37,15 @@ pub const CONFIG_FILE: &str = "txs.toml";
 #[derive(Command, Debug, Options, Runnable)]
 pub enum TxsCmd {
     /// The `create-account` subcommand
-    #[options(help = "invoke stdlib script 'create_user_account'")]
+    #[options(help = "submit tx to create a user account from account.json file")]
     CreateAccount(CreateAccountCmd),
 
+    /// The `create-validator` subcommand
+    #[options(help = "submit tx to create a validator from account.json file")]
+    CreateValidator(CreateValidatorCmd),
+
     /// The `oracle-upgrade` subcommand
-    #[options(help = "invoke stdlib script 'ol_oracle_tx_script'")]
+    #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),     
 
     /// --- End of STDLIB SCRIPT COMMANDS ---
@@ -47,13 +54,14 @@ pub enum TxsCmd {
     #[options(help = "get usage information")]
     Help(Help<Self>),
 
-    /// The `init` subcommand
-    #[options(help = "initialize txs configs txs.toml")]
-    Init(InitCmd),
-
     /// The `version` subcommand
     #[options(help = "display version information")]
     Version(VersionCmd),   
+
+    /// The `autopay-new` subcommand
+    #[options(help = "batch autopay transactions from json file")]
+    AutopayBatch(AutopayBatchCmd),   
+    
 }
 
 /// This trait allows you to define how application configuration is loaded.

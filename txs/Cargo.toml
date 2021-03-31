@@ -44,6 +44,8 @@ storage-interface= {path = "../storage/storage-interface", version="0.1.0"}
 transaction-builder = { path = "../language/transaction-builder", version = "0.1.0"}
 vdf = { path = "../verifiable_delay/vdf", version = "^0.1.0" }
 vm-genesis={path="../language/tools/vm-genesis", version="0.1.0"}
+ol-cli = {path = "../ol-cli"}
+dialoguer = "0.8.0"
 
 [dependencies.abscissa_core]
 version = "0.5.2"

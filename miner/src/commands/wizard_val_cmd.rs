@@ -4,7 +4,7 @@
 
 use abscissa_core::{Command, Options, Runnable, status_info, status_ok};
 use std::{path::PathBuf};
-use super::{genesis_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
+use super::{files_cmd, init_cmd, keygen_cmd, manifest_cmd, zero_cmd};
 
 /// `val-wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
@@ -33,7 +33,7 @@ impl Runnable for ValWizardCmd {
         // Keygen
         if self.keygen {
             keygen_cmd::generate_keys();
-            status_ok!("\nKeys generated OK", "\n...........................\n");
+            status_ok!("\nKeys generated", "\n...........................\n");
         }
 
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys you can re-run this command with the flag '--keygen', or run the standalone keygen subcommand with 'miner keygen'.\n\nYour first 0L proof-of-work will be mined now. Expect this to take up to 15 minutes on modern CPUs.\n");
@@ -44,45 +44,43 @@ impl Runnable for ValWizardCmd {
         // Initialize Miner
         // Need to assign miner_config, because reading from app_config can only be done at startup, and it will be blank at the time of wizard executing.
         let miner_config = init_cmd::initialize_miner(authkey, account, &self.path).unwrap();
-        status_ok!("\nMiner config OK", "\n...........................\n");
+        status_ok!("\nMiner config written", "\n...........................\n");
 
         // Initialize Validator Keys
         init_cmd::initialize_validator(&wallet, &miner_config).unwrap();
-        status_ok!("\nKey file OK", "\n...........................\n");
+        status_ok!("\nKey file written", "\n...........................\n");
 
         if !self.skip_fetch_genesis {
-            genesis_cmd::get_files(
-                miner_config.workspace.node_home.clone(),
-                &self.github_org,
-                &self.repo,
-            );
-            status_ok!("\nGenesis OK", "\n...........................\n");
+            if !self.rebuild_genesis  {
+                files_cmd::get_files(
+                    miner_config.workspace.node_home.clone(),
+                    &self.github_org,
+                    &self.repo,
+                );
+                status_ok!("\nDownloaded genesis files", "\n...........................\n");
+            }
         }
 
         // Build Genesis and node.yaml file
-        let home_dir = miner_config.workspace.node_home.to_owned();
-        // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = miner_config.profile.auth_key.clone() + "-oper";
-        genesis_cmd::genesis_files(
-            home_dir,
-            Some(namespace),
+        files_cmd::genesis_files(
+            &miner_config,
             &self.chain_id,
             &self.github_org,
             &self.repo,
             &self.rebuild_genesis,
             &false,
         );
-        status_ok!("\nNode config OK", "\n...........................\n");
+        status_ok!("\nNode config written", "\n...........................\n");
 
         if !self.skip_mining {
             // Mine Block
             zero_cmd::mine_zero(&miner_config);
-            status_ok!("\nProof OK", "\n...........................\n");
+            status_ok!("\nGenesis proof complete", "\n...........................\n");
         }
         
         // Write Manifest
         manifest_cmd::write_manifest(&self.path, wallet, Some(miner_config));
-        status_ok!("\nAccount manifest OK", "\n...........................\n");
+        status_ok!("\nAccount manifest written", "\n...........................\n");
 
         status_info!("Your validator node and miner app are now configured.", "The account.json can be used to submit an account creation transaction on-chain. Someone with an existing account (with GAS) can do this for you.");
     }

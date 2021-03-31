@@ -4,7 +4,8 @@ module FullnodeState {
   use 0x1::CoreAddresses;
   use 0x1::Signer;
   use 0x1::Testnet::is_testnet;
-
+  use 0x1::ValidatorConfig;
+  
   resource struct FullnodeCounter {
     proofs_submitted_in_epoch: u64,
     proofs_paid_in_epoch: u64,
@@ -44,10 +45,16 @@ module FullnodeState {
   }
 
   /// Miner increments proofs by 1
-  /// TO
   public fun inc_proof(sender: &signer) acquires FullnodeCounter {
     let addr = Signer::address_of(sender);
       let state = borrow_global_mut<FullnodeCounter>(addr);
+      state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
+  }
+
+  /// Miner increments proofs by 1
+  public fun inc_proof_by_operator(operator_sig: &signer, miner_addr: address) acquires FullnodeCounter {
+    assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), 130103010020);
+      let state = borrow_global_mut<FullnodeCounter>(miner_addr);
       state.proofs_submitted_in_epoch = state.proofs_submitted_in_epoch + 1;
   }
 

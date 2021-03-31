@@ -800,7 +800,7 @@ module LibraAccount {
     
     // 0L function for AutoPay module
     // 0L error suffix 120101
-    public fun make_payment<Token>(
+    public fun vm_make_payment<Token>(
         payer : address,
         payee: address,
         amount: u64,
@@ -809,6 +809,8 @@ module LibraAccount {
         vm: &signer
     ) acquires LibraAccount , Balance, AccountOperationsCapability {
         if (Signer::address_of(vm) != CoreAddresses::LIBRA_ROOT_ADDRESS()) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 0) return; 
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 

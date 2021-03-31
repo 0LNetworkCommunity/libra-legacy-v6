@@ -121,6 +121,7 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
     }
 
     // Get/override dynamic waypoint from key_store.json
+    // TODO: make this only apply to prod
     if Path::new(&txs_config.get_key_store_path()).exists() {
         tx_params.waypoint = txs_config.get_waypoint().unwrap();
     }
@@ -175,7 +176,7 @@ pub fn get_tx_params_from_swarm(
 
 /// Gets transaction params from the 0L project root.
 pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {    
-    let url =  Url::parse(&config.profile.url).unwrap();
+    let url =  config.profile.default_node.clone().unwrap();
 
     let (auth_key, address, wallet) = keygen::account_from_prompt();
     let keys = KeyScheme::new_from_mnemonic(wallet.mnemonic());
@@ -185,15 +186,15 @@ pub fn get_tx_params_from_toml(config: AppConfig) -> Result<TxParams, Error> {
         auth_key,
         address,
         url,
-        waypoint: config.profile.waypoint,
+        waypoint: config.get_waypoint().clone().expect("could not get waypoint"),
         keypair,
-        max_gas_unit_for_tx: config.profile.max_gas_unit_for_tx,
-        coin_price_per_unit: config.profile.coin_price_per_unit, // in micro_gas
-        user_tx_timeout: config.profile.user_tx_timeout,
+        max_gas_unit_for_tx: config.tx_configs.management_txs.max_gas_unit_for_tx,
+        coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
+        user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
     };
 
-    println!("Info: Getting tx params from txs.toml if available, \
-              otherwise using AppConfig::Profile::default()");
+    // println!("Info: Getting tx params from txs.toml if available, \
+    //           otherwise using AppConfig::Profile::default()");
     Ok(tx_params)
 }
 

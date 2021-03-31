@@ -1,5 +1,7 @@
 //! Key generation
-use abscissa_core::status_info;
+use std::env;
+
+use abscissa_core::{status_info, status_warn};
 use libra_wallet::{Mnemonic, WalletLibrary};
 use libra_types::{
   account_address::AccountAddress,
@@ -52,10 +54,24 @@ pub fn get_account_from_mnem(mnemonic_string: String)
 pub fn account_from_prompt() 
   -> (AuthenticationKey, AccountAddress, WalletLibrary) {
     println!("Enter your 0L mnemonic:");
-    let mnemonic_string = rpassword::read_password_from_tty(
-      Some("\u{1F511} ")
-    ).unwrap().trim().to_string();
-    get_account_from_mnem(mnemonic_string)
+    // TODO: Simplify mnemonic entry for CI/debug cases
+
+    match env::var("NODE_ENV") {
+      Ok(val) => {
+        let maybe_env_mnem = env::var("MNEM");
+        
+        // if we are in debugging or CI mode
+        if val != "prod" && maybe_env_mnem.is_ok() {
+          status_warn!("Debugging mode, using mnemonic from env variable, $MNEM");
+          return get_account_from_mnem(maybe_env_mnem.unwrap().trim().to_string())
+        }
+        println!("Debugging mode, you can set mnemonic to env $MNEM");
+      },
+      _ => {}, // default to "prod" if not set
+    };
+    
+    let read = rpassword::read_password_from_tty(Some("\u{1F511} "));
+    get_account_from_mnem(read.unwrap().trim().to_string())
 }
 
 #[test]
