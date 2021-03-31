@@ -2,9 +2,7 @@
 
 
 use std::{thread, time::{Duration}};
-use crate::{
-    check::Check,
-};
+use crate::{check::Check, prelude::app_config};
 use std::io::{Write, stdout};
 use crossterm::{QueueableCommand, cursor};
 

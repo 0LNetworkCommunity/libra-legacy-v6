@@ -141,7 +141,6 @@ impl NodeState {
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
         fn action_print() { println!("Triggering expected action") };
         println!("Onboarding stage: {:?}", self.state);
-
         let mut check = Check::new();
         match &self.state {
             NodeVariants::EmptyBox => {
@@ -218,4 +217,8 @@ impl NodeState {
         
         self
     }
+}
+
+fn app_config() -> crate::config::OlCliConfig {
+    todo!()
 }

@@ -55,6 +55,10 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
   }
 }
 
+fn app_config() -> crate::config::OlCliConfig {
+    todo!()
+}
+
 
 fn get_account_view(account: AccountAddress) -> AccountView {
     let (account_view, _) = what_client()
