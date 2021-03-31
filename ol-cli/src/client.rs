@@ -16,7 +16,7 @@ pub fn make_client(url: Option<Url>, waypoint: Waypoint) -> Result<LibraClient, 
     ).unwrap())
 }
 
-///
+/// Experimental
 pub fn get_client(_url: Option<Url>, _waypoint: Waypoint) -> Option<LibraClient> {
     // if url and waypoint provided as fn params 
     //     return LibraClient::new(url, waypoint);
