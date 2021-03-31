@@ -172,7 +172,7 @@ impl<'a> App<'a> {
                 .unwrap()
                 .first()
             {
-                cs.total_supply = (first.total_value() / first.fractional_part() as u128) as u64;
+                cs.total_supply = (first.total_value() / first.scaling_factor() as u128) as u64;
             }
 
             cs.height = meta.version;
