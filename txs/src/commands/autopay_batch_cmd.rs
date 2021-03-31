@@ -89,15 +89,11 @@ impl Runnable for AutopayBatchCmd {
 
         let tx_params = get_tx_params().unwrap();
 
-        // TODO: check if autopay is initialized on this account.
-        if Confirm::new().with_prompt("Enable autopay?").interact().unwrap() {
-            send_autopay_enable(&tx_params);
-        }
-        
-
         let epoch = get_epoch(&tx_params);
         println!("The current epoch is: {}", epoch);
 
+        // TODO: Check instruction IDs are sequential.
+        
         let instructions = get_instructions(&self.autopay_batch_file);
         instructions.into_iter().for_each(|i| {
             let warning = format!(
