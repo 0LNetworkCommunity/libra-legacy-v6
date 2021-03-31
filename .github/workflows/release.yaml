@@ -15,12 +15,12 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
       - uses: hecrj/setup-rust-action@v1
         with:
           rust-version: stable
           components: rustfmt
-      - uses: actions/checkout@v1
       - name: Build
         run:  cargo deb --deb-version ${{ github.ref }} -- -p miner --exclude libra-fuzzer --exclude cluster-test --exclude libra-fuzz
       - name: Upload binaries to release
