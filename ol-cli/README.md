@@ -68,6 +68,15 @@ Options on the entrypoint will override configs found in `miner.toml`.
 
 Can start and stop long running processes such as `node` and `miner`. The intended use is the onboarding flow, or debugging. Note: best practice for such long running process is `systemd` daemon.
 
+Options:
+```
+--start-node:  start node  
+--stop-node:   stop node  
+--start-miner: start miner  
+--stop-miner:  stop miner  
+--stop-all:    stop node and miner  
+```
+
 ### `ol restore`
 
 Can restore the database from the epoch-archive repository. Default is non-destructive, and fetches the most recent (highest epoch)  from the archive. Intended use is for onboarding.
