@@ -5,7 +5,7 @@ on:
     branches: [ OLv4, 'release**', ci ]
   pull_request:
     branches: [ master, OLv4, 'release**' ]
-
+    
 jobs:
   functional:
     name: Functional Tests
@@ -26,6 +26,8 @@ jobs:
             toolchain: 1.46.0
             override: true
             components: rustfmt, clippy
+      - name: Install deps
+        run: sudo apt-get install -y lld
       - name: check version
         run: rustc -V
       - name: Build stdlib
@@ -45,6 +47,8 @@ jobs:
             target
             ./target_test
           key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install deps
+        run: sudo apt-get install -y lld
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -66,6 +70,8 @@ jobs:
             target
             ./target_test
           key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install deps
+        run: sudo apt-get install -y lld
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:

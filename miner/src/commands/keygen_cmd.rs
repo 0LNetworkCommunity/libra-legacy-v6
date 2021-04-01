@@ -2,7 +2,6 @@
 
 #![allow(clippy::never_loop)]
 use abscissa_core::{Command, Options, Runnable};
-use crate::keygen;
 
 /// `keygen` subcommand
 #[derive(Command, Debug, Default, Options)]

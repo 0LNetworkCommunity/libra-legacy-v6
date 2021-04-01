@@ -13,7 +13,7 @@ use cli::{
 };
 use libra_types::{chain_id::ChainId, waypoint::Waypoint};
 use rustyline::{config::CompletionType, error::ReadlineError, Config, Editor};
-use std::{env, str::FromStr, time::{Duration, UNIX_EPOCH}};
+use std::{str::FromStr, time::{Duration, UNIX_EPOCH}};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -80,27 +80,8 @@ struct Args {
 
 fn main() {
     let args = Args::from_args();
-    // TODO: Duplicated with 0L miner.
-    println!("Enter your 0L mnemonic:");
-    let mut entered_mnem = false;
-    let mnemonic_string = match env::var("NODE_ENV") {
-        Ok(val) => {
-           match val.as_str() {
-            "prod" => rpassword::read_password_from_tty(Some("\u{1F511}")),
-            // for test and stage environments, so mnemonics can be inputted.
-             _ => {
-               println!("(unsafe STDIN input for testing) \u{1F511}");
-               rpassword::read_password()
-             }
-           }          
-        },
-        // if not set assume prod
-        _ => rpassword::read_password_from_tty(Some("\u{1F511}"))
-    };
-    if mnemonic_string.is_ok() { 
-        entered_mnem = true;
-    }
-
+    let mnemonic_str = keygen::account_from_prompt().2.mnemonic();
+    let entered_mnem = if mnemonic_str.is_empty() { false } else { true };
 
     let mut logger = ::libra_logger::Logger::new();
     if !args.verbose {
@@ -142,7 +123,7 @@ fn main() {
         true, // 0L change
         args.faucet_url.clone(),
         mnemonic_file,
-        Some(mnemonic_string.unwrap().trim().to_owned()), // 0L change
+        Some(mnemonic_str.trim().to_string()), // 0L change
         waypoint,
     )
     .expect("Failed to construct client.");

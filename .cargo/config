@@ -1,3 +1,7 @@
+# Dramatically increases the link performance for the eventbus
+[build]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
 [alias]
 x = "run --package x --bin x --"
 xcheck = "run --package x --bin x -- check"

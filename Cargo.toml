@@ -55,6 +55,7 @@ members = [
     "execution/executor-types",
     "json-rpc",
     "json-rpc/types",
+    "keygen",
     "language/benchmarks",
     "language/borrow-graph",
     "language/bytecode-verifier",
@@ -149,7 +150,9 @@ members = [
     "verifiable_delay/vdf",
     "verifiable_delay/vdf-cli",
     "verifiable_delay/classgroup",
-    "miner"
+    "miner",
+    "txs",
+    "ol-cli",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Libra codebase". These members should
