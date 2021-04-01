@@ -2,6 +2,7 @@
 
 // use miner::delay::delay_difficulty;
 // use miner::submit_tx::TxParams;
+use crate::commands::CONFIG_FILE;
 use abscissa_core::path::PathBuf;
 use ajson;
 use dirs;
@@ -16,7 +17,6 @@ use rustyline::Editor;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::{fs, net::Ipv4Addr, str::FromStr};
-use crate::commands::CONFIG_FILE;
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 /// MinerApp Configuration
@@ -32,8 +32,6 @@ pub struct OlCliConfig {
     /// Transaction configurations
     pub tx_configs: TxTypes,
 }
-
-
 
 impl OlCliConfig {
     /// Gets the dynamic waypoint from libra node's key_store.json
@@ -52,7 +50,6 @@ impl OlCliConfig {
         }
     }
 
-    
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
         let mut home = self.workspace.node_home.clone();
@@ -88,27 +85,32 @@ impl OlCliConfig {
         // Set up github token
         let mut rl = Editor::<()>::new();
 
-        
         let system_ip = machine_ip::get().unwrap().to_string();
         // println!("\nFound host IP address: {:?}\n", system_ip);
 
-        let ip = match rl.readline(&format!("Will you use this host, and this IP address {:?}, for your node? (y/n)", system_ip)) {
+        let ip = match rl.readline(&format!(
+            "Will you use this host, and this IP address {:?}, for your node? (y/n)",
+            system_ip
+        )) {
             Ok(val) => {
                 if (val == "y") | (val == "Y") {
-                    system_ip.parse::<Ipv4Addr>().expect("Could not parse IP address: {:?}")
+                    system_ip
+                        .parse::<Ipv4Addr>()
+                        .expect("Could not parse IP address: {:?}")
                 } else {
                     let readline = rl
                         .readline("Enter the IP address of the node: ")
                         .expect("Must enter an ip address, or 0.0.0.0 as localhost");
 
-                    readline.parse::<Ipv4Addr>().expect("Could not parse IP address")
+                    readline
+                        .parse::<Ipv4Addr>()
+                        .expect("Could not parse IP address")
                 }
             }
             Err(_) => {
                 std::process::exit(1);
             }
         };
-
 
         miner_configs.profile.ip = ip;
 
@@ -136,8 +138,6 @@ impl OlCliConfig {
         );
         miner_configs
     }
-    
-
 }
 
 /// Default configuration settings.
@@ -150,7 +150,7 @@ impl Default for OlCliConfig {
             workspace: Workspace::default(),
             profile: Profile::default(),
             chain_info: ChainInfo::default(),
-            tx_configs: TxTypes::default()
+            tx_configs: TxTypes::default(),
         }
     }
 }
@@ -161,14 +161,12 @@ impl Default for OlCliConfig {
 pub struct Workspace {
     /// home directory of the libra node, may be the same as miner.
     pub node_home: PathBuf,
-    
+
     /// Directory to store blocks in
     pub block_dir: String,
 
     /// Path to which stdlib binaries for upgrades get built typically /language/stdlib/staged/stdlib.mv
     pub stdlib_bin_path: PathBuf,
-
-
 }
 
 impl Default for Workspace {
@@ -176,8 +174,9 @@ impl Default for Workspace {
         Self {
             node_home: dirs::home_dir().unwrap().join(NODE_HOME),
             block_dir: "blocks".to_owned(),
-            stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv".parse::<PathBuf>().unwrap(),
-
+            stdlib_bin_path: "/root/libra/language/stdlib/staged/stdlib.mv"
+                .parse::<PathBuf>()
+                .unwrap(),
         }
     }
 }
@@ -247,16 +246,7 @@ pub struct TxTypes {
     /// Transactions related to management: val configs, onboarding, upgrade
     pub management_txs: TxPrefs,
     /// Transactions related to mining: commit proof.
-    pub miner_txs: TxPrefs, 
-}
-
-impl Default for TxTypes {
-        fn default() -> Self {
-        Self {
-            management_txs: TxPrefs::default(), // gas UNITS of computation
-            miner_txs: TxPrefs::default(),
-        }
-    }
+    pub miner_txs: TxPrefs,
 }
 
 /// Transaction preferences for a given type of transaction
@@ -264,19 +254,26 @@ impl Default for TxTypes {
 #[serde(deny_unknown_fields)]
 pub struct TxPrefs {
     /// Max gas units to pay per transaction
-    pub max_gas_unit_for_tx: u64, //100_000,
+    pub max_gas_unit_for_tx: u64, // gas UNITS of computation
     /// Max coin price per unit of gas
-    pub coin_price_per_unit: u64, // in micro_gas
+    pub coin_price_per_unit: u64, // price in micro GAS
     /// Time in milliseconds to timeout
-    pub user_tx_timeout: u64,     // 5_000,
+    pub user_tx_timeout: u64, // milliseconds,
 }
 
-impl Default for TxPrefs {
+impl Default for TxTypes {
     fn default() -> Self {
         Self {
-            max_gas_unit_for_tx: 100_000, // gas UNITS of computation
-            coin_price_per_unit: 1, // GAS PRICE in micro_gas
-            user_tx_timeout: 5_000,
+            management_txs: TxPrefs {
+                max_gas_unit_for_tx: 1_000_000, // oracle upgrade transaction is expensive.
+                coin_price_per_unit: 1,
+                user_tx_timeout: 5_000,
+            },
+            miner_txs: TxPrefs {
+                max_gas_unit_for_tx: 10_000, // miner transaction
+                coin_price_per_unit: 1,
+                user_tx_timeout: 5_000,
+            },
         }
     }
 }
