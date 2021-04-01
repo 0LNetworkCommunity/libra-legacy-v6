@@ -324,6 +324,25 @@ impl LibraClient {
         Ok(())
     }
 
+    /// generate latest waypoint
+    pub fn waypoint(&self)->Option<Waypoint> {
+        let latest_epoch_change_li = match self.latest_epoch_change_li() {
+            Some(li) => li,
+            None => {
+                println!("No epoch change LedgerInfo found");
+                return None;
+            }
+        };
+
+        match Waypoint::new_epoch_boundary(latest_epoch_change_li.ledger_info()) {
+            Err(e) => {
+                println!("Failed to generate a waypoint: {}", e);
+                None
+            },
+            Ok(waypoint) => Some(waypoint),
+        }
+    }
+
     /// LedgerInfo corresponding to the latest epoch change.
     pub(crate) fn latest_epoch_change_li(&self) -> Option<&LedgerInfoWithSignatures> {
         self.latest_epoch_change_li.as_ref()

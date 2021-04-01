@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 // use std::{path::PathBuf};
-use crate::{application::app_config, config::MinerConfig, keygen};
+use crate::{application::app_config, config::MinerConfig};
 use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use libra_genesis_tool::{init, key, keyscheme::KeyScheme};
@@ -47,7 +47,6 @@ pub fn initialize_validator(wallet: &WalletLibrary, miner_config: &MinerConfig) 
     let keys = KeyScheme::new(wallet);
     let namespace = miner_config.profile.auth_key.to_owned();
     init::key_store_init(home_dir, &namespace, keys, false);
-
     key::set_operator_key(home_dir, &namespace);
     key::set_owner_key(home_dir, &namespace);
 

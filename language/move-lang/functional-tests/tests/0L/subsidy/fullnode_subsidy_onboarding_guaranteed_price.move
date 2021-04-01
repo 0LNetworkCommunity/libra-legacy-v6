@@ -1,4 +1,4 @@
-//! account: bob, 100, 0, validator
+//! account: bob, 2000002, 0, validator
 
 //! new-transaction
 //! sender: bob
@@ -63,7 +63,7 @@ fun main(vm: &signer) {
     let new_account_bal = LibraAccount::balance<GAS>(eve_addr);
     print(&new_account_bal);
 
-    assert(new_account_bal == 576000, 735702);
+    assert(new_account_bal == 1576000, 735702);
     assert(new_account_bal>old_account_bal, 735703);
 }
 }

@@ -30,7 +30,6 @@ else
 REPO_NAME = experimental-genesis
 NODE_ENV = prod
 endif
-#experimental network is #7
 
 # Registration params
 REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
@@ -38,23 +37,21 @@ LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
 ##### DEPENDENCIES #####
 deps:
-	#install rust
-	curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
-	#target is Ubuntu
-	sudo apt-get update
-	sudo apt-get -y install build-essential cmake clang llvm libgmp-dev pkg-config libssl-dev
-
+	. ./util/setup.sh
 
 bins:
-	#TOML cli
-	cargo install toml-cli
-	cargo run -p stdlib --release
 	#Build and install genesis tool, libra-node, and miner
-	cargo build -p miner --release && sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
-	cargo build -p libra-node --release && sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
+	cargo run -p stdlib --release
+	# NOTE: stdlib is built for cli bindings
+	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs --release
 
-##### PIPELINES #####
-# pipelines for genesis ceremony
+	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
+	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
+	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
+	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
+	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
+	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
+
 
 #### GENESIS BACKEND SETUP ####
 init-backend: 
@@ -174,7 +171,7 @@ genesis:
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.
-	cargo run -p libra-node -- --config ${DATA_PATH}/node.yaml
+	cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
 
 daemon:
 # your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
@@ -259,7 +256,7 @@ endif
 #### HELPERS ####
 set-waypoint:
 	@if test -f ${DATA_PATH}/key_store.json; then \
-		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+		jq -r '. | with_entries(select(.key|match("/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
 	fi
 
 	@if test ! -f ${DATA_PATH}/key_store.json; then \
@@ -269,14 +266,11 @@ set-waypoint:
 	@cat ${DATA_PATH}/client_waypoint
 
 client: set-waypoint
-ifeq (${TEST}, y)
-	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
-else
+# ifeq (${TEST}, y)
+# 	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
+# else
 	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
-endif
-
-test: set-waypoint
-	cargo run -p cli -- -u http://localhost:8080 --waypoint "$$(cat ${DATA_PATH}/client_waypoint)" --chain-id ${CHAIN_ID}
+# endif
 
 
 stdlib:
@@ -309,29 +303,26 @@ stop:
 ##### DEVNET TESTS #####
 # Quickly start a devnet with fixture files. To do a full devnet setup see 'devnet-reset' below
 
-devnet: stop clear fix devnet-keys devnet-yaml start
+devnet: 
+	MNEM='${MNEM}' make stop clear fix devnet-keys devnet-yaml start
 # runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
 # This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
 
 devnet-keys: 
-	@printf '${MNEM}' | cargo run -p miner -- init --skip-miner
+	MNEM='${MNEM}' cargo run -p miner -- init --skip-miner
 
 devnet-yaml:
-	cargo run -p miner -- genesis
+	cargo run -p miner -- files
 
 devnet-onboard: clear fix
 	#starts config for a new miner "eve", uses the devnet github repo for ceremony
-	cargo r -p miner -- init --skip-miner <<< $$'${MNEM}'
-	cargo r -p miner -- genesis
-
-devnet-previous: stop clear 
-# runs a smoke test from fixtures. Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-	V=previous make fix devnet-keys devnet-yaml start
-
+	MNEM='${MNEM}' cargo r -p miner -- init --skip-miner
+	cargo r -p miner -- files
 
 ### FULL DEVNET RESET ####
 
-devnet-reset: devnet-reset-ceremony genesis start
+devnet-reset: 
+	MNEM='${MNEM}' make devnet-reset-ceremony genesis start
 # Tests the full genesis ceremony cycle, and rebuilds all genesis and waypoints.
 
 devnet-reset-ceremony:
@@ -342,13 +333,13 @@ devnet-reset-ceremony:
 
 devnet-reset-onboard: clear 
 # fixtures needs a file that works
-	SKIP_BLOB=y fix
-# starts config for a new miner "eve", uses the devnet github repo for ceremony
-	cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis --skip-mining
+	SKIP_BLOB=y make fix
+	cp ${SOURCE}/fixtures/genesis/${V}/* ~/.0L/
+# # starts config for a new miner "eve", uses the devnet github repo for ceremony
+	MNEM="${MNEM}" cargo r -p miner -- val-wizard  --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis --skip-mining 
 
 #### GIT HELPERS FOR DEVNET AUTOMATION ####
-devnet-save-genesis: get-waypoint
-	echo $$WAY > ${DATA_PATH}/genesis_waypoint
+devnet-save-genesis: set-waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/fixtures/genesis/${V}/
 	git add ${SOURCE}/fixtures/genesis/${V}/
 	git commit -a -m "save genesis fixtures to ${V}"
@@ -361,5 +352,5 @@ devnet-pull:
 # must be on a branch
 	git fetch && git checkout ${V} -f && git pull
 
-devnet-fn:
+devnet-fullnode:
 	cargo run -p miner -- fn-wizard --path ~/.0L/

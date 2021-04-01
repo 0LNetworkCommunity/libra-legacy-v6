@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/css/uikit.min.css' />
+<script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/uikit@3.6.18/dist/js/uikit-icons.min.js'></script>
+        <script type="text/javascript">
+          var uri = 'http://' + location.host + '/check';
+          var sse = new EventSource(uri);
+          sse.onmessage = function (msg) {
+            let data_json = JSON.parse(msg.data);
+            console.log(data_json);
+            document.getElementById("is_sync").innerHTML = data_json.is_synced;
+            document.getElementById("is_config").innerHTML = data_json.is_config;
+
+            document.getElementById("height").innerHTML = data_json.height;
+            document.getElementById("epoch").innerHTML = data_json.epoch;
+
+          };
+        </script>
+<html>
+
+<head>
+  <title>0L</title>
+</head>
+
+<body class="uk-background-muted uk-height-viewport">
+  <nav class="uk-navbar uk-navbar-container uk-margin">
+    <div class="uk-navbar-left">
+      <a class="uk-navbar-toggle" uk-navbar-toggle-icon href="#"></a>
+    </div>
+  </nav>
+  <div>
+    <div class='uk-container '>
+      <div class="" uk-grid>
+        <div class="uk-width-1-3">
+          <div class="uk-card uk-card-default uk-card-body">
+            <h3 class='uk-card-title uk-text-center uk-text-uppercase uk-text-muted' >Onboarding</h3>
+            <dl class="uk-description-list">
+                <dt>
+                  {{#if is_config}}
+                  <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                  {{else}}
+                  <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                  {{/if}}
+                  Node configured:
+                  <span id="is_config"> {{is_config}} </span>
+                </dt>
+                <dd>node.yaml, miner.toml, key_store.json</dd>
+
+              <dt>
+                {{#if is_restored}}
+                <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                {{else}}
+                <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                {{/if}}
+                DB is restored:
+                <span id="is_restored"> {{is_restored}} </span>
+              </dt>
+              <dd>db successfully restored</dd>
+              
+
+              
+              <dt>
+                {{#if is_created}}
+                <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                {{else}}
+                <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                {{/if}}
+                Account on chain:
+                <span id="is_created"> {{is_created}} </span>
+              </dt>
+              <dd>owner account created on chain</dd>
+
+              <!-- <dt>
+                {{#if is_created}}
+                <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                {{else}}
+                <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                {{/if}}
+                Account on chain:
+                <span id="is_sync"> {{is_created}} </span>
+              </dt>
+              <dd>owner has minimum balance for mining</dd> -->
+              
+              <dt>
+                {{#if is_mining}}
+                <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                {{else}}
+                <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                {{/if}}
+                Miner is running:
+                <span id="is_mining"> {{is_mining}} </span>
+              </dt>
+              <dd>process `miner` has started</dd>
+              
+              <dt>
+                {{#if is_node}}
+                <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                {{else}}
+                <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                {{/if}}
+                Node is running:
+                <span id="is_node"> {{is_node}} </span>
+              </dt>
+              <dd>process `libra-node` has started</dd>
+              <!-- Node sync -->
+              <dt> 
+                {{#if is_synced}}
+                <span class="uk-margin-small-right uk-text-success" uk-icon="icon: check; ratio: 1"></span>
+                {{else}}
+                <span class="uk-margin-small-right uk-text-warning" uk-icon="icon: warning; ratio: 1"></span>
+                {{/if}}
+                Node is
+                synced:
+                <span id="is_sync"> {{is_synced}} </span>
+              </dt>
+              <dd>node is up to date with upstream </dd>
+            </dl>
+
+
+          </div>
+        </div>
+        <div class="uk-width-1-3">
+          <div class="uk-card uk-card-default uk-card-body">
+            <h3 class='uk-card-title uk-text-center uk-text-uppercase uk-text-muted'>Info</h3>
+
+            <table class="uk-table">
+              <tbody>
+                <tr>
+                  <td>Epoch</td>
+                  <td id="epoch">0</td>
+                </tr>
+                <tr>
+                  <td>Height</td>
+                  <td id="height">0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="uk-width-1-3">
+          <div class="uk-card uk-card-default uk-card-body uk-text-center ">
+            <h3 class='uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large'>Account</h3>
+            <dl class="uk-description-list">
+              <dt>0xECAF65ADD1B785B0495E3099F4045EC0</dt>
+              <dd>owner account</dd>
+              <dt>60384234</dt>
+              <dd>balance</dd>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</body>
+
+</html>
