@@ -44,7 +44,7 @@ pub fn save_pid(name: &str, pid: u32) {
             let serialized = serde_json::to_vec(&process).unwrap();
             check::DB_CACHE.put(name.as_bytes(), serialized).unwrap();
         },
-        Err(e) => println!("RocksDB operational problem occured: {}", e),
+        Err(e) => println!("RocksDB operational problem occurred: {}", e),
     }    
 
     // Load, update and save
@@ -156,6 +156,22 @@ fn kill_all(process: &str) {
     child.wait().expect("killall did not exit");
 }
 
+/// Spawn process with some options
+fn spawn_process(
+    binary: &str, args: &[&str], log_file: &str, expect_msg: &str
+) -> std::process::Child {
+    // Create log file, and pipe stdout/err
+    let outputs = create_log_file(log_file);
+    let errors = outputs.try_clone().unwrap();
+
+    Command::new(binary)
+        .args(args)
+        .stdout(Stdio::from(outputs))
+        .stderr(Stdio::from(errors))
+        .spawn()
+        .expect(expect_msg)
+}
+
 /// Start Miner
 pub fn start_miner() {
     // Stop any processes we may have started and detached from.
@@ -165,31 +181,22 @@ pub fn start_miner() {
         return
     }
 
-    // Create log file, and pipe stdout/err
-    let outputs = create_log_file("miner");
-    let errors = outputs.try_clone().unwrap();
-
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
-    let use_backup = if check::Check::node_is_synced().0 {"--backup-url"} else { "" };
+    let use_backup = check::Check::node_is_synced().0;
     
-    // TODO: Boilerplate, figure out how to make generic
     let child = if *IS_PROD {
-        Command::new("miner")
-        .arg("start")
-        .arg(use_backup)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to run 'miner', is it installed?")
+        let mut args = vec!["start"];
+        if use_backup { args.push("--backup-url"); };
+        spawn_process(
+            "miner", args.as_slice(), "miner", "failed to run 'miner', is it installed?"
+        )
     } else {
-        Command::new("cargo").args(&["r", "-p", "miner", "--"])
-        .arg("start")
-        .arg(use_backup)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to run cargo r -p miner")
+        let mut args = vec!["r", "-p", "miner", "--", "start"];
+        if use_backup { args.push("--backup-url"); };
+        spawn_process(
+            "cargo", args.as_slice(), "miner", "failed to run cargo r -p miner"
+        )
     };
 
     let pid = &child.id();
