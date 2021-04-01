@@ -23,6 +23,7 @@ use reqwest::Url;
 use std::{fs, io::{stdout, Write}, path::{Path, PathBuf}, thread, time};
 
 /// All the parameters needed for a client transaction.
+#[derive(Debug)]
 pub struct TxParams {
     /// User's 0L authkey used in mining.
     pub auth_key: AuthenticationKey,
@@ -60,7 +61,6 @@ pub fn submit_tx(
         Some(av) => av.sequence_number,
         None => 0,
     };
-
     // Sign the transaction script
     let txn = create_user_txn(
         &tx_params.keypair,
@@ -116,7 +116,7 @@ pub fn get_tx_params() -> Result<TxParams, Error> {
             swarm_path.clone().expect("needs a valid swarm temp dir")
         ).unwrap();
     } else {
-        // Get from txs.toml e.g. ~/.0L/txs.toml, or use Profile::default()
+        // Get from 0L.toml e.g. ~/.0L/0L.toml, or use Profile::default()
         tx_params = get_tx_params_from_toml(txs_config.clone()).unwrap();        
     }
 
@@ -247,35 +247,3 @@ pub fn eval_tx_status(result: TransactionView) -> bool {
         }, 
     }
 }
-
-// #[test]
-// fn test_make_params() {
-//     use libra_types::PeerId; 
-//     use crate::config::{
-//         Workspace,
-//         Profile,
-//     };
-//     use std::path::PathBuf;
-
-//     let mnemonic = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse";
-//     let waypoint: Waypoint =  "0:3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2".parse().unwrap();
-//     let configs_fixture = AppConfig {
-//         workspace: Workspace{
-//             node_home: PathBuf::from("."),
-//         },
-//         profile: Profile {
-//             auth_key: "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
-//                 .to_owned(),
-//             account: PeerId::from_hex_literal("0x000000000000000000000000deadbeef").unwrap(),
-//             ip: "1.1.1.1".parse().unwrap(),
-//             statement: "Protests rage across the nation".to_owned(),
-//         },
-
-//     };
-
-//     let keys = KeyScheme::new_from_mnemonic(mnemonic.to_owned());
-//     let p = get_params(keys, waypoint, &configs_fixture);
-//     assert_eq!("http://localhost:8080/".to_string(), p.url.to_string());
-//     // debug!("{:?}", p.url);
-//     //make_params
-// }

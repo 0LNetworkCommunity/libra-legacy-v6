@@ -17,6 +17,7 @@ mod version_cmd;
 mod autopay_batch_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
+use ol_cli::commands::CONFIG_FILE;
 use crate::config::AppConfig;
 use dirs;
 use libra_global_constants::NODE_HOME;
@@ -25,17 +26,15 @@ use self::{
     create_validator_cmd::CreateValidatorCmd,
     oracle_upgrade_cmd::OracleUpgradeCmd,
     version_cmd::VersionCmd,
-    autopay_batch_cmd::AutopayBatchCmd,
-    
+    autopay_batch_cmd::AutopayBatchCmd,    
 };
 use std::path::PathBuf;
 
-/// TxsApp Configuration Filename
-pub const CONFIG_FILE: &str = "txs.toml";
 
 /// TxsApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
 pub enum TxsCmd {
+
     /// The `create-account` subcommand
     #[options(help = "submit tx to create a user account from account.json file")]
     CreateAccount(CreateAccountCmd),
@@ -48,7 +47,11 @@ pub enum TxsCmd {
     #[options(help = "submit an oracle transaction to upgrade stdlib")]
     OracleUpgrade(OracleUpgradeCmd),     
 
-    /// --- End of STDLIB SCRIPT COMMANDS ---
+    /// The `autopay-new` subcommand
+    #[options(help = "batch autopay transactions from json file")]
+    AutopayBatch(AutopayBatchCmd),   
+
+    // --- End of STDLIB SCRIPT COMMANDS ---
 
     /// The `help` subcommand
     #[options(help = "get usage information")]
@@ -58,10 +61,6 @@ pub enum TxsCmd {
     #[options(help = "display version information")]
     Version(VersionCmd),   
 
-    /// The `autopay-new` subcommand
-    #[options(help = "batch autopay transactions from json file")]
-    AutopayBatch(AutopayBatchCmd),   
-    
 }
 
 /// This trait allows you to define how application configuration is loaded.
@@ -76,10 +75,6 @@ impl Configurable<AppConfig> for TxsCmd {
         config_path.push(NODE_HOME);
         config_path.push(CONFIG_FILE);
 
-        if config_path.exists() {
-            Some(config_path)
-        } else {
-            None
-        }
+        Some(config_path)
     }
 }

@@ -68,20 +68,6 @@ fn get_epoch(tx_params: &TxParams) -> u64 {
     0
 }
 
-fn send_autopay_enable(tx_params: &TxParams) {
-    let script = transaction_builder::encode_autopay_enable_script();
-
-    match submit_tx(
-        &tx_params, 
-        script,
-    ) {
-        Err(err) => { println!("{:?}", err) }
-        Ok(res)  => {
-            eval_tx_status(res);
-        }
-    }
-}
-
 impl Runnable for AutopayBatchCmd {   
     fn run(&self) {
         // Note: autopay batching needs to have id numbers to each instruction.
