@@ -225,19 +225,16 @@ pub fn choose_rpc_node() -> Option<Url> {
 /// 
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
-    // TODO: Boilerplate, figure out how to make generic
     let mut child = if *IS_PROD {
         Command::new("miner")
-        .arg("val-wizard")
-        .arg("--keygen")
-        .spawn()
-        .expect(&format!("failed to find 'miner', is it installed?"))
+            .args(&["val-wizard", "--keygen"])
+            .spawn()
+            .expect(&format!("failed to find 'miner', is it installed?"))
     } else {
-        Command::new("cargo").args(&["r", "-p", "miner", "--"])
-        .arg("val-wizard")
-        .arg("--keygen")
-        .spawn()
-        .expect(&format!("failed to run cargo r -p miner"))
+        Command::new("cargo")
+            .args(&["r", "-p", "miner", "--", "val-wizard", "--keygen"])
+            .spawn()
+            .expect(&format!("failed to run cargo r -p miner"))
     };
 
     let exit_code = child.wait().expect("failed to wait on miner"); 
