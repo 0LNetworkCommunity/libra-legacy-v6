@@ -43,8 +43,9 @@ impl Runnable for MgmtCmd {
             management::stop_miner();
         }
         else if self.stop_all {
-            management::stop_node();
-            management::stop_miner();
-        }        
+            management::run_validator_wizard();
+            // management::stop_node();
+            // management::stop_miner();
+        }
     }
 }
