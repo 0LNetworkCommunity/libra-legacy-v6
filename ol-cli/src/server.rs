@@ -83,6 +83,9 @@ pub async fn main() {
         warp::sse::reply(event_stream)
     });
 
+    //GET dash/ (json api for check data)
+    let dash = warp::fs::dir("/root/web-monitor/public/");
+
     //GET explorer/ (the json api for explorer)
     let _explorer = warp::path("explorer").and(warp::get()).map(|| {
 
@@ -96,6 +99,7 @@ pub async fn main() {
         // reply using server-sent events
         warp::sse::reply(event_stream)
     });
+    warp::serve(dash.or(check)).run(([127, 0, 0, 1], 3030)).await;
 
-    warp::serve(route.or(check)).run(([127, 0, 0, 1], 3030)).await;
+    // warp::serve(dash).run(([127, 0, 0, 1], 3030)).await;
 }
