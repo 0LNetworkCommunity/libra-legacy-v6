@@ -96,21 +96,14 @@ pub fn create_log_file(file_name: &str) -> File {
 
 /// Start Node, as fullnode
 pub fn start_node(config_type: NodeType) -> Result<(), Error> {
-    // Stop any processes we may have started and detached from.
-    // Do not need to start
-
+    use BINARY_NODE as NODE;
     // if is running do nothing
     if check::Check::new().node_running() {
-        println!("Node is already running. Exiting.");
+        println!("{} is already running. Exiting.", NODE);
         return Ok(())
     }
 
-    // Create log file, and pipe stdout/err    
-    let outputs = create_log_file("node");
-    let errors = outputs.try_clone().unwrap();
-
     // Start as validator or fullnode
-    // Get the yaml file
     let conf = app_config();
     let node_home = conf.workspace.node_home.to_str().unwrap();
     let config_file_name = match config_type {
@@ -118,28 +111,23 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
         NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
     };
 
-    // TODO: Boilerplate, figure out how to make generic
     let child = if *IS_PROD {
-        Command::new("libra-node")
-        .arg("--config")
-        .arg(config_file_name)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to execute child")
+        let args = vec!["--config", &config_file_name];
+        println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
+        spawn_process(
+            NODE, args.as_slice(), "node", "failed to run 'libra-node', is it installed?"
+        )
     } else {
-        Command::new("cargo").args(&["r", "-p", "libra-node", "--"])
-        .arg("--config")
-        .arg(config_file_name)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to execute child")
+        let args = vec!["r", "-p", NODE, "--", "--config", &config_file_name];
+        println!("Starting 'cargo' with args: {:?}", args.join(" "));
+        spawn_process(
+            "cargo", args.as_slice(), "node", "failed to run cargo r -p libra-node"
+        )
     };
 
     let pid = &child.id();
-    save_pid(BINARY_NODE, *pid);
-    println!("Started new '{}' with PID: {}", BINARY_NODE, pid);
+    save_pid(NODE, *pid);
+    println!("Started new with PID: {}", pid);
     Ok(())
 }
 
