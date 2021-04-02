@@ -89,6 +89,7 @@ pub fn create_log_file(file_name: &str) -> File {
     let logs_dir = conf.workspace.node_home.join("logs/");
     fs::create_dir_all(&logs_dir).expect("could not create logs dir");
     let logs_file = logs_dir.join([file_name, ".log"].join(""));
+    println!("Logging in file: {:?}", logs_file);
 
     File::create(logs_file).expect("could not create log file")
 }
@@ -176,8 +177,9 @@ fn spawn_process(
 pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     // if is running do nothing
+    use BINARY_MINER as MINER;
     if check::Check::new().miner_running() {
-        println!("Miner is already running. Exiting.");
+        println!("{} is already running. Exiting.", MINER);
         return
     }
 
@@ -188,20 +190,22 @@ pub fn start_miner() {
     let child = if *IS_PROD {
         let mut args = vec!["start"];
         if use_backup { args.push("--backup-url"); };
+        println!("Starting '{}' with args: {:?}", MINER, args.join(" "));
         spawn_process(
-            "miner", args.as_slice(), "miner", "failed to run 'miner', is it installed?"
-        )
+            MINER, args.as_slice(), MINER, "failed to run 'miner', is it installed?"
+        )        
     } else {
-        let mut args = vec!["r", "-p", "miner", "--", "start"];
+        let mut args = vec!["r", "-p", MINER, "--", "start"];
         if use_backup { args.push("--backup-url"); };
+        println!("Starting 'cargo' with args: {:?}", args.join(" "));
         spawn_process(
-            "cargo", args.as_slice(), "miner", "failed to run cargo r -p miner"
+            "cargo", args.as_slice(), MINER, "failed to run cargo r -p miner"
         )
     };
 
     let pid = &child.id();
-    save_pid(BINARY_MINER, *pid);
-    println!("Started new {} with PID: {}", BINARY_MINER, pid);
+    save_pid(MINER, *pid);
+    println!("Started with PID {} in the background", pid);
 }
 
 /// Stop Miner
