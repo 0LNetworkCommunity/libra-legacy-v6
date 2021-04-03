@@ -3,7 +3,6 @@ use cli::libra_client::LibraClient;
 use libra_json_rpc_client::views::AccountView;
 use crate::{
   client,
-  check::Check,
   account_resource::get_annotate_account_blob,
   metadata::Metadata,
   
@@ -38,8 +37,8 @@ pub fn get(query_type: QueryType, account: AccountAddress) -> String {
       "0".to_string()
     },
     BlockHeight => {
-      let mut check = Check::new();
-      check.chain_height().to_string()
+      let (chain, _) = crate::chain_info::fetch_chain_info();
+      chain.unwrap().height.to_string()
     },
     SyncDelay => {
       Metadata::compare_from_config().to_string()

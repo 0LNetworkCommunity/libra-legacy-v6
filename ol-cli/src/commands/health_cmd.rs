@@ -11,16 +11,16 @@ use crate::check_runner;
 ///
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
-pub struct CheckCmd {
+pub struct HealthCmd {
     /// Runs continuously
     #[options(no_short, help = "is live")]
     live: bool
 }
 
-impl Runnable for CheckCmd {
+impl Runnable for HealthCmd {
     /// Start the application.
     fn run(&self) {
-        check_runner::mon(self.live);
+        check_runner::mon(self.live, true);
         // monitor::timer();
 
         // Your code goes here

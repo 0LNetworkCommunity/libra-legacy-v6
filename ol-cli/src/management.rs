@@ -1,6 +1,6 @@
 //! `management` functions
 
-use crate::{check, prelude::app_config};
+use crate::{node_health, prelude::app_config};
 use anyhow::Error;
 use reqwest::Url;
 use serde::{Serialize, Deserialize};
@@ -35,35 +35,35 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(||{
 /// Save PID
 pub fn save_pid(name: &str, pid: u32) {
     // Handle empty case
-    match check::DB_CACHE.get(name.as_bytes()) {
+    match node_health::DB_CACHE.get(name.as_bytes()) {
         Ok(Some(_value)) => { /* TODO */},
         Ok(None) => { 
             let process = Process { 
                 name: name.to_owned(), pids: vec![pid].into_iter().collect() 
             };
             let serialized = serde_json::to_vec(&process).unwrap();
-            check::DB_CACHE.put(name.as_bytes(), serialized).unwrap();
+            node_health::DB_CACHE.put(name.as_bytes(), serialized).unwrap();
         },
         Err(e) => println!("RocksDB operational problem occured: {}", e),
     }    
 
     // Load, update and save
-    let pids_loaded = check::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
+    let pids_loaded = node_health::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
     let mut process: Process = serde_json::de::from_slice(
         &pids_loaded
     ).unwrap();    
     process.pids.insert(pid);    
     let serialized = serde_json::to_vec(&process).unwrap();
-    let _res = check::DB_CACHE.put(name.as_bytes(), serialized);
+    let _res = node_health::DB_CACHE.put(name.as_bytes(), serialized);
 }
 
 /// Kill all the processes that are running
 pub fn kill_zombies(name: &str) {
-    if check::DB_CACHE.get(name.as_bytes()).unwrap().is_none() {
+    if node_health::DB_CACHE.get(name.as_bytes()).unwrap().is_none() {
         return;
     }
 
-    let pids_loaded = check::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
+    let pids_loaded = node_health::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
 
     println!("Killing zombie '{}' processes...", name);
@@ -99,7 +99,7 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     // Do not need to start
 
     // if is running do nothing
-    if check::Check::new().node_running() {
+    if node_health::NodeHealth::new().node_running() {
         println!("Node is already running. Exiting.");
         return Ok(())
     }
@@ -160,7 +160,7 @@ fn kill_all(process: &str) {
 pub fn start_miner() {
     // Stop any processes we may have started and detached from.
     // if is running do nothing
-    if check::Check::new().miner_running() {
+    if node_health::NodeHealth::new().miner_running() {
         println!("Miner is already running. Exiting.");
         return
     }
@@ -171,7 +171,7 @@ pub fn start_miner() {
 
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
-    let use_backup = if check::Check::node_is_synced().0 {"--backup-url"} else { "" };
+    let use_backup = if node_health::NodeHealth::node_is_synced().0 {"--backup-url"} else { "" };
     
     // TODO: Boilerplate, figure out how to make generic
     let child = if *IS_PROD {
@@ -208,7 +208,7 @@ pub fn choose_rpc_node() -> Option<Url> {
 
     // check the node is in sync
     // Note this assumes that we can connect to local and to a backup.
-    if check::Check::node_is_synced().0 {
+    if node_health::NodeHealth::node_is_synced().0 {
         // always choose local node if in sync
         return conf.profile.default_node
     } else {

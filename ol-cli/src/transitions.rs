@@ -1,7 +1,7 @@
 //! 'transitions' a state machine for the onboarding stages of a new validator. Can query and/or trigger the next expected action in the onboarding process.
 
 use crate::{
-    check::{DB_CACHE, Check},
+    node_health::{DB_CACHE, NodeHealth},
     management,
     restore,
 };
@@ -141,7 +141,7 @@ impl NodeState {
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
         fn action_print() { println!("Triggering expected action") };
         println!("Onboarding stage: {:?}", self.state);
-        let mut check = Check::new();
+        let mut check = NodeHealth::new();
         match &self.state {
             NodeVariants::EmptyBox => {
                 if check.configs_exist() {
@@ -185,7 +185,7 @@ impl NodeState {
                     management::start_miner()
                 }
 
-                if check.check_sync().0 {
+                if NodeHealth::node_is_synced().0 {
                     &self.transition(NodeAction::FullnodeSynced, trigger_action);
                 } 
 

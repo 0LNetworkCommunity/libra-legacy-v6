@@ -1,6 +1,6 @@
 //! web-monitor
 
-use crate::{check, check_runner};
+use crate::{node_health, check_runner};
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
@@ -10,7 +10,7 @@ use warp::{sse::ServerSentEvent, Filter};
 
 // TODO: does this need to be a separate function?
 // create server-sent event
-fn sse_check(info: check::Items) -> Result<impl ServerSentEvent, Infallible> {
+fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
 
@@ -19,7 +19,7 @@ fn sse_check(info: check::Items) -> Result<impl ServerSentEvent, Infallible> {
 pub async fn main() {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(|| {
-        check_runner::mon(true);
+        check_runner::mon(true, false);
     });
 
     //GET check/ (json api for check data)
@@ -27,7 +27,7 @@ pub async fn main() {
         // create server event source from Check object
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
             // counter += 1;
-            let items = check::Items::read_cache().unwrap();
+            let items = node_health::Items::read_cache().unwrap();
 
             sse_check(items)
         });
@@ -39,7 +39,7 @@ pub async fn main() {
     let _explorer = warp::path("explorer").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            let items = check::Items::read_cache().unwrap();
+            let items = node_health::Items::read_cache().unwrap();
 
             // TODO: Use a different data source for /explorer/ data.
             sse_check(items)

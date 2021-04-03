@@ -40,10 +40,6 @@ pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
 #[serde(deny_unknown_fields)]
 /// Steps needed to initialize a miner
 pub struct Items {
-    /// the chain height
-    pub height: u64,
-    /// current epoch
-    pub epoch: u64,
     /// node configs created
     pub configs_exist: bool,
     /// current epoch
@@ -56,19 +52,21 @@ pub struct Items {
     pub miner_running: bool,
     /// is the blockchain in sync with upstream
     pub is_synced: bool,
+    /// how far behind is the node
+    pub sync_delay: i64,
 }
+
 
 impl Default for Items {
     fn default() -> Self { 
         Self {
-            height: 0,
-            epoch: 0,
-            is_synced: false,
             configs_exist: false,
             db_restored: false,
             account_created: false,
             node_running: false,
             miner_running: false,
+            is_synced: false,
+            sync_delay: 0,
         }
     }
 }
@@ -112,13 +110,11 @@ impl Items {
 
 
 /// Configuration used for checks we want to make on the node
-pub struct Check {
-    /// OL configs
+pub struct NodeHealth {
+    /// 0L configs
     pub conf: OlCliConfig,
     /// libraclient for connecting
     pub client: LibraClient,
-    // miner_process_name: &'static str,
-    // node_process_name: &'static str,
     /// all items we are checking. Monitor sends these to cache.
     pub items: Items,
     chain_state: Option<AccountState>,
@@ -126,11 +122,11 @@ pub struct Check {
 }
 
 
-impl Check {
+impl NodeHealth {
     /// Create a instance of Check
     pub fn new() -> Self {
         let conf = app_config().to_owned();
-        let use_local = Check::check_node_state();
+        let use_local = NodeHealth::check_node_state();
 
         let url = if use_local {
             conf
@@ -157,6 +153,19 @@ impl Check {
             miner_state: None,
             chain_state: None,
         }
+    }
+
+    /// refresh all checks
+    pub fn refresh_checks(&mut self) {
+      self.items.configs_exist = self.configs_exist();
+      self.items.db_restored = self.database_bootstrapped();
+      self.items.node_running = self.node_running();
+      self.items.miner_running = self.miner_running();
+      self.items.account_created = self.accounts_exist_on_chain();
+      let sync_tuple = NodeHealth::node_is_synced();
+
+      self.items.is_synced = sync_tuple.0;
+      self.items.sync_delay = sync_tuple.1;
     }
 
     fn get_annotate_account_blob(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
@@ -199,28 +208,28 @@ impl Check {
         }
     }
 
-    /// return  height on chain
-    pub fn chain_height(&mut self) -> u64 {
-        match self.client.get_metadata() {
-            Ok(m) => {
-                self.items.height = m.version;
-                m.version
-            }
-            Err(_) => 0
-        }
-    }
+    // /// return  height on chain
+    // pub fn chain_height(&mut self) -> u64 {
+    //     match self.client.get_metadata() {
+    //         Ok(m) => {
+    //             self.items.height = m.version;
+    //             m.version
+    //         }
+    //         Err(_) => 0
+    //     }
+    // }
 
-    /// return epoch on chain
-    pub fn epoch_on_chain(&mut self)-> u64 {
-        match &self.chain_state {
-            Some(s) => {
-                let epoch = s.get_configuration_resource().unwrap().unwrap().epoch();
-                self.items.epoch = epoch;
-                epoch
-            },
-            None => 0
-        }
-    }
+    // /// return epoch on chain
+    // pub fn epoch_on_chain(&mut self)-> u64 {
+    //     match &self.chain_state {
+    //         Some(s) => {
+    //             let epoch = s.get_configuration_resource().unwrap().unwrap().epoch();
+    //             self.items.epoch = epoch;
+    //             epoch
+    //         },
+    //         None => 0
+    //     }
+    // }
     /// validator sets
     pub fn validator_set_count(&self)-> usize {
         match &self.chain_state {
@@ -275,23 +284,19 @@ impl Check {
         let c_exist = home_path.join("blocks/block_0.json").exists() && 
         home_path.join("validator.node.yaml").exists() && 
         home_path.join("key_store.json").exists();
-
-        self.items.configs_exist = c_exist;
         c_exist
     }
 
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
         let account = self.client.get_account(self.conf.profile.account, false);
-        self.items.account_created = match account {
+         match account {
             Ok((opt,_)) => match opt{
                 Some(_) => true,
                 None => false
             },
             Err(_) => false,
-        };
-
-        self.items.account_created
+        }
     }
 
     /// database is initialized
@@ -301,32 +306,30 @@ impl Check {
 
         let mut file = self.conf.workspace.node_home.clone();
         file.push("db/libradb"); //TODO change file name later
-        let exists = file.exists();
-        self.items.db_restored = exists;
-        exists
+        file.exists()
     }
 
-    /// Checks if node is synced
+    /// check if node is synced
     pub fn node_is_synced() -> (bool, i64) {
-        if !Check::check_node_state() {
+        if !NodeHealth::check_node_state() {
             return (false, 0)
         };
         let delay = Metadata::compare_from_config();
-        ( delay < 10_000, delay)
+        (delay < 10_000, delay)
     }
 
-    /// Check if node caught up, if so mark as caught up.
-    pub fn check_sync(&mut self) -> (bool, i64) {
-        let sync = Check::node_is_synced();
-        // let have_ever_synced = false;
-        // assert never synced
-        if self.has_never_synced() && sync.0 {
-            // mark as synced
-            self.items.is_synced = true;
-            self.items.write_cache();
-        }
-        sync  
-    }
+    // /// Check if node caught up, if so mark as caught up.
+    // pub fn check_sync(&mut self) -> (bool, i64) {
+    //     let sync = Check::node_is_synced();
+    //     // let have_ever_synced = false;
+    //     // assert never synced
+    //     if self.has_never_synced() && sync.0 {
+    //         // mark as synced
+    //         self.items.is_synced = true;
+    //         self.items.write_cache();
+    //     }
+    //     sync  
+    // }
 
     /// Check if the node has ever synced
     pub fn has_never_synced(&self) -> bool {
@@ -339,25 +342,25 @@ impl Check {
     /// Check if node started sync
     pub fn node_started_sync(&self) -> bool {
         match Items::read_cache() {
-            // TODO: Use has_started_sync
-            Some(i) => {!i.is_synced}
-            None => {true}
+            // has anything in the cache state
+            Some(_) => true,
+            None => false
         }
     }
 
     /// Check if node is running
     pub fn check_node_state() -> bool {
-        Check::check_process(NODE_PROCESS)
+        NodeHealth::check_process(NODE_PROCESS)
     }
     /// Check if node is running
     pub fn node_running(&mut self) -> bool {
-        self.items.node_running = Check::check_process(NODE_PROCESS);
+        self.items.node_running = NodeHealth::check_process(NODE_PROCESS);
         self.items.node_running
     }
 
     /// Check if miner is running
     pub fn miner_running(&mut self) -> bool {
-      self.items.miner_running = Check::check_process(MINER_PROCESS);
+      self.items.miner_running = NodeHealth::check_process(MINER_PROCESS);
       self.items.miner_running
     }
 
@@ -375,51 +378,16 @@ impl Check {
         false
     }
 
-    /// get blockchain height
-    pub fn get_height(&mut self) -> u64 {
+    // /// get blockchain height
+    // pub fn get_height(&mut self) -> u64 {
 
-        let m = Metadata::new(
-            &self.conf.profile.default_node.clone().unwrap(),
-            &mut self.client
-        );
-        if let Some(mv) = m.meta {
-           return mv.version
-        }
-        0
-    }
-}
-
-/// Collects a pipeline of triggers for onboarding
-pub fn onboarding_triggers() {
-    // Validator just started setting up machine
-    // if Check::is_clean_start() {
-    //     management::fast_forward_db();
-    //     return
-    // }
-    // // Restore was successful, can start syncing
-    // if  Check::database_bootstrapped() && !Check::node_is_running() {
-    //     management::start_node(management::NodeType::Validator);
-    //     return
-    // }
-    //
-    // // Validator account is created on chain, can start mining
-    // if  Check::accounts_exist_on_chain()
-    // && Check::database_bootstrapped()
-    // && Check::node_is_running()
-    // && Check::node_is_synced() // not
-    // && !Check::miner_is_mining() {
-    //     management::start_miner();
-    //     return
-    // }
-    // // Node has caught up to rest of network
-    // if  Check::node_is_synced() && !Check::miner_is_mining() {
-    //     management::start_miner();
-    //     return
-    // }
-    //
-    //     // Node has caught up to rest of network
-    // if  Check::node_is_synced() && !Check::miner_is_mining() {
-    //     management::start_miner();
-    //     return
+    //     let m = Metadata::new(
+    //         &self.conf.profile.default_node.clone().unwrap(),
+    //         &mut self.client
+    //     );
+    //     if let Some(mv) = m.meta {
+    //        return mv.version
+    //     }
+    //     0
     // }
 }
