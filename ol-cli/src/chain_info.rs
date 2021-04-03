@@ -79,7 +79,9 @@ pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
         let now = Utc::now().timestamp();
 
         match meta.chain_id {
+            // testnet has faster epochs
             4 => cs.epoch_progress = (now - ts) as f64 / 61f64, // 1 minute
+            // for main net
             _ => cs.epoch_progress = (now - ts) as f64 / 86401f64, // 24 hours
         }
         if cs.epoch_progress > 1f64 {
@@ -147,9 +149,6 @@ pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
                 }
             })
             .collect();
-
-            println!("{:?}", chain_state);
-            println!("{:?}", validators);
 
             return (chain_state, Some(validators))
     }
