@@ -273,7 +273,6 @@ impl Check {
         let home_path = self.conf.workspace.node_home.clone();
         
         let c_exist = home_path.join("blocks/block_0.json").exists() && 
-        // home_path.join("validator.node.yaml").exists() && 
         home_path.join("validator.node.yaml").exists() && 
         home_path.join("key_store.json").exists();
 
@@ -348,32 +347,27 @@ impl Check {
 
     /// Check if node is running
     pub fn check_node_state() -> bool {
-        let mut system = sysinfo::System::new_all();
-        // dbg!(&self.node_process_name);
-
-        // First we update all information of our system struct.
-        system.refresh_all();
-        let ps = system.get_process_by_name(NODE_PROCESS);
-        // dbg!(&ps);
-
-        let is_running = ps.len() > 0;
-        is_running
+        Check::check_process(NODE_PROCESS)
     }
     /// Check if node is running
     pub fn node_running(&mut self) -> bool {
-        let is_running = Check::check_node_state();
-        self.items.node_running = is_running;
-        is_running
+        self.items.node_running = Check::check_process(NODE_PROCESS);
+        self.items.node_running
     }
 
     /// Check if miner is running
-    pub fn miner_running(&self) -> bool {
+    pub fn miner_running(&mut self) -> bool {
+      self.items.miner_running = Check::check_process(MINER_PROCESS);
+      self.items.miner_running
+    }
+
+    fn check_process(process_str: &str) -> bool {
         let mut system = sysinfo::System::new_all();
         system.refresh_all();
 
         use sysinfo::ProcessExt;
         for (_, process) in system.get_processes() {
-            if process.name() == MINER_PROCESS { 
+            if process.name() == process_str { 
                 return true; 
             }            
         }
