@@ -3,8 +3,9 @@ use crate::client;
 use chrono::Utc;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
+use serde::{Serialize, Deserialize};
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Debug, Deserialize, Serialize)]
 /// ChainInfo struct
 pub struct ChainInfo {
     /// epoch

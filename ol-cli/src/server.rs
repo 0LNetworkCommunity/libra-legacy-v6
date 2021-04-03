@@ -1,6 +1,6 @@
 //! web-monitor
 
-use crate::{node_health, check_runner};
+use crate::{node_health, check_runner, chain_info};
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
@@ -11,6 +11,10 @@ use warp::{sse::ServerSentEvent, Filter};
 // TODO: does this need to be a separate function?
 // create server-sent event
 fn sse_check(info: node_health::Items) -> Result<impl ServerSentEvent, Infallible> {
+    Ok(warp::sse::json(info))
+}
+
+fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
 
@@ -36,13 +40,12 @@ pub async fn main() {
     });
 
     //GET explorer/ (the json api for explorer)
-    let _explorer = warp::path("explorer").and(warp::get()).map(|| {
+    let explorer = warp::path("explorer").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            let items = node_health::Items::read_cache().unwrap();
-
+            let info = crate::chain_info::fetch_chain_info();
             // TODO: Use a different data source for /explorer/ data.
-            sse_check(items)
+            sse_chain_info(info.0.unwrap())
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)
@@ -51,7 +54,7 @@ pub async fn main() {
     //GET /
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
-    warp::serve(home.or(check))
+    warp::serve(home.or(check).or(explorer))
         .run(([0, 0, 0, 0], 3030))
         .await;
 }
