@@ -156,7 +156,7 @@ impl NodeHealth {
     }
 
     /// refresh all checks
-    pub fn refresh_checks(&mut self) {
+    pub fn refresh_checks(&mut self) -> Items {
       self.items.configs_exist = self.configs_exist();
       self.items.db_restored = self.database_bootstrapped();
       self.items.node_running = self.node_running();
@@ -166,6 +166,7 @@ impl NodeHealth {
 
       self.items.is_synced = sync_tuple.0;
       self.items.sync_delay = sync_tuple.1;
+      self.items.clone()
     }
 
     fn get_annotate_account_blob(&mut self, address: AccountAddress) -> Result<AccountState, Error> {

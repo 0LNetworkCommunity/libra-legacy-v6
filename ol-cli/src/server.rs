@@ -24,11 +24,11 @@ pub async fn main() {
 
     //GET check/ (json api for check data)
     let check = warp::path("check").and(warp::get()).map(|| {
+        // let mut health = node_health::NodeHealth::new();
         // create server event source from Check object
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
-            // counter += 1;
             let items = node_health::Items::read_cache().unwrap();
-
+            // let items = health.refresh_checks();
             sse_check(items)
         });
         // reply using server-sent events
