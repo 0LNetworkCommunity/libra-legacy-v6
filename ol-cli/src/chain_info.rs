@@ -3,7 +3,6 @@ use crate::client;
 use chrono::Utc;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
-// TODO: This code is copied from explorer/app.rs, needs to be deduplicated (removed from app.rs)
 
 #[derive(Default, Debug)]
 /// ChainInfo struct
