@@ -18,9 +18,9 @@ impl Runnable for ServeCmd {
   /// Start the application.
   fn run(&self) {
     abscissa_tokio::run(&APPLICATION, async {
-      tokio::spawn(async move {
-        println!("starting web-monitor");
-        server::main()
+      tokio::spawn(async {
+        let web = server::WebMonitor::new(); 
+        web.run();
       })
     }).unwrap();
   }

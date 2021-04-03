@@ -1,6 +1,7 @@
 //! web-monitor
 
 use crate::{node_health, check_runner, chain_info};
+use abscissa_core::Runnable;
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
@@ -18,8 +19,18 @@ fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, I
     Ok(warp::sse::json(info))
 }
 
-/// main server
-pub async fn main() {
+/// webmonitor
+pub struct WebMonitor {}
+
+impl WebMonitor {
+  /// new
+  pub fn new() -> Self {
+    WebMonitor {}
+  }
+}
+
+impl Runnable for WebMonitor {
+  fn run(&self)  {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(|| {
         check_runner::mon(true, false);
@@ -55,4 +66,5 @@ pub async fn main() {
 
     warp::serve(home.or(check).or(explorer))
         .run(([0, 0, 0, 0], 3030));
+  }
 }
