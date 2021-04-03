@@ -35,9 +35,6 @@ pub async fn main() {
         warp::sse::reply(event_stream)
     });
 
-    //GET dash/ (json api for check data)
-    let dash = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
-
     //GET explorer/ (the json api for explorer)
     let _explorer = warp::path("explorer").and(warp::get()).map(|| {
         // create server event source
@@ -51,7 +48,10 @@ pub async fn main() {
         warp::sse::reply(event_stream)
     });
 
-    warp::serve(dash.or(check))
+    //GET /
+    let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
+
+    warp::serve(home.or(check))
         .run(([0, 0, 0, 0], 3030))
         .await;
 }
