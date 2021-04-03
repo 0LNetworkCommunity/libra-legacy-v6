@@ -54,6 +54,5 @@ pub async fn main() {
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
     warp::serve(home.or(check).or(explorer))
-        .run(([0, 0, 0, 0], 3030))
-        .await;
+        .run(([0, 0, 0, 0], 3030));
 }
