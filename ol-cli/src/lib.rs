@@ -31,5 +31,7 @@ pub mod server;
 pub mod restore;
 pub mod transitions;
 pub mod query;
+pub mod chain_info;
+
 /// Cli block explorer
 pub mod explorer;
