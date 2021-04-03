@@ -1,9 +1,9 @@
 //! server
 
-use std::sync::Arc;
-use handlebars::Handlebars;
-use serde::Serialize;
-use serde_json::json;
+// use std::sync::Arc;
+// use handlebars::Handlebars;
+// use serde::Serialize;
+// use serde_json::json;
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::time::Duration;
@@ -13,10 +13,10 @@ use crate::{check, check_runner};
 use std::thread;
 
 
-struct WithTemplate<T: Serialize> {
-    name: &'static str,
-    value: T,
-}
+// struct WithTemplate<T: Serialize> {
+//     name: &'static str,
+//     value: T,
+// }
 
 // TODO: does this need to be a separate function?
 // create server-sent event
@@ -24,15 +24,15 @@ fn sse_check(info: check::Items) -> Result<impl ServerSentEvent, Infallible> {
     Ok(warp::sse::json(info))
 }
 
-fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars<'_>>) -> impl warp::Reply
-where
-    T: Serialize,
-{
-    let render = hbs
-        .render(template.name, &template.value)
-        .unwrap_or_else(|err| err.to_string());
-    warp::reply::html(render)
-}
+// fn render<T>(template: WithTemplate<T>, hbs: Arc<Handlebars<'_>>) -> impl warp::Reply
+// where
+//     T: Serialize,
+// {
+//     let render = hbs
+//         .render(template.name, &template.value)
+//         .unwrap_or_else(|err| err.to_string());
+//     warp::reply::html(render)
+// }
 
 /// Web Template
 pub const TEMPLATE: &'static str = std::include_str!("../web/index.html");
@@ -46,29 +46,29 @@ pub async fn main() {
         check_runner::mon(true);
     });
 
-    let mut hb = Handlebars::new();
+    // let mut hb = Handlebars::new();
     // register the template
-    hb.register_template_string("template.html", TEMPLATE)
-        .unwrap();
+    // hb.register_template_string("template.html", TEMPLATE)
+        // .unwrap();
 
     // Turn Handlebars instance into a Filter so we can combine it
     // easily with others...
-    let hb = Arc::new(hb);
+    // let hb = Arc::new(hb);
 
     // Create a reusable closure to render template
-    let handlebars = move |with_template| render(with_template, hb.clone());
+    // let handlebars = move |with_template| render(with_template, hb.clone());
 
-    //GET / (index html)
-    let route = warp::get()
-        .and(warp::path::end())
-        .map(|| {
-            let items = check::Items::read_cache().unwrap_or_default();
-            WithTemplate {
-                name: "template.html",
-                value: json!({"is_synced" : items.is_synced }),
-            }
-        })
-        .map(handlebars);
+    // //GET / (index html)
+    // let route = warp::get()
+    //     .and(warp::path::end())
+    //     .map(|| {
+    //         let items = check::Items::read_cache().unwrap_or_default();
+    //         WithTemplate {
+    //             name: "template.html",
+    //             value: json!({"is_synced" : items.is_synced }),
+    //         }
+    //     })
+    //     .map(handlebars);
     
     //GET check/ (json api for check data)
     let check = warp::path("check").and(warp::get()).map(|| {

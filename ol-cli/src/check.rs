@@ -284,15 +284,17 @@ impl Check {
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
         // check to see no files are present
-        let x = self.client.get_account(self.conf.profile.account, false);
-        //println!("Account address: {}", &self.conf.address);
-        match x {
+        let account = self.client.get_account(self.conf.profile.account, false);
+        println!("Account address: {:?}", &account);
+        self.items.account_created = match account {
             Ok((opt,_)) => match opt{
                 Some(_) => true,
                 None => false
             },
             Err(_) => false,
-        }
+        };
+
+        self.items.account_created
     }
 
     /// database is initialized

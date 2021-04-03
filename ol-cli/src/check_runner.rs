@@ -4,7 +4,7 @@
 use std::{thread, time::{Duration}};
 use crate::{check::Check};
 use std::io::{Write, stdout};
-use crossterm::{QueueableCommand, cursor};
+use crossterm::{QueueableCommand, cursor, terminal::{self, ClearType}};
 
 /// Start the node monitor
 pub fn mon(is_live: bool) {
@@ -14,35 +14,37 @@ pub fn mon(is_live: bool) {
     let mut checker = Check::new();
     loop {
         thread::sleep(Duration::from_millis(1000));
-
+        terminal::Clear(ClearType::All);
         checker.fetch_upstream_states();
 
         // TODO: make keep cursor position
         let sync_tuple = checker.check_sync();
 
-        let mining = match checker.miner_running() {
-            true=> "running",
-            false => "stopped"
-        };
-        let node_status = match checker.node_running() {
-            true=> "running",
-            false => "stopped"
-        };
-
         stdout.queue(cursor::SavePosition).unwrap();
         stdout.write(
             format!(
-                "Test: {}, Configs Exist:{}, Is synced: {}, Sync delay: {}, Node app: {}, Miner app: {}, Account on chain: {}, Epoch: {}, Height {}, In val set:{}",
-                &x,
-                checker.configs_exist(),
-                &sync_tuple.0,
-                &sync_tuple.1,
-                node_status,
-                mining,
-                checker.accounts_exist_on_chain(),
-                checker.epoch_on_chain(),
-                checker.chain_height(),
-                checker.is_in_validator_set(),
+"Check-counter: {counter}
+Configs Exist:{configs}
+DB Restored: {restored}
+Is Synced: {synced}
+Sync Delay: {delay}
+Node Running: {node}
+Miner Running: {miner}
+Account On Chain: {account}
+Epoch: {epoch}
+Height {height}
+In Validator Set:{valset}",
+                counter = &x,
+                configs = checker.configs_exist(),
+                restored = checker.database_bootstrapped(),
+                synced = &sync_tuple.0,
+                delay = &sync_tuple.1,
+                node = checker.node_running(),
+                miner = checker.miner_running(),
+                account = checker.accounts_exist_on_chain(),
+                epoch = checker.epoch_on_chain(),
+                height = checker.chain_height(),
+                valset = checker.is_in_validator_set(),
             ).as_bytes()
         ).unwrap();
 
