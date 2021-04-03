@@ -19,7 +19,6 @@ fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, I
 }
 
 /// main server
-#[tokio::main]
 pub async fn main() {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(|| {

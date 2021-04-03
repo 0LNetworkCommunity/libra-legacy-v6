@@ -2,6 +2,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::server;
+use crate::{application::APPLICATION};
 
 /// `serve-cmd` subcommand
 ///
@@ -14,9 +15,12 @@ use crate::server;
 pub struct ServeCmd {}
 
 impl Runnable for ServeCmd {
-    /// Start the application.
-    fn run(&self) {
+  /// Start the application.
+  fn run(&self) {
+    abscissa_tokio::run(&APPLICATION, async {
+      tokio::spawn(async move {
         server::main();
-        println!("server started");
-    }
+      })
+    }).unwrap();
+  }
 }
