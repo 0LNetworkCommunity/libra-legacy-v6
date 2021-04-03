@@ -283,9 +283,7 @@ impl Check {
 
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
-        // check to see no files are present
         let account = self.client.get_account(self.conf.profile.account, false);
-        println!("Account address: {:?}", &account);
         self.items.account_created = match account {
             Ok((opt,_)) => match opt{
                 Some(_) => true,

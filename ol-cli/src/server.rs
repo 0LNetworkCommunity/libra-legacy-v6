@@ -52,6 +52,6 @@ pub async fn main() {
     });
 
     warp::serve(dash.or(check))
-        .run(([127, 0, 0, 1], 3030))
+        .run(([0, 0, 0, 0], 3030))
         .await;
 }
