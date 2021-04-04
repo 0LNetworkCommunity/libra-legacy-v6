@@ -31,7 +31,7 @@ impl Runnable for OnboardCmd {
         if self.autopilot {
             loop {
                 println!("Running onboarding autopilot, {}", trigger_actions_str);
-                let _state = transitions::NodeState::init()
+                let _state = transitions::HostState::init()
                     .maybe_advance(trigger_actions)
                     .get_state();
                 thread::sleep(Duration::from_millis(10_000));
@@ -39,7 +39,7 @@ impl Runnable for OnboardCmd {
         } 
         else if self.next {
             println!("Running manual onboarding, {}", trigger_actions_str);
-            let state = transitions::NodeState::init()
+            let state = transitions::HostState::init()
                 .maybe_advance(trigger_actions)
                 .get_state();
             println!("Onboarding stage at exit: {:?}", state);

@@ -27,7 +27,6 @@ pub enum NodeVariants {
     /// should change to fullnode mode.
     ValidatorOutOfSet,
 }
-
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 /// All actions which can be taken on a node
@@ -49,20 +48,52 @@ pub enum NodeAction {
 
 }
 
+
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+/// All states a miner can be in
+pub enum MinerVariants {
+    /// Nothing is configured
+    EmptyBox,
+    /// Files initialized  0L.toml, node.yaml, key_store.json
+    ConfigsOk,
+    /// Account exists on chain, and has balance, can start mining.
+    AccountOnChain,
+    /// Miner connected to upstream
+    Mining,
+    /// Miner connected to upstream
+    Stopped,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+/// Actions that impact the miner
+pub enum MinerAction {
+  /// wizard was run to create host configs
+  RanWizard,
+  /// account was created on chain
+  AccountCreated,
+  /// miner has started
+  Started,
+  /// miner failed
+  Failed,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 /// The Current state of a node
-pub struct NodeState {
-    state: NodeVariants,
+pub struct HostState {
+    node_state: NodeVariants,
+    miner_state: MinerVariants,
     trigger: NodeAction,
-    // check: Check,
 }
 
-impl NodeState {
+impl HostState {
     /// init
     pub fn init() -> Self{
         Self {
-            state: NodeVariants::EmptyBox,
+            node_state: NodeVariants::EmptyBox,
+            miner_state: MinerVariants::EmptyBox,
             trigger: NodeAction::Init,
             // check: Check::new(),
         }
@@ -78,7 +109,7 @@ impl NodeState {
     }
     
     /// Get from cache
-    pub fn read_cache() -> Option<NodeState>{
+    pub fn read_cache() -> Option<HostState>{
         let q = DB_CACHE.get("onboarding").unwrap().unwrap();
         match serde_json::from_slice(&q.as_slice()) {
             Ok(items) => {
@@ -90,8 +121,66 @@ impl NodeState {
 
     /// Get state
     pub fn get_state(&self) -> NodeVariants {
-        self.state.to_owned()
+        self.node_state.to_owned()
     }
+
+    /// the transitions in the miner state machine
+    pub fn miner_transition(&mut self, action: MinerAction, _trigger_action: bool) -> &Self {   
+      match action {
+        MinerAction::RanWizard => { self.miner_state = MinerVariants::ConfigsOk}
+        MinerAction::AccountCreated => { self.miner_state = MinerVariants::AccountOnChain }
+        MinerAction::Started => { self.miner_state = MinerVariants::Mining }
+        MinerAction::Failed => { self.miner_state = MinerVariants::Mining }
+      };
+      self
+    }
+
+    /// try to advance the state machine
+    pub fn miner_maybe_advance(&mut self, trigger_action: bool)  -> &Self {
+      let mut check = NodeHealth::new();
+
+      match &self.miner_state {
+          MinerVariants::EmptyBox => {
+            if check.configs_exist() {
+                &self.miner_transition(MinerAction::RanWizard, trigger_action);
+            }
+            // Note: Don't trigger any action, may conflict with validator node setup.
+          }
+          MinerVariants::ConfigsOk => {
+            if check.accounts_exist_on_chain() {
+                &self.miner_transition(MinerAction::AccountCreated, trigger_action);
+            }
+          }
+          MinerVariants::AccountOnChain => {
+            if check.miner_running() {
+                &self.miner_transition(MinerAction::Started, trigger_action);
+            } else {
+              // if the node has synced (or is otherwise advanced in onboaring)
+              match &self.node_state {
+                NodeVariants::FullnodeSyncComplete => { management::start_miner() }
+                NodeVariants::ValidatorIsRunning => { management::start_miner() }
+                NodeVariants::ValidatorOutOfSet  => { management::start_miner() }
+                _ => {}
+              }
+            }
+          }
+          MinerVariants::Mining => {
+            if !check.miner_running() {
+              &self.miner_transition(MinerAction::Failed, trigger_action);
+            }
+          }
+          MinerVariants::Stopped => {
+            if check.miner_running() {
+              &self.miner_transition(MinerAction::Started, trigger_action);
+            } else {
+              // start the miner
+              management::start_miner();
+            }
+          }
+      }
+      self
+    }
+
 
     /// State transition
     pub fn transition(&mut self, action: NodeAction, trigger_action: bool) -> &Self {        
@@ -102,33 +191,32 @@ impl NodeState {
 
             // Node has an empty box, no config files
             NodeAction::RunWizard => {
-                if self.state == EmptyBox {self.state = ValConfigsOk;}
+                if self.node_state == EmptyBox {self.node_state = ValConfigsOk;}
             }
 
             NodeAction::RestoreDb => {
-                if self.state == ValConfigsOk {self.state = DbRestoredOk;}
+                if self.node_state == ValConfigsOk {self.node_state = DbRestoredOk;}
             }
             
             NodeAction::StartFullnode => {
-                if self.state == DbRestoredOk {self.state = FullnodeIsRunning;}
+                if self.node_state == DbRestoredOk {self.node_state = FullnodeIsRunning;}
 
                 // if the node was previously in validator mode
-                if self.state == ValidatorIsRunning || self.state == ValidatorOutOfSet {
-                    self.state = FullnodeIsRunning;
+                if self.node_state == ValidatorIsRunning || self.node_state == ValidatorOutOfSet {
+                    self.node_state = FullnodeIsRunning;
                 }
- 
             }
 
             NodeAction::FullnodeSynced => {
-                if self.state == FullnodeIsRunning {self.state = FullnodeSyncComplete};
+                if self.node_state == FullnodeIsRunning {self.node_state = FullnodeSyncComplete};
             }
 
             NodeAction::SwitchToValidatorMode => {
-                if self.state == FullnodeSyncComplete {self.state = ValidatorIsRunning};
+                if self.node_state == FullnodeSyncComplete {self.node_state = ValidatorIsRunning};
             }
 
             NodeAction::ValidatorDroppedFromSet => {
-                if self.state == ValidatorIsRunning {self.state = ValidatorOutOfSet};
+                if self.node_state == ValidatorIsRunning {self.node_state = ValidatorOutOfSet};
             }
         };
 
@@ -139,10 +227,12 @@ impl NodeState {
 
     /// Advance to the next state
     pub fn maybe_advance(&mut self, trigger_action: bool) -> &Self {
-        fn action_print() { println!("Triggering expected action") };
-        println!("Onboarding stage: {:?}", self.state);
+        
+        println!("Onboarding stage: {:?}", self.node_state);
         let mut check = NodeHealth::new();
-        match &self.state {
+
+        // Try to advance the node state. Miner below
+        match &self.node_state {
             NodeVariants::EmptyBox => {
                 if check.configs_exist() {
                     &self.transition(NodeAction::RunWizard, trigger_action);}
@@ -209,12 +299,14 @@ impl NodeState {
                     &self.transition(NodeAction::SwitchToValidatorMode, trigger_action);
                 } 
                 //No 'else'. Nothing to do to make fullnode sync, just waiting
-
-
             }
             _ => {}
         };
         
         self
     }
+
+
 }
+
+fn action_print() { println!("Triggering expected action"); }
