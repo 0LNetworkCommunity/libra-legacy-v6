@@ -79,7 +79,7 @@ pub enum OlCliCmd {
 
     /// The `check` subcommand
     #[options(help = "run healthcheck on the account, node, and displays some network information")]
-    Check(HealthCmd),
+    Health(HealthCmd),
 
     /// The `explorer` subcommand
     #[options(help = "watch a block explorer monitor in terminal")]

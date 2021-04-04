@@ -2,8 +2,13 @@
 use crate::{cache::DB_CACHE, client};
 use chrono::Utc;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
-use std::convert::TryFrom;
+use std::convert::{TryFrom};
 use serde::{Serialize, Deserialize};
+
+/// name of chain info key for db
+pub const CHAIN_INFO_DB_KEY: &str = "chain_info";
+/// name of val info key for db
+pub const VAL_INFO_DB_KEY: &str = "val_info";
 
 #[derive(Default, Clone, Debug, Deserialize, Serialize)]
 /// ChainInfo struct
@@ -156,11 +161,22 @@ pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
             let cs_ser = serde_json::to_vec(&chain_state).unwrap();
             let val_ser = serde_json::to_vec(&validators).unwrap();
 
-            DB_CACHE.put("chain_info".as_bytes(), cs_ser).unwrap();
-            DB_CACHE.put("val_info".as_bytes(), val_ser).unwrap();
+            DB_CACHE.put(CHAIN_INFO_DB_KEY.as_bytes(), cs_ser).unwrap();
+            DB_CACHE.put(VAL_INFO_DB_KEY.as_bytes(), val_ser).unwrap();
 
             return (chain_state, Some(validators))
     }
 
     (None, None)
+}
+
+/// get chain info from cache
+pub fn read_chain_info_cache() -> ChainInfo {
+  let chain_state = DB_CACHE.get(CHAIN_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach chain_info cache");
+  let c: ChainInfo = serde_json::de::from_slice(&chain_state.as_slice()).unwrap();
+  c
+  // let val_info = DB_CACHE.get(CHAIN_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach chain_info cache");
+  // let v: ValidatorInfo = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
+
+  // return (c, v)
 }
