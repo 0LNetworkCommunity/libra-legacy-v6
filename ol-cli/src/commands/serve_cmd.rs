@@ -20,7 +20,7 @@ impl Runnable for ServeCmd {
     abscissa_tokio::run(&APPLICATION, async {
       tokio::spawn(async move {
         println!("starting web-monitor");
-        server::main()
+        server::start_server()
       })
     }).unwrap();
   }

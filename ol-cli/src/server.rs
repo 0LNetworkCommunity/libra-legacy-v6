@@ -19,7 +19,7 @@ fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, I
 }
 
 /// main server
-pub async fn main() {
+pub async fn start_server() {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(|| {
         check_runner::mon(true, false);
@@ -54,5 +54,5 @@ pub async fn main() {
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
     warp::serve(home.or(check).or(explorer))
-        .run(([0, 0, 0, 0], 3030));
+        .run(([0, 0, 0, 0], 3030)).await;
 }
