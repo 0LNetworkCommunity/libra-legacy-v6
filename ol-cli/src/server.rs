@@ -18,6 +18,11 @@ fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, I
     Ok(warp::sse::json(info))
 }
 
+fn sse_val_info(info: Vec<chain_info::ValidatorInfo>) -> Result<impl ServerSentEvent, Infallible> {
+    Ok(warp::sse::json(info))
+}
+
+
 /// main server
 #[tokio::main]
 pub async fn start_server() {
@@ -39,13 +44,24 @@ pub async fn start_server() {
         warp::sse::reply(event_stream)
     });
 
-    //GET explorer/ (the json api for explorer)
-    let explorer = warp::path("explorer").and(warp::get()).map(|| {
+    //GET chain/ (the json api)
+    let chain = warp::path("chain").and(warp::get()).map(|| {
         // create server event source
         let event_stream = interval(Duration::from_secs(1)).map(move |_| {
             let info = crate::chain_info::read_chain_info_cache();
-            // TODO: Use a different data source for /explorer/ data.
             sse_chain_info(info)
+        });
+        // reply using server-sent events
+        warp::sse::reply(event_stream)
+    });
+
+    //GET validators/ (the json api)
+    let validators = warp::path("validators").and(warp::get()).map(|| {
+        // create server event source
+        let event_stream = interval(Duration::from_secs(1)).map(move |_| {
+            let info = crate::chain_info::read_val_info_cache();
+            // TODO: Use a different data source for /explorer/ data.
+            sse_val_info(info)
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)
@@ -54,6 +70,6 @@ pub async fn start_server() {
     //GET /
     let home = warp::fs::dir("/root/libra/ol-cli/web-monitor/public/");
 
-    warp::serve(home.or(check).or(explorer))
+    warp::serve(home.or(check).or(chain).or(validators))
         .run(([0, 0, 0, 0], 3030)).await;
 }

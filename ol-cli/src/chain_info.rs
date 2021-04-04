@@ -175,8 +175,11 @@ pub fn read_chain_info_cache() -> ChainInfo {
   let chain_state = DB_CACHE.get(CHAIN_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach chain_info cache");
   let c: ChainInfo = serde_json::de::from_slice(&chain_state.as_slice()).unwrap();
   c
-  // let val_info = DB_CACHE.get(CHAIN_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach chain_info cache");
-  // let v: ValidatorInfo = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
+}
 
-  // return (c, v)
+/// get chain info from cache
+pub fn read_val_info_cache() -> Vec<ValidatorInfo> {
+  let val_info = DB_CACHE.get(VAL_INFO_DB_KEY.as_bytes()).unwrap().expect("could not reach chain_info cache");
+  let v: Vec<ValidatorInfo> = serde_json::de::from_slice(&val_info.as_slice()).unwrap();
+  v
 }
