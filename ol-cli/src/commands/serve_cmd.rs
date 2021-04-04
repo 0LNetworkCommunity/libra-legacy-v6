@@ -2,7 +2,7 @@
 
 use abscissa_core::{Command, Options, Runnable};
 use crate::server;
-use crate::{application::APPLICATION};
+
 
 /// `serve-cmd` subcommand
 ///

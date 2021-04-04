@@ -1,7 +1,6 @@
 //! web-monitor
 
 use crate::{node_health, check_runner, chain_info};
-use abscissa_core::Runnable;
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::thread;
@@ -20,6 +19,7 @@ fn sse_chain_info(info: chain_info::ChainInfo) -> Result<impl ServerSentEvent, I
 }
 
 /// main server
+#[tokio::main]
 pub async fn start_server() {
     // TODO: Perhaps a better way to keep the check cache fresh?
     thread::spawn(|| {
