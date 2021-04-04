@@ -1,11 +1,16 @@
 //! `management` functions
 
-use crate::{node_health, prelude::app_config};
+use crate::{cache::DB_CACHE, node_health, prelude::app_config};
 use anyhow::Error;
-use reqwest::Url;
-use serde::{Serialize, Deserialize};
-use std::{collections::HashSet, env, fs::{self, File}, process::{Command, Stdio}};
 use once_cell::sync::Lazy;
+use reqwest::Url;
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::HashSet,
+    env,
+    fs::{self, File},
+    process::{Command, Stdio},
+};
 
 const BINARY_NODE: &str = "libra-node";
 const BINARY_MINER: &str = "miner";
@@ -18,60 +23,57 @@ struct Process {
 }
 
 /// Check if we are in prod mode
-pub static IS_PROD: Lazy<bool> = Lazy::new(||{  
+pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     match env::var("NODE_ENV") {
         Ok(val) => {
             match val.as_str() {
-                "prod" =>  {true},
+                "prod" => true,
                 // if anything else is set by user is false
-                _ => {false} 
+                _ => false,
             }
         }
         // default to prod if nothig is set
-        _ => {true}
+        _ => true,
     }
 });
 
 /// Save PID
 pub fn save_pid(name: &str, pid: u32) {
     // Handle empty case
-    match node_health::DB_CACHE.get(name.as_bytes()) {
-        Ok(Some(_value)) => { /* TODO */},
-        Ok(None) => { 
-            let process = Process { 
-                name: name.to_owned(), pids: vec![pid].into_iter().collect() 
+    match DB_CACHE.get(name.as_bytes()) {
+        Ok(Some(_value)) => { /* TODO */ }
+        Ok(None) => {
+            let process = Process {
+                name: name.to_owned(),
+                pids: vec![pid].into_iter().collect(),
             };
             let serialized = serde_json::to_vec(&process).unwrap();
-            node_health::DB_CACHE.put(name.as_bytes(), serialized).unwrap();
-        },
+            DB_CACHE.put(name.as_bytes(), serialized).unwrap();
+        }
         Err(e) => println!("RocksDB operational problem occured: {}", e),
-    }    
+    }
 
     // Load, update and save
-    let pids_loaded = node_health::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
-    let mut process: Process = serde_json::de::from_slice(
-        &pids_loaded
-    ).unwrap();    
-    process.pids.insert(pid);    
+    let pids_loaded = DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
+    let mut process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
+    process.pids.insert(pid);
     let serialized = serde_json::to_vec(&process).unwrap();
-    let _res = node_health::DB_CACHE.put(name.as_bytes(), serialized);
+    let _res = DB_CACHE.put(name.as_bytes(), serialized);
 }
 
 /// Kill all the processes that are running
 pub fn kill_zombies(name: &str) {
-    if node_health::DB_CACHE.get(name.as_bytes()).unwrap().is_none() {
+    if DB_CACHE.get(name.as_bytes()).unwrap().is_none() {
         return;
     }
 
-    let pids_loaded = node_health::DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
+    let pids_loaded = DB_CACHE.get(name.as_bytes()).unwrap().unwrap();
     let process: Process = serde_json::de::from_slice(&pids_loaded).unwrap();
 
     println!("Killing zombie '{}' processes...", name);
     use nix::sys::signal::{self, Signal};
     for pid in process.pids.iter() {
-        let _res = signal::kill(
-            nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM
-        );
+        let _res = signal::kill(nix::unistd::Pid::from_raw(*pid as i32), Signal::SIGTERM);
     }
 }
 
@@ -83,7 +85,7 @@ pub enum NodeType {
     Fullnode,
 }
 
-/// 
+///
 pub fn create_log_file(file_name: &str) -> File {
     let conf = app_config();
     let logs_dir = conf.workspace.node_home.join("logs/");
@@ -101,10 +103,10 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     // if is running do nothing
     if node_health::NodeHealth::new().node_running() {
         println!("Node is already running. Exiting.");
-        return Ok(())
+        return Ok(());
     }
 
-    // Create log file, and pipe stdout/err    
+    // Create log file, and pipe stdout/err
     let outputs = create_log_file("node");
     let errors = outputs.try_clone().unwrap();
 
@@ -113,27 +115,28 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
     let conf = app_config();
     let node_home = conf.workspace.node_home.to_str().unwrap();
     let config_file_name = match config_type {
-        NodeType::Validator => {format!("{}validator.node.yaml", node_home)}
-        NodeType::Fullnode => {format!("{}fullnode.node.yaml", node_home)}
+        NodeType::Validator => format!("{}validator.node.yaml", node_home),
+        NodeType::Fullnode => format!("{}fullnode.node.yaml", node_home),
     };
 
     // TODO: Boilerplate, figure out how to make generic
     let child = if *IS_PROD {
         Command::new("libra-node")
-        .arg("--config")
-        .arg(config_file_name)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to execute child")
+            .arg("--config")
+            .arg(config_file_name)
+            .stdout(Stdio::from(outputs))
+            .stderr(Stdio::from(errors))
+            .spawn()
+            .expect("failed to execute child")
     } else {
-        Command::new("cargo").args(&["r", "-p", "libra-node", "--"])
-        .arg("--config")
-        .arg(config_file_name)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to execute child")
+        Command::new("cargo")
+            .args(&["r", "-p", "libra-node", "--"])
+            .arg("--config")
+            .arg(config_file_name)
+            .stdout(Stdio::from(outputs))
+            .stderr(Stdio::from(errors))
+            .spawn()
+            .expect("failed to execute child")
     };
 
     let pid = &child.id();
@@ -144,13 +147,14 @@ pub fn start_node(config_type: NodeType) -> Result<(), Error> {
 
 /// Stop node, as validator
 pub fn stop_node() {
-    kill_all(BINARY_NODE);    
+    kill_all(BINARY_NODE);
 }
 
 fn kill_all(process: &str) {
     kill_zombies(process);
 
-    let mut child = Command::new("killall").arg(process)
+    let mut child = Command::new("killall")
+        .arg(process)
         .spawn()
         .expect(&format!("failed to run killall {}", process));
     child.wait().expect("killall did not exit");
@@ -162,7 +166,7 @@ pub fn start_miner() {
     // if is running do nothing
     if node_health::NodeHealth::new().miner_running() {
         println!("Miner is already running. Exiting.");
-        return
+        return;
     }
 
     // Create log file, and pipe stdout/err
@@ -171,25 +175,30 @@ pub fn start_miner() {
 
     // if node is NOT synced, then should use a backup/upstream node
     // let url = choose_rpc_node().unwrap();
-    let use_backup = if node_health::NodeHealth::node_is_synced().0 {"--backup-url"} else { "" };
-    
+    let use_backup = if node_health::NodeHealth::node_is_synced().0 {
+        "--backup-url"
+    } else {
+        ""
+    };
+
     // TODO: Boilerplate, figure out how to make generic
     let child = if *IS_PROD {
         Command::new("miner")
-        .arg("start")
-        .arg(use_backup)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to run 'miner', is it installed?")
+            .arg("start")
+            .arg(use_backup)
+            .stdout(Stdio::from(outputs))
+            .stderr(Stdio::from(errors))
+            .spawn()
+            .expect("failed to run 'miner', is it installed?")
     } else {
-        Command::new("cargo").args(&["r", "-p", "miner", "--"])
-        .arg("start")
-        .arg(use_backup)
-        .stdout(Stdio::from(outputs))
-        .stderr(Stdio::from(errors))
-        .spawn()
-        .expect("failed to run cargo r -p miner")
+        Command::new("cargo")
+            .args(&["r", "-p", "miner", "--"])
+            .arg("start")
+            .arg(use_backup)
+            .stdout(Stdio::from(outputs))
+            .stderr(Stdio::from(errors))
+            .spawn()
+            .expect("failed to run cargo r -p miner")
     };
 
     let pid = &child.id();
@@ -210,38 +219,41 @@ pub fn choose_rpc_node() -> Option<Url> {
     // Note this assumes that we can connect to local and to a backup.
     if node_health::NodeHealth::node_is_synced().0 {
         // always choose local node if in sync
-        return conf.profile.default_node
+        return conf.profile.default_node;
     } else {
         // otherwise use a backup
         // TODO: check all backups in vector to see which connects
-        Some(conf.profile.upstream_nodes
-            .unwrap()
-            .into_iter()
-            .next()
-            .unwrap()
+        Some(
+            conf.profile
+                .upstream_nodes
+                .unwrap()
+                .into_iter()
+                .next()
+                .unwrap(),
         )
     }
 }
 
-/// 
+///
 pub fn run_validator_wizard() -> bool {
     println!("Running validator wizard");
     // TODO: Boilerplate, figure out how to make generic
     let mut child = if *IS_PROD {
         Command::new("miner")
-        .arg("val-wizard")
-        .arg("--keygen")
-        .spawn()
-        .expect(&format!("failed to find 'miner', is it installed?"))
+            .arg("val-wizard")
+            .arg("--keygen")
+            .spawn()
+            .expect(&format!("failed to find 'miner', is it installed?"))
     } else {
-        Command::new("cargo").args(&["r", "-p", "miner", "--"])
-        .arg("val-wizard")
-        .arg("--keygen")
-        .spawn()
-        .expect(&format!("failed to run cargo r -p miner"))
+        Command::new("cargo")
+            .args(&["r", "-p", "miner", "--"])
+            .arg("val-wizard")
+            .arg("--keygen")
+            .spawn()
+            .expect(&format!("failed to run cargo r -p miner"))
     };
 
-    let exit_code = child.wait().expect("failed to wait on miner"); 
+    let exit_code = child.wait().expect("failed to wait on miner");
     assert!(exit_code.success());
 
     true

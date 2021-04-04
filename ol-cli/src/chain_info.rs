@@ -1,5 +1,5 @@
 //! `chain_info`
-use crate::client;
+use crate::{cache::DB_CACHE, client};
 use chrono::Utc;
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
@@ -23,7 +23,7 @@ pub struct ChainInfo {
 }
 
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Deserialize, Serialize)]
 /// Validator info struct
 pub struct ValidatorInfo {
     /// account address
@@ -49,6 +49,7 @@ pub struct ValidatorInfo {
     /// epoch count since creation
     pub epochs_since_last_account_creation: u64,
 }
+
 
 /// fetch state from system address 0x0
 pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
@@ -150,6 +151,13 @@ pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
                 }
             })
             .collect();
+
+            // also save to cache
+            let cs_ser = serde_json::to_vec(&chain_state).unwrap();
+            let val_ser = serde_json::to_vec(&validators).unwrap();
+
+            DB_CACHE.put("chain_info".as_bytes(), cs_ser).unwrap();
+            DB_CACHE.put("val_info".as_bytes(), val_ser).unwrap();
 
             return (chain_state, Some(validators))
     }

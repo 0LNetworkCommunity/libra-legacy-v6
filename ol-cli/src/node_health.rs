@@ -3,21 +3,19 @@
 use anyhow::Error;
 use cli::libra_client::LibraClient;
 use sysinfo::SystemExt;
-use crate::metadata::Metadata;
+use crate::{cache::DB_CACHE, metadata::Metadata};
 use crate::config::OlCliConfig;
 use crate::application::app_config;
 use std::str;
-use rocksdb::DB;
+// use rocksdb::DB;
 use serde::{Serialize, Deserialize};
 
 use libra_types::{account_address::AccountAddress, account_state::AccountState};
 use std::convert::TryFrom;
 use libra_json_rpc_client::views::MinerStateResourceView;
 use libra_types::waypoint::Waypoint;
-use once_cell::sync::Lazy;
+// use once_cell::sync::Lazy;
 
-/// caching database name, to be appended to node_home
-pub const CHECK_CACHE_PATH: &str = "ol-system-checks";
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -29,12 +27,12 @@ pub const NODE_PROCESS: &str = "libra-node";
 pub const MINER_PROCESS: &str = "miner";
 
 
-/// Construct Lazy Database instance
-pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
-    let mut conf = app_config().to_owned();
-    conf.workspace.node_home.push(CHECK_CACHE_PATH);
-    DB::open_default(conf.workspace.node_home).unwrap()
-});
+// /// Construct Lazy Database instance
+// pub static DB_CACHE: Lazy<DB> = Lazy::new(||{
+//     let mut conf = app_config().to_owned();
+//     conf.workspace.node_home.push(CHECK_CACHE_PATH);
+//     DB::open_default(conf.workspace.node_home).unwrap()
+// });
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
