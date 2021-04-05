@@ -1,7 +1,7 @@
 <script>
-  import Main from "../src/components/monitor/Main.svelte";
+  import Main from "./components/layout/Main.svelte";
 </script>
 
-<main class="uk-background-muted uk-height-viewport">
+<main>
   <Main/>
 </main>
