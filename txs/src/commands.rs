@@ -34,7 +34,6 @@ use std::path::PathBuf;
 /// TxsApp Subcommands
 #[derive(Command, Debug, Options, Runnable)]
 pub enum TxsCmd {
-
     /// The `create-account` subcommand
     #[options(help = "submit tx to create a user account from account.json file")]
     CreateAccount(CreateAccountCmd),

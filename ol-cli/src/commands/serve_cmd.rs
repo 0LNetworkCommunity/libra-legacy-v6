@@ -3,7 +3,6 @@
 use abscissa_core::{Command, Options, Runnable};
 use crate::server;
 
-
 /// `serve-cmd` subcommand
 ///
 /// The `Options` proc macro generates an option parser based on the struct
