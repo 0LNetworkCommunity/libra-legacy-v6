@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import {sortBy, reverse} from "lodash";
+  import { sortBy, reverse } from "lodash";
 
   interface ValInfo {
     account_address: string;
@@ -21,7 +21,7 @@
     var sse = new EventSource(uri);
     sse.onmessage = function (msg) {
       set = JSON.parse(msg.data);
-      set = sortBy(set, ['voting_power']).reverse();
+      set = sortBy(set, ["voting_power"]).reverse();
     };
   });
 
@@ -31,32 +31,60 @@
 </script>
 
 <main>
-  <h2 class="uk-heading-line uk-text-light uk-text-center uk-text-uppercase uk-text-muted"><span>{set.length} Validators</span></h2>
-
-  <div class="uk-overflow-auto">
-    <table
-      class="uk-table uk-table-small uk-table-divider uk-table-responsive"
-    >
-      <thead>
-        <tr>
-          <th></th>
-          <th>Account</th>
-          <th>Voting Power</th>  
-          <th>Proofs in Epoch</th>
-          <th>Can Create Account</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each set as val, i}
-          <tr>
-            <td>{i + 1}</td>
-            <td>{val.account_address}</td>
-            <td>{val.voting_power}</td>
-            <td>{val.count_proofs_in_epoch}</td>
-            <td>{can_create_account(val)}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+  <h2
+    class=" uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom"
+  >
+    <span>{set.length} Validators</span>
+  </h2>
+  <!-- <div class="uk-child-width-expand@s uk-text-center uk-text-uppercase" uk-grid>
+    <div>Account</div>
+    <div>Voting Power</div>
+    <div>Proofs in Epoch</div>
+    <div>Tower Height</div>
+  </div> -->
+  <div class="uk-accordion-title uk-text-muted">
+    <div class="uk-column-1-4 uk-child-width-expand@s uk-text-center uk-text-uppercase uk-text-light uk-text-small">
+      <div>account</div>
+      <div>voting power</div>
+      <div>proofs in epoch</div>
+      <div>tower height</div>
+    </div>
   </div>
+
+  <ul uk-accordion>
+    {#each set as val, i}
+      <li>
+        <div class="uk-accordion-title">
+          <div class="uk-column-1-4 uk-child-width-expand@s uk-text-center">
+            <div>{val.account_address}</div>
+            <div>{val.voting_power}</div>
+            <div>{val.count_proofs_in_epoch}</div>
+            <div>{val.tower_height}</div>
+          </div>
+        </div>
+        <div class="uk-accordion-content">
+          <table class="uk-table">
+            <tbody>
+              <tr>
+                <td>fullnode network address</td>
+                <td class="uk-text-break"> {val.full_node_ip} </td>
+              </tr>
+              <tr>
+                <td>validator network address</td>
+                <td class="uk-text-break">{val.validator_ip}</td>
+              </tr>
+              <tr>
+                <td>epochs validating and mining</td>
+                <td>{val.epochs_validating_and_mining}</td>
+              </tr>
+              <tr>
+                <td>can create account</td>
+                <td>{can_create_account(val)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </li>
+    {/each}
+  </ul>
 </main>
