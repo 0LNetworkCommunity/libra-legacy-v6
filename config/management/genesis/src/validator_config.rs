@@ -31,13 +31,10 @@ impl ValidatorConfig {
             .override_shared_backend(&self.shared_backend.shared_backend)?;
 
         // Retrieve and set owner account
-        // let owner_account =
-        //     libra_config::utils::validator_owner_account_from_name(self.owner_name.as_bytes());
         let remote_storage = config.shared_backend_with_namespace(self.owner_name.into());
         let owner_key = remote_storage.ed25519_key(OWNER_KEY)?;
         let staged_owner_auth_key = AuthenticationKey::ed25519(&owner_key);
         let owner_account = staged_owner_auth_key.derived_address();
-
 
         // This means Operators can only have 1 owner, at least at genesis.
         let mut validator_storage = config.validator_backend();
