@@ -19284,8 +19284,8 @@ var app = (function () {
     			t2$ = space();
     			create_component(upgrade$.$$.fragment);
     			attr_dev(ul$, "class", "uk-switcher uk-margin switcher-container");
-    			add_location(ul$, file$$1, 10, 4, 315);
-    			attr_dev(div$, "class", "uk-container uk-margin-large-top");
+    			add_location(ul$, file$$1, 10, 4, 309);
+    			attr_dev(div$, "class", "uk-container uk-margin-top");
     			add_location(div$, file$$1, 9, 2, 264);
     			attr_dev(main$, "class", "uk-background-muted uk-height-viewport");
     			add_location(main$, file$$1, 7, 0, 198);

@@ -7,7 +7,7 @@
 
 <main class="uk-background-muted uk-height-viewport">
   <Nav />
-  <div class="uk-container uk-margin-large-top">
+  <div class="uk-container uk-margin-top">
     <ul class="uk-switcher uk-margin switcher-container">
       <Dash />
       <Vals />
