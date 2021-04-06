@@ -27,7 +27,7 @@
     id: string;
     title: string;
     description: string;
-    is_true: bool;
+    is_true: Boolean;
   }
 
   let allChecks: CheckObj[] = [

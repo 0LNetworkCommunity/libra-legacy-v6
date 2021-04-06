@@ -18837,64 +18837,34 @@ var app = (function () {
 
     function get_each_context$(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[3] = list[i];
+    	child_ctx[2] = list[i];
+    	child_ctx[4] = i;
     	return child_ctx;
     }
 
-    function get_each_context$_1(ctx, list, i) {
-    	const child_ctx = ctx.slice();
-    	child_ctx[6] = list[i];
-    	return child_ctx;
-    }
-
-    // (32:10) {#each headers as head}
-    function create_each_block$_1(ctx) {
-    	let th$;
-    	let t$_value$ = /*head*/ ctx[6] + "";
-    	let t$;
-
-    	const block$ = {
-    		c: function create() {
-    			th$ = element("th");
-    			t$ = text(t$_value$);
-    			add_location(th$, file$$3, 32, 12, 1277);
-    		},
-    		m: function mount(target, anchor) {
-    			insert_dev(target, th$, anchor);
-    			append_dev(th$, t$);
-    		},
-    		p: noop,
-    		d: function destroy(detaching) {
-    			if (detaching) detach_dev(th$);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block: block$,
-    		id: create_each_block$_1.name,
-    		type: "each",
-    		source: "(32:10) {#each headers as head}",
-    		ctx
-    	});
-
-    	return block$;
-    }
-
-    // (38:8) {#each set as val}
+    // (43:8) {#each set as val, i}
     function create_each_block$(ctx) {
     	let tr$;
     	let td0$;
-    	let t0$_value$ = /*val*/ ctx[3].account_address + "";
+    	let t0$_value$ = /*i*/ ctx[4] + 1 + "";
     	let t0$;
     	let t1$;
     	let td1$;
-    	let t2$_value$ = /*val*/ ctx[3].voting_power + "";
+    	let t2$_value$ = /*val*/ ctx[2].account_address + "";
     	let t2$;
     	let t3$;
     	let td2$;
-    	let t4$_value$ = /*val*/ ctx[3].epochs_since_last_account_creation + "";
+    	let t4$_value$ = /*val*/ ctx[2].voting_power + "";
     	let t4$;
     	let t5$;
+    	let td3$;
+    	let t6$_value$ = /*val*/ ctx[2].count_proofs_in_epoch + "";
+    	let t6$;
+    	let t7$;
+    	let td4$;
+    	let t8$_value$ = can_create_account(/*val*/ ctx[2]) + "";
+    	let t8$;
+    	let t9$;
 
     	const block$ = {
     		c: function create() {
@@ -18908,10 +18878,18 @@ var app = (function () {
     			td2$ = element("td");
     			t4$ = text(t4$_value$);
     			t5$ = space();
-    			add_location(td0$, file$$3, 39, 12, 1408);
-    			add_location(td1$, file$$3, 40, 12, 1451);
-    			add_location(td2$, file$$3, 41, 12, 1491);
-    			add_location(tr$, file$$3, 38, 10, 1391);
+    			td3$ = element("td");
+    			t6$ = text(t6$_value$);
+    			t7$ = space();
+    			td4$ = element("td");
+    			t8$ = text(t8$_value$);
+    			t9$ = space();
+    			add_location(td0$, file$$3, 44, 12, 1737);
+    			add_location(td1$, file$$3, 45, 12, 1766);
+    			add_location(td2$, file$$3, 46, 12, 1809);
+    			add_location(td3$, file$$3, 47, 12, 1849);
+    			add_location(td4$, file$$3, 48, 12, 1898);
+    			add_location(tr$, file$$3, 43, 10, 1720);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr$, anchor);
@@ -18924,11 +18902,18 @@ var app = (function () {
     			append_dev(tr$, td2$);
     			append_dev(td2$, t4$);
     			append_dev(tr$, t5$);
+    			append_dev(tr$, td3$);
+    			append_dev(td3$, t6$);
+    			append_dev(tr$, t7$);
+    			append_dev(tr$, td4$);
+    			append_dev(td4$, t8$);
+    			append_dev(tr$, t9$);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*set*/ 1 && t0$_value$ !== (t0$_value$ = /*val*/ ctx[3].account_address + "")) set_data_dev(t0$, t0$_value$);
-    			if (dirty & /*set*/ 1 && t2$_value$ !== (t2$_value$ = /*val*/ ctx[3].voting_power + "")) set_data_dev(t2$, t2$_value$);
-    			if (dirty & /*set*/ 1 && t4$_value$ !== (t4$_value$ = /*val*/ ctx[3].epochs_since_last_account_creation + "")) set_data_dev(t4$, t4$_value$);
+    			if (dirty & /*set*/ 1 && t2$_value$ !== (t2$_value$ = /*val*/ ctx[2].account_address + "")) set_data_dev(t2$, t2$_value$);
+    			if (dirty & /*set*/ 1 && t4$_value$ !== (t4$_value$ = /*val*/ ctx[2].voting_power + "")) set_data_dev(t4$, t4$_value$);
+    			if (dirty & /*set*/ 1 && t6$_value$ !== (t6$_value$ = /*val*/ ctx[2].count_proofs_in_epoch + "")) set_data_dev(t6$, t6$_value$);
+    			if (dirty & /*set*/ 1 && t8$_value$ !== (t8$_value$ = can_create_account(/*val*/ ctx[2]) + "")) set_data_dev(t8$, t8$_value$);
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(tr$);
@@ -18939,7 +18924,7 @@ var app = (function () {
     		block: block$,
     		id: create_each_block$.name,
     		type: "each",
-    		source: "(38:8) {#each set as val}",
+    		source: "(43:8) {#each set as val, i}",
     		ctx
     	});
 
@@ -18948,21 +18933,27 @@ var app = (function () {
 
     function create_fragment$3(ctx) {
     	let main$;
+    	let h2$;
+    	let span$;
+    	let t0$_value$ = /*set*/ ctx[0].length + "";
     	let t0$;
+    	let t1$;
+    	let t2$;
     	let div$;
     	let table$;
     	let thead$;
     	let tr$;
-    	let t1$;
+    	let th0$;
+    	let t3$;
+    	let th1$;
+    	let t5$;
+    	let th2$;
+    	let t7$;
+    	let th3$;
+    	let t9$;
+    	let th4$;
+    	let t11$;
     	let tbody$;
-    	let each_value$_1 = /*headers*/ ctx[1];
-    	validate_each_argument(each_value$_1);
-    	let each_blocks$_1 = [];
-
-    	for (let i = 0; i < each_value$_1.length; i += 1) {
-    		each_blocks$_1[i] = create_each_block$_1(get_each_context$_1(ctx, each_value$_1, i));
-    	}
-
     	let each_value$ = /*set*/ ctx[0];
     	validate_each_argument(each_value$);
     	let each_blocks$ = [];
@@ -18974,48 +18965,76 @@ var app = (function () {
     	const block$ = {
     		c: function create() {
     			main$ = element("main");
-    			t0$ = text("validators\n\n  ");
+    			h2$ = element("h2");
+    			span$ = element("span");
+    			t0$ = text(t0$_value$);
+    			t1$ = text(" Validators");
+    			t2$ = space();
     			div$ = element("div");
     			table$ = element("table");
     			thead$ = element("thead");
     			tr$ = element("tr");
-
-    			for (let i = 0; i < each_blocks$_1.length; i += 1) {
-    				each_blocks$_1[i].c();
-    			}
-
-    			t1$ = space();
+    			th0$ = element("th");
+    			t3$ = space();
+    			th1$ = element("th");
+    			th1$.textContent = "Account";
+    			t5$ = space();
+    			th2$ = element("th");
+    			th2$.textContent = "Voting Power";
+    			t7$ = space();
+    			th3$ = element("th");
+    			th3$.textContent = "Proofs in Epoch";
+    			t9$ = space();
+    			th4$ = element("th");
+    			th4$.textContent = "Can Create Account";
+    			t11$ = space();
     			tbody$ = element("tbody");
 
     			for (let i = 0; i < each_blocks$.length; i += 1) {
     				each_blocks$[i].c();
     			}
 
-    			add_location(tr$, file$$3, 30, 8, 1226);
-    			add_location(thead$, file$$3, 29, 6, 1210);
-    			add_location(tbody$, file$$3, 36, 6, 1346);
-    			attr_dev(table$, "class", "uk-table uk-table-small uk-table-divider uk-table-responsive ");
-    			add_location(table$, file$$3, 26, 4, 1115);
+    			add_location(span$, file$$3, 26, 91, 1288);
+    			attr_dev(h2$, "class", "uk-heading-line uk-text-light uk-text-center uk-text-uppercase uk-text-muted");
+    			add_location(h2$, file$$3, 26, 2, 1199);
+    			add_location(th0$, file$$3, 34, 10, 1493);
+    			add_location(th1$, file$$3, 35, 10, 1513);
+    			add_location(th2$, file$$3, 36, 10, 1540);
+    			add_location(th3$, file$$3, 37, 10, 1574);
+    			add_location(th4$, file$$3, 38, 10, 1609);
+    			add_location(tr$, file$$3, 33, 8, 1478);
+    			add_location(thead$, file$$3, 32, 6, 1462);
+    			add_location(tbody$, file$$3, 41, 6, 1672);
+    			attr_dev(table$, "class", "uk-table uk-table-small uk-table-divider uk-table-responsive");
+    			add_location(table$, file$$3, 29, 4, 1368);
     			attr_dev(div$, "class", "uk-overflow-auto");
-    			add_location(div$, file$$3, 25, 2, 1080);
-    			add_location(main$, file$$3, 22, 0, 1057);
+    			add_location(div$, file$$3, 28, 2, 1333);
+    			add_location(main$, file$$3, 25, 0, 1190);
     		},
     		l: function claim(nodes) {
     			throw new Error$$3("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, main$, anchor);
-    			append_dev(main$, t0$);
+    			append_dev(main$, h2$);
+    			append_dev(h2$, span$);
+    			append_dev(span$, t0$);
+    			append_dev(span$, t1$);
+    			append_dev(main$, t2$);
     			append_dev(main$, div$);
     			append_dev(div$, table$);
     			append_dev(table$, thead$);
     			append_dev(thead$, tr$);
-
-    			for (let i = 0; i < each_blocks$_1.length; i += 1) {
-    				each_blocks$_1[i].m(tr$, null);
-    			}
-
-    			append_dev(table$, t1$);
+    			append_dev(tr$, th0$);
+    			append_dev(tr$, t3$);
+    			append_dev(tr$, th1$);
+    			append_dev(tr$, t5$);
+    			append_dev(tr$, th2$);
+    			append_dev(tr$, t7$);
+    			append_dev(tr$, th3$);
+    			append_dev(tr$, t9$);
+    			append_dev(tr$, th4$);
+    			append_dev(table$, t11$);
     			append_dev(table$, tbody$);
 
     			for (let i = 0; i < each_blocks$.length; i += 1) {
@@ -19023,31 +19042,9 @@ var app = (function () {
     			}
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*headers*/ 2) {
-    				each_value$_1 = /*headers*/ ctx[1];
-    				validate_each_argument(each_value$_1);
-    				let i;
+    			if (dirty & /*set*/ 1 && t0$_value$ !== (t0$_value$ = /*set*/ ctx[0].length + "")) set_data_dev(t0$, t0$_value$);
 
-    				for (i = 0; i < each_value$_1.length; i += 1) {
-    					const child_ctx = get_each_context$_1(ctx, each_value$_1, i);
-
-    					if (each_blocks$_1[i]) {
-    						each_blocks$_1[i].p(child_ctx, dirty);
-    					} else {
-    						each_blocks$_1[i] = create_each_block$_1(child_ctx);
-    						each_blocks$_1[i].c();
-    						each_blocks$_1[i].m(tr$, null);
-    					}
-    				}
-
-    				for (; i < each_blocks$_1.length; i += 1) {
-    					each_blocks$_1[i].d(1);
-    				}
-
-    				each_blocks$_1.length = each_value$_1.length;
-    			}
-
-    			if (dirty & /*set*/ 1) {
+    			if (dirty & /*can_create_account, set*/ 1) {
     				each_value$ = /*set*/ ctx[0];
     				validate_each_argument(each_value$);
     				let i;
@@ -19075,7 +19072,6 @@ var app = (function () {
     		o: noop,
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(main$);
-    			destroy_each(each_blocks$_1, detaching);
     			destroy_each(each_blocks$, detaching);
     		}
     	};
@@ -19089,6 +19085,10 @@ var app = (function () {
     	});
 
     	return block$;
+    }
+
+    function can_create_account(info) {
+    	return info.epochs_since_last_account_creation > 7;
     }
 
     function instance$$3($$self, $$props, $$invalidate) {
@@ -19131,7 +19131,6 @@ var app = (function () {
     			});
     	};
 
-    	let headers = ["a", "b", "c"];
     	let set = [];
 
     	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -19140,7 +19139,7 @@ var app = (function () {
 
     		sse.onmessage = function (msg) {
     			$$invalidate(0, set = JSON.parse(msg.data));
-    			console.log(json);
+    			$$invalidate(0, set = lodash.sortBy(set, ["voting_power"]).reverse());
     		};
     	}));
 
@@ -19150,11 +19149,17 @@ var app = (function () {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console$$3.warn(`<Vals> was created with unknown prop '${key}'`);
     	});
 
-    	$$self.$capture_state = () => ({ __awaiter, onMount, headers, set });
+    	$$self.$capture_state = () => ({
+    		__awaiter,
+    		onMount,
+    		sortBy: lodash.sortBy,
+    		reverse: lodash.reverse,
+    		set,
+    		can_create_account
+    	});
 
     	$$self.$inject_state = $$props => {
     		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
-    		if ("headers" in $$props) $$invalidate(1, headers = $$props.headers);
     		if ("set" in $$props) $$invalidate(0, set = $$props.set);
     	};
 
@@ -19162,7 +19167,7 @@ var app = (function () {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [set, headers];
+    	return [set];
     }
 
     class Vals$ extends SvelteComponentDev {
