@@ -6,7 +6,9 @@ DATA_PATH = ${HOME}/.0L
 CHAIN_ID = 1
 
 ifndef SOURCE
-SOURCE=${HOME}/libra
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+SOURCE=${MAKEFILE_DIR}
 endif
 
 ifndef V
