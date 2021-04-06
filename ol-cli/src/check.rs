@@ -354,10 +354,40 @@ impl Check {
         // First we update all information of our system struct.
         system.refresh_all();
         let ps = system.get_process_by_name(NODE_PROCESS);
-        // dbg!(&ps);
+
 
         let is_running = ps.len() > 0;
         is_running
+    }
+
+    pub fn check_systemd(){
+              
+        // Command::new("systemctl")
+        //     .arg("is-active")
+        //     .arg(NODE_PROCESS)
+        //     .
+      
+    let output = Command::new("git").arg("log").arg("--oneline").output()?;
+
+    if !output.status.success() {
+        panic!("Command executed with failing error code");
+    }
+
+    let pattern = Regex::new(r"(?x)
+                               ([0-9a-fA-F]+) # commit hash
+                               (.*)           # The commit message")?;
+
+    String::from_utf8(output.stdout)?
+        .lines()
+        .filter_map(|line| pattern.captures(line))
+        .map(|cap| {
+                 Commit {
+                     hash: cap[1].to_string(),
+                     message: cap[2].trim().to_string(),
+                 }
+             })
+        .take(5)
+        .for_each(|x| println!("{:?}", x));
     }
     /// Check if node is running
     pub fn node_running(&mut self) -> bool {

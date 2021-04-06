@@ -33,6 +33,7 @@ pub mod transitions;
 pub mod query;
 pub mod chain_info;
 pub mod cache;
+pub mod check;
 
 /// Cli block explorer
 pub mod explorer;
