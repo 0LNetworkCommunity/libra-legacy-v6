@@ -5000,6 +5000,7 @@ dependencies = [
  "nix 0.18.0",
  "num-format",
  "once_cell",
+ "regex",
  "reqwest",
  "resource-viewer",
  "rocksdb",

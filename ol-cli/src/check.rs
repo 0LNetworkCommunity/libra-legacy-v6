@@ -6,7 +6,8 @@ use sysinfo::SystemExt;
 use crate::metadata::Metadata;
 use crate::config::OlCliConfig;
 use crate::application::app_config;
-use std::str;
+use std::{process::Command, str, };
+use regex::Regex;
 use rocksdb::DB;
 use serde::{Serialize, Deserialize};
 
@@ -367,7 +368,7 @@ impl Check {
         //     .arg(NODE_PROCESS)
         //     .
       
-    let output = Command::new("git").arg("log").arg("--oneline").output()?;
+    let output = Command::new("git").arg("log").arg("--oneline").output().unwrap();
 
     if !output.status.success() {
         panic!("Command executed with failing error code");
@@ -375,17 +376,12 @@ impl Check {
 
     let pattern = Regex::new(r"(?x)
                                ([0-9a-fA-F]+) # commit hash
-                               (.*)           # The commit message")?;
+                               (.*)           # The commit message").unwrap();
 
-    String::from_utf8(output.stdout)?
+    String::from_utf8(output.stdout).unwrap()
         .lines()
         .filter_map(|line| pattern.captures(line))
-        .map(|cap| {
-                 Commit {
-                     hash: cap[1].to_string(),
-                     message: cap[2].trim().to_string(),
-                 }
-             })
+        .map(|cap| {cap[2].trim().to_string()})
         .take(5)
         .for_each(|x| println!("{:?}", x));
     }
