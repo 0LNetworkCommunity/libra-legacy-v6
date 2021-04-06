@@ -322,8 +322,11 @@ devnet-yaml:
 # We want to simulate the new validator fetching genesis files from the mock archive: dev-genesis-archive
 devnet-onboard: clear fix
 # starts config for a new miner "eve", uses the devnet github repo for ceremony
+# mock fetch from dev-genesis repo
 	MNEM='${MNEM}' cargo r -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
+# mock restore backups from dev-epoch-archive
 	cargo r -p ol-cli -- restore
+# start a node with fullnode.node.yaml configs
 	make start-full
 
 ### FULL DEVNET RESET ####
