@@ -1,12 +1,11 @@
 
 <script lang="ts">
   let account: string = undefined;
-  let balance: number = 0;
-  let inValidatorSet: bool = false;
+  let balance: Number = 0;
+  let inValidatorSet: Boolean = false;
 
   let valSetText = "Jailed";
-  
-  if (inValidatorSet) { valSetTex = "In Validator Set"};
+  if (inValidatorSet) { valSetText = "In Validator Set"};
 
 </script>
 
@@ -19,9 +18,11 @@
   <dl class="uk-description-list">
     <dt>{account}</dt>
     <dd>owner account</dd>
+    
     <dt>{balance}</dt>
     <dd>balance</dd>
 
     <dt> {valSetText} </dt>
+    <dd>status</dd>
   </dl>
 </div>
