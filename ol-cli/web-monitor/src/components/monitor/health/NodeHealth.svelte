@@ -11,7 +11,7 @@
     sse.onmessage = function (msg) {
       healthData = JSON.parse(msg.data);
 
-      allChecks = map(allChecks, (i: Check)=> {
+      allChecks = map(allChecks, (i: CheckObj)=> {
         if (i.id === "config") { i.is_true = healthData.configs_exist; };
         if (i.id === "account") { i.is_true = healthData.account_created; };
         if (i.id === "restore") { i.is_true = healthData.db_restored; };
@@ -20,19 +20,17 @@
         if (i.id === "sync") { i.is_true = healthData.is_synced; };
         return i;
       });
-      console.log(allChecks);
-
     };
   });
 
-  interface Check {
+  interface CheckObj {
     id: string;
     title: string;
     description: string;
     is_true: bool;
   }
 
-  let allChecks: Check[] = [
+  let allChecks: CheckObj[] = [
     {
       id: "config",
       title: "Node configured",

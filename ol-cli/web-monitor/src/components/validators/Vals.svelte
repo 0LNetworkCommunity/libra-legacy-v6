@@ -1,9 +1,31 @@
-<script>
+
+<script lang="ts">
+  import { onMount } from "svelte";
+
   let headers = ["a", "b", "c"]
-  let valSet = [
-    {a: 1, b: 2, c: 3},
-    {a: 1, b: 2, c: 3},
-  ]
+  interface ValSet {
+    account_address: String,
+    pub_key: String,
+    voting_power: Number,
+    full_node_ip: String,
+    validator_ip: String,
+    tower_height: Number,
+    tower_epoch: Number,
+    count_proofs_in_epoch: Number,
+    epochs_validating_and_mining: Number,
+    contiguous_epochs_validating_and_mining: Number,
+    epochs_since_last_account_creation: Number,
+  }
+  let set: ValSet[] = [];
+  onMount(async () => {
+    var uri = "http://" + location.host + "/validators";
+    var sse = new EventSource(uri);
+    sse.onmessage = function (msg) {
+      set = JSON.parse(msg.data);
+      console.log(json)
+    };
+  });
+
 </script>
 <main>
   validators
@@ -20,11 +42,11 @@
         </tr>
       </thead>
       <tbody>
-        {#each valSet as val}
+        {#each set as val}
           <tr>
-            <td>{val.a}</td>
-            <td>{val.b}</td>
-            <td>{val.c}</td>
+            <td>{val.account_address}</td>
+            <td>{val.voting_power}</td>
+            <td>{val.epochs_since_last_account_creation}</td>
           </tr>
         {/each}
       </tbody>

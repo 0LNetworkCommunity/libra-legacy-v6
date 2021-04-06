@@ -17951,7 +17951,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (90:2) {#if healthData}
+    // (89:2) {#if healthData}
     function create_if_block$(ctx) {
     	let div$;
     	let h3$;
@@ -17983,11 +17983,11 @@ var app = (function () {
     			}
 
     			attr_dev(h3$, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3$, file$$7, 91, 6, 2873);
+    			add_location(h3$, file$$7, 90, 6, 2841);
     			attr_dev(dl$, "class", "uk-description-list");
-    			add_location(dl$, file$$7, 94, 6, 2985);
+    			add_location(dl$, file$$7, 93, 6, 2953);
     			attr_dev(div$, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div$, file$$7, 90, 4, 2816);
+    			add_location(div$, file$$7, 89, 4, 2784);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div$, anchor);
@@ -18058,14 +18058,14 @@ var app = (function () {
     		block: block$,
     		id: create_if_block$.name,
     		type: "if",
-    		source: "(90:2) {#if healthData}",
+    		source: "(89:2) {#if healthData}",
     		ctx
     	});
 
     	return block$;
     }
 
-    // (96:8) {#each allChecks as c}
+    // (95:8) {#each allChecks as c}
     function create_each_block$$1(ctx) {
     	let check$;
     	let current;
@@ -18112,7 +18112,7 @@ var app = (function () {
     		block: block$,
     		id: create_each_block$$1.name,
     		type: "each",
-    		source: "(96:8) {#each allChecks as c}",
+    		source: "(95:8) {#each allChecks as c}",
     		ctx
     	});
 
@@ -18128,7 +18128,7 @@ var app = (function () {
     		c: function create() {
     			main$ = element("main");
     			if (if_block$) if_block$.c();
-    			add_location(main$, file$$7, 88, 0, 2786);
+    			add_location(main$, file$$7, 87, 0, 2754);
     		},
     		l: function claim(nodes) {
     			throw new Error$$7("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18275,8 +18275,6 @@ var app = (function () {
     				
     				return i;
     			}));
-
-    			console.log(allChecks);
     		};
     	}));
 
@@ -18839,27 +18837,27 @@ var app = (function () {
 
     function get_each_context$(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[2] = list[i];
+    	child_ctx[3] = list[i];
     	return child_ctx;
     }
 
     function get_each_context$_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[5] = list[i];
+    	child_ctx[6] = list[i];
     	return child_ctx;
     }
 
-    // (17:10) {#each headers as head}
+    // (32:10) {#each headers as head}
     function create_each_block$_1(ctx) {
     	let th$;
-    	let t$_value$ = /*head*/ ctx[5] + "";
+    	let t$_value$ = /*head*/ ctx[6] + "";
     	let t$;
 
     	const block$ = {
     		c: function create() {
     			th$ = element("th");
     			t$ = text(t$_value$);
-    			add_location(th$, file$$3, 17, 12, 340);
+    			add_location(th$, file$$3, 32, 12, 1277);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, th$, anchor);
@@ -18875,26 +18873,26 @@ var app = (function () {
     		block: block$,
     		id: create_each_block$_1.name,
     		type: "each",
-    		source: "(17:10) {#each headers as head}",
+    		source: "(32:10) {#each headers as head}",
     		ctx
     	});
 
     	return block$;
     }
 
-    // (23:8) {#each valSet as val}
+    // (38:8) {#each set as val}
     function create_each_block$(ctx) {
     	let tr$;
     	let td0$;
-    	let t0$_value$ = /*val*/ ctx[2].a + "";
+    	let t0$_value$ = /*val*/ ctx[3].account_address + "";
     	let t0$;
     	let t1$;
     	let td1$;
-    	let t2$_value$ = /*val*/ ctx[2].b + "";
+    	let t2$_value$ = /*val*/ ctx[3].voting_power + "";
     	let t2$;
     	let t3$;
     	let td2$;
-    	let t4$_value$ = /*val*/ ctx[2].c + "";
+    	let t4$_value$ = /*val*/ ctx[3].epochs_since_last_account_creation + "";
     	let t4$;
     	let t5$;
 
@@ -18910,10 +18908,10 @@ var app = (function () {
     			td2$ = element("td");
     			t4$ = text(t4$_value$);
     			t5$ = space();
-    			add_location(td0$, file$$3, 24, 12, 474);
-    			add_location(td1$, file$$3, 25, 12, 503);
-    			add_location(td2$, file$$3, 26, 12, 532);
-    			add_location(tr$, file$$3, 23, 10, 457);
+    			add_location(td0$, file$$3, 39, 12, 1408);
+    			add_location(td1$, file$$3, 40, 12, 1451);
+    			add_location(td2$, file$$3, 41, 12, 1491);
+    			add_location(tr$, file$$3, 38, 10, 1391);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr$, anchor);
@@ -18927,7 +18925,11 @@ var app = (function () {
     			append_dev(td2$, t4$);
     			append_dev(tr$, t5$);
     		},
-    		p: noop,
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*set*/ 1 && t0$_value$ !== (t0$_value$ = /*val*/ ctx[3].account_address + "")) set_data_dev(t0$, t0$_value$);
+    			if (dirty & /*set*/ 1 && t2$_value$ !== (t2$_value$ = /*val*/ ctx[3].voting_power + "")) set_data_dev(t2$, t2$_value$);
+    			if (dirty & /*set*/ 1 && t4$_value$ !== (t4$_value$ = /*val*/ ctx[3].epochs_since_last_account_creation + "")) set_data_dev(t4$, t4$_value$);
+    		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(tr$);
     		}
@@ -18937,7 +18939,7 @@ var app = (function () {
     		block: block$,
     		id: create_each_block$.name,
     		type: "each",
-    		source: "(23:8) {#each valSet as val}",
+    		source: "(38:8) {#each set as val}",
     		ctx
     	});
 
@@ -18953,7 +18955,7 @@ var app = (function () {
     	let tr$;
     	let t1$;
     	let tbody$;
-    	let each_value$_1 = /*headers*/ ctx[0];
+    	let each_value$_1 = /*headers*/ ctx[1];
     	validate_each_argument(each_value$_1);
     	let each_blocks$_1 = [];
 
@@ -18961,7 +18963,7 @@ var app = (function () {
     		each_blocks$_1[i] = create_each_block$_1(get_each_context$_1(ctx, each_value$_1, i));
     	}
 
-    	let each_value$ = /*valSet*/ ctx[1];
+    	let each_value$ = /*set*/ ctx[0];
     	validate_each_argument(each_value$);
     	let each_blocks$ = [];
 
@@ -18989,14 +18991,14 @@ var app = (function () {
     				each_blocks$[i].c();
     			}
 
-    			add_location(tr$, file$$3, 15, 8, 289);
-    			add_location(thead$, file$$3, 14, 6, 273);
-    			add_location(tbody$, file$$3, 21, 6, 409);
+    			add_location(tr$, file$$3, 30, 8, 1226);
+    			add_location(thead$, file$$3, 29, 6, 1210);
+    			add_location(tbody$, file$$3, 36, 6, 1346);
     			attr_dev(table$, "class", "uk-table uk-table-small uk-table-divider uk-table-responsive ");
-    			add_location(table$, file$$3, 11, 4, 178);
+    			add_location(table$, file$$3, 26, 4, 1115);
     			attr_dev(div$, "class", "uk-overflow-auto");
-    			add_location(div$, file$$3, 10, 2, 143);
-    			add_location(main$, file$$3, 7, 0, 120);
+    			add_location(div$, file$$3, 25, 2, 1080);
+    			add_location(main$, file$$3, 22, 0, 1057);
     		},
     		l: function claim(nodes) {
     			throw new Error$$3("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -19021,8 +19023,8 @@ var app = (function () {
     			}
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*headers*/ 1) {
-    				each_value$_1 = /*headers*/ ctx[0];
+    			if (dirty & /*headers*/ 2) {
+    				each_value$_1 = /*headers*/ ctx[1];
     				validate_each_argument(each_value$_1);
     				let i;
 
@@ -19045,8 +19047,8 @@ var app = (function () {
     				each_blocks$_1.length = each_value$_1.length;
     			}
 
-    			if (dirty & /*valSet*/ 2) {
-    				each_value$ = /*valSet*/ ctx[1];
+    			if (dirty & /*set*/ 1) {
+    				each_value$ = /*set*/ ctx[0];
     				validate_each_argument(each_value$);
     				let i;
 
@@ -19092,26 +19094,75 @@ var app = (function () {
     function instance$$3($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("Vals", slots, []);
+
+    	var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+    		function adopt(value) {
+    			return value instanceof P
+    			? value
+    			: new P(function (resolve) {
+    						resolve(value);
+    					});
+    		}
+
+    		return new (P || (P = Promise))(function (resolve, reject) {
+    				function fulfilled(value) {
+    					try {
+    						step(generator.next(value));
+    					} catch(e) {
+    						reject(e);
+    					}
+    				}
+
+    				function rejected(value) {
+    					try {
+    						step(generator["throw"](value));
+    					} catch(e) {
+    						reject(e);
+    					}
+    				}
+
+    				function step(result) {
+    					result.done
+    					? resolve(result.value)
+    					: adopt(result.value).then(fulfilled, rejected);
+    				}
+
+    				step((generator = generator.apply(thisArg, _arguments || [])).next());
+    			});
+    	};
+
     	let headers = ["a", "b", "c"];
-    	let valSet = [{ a: 1, b: 2, c: 3 }, { a: 1, b: 2, c: 3 }];
+    	let set = [];
+
+    	onMount(() => __awaiter(void 0, void 0, void 0, function* () {
+    		var uri = "http://" + location.host + "/validators";
+    		var sse = new EventSource(uri);
+
+    		sse.onmessage = function (msg) {
+    			$$invalidate(0, set = JSON.parse(msg.data));
+    			console.log(json);
+    		};
+    	}));
+
     	const writable_props = [];
 
     	Object$$3.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console$$3.warn(`<Vals> was created with unknown prop '${key}'`);
     	});
 
-    	$$self.$capture_state = () => ({ headers, valSet });
+    	$$self.$capture_state = () => ({ __awaiter, onMount, headers, set });
 
     	$$self.$inject_state = $$props => {
-    		if ("headers" in $$props) $$invalidate(0, headers = $$props.headers);
-    		if ("valSet" in $$props) $$invalidate(1, valSet = $$props.valSet);
+    		if ("__awaiter" in $$props) __awaiter = $$props.__awaiter;
+    		if ("headers" in $$props) $$invalidate(1, headers = $$props.headers);
+    		if ("set" in $$props) $$invalidate(0, set = $$props.set);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [headers, valSet];
+    	return [set, headers];
     }
 
     class Vals$ extends SvelteComponentDev {
