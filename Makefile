@@ -173,6 +173,10 @@ start:
 # run in foreground. Only for testing, use a daemon for net.
 	cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
 
+# Start a fullnode instead of a validator node
+start-full:
+	cargo run -p libra-node -- --config ${DATA_PATH}/fullnode.node.yaml
+
 daemon:
 # your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
 	sudo cp -f ~/.0L/libra-node.service /lib/systemd/system/
@@ -318,7 +322,9 @@ devnet-yaml:
 # We want to simulate the new validator fetching genesis files from the mock archive: dev-genesis-archive
 devnet-onboard: clear fix
 # starts config for a new miner "eve", uses the devnet github repo for ceremony
-	MNEM='${MNEM}' cargo r -p miner -- val-wizard --skip-miner --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
+	MNEM='${MNEM}' cargo r -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
+	cargo r -p ol-cli -- restore
+	make start-full
 
 ### FULL DEVNET RESET ####
 
