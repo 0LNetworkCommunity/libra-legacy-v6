@@ -234,7 +234,7 @@ impl Check {
         self.conf.profile.account.to_vec()
     }
 
-    /// Current monitor account
+    /// Current waypoint
     pub fn waypoint(&mut self) -> Waypoint {
         self.client.get_state_proof().expect("Failed to get state proof"); // refresh latest state proof
         let waypoint = self.client.waypoint();

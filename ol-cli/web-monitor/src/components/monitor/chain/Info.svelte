@@ -12,12 +12,13 @@
       let chain = JSON.parse(msg.data);
       epoch = chain.epoch;
       round = chain.height;
+      waypoint = chain.waypoint;
     }
     console.log(epoch)
   });
 </script>
 
-<div class="uk-card uk-card-default uk-card-body">
+<div class="uk-card uk-card-default uk-card-body uk-height-1-1">
   <h3 class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted">
     Chain
   </h3>
@@ -34,7 +35,7 @@
       </tr>
       <tr>
         <td>Waypoint</td>
-        <td>{waypoint}</td>
+        <td class="uk-text-break">{waypoint}</td>
       </tr>
     </tbody>
   </table>

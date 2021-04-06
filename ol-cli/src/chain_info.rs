@@ -1,7 +1,7 @@
 //! `chain_info`
 use crate::{cache::DB_CACHE, client};
 use chrono::Utc;
-use libra_types::{account_address::AccountAddress, account_state::AccountState};
+use libra_types::{account_address::AccountAddress, account_state::AccountState, waypoint::Waypoint};
 use std::convert::{TryFrom};
 use serde::{Serialize, Deserialize};
 
@@ -25,6 +25,8 @@ pub struct ChainInfo {
     pub latest_epoch_change_time: u64,
     /// epoch_progress
     pub epoch_progress: f64,
+    /// waypoint
+    pub waypoint: Option<Waypoint>,
 }
 
 
@@ -61,6 +63,11 @@ pub fn fetch_chain_info() -> (Option<ChainInfo>, Option<Vec<ValidatorInfo>>){
     let mut client = client::default_remote_client().0.unwrap();
     let (blob, _version) = client.get_account_state_blob(AccountAddress::ZERO).unwrap();
     let mut cs = ChainInfo::default();
+    
+    // TODO: This is duplicated with check.rs
+    client.get_state_proof().expect("Failed to get state proof");
+    cs.waypoint = client.waypoint();
+
     if let Some(account_blob) = blob {
         let account_state = AccountState::try_from(&account_blob).unwrap();
         let meta = client.get_metadata().unwrap();

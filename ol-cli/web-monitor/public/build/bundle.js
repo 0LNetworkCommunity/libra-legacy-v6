@@ -386,65 +386,49 @@ var app = (function () {
     function create_fragment$9(ctx) {
     	let main$;
     	let nav$;
-    	let div0$;
-    	let ul0$;
-    	let a0$;
-    	let t0$;
-    	let div1$;
-    	let ul1$;
+    	let div$;
+    	let ul$;
     	let li0$;
-    	let a1$;
-    	let t2$;
+    	let a0$;
+    	let t1$;
     	let li1$;
-    	let a2$;
-    	let t4$;
+    	let a1$;
+    	let t3$;
     	let li2$;
-    	let a3$;
+    	let a2$;
 
     	const block$ = {
     		c: function create() {
     			main$ = element("main");
     			nav$ = element("nav");
-    			div0$ = element("div");
-    			ul0$ = element("ul");
-    			a0$ = element("a");
-    			t0$ = space();
-    			div1$ = element("div");
-    			ul1$ = element("ul");
+    			div$ = element("div");
+    			ul$ = element("ul");
     			li0$ = element("li");
-    			a1$ = element("a");
-    			a1$.textContent = "Dash";
-    			t2$ = space();
+    			a0$ = element("a");
+    			a0$.textContent = "Dash";
+    			t1$ = space();
     			li1$ = element("li");
-    			a2$ = element("a");
-    			a2$.textContent = "Validators";
-    			t4$ = space();
+    			a1$ = element("a");
+    			a1$.textContent = "Validators";
+    			t3$ = space();
     			li2$ = element("li");
-    			a3$ = element("a");
-    			a3$.textContent = "Upgrades";
-    			attr_dev(a0$, "class", "uk-navbar-toggle");
-    			attr_dev(a0$, "uk-navbar-toggle-icon", "");
-    			attr_dev(a0$, "href", "");
-    			add_location(a0$, file$$9, 4, 8, 127);
-    			attr_dev(ul0$, "class", "uk-navbar-nav");
-    			add_location(ul0$, file$$9, 3, 6, 92);
-    			attr_dev(div0$, "class", "uk-navbar-left");
-    			add_location(div0$, file$$9, 2, 4, 57);
-    			attr_dev(a1$, "href", "#");
-    			add_location(a1$, file$$9, 10, 30, 353);
+    			a2$ = element("a");
+    			a2$.textContent = "Upgrades";
+    			attr_dev(a0$, "href", "#");
+    			add_location(a0$, file$$9, 10, 30, 362);
     			attr_dev(li0$, "class", "uk-active");
-    			add_location(li0$, file$$9, 10, 8, 331);
+    			add_location(li0$, file$$9, 10, 8, 340);
+    			attr_dev(a1$, "href", "#");
+    			add_location(a1$, file$$9, 11, 12, 400);
+    			add_location(li1$, file$$9, 11, 8, 396);
     			attr_dev(a2$, "href", "#");
-    			add_location(a2$, file$$9, 11, 12, 391);
-    			add_location(li1$, file$$9, 11, 8, 387);
-    			attr_dev(a3$, "href", "#");
-    			add_location(a3$, file$$9, 12, 12, 435);
-    			add_location(li2$, file$$9, 12, 8, 431);
-    			attr_dev(ul1$, "class", "uk-navbar-nav");
-    			attr_dev(ul1$, "uk-switcher", "connect: .switcher-container");
-    			add_location(ul1$, file$$9, 9, 6, 253);
-    			attr_dev(div1$, "class", "uk-navbar-center");
-    			add_location(div1$, file$$9, 8, 4, 216);
+    			add_location(a2$, file$$9, 12, 12, 444);
+    			add_location(li2$, file$$9, 12, 8, 440);
+    			attr_dev(ul$, "class", "uk-navbar-nav");
+    			attr_dev(ul$, "uk-switcher", "connect: .switcher-container");
+    			add_location(ul$, file$$9, 9, 6, 262);
+    			attr_dev(div$, "class", "uk-navbar-center");
+    			add_location(div$, file$$9, 8, 4, 225);
     			attr_dev(nav$, "class", "uk-navbar-container");
     			attr_dev(nav$, "uk-navbar", "");
     			add_location(nav$, file$$9, 1, 2, 9);
@@ -456,20 +440,16 @@ var app = (function () {
     		m: function mount(target, anchor) {
     			insert_dev(target, main$, anchor);
     			append_dev(main$, nav$);
-    			append_dev(nav$, div0$);
-    			append_dev(div0$, ul0$);
-    			append_dev(ul0$, a0$);
-    			append_dev(nav$, t0$);
-    			append_dev(nav$, div1$);
-    			append_dev(div1$, ul1$);
-    			append_dev(ul1$, li0$);
-    			append_dev(li0$, a1$);
-    			append_dev(ul1$, t2$);
-    			append_dev(ul1$, li1$);
-    			append_dev(li1$, a2$);
-    			append_dev(ul1$, t4$);
-    			append_dev(ul1$, li2$);
-    			append_dev(li2$, a3$);
+    			append_dev(nav$, div$);
+    			append_dev(div$, ul$);
+    			append_dev(ul$, li0$);
+    			append_dev(li0$, a0$);
+    			append_dev(ul$, t1$);
+    			append_dev(ul$, li1$);
+    			append_dev(li1$, a1$);
+    			append_dev(ul$, t3$);
+    			append_dev(ul$, li2$);
+    			append_dev(li2$, a2$);
     		},
     		p: noop,
     		i: noop,
@@ -18386,6 +18366,7 @@ var app = (function () {
     	let td4$;
     	let t11$;
     	let td5$;
+    	let t12$;
 
     	const block$ = {
     		c: function create() {
@@ -18414,23 +18395,24 @@ var app = (function () {
     			td4$.textContent = "Waypoint";
     			t11$ = space();
     			td5$ = element("td");
-    			td5$.textContent = `${/*waypoint*/ ctx[2]}`;
+    			t12$ = text(/*waypoint*/ ctx[2]);
     			attr_dev(h3$, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted");
-    			add_location(h3$, file$$6, 26, 2, 1178);
-    			add_location(td0$, file$$6, 33, 8, 1329);
-    			add_location(td1$, file$$6, 34, 8, 1352);
-    			add_location(tr0$, file$$6, 32, 6, 1316);
-    			add_location(td2$, file$$6, 37, 8, 1402);
-    			add_location(td3$, file$$6, 38, 8, 1425);
-    			add_location(tr1$, file$$6, 36, 6, 1389);
-    			add_location(td4$, file$$6, 41, 8, 1473);
-    			add_location(td5$, file$$6, 42, 8, 1499);
-    			add_location(tr2$, file$$6, 40, 6, 1460);
-    			add_location(tbody$, file$$6, 31, 4, 1302);
+    			add_location(h3$, file$$6, 27, 2, 1227);
+    			add_location(td0$, file$$6, 34, 8, 1378);
+    			add_location(td1$, file$$6, 35, 8, 1401);
+    			add_location(tr0$, file$$6, 33, 6, 1365);
+    			add_location(td2$, file$$6, 38, 8, 1451);
+    			add_location(td3$, file$$6, 39, 8, 1474);
+    			add_location(tr1$, file$$6, 37, 6, 1438);
+    			add_location(td4$, file$$6, 42, 8, 1522);
+    			attr_dev(td5$, "class", "uk-text-break");
+    			add_location(td5$, file$$6, 43, 8, 1548);
+    			add_location(tr2$, file$$6, 41, 6, 1509);
+    			add_location(tbody$, file$$6, 32, 4, 1351);
     			attr_dev(table$, "class", "uk-table");
-    			add_location(table$, file$$6, 30, 2, 1273);
-    			attr_dev(div$, "class", "uk-card uk-card-default uk-card-body");
-    			add_location(div$, file$$6, 25, 0, 1125);
+    			add_location(table$, file$$6, 31, 2, 1322);
+    			attr_dev(div$, "class", "uk-card uk-card-default uk-card-body uk-height-1-1");
+    			add_location(div$, file$$6, 26, 0, 1160);
     		},
     		l: function claim(nodes) {
     			throw new Error$$6("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -18457,10 +18439,12 @@ var app = (function () {
     			append_dev(tr2$, td4$);
     			append_dev(tr2$, t11$);
     			append_dev(tr2$, td5$);
+    			append_dev(td5$, t12$);
     		},
     		p: function update(ctx, [dirty]) {
     			if (dirty & /*epoch*/ 1) set_data_dev(t4$, /*epoch*/ ctx[0]);
     			if (dirty & /*round*/ 2) set_data_dev(t8$, /*round*/ ctx[1]);
+    			if (dirty & /*waypoint*/ 4) set_data_dev(t12$, /*waypoint*/ ctx[2]);
     		},
     		i: noop,
     		o: noop,
@@ -18532,6 +18516,7 @@ var app = (function () {
     			let chain = JSON.parse(msg.data);
     			$$invalidate(0, epoch = chain.epoch);
     			$$invalidate(1, round = chain.height);
+    			$$invalidate(2, waypoint = chain.waypoint);
     		};
 
     		console.log(epoch);
@@ -18613,15 +18598,15 @@ var app = (function () {
     			dt2$ = element("dt");
     			dt2$.textContent = `${/*valSetText*/ ctx[2]}`;
     			attr_dev(h3$, "class", "uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large");
-    			add_location(h3$, file$$5, 12, 2, 258);
-    			add_location(dt0$, file$$5, 18, 4, 412);
-    			add_location(dd0$, file$$5, 19, 4, 435);
-    			add_location(dt1$, file$$5, 20, 4, 462);
-    			add_location(dd1$, file$$5, 21, 4, 485);
-    			add_location(dt2$, file$$5, 23, 4, 507);
+    			add_location(h3$, file$$5, 12, 2, 271);
+    			add_location(dt0$, file$$5, 18, 4, 425);
+    			add_location(dd0$, file$$5, 19, 4, 448);
+    			add_location(dt1$, file$$5, 20, 4, 475);
+    			add_location(dd1$, file$$5, 21, 4, 498);
+    			add_location(dt2$, file$$5, 23, 4, 520);
     			attr_dev(dl$, "class", "uk-description-list");
-    			add_location(dl$, file$$5, 17, 2, 375);
-    			attr_dev(div$, "class", "uk-card uk-card-default uk-card-body uk-text-center ");
+    			add_location(dl$, file$$5, 17, 2, 388);
+    			attr_dev(div$, "class", "uk-card uk-card-default uk-card-body uk-text-center uk-height-1-1");
     			add_location(div$, file$$5, 11, 0, 189);
     		},
     		l: function claim(nodes) {

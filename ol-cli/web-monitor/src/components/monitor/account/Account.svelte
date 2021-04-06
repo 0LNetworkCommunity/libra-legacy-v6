@@ -10,7 +10,7 @@
 
 </script>
 
-<div class="uk-card uk-card-default uk-card-body uk-text-center ">
+<div class="uk-card uk-card-default uk-card-body uk-text-center uk-height-1-1">
   <h3
     class="uk-card-title uk-text-center uk-text-uppercase uk-text-muted uk-text-large"
   >
