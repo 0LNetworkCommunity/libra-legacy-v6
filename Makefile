@@ -173,6 +173,10 @@ start:
 # run in foreground. Only for testing, use a daemon for net.
 	cargo run -p libra-node -- --config ${DATA_PATH}/validator.node.yaml
 
+# Start a fullnode instead of a validator node
+start-full:
+	cargo run -p libra-node -- --config ${DATA_PATH}/fullnode.node.yaml
+
 daemon:
 # your node's custom libra-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
 	sudo cp -f ~/.0L/libra-node.service /lib/systemd/system/
@@ -225,9 +229,10 @@ check:
 
 fix:
 ifdef TEST
-	echo ${NS}
-	@if test ! -d ${0L_PATH}; then \
-		mkdir ${0L_PATH}; \
+	@echo NAMESPACE: ${NS}
+	@echo GENESIS: ${V}
+	@if test ! -d ${DATA_PATH}; then \
+		echo Creating Directories \
 		mkdir ${DATA_PATH}; \
 		mkdir -p ${DATA_PATH}/blocks/; \
 	fi
@@ -314,10 +319,15 @@ devnet-keys:
 devnet-yaml:
 	cargo run -p miner -- files
 
+# We want to simulate the new validator fetching genesis files from the mock archive: dev-genesis-archive
 devnet-onboard: clear fix
-	#starts config for a new miner "eve", uses the devnet github repo for ceremony
-	MNEM='${MNEM}' cargo r -p miner -- init --skip-miner
-	cargo r -p miner -- files
+# starts config for a new miner "eve", uses the devnet github repo for ceremony
+# mock fetch from dev-genesis repo
+	MNEM='${MNEM}' cargo r -p miner -- val-wizard --skip-mining --skip-fetch-genesis --chain-id 1 --github-org OLSF --repo dev-genesis
+# mock restore backups from dev-epoch-archive
+	cargo r -p ol-cli -- restore
+# start a node with fullnode.node.yaml configs
+	make start-full
 
 ### FULL DEVNET RESET ####
 
