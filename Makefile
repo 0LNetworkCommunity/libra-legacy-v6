@@ -45,6 +45,7 @@ bins:
 	# NOTE: stdlib is built for cli bindings
 	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs --release
 
+install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
 	sudo cp -f ${SOURCE}/target/release/libra-node /usr/local/bin/libra-node
 	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
